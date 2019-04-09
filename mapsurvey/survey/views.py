@@ -1,13 +1,16 @@
 from django.shortcuts import render
 from django.db.models import Q
 from django.http import HttpResponse
-from .models import Survey, Question, SurveySession, Answer
+#from .models import Survey, Question, SurveySession, Answer
 from datetime import datetime
 from django import forms
 from django.views.generic import UpdateView
 from leaflet.forms.widgets import LeafletWidget
 
+def index(request):
+    return HttpResponse("Hello, world. You're at the polls index.")
 
+'''
 class AnswerForm(forms.ModelForm):
 	class Meta:
 		model = Answer
@@ -20,7 +23,6 @@ class EditAnswerForm(UpdateView):
 	template_name = 'answer.html'
 
 	success_url = '../Q2/'
-
 
 	def get_object(self):
 		survey = Survey.objects.get(url_name=self.kwargs['survey_name'])
@@ -35,11 +37,9 @@ class EditAnswerForm(UpdateView):
 		survey_session = SurveySession.objects.get(pk = self.request.session['survey_session_id'])
 
 		answer = Answer(survey_session=survey_session, question=question)
-		answer.save()
 		return  answer
 
-def index(request):
-    return HttpResponse("Hello, world. You're at the polls index.")
+
 
 def survey_list(request):
 	survey_list = Survey.objects.all()
@@ -70,5 +70,5 @@ def question(request, survey_name, question_code):
 	context = {'survey': survey, 'question': question, 'session_id': request.session['survey_session_id']}
 	return render(request, 'question_template.html', context)
 
-
+'''
 
