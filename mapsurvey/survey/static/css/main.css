@@ -1,0 +1,186 @@
+body {
+  width: 100%;
+  height: 100%;
+  font-family: 'NotoSans', sans-serif;
+  font-weight: normal;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  padding: 0;
+}
+
+p {
+  padding-bottom: 15px;
+}
+
+
+.info {
+	position: absolute;
+	top: 10px;
+	right:10px;
+	z-index: 2;
+    padding: 6px 8px;
+    font: 14px/16px Arial, Helvetica, sans-serif;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+    width: 230px;
+    height: 260px;
+    background: black;
+    color:white;
+}
+.info h4 {
+    margin: 0 0 5px;
+    color: #777;
+}
+
+.info .functions {
+	margin-bottom: 20px;
+}
+
+.info .functions div {
+	  font: 10px sans-serif;
+	  background-color: steelblue;
+	  text-align: left;
+	  padding: 3px;
+	  margin: 1px;
+	  color: white;
+	  white-space: nowrap;
+}
+
+.headerInfo {
+  position: absolute;
+  margin-top: 9px;
+  width: 290px;
+  height: 49px;
+  margin-left: 15px;
+  color: #ffffff;
+  opacity: 0.5;
+  z-index: 1;
+  cursor: pointer;
+}
+.headerInfo:hover {
+  opacity: 1;
+}
+.header {
+  position: absolute;
+  width: 252px;
+  height: 49px;
+  font-size: 36px;
+  font-style: italic;
+  text-align: left;
+}
+
+.project_info {
+position: absolute;
+object-fit: contain;
+margin-top: 6px;
+left: 290px;
+width: 35px;
+z-index: 1;
+cursor: pointer;
+}
+
+#description {
+  position: absolute;
+  box-sizing: border-box;
+  max-width: 600px;
+  width: 100%;
+	background-color: #101a4a;
+  padding: 10px 10px 0;
+  overflow-y: auto;
+  height: 100%;
+  z-index: 10;
+  transition: all 0.5s ease-in;
+  opacity: 0.95;
+}
+
+@media (max-width: 600px) {
+  .tablinks {
+    font-size: 18px;
+  }
+
+  .tabcontent {
+    margin-left: 11px;
+    margin-top: 19px;
+    font-size: 14px;
+    color: #ffffff;
+    overflow-y: auto;
+  }
+
+  .header {
+    display: none;
+  }
+
+  .info {
+    left: 10px;
+  }
+}
+
+.tab {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-left: 21px;
+  font-size: 36px;
+  font-style: italic;
+  text-align: center;
+  color: #ffffff;
+}
+
+.tablinks {
+  border: none;
+  font-size: 36px;
+  font-style: italic;
+  background-color: transparent;
+  cursor: pointer;
+  color: #fff;
+  opacity: 0.5;
+  transition: 0.3s;
+  margin-bottom: 10px;
+}
+
+.tablinks:hover {
+  opacity: 1;
+  animation: ease;
+  margin-bottom: 10px;
+}
+
+.tablinks.active {
+  opacity: 1;
+  margin-bottom: 5px;
+  border-bottom: 5px solid #fff;
+  cursor: pointer;
+}
+
+.tabcontent {
+  max-width: 505px;
+  margin-left: 21px;
+  margin-top: 29px;
+	font-size: 18px;
+	color: #ffffff;
+  overflow-y: auto;
+}
+
+.tabcontent ul {
+  list-style: circle;
+}
+
+.tabcontent ol > li {
+  margin-bottom: 10px;
+}
+
+.tabcontent img {
+  object-fit: cover;
+  width: 100%;
+  margin: 10px 0;
+}
+
+.tabcontent a {
+  color: white;
+}
+
+.leaflet-container {
+  margin-left: 32vw;
+  height: 100vh; 
+  width: 68vw; 
+  z-index: 0;
+}
