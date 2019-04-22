@@ -6,7 +6,6 @@ from .models import SurveyHeader, SurveySession, SurveySection, Answer, OptionGr
 from datetime import datetime
 from django import forms
 from django.views.generic import UpdateView
-from leaflet.forms.widgets import LeafletWidget
 from .forms import SurveySectionAnswerForm
 from django.http import HttpResponseRedirect
 

@@ -7,9 +7,9 @@ verify_ssl = true
 
 [packages]
 django = "*"
-psycopg2 = "*"
-django-leaflet = "*"
 django-debug-toolbar = "*"
+psycopg2-binary = "*"
+django-leaflet = "*"
 
 [requires]
 python_version = "3.7"
