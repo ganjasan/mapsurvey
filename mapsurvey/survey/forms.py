@@ -103,7 +103,7 @@ class SurveySectionAnswerForm(forms.Form):
             field_name = question.code
             field_label = question.name
             self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.option_group, field_label)
-            
+            self.fields[field_name]
             #fill fields if answer exists TODO
             '''
             try:

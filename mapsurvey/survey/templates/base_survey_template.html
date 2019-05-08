@@ -38,6 +38,7 @@
 
 <script type="text/javascript">
 
+
     //nvigation
     function toggleInfo(show) {
         if(show) { info_page.style.visibility="visible"; }
@@ -56,6 +57,8 @@
     }).addTo(map);
 
     var editableLayers = new L.FeatureGroup();
+
+    var currentQ = null
         
     map.addLayer(editableLayers);
 
@@ -88,8 +91,40 @@
         }
 
         editableLayers.addLayer(layer);
+
+
         toggleInfo(true);
+
+
+        let valueOfInput = $(".geo-inp[name='" + currentQ + "'").val()
+        valueOfInput += JSON.stringify(layer.toGeoJSON())
+        $(".geo-inp[name='" + currentQ + "'").val(valueOfInput)
     });
+
+
+
+    $('.endservey').click(function() {
+        console.log(editableLayers)
+        console.log(document.location.href) // убрать лишнии знаки в конце урла посре 6 /
+        console.log(editableLayers._layers)
+        console.log(editableLayers.toGeoJSON())
+        console.log(JSON.stringify(editableLayers.toGeoJSON()))
+        for (l in editableLayers._layers) {
+            console.log(editableLayers._layers[l].toGeoJSON())
+            console.log(JSON.stringify(editableLayers._layers[l].toGeoJSON()))
+        }
+
+        
+
+        // $.ajax({
+        //   url: document.location.href,
+        //   type: "POST",
+        //   data: a,
+        //   success: console.log("succsec"),
+        //   dataType: 'json'
+        // });
+    })
+
 
 
     $('.drawpolygon').click(function() {
@@ -97,6 +132,9 @@
 
         polygonDrawer.enable();
         toggleInfo(false);
+
+        currentQ = $(this).attr('name')
+
     });
 
     $('.drawline').click(function() {
@@ -104,6 +142,7 @@
 
         lineDrawer.enable();
         toggleInfo(false);
+        currentQ = $(this).attr('name')
     })
 
     $('.drawpoint').click(function() {
@@ -111,6 +150,7 @@
 
         pointDrawer.enable();
         toggleInfo(false);
+        currentQ = $(this).attr('name')
     })
 
 
