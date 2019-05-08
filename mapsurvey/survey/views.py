@@ -2,7 +2,6 @@ from django.shortcuts import render
 from django.db.models import Q
 from django.http import HttpResponse
 from .models import SurveyHeader, SurveySession, SurveySection, Answer, OptionGroup, Question, OptionChoice
-#from .models import Survey, Question, SurveySession, Answer
 from datetime import datetime
 from django import forms
 from django.views.generic import UpdateView

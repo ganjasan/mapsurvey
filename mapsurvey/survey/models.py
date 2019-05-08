@@ -17,7 +17,6 @@ INPUT_TYPE_CHOICES = (
     ("point", _("Geo Point")),
     ("line", _("Geo Line")),
     ("polygon", _("Geo Polygon")),
-    ("slider", _("slider")),
 )
 
 class SurveySession(models.Model):
