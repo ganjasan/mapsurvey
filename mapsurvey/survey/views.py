@@ -8,6 +8,9 @@ from django import forms
 from django.views.generic import UpdateView
 from .forms import SurveySectionAnswerForm
 from django.http import HttpResponseRedirect
+from django.core import serializers
+import geojson
+from django.contrib.gis.geos import GEOSGeometry
 
 def index(request):
     return HttpResponse("Hello, world")
@@ -26,6 +29,7 @@ def survey_header(request, survey_name):
 
 	return render(request, 'survey_header.html', context)
 
+
 def survey_section(request, survey_name, section_name):
 	
 	survey = SurveyHeader.objects.get(name=survey_name)
@@ -39,36 +43,48 @@ def survey_section(request, survey_name, section_name):
 	section = SurveySection.objects.get(Q(survey_header=survey) & Q(name=section_name))
 
 	if request.method == 'POST':
-		#form = SurveySectionAnswerForm(initial=request.POST, instance=section, survey_session_id=request.session['survey_session_id'])
+		form = SurveySectionAnswerForm(initial=request.POST, instance=section, survey_session_id=request.session['survey_session_id'])
+
 		#save data to answers
 		section_questions = section.questions()
 		survey_session = SurveySession.objects.get(pk=request.session['survey_session_id'])
 		for question in section_questions:
 			result = request.POST[question.code]
+			print(result)
+
+
+			# # Получается на каждое поле мы создаем отдельную строку в таблице.
+			# # Не будет лучше все в одну строку записывать?
 			answer = Answer(survey_session=survey_session, question=question)
 			answer.save()
 
-			if question.option_group == OptionGroup.objects.get(name='other'):
-				if question.input_type == "text":
-					pass
-				elif question.input_type == "number":
-					pass
-				elif question.input_type == "point":
-					pass
-				elif question.input_type == "line":
-					pass
-				elif question.input_type == "polygon":
-					pass
-				else:
-					pass
+			if (result != ""):
+				if question.option_group == OptionGroup.objects.get(name='other'):
+					print(question.input_type)
+					if (question.input_type in ['point', 'line', 'polygon']):
+						gj = geojson.loads(result)
+						gj = geojson.dumps(gj['geometry'])
+						resultToSave = GEOSGeometry(gj)
 
-			else:
-				for result_answer in result:
-					choice = OptionChoice.objects.get(Q(option_group=question.option_group) & Q(code=result_answer))
-					answer.choice.add(choice)
+					if question.input_type == "text":
+						answer.text = result
+					elif question.input_type == "number":
+						answer.numeric = float(result)
+					elif question.input_type == "point":
+						answer.point = resultToSave
+					elif question.input_type == "line":						
+						answer.line = resultToSave
+					elif question.input_type == "polygon":
+						answer.polygon = resultToSave
+					else:
+						pass
 					answer.save()
 
-			
+				else:
+					for result_answer in result:
+						choice = OptionChoice.objects.get(Q(option_group=question.option_group) & Q(code=result_answer))
+						answer.choice.add(choice)
+						answer.save()
 
 		
 		return HttpResponseRedirect('../'+section.next_section.name)

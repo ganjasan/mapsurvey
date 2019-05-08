@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'debug_toolbar'
 ]
 
 MIDDLEWARE = [
@@ -82,7 +83,7 @@ DATABASES = {
         'NAME': 'mapsurvey',
         'USER': 'postgres',
         'PASSWORD': 'adminadmin',
-        'HOST': 'db',
+        'HOST': 'localhost',
         'PORT': '5432',
     }
 }
@@ -127,3 +128,5 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 INTERNAL_IPS = ('127.0.0.1',)
+
+# GDAL_LIBRARY_PATH = 'C:\\OSGeo4W64\\bin'

@@ -17,10 +17,11 @@
             </div>
             <div class="col-2 align-self-end">
                 {% if section.next_section %}
-                    <!--<input type="submit" class="btn btn-primary" form="section_question_form" value="Далее"> -->
+                    <!-- <input type="submit" class="btn btn-primary" form="section_question_form" value="Далее">  -->
                     <a class="btn btn-primary" href="../{{ section.next_section }}" role="button">Далее</a>
                 {% else %}
-                    <a class="btn btn-primary" href="{{ survey.redirect_url }}" role="button">Завершить</a>
+                    <input type="submit" class="btn btn-primary" form="section_question_form" value="Завершить"> 
+                    <!-- <a class="btn btn-primary endservey" href="{{ survey.redirect_url }}" role="button">Завершить</a> -->
                 {% endif %}
                 
             </div>
