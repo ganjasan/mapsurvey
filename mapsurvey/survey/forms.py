@@ -72,6 +72,9 @@ class SurveySectionAnswerForm(forms.Form):
                 label = label,
             )
 
+        elif input_type == 'slider':
+            return RangeSliderField(minimum=1,maximum=10,step=1, label=label)
+
         elif input_type == 'point':
             return LeafletDrawButtonField(widget=PointDrawButtonWidget, button_text=label, label=False)
 
