@@ -14,15 +14,19 @@ class LeafletDrawButtonWidget(widgets.Widget):
         if attrs is not None:
             attrs = attrs.copy()
             self.draw_type = attrs.pop('type', self.input_type)
-            self.button_text = attrs.pop('button_text', self.button_text)
+            self.title = attrs.pop('title', self.title)
+            self.subtitle = attrs.pop('subtitle', self.subtitle)
+            self.color = attrs.pop('color', self.color)
 
         super().__init__(attrs)
 
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
-        context['widget']['button_text'] = context['widget']['attrs']['button_text']
+        context['widget']['title'] = context['widget']['attrs']['title']
+        context['widget']['subtitle'] = context['widget']['attrs']['subtitle']
         context['widget']['draw_type'] = self.draw_type
+        context['widget']['color'] = context['widget']['attrs']['color']
 
         print(context['widget'])
         return context
@@ -41,14 +45,18 @@ class PolygonDrawButtonWidget(LeafletDrawButtonWidget):
 
 
 class LeafletDrawButtonField(forms.Field):
-    def __init__(self, *, button_text, **kwargs):
-        self.button_text = button_text
+    def __init__(self,*, title, subtitle, color, **kwargs):
+        self.title = title
+        self.subtitle = subtitle
+        self.color = color
 
         super().__init__(**kwargs)
 
     def widget_attrs(self, widget):
         attrs = super().widget_attrs(widget)
-        attrs['button_text'] = self.button_text
+        attrs['title'] = self.title
+        attrs['subtitle'] = self.subtitle
+        attrs['color'] = self.color
 
         return attrs
 
@@ -56,7 +64,7 @@ class LeafletDrawButtonField(forms.Field):
 
 class SurveySectionAnswerForm(forms.Form):
 
-    def _get_form_from_input_type(self, input_type, option_group, label):
+    def _get_form_from_input_type(self, input_type, option_group, label, sublabel, color):
 
         if input_type == 'text':
             return forms.CharField(widget=forms.Textarea, label=label)
@@ -73,13 +81,13 @@ class SurveySectionAnswerForm(forms.Form):
             )
 
         elif input_type == 'point':
-            return LeafletDrawButtonField(widget=PointDrawButtonWidget, button_text=label, label=False)
+            return LeafletDrawButtonField(widget=PointDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color)
 
         elif input_type == 'line':
-            return LeafletDrawButtonField(widget=LineDrawButtonWidget, button_text = label, label=False)
+            return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color)
 
         elif input_type == 'polygon':
-            return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, button_text = label, label=False)
+            return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color)
 
         else:
             return forms.CharField(widget=forms.Textarea)
@@ -96,21 +104,15 @@ class SurveySectionAnswerForm(forms.Form):
 
         for question in questions:
 
-            #try to get answers if exists
-            #question['answers'] = Answer.objects.filter(question=question, survey_session=self.survey_session)
-
             #add question to field
             field_name = question.code
             field_label = question.name
-            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.option_group, field_label)
+            field_sublabel = question.subtext
+            field_color = question.color
+
+            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.option_group, field_label, field_sublabel, field_color)
             self.fields[field_name]
-            #fill fields if answer exists TODO
-            '''
-            try:
-                self.initial[field_name] = question['answers']
-            except Exception:
-                #TODO
-            '''
+            
 
 
     def save(self):

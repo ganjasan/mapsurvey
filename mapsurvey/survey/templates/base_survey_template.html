@@ -75,7 +75,7 @@
           edit: {
             featureGroup: editableLayers, //REQUIRED!!
             remove: false
-          }
+          },
         };
 
         // Initialise the draw control and pass it the FeatureGroup of editable layers
@@ -128,9 +128,21 @@
 
 
     $('.drawpolygon').click(function() {
+       
+
         var polygonDrawer = new L.Draw.Polygon(map);
 
+        polygonDrawer.setOptions(
+            {
+                    shapeOptions:{
+                        color:$(this).attr('data-color'),
+                    }
+            }
+            
+        )
+
         polygonDrawer.enable();
+        console.log(polygonDrawer);
         toggleInfo(false);
 
         currentQ = $(this).attr('name')
@@ -138,7 +150,11 @@
     });
 
     $('.drawline').click(function() {
-        var lineDrawer = new L.Draw.Polyline(map);
+        var options = {
+            color: $(this).attr('data-color'),
+        }
+
+        var lineDrawer = new L.Draw.Polyline(map, options);
 
         lineDrawer.enable();
         toggleInfo(false);
@@ -146,7 +162,11 @@
     })
 
     $('.drawpoint').click(function() {
-        var pointDrawer = new L.Draw.Marker(map);
+        var options = {
+            color: $(this).attr('data-color'),
+        }
+
+        var pointDrawer = new L.Draw.Marker(map, options);
 
         pointDrawer.enable();
         toggleInfo(false);

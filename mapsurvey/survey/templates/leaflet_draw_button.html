@@ -1,6 +1,7 @@
 <div>
-	<button name = "{{ widget.name }}" type="button" class="drawbutton btn btn-light {{ widget.draw_type }} ">
-		{{ widget.button_text }}
+	<button name = "{{ widget.name }}" type="button" class="drawbutton btn btn-dark {{ widget.draw_type }}" data-color="{{widget.color}}" style="background-color: {{widget.color}}">
+		<p>{{ widget.title }}</p>
+		{{widget.subtitle}}
 	</button>
 	<input type="text" name="{{ widget.name }}" hidden class="geo-inp">
 </div>

@@ -106,6 +106,7 @@ class Question(models.Model):
     input_type = models.CharField(max_length=80, choices=INPUT_TYPE_CHOICES)
     option_group = models.ForeignKey("OptionGroup", on_delete=models.CASCADE, null=True)
     required = models.BooleanField(default=False)
+    color = models.CharField(verbose_name=_(u'Color'), max_length=7, help_text=_(u'HEX color, as #RRGGBB'), default="#F1F1F1")
 
     def __str__(self):
         return self.name
