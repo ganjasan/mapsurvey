@@ -50,34 +50,42 @@ def survey_section(request, survey_name, section_name):
 		for question in section_questions:
 			result = request.POST[question.code]
 
-			# # Получается на каждое поле мы создаем отдельную строку в таблице.
-			# # Не будет лучше все в одну строку записывать?
-			answer = Answer(survey_session=survey_session, question=question)
-			answer.save()
-
 			if (result != ""):
 				if question.option_group == OptionGroup.objects.get(name='other'):
-					print(question.input_type)
 					if (question.input_type in ['point', 'line', 'polygon']):
-						gj = geojson.loads(result)
-						gj = geojson.dumps(gj['geometry'])
-						resultToSave = GEOSGeometry(gj)
+						geostr_list = result.split('|')
+						for geostr in geostr_list:
+							if geostr != '':
+								answer = Answer(survey_session=survey_session, question=question)
 
-					if question.input_type == "text":
-						answer.text = result
-					elif question.input_type == "number":
-						answer.numeric = float(result)
-					elif question.input_type == "point":
-						answer.point = resultToSave
-					elif question.input_type == "line":						
-						answer.line = resultToSave
-					elif question.input_type == "polygon":
-						answer.polygon = resultToSave
+								gj = geojson.loads(geostr)
+								gj = geojson.dumps(gj['geometry'])
+								resultToSave = GEOSGeometry(gj)
+
+								if question.input_type == "point":
+									answer.point = resultToSave
+								elif question.input_type == "line":
+									answer.line = resultToSave
+								elif question.input_type == "polygon":
+									answer.polygon = resultToSave
+
+								answer.save()
+
 					else:
-						pass
-					answer.save()
+						answer = Answer(survey_session=survey_session, question=question)
+
+						if question.input_type == "text":
+							answer.text = result
+						elif question.input_type == "number":
+							answer.numeric = float(result)
+						else:
+							pass
+
+						answer.save()
 
 				else:
+					answer = Answer(survey_session=survey_session, question=question)
+					answer.save()
 					for result_answer in result:
 						choice = OptionChoice.objects.get(Q(option_group=question.option_group) & Q(code=result_answer))
 						answer.choice.add(choice)

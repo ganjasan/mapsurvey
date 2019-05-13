@@ -13,8 +13,8 @@
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src=https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw.css">
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js" type="text/javascript"></script>
 </head>
 
 
@@ -44,8 +44,6 @@
 <div id="map"></div>
 
 <script type="text/javascript">
-
-
     //nvigation
     function toggleInfo(show) {
         if(show) { info_page.style.visibility="visible"; }
@@ -53,7 +51,7 @@
     }
 
     //var map = L.map('map').setView(["{{ section.start_map_postion.y }}", "{{ section.start_map_postion.x }}"], "{{ section.start_map_zoom }}");
-    var map = L.map('map', {zoomControl: false}).setView(["{{ section.start_map_postion.y }}", "{{ section.start_map_postion.x }}"], "{{ section.start_map_zoom }}");
+    var map = L.map('map', {zoomControl: false}).setView(["{{ survey.start_map_postion.y }}", "{{ survey.start_map_postion.x }}"], "{{ survey.start_map_zoom }}");
     L.control.zoom({position: 'bottomright'}).addTo(map);
 
     L.tileLayer(
@@ -104,7 +102,7 @@
 
 
         let valueOfInput = $(".geo-inp[name='" + currentQ + "'").val()
-        valueOfInput += JSON.stringify(layer.toGeoJSON())
+        valueOfInput += (JSON.stringify(layer.toGeoJSON()) + "|")
         $(".geo-inp[name='" + currentQ + "'").val(valueOfInput)
     });
 
@@ -120,8 +118,6 @@
             console.log(editableLayers._layers[l].toGeoJSON())
             console.log(JSON.stringify(editableLayers._layers[l].toGeoJSON()))
         }
-
-        
 
         // $.ajax({
         //   url: document.location.href,
@@ -149,7 +145,6 @@
         )
 
         polygonDrawer.enable();
-        console.log(polygonDrawer);
         toggleInfo(false);
 
         currentQ = $(this).attr('name')
