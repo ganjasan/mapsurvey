@@ -25,7 +25,9 @@ SECRET_KEY = 'ctz81@qwp#)nyzq+^l!-3fq=eflx_+-e)o+zhsnj!yd56h+p9n'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'gradintegra.com',
+]
 
 # Application definition
 
