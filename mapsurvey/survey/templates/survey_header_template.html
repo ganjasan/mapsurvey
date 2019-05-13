@@ -1,8 +1,8 @@
 {% extends 'base_survey_template.html' %}
 
 {% block title %}
-    {{ section.title }}
-{% endblock %}
+    {{ survey.title }}
+{% end block %}
 
 {% block content %}
 	<div class='questions'>
@@ -11,27 +11,26 @@
         	{{ form }}
         </form>
 	</div>
-{% endblock %}
-
-{% block navig_buttons %}
-    <div class="container navig_buttons">
+	<div class="container navig_buttons">
         <div class="row">
             <div class="col align-self-start">
                 {% if section.prev_section %}
-                    <a class="btn btn-primary prev_button" href="../{{ section.prev_section }}" role="button">Назад</a>
+                    <a class="btn btn-primary" href="../{{ section.prev_section }}" role="button">Назад</a>
                    
                 {% endif %}
             </div>
-            <div class="col align-self-end">
+            <div class="col-2 align-self-end">
                 {% if section.next_section %}
                     <!-- <input type="submit" class="btn btn-primary" form="section_question_form" value="Далее">  -->
-                    <a class="btn btn-primary prev_button" href="../{{ section.next_section }}" role="button">Далее</a>
+                    <a class="btn btn-primary" href="../{{ section.next_section }}" role="button">Далее</a>
                 {% else %}
-                    <!-- <input type="submit" class="btn btn-primary" form="section_question_form" value="Завершить"> -->
-                    <a class="btn btn-primary endservey next_button" href="{{ survey.redirect_url }}" role="button">Завершить</a>
+                    <input type="submit" class="btn btn-primary" form="section_question_form" value="Завершить"> 
+                    <!-- <a class="btn btn-primary endservey" href="{{ survey.redirect_url }}" role="button">Завершить</a> -->
                 {% endif %}
                 
             </div>
         </div>
+
     </div>
+  
 {% endblock %}

@@ -1,17 +1,23 @@
 {% extends 'base_survey_template.html' %}
 
+{% block title %}
+    {{ survey.title }}
+{% endblock %}
+
 {% block content %}
     <div class="instructions">
         <p> {{ survey.instructions }} </p>
-    </div>
-    <div class="container navig_buttons">
+    </div> 
+{% endblock %}
+
+{% block navig_buttons %}
+    <div class="container">
         <div class="row">
             <div class="col align-self-start">
             </div>
             <div class="col-2 align-self-end">
-                <a class="btn btn-primary" href="{{ section }}" role="button">Начать</a>
+                <a class="btn btn-primary next_button" href="{{ section }}" role="button">Начать</a>
             </div>
         </div>
     </div>
-  
 {% endblock %}

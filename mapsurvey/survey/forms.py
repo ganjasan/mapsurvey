@@ -69,6 +69,9 @@ class SurveySectionAnswerForm(forms.Form):
         if input_type == 'text':
             return forms.CharField(widget=forms.Textarea, label=label)
 
+        if input_type == 'number':
+            return forms.CharField(widget=forms.NumberInput, label=label)
+
         elif input_type == 'choice':
             return forms.ChoiceField(widget=forms.RadioSelect, choices=[(choice.code, choice.name) for choice in option_group.choices()], label=label)
 

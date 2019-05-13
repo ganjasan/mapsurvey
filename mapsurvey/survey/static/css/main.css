@@ -22,10 +22,9 @@ p {
 #info_page {
   position: absolute;
   box-sizing: border-box;
-  max-width: 600px;
-  width: 100%;
+  max-width: 540px;
   background-color: #fafafa;
-  padding: 10px 10px 0;
+  padding: 10px 10px 10px 10px;
   overflow-y: auto;
   height: 90%;
   z-index: 10;
@@ -34,12 +33,22 @@ p {
   left:10px;
   top: 5%;
   border: 1px solid black
+  margin-right:10px;
 }
 
 .header{
   display: flex; 
   font-size: 2em;
   margin-bottom: 10px;
+  padding: 15px;
+}
+
+#title{
+  padding-left: 10px;
+}
+
+#content{
+  padding: 15px;
 }
 
 .glyph {
@@ -59,3 +68,22 @@ p {
   z-index: 9;
 
 }
+
+.drawbutton {
+  margin-bottom: 1em;
+  width: 100%;
+
+}
+
+.drawbutton p{
+  margin-bottom: 0px;
+}
+
+.next_button {
+  float:right;
+}
+
+.prev_button {
+  float:left;
+}
+

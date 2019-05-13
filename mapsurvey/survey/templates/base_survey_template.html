@@ -26,12 +26,19 @@
         <button id="closeButton" class="tablinks" onclick="toggleInfo(false)">
         <i class="fas fa-angle-double-left" style="font-size:28px; width:28px; height:28px;"></i>
         </button>
-        <div id='section_title'>
-            {{ section.title }}
+        <div id='title'>
+        	{% block title %}
+        	{% endblock %}
         </div>
     </div>
-    {% block content %}
-    {% endblock %}  
+    <div id='content'>
+    	{% block content %}
+    	{% endblock %}
+	</div>
+	<div id='navig_buttons'>
+		{% block navig_buttons %}
+		{% endblock %}
+	</div>
 </div>
 
 <div id="map"></div>
