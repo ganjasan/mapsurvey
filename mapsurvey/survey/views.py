@@ -83,8 +83,8 @@ def survey_section(request, survey_name, section_name):
 						answer.choice.add(choice)
 						answer.save()
 
-		
-		return HttpResponseRedirect(survey.redirect_url)
+		next_page = ("../" + section.next_section.name) if section.next_section else survey.redirect_url
+		return HttpResponseRedirect(next_page)
 
 	else:
 		form = SurveySectionAnswerForm(initial={}, instance=section, survey_session_id=request.session['survey_session_id'] )
