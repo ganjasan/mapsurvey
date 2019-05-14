@@ -89,22 +89,47 @@
 
     map.on('draw:created', function(e) {
         var type = e.layerType,
-        layer = e.layer;
+        layer = e.layer,
+        	feature = layer.feature = layer.feature || {};
 
-        if (type === 'marker') {
-            layer.bindPopup('A popup!');
-        }
+        feature.type = feature.type || "Feature"; // Intialize feature.type
+        var props = feature.properties = feature.properties || {};
+        props.question_id = currentQ;
+
+        layer.bindPopup('<button type="button" class="btn btn-danger layer-delete">Delete</button>');
+        layer.on("popupopen", onPopupOpen);
+        
+
 
         editableLayers.addLayer(layer);
 
 
         toggleInfo(true);
 
-
-        let valueOfInput = $(".geo-inp[name='" + currentQ + "'").val()
-        valueOfInput += (JSON.stringify(layer.toGeoJSON()) + "|")
-        $(".geo-inp[name='" + currentQ + "'").val(valueOfInput)
+        /*
+        	let valueOfInput = $(".geo-inp[name='" + currentQ + "'").val()
+        	valueOfInput += (JSON.stringify(layer.toGeoJSON()) + "|")
+        	console.log(valueOfInput)
+        	$(".geo-inp[name='" + currentQ + "'").val(valueOfInput)
+        */
     });
+
+    function onPopupOpen(){
+    	var tempLayer = this;
+
+    	$("button.layer-delete").click(function(){
+    		editableLayers.removeLayer(tempLayer);
+    	})
+    }
+
+    $("#section_question_form").submit(function(e){
+    	editableLayers.eachLayer(function(layer){
+    		let valueOfInput = $(".geo-inp[name='" + layer.feature.properties.question_id + "'").val()
+    		valueOfInput += (JSON.stringify(layer.toGeoJSON()) + "|")
+        	console.log(valueOfInput)
+        	$(".geo-inp[name='" + layer.feature.properties.question_id + "'").val(valueOfInput)
+    	})
+    })
 
 
 
