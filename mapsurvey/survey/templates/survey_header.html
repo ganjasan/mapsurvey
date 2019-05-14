@@ -6,7 +6,7 @@
 
 {% block content %}
     <div class="instructions">
-        <p> {{ survey.instructions }} </p>
+        <p> {{ survey.instructions | safe  }} </p>
     </div> 
 {% endblock %}
 
