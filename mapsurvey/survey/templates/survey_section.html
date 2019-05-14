@@ -6,7 +6,9 @@
 
 {% block content %}
     <div class='subheading'>
-        {{ section.subheading | safe }}
+        {% if section.subheading %}
+            {{ section.subheading | safe }}
+        {% endif %}
     </div>
 	<div class='questions'>
 		<form method="post" id="section_question_form">
