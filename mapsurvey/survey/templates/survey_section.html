@@ -5,6 +5,9 @@
 {% endblock %}
 
 {% block content %}
+    <div class='subheading'>
+        {{ section.subheading | safe }}
+    </div>
 	<div class='questions'>
 		<form method="post" id="section_question_form">
 			{% csrf_token %}

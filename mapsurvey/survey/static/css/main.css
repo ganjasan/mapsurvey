@@ -9,7 +9,12 @@ body {
 }
 
 p {
-  padding-bottom: 15px;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+ul {
+   list-style: none;
 }
 
 
