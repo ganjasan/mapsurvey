@@ -27,8 +27,7 @@ class LeafletDrawButtonWidget(widgets.Widget):
         context['widget']['subtitle'] = context['widget']['attrs']['subtitle']
         context['widget']['draw_type'] = self.draw_type
         context['widget']['color'] = context['widget']['attrs']['color']
-
-        print(context['widget'])
+        
         return context
 
 class PointDrawButtonWidget(LeafletDrawButtonWidget):
@@ -77,7 +76,6 @@ class SurveySectionAnswerForm(forms.Form):
 
         elif input_type == 'multichoice':
             return forms.MultipleChoiceField(
-                required=False,
                 widget=forms.CheckboxSelectMultiple,
                 choices = [(choice.code, choice.name) for choice in option_group.choices()],
                 label = label,
@@ -114,8 +112,6 @@ class SurveySectionAnswerForm(forms.Form):
             field_color = question.color
 
             self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.option_group, field_label, field_sublabel, field_color)
-            self.fields[field_name]
-            
 
 
     def save(self):

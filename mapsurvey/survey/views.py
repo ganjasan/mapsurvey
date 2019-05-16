@@ -10,6 +10,7 @@ from django.http import HttpResponseRedirect
 from django.core import serializers
 import geojson
 from django.contrib.gis.geos import GEOSGeometry
+import sys
 
 def index(request):
     return HttpResponse("Hello, world")
@@ -47,11 +48,14 @@ def survey_section(request, survey_name, section_name):
 		#save data to answers
 		section_questions = section.questions()
 		survey_session = SurveySession.objects.get(pk=request.session['survey_session_id'])
-		for question in section_questions:
-			result = request.POST[question.code]
 
-			if (result != ""):
+		for question in section_questions:
+			result = request.POST.getlist(question.code)
+			print(result)
+
+			if (result != []):
 				if question.option_group == OptionGroup.objects.get(name='other'):
+					result = result[0]
 					if (question.input_type in ['point', 'line', 'polygon']):
 						geostr_list = result.split('|')
 						for geostr in geostr_list:
@@ -89,7 +93,8 @@ def survey_section(request, survey_name, section_name):
 					for result_answer in result:
 						choice = OptionChoice.objects.get(Q(option_group=question.option_group) & Q(code=result_answer))
 						answer.choice.add(choice)
-						answer.save()
+
+					answer.save()
 
 		next_page = ("../" + section.next_section.name) if section.next_section else survey.redirect_url
 		return HttpResponseRedirect(next_page)

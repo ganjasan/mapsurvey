@@ -13,7 +13,7 @@
 	<div class='questions'>
 		<form method="post" id="section_question_form">
 			{% csrf_token %}
-        	{{ form }}
+        	{{ form.as_p }}
         </form>
 	</div>
 {% endblock %}

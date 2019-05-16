@@ -8,7 +8,7 @@ body {
   padding: 0;
 }
 
-p {
+.questions p {
   padding-bottom: 0;
   margin-bottom: 0;
 }
