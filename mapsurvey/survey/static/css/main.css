@@ -94,7 +94,7 @@ ul {
 
 #drawbar{
   position: absolute;
-  left:50%;
+  left: 45%;
   z-index: 9;
   top:5%;
 }
