@@ -34,7 +34,7 @@
 </head>
 
 
-<button id="showButton" onclick="toggleInfo(true)">
+<button id="showButton" onclick="toggleInfo(true)" style="visibility: hidden;">
         <i class="fas fa-angle-double-right" style="font-size:28px; width:28px; height:28px;"></i>
 </button>
 <div id="info_page">
@@ -57,13 +57,22 @@
 	</div>
 </div>
 
+<div id="drawbar" style="visibility: hidden;">
+    <button id='draw_button' type="button" class="btn btn-primary" data-mode='start_draw'>Начать рисовать</button>
+</div>
+
 <div id="map"></div>
 
 <script type="text/javascript">
     //nvigation
     function toggleInfo(show) {
-        if(show) { info_page.style.visibility="visible"; }
-        else { info_page.style.visibility="hidden"; }
+        if(show) { info_page.style.visibility="visible"; showButton.style.visibility="hidden"}
+        else { info_page.style.visibility="hidden"; showButton.style.visibility="visible"}
+    }
+
+    function toggleDrawbar(show){
+        if (show){drawbar.style.visibility="visible";}
+        else{drawbar.style.visibility="hidden"}
     }
 
     //var map = L.map('map').setView(["{{ section.start_map_postion.y }}", "{{ section.start_map_postion.x }}"], "{{ section.start_map_zoom }}");
@@ -79,7 +88,9 @@
 
     var editableLayers = new L.FeatureGroup();
 
-    var currentQ = null
+    var currentQ = null;
+
+    var currentDrawFeature = null;
         
     map.addLayer(editableLayers);
 
@@ -104,6 +115,7 @@
     map.addControl(drawControl);
 
     map.on('draw:created', function(e) {
+
         var type = e.layerType,
         layer = e.layer,
         	feature = layer.feature = layer.feature || {};
@@ -120,15 +132,30 @@
         editableLayers.addLayer(layer);
 
 
-        toggleInfo(true);
-
-        /*
-        	let valueOfInput = $(".geo-inp[name='" + currentQ + "'").val()
-        	valueOfInput += (JSON.stringify(layer.toGeoJSON()) + "|")
-        	console.log(valueOfInput)
-        	$(".geo-inp[name='" + currentQ + "'").val(valueOfInput)
-        */
+        endDrawMode();
+        
     });
+
+    function startDrawMode(question){
+        toggleInfo(false);
+        toggleDrawbar(true);
+
+        currentQ = $(question).attr('name');
+
+        $("#draw_button").attr('data-color', $(question).attr('data-color'));
+        $('#draw_button').attr('data-mode', 'start_draw');
+        $('#draw_button').text('Начать рисовать');
+    }
+
+    function endDrawMode(){
+        toggleInfo(true);
+        toggleDrawbar(false);
+
+        currentQ = null;
+
+        currentDrawFeature.disable();
+        currentDrawFeature = null;
+    }
 
     function onPopupOpen(){
     	var tempLayer = this;
@@ -147,33 +174,39 @@
     	})
     })
 
+    $('#draw_button').click(function(){
+        mode = $(this).attr('data-mode');
 
+        if (mode == "start_draw"){
 
-    $('.endservey').click(function() {
-        console.log(editableLayers)
-        console.log(document.location.href) // убрать лишнии знаки в конце урла посре 6 /
-        console.log(editableLayers._layers)
-        console.log(editableLayers.toGeoJSON())
-        console.log(JSON.stringify(editableLayers.toGeoJSON()))
-        for (l in editableLayers._layers) {
-            console.log(editableLayers._layers[l].toGeoJSON())
-            console.log(JSON.stringify(editableLayers._layers[l].toGeoJSON()))
+            currentDrawFeature = new L.Draw.Polygon(map);
+
+            currentDrawFeature.setOptions(
+                {
+                        shapeOptions:{
+                            color:$(this).attr('data-color'),
+                        }
+                }
+                
+            )
+
+            currentDrawFeature.enable();
+
+            $(this).attr('data-mode', 'stop_draw');
+            $(this).text("Удалить");
+        }else{
+            currentDrawFeature.disable();
+            $(this).attr('data-mode', 'start_draw');
+            $(this).text('Начать рисовать');
         }
-
-        // $.ajax({
-        //   url: document.location.href,
-        //   type: "POST",
-        //   data: a,
-        //   success: console.log("succsec"),
-        //   dataType: 'json'
-        // });
-    })
-
+    });
 
 
     $('.drawpolygon').click(function() {
        
+        startDrawMode(this);
 
+        /*
         var polygonDrawer = new L.Draw.Polygon(map);
 
         polygonDrawer.setOptions(
@@ -189,6 +222,7 @@
         toggleInfo(false);
 
         currentQ = $(this).attr('name')
+        */
 
     });
 

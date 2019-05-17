@@ -92,3 +92,9 @@ ul {
   float:left;
 }
 
+#drawbar{
+  position: absolute;
+  left:50%;
+  z-index: 9;
+  top:5%;
+}
