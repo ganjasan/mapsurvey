@@ -76,7 +76,8 @@
     }
 
     //var map = L.map('map').setView(["{{ section.start_map_postion.y }}", "{{ section.start_map_postion.x }}"], "{{ section.start_map_zoom }}");
-    var map = L.map('map', {zoomControl: false}).setView(["{{ survey.start_map_postion.y }}", "{{ survey.start_map_postion.x }}"], "{{ survey.start_map_zoom }}");
+    //var map = L.map('map', {zoomControl: false}).setView(["{{ survey.start_map_postion.x }}", "{{ survey.start_map_postion.y }}"], "{{ survey.start_map_zoom }}");
+    var map = L.map('map', {zoomControl: false}).setView(["{{ survey.start_map_postion.y }}".replace(",","."), "{{ survey.start_map_postion.x }}".replace(",",".")], "{{ survey.start_map_zoom }}");
     L.control.zoom({position: 'bottomright'}).addTo(map);
 
     L.tileLayer(
@@ -203,27 +204,7 @@
 
 
     $('.drawpolygon').click(function() {
-       
         startDrawMode(this);
-
-        /*
-        var polygonDrawer = new L.Draw.Polygon(map);
-
-        polygonDrawer.setOptions(
-            {
-                    shapeOptions:{
-                        color:$(this).attr('data-color'),
-                    }
-            }
-            
-        )
-
-        polygonDrawer.enable();
-        toggleInfo(false);
-
-        currentQ = $(this).attr('name')
-        */
-
     });
 
     $('.drawline').click(function() {
@@ -231,9 +212,9 @@
             color: $(this).attr('data-color'),
         }
 
-        var lineDrawer = new L.Draw.Polyline(map, options);
+        currentDrawFeature = new L.Draw.Polyline(map, options);
 
-        lineDrawer.enable();
+        currentDrawFeature.enable();
         toggleInfo(false);
         currentQ = $(this).attr('name')
     })
@@ -243,15 +224,14 @@
             color: $(this).attr('data-color'),
         }
 
-        var pointDrawer = new L.Draw.Marker(map, options);
+        currentDrawFeature = new L.Draw.Marker(map, options);
 
-        pointDrawer.enable();
+        currentDrawFeature.enable();
+
         toggleInfo(false);
         currentQ = $(this).attr('name')
     })
-
-
-
+    
 </script>
 
 </body>

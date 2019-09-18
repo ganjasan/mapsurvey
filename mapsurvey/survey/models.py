@@ -28,6 +28,7 @@ class SurveySession(models.Model):
 #example - QULLAB
 class Organization(models.Model):
     name = models.CharField(max_length=250)
+    
 
     def __str__(self):
         return self.name
@@ -50,6 +51,16 @@ class SurveyHeader(models.Model):
     def start_section(self):
         if not hasattr(self, "__sscache"):
             self.__sscache = SurveySection.objects.get(Q(survey_header=self) & Q(is_head=True))
+        return self.__sscache
+
+    def questions(self):
+        if not hasattr(self, "__qcache"):
+            self.__sscache = Question.objects.filter(survey_section__in=SurveySection.objects.filter(survey_header=self))
+        return self.__sscache
+
+    def geo_questions(self):
+        if not hasattr(self, "__gqcache"):
+            self.__sscache = Question.objects.filter(Q(survey_section__in=SurveySection.objects.filter(survey_header=self)) & Q(input_type__in=['point','line','polygon']))
         return self.__sscache
 
 #survey sections
@@ -75,8 +86,6 @@ class SurveySection(models.Model):
         if not hasattr(self, "__qcache"):
             self.__qcache = Question.objects.filter(survey_section=self).order_by('code')
         return self.__qcache
-
-
 
 
 
@@ -113,6 +122,11 @@ class Question(models.Model):
 
     def __str__(self):
         return self.name
+
+    def answers(self):
+        if not hasattr(self, "__acache"):
+            self.__acache = Answer.objects.filter(question=self)
+        return self.__acache
 
 
 

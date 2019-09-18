@@ -29,6 +29,7 @@ ALLOWED_HOSTS = [
     'gradintegra.com',
     'localhost',
     '127.0.0.1',
+    '77.234.221.102',
 ]
 
 # Application definition
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'debug_toolbar',
+    'django_registration',
 
 ]
 
@@ -88,8 +90,8 @@ DATABASES = {
         'NAME': 'mapsurvey',
         'USER': 'postgres',
         'PASSWORD': 'adminadmin',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'HOST': '77.234.221.102',
+        'PORT': '5434',
     }
 }
 
@@ -116,7 +118,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru-RU'
 
 TIME_ZONE = 'UTC'
 
@@ -133,3 +135,16 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 INTERNAL_IPS = ('127.0.0.1',)
+
+LOGIN_REDIRECT_URL = '/editor/'
+
+ACCOUNT_ACTIVATION_DAYS = 1
+
+# для отправки кода активации
+AUTH_USER_EMAIL_UNIQUE = True
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 1025
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+EMAIL_USE_TLS = False
+DEFAULT_FROM_EMAIL = 'info@google.ru'

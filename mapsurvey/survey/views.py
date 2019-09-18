@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponse
 from .models import SurveyHeader, SurveySession, SurveySection, Answer, OptionGroup, Question, OptionChoice
@@ -7,13 +8,26 @@ from django import forms
 from django.views.generic import UpdateView
 from .forms import SurveySectionAnswerForm
 from django.http import HttpResponseRedirect
-from django.core import serializers
+from django.core.serializers import serialize
 import geojson
 from django.contrib.gis.geos import GEOSGeometry
 import sys
+from io import BytesIO
+from zipfile import ZipFile
 
 def index(request):
-    return HttpResponse("Hello, world")
+	if not request.user.is_authenticated:
+		return redirect('/accounts/login/')
+
+	return redirect('/editor')
+
+@login_required
+def editor(request):
+	survey_list = SurveyHeader.objects.all()
+	context = {
+		"survey_headers": survey_list,
+	}
+	return render(request, "editor.html", context)
 
 def survey_list(request):
 	survey_list = SurveyHeader.objects.all()
@@ -104,3 +118,31 @@ def survey_section(request, survey_name, section_name):
 
 	return render(request, 'survey_section.html', {'form': form, 'survey':survey, 'section':section})
 
+@login_required
+def download_data(request, survey_name):
+	in_memory = BytesIO()
+	zip = ZipFile(in_memory, "a")
+
+	survey = SurveyHeader.objects.get(name=survey_name)
+	get_questions = survey.geo_questions()
+
+	for question in get_questions:
+		#получить ответы
+		answers = question.answers()
+		#сформировать geojson файл
+		geojson_str = serialize('geojson', answers, geometry_field=question.input_type)
+			#cформировать файлы
+		zip.writestr(question.name + '.geojson', geojson_str)
+
+	#Windows bug fix
+	for file in zip.filelist:
+		file.create_system = 0
+
+	zip.close()
+	response = HttpResponse(content_type="application/zip")
+	response["Content-Disposition"] = "attachment; filename={filename}.zip".format(filename=survey_name)
+
+	in_memory.seek(0)
+	response.write(in_memory.read())
+
+	return response
