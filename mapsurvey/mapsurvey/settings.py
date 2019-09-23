@@ -26,7 +26,7 @@ SECRET_KEY = 'ctz81@qwp#)nyzq+^l!-3fq=eflx_+-e)o+zhsnj!yd56h+p9n'
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'gradintegra.com',
+    'mapsurvey.ru',
     'localhost',
     '127.0.0.1',
     '77.234.221.102',
@@ -90,7 +90,7 @@ DATABASES = {
         'NAME': 'mapsurvey',
         'USER': 'postgres',
         'PASSWORD': 'adminadmin',
-        'HOST': '77.234.221.102',
+        'HOST': 'localhost',
         'PORT': '5434',
     }
 }
@@ -143,8 +143,8 @@ ACCOUNT_ACTIVATION_DAYS = 1
 # для отправки кода активации
 AUTH_USER_EMAIL_UNIQUE = True
 EMAIL_HOST = 'localhost'
-EMAIL_PORT = 1025
+EMAIL_PORT = 25
 EMAIL_HOST_USER = ''
 EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = False
-DEFAULT_FROM_EMAIL = 'info@google.ru'
+DEFAULT_FROM_EMAIL = 'info@mapsurvey.ru'
