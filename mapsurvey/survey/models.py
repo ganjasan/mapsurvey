@@ -63,6 +63,11 @@ class SurveyHeader(models.Model):
             self.__sscache = Question.objects.filter(Q(survey_section__in=SurveySection.objects.filter(survey_header=self)) & Q(input_type__in=['point','line','polygon']))
         return self.__sscache
 
+    def answers(self):
+        if not hasattr(self, "__gqcache"):
+            self.__sscache = Answer.objects.filter(Q(question__in=Question.objects.filter(survey_section__in=SurveySection.objects.filter(survey_header=self))))
+        return self.__sscache
+
 #survey sections
 class SurveySection(models.Model):
     is_head = models.BooleanField(default=False)

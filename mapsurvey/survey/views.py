@@ -124,9 +124,9 @@ def download_data(request, survey_name):
 	zip = ZipFile(in_memory, "a")
 
 	survey = SurveyHeader.objects.get(name=survey_name)
-	get_questions = survey.geo_questions()
+	geo_questions = survey.geo_questions()
 
-	for question in get_questions:
+	for question in geo_questions:
 		#получить ответы
 		answers = question.answers()
 		#сформировать geojson файл
