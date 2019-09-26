@@ -117,6 +117,7 @@ class OptionChoice(models.Model):
 
 class Question(models.Model):
     survey_section = models.ForeignKey("SurveySection", on_delete=models.CASCADE)
+    parent_question_id = models.ForeignKey('self', default=None, null=True, blank=True, on_delete=models.CASCADE)
     code = models.CharField(max_length=8) #Q1 - using as url path and sort field
     name = models.CharField(max_length=80, null=True, blank=True)
     subtext = models.CharField(max_length=500, null=True, blank=True)
@@ -133,17 +134,10 @@ class Question(models.Model):
             self.__acache = Answer.objects.filter(question=self)
         return self.__acache
 
-
-
-'''
-class QuestionOption(models.Model):
-    question = models.ForeignKey("Question", on_delete=models.CASCADE)
-    option_choice = models.ForeignKey("OptionChoice", on_delete=models.CASCADE)
-'''
-
 class Answer(models.Model):
     survey_session = models.ForeignKey("SurveySession", on_delete=models.CASCADE)
     question = models.ForeignKey("Question", on_delete=models.CASCADE)
+    parent_answer_id = models.ForeignKey('self', default=None, null=True, blank=True, on_delete=models.CASCADE)
     choice = models.ManyToManyField("OptionChoice")
 
     numeric = models.FloatField(null=True,blank=True)

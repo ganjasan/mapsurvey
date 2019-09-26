@@ -11,9 +11,10 @@ RUN apt-get -y install binutils libproj-dev gdal-bin
 RUN apt-get install -y postfix && \
 postconf -e "myhostname = mail.mapsurvey.ru" && \
 postconf -e "mydomain = mapsurvey.ru" && \
-postconf -e "myorigin = $mydomain" && \
+postconf -e "myorigin = mapsurvey.ru" && \
 postconf -e "mydestination = localhost" && \
 
+CMD service postfix start
 
 RUN pip install pipenv
 COPY Pipfile Pipfile.lock /code/
