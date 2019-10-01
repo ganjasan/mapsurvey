@@ -115,6 +115,7 @@
     var drawControl = new L.Control.Draw(drawPluginOptions);
     map.addControl(drawControl);
 
+    /*
     map.on('draw:created', function(e) {
 
         var type = e.layerType,
@@ -128,18 +129,19 @@
         layer.bindPopup('<button type="button" class="btn btn-danger layer-delete">Delete</button>');
         layer.on("popupopen", onPopupOpen);
         
-
-
         editableLayers.addLayer(layer);
-
 
         endDrawMode();
         
     });
+    */
+
 
     function startDrawMode(question){
         toggleInfo(false);
         toggleDrawbar(true);
+
+        console.log(question);
 
         currentQ = $(question).attr('name');
 
@@ -156,14 +158,6 @@
 
         currentDrawFeature.disable();
         currentDrawFeature = null;
-    }
-
-    function onPopupOpen(){
-    	var tempLayer = this;
-
-    	$("button.layer-delete").click(function(){
-    		editableLayers.removeLayer(tempLayer);
-    	})
     }
 
     $("#section_question_form").submit(function(e){
@@ -233,6 +227,9 @@
     })
     
 </script>
+
+{% block section_scripts %}
+{% endblock %}
 
 </body>
 

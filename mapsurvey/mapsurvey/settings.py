@@ -90,8 +90,8 @@ DATABASES = {
         'NAME': 'mapsurvey',
         'USER': 'postgres',
         'PASSWORD': 'adminadmin',
-        'HOST': 'localhost',
-        'PORT': '5434',
+        'HOST': '77.234.221.102',
+        'PORT': '5436',
     }
 }
 

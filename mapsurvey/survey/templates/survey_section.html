@@ -1,4 +1,5 @@
 {% extends 'base_survey_template.html' %}
+{% load hash %}
 
 {% block title %}
     {{ section.title }}
@@ -38,4 +39,91 @@
             </div>
         </div>
     </div>
+
 {% endblock %}
+
+{% block section_scripts %}
+
+
+<script type="text/javascript">
+
+    var section_response = {};
+    
+    var subquestions_forms = JSON.parse(`{{ subquestions_forms|safe }}`.replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
+    //console.log(subquestions_forms['Q1']);
+
+    map.on('draw:created', function(e) {
+
+        var type = e.layerType,
+        layer = e.layer,
+            feature = layer.feature = layer.feature || {};
+
+        feature.type = feature.type || "Feature"; // Intialize feature.type
+        var props = feature.properties = feature.properties || {};
+        props.question_id = currentQ;
+
+        layer.bindPopup('<form action="" onsubmit="return false;" id="subquestion_form">' + subquestions_forms[currentQ]
+            + '<button type="button" class="btn btn-success layer-apply">Apply</button> \
+            <button type="button" class="btn btn-primary layer-edit">Edit</button> \
+            <button type="button" class="btn btn-danger layer-delete">Delete</button>'
+            + '</form>');
+
+        layer.on("popupopen", onPopupOpen);
+        
+        editableLayers.addLayer(layer);
+
+
+        endDrawMode();
+        
+    });
+
+   
+
+    function onPopupOpen(){
+        var tempLayer = this;
+
+        //загрузить из properties данные подвопросов если они там есть
+        var properties = tempLayer.feature.properties;
+        
+        for (var key in properties){
+            if (key != 'question_id'){
+                element = $('*[name=' + key +']');
+                if (element.length>1) {
+                    if (element[0].type == 'radio'){
+                        $('*[name=Q1_2][value='+properties[key]+']').prop('checked', true);
+                    }
+                }
+                else{
+                    element.val(properties[key]);
+                } 
+            }
+        }
+
+        tempLayer.editing.disable();
+
+        $("button.layer-delete").click(function(){
+            editableLayers.removeLayer(tempLayer);
+        })
+
+        $("button.layer-edit").click(function(){
+            tempLayer.editing.enable();
+            tempLayer.closePopup();
+        })
+
+        $("button.layer-apply").click(function(){
+            subquestion_form_result = $('#subquestion_form').serializeArray();
+            
+            for (r in subquestion_form_result){
+                tempLayer.feature.properties[subquestion_form_result[r]['name']] = subquestion_form_result[r]['value'];
+            }
+
+            tempLayer.closePopup();
+            
+        })
+    }
+
+</script>
+
+{% endblock %}
+
+

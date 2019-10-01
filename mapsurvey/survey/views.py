@@ -57,7 +57,7 @@ def survey_section(request, survey_name, section_name):
 	section = SurveySection.objects.get(Q(survey_header=survey) & Q(name=section_name))
 
 	if request.method == 'POST':
-		form = SurveySectionAnswerForm(initial=request.POST, instance=section, survey_session_id=request.session['survey_session_id'])
+		form = SurveySectionAnswerForm(initial=request.POST, section=section, question=None, survey_session_id=request.session['survey_session_id'])
 
 		#save data to answers
 		section_questions = section.questions()
@@ -65,6 +65,7 @@ def survey_section(request, survey_name, section_name):
 
 		for question in section_questions:
 			result = request.POST.getlist(question.code)
+			print(result)
 			print(result)
 
 			if (result != []):
@@ -77,8 +78,8 @@ def survey_section(request, survey_name, section_name):
 								answer = Answer(survey_session=survey_session, question=question)
 
 								gj = geojson.loads(geostr)
-								gj = geojson.dumps(gj['geometry'])
-								resultToSave = GEOSGeometry(gj)
+								geometry = geojson.dumps(gj['geometry'])
+								resultToSave = GEOSGeometry(geometry)
 
 								if question.input_type == "point":
 									answer.point = resultToSave
@@ -88,6 +89,28 @@ def survey_section(request, survey_name, section_name):
 									answer.polygon = resultToSave
 
 								answer.save()
+
+								#сохранить properties как ответы наследники
+								properties = gj['properties'];
+								for key, value in properties.items():
+									if key != 'question_id':
+										sub_question = Question.objects.get(code=key)
+										sub_answer = Answer(survey_session=survey_session, question=sub_question, parent_answer_id = answer)
+										if sub_question.option_group == OptionGroup.objects.get(name='other'):
+											if sub_question.input_type == 'text':
+												sub_answer.text = value
+											elif sub_question.input_type == 'number':
+												sub_answer.numeric = float(value)
+											else:
+												pass
+										else:
+											sub_answer.save()
+											for result_answer in value:
+												choice = OptionChoice.objects.get(Q(option_group=sub_question.option_group) & Q(code=result_answer))
+												sub_answer.choice.add(choice)
+
+										sub_answer.save()
+
 
 					else:
 						answer = Answer(survey_session=survey_session, question=question)
@@ -114,9 +137,20 @@ def survey_section(request, survey_name, section_name):
 		return HttpResponseRedirect(next_page)
 
 	else:
-		form = SurveySectionAnswerForm(initial={}, instance=section, survey_session_id=request.session['survey_session_id'] )
+		form = SurveySectionAnswerForm(initial={}, section=section, question=None, survey_session_id=request.session['survey_session_id'])
 
-	return render(request, 'survey_section.html', {'form': form, 'survey':survey, 'section':section})
+		questions = section.questions();
+
+		
+		#subquestion_form = SurveySectionAnswerForm(initial={}, section=section, question=questions[0], survey_session_id=request.session['survey_session_id']).as_p()
+		
+		subquestions_forms = {}
+		for question in questions:
+			subquestions_forms[question.code] = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=request.session['survey_session_id']).as_p()
+		
+
+
+	return render(request, 'survey_section.html', {'form': form, 'subquestions_forms':subquestions_forms, 'survey':survey, 'section':section})
 
 @login_required
 def download_data(request, survey_name):
@@ -129,6 +163,8 @@ def download_data(request, survey_name):
 	for question in geo_questions:
 		#получить ответы
 		answers = question.answers()
+
+		print(type(answers[0]))
 		#сформировать geojson файл
 		geojson_str = serialize('geojson', answers, geometry_field=question.input_type)
 			#cформировать файлы

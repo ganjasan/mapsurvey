@@ -60,7 +60,6 @@ class LeafletDrawButtonField(forms.Field):
         return attrs
 
 
-
 class SurveySectionAnswerForm(forms.Form):
 
     def _get_form_from_input_type(self, input_type, option_group, label, sublabel, color):
@@ -94,14 +93,16 @@ class SurveySectionAnswerForm(forms.Form):
             return forms.CharField(widget=forms.Textarea)
     
 
-    def __init__(self, initial, instance, survey_session_id, *args, **kwargs):
+    def __init__(self, initial, section, question, survey_session_id, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        section = instance
+        section = section
         survey_session_id = survey_session_id
 
-
-        questions = section.questions()
+        if question == None:
+            questions = section.questions()
+        else:
+            questions = question.subQuestions()
 
         for question in questions:
 
