@@ -30,7 +30,7 @@
             </div>
             <div class="col align-self-end">
                 {% if section.next_section %}
-                    <input type="submit" class="btn btn-primary" form="section_question_form" value="Далее">
+                    <input type="submit" class="btn btn-primary next_button" form="section_question_form" value="Далее">
                     <!-- <a class="btn btn-primary prev_button" href="../{{ section.next_section }}" role="button">Далее</a> -->
                 {% else %}
                     <input type="submit" class="btn btn-primary next_button" form="section_question_form" value="Завершить">
@@ -44,12 +44,14 @@
 
 {% block section_scripts %}
 
-
 <script type="text/javascript">
 
+    //var map = L.map('map', {zoomControl: false}).setView(["{{ section.start_map_postion.y }}".replace(",","."), "{{ section.start_map_postion.x }}".replace(",",".")], "{{ section.start_map_zoom }}");
+
     var section_response = {};
-    
+
     var subquestions_forms = JSON.parse(`{{ subquestions_forms|safe }}`.replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
+    
     //console.log(subquestions_forms['Q1']);
 
     map.on('draw:created', function(e) {
@@ -72,8 +74,19 @@
         
         editableLayers.addLayer(layer);
 
+        if (subquestions_forms[currentQ]){
+            layer.openPopup();
 
-        endDrawMode();
+        }else{
+            endDrawMode();            
+        }
+        /* 
+        if Object.keys(layer.feature.properties).length > 1 {
+            layer.openPopup();
+        }
+        */
+
+
         
     });
 
@@ -103,11 +116,12 @@
 
         $("button.layer-delete").click(function(){
             editableLayers.removeLayer(tempLayer);
+
+            endDrawMode();
         })
 
         $("button.layer-edit").click(function(){
-            tempLayer.editing.enable();
-            tempLayer.closePopup();
+            startEditMode(tempLayer);
         })
 
         $("button.layer-apply").click(function(){
@@ -118,6 +132,8 @@
             }
 
             tempLayer.closePopup();
+
+            endDrawMode();
             
         })
     }

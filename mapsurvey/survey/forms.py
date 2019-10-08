@@ -3,6 +3,10 @@ from django.forms import widgets
 from .models import SurveySection,Question, Answer, INPUT_TYPE_CHOICES, SurveySession, OptionGroup
 from django.utils import html
 import logging
+from django import forms
+from django.utils.safestring import mark_safe
+import re
+
 
 class LeafletDrawButtonWidget(widgets.Widget):
 
@@ -17,6 +21,7 @@ class LeafletDrawButtonWidget(widgets.Widget):
             self.title = attrs.pop('title', self.title)
             self.subtitle = attrs.pop('subtitle', self.subtitle)
             self.color = attrs.pop('color', self.color)
+            self.icon_class = attrs.pop('icon_class', self.icon_class)
 
         super().__init__(attrs)
 
@@ -27,6 +32,7 @@ class LeafletDrawButtonWidget(widgets.Widget):
         context['widget']['subtitle'] = context['widget']['attrs']['subtitle']
         context['widget']['draw_type'] = self.draw_type
         context['widget']['color'] = context['widget']['attrs']['color']
+        context['widget']['icon_class'] = context['widget']['attrs']['icon_class']
         
         return context
 
@@ -44,10 +50,11 @@ class PolygonDrawButtonWidget(LeafletDrawButtonWidget):
 
 
 class LeafletDrawButtonField(forms.Field):
-    def __init__(self,*, title, subtitle, color, **kwargs):
+    def __init__(self,*, title, subtitle, color, icon_class, **kwargs):
         self.title = title
         self.subtitle = subtitle
         self.color = color
+        self.icon_class = icon_class
 
         super().__init__(**kwargs)
 
@@ -56,13 +63,14 @@ class LeafletDrawButtonField(forms.Field):
         attrs['title'] = self.title
         attrs['subtitle'] = self.subtitle
         attrs['color'] = self.color
+        attrs['icon_class'] = self.icon_class
 
         return attrs
 
 
 class SurveySectionAnswerForm(forms.Form):
 
-    def _get_form_from_input_type(self, input_type, option_group, label, sublabel, color):
+    def _get_form_from_input_type(self, input_type, option_group, label, sublabel, color, icon_class):
 
         if input_type == 'text':
             return forms.CharField(widget=forms.Textarea, label=label)
@@ -80,14 +88,20 @@ class SurveySectionAnswerForm(forms.Form):
                 label = label,
             )
 
+        elif input_type == 'range':
+            int_choices = [ int(c.name) for c in option_group.choices()]
+            minimum = min(int_choices)
+            maximum = max(int_choices)
+            return forms.IntegerField(widget=forms.NumberInput(attrs={'type':'range', 'step': '1', 'min':str(minimum), 'max':str(maximum)}), label=label)
+
         elif input_type == 'point':
-            return LeafletDrawButtonField(widget=PointDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color)
+            return LeafletDrawButtonField(widget=PointDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class)
 
         elif input_type == 'line':
-            return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color)
+            return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class)
 
         elif input_type == 'polygon':
-            return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color)
+            return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class)
 
         else:
             return forms.CharField(widget=forms.Textarea)
@@ -111,8 +125,9 @@ class SurveySectionAnswerForm(forms.Form):
             field_label = question.name
             field_sublabel = question.subtext
             field_color = question.color
+            field_icon_class = question.icon_class
 
-            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.option_group, field_label, field_sublabel, field_color)
+            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.option_group, field_label, field_sublabel, field_color, field_icon_class)
 
 
     def save(self):

@@ -4,7 +4,7 @@ from .models import Organization, SurveyHeader, SurveySection, Question, Answer,
 from leaflet.admin import LeafletGeoAdmin
 
 class SurveyAdmin(LeafletGeoAdmin):
-	list_display = ('organization','name', 'title', 'instructions', 'redirect_url', 'start_map_postion', 'start_map_zoom')
+	list_display = ('organization','name', 'redirect_url')
 
 class QuestionInLine(admin.TabularInline):
 	model = Question
@@ -26,19 +26,4 @@ admin.site.register(OptionGroup)
 admin.site.register(OptionChoice)
 admin.site.register(SurveySession)
 admin.site.register(Answer)
-
-'''
-class QuestionAdmin(LeafletGeoAdmin):
-	list_display = ('survey', 'is_head', 'code', 'map_position', 'zoom', 'title', 'description', 'next_question', 'prev_question')
-
-
-
-admin.site.register(Survey, SurveyAdmin)
-admin.site.register(Question, QuestionAdmin)
-admin.site.register(InputType)
-admin.site.register(User)
-admin.site.register(Answer)
-admin.site.register(SurveySession)
-'''
-
 

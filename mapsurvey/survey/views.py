@@ -13,6 +13,7 @@ import geojson
 from django.contrib.gis.geos import GEOSGeometry
 import sys
 from io import BytesIO
+import json
 from zipfile import ZipFile
 
 def index(request):
@@ -39,9 +40,15 @@ def survey_header(request, survey_name):
 		del request.session['survey_session_id']
 
 	survey = SurveyHeader.objects.get(name=survey_name)
-	context = {'survey': survey, 'section': survey.start_section()}
+	start_section = survey.start_section()
 
-	return render(request, 'survey_header.html', context)
+	redirect_page = ("../" + survey_name + "/" + start_section.name) if start_section else survey.redirect_url
+	
+	return HttpResponseRedirect(redirect_page)
+	
+	#context = {'survey': survey, 'section': survey.start_section()}
+
+	#return render(request, 'survey_header.html', context)
 
 
 def survey_section(request, survey_name, section_name):
@@ -104,10 +111,16 @@ def survey_section(request, survey_name, section_name):
 											else:
 												pass
 										else:
-											sub_answer.save()
-											for result_answer in value:
-												choice = OptionChoice.objects.get(Q(option_group=sub_question.option_group) & Q(code=result_answer))
-												sub_answer.choice.add(choice)
+											print(sub_question.input_type)
+											if(sub_question.input_type == 'range'):
+												sub_answer.numeric = float(value)
+											else:
+												sub_answer.save()
+												for result_answer in value:
+													print(sub_question.option_group)
+													print(result_answer)
+													choice = OptionChoice.objects.get(Q(option_group=sub_question.option_group) & Q(code=result_answer))
+													sub_answer.choice.add(choice)
 
 										sub_answer.save()
 
@@ -140,13 +153,10 @@ def survey_section(request, survey_name, section_name):
 		form = SurveySectionAnswerForm(initial={}, section=section, question=None, survey_session_id=request.session['survey_session_id'])
 
 		questions = section.questions();
-
-		
-		#subquestion_form = SurveySectionAnswerForm(initial={}, section=section, question=questions[0], survey_session_id=request.session['survey_session_id']).as_p()
-		
+	
 		subquestions_forms = {}
 		for question in questions:
-			subquestions_forms[question.code] = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=request.session['survey_session_id']).as_p()
+			subquestions_forms[question.code] = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=request.session['survey_session_id']).as_p().replace("/script", "\/script")
 		
 
 
@@ -158,16 +168,86 @@ def download_data(request, survey_name):
 	zip = ZipFile(in_memory, "a")
 
 	survey = SurveyHeader.objects.get(name=survey_name)
-	geo_questions = survey.geo_questions()
+	geo_questions = survey.geo_questions()	
 
 	for question in geo_questions:
-		#получить ответы
-		answers = question.answers()
+		
+		layer_properties = {
+			"survey": question.survey_section.survey_header.name,
+			"survey_section": question.survey_section.name,
+			"required": question.required,
+		}
 
-		print(type(answers[0]))
+		#layer_str = geojson_template.format(layer_name = question.name, properties=layer_properties)
+
+		#получить ответы
+		features = []
+		answers = question.answers()
+		for answer in answers:
+			#получить геометрию
+			geo_type = question.input_type
+			if geo_type == "polygon":
+				coordinates =  [[[i[0],i[1]] for i in answer.polygon.coords[0]]]
+				geometry_type = "Polygon"
+			elif geo_type == "line":
+				coordinates =  [[[i[0],i[1]] for i in answer.line.coords[0]]]
+				geometry_type = "Line"
+			elif geo_type == "point":
+				coordinates =  [[answer.point.coords[0]]]
+				geometry_type = "Point"
+
+			#получить properties из subquestions
+			subquestions = question.subQuestions()
+			properties = {}
+			subanswers = answer.subAnswers();
+			result = ""
+			for key in subanswers:
+				input_type = key.input_type
+				if input_type == "text":
+					if subanswers[key]:
+						answer = subanswers[key][0]
+						result = answer.text
+				elif input_type == "number":
+					if subanswers[key]:
+						answer = subanswers[key][0]
+						result = answer.numeric
+				elif input_type == "choice":
+					if subanswers[key]:
+						answer = subanswers[key][0]
+						result =answer.choice.name
+				elif input_type == "multichoice":
+					if subanswers[key]:
+						result = [a.choice.name for a in subanswers[key]]
+
+				properties[key.name] = result
+
+			properties["session"] = str(answer.survey_session)
+
+			feature = {
+				"type": "Feature",
+				"properties": properties,
+				"geometry":{
+					"type": geometry_type,
+					"coordinates": coordinates,
+				}
+			}
+
+			features.append(feature)
+		
+		geojson_dict = {
+			"type": "FeatureCollection", 
+			"name": question.name,
+			"crs": {"type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }},
+			"properties": layer_properties,
+			"features": features,
+		} 
+
+		geojson_str = json.dumps(geojson_dict, ensure_ascii=False).encode('utf8')
+
 		#сформировать geojson файл
-		geojson_str = serialize('geojson', answers, geometry_field=question.input_type)
-			#cформировать файлы
+		#geojson_str = serialize('geojson', answers, geometry_field=question.input_type)
+		
+		#cформировать файлы
 		zip.writestr(question.name + '.geojson', geojson_str)
 
 	#Windows bug fix

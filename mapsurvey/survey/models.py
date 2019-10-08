@@ -4,7 +4,18 @@ from django.contrib.gis.geos import Point
 from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
+from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 
+#VALIDATORS
+url_name_validator = RegexValidator(
+    regex = r'[a-zA-Z0-9_]',
+    message=_('Only alphanumeric character and "_" sign'),
+    code='invalid',
+)
+
+def validate_url_name(value):
+    return url_name_validator(value)
 
 
 INPUT_TYPE_CHOICES = (
@@ -12,6 +23,7 @@ INPUT_TYPE_CHOICES = (
     ("number", _("Number")),
     ("choice", _("Choices")),
     ("multichoice", _("Multiple Choices")),
+    ("range", _("Range")),
     ("rating", _("Rating")),
     ("datetime", _("Date/Time")),
     ("point", _("Geo Point")),
@@ -37,20 +49,23 @@ class Organization(models.Model):
 #example - quality of urban life 
 class SurveyHeader(models.Model):
     organization = models.ForeignKey("Organization", on_delete=models.SET_NULL, null=True, blank=True)
-    name = models.CharField(max_length=45, unique=True)
-    title = models.CharField(max_length=80, null=True, blank=True)
-    instructions = models.TextField(blank=True, null=True)
+    name = models.CharField(max_length=45, unique=True, validators=[validate_url_name])
+    #title = models.CharField(max_length=80, null=True, blank=True)
+    #instructions = models.TextField(blank=True, null=True)
     redirect_url = models.CharField(max_length=250, default="#") #URL to redirect to when survey is complete.
 
-    start_map_postion = geomodels.PointField(default='POINT(0.0 0.0)')
-    start_map_zoom = models.IntegerField(default=12)
+    #start_map_postion = geomodels.PointField(default='POINT(30.317 59.945)')
+    #start_map_zoom = models.IntegerField(default=12)
 
     def __str__(self):
-        return self.title
+        return self.name
 
     def start_section(self):
         if not hasattr(self, "__sscache"):
-            self.__sscache = SurveySection.objects.get(Q(survey_header=self) & Q(is_head=True))
+            try:
+                self.__sscache = SurveySection.objects.get(Q(survey_header=self) & Q(is_head=True))
+            except Exception as e:
+                self.__sscache = None
         return self.__sscache
 
     def questions(self):
@@ -73,12 +88,12 @@ class SurveySection(models.Model):
     is_head = models.BooleanField(default=False)
 
     survey_header = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE)
-    name = models.CharField(max_length=45, default="main_section") #section_a
+    name = models.CharField(max_length=45, default="survey_description", validators=[validate_url_name]) #section_a
     title = models.CharField(max_length=80, null=True, blank=True) #Your Home Area
     subheading = models.CharField(max_length=4096, null=True, blank=True) #Several question about your home area quality
     code = models.CharField(max_length=8)
 
-    start_map_postion = geomodels.PointField(default='POINT(0.0 0.0)')
+    start_map_postion = geomodels.PointField(default='POINT(30.317 59.945)')
     start_map_zoom = models.IntegerField(default=12)
 
     next_section = models.ForeignKey("SurveySection", null=True, blank=True, on_delete=models.SET_NULL, related_name='survey_next_section')
@@ -89,7 +104,7 @@ class SurveySection(models.Model):
 
     def questions(self):
         if not hasattr(self, "__qcache"):
-            self.__qcache = Question.objects.filter(survey_section=self).filter(parent_question_id__isnull=True).order_by('code')
+            self.__qcache = Question.objects.filter(survey_section=self).filter(parent_question_id__isnull=True).order_by('order_number')
         return self.__qcache
 
 
@@ -118,20 +133,22 @@ class OptionChoice(models.Model):
 class Question(models.Model):
     survey_section = models.ForeignKey("SurveySection", on_delete=models.CASCADE)
     parent_question_id = models.ForeignKey('self', default=None, null=True, blank=True, on_delete=models.CASCADE)
-    code = models.CharField(max_length=8) #Q1 - using as url path and sort field
+    code = models.CharField(max_length=8) #must be uniq in survey
+    order_number = models.IntegerField(default=0) # unique in section or popup
     name = models.CharField(max_length=80, null=True, blank=True)
     subtext = models.CharField(max_length=500, null=True, blank=True)
     input_type = models.CharField(max_length=80, choices=INPUT_TYPE_CHOICES)
     option_group = models.ForeignKey("OptionGroup", on_delete=models.CASCADE, null=True)
     required = models.BooleanField(default=False)
-    color = models.CharField(verbose_name=_(u'Color'), max_length=7, help_text=_(u'HEX color, as #RRGGBB'), default="#F1F1F1")
+    color = models.CharField(verbose_name=_(u'Color'), max_length=7, help_text=_(u'HEX color, as #RRGGBB'), default="#000000")
+    icon_class = models.CharField(default="", max_length=80, help_text=_(u'Must be Font-Awesome class'), blank=True, null=True)
 
     def __str__(self):
         return self.name
 
     def subQuestions(self):
     	if not hasattr(self, "__sqcache"):
-    		self.__sqcache = Question.objects.filter(parent_question_id=self)
+    		self.__sqcache = Question.objects.filter(parent_question_id=self).order_by('order_number')
     	return self.__sqcache
 
     def answers(self):
@@ -151,4 +168,13 @@ class Answer(models.Model):
     point = geomodels.PointField(null=True, blank=True)
     line = geomodels.LineStringField(null=True, blank=True)
     polygon = geomodels.PolygonField(null=True, blank=True)
+
+    def subAnswers(self):
+    	if not hasattr(self, "__sacache"):
+    		subanswers = Answer.objects.filter(parent_answer_id=self)
+    		subquestions = self.question.subQuestions()
+    		self.__sacache = {}
+    		for subquestion in subquestions:
+    			self.__sacache[subquestion] = list(filter(lambda a: a.question == subquestion, subanswers))
+    	return self.__sacache
 
