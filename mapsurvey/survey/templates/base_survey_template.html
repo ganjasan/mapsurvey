@@ -48,7 +48,7 @@
 <button id="showButton" onclick="toggleInfo(true)" style="visibility: hidden;">
         <i class="fas fa-angle-double-right" style="font-size:28px; width:28px; height:28px;"></i>
 </button>
-<div id="info_page">
+<div id="info_page" class="d-flex flex-column">
     <div class="header">
         <div id='title'>
         	{% block title %}
@@ -60,7 +60,7 @@
     	{% block content %}
     	{% endblock %}
 	</div>
-	<div id='navig_buttons'>
+	<div id='navig_buttons' class="mt-auto">
 		{% block navig_buttons %}
 		{% endblock %}
 	</div>
@@ -86,13 +86,19 @@
 
     //var map = L.map('map').setView(["{{ section.start_map_postion.y }}", "{{ section.start_map_postion.x }}"], "{{ section.start_map_zoom }}");
     //var map = L.map('map', {zoomControl: false}).setView(["{{ survey.start_map_postion.x }}", "{{ survey.start_map_postion.y }}"], "{{ survey.start_map_zoom }}");
+    var mapboxUrl = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}';
+    mapboxAccessToken = 'pk.eyJ1IjoiYWxleGFuZGVyMzQzOTYiLCJhIjoiY2p4dXQ5d3FjMDQ5bDNubW5wamRzMnEyZyJ9.upZaF0zYwJ8NK-9Wub4MOg';
+    mapboxMapId = 'mapbox.streets';
+
     var map = L.map('map', {zoomControl: false}).setView(["{{ section.start_map_postion.y }}".replace(",","."), "{{ section.start_map_postion.x }}".replace(",",".")], "{{ section.start_map_zoom }}");
     L.control.zoom({position: 'bottomright'}).addTo(map);
 
     L.tileLayer(
-        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        mapboxUrl, {
             attribution: 'Data © <a href="http://osm.org/copyright">OpenStreetMap</a>',
             maxZoom: 18,
+            id:mapboxMapId,
+            accessToken: mapboxAccessToken,
 
     }).addTo(map);
 

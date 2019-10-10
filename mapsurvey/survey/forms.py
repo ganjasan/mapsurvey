@@ -22,6 +22,7 @@ class LeafletDrawButtonWidget(widgets.Widget):
             self.subtitle = attrs.pop('subtitle', self.subtitle)
             self.color = attrs.pop('color', self.color)
             self.icon_class = attrs.pop('icon_class', self.icon_class)
+            self.draw_icon_class = attrs.pop('draw_icon_class', self.draw_icon_class)
 
         super().__init__(attrs)
 
@@ -33,6 +34,7 @@ class LeafletDrawButtonWidget(widgets.Widget):
         context['widget']['draw_type'] = self.draw_type
         context['widget']['color'] = context['widget']['attrs']['color']
         context['widget']['icon_class'] = context['widget']['attrs']['icon_class']
+        context['widget']['draw_icon_class'] = context['widget']['attrs']['draw_icon_class']
         
         return context
 
@@ -50,11 +52,12 @@ class PolygonDrawButtonWidget(LeafletDrawButtonWidget):
 
 
 class LeafletDrawButtonField(forms.Field):
-    def __init__(self,*, title, subtitle, color, icon_class, **kwargs):
+    def __init__(self,*, title, subtitle, color, icon_class, draw_icon_class, **kwargs):
         self.title = title
         self.subtitle = subtitle
         self.color = color
         self.icon_class = icon_class
+        self.draw_icon_class = draw_icon_class
 
         super().__init__(**kwargs)
 
@@ -64,6 +67,7 @@ class LeafletDrawButtonField(forms.Field):
         attrs['subtitle'] = self.subtitle
         attrs['color'] = self.color
         attrs['icon_class'] = self.icon_class
+        attrs['draw_icon_class'] = self.draw_icon_class
 
         return attrs
 
@@ -95,13 +99,13 @@ class SurveySectionAnswerForm(forms.Form):
             return forms.IntegerField(widget=forms.NumberInput(attrs={'type':'range', 'step': '1', 'min':str(minimum), 'max':str(maximum)}), label=label)
 
         elif input_type == 'point':
-            return LeafletDrawButtonField(widget=PointDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class)
+            return LeafletDrawButtonField(widget=PointDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class="fas fa-map-marker-alt")
 
         elif input_type == 'line':
-            return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class)
+            return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class="")
 
         elif input_type == 'polygon':
-            return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class)
+            return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class="fas fa-draw-polygon")
 
         else:
             return forms.CharField(widget=forms.Textarea)

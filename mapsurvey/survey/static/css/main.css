@@ -27,33 +27,32 @@ ul {
 #info_page {
   position: absolute;
   box-sizing: border-box;
-  max-width: 540px;
+  max-width: 480px;
   background-color: #fafafa;
   padding: 10px 10px 10px 10px;
   overflow-y: auto;
-  height: 90%;
+  height: 100%;
   z-index: 10;
   transition: all 0.5s ease-in;
   opacity: 0.95;
-  left:10px;
-  top: 5%;
   border: 1px solid black
   margin-right:10px;
+  overflow-y: none;
+  padding-bottom: 20px;
 }
 
 .header{
   display: flex; 
-  font-size: 1.5 em;
-  margin-bottom: 10px;
+  font-size: 1.5em;
   padding: 15px;
 }
 
 #title{
-  padding-left: 10px;
 }
 
 #content{
   padding: 15px;
+  overflow-y: auto;
 }
 
 .glyph {
@@ -101,6 +100,10 @@ ul {
   position: absolute;
   top:10px;
   right:10px;
+}
+
+#navig_buttons{
+	padding-top: 20px;
 }
 
 @media only screen and (max-width: 768px) {
