@@ -193,7 +193,7 @@ def download_data(request, survey_name):
 				coordinates =  [[[i[0],i[1]] for i in answer.line.coords[0]]]
 				geometry_type = "Line"
 			elif geo_type == "point":
-				coordinates =  [[answer.point.coords[0]]]
+				coordinates =  [answer.point.coords[0], answer.point.coords[1]]
 				geometry_type = "Point"
 
 			#получить properties из subquestions
@@ -207,7 +207,7 @@ def download_data(request, survey_name):
 					if subanswers[key]:
 						answer = subanswers[key][0]
 						result = answer.text
-				elif input_type == "number":
+				elif input_type == "number" or input_type == "range":
 					if subanswers[key]:
 						answer = subanswers[key][0]
 						result = answer.numeric
@@ -217,6 +217,7 @@ def download_data(request, survey_name):
 						result =answer.choice.name
 				elif input_type == "multichoice":
 					if subanswers[key]:
+						print(subanswers[key][0])
 						result = [a.choice.name for a in subanswers[key]]
 
 				properties[key.name] = result
