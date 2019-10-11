@@ -136,7 +136,7 @@ def survey_section(request, survey_name, section_name):
 				else:
 					answer = Answer(survey_session=survey_session, question=question)
 					if  question.input_type == "range":
-						answer.numeric = float(result)
+						answer.numeric = float(result[0])
 					else:
 						answer.save()
 						for result_answer in result:

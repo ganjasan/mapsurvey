@@ -65,9 +65,9 @@
         props.question_id = currentQ;
 
         layer.bindPopup('<form action="" onsubmit="return false;" id="subquestion_form">' + subquestions_forms[currentQ]
-            + '<div class="container" style="padding-left:0px"><div class="row"><div class="col-sm"><button type="button" class="btn btn-success layer-apply" style="width:85%; font-size:2em"><i class="far fa-save"></i></button></div> \
-            <div class="col-sm"><button type="button" class="btn btn-primary layer-edit" style="width:85%; font-size:2em"><i class="far fa-edit"></i></button></div> \
-            <div class="col-sm"><button type="button" class="btn btn-danger layer-delete" style="width:85%; font-size:2em"><i class="far fa-trash-alt"></i></button></div></div></div>'
+            + '<div class="container" style="padding-left:0px"><div class="row"><div class="col"><button type="button" class="btn btn-success layer-apply" style="width:85%; font-size:2em"><i class="far fa-save"></i></button></div> \
+            <div class="col"><button type="button" class="btn btn-primary layer-edit" style="width:85%; font-size:2em"><i class="far fa-edit"></i></button></div> \
+            <div class="col"><button type="button" class="btn btn-danger layer-delete" style="width:85%; font-size:2em"><i class="far fa-trash-alt"></i></button></div></div></div>'
             + '</form>');
 
         layer.on("popupopen", onPopupOpen);
