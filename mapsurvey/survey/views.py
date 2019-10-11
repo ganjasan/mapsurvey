@@ -72,8 +72,6 @@ def survey_section(request, survey_name, section_name):
 
 		for question in section_questions:
 			result = request.POST.getlist(question.code)
-			print(result)
-			print(result)
 
 			if (result != []):
 				if question.option_group == OptionGroup.objects.get(name='other'):
@@ -111,14 +109,11 @@ def survey_section(request, survey_name, section_name):
 											else:
 												pass
 										else:
-											print(sub_question.input_type)
 											if(sub_question.input_type == 'range'):
 												sub_answer.numeric = float(value)
 											else:
 												sub_answer.save()
 												for result_answer in value:
-													print(sub_question.option_group)
-													print(result_answer)
 													choice = OptionChoice.objects.get(Q(option_group=sub_question.option_group) & Q(code=result_answer))
 													sub_answer.choice.add(choice)
 
@@ -131,7 +126,8 @@ def survey_section(request, survey_name, section_name):
 						if question.input_type == "text":
 							answer.text = result
 						elif question.input_type == "number":
-							answer.numeric = float(result)
+							if result:
+								answer.numeric = float(result)
 						else:
 							pass
 
@@ -139,12 +135,19 @@ def survey_section(request, survey_name, section_name):
 
 				else:
 					answer = Answer(survey_session=survey_session, question=question)
-					answer.save()
-					for result_answer in result:
-						choice = OptionChoice.objects.get(Q(option_group=question.option_group) & Q(code=result_answer))
-						answer.choice.add(choice)
+					if  question.input_type == "range":
+						answer.numeric = float(result)
+					else:
+						answer.save()
+						for result_answer in result:
+							if result_answer:
+								try:
+									choice = OptionChoice.objects.get(Q(option_group=question.option_group) & Q(code=result_answer))
+									answer.choice.add(choice)
+								except Exception as e:
+									print(e)
 
-					answer.save()
+						answer.save()
 
 		next_page = ("../" + section.next_section.name) if section.next_section else survey.redirect_url
 		return HttpResponseRedirect(next_page)
@@ -217,7 +220,6 @@ def download_data(request, survey_name):
 						result =answer.choice.name
 				elif input_type == "multichoice":
 					if subanswers[key]:
-						print(subanswers[key][0])
 						result = [a.choice.name for a in subanswers[key]]
 
 				properties[key.name] = result

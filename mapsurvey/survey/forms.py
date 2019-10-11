@@ -74,22 +74,23 @@ class LeafletDrawButtonField(forms.Field):
 
 class SurveySectionAnswerForm(forms.Form):
 
-    def _get_form_from_input_type(self, input_type, option_group, label, sublabel, color, icon_class):
+    def _get_form_from_input_type(self, input_type, required,  option_group, label, sublabel, color, icon_class):
 
         if input_type == 'text':
-            return forms.CharField(widget=forms.Textarea, label=label)
+            return forms.CharField(widget=forms.Textarea, label=label, required = required)
 
         if input_type == 'number':
-            return forms.CharField(widget=forms.NumberInput, label=label)
+            return forms.CharField(widget=forms.NumberInput, label=label, required = required)
 
         elif input_type == 'choice':
-            return forms.ChoiceField(widget=forms.RadioSelect, choices=[(choice.code, choice.name) for choice in option_group.choices()], label=label)
+            return forms.ChoiceField(widget=forms.RadioSelect, choices=[(choice.code, choice.name) for choice in option_group.choices()], label=label, required=required)
 
         elif input_type == 'multichoice':
             return forms.MultipleChoiceField(
                 widget=forms.CheckboxSelectMultiple,
                 choices = [(choice.code, choice.name) for choice in option_group.choices()],
                 label = label,
+                required = required,
             )
 
         elif input_type == 'range':
@@ -131,7 +132,7 @@ class SurveySectionAnswerForm(forms.Form):
             field_color = question.color
             field_icon_class = question.icon_class
 
-            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.option_group, field_label, field_sublabel, field_color, field_icon_class)
+            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question.option_group, field_label, field_sublabel, field_color, field_icon_class)
 
 
     def save(self):
