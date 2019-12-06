@@ -99,7 +99,7 @@ def survey_section(request, survey_name, section_name):
 								properties = gj['properties'];
 								for key, value in properties.items():
 									if key != 'question_id':
-										sub_question = Question.objects.get(code=key)
+										sub_question = Question.objects.get(Q(survey_section=section) & Q(code=key))
 										sub_answer = Answer(survey_session=survey_session, question=sub_question, parent_answer_id = answer)
 										if sub_question.option_group == OptionGroup.objects.get(name='other'):
 											if sub_question.input_type == 'text':

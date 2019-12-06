@@ -86,10 +86,7 @@
         if Object.keys(layer.feature.properties).length > 1 {
             layer.openPopup();
         }
-        */
-
-
-        
+        */        
     });
 
    
@@ -128,9 +125,9 @@
 
         $("button.layer-apply").click(function(){
             subquestion_form_result = $('#subquestion_form').serializeArray();
-            
-            for (r in subquestion_form_result){
-                tempLayer.feature.properties[subquestion_form_result[r]['name']] = subquestion_form_result[r]['value'];
+            grouped_by_name_result = subquestion_form_result.groupBy("name");
+            for (var prop in grouped_by_name_result) {
+                tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
             }
 
             tempLayer.closePopup();

@@ -8,6 +8,7 @@ class SurveyAdmin(LeafletGeoAdmin):
 
 class QuestionInLine(admin.TabularInline):
 	model = Question
+	fields = ('parent_question_id','name', 'subtext','order_number','input_type','option_group', 'required', 'color', 'icon_class')
 
 class SurveySectionAdmin(LeafletGeoAdmin):
 	list_display = ('name', 'title', 'is_head', 'code', 'survey_header', 'subheading', 'start_map_postion', 'start_map_zoom')
