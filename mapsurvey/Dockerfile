@@ -8,11 +8,11 @@ RUN apt-get update
 RUN apt-get -y install binutils libproj-dev gdal-bin
 
 #install postfix
-RUN apt-get install -y postfix && \
-postconf -e "myhostname = mail.mapsurvey.ru" && \
-postconf -e "mydomain = mapsurvey.ru" && \
-postconf -e "myorigin = mapsurvey.ru" && \
-postconf -e "mydestination = localhost" && \
+#RUN apt-get install -y postfix && \
+#postconf -e "myhostname = mail.mapsurvey.ru" && \
+#postconf -e "mydomain = mapsurvey.ru" && \
+#postconf -e "myorigin = mapsurvey.ru" && \
+#postconf -e "mydestination = localhost" && \
 
 CMD service postfix start
 

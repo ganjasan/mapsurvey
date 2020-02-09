@@ -100,7 +100,8 @@ class SurveySectionAnswerForm(forms.Form):
             return forms.IntegerField(widget=forms.NumberInput(attrs={'type':'range', 'step': '1', 'min':str(minimum), 'max':str(maximum)}), label=label)
 
         elif input_type == 'point':
-            return LeafletDrawButtonField(widget=PointDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class="fas fa-map-marker-alt")
+            draw_icon_class = icon_class if icon_class else "fas fa-map-marker-alt"
+            return LeafletDrawButtonField(widget=PointDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class)
 
         elif input_type == 'line':
             return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class="")

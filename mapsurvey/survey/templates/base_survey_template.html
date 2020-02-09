@@ -137,6 +137,7 @@
 
         currentQ = $(question).attr('name');
 
+        $("#draw_button").attr('draw-type',  $(question).attr('draw-type'));
         $("#draw_button").attr('data-color', $(question).attr('data-color'));
         $('#draw_button').attr('data-mode', 'start_draw');
         $('#draw_button').text('Начать рисовать');
@@ -187,9 +188,28 @@
         mode = $(this).attr('data-mode');
 
         if (mode == "start_draw"){
+            let draw_type = $(this).attr('draw-type');
+            if (draw_type == "drawpolygon")
+                currentDrawFeature = new L.Draw.Polygon(map);
+            else if (draw_type == "drawline")
+                currentDrawFeature = new L.Draw.Polyline(map);
+            else if (draw_type == "drawpoint"){
+                currentDrawFeature = new L.Draw.Marker(map);
+                currentDrawFeature.setOptions(
+                    {
+                        color: $(this).attr('data-color'),
+            
+                        icon: L.icon.fontAwesome({ 
+                            iconClasses: 'fa ' + $(this).attr('data-icon') , // you _could_ add other icon classes, not tested.
+                            markerColor: $(this).attr('data-color'),
+                            iconColor: '#FFF',
+                            iconXOffset: -2, 
+                         })
 
-            currentDrawFeature = new L.Draw.Polygon(map);
-
+                    }
+                )
+            }
+            
             currentDrawFeature.setOptions(
                 {
                         shapeOptions:{
@@ -198,6 +218,8 @@
                 }
                 
             )
+            console.log(currentDrawFeature);
+
 
             currentDrawFeature.enable();
 
@@ -213,6 +235,11 @@
         }
     });
 
+    $('.drawbutton').click(function(){
+        startDrawMode(this);
+    })
+
+    /*
 
     $('.drawpolygon').click(function() {
         startDrawMode(this);
@@ -234,6 +261,7 @@
         currentDrawFeature.enable();
         toggleInfo(false);
         currentQ = $(this).attr('name')
+
     })
 
     $('.drawpoint').click(function() {
@@ -258,6 +286,7 @@
         toggleInfo(false);
         currentQ = $(this).attr('name')
     })
+    */
     
 </script>
 

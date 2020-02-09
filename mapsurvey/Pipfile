@@ -12,6 +12,7 @@ psycopg2-binary = "*"
 django-leaflet = "*"
 geojson = "*"
 django-registration = "*"
+pandas = "*"
 
 [requires]
 python_version = "3.7"

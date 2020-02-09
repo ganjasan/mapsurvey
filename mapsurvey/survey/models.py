@@ -36,6 +36,11 @@ class SurveySession(models.Model):
     start_datetime = models.DateTimeField(default=datetime.now)
     end_datetime = models.DateTimeField(null=True, blank=True)
 
+    def answers(self):
+        if not hasattr(self, "__acache"):
+            self.__acache = Answer.objects.filter(Q(survey_session=self) & Q(parent_answer_id__isnull=True))
+        return self.__acache
+
 #organizations
 #example - QULLAB
 class Organization(models.Model):
@@ -70,18 +75,23 @@ class SurveyHeader(models.Model):
 
     def questions(self):
         if not hasattr(self, "__qcache"):
-            self.__sscache = Question.objects.filter(survey_section__in=SurveySection.objects.filter(survey_header=self))
-        return self.__sscache
+            self.__qcache = Question.objects.filter(survey_section__in=SurveySection.objects.filter(survey_header=self))
+        return self.__qcache
 
     def geo_questions(self):
         if not hasattr(self, "__gqcache"):
-            self.__sscache = Question.objects.filter(Q(survey_section__in=SurveySection.objects.filter(survey_header=self)) & Q(input_type__in=['point','line','polygon']))
-        return self.__sscache
+            self.__gqcache = Question.objects.filter(Q(survey_section__in=SurveySection.objects.filter(survey_header=self)) & Q(input_type__in=['point','line','polygon']))
+        return self.__gqcache
+
+    def sessions(self):
+        if not hasattr(self, "__scache"):
+            self.__scache = SurveySession.objects.filter(survey=self)
+        return self.__scache
 
     def answers(self):
-        if not hasattr(self, "__gqcache"):
-            self.__sscache = Answer.objects.filter(Q(question__in=Question.objects.filter(survey_section__in=SurveySection.objects.filter(survey_header=self))))
-        return self.__sscache
+        if not hasattr(self, "__acache"):
+            self.__acache = Answer.objects.filter(Q(question__in=Question.objects.filter(survey_section__in=SurveySection.objects.filter(survey_header=self))))
+        return self.__acache
 
 #survey sections
 class SurveySection(models.Model):

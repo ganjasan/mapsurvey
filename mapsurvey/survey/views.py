@@ -15,6 +15,7 @@ import sys
 from io import BytesIO
 import json
 from zipfile import ZipFile
+import pandas as pd
 
 def index(request):
 	if not request.user.is_authenticated:
@@ -171,6 +172,8 @@ def download_data(request, survey_name):
 	zip = ZipFile(in_memory, "a")
 
 	survey = SurveyHeader.objects.get(name=survey_name)
+	
+	#обработка гео вопросов
 	geo_questions = survey.geo_questions()	
 
 	for question in geo_questions:
@@ -193,8 +196,8 @@ def download_data(request, survey_name):
 				coordinates =  [[[i[0],i[1]] for i in answer.polygon.coords[0]]]
 				geometry_type = "Polygon"
 			elif geo_type == "line":
-				coordinates =  [[[i[0],i[1]] for i in answer.line.coords[0]]]
-				geometry_type = "Line"
+				coordinates =  [[i[0],i[1]] for i in answer.line.coords]
+				geometry_type = "LineString"
 			elif geo_type == "point":
 				coordinates =  [answer.point.coords[0], answer.point.coords[1]]
 				geometry_type = "Point"
@@ -252,6 +255,38 @@ def download_data(request, survey_name):
 		
 		#cформировать файлы
 		zip.writestr(question.name + '.geojson', geojson_str)
+
+	#обработка обычных вопросов
+
+	sessions = survey.sessions()
+
+	properties_list = []
+	for session in sessions:
+		properties = {}
+		answers = session.answers()
+		result = ""
+		for answer in answers:
+			input_type = answer.question.input_type
+			
+			if input_type == "text":
+				result = answer.text
+			elif input_type == "number" or input_type == "range":
+				result = answer.numeric
+			elif input_type == "choice":
+				result = answer.choice.all()[0].name
+			elif input_type == "multichoice":
+				
+				result = [c.name for c in answer.choice.all()]
+			else:
+				continue
+
+			properties[answer.question.name] = result
+
+		properties["session"] = str(session)
+		properties_list.append(properties)
+
+	zip.writestr(survey.name + '.csv', pd.DataFrame(properties_list).to_csv())
+
 
 	#Windows bug fix
 	for file in zip.filelist:
