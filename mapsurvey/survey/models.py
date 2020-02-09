@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
+import random
 
 #VALIDATORS
 url_name_validator = RegexValidator(
@@ -55,12 +56,7 @@ class Organization(models.Model):
 class SurveyHeader(models.Model):
     organization = models.ForeignKey("Organization", on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=45, unique=True, validators=[validate_url_name])
-    #title = models.CharField(max_length=80, null=True, blank=True)
-    #instructions = models.TextField(blank=True, null=True)
     redirect_url = models.CharField(max_length=250, default="#") #URL to redirect to when survey is complete.
-
-    #start_map_postion = geomodels.PointField(default='POINT(30.317 59.945)')
-    #start_map_zoom = models.IntegerField(default=12)
 
     def __str__(self):
         return self.name
@@ -118,7 +114,6 @@ class SurveySection(models.Model):
         return self.__qcache
 
 
-
 #examples - Never-Always, Years-By-Five
 class OptionGroup(models.Model):
     name = models.CharField(max_length=45, unique=True)
@@ -140,10 +135,18 @@ class OptionChoice(models.Model):
     def __str__(self):
         return self.name
 
-class Question(models.Model):
+def question_code_generator():
+    while True:
+        code = "Q_"+str(random.random())[2:13]
+        try:
+            Question.objects.get(code=code)
+        except:
+            return code
+
+class Question(models.Model):    
     survey_section = models.ForeignKey("SurveySection", on_delete=models.CASCADE)
     parent_question_id = models.ForeignKey('self', default=None, null=True, blank=True, on_delete=models.CASCADE)
-    code = models.CharField(max_length=8) #must be uniq in survey
+    code = models.CharField(max_length=12, default=question_code_generator)
     order_number = models.IntegerField(default=0) # unique in section or popup
     name = models.CharField(max_length=80, null=True, blank=True)
     subtext = models.CharField(max_length=500, null=True, blank=True)
@@ -154,7 +157,7 @@ class Question(models.Model):
     icon_class = models.CharField(default="", max_length=80, help_text=_(u'Must be Font-Awesome class'), blank=True, null=True)
 
     def __str__(self):
-        return self.name
+        return self.name 
 
     def subQuestions(self):
     	if not hasattr(self, "__sqcache"):

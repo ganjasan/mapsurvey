@@ -50,11 +50,16 @@
 
     var section_response = {};
 
-    var subquestions_forms = JSON.parse(`{{ subquestions_forms|safe }}`.replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
+//   console.log("{{ subquestions_forms|safe}}")
+
+      var subquestion_form_result = JSON.parse("{94: '<p><label for="id_95">Число:</label> <input type="number" name="95" id="id_95"></p>'}".replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
+//    var subquestions_forms = JSON.parse('{{ subquestions_forms|safe }}'.replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
     
     //console.log(subquestions_forms['Q1']);
 
     map.on('draw:created', function(e) {
+
+        console.log(currentQ)
 
         var type = e.layerType,
         layer = e.layer,
@@ -86,10 +91,7 @@
         if Object.keys(layer.feature.properties).length > 1 {
             layer.openPopup();
         }
-        */
-
-
-        
+        */        
     });
 
    
@@ -128,9 +130,9 @@
 
         $("button.layer-apply").click(function(){
             subquestion_form_result = $('#subquestion_form').serializeArray();
-            
-            for (r in subquestion_form_result){
-                tempLayer.feature.properties[subquestion_form_result[r]['name']] = subquestion_form_result[r]['value'];
+            grouped_by_name_result = subquestion_form_result.groupBy("name");
+            for (var prop in grouped_by_name_result) {
+                tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
             }
 
             tempLayer.closePopup();
