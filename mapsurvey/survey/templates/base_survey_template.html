@@ -238,33 +238,15 @@
         }
     });
 
-    $('.drawbutton').click(function(){
-        startDrawMode(this);
-    })
 
-    /*
+    
 
     $('.drawpolygon').click(function() {
         startDrawMode(this);
     });
 
     $('.drawline').click(function() {
-
-    	currentDrawFeature = new L.Draw.Polyline(map);
-        
-        currentDrawFeature.setOptions(
-                {
-                        shapeOptions:{
-                            color:$(this).attr('data-color'),
-                        }
-                }
-                
-        )
-
-        currentDrawFeature.enable();
-        toggleInfo(false);
-        currentQ = $(this).attr('name')
-
+        startDrawMode(this);
     })
 
     $('.drawpoint').click(function() {
@@ -289,7 +271,6 @@
         toggleInfo(false);
         currentQ = $(this).attr('name')
     })
-    */
     
 </script>
 
