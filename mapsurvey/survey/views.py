@@ -104,14 +104,14 @@ def survey_section(request, survey_name, section_name):
 										sub_answer = Answer(survey_session=survey_session, question=sub_question, parent_answer_id = answer)
 										if sub_question.option_group == OptionGroup.objects.get(name='other'):
 											if sub_question.input_type == 'text':
-												sub_answer.text = value
+												sub_answer.text = value[0]
 											elif sub_question.input_type == 'number':
-												sub_answer.numeric = float(value)
+												sub_answer.numeric = float(value[0])
 											else:
 												pass
 										else:
 											if(sub_question.input_type == 'range'):
-												sub_answer.numeric = float(value)
+												sub_answer.numeric = float(value[0])
 											else:
 												sub_answer.save()
 												for result_answer in value:
