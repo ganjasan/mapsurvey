@@ -51,9 +51,10 @@
     var section_response = {};
 
 //   console.log("{{ subquestions_forms|safe}}")
+    var subquestions_forms = JSON.parse(`{{ subquestions_forms|safe }}`.replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
 
-      var subquestion_form_result = JSON.parse("{94: '<p><label for="id_95">Число:</label> <input type="number" name="95" id="id_95"></p>'}".replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
-//    var subquestions_forms = JSON.parse('{{ subquestions_forms|safe }}'.replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
+    //var subquestion_form_result = JSON.parse("{94: '<p><label for="id_95">Число:</label> <input type="number" name="95" id="id_95"></p>'}".replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
+//  var subquestions_forms = JSON.parse('{{ subquestions_forms|safe }}'.replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
     
     //console.log(subquestions_forms['Q1']);
 
