@@ -137,7 +137,7 @@ class OptionChoice(models.Model):
 
 def question_code_generator():
     while True:
-        code = "Q_"+str(random.random())[2:13]
+        code = "Q_"+str(random.random())[2:12]
         try:
             Question.objects.get(code=code)
         except:
@@ -146,7 +146,7 @@ def question_code_generator():
 class Question(models.Model):    
     survey_section = models.ForeignKey("SurveySection", on_delete=models.CASCADE)
     parent_question_id = models.ForeignKey('self', default=None, null=True, blank=True, on_delete=models.CASCADE)
-    code = models.CharField(max_length=12, default=question_code_generator)
+    code = models.CharField(max_length=50, default=question_code_generator)
     order_number = models.IntegerField(default=0) # unique in section or popup
     name = models.CharField(max_length=80, null=True, blank=True)
     subtext = models.CharField(max_length=500, null=True, blank=True)
