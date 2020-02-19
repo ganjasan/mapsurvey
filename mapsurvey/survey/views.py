@@ -283,6 +283,7 @@ def download_data(request, survey_name):
 			properties[answer.question.name] = result
 
 		properties["session"] = str(session)
+		properties["datetime"] = session.start_datetime
 		properties_list.append(properties)
 
 	zip.writestr(survey.name + '.csv', pd.DataFrame(properties_list).to_csv())
