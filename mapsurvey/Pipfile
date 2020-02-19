@@ -13,6 +13,7 @@ django-leaflet = "*"
 geojson = "*"
 django-registration = "*"
 pandas = "*"
+uwsgi = "*"
 
 [requires]
 python_version = "3.7"
