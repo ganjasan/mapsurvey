@@ -26,7 +26,7 @@ services:
 
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    command: gunicorn --bind :8000 mapsurvey.wsgi:application
     ports:
       - 8000:8000
     depends_on:
