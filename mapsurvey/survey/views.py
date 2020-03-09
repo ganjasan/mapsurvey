@@ -220,10 +220,10 @@ def download_data(request, survey_name):
 				elif input_type == "choice":
 					if subanswers[key]:
 						answer = subanswers[key][0]
-						result =answer.choice.name
+						result =answer.choice.all()[0].name
 				elif input_type == "multichoice":
 					if subanswers[key]:
-						result = [a.choice.name for a in subanswers[key]]
+						result = [a.choice.all()[0].name for a in subanswers[key]]
 
 				properties[key.name] = result
 
