@@ -104,9 +104,11 @@ class SurveySectionAnswerForm(forms.Form):
             return LeafletDrawButtonField(widget=PointDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class)
 
         elif input_type == 'line':
+            draw_icon_class = icon_class if icon_class else "fas fa-route"
             return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class="")
 
         elif input_type == 'polygon':
+            draw_icon_class = icon_class if icon_class else "fas fa-draw-polygon"
             return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class="fas fa-draw-polygon")
 
         else:

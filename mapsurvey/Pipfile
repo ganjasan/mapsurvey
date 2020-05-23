@@ -14,7 +14,8 @@ geojson = "*"
 django-registration = "*"
 pandas = "*"
 gunicorn = "*"
-
+django-storages = "*"
+boto3 = "*"
 
 [requires]
 python_version = "3.7"

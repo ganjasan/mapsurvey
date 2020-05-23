@@ -95,7 +95,7 @@ class SurveySection(models.Model):
 
     survey_header = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE)
     name = models.CharField(max_length=45, default="survey_description", validators=[validate_url_name]) #section_a
-    title = models.CharField(max_length=80, null=True, blank=True) #Your Home Area
+    title = models.CharField(max_length=256, null=True, blank=True) #Your Home Area
     subheading = models.CharField(max_length=4096, null=True, blank=True) #Several question about your home area quality
     code = models.CharField(max_length=8)
 
@@ -129,7 +129,7 @@ class OptionGroup(models.Model):
 
 class OptionChoice(models.Model):
     option_group = models.ForeignKey("OptionGroup", on_delete=models.CASCADE)
-    name = models.CharField(max_length=45)
+    name = models.CharField(max_length=256)
     code = models.IntegerField(null=False, blank=False)
 
     def __str__(self):
@@ -148,8 +148,8 @@ class Question(models.Model):
     parent_question_id = models.ForeignKey('self', default=None, null=True, blank=True, on_delete=models.CASCADE)
     code = models.CharField(max_length=50, default=question_code_generator)
     order_number = models.IntegerField(default=0) # unique in section or popup
-    name = models.CharField(max_length=80, null=True, blank=True)
-    subtext = models.CharField(max_length=500, null=True, blank=True)
+    name = models.CharField(max_length=512, null=True, blank=True)
+    subtext = models.CharField(max_length=512, null=True, blank=True)
     input_type = models.CharField(max_length=80, choices=INPUT_TYPE_CHOICES)
     option_group = models.ForeignKey("OptionGroup", on_delete=models.CASCADE, null=True)
     required = models.BooleanField(default=False)
