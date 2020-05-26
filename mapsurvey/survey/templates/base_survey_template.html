@@ -106,6 +106,8 @@
 
     }).addTo(map);
 
+    L.Draw.Polyline.prototype._onTouch = L.Util.falseFn;
+    L.Draw.Polygon.prototype._onTouch = L.Util.falseFn;
 
     var editableLayers = new L.FeatureGroup();
 
@@ -131,7 +133,7 @@
           },
         };
 
-        // Initialise the draw control and pass it the FeatureGroup of editable layers
+    // Initialise the draw control and pass it the FeatureGroup of editable layers
     var drawControl = new L.Control.Draw(drawPluginOptions);
     map.addControl(drawControl);
 
@@ -222,9 +224,7 @@
                 }
                 
             )
-            console.log(currentDrawFeature);
-
-
+            
             currentDrawFeature.enable();
 
             $(this).attr('data-mode', 'stop_draw');

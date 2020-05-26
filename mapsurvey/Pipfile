@@ -16,6 +16,7 @@ pandas = "*"
 gunicorn = "*"
 django-storages = "*"
 boto3 = "*"
+pillow = "*"
 
 [requires]
 python_version = "3.7"

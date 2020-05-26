@@ -51,6 +51,22 @@ class PolygonDrawButtonWidget(LeafletDrawButtonWidget):
     template_name = 'polygon_draw_button.html'
 
 
+class ShowImageWidget(widgets.Widget):
+    template_name = 'show_image.html'
+
+    def __init__(self, attrs=None):
+        if attrs is not None:
+            attrs = attrs.copy()
+            self.image_src = attrs.pop('image_source', self.image_source)
+
+        super().__init__(attrs)
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['widget']['image_source'] = context['widget']['attrs']['image_source']
+
+        return context
+
 class LeafletDrawButtonField(forms.Field):
     def __init__(self,*, title, subtitle, color, icon_class, draw_icon_class, **kwargs):
         self.title = title
@@ -71,15 +87,26 @@ class LeafletDrawButtonField(forms.Field):
 
         return attrs
 
+class ShowImageField(forms.Field):
+    def __init__(self, *, image_source, **kwargs):
+        self.image_source = image_source
+
+        super().__init__(**kwargs)
+
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        attrs['image_source'] = self.image_source
+
+        return attrs
 
 class SurveySectionAnswerForm(forms.Form):
 
-    def _get_form_from_input_type(self, input_type, required,  option_group, label, sublabel, color, icon_class):
+    def _get_form_from_input_type(self, input_type, required,  option_group, label, sublabel, color, icon_class, image_source):
 
         if input_type == 'text':
             return forms.CharField(widget=forms.Textarea, label=label, required = required)
 
-        if input_type == 'number':
+        elif input_type == 'number':
             return forms.CharField(widget=forms.NumberInput, label=label, required = required)
 
         elif input_type == 'choice':
@@ -97,7 +124,7 @@ class SurveySectionAnswerForm(forms.Form):
             int_choices = [ int(c.name) for c in option_group.choices()]
             minimum = min(int_choices)
             maximum = max(int_choices)
-            return forms.IntegerField(widget=forms.NumberInput(attrs={'type':'range', 'step': '1', 'min':str(minimum), 'max':str(maximum)}), label=label)
+            return forms.IntegerField(widget=forms.NumberInput(attrs={'type':'range', 'step': '1', 'min':str(minimum), 'max':str(maximum)}), label=label, required=required)
 
         elif input_type == 'point':
             draw_icon_class = icon_class if icon_class else "fas fa-map-marker-alt"
@@ -105,11 +132,14 @@ class SurveySectionAnswerForm(forms.Form):
 
         elif input_type == 'line':
             draw_icon_class = icon_class if icon_class else "fas fa-route"
-            return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class="")
+            return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class)
 
         elif input_type == 'polygon':
             draw_icon_class = icon_class if icon_class else "fas fa-draw-polygon"
-            return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class="fas fa-draw-polygon")
+            return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class)
+
+        elif input_type == 'image':
+            return ShowImageField(widget=ShowImageWidget, label=False, image_source=image_source)
 
         else:
             return forms.CharField(widget=forms.Textarea)
@@ -131,11 +161,14 @@ class SurveySectionAnswerForm(forms.Form):
             #add question to field
             field_name = question.code
             field_label = question.name
-            field_sublabel = question.subtext
+            field_sublabel = question.subtext if question.subtext else ""
             field_color = question.color
             field_icon_class = question.icon_class
+            image_source = question.image.url if question.image else None
 
-            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question.option_group, field_label, field_sublabel, field_color, field_icon_class)
+            print(field_sublabel)
+
+            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question.option_group, field_label, field_sublabel, field_color, field_icon_class, image_source)
 
 
     def save(self):

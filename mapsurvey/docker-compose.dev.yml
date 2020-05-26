@@ -1,7 +1,6 @@
 version: '3.3'
 
 volumes:
-  dbbackups:
   postgres-data:
 
 services:
@@ -9,7 +8,6 @@ services:
     image: postgis/postgis
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - dbbackups:/backups
     environment:
       # If you need to create multiple database you can add coma separated databases eg gis,data
       - POSTGRES_DB=mapsurvey

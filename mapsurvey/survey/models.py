@@ -30,12 +30,16 @@ INPUT_TYPE_CHOICES = (
     ("point", _("Geo Point")),
     ("line", _("Geo Line")),
     ("polygon", _("Geo Polygon")),
+    ("image", _("Image")),
 )
 
 class SurveySession(models.Model):
     survey = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE)
     start_datetime = models.DateTimeField(default=datetime.now)
     end_datetime = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
 
     def answers(self):
         if not hasattr(self, "__acache"):
@@ -47,6 +51,8 @@ class SurveySession(models.Model):
 class Organization(models.Model):
     name = models.CharField(max_length=250)
     
+    class Meta:
+        app_label = 'survey'
 
     def __str__(self):
         return self.name
@@ -57,6 +63,9 @@ class SurveyHeader(models.Model):
     organization = models.ForeignKey("Organization", on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=45, unique=True, validators=[validate_url_name])
     redirect_url = models.CharField(max_length=250, default="#") #URL to redirect to when survey is complete.
+
+    class Meta:
+        app_label = 'survey'
 
     def __str__(self):
         return self.name
@@ -105,6 +114,9 @@ class SurveySection(models.Model):
     next_section = models.ForeignKey("SurveySection", null=True, blank=True, on_delete=models.SET_NULL, related_name='survey_next_section')
     prev_section = models.ForeignKey("SurveySection", null=True, blank=True, on_delete=models.SET_NULL, related_name='survey_prev_section')
 
+    class Meta:
+        app_label = 'survey'
+
     def __str__(self):
         return self.name
 
@@ -119,6 +131,9 @@ class OptionGroup(models.Model):
     name = models.CharField(max_length=45, unique=True)
     #choices = models.ManyToManyField("OptionChoice")
 
+    class Meta:
+        app_label = 'survey'
+
     def __str__(self):
         return self.name
 
@@ -131,6 +146,9 @@ class OptionChoice(models.Model):
     option_group = models.ForeignKey("OptionGroup", on_delete=models.CASCADE)
     name = models.CharField(max_length=256)
     code = models.IntegerField(null=False, blank=False)
+
+    class Meta:
+        app_label = 'survey'
 
     def __str__(self):
         return self.name
@@ -155,6 +173,10 @@ class Question(models.Model):
     required = models.BooleanField(default=False)
     color = models.CharField(verbose_name=_(u'Color'), max_length=7, help_text=_(u'HEX color, as #RRGGBB'), default="#000000")
     icon_class = models.CharField(default="", max_length=80, help_text=_(u'Must be Font-Awesome class'), blank=True, null=True)
+    image = models.ImageField(upload_to ='images/', null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
 
     def __str__(self):
         return self.name 
@@ -182,6 +204,9 @@ class Answer(models.Model):
     line = geomodels.LineStringField(null=True, blank=True)
     polygon = geomodels.PolygonField(null=True, blank=True)
 
+    class Meta:
+        app_label = 'survey'
+    
     def subAnswers(self):
     	if not hasattr(self, "__sacache"):
     		subanswers = Answer.objects.filter(parent_answer_id=self)

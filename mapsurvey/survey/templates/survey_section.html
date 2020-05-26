@@ -56,11 +56,7 @@
     //var subquestion_form_result = JSON.parse("{94: '<p><label for="id_95">Число:</label> <input type="number" name="95" id="id_95"></p>'}".replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
 //  var subquestions_forms = JSON.parse('{{ subquestions_forms|safe }}'.replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
     
-    //console.log(subquestions_forms['Q1']);
-
     map.on('draw:created', function(e) {
-
-        console.log(currentQ)
 
         var type = e.layerType,
         layer = e.layer,
@@ -79,6 +75,7 @@
             });
 
         layer.on("popupopen", onPopupOpen);
+        layer.on("popupclose", onPopupClose);
         
         editableLayers.addLayer(layer);
 
@@ -95,20 +92,22 @@
         */        
     });
 
-   
-
     function onPopupOpen(){
         var tempLayer = this;
 
         //загрузить из properties данные подвопросов если они там есть
         var properties = tempLayer.feature.properties;
         
+        console.log(properties)
+
         for (var key in properties){
             if (key != 'question_id'){
                 element = $('*[name=' + key +']');
+                
                 if (element.length>1) {
-                    if (element[0].type == 'radio'){
-                        $('*[name=Q1_2][value='+properties[key]+']').prop('checked', true);
+                    let type = element[0].type
+                    if (type == 'checkbox' || type == 'radio'){
+                        properties[key].forEach(element => $('*[name=' + key + '][value='+ element +']').prop('checked', true));
                     }
                 }
                 else{
@@ -141,6 +140,16 @@
             endDrawMode();
             
         })
+    }
+
+    function onPopupClose(){
+        var tempLayer = this;
+        
+        subquestion_form_result = $('#subquestion_form').serializeArray();
+        grouped_by_name_result = subquestion_form_result.groupBy("name");
+        for (var prop in grouped_by_name_result) {
+                tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
+        }
     }
 
 </script>
