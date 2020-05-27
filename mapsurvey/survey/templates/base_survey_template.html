@@ -109,6 +109,124 @@
     L.Draw.Polyline.prototype._onTouch = L.Util.falseFn;
     L.Draw.Polygon.prototype._onTouch = L.Util.falseFn;
 
+    //l18n
+    L.drawLocal = {
+    // format: {
+    //  numeric: {
+    //      delimiters: {
+    //          thousands: ',',
+    //          decimal: '.'
+    //      }
+    //  }
+    // },
+        draw: {
+            toolbar: {
+                // #TODO: this should be reorganized where actions are nested in actions
+                // ex: actions.undo  or actions.cancel
+                actions: {
+                    title: 'Cancel drawing',
+                    text: 'Cancel'
+                },
+                finish: {
+                    title: 'Finish drawing',
+                    text: 'Finish'
+                },
+                undo: {
+                    title: 'Delete last point drawn',
+                    text: 'Delete last point'
+                },
+                buttons: {
+                    polyline: 'Draw a polyline',
+                    polygon: 'Draw a polygon',
+                    rectangle: 'Draw a rectangle',
+                    circle: 'Draw a circle',
+                    marker: 'Draw a marker',
+                    circlemarker: 'Draw a circlemarker'
+                }
+            },
+            handlers: {
+                circle: {
+                    tooltip: {
+                        start: 'Click and drag to draw circle.'
+                    },
+                    radius: 'Radius'
+                },
+                circlemarker: {
+                    tooltip: {
+                        start: 'Click map to place circle marker.'
+                    }
+                },
+                marker: {
+                    tooltip: {
+                        start: 'Нахмите на карту, чтобы установить маркер.'
+                    }
+                },
+                polygon: {
+                    tooltip: {
+                        start: 'Нажмите, чтобы начать рисовать фигуру.',
+                        cont: 'Нажмите, чтобы продолжить рисовать фигуру.',
+                        end: 'Нажмите на первую точку, чтобы закрыть эту форму.'
+                    }
+                },
+                polyline: {
+                    error: '<strong>Ошибка:</strong> края формы не могут пересекаться!',
+                    tooltip: {
+                        start: 'Нажмите, чтобы начать рисование линию.',
+                        cont: 'Нажмите, чтобы продолжить рисовать линию.',
+                        end: 'Нажмите на последнюю точку, чтобы закончить линию.'
+                    }
+                },
+                rectangle: {
+                    tooltip: {
+                        start: 'Click and drag to draw rectangle.'
+                    }
+                },
+                simpleshape: {
+                    tooltip: {
+                        end: 'Release mouse to finish drawing.'
+                    }
+                }
+            }
+        },
+        edit: {
+            toolbar: {
+                actions: {
+                    save: {
+                        title: 'Save changes',
+                        text: 'Save'
+                    },
+                    cancel: {
+                        title: 'Cancel editing, discards all changes',
+                        text: 'Cancel'
+                    },
+                    clearAll: {
+                        title: 'Clear all layers',
+                        text: 'Clear All'
+                    }
+                },
+                buttons: {
+                    edit: 'Edit layers',
+                    editDisabled: 'No layers to edit',
+                    remove: 'Delete layers',
+                    removeDisabled: 'No layers to delete'
+                }
+            },
+            handlers: {
+                edit: {
+                    tooltip: {
+                        text: 'Drag handles or markers to edit features.',
+                        subtext: 'Click cancel to undo changes.'
+                    }
+                },
+                remove: {
+                    tooltip: {
+                        text: 'Click on a feature to remove.'
+                    }
+                }
+            }
+        }
+    };
+
     var editableLayers = new L.FeatureGroup();
 
     var currentQ = null;
@@ -240,11 +358,42 @@
     });
 
     $('.drawpolygon').click(function() {
-        startDrawMode(this);
+        //startDrawMode(this);
+        currentDrawFeature = new L.Draw.Polygon(map);
+
+        currentDrawFeature.setOptions(
+                {
+                        shapeOptions:{
+                            color:$(this).attr('data-color'),
+                        }
+                }
+                
+            )
+
+        currentDrawFeature.enable();
+
+        toggleInfo(false);
+        currentQ = $(this).attr('name')
+
     });
 
     $('.drawline').click(function() {
-        startDrawMode(this);
+        //startDrawMode(this);
+        currentDrawFeature = new L.Draw.Polyline(map);
+
+        currentDrawFeature.setOptions(
+                {
+                        shapeOptions:{
+                            color:$(this).attr('data-color'),
+                        }
+                }
+                
+            )
+
+        currentDrawFeature.enable();
+
+        toggleInfo(false);
+        currentQ = $(this).attr('name')
     })
 
     $('.drawpoint').click(function() {
