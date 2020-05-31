@@ -205,7 +205,7 @@ def download_data(request, survey_name):
 			#получить properties из subquestions
 			subquestions = question.subQuestions()
 			properties = {}
-			subanswers = answer.subAnswers();
+			subanswers = answer.subAnswers()
 			result = ""
 			for key in subanswers:
 				input_type = key.input_type
@@ -223,7 +223,7 @@ def download_data(request, survey_name):
 						result =answer.choice.all()[0].name
 				elif input_type == "multichoice":
 					if subanswers[key]:
-						result = [a.choice.all()[0].name for a in subanswers[key]]
+						result = [a.name for a in subanswers[key][0].choice.all()]
 
 				properties[key.name] = result
 
