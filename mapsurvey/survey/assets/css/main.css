@@ -8,6 +8,14 @@ body {
   padding: 0;
 }
 
+label {
+  margin-right: 12px;
+}
+
+.form-check-inline {
+  margin-right: 0px;
+}
+
 .questions p {
   padding-bottom: 0;
   margin-bottom: 0;
@@ -15,6 +23,7 @@ body {
 
 ul {
    list-style: none;
+   padding-left: 0;
 }
 
 
@@ -37,8 +46,16 @@ ul {
   opacity: 0.95;
   border: 1px solid black
   margin-right:10px;
-  overflow-y: none;
   padding-bottom: 20px;
+}
+
+.geo-inp{
+    height:0;
+    width:0;
+    visibility: hidden;
+    padding:0;
+    margin:0;
+    float:right;
 }
 
 .header{
@@ -52,7 +69,6 @@ ul {
 
 #content{
   padding: 15px;
-  overflow-y: auto;
 }
 
 .glyph {

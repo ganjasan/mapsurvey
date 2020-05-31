@@ -84,12 +84,7 @@
 
         }else{
             endDrawMode();            
-        }
-        /* 
-        if Object.keys(layer.feature.properties).length > 1 {
-            layer.openPopup();
-        }
-        */        
+        }    
     });
 
     function onPopupOpen(){
@@ -143,6 +138,7 @@
     }
 
     function onPopupClose(){
+
         var tempLayer = this;
         
         subquestion_form_result = $('#subquestion_form').serializeArray();
@@ -150,6 +146,11 @@
         for (var prop in grouped_by_name_result) {
                 tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
         }
+
+        toggleInfo(true);
+        toggleDrawbar(false);
+
+        currentDrawFeature.disable();
     }
 
 </script>

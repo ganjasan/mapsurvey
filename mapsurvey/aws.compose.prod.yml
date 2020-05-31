@@ -2,7 +2,7 @@ version: '2'
 services:
   web:
     image: 911582809631.dkr.ecr.eu-west-1.amazonaws.com/mapsurvey:latest
-    command: 'gunicorn --bind :8000 mapsurvey.wsgi:application'
+    command: 'python manage.py runserver 0.0.0.0:8000'
     ports:
       - 80:8000
     env_file:

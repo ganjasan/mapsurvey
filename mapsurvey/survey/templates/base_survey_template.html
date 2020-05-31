@@ -16,7 +16,8 @@
 	</script>
 	<noscript><div><img src="https://mc.yandex.ru/watch/53686546" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 	<!-- /Yandex.Metrika counter -->
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- js util -->
     <script type="text/javascript" src="{% static 'js/util.js' %}"></script>
@@ -241,13 +242,14 @@
             polygon: false,
             marker:false,
             polyline:false,
-            circle: false, 
+            circlemarker: false,
+            circle:false,
             rectangle: false,
-           
             },
           edit: {
             featureGroup: editableLayers, //REQUIRED!!
-            remove: false
+            remove: false,
+            edit:false
           },
         };
 
@@ -301,11 +303,10 @@
 
     $("#section_question_form").submit(function(e){
     	editableLayers.eachLayer(function(layer){
-    		let valueOfInput = $(".geo-inp[name='" + layer.feature.properties.question_id + "'").val()
-    		valueOfInput += (JSON.stringify(layer.toGeoJSON()) + "|")
-        	console.log(valueOfInput)
-        	$(".geo-inp[name='" + layer.feature.properties.question_id + "'").val(valueOfInput)
-    	})
+    		let valueOfInput = $(".geo-inp[name='" + layer.feature.properties.question_id + "'").val();
+    		valueOfInput += (JSON.stringify(layer.toGeoJSON()) + "|");
+        	$(".geo-inp[name='" + layer.feature.properties.question_id + "'").val(valueOfInput);
+    	});
     })
 
     $('#draw_button').click(function(){
@@ -407,8 +408,6 @@
                 iconColor: '#FFF',
                 iconXOffset: -2, 
             })
-            
-            
         }
 
         currentDrawFeature = new L.Draw.Marker(map, options);
@@ -416,7 +415,7 @@
         currentDrawFeature.enable();
 
         toggleInfo(false);
-        currentQ = $(this).attr('name')
+        currentQ = $(this).attr('name');
     })
     
 </script>

@@ -103,7 +103,7 @@ def survey_section(request, survey_name, section_name):
 										sub_question = Question.objects.get(Q(survey_section=section) & Q(code=key))
 										sub_answer = Answer(survey_session=survey_session, question=sub_question, parent_answer_id = answer)
 										if sub_question.option_group == OptionGroup.objects.get(name='other'):
-											if sub_question.input_type == 'text' and value and value[0]:
+											if (sub_question.input_type == 'text' or sub_question.input_type == 'text_line') and value and value[0]:
 												sub_answer.text = value[0]
 											elif sub_question.input_type == 'number' and value and value[0]:
 												sub_answer.numeric = float(value[0])
@@ -124,7 +124,7 @@ def survey_section(request, survey_name, section_name):
 					else:
 						answer = Answer(survey_session=survey_session, question=question)
 
-						if question.input_type == "text":
+						if (question.input_type == "text" or question.input_type == "text_line"):
 							answer.text = result
 						elif question.input_type == "number":
 							if result:
@@ -209,7 +209,7 @@ def download_data(request, survey_name):
 			result = ""
 			for key in subanswers:
 				input_type = key.input_type
-				if input_type == "text":
+				if (input_type == "text" or input_type == "text_line"):
 					if subanswers[key]:
 						answer = subanswers[key][0]
 						result = answer.text
@@ -217,7 +217,7 @@ def download_data(request, survey_name):
 					if subanswers[key]:
 						answer = subanswers[key][0]
 						result = answer.numeric
-				elif input_type == "choice":
+				elif input_type == "choice" or input_type == "rating":
 					if subanswers[key]:
 						answer = subanswers[key][0]
 						result =answer.choice.all()[0].name
@@ -268,11 +268,11 @@ def download_data(request, survey_name):
 		for answer in answers:
 			input_type = answer.question.input_type
 			
-			if input_type == "text":
+			if (input_type == "text" or input_type == "text_line"):
 				result = answer.text
 			elif input_type == "number" or input_type == "range":
 				result = answer.numeric
-			elif input_type == "choice":
+			elif input_type == "choice" or input_type == "rating":
 				result = answer.choice.all()[0].name
 			elif input_type == "multichoice":
 				

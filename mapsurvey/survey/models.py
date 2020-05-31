@@ -31,6 +31,8 @@ INPUT_TYPE_CHOICES = (
     ("line", _("Geo Line")),
     ("polygon", _("Geo Polygon")),
     ("image", _("Image")),
+    ("text_line", _("Line")),
+    ("html", _("HTML")),
 )
 
 class SurveySession(models.Model):

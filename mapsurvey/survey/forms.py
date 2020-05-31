@@ -7,6 +7,36 @@ from django import forms
 from django.utils.safestring import mark_safe
 import re
 
+class HTMLTextWidget(widgets.Widget):
+    template_name = 'html_text.html'
+
+    def __init__(self, attrs=None):
+        if attrs is not None:
+            attrs = attrs.copy()
+            self.title = attrs.pop('title', self.title)
+            self.subtitle = attrs.pop('subtitle', self.subtitle)
+
+        super().__init__(attrs)
+
+    def get_context(self,name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['widget']['title'] = context['widget']['attrs']['title']
+        context['widget']['subtitle'] = context['widget']['attrs']['subtitle']
+        return context
+
+class HTMLField(forms.Field):
+    def __init__(self, *, title, subtitle, **kwargs):
+        self.title = title
+        self.subtitle = subtitle
+        super().__init__(**kwargs)
+
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        attrs['title'] = self.title
+        attrs['subtitle'] = self.subtitle
+
+        return attrs
+
 
 class LeafletDrawButtonWidget(widgets.Widget):
 
@@ -23,6 +53,7 @@ class LeafletDrawButtonWidget(widgets.Widget):
             self.color = attrs.pop('color', self.color)
             self.icon_class = attrs.pop('icon_class', self.icon_class)
             self.draw_icon_class = attrs.pop('draw_icon_class', self.draw_icon_class)
+            self.required = attrs.pop('required', self.required)
 
         super().__init__(attrs)
 
@@ -35,7 +66,7 @@ class LeafletDrawButtonWidget(widgets.Widget):
         context['widget']['color'] = context['widget']['attrs']['color']
         context['widget']['icon_class'] = context['widget']['attrs']['icon_class']
         context['widget']['draw_icon_class'] = context['widget']['attrs']['draw_icon_class']
-        
+        context['widget']['required'] = context['widget']['required']
         return context
 
 class PointDrawButtonWidget(LeafletDrawButtonWidget):
@@ -106,6 +137,9 @@ class SurveySectionAnswerForm(forms.Form):
         if input_type == 'text':
             return forms.CharField(widget=forms.Textarea, label=label, required = required)
 
+        elif input_type == 'text_line':
+            return forms.CharField(widget=forms.TextInput, label=label, required = required)
+
         elif input_type == 'number':
             return forms.CharField(widget=forms.NumberInput, label=label, required = required)
 
@@ -128,19 +162,24 @@ class SurveySectionAnswerForm(forms.Form):
 
         elif input_type == 'point':
             draw_icon_class = icon_class if icon_class else "fas fa-map-marker-alt"
-            return LeafletDrawButtonField(widget=PointDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class)
+            return LeafletDrawButtonField(widget=PointDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required)
 
         elif input_type == 'line':
             draw_icon_class = icon_class if icon_class else "fas fa-route"
-            return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class)
+            return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required)
 
         elif input_type == 'polygon':
             draw_icon_class = icon_class if icon_class else "fas fa-draw-polygon"
-            return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class)
+            return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required)
 
         elif input_type == 'image':
             return ShowImageField(widget=ShowImageWidget, label=False, image_source=image_source)
 
+        elif input_type == 'rating':
+            return forms.ChoiceField(widget=forms.RadioSelect(attrs={'class': 'form-check-inline', 'style': 'margin-right:0;'}), choices=[(choice.code, choice.name) for choice in option_group.choices()], label=label, required=required)
+
+        elif input_type == "html":
+            return HTMLField(widget=HTMLTextWidget, label=False, title = label, subtitle=sublabel)
         else:
             return forms.CharField(widget=forms.Textarea)
     
