@@ -1,0 +1,22 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+django = "*"
+django-debug-toolbar = "*"
+psycopg2-binary = "*"
+django-leaflet = "*"
+geojson = "*"
+django-registration = "*"
+pandas = "*"
+gunicorn = "*"
+django-storages = "*"
+boto3 = "*"
+pillow = "*"
+
+[requires]
+python_version = "3.9"

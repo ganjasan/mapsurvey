@@ -1,0 +1,29 @@
+{% extends 'base_survey_template.html' %}
+
+{% block content %}
+	<div class="title">{{ section.title }}</div>
+	<div class='questions'>
+		{% csrf_token %}
+        {{ form }}
+	</div>
+	<div class="container navig_button">
+        <div class="row">
+            <div class="col align-self-start">
+                {% if section.prev_section %}
+                    <a class="btn btn-primary" href="../{{ section.prev_section }}" role="button">Назад</a>
+                   
+                {% endif %}
+            </div>
+            <div class="col-2 align-self-end">
+                {% if section.next_section %}
+                    <input type="submit" class="btn btn-primary" form="section_question_form" value="Далее">
+                {% else %}
+                    <a class="btn btn-primary" href="{{ survey.redirect_url }}" role="button">Завершить</a>
+                {% endif %}
+                
+            </div>
+        </div>
+
+    </div>
+  
+{% endblock %}

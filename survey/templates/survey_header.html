@@ -1,0 +1,25 @@
+{% extends 'base_survey_template.html' %}
+
+{% block title %}
+    {{ survey.title }}
+{% endblock %}
+
+{% block content %}
+    <div class="instructions">
+        <p> {{ survey.instructions | safe  }} </p>
+    </div> 
+{% endblock %}
+
+{% block navig_buttons %}
+    <div class="container">
+        <div class="row">
+            <div class="col align-self-start">
+            </div>
+            <div class="col-2 align-self-end">
+                {% if section %}
+                <a class="btn btn-primary next_button" href="{{ section }}" role="button">Начать</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

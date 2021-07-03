@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+
+
+{% block content %}
+	<div class="menu">
+	</div>
+
+	<div class="items">
+		<table class="table table-striped">
+		  <tbody>
+		  	{% for survey in survey_headers %}
+				<tr>
+					<td><a href="../surveys/{{survey.name}}">{{survey.name}}</a></td>
+					<td><a href="#">Edit</a></td>
+					<td><a href="../surveys/{{survey.name}}/download">Download</a></td>
+					<td><a href="#" class="text-danger">Delete</a></td>
+				</tr>
+			{% endfor %}
+		  </tbody>
+		</table>
+		<button type="button" class="btn btn-outline-primary">New Survey</button>
+	</div>
+{% endblock %}

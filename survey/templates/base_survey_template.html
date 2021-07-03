@@ -1,0 +1,424 @@
+
+{% load static %}
+<head>
+	<!-- Yandex.Metrika counter -->
+	<script type="text/javascript" >
+	   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+	   m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+	   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+	   ym(53686546, "init", {
+	        clickmap:true,
+	        trackLinks:true,
+	        accurateTrackBounce:true,
+	        webvisor:true
+	   });
+	</script>
+	<noscript><div><img src="https://mc.yandex.ru/watch/53686546" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+	<!-- /Yandex.Metrika counter -->
+	
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- js util -->
+    <script type="text/javascript" src="{% static 'js/util.js' %}"></script>
+
+    <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
+   integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+   crossorigin=""/>
+   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+    <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+   integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
+   crossorigin=""></script>
+    
+    <!-- bootstrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <!-- end bootstrap -->
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js" type="text/javascript"></script>
+
+   <!-- leaflet fa markers -->
+   <link rel='stylesheet' href="{% static 'css/L.Icon.FontAwesome.css' %}">
+   <script type="text/javascript" src="{% static 'js/L.Icon.FontAwesome.js' %}"></script>
+   <!--end fa markers -->
+
+</head>
+
+
+<button id="showButton" onclick="toggleInfo(true)" style="visibility: hidden;">
+        <i class="fas fa-angle-double-right" style="font-size:28px; width:28px; height:28px;"></i>
+</button>
+<div id="info_page" class="d-flex flex-column">
+    <div class="header">
+        <div id='title'>
+        	{% block title %}
+        	{% endblock %}
+        </div>
+        <i id="closeButton" class="fas fa-angle-double-left" onclick="toggleInfo(false)" style="font-size:28px; width:28px; height:28px;"></i>
+    </div>
+    <div id='content'>
+    	{% block content %}
+    	{% endblock %}
+	</div>
+	<div id='navig_buttons' class="mt-auto">
+		{% block navig_buttons %}
+		{% endblock %}
+	</div>
+</div>
+
+<div id="drawbar" style="visibility: hidden;">
+    <button id='draw_button' type="button" class="btn btn-primary" data-mode='start_draw'>Начать рисовать</button>
+</div>
+
+<div id="map"></div>
+
+<script type="text/javascript">
+    //nvigation
+    function toggleInfo(show) {
+        if(show) { info_page.style.visibility="visible"; showButton.style.visibility="hidden"}
+        else { info_page.style.visibility="hidden"; showButton.style.visibility="visible"}
+    }
+
+    function toggleDrawbar(show){
+        if (show){drawbar.style.visibility="visible";}
+        else{drawbar.style.visibility="hidden"}
+    }
+
+    var mapboxUrl = 'https://api.mapbox.com/styles/v1/konuchovartem/ck3zm4ovp4gzs1ck07dyr2ttp/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}';
+    mapboxAccessToken = 'pk.eyJ1IjoiYWxleGFuZGVyMzQzOTYiLCJhIjoiY2p4dXQ5d3FjMDQ5bDNubW5wamRzMnEyZyJ9.upZaF0zYwJ8NK-9Wub4MOg';
+    
+    var map = L.map('map', {zoomControl: false}).setView(["{{ section.start_map_postion.y }}".replace(",","."), "{{ section.start_map_postion.x }}".replace(",",".")], "{{ section.start_map_zoom }}");
+
+    L.control.zoom({position: 'bottomright'}).addTo(map);
+
+    L.tileLayer(
+        mapboxUrl, {
+            attribution: 'Data © <a href="http://osm.org/copyright">OpenStreetMap</a>',
+            maxZoom: 23,
+            accessToken: mapboxAccessToken,
+
+    }).addTo(map);
+
+    L.Draw.Polyline.prototype._onTouch = L.Util.falseFn;
+    L.Draw.Polygon.prototype._onTouch = L.Util.falseFn;
+
+    //l18n
+    L.drawLocal = {
+    // format: {
+    //  numeric: {
+    //      delimiters: {
+    //          thousands: ',',
+    //          decimal: '.'
+    //      }
+    //  }
+    // },
+        draw: {
+            toolbar: {
+                // #TODO: this should be reorganized where actions are nested in actions
+                // ex: actions.undo  or actions.cancel
+                actions: {
+                    title: 'Cancel drawing',
+                    text: 'Cancel'
+                },
+                finish: {
+                    title: 'Finish drawing',
+                    text: 'Finish'
+                },
+                undo: {
+                    title: 'Delete last point drawn',
+                    text: 'Delete last point'
+                },
+                buttons: {
+                    polyline: 'Draw a polyline',
+                    polygon: 'Draw a polygon',
+                    rectangle: 'Draw a rectangle',
+                    circle: 'Draw a circle',
+                    marker: 'Draw a marker',
+                    circlemarker: 'Draw a circlemarker'
+                }
+            },
+            handlers: {
+                circle: {
+                    tooltip: {
+                        start: 'Click and drag to draw circle.'
+                    },
+                    radius: 'Radius'
+                },
+                circlemarker: {
+                    tooltip: {
+                        start: 'Click map to place circle marker.'
+                    }
+                },
+                marker: {
+                    tooltip: {
+                        start: 'Нахмите на карту, чтобы установить маркер.'
+                    }
+                },
+                polygon: {
+                    tooltip: {
+                        start: 'Нажмите, чтобы начать рисовать фигуру.',
+                        cont: 'Нажмите, чтобы продолжить рисовать фигуру.',
+                        end: 'Нажмите на первую точку, чтобы закрыть эту форму.'
+                    }
+                },
+                polyline: {
+                    error: '<strong>Ошибка:</strong> края формы не могут пересекаться!',
+                    tooltip: {
+                        start: 'Нажмите, чтобы начать рисование линию.',
+                        cont: 'Нажмите, чтобы продолжить рисовать линию.',
+                        end: 'Нажмите на последнюю точку, чтобы закончить линию.'
+                    }
+                },
+                rectangle: {
+                    tooltip: {
+                        start: 'Click and drag to draw rectangle.'
+                    }
+                },
+                simpleshape: {
+                    tooltip: {
+                        end: 'Release mouse to finish drawing.'
+                    }
+                }
+            }
+        },
+        edit: {
+            toolbar: {
+                actions: {
+                    save: {
+                        title: 'Save changes',
+                        text: 'Save'
+                    },
+                    cancel: {
+                        title: 'Cancel editing, discards all changes',
+                        text: 'Cancel'
+                    },
+                    clearAll: {
+                        title: 'Clear all layers',
+                        text: 'Clear All'
+                    }
+                },
+                buttons: {
+                    edit: 'Edit layers',
+                    editDisabled: 'No layers to edit',
+                    remove: 'Delete layers',
+                    removeDisabled: 'No layers to delete'
+                }
+            },
+            handlers: {
+                edit: {
+                    tooltip: {
+                        text: 'Drag handles or markers to edit features.',
+                        subtext: 'Click cancel to undo changes.'
+                    }
+                },
+                remove: {
+                    tooltip: {
+                        text: 'Click on a feature to remove.'
+                    }
+                }
+            }
+        }
+    };
+
+    var editableLayers = new L.FeatureGroup();
+
+    var currentQ = null;
+
+    var currentDrawFeature = null;
+        
+    map.addLayer(editableLayers);
+
+    var drawPluginOptions = {
+          position: 'topright',
+          draw: {
+            polygon: false,
+            marker:false,
+            polyline:false,
+            circlemarker: false,
+            circle:false,
+            rectangle: false,
+            },
+          edit: {
+            featureGroup: editableLayers, //REQUIRED!!
+            remove: false,
+            edit:false
+          },
+        };
+
+    // Initialise the draw control and pass it the FeatureGroup of editable layers
+    var drawControl = new L.Control.Draw(drawPluginOptions);
+    map.addControl(drawControl);
+
+    function startDrawMode(question){
+        toggleInfo(false);
+        toggleDrawbar(true);
+
+        currentQ = $(question).attr('name');
+
+        $("#draw_button").attr('draw-type',  $(question).attr('draw-type'));
+        $("#draw_button").attr('data-color', $(question).attr('data-color'));
+        $('#draw_button').attr('data-mode', 'start_draw');
+        $('#draw_button').text('Начать рисовать');
+    }
+
+    function endDrawMode(){
+        toggleInfo(true);
+        toggleDrawbar(false);
+
+        currentQ = null;
+
+        currentDrawFeature.disable();
+        currentDrawFeature = null;
+    }
+
+    function startEditMode(layer){
+    	toggleInfo(false);
+    	toggleDrawbar(true);
+
+    	layer.editing.enable();
+
+    	currentDrawFeature = layer;
+
+		$('#draw_button').attr('data-mode', 'end_edit');
+        $('#draw_button').text('Завершить редактировать');
+
+        layer.closePopup();
+    }
+
+    function endEditMode(layer){
+    	toggleInfo(true);
+    	toggleDrawbar(false);
+
+    	layer.editing.disable();
+
+    }
+
+    $("#section_question_form").submit(function(e){
+    	editableLayers.eachLayer(function(layer){
+    		let valueOfInput = $(".geo-inp[name='" + layer.feature.properties.question_id + "'").val();
+    		valueOfInput += (JSON.stringify(layer.toGeoJSON()) + "|");
+        	$(".geo-inp[name='" + layer.feature.properties.question_id + "'").val(valueOfInput);
+    	});
+    })
+
+    $('#draw_button').click(function(){
+        mode = $(this).attr('data-mode');
+
+        if (mode == "start_draw"){
+            let draw_type = $(this).attr('draw-type');
+            if (draw_type == "drawpolygon")
+                currentDrawFeature = new L.Draw.Polygon(map);
+            else if (draw_type == "drawline")
+                currentDrawFeature = new L.Draw.Polyline(map);
+            else if (draw_type == "drawpoint"){
+                currentDrawFeature = new L.Draw.Marker(map);
+                currentDrawFeature.setOptions(
+                    {
+                        color: $(this).attr('data-color'),
+            
+                        icon: L.icon.fontAwesome({ 
+                            iconClasses: 'fa ' + $(this).attr('data-icon') , // you _could_ add other icon classes, not tested.
+                            markerColor: $(this).attr('data-color'),
+                            iconColor: '#FFF',
+                            iconXOffset: -2, 
+                         })
+
+                    }
+                )
+            }
+            
+            currentDrawFeature.setOptions(
+                {
+                        shapeOptions:{
+                            color:$(this).attr('data-color'),
+                        }
+                }
+                
+            )
+            
+            currentDrawFeature.enable();
+
+            $(this).attr('data-mode', 'stop_draw');
+            $(this).text("Удалить");
+        }else if (mode == "end_edit"){
+        	endEditMode(currentDrawFeature);
+        }
+        else{
+            currentDrawFeature.disable();
+            $(this).attr('data-mode', 'start_draw');
+            $(this).text('Начать рисовать');
+        }
+    });
+
+    $('.drawpolygon').click(function() {
+        //startDrawMode(this);
+        currentDrawFeature = new L.Draw.Polygon(map);
+
+        currentDrawFeature.setOptions(
+                {
+                        shapeOptions:{
+                            color:$(this).attr('data-color'),
+                        }
+                }
+                
+            )
+
+        currentDrawFeature.enable();
+
+        toggleInfo(false);
+        currentQ = $(this).attr('name')
+
+    });
+
+    $('.drawline').click(function() {
+        //startDrawMode(this);
+        currentDrawFeature = new L.Draw.Polyline(map);
+
+        currentDrawFeature.setOptions(
+                {
+                        shapeOptions:{
+                            color:$(this).attr('data-color'),
+                        }
+                }
+                
+            )
+
+        currentDrawFeature.enable();
+
+        toggleInfo(false);
+        currentQ = $(this).attr('name')
+    })
+
+    $('.drawpoint').click(function() {
+
+        var options = {
+            color: $(this).attr('data-color'),
+            
+            icon: L.icon.fontAwesome({ 
+                iconClasses: 'fa ' + $(this).attr('data-icon') , // you _could_ add other icon classes, not tested.
+                markerColor: $(this).attr('data-color'),
+                iconColor: '#FFF',
+                iconXOffset: -2, 
+            })
+        }
+
+        currentDrawFeature = new L.Draw.Marker(map, options);
+
+        currentDrawFeature.enable();
+
+        toggleInfo(false);
+        currentQ = $(this).attr('name');
+    })
+    
+</script>
+
+{% block section_scripts %}
+{% endblock %}
+
+</body>
+
+

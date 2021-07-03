@@ -1,0 +1,158 @@
+{% extends 'base_survey_template.html' %}
+{% load hash %}
+
+{% block title %}
+    {{ section.title }}
+{% endblock %}
+
+{% block content %}
+    <div class='subheading'>
+        {% if section.subheading %}
+            {{ section.subheading | safe }}
+        {% endif %}
+    </div>
+	<div class='questions'>
+		<form method="post" id="section_question_form">
+			{% csrf_token %}
+        	{{ form.as_p }}
+        </form>
+	</div>
+{% endblock %}
+
+{% block navig_buttons %}
+    <div class="container navig_buttons">
+        <div class="row">
+            <div class="col align-self-start">
+                {% if section.prev_section %}
+                    <a class="btn btn-dark prev_button" style="border-radius: 0; width: 80%" href="../{{ section.prev_section }}" role="button">Назад</a>
+                   
+                {% endif %}
+            </div>
+            <div class="col align-self-end">
+                {% if section.next_section %}
+                    <input type="submit" class="btn btn-dark next_button" style="border-radius: 0; width: 80%" form="section_question_form" value="Далее">
+                    <!-- <a class="btn btn-primary prev_button" href="../{{ section.next_section }}" role="button">Далее</a> -->
+                {% else %}
+                    <input type="submit" class="btn btn-dark next_button" style="border-radius: 0; width: 80%" form="section_question_form" value="Завершить">
+                {% endif %}
+                
+            </div>
+        </div>form
+    </div>
+
+{% endblock %}
+
+{% block section_scripts %}
+
+<script type="text/javascript">
+
+    //var map = L.map('map', {zoomControl: false}).setView(["{{ section.start_map_postion.y }}".replace(",","."), "{{ section.start_map_postion.x }}".replace(",",".")], "{{ section.start_map_zoom }}");
+
+    var section_response = {};
+
+//   console.log("{{ subquestions_forms|safe}}")
+    var subquestions_forms = JSON.parse(`{{ subquestions_forms|safe }}`.replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
+
+    //var subquestion_form_result = JSON.parse("{94: '<p><label for="id_95">Число:</label> <input type="number" name="95" id="id_95"></p>'}".replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
+//  var subquestions_forms = JSON.parse('{{ subquestions_forms|safe }}'.replace(new RegExp("\"", 'g'), "\\\"").replace(new RegExp("\'", "g"), "\"").replace(new RegExp("\n","g"), ""));
+    
+    map.on('draw:created', function(e) {
+
+        var type = e.layerType,
+        layer = e.layer,
+            feature = layer.feature = layer.feature || {};
+
+        feature.type = feature.type || "Feature"; // Intialize feature.type
+        var props = feature.properties = feature.properties || {};
+        props.question_id = currentQ;
+
+        layer.bindPopup('<form action="" onsubmit="return false;" id="subquestion_form">' + subquestions_forms[currentQ]
+            + '<div class="container mt-auto" style="padding-left:0px"><div class="row"><div class="col"><button type="button" class="btn btn-success layer-apply" style="width:85%; font-size:2em"><i class="far fa-save"></i></button></div> \
+            <div class="col"><button type="button" class="btn btn-primary layer-edit" style="width:85%; font-size:2em"><i class="far fa-edit"></i></button></div> \
+            <div class="col"><button type="button" class="btn btn-danger layer-delete" style="width:85%; font-size:2em"><i class="far fa-trash-alt"></i></button></div></div></div>'
+            + '</form>', {
+                maxHeight: $(document).height()*0.8,
+            });
+
+        layer.on("popupopen", onPopupOpen);
+        layer.on("popupclose", onPopupClose);
+        
+        editableLayers.addLayer(layer);
+
+        if (subquestions_forms[currentQ]){
+            layer.openPopup();
+
+        }else{
+            endDrawMode();            
+        }    
+    });
+
+    function onPopupOpen(){
+        var tempLayer = this;
+
+        //загрузить из properties данные подвопросов если они там есть
+        var properties = tempLayer.feature.properties;
+        
+        console.log(properties)
+
+        for (var key in properties){
+            if (key != 'question_id'){
+                element = $('*[name=' + key +']');
+                
+                if (element.length>1) {
+                    let type = element[0].type
+                    if (type == 'checkbox' || type == 'radio'){
+                        properties[key].forEach(element => $('*[name=' + key + '][value='+ element +']').prop('checked', true));
+                    }
+                }
+                else{
+                    element.val(properties[key]);
+                } 
+            }
+        }
+
+        tempLayer.editing.disable();
+
+        $("button.layer-delete").click(function(){
+            editableLayers.removeLayer(tempLayer);
+
+            endDrawMode();
+        })
+
+        $("button.layer-edit").click(function(){
+            startEditMode(tempLayer);
+        })
+
+        $("button.layer-apply").click(function(){
+            subquestion_form_result = $('#subquestion_form').serializeArray();
+            grouped_by_name_result = subquestion_form_result.groupBy("name");
+            for (var prop in grouped_by_name_result) {
+                tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
+            }
+
+            tempLayer.closePopup();
+
+            endDrawMode();
+            
+        })
+    }
+
+    function onPopupClose(){
+
+        var tempLayer = this;
+        
+        subquestion_form_result = $('#subquestion_form').serializeArray();
+        grouped_by_name_result = subquestion_form_result.groupBy("name");
+        for (var prop in grouped_by_name_result) {
+                tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
+        }
+
+        toggleInfo(true);
+        //toggleDrawbar(false);
+    }
+
+</script>
+
+{% endblock %}
+
+

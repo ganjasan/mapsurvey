@@ -1,0 +1,157 @@
+body {
+  width: 100%;
+  height: 100%;
+  font-family: 'NotoSans', sans-serif;
+  font-weight: normal;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  padding: 0;
+}
+
+label {
+  margin-right: 12px;
+}
+
+textarea {
+  height: 4em;
+}
+
+.form-check-inline {
+  margin-right: 0px;
+}
+
+.questions p {
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+ul {
+   list-style: none;
+   padding-left: 0;
+}
+
+
+#map {
+  height: 100vh; 
+  width: 100vw; 
+  z-index: 0;
+}
+
+#info_page {
+  font-size:1em;
+  position: absolute;
+  box-sizing: border-box;
+  max-width: 480px;
+  background-color: #fafafa;
+  padding: 10px 10px 10px 10px;
+  overflow-y: auto;
+  height: 100%;
+  z-index: 10;
+  transition: all 0.5s ease-in;
+  opacity: 0.95;
+  border: 1px solid black
+  margin-right:10px;
+  padding-bottom: 20px;
+}
+
+.geo-inp{
+    height:0;
+    width:0;
+    visibility: hidden;
+    padding:0;
+    margin:0;
+    float:right;
+}
+
+.header{
+  display: flex; 
+  font-size: 1.5em;
+  padding: 15px;
+}
+
+#title{
+}
+
+#content{
+  padding: 15px;
+}
+
+.glyph {
+  top: 50%;
+  left: 50%;
+  height: 50%;
+}
+
+#section_title{
+  margin-left: 10px;
+}
+
+#showButton{
+  position: absolute;
+  left:10px;
+  top: 5%;
+  z-index: 9;
+}
+
+.drawbutton {
+  margin-bottom: 1em;
+  width: 100%;
+}
+
+.drawbutton p{
+  margin-bottom: 0px;
+}
+
+.next_button {
+  float:right;
+}
+
+.prev_button {
+  float:left;
+}
+
+#drawbar{
+  position: absolute;
+  left: 45%;
+  z-index: 9;
+  top:5%;
+}
+
+#closeButton{
+  position: absolute;
+  top:10px;
+  right:10px;
+}
+
+#navig_buttons{
+	padding-top: 20px;
+}
+
+
+
+@media only screen and (max-width: 768px) {
+
+  #info_page {
+    font-size:1.2em;
+    position: absolute;
+    box-sizing: border-box;
+    width:100%;
+    max-width: 100%;
+    height: 100%;
+    background-color: #fafafa;
+    padding: 10px 10px 10px 10px;
+    overflow-y: auto;
+    z-index: 10;
+    transition: all 0.5s ease-in;
+    opacity: 0.95;
+    left:0;
+    top: 0;
+    border: 1px solid black;
+  }
+
+  #map {
+    height: 100vh; 
+    width: 100vw; 
+    z-index: 0;
+  }
+}
