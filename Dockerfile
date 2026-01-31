@@ -36,5 +36,6 @@ RUN chown -R app:app $APP_HOME
 # change to the app user
 USER app
 
-# entrypoint is configured in docker-compose.yml
+ENTRYPOINT ["/home/app/web/entrypoint.sh"]
+CMD gunicorn --bind :${PORT:-8000} mapsurvey.wsgi:application
 
