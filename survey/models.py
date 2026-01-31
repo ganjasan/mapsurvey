@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.gis.db import models as geomodels
 from django.contrib.gis.geos import Point
 from datetime import datetime
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -64,7 +64,7 @@ class Organization(models.Model):
 class SurveyHeader(models.Model):
     organization = models.ForeignKey("Organization", on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=45, unique=True, validators=[validate_url_name])
-    redirect_url = models.CharField(max_length=250, default="#") #URL to redirect to when survey is complete.
+    redirect_url = models.CharField(max_length=250, default="#", help_text=_('URL to redirect after survey completion. E.g.: /thanks/ or https://example.com'))
 
     class Meta:
         app_label = 'survey'

@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
-import dj_database_url
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -95,10 +95,15 @@ DATABASES = {
 
 # Override with DATABASE_URL if set (for Render)
 if os.environ.get("DATABASE_URL"):
-    DATABASES["default"] = dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
-        engine="django.contrib.gis.db.backends.postgis"
-    )
+    db_url = urlparse(os.environ.get("DATABASE_URL"))
+    DATABASES["default"] = {
+        "ENGINE": "django.contrib.gis.db.backends.postgis",
+        "NAME": db_url.path[1:],
+        "USER": db_url.username,
+        "PASSWORD": db_url.password,
+        "HOST": db_url.hostname,
+        "PORT": db_url.port or 5432,
+    }
 
 
 # Password validation
