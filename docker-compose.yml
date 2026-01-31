@@ -14,8 +14,7 @@ services:
 
   web:
     build: .
-    entrypoint: ["/home/app/web/entrypoint.sh"]
-    command: gunicorn --bind :${PORT:-8000} mapsurvey.wsgi:application
+    command: gunicorn --bind :8000 mapsurvey.wsgi:application
     ports:
       - 8000:8000
     env_file:

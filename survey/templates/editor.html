@@ -1,24 +1,83 @@
 {% extends "base.html" %}
 
-
-
 {% block content %}
 	<div class="menu">
+		{% if messages %}
+			{% for message in messages %}
+				<div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+					{{ message }}
+					<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+				</div>
+			{% endfor %}
+		{% endif %}
 	</div>
 
 	<div class="items">
 		<table class="table table-striped">
+		  <thead>
+			<tr>
+			  <th>Survey</th>
+			  <th>Actions</th>
+			</tr>
+		  </thead>
 		  <tbody>
 		  	{% for survey in survey_headers %}
 				<tr>
 					<td><a href="../surveys/{{survey.name}}">{{survey.name}}</a></td>
-					<td><a href="#">Edit</a></td>
-					<td><a href="../surveys/{{survey.name}}/download">Download</a></td>
-					<td><a href="#" class="text-danger">Delete</a></td>
+					<td>
+						<a href="#">Edit</a> |
+						<a href="../surveys/{{survey.name}}/download">Download Data</a> |
+						<div class="dropdown d-inline">
+							<a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+								Export
+							</a>
+							<ul class="dropdown-menu">
+								<li><a class="dropdown-item" href="{% url 'export_survey' survey.name %}?mode=structure">Structure Only</a></li>
+								<li><a class="dropdown-item" href="{% url 'export_survey' survey.name %}?mode=data">Data Only</a></li>
+								<li><a class="dropdown-item" href="{% url 'export_survey' survey.name %}?mode=full">Full Backup</a></li>
+							</ul>
+						</div> |
+						<a href="#" class="text-danger">Delete</a>
+					</td>
 				</tr>
 			{% endfor %}
 		  </tbody>
 		</table>
-		<button type="button" class="btn btn-outline-primary">New Survey</button>
+
+		<div class="mt-3">
+			<button type="button" class="btn btn-outline-primary">New Survey</button>
+
+			<button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#importModal">
+				Import Survey
+			</button>
+		</div>
+	</div>
+
+	<!-- Import Modal -->
+	<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="importModalLabel">Import Survey</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<form method="post" action="{% url 'import_survey' %}" enctype="multipart/form-data">
+					{% csrf_token %}
+					<div class="modal-body">
+						<div class="mb-3">
+							<label for="importFile" class="form-label">Select ZIP archive</label>
+							<input class="form-control" type="file" id="importFile" name="file" accept=".zip" required>
+						</div>
+						<p class="text-muted small">
+							Upload a ZIP archive exported from this system. Supports structure-only, data-only, or full backup archives.
+						</p>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+						<button type="submit" class="btn btn-primary">Import</button>
+					</div>
+				</form>
+			</div>
+		</div>
 	</div>
 {% endblock %}
