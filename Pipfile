@@ -14,9 +14,11 @@ geojson = "*"
 django-registration = "*"
 pandas = "*"
 gunicorn = "*"
+whitenoise = "*"
 django-storages = "*"
 boto3 = "*"
 pillow = "*"
+dj-database-url = "*"
 
 [requires]
 python_version = "3.9"

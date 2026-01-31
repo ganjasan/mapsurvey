@@ -1,0 +1,29 @@
+databases:
+  - name: mapsurvey-db
+    plan: starter
+    databaseName: mapsurvey
+    user: mapsurvey
+    postgresMajorVersion: 16
+    ipAllowList: []
+
+services:
+  - type: web
+    name: mapsurvey
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mapsurvey-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "0"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "localhost"
+      - key: MAPBOX_ACCESS_TOKEN
+        sync: false
+    healthCheckPath: /

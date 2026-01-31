@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+import dj_database_url
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,6 +21,11 @@ SECRET_KEY = os.environ.get("SECRET_KEY", 'secret')
 DEBUG = int(os.environ.get("DEBUG", default=0))
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", 'localhost').split(" ")
+
+# Add Render external hostname if set
+RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 # Application definition
 
@@ -41,6 +47,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -63,6 +70,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'survey.context_processors.mapbox',
             ],
         },
     },
@@ -84,6 +92,13 @@ DATABASES = {
         "PORT": os.environ.get("SQL_PORT", "5432"),
     }
 }
+
+# Override with DATABASE_URL if set (for Render)
+if os.environ.get("DATABASE_URL"):
+    DATABASES["default"] = dj_database_url.config(
+        default=os.environ.get("DATABASE_URL"),
+        engine="django.contrib.gis.db.backends.postgis"
+    )
 
 
 # Password validation
@@ -160,6 +175,7 @@ if USE_S3:
 else:
     STATIC_URL = '/staticfiles/'
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
     MEDIA_URL = '/mediafiles/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
 
@@ -173,6 +189,10 @@ INTERNAL_IPS = ('127.0.0.1',)
 LOGIN_REDIRECT_URL = '/editor/'
 
 ACCOUNT_ACTIVATION_DAYS = 1
+
+# Mapbox
+MAPBOX_URL = os.environ.get('MAPBOX_URL', 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}')
+MAPBOX_ACCESS_TOKEN = os.environ.get('MAPBOX_ACCESS_TOKEN', '')
 
 # для отправки кода активации
 AUTH_USER_EMAIL_UNIQUE = True
