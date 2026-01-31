@@ -88,8 +88,8 @@
         else{drawbar.style.visibility="hidden"}
     }
 
-    var mapboxUrl = 'https://api.mapbox.com/styles/v1/konuchovartem/ck3zm4ovp4gzs1ck07dyr2ttp/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}';
-    mapboxAccessToken = 'pk.eyJ1IjoiYWxleGFuZGVyMzQzOTYiLCJhIjoiY2p4dXQ5d3FjMDQ5bDNubW5wamRzMnEyZyJ9.upZaF0zYwJ8NK-9Wub4MOg';
+    var mapboxUrl = '{{ MAPBOX_URL }}';
+    var mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
     
     var map = L.map('map', {zoomControl: false}).setView(["{{ section.start_map_postion.y }}".replace(",","."), "{{ section.start_map_postion.x }}".replace(",",".")], "{{ section.start_map_zoom }}");
 
