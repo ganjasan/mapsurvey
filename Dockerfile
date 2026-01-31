@@ -15,9 +15,7 @@ WORKDIR $APP_HOME
 
 #install geo libs
 RUN apt-get -y update && apt-get -y upgrade
-RUN apt-get -y install apt-utils binutils libproj-dev gdal-bin netcat postgresql-client
-RUN apt-get -y install openssh-server
-
+RUN apt-get -y install apt-utils binutils libproj-dev gdal-bin postgresql-client
 # install dependencies
 RUN pip install pipenv
 COPY Pipfile Pipfile.lock $APP_HOME
@@ -38,6 +36,5 @@ RUN chown -R app:app $APP_HOME
 # change to the app user
 USER app
 
-# run entrypoint.prod.sh
-#ENTRYPOINT ["/home/app/web/entrypoint.sh"]
+# entrypoint is configured in docker-compose.yml
 
