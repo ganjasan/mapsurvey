@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponse
-from .models import SurveyHeader, SurveySession, SurveySection, Answer, OptionGroup, Question, OptionChoice
+from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, OptionChoice
 from datetime import datetime
 from django import forms
 from django.views.generic import UpdateView
@@ -75,7 +75,7 @@ def survey_section(request, survey_name, section_name):
 			result = request.POST.getlist(question.code)
 
 			if (result != []):
-				if question.option_group == OptionGroup.objects.get(name='other'):
+				if question.option_group is None:
 					result = result[0]
 					if (question.input_type in ['point', 'line', 'polygon']):
 						geostr_list = result.split('|')
@@ -102,7 +102,7 @@ def survey_section(request, survey_name, section_name):
 									if key != 'question_id':
 										sub_question = Question.objects.get(Q(survey_section=section) & Q(code=key))
 										sub_answer = Answer(survey_session=survey_session, question=sub_question, parent_answer_id = answer)
-										if sub_question.option_group == OptionGroup.objects.get(name='other'):
+										if sub_question.option_group is None:
 											if (sub_question.input_type == 'text' or sub_question.input_type == 'text_line') and value and value[0]:
 												sub_answer.text = value[0]
 											elif sub_question.input_type == 'number' and value and value[0]:

@@ -298,11 +298,47 @@
     }
 
     $("#section_question_form").submit(function(e){
+    	// First, collect geo data from map layers
     	editableLayers.eachLayer(function(layer){
     		let valueOfInput = $(".geo-inp[name='" + layer.feature.properties.question_id + "'").val();
     		valueOfInput += (JSON.stringify(layer.toGeoJSON()) + "|");
         	$(".geo-inp[name='" + layer.feature.properties.question_id + "'").val(valueOfInput);
     	});
+
+    	// Validate required geo fields
+    	let isValid = true;
+    	let firstInvalidField = null;
+
+    	// Remove previous error styling
+    	$('.drawbutton').css('border', '');
+
+    	$('.geo-inp[data-required="true"]').each(function() {
+    		if (!$(this).val()) {
+    			isValid = false;
+    			// Find the corresponding draw button and highlight it
+    			let fieldName = $(this).attr('name');
+    			let drawButton = $('button.drawbutton[name="' + fieldName + '"]');
+    			drawButton.css('border', '3px solid #dc3545');
+
+    			if (!firstInvalidField) {
+    				firstInvalidField = drawButton;
+    			}
+    		}
+    	});
+
+    	if (!isValid) {
+    		e.preventDefault();
+
+    		// Scroll to first invalid field
+    		if (firstInvalidField) {
+    			$('html, body').animate({
+    				scrollTop: firstInvalidField.offset().top - 100
+    			}, 300);
+    		}
+
+    		alert('Please complete all required map questions before proceeding.');
+    		return false;
+    	}
     })
 
     $('#draw_button').click(function(){
