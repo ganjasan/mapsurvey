@@ -12,4 +12,9 @@ fi
 python manage.py migrate
 python manage.py collectstatic --no-input --clear
 
+# Create superuser from env vars if set (DJANGO_SUPERUSER_USERNAME, DJANGO_SUPERUSER_EMAIL, DJANGO_SUPERUSER_PASSWORD)
+if [ -n "$DJANGO_SUPERUSER_USERNAME" ]; then
+    python manage.py createsuperuser --noinput || true
+fi
+
 exec "$@"
