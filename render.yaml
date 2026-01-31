@@ -1,6 +1,6 @@
 databases:
   - name: mapsurvey-db
-    plan: starter
+    plan: basic-256mb
     databaseName: mapsurvey
     user: mapsurvey
     postgresMajorVersion: 16
