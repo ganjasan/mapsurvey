@@ -171,7 +171,7 @@ class Question(models.Model):
     name = models.CharField(max_length=512, null=True, blank=True)
     subtext = models.CharField(max_length=512, null=True, blank=True)
     input_type = models.CharField(max_length=80, choices=INPUT_TYPE_CHOICES)
-    option_group = models.ForeignKey("OptionGroup", on_delete=models.CASCADE, null=True)
+    option_group = models.ForeignKey("OptionGroup", on_delete=models.CASCADE, null=True, blank=True)
     required = models.BooleanField(default=False)
     color = models.CharField(verbose_name=_(u'Color'), max_length=7, help_text=_(u'HEX color, as #RRGGBB'), default="#000000")
     icon_class = models.CharField(default="", max_length=80, help_text=_(u'Must be Font-Awesome class'), blank=True, null=True)

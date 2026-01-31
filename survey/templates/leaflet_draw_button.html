@@ -10,5 +10,5 @@
 			</div>
 		</div>
 	</button>
-	<input type="text" name="{{ widget.name }}" hidden class="geo-inp" {%if widget.required %} required {% endif %}>
+	<input type="text" name="{{ widget.name }}" hidden class="geo-inp" {% if widget.required %}data-required="true"{% endif %}>
 </div>
