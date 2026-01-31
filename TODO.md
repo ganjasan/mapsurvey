@@ -2,8 +2,8 @@
 
 ## Bugs
 - [x] Option group показывается как обязательное поле в админке (должно быть optional, нужно только для choice/multichoice)
+- [x] Required geo-поля вызывают ошибку "An invalid form control is not focusable" (заменили required на data-required + JS валидация)
 - [ ] Иконки не отображаются на карте
-- [ ] Кнопка Next не работает
 - [ ] Не загружаются картинки
 
 ## Survey Editor

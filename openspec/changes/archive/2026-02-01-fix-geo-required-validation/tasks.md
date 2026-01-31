@@ -17,10 +17,10 @@
 
 ## 4. Testing
 
-- [ ] 4.1 Test form submission with required geo field empty (should block)
-- [ ] 4.2 Test form submission with required geo field filled (should proceed)
-- [ ] 4.3 Test form with multiple required geo fields
-- [ ] 4.4 Test form with mix of required and optional geo fields
+- [x] 4.1 Test form submission with required geo field empty (should block)
+- [x] 4.2 Test form submission with required geo field filled (should proceed)
+- [x] 4.3 Test form with multiple required geo fields
+- [x] 4.4 Test form with mix of required and optional geo fields
 
 > **Manual testing required** - verify in browser
 
