@@ -1,5 +1,4 @@
-
-{% load static %}
+{% load static i18n i18n_extras %}
 <head>
 	<!-- Yandex.Metrika counter -->
 	<script type="text/javascript" >
@@ -71,10 +70,15 @@
 </div>
 
 <div id="drawbar" style="visibility: hidden;">
-    <button id='draw_button' type="button" class="btn btn-primary" data-mode='start_draw'>Начать рисовать</button>
+    <button id='draw_button' type="button" class="btn btn-primary" data-mode='start_draw'>{% trans "Start drawing" %}</button>
 </div>
 
 <div id="map"></div>
+
+<script type="text/javascript">
+    // Load i18n translations
+    var i18n = {% i18n_json %};
+</script>
 
 <script type="text/javascript">
     //nvigation
@@ -155,22 +159,22 @@
                 },
                 marker: {
                     tooltip: {
-                        start: 'Нахмите на карту, чтобы установить маркер.'
+                        start: i18n.clickToPlaceMarker
                     }
                 },
                 polygon: {
                     tooltip: {
-                        start: 'Нажмите, чтобы начать рисовать фигуру.',
-                        cont: 'Нажмите, чтобы продолжить рисовать фигуру.',
-                        end: 'Нажмите на первую точку, чтобы закрыть эту форму.'
+                        start: i18n.clickToStartShape,
+                        cont: i18n.clickToContinueShape,
+                        end: i18n.clickFirstPointToClose
                     }
                 },
                 polyline: {
-                    error: '<strong>Ошибка:</strong> края формы не могут пересекаться!',
+                    error: i18n.shapeEdgesCannotIntersect,
                     tooltip: {
-                        start: 'Нажмите, чтобы начать рисование линию.',
-                        cont: 'Нажмите, чтобы продолжить рисовать линию.',
-                        end: 'Нажмите на последнюю точку, чтобы закончить линию.'
+                        start: i18n.clickToStartLine,
+                        cont: i18n.clickToContinueLine,
+                        end: i18n.clickLastPointToFinish
                     }
                 },
                 rectangle: {
@@ -262,7 +266,7 @@
         $("#draw_button").attr('draw-type',  $(question).attr('draw-type'));
         $("#draw_button").attr('data-color', $(question).attr('data-color'));
         $('#draw_button').attr('data-mode', 'start_draw');
-        $('#draw_button').text('Начать рисовать');
+        $('#draw_button').text(i18n.startDrawing);
     }
 
     function endDrawMode(){
@@ -284,7 +288,7 @@
     	currentDrawFeature = layer;
 
 		$('#draw_button').attr('data-mode', 'end_edit');
-        $('#draw_button').text('Завершить редактировать');
+        $('#draw_button').text(i18n.finishEditing);
 
         layer.closePopup();
     }
@@ -379,14 +383,14 @@
             currentDrawFeature.enable();
 
             $(this).attr('data-mode', 'stop_draw');
-            $(this).text("Удалить");
+            $(this).text(i18n.delete);
         }else if (mode == "end_edit"){
         	endEditMode(currentDrawFeature);
         }
         else{
             currentDrawFeature.disable();
             $(this).attr('data-mode', 'start_draw');
-            $(this).text('Начать рисовать');
+            $(this).text(i18n.startDrawing);
         }
     });
 

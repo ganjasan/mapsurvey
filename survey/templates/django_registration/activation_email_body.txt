@@ -1,6 +1,6 @@
-# текст письма
-# activation_email.txt
-Регистрация на сайте
-Для активации вашего аккаунта необходимо перейти по ссылке:
+{% load i18n %}{% trans "Site Registration" %}
+
+{% trans "To activate your account, please follow this link:" %}
 {{ site }}/accounts/activate/{{ activation_key }}/
-Спасибо!
+
+{% trans "Thank you!" %}

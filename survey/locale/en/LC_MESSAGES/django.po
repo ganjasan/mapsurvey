@@ -1,0 +1,225 @@
+# English translations for Mapsurvey.
+# Copyright (C) 2024
+# This file is distributed under the same license as the Mapsurvey package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Mapsurvey 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-01 13:59+0000\n"
+"PO-Revision-Date: 2026-02-01 14:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: survey/models.py:14
+msgid "Only alphanumeric character and \"_\" sign"
+msgstr "Only alphanumeric character and \"_\" sign"
+
+#: survey/models.py:23
+msgid "Text"
+msgstr "Text"
+
+#: survey/models.py:24
+msgid "Number"
+msgstr "Number"
+
+#: survey/models.py:25
+msgid "Choices"
+msgstr "Choices"
+
+#: survey/models.py:26
+msgid "Multiple Choices"
+msgstr "Multiple Choices"
+
+#: survey/models.py:27
+msgid "Range"
+msgstr "Range"
+
+#: survey/models.py:28
+msgid "Rating"
+msgstr "Rating"
+
+#: survey/models.py:29
+msgid "Date/Time"
+msgstr "Date/Time"
+
+#: survey/models.py:30
+msgid "Geo Point"
+msgstr "Geo Point"
+
+#: survey/models.py:31
+msgid "Geo Line"
+msgstr "Geo Line"
+
+#: survey/models.py:32
+msgid "Geo Polygon"
+msgstr "Geo Polygon"
+
+#: survey/models.py:33
+msgid "Image"
+msgstr "Image"
+
+#: survey/models.py:34
+msgid "Line"
+msgstr "Line"
+
+#: survey/models.py:35
+msgid "HTML"
+msgstr "HTML"
+
+#: survey/models.py:67
+msgid ""
+"URL to redirect after survey completion. E.g.: /thanks/ or https://example."
+"com"
+msgstr ""
+"URL to redirect after survey completion. E.g.: /thanks/ or https://example."
+"com"
+
+#: survey/models.py:176
+msgid "Color"
+msgstr "Color"
+
+#: survey/models.py:176
+msgid "HEX color, as #RRGGBB"
+msgstr "HEX color, as #RRGGBB"
+
+#: survey/models.py:177
+msgid "Must be Font-Awesome class"
+msgstr "Must be Font-Awesome class"
+
+#: survey/templates/base_survey_template.html:73
+#: survey/templatetags/i18n_extras.py:17
+msgid "Start drawing"
+msgstr "Start drawing"
+
+#: survey/templates/django_registration/activation_complete.html:4
+msgid "Activation"
+msgstr "Activation"
+
+#: survey/templates/django_registration/activation_complete.html:5
+#, python-format
+msgid "Hello, %(account)s!"
+msgstr "Hello, %(account)s!"
+
+#: survey/templates/django_registration/activation_complete.html:6
+msgid "Your account has been activated."
+msgstr "Your account has been activated."
+
+#: survey/templates/django_registration/activation_complete.html:6
+msgid "Enter"
+msgstr "Enter"
+
+#: survey/templates/django_registration/activation_complete.html:6
+msgid "the site."
+msgstr "the site."
+
+#: survey/templates/django_registration/activation_email_body.txt:1
+msgid "Site Registration"
+msgstr "Site Registration"
+
+#: survey/templates/django_registration/activation_email_body.txt:3
+msgid "To activate your account, please follow this link:"
+msgstr "To activate your account, please follow this link:"
+
+#: survey/templates/django_registration/activation_email_body.txt:6
+msgid "Thank you!"
+msgstr "Thank you!"
+
+#: survey/templates/django_registration/activation_email_subject.txt:1
+msgid "Account Activation"
+msgstr "Account Activation"
+
+#: survey/templates/django_registration/activation_failed.html:4
+msgid "Activation Failed"
+msgstr "Activation Failed"
+
+#: survey/templates/django_registration/registration_complete.html:4
+msgid "Registration Complete"
+msgstr "Registration Complete"
+
+#: survey/templates/django_registration/registration_complete.html:5
+msgid ""
+"Thank you for registering. A confirmation code has been sent to your email. "
+"Please confirm your registration by clicking the link provided."
+msgstr ""
+"Thank you for registering. A confirmation code has been sent to your email. "
+"Please confirm your registration by clicking the link provided."
+
+#: survey/templates/django_registration/registration_form.html:8
+#: survey/templates/registration/registration_form.html:8
+msgid "Submit"
+msgstr "Submit"
+
+#: survey/templates/registration/registration_form.html:2
+msgid "Register for an account"
+msgstr "Register for an account"
+
+#: survey/templates/survey_header.html:21
+msgid "Start"
+msgstr "Start"
+
+#: survey/templates/survey_header_template.html:19
+#: survey/templates/survey_section.html:27
+#: survey/templates/survey_section_block.html:14
+msgid "Back"
+msgstr "Back"
+
+#: survey/templates/survey_header_template.html:25
+#: survey/templates/survey_header_template.html:26
+#: survey/templates/survey_section.html:33
+#: survey/templates/survey_section.html:34
+#: survey/templates/survey_section_block.html:20
+msgid "Next"
+msgstr "Next"
+
+#: survey/templates/survey_header_template.html:28
+#: survey/templates/survey_header_template.html:29
+#: survey/templates/survey_section.html:36
+#: survey/templates/survey_section_block.html:22
+msgid "Finish"
+msgstr "Finish"
+
+#: survey/templatetags/i18n_extras.py:18
+msgid "Finish editing"
+msgstr "Finish editing"
+
+#: survey/templatetags/i18n_extras.py:19
+msgid "Delete"
+msgstr "Delete"
+
+#: survey/templatetags/i18n_extras.py:22
+msgid "Click on the map to place a marker."
+msgstr "Click on the map to place a marker."
+
+#: survey/templatetags/i18n_extras.py:25
+msgid "Click to start drawing a shape."
+msgstr "Click to start drawing a shape."
+
+#: survey/templatetags/i18n_extras.py:26
+msgid "Click to continue drawing the shape."
+msgstr "Click to continue drawing the shape."
+
+#: survey/templatetags/i18n_extras.py:27
+msgid "Click the first point to close this shape."
+msgstr "Click the first point to close this shape."
+
+#: survey/templatetags/i18n_extras.py:30
+msgid "Click to start drawing a line."
+msgstr "Click to start drawing a line."
+
+#: survey/templatetags/i18n_extras.py:31
+msgid "Click to continue drawing the line."
+msgstr "Click to continue drawing the line."
+
+#: survey/templatetags/i18n_extras.py:32
+msgid "Click the last point to finish the line."
+msgstr "Click the last point to finish the line."
+
+#: survey/templatetags/i18n_extras.py:35
+msgid "<strong>Error:</strong> Shape edges cannot intersect!"
+msgstr "<strong>Error:</strong> Shape edges cannot intersect!"
