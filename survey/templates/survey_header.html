@@ -1,4 +1,5 @@
 {% extends 'base_survey_template.html' %}
+{% load i18n %}
 
 {% block title %}
     {{ survey.title }}
@@ -17,7 +18,7 @@
             </div>
             <div class="col-2 align-self-end">
                 {% if section %}
-                <a class="btn btn-primary next_button" href="{{ section }}" role="button">Начать</a>
+                <a class="btn btn-primary next_button" href="{{ section }}" role="button">{% trans "Start" %}</a>
                 {% endif %}
             </div>
         </div>

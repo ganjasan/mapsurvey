@@ -1,7 +1,6 @@
 {% extends "base.html"  %}
+{% load i18n %}
 {% block content %}
-<h1>Регистрация завершена</h1>
-Спасибо за уделённое время. На ваш e-mail отправлен
-код подтверждения. Необходимо подтвердить регистрацию,
-просто кликнув по указанной ссылке.<br/><br/>
+<h1>{% trans "Registration Complete" %}</h1>
+{% trans "Thank you for registering. A confirmation code has been sent to your email. Please confirm your registration by clicking the link provided." %}<br/><br/>
 {% endblock %}

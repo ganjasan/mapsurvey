@@ -1,5 +1,6 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block content %}
-<h1>Активация не удалась</h1>
+<h1>{% trans "Activation Failed" %}</h1>
 <p>{{ activation_error.message }}</p>
 {% endblock %}

@@ -1,4 +1,5 @@
 {% extends 'base_survey_template.html' %}
+{% load i18n %}
 
 {% block title %}
     {{ survey.title }}
@@ -15,17 +16,17 @@
         <div class="row">
             <div class="col align-self-start">
                 {% if section.prev_section %}
-                    <a class="btn btn-primary" href="../{{ section.prev_section }}" role="button">Назад</a>
-                   
+                    <a class="btn btn-primary" href="../{{ section.prev_section }}" role="button">{% trans "Back" %}</a>
+
                 {% endif %}
             </div>
             <div class="col-2 align-self-end">
                 {% if section.next_section %}
-                    <!-- <input type="submit" class="btn btn-primary" form="section_question_form" value="Далее">  -->
-                    <a class="btn btn-primary" href="../{{ section.next_section }}" role="button">Далее</a>
+                    <!-- <input type="submit" class="btn btn-primary" form="section_question_form" value="{% trans "Next" %}">  -->
+                    <a class="btn btn-primary" href="../{{ section.next_section }}" role="button">{% trans "Next" %}</a>
                 {% else %}
-                    <input type="submit" class="btn btn-primary" form="section_question_form" value="Завершить"> 
-                    <!-- <a class="btn btn-primary endservey" href="{{ survey.redirect_url }}" role="button">Завершить</a> -->
+                    <input type="submit" class="btn btn-primary" form="section_question_form" value="{% trans "Finish" %}">
+                    <!-- <a class="btn btn-primary endservey" href="{{ survey.redirect_url }}" role="button">{% trans "Finish" %}</a> -->
                 {% endif %}
                 
             </div>

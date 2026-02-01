@@ -1,0 +1,227 @@
+# Russian translations for Mapsurvey.
+# Copyright (C) 2024
+# This file is distributed under the same license as the Mapsurvey package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Mapsurvey 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-01 13:59+0000\n"
+"PO-Revision-Date: 2026-02-01 14:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
+"(n%100>=11 && n%100<=14)? 2 : 3);\n"
+
+#: survey/models.py:14
+msgid "Only alphanumeric character and \"_\" sign"
+msgstr "Только буквы, цифры и знак \"_\""
+
+#: survey/models.py:23
+msgid "Text"
+msgstr "Текст"
+
+#: survey/models.py:24
+msgid "Number"
+msgstr "Число"
+
+#: survey/models.py:25
+msgid "Choices"
+msgstr "Выбор"
+
+#: survey/models.py:26
+msgid "Multiple Choices"
+msgstr "Множественный выбор"
+
+#: survey/models.py:27
+msgid "Range"
+msgstr "Диапазон"
+
+#: survey/models.py:28
+msgid "Rating"
+msgstr "Рейтинг"
+
+#: survey/models.py:29
+msgid "Date/Time"
+msgstr "Дата/Время"
+
+#: survey/models.py:30
+msgid "Geo Point"
+msgstr "Геоточка"
+
+#: survey/models.py:31
+msgid "Geo Line"
+msgstr "Геолиния"
+
+#: survey/models.py:32
+msgid "Geo Polygon"
+msgstr "Геополигон"
+
+#: survey/models.py:33
+msgid "Image"
+msgstr "Изображение"
+
+#: survey/models.py:34
+msgid "Line"
+msgstr "Строка"
+
+#: survey/models.py:35
+msgid "HTML"
+msgstr "HTML"
+
+#: survey/models.py:67
+msgid ""
+"URL to redirect after survey completion. E.g.: /thanks/ or https://example."
+"com"
+msgstr ""
+"URL для перенаправления после завершения опроса. Например: /thanks/ или "
+"https://example.com"
+
+#: survey/models.py:176
+msgid "Color"
+msgstr "Цвет"
+
+#: survey/models.py:176
+msgid "HEX color, as #RRGGBB"
+msgstr "HEX цвет, как #RRGGBB"
+
+#: survey/models.py:177
+msgid "Must be Font-Awesome class"
+msgstr "Должен быть классом Font-Awesome"
+
+#: survey/templates/base_survey_template.html:73
+#: survey/templatetags/i18n_extras.py:17
+msgid "Start drawing"
+msgstr "Начать рисовать"
+
+#: survey/templates/django_registration/activation_complete.html:4
+msgid "Activation"
+msgstr "Активация"
+
+#: survey/templates/django_registration/activation_complete.html:5
+#, python-format
+msgid "Hello, %(account)s!"
+msgstr "Привет, %(account)s!"
+
+#: survey/templates/django_registration/activation_complete.html:6
+msgid "Your account has been activated."
+msgstr "Ваша учетная запись активирована."
+
+#: survey/templates/django_registration/activation_complete.html:6
+msgid "Enter"
+msgstr "Заходите"
+
+#: survey/templates/django_registration/activation_complete.html:6
+msgid "the site."
+msgstr "на сайт."
+
+#: survey/templates/django_registration/activation_email_body.txt:1
+msgid "Site Registration"
+msgstr "Регистрация на сайте"
+
+#: survey/templates/django_registration/activation_email_body.txt:3
+msgid "To activate your account, please follow this link:"
+msgstr "Для активации вашего аккаунта необходимо перейти по ссылке:"
+
+#: survey/templates/django_registration/activation_email_body.txt:6
+msgid "Thank you!"
+msgstr "Спасибо!"
+
+#: survey/templates/django_registration/activation_email_subject.txt:1
+msgid "Account Activation"
+msgstr "Активация аккаунта"
+
+#: survey/templates/django_registration/activation_failed.html:4
+msgid "Activation Failed"
+msgstr "Активация не удалась"
+
+#: survey/templates/django_registration/registration_complete.html:4
+msgid "Registration Complete"
+msgstr "Регистрация завершена"
+
+#: survey/templates/django_registration/registration_complete.html:5
+msgid ""
+"Thank you for registering. A confirmation code has been sent to your email. "
+"Please confirm your registration by clicking the link provided."
+msgstr ""
+"Спасибо за уделённое время. На ваш e-mail отправлен код подтверждения. "
+"Необходимо подтвердить регистрацию, просто кликнув по указанной ссылке."
+
+#: survey/templates/django_registration/registration_form.html:8
+#: survey/templates/registration/registration_form.html:8
+msgid "Submit"
+msgstr "Отправить"
+
+#: survey/templates/registration/registration_form.html:2
+msgid "Register for an account"
+msgstr "Зарегистрировать аккаунт"
+
+#: survey/templates/survey_header.html:21
+msgid "Start"
+msgstr "Начать"
+
+#: survey/templates/survey_header_template.html:19
+#: survey/templates/survey_section.html:27
+#: survey/templates/survey_section_block.html:14
+msgid "Back"
+msgstr "Назад"
+
+#: survey/templates/survey_header_template.html:25
+#: survey/templates/survey_header_template.html:26
+#: survey/templates/survey_section.html:33
+#: survey/templates/survey_section.html:34
+#: survey/templates/survey_section_block.html:20
+msgid "Next"
+msgstr "Далее"
+
+#: survey/templates/survey_header_template.html:28
+#: survey/templates/survey_header_template.html:29
+#: survey/templates/survey_section.html:36
+#: survey/templates/survey_section_block.html:22
+msgid "Finish"
+msgstr "Завершить"
+
+#: survey/templatetags/i18n_extras.py:18
+msgid "Finish editing"
+msgstr "Завершить редактировать"
+
+#: survey/templatetags/i18n_extras.py:19
+msgid "Delete"
+msgstr "Удалить"
+
+#: survey/templatetags/i18n_extras.py:22
+msgid "Click on the map to place a marker."
+msgstr "Нажмите на карту, чтобы установить маркер."
+
+#: survey/templatetags/i18n_extras.py:25
+msgid "Click to start drawing a shape."
+msgstr "Нажмите, чтобы начать рисовать фигуру."
+
+#: survey/templatetags/i18n_extras.py:26
+msgid "Click to continue drawing the shape."
+msgstr "Нажмите, чтобы продолжить рисовать фигуру."
+
+#: survey/templatetags/i18n_extras.py:27
+msgid "Click the first point to close this shape."
+msgstr "Нажмите на первую точку, чтобы закрыть эту форму."
+
+#: survey/templatetags/i18n_extras.py:30
+msgid "Click to start drawing a line."
+msgstr "Нажмите, чтобы начать рисовать линию."
+
+#: survey/templatetags/i18n_extras.py:31
+msgid "Click to continue drawing the line."
+msgstr "Нажмите, чтобы продолжить рисовать линию."
+
+#: survey/templatetags/i18n_extras.py:32
+msgid "Click the last point to finish the line."
+msgstr "Нажмите на последнюю точку, чтобы закончить линию."
+
+#: survey/templatetags/i18n_extras.py:35
+msgid "<strong>Error:</strong> Shape edges cannot intersect!"
+msgstr "<strong>Ошибка:</strong> края формы не могут пересекаться!"
