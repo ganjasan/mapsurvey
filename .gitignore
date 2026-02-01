@@ -2,3 +2,4 @@
 env/
 db.sqlite3
 user_surveys/
+.claude/mcp.json
