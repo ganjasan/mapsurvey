@@ -16,7 +16,22 @@ python manage.py migrate               # Apply database migrations
 python manage.py runserver             # Start development server (port 8000)
 python manage.py createsuperuser       # Create admin user
 python manage.py collectstatic         # Collect static files
+
+# Testing (requires running PostGIS on port 5434)
+./run_tests.sh survey                  # Run all survey app tests
+./run_tests.sh survey -v2              # Verbose output
+./run_tests.sh survey.tests.SmokeTest  # Run specific test class
 ```
+
+## Testing
+
+Tests use Django's built-in test framework with PostGIS. Django automatically creates a separate `test_mapsurvey` database.
+
+**Prerequisites**: PostGIS container must be running (`docker compose up -d db`)
+
+**Test location**: `survey/tests.py`
+
+**Writing tests**: Use `django.test.TestCase` and GIVEN/WHEN/THEN pattern for docstrings.
 
 ## Architecture Overview
 

@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.db.models import Q
 from django.http import HttpResponse
 from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, OptionChoice
@@ -16,6 +17,14 @@ from io import BytesIO
 import json
 from zipfile import ZipFile
 import pandas as pd
+
+from .serialization import (
+    export_survey_to_zip,
+    import_survey_from_zip,
+    ImportError as SerializationImportError,
+    ExportError,
+    EXPORT_MODES,
+)
 
 def index(request):
 	if not request.user.is_authenticated:
@@ -301,3 +310,69 @@ def download_data(request, survey_name):
 	response.write(in_memory.read())
 
 	return response
+
+
+@login_required
+def export_survey(request, survey_name):
+	"""Export survey to ZIP archive with specified mode."""
+	mode = request.GET.get('mode', 'structure')
+
+	if mode not in EXPORT_MODES:
+		messages.error(request, f"Invalid export mode '{mode}'")
+		return redirect('editor')
+
+	try:
+		survey = SurveyHeader.objects.get(name=survey_name)
+	except SurveyHeader.DoesNotExist:
+		messages.error(request, f"Survey '{survey_name}' not found")
+		return redirect('editor')
+
+	try:
+		in_memory = BytesIO()
+		warnings = export_survey_to_zip(survey, in_memory, mode)
+
+		# Show warnings as messages
+		for warning in warnings:
+			messages.warning(request, warning)
+
+		response = HttpResponse(content_type="application/zip")
+		response["Content-Disposition"] = f"attachment; filename=survey_{survey_name}_{mode}.zip"
+
+		in_memory.seek(0)
+		response.write(in_memory.read())
+
+		return response
+
+	except ExportError as e:
+		messages.error(request, str(e))
+		return redirect('editor')
+
+
+@login_required
+def import_survey(request):
+	"""Import survey from uploaded ZIP archive."""
+	if request.method != 'POST':
+		return redirect('editor')
+
+	if 'file' not in request.FILES:
+		messages.error(request, "No file uploaded")
+		return redirect('editor')
+
+	uploaded_file = request.FILES['file']
+
+	try:
+		survey, warnings = import_survey_from_zip(uploaded_file)
+
+		# Show warnings
+		for warning in warnings:
+			messages.warning(request, warning)
+
+		if survey:
+			messages.success(request, f"Survey '{survey.name}' imported successfully")
+		else:
+			messages.success(request, "Data imported successfully")
+
+	except SerializationImportError as e:
+		messages.error(request, str(e))
+
+	return redirect('editor')

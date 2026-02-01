@@ -1,3 +1,2218 @@
-from django.test import TestCase
+from django.test import TestCase, Client
+from django.contrib.auth.models import User
+from django.contrib.gis.geos import Point, LineString, Polygon
+from io import BytesIO
+import json
+import zipfile
 
-# Create your tests here.
+from .models import (
+    Organization, SurveyHeader, SurveySection, Question,
+    OptionGroup, OptionChoice, SurveySession, Answer
+)
+from .serialization import (
+    serialize_survey_to_dict, serialize_option_groups, serialize_sections,
+    serialize_questions, serialize_sessions, serialize_answers,
+    geo_to_wkt, serialize_choices, export_survey_to_zip, validate_archive,
+    import_survey_from_zip, ImportError, FORMAT_VERSION
+)
+
+
+class SmokeTest(TestCase):
+    """Basic smoke test to verify test infrastructure works."""
+
+    def test_database_connection(self):
+        """
+        GIVEN a PostGIS database
+        WHEN we query the database
+        THEN the connection should work and PostGIS should be available
+        """
+        from django.db import connection
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT PostGIS_Version();")
+            version = cursor.fetchone()[0]
+
+        self.assertIsNotNone(version)
+
+
+class StructureSerializationTest(TestCase):
+    """Tests for survey structure serialization."""
+
+    def setUp(self):
+        """Set up test data for structure serialization tests."""
+        self.org = Organization.objects.create(name="Test Org")
+        self.survey = SurveyHeader.objects.create(
+            name="test_survey",
+            organization=self.org,
+            redirect_url="/thanks/"
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="section_one",
+            title="First Section",
+            subheading="Introduction",
+            code="S1",
+            is_head=True,
+            start_map_postion=Point(30.5, 60.0),
+            start_map_zoom=14
+        )
+        self.option_group = OptionGroup.objects.create(name="YesNo")
+        self.choice_yes = OptionChoice.objects.create(
+            option_group=self.option_group,
+            name="Yes",
+            code=1
+        )
+        self.choice_no = OptionChoice.objects.create(
+            option_group=self.option_group,
+            name="No",
+            code=0
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section,
+            code="Q001",
+            order_number=1,
+            name="Do you agree?",
+            input_type="choice",
+            option_group=self.option_group,
+            required=True
+        )
+
+    def test_serialize_survey_to_dict(self):
+        """
+        GIVEN a survey with organization
+        WHEN serialize_survey_to_dict is called
+        THEN it returns dict with name, organization, redirect_url, and sections
+        """
+        result = serialize_survey_to_dict(self.survey)
+
+        self.assertEqual(result["name"], "test_survey")
+        self.assertEqual(result["organization"], "Test Org")
+        self.assertEqual(result["redirect_url"], "/thanks/")
+        self.assertIn("sections", result)
+        self.assertEqual(len(result["sections"]), 1)
+
+    def test_serialize_option_groups(self):
+        """
+        GIVEN a survey with questions using option groups
+        WHEN serialize_option_groups is called
+        THEN it returns deduplicated list of option groups with choices
+        """
+        result = serialize_option_groups(self.survey)
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["name"], "YesNo")
+        self.assertEqual(len(result[0]["choices"]), 2)
+        choice_names = [c["name"] for c in result[0]["choices"]]
+        self.assertIn("Yes", choice_names)
+        self.assertIn("No", choice_names)
+
+    def test_serialize_sections_with_geo(self):
+        """
+        GIVEN a survey section with geo point
+        WHEN serialize_sections is called
+        THEN it returns sections with WKT geo coordinates
+        """
+        result = serialize_sections(self.survey)
+
+        self.assertEqual(len(result), 1)
+        section = result[0]
+        self.assertEqual(section["name"], "section_one")
+        self.assertEqual(section["title"], "First Section")
+        self.assertEqual(section["is_head"], True)
+        self.assertIn("POINT", section["start_map_position"])
+        self.assertEqual(section["start_map_zoom"], 14)
+
+    def test_serialize_questions_with_hierarchy(self):
+        """
+        GIVEN a question with sub-questions
+        WHEN serialize_questions is called
+        THEN it returns questions with nested sub_questions
+        """
+        sub_question = Question.objects.create(
+            survey_section=self.section,
+            parent_question_id=self.question,
+            code="Q001_1",
+            order_number=1,
+            name="Why do you agree?",
+            input_type="text"
+        )
+
+        result = serialize_questions(self.section)
+
+        self.assertEqual(len(result), 1)
+        parent_q = result[0]
+        self.assertEqual(parent_q["code"], "Q001")
+        self.assertEqual(len(parent_q["sub_questions"]), 1)
+        self.assertEqual(parent_q["sub_questions"][0]["code"], "Q001_1")
+
+    def test_serialize_question_fields(self):
+        """
+        GIVEN a question with all fields populated
+        WHEN serializing questions
+        THEN all fields are included in the output
+        """
+        result = serialize_questions(self.section)
+
+        question = result[0]
+        self.assertEqual(question["code"], "Q001")
+        self.assertEqual(question["order_number"], 1)
+        self.assertEqual(question["name"], "Do you agree?")
+        self.assertEqual(question["input_type"], "choice")
+        self.assertEqual(question["option_group_name"], "YesNo")
+        self.assertEqual(question["required"], True)
+
+
+class DataSerializationTest(TestCase):
+    """Tests for survey data serialization (sessions, answers, geo, choices)."""
+
+    def setUp(self):
+        """Set up test data for data serialization tests."""
+        self.survey = SurveyHeader.objects.create(name="data_test_survey")
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="section_data",
+            code="SD",
+            is_head=True
+        )
+        self.option_group = OptionGroup.objects.create(name="Rating5")
+        self.choice_1 = OptionChoice.objects.create(
+            option_group=self.option_group, name="Poor", code=1
+        )
+        self.choice_5 = OptionChoice.objects.create(
+            option_group=self.option_group, name="Excellent", code=5
+        )
+        self.text_question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_TEXT",
+            name="Your feedback",
+            input_type="text"
+        )
+        self.choice_question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_CHOICE",
+            name="Rate us",
+            input_type="choice",
+            option_group=self.option_group
+        )
+        self.point_question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_POINT",
+            name="Mark location",
+            input_type="point"
+        )
+        self.line_question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_LINE",
+            name="Draw route",
+            input_type="line"
+        )
+        self.polygon_question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_POLY",
+            name="Draw area",
+            input_type="polygon"
+        )
+        self.session = SurveySession.objects.create(survey=self.survey)
+
+    def test_serialize_sessions(self):
+        """
+        GIVEN a survey with sessions
+        WHEN serialize_sessions is called
+        THEN it returns list of sessions with datetime and answers
+        """
+        result = serialize_sessions(self.survey)
+
+        self.assertEqual(len(result), 1)
+        self.assertIn("start_datetime", result[0])
+        self.assertIn("end_datetime", result[0])
+        self.assertIn("answers", result[0])
+
+    def test_serialize_answers_with_text(self):
+        """
+        GIVEN a session with text answer
+        WHEN serialize_answers is called
+        THEN it returns answers with text field populated
+        """
+        answer = Answer.objects.create(
+            survey_session=self.session,
+            question=self.text_question,
+            text="Great service!"
+        )
+
+        result = serialize_answers(self.session)
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["question_code"], "Q_TEXT")
+        self.assertEqual(result[0]["text"], "Great service!")
+
+    def test_serialize_answers_with_choices(self):
+        """
+        GIVEN a session with multichoice answer
+        WHEN serialize_answers is called
+        THEN it returns answers with choice names
+        """
+        answer = Answer.objects.create(
+            survey_session=self.session,
+            question=self.choice_question
+        )
+        answer.choice.add(self.choice_5)
+
+        result = serialize_answers(self.session)
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["question_code"], "Q_CHOICE")
+        self.assertIn("Excellent", result[0]["choices"])
+
+    def test_geo_to_wkt_point(self):
+        """
+        GIVEN a Point geometry
+        WHEN geo_to_wkt is called
+        THEN it returns WKT string representation
+        """
+        point = Point(30.5, 60.0)
+        result = geo_to_wkt(point)
+
+        self.assertIn("POINT", result)
+        self.assertIn("30.5", result)
+        self.assertIn("60", result)
+
+    def test_geo_to_wkt_line(self):
+        """
+        GIVEN a LineString geometry
+        WHEN geo_to_wkt is called
+        THEN it returns WKT string representation
+        """
+        line = LineString((0, 0), (1, 1), (2, 2))
+        result = geo_to_wkt(line)
+
+        self.assertIn("LINESTRING", result)
+
+    def test_geo_to_wkt_polygon(self):
+        """
+        GIVEN a Polygon geometry
+        WHEN geo_to_wkt is called
+        THEN it returns WKT string representation
+        """
+        polygon = Polygon(((0, 0), (0, 1), (1, 1), (1, 0), (0, 0)))
+        result = geo_to_wkt(polygon)
+
+        self.assertIn("POLYGON", result)
+
+    def test_geo_to_wkt_none(self):
+        """
+        GIVEN None value
+        WHEN geo_to_wkt is called
+        THEN it returns None
+        """
+        result = geo_to_wkt(None)
+        self.assertIsNone(result)
+
+    def test_serialize_answers_with_geo(self):
+        """
+        GIVEN a session with geo answers (point, line, polygon)
+        WHEN serialize_answers is called
+        THEN it returns answers with WKT strings
+        """
+        Answer.objects.create(
+            survey_session=self.session,
+            question=self.point_question,
+            point=Point(30.5, 60.0)
+        )
+        Answer.objects.create(
+            survey_session=self.session,
+            question=self.line_question,
+            line=LineString((0, 0), (1, 1))
+        )
+        Answer.objects.create(
+            survey_session=self.session,
+            question=self.polygon_question,
+            polygon=Polygon(((0, 0), (0, 1), (1, 1), (1, 0), (0, 0)))
+        )
+
+        result = serialize_answers(self.session)
+
+        self.assertEqual(len(result), 3)
+        point_answer = next(a for a in result if a["question_code"] == "Q_POINT")
+        line_answer = next(a for a in result if a["question_code"] == "Q_LINE")
+        poly_answer = next(a for a in result if a["question_code"] == "Q_POLY")
+
+        self.assertIn("POINT", point_answer["point"])
+        self.assertIn("LINESTRING", line_answer["line"])
+        self.assertIn("POLYGON", poly_answer["polygon"])
+
+    def test_serialize_answers_with_hierarchy(self):
+        """
+        GIVEN a parent answer with sub-answers
+        WHEN serialize_answers is called
+        THEN it returns answers with nested sub_answers
+        """
+        sub_question = Question.objects.create(
+            survey_section=self.section,
+            parent_question_id=self.text_question,
+            code="Q_TEXT_SUB",
+            name="More details",
+            input_type="text"
+        )
+        parent_answer = Answer.objects.create(
+            survey_session=self.session,
+            question=self.text_question,
+            text="Main feedback"
+        )
+        sub_answer = Answer.objects.create(
+            survey_session=self.session,
+            question=sub_question,
+            parent_answer_id=parent_answer,
+            text="Additional details"
+        )
+
+        result = serialize_answers(self.session)
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["text"], "Main feedback")
+        self.assertEqual(len(result[0]["sub_answers"]), 1)
+        self.assertEqual(result[0]["sub_answers"][0]["text"], "Additional details")
+
+    def test_serialize_choices(self):
+        """
+        GIVEN an answer with multiple choices
+        WHEN serialize_choices is called
+        THEN it returns list of choice names
+        """
+        answer = Answer.objects.create(
+            survey_session=self.session,
+            question=self.choice_question
+        )
+        answer.choice.add(self.choice_1, self.choice_5)
+
+        result = serialize_choices(answer)
+
+        self.assertEqual(len(result), 2)
+        self.assertIn("Poor", result)
+        self.assertIn("Excellent", result)
+
+
+class ZipCreationTest(TestCase):
+    """Tests for ZIP archive creation with all modes."""
+
+    def setUp(self):
+        """Set up test data for ZIP creation tests."""
+        self.survey = SurveyHeader.objects.create(name="zip_test_survey")
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="zip_section",
+            code="ZS",
+            is_head=True
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_ZIP",
+            name="Test question",
+            input_type="text"
+        )
+        self.session = SurveySession.objects.create(survey=self.survey)
+        self.answer = Answer.objects.create(
+            survey_session=self.session,
+            question=self.question,
+            text="Test response"
+        )
+
+    def test_export_structure_mode(self):
+        """
+        GIVEN a survey with structure
+        WHEN export_survey_to_zip is called with mode=structure
+        THEN it creates ZIP with survey.json only, no responses.json
+        """
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+
+        output.seek(0)
+        with zipfile.ZipFile(output, 'r') as zf:
+            names = zf.namelist()
+            self.assertIn("survey.json", names)
+            self.assertNotIn("responses.json", names)
+
+            survey_data = json.loads(zf.read("survey.json"))
+            self.assertEqual(survey_data["version"], FORMAT_VERSION)
+            self.assertEqual(survey_data["mode"], "structure")
+            self.assertEqual(survey_data["survey"]["name"], "zip_test_survey")
+
+    def test_export_data_mode(self):
+        """
+        GIVEN a survey with responses
+        WHEN export_survey_to_zip is called with mode=data
+        THEN it creates ZIP with responses.json only, no survey.json
+        """
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="data")
+
+        output.seek(0)
+        with zipfile.ZipFile(output, 'r') as zf:
+            names = zf.namelist()
+            self.assertNotIn("survey.json", names)
+            self.assertIn("responses.json", names)
+
+            responses_data = json.loads(zf.read("responses.json"))
+            self.assertEqual(responses_data["version"], FORMAT_VERSION)
+            self.assertEqual(responses_data["survey_name"], "zip_test_survey")
+            self.assertEqual(len(responses_data["sessions"]), 1)
+
+    def test_export_full_mode(self):
+        """
+        GIVEN a survey with structure and responses
+        WHEN export_survey_to_zip is called with mode=full
+        THEN it creates ZIP with both survey.json and responses.json
+        """
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="full")
+
+        output.seek(0)
+        with zipfile.ZipFile(output, 'r') as zf:
+            names = zf.namelist()
+            self.assertIn("survey.json", names)
+            self.assertIn("responses.json", names)
+
+            survey_data = json.loads(zf.read("survey.json"))
+            self.assertEqual(survey_data["mode"], "full")
+
+    def test_export_default_mode_is_structure(self):
+        """
+        GIVEN a survey
+        WHEN export_survey_to_zip is called without mode
+        THEN it defaults to structure mode
+        """
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output)
+
+        output.seek(0)
+        with zipfile.ZipFile(output, 'r') as zf:
+            names = zf.namelist()
+            self.assertIn("survey.json", names)
+            self.assertNotIn("responses.json", names)
+
+    def test_export_includes_option_groups(self):
+        """
+        GIVEN a survey with questions using option groups
+        WHEN export_survey_to_zip is called
+        THEN the survey.json includes option_groups
+        """
+        option_group = OptionGroup.objects.create(name="TestGroup")
+        OptionChoice.objects.create(option_group=option_group, name="A", code=1)
+        self.question.option_group = option_group
+        self.question.save()
+
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+
+        output.seek(0)
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_data = json.loads(zf.read("survey.json"))
+            self.assertIn("option_groups", survey_data)
+            self.assertEqual(len(survey_data["option_groups"]), 1)
+            self.assertEqual(survey_data["option_groups"][0]["name"], "TestGroup")
+
+    def test_export_includes_exported_at(self):
+        """
+        GIVEN a survey
+        WHEN export_survey_to_zip is called
+        THEN the JSON includes exported_at timestamp
+        """
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+
+        output.seek(0)
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_data = json.loads(zf.read("survey.json"))
+            self.assertIn("exported_at", survey_data)
+            self.assertIn("Z", survey_data["exported_at"])
+
+    def test_validate_archive_valid_structure(self):
+        """
+        GIVEN a valid ZIP archive with survey.json
+        WHEN validate_archive is called
+        THEN it returns parsed data with has_structure=True
+        """
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+        output.seek(0)
+
+        with zipfile.ZipFile(output, 'r') as zf:
+            result = validate_archive(zf)
+
+        self.assertTrue(result["has_structure"])
+        self.assertFalse(result["has_data"])
+        self.assertIsNotNone(result["survey_data"])
+
+    def test_validate_archive_valid_full(self):
+        """
+        GIVEN a valid ZIP archive with both survey.json and responses.json
+        WHEN validate_archive is called
+        THEN it returns parsed data with has_structure=True and has_data=True
+        """
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="full")
+        output.seek(0)
+
+        with zipfile.ZipFile(output, 'r') as zf:
+            result = validate_archive(zf)
+
+        self.assertTrue(result["has_structure"])
+        self.assertTrue(result["has_data"])
+
+    def test_validate_archive_empty_zip(self):
+        """
+        GIVEN a ZIP archive without survey.json or responses.json
+        WHEN validate_archive is called
+        THEN it raises ImportError
+        """
+        output = BytesIO()
+        with zipfile.ZipFile(output, 'w') as zf:
+            zf.writestr("readme.txt", "empty")
+        output.seek(0)
+
+        with zipfile.ZipFile(output, 'r') as zf:
+            with self.assertRaises(ImportError) as context:
+                validate_archive(zf)
+            self.assertIn("survey.json", str(context.exception))
+
+    def test_validate_archive_wrong_version(self):
+        """
+        GIVEN a ZIP archive with unsupported version
+        WHEN validate_archive is called
+        THEN it raises ImportError
+        """
+        output = BytesIO()
+        with zipfile.ZipFile(output, 'w') as zf:
+            zf.writestr("survey.json", json.dumps({
+                "version": "2.0",
+                "survey": {"name": "test"}
+            }))
+        output.seek(0)
+
+        with zipfile.ZipFile(output, 'r') as zf:
+            with self.assertRaises(ImportError) as context:
+                validate_archive(zf)
+            self.assertIn("Unsupported format version", str(context.exception))
+
+
+class CLICommandTest(TestCase):
+    """Tests for CLI export/import management commands."""
+
+    def setUp(self):
+        """Set up test data for CLI tests."""
+        self.survey = SurveyHeader.objects.create(name="cli_test_survey")
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="cli_section",
+            code="CS",
+            is_head=True
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_CLI",
+            name="CLI test question",
+            input_type="text"
+        )
+
+    def test_export_command_to_file(self):
+        """
+        GIVEN a survey exists
+        WHEN export_survey command is called with --output
+        THEN it creates a valid ZIP file
+        """
+        import tempfile
+        from django.core.management import call_command
+
+        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as f:
+            output_path = f.name
+
+        try:
+            call_command('export_survey', 'cli_test_survey', '--output', output_path)
+
+            with zipfile.ZipFile(output_path, 'r') as zf:
+                self.assertIn("survey.json", zf.namelist())
+        finally:
+            import os
+            os.unlink(output_path)
+
+    def test_export_command_with_mode(self):
+        """
+        GIVEN a survey with responses
+        WHEN export_survey command is called with --mode=full
+        THEN it creates ZIP with both survey.json and responses.json
+        """
+        import tempfile
+        from django.core.management import call_command
+
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(
+            survey_session=session,
+            question=self.question,
+            text="CLI response"
+        )
+
+        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as f:
+            output_path = f.name
+
+        try:
+            call_command('export_survey', 'cli_test_survey', '--mode', 'full', '--output', output_path)
+
+            with zipfile.ZipFile(output_path, 'r') as zf:
+                self.assertIn("survey.json", zf.namelist())
+                self.assertIn("responses.json", zf.namelist())
+        finally:
+            import os
+            os.unlink(output_path)
+
+    def test_export_command_survey_not_found(self):
+        """
+        GIVEN no survey exists with given name
+        WHEN export_survey command is called
+        THEN it raises CommandError
+        """
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+
+        with self.assertRaises(CommandError) as context:
+            call_command('export_survey', 'nonexistent_survey')
+        self.assertIn("not found", str(context.exception))
+
+    def test_import_command_from_file(self):
+        """
+        GIVEN a valid ZIP archive file
+        WHEN import_survey command is called
+        THEN it creates the survey
+        """
+        import tempfile
+        from django.core.management import call_command
+
+        # First export to create a valid archive
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+        output.seek(0)
+
+        # Read and modify to use different name
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_json = json.loads(zf.read("survey.json"))
+
+        survey_json["survey"]["name"] = "imported_cli_survey"
+
+        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as f:
+            import_path = f.name
+
+        try:
+            with zipfile.ZipFile(import_path, 'w') as zf:
+                zf.writestr("survey.json", json.dumps(survey_json))
+
+            call_command('import_survey', import_path)
+
+            self.assertTrue(SurveyHeader.objects.filter(name="imported_cli_survey").exists())
+        finally:
+            import os
+            os.unlink(import_path)
+
+    def test_import_command_file_not_found(self):
+        """
+        GIVEN a non-existent file path
+        WHEN import_survey command is called
+        THEN it raises CommandError
+        """
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+
+        with self.assertRaises(CommandError) as context:
+            call_command('import_survey', '/nonexistent/path/to/file.zip')
+        self.assertIn("not found", str(context.exception))
+
+    def test_import_command_survey_exists(self):
+        """
+        GIVEN a ZIP archive with survey name that already exists
+        WHEN import_survey command is called
+        THEN it raises CommandError
+        """
+        import tempfile
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+
+        # Export existing survey
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+        output.seek(0)
+
+        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as f:
+            import_path = f.name
+
+        try:
+            with open(import_path, 'wb') as f:
+                f.write(output.read())
+
+            with self.assertRaises(CommandError) as context:
+                call_command('import_survey', import_path)
+            self.assertIn("already exists", str(context.exception))
+        finally:
+            import os
+            os.unlink(import_path)
+
+
+class RoundTripTest(TestCase):
+    """Tests for export/import round-trip integrity."""
+
+    def test_roundtrip_structure_only(self):
+        """
+        GIVEN a complete survey with sections and questions
+        WHEN exported and imported with mode=structure
+        THEN the imported survey matches the original structure
+        """
+        # Create original survey
+        org = Organization.objects.create(name="RoundTrip Org")
+        survey = SurveyHeader.objects.create(
+            name="roundtrip_survey",
+            organization=org,
+            redirect_url="/completed/"
+        )
+        section1 = SurveySection.objects.create(
+            survey_header=survey,
+            name="section_a",
+            title="First Section",
+            code="SA",
+            is_head=True,
+            start_map_postion=Point(30.0, 60.0),
+            start_map_zoom=15
+        )
+        section2 = SurveySection.objects.create(
+            survey_header=survey,
+            name="section_b",
+            title="Second Section",
+            code="SB",
+            is_head=False
+        )
+        section1.next_section = section2
+        section1.save()
+        section2.prev_section = section1
+        section2.save()
+
+        option_group = OptionGroup.objects.create(name="RoundTripChoices")
+        OptionChoice.objects.create(option_group=option_group, name="Option A", code=1)
+        OptionChoice.objects.create(option_group=option_group, name="Option B", code=2)
+
+        question1 = Question.objects.create(
+            survey_section=section1,
+            code="Q_RT1",
+            order_number=1,
+            name="Main question",
+            input_type="choice",
+            option_group=option_group,
+            required=True
+        )
+        sub_question = Question.objects.create(
+            survey_section=section1,
+            parent_question_id=question1,
+            code="Q_RT1_SUB",
+            order_number=1,
+            name="Follow-up",
+            input_type="text"
+        )
+
+        # Export
+        output = BytesIO()
+        export_survey_to_zip(survey, output, mode="structure")
+        output.seek(0)
+
+        # Modify name in archive for import
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_json = json.loads(zf.read("survey.json"))
+
+        survey_json["survey"]["name"] = "roundtrip_imported"
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_json))
+        import_buffer.seek(0)
+
+        # Import
+        imported_survey, warnings = import_survey_from_zip(import_buffer)
+
+        # Verify structure
+        self.assertEqual(imported_survey.name, "roundtrip_imported")
+        self.assertEqual(imported_survey.organization.name, "RoundTrip Org")
+        self.assertEqual(imported_survey.redirect_url, "/completed/")
+
+        # Verify sections
+        imported_sections = list(SurveySection.objects.filter(
+            survey_header=imported_survey
+        ).order_by('name'))
+        self.assertEqual(len(imported_sections), 2)
+        self.assertEqual(imported_sections[0].title, "First Section")
+        self.assertEqual(imported_sections[0].is_head, True)
+        self.assertEqual(imported_sections[0].start_map_zoom, 15)
+
+        # Verify section links
+        self.assertEqual(imported_sections[0].next_section, imported_sections[1])
+        self.assertEqual(imported_sections[1].prev_section, imported_sections[0])
+
+        # Verify questions
+        imported_questions = list(Question.objects.filter(
+            survey_section__survey_header=imported_survey,
+            parent_question_id__isnull=True
+        ))
+        self.assertEqual(len(imported_questions), 1)
+        self.assertEqual(imported_questions[0].name, "Main question")
+        self.assertEqual(imported_questions[0].required, True)
+        self.assertIsNotNone(imported_questions[0].option_group)
+
+        # Verify sub-questions
+        sub_questions = list(Question.objects.filter(
+            parent_question_id=imported_questions[0]
+        ))
+        self.assertEqual(len(sub_questions), 1)
+        self.assertEqual(sub_questions[0].name, "Follow-up")
+
+    def test_roundtrip_full_with_responses(self):
+        """
+        GIVEN a survey with sections, questions, and responses
+        WHEN exported and imported with mode=full
+        THEN the imported survey includes all responses
+        """
+        # Create survey
+        survey = SurveyHeader.objects.create(name="full_roundtrip")
+        section = SurveySection.objects.create(
+            survey_header=survey,
+            name="full_section",
+            code="FS",
+            is_head=True
+        )
+        option_group = OptionGroup.objects.create(name="FullRTChoices")
+        choice = OptionChoice.objects.create(option_group=option_group, name="Selected", code=1)
+
+        text_q = Question.objects.create(
+            survey_section=section,
+            code="Q_FULL_TEXT",
+            name="Text question",
+            input_type="text"
+        )
+        choice_q = Question.objects.create(
+            survey_section=section,
+            code="Q_FULL_CHOICE",
+            name="Choice question",
+            input_type="choice",
+            option_group=option_group
+        )
+        point_q = Question.objects.create(
+            survey_section=section,
+            code="Q_FULL_POINT",
+            name="Point question",
+            input_type="point"
+        )
+
+        # Create responses
+        session = SurveySession.objects.create(survey=survey)
+        Answer.objects.create(
+            survey_session=session,
+            question=text_q,
+            text="User response"
+        )
+        choice_answer = Answer.objects.create(
+            survey_session=session,
+            question=choice_q
+        )
+        choice_answer.choice.add(choice)
+        Answer.objects.create(
+            survey_session=session,
+            question=point_q,
+            point=Point(31.0, 61.0)
+        )
+
+        # Export full
+        output = BytesIO()
+        export_survey_to_zip(survey, output, mode="full")
+        output.seek(0)
+
+        # Modify name in archive
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_json = json.loads(zf.read("survey.json"))
+            responses_json = json.loads(zf.read("responses.json"))
+
+        survey_json["survey"]["name"] = "full_roundtrip_imported"
+        responses_json["survey_name"] = "full_roundtrip_imported"
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_json))
+            zf.writestr("responses.json", json.dumps(responses_json))
+        import_buffer.seek(0)
+
+        # Import
+        imported_survey, warnings = import_survey_from_zip(import_buffer)
+
+        # Verify survey
+        self.assertEqual(imported_survey.name, "full_roundtrip_imported")
+
+        # Verify sessions
+        sessions = list(SurveySession.objects.filter(survey=imported_survey))
+        self.assertEqual(len(sessions), 1)
+
+        # Verify answers
+        answers = list(Answer.objects.filter(survey_session=sessions[0]))
+        self.assertEqual(len(answers), 3)
+
+        # Use question name instead of code, since codes may be remapped
+        text_answer = next(a for a in answers if a.question.name == "Text question")
+        self.assertEqual(text_answer.text, "User response")
+
+        choice_answer = next(a for a in answers if a.question.name == "Choice question")
+        self.assertEqual(list(choice_answer.choice.all())[0].name, "Selected")
+
+        point_answer = next(a for a in answers if a.question.name == "Point question")
+        self.assertIsNotNone(point_answer.point)
+
+    def test_roundtrip_preserves_geo_data(self):
+        """
+        GIVEN a survey with geo answers (point, line, polygon)
+        WHEN exported and imported
+        THEN the geo data is preserved accurately
+        """
+        survey = SurveyHeader.objects.create(name="geo_roundtrip")
+        section = SurveySection.objects.create(
+            survey_header=survey,
+            name="geo_section",
+            code="GS",
+            is_head=True,
+            start_map_postion=Point(30.317, 59.945)
+        )
+        point_q = Question.objects.create(
+            survey_section=section,
+            code="Q_GEO_PT",
+            input_type="point"
+        )
+        line_q = Question.objects.create(
+            survey_section=section,
+            code="Q_GEO_LN",
+            input_type="line"
+        )
+        poly_q = Question.objects.create(
+            survey_section=section,
+            code="Q_GEO_PG",
+            input_type="polygon"
+        )
+
+        session = SurveySession.objects.create(survey=survey)
+        original_point = Point(30.5, 60.0)
+        original_line = LineString((0, 0), (1, 1), (2, 0))
+        original_polygon = Polygon(((0, 0), (0, 2), (2, 2), (2, 0), (0, 0)))
+
+        Answer.objects.create(survey_session=session, question=point_q, point=original_point)
+        Answer.objects.create(survey_session=session, question=line_q, line=original_line)
+        Answer.objects.create(survey_session=session, question=poly_q, polygon=original_polygon)
+
+        # Export
+        output = BytesIO()
+        export_survey_to_zip(survey, output, mode="full")
+        output.seek(0)
+
+        # Modify name for import
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_json = json.loads(zf.read("survey.json"))
+            responses_json = json.loads(zf.read("responses.json"))
+
+        survey_json["survey"]["name"] = "geo_roundtrip_imported"
+        responses_json["survey_name"] = "geo_roundtrip_imported"
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_json))
+            zf.writestr("responses.json", json.dumps(responses_json))
+        import_buffer.seek(0)
+
+        # Import
+        imported_survey, _ = import_survey_from_zip(import_buffer)
+
+        # Verify geo section position
+        imported_section = SurveySection.objects.get(survey_header=imported_survey)
+        self.assertAlmostEqual(imported_section.start_map_postion.x, 30.317, places=3)
+        self.assertAlmostEqual(imported_section.start_map_postion.y, 59.945, places=3)
+
+        # Verify geo answers - use input_type since codes may be remapped
+        session = SurveySession.objects.get(survey=imported_survey)
+        answers = Answer.objects.filter(survey_session=session)
+
+        point_ans = answers.get(question__input_type="point")
+        self.assertAlmostEqual(point_ans.point.x, 30.5, places=1)
+        self.assertAlmostEqual(point_ans.point.y, 60.0, places=1)
+
+        line_ans = answers.get(question__input_type="line")
+        self.assertEqual(len(line_ans.line.coords), 3)
+
+        poly_ans = answers.get(question__input_type="polygon")
+        self.assertIsNotNone(poly_ans.polygon)
+
+
+class DataOnlyImportTest(TestCase):
+    """Tests for data-only import to existing survey."""
+
+    def setUp(self):
+        """Create a survey for data-only import tests."""
+        self.survey = SurveyHeader.objects.create(name="existing_survey")
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="existing_section",
+            code="ES",
+            is_head=True
+        )
+        self.option_group = OptionGroup.objects.create(name="DataImportChoices")
+        self.choice = OptionChoice.objects.create(
+            option_group=self.option_group,
+            name="Choice A",
+            code=1
+        )
+        self.text_q = Question.objects.create(
+            survey_section=self.section,
+            code="Q_EXIST_TEXT",
+            name="Existing text question",
+            input_type="text"
+        )
+        self.choice_q = Question.objects.create(
+            survey_section=self.section,
+            code="Q_EXIST_CHOICE",
+            name="Existing choice question",
+            input_type="choice",
+            option_group=self.option_group
+        )
+
+    def test_data_only_import_to_existing_survey(self):
+        """
+        GIVEN an existing survey and data-only ZIP archive
+        WHEN import_survey_from_zip is called
+        THEN responses are added to the existing survey
+        """
+        # Create data-only archive
+        responses_data = {
+            "version": FORMAT_VERSION,
+            "exported_at": "2024-01-01T12:00:00Z",
+            "survey_name": "existing_survey",
+            "sessions": [
+                {
+                    "start_datetime": "2024-01-01T10:00:00Z",
+                    "end_datetime": "2024-01-01T10:30:00Z",
+                    "answers": [
+                        {
+                            "question_code": "Q_EXIST_TEXT",
+                            "text": "Imported response",
+                            "numeric": None,
+                            "yn": None,
+                            "point": None,
+                            "line": None,
+                            "polygon": None,
+                            "choices": [],
+                            "sub_answers": []
+                        },
+                        {
+                            "question_code": "Q_EXIST_CHOICE",
+                            "text": None,
+                            "numeric": None,
+                            "yn": None,
+                            "point": None,
+                            "line": None,
+                            "polygon": None,
+                            "choices": ["Choice A"],
+                            "sub_answers": []
+                        }
+                    ]
+                }
+            ]
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("responses.json", json.dumps(responses_data))
+        import_buffer.seek(0)
+
+        # Import
+        result_survey, warnings = import_survey_from_zip(import_buffer)
+
+        # For data-only import, the existing survey is returned
+        self.assertEqual(result_survey, self.survey)
+
+        # Verify session was added to existing survey
+        sessions = SurveySession.objects.filter(survey=self.survey)
+        self.assertEqual(sessions.count(), 1)
+
+        # Verify answers
+        session = sessions.first()
+        answers = Answer.objects.filter(survey_session=session)
+        self.assertEqual(answers.count(), 2)
+
+        text_answer = answers.get(question=self.text_q)
+        self.assertEqual(text_answer.text, "Imported response")
+
+        choice_answer = answers.get(question=self.choice_q)
+        self.assertEqual(list(choice_answer.choice.all())[0].name, "Choice A")
+
+    def test_data_only_import_requires_existing_survey(self):
+        """
+        GIVEN a data-only archive referencing non-existent survey
+        WHEN import_survey_from_zip is called
+        THEN it raises ImportError
+        """
+        responses_data = {
+            "version": FORMAT_VERSION,
+            "exported_at": "2024-01-01T12:00:00Z",
+            "survey_name": "nonexistent_survey",
+            "sessions": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("responses.json", json.dumps(responses_data))
+        import_buffer.seek(0)
+
+        with self.assertRaises(ImportError) as context:
+            import_survey_from_zip(import_buffer)
+        self.assertIn("requires existing survey", str(context.exception))
+
+    def test_data_only_import_multiple_sessions(self):
+        """
+        GIVEN a data-only archive with multiple sessions
+        WHEN import_survey_from_zip is called
+        THEN all sessions are imported
+        """
+        responses_data = {
+            "version": FORMAT_VERSION,
+            "exported_at": "2024-01-01T12:00:00Z",
+            "survey_name": "existing_survey",
+            "sessions": [
+                {
+                    "start_datetime": "2024-01-01T10:00:00Z",
+                    "end_datetime": None,
+                    "answers": [
+                        {"question_code": "Q_EXIST_TEXT", "text": "Session 1",
+                         "numeric": None, "yn": None, "point": None, "line": None,
+                         "polygon": None, "choices": [], "sub_answers": []}
+                    ]
+                },
+                {
+                    "start_datetime": "2024-01-02T10:00:00Z",
+                    "end_datetime": None,
+                    "answers": [
+                        {"question_code": "Q_EXIST_TEXT", "text": "Session 2",
+                         "numeric": None, "yn": None, "point": None, "line": None,
+                         "polygon": None, "choices": [], "sub_answers": []}
+                    ]
+                },
+                {
+                    "start_datetime": "2024-01-03T10:00:00Z",
+                    "end_datetime": None,
+                    "answers": [
+                        {"question_code": "Q_EXIST_TEXT", "text": "Session 3",
+                         "numeric": None, "yn": None, "point": None, "line": None,
+                         "polygon": None, "choices": [], "sub_answers": []}
+                    ]
+                }
+            ]
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("responses.json", json.dumps(responses_data))
+        import_buffer.seek(0)
+
+        import_survey_from_zip(import_buffer)
+
+        sessions = SurveySession.objects.filter(survey=self.survey)
+        self.assertEqual(sessions.count(), 3)
+
+        texts = [Answer.objects.get(survey_session=s).text for s in sessions]
+        self.assertIn("Session 1", texts)
+        self.assertIn("Session 2", texts)
+        self.assertIn("Session 3", texts)
+
+
+class ErrorCaseTest(TestCase):
+    """Tests for error cases during import."""
+
+    def test_invalid_zip_file(self):
+        """
+        GIVEN invalid data that is not a ZIP file
+        WHEN import_survey_from_zip is called
+        THEN it raises ImportError
+        """
+        invalid_data = BytesIO(b"This is not a ZIP file")
+
+        with self.assertRaises(ImportError) as context:
+            import_survey_from_zip(invalid_data)
+        self.assertIn("Invalid ZIP", str(context.exception))
+
+    def test_missing_survey_json_and_responses_json(self):
+        """
+        GIVEN a ZIP file without survey.json or responses.json
+        WHEN import_survey_from_zip is called
+        THEN it raises ImportError
+        """
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("readme.txt", "Nothing here")
+        import_buffer.seek(0)
+
+        with self.assertRaises(ImportError) as context:
+            import_survey_from_zip(import_buffer)
+        self.assertIn("must contain", str(context.exception))
+
+    def test_invalid_json_in_survey(self):
+        """
+        GIVEN a ZIP file with invalid JSON in survey.json
+        WHEN import_survey_from_zip is called
+        THEN it raises ImportError
+        """
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", "{ invalid json }")
+        import_buffer.seek(0)
+
+        with self.assertRaises(ImportError) as context:
+            import_survey_from_zip(import_buffer)
+        self.assertIn("Invalid survey.json", str(context.exception))
+
+    def test_unsupported_version(self):
+        """
+        GIVEN a ZIP file with unsupported format version
+        WHEN import_survey_from_zip is called
+        THEN it raises ImportError with version info
+        """
+        survey_data = {
+            "version": "99.0",
+            "survey": {"name": "test"},
+            "option_groups": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        with self.assertRaises(ImportError) as context:
+            import_survey_from_zip(import_buffer)
+        self.assertIn("Unsupported format version", str(context.exception))
+        self.assertIn("99.0", str(context.exception))
+
+    def test_missing_survey_name(self):
+        """
+        GIVEN a ZIP file with survey.json missing name field
+        WHEN import_survey_from_zip is called
+        THEN it raises ImportError
+        """
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {"organization": "Test"},
+            "option_groups": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        with self.assertRaises(ImportError) as context:
+            import_survey_from_zip(import_buffer)
+        self.assertIn("survey.name", str(context.exception))
+
+    def test_survey_already_exists(self):
+        """
+        GIVEN a survey already exists with the same name
+        WHEN import_survey_from_zip is called
+        THEN it raises ImportError
+        """
+        SurveyHeader.objects.create(name="duplicate_survey")
+
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {"name": "duplicate_survey"},
+            "option_groups": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        with self.assertRaises(ImportError) as context:
+            import_survey_from_zip(import_buffer)
+        self.assertIn("already exists", str(context.exception))
+
+    def test_invalid_input_type(self):
+        """
+        GIVEN a survey.json with invalid input_type for a question
+        WHEN import_survey_from_zip is called
+        THEN it raises ImportError
+        """
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {
+                "name": "invalid_input_type_survey",
+                "sections": [
+                    {
+                        "name": "section1",
+                        "code": "S1",
+                        "is_head": True,
+                        "questions": [
+                            {
+                                "code": "Q_INVALID",
+                                "order_number": 1,
+                                "name": "Invalid question",
+                                "input_type": "invalid_type",
+                                "sub_questions": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            "option_groups": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        with self.assertRaises(ImportError) as context:
+            import_survey_from_zip(import_buffer)
+        self.assertIn("Invalid input_type", str(context.exception))
+        self.assertIn("invalid_type", str(context.exception))
+
+    def test_answer_references_unknown_question(self):
+        """
+        GIVEN an existing survey and responses referencing unknown question
+        WHEN import_survey_from_zip is called
+        THEN it imports with warning and skips the answer
+        """
+        survey = SurveyHeader.objects.create(name="missing_ref_survey")
+        section = SurveySection.objects.create(
+            survey_header=survey,
+            name="missing_ref_section",
+            code="MRS",
+            is_head=True
+        )
+        Question.objects.create(
+            survey_section=section,
+            code="Q_EXISTS",
+            name="Existing",
+            input_type="text"
+        )
+
+        responses_data = {
+            "version": FORMAT_VERSION,
+            "survey_name": "missing_ref_survey",
+            "sessions": [
+                {
+                    "start_datetime": "2024-01-01T10:00:00Z",
+                    "end_datetime": None,
+                    "answers": [
+                        {"question_code": "Q_NONEXISTENT", "text": "Orphan",
+                         "numeric": None, "yn": None, "point": None, "line": None,
+                         "polygon": None, "choices": [], "sub_answers": []}
+                    ]
+                }
+            ]
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("responses.json", json.dumps(responses_data))
+        import_buffer.seek(0)
+
+        result, warnings = import_survey_from_zip(import_buffer)
+
+        # Should have a warning about missing question
+        self.assertTrue(any("Q_NONEXISTENT" in w for w in warnings))
+
+        # Session should still be created, but no answer
+        sessions = SurveySession.objects.filter(survey=survey)
+        self.assertEqual(sessions.count(), 1)
+        self.assertEqual(Answer.objects.filter(survey_session=sessions.first()).count(), 0)
+
+    def test_choice_references_missing_option(self):
+        """
+        GIVEN responses with choice name not in OptionGroup
+        WHEN import_survey_from_zip is called
+        THEN it imports with warning and skips the choice
+        """
+        survey = SurveyHeader.objects.create(name="missing_choice_survey")
+        section = SurveySection.objects.create(
+            survey_header=survey,
+            name="missing_choice_section",
+            code="MCS",
+            is_head=True
+        )
+        option_group = OptionGroup.objects.create(name="MissingChoiceGroup")
+        OptionChoice.objects.create(option_group=option_group, name="Valid Choice", code=1)
+        Question.objects.create(
+            survey_section=section,
+            code="Q_CHOICE_TEST",
+            name="Choice test",
+            input_type="choice",
+            option_group=option_group
+        )
+
+        responses_data = {
+            "version": FORMAT_VERSION,
+            "survey_name": "missing_choice_survey",
+            "sessions": [
+                {
+                    "start_datetime": "2024-01-01T10:00:00Z",
+                    "end_datetime": None,
+                    "answers": [
+                        {"question_code": "Q_CHOICE_TEST", "text": None,
+                         "numeric": None, "yn": None, "point": None, "line": None,
+                         "polygon": None, "choices": ["Valid Choice", "Missing Choice"],
+                         "sub_answers": []}
+                    ]
+                }
+            ]
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("responses.json", json.dumps(responses_data))
+        import_buffer.seek(0)
+
+        result, warnings = import_survey_from_zip(import_buffer)
+
+        # Should have warning about missing choice
+        self.assertTrue(any("Missing Choice" in w for w in warnings))
+
+        # Answer should exist with only valid choice
+        answer = Answer.objects.get(question__code="Q_CHOICE_TEST")
+        choices = list(answer.choice.all())
+        self.assertEqual(len(choices), 1)
+        self.assertEqual(choices[0].name, "Valid Choice")
+
+    def test_invalid_wkt_in_section(self):
+        """
+        GIVEN survey.json with invalid WKT for section geo point
+        WHEN import_survey_from_zip is called
+        THEN it raises ImportError
+        """
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {
+                "name": "invalid_wkt_survey",
+                "sections": [
+                    {
+                        "name": "section1",
+                        "code": "S1",
+                        "is_head": True,
+                        "start_map_position": "NOT VALID WKT",
+                        "questions": []
+                    }
+                ]
+            },
+            "option_groups": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        with self.assertRaises(ImportError) as context:
+            import_survey_from_zip(import_buffer)
+        self.assertIn("Invalid WKT", str(context.exception))
+
+    def test_option_choice_missing_code_uses_index(self):
+        """
+        GIVEN survey.json with option choices missing 'code' field
+        WHEN import_survey_from_zip is called
+        THEN it creates choices with auto-generated codes (1, 2, 3...)
+        """
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {
+                "name": "missing_choice_code_survey",
+                "sections": [
+                    {
+                        "name": "section1",
+                        "code": "S1",
+                        "is_head": True,
+                        "questions": [
+                            {
+                                "code": "Q_CHOICE",
+                                "order_number": 1,
+                                "name": "Choice question",
+                                "input_type": "choice",
+                                "option_group_name": "NoCodeGroup",
+                                "sub_questions": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            "option_groups": [
+                {
+                    "name": "NoCodeGroup",
+                    "choices": [
+                        {"name": "First"},
+                        {"name": "Second"},
+                        {"name": "Third"}
+                    ]
+                }
+            ]
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        imported_survey, warnings = import_survey_from_zip(import_buffer)
+
+        # Should have created survey
+        self.assertIsNotNone(imported_survey)
+
+        # OptionGroup should exist with choices having sequential codes
+        group = OptionGroup.objects.get(name="NoCodeGroup")
+        choices = list(group.choices())
+        self.assertEqual(len(choices), 3)
+        self.assertEqual(choices[0].code, 1)
+        self.assertEqual(choices[1].code, 2)
+        self.assertEqual(choices[2].code, 3)
+
+    def test_section_code_truncated_to_max_length(self):
+        """
+        GIVEN survey.json with section code longer than 8 characters
+        WHEN import_survey_from_zip is called
+        THEN it truncates the code to 8 characters
+        """
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {
+                "name": "long_code_survey",
+                "sections": [
+                    {
+                        "name": "section1",
+                        "code": "VERYLONGCODE123",
+                        "is_head": True,
+                        "questions": []
+                    }
+                ]
+            },
+            "option_groups": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        imported_survey, warnings = import_survey_from_zip(import_buffer)
+
+        self.assertIsNotNone(imported_survey)
+        section = SurveySection.objects.get(survey_header=imported_survey)
+        self.assertEqual(section.code, "VERYLONG")
+        self.assertEqual(len(section.code), 8)
+
+    def test_choice_input_requires_option_group(self):
+        """
+        GIVEN survey.json with choice question without option_group_name
+        WHEN import_survey_from_zip is called
+        THEN it raises ImportError
+        """
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {
+                "name": "missing_og_survey",
+                "sections": [
+                    {
+                        "name": "section1",
+                        "code": "S1",
+                        "is_head": True,
+                        "questions": [
+                            {
+                                "code": "Q_NO_OG",
+                                "order_number": 1,
+                                "name": "Choice without option group",
+                                "input_type": "choice",
+                                "sub_questions": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            "option_groups": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        with self.assertRaises(ImportError) as context:
+            import_survey_from_zip(import_buffer)
+        self.assertIn("requires option_group_name", str(context.exception))
+
+    def test_unknown_option_group_name_raises_error(self):
+        """
+        GIVEN survey.json with question referencing non-existent option_group
+        WHEN import_survey_from_zip is called
+        THEN it raises ImportError
+        """
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {
+                "name": "bad_og_ref_survey",
+                "sections": [
+                    {
+                        "name": "section1",
+                        "code": "S1",
+                        "is_head": True,
+                        "questions": [
+                            {
+                                "code": "Q_BAD_OG",
+                                "order_number": 1,
+                                "name": "Choice with bad option group",
+                                "input_type": "choice",
+                                "option_group_name": "NonExistentGroup",
+                                "sub_questions": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            "option_groups": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        with self.assertRaises(ImportError) as context:
+            import_survey_from_zip(import_buffer)
+        self.assertIn("not found in option_groups", str(context.exception))
+
+
+class CodeRemappingTest(TestCase):
+    """Tests for question code remapping on collision."""
+
+    def test_code_collision_generates_new_code(self):
+        """
+        GIVEN an existing question with same code as in archive
+        WHEN import_survey_from_zip is called
+        THEN it generates a new unique code for the imported question
+        """
+        # Create existing question with code that will collide
+        existing_survey = SurveyHeader.objects.create(name="existing")
+        existing_section = SurveySection.objects.create(
+            survey_header=existing_survey,
+            name="existing_section",
+            code="ES",
+            is_head=True
+        )
+        Question.objects.create(
+            survey_section=existing_section,
+            code="Q_COLLISION",
+            name="Existing question",
+            input_type="text"
+        )
+
+        # Create archive with same question code
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {
+                "name": "collision_test_survey",
+                "sections": [
+                    {
+                        "name": "new_section",
+                        "code": "NS",
+                        "is_head": True,
+                        "questions": [
+                            {
+                                "code": "Q_COLLISION",
+                                "order_number": 1,
+                                "name": "Imported question",
+                                "input_type": "text",
+                                "sub_questions": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            "option_groups": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        imported_survey, warnings = import_survey_from_zip(import_buffer)
+
+        # Should have created survey
+        self.assertIsNotNone(imported_survey)
+
+        # Imported question should have different code
+        imported_question = Question.objects.get(
+            survey_section__survey_header=imported_survey
+        )
+        self.assertNotEqual(imported_question.code, "Q_COLLISION")
+        self.assertTrue(imported_question.code.startswith("Q_"))
+        self.assertEqual(imported_question.name, "Imported question")
+
+    def test_code_remap_applies_to_responses(self):
+        """
+        GIVEN archive with code collision and responses referencing original code
+        WHEN import_survey_from_zip is called
+        THEN responses are linked using remapped code
+        """
+        # Create existing question with colliding code
+        existing_survey = SurveyHeader.objects.create(name="existing2")
+        existing_section = SurveySection.objects.create(
+            survey_header=existing_survey,
+            name="existing_section2",
+            code="ES2",
+            is_head=True
+        )
+        Question.objects.create(
+            survey_section=existing_section,
+            code="Q_REMAP",
+            name="Existing question",
+            input_type="text"
+        )
+
+        # Archive with collision and responses
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {
+                "name": "remap_test_survey",
+                "sections": [
+                    {
+                        "name": "remap_section",
+                        "code": "RS",
+                        "is_head": True,
+                        "questions": [
+                            {
+                                "code": "Q_REMAP",
+                                "order_number": 1,
+                                "name": "Imported question for remap",
+                                "input_type": "text",
+                                "sub_questions": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            "option_groups": []
+        }
+
+        responses_data = {
+            "version": FORMAT_VERSION,
+            "survey_name": "remap_test_survey",
+            "sessions": [
+                {
+                    "start_datetime": "2024-01-01T10:00:00Z",
+                    "end_datetime": None,
+                    "answers": [
+                        {
+                            "question_code": "Q_REMAP",
+                            "text": "Remapped answer",
+                            "numeric": None,
+                            "yn": None,
+                            "point": None,
+                            "line": None,
+                            "polygon": None,
+                            "choices": [],
+                            "sub_answers": []
+                        }
+                    ]
+                }
+            ]
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+            zf.writestr("responses.json", json.dumps(responses_data))
+        import_buffer.seek(0)
+
+        imported_survey, warnings = import_survey_from_zip(import_buffer)
+
+        # Get the imported question (has new code)
+        imported_question = Question.objects.get(
+            survey_section__survey_header=imported_survey
+        )
+        self.assertNotEqual(imported_question.code, "Q_REMAP")
+
+        # Answer should be linked to the imported question with new code
+        session = SurveySession.objects.get(survey=imported_survey)
+        answer = Answer.objects.get(survey_session=session)
+        self.assertEqual(answer.question, imported_question)
+        self.assertEqual(answer.text, "Remapped answer")
+
+    def test_code_remap_with_sub_questions(self):
+        """
+        GIVEN archive with parent question code collision and sub-questions
+        WHEN import_survey_from_zip is called
+        THEN sub-questions are correctly linked to remapped parent
+        """
+        # Create colliding code
+        existing_survey = SurveyHeader.objects.create(name="existing3")
+        existing_section = SurveySection.objects.create(
+            survey_header=existing_survey,
+            name="existing_section3",
+            code="ES3",
+            is_head=True
+        )
+        Question.objects.create(
+            survey_section=existing_section,
+            code="Q_PARENT_REMAP",
+            name="Existing parent",
+            input_type="text"
+        )
+
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {
+                "name": "sub_remap_survey",
+                "sections": [
+                    {
+                        "name": "sub_remap_section",
+                        "code": "SRS",
+                        "is_head": True,
+                        "questions": [
+                            {
+                                "code": "Q_PARENT_REMAP",
+                                "order_number": 1,
+                                "name": "Imported parent",
+                                "input_type": "text",
+                                "sub_questions": [
+                                    {
+                                        "code": "Q_CHILD",
+                                        "order_number": 1,
+                                        "name": "Child question",
+                                        "input_type": "text",
+                                        "sub_questions": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "option_groups": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        imported_survey, warnings = import_survey_from_zip(import_buffer)
+
+        # Get parent (remapped)
+        parent = Question.objects.get(
+            survey_section__survey_header=imported_survey,
+            parent_question_id__isnull=True
+        )
+        self.assertNotEqual(parent.code, "Q_PARENT_REMAP")
+
+        # Get child
+        child = Question.objects.get(
+            survey_section__survey_header=imported_survey,
+            parent_question_id__isnull=False
+        )
+        self.assertEqual(child.parent_question_id, parent)
+        self.assertEqual(child.name, "Child question")
+
+    def test_multiple_collisions(self):
+        """
+        GIVEN archive with multiple question code collisions
+        WHEN import_survey_from_zip is called
+        THEN all colliding codes are remapped uniquely
+        """
+        # Create multiple existing questions
+        existing_survey = SurveyHeader.objects.create(name="existing4")
+        existing_section = SurveySection.objects.create(
+            survey_header=existing_survey,
+            name="existing_section4",
+            code="ES4",
+            is_head=True
+        )
+        Question.objects.create(survey_section=existing_section, code="Q_MULTI_1", input_type="text")
+        Question.objects.create(survey_section=existing_section, code="Q_MULTI_2", input_type="text")
+        Question.objects.create(survey_section=existing_section, code="Q_MULTI_3", input_type="text")
+
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {
+                "name": "multi_collision_survey",
+                "sections": [
+                    {
+                        "name": "multi_section",
+                        "code": "MS",
+                        "is_head": True,
+                        "questions": [
+                            {"code": "Q_MULTI_1", "order_number": 1, "name": "Q1", "input_type": "text", "sub_questions": []},
+                            {"code": "Q_MULTI_2", "order_number": 2, "name": "Q2", "input_type": "text", "sub_questions": []},
+                            {"code": "Q_MULTI_3", "order_number": 3, "name": "Q3", "input_type": "text", "sub_questions": []},
+                        ]
+                    }
+                ]
+            },
+            "option_groups": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        imported_survey, warnings = import_survey_from_zip(import_buffer)
+
+        # All three should have new unique codes
+        imported_questions = list(Question.objects.filter(
+            survey_section__survey_header=imported_survey
+        ))
+        self.assertEqual(len(imported_questions), 3)
+
+        codes = [q.code for q in imported_questions]
+        self.assertNotIn("Q_MULTI_1", codes)
+        self.assertNotIn("Q_MULTI_2", codes)
+        self.assertNotIn("Q_MULTI_3", codes)
+
+        # All codes should be unique
+        self.assertEqual(len(set(codes)), 3)
+
+
+class WebViewTest(TestCase):
+    """Tests for Web views (auth, modes, upload)."""
+
+    def setUp(self):
+        """Set up test data and client."""
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.survey = SurveyHeader.objects.create(name="web_test_survey")
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="web_section",
+            code="WS",
+            is_head=True
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_WEB",
+            name="Web test question",
+            input_type="text"
+        )
+
+    def test_export_requires_authentication(self):
+        """
+        GIVEN an unauthenticated user
+        WHEN accessing export URL directly
+        THEN redirect to login page
+        """
+        response = self.client.get('/editor/export/web_test_survey/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('login', response.url)
+
+    def test_export_authenticated_structure_mode(self):
+        """
+        GIVEN an authenticated user
+        WHEN accessing export URL with mode=structure
+        THEN download ZIP file with survey.json
+        """
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get('/editor/export/web_test_survey/?mode=structure')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/zip')
+        self.assertIn('survey_web_test_survey_structure.zip', response['Content-Disposition'])
+
+        # Verify ZIP contents
+        zip_buffer = BytesIO(response.content)
+        with zipfile.ZipFile(zip_buffer, 'r') as zf:
+            self.assertIn("survey.json", zf.namelist())
+
+    def test_export_authenticated_data_mode(self):
+        """
+        GIVEN an authenticated user and survey with responses
+        WHEN accessing export URL with mode=data
+        THEN download ZIP file with responses.json
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(
+            survey_session=session,
+            question=self.question,
+            text="Web response"
+        )
+
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get('/editor/export/web_test_survey/?mode=data')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/zip')
+
+        zip_buffer = BytesIO(response.content)
+        with zipfile.ZipFile(zip_buffer, 'r') as zf:
+            self.assertIn("responses.json", zf.namelist())
+
+    def test_export_authenticated_full_mode(self):
+        """
+        GIVEN an authenticated user
+        WHEN accessing export URL with mode=full
+        THEN download ZIP file with both survey.json and responses.json
+        """
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get('/editor/export/web_test_survey/?mode=full')
+
+        self.assertEqual(response.status_code, 200)
+
+        zip_buffer = BytesIO(response.content)
+        with zipfile.ZipFile(zip_buffer, 'r') as zf:
+            self.assertIn("survey.json", zf.namelist())
+            self.assertIn("responses.json", zf.namelist())
+
+    def test_export_default_mode_is_structure(self):
+        """
+        GIVEN an authenticated user
+        WHEN accessing export URL without mode parameter
+        THEN default to structure mode
+        """
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get('/editor/export/web_test_survey/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('structure.zip', response['Content-Disposition'])
+
+    def test_export_survey_not_found(self):
+        """
+        GIVEN an authenticated user
+        WHEN accessing export URL for non-existent survey
+        THEN redirect with error message
+        """
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get('/editor/export/nonexistent_survey/')
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_import_requires_authentication(self):
+        """
+        GIVEN an unauthenticated user
+        WHEN accessing import URL
+        THEN redirect to login page
+        """
+        response = self.client.post('/editor/import/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('login', response.url)
+
+    def test_import_requires_post(self):
+        """
+        GIVEN an authenticated user
+        WHEN accessing import URL with GET
+        THEN redirect to editor
+        """
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get('/editor/import/')
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('editor', response.url)
+
+    def test_import_requires_file(self):
+        """
+        GIVEN an authenticated user
+        WHEN posting to import URL without file
+        THEN redirect with error message
+        """
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.post('/editor/import/')
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_import_valid_file(self):
+        """
+        GIVEN an authenticated user and valid ZIP file
+        WHEN posting to import URL
+        THEN import survey and redirect with success message
+        """
+        # Create valid archive
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {
+                "name": "imported_web_survey",
+                "sections": [
+                    {
+                        "name": "imported_section",
+                        "code": "IS",
+                        "is_head": True,
+                        "questions": []
+                    }
+                ]
+            },
+            "option_groups": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        upload_file = SimpleUploadedFile(
+            "import.zip",
+            import_buffer.read(),
+            content_type="application/zip"
+        )
+
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.post('/editor/import/', {'file': upload_file})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(SurveyHeader.objects.filter(name="imported_web_survey").exists())
+
+    def test_import_invalid_file(self):
+        """
+        GIVEN an authenticated user and invalid ZIP file
+        WHEN posting to import URL
+        THEN redirect with error message
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        invalid_file = SimpleUploadedFile(
+            "invalid.zip",
+            b"not a valid zip file",
+            content_type="application/zip"
+        )
+
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.post('/editor/import/', {'file': invalid_file})
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_import_survey_already_exists(self):
+        """
+        GIVEN an authenticated user and archive with existing survey name
+        WHEN posting to import URL
+        THEN redirect with error message
+        """
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {
+                "name": "web_test_survey",  # Already exists
+                "sections": []
+            },
+            "option_groups": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        upload_file = SimpleUploadedFile(
+            "import.zip",
+            import_buffer.read(),
+            content_type="application/zip"
+        )
+
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.post('/editor/import/', {'file': upload_file})
+
+        self.assertEqual(response.status_code, 302)
