@@ -376,3 +376,20 @@ def import_survey(request):
 		messages.error(request, str(e))
 
 	return redirect('editor')
+
+
+@login_required
+def delete_survey(request, survey_name):
+	"""Delete a survey and all related data."""
+	if request.method != 'POST':
+		messages.error(request, "Invalid request method")
+		return redirect('editor')
+
+	try:
+		survey = SurveyHeader.objects.get(name=survey_name)
+		survey.delete()
+		messages.success(request, f"Survey '{survey_name}' deleted successfully")
+	except SurveyHeader.DoesNotExist:
+		messages.error(request, f"Survey '{survey_name}' not found")
+
+	return redirect('editor')

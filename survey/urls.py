@@ -7,6 +7,7 @@ urlpatterns = [
     path('editor/', views.editor, name='editor'),
     path('editor/export/<str:survey_name>/', views.export_survey, name='export_survey'),
     path('editor/import/', views.import_survey, name='import_survey'),
+    path('editor/delete/<str:survey_name>/', views.delete_survey, name='delete_survey'),
     path('surveys/', views.survey_list, name='survey_list'),
     path('surveys/<str:survey_name>/', views.survey_header, name='survey'),
     path('surveys/<str:survey_name>/<str:section_name>/', views.survey_section, name='section'),
