@@ -91,3 +91,7 @@ Required in `.env`:
 - Models use `PointField`, `LineStringField`, `PolygonField` from `django.contrib.gis.db.models`
 - Admin uses `LeafletGeoAdmin` for map-based editing
 - Custom Leaflet draw widgets in `survey/forms.py` for frontend geometry input
+
+## Project Management
+
+**Task list**: See `TODO.md` for planned features and tasks
