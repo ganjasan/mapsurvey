@@ -67,9 +67,11 @@
         props.question_id = currentQ;
 
         layer.bindPopup('<form action="" onsubmit="return false;" id="subquestion_form">' + subquestions_forms[currentQ]
-            + '<div class="container mt-auto" style="padding-left:0px"><div class="row"><div class="col"><button type="button" class="btn btn-success layer-apply" style="width:85%; font-size:2em"><i class="far fa-save"></i></button></div> \
-            <div class="col"><button type="button" class="btn btn-primary layer-edit" style="width:85%; font-size:2em"><i class="far fa-edit"></i></button></div> \
-            <div class="col"><button type="button" class="btn btn-danger layer-delete" style="width:85%; font-size:2em"><i class="far fa-trash-alt"></i></button></div></div></div>'
+            + '<div class="layer-controls">\
+            <button type="button" class="btn btn-success layer-apply"><i class="far fa-save"></i></button>\
+            <button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>\
+            <button type="button" class="btn btn-danger layer-delete"><i class="far fa-trash-alt"></i></button>\
+            </div>'
             + '</form>', {
                 maxHeight: $(document).height()*0.8,
             });

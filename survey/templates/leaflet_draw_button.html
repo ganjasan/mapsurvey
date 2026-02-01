@@ -1,12 +1,12 @@
 <div>
-	<button name = "{{ widget.name }}" type="button" class="drawbutton btn btn-light {{ widget.draw_type }} container" draw-type="{{widget.draw_type}}" data-color="{{widget.color}}" data-icon="{{widget.icon_class}}" >
-		<div class="row">
-			<div class="col-sm-2" style="text-align: center; ">
-				<i class="{{ widget.draw_icon_class }}" style="font-size:50px; position:relative;top: calc(50% - 25px); color: {{ widget.color }}"></i>
+	<button name = "{{ widget.name }}" type="button" class="drawbutton btn btn-light {{ widget.draw_type }}" draw-type="{{widget.draw_type}}" data-color="{{widget.color}}" data-icon="{{widget.icon_class}}" >
+		<div class="geo-question">
+			<div class="geo-question-icon">
+				<i class="{{ widget.draw_icon_class }}" style="font-size:50px; color: {{ widget.color }}"></i>
 			</div>
-			<div class="col-sm-10" style="padding-left:0px">
-				<p style="text-align: left">{{ widget.title }}</p>
-				<p style="text-align: left">{{widget.subtitle}}</p>
+			<div class="geo-question-text">
+				<p class="geo-question-title">{{ widget.title }}</p>
+				{% if widget.subtitle %}<p class="geo-question-subtitle">{{widget.subtitle}}</p>{% endif %}
 			</div>
 		</div>
 	</button>
