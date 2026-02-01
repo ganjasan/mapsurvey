@@ -41,6 +41,12 @@ The system SHALL provide export options in `/editor/` dashboard.
 - **WHEN** authenticated user clicks "Export" for a survey
 - **THEN** system shows dropdown with options: Structure, Data, Full
 
+#### Scenario: Dropdown visual feedback
+- **WHEN** user hovers over export dropdown item
+- **THEN** item background SHALL highlight (light gray)
+- **WHEN** user clicks/presses dropdown item
+- **THEN** item background SHALL change to primary color (blue) with white text
+
 #### Scenario: Download export
 - **WHEN** user selects export mode
 - **THEN** browser downloads ZIP file named `survey_<name>_<mode>.zip`
@@ -154,6 +160,14 @@ The system SHALL provide a management command `import_survey` that creates a sur
 - **WHEN** JSON contains a question with input_type not in allowed choices
 - **THEN** system exits with error code 1 and message "Invalid input_type '<type>' for question '<code>'"
 
+#### Scenario: Missing option_group for choice-based input types
+- **WHEN** JSON contains a question with input_type choice/multichoice/range/rating without option_group_name
+- **THEN** system exits with error code 1 and message "Question '<code>': input_type '<type>' requires option_group_name"
+
+#### Scenario: Unknown option_group_name reference
+- **WHEN** JSON contains a question with option_group_name not in option_groups array
+- **THEN** system exits with error code 1 and message "Question '<code>': option_group_name '<name>' not found in option_groups"
+
 ### Requirement: Import survey from ZIP via Web UI
 The system SHALL provide an upload form in `/editor/` dashboard to import surveys.
 
@@ -247,6 +261,25 @@ The serialization SHALL properly handle GeoDjango PointField for section map pos
 #### Scenario: Invalid WKT string
 - **WHEN** archive contains invalid WKT string for start_map_position
 - **THEN** system exits with error code 1 and message "Invalid WKT for section '<name>': <parse_error>"
+
+### Requirement: Handle field length limits during import
+The import SHALL truncate field values that exceed database column limits.
+
+#### Scenario: Section code exceeds max length
+- **WHEN** archive contains section with code longer than 8 characters
+- **THEN** system SHALL truncate code to 8 characters
+
+#### Scenario: Section name exceeds max length
+- **WHEN** archive contains section with name longer than 45 characters
+- **THEN** system SHALL truncate name to 45 characters
+
+#### Scenario: Survey name exceeds max length
+- **WHEN** archive contains survey with name longer than 45 characters
+- **THEN** system SHALL truncate name to 45 characters
+
+#### Scenario: OptionChoice missing code
+- **WHEN** archive contains OptionChoice without code field
+- **THEN** system SHALL auto-generate sequential codes (1, 2, 3...)
 
 ### Requirement: Handle image files during import
 The import SHALL extract image files and link them to questions/answers.

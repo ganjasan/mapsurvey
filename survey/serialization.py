@@ -430,11 +430,11 @@ def get_or_create_option_groups(
             group = OptionGroup.objects.create(name=name)
 
             # Create choices for new group
-            for choice_data in group_data.get("choices", []):
+            for idx, choice_data in enumerate(group_data.get("choices", []), start=1):
                 OptionChoice.objects.create(
                     option_group=group,
                     name=choice_data["name"],
-                    code=choice_data["code"],
+                    code=choice_data.get("code", idx),
                 )
 
         result[name] = group
@@ -456,9 +456,9 @@ def create_survey_header(
         )
 
     return SurveyHeader.objects.create(
-        name=name,
+        name=name[:45],
         organization=organization,
-        redirect_url=survey_data.get("redirect_url", "#"),
+        redirect_url=survey_data.get("redirect_url", "#")[:250],
     )
 
 
@@ -483,13 +483,13 @@ def create_sections(
 
         section = SurveySection.objects.create(
             survey_header=survey,
-            name=section_data["name"],
-            title=section_data.get("title"),
+            name=section_data["name"][:45],
+            title=section_data.get("title", "")[:256] if section_data.get("title") else None,
             subheading=section_data.get("subheading"),
-            code=section_data.get("code", ""),
+            code=section_data.get("code", "")[:8],
             is_head=section_data.get("is_head", False),
             start_map_postion=start_map_position or Point(30.317, 59.945),
-            start_map_zoom=section_data.get("start_map_zoom", 12),
+            start_map_zoom=section_data.get("start_map_zoom") or 12,
             # next_section and prev_section are resolved later
         )
 
@@ -537,19 +537,30 @@ def _create_question(
     og_name = question_data.get("option_group_name")
     if og_name:
         option_group = option_groups.get(og_name)
+        if option_group is None:
+            raise ImportError(
+                f"Question '{original_code}': option_group_name '{og_name}' not found in option_groups"
+            )
+
+    # Validate option_group required for certain input types
+    requires_option_group = {"choice", "multichoice", "range", "rating"}
+    if input_type in requires_option_group and option_group is None:
+        raise ImportError(
+            f"Question '{original_code}': input_type '{input_type}' requires option_group_name"
+        )
 
     question = Question.objects.create(
         survey_section=section,
         parent_question_id=parent,
-        code=code,
+        code=code[:50],
         order_number=question_data.get("order_number", 0),
-        name=question_data.get("name"),
-        subtext=question_data.get("subtext"),
-        input_type=input_type,
+        name=question_data.get("name", "")[:512] if question_data.get("name") else None,
+        subtext=question_data.get("subtext", "")[:512] if question_data.get("subtext") else None,
+        input_type=input_type[:80],
         option_group=option_group,
         required=question_data.get("required", False),
-        color=question_data.get("color", "#000000"),
-        icon_class=question_data.get("icon_class", ""),
+        color=question_data.get("color", "#000000")[:7],
+        icon_class=question_data.get("icon_class", "")[:80] if question_data.get("icon_class") else None,
         # image is handled separately during extraction
     )
 

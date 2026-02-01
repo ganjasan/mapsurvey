@@ -71,12 +71,12 @@
 
 ## 9. Testing
 
-- [ ] 9.1 Write test for structure serialization
-- [ ] 9.2 Write test for data serialization (sessions, answers, geo, choices)
-- [ ] 9.3 Write test for ZIP creation with all modes
-- [ ] 9.4 Write test for CLI export/import commands
-- [ ] 9.5 Write test for round-trip: export full → import → compare
-- [ ] 9.6 Write test for data-only import to existing survey
-- [ ] 9.7 Write test for error cases (missing survey, invalid archive, missing refs)
-- [ ] 9.8 Write test for code remapping (collision → remap → responses use new code)
-- [ ] 9.9 Write test for Web views (auth, modes, upload)
+- [x] 9.1 Write test for structure serialization
+- [x] 9.2 Write test for data serialization (sessions, answers, geo, choices)
+- [x] 9.3 Write test for ZIP creation with all modes
+- [x] 9.4 Write test for CLI export/import commands
+- [x] 9.5 Write test for round-trip: export full → import → compare
+- [x] 9.6 Write test for data-only import to existing survey
+- [x] 9.7 Write test for error cases (missing survey, invalid archive, missing refs)
+- [x] 9.8 Write test for code remapping (collision → remap → responses use new code)
+- [x] 9.9 Write test for Web views (auth, modes, upload)
