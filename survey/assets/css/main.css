@@ -102,6 +102,54 @@ ul {
   margin-bottom: 0px;
 }
 
+/* Geo Question styling */
+.geo-question {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  text-align: left;
+}
+
+.geo-question-icon {
+  flex-shrink: 0;
+  width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.geo-question-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.geo-question-title {
+  margin: 0;
+  font-weight: 500;
+}
+
+.geo-question-subtitle {
+  margin: 0;
+  font-size: 0.9em;
+  color: #666;
+}
+
+/* Layer popup controls (save/edit/delete buttons) */
+.layer-controls {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin-top: 15px;
+  justify-content: center;
+}
+
+.layer-controls .btn {
+  flex: 1;
+  font-size: 1.5em;
+  padding: 8px 12px;
+  min-width: 50px;
+}
+
 .next_button {
   float:right;
 }
