@@ -46,13 +46,13 @@
 
 ## 6. Serialization
 
-- [ ] 6.1 Add `available_languages` to survey.json export in `export_survey_to_zip`
-- [ ] 6.2 Add `translations` array to section, question, and option choice serialization
-- [ ] 6.3 Add `language` field to session serialization in responses.json
-- [ ] 6.4 Import `available_languages` field in `import_survey_from_zip`
-- [ ] 6.5 Import translations for sections, questions, and option choices
-- [ ] 6.6 Import session `language` field from responses.json
-- [ ] 6.7 Write tests for export/import round-trip with translations
+- [x] 6.1 Add `available_languages` to survey.json export in `export_survey_to_zip`
+- [x] 6.2 Add `translations` array to section, question, and option choice serialization
+- [x] 6.3 Add `language` field to session serialization in responses.json
+- [x] 6.4 Import `available_languages` field in `import_survey_from_zip`
+- [x] 6.5 Import translations for sections, questions, and option choices
+- [x] 6.6 Import session `language` field from responses.json
+- [x] 6.7 Write tests for export/import round-trip with translations
 
 ## 7. Integration Testing
 

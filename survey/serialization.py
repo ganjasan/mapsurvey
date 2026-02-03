@@ -19,7 +19,8 @@ from django.db import transaction
 from .models import (
     Organization, SurveyHeader, SurveySection, Question,
     OptionGroup, OptionChoice, SurveySession, Answer,
-    INPUT_TYPE_CHOICES
+    INPUT_TYPE_CHOICES, SurveySectionTranslation,
+    QuestionTranslation, OptionChoiceTranslation
 )
 
 # Format version for compatibility checking
@@ -52,6 +53,7 @@ def serialize_survey_to_dict(survey: SurveyHeader) -> Dict[str, Any]:
         "name": survey.name,
         "organization": survey.organization.name if survey.organization else None,
         "redirect_url": survey.redirect_url,
+        "available_languages": survey.available_languages or [],
         "sections": serialize_sections(survey),
     }
 
@@ -66,7 +68,14 @@ def serialize_option_groups(survey: SurveyHeader) -> List[Dict[str, Any]]:
             seen_groups[group.name] = {
                 "name": group.name,
                 "choices": [
-                    {"name": choice.name, "code": choice.code}
+                    {
+                        "name": choice.name,
+                        "code": choice.code,
+                        "translations": [
+                            {"language": t.language, "name": t.name}
+                            for t in choice.translations.all()
+                        ]
+                    }
                     for choice in group.choices()
                 ]
             }
@@ -90,6 +99,10 @@ def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
             "start_map_zoom": section.start_map_zoom,
             "next_section_name": section.next_section.name if section.next_section else None,
             "prev_section_name": section.prev_section.name if section.prev_section else None,
+            "translations": [
+                {"language": t.language, "title": t.title, "subheading": t.subheading}
+                for t in section.translations.all()
+            ],
             "questions": serialize_questions(section),
         })
 
@@ -109,6 +122,10 @@ def _serialize_question(question: Question) -> Dict[str, Any]:
         "color": question.color,
         "icon_class": question.icon_class,
         "image": question.image.name if question.image else None,
+        "translations": [
+            {"language": t.language, "name": t.name, "subtext": t.subtext}
+            for t in question.translations.all()
+        ],
         "sub_questions": [
             _serialize_question(sub_q)
             for sub_q in question.subQuestions()
@@ -155,6 +172,7 @@ def serialize_sessions(survey: SurveyHeader) -> List[Dict[str, Any]]:
         sessions.append({
             "start_datetime": session.start_datetime.isoformat() if session.start_datetime else None,
             "end_datetime": session.end_datetime.isoformat() if session.end_datetime else None,
+            "language": session.language,
             "answers": serialize_answers(session),
         })
 
@@ -431,11 +449,19 @@ def get_or_create_option_groups(
 
             # Create choices for new group
             for idx, choice_data in enumerate(group_data.get("choices", []), start=1):
-                OptionChoice.objects.create(
+                choice = OptionChoice.objects.create(
                     option_group=group,
                     name=choice_data["name"],
                     code=choice_data.get("code", idx),
                 )
+
+                # Create choice translations
+                for trans_data in choice_data.get("translations", []):
+                    OptionChoiceTranslation.objects.create(
+                        option_choice=choice,
+                        language=trans_data["language"],
+                        name=trans_data.get("name"),
+                    )
 
         result[name] = group
 
@@ -459,6 +485,7 @@ def create_survey_header(
         name=name[:45],
         organization=organization,
         redirect_url=survey_data.get("redirect_url", "#")[:250],
+        available_languages=survey_data.get("available_languages", []),
     )
 
 
@@ -492,6 +519,15 @@ def create_sections(
             start_map_zoom=section_data.get("start_map_zoom") or 12,
             # next_section and prev_section are resolved later
         )
+
+        # Create section translations
+        for trans_data in section_data.get("translations", []):
+            SurveySectionTranslation.objects.create(
+                section=section,
+                language=trans_data["language"],
+                title=trans_data.get("title"),
+                subheading=trans_data.get("subheading"),
+            )
 
         result[section.name] = section
 
@@ -563,6 +599,15 @@ def _create_question(
         icon_class=question_data.get("icon_class", "")[:80] if question_data.get("icon_class") else None,
         # image is handled separately during extraction
     )
+
+    # Create question translations
+    for trans_data in question_data.get("translations", []):
+        QuestionTranslation.objects.create(
+            question=question,
+            language=trans_data["language"],
+            name=trans_data.get("name"),
+            subtext=trans_data.get("subtext"),
+        )
 
     # Create sub-questions recursively
     for sub_q_data in question_data.get("sub_questions", []):
@@ -729,6 +774,7 @@ def create_session(
         survey=survey,
         start_datetime=start_dt or datetime.now(),
         end_datetime=end_dt,
+        language=session_data.get("language"),
     )
 
 

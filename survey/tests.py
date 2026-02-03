@@ -3204,3 +3204,361 @@ class TranslatedContentDisplayTest(TestCase):
         )
 
         self.assertEqual(form.fields["Q_UNTRANS"].label, "Untranslated Question")
+
+
+class TranslationSerializationTest(TestCase):
+    """Tests for export/import of translations."""
+
+    def setUp(self):
+        """Set up test data with translations."""
+        from .models import (
+            SurveySectionTranslation, QuestionTranslation, OptionChoiceTranslation
+        )
+        self.SurveySectionTranslation = SurveySectionTranslation
+        self.QuestionTranslation = QuestionTranslation
+        self.OptionChoiceTranslation = OptionChoiceTranslation
+
+        self.org = Organization.objects.create(name="Serialization Test Org")
+        self.survey = SurveyHeader.objects.create(
+            name="serialization_test",
+            organization=self.org,
+            available_languages=["en", "ru", "de"]
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="section1",
+            title="Original Section Title",
+            subheading="Original Section Subheading",
+            code="ST1",
+            is_head=True
+        )
+        self.option_group = OptionGroup.objects.create(name="SerializationChoices")
+        self.choice1 = OptionChoice.objects.create(
+            option_group=self.option_group,
+            name="Original Choice",
+            code=1
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_SER",
+            order_number=1,
+            name="Original Question Name",
+            subtext="Original Question Subtext",
+            input_type="choice",
+            option_group=self.option_group
+        )
+
+        # Create translations
+        self.SurveySectionTranslation.objects.create(
+            section=self.section,
+            language="ru",
+            title="Русский заголовок секции",
+            subheading="Русский подзаголовок секции"
+        )
+        self.QuestionTranslation.objects.create(
+            question=self.question,
+            language="ru",
+            name="Русский вопрос",
+            subtext="Русский подтекст"
+        )
+        self.OptionChoiceTranslation.objects.create(
+            option_choice=self.choice1,
+            language="ru",
+            name="Русский выбор"
+        )
+
+    def test_export_includes_available_languages(self):
+        """
+        GIVEN a survey with available_languages
+        WHEN exported to ZIP
+        THEN survey.json contains available_languages field
+        """
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+        output.seek(0)
+
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_data = json.loads(zf.read("survey.json"))
+
+        self.assertEqual(
+            survey_data["survey"]["available_languages"],
+            ["en", "ru", "de"]
+        )
+
+    def test_export_includes_section_translations(self):
+        """
+        GIVEN a section with translations
+        WHEN exported to ZIP
+        THEN section has translations array in survey.json
+        """
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+        output.seek(0)
+
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_data = json.loads(zf.read("survey.json"))
+
+        section_data = survey_data["survey"]["sections"][0]
+        self.assertIn("translations", section_data)
+        self.assertEqual(len(section_data["translations"]), 1)
+        self.assertEqual(section_data["translations"][0]["language"], "ru")
+        self.assertEqual(section_data["translations"][0]["title"], "Русский заголовок секции")
+        self.assertEqual(section_data["translations"][0]["subheading"], "Русский подзаголовок секции")
+
+    def test_export_includes_question_translations(self):
+        """
+        GIVEN a question with translations
+        WHEN exported to ZIP
+        THEN question has translations array in survey.json
+        """
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+        output.seek(0)
+
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_data = json.loads(zf.read("survey.json"))
+
+        question_data = survey_data["survey"]["sections"][0]["questions"][0]
+        self.assertIn("translations", question_data)
+        self.assertEqual(len(question_data["translations"]), 1)
+        self.assertEqual(question_data["translations"][0]["language"], "ru")
+        self.assertEqual(question_data["translations"][0]["name"], "Русский вопрос")
+        self.assertEqual(question_data["translations"][0]["subtext"], "Русский подтекст")
+
+    def test_export_includes_choice_translations(self):
+        """
+        GIVEN an option choice with translations
+        WHEN exported to ZIP
+        THEN choice has translations array in survey.json
+        """
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+        output.seek(0)
+
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_data = json.loads(zf.read("survey.json"))
+
+        choice_data = survey_data["option_groups"][0]["choices"][0]
+        self.assertIn("translations", choice_data)
+        self.assertEqual(len(choice_data["translations"]), 1)
+        self.assertEqual(choice_data["translations"][0]["language"], "ru")
+        self.assertEqual(choice_data["translations"][0]["name"], "Русский выбор")
+
+    def test_export_includes_session_language(self):
+        """
+        GIVEN a session with language set
+        WHEN exported with mode=full
+        THEN session has language field in responses.json
+        """
+        session = SurveySession.objects.create(
+            survey=self.survey,
+            language="ru"
+        )
+
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="full")
+        output.seek(0)
+
+        with zipfile.ZipFile(output, 'r') as zf:
+            responses_data = json.loads(zf.read("responses.json"))
+
+        self.assertEqual(responses_data["sessions"][0]["language"], "ru")
+
+    def test_import_restores_available_languages(self):
+        """
+        GIVEN a ZIP with available_languages
+        WHEN imported
+        THEN survey has available_languages set
+        """
+        # Export
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+        output.seek(0)
+
+        # Modify name for import
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_json = json.loads(zf.read("survey.json"))
+
+        survey_json["survey"]["name"] = "imported_translation_test"
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_json))
+        import_buffer.seek(0)
+
+        # Import
+        imported_survey, _ = import_survey_from_zip(import_buffer)
+
+        self.assertEqual(imported_survey.available_languages, ["en", "ru", "de"])
+
+    def test_import_restores_section_translations(self):
+        """
+        GIVEN a ZIP with section translations
+        WHEN imported
+        THEN section has translations
+        """
+        # Export
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+        output.seek(0)
+
+        # Modify name for import
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_json = json.loads(zf.read("survey.json"))
+
+        survey_json["survey"]["name"] = "imported_section_trans"
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_json))
+        import_buffer.seek(0)
+
+        # Import
+        imported_survey, _ = import_survey_from_zip(import_buffer)
+
+        section = SurveySection.objects.get(survey_header=imported_survey)
+        self.assertEqual(section.get_translated_title("ru"), "Русский заголовок секции")
+        self.assertEqual(section.get_translated_subheading("ru"), "Русский подзаголовок секции")
+
+    def test_import_restores_question_translations(self):
+        """
+        GIVEN a ZIP with question translations
+        WHEN imported
+        THEN question has translations
+        """
+        # Export
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+        output.seek(0)
+
+        # Modify name for import
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_json = json.loads(zf.read("survey.json"))
+
+        survey_json["survey"]["name"] = "imported_question_trans"
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_json))
+        import_buffer.seek(0)
+
+        # Import
+        imported_survey, _ = import_survey_from_zip(import_buffer)
+
+        question = Question.objects.get(
+            survey_section__survey_header=imported_survey,
+            name="Original Question Name"
+        )
+        self.assertEqual(question.get_translated_name("ru"), "Русский вопрос")
+        self.assertEqual(question.get_translated_subtext("ru"), "Русский подтекст")
+
+    def test_import_restores_choice_translations(self):
+        """
+        GIVEN a ZIP with choice translations (new option group)
+        WHEN imported
+        THEN choice has translations
+        """
+        # Create a unique option group for this test
+        new_group = OptionGroup.objects.create(name="UniqueImportChoices")
+        new_choice = OptionChoice.objects.create(
+            option_group=new_group,
+            name="Unique Choice",
+            code=1
+        )
+        self.OptionChoiceTranslation.objects.create(
+            option_choice=new_choice,
+            language="de",
+            name="Deutsche Wahl"
+        )
+
+        new_survey = SurveyHeader.objects.create(
+            name="choice_trans_test",
+            organization=self.org,
+            available_languages=["en", "de"]
+        )
+        new_section = SurveySection.objects.create(
+            survey_header=new_survey,
+            name="choice_section",
+            code="CS1",
+            is_head=True
+        )
+        Question.objects.create(
+            survey_section=new_section,
+            code="Q_UNIQUE_CHOICE",
+            name="Unique Choice Question",
+            input_type="choice",
+            option_group=new_group
+        )
+
+        # Export
+        output = BytesIO()
+        export_survey_to_zip(new_survey, output, mode="structure")
+        output.seek(0)
+
+        # Modify name and option group name for import
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_json = json.loads(zf.read("survey.json"))
+
+        survey_json["survey"]["name"] = "imported_choice_trans"
+        # Rename option group to ensure new creation
+        for og in survey_json["option_groups"]:
+            if og["name"] == "UniqueImportChoices":
+                og["name"] = "ImportedUniqueChoices"
+        for section in survey_json["survey"]["sections"]:
+            for q in section["questions"]:
+                if q["option_group_name"] == "UniqueImportChoices":
+                    q["option_group_name"] = "ImportedUniqueChoices"
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_json))
+        import_buffer.seek(0)
+
+        # Import
+        imported_survey, _ = import_survey_from_zip(import_buffer)
+
+        # Verify choice translation was imported
+        imported_group = OptionGroup.objects.get(name="ImportedUniqueChoices")
+        imported_choice = OptionChoice.objects.get(option_group=imported_group)
+        self.assertEqual(imported_choice.get_translated_name("de"), "Deutsche Wahl")
+
+    def test_import_restores_session_language(self):
+        """
+        GIVEN a ZIP with session language
+        WHEN imported with mode=full
+        THEN session has language set
+        """
+        # Create session with language
+        session = SurveySession.objects.create(
+            survey=self.survey,
+            language="de"
+        )
+        Answer.objects.create(
+            survey_session=session,
+            question=self.question
+        )
+
+        # Export full
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="full")
+        output.seek(0)
+
+        # Modify name for import
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_json = json.loads(zf.read("survey.json"))
+            responses_json = json.loads(zf.read("responses.json"))
+
+        survey_json["survey"]["name"] = "imported_session_lang"
+        responses_json["survey_name"] = "imported_session_lang"
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_json))
+            zf.writestr("responses.json", json.dumps(responses_json))
+        import_buffer.seek(0)
+
+        # Import
+        imported_survey, _ = import_survey_from_zip(import_buffer)
+
+        imported_session = SurveySession.objects.get(survey=imported_survey)
+        self.assertEqual(imported_session.language, "de")
