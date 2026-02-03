@@ -14,11 +14,11 @@
 
 ## 2. Admin Interface
 
-- [ ] 2.1 Create `SurveySectionTranslationInline` for `SurveySectionAdmin`
-- [ ] 2.2 Create `QuestionTranslationInline` for `QuestionAdmin`
-- [ ] 2.3 Create `OptionChoiceTranslationInline` for `OptionChoiceAdmin`
-- [ ] 2.4 Add `available_languages` field to `SurveyHeaderAdmin`
-- [ ] 2.5 Write tests for admin inlines (translation creation via admin)
+- [x] 2.1 Create `SurveySectionTranslationInline` for `SurveySectionAdmin`
+- [x] 2.2 Create `QuestionTranslationInline` for `QuestionAdmin`
+- [x] 2.3 Create `OptionChoiceTranslationInline` for `OptionChoiceAdmin`
+- [x] 2.4 Add `available_languages` field to `SurveyHeaderAdmin`
+- [x] 2.5 Write tests for admin inlines (translation creation via admin)
 
 ## 3. Language Selection
 

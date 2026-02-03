@@ -2621,3 +2621,134 @@ class TranslationModelsTest(TestCase):
         """
         session = SurveySession.objects.create(survey=self.survey)
         self.assertIsNone(session.language)
+
+
+class AdminInlineTest(TestCase):
+    """Tests for admin interface with translation inlines."""
+
+    def setUp(self):
+        """Set up test data and admin user."""
+        from django.contrib.admin.sites import AdminSite
+        from .admin import (
+            SurveySectionAdmin, QuestionAdmin, OptionChoiceAdmin,
+            SurveySectionTranslationInline, QuestionTranslationInline, OptionChoiceTranslationInline
+        )
+        from .models import SurveySectionTranslation, QuestionTranslation, OptionChoiceTranslation
+
+        self.SurveySectionTranslation = SurveySectionTranslation
+        self.QuestionTranslation = QuestionTranslation
+        self.OptionChoiceTranslation = OptionChoiceTranslation
+
+        self.site = AdminSite()
+        self.section_admin = SurveySectionAdmin(SurveySection, self.site)
+        self.question_admin = QuestionAdmin(Question, self.site)
+        self.option_choice_admin = OptionChoiceAdmin(OptionChoice, self.site)
+
+        self.user = User.objects.create_superuser(
+            username='admin',
+            email='admin@test.com',
+            password='adminpass123'
+        )
+        self.org = Organization.objects.create(name="Admin Test Org")
+        self.survey = SurveyHeader.objects.create(
+            name="admin_test_survey",
+            organization=self.org,
+            available_languages=["en", "ru"]
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="admin_section",
+            title="Admin Section",
+            code="AS1",
+            is_head=True
+        )
+        self.option_group = OptionGroup.objects.create(name="admin_options")
+        self.option = OptionChoice.objects.create(
+            option_group=self.option_group,
+            name="Option A",
+            code=1
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section,
+            name="Admin Question",
+            input_type="text",
+            code="AQ1"
+        )
+
+    def test_section_admin_has_translation_inline(self):
+        """
+        GIVEN SurveySectionAdmin
+        WHEN inlines are checked
+        THEN SurveySectionTranslationInline is present
+        """
+        inline_names = [inline.__name__ for inline in self.section_admin.inlines]
+        self.assertIn('SurveySectionTranslationInline', inline_names)
+
+    def test_question_admin_has_translation_inline(self):
+        """
+        GIVEN QuestionAdmin
+        WHEN inlines are checked
+        THEN QuestionTranslationInline is present
+        """
+        inline_names = [inline.__name__ for inline in self.question_admin.inlines]
+        self.assertIn('QuestionTranslationInline', inline_names)
+
+    def test_option_choice_admin_has_translation_inline(self):
+        """
+        GIVEN OptionChoiceAdmin
+        WHEN inlines are checked
+        THEN OptionChoiceTranslationInline is present
+        """
+        inline_names = [inline.__name__ for inline in self.option_choice_admin.inlines]
+        self.assertIn('OptionChoiceTranslationInline', inline_names)
+
+    def test_create_section_translation_via_model(self):
+        """
+        GIVEN a survey section
+        WHEN translation is created programmatically
+        THEN translation is accessible via section
+        """
+        self.SurveySectionTranslation.objects.create(
+            section=self.section,
+            language="ru",
+            title="Админ Секция"
+        )
+        self.assertEqual(self.section.translations.count(), 1)
+        self.assertEqual(self.section.translations.first().title, "Админ Секция")
+
+    def test_create_question_translation_via_model(self):
+        """
+        GIVEN a question
+        WHEN translation is created programmatically
+        THEN translation is accessible via question
+        """
+        self.QuestionTranslation.objects.create(
+            question=self.question,
+            language="ru",
+            name="Админ Вопрос"
+        )
+        self.assertEqual(self.question.translations.count(), 1)
+        self.assertEqual(self.question.translations.first().name, "Админ Вопрос")
+
+    def test_create_option_translation_via_model(self):
+        """
+        GIVEN an option choice
+        WHEN translation is created programmatically
+        THEN translation is accessible via option choice
+        """
+        self.OptionChoiceTranslation.objects.create(
+            option_choice=self.option,
+            language="ru",
+            name="Вариант А"
+        )
+        self.assertEqual(self.option.translations.count(), 1)
+        self.assertEqual(self.option.translations.first().name, "Вариант А")
+
+    def test_survey_admin_displays_available_languages(self):
+        """
+        GIVEN SurveyAdmin
+        WHEN list_display is checked
+        THEN available_languages is included
+        """
+        from .admin import SurveyAdmin
+        self.assertIn('available_languages', SurveyAdmin.list_display)
