@@ -124,12 +124,18 @@ def survey_language_select(request, survey_name):
 def survey_header(request, survey_name):
 	if request.session.get('survey_session_id'):
 		del request.session['survey_session_id']
+	if request.session.get('survey_language'):
+		del request.session['survey_language']
 
 	survey = SurveyHeader.objects.get(name=survey_name)
-	start_section = survey.start_section()
 
+	# Redirect to language selection for multilingual surveys
+	if survey.is_multilingual():
+		return redirect('survey_language_select', survey_name=survey_name)
+
+	start_section = survey.start_section()
 	redirect_page = ("../" + survey_name + "/" + start_section.name) if start_section else survey.redirect_url
-	
+
 	return HttpResponseRedirect(redirect_page)
 	
 	#context = {'survey': survey, 'section': survey.start_section()}
@@ -138,12 +144,19 @@ def survey_header(request, survey_name):
 
 
 def survey_section(request, survey_name, section_name):
-	
+
 	survey = SurveyHeader.objects.get(name=survey_name)
+
+	# For multilingual surveys, redirect to language selection if no language chosen
+	if survey.is_multilingual() and not request.session.get('survey_language'):
+		return redirect('survey_language_select', survey_name=survey_name)
+
+	# Get selected language (None for single-language surveys)
+	selected_language = request.session.get('survey_language')
 
 	#если сессия на задана, то создать запись сессии
 	if  not request.session.get('survey_session_id'):
-		survey_session = SurveySession(survey=survey)
+		survey_session = SurveySession(survey=survey, language=selected_language)
 		survey_session.save()
 		request.session['survey_session_id'] = survey_session.id
 
@@ -249,7 +262,13 @@ def survey_section(request, survey_name, section_name):
 		
 
 
-	return render(request, 'survey_section.html', {'form': form, 'subquestions_forms':subquestions_forms, 'survey':survey, 'section':section})
+	return render(request, 'survey_section.html', {
+		'form': form,
+		'subquestions_forms': subquestions_forms,
+		'survey': survey,
+		'section': section,
+		'selected_language': selected_language,
+	})
 
 @login_required
 def download_data(request, survey_name):

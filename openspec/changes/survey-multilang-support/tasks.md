@@ -31,10 +31,10 @@
 
 ## 4. Survey Flow Integration
 
-- [ ] 4.1 Modify `survey_header` view to redirect to language selection for multilingual surveys
-- [ ] 4.2 Modify `survey_section` view to check for language selection and redirect if missing
-- [ ] 4.3 Pass selected language to template context in `survey_section` view
-- [ ] 4.4 Write tests for survey flow redirects (multilingual and single-language)
+- [x] 4.1 Modify `survey_header` view to redirect to language selection for multilingual surveys
+- [x] 4.2 Modify `survey_section` view to check for language selection and redirect if missing
+- [x] 4.3 Pass selected language to template context in `survey_section` view
+- [x] 4.4 Write tests for survey flow redirects (multilingual and single-language)
 
 ## 5. Translated Content Display
 

@@ -2868,3 +2868,104 @@ class LanguageSelectionTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(self.client.session.get('survey_session_id'))
+
+
+class SurveyFlowIntegrationTest(TestCase):
+    """Tests for survey flow with multilingual support."""
+
+    def setUp(self):
+        """Set up test data for flow tests."""
+        self.client = Client()
+        self.org = Organization.objects.create(name="Flow Test Org")
+        self.multilang_survey = SurveyHeader.objects.create(
+            name="flow_multilang",
+            organization=self.org,
+            available_languages=["en", "ru"]
+        )
+        self.single_lang_survey = SurveyHeader.objects.create(
+            name="flow_singlelang",
+            organization=self.org,
+            available_languages=[]
+        )
+        self.multi_section = SurveySection.objects.create(
+            survey_header=self.multilang_survey,
+            name="section1",
+            title="Multi Section",
+            code="MS1",
+            is_head=True
+        )
+        self.single_section = SurveySection.objects.create(
+            survey_header=self.single_lang_survey,
+            name="section1",
+            title="Single Section",
+            code="SS1",
+            is_head=True
+        )
+
+    def test_survey_header_redirects_to_language_select_for_multilang(self):
+        """
+        GIVEN a multilingual survey
+        WHEN user visits survey entry URL
+        THEN user is redirected to language selection
+        """
+        response = self.client.get('/surveys/flow_multilang/')
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('language', response.url)
+
+    def test_survey_header_redirects_to_section_for_singlelang(self):
+        """
+        GIVEN a single-language survey
+        WHEN user visits survey entry URL
+        THEN user is redirected directly to first section
+        """
+        response = self.client.get('/surveys/flow_singlelang/')
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('section1', response.url)
+
+    def test_section_redirects_to_language_select_if_no_language(self):
+        """
+        GIVEN a multilingual survey
+        WHEN user visits section directly without language selection
+        THEN user is redirected to language selection
+        """
+        response = self.client.get('/surveys/flow_multilang/section1/')
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('language', response.url)
+
+    def test_section_accessible_after_language_selection(self):
+        """
+        GIVEN a multilingual survey with language selected
+        WHEN user visits section
+        THEN section is displayed
+        """
+        # First select language
+        self.client.post('/surveys/flow_multilang/language/', {'language': 'en'})
+
+        # Then access section
+        response = self.client.get('/surveys/flow_multilang/section1/')
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_section_accessible_for_singlelang_without_language(self):
+        """
+        GIVEN a single-language survey
+        WHEN user visits section directly
+        THEN section is displayed (no language selection needed)
+        """
+        response = self.client.get('/surveys/flow_singlelang/section1/')
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_selected_language_passed_to_section_context(self):
+        """
+        GIVEN a multilingual survey with Russian selected
+        WHEN section is rendered
+        THEN template context contains selected_language='ru'
+        """
+        self.client.post('/surveys/flow_multilang/language/', {'language': 'ru'})
+        response = self.client.get('/surveys/flow_multilang/section1/')
+
+        self.assertEqual(response.context['selected_language'], 'ru')
