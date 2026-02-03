@@ -2,13 +2,13 @@
 {% load hash i18n %}
 
 {% block title %}
-    {{ section.title }}
+    {{ section_title }}
 {% endblock %}
 
 {% block content %}
     <div class='subheading'>
-        {% if section.subheading %}
-            {{ section.subheading | safe }}
+        {% if section_subheading %}
+            {{ section_subheading | safe }}
         {% endif %}
     </div>
 	<div class='questions'>

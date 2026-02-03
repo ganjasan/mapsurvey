@@ -15,6 +15,7 @@ from .serialization import (
     geo_to_wkt, serialize_choices, export_survey_to_zip, validate_archive,
     import_survey_from_zip, ImportError, FORMAT_VERSION
 )
+from .forms import SurveySectionAnswerForm
 
 
 class SmokeTest(TestCase):
@@ -2969,3 +2970,237 @@ class SurveyFlowIntegrationTest(TestCase):
         response = self.client.get('/surveys/flow_multilang/section1/')
 
         self.assertEqual(response.context['selected_language'], 'ru')
+
+
+class TranslatedContentDisplayTest(TestCase):
+    """Tests for translated content display in forms and templates."""
+
+    def setUp(self):
+        """Set up test data with translations."""
+        from .models import (
+            SurveySectionTranslation, QuestionTranslation, OptionChoiceTranslation
+        )
+        self.SurveySectionTranslation = SurveySectionTranslation
+        self.QuestionTranslation = QuestionTranslation
+        self.OptionChoiceTranslation = OptionChoiceTranslation
+
+        self.client = Client()
+        self.org = Organization.objects.create(name="Display Test Org")
+        self.survey = SurveyHeader.objects.create(
+            name="display_test",
+            organization=self.org,
+            available_languages=["en", "ru"]
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="section1",
+            title="Original Title",
+            subheading="Original Subheading",
+            code="DT1",
+            is_head=True
+        )
+        self.option_group = OptionGroup.objects.create(name="DisplayChoices")
+        self.choice1 = OptionChoice.objects.create(
+            option_group=self.option_group,
+            name="Original Choice 1",
+            code=1
+        )
+        self.choice2 = OptionChoice.objects.create(
+            option_group=self.option_group,
+            name="Original Choice 2",
+            code=2
+        )
+        self.text_question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_TEXT",
+            order_number=1,
+            name="Original Question",
+            subtext="Original Subtext",
+            input_type="text"
+        )
+        self.choice_question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_CHOICE",
+            order_number=2,
+            name="Original Choice Question",
+            input_type="choice",
+            option_group=self.option_group
+        )
+
+        # Create translations
+        self.SurveySectionTranslation.objects.create(
+            section=self.section,
+            language="ru",
+            title="Русский заголовок",
+            subheading="Русский подзаголовок"
+        )
+        self.QuestionTranslation.objects.create(
+            question=self.text_question,
+            language="ru",
+            name="Русский вопрос",
+            subtext="Русский подтекст"
+        )
+        self.QuestionTranslation.objects.create(
+            question=self.choice_question,
+            language="ru",
+            name="Русский вопрос с выбором"
+        )
+        self.OptionChoiceTranslation.objects.create(
+            option_choice=self.choice1,
+            language="ru",
+            name="Выбор 1"
+        )
+        self.OptionChoiceTranslation.objects.create(
+            option_choice=self.choice2,
+            language="ru",
+            name="Выбор 2"
+        )
+
+    def test_form_uses_translated_question_labels(self):
+        """
+        GIVEN a form with language='ru'
+        WHEN form is created
+        THEN question labels use Russian translations
+        """
+        session = SurveySession.objects.create(survey=self.survey, language="ru")
+        form = SurveySectionAnswerForm(
+            initial={},
+            section=self.section,
+            question=None,
+            survey_session_id=session.id,
+            language="ru"
+        )
+
+        self.assertEqual(form.fields["Q_TEXT"].label, "Русский вопрос")
+        self.assertEqual(form.fields["Q_CHOICE"].label, "Русский вопрос с выбором")
+
+    def test_form_uses_original_labels_without_language(self):
+        """
+        GIVEN a form with language=None
+        WHEN form is created
+        THEN question labels use original names
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        form = SurveySectionAnswerForm(
+            initial={},
+            section=self.section,
+            question=None,
+            survey_session_id=session.id,
+            language=None
+        )
+
+        self.assertEqual(form.fields["Q_TEXT"].label, "Original Question")
+        self.assertEqual(form.fields["Q_CHOICE"].label, "Original Choice Question")
+
+    def test_form_uses_translated_choice_options(self):
+        """
+        GIVEN a form with language='ru' and choice question
+        WHEN form is created
+        THEN choice options use Russian translations
+        """
+        session = SurveySession.objects.create(survey=self.survey, language="ru")
+        form = SurveySectionAnswerForm(
+            initial={},
+            section=self.section,
+            question=None,
+            survey_session_id=session.id,
+            language="ru"
+        )
+
+        choices = form.fields["Q_CHOICE"].choices
+        choice_labels = [label for code, label in choices]
+        self.assertIn("Выбор 1", choice_labels)
+        self.assertIn("Выбор 2", choice_labels)
+
+    def test_form_uses_original_choice_options_without_language(self):
+        """
+        GIVEN a form with language=None and choice question
+        WHEN form is created
+        THEN choice options use original names
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        form = SurveySectionAnswerForm(
+            initial={},
+            section=self.section,
+            question=None,
+            survey_session_id=session.id,
+            language=None
+        )
+
+        choices = form.fields["Q_CHOICE"].choices
+        choice_labels = [label for code, label in choices]
+        self.assertIn("Original Choice 1", choice_labels)
+        self.assertIn("Original Choice 2", choice_labels)
+
+    def test_section_view_passes_translated_title_to_context(self):
+        """
+        GIVEN a multilingual survey with Russian selected
+        WHEN section is rendered
+        THEN context contains translated section title
+        """
+        self.client.post('/surveys/display_test/language/', {'language': 'ru'})
+        response = self.client.get('/surveys/display_test/section1/')
+
+        self.assertEqual(response.context['section_title'], "Русский заголовок")
+
+    def test_section_view_passes_translated_subheading_to_context(self):
+        """
+        GIVEN a multilingual survey with Russian selected
+        WHEN section is rendered
+        THEN context contains translated section subheading
+        """
+        self.client.post('/surveys/display_test/language/', {'language': 'ru'})
+        response = self.client.get('/surveys/display_test/section1/')
+
+        self.assertEqual(response.context['section_subheading'], "Русский подзаголовок")
+
+    def test_section_view_passes_original_title_without_language(self):
+        """
+        GIVEN a single-language survey
+        WHEN section is rendered
+        THEN context contains original section title
+        """
+        single_survey = SurveyHeader.objects.create(
+            name="single_display_test",
+            organization=self.org,
+            available_languages=[]
+        )
+        single_section = SurveySection.objects.create(
+            survey_header=single_survey,
+            name="section1",
+            title="Single Lang Title",
+            subheading="Single Lang Subheading",
+            code="SDT1",
+            is_head=True
+        )
+
+        response = self.client.get('/surveys/single_display_test/section1/')
+
+        self.assertEqual(response.context['section_title'], "Single Lang Title")
+        self.assertEqual(response.context['section_subheading'], "Single Lang Subheading")
+
+    def test_form_fallback_for_missing_translation(self):
+        """
+        GIVEN a question without translation for requested language
+        WHEN form is created with that language
+        THEN question label falls back to original name
+        """
+        # Create question without Russian translation
+        untranslated_q = Question.objects.create(
+            survey_section=self.section,
+            code="Q_UNTRANS",
+            order_number=3,
+            name="Untranslated Question",
+            input_type="text"
+        )
+
+        session = SurveySession.objects.create(survey=self.survey, language="ru")
+        form = SurveySectionAnswerForm(
+            initial={},
+            section=self.section,
+            question=None,
+            survey_session_id=session.id,
+            language="ru"
+        )
+
+        self.assertEqual(form.fields["Q_UNTRANS"].label, "Untranslated Question")

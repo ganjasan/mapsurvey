@@ -132,26 +132,28 @@ class ShowImageField(forms.Field):
 
 class SurveySectionAnswerForm(forms.Form):
 
-    def _get_form_from_input_type(self, input_type, required,  option_group, label, sublabel, color, icon_class, image_source):
+    def _get_form_from_input_type(self, input_type, required, option_group, label, sublabel, color, icon_class, image_source, language=None):
 
         if input_type == 'text':
-            return forms.CharField(widget=forms.Textarea, label=label, required = required)
+            return forms.CharField(widget=forms.Textarea, label=label, required=required)
 
         elif input_type == 'text_line':
-            return forms.CharField(widget=forms.TextInput, label=label, required = required)
+            return forms.CharField(widget=forms.TextInput, label=label, required=required)
 
         elif input_type == 'number':
-            return forms.CharField(widget=forms.NumberInput, label=label, required = required)
+            return forms.CharField(widget=forms.NumberInput, label=label, required=required)
 
         elif input_type == 'choice':
-            return forms.ChoiceField(widget=forms.RadioSelect, choices=[(choice.code, choice.name) for choice in option_group.choices()], label=label, required=required)
+            choices = [(choice.code, choice.get_translated_name(language)) for choice in option_group.choices()]
+            return forms.ChoiceField(widget=forms.RadioSelect, choices=choices, label=label, required=required)
 
         elif input_type == 'multichoice':
+            choices = [(choice.code, choice.get_translated_name(language)) for choice in option_group.choices()]
             return forms.MultipleChoiceField(
                 widget=forms.CheckboxSelectMultiple,
-                choices = [(choice.code, choice.name) for choice in option_group.choices()],
-                label = label,
-                required = required,
+                choices=choices,
+                label=label,
+                required=required,
             )
 
         elif input_type == 'range':
@@ -176,7 +178,8 @@ class SurveySectionAnswerForm(forms.Form):
             return ShowImageField(widget=ShowImageWidget, label=False, image_source=image_source)
 
         elif input_type == 'rating':
-            return forms.ChoiceField(widget=forms.RadioSelect(attrs={'class': 'form-check-inline', 'style': 'margin-right:0;'}), choices=[(choice.code, choice.name) for choice in option_group.choices()], label=label, required=required)
+            choices = [(choice.code, choice.get_translated_name(language)) for choice in option_group.choices()]
+            return forms.ChoiceField(widget=forms.RadioSelect(attrs={'class': 'form-check-inline', 'style': 'margin-right:0;'}), choices=choices, label=label, required=required)
 
         elif input_type == "html":
             return HTMLField(widget=HTMLTextWidget, label=False, title = label, subtitle=sublabel)
@@ -184,11 +187,12 @@ class SurveySectionAnswerForm(forms.Form):
             return forms.CharField(widget=forms.Textarea)
     
 
-    def __init__(self, initial, section, question, survey_session_id, *args, **kwargs):
+    def __init__(self, initial, section, question, survey_session_id, language=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         section = section
         survey_session_id = survey_session_id
+        self.language = language
 
         if question == None:
             questions = section.questions()
@@ -199,15 +203,13 @@ class SurveySectionAnswerForm(forms.Form):
 
             #add question to field
             field_name = question.code
-            field_label = question.name
-            field_sublabel = question.subtext if question.subtext else ""
+            field_label = question.get_translated_name(language)
+            field_sublabel = question.get_translated_subtext(language) if question.subtext else ""
             field_color = question.color
             field_icon_class = question.icon_class
             image_source = question.image.url if question.image else None
 
-            print(field_sublabel)
-
-            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question.option_group, field_label, field_sublabel, field_color, field_icon_class, image_source)
+            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question.option_group, field_label, field_sublabel, field_color, field_icon_class, image_source, language)
 
 
     def save(self):

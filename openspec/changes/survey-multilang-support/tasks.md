@@ -38,11 +38,11 @@
 
 ## 5. Translated Content Display
 
-- [ ] 5.1 Modify `SurveySectionAnswerForm` to accept `language` parameter
-- [ ] 5.2 Use translated question names and subtexts in form field generation
-- [ ] 5.3 Use translated option choice names in choice fields
-- [ ] 5.4 Update `survey_section.html` to display translated section title and subheading
-- [ ] 5.5 Write tests for form field labels with translations
+- [x] 5.1 Modify `SurveySectionAnswerForm` to accept `language` parameter
+- [x] 5.2 Use translated question names and subtexts in form field generation
+- [x] 5.3 Use translated option choice names in choice fields
+- [x] 5.4 Update `survey_section.html` to display translated section title and subheading
+- [x] 5.5 Write tests for form field labels with translations
 
 ## 6. Serialization
 

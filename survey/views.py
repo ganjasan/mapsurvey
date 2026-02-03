@@ -163,7 +163,7 @@ def survey_section(request, survey_name, section_name):
 	section = SurveySection.objects.get(Q(survey_header=survey) & Q(name=section_name))
 
 	if request.method == 'POST':
-		form = SurveySectionAnswerForm(initial=request.POST, section=section, question=None, survey_session_id=request.session['survey_session_id'])
+		form = SurveySectionAnswerForm(initial=request.POST, section=section, question=None, survey_session_id=request.session['survey_session_id'], language=selected_language)
 
 		#save data to answers
 		section_questions = section.questions()
@@ -252,21 +252,27 @@ def survey_section(request, survey_name, section_name):
 		return HttpResponseRedirect(next_page)
 
 	else:
-		form = SurveySectionAnswerForm(initial={}, section=section, question=None, survey_session_id=request.session['survey_session_id'])
+		form = SurveySectionAnswerForm(initial={}, section=section, question=None, survey_session_id=request.session['survey_session_id'], language=selected_language)
 
 		questions = section.questions();
-	
+
 		subquestions_forms = {}
 		for question in questions:
-			subquestions_forms[question.code] = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=request.session['survey_session_id']).as_p().replace("/script", "\/script")
+			subquestions_forms[question.code] = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=request.session['survey_session_id'], language=selected_language).as_p().replace("/script", "\/script")
 		
 
+
+	# Get translated section title and subheading for template
+	section_title = section.get_translated_title(selected_language)
+	section_subheading = section.get_translated_subheading(selected_language)
 
 	return render(request, 'survey_section.html', {
 		'form': form,
 		'subquestions_forms': subquestions_forms,
 		'survey': survey,
 		'section': section,
+		'section_title': section_title,
+		'section_subheading': section_subheading,
 		'selected_language': selected_language,
 	})
 
