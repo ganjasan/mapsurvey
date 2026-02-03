@@ -39,6 +39,7 @@ class SurveySession(models.Model):
     survey = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE)
     start_datetime = models.DateTimeField(default=datetime.now)
     end_datetime = models.DateTimeField(null=True, blank=True)
+    language = models.CharField(max_length=10, null=True, blank=True, help_text=_('Selected language code (ISO 639-1)'))
 
     class Meta:
         app_label = 'survey'
@@ -65,6 +66,7 @@ class SurveyHeader(models.Model):
     organization = models.ForeignKey("Organization", on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=45, unique=True, validators=[validate_url_name])
     redirect_url = models.CharField(max_length=250, default="#", help_text=_('URL to redirect after survey completion. E.g.: /thanks/ or https://example.com'))
+    available_languages = models.JSONField(default=list, blank=True, help_text=_('List of ISO 639-1 language codes, e.g. ["en", "ru", "de"]'))
 
     class Meta:
         app_label = 'survey'
@@ -100,6 +102,10 @@ class SurveyHeader(models.Model):
             self.__acache = Answer.objects.filter(Q(question__in=Question.objects.filter(survey_section__in=SurveySection.objects.filter(survey_header=self))))
         return self.__acache
 
+    def is_multilingual(self):
+        return bool(self.available_languages and len(self.available_languages) > 0)
+
+
 #survey sections
 class SurveySection(models.Model):
     is_head = models.BooleanField(default=False)
@@ -126,6 +132,38 @@ class SurveySection(models.Model):
         if not hasattr(self, "__qcache"):
             self.__qcache = Question.objects.filter(survey_section=self).filter(parent_question_id__isnull=True).order_by('order_number')
         return self.__qcache
+
+    def get_translated_title(self, lang):
+        if not lang:
+            return self.title
+        try:
+            translation = self.translations.get(language=lang)
+            return translation.title if translation.title else self.title
+        except SurveySectionTranslation.DoesNotExist:
+            return self.title
+
+    def get_translated_subheading(self, lang):
+        if not lang:
+            return self.subheading
+        try:
+            translation = self.translations.get(language=lang)
+            return translation.subheading if translation.subheading else self.subheading
+        except SurveySectionTranslation.DoesNotExist:
+            return self.subheading
+
+
+class SurveySectionTranslation(models.Model):
+    section = models.ForeignKey("SurveySection", on_delete=models.CASCADE, related_name='translations')
+    language = models.CharField(max_length=10, help_text=_('ISO 639-1 language code'))
+    title = models.CharField(max_length=256, null=True, blank=True)
+    subheading = models.CharField(max_length=4096, null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        unique_together = ('section', 'language')
+
+    def __str__(self):
+        return f"{self.section.name} ({self.language})"
 
 
 #examples - Never-Always, Years-By-Five
@@ -154,6 +192,29 @@ class OptionChoice(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_translated_name(self, lang):
+        if not lang:
+            return self.name
+        try:
+            translation = self.translations.get(language=lang)
+            return translation.name if translation.name else self.name
+        except OptionChoiceTranslation.DoesNotExist:
+            return self.name
+
+
+class OptionChoiceTranslation(models.Model):
+    option_choice = models.ForeignKey("OptionChoice", on_delete=models.CASCADE, related_name='translations')
+    language = models.CharField(max_length=10, help_text=_('ISO 639-1 language code'))
+    name = models.CharField(max_length=256)
+
+    class Meta:
+        app_label = 'survey'
+        unique_together = ('option_choice', 'language')
+
+    def __str__(self):
+        return f"{self.option_choice.name} ({self.language})"
+
 
 def question_code_generator():
     while True:
@@ -192,6 +253,39 @@ class Question(models.Model):
         if not hasattr(self, "__acache"):
             self.__acache = Answer.objects.filter(question=self)
         return self.__acache
+
+    def get_translated_name(self, lang):
+        if not lang:
+            return self.name
+        try:
+            translation = self.translations.get(language=lang)
+            return translation.name if translation.name else self.name
+        except QuestionTranslation.DoesNotExist:
+            return self.name
+
+    def get_translated_subtext(self, lang):
+        if not lang:
+            return self.subtext
+        try:
+            translation = self.translations.get(language=lang)
+            return translation.subtext if translation.subtext else self.subtext
+        except QuestionTranslation.DoesNotExist:
+            return self.subtext
+
+
+class QuestionTranslation(models.Model):
+    question = models.ForeignKey("Question", on_delete=models.CASCADE, related_name='translations')
+    language = models.CharField(max_length=10, help_text=_('ISO 639-1 language code'))
+    name = models.CharField(max_length=512, null=True, blank=True)
+    subtext = models.CharField(max_length=512, null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        unique_together = ('question', 'language')
+
+    def __str__(self):
+        return f"{self.question.code} ({self.language})"
+
 
 class Answer(models.Model):
     survey_session = models.ForeignKey("SurveySession", on_delete=models.CASCADE)

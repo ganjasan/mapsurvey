@@ -2317,3 +2317,307 @@ class DeleteSurveyTest(TestCase):
         self.assertEqual(response.status_code, 302)
         # Survey should still exist
         self.assertTrue(SurveyHeader.objects.filter(name="delete_test_survey").exists())
+
+
+class TranslationModelsTest(TestCase):
+    """Tests for multilingual translation models and helper methods."""
+
+    def setUp(self):
+        """Set up test data for translation tests."""
+        from .models import (
+            SurveySectionTranslation, QuestionTranslation, OptionChoiceTranslation
+        )
+        self.SurveySectionTranslation = SurveySectionTranslation
+        self.QuestionTranslation = QuestionTranslation
+        self.OptionChoiceTranslation = OptionChoiceTranslation
+
+        self.org = Organization.objects.create(name="Test Org")
+        self.survey = SurveyHeader.objects.create(
+            name="multilang_survey",
+            organization=self.org,
+            redirect_url="/thanks/",
+            available_languages=["en", "ru", "de"]
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="section1",
+            title="Welcome",
+            subheading="Please answer the questions",
+            code="S1",
+            is_head=True
+        )
+        self.option_group = OptionGroup.objects.create(name="test_options")
+        self.option1 = OptionChoice.objects.create(
+            option_group=self.option_group,
+            name="Yes",
+            code=1
+        )
+        self.option2 = OptionChoice.objects.create(
+            option_group=self.option_group,
+            name="No",
+            code=2
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section,
+            name="Do you agree?",
+            subtext="Select one option",
+            input_type="choice",
+            option_group=self.option_group,
+            code="Q1"
+        )
+
+    def test_survey_is_multilingual_true(self):
+        """
+        GIVEN a survey with available_languages configured
+        WHEN is_multilingual() is called
+        THEN it returns True
+        """
+        self.assertTrue(self.survey.is_multilingual())
+
+    def test_survey_is_multilingual_false_empty_list(self):
+        """
+        GIVEN a survey with empty available_languages
+        WHEN is_multilingual() is called
+        THEN it returns False
+        """
+        survey = SurveyHeader.objects.create(
+            name="single_lang_survey",
+            available_languages=[]
+        )
+        self.assertFalse(survey.is_multilingual())
+
+    def test_survey_is_multilingual_false_no_languages(self):
+        """
+        GIVEN a survey with no available_languages set
+        WHEN is_multilingual() is called
+        THEN it returns False
+        """
+        survey = SurveyHeader.objects.create(name="default_survey")
+        self.assertFalse(survey.is_multilingual())
+
+    def test_section_translation_creation(self):
+        """
+        GIVEN a survey section
+        WHEN translation is created
+        THEN translation is stored correctly
+        """
+        translation = self.SurveySectionTranslation.objects.create(
+            section=self.section,
+            language="ru",
+            title="Добро пожаловать",
+            subheading="Пожалуйста, ответьте на вопросы"
+        )
+        self.assertEqual(translation.section, self.section)
+        self.assertEqual(translation.language, "ru")
+        self.assertEqual(translation.title, "Добро пожаловать")
+
+    def test_section_get_translated_title_with_translation(self):
+        """
+        GIVEN a section with Russian translation
+        WHEN get_translated_title('ru') is called
+        THEN returns translated title
+        """
+        self.SurveySectionTranslation.objects.create(
+            section=self.section,
+            language="ru",
+            title="Добро пожаловать"
+        )
+        self.assertEqual(
+            self.section.get_translated_title("ru"),
+            "Добро пожаловать"
+        )
+
+    def test_section_get_translated_title_without_translation(self):
+        """
+        GIVEN a section without German translation
+        WHEN get_translated_title('de') is called
+        THEN returns original title
+        """
+        self.assertEqual(
+            self.section.get_translated_title("de"),
+            "Welcome"
+        )
+
+    def test_section_get_translated_title_with_none_language(self):
+        """
+        GIVEN a section
+        WHEN get_translated_title(None) is called
+        THEN returns original title
+        """
+        self.assertEqual(
+            self.section.get_translated_title(None),
+            "Welcome"
+        )
+
+    def test_section_get_translated_subheading_with_translation(self):
+        """
+        GIVEN a section with Russian translation
+        WHEN get_translated_subheading('ru') is called
+        THEN returns translated subheading
+        """
+        self.SurveySectionTranslation.objects.create(
+            section=self.section,
+            language="ru",
+            subheading="Пожалуйста, ответьте"
+        )
+        self.assertEqual(
+            self.section.get_translated_subheading("ru"),
+            "Пожалуйста, ответьте"
+        )
+
+    def test_section_get_translated_subheading_fallback(self):
+        """
+        GIVEN a section with translation that has empty subheading
+        WHEN get_translated_subheading is called
+        THEN returns original subheading
+        """
+        self.SurveySectionTranslation.objects.create(
+            section=self.section,
+            language="ru",
+            title="Добро пожаловать",
+            subheading=""
+        )
+        self.assertEqual(
+            self.section.get_translated_subheading("ru"),
+            "Please answer the questions"
+        )
+
+    def test_question_translation_creation(self):
+        """
+        GIVEN a question
+        WHEN translation is created
+        THEN translation is stored correctly
+        """
+        translation = self.QuestionTranslation.objects.create(
+            question=self.question,
+            language="ru",
+            name="Вы согласны?",
+            subtext="Выберите один вариант"
+        )
+        self.assertEqual(translation.question, self.question)
+        self.assertEqual(translation.name, "Вы согласны?")
+
+    def test_question_get_translated_name_with_translation(self):
+        """
+        GIVEN a question with Russian translation
+        WHEN get_translated_name('ru') is called
+        THEN returns translated name
+        """
+        self.QuestionTranslation.objects.create(
+            question=self.question,
+            language="ru",
+            name="Вы согласны?"
+        )
+        self.assertEqual(
+            self.question.get_translated_name("ru"),
+            "Вы согласны?"
+        )
+
+    def test_question_get_translated_name_without_translation(self):
+        """
+        GIVEN a question without translation
+        WHEN get_translated_name('fr') is called
+        THEN returns original name
+        """
+        self.assertEqual(
+            self.question.get_translated_name("fr"),
+            "Do you agree?"
+        )
+
+    def test_question_get_translated_subtext_with_translation(self):
+        """
+        GIVEN a question with Russian translation
+        WHEN get_translated_subtext('ru') is called
+        THEN returns translated subtext
+        """
+        self.QuestionTranslation.objects.create(
+            question=self.question,
+            language="ru",
+            subtext="Выберите один вариант"
+        )
+        self.assertEqual(
+            self.question.get_translated_subtext("ru"),
+            "Выберите один вариант"
+        )
+
+    def test_option_choice_translation_creation(self):
+        """
+        GIVEN an option choice
+        WHEN translation is created
+        THEN translation is stored correctly
+        """
+        translation = self.OptionChoiceTranslation.objects.create(
+            option_choice=self.option1,
+            language="ru",
+            name="Да"
+        )
+        self.assertEqual(translation.option_choice, self.option1)
+        self.assertEqual(translation.name, "Да")
+
+    def test_option_choice_get_translated_name_with_translation(self):
+        """
+        GIVEN an option choice with Russian translation
+        WHEN get_translated_name('ru') is called
+        THEN returns translated name
+        """
+        self.OptionChoiceTranslation.objects.create(
+            option_choice=self.option1,
+            language="ru",
+            name="Да"
+        )
+        self.assertEqual(
+            self.option1.get_translated_name("ru"),
+            "Да"
+        )
+
+    def test_option_choice_get_translated_name_without_translation(self):
+        """
+        GIVEN an option choice without translation
+        WHEN get_translated_name('de') is called
+        THEN returns original name
+        """
+        self.assertEqual(
+            self.option1.get_translated_name("de"),
+            "Yes"
+        )
+
+    def test_translation_unique_constraint(self):
+        """
+        GIVEN an existing translation for section+language
+        WHEN another translation with same section+language is created
+        THEN IntegrityError is raised
+        """
+        from django.db import IntegrityError
+
+        self.SurveySectionTranslation.objects.create(
+            section=self.section,
+            language="ru",
+            title="Добро пожаловать"
+        )
+        with self.assertRaises(IntegrityError):
+            self.SurveySectionTranslation.objects.create(
+                section=self.section,
+                language="ru",
+                title="Другой перевод"
+            )
+
+    def test_session_language_field(self):
+        """
+        GIVEN a survey session
+        WHEN language is set
+        THEN language is stored correctly
+        """
+        session = SurveySession.objects.create(
+            survey=self.survey,
+            language="ru"
+        )
+        self.assertEqual(session.language, "ru")
+
+    def test_session_language_nullable(self):
+        """
+        GIVEN a survey session without language
+        WHEN session is created
+        THEN language is None
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        self.assertIsNone(session.language)
