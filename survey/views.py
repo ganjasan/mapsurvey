@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.http import HttpResponse
+from django.utils import translation
 from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, OptionChoice
 from datetime import datetime
 from django import forms
@@ -44,6 +45,81 @@ def survey_list(request):
 	survey_list = SurveyHeader.objects.all()
 	context = {'survey_list': survey_list}
 	return render(request, 'survey_list.html', context)
+
+
+# ISO 639-1 language names in their native form
+LANGUAGE_NAMES = {
+	'en': 'English',
+	'ru': 'Русский',
+	'de': 'Deutsch',
+	'fr': 'Français',
+	'es': 'Español',
+	'it': 'Italiano',
+	'pt': 'Português',
+	'zh': '中文',
+	'ja': '日本語',
+	'ko': '한국어',
+	'ar': 'العربية',
+	'hi': 'हिन्दी',
+	'pl': 'Polski',
+	'uk': 'Українська',
+	'nl': 'Nederlands',
+	'sv': 'Svenska',
+	'fi': 'Suomi',
+	'no': 'Norsk',
+	'da': 'Dansk',
+	'cs': 'Čeština',
+	'tr': 'Türkçe',
+	'he': 'עברית',
+	'th': 'ไทย',
+	'vi': 'Tiếng Việt',
+}
+
+
+def survey_language_select(request, survey_name):
+	"""Display language selection screen for multilingual surveys."""
+	survey = SurveyHeader.objects.get(name=survey_name)
+
+	if not survey.is_multilingual():
+		# Single-language survey - redirect directly to first section
+		return redirect('survey', survey_name=survey_name)
+
+	if request.method == 'POST':
+		selected_language = request.POST.get('language')
+		if selected_language and selected_language in survey.available_languages:
+			# Activate Django i18n language
+			translation.activate(selected_language)
+			request.session['_language'] = selected_language
+
+			# Create or update survey session with selected language
+			if request.session.get('survey_session_id'):
+				del request.session['survey_session_id']
+
+			survey_session = SurveySession(survey=survey, language=selected_language)
+			survey_session.save()
+			request.session['survey_session_id'] = survey_session.id
+			request.session['survey_language'] = selected_language
+
+			# Redirect to first section
+			start_section = survey.start_section()
+			if start_section:
+				return redirect('section', survey_name=survey_name, section_name=start_section.name)
+			return redirect(survey.redirect_url)
+
+	# Build language list with native names
+	languages = []
+	for lang_code in survey.available_languages:
+		languages.append({
+			'code': lang_code,
+			'name': LANGUAGE_NAMES.get(lang_code, lang_code)
+		})
+
+	context = {
+		'survey': survey,
+		'languages': languages,
+	}
+	return render(request, 'survey_language_select.html', context)
+
 
 def survey_header(request, survey_name):
 	if request.session.get('survey_session_id'):

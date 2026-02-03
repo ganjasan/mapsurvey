@@ -22,12 +22,12 @@
 
 ## 3. Language Selection
 
-- [ ] 3.1 Create `survey_language_select` view function
-- [ ] 3.2 Create `survey_language_select.html` template with language buttons
-- [ ] 3.3 Add URL pattern `/surveys/<survey_name>/language/`
-- [ ] 3.4 Activate Django i18n language on selection and store in Django session
-- [ ] 3.5 Store selected language in `SurveySession.language`
-- [ ] 3.6 Write tests for language selection view
+- [x] 3.1 Create `survey_language_select` view function
+- [x] 3.2 Create `survey_language_select.html` template with language buttons
+- [x] 3.3 Add URL pattern `/surveys/<survey_name>/language/`
+- [x] 3.4 Activate Django i18n language on selection and store in Django session
+- [x] 3.5 Store selected language in `SurveySession.language`
+- [x] 3.6 Write tests for language selection view
 
 ## 4. Survey Flow Integration
 

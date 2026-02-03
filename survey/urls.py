@@ -10,6 +10,7 @@ urlpatterns = [
     path('editor/delete/<str:survey_name>/', views.delete_survey, name='delete_survey'),
     path('surveys/', views.survey_list, name='survey_list'),
     path('surveys/<str:survey_name>/', views.survey_header, name='survey'),
+    path('surveys/<str:survey_name>/language/', views.survey_language_select, name='survey_language_select'),
     path('surveys/<str:survey_name>/<str:section_name>/', views.survey_section, name='section'),
     path('surveys/<str:survey_name>/download', views.download_data, name='download_data'),
     #path('surveys/<str:survey_name>/<str:question_code>/', views.EditAnswerForm.as_view(), name='question'),

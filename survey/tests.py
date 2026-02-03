@@ -2752,3 +2752,119 @@ class AdminInlineTest(TestCase):
         """
         from .admin import SurveyAdmin
         self.assertIn('available_languages', SurveyAdmin.list_display)
+
+
+class LanguageSelectionTest(TestCase):
+    """Tests for language selection view and flow."""
+
+    def setUp(self):
+        """Set up test data for language selection tests."""
+        self.client = Client()
+        self.org = Organization.objects.create(name="Lang Test Org")
+        self.multilang_survey = SurveyHeader.objects.create(
+            name="multilang_test",
+            organization=self.org,
+            available_languages=["en", "ru", "de"]
+        )
+        self.single_lang_survey = SurveyHeader.objects.create(
+            name="singlelang_test",
+            organization=self.org,
+            available_languages=[]
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.multilang_survey,
+            name="section1",
+            title="Test Section",
+            code="S1",
+            is_head=True
+        )
+        self.single_section = SurveySection.objects.create(
+            survey_header=self.single_lang_survey,
+            name="section1",
+            title="Single Lang Section",
+            code="SL1",
+            is_head=True
+        )
+
+    def test_language_selection_page_displays_for_multilang_survey(self):
+        """
+        GIVEN a multilingual survey
+        WHEN user visits language selection URL
+        THEN language options are displayed
+        """
+        response = self.client.get('/surveys/multilang_test/language/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'English')
+        self.assertContains(response, 'Русский')
+        self.assertContains(response, 'Deutsch')
+
+    def test_language_selection_redirects_for_single_lang_survey(self):
+        """
+        GIVEN a single-language survey
+        WHEN user visits language selection URL
+        THEN user is redirected to survey entry
+        """
+        response = self.client.get('/surveys/singlelang_test/language/')
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('singlelang_test', response.url)
+
+    def test_language_selection_creates_session_with_language(self):
+        """
+        GIVEN a multilingual survey
+        WHEN user selects a language
+        THEN session is created with selected language
+        """
+        response = self.client.post(
+            '/surveys/multilang_test/language/',
+            {'language': 'ru'}
+        )
+
+        self.assertEqual(response.status_code, 302)
+        session_id = self.client.session.get('survey_session_id')
+        self.assertIsNotNone(session_id)
+
+        session = SurveySession.objects.get(pk=session_id)
+        self.assertEqual(session.language, 'ru')
+
+    def test_language_selection_stores_language_in_django_session(self):
+        """
+        GIVEN a multilingual survey
+        WHEN user selects a language
+        THEN Django session contains selected language
+        """
+        self.client.post(
+            '/surveys/multilang_test/language/',
+            {'language': 'de'}
+        )
+
+        self.assertEqual(self.client.session.get('survey_language'), 'de')
+
+    def test_language_selection_redirects_to_first_section(self):
+        """
+        GIVEN a multilingual survey with sections
+        WHEN user selects a language
+        THEN user is redirected to first section
+        """
+        response = self.client.post(
+            '/surveys/multilang_test/language/',
+            {'language': 'en'}
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('section1', response.url)
+
+    def test_language_selection_ignores_invalid_language(self):
+        """
+        GIVEN a multilingual survey
+        WHEN user submits invalid language code
+        THEN selection page is shown again (no redirect)
+        """
+        response = self.client.post(
+            '/surveys/multilang_test/language/',
+            {'language': 'invalid'}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(self.client.session.get('survey_session_id'))
