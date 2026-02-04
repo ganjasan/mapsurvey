@@ -56,7 +56,7 @@
 
 ## 7. Integration Testing
 
-- [ ] 7.1 Write end-to-end test: create multilingual survey, select language, complete survey
-- [ ] 7.2 Write test: export multilingual survey, import to fresh DB, verify translations
-- [ ] 7.3 Write test: single-language survey backwards compatibility (no language screen)
-- [ ] 7.4 Write test: missing translation falls back to original content
+- [x] 7.1 Write end-to-end test: create multilingual survey, select language, complete survey
+- [x] 7.2 Write test: export multilingual survey, import to fresh DB, verify translations
+- [x] 7.3 Write test: single-language survey backwards compatibility (no language screen)
+- [x] 7.4 Write test: missing translation falls back to original content

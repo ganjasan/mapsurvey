@@ -3562,3 +3562,269 @@ class TranslationSerializationTest(TestCase):
 
         imported_session = SurveySession.objects.get(survey=imported_survey)
         self.assertEqual(imported_session.language, "de")
+
+
+class MultilingualIntegrationTest(TestCase):
+    """End-to-end integration tests for multilingual survey functionality."""
+
+    def setUp(self):
+        """Set up complete multilingual survey with translations."""
+        from .models import (
+            SurveySectionTranslation, QuestionTranslation, OptionChoiceTranslation
+        )
+        self.SurveySectionTranslation = SurveySectionTranslation
+        self.QuestionTranslation = QuestionTranslation
+        self.OptionChoiceTranslation = OptionChoiceTranslation
+
+        self.client = Client()
+        self.org = Organization.objects.create(name="Integration Test Org")
+
+        # Create multilingual survey
+        self.survey = SurveyHeader.objects.create(
+            name="integration_multilang",
+            organization=self.org,
+            available_languages=["en", "ru"],
+            redirect_url="/completed/"
+        )
+
+        # Create section with translations
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="main_section",
+            title="English Section Title",
+            subheading="English section description",
+            code="INT1",
+            is_head=True
+        )
+        self.SurveySectionTranslation.objects.create(
+            section=self.section,
+            language="ru",
+            title="Русский заголовок секции",
+            subheading="Русское описание секции"
+        )
+
+        # Create option group with translated choices
+        self.option_group = OptionGroup.objects.create(name="IntegrationChoices")
+        self.choice1 = OptionChoice.objects.create(
+            option_group=self.option_group,
+            name="Yes",
+            code=1
+        )
+        self.choice2 = OptionChoice.objects.create(
+            option_group=self.option_group,
+            name="No",
+            code=2
+        )
+        self.OptionChoiceTranslation.objects.create(
+            option_choice=self.choice1,
+            language="ru",
+            name="Да"
+        )
+        self.OptionChoiceTranslation.objects.create(
+            option_choice=self.choice2,
+            language="ru",
+            name="Нет"
+        )
+
+        # Create questions with translations
+        self.text_question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_INT_TEXT",
+            order_number=1,
+            name="What is your name?",
+            subtext="Please enter your full name",
+            input_type="text"
+        )
+        self.QuestionTranslation.objects.create(
+            question=self.text_question,
+            language="ru",
+            name="Как вас зовут?",
+            subtext="Пожалуйста, введите ваше полное имя"
+        )
+
+        self.choice_question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_INT_CHOICE",
+            order_number=2,
+            name="Do you agree?",
+            input_type="choice",
+            option_group=self.option_group
+        )
+        self.QuestionTranslation.objects.create(
+            question=self.choice_question,
+            language="ru",
+            name="Вы согласны?"
+        )
+
+    def test_end_to_end_multilingual_survey_flow(self):
+        """
+        GIVEN a multilingual survey with Russian translations
+        WHEN user selects Russian, views section
+        THEN survey session is created with language='ru' and translated titles shown
+        """
+        # Step 1: Access survey entry - should redirect to language selection
+        response = self.client.get('/surveys/integration_multilang/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('language', response.url)
+
+        # Step 2: Select Russian language
+        response = self.client.post(
+            '/surveys/integration_multilang/language/',
+            {'language': 'ru'}
+        )
+        self.assertEqual(response.status_code, 302)
+
+        # Step 3: View section - should show translated content
+        response = self.client.get('/surveys/integration_multilang/main_section/')
+        self.assertEqual(response.status_code, 200)
+
+        # Verify translated section title is in context
+        self.assertEqual(response.context['section_title'], "Русский заголовок секции")
+        self.assertEqual(response.context['section_subheading'], "Русское описание секции")
+        self.assertEqual(response.context['selected_language'], 'ru')
+
+        # Verify session was created with correct language
+        session = SurveySession.objects.get(survey=self.survey)
+        self.assertEqual(session.language, 'ru')
+
+    def test_export_import_multilingual_survey_roundtrip(self):
+        """
+        GIVEN a multilingual survey with translations and responses
+        WHEN exported and imported to fresh database
+        THEN all translations and language settings are preserved
+        """
+        # Create a session with language
+        session = SurveySession.objects.create(
+            survey=self.survey,
+            language="ru"
+        )
+        Answer.objects.create(
+            survey_session=session,
+            question=self.text_question,
+            text="Тестовый ответ"
+        )
+
+        # Export
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="full")
+        output.seek(0)
+
+        # Modify name for import
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_json = json.loads(zf.read("survey.json"))
+            responses_json = json.loads(zf.read("responses.json"))
+
+        survey_json["survey"]["name"] = "imported_integration_multilang"
+        responses_json["survey_name"] = "imported_integration_multilang"
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_json))
+            zf.writestr("responses.json", json.dumps(responses_json))
+        import_buffer.seek(0)
+
+        # Import
+        imported_survey, _ = import_survey_from_zip(import_buffer)
+
+        # Verify survey structure
+        self.assertEqual(imported_survey.available_languages, ["en", "ru"])
+
+        # Verify section translations
+        imported_section = SurveySection.objects.get(survey_header=imported_survey)
+        self.assertEqual(
+            imported_section.get_translated_title("ru"),
+            "Русский заголовок секции"
+        )
+
+        # Verify question translations
+        imported_text_q = Question.objects.get(
+            survey_section=imported_section,
+            name="What is your name?"
+        )
+        self.assertEqual(
+            imported_text_q.get_translated_name("ru"),
+            "Как вас зовут?"
+        )
+
+        # Verify session language preserved
+        imported_session = SurveySession.objects.get(survey=imported_survey)
+        self.assertEqual(imported_session.language, "ru")
+
+    def test_single_language_survey_backwards_compatibility(self):
+        """
+        GIVEN a survey without available_languages (single-language)
+        WHEN user accesses the survey
+        THEN no language selection screen is shown, direct access to section
+        """
+        # Create single-language survey
+        single_survey = SurveyHeader.objects.create(
+            name="single_lang_compat",
+            organization=self.org,
+            available_languages=[]
+        )
+        single_section = SurveySection.objects.create(
+            survey_header=single_survey,
+            name="single_section",
+            title="Single Lang Title",
+            code="SLC1",
+            is_head=True
+        )
+        Question.objects.create(
+            survey_section=single_section,
+            code="Q_SINGLE",
+            name="Single language question",
+            input_type="text"
+        )
+
+        # Access survey - should redirect directly to section
+        response = self.client.get('/surveys/single_lang_compat/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('single_section', response.url)
+        self.assertNotIn('language', response.url)
+
+        # Access section directly - should work without language selection
+        response = self.client.get('/surveys/single_lang_compat/single_section/')
+        self.assertEqual(response.status_code, 200)
+
+        # Verify original content is shown (no translations)
+        self.assertEqual(response.context['section_title'], "Single Lang Title")
+        self.assertIsNone(response.context['selected_language'])
+
+        # Submit answer
+        response = self.client.post('/surveys/single_lang_compat/single_section/', {
+            'Q_SINGLE': 'Test answer',
+        })
+
+        # Verify session created without language
+        session = SurveySession.objects.get(survey=single_survey)
+        self.assertIsNone(session.language)
+
+    def test_missing_translation_fallback_in_section_title(self):
+        """
+        GIVEN a multilingual survey where section lacks translation for a language
+        WHEN user selects that language
+        THEN original section title is displayed as fallback
+        """
+        # Create a new section without Russian translation
+        untranslated_section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="untranslated_section",
+            title="Untranslated Section Title",
+            subheading="Untranslated subheading",
+            code="UNT1",
+            is_head=False
+        )
+        # Link from main section
+        self.section.next_section = untranslated_section
+        self.section.save()
+
+        # Select Russian
+        self.client.post('/surveys/integration_multilang/language/', {'language': 'ru'})
+
+        # Access untranslated section
+        response = self.client.get('/surveys/integration_multilang/untranslated_section/')
+        self.assertEqual(response.status_code, 200)
+
+        # Verify original title is shown as fallback
+        self.assertEqual(response.context['section_title'], "Untranslated Section Title")
+        self.assertEqual(response.context['section_subheading'], "Untranslated subheading")
