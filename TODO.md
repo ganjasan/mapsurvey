@@ -22,14 +22,14 @@
 
 ## Editor
 
-- [ ] Implement Delete Survey button in `/editor/`
+- [x] Implement Delete Survey button in `/editor/` 01.02.26
   - Add `delete_survey` view with confirmation
   - Add URL route `/editor/delete/<name>/`
   - Update template with working link and confirmation modal
 
 ## Bugs
 
-- [ ] Кривая вёрстка Geo Questions
+- [x] 01.02.26 Кривая вёрстка Geo Questions
   - Иконка вопроса налезает на текст
   - Текст subtext обтекает иконку некорректно
   - Нужно исправить CSS для `.geo-question` или аналогичного класса
@@ -37,7 +37,7 @@
 - [ ] Slider (range input) отображается без рисок
   - Добавить tick marks для визуализации значений
 
-- [ ] Кнопки управления гео-объектами (save/edit/delete) отображаются вертикально
+- [x] 01.02.26 Кнопки управления гео-объектами (save/edit/delete) отображаются вертикально
   - Должны быть горизонтально в одну строку
   - Поведение нестабильное: иногда горизонтально, иногда вертикально
   - Зависит от ширины popup или количества sub-questions
