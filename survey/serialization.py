@@ -443,25 +443,38 @@ def get_or_create_option_groups(
         # Try to get existing group
         try:
             group = OptionGroup.objects.get(name=name)
+            group_exists = True
         except OptionGroup.DoesNotExist:
             # Create new group
             group = OptionGroup.objects.create(name=name)
+            group_exists = False
 
-            # Create choices for new group
-            for idx, choice_data in enumerate(group_data.get("choices", []), start=1):
+        # Process choices (create new or add translations to existing)
+        for idx, choice_data in enumerate(group_data.get("choices", []), start=1):
+            choice_code = choice_data.get("code", idx)
+
+            if group_exists:
+                # Find existing choice by code
+                try:
+                    choice = OptionChoice.objects.get(option_group=group, code=choice_code)
+                except OptionChoice.DoesNotExist:
+                    # Choice doesn't exist in existing group, skip
+                    continue
+            else:
+                # Create new choice
                 choice = OptionChoice.objects.create(
                     option_group=group,
                     name=choice_data["name"],
-                    code=choice_data.get("code", idx),
+                    code=choice_code,
                 )
 
-                # Create choice translations
-                for trans_data in choice_data.get("translations", []):
-                    OptionChoiceTranslation.objects.create(
-                        option_choice=choice,
-                        language=trans_data["language"],
-                        name=trans_data.get("name"),
-                    )
+            # Create or update choice translations
+            for trans_data in choice_data.get("translations", []):
+                OptionChoiceTranslation.objects.update_or_create(
+                    option_choice=choice,
+                    language=trans_data["language"],
+                    defaults={"name": trans_data.get("name")},
+                )
 
         result[name] = group
 

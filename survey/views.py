@@ -51,6 +51,10 @@ def survey_list(request):
 LANGUAGE_NAMES = {
 	'en': 'English',
 	'ru': 'Русский',
+	'ky': 'Кыргызча',
+	'uz': "O'zbekcha",
+	'tg': 'Тоҷикӣ',
+	'kk': 'Қазақша',
 	'de': 'Deutsch',
 	'fr': 'Français',
 	'es': 'Español',
@@ -73,6 +77,10 @@ LANGUAGE_NAMES = {
 	'he': 'עברית',
 	'th': 'ไทย',
 	'vi': 'Tiếng Việt',
+	'az': 'Azərbaycanca',
+	'ka': 'ქართული',
+	'hy': 'Հայերdelays',
+	'mn': 'Монгол',
 }
 
 

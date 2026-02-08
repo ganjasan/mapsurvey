@@ -3563,6 +3563,191 @@ class TranslationSerializationTest(TestCase):
         imported_session = SurveySession.objects.get(survey=imported_survey)
         self.assertEqual(imported_session.language, "de")
 
+    def test_import_adds_translations_to_existing_option_group(self):
+        """
+        GIVEN an OptionGroup already exists without translations
+        WHEN importing a survey that references that OptionGroup with translations
+        THEN translations are added to existing OptionChoices
+        """
+        # Create existing option group without translations
+        existing_group = OptionGroup.objects.create(name="ExistingGroupForTransTest")
+        existing_choice1 = OptionChoice.objects.create(
+            option_group=existing_group,
+            name="Choice One",
+            code=1
+        )
+        existing_choice2 = OptionChoice.objects.create(
+            option_group=existing_group,
+            name="Choice Two",
+            code=2
+        )
+
+        # Verify no translations exist initially
+        self.assertEqual(existing_choice1.translations.count(), 0)
+        self.assertEqual(existing_choice2.translations.count(), 0)
+
+        # Create survey JSON with translations for the existing group
+        survey_json = {
+            "version": "1.0",
+            "exported_at": "2026-02-08T12:00:00Z",
+            "mode": "structure",
+            "survey": {
+                "name": "test_existing_group_trans",
+                "organization": None,
+                "redirect_url": "#",
+                "available_languages": ["en", "ru"],
+                "sections": [{
+                    "name": "test_section",
+                    "title": "Test Section",
+                    "subheading": None,
+                    "code": "TEST",
+                    "is_head": True,
+                    "start_map_position": None,
+                    "start_map_zoom": 12,
+                    "next_section_name": None,
+                    "prev_section_name": None,
+                    "translations": [],
+                    "questions": [{
+                        "code": "Q_EXISTING_GROUP",
+                        "order_number": 1,
+                        "name": "Test question",
+                        "subtext": None,
+                        "input_type": "choice",
+                        "required": True,
+                        "color": "#000000",
+                        "icon_class": None,
+                        "image": None,
+                        "option_group_name": "ExistingGroupForTransTest",
+                        "translations": [],
+                        "sub_questions": []
+                    }]
+                }]
+            },
+            "option_groups": [{
+                "name": "ExistingGroupForTransTest",
+                "choices": [
+                    {
+                        "name": "Choice One",
+                        "code": 1,
+                        "translations": [{"language": "ru", "name": "Выбор Один"}]
+                    },
+                    {
+                        "name": "Choice Two",
+                        "code": 2,
+                        "translations": [{"language": "ru", "name": "Выбор Два"}]
+                    }
+                ]
+            }]
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_json))
+        import_buffer.seek(0)
+
+        # Import
+        imported_survey, warnings = import_survey_from_zip(import_buffer)
+
+        # Verify translations were added to existing choices
+        existing_choice1.refresh_from_db()
+        existing_choice2.refresh_from_db()
+
+        self.assertEqual(existing_choice1.get_translated_name("ru"), "Выбор Один")
+        self.assertEqual(existing_choice2.get_translated_name("ru"), "Выбор Два")
+        self.assertEqual(existing_choice1.translations.count(), 1)
+        self.assertEqual(existing_choice2.translations.count(), 1)
+
+    def test_import_merges_translations_to_existing_option_group(self):
+        """
+        GIVEN an OptionGroup already exists with some translations
+        WHEN importing a survey with additional translations for same choices
+        THEN new translations are added and existing ones are updated
+        """
+        # Create existing option group with German translation
+        existing_group = OptionGroup.objects.create(name="MergeTransTestGroup")
+        existing_choice = OptionChoice.objects.create(
+            option_group=existing_group,
+            name="Merge Choice",
+            code=1
+        )
+        self.OptionChoiceTranslation.objects.create(
+            option_choice=existing_choice,
+            language="de",
+            name="Deutsche Wahl"
+        )
+
+        # Verify initial state
+        self.assertEqual(existing_choice.translations.count(), 1)
+        self.assertEqual(existing_choice.get_translated_name("de"), "Deutsche Wahl")
+
+        # Create survey JSON with Russian translation (new) and updated German
+        survey_json = {
+            "version": "1.0",
+            "exported_at": "2026-02-08T12:00:00Z",
+            "mode": "structure",
+            "survey": {
+                "name": "test_merge_trans",
+                "organization": None,
+                "redirect_url": "#",
+                "available_languages": ["en", "ru", "de"],
+                "sections": [{
+                    "name": "merge_section",
+                    "title": "Merge Section",
+                    "subheading": None,
+                    "code": "MERGE",
+                    "is_head": True,
+                    "start_map_position": None,
+                    "start_map_zoom": 12,
+                    "next_section_name": None,
+                    "prev_section_name": None,
+                    "translations": [],
+                    "questions": [{
+                        "code": "Q_MERGE_CHOICE",
+                        "order_number": 1,
+                        "name": "Merge question",
+                        "subtext": None,
+                        "input_type": "choice",
+                        "required": True,
+                        "color": "#000000",
+                        "icon_class": None,
+                        "image": None,
+                        "option_group_name": "MergeTransTestGroup",
+                        "translations": [],
+                        "sub_questions": []
+                    }]
+                }]
+            },
+            "option_groups": [{
+                "name": "MergeTransTestGroup",
+                "choices": [{
+                    "name": "Merge Choice",
+                    "code": 1,
+                    "translations": [
+                        {"language": "ru", "name": "Русский Выбор"},
+                        {"language": "de", "name": "Aktualisierte Deutsche Wahl"}
+                    ]
+                }]
+            }]
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_json))
+        import_buffer.seek(0)
+
+        # Import
+        imported_survey, warnings = import_survey_from_zip(import_buffer)
+
+        # Verify translations were merged
+        existing_choice.refresh_from_db()
+
+        # Should now have 2 translations
+        self.assertEqual(existing_choice.translations.count(), 2)
+        # Russian was added
+        self.assertEqual(existing_choice.get_translated_name("ru"), "Русский Выбор")
+        # German was updated
+        self.assertEqual(existing_choice.get_translated_name("de"), "Aktualisierte Deutsche Wahl")
+
 
 class MultilingualIntegrationTest(TestCase):
     """End-to-end integration tests for multilingual survey functionality."""

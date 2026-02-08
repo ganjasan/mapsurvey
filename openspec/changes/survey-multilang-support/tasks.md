@@ -60,3 +60,11 @@
 - [x] 7.2 Write test: export multilingual survey, import to fresh DB, verify translations
 - [x] 7.3 Write test: single-language survey backwards compatibility (no language screen)
 - [x] 7.4 Write test: missing translation falls back to original content
+
+## 8. Bugfix: OptionChoice translations for existing OptionGroups
+
+- [ ] 8.1 Update `get_or_create_option_groups` to add translations to existing OptionChoices
+- [ ] 8.2 Match OptionChoices by code when OptionGroup exists to find correct choice for translation
+- [ ] 8.3 Use `get_or_create` for OptionChoiceTranslation to update existing or create new
+- [ ] 8.4 Write test: import survey with translations when OptionGroup already exists (without translations)
+- [ ] 8.5 Write test: import survey with translations when OptionGroup already has some translations (merge)

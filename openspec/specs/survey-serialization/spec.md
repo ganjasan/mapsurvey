@@ -204,6 +204,12 @@ The import command SHALL create all related objects in the correct order to sati
 - **WHEN** archive contains an OptionGroup with name that already exists in database
 - **THEN** system SHALL use the existing OptionGroup instead of creating duplicate
 
+#### Scenario: Add translations to existing OptionChoices
+- **WHEN** archive contains OptionChoice translations
+- **AND** the OptionGroup already exists in database
+- **THEN** system SHALL add missing OptionChoiceTranslation records to existing OptionChoices
+- **AND** system SHALL update existing OptionChoiceTranslation records if language matches
+
 #### Scenario: Reuse existing Organization
 - **WHEN** archive specifies an organization name that already exists in database
 - **THEN** system SHALL use the existing Organization instead of creating duplicate

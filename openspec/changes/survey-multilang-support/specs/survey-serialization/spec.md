@@ -90,11 +90,18 @@ The system SHALL create QuestionTranslation records when importing a survey.
 - **THEN** system SHALL not create any QuestionTranslation records for that question
 
 ### Requirement: Import option choice translations
-The system SHALL create OptionChoiceTranslation records when importing a survey.
+The system SHALL create or update OptionChoiceTranslation records when importing a survey, regardless of whether the OptionGroup already exists.
 
-#### Scenario: Import option choice with translations
+#### Scenario: Import option choice with translations (new OptionGroup)
 - **WHEN** survey.json option choice contains translations array
-- **THEN** system SHALL create OptionChoiceTranslation record for each translation
+- **AND** the OptionGroup does not exist in the database
+- **THEN** system SHALL create OptionGroup, OptionChoices, and OptionChoiceTranslation records
+
+#### Scenario: Import option choice with translations (existing OptionGroup)
+- **WHEN** survey.json option choice contains translations array
+- **AND** the OptionGroup already exists in the database
+- **THEN** system SHALL add missing OptionChoiceTranslation records to existing OptionChoices
+- **AND** system SHALL update existing OptionChoiceTranslation records if language matches
 
 #### Scenario: Import option choice without translations
 - **WHEN** survey.json option choice has empty translations array
