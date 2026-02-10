@@ -7,10 +7,10 @@ import zipfile
 
 from .models import (
     Organization, SurveyHeader, SurveySection, Question,
-    OptionGroup, OptionChoice, SurveySession, Answer
+    SurveySession, Answer, ChoicesValidator
 )
 from .serialization import (
-    serialize_survey_to_dict, serialize_option_groups, serialize_sections,
+    serialize_survey_to_dict, serialize_sections,
     serialize_questions, serialize_sessions, serialize_answers,
     geo_to_wkt, serialize_choices, export_survey_to_zip, validate_archive,
     import_survey_from_zip, ImportError, FORMAT_VERSION
@@ -57,24 +57,17 @@ class StructureSerializationTest(TestCase):
             start_map_postion=Point(30.5, 60.0),
             start_map_zoom=14
         )
-        self.option_group = OptionGroup.objects.create(name="YesNo")
-        self.choice_yes = OptionChoice.objects.create(
-            option_group=self.option_group,
-            name="Yes",
-            code=1
-        )
-        self.choice_no = OptionChoice.objects.create(
-            option_group=self.option_group,
-            name="No",
-            code=0
-        )
+        self.yes_no_choices = [
+            {"code": 1, "name": {"en": "Yes", "ru": "Да"}},
+            {"code": 0, "name": {"en": "No", "ru": "Нет"}},
+        ]
         self.question = Question.objects.create(
             survey_section=self.section,
             code="Q001",
             order_number=1,
             name="Do you agree?",
             input_type="choice",
-            option_group=self.option_group,
+            choices=self.yes_no_choices,
             required=True
         )
 
@@ -92,20 +85,21 @@ class StructureSerializationTest(TestCase):
         self.assertIn("sections", result)
         self.assertEqual(len(result["sections"]), 1)
 
-    def test_serialize_option_groups(self):
+    def test_serialize_question_with_inline_choices(self):
         """
-        GIVEN a survey with questions using option groups
-        WHEN serialize_option_groups is called
-        THEN it returns deduplicated list of option groups with choices
+        GIVEN a question with inline choices
+        WHEN serialize_questions is called
+        THEN the question includes choices array
         """
-        result = serialize_option_groups(self.survey)
+        result = serialize_questions(self.section)
 
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]["name"], "YesNo")
-        self.assertEqual(len(result[0]["choices"]), 2)
-        choice_names = [c["name"] for c in result[0]["choices"]]
-        self.assertIn("Yes", choice_names)
-        self.assertIn("No", choice_names)
+        question = result[0]
+        self.assertIsNotNone(question["choices"])
+        self.assertEqual(len(question["choices"]), 2)
+        codes = [c["code"] for c in question["choices"]]
+        self.assertIn(1, codes)
+        self.assertIn(0, codes)
 
     def test_serialize_sections_with_geo(self):
         """
@@ -159,7 +153,7 @@ class StructureSerializationTest(TestCase):
         self.assertEqual(question["order_number"], 1)
         self.assertEqual(question["name"], "Do you agree?")
         self.assertEqual(question["input_type"], "choice")
-        self.assertEqual(question["option_group_name"], "YesNo")
+        self.assertIsNotNone(question["choices"])
         self.assertEqual(question["required"], True)
 
 
@@ -175,13 +169,10 @@ class DataSerializationTest(TestCase):
             code="SD",
             is_head=True
         )
-        self.option_group = OptionGroup.objects.create(name="Rating5")
-        self.choice_1 = OptionChoice.objects.create(
-            option_group=self.option_group, name="Poor", code=1
-        )
-        self.choice_5 = OptionChoice.objects.create(
-            option_group=self.option_group, name="Excellent", code=5
-        )
+        self.rating_choices = [
+            {"code": 1, "name": "Poor"},
+            {"code": 5, "name": "Excellent"},
+        ]
         self.text_question = Question.objects.create(
             survey_section=self.section,
             code="Q_TEXT",
@@ -193,7 +184,7 @@ class DataSerializationTest(TestCase):
             code="Q_CHOICE",
             name="Rate us",
             input_type="choice",
-            option_group=self.option_group
+            choices=self.rating_choices
         )
         self.point_question = Question.objects.create(
             survey_section=self.section,
@@ -248,15 +239,15 @@ class DataSerializationTest(TestCase):
 
     def test_serialize_answers_with_choices(self):
         """
-        GIVEN a session with multichoice answer
+        GIVEN a session with choice answer
         WHEN serialize_answers is called
         THEN it returns answers with choice names
         """
         answer = Answer.objects.create(
             survey_session=self.session,
-            question=self.choice_question
+            question=self.choice_question,
+            selected_choices=[5]
         )
-        answer.choice.add(self.choice_5)
 
         result = serialize_answers(self.session)
 
@@ -375,15 +366,15 @@ class DataSerializationTest(TestCase):
 
     def test_serialize_choices(self):
         """
-        GIVEN an answer with multiple choices
+        GIVEN an answer with multiple selected choices
         WHEN serialize_choices is called
         THEN it returns list of choice names
         """
         answer = Answer.objects.create(
             survey_session=self.session,
-            question=self.choice_question
+            question=self.choice_question,
+            selected_choices=[1, 5]
         )
-        answer.choice.add(self.choice_1, self.choice_5)
 
         result = serialize_choices(answer)
 
@@ -490,15 +481,14 @@ class ZipCreationTest(TestCase):
             self.assertIn("survey.json", names)
             self.assertNotIn("responses.json", names)
 
-    def test_export_includes_option_groups(self):
+    def test_export_includes_inline_choices(self):
         """
-        GIVEN a survey with questions using option groups
+        GIVEN a survey with questions using inline choices
         WHEN export_survey_to_zip is called
-        THEN the survey.json includes option_groups
+        THEN the survey.json includes choices in questions
         """
-        option_group = OptionGroup.objects.create(name="TestGroup")
-        OptionChoice.objects.create(option_group=option_group, name="A", code=1)
-        self.question.option_group = option_group
+        self.question.choices = [{"code": 1, "name": "A"}, {"code": 2, "name": "B"}]
+        self.question.input_type = "choice"
         self.question.save()
 
         output = BytesIO()
@@ -507,9 +497,8 @@ class ZipCreationTest(TestCase):
         output.seek(0)
         with zipfile.ZipFile(output, 'r') as zf:
             survey_data = json.loads(zf.read("survey.json"))
-            self.assertIn("option_groups", survey_data)
-            self.assertEqual(len(survey_data["option_groups"]), 1)
-            self.assertEqual(survey_data["option_groups"][0]["name"], "TestGroup")
+            questions = survey_data["survey"]["sections"][0]["questions"]
+            self.assertEqual(len(questions[0]["choices"]), 2)
 
     def test_export_includes_exported_at(self):
         """
@@ -791,9 +780,10 @@ class RoundTripTest(TestCase):
         section2.prev_section = section1
         section2.save()
 
-        option_group = OptionGroup.objects.create(name="RoundTripChoices")
-        OptionChoice.objects.create(option_group=option_group, name="Option A", code=1)
-        OptionChoice.objects.create(option_group=option_group, name="Option B", code=2)
+        rt_choices = [
+            {"code": 1, "name": {"en": "Option A"}},
+            {"code": 2, "name": {"en": "Option B"}},
+        ]
 
         question1 = Question.objects.create(
             survey_section=section1,
@@ -801,7 +791,7 @@ class RoundTripTest(TestCase):
             order_number=1,
             name="Main question",
             input_type="choice",
-            option_group=option_group,
+            choices=rt_choices,
             required=True
         )
         sub_question = Question.objects.create(
@@ -858,7 +848,8 @@ class RoundTripTest(TestCase):
         self.assertEqual(len(imported_questions), 1)
         self.assertEqual(imported_questions[0].name, "Main question")
         self.assertEqual(imported_questions[0].required, True)
-        self.assertIsNotNone(imported_questions[0].option_group)
+        self.assertIsNotNone(imported_questions[0].choices)
+        self.assertEqual(len(imported_questions[0].choices), 2)
 
         # Verify sub-questions
         sub_questions = list(Question.objects.filter(
@@ -881,8 +872,7 @@ class RoundTripTest(TestCase):
             code="FS",
             is_head=True
         )
-        option_group = OptionGroup.objects.create(name="FullRTChoices")
-        choice = OptionChoice.objects.create(option_group=option_group, name="Selected", code=1)
+        full_choices = [{"code": 1, "name": "Selected"}]
 
         text_q = Question.objects.create(
             survey_section=section,
@@ -895,7 +885,7 @@ class RoundTripTest(TestCase):
             code="Q_FULL_CHOICE",
             name="Choice question",
             input_type="choice",
-            option_group=option_group
+            choices=full_choices
         )
         point_q = Question.objects.create(
             survey_section=section,
@@ -911,11 +901,11 @@ class RoundTripTest(TestCase):
             question=text_q,
             text="User response"
         )
-        choice_answer = Answer.objects.create(
+        Answer.objects.create(
             survey_session=session,
-            question=choice_q
+            question=choice_q,
+            selected_choices=[1]
         )
-        choice_answer.choice.add(choice)
         Answer.objects.create(
             survey_session=session,
             question=point_q,
@@ -960,7 +950,7 @@ class RoundTripTest(TestCase):
         self.assertEqual(text_answer.text, "User response")
 
         choice_answer = next(a for a in answers if a.question.name == "Choice question")
-        self.assertEqual(list(choice_answer.choice.all())[0].name, "Selected")
+        self.assertEqual(choice_answer.selected_choices, [1])
 
         point_answer = next(a for a in answers if a.question.name == "Point question")
         self.assertIsNotNone(point_answer.point)
@@ -1058,12 +1048,7 @@ class DataOnlyImportTest(TestCase):
             code="ES",
             is_head=True
         )
-        self.option_group = OptionGroup.objects.create(name="DataImportChoices")
-        self.choice = OptionChoice.objects.create(
-            option_group=self.option_group,
-            name="Choice A",
-            code=1
-        )
+        self.data_import_choices = [{"code": 1, "name": "Choice A"}]
         self.text_q = Question.objects.create(
             survey_section=self.section,
             code="Q_EXIST_TEXT",
@@ -1075,7 +1060,7 @@ class DataOnlyImportTest(TestCase):
             code="Q_EXIST_CHOICE",
             name="Existing choice question",
             input_type="choice",
-            option_group=self.option_group
+            choices=self.data_import_choices
         )
 
     def test_data_only_import_to_existing_survey(self):
@@ -1145,7 +1130,7 @@ class DataOnlyImportTest(TestCase):
         self.assertEqual(text_answer.text, "Imported response")
 
         choice_answer = answers.get(question=self.choice_q)
-        self.assertEqual(list(choice_answer.choice.all())[0].name, "Choice A")
+        self.assertEqual(choice_answer.selected_choices, [1])
 
     def test_data_only_import_requires_existing_survey(self):
         """
@@ -1430,7 +1415,7 @@ class ErrorCaseTest(TestCase):
 
     def test_choice_references_missing_option(self):
         """
-        GIVEN responses with choice name not in OptionGroup
+        GIVEN responses with choice name not in Question.choices
         WHEN import_survey_from_zip is called
         THEN it imports with warning and skips the choice
         """
@@ -1441,14 +1426,12 @@ class ErrorCaseTest(TestCase):
             code="MCS",
             is_head=True
         )
-        option_group = OptionGroup.objects.create(name="MissingChoiceGroup")
-        OptionChoice.objects.create(option_group=option_group, name="Valid Choice", code=1)
         Question.objects.create(
             survey_section=section,
             code="Q_CHOICE_TEST",
             name="Choice test",
             input_type="choice",
-            option_group=option_group
+            choices=[{"code": 1, "name": "Valid Choice"}]
         )
 
         responses_data = {
@@ -1478,11 +1461,9 @@ class ErrorCaseTest(TestCase):
         # Should have warning about missing choice
         self.assertTrue(any("Missing Choice" in w for w in warnings))
 
-        # Answer should exist with only valid choice
+        # Answer should exist with only valid choice code
         answer = Answer.objects.get(question__code="Q_CHOICE_TEST")
-        choices = list(answer.choice.all())
-        self.assertEqual(len(choices), 1)
-        self.assertEqual(choices[0].name, "Valid Choice")
+        self.assertEqual(answer.selected_choices, [1])
 
     def test_invalid_wkt_in_section(self):
         """
@@ -1516,11 +1497,11 @@ class ErrorCaseTest(TestCase):
             import_survey_from_zip(import_buffer)
         self.assertIn("Invalid WKT", str(context.exception))
 
-    def test_option_choice_missing_code_uses_index(self):
+    def test_legacy_option_group_missing_code_uses_index(self):
         """
-        GIVEN survey.json with option choices missing 'code' field
+        GIVEN survey.json with legacy option_groups where choices missing 'code' field
         WHEN import_survey_from_zip is called
-        THEN it creates choices with auto-generated codes (1, 2, 3...)
+        THEN it converts to inline choices with auto-generated codes (1, 2, 3...)
         """
         survey_data = {
             "version": FORMAT_VERSION,
@@ -1566,13 +1547,15 @@ class ErrorCaseTest(TestCase):
         # Should have created survey
         self.assertIsNotNone(imported_survey)
 
-        # OptionGroup should exist with choices having sequential codes
-        group = OptionGroup.objects.get(name="NoCodeGroup")
-        choices = list(group.choices())
-        self.assertEqual(len(choices), 3)
-        self.assertEqual(choices[0].code, 1)
-        self.assertEqual(choices[1].code, 2)
-        self.assertEqual(choices[2].code, 3)
+        # Question should have inline choices with sequential codes
+        question = Question.objects.get(
+            survey_section__survey_header=imported_survey,
+            code="Q_CHOICE"
+        )
+        self.assertEqual(len(question.choices), 3)
+        self.assertEqual(question.choices[0]["code"], 1)
+        self.assertEqual(question.choices[1]["code"], 2)
+        self.assertEqual(question.choices[2]["code"], 3)
 
     def test_section_code_truncated_to_max_length(self):
         """
@@ -1608,9 +1591,9 @@ class ErrorCaseTest(TestCase):
         self.assertEqual(section.code, "VERYLONG")
         self.assertEqual(len(section.code), 8)
 
-    def test_choice_input_requires_option_group(self):
+    def test_choice_input_requires_choices(self):
         """
-        GIVEN survey.json with choice question without option_group_name
+        GIVEN survey.json with choice question without choices
         WHEN import_survey_from_zip is called
         THEN it raises ImportError
         """
@@ -1627,7 +1610,7 @@ class ErrorCaseTest(TestCase):
                             {
                                 "code": "Q_NO_OG",
                                 "order_number": 1,
-                                "name": "Choice without option group",
+                                "name": "Choice without choices",
                                 "input_type": "choice",
                                 "sub_questions": []
                             }
@@ -1645,11 +1628,11 @@ class ErrorCaseTest(TestCase):
 
         with self.assertRaises(ImportError) as context:
             import_survey_from_zip(import_buffer)
-        self.assertIn("requires option_group_name", str(context.exception))
+        self.assertIn("requires choices", str(context.exception))
 
-    def test_unknown_option_group_name_raises_error(self):
+    def test_unknown_legacy_option_group_name_raises_error(self):
         """
-        GIVEN survey.json with question referencing non-existent option_group
+        GIVEN survey.json with question referencing non-existent legacy option_group
         WHEN import_survey_from_zip is called
         THEN it raises ImportError
         """
@@ -2326,11 +2309,10 @@ class TranslationModelsTest(TestCase):
     def setUp(self):
         """Set up test data for translation tests."""
         from .models import (
-            SurveySectionTranslation, QuestionTranslation, OptionChoiceTranslation
+            SurveySectionTranslation, QuestionTranslation,
         )
         self.SurveySectionTranslation = SurveySectionTranslation
         self.QuestionTranslation = QuestionTranslation
-        self.OptionChoiceTranslation = OptionChoiceTranslation
 
         self.org = Organization.objects.create(name="Test Org")
         self.survey = SurveyHeader.objects.create(
@@ -2347,23 +2329,16 @@ class TranslationModelsTest(TestCase):
             code="S1",
             is_head=True
         )
-        self.option_group = OptionGroup.objects.create(name="test_options")
-        self.option1 = OptionChoice.objects.create(
-            option_group=self.option_group,
-            name="Yes",
-            code=1
-        )
-        self.option2 = OptionChoice.objects.create(
-            option_group=self.option_group,
-            name="No",
-            code=2
-        )
+        self.test_choices = [
+            {"code": 1, "name": {"en": "Yes", "ru": "Да"}},
+            {"code": 2, "name": {"en": "No", "ru": "Нет"}},
+        ]
         self.question = Question.objects.create(
             survey_section=self.section,
             name="Do you agree?",
             subtext="Select one option",
             input_type="choice",
-            option_group=self.option_group,
+            choices=self.test_choices,
             code="Q1"
         )
 
@@ -2541,44 +2516,25 @@ class TranslationModelsTest(TestCase):
             "Выберите один вариант"
         )
 
-    def test_option_choice_translation_creation(self):
+    def test_inline_choice_get_name_with_translation(self):
         """
-        GIVEN an option choice
-        WHEN translation is created
-        THEN translation is stored correctly
-        """
-        translation = self.OptionChoiceTranslation.objects.create(
-            option_choice=self.option1,
-            language="ru",
-            name="Да"
-        )
-        self.assertEqual(translation.option_choice, self.option1)
-        self.assertEqual(translation.name, "Да")
-
-    def test_option_choice_get_translated_name_with_translation(self):
-        """
-        GIVEN an option choice with Russian translation
-        WHEN get_translated_name('ru') is called
+        GIVEN a question with inline choices with Russian translation
+        WHEN get_choice_name(1, 'ru') is called
         THEN returns translated name
         """
-        self.OptionChoiceTranslation.objects.create(
-            option_choice=self.option1,
-            language="ru",
-            name="Да"
-        )
         self.assertEqual(
-            self.option1.get_translated_name("ru"),
+            self.question.get_choice_name(1, "ru"),
             "Да"
         )
 
-    def test_option_choice_get_translated_name_without_translation(self):
+    def test_inline_choice_get_name_without_translation(self):
         """
-        GIVEN an option choice without translation
-        WHEN get_translated_name('de') is called
-        THEN returns original name
+        GIVEN a question with inline choices without German translation
+        WHEN get_choice_name(1, 'de') is called
+        THEN returns English name as fallback
         """
         self.assertEqual(
-            self.option1.get_translated_name("de"),
+            self.question.get_choice_name(1, "de"),
             "Yes"
         )
 
@@ -2631,19 +2587,17 @@ class AdminInlineTest(TestCase):
         """Set up test data and admin user."""
         from django.contrib.admin.sites import AdminSite
         from .admin import (
-            SurveySectionAdmin, QuestionAdmin, OptionChoiceAdmin,
-            SurveySectionTranslationInline, QuestionTranslationInline, OptionChoiceTranslationInline
+            SurveySectionAdmin, QuestionAdmin,
+            SurveySectionTranslationInline, QuestionTranslationInline,
         )
-        from .models import SurveySectionTranslation, QuestionTranslation, OptionChoiceTranslation
+        from .models import SurveySectionTranslation, QuestionTranslation
 
         self.SurveySectionTranslation = SurveySectionTranslation
         self.QuestionTranslation = QuestionTranslation
-        self.OptionChoiceTranslation = OptionChoiceTranslation
 
         self.site = AdminSite()
         self.section_admin = SurveySectionAdmin(SurveySection, self.site)
         self.question_admin = QuestionAdmin(Question, self.site)
-        self.option_choice_admin = OptionChoiceAdmin(OptionChoice, self.site)
 
         self.user = User.objects.create_superuser(
             username='admin',
@@ -2662,12 +2616,6 @@ class AdminInlineTest(TestCase):
             title="Admin Section",
             code="AS1",
             is_head=True
-        )
-        self.option_group = OptionGroup.objects.create(name="admin_options")
-        self.option = OptionChoice.objects.create(
-            option_group=self.option_group,
-            name="Option A",
-            code=1
         )
         self.question = Question.objects.create(
             survey_section=self.section,
@@ -2693,15 +2641,6 @@ class AdminInlineTest(TestCase):
         """
         inline_names = [inline.__name__ for inline in self.question_admin.inlines]
         self.assertIn('QuestionTranslationInline', inline_names)
-
-    def test_option_choice_admin_has_translation_inline(self):
-        """
-        GIVEN OptionChoiceAdmin
-        WHEN inlines are checked
-        THEN OptionChoiceTranslationInline is present
-        """
-        inline_names = [inline.__name__ for inline in self.option_choice_admin.inlines]
-        self.assertIn('OptionChoiceTranslationInline', inline_names)
 
     def test_create_section_translation_via_model(self):
         """
@@ -2730,20 +2669,6 @@ class AdminInlineTest(TestCase):
         )
         self.assertEqual(self.question.translations.count(), 1)
         self.assertEqual(self.question.translations.first().name, "Админ Вопрос")
-
-    def test_create_option_translation_via_model(self):
-        """
-        GIVEN an option choice
-        WHEN translation is created programmatically
-        THEN translation is accessible via option choice
-        """
-        self.OptionChoiceTranslation.objects.create(
-            option_choice=self.option,
-            language="ru",
-            name="Вариант А"
-        )
-        self.assertEqual(self.option.translations.count(), 1)
-        self.assertEqual(self.option.translations.first().name, "Вариант А")
 
     def test_survey_admin_displays_available_languages(self):
         """
@@ -2978,11 +2903,10 @@ class TranslatedContentDisplayTest(TestCase):
     def setUp(self):
         """Set up test data with translations."""
         from .models import (
-            SurveySectionTranslation, QuestionTranslation, OptionChoiceTranslation
+            SurveySectionTranslation, QuestionTranslation,
         )
         self.SurveySectionTranslation = SurveySectionTranslation
         self.QuestionTranslation = QuestionTranslation
-        self.OptionChoiceTranslation = OptionChoiceTranslation
 
         self.client = Client()
         self.org = Organization.objects.create(name="Display Test Org")
@@ -2999,17 +2923,10 @@ class TranslatedContentDisplayTest(TestCase):
             code="DT1",
             is_head=True
         )
-        self.option_group = OptionGroup.objects.create(name="DisplayChoices")
-        self.choice1 = OptionChoice.objects.create(
-            option_group=self.option_group,
-            name="Original Choice 1",
-            code=1
-        )
-        self.choice2 = OptionChoice.objects.create(
-            option_group=self.option_group,
-            name="Original Choice 2",
-            code=2
-        )
+        self.display_choices = [
+            {"code": 1, "name": {"en": "Original Choice 1", "ru": "Выбор 1"}},
+            {"code": 2, "name": {"en": "Original Choice 2", "ru": "Выбор 2"}},
+        ]
         self.text_question = Question.objects.create(
             survey_section=self.section,
             code="Q_TEXT",
@@ -3024,7 +2941,7 @@ class TranslatedContentDisplayTest(TestCase):
             order_number=2,
             name="Original Choice Question",
             input_type="choice",
-            option_group=self.option_group
+            choices=self.display_choices
         )
 
         # Create translations
@@ -3044,16 +2961,6 @@ class TranslatedContentDisplayTest(TestCase):
             question=self.choice_question,
             language="ru",
             name="Русский вопрос с выбором"
-        )
-        self.OptionChoiceTranslation.objects.create(
-            option_choice=self.choice1,
-            language="ru",
-            name="Выбор 1"
-        )
-        self.OptionChoiceTranslation.objects.create(
-            option_choice=self.choice2,
-            language="ru",
-            name="Выбор 2"
         )
 
     def test_form_uses_translated_question_labels(self):
@@ -3206,17 +3113,217 @@ class TranslatedContentDisplayTest(TestCase):
         self.assertEqual(form.fields["Q_UNTRANS"].label, "Untranslated Question")
 
 
+class InlineChoicesTest(TestCase):
+    """Tests for inline choices functionality on Question and Answer models."""
+
+    def setUp(self):
+        """Set up test data with inline choices."""
+        self.org = Organization.objects.create(name="Inline Choices Test Org")
+        self.survey = SurveyHeader.objects.create(
+            name="inline_choices_test",
+            organization=self.org
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="section1",
+            code="IC1",
+            is_head=True
+        )
+        self.multilingual_choices = [
+            {"code": 1, "name": {"en": "Yes", "ru": "Да", "de": "Ja"}},
+            {"code": 2, "name": {"en": "No", "ru": "Нет", "de": "Nein"}},
+        ]
+        self.question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_IC",
+            order_number=1,
+            name="Choice Question",
+            input_type="choice",
+            choices=self.multilingual_choices
+        )
+        self.session = SurveySession.objects.create(survey=self.survey)
+
+    def test_get_choice_name_returns_requested_language(self):
+        """
+        GIVEN a question with multilingual choices
+        WHEN get_choice_name is called with a specific language
+        THEN the name in that language is returned
+        """
+        self.assertEqual(self.question.get_choice_name(1, "en"), "Yes")
+        self.assertEqual(self.question.get_choice_name(1, "ru"), "Да")
+        self.assertEqual(self.question.get_choice_name(2, "de"), "Nein")
+
+    def test_get_choice_name_falls_back_to_english(self):
+        """
+        GIVEN a question with multilingual choices
+        WHEN get_choice_name is called with a language that has no translation
+        THEN the English name is returned as fallback
+        """
+        self.assertEqual(self.question.get_choice_name(1, "fr"), "Yes")
+        self.assertEqual(self.question.get_choice_name(2, "ja"), "No")
+
+    def test_get_choice_name_falls_back_to_first_available(self):
+        """
+        GIVEN a question with choices that have no English translation
+        WHEN get_choice_name is called with an unavailable language
+        THEN the first available translation is returned
+        """
+        no_en_choices = [
+            {"code": 1, "name": {"ru": "Да", "de": "Ja"}},
+        ]
+        question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_NOEN",
+            order_number=2,
+            name="No English",
+            input_type="choice",
+            choices=no_en_choices
+        )
+        result = question.get_choice_name(1, "fr")
+        self.assertIn(result, ["Да", "Ja"])
+
+    def test_get_choice_name_returns_code_for_missing_choice(self):
+        """
+        GIVEN a question with choices
+        WHEN get_choice_name is called with a non-existent code
+        THEN the string representation of the code is returned
+        """
+        self.assertEqual(self.question.get_choice_name(99, "en"), "99")
+
+    def test_get_choice_name_with_string_name(self):
+        """
+        GIVEN a question with choices where name is a plain string
+        WHEN get_choice_name is called
+        THEN the string name is returned regardless of language
+        """
+        simple_choices = [
+            {"code": 1, "name": "Simple Choice"},
+        ]
+        question = Question.objects.create(
+            survey_section=self.section,
+            code="Q_SIMPLE",
+            order_number=3,
+            name="Simple",
+            input_type="choice",
+            choices=simple_choices
+        )
+        self.assertEqual(question.get_choice_name(1, "en"), "Simple Choice")
+        self.assertEqual(question.get_choice_name(1, "ru"), "Simple Choice")
+
+    def test_get_choice_name_with_none_language(self):
+        """
+        GIVEN a question with multilingual choices
+        WHEN get_choice_name is called with lang=None
+        THEN the English name is returned as fallback
+        """
+        self.assertEqual(self.question.get_choice_name(1, None), "Yes")
+        self.assertEqual(self.question.get_choice_name(2), "No")
+
+    def test_choices_validator_accepts_valid_choices(self):
+        """
+        GIVEN valid choices structure
+        WHEN ChoicesValidator is called
+        THEN no error is raised
+        """
+        validator = ChoicesValidator()
+        validator([
+            {"code": 1, "name": "Choice A"},
+            {"code": 2, "name": {"en": "Choice B", "ru": "Выбор Б"}},
+        ])
+
+    def test_choices_validator_rejects_non_list(self):
+        """
+        GIVEN a non-list value
+        WHEN ChoicesValidator is called
+        THEN ValidationError is raised
+        """
+        from django.core.exceptions import ValidationError
+        validator = ChoicesValidator()
+        with self.assertRaises(ValidationError):
+            validator("not a list")
+
+    def test_choices_validator_rejects_missing_code(self):
+        """
+        GIVEN a choice dict without 'code' key
+        WHEN ChoicesValidator is called
+        THEN ValidationError is raised
+        """
+        from django.core.exceptions import ValidationError
+        validator = ChoicesValidator()
+        with self.assertRaises(ValidationError):
+            validator([{"name": "No code"}])
+
+    def test_choices_validator_rejects_missing_name(self):
+        """
+        GIVEN a choice dict without 'name' key
+        WHEN ChoicesValidator is called
+        THEN ValidationError is raised
+        """
+        from django.core.exceptions import ValidationError
+        validator = ChoicesValidator()
+        with self.assertRaises(ValidationError):
+            validator([{"code": 1}])
+
+    def test_choices_validator_rejects_non_dict_items(self):
+        """
+        GIVEN a list containing non-dict items
+        WHEN ChoicesValidator is called
+        THEN ValidationError is raised
+        """
+        from django.core.exceptions import ValidationError
+        validator = ChoicesValidator()
+        with self.assertRaises(ValidationError):
+            validator(["not a dict"])
+
+    def test_selected_choices_saved_and_retrieved(self):
+        """
+        GIVEN an answer with selected_choices
+        WHEN saved and retrieved from database
+        THEN selected_choices are preserved
+        """
+        answer = Answer.objects.create(
+            survey_session=self.session,
+            question=self.question,
+            selected_choices=[1, 2]
+        )
+        answer.refresh_from_db()
+        self.assertEqual(answer.selected_choices, [1, 2])
+
+    def test_get_selected_choice_names_returns_names(self):
+        """
+        GIVEN an answer with selected_choices
+        WHEN get_selected_choice_names is called
+        THEN choice names are returned in the requested language
+        """
+        answer = Answer.objects.create(
+            survey_session=self.session,
+            question=self.question,
+            selected_choices=[1, 2]
+        )
+        self.assertEqual(answer.get_selected_choice_names("en"), ["Yes", "No"])
+        self.assertEqual(answer.get_selected_choice_names("ru"), ["Да", "Нет"])
+
+    def test_get_selected_choice_names_empty_for_no_choices(self):
+        """
+        GIVEN an answer with no selected_choices
+        WHEN get_selected_choice_names is called
+        THEN an empty list is returned
+        """
+        answer = Answer.objects.create(
+            survey_session=self.session,
+            question=self.question
+        )
+        self.assertEqual(answer.get_selected_choice_names("en"), [])
+
+
 class TranslationSerializationTest(TestCase):
     """Tests for export/import of translations."""
 
     def setUp(self):
         """Set up test data with translations."""
-        from .models import (
-            SurveySectionTranslation, QuestionTranslation, OptionChoiceTranslation
-        )
+        from .models import SurveySectionTranslation, QuestionTranslation
         self.SurveySectionTranslation = SurveySectionTranslation
         self.QuestionTranslation = QuestionTranslation
-        self.OptionChoiceTranslation = OptionChoiceTranslation
 
         self.org = Organization.objects.create(name="Serialization Test Org")
         self.survey = SurveyHeader.objects.create(
@@ -3232,12 +3339,9 @@ class TranslationSerializationTest(TestCase):
             code="ST1",
             is_head=True
         )
-        self.option_group = OptionGroup.objects.create(name="SerializationChoices")
-        self.choice1 = OptionChoice.objects.create(
-            option_group=self.option_group,
-            name="Original Choice",
-            code=1
-        )
+        self.choices = [
+            {"code": 1, "name": {"en": "Original Choice", "ru": "Русский выбор"}},
+        ]
         self.question = Question.objects.create(
             survey_section=self.section,
             code="Q_SER",
@@ -3245,7 +3349,7 @@ class TranslationSerializationTest(TestCase):
             name="Original Question Name",
             subtext="Original Question Subtext",
             input_type="choice",
-            option_group=self.option_group
+            choices=self.choices
         )
 
         # Create translations
@@ -3260,11 +3364,6 @@ class TranslationSerializationTest(TestCase):
             language="ru",
             name="Русский вопрос",
             subtext="Русский подтекст"
-        )
-        self.OptionChoiceTranslation.objects.create(
-            option_choice=self.choice1,
-            language="ru",
-            name="Русский выбор"
         )
 
     def test_export_includes_available_languages(self):
@@ -3325,11 +3424,11 @@ class TranslationSerializationTest(TestCase):
         self.assertEqual(question_data["translations"][0]["name"], "Русский вопрос")
         self.assertEqual(question_data["translations"][0]["subtext"], "Русский подтекст")
 
-    def test_export_includes_choice_translations(self):
+    def test_export_includes_inline_choice_translations(self):
         """
-        GIVEN an option choice with translations
+        GIVEN a question with inline choices containing multilingual names
         WHEN exported to ZIP
-        THEN choice has translations array in survey.json
+        THEN question choices contain multilingual name dict
         """
         output = BytesIO()
         export_survey_to_zip(self.survey, output, mode="structure")
@@ -3338,11 +3437,13 @@ class TranslationSerializationTest(TestCase):
         with zipfile.ZipFile(output, 'r') as zf:
             survey_data = json.loads(zf.read("survey.json"))
 
-        choice_data = survey_data["option_groups"][0]["choices"][0]
-        self.assertIn("translations", choice_data)
-        self.assertEqual(len(choice_data["translations"]), 1)
-        self.assertEqual(choice_data["translations"][0]["language"], "ru")
-        self.assertEqual(choice_data["translations"][0]["name"], "Русский выбор")
+        question_data = survey_data["survey"]["sections"][0]["questions"][0]
+        self.assertIsNotNone(question_data["choices"])
+        self.assertEqual(len(question_data["choices"]), 1)
+        choice = question_data["choices"][0]
+        self.assertEqual(choice["code"], 1)
+        self.assertEqual(choice["name"]["en"], "Original Choice")
+        self.assertEqual(choice["name"]["ru"], "Русский выбор")
 
     def test_export_includes_session_language(self):
         """
@@ -3452,62 +3553,22 @@ class TranslationSerializationTest(TestCase):
         self.assertEqual(question.get_translated_name("ru"), "Русский вопрос")
         self.assertEqual(question.get_translated_subtext("ru"), "Русский подтекст")
 
-    def test_import_restores_choice_translations(self):
+    def test_import_restores_inline_choice_translations(self):
         """
-        GIVEN a ZIP with choice translations (new option group)
+        GIVEN a ZIP with inline choices containing multilingual names
         WHEN imported
-        THEN choice has translations
+        THEN question has choices with multilingual names preserved
         """
-        # Create a unique option group for this test
-        new_group = OptionGroup.objects.create(name="UniqueImportChoices")
-        new_choice = OptionChoice.objects.create(
-            option_group=new_group,
-            name="Unique Choice",
-            code=1
-        )
-        self.OptionChoiceTranslation.objects.create(
-            option_choice=new_choice,
-            language="de",
-            name="Deutsche Wahl"
-        )
-
-        new_survey = SurveyHeader.objects.create(
-            name="choice_trans_test",
-            organization=self.org,
-            available_languages=["en", "de"]
-        )
-        new_section = SurveySection.objects.create(
-            survey_header=new_survey,
-            name="choice_section",
-            code="CS1",
-            is_head=True
-        )
-        Question.objects.create(
-            survey_section=new_section,
-            code="Q_UNIQUE_CHOICE",
-            name="Unique Choice Question",
-            input_type="choice",
-            option_group=new_group
-        )
-
         # Export
         output = BytesIO()
-        export_survey_to_zip(new_survey, output, mode="structure")
+        export_survey_to_zip(self.survey, output, mode="structure")
         output.seek(0)
 
-        # Modify name and option group name for import
+        # Modify name for import
         with zipfile.ZipFile(output, 'r') as zf:
             survey_json = json.loads(zf.read("survey.json"))
 
         survey_json["survey"]["name"] = "imported_choice_trans"
-        # Rename option group to ensure new creation
-        for og in survey_json["option_groups"]:
-            if og["name"] == "UniqueImportChoices":
-                og["name"] = "ImportedUniqueChoices"
-        for section in survey_json["survey"]["sections"]:
-            for q in section["questions"]:
-                if q["option_group_name"] == "UniqueImportChoices":
-                    q["option_group_name"] = "ImportedUniqueChoices"
 
         import_buffer = BytesIO()
         with zipfile.ZipFile(import_buffer, 'w') as zf:
@@ -3517,10 +3578,15 @@ class TranslationSerializationTest(TestCase):
         # Import
         imported_survey, _ = import_survey_from_zip(import_buffer)
 
-        # Verify choice translation was imported
-        imported_group = OptionGroup.objects.get(name="ImportedUniqueChoices")
-        imported_choice = OptionChoice.objects.get(option_group=imported_group)
-        self.assertEqual(imported_choice.get_translated_name("de"), "Deutsche Wahl")
+        # Verify inline choices with translations were imported
+        imported_question = Question.objects.get(
+            survey_section__survey_header=imported_survey,
+            name="Original Question Name"
+        )
+        self.assertIsNotNone(imported_question.choices)
+        self.assertEqual(len(imported_question.choices), 1)
+        self.assertEqual(imported_question.get_choice_name(1, "en"), "Original Choice")
+        self.assertEqual(imported_question.get_choice_name(1, "ru"), "Русский выбор")
 
     def test_import_restores_session_language(self):
         """
@@ -3563,36 +3629,18 @@ class TranslationSerializationTest(TestCase):
         imported_session = SurveySession.objects.get(survey=imported_survey)
         self.assertEqual(imported_session.language, "de")
 
-    def test_import_adds_translations_to_existing_option_group(self):
+    def test_import_legacy_format_converts_option_groups_to_inline_choices(self):
         """
-        GIVEN an OptionGroup already exists without translations
-        WHEN importing a survey that references that OptionGroup with translations
-        THEN translations are added to existing OptionChoices
+        GIVEN a ZIP in legacy format with option_groups and option_group_name
+        WHEN imported
+        THEN question has inline choices with translations from legacy format
         """
-        # Create existing option group without translations
-        existing_group = OptionGroup.objects.create(name="ExistingGroupForTransTest")
-        existing_choice1 = OptionChoice.objects.create(
-            option_group=existing_group,
-            name="Choice One",
-            code=1
-        )
-        existing_choice2 = OptionChoice.objects.create(
-            option_group=existing_group,
-            name="Choice Two",
-            code=2
-        )
-
-        # Verify no translations exist initially
-        self.assertEqual(existing_choice1.translations.count(), 0)
-        self.assertEqual(existing_choice2.translations.count(), 0)
-
-        # Create survey JSON with translations for the existing group
         survey_json = {
             "version": "1.0",
             "exported_at": "2026-02-08T12:00:00Z",
             "mode": "structure",
             "survey": {
-                "name": "test_existing_group_trans",
+                "name": "test_legacy_choice_trans",
                 "organization": None,
                 "redirect_url": "#",
                 "available_languages": ["en", "ru"],
@@ -3608,7 +3656,7 @@ class TranslationSerializationTest(TestCase):
                     "prev_section_name": None,
                     "translations": [],
                     "questions": [{
-                        "code": "Q_EXISTING_GROUP",
+                        "code": "Q_LEGACY_CHOICE",
                         "order_number": 1,
                         "name": "Test question",
                         "subtext": None,
@@ -3617,14 +3665,14 @@ class TranslationSerializationTest(TestCase):
                         "color": "#000000",
                         "icon_class": None,
                         "image": None,
-                        "option_group_name": "ExistingGroupForTransTest",
+                        "option_group_name": "LegacyGroup",
                         "translations": [],
                         "sub_questions": []
                     }]
                 }]
             },
             "option_groups": [{
-                "name": "ExistingGroupForTransTest",
+                "name": "LegacyGroup",
                 "choices": [
                     {
                         "name": "Choice One",
@@ -3648,105 +3696,17 @@ class TranslationSerializationTest(TestCase):
         # Import
         imported_survey, warnings = import_survey_from_zip(import_buffer)
 
-        # Verify translations were added to existing choices
-        existing_choice1.refresh_from_db()
-        existing_choice2.refresh_from_db()
-
-        self.assertEqual(existing_choice1.get_translated_name("ru"), "Выбор Один")
-        self.assertEqual(existing_choice2.get_translated_name("ru"), "Выбор Два")
-        self.assertEqual(existing_choice1.translations.count(), 1)
-        self.assertEqual(existing_choice2.translations.count(), 1)
-
-    def test_import_merges_translations_to_existing_option_group(self):
-        """
-        GIVEN an OptionGroup already exists with some translations
-        WHEN importing a survey with additional translations for same choices
-        THEN new translations are added and existing ones are updated
-        """
-        # Create existing option group with German translation
-        existing_group = OptionGroup.objects.create(name="MergeTransTestGroup")
-        existing_choice = OptionChoice.objects.create(
-            option_group=existing_group,
-            name="Merge Choice",
-            code=1
+        # Verify legacy choices were converted to inline choices with translations
+        imported_question = Question.objects.get(
+            survey_section__survey_header=imported_survey,
+            code="Q_LEGACY_CHOICE"
         )
-        self.OptionChoiceTranslation.objects.create(
-            option_choice=existing_choice,
-            language="de",
-            name="Deutsche Wahl"
-        )
-
-        # Verify initial state
-        self.assertEqual(existing_choice.translations.count(), 1)
-        self.assertEqual(existing_choice.get_translated_name("de"), "Deutsche Wahl")
-
-        # Create survey JSON with Russian translation (new) and updated German
-        survey_json = {
-            "version": "1.0",
-            "exported_at": "2026-02-08T12:00:00Z",
-            "mode": "structure",
-            "survey": {
-                "name": "test_merge_trans",
-                "organization": None,
-                "redirect_url": "#",
-                "available_languages": ["en", "ru", "de"],
-                "sections": [{
-                    "name": "merge_section",
-                    "title": "Merge Section",
-                    "subheading": None,
-                    "code": "MERGE",
-                    "is_head": True,
-                    "start_map_position": None,
-                    "start_map_zoom": 12,
-                    "next_section_name": None,
-                    "prev_section_name": None,
-                    "translations": [],
-                    "questions": [{
-                        "code": "Q_MERGE_CHOICE",
-                        "order_number": 1,
-                        "name": "Merge question",
-                        "subtext": None,
-                        "input_type": "choice",
-                        "required": True,
-                        "color": "#000000",
-                        "icon_class": None,
-                        "image": None,
-                        "option_group_name": "MergeTransTestGroup",
-                        "translations": [],
-                        "sub_questions": []
-                    }]
-                }]
-            },
-            "option_groups": [{
-                "name": "MergeTransTestGroup",
-                "choices": [{
-                    "name": "Merge Choice",
-                    "code": 1,
-                    "translations": [
-                        {"language": "ru", "name": "Русский Выбор"},
-                        {"language": "de", "name": "Aktualisierte Deutsche Wahl"}
-                    ]
-                }]
-            }]
-        }
-
-        import_buffer = BytesIO()
-        with zipfile.ZipFile(import_buffer, 'w') as zf:
-            zf.writestr("survey.json", json.dumps(survey_json))
-        import_buffer.seek(0)
-
-        # Import
-        imported_survey, warnings = import_survey_from_zip(import_buffer)
-
-        # Verify translations were merged
-        existing_choice.refresh_from_db()
-
-        # Should now have 2 translations
-        self.assertEqual(existing_choice.translations.count(), 2)
-        # Russian was added
-        self.assertEqual(existing_choice.get_translated_name("ru"), "Русский Выбор")
-        # German was updated
-        self.assertEqual(existing_choice.get_translated_name("de"), "Aktualisierte Deutsche Wahl")
+        self.assertIsNotNone(imported_question.choices)
+        self.assertEqual(len(imported_question.choices), 2)
+        self.assertEqual(imported_question.get_choice_name(1, "en"), "Choice One")
+        self.assertEqual(imported_question.get_choice_name(1, "ru"), "Выбор Один")
+        self.assertEqual(imported_question.get_choice_name(2, "en"), "Choice Two")
+        self.assertEqual(imported_question.get_choice_name(2, "ru"), "Выбор Два")
 
 
 class MultilingualIntegrationTest(TestCase):
@@ -3754,12 +3714,9 @@ class MultilingualIntegrationTest(TestCase):
 
     def setUp(self):
         """Set up complete multilingual survey with translations."""
-        from .models import (
-            SurveySectionTranslation, QuestionTranslation, OptionChoiceTranslation
-        )
+        from .models import SurveySectionTranslation, QuestionTranslation
         self.SurveySectionTranslation = SurveySectionTranslation
         self.QuestionTranslation = QuestionTranslation
-        self.OptionChoiceTranslation = OptionChoiceTranslation
 
         self.client = Client()
         self.org = Organization.objects.create(name="Integration Test Org")
@@ -3788,28 +3745,11 @@ class MultilingualIntegrationTest(TestCase):
             subheading="Русское описание секции"
         )
 
-        # Create option group with translated choices
-        self.option_group = OptionGroup.objects.create(name="IntegrationChoices")
-        self.choice1 = OptionChoice.objects.create(
-            option_group=self.option_group,
-            name="Yes",
-            code=1
-        )
-        self.choice2 = OptionChoice.objects.create(
-            option_group=self.option_group,
-            name="No",
-            code=2
-        )
-        self.OptionChoiceTranslation.objects.create(
-            option_choice=self.choice1,
-            language="ru",
-            name="Да"
-        )
-        self.OptionChoiceTranslation.objects.create(
-            option_choice=self.choice2,
-            language="ru",
-            name="Нет"
-        )
+        # Create inline choices with translated names
+        self.yes_no_choices = [
+            {"code": 1, "name": {"en": "Yes", "ru": "Да"}},
+            {"code": 2, "name": {"en": "No", "ru": "Нет"}},
+        ]
 
         # Create questions with translations
         self.text_question = Question.objects.create(
@@ -3833,7 +3773,7 @@ class MultilingualIntegrationTest(TestCase):
             order_number=2,
             name="Do you agree?",
             input_type="choice",
-            option_group=self.option_group
+            choices=self.yes_no_choices
         )
         self.QuestionTranslation.objects.create(
             question=self.choice_question,

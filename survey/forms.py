@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import widgets
-from .models import SurveySection,Question, Answer, INPUT_TYPE_CHOICES, SurveySession, OptionGroup
+from .models import SurveySection, Question, Answer, INPUT_TYPE_CHOICES, SurveySession
 from django.utils import html
 import logging
 from django import forms
@@ -132,7 +132,7 @@ class ShowImageField(forms.Field):
 
 class SurveySectionAnswerForm(forms.Form):
 
-    def _get_form_from_input_type(self, input_type, required, option_group, label, sublabel, color, icon_class, image_source, language=None):
+    def _get_form_from_input_type(self, input_type, required, question, label, sublabel, color, icon_class, image_source, language=None):
 
         if input_type == 'text':
             return forms.CharField(widget=forms.Textarea, label=label, required=required)
@@ -144,11 +144,11 @@ class SurveySectionAnswerForm(forms.Form):
             return forms.CharField(widget=forms.NumberInput, label=label, required=required)
 
         elif input_type == 'choice':
-            choices = [(choice.code, choice.get_translated_name(language)) for choice in option_group.choices()]
+            choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
             return forms.ChoiceField(widget=forms.RadioSelect, choices=choices, label=label, required=required)
 
         elif input_type == 'multichoice':
-            choices = [(choice.code, choice.get_translated_name(language)) for choice in option_group.choices()]
+            choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
             return forms.MultipleChoiceField(
                 widget=forms.CheckboxSelectMultiple,
                 choices=choices,
@@ -157,9 +157,9 @@ class SurveySectionAnswerForm(forms.Form):
             )
 
         elif input_type == 'range':
-            int_choices = [ int(c.name) for c in option_group.choices()]
-            minimum = min(int_choices)
-            maximum = max(int_choices)
+            codes = [c["code"] for c in (question.choices or [])]
+            minimum = min(codes) if codes else 0
+            maximum = max(codes) if codes else 10
             return forms.IntegerField(widget=forms.NumberInput(attrs={'type':'range', 'step': '1', 'min':str(minimum), 'max':str(maximum)}), label=label, required=required)
 
         elif input_type == 'point':
@@ -178,7 +178,7 @@ class SurveySectionAnswerForm(forms.Form):
             return ShowImageField(widget=ShowImageWidget, label=False, image_source=image_source)
 
         elif input_type == 'rating':
-            choices = [(choice.code, choice.get_translated_name(language)) for choice in option_group.choices()]
+            choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
             return forms.ChoiceField(widget=forms.RadioSelect(attrs={'class': 'form-check-inline', 'style': 'margin-right:0;'}), choices=choices, label=label, required=required)
 
         elif input_type == "html":
@@ -209,7 +209,7 @@ class SurveySectionAnswerForm(forms.Form):
             field_icon_class = question.icon_class
             image_source = question.image.url if question.image else None
 
-            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question.option_group, field_label, field_sublabel, field_color, field_icon_class, image_source, language)
+            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question, field_label, field_sublabel, field_color, field_icon_class, image_source, language)
 
 
     def save(self):

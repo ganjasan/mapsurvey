@@ -5,8 +5,31 @@ from datetime import datetime
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, BaseValidator
 import random
+
+
+class ChoicesValidator(BaseValidator):
+    """Validate that Question.choices JSONField has correct structure."""
+    message = "Invalid choices structure."
+    code = "invalid_choices"
+
+    def __init__(self, limit_value=None):
+        super().__init__(limit_value=limit_value or True)
+
+    def __call__(self, value):
+        if not isinstance(value, list):
+            raise ValidationError("choices must be a list")
+        for item in value:
+            if not isinstance(item, dict):
+                raise ValidationError("Each choice must be a dict")
+            if "code" not in item:
+                raise ValidationError("Each choice must have 'code'")
+            if "name" not in item:
+                raise ValidationError("Each choice must have 'name'")
+
+    def compare(self, a, b):
+        return False
 
 #VALIDATORS
 url_name_validator = RegexValidator(
@@ -166,56 +189,6 @@ class SurveySectionTranslation(models.Model):
         return f"{self.section.name} ({self.language})"
 
 
-#examples - Never-Always, Years-By-Five
-class OptionGroup(models.Model):
-    name = models.CharField(max_length=45, unique=True)
-    #choices = models.ManyToManyField("OptionChoice")
-
-    class Meta:
-        app_label = 'survey'
-
-    def __str__(self):
-        return self.name
-
-    def choices(self):
-        if not hasattr(self, "__ccache"):
-            self.__ccache = OptionChoice.objects.filter(option_group=self).order_by('code')
-        return self.__ccache
-
-class OptionChoice(models.Model):
-    option_group = models.ForeignKey("OptionGroup", on_delete=models.CASCADE)
-    name = models.CharField(max_length=256)
-    code = models.IntegerField(null=False, blank=False)
-
-    class Meta:
-        app_label = 'survey'
-
-    def __str__(self):
-        return self.name
-
-    def get_translated_name(self, lang):
-        if not lang:
-            return self.name
-        try:
-            translation = self.translations.get(language=lang)
-            return translation.name if translation.name else self.name
-        except OptionChoiceTranslation.DoesNotExist:
-            return self.name
-
-
-class OptionChoiceTranslation(models.Model):
-    option_choice = models.ForeignKey("OptionChoice", on_delete=models.CASCADE, related_name='translations')
-    language = models.CharField(max_length=10, help_text=_('ISO 639-1 language code'))
-    name = models.CharField(max_length=256)
-
-    class Meta:
-        app_label = 'survey'
-        unique_together = ('option_choice', 'language')
-
-    def __str__(self):
-        return f"{self.option_choice.name} ({self.language})"
-
-
 def question_code_generator():
     while True:
         code = "Q_"+str(random.random())[2:12]
@@ -232,7 +205,7 @@ class Question(models.Model):
     name = models.CharField(max_length=512, null=True, blank=True)
     subtext = models.CharField(max_length=512, null=True, blank=True)
     input_type = models.CharField(max_length=80, choices=INPUT_TYPE_CHOICES)
-    option_group = models.ForeignKey("OptionGroup", on_delete=models.CASCADE, null=True, blank=True)
+    choices = models.JSONField(null=True, blank=True, validators=[ChoicesValidator()])
     required = models.BooleanField(default=False)
     color = models.CharField(verbose_name=_(u'Color'), max_length=7, help_text=_(u'HEX color, as #RRGGBB'), default="#000000")
     icon_class = models.CharField(default="", max_length=80, help_text=_(u'Must be Font-Awesome class'), blank=True, null=True)
@@ -272,6 +245,19 @@ class Question(models.Model):
         except QuestionTranslation.DoesNotExist:
             return self.subtext
 
+    def get_choice_name(self, code, lang=None):
+        for choice in self.choices or []:
+            if choice["code"] == code:
+                names = choice["name"]
+                if isinstance(names, dict):
+                    if lang and lang in names:
+                        return names[lang]
+                    if "en" in names:
+                        return names["en"]
+                    return next(iter(names.values()))
+                return names
+        return str(code)
+
 
 class QuestionTranslation(models.Model):
     question = models.ForeignKey("Question", on_delete=models.CASCADE, related_name='translations')
@@ -291,7 +277,7 @@ class Answer(models.Model):
     survey_session = models.ForeignKey("SurveySession", on_delete=models.CASCADE)
     question = models.ForeignKey("Question", on_delete=models.CASCADE)
     parent_answer_id = models.ForeignKey('self', default=None, null=True, blank=True, on_delete=models.CASCADE)
-    choice = models.ManyToManyField("OptionChoice")
+    selected_choices = models.JSONField(null=True, blank=True)
 
     numeric = models.FloatField(null=True,blank=True)
     text = models.TextField(null=True, blank=True)
@@ -303,6 +289,10 @@ class Answer(models.Model):
     class Meta:
         app_label = 'survey'
     
+    def get_selected_choice_names(self, lang=None):
+        codes = self.selected_choices or []
+        return [self.question.get_choice_name(code, lang) for code in codes]
+
     def subAnswers(self):
     	if not hasattr(self, "__sacache"):
     		subanswers = Answer.objects.filter(parent_answer_id=self)

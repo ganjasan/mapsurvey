@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import HttpResponse
 from django.utils import translation
-from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, OptionChoice
+from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question
 from datetime import datetime
 from django import forms
 from django.views.generic import UpdateView
@@ -181,7 +181,7 @@ def survey_section(request, survey_name, section_name):
 			result = request.POST.getlist(question.code)
 
 			if (result != []):
-				if question.option_group is None:
+				if not question.choices:
 					result = result[0]
 					if (question.input_type in ['point', 'line', 'polygon']):
 						geostr_list = result.split('|')
@@ -208,7 +208,7 @@ def survey_section(request, survey_name, section_name):
 									if key != 'question_id':
 										sub_question = Question.objects.get(Q(survey_section=section) & Q(code=key))
 										sub_answer = Answer(survey_session=survey_session, question=sub_question, parent_answer_id = answer)
-										if sub_question.option_group is None:
+										if not sub_question.choices:
 											if (sub_question.input_type == 'text' or sub_question.input_type == 'text_line') and value and value[0]:
 												sub_answer.text = value[0]
 											elif sub_question.input_type == 'number' and value and value[0]:
@@ -219,11 +219,7 @@ def survey_section(request, survey_name, section_name):
 											if(sub_question.input_type == 'range') and value and value[0]:
 												sub_answer.numeric = float(value[0])
 											else:
-												sub_answer.save()
-												for result_answer in value:
-													choice = OptionChoice.objects.get(Q(option_group=sub_question.option_group) & Q(code=result_answer))
-													sub_answer.choice.add(choice)
-
+												sub_answer.selected_choices = [int(v) for v in value if v]
 										sub_answer.save()
 
 
@@ -245,16 +241,9 @@ def survey_section(request, survey_name, section_name):
 					if  question.input_type == "range":
 						answer.numeric = float(result[0])
 					else:
-						answer.save()
-						for result_answer in result:
-							if result_answer:
-								try:
-									choice = OptionChoice.objects.get(Q(option_group=question.option_group) & Q(code=result_answer))
-									answer.choice.add(choice)
-								except Exception as e:
-									print(e)
+						answer.selected_choices = [int(r) for r in result if r]
 
-						answer.save()
+					answer.save()
 
 		next_page = ("../" + section.next_section.name) if section.next_section else survey.redirect_url
 		return HttpResponseRedirect(next_page)
@@ -338,10 +327,11 @@ def download_data(request, survey_name):
 				elif input_type == "choice" or input_type == "rating":
 					if subanswers[key]:
 						answer = subanswers[key][0]
-						result =answer.choice.all()[0].name
+						names = answer.get_selected_choice_names()
+						result = names[0] if names else ""
 				elif input_type == "multichoice":
 					if subanswers[key]:
-						result = [a.name for a in subanswers[key][0].choice.all()]
+						result = subanswers[key][0].get_selected_choice_names()
 
 				properties[key.name] = result
 
@@ -385,16 +375,16 @@ def download_data(request, survey_name):
 		result = ""
 		for answer in answers:
 			input_type = answer.question.input_type
-			
+
 			if (input_type == "text" or input_type == "text_line"):
 				result = answer.text
 			elif input_type == "number" or input_type == "range":
 				result = answer.numeric
 			elif input_type == "choice" or input_type == "rating":
-				result = answer.choice.all()[0].name
+				names = answer.get_selected_choice_names()
+				result = names[0] if names else ""
 			elif input_type == "multichoice":
-				
-				result = [c.name for c in answer.choice.all()]
+				result = answer.get_selected_choice_names()
 			else:
 				continue
 

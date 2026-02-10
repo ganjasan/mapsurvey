@@ -18,9 +18,9 @@ from django.db import transaction
 
 from .models import (
     Organization, SurveyHeader, SurveySection, Question,
-    OptionGroup, OptionChoice, SurveySession, Answer,
+    SurveySession, Answer,
     INPUT_TYPE_CHOICES, SurveySectionTranslation,
-    QuestionTranslation, OptionChoiceTranslation
+    QuestionTranslation,
 )
 
 # Format version for compatibility checking
@@ -58,31 +58,6 @@ def serialize_survey_to_dict(survey: SurveyHeader) -> Dict[str, Any]:
     }
 
 
-def serialize_option_groups(survey: SurveyHeader) -> List[Dict[str, Any]]:
-    """Collect and deduplicate all OptionGroups used by survey questions."""
-    seen_groups = {}
-
-    for question in survey.questions():
-        if question.option_group and question.option_group.name not in seen_groups:
-            group = question.option_group
-            seen_groups[group.name] = {
-                "name": group.name,
-                "choices": [
-                    {
-                        "name": choice.name,
-                        "code": choice.code,
-                        "translations": [
-                            {"language": t.language, "name": t.name}
-                            for t in choice.translations.all()
-                        ]
-                    }
-                    for choice in group.choices()
-                ]
-            }
-
-    return list(seen_groups.values())
-
-
 def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
     """Serialize all sections with geo WKT and questions."""
     sections = SurveySection.objects.filter(survey_header=survey)
@@ -117,7 +92,7 @@ def _serialize_question(question: Question) -> Dict[str, Any]:
         "name": question.name,
         "subtext": question.subtext,
         "input_type": question.input_type,
-        "option_group_name": question.option_group.name if question.option_group else None,
+        "choices": question.choices,
         "required": question.required,
         "color": question.color,
         "icon_class": question.icon_class,
@@ -214,8 +189,8 @@ def geo_to_wkt(geo_field) -> Optional[str]:
 
 
 def serialize_choices(answer: Answer) -> List[str]:
-    """Serialize ManyToMany choices to list of choice names."""
-    return [choice.name for choice in answer.choice.all()]
+    """Serialize selected choices to list of choice names."""
+    return answer.get_selected_choice_names()
 
 
 def collect_upload_images(survey: SurveyHeader) -> List[Tuple[str, str]]:
@@ -264,7 +239,6 @@ def export_survey_to_zip(
                 "exported_at": datetime.utcnow().isoformat() + "Z",
                 "mode": mode,
                 "survey": serialize_survey_to_dict(survey),
-                "option_groups": serialize_option_groups(survey),
             }
             zf.writestr("survey.json", json.dumps(survey_data, indent=2, ensure_ascii=False))
 
@@ -390,13 +364,10 @@ def import_structure_from_archive(
     code_remap = {}
 
     survey_data = data["survey"]
-    option_groups_data = data.get("option_groups", [])
+    legacy_option_groups = data.get("option_groups", [])
 
     # Create organization
     org = get_or_create_organization(survey_data.get("organization"))
-
-    # Create option groups first
-    option_groups = get_or_create_option_groups(option_groups_data)
 
     # Create survey header
     survey = create_survey_header(survey_data, org)
@@ -410,7 +381,7 @@ def import_structure_from_archive(
         section = sections.get(section_data["name"])
         if section:
             questions_data = section_data.get("questions", [])
-            create_questions(section, questions_data, option_groups, code_remap)
+            create_questions(section, questions_data, legacy_option_groups, code_remap)
 
     # Resolve section links
     link_warnings = resolve_section_links(sections, sections_data)
@@ -431,54 +402,23 @@ def get_or_create_organization(name: Optional[str]) -> Optional[Organization]:
     return org
 
 
-def get_or_create_option_groups(
-    option_groups_data: List[Dict[str, Any]]
-) -> Dict[str, OptionGroup]:
-    """Create or reuse OptionGroups, returns name->object mapping."""
-    result = {}
-
-    for group_data in option_groups_data:
-        name = group_data["name"]
-
-        # Try to get existing group
-        try:
-            group = OptionGroup.objects.get(name=name)
-            group_exists = True
-        except OptionGroup.DoesNotExist:
-            # Create new group
-            group = OptionGroup.objects.create(name=name)
-            group_exists = False
-
-        # Process choices (create new or add translations to existing)
-        for idx, choice_data in enumerate(group_data.get("choices", []), start=1):
-            choice_code = choice_data.get("code", idx)
-
-            if group_exists:
-                # Find existing choice by code
-                try:
-                    choice = OptionChoice.objects.get(option_group=group, code=choice_code)
-                except OptionChoice.DoesNotExist:
-                    # Choice doesn't exist in existing group, skip
-                    continue
-            else:
-                # Create new choice
-                choice = OptionChoice.objects.create(
-                    option_group=group,
-                    name=choice_data["name"],
-                    code=choice_code,
-                )
-
-            # Create or update choice translations
-            for trans_data in choice_data.get("translations", []):
-                OptionChoiceTranslation.objects.update_or_create(
-                    option_choice=choice,
-                    language=trans_data["language"],
-                    defaults={"name": trans_data.get("name")},
-                )
-
-        result[name] = group
-
-    return result
+def convert_legacy_option_group_to_choices(
+    option_group_name: str,
+    legacy_option_groups: List[Dict[str, Any]]
+) -> Optional[List[Dict[str, Any]]]:
+    """Convert legacy option_groups format to inline choices."""
+    for group in legacy_option_groups:
+        if group["name"] == option_group_name:
+            choices = []
+            for idx, choice_data in enumerate(group.get("choices", []), start=1):
+                code = choice_data.get("code", idx)
+                # Build name dict with translations
+                names = {"en": choice_data["name"]}
+                for trans in choice_data.get("translations", []):
+                    names[trans["language"]] = trans["name"]
+                choices.append({"code": code, "name": names})
+            return choices
+    return None
 
 
 def create_survey_header(
@@ -559,7 +499,7 @@ def _generate_unique_code(original_code: str) -> str:
 def _create_question(
     section: SurveySection,
     question_data: Dict[str, Any],
-    option_groups: Dict[str, OptionGroup],
+    legacy_option_groups: List[Dict[str, Any]],
     code_remap: Dict[str, str],
     parent: Optional[Question] = None
 ) -> Question:
@@ -581,21 +521,23 @@ def _create_question(
             f"Invalid input_type '{input_type}' for question '{original_code}'"
         )
 
-    # Get option group
-    option_group = None
-    og_name = question_data.get("option_group_name")
-    if og_name:
-        option_group = option_groups.get(og_name)
-        if option_group is None:
-            raise ImportError(
-                f"Question '{original_code}': option_group_name '{og_name}' not found in option_groups"
-            )
+    # Resolve choices: inline format or legacy option_group_name
+    choices = question_data.get("choices")
+    if choices is None:
+        # Try legacy format
+        og_name = question_data.get("option_group_name")
+        if og_name:
+            choices = convert_legacy_option_group_to_choices(og_name, legacy_option_groups)
+            if choices is None:
+                raise ImportError(
+                    f"Question '{original_code}': option_group_name '{og_name}' not found in option_groups"
+                )
 
-    # Validate option_group required for certain input types
-    requires_option_group = {"choice", "multichoice", "range", "rating"}
-    if input_type in requires_option_group and option_group is None:
+    # Validate choices required for certain input types
+    requires_choices = {"choice", "multichoice", "range", "rating"}
+    if input_type in requires_choices and not choices:
         raise ImportError(
-            f"Question '{original_code}': input_type '{input_type}' requires option_group_name"
+            f"Question '{original_code}': input_type '{input_type}' requires choices"
         )
 
     question = Question.objects.create(
@@ -606,7 +548,7 @@ def _create_question(
         name=question_data.get("name", "")[:512] if question_data.get("name") else None,
         subtext=question_data.get("subtext", "")[:512] if question_data.get("subtext") else None,
         input_type=input_type[:80],
-        option_group=option_group,
+        choices=choices,
         required=question_data.get("required", False),
         color=question_data.get("color", "#000000")[:7],
         icon_class=question_data.get("icon_class", "")[:80] if question_data.get("icon_class") else None,
@@ -624,7 +566,7 @@ def _create_question(
 
     # Create sub-questions recursively
     for sub_q_data in question_data.get("sub_questions", []):
-        _create_question(section, sub_q_data, option_groups, code_remap, parent=question)
+        _create_question(section, sub_q_data, legacy_option_groups, code_remap, parent=question)
 
     return question
 
@@ -632,12 +574,12 @@ def _create_question(
 def create_questions(
     section: SurveySection,
     questions_data: List[Dict[str, Any]],
-    option_groups: Dict[str, OptionGroup],
+    legacy_option_groups: List[Dict[str, Any]],
     code_remap: Dict[str, str]
 ) -> None:
     """Create questions with hierarchy, updating code_remap for collisions."""
     for question_data in questions_data:
-        _create_question(section, question_data, option_groups, code_remap)
+        _create_question(section, question_data, legacy_option_groups, code_remap)
 
 
 def resolve_section_links(
@@ -831,9 +773,9 @@ def create_answer(
         polygon=wkt_to_geo(answer_data.get("polygon"), "polygon"),
     )
 
-    # Link choices
+    # Link choices by name -> code
     choice_names = answer_data.get("choices", [])
-    choice_warnings = link_choices(answer, choice_names, question.option_group)
+    choice_warnings = link_choices(answer, choice_names, question)
     warnings.extend(choice_warnings)
 
     # Create sub-answers recursively
@@ -857,25 +799,36 @@ def wkt_to_geo(wkt: Optional[str], field_type: str) -> Optional[GEOSGeometry]:
 def link_choices(
     answer: Answer,
     choice_names: List[str],
-    option_group: Optional[OptionGroup]
+    question: Question
 ) -> List[str]:
-    """Link answer to choices by name, returns warnings for missing choices."""
+    """Convert choice names to codes and store in answer.selected_choices."""
     warnings = []
 
-    if not option_group or not choice_names:
+    if not question.choices or not choice_names:
         return warnings
 
-    for choice_name in choice_names:
-        try:
-            choice = OptionChoice.objects.get(
-                option_group=option_group,
-                name=choice_name
-            )
-            answer.choice.add(choice)
-        except OptionChoice.DoesNotExist:
+    # Build a name->code lookup from Question.choices
+    name_to_code = {}
+    for choice in question.choices:
+        names = choice["name"]
+        if isinstance(names, dict):
+            for lang_name in names.values():
+                name_to_code[lang_name] = choice["code"]
+        else:
+            name_to_code[names] = choice["code"]
+
+    codes = []
+    for name in choice_names:
+        if name in name_to_code:
+            codes.append(name_to_code[name])
+        else:
             warnings.append(
-                f"Choice '{choice_name}' not found for question '{answer.question.code}', skipped"
+                f"Choice '{name}' not found for question '{answer.question.code}', skipped"
             )
+
+    if codes:
+        answer.selected_choices = codes
+        answer.save(update_fields=['selected_choices'])
 
     return warnings
 

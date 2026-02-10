@@ -1,5 +1,3 @@
-## ADDED Requirements
-
 ### Requirement: Export modes
 The system SHALL support three export modes: structure, data, and full.
 
@@ -72,7 +70,6 @@ The exported ZIP SHALL contain survey definition JSON and media files.
   - `version`: format version string (e.g., "1.0")
   - `exported_at`: ISO 8601 timestamp
   - `survey`: object containing survey header fields and nested sections
-  - `option_groups`: array of all OptionGroups referenced by questions
 
 #### Scenario: Section serialization
 - **WHEN** a survey with multiple sections is exported
@@ -90,9 +87,19 @@ The exported ZIP SHALL contain survey definition JSON and media files.
 - **WHEN** a question has an image attached
 - **THEN** the image file SHALL be copied to `images/structure/` with filename `<question_code>_<original_name>`
 
-#### Scenario: OptionGroup deduplication
-- **WHEN** multiple questions reference the same OptionGroup
-- **THEN** the OptionGroup SHALL appear only once in `option_groups` array
+#### Scenario: Question serialization with inline choices
+- **WHEN** a question has input_type choice/multichoice/range/rating
+- **THEN** the question object SHALL include `choices` array with inline choice objects:
+  ```json
+  {
+    "code": "Q001",
+    "input_type": "choice",
+    "choices": [
+      {"code": 1, "name": {"en": "Yes", "ru": "Да"}},
+      {"code": 2, "name": {"en": "No", "ru": "Нет"}}
+    ]
+  }
+  ```
 
 #### Scenario: User-uploaded file inclusion
 - **WHEN** an answer has uploaded file (image type question)
@@ -118,7 +125,7 @@ The responses.json SHALL contain all survey sessions and answers.
   - `question_code`: reference to question by code
   - `numeric`, `text`, `yn`: scalar values (if present)
   - `point`, `line`, `polygon`: WKT strings (if present)
-  - `choices`: array of OptionChoice names (for choice/multichoice)
+  - `choices`: array of choice names resolved from codes (for choice/multichoice)
   - `sub_answers`: nested array for hierarchical answers
 
 #### Scenario: Answer with geo data
@@ -160,13 +167,10 @@ The system SHALL provide a management command `import_survey` that creates a sur
 - **WHEN** JSON contains a question with input_type not in allowed choices
 - **THEN** system exits with error code 1 and message "Invalid input_type '<type>' for question '<code>'"
 
-#### Scenario: Missing option_group for choice-based input types
-- **WHEN** JSON contains a question with input_type choice/multichoice/range/rating without option_group_name
-- **THEN** system exits with error code 1 and message "Question '<code>': input_type '<type>' requires option_group_name"
-
-#### Scenario: Unknown option_group_name reference
-- **WHEN** JSON contains a question with option_group_name not in option_groups array
-- **THEN** system exits with error code 1 and message "Question '<code>': option_group_name '<name>' not found in option_groups"
+#### Scenario: Missing choices for choice-based input types
+- **WHEN** JSON contains a question with input_type choice/multichoice/range/rating without `choices` array
+- **AND** no legacy `option_group_name` is present
+- **THEN** system exits with error code 1 and message "Question '<code>': input_type '<type>' requires choices"
 
 ### Requirement: Import survey from ZIP via Web UI
 The system SHALL provide an upload form in `/editor/` dashboard to import surveys.
@@ -190,25 +194,14 @@ The import command SHALL create all related objects in the correct order to sati
 - **WHEN** a survey archive is imported
 - **THEN** objects SHALL be created in this order:
   1. Organization (if specified and doesn't exist)
-  2. OptionGroups and OptionChoices
-  3. SurveyHeader
-  4. SurveySections (without next/prev links)
-  5. Questions (parents before children) with image extraction
-  6. SurveySection next/prev links resolved
+  2. SurveyHeader
+  3. SurveySections (without next/prev links)
+  4. Questions (parents before children) with choices and image extraction
+  5. SurveySection next/prev links resolved
 
 #### Scenario: Atomic import transaction
 - **WHEN** import fails at any step
 - **THEN** all created objects SHALL be rolled back and database remains unchanged
-
-#### Scenario: Reuse existing OptionGroup
-- **WHEN** archive contains an OptionGroup with name that already exists in database
-- **THEN** system SHALL use the existing OptionGroup instead of creating duplicate
-
-#### Scenario: Add translations to existing OptionChoices
-- **WHEN** archive contains OptionChoice translations
-- **AND** the OptionGroup already exists in database
-- **THEN** system SHALL add missing OptionChoiceTranslation records to existing OptionChoices
-- **AND** system SHALL update existing OptionChoiceTranslation records if language matches
 
 #### Scenario: Reuse existing Organization
 - **WHEN** archive specifies an organization name that already exists in database
@@ -230,6 +223,38 @@ The import command SHALL create all related objects in the correct order to sati
 - **WHEN** archive contains a section with next_section_name referencing non-existent section
 - **THEN** system SHALL set the link to null and output warning "Section '<name>': next_section '<ref>' not found, set to null"
 
+### Requirement: Import question with inline choices
+The import SHALL parse inline choices from question object instead of referencing OptionGroups.
+
+#### Scenario: Import question with choices
+- **WHEN** archive contains question with `choices` array
+- **THEN** system SHALL store choices in `Question.choices` JSONField
+
+#### Scenario: Import legacy format with option_groups
+- **WHEN** archive contains legacy `option_groups` array and questions with `option_group_name`
+- **THEN** system SHALL convert to inline format:
+  1. Find referenced OptionGroup in `option_groups` array
+  2. Convert choices to inline format with translations
+  3. Store in `Question.choices`
+
+#### Scenario: Missing choices for choice-based input types
+- **WHEN** JSON contains question with input_type choice/multichoice/range/rating without `choices` array
+- **AND** no legacy `option_group_name` is present
+- **THEN** system exits with error code 1 and message "Question '<code>': input_type '<type>' requires choices"
+
+### Requirement: Import answer choices by name
+The import SHALL convert choice names back to codes when restoring answers.
+
+#### Scenario: Import answer with choices
+- **WHEN** responses.json contains answer with `choices: ["Yes", "Maybe"]`
+- **THEN** system SHALL:
+  1. Look up each name in `Question.choices` by matching name values
+  2. Store corresponding codes in `Answer.selected_choices`
+
+#### Scenario: Answer choice name not found
+- **WHEN** answer contains choice name not in Question.choices
+- **THEN** system SHALL skip that choice and output warning "Choice '<name>' not found for question '<code>', skipped"
+
 ### Requirement: Import responses from archive
 The import SHALL restore survey sessions and answers when present in archive.
 
@@ -245,8 +270,8 @@ The import SHALL restore survey sessions and answers when present in archive.
 - **WHEN** responses.json contains answer with question_code not in survey
 - **THEN** system SHALL skip answer and output warning "Answer references unknown question '<code>', skipped"
 
-#### Scenario: Answer choice references missing option
-- **WHEN** answer contains choice name not in OptionGroup
+#### Scenario: Answer choice name not found
+- **WHEN** answer contains choice name not in Question.choices
 - **THEN** system SHALL skip that choice and output warning "Choice '<name>' not found for question '<code>', skipped"
 
 #### Scenario: Import geo answer
@@ -282,10 +307,6 @@ The import SHALL truncate field values that exceed database column limits.
 #### Scenario: Survey name exceeds max length
 - **WHEN** archive contains survey with name longer than 45 characters
 - **THEN** system SHALL truncate name to 45 characters
-
-#### Scenario: OptionChoice missing code
-- **WHEN** archive contains OptionChoice without code field
-- **THEN** system SHALL auto-generate sequential codes (1, 2, 3...)
 
 ### Requirement: Handle image files during import
 The import SHALL extract image files and link them to questions/answers.

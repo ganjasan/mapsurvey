@@ -2,8 +2,8 @@ from django.contrib.gis import admin as gisadmin
 from django.contrib import admin
 from .models import (
     Organization, SurveyHeader, SurveySection, Question, Answer,
-    OptionGroup, OptionChoice, SurveySession,
-    SurveySectionTranslation, QuestionTranslation, OptionChoiceTranslation
+    SurveySession,
+    SurveySectionTranslation, QuestionTranslation,
 )
 from leaflet.admin import LeafletGeoAdmin
 
@@ -20,19 +20,13 @@ class QuestionTranslationInline(admin.TabularInline):
     fields = ('language', 'name', 'subtext')
 
 
-class OptionChoiceTranslationInline(admin.TabularInline):
-    model = OptionChoiceTranslation
-    extra = 1
-    fields = ('language', 'name')
-
-
 class SurveyAdmin(LeafletGeoAdmin):
     list_display = ('organization', 'name', 'redirect_url', 'available_languages')
 
 
 class QuestionInLine(admin.TabularInline):
     model = Question
-    fields = ('parent_question_id', 'name', 'subtext', 'order_number', 'input_type', 'option_group', 'required', 'color', 'icon_class', 'image')
+    fields = ('parent_question_id', 'name', 'subtext', 'order_number', 'input_type', 'choices', 'required', 'color', 'icon_class', 'image')
 
 
 class SurveySectionAdmin(LeafletGeoAdmin):
@@ -51,18 +45,9 @@ class QuestionAdmin(admin.ModelAdmin):
     ]
 
 
-class OptionChoiceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code', 'option_group')
-    inlines = [
-        OptionChoiceTranslationInline,
-    ]
-
-
 gisadmin.site.register(Organization)
 gisadmin.site.register(SurveyHeader, SurveyAdmin)
 gisadmin.site.register(SurveySection, SurveySectionAdmin)
 gisadmin.site.register(Question, QuestionAdmin)
-admin.site.register(OptionGroup)
-admin.site.register(OptionChoice, OptionChoiceAdmin)
 admin.site.register(SurveySession)
 admin.site.register(Answer)

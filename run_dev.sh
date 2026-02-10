@@ -34,9 +34,9 @@ fi
 echo "🐘 Starting PostgreSQL..."
 docker compose up -d db 2>/dev/null || docker-compose up -d db 2>/dev/null
 
-# Wait for database to be ready
+# Wait for database to be ready (check from host via mapped port)
 echo "⏳ Waiting for database..."
-until docker compose exec -T db pg_isready -U mapsurvey 2>/dev/null || docker-compose exec -T db pg_isready -U mapsurvey 2>/dev/null; do
+until pg_isready -h localhost -p 5434 -U mapsurvey 2>/dev/null; do
     sleep 1
 done
 echo "✓ Database ready"
