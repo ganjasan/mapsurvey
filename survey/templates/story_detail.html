@@ -1,0 +1,33 @@
+{% extends "base_landing.html" %}
+
+{% block title %}{{ story.title }} — Mapsurvey{% endblock %}
+
+{% block content %}
+<article class="story-detail">
+    <div class="landing-inner">
+        <div class="story-detail__header">
+            <h1 class="story-detail__title">{{ story.title }}</h1>
+            <div class="story-detail__meta">
+                <span class="story-card__badge">{{ story.get_story_type_display }}</span>
+                {% if story.published_date %}
+                <span>{{ story.published_date|date:"j M Y" }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if story.cover_image %}
+        <img src="{{ story.cover_image.url }}" alt="{{ story.title }}" class="story-detail__cover">
+        {% endif %}
+
+        <div class="story-detail__body">
+            {{ story.body|safe }}
+        </div>
+
+        {% if story.survey %}
+        <div class="story-detail__survey-link">
+            <p>Related survey: <a href="/surveys/{{ story.survey.name }}/">{{ story.survey.name }}</a></p>
+        </div>
+        {% endif %}
+    </div>
+</article>
+{% endblock %}

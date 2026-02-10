@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Mapsurvey — Geo-spatial surveys for cities{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="landing-body">
+    <nav class="landing-nav">
+        <a href="/" class="landing-nav__brand">Mapsurvey</a>
+        <button class="landing-nav__toggle" aria-label="Menu" onclick="this.classList.toggle('is-active'); document.getElementById('nav-links').classList.toggle('is-open')">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="landing-nav__links" id="nav-links">
+            <li><a href="{% url 'index' %}#surveys">Surveys</a></li>
+            <li><a href="{% url 'index' %}#stories">Stories</a></li>
+            <li><a href="{% url 'index' %}#contact">Contact</a></li>
+            {% if user.is_authenticated %}
+                <li><span class="nav-sep"></span></li>
+                <li><a href="{% url 'editor' %}">Editor</a></li>
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    <footer class="landing-footer">
+        <div class="landing-footer__inner">
+            <div class="landing-footer__brand">Mapsurvey</div>
+            <ul class="landing-footer__links">
+                <li><a href="{% url 'index' %}#surveys">Surveys</a></li>
+                <li><a href="{% url 'index' %}#stories">Stories</a></li>
+                {% if CONTACT_EMAIL %}
+                <li><a href="mailto:{{ CONTACT_EMAIL }}">{{ CONTACT_EMAIL }}</a></li>
+                {% endif %}
+                {% if CONTACT_TELEGRAM %}
+                <li><a href="https://t.me/{{ CONTACT_TELEGRAM }}">Telegram</a></li>
+                {% endif %}
+            </ul>
+            <div class="landing-footer__copy">&copy; {% now "Y" %} Mapsurvey</div>
+        </div>
+    </footer>
+</body>
+</html>

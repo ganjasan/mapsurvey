@@ -42,6 +42,12 @@ def validate_url_name(value):
     return url_name_validator(value)
 
 
+VISIBILITY_CHOICES = (
+    ("private", _("Private")),
+    ("demo", _("Demo")),
+    ("public", _("Public")),
+)
+
 INPUT_TYPE_CHOICES = (
     ("text", _("Text")),
     ("number", _("Number")),
@@ -90,6 +96,8 @@ class SurveyHeader(models.Model):
     name = models.CharField(max_length=45, unique=True, validators=[validate_url_name])
     redirect_url = models.CharField(max_length=250, default="#", help_text=_('URL to redirect after survey completion. E.g.: /thanks/ or https://example.com'))
     available_languages = models.JSONField(default=list, blank=True, help_text=_('List of ISO 639-1 language codes, e.g. ["en", "ru", "de"]'))
+    visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default="private", help_text=_('Controls whether survey appears on the landing page'))
+    is_archived = models.BooleanField(default=False, help_text=_('Marks completed surveys whose results can be shown'))
 
     class Meta:
         app_label = 'survey'
@@ -301,4 +309,33 @@ class Answer(models.Model):
     		for subquestion in subquestions:
     			self.__sacache[subquestion] = list(filter(lambda a: a.question == subquestion, subanswers))
     	return self.__sacache
+
+
+STORY_TYPE_CHOICES = (
+    ("map", _("Map")),
+    ("open-data", _("Open Data")),
+    ("results", _("Results")),
+    ("article", _("Article")),
+)
+
+
+class Story(models.Model):
+    title = models.CharField(max_length=256)
+    slug = models.SlugField(max_length=256, unique=True)
+    body = models.TextField(blank=True)
+    cover_image = models.ImageField(upload_to='stories/', null=True, blank=True)
+    story_type = models.CharField(max_length=20, choices=STORY_TYPE_CHOICES, default="article")
+    survey = models.ForeignKey("SurveyHeader", on_delete=models.SET_NULL, null=True, blank=True)
+    is_published = models.BooleanField(default=False)
+    published_date = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        verbose_name_plural = 'stories'
+
+    def __str__(self):
+        return self.title
+
+    def get_story_type_display_label(self):
+        return dict(STORY_TYPE_CHOICES).get(self.story_type, self.story_type)
 

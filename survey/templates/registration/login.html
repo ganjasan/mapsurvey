@@ -35,7 +35,8 @@
 {# Assumes you setup the password_reset view in your URLconf #}
 <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
 
-<p><a href="{% url 'django_registration_register' %}">New registration</a></p>
+{# Registration temporarily hidden — new users are created by admin #}
+{# <p><a href="{% url 'django_registration_register' %}">New registration</a></p> #}
 
 
 {% endblock %}

@@ -1,0 +1,145 @@
+{% extends "base_landing.html" %}
+
+{% block content %}
+
+{# ===== Hero ===== #}
+<section class="hero" id="hero">
+    <div class="landing-inner">
+        <h1 class="hero__headline">Geo-spatial surveys for&nbsp;cities and&nbsp;communities</h1>
+        <p class="hero__description">
+            We design and run geo-surveys for architecture, urban&nbsp;planning, and urbanism firms.
+            Collect spatial data, engage communities, and get actionable maps&nbsp;and&nbsp;analytics.
+        </p>
+        <div class="hero__cta-group">
+            <a href="#contact" class="btn-primary-landing">Order a Survey</a>
+            <a href="#surveys" class="btn-secondary-landing">Browse Surveys</a>
+        </div>
+    </div>
+</section>
+
+{# ===== How It Works ===== #}
+<section class="how-it-works" id="how-it-works">
+    <div class="landing-inner">
+        <p class="section-title">How it works</p>
+        <div class="how-it-works__grid">
+            <div class="how-it-works__step reveal">
+                <div class="how-it-works__number">01</div>
+                <div class="how-it-works__step-title">Describe your task</div>
+                <p class="how-it-works__step-text">
+                    Tell us about your project, target area, and what data you need.
+                    We'll figure out the best survey structure.
+                </p>
+            </div>
+            <div class="how-it-works__step reveal reveal-delay-1">
+                <div class="how-it-works__number">02</div>
+                <div class="how-it-works__step-title">We create a geo-survey</div>
+                <p class="how-it-works__step-text">
+                    We design questions, set up map interactions, and deploy the survey — ready for respondents.
+                </p>
+            </div>
+            <div class="how-it-works__step reveal reveal-delay-2">
+                <div class="how-it-works__number">03</div>
+                <div class="how-it-works__step-title">You get data and maps</div>
+                <p class="how-it-works__step-text">
+                    Receive GeoJSON, CSV, and interactive maps with all collected responses. Ready for analysis and reports.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ===== Survey Cards ===== #}
+<section class="surveys-section" id="surveys">
+    <div class="landing-inner">
+        <p class="section-title">Surveys</p>
+        <h2 class="section-heading">Explore our surveys</h2>
+        {% if surveys %}
+        <div class="survey-cards">
+            {% for survey in surveys %}
+            <a href="{% if survey.is_archived %}/surveys/{{ survey.name }}/download{% else %}/surveys/{{ survey.name }}/{% endif %}"
+               class="survey-card reveal reveal-delay-{{ forloop.counter }}">
+                <span class="survey-card__badge survey-card__badge--{{ survey.visibility }}{% if survey.is_archived %} survey-card__badge--archived{% endif %}">
+                    {% if survey.visibility == "demo" %}Demo{% elif survey.is_archived %}Archived{% else %}Active{% endif %}
+                </span>
+                <div class="survey-card__name">{{ survey.name }}</div>
+                {% if survey.organization %}
+                <div class="survey-card__org">{{ survey.organization.name }}</div>
+                {% endif %}
+                <div class="survey-card__responses">{{ survey.session_count }} response{{ survey.session_count|pluralize }}</div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="section-empty">No public surveys yet. Contact us to start one.</p>
+        {% endif %}
+    </div>
+</section>
+
+{# ===== Stories ===== #}
+<section class="stories-section" id="stories">
+    <div class="landing-inner">
+        <p class="section-title">Stories</p>
+        <h2 class="section-heading">Results, maps, and open data</h2>
+        {% if stories %}
+        <div class="story-cards">
+            {% for story in stories %}
+            <a href="/stories/{{ story.slug }}/" class="story-card reveal reveal-delay-{{ forloop.counter }}">
+                {% if story.cover_image %}
+                <img src="{{ story.cover_image.url }}" alt="{{ story.title }}" class="story-card__image">
+                {% else %}
+                <div class="story-card__placeholder"></div>
+                {% endif %}
+                <div class="story-card__body">
+                    <span class="story-card__badge">{{ story.get_story_type_display }}</span>
+                    <div class="story-card__title">{{ story.title }}</div>
+                    {% if story.published_date %}
+                    <div class="story-card__date">{{ story.published_date|date:"j M Y" }}</div>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="section-empty">Stories coming soon.</p>
+        {% endif %}
+    </div>
+</section>
+
+{# ===== Contact ===== #}
+<section class="contact-section" id="contact">
+    <div class="landing-inner">
+        <p class="section-title">Get in touch</p>
+        <h2 class="section-heading">Ready to run a survey?<br>Let's talk.</h2>
+        <div class="contact__channels">
+            {% if CONTACT_EMAIL %}
+            <a href="mailto:{{ CONTACT_EMAIL }}?subject=Survey%20inquiry" class="contact__link contact__link--email">
+                {{ CONTACT_EMAIL }}
+            </a>
+            {% endif %}
+            {% if CONTACT_TELEGRAM %}
+            <a href="https://t.me/{{ CONTACT_TELEGRAM }}" class="contact__link contact__link--telegram" target="_blank" rel="noopener">
+                Telegram
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<script>
+// Scroll-triggered reveal
+(function() {
+    var reveals = document.querySelectorAll('.reveal');
+    if (!reveals.length) return;
+    var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15 });
+    reveals.forEach(function(el) { observer.observe(el); });
+})();
+</script>
+
+{% endblock %}

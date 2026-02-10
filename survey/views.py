@@ -1,16 +1,18 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import models
 from django.db.models import Q
 from django.http import HttpResponse
 from django.utils import translation
-from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question
+from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story
 from datetime import datetime
 from django import forms
 from django.views.generic import UpdateView
 from .forms import SurveySectionAnswerForm
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.core.serializers import serialize
+from django.db.models import Count
 import geojson
 from django.contrib.gis.geos import GEOSGeometry
 import sys
@@ -28,10 +30,25 @@ from .serialization import (
 )
 
 def index(request):
-	if not request.user.is_authenticated:
-		return redirect('/accounts/login/')
-
-	return redirect('/editor')
+	surveys = (
+		SurveyHeader.objects
+		.filter(visibility__in=['demo', 'public'])
+		.select_related('organization')
+		.annotate(session_count=Count('surveysession'))
+		.order_by(
+			models.Case(
+				models.When(visibility='demo', then=0),
+				models.When(is_archived=False, then=1),
+				default=2,
+				output_field=models.IntegerField(),
+			)
+		)
+	)
+	stories = Story.objects.filter(is_published=True).order_by('-published_date')
+	return render(request, 'landing.html', {
+		'surveys': surveys,
+		'stories': stories,
+	})
 
 @login_required
 def editor(request):
@@ -475,6 +492,14 @@ def import_survey(request):
 		messages.error(request, str(e))
 
 	return redirect('editor')
+
+
+def story_detail(request, slug):
+	try:
+		story = Story.objects.select_related('survey').get(slug=slug, is_published=True)
+	except Story.DoesNotExist:
+		raise Http404
+	return render(request, 'story_detail.html', {'story': story})
 
 
 @login_required

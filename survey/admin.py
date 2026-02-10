@@ -4,6 +4,7 @@ from .models import (
     Organization, SurveyHeader, SurveySection, Question, Answer,
     SurveySession,
     SurveySectionTranslation, QuestionTranslation,
+    Story,
 )
 from leaflet.admin import LeafletGeoAdmin
 
@@ -21,7 +22,8 @@ class QuestionTranslationInline(admin.TabularInline):
 
 
 class SurveyAdmin(LeafletGeoAdmin):
-    list_display = ('organization', 'name', 'redirect_url', 'available_languages')
+    list_display = ('organization', 'name', 'visibility', 'is_archived', 'redirect_url', 'available_languages')
+    list_filter = ('visibility', 'is_archived')
 
 
 class QuestionInLine(admin.TabularInline):
@@ -51,3 +53,12 @@ gisadmin.site.register(SurveySection, SurveySectionAdmin)
 gisadmin.site.register(Question, QuestionAdmin)
 admin.site.register(SurveySession)
 admin.site.register(Answer)
+
+
+class StoryAdmin(admin.ModelAdmin):
+    list_display = ('title', 'story_type', 'is_published', 'published_date')
+    list_filter = ('story_type', 'is_published')
+    prepopulated_fields = {'slug': ('title',)}
+
+
+admin.site.register(Story, StoryAdmin)

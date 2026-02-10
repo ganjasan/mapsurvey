@@ -7,7 +7,7 @@ import zipfile
 
 from .models import (
     Organization, SurveyHeader, SurveySection, Question,
-    SurveySession, Answer, ChoicesValidator
+    SurveySession, Answer, ChoicesValidator, Story,
 )
 from .serialization import (
     serialize_survey_to_dict, serialize_sections,
@@ -3953,3 +3953,225 @@ class MultilingualIntegrationTest(TestCase):
         # Verify original title is shown as fallback
         self.assertEqual(response.context['section_title'], "Untranslated Section Title")
         self.assertEqual(response.context['section_subheading'], "Untranslated subheading")
+
+
+class SurveyHeaderVisibilityTest(TestCase):
+    """Tests for SurveyHeader visibility and is_archived fields."""
+
+    def test_default_visibility_is_private(self):
+        """
+        GIVEN a new SurveyHeader
+        WHEN created without specifying visibility
+        THEN visibility should default to 'private'
+        """
+        org = Organization.objects.create(name="TestOrg")
+        survey = SurveyHeader.objects.create(name="test_vis", organization=org)
+        self.assertEqual(survey.visibility, "private")
+
+    def test_default_is_archived_is_false(self):
+        """
+        GIVEN a new SurveyHeader
+        WHEN created without specifying is_archived
+        THEN is_archived should default to False
+        """
+        survey = SurveyHeader.objects.create(name="test_arch")
+        self.assertFalse(survey.is_archived)
+
+    def test_visibility_choices(self):
+        """
+        GIVEN a SurveyHeader
+        WHEN setting visibility to each valid choice
+        THEN each value should be accepted
+        """
+        for vis in ("private", "demo", "public"):
+            survey = SurveyHeader.objects.create(name=f"test_{vis}", visibility=vis)
+            self.assertEqual(survey.visibility, vis)
+
+
+class StoryModelTest(TestCase):
+    """Tests for the Story model."""
+
+    def test_create_story(self):
+        """
+        GIVEN valid story data
+        WHEN a Story is created
+        THEN it should be persisted and queryable
+        """
+        story = Story.objects.create(
+            title="Test Story",
+            slug="test-story",
+            body="<p>Body</p>",
+            story_type="article",
+            is_published=True,
+        )
+        self.assertEqual(Story.objects.get(slug="test-story").title, "Test Story")
+
+    def test_slug_uniqueness(self):
+        """
+        GIVEN an existing Story with a slug
+        WHEN creating another Story with the same slug
+        THEN the system should raise an IntegrityError
+        """
+        from django.db import IntegrityError
+        Story.objects.create(title="A", slug="dup", story_type="article")
+        with self.assertRaises(IntegrityError):
+            Story.objects.create(title="B", slug="dup", story_type="article")
+
+    def test_nullable_survey_fk(self):
+        """
+        GIVEN a Story without a survey FK
+        WHEN created
+        THEN it should be valid with survey as NULL
+        """
+        story = Story.objects.create(title="No Survey", slug="no-survey", story_type="map")
+        self.assertIsNone(story.survey)
+
+    def test_story_with_survey_fk(self):
+        """
+        GIVEN a Story linked to a SurveyHeader
+        WHEN created
+        THEN the story should reference that survey
+        """
+        survey = SurveyHeader.objects.create(name="linked_survey")
+        story = Story.objects.create(
+            title="Linked", slug="linked", story_type="results", survey=survey,
+        )
+        self.assertEqual(story.survey, survey)
+
+
+class LandingPageViewTest(TestCase):
+    """Tests for the landing page index view."""
+
+    def setUp(self):
+        self.client = Client()
+        self.org = Organization.objects.create(name="TestOrg")
+
+    def test_anonymous_sees_landing_page(self):
+        """
+        GIVEN an unauthenticated user
+        WHEN navigating to /
+        THEN the system renders the landing page (not a redirect)
+        """
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'landing.html')
+
+    def test_authenticated_sees_landing_page(self):
+        """
+        GIVEN an authenticated user
+        WHEN navigating to /
+        THEN the system renders the landing page (not a redirect)
+        """
+        User.objects.create_user('testuser', password='pass')
+        self.client.login(username='testuser', password='pass')
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'landing.html')
+
+    def test_only_visible_surveys_shown(self):
+        """
+        GIVEN surveys with different visibility settings
+        WHEN the landing page is rendered
+        THEN only demo and public surveys appear in context
+        """
+        SurveyHeader.objects.create(name="priv", visibility="private", organization=self.org)
+        SurveyHeader.objects.create(name="demo_s", visibility="demo", organization=self.org)
+        SurveyHeader.objects.create(name="pub_s", visibility="public", organization=self.org)
+
+        response = self.client.get('/')
+        survey_names = [s.name for s in response.context['surveys']]
+        self.assertNotIn("priv", survey_names)
+        self.assertIn("demo_s", survey_names)
+        self.assertIn("pub_s", survey_names)
+
+    def test_survey_ordering_demo_active_archived(self):
+        """
+        GIVEN demo, active public, and archived surveys
+        WHEN the landing page is rendered
+        THEN surveys are ordered: demo first, active public, then archived
+        """
+        SurveyHeader.objects.create(name="archived_s", visibility="public", is_archived=True, organization=self.org)
+        SurveyHeader.objects.create(name="active_s", visibility="public", organization=self.org)
+        SurveyHeader.objects.create(name="demo_s2", visibility="demo", organization=self.org)
+
+        response = self.client.get('/')
+        names = [s.name for s in response.context['surveys']]
+        self.assertEqual(names[0], "demo_s2")
+        self.assertEqual(names[1], "active_s")
+        self.assertEqual(names[2], "archived_s")
+
+    def test_no_surveys_section_when_all_private(self):
+        """
+        GIVEN all surveys have visibility 'private'
+        WHEN the landing page is rendered
+        THEN no surveys appear in context
+        """
+        SurveyHeader.objects.create(name="hidden", visibility="private")
+        response = self.client.get('/')
+        self.assertEqual(len(response.context['surveys']), 0)
+
+    def test_no_stories_when_none_published(self):
+        """
+        GIVEN no published stories
+        WHEN the landing page is rendered
+        THEN stories context is empty
+        """
+        Story.objects.create(title="Draft", slug="draft", story_type="article", is_published=False)
+        response = self.client.get('/')
+        self.assertEqual(len(response.context['stories']), 0)
+
+
+class StoryDetailViewTest(TestCase):
+    """Tests for the story detail view."""
+
+    def setUp(self):
+        self.client = Client()
+
+    def test_published_story_returns_200(self):
+        """
+        GIVEN a published story
+        WHEN navigating to /stories/<slug>/
+        THEN the system returns 200
+        """
+        from django.utils import timezone
+        Story.objects.create(
+            title="Published", slug="published", story_type="article",
+            is_published=True, published_date=timezone.now(),
+        )
+        response = self.client.get('/stories/published/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'story_detail.html')
+
+    def test_unpublished_story_returns_404(self):
+        """
+        GIVEN an unpublished story
+        WHEN navigating to /stories/<slug>/
+        THEN the system returns 404
+        """
+        Story.objects.create(title="Draft", slug="draft-story", story_type="article", is_published=False)
+        response = self.client.get('/stories/draft-story/')
+        self.assertEqual(response.status_code, 404)
+
+    def test_nonexistent_story_returns_404(self):
+        """
+        GIVEN no story with a given slug
+        WHEN navigating to /stories/<slug>/
+        THEN the system returns 404
+        """
+        response = self.client.get('/stories/does-not-exist/')
+        self.assertEqual(response.status_code, 404)
+
+    def test_story_with_survey_shows_link(self):
+        """
+        GIVEN a published story linked to a survey
+        WHEN viewing the story detail
+        THEN the page includes the survey name in the response
+        """
+        from django.utils import timezone
+        survey = SurveyHeader.objects.create(name="linked_surv")
+        Story.objects.create(
+            title="With Survey", slug="with-survey", story_type="results",
+            is_published=True, published_date=timezone.now(), survey=survey,
+        )
+        response = self.client.get('/stories/with-survey/')
+        self.assertContains(response, "linked_surv")
