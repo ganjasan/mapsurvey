@@ -73,6 +73,16 @@
     <button id='draw_button' type="button" class="btn btn-primary" data-mode='start_draw'>{% trans "Start drawing" %}</button>
 </div>
 
+<div id="crosshair-overlay" style="display: none;">
+    <div class="crosshair-icon">
+        <i class="fas fa-map-marker-alt"></i>
+    </div>
+    <div class="crosshair-actions">
+        <button type="button" class="crosshair-cancel"><i class="fas fa-times"></i></button>
+        <button type="button" class="crosshair-apply"><i class="fas fa-check"></i></button>
+    </div>
+</div>
+
 <div id="map"></div>
 
 <script type="text/javascript">
@@ -228,11 +238,17 @@
         }
     };
 
+    var isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+
     var editableLayers = new L.FeatureGroup();
 
     var currentQ = null;
 
     var currentDrawFeature = null;
+
+    // Crosshair mode state
+    var crosshairColor = null;
+    var crosshairIcon = null;
         
     map.addLayer(editableLayers);
 
@@ -275,8 +291,10 @@
 
         currentQ = null;
 
-        currentDrawFeature.disable();
-        currentDrawFeature = null;
+        if (currentDrawFeature) {
+            currentDrawFeature.disable();
+            currentDrawFeature = null;
+        }
     }
 
     function startEditMode(layer){
@@ -300,6 +318,45 @@
     	layer.editing.disable();
 
     }
+
+    function showCrosshair(color, iconClass) {
+        crosshairColor = color;
+        crosshairIcon = iconClass;
+        var overlay = document.getElementById('crosshair-overlay');
+        var iconEl = overlay.querySelector('.crosshair-icon i');
+        iconEl.className = 'fa ' + iconClass;
+        iconEl.style.color = color;
+        overlay.style.display = 'flex';
+    }
+
+    function hideCrosshair() {
+        document.getElementById('crosshair-overlay').style.display = 'none';
+        crosshairColor = null;
+        crosshairIcon = null;
+    }
+
+    $('.crosshair-apply').click(function() {
+        var center = map.getCenter();
+        var layer = L.marker([center.lat, center.lng], {
+            icon: L.icon.fontAwesome({
+                iconClasses: 'fa ' + crosshairIcon,
+                markerColor: crosshairColor,
+                iconColor: '#FFF',
+                iconXOffset: -2,
+            })
+        });
+
+        hideCrosshair();
+
+        // Fire draw:created so survey_section.html handles popup/layer setup
+        map.fire('draw:created', {layerType: 'marker', layer: layer});
+    });
+
+    $('.crosshair-cancel').click(function() {
+        hideCrosshair();
+        toggleInfo(true);
+        currentQ = null;
+    });
 
     $("#section_question_form").submit(function(e){
     	// First, collect geo data from map layers
@@ -434,24 +491,28 @@
     })
 
     $('.drawpoint').click(function() {
-
-        var options = {
-            color: $(this).attr('data-color'),
-            
-            icon: L.icon.fontAwesome({ 
-                iconClasses: 'fa ' + $(this).attr('data-icon') , // you _could_ add other icon classes, not tested.
-                markerColor: $(this).attr('data-color'),
-                iconColor: '#FFF',
-                iconXOffset: -2, 
-            })
-        }
-
-        currentDrawFeature = new L.Draw.Marker(map, options);
-
-        currentDrawFeature.enable();
+        var color = $(this).attr('data-color');
+        var icon = $(this).attr('data-icon');
 
         toggleInfo(false);
         currentQ = $(this).attr('name');
+
+        if (isTouchDevice) {
+            showButton.style.visibility = "hidden";
+            showCrosshair(color, icon);
+        } else {
+            var options = {
+                color: color,
+                icon: L.icon.fontAwesome({
+                    iconClasses: 'fa ' + icon,
+                    markerColor: color,
+                    iconColor: '#FFF',
+                    iconXOffset: -2,
+                })
+            }
+            currentDrawFeature = new L.Draw.Marker(map, options);
+            currentDrawFeature.enable();
+        }
     })
     
 </script>

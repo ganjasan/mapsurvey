@@ -177,6 +177,53 @@ ul {
 
 
 
+/* Crosshair overlay for touch point placement */
+#crosshair-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 15;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#crosshair-overlay .crosshair-icon {
+  font-size: 40px;
+  text-shadow: 0 0 6px rgba(255,255,255,0.8);
+}
+
+#crosshair-overlay .crosshair-actions {
+  pointer-events: auto;
+  display: flex;
+  gap: 20px;
+  margin-top: 16px;
+}
+
+#crosshair-overlay .crosshair-cancel,
+#crosshair-overlay .crosshair-apply {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  font-size: 22px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+#crosshair-overlay .crosshair-cancel {
+  background-color: #dc3545;
+}
+
+#crosshair-overlay .crosshair-apply {
+  background-color: #28a745;
+}
+
 @media only screen and (max-width: 768px) {
 
   #info_page {
