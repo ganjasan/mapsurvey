@@ -5,6 +5,10 @@
     {{ section_title }}
 {% endblock %}
 
+{% block progress %}
+    <div class="survey-progress">{{ section_current }} / {{ section_total }}</div>
+{% endblock %}
+
 {% block content %}
     <div class='subheading'>
         {% if section_subheading %}

@@ -59,6 +59,7 @@
         </div>
         <i id="closeButton" class="fas fa-angle-double-left" onclick="toggleInfo(false)" style="font-size:28px; width:28px; height:28px;"></i>
     </div>
+    {% block progress %}{% endblock %}
     <div id='content'>
     	{% block content %}
     	{% endblock %}

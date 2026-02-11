@@ -187,6 +187,18 @@ def survey_section(request, survey_name, section_name):
 
 	section = SurveySection.objects.get(Q(survey_header=survey) & Q(name=section_name))
 
+	# Compute progress: current section index (1-based) and total sections
+	section_current = 1
+	s = section
+	while s.prev_section:
+		s = s.prev_section
+		section_current += 1
+	section_total = section_current
+	s = section
+	while s.next_section:
+		s = s.next_section
+		section_total += 1
+
 	if request.method == 'POST':
 		form = SurveySectionAnswerForm(initial=request.POST, section=section, question=None, survey_session_id=request.session['survey_session_id'], language=selected_language)
 
@@ -363,6 +375,8 @@ def survey_section(request, survey_name, section_name):
 		'section_subheading': section_subheading,
 		'selected_language': selected_language,
 		'existing_geo_answers_json': existing_geo_answers_json,
+		'section_current': section_current,
+		'section_total': section_total,
 	})
 
 @login_required

@@ -180,6 +180,13 @@ ul {
 	padding-top: 20px;
 }
 
+.survey-progress {
+  text-align: center;
+  font-size: 0.85em;
+  color: #999;
+  padding: 2px 0 4px;
+}
+
 
 
 /* Crosshair overlay for touch point placement */
