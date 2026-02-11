@@ -290,6 +290,14 @@ msgstr "Нажмите на последнюю точку, чтобы закон
 msgid "<strong>Error:</strong> Shape edges cannot intersect!"
 msgstr "<strong>Ошибка:</strong> края формы не могут пересекаться!"
 
+#: survey/templatetags/i18n_extras.py:38
+msgid "Search address..."
+msgstr "Поиск адреса..."
+
+#: survey/templatetags/i18n_extras.py:39
+msgid "No results found"
+msgstr "Ничего не найдено"
+
 #, fuzzy
 #~| msgid "Date/Time"
 #~ msgid "Time"

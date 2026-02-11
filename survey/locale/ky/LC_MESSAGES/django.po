@@ -1,0 +1,106 @@
+# Kyrgyz translations for Mapsurvey.
+# Copyright (C) 2026
+# This file is distributed under the same license as the Mapsurvey package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Mapsurvey 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-11 12:04+0000\n"
+"PO-Revision-Date: 2026-02-11 14:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Kyrgyz\n"
+"Language: ky\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: survey/templates/base_survey_template.html:73
+#: survey/templatetags/i18n_extras.py:17
+msgid "Start drawing"
+msgstr "Тартууну баштоо"
+
+#: survey/templates/base_survey_template.html:84
+msgid "Cancel"
+msgstr "Жокко чыгаруу"
+
+#: survey/templates/base_survey_template.html:85
+msgid "Apply"
+msgstr "Колдонуу"
+
+#: survey/templates/survey_header.html:21
+msgid "Start"
+msgstr "Баштоо"
+
+#: survey/templates/survey_header_template.html:19
+#: survey/templates/survey_section.html:27
+#: survey/templates/survey_section_block.html:14
+msgid "Back"
+msgstr "Артка"
+
+#: survey/templates/survey_header_template.html:25
+#: survey/templates/survey_header_template.html:26
+#: survey/templates/survey_section.html:33
+#: survey/templates/survey_section.html:34
+#: survey/templates/survey_section_block.html:20
+msgid "Next"
+msgstr "Кийинки"
+
+#: survey/templates/survey_header_template.html:28
+#: survey/templates/survey_header_template.html:29
+#: survey/templates/survey_section.html:36
+#: survey/templates/survey_section_block.html:22
+msgid "Finish"
+msgstr "Аяктоо"
+
+#: survey/templates/survey_language_select.html:60
+msgid "Select your language"
+msgstr "Тилиңизди тандаңыз"
+
+#: survey/templatetags/i18n_extras.py:18
+msgid "Finish editing"
+msgstr "Түзөтүүнү аяктоо"
+
+#: survey/templatetags/i18n_extras.py:19
+msgid "Delete"
+msgstr "Өчүрүү"
+
+#: survey/templatetags/i18n_extras.py:22
+msgid "Click on the map to place a marker."
+msgstr "Маркерди коюу үчүн картаны басыңыз."
+
+#: survey/templatetags/i18n_extras.py:25
+msgid "Click to start drawing a shape."
+msgstr "Фигураны тартууну баштоо үчүн басыңыз."
+
+#: survey/templatetags/i18n_extras.py:26
+msgid "Click to continue drawing the shape."
+msgstr "Фигураны тартууну улантуу үчүн басыңыз."
+
+#: survey/templatetags/i18n_extras.py:27
+msgid "Click the first point to close this shape."
+msgstr "Бул фигураны жабуу үчүн биринчи чекитти басыңыз."
+
+#: survey/templatetags/i18n_extras.py:30
+msgid "Click to start drawing a line."
+msgstr "Сызыкты тартууну баштоо үчүн басыңыз."
+
+#: survey/templatetags/i18n_extras.py:31
+msgid "Click to continue drawing the line."
+msgstr "Сызыкты тартууну улантуу үчүн басыңыз."
+
+#: survey/templatetags/i18n_extras.py:32
+msgid "Click the last point to finish the line."
+msgstr "Сызыкты аяктоо үчүн акыркы чекитти басыңыз."
+
+#: survey/templatetags/i18n_extras.py:35
+msgid "<strong>Error:</strong> Shape edges cannot intersect!"
+msgstr "<strong>Ката:</strong> Фигуранын четтери кесилишпеши керек!"
+
+#: survey/templatetags/i18n_extras.py:38
+msgid "Search address..."
+msgstr "Дарек издөө..."
+
+#: survey/templatetags/i18n_extras.py:39
+msgid "No results found"
+msgstr "Эч нерсе табылган жок"

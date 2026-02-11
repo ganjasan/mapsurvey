@@ -33,5 +33,9 @@ def i18n_json():
 
         # Error messages
         'shapeEdgesCannotIntersect': _('<strong>Error:</strong> Shape edges cannot intersect!'),
+
+        # Geocoding search
+        'searchAddress': _('Search address...'),
+        'noResultsFound': _('No results found'),
     }
     return mark_safe(json.dumps(translations, ensure_ascii=False))

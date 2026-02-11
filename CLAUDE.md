@@ -92,6 +92,20 @@ Required in `.env`:
 - Admin uses `LeafletGeoAdmin` for map-based editing
 - Custom Leaflet draw widgets in `survey/forms.py` for frontend geometry input
 
+## Workflow: Spec Driven Development (OpenSpec)
+
+This project uses **Spec Driven Development** via the `openspec` CLI. All changes go through the artifact pipeline:
+
+```
+/opsx:new → /opsx:ff or /opsx:continue → /opsx:apply → /opsx:archive
+```
+
+**Key rule**: When asked to make changes or fix bugs, **always work through OpenSpec first**:
+- If there is an active change related to the request — update its specs/design/tasks before editing code
+- If no relevant change exists — create a new one (`/opsx:new`) before implementing
+
+Never jump straight to code without a corresponding change in `openspec/changes/`.
+
 ## Project Management
 
 **Task list**: See `TODO.md` for planned features and tasks
