@@ -258,6 +258,8 @@
 
     var currentDrawFeature = null;
 
+    var currentEditLayer = null;
+
     // Crosshair mode state
     var crosshairColor = null;
     var crosshairIcon = null;
@@ -313,9 +315,13 @@
     	if (isMobile()) toggleInfo(false);
     	toggleDrawbar(true);
 
-    	layer.editing.enable();
+    	// Finish any previous edit first (single-edit enforcement)
+    	if (currentEditLayer) {
+    	    currentEditLayer.editing.disable();
+    	}
 
-    	currentDrawFeature = layer;
+    	layer.editing.enable();
+    	currentEditLayer = layer;
 
 		$('#draw_button').attr('data-mode', 'end_edit');
         $('#draw_button').text(i18n.finishEditing);
@@ -328,7 +334,7 @@
     	toggleDrawbar(false);
 
     	layer.editing.disable();
-
+    	currentEditLayer = null;
     }
 
     function showCrosshair(color, iconClass) {
@@ -454,7 +460,7 @@
             $(this).attr('data-mode', 'stop_draw');
             $(this).text(i18n.delete);
         }else if (mode == "end_edit"){
-        	endEditMode(currentDrawFeature);
+        	endEditMode(currentEditLayer);
         }
         else{
             currentDrawFeature.disable();

@@ -58,6 +58,12 @@
     
     map.on('draw:created', function(e) {
 
+        // Disable the draw handler immediately (single-shot draw)
+        if (currentDrawFeature) {
+            currentDrawFeature.disable();
+            currentDrawFeature = null;
+        }
+
         var type = e.layerType,
         layer = e.layer,
             feature = layer.feature = layer.feature || {};
@@ -66,7 +72,10 @@
         var props = feature.properties = feature.properties || {};
         props.question_id = currentQ;
 
-        layer.bindPopup('<form action="" onsubmit="return false;" id="subquestion_form">' + subquestions_forms[currentQ]
+        var formId = 'subquestion_form_' + L.Util.stamp(layer);
+        layer._formId = formId;
+
+        layer.bindPopup('<form action="" onsubmit="return false;" id="' + formId + '">' + subquestions_forms[currentQ]
             + '<div class="layer-controls">\
             <button type="button" class="btn btn-success layer-apply"><i class="far fa-save"></i></button>\
             <button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>\
@@ -78,7 +87,7 @@
 
         layer.on("popupopen", onPopupOpen);
         layer.on("popupclose", onPopupClose);
-        
+
         editableLayers.addLayer(layer);
 
         if (subquestions_forms[currentQ]){
@@ -91,43 +100,45 @@
 
     function onPopupOpen(){
         var tempLayer = this;
+        var $popup = $(tempLayer.getPopup().getElement());
+        var $form = $popup.find('form');
 
         //загрузить из properties данные подвопросов если они там есть
         var properties = tempLayer.feature.properties;
-        
-        console.log(properties)
 
         for (var key in properties){
             if (key != 'question_id'){
-                element = $('*[name=' + key +']');
-                
+                var element = $form.find('*[name=' + key +']');
+
                 if (element.length>1) {
                     let type = element[0].type
                     if (type == 'checkbox' || type == 'radio'){
-                        properties[key].forEach(element => $('*[name=' + key + '][value='+ element +']').prop('checked', true));
+                        properties[key].forEach(function(val) {
+                            $form.find('*[name=' + key + '][value='+ val +']').prop('checked', true);
+                        });
                     }
                 }
                 else{
                     element.val(properties[key]);
-                } 
+                }
             }
         }
 
         tempLayer.editing.disable();
 
-        $("button.layer-delete").click(function(){
+        $popup.find("button.layer-delete").click(function(){
             editableLayers.removeLayer(tempLayer);
 
             endDrawMode();
         })
 
-        $("button.layer-edit").click(function(){
+        $popup.find("button.layer-edit").click(function(){
             startEditMode(tempLayer);
         })
 
-        $("button.layer-apply").click(function(){
-            subquestion_form_result = $('#subquestion_form').serializeArray();
-            grouped_by_name_result = subquestion_form_result.groupBy("name");
+        $popup.find("button.layer-apply").click(function(){
+            var subquestion_form_result = $('#' + tempLayer._formId).serializeArray();
+            var grouped_by_name_result = subquestion_form_result.groupBy("name");
             for (var prop in grouped_by_name_result) {
                 tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
             }
@@ -135,22 +146,20 @@
             tempLayer.closePopup();
 
             endDrawMode();
-            
+
         })
     }
 
     function onPopupClose(){
-
         var tempLayer = this;
 
-        subquestion_form_result = $('#subquestion_form').serializeArray();
-        grouped_by_name_result = subquestion_form_result.groupBy("name");
+        var subquestion_form_result = $('#' + tempLayer._formId).serializeArray();
+        var grouped_by_name_result = subquestion_form_result.groupBy("name");
         for (var prop in grouped_by_name_result) {
                 tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
         }
 
         if (isMobile()) toggleInfo(true);
-        //toggleDrawbar(false);
     }
 
     // Restore existing geo answers from server
@@ -192,7 +201,10 @@
                 feature.type = "Feature";
                 feature.properties = geoFeature.properties;
 
-                layer.bindPopup('<form action="" onsubmit="return false;" id="subquestion_form">' + subquestions_forms[questionCode]
+                var formId = 'subquestion_form_' + L.Util.stamp(layer);
+                layer._formId = formId;
+
+                layer.bindPopup('<form action="" onsubmit="return false;" id="' + formId + '">' + subquestions_forms[questionCode]
                     + '<div class="layer-controls">\
                     <button type="button" class="btn btn-success layer-apply"><i class="far fa-save"></i></button>\
                     <button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>\
