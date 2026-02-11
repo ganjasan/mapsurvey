@@ -250,8 +250,6 @@
         }
     };
 
-    var isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
-
     var editableLayers = new L.FeatureGroup();
 
     var currentQ = null;
@@ -263,6 +261,8 @@
     // Crosshair mode state
     var crosshairColor = null;
     var crosshairIcon = null;
+    var crosshairEditLayer = null;
+    var crosshairEditOriginalLatLng = null;
         
     map.addLayer(editableLayers);
 
@@ -288,7 +288,7 @@
     map.addControl(drawControl);
 
     function startDrawMode(question){
-        if (isMobile()) toggleInfo(false);
+        toggleInfo(false);
         toggleDrawbar(true);
 
         currentQ = $(question).attr('name');
@@ -300,7 +300,7 @@
     }
 
     function endDrawMode(){
-        if (isMobile()) toggleInfo(true);
+        toggleInfo(true);
         toggleDrawbar(false);
 
         currentQ = null;
@@ -312,7 +312,7 @@
     }
 
     function startEditMode(layer){
-    	if (isMobile()) toggleInfo(false);
+    	toggleInfo(false);
     	toggleDrawbar(true);
 
     	// Finish any previous edit first (single-edit enforcement)
@@ -330,16 +330,20 @@
     }
 
     function endEditMode(layer){
-    	if (isMobile()) toggleInfo(true);
+    	toggleInfo(true);
     	toggleDrawbar(false);
 
     	layer.editing.disable();
     	currentEditLayer = null;
     }
 
-    function showCrosshair(color, iconClass) {
+    function showCrosshair(color, iconClass, editLayer) {
         crosshairColor = color;
         crosshairIcon = iconClass;
+        crosshairEditLayer = editLayer || null;
+        if (crosshairEditLayer) {
+            crosshairEditOriginalLatLng = crosshairEditLayer.getLatLng();
+        }
         var overlay = document.getElementById('crosshair-overlay');
         overlay.querySelector('.crosshair-pin-path').setAttribute('fill', color);
         var iconEl = overlay.querySelector('.crosshair-pin-icon');
@@ -353,26 +357,52 @@
         crosshairIcon = null;
     }
 
+    // Get LatLng at the pin tip (bottom of the crosshair pin, 32px below screen center)
+    function getCrosshairLatLng() {
+        var size = map.getSize();
+        var pinTipPoint = L.point(size.x / 2, size.y / 2 + 32);
+        return map.containerPointToLatLng(pinTipPoint);
+    }
+
     $('.crosshair-apply').click(function() {
-        var center = map.getCenter();
-        var layer = L.marker([center.lat, center.lng], {
-            icon: L.icon.fontAwesome({
-                iconClasses: 'fa ' + crosshairIcon,
-                markerColor: crosshairColor,
-                iconColor: '#FFF',
-                iconXOffset: -2,
-            })
-        });
+        var pinLatLng = getCrosshairLatLng();
 
-        hideCrosshair();
+        if (crosshairEditLayer) {
+            // Edit mode: move the existing marker to new position
+            crosshairEditLayer.setLatLng(pinLatLng);
+            crosshairEditLayer.setOpacity(1);
+            crosshairEditLayer = null;
+            crosshairEditOriginalLatLng = null;
+            hideCrosshair();
+            toggleInfo(true);
+        } else {
+            // New placement mode: create a new marker
+            var layer = L.marker(pinLatLng, {
+                icon: L.icon.fontAwesome({
+                    iconClasses: 'fa ' + crosshairIcon,
+                    markerColor: crosshairColor,
+                    iconColor: '#FFF',
+                    iconXOffset: -2,
+                })
+            });
 
-        // Fire draw:created so survey_section.html handles popup/layer setup
-        map.fire('draw:created', {layerType: 'marker', layer: layer});
+            hideCrosshair();
+
+            // Fire draw:created so survey_section.html handles popup/layer setup
+            map.fire('draw:created', {layerType: 'marker', layer: layer});
+        }
     });
 
     $('.crosshair-cancel').click(function() {
+        if (crosshairEditLayer) {
+            // Edit mode: restore marker visibility at original position
+            crosshairEditLayer.setLatLng(crosshairEditOriginalLatLng);
+            crosshairEditLayer.setOpacity(1);
+            crosshairEditLayer = null;
+            crosshairEditOriginalLatLng = null;
+        }
         hideCrosshair();
-        if (isMobile()) toggleInfo(true);
+        toggleInfo(true);
         currentQ = null;
     });
 
@@ -429,22 +459,6 @@
                 currentDrawFeature = new L.Draw.Polygon(map);
             else if (draw_type == "drawline")
                 currentDrawFeature = new L.Draw.Polyline(map);
-            else if (draw_type == "drawpoint"){
-                currentDrawFeature = new L.Draw.Marker(map);
-                currentDrawFeature.setOptions(
-                    {
-                        color: $(this).attr('data-color'),
-            
-                        icon: L.icon.fontAwesome({ 
-                            iconClasses: 'fa ' + $(this).attr('data-icon') , // you _could_ add other icon classes, not tested.
-                            markerColor: $(this).attr('data-color'),
-                            iconColor: '#FFF',
-                            iconXOffset: -2, 
-                         })
-
-                    }
-                )
-            }
             
             currentDrawFeature.setOptions(
                 {
@@ -484,7 +498,7 @@
 
         currentDrawFeature.enable();
 
-        if (isMobile()) toggleInfo(false);
+        toggleInfo(false);
         currentQ = $(this).attr('name')
 
     });
@@ -504,7 +518,7 @@
 
         currentDrawFeature.enable();
 
-        if (isMobile()) toggleInfo(false);
+        toggleInfo(false);
         currentQ = $(this).attr('name')
     })
 
@@ -512,25 +526,11 @@
         var color = $(this).attr('data-color');
         var icon = $(this).attr('data-icon');
 
-        if (isMobile()) toggleInfo(false);
+        toggleInfo(false);
         currentQ = $(this).attr('name');
 
-        if (isTouchDevice) {
-            showButton.style.visibility = "hidden";
-            showCrosshair(color, icon);
-        } else {
-            var options = {
-                color: color,
-                icon: L.icon.fontAwesome({
-                    iconClasses: 'fa ' + icon,
-                    markerColor: color,
-                    iconColor: '#FFF',
-                    iconXOffset: -2,
-                })
-            }
-            currentDrawFeature = new L.Draw.Marker(map, options);
-            currentDrawFeature.enable();
-        }
+        showButton.style.visibility = "hidden";
+        showCrosshair(color, icon);
     })
     
 </script>

@@ -77,9 +77,9 @@
 
         layer.bindPopup('<form action="" onsubmit="return false;" id="' + formId + '">' + subquestions_forms[currentQ]
             + '<div class="layer-controls">\
-            <button type="button" class="btn btn-success layer-apply"><i class="far fa-save"></i></button>\
-            <button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>\
             <button type="button" class="btn btn-danger layer-delete"><i class="far fa-trash-alt"></i></button>\
+            <button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>\
+            <button type="button" class="btn btn-success layer-apply"><i class="fas fa-check"></i></button>\
             </div>'
             + '</form>', {
                 maxHeight: $(document).height()*0.8,
@@ -133,7 +133,27 @@
         })
 
         $popup.find("button.layer-edit").click(function(){
-            startEditMode(tempLayer);
+            if (tempLayer instanceof L.Marker) {
+                // Point marker: use crosshair repositioning
+                var questionId = tempLayer.feature.properties.question_id;
+                var btn = $('button.drawbutton[name="' + questionId + '"]');
+                var color = btn.attr('data-color') || '#000000';
+                var icon = btn.attr('data-icon') || 'fas fa-map-marker-alt';
+
+                tempLayer.closePopup();
+                tempLayer.setOpacity(0);
+                toggleInfo(false);
+                // Pan so the marker sits under the pin tip (32px below screen center)
+                var markerPoint = map.latLngToContainerPoint(tempLayer.getLatLng());
+                var targetCenter = map.containerPointToLatLng(
+                    L.point(markerPoint.x, markerPoint.y - 32)
+                );
+                map.panTo(targetCenter);
+                showCrosshair(color, icon, tempLayer);
+            } else {
+                // Line/polygon: use existing drag-handle edit mode
+                startEditMode(tempLayer);
+            }
         })
 
         $popup.find("button.layer-apply").click(function(){
@@ -159,7 +179,7 @@
                 tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
         }
 
-        if (isMobile()) toggleInfo(true);
+        toggleInfo(true);
     }
 
     // Restore existing geo answers from server
@@ -206,9 +226,9 @@
 
                 layer.bindPopup('<form action="" onsubmit="return false;" id="' + formId + '">' + subquestions_forms[questionCode]
                     + '<div class="layer-controls">\
-                    <button type="button" class="btn btn-success layer-apply"><i class="far fa-save"></i></button>\
-                    <button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>\
                     <button type="button" class="btn btn-danger layer-delete"><i class="far fa-trash-alt"></i></button>\
+                    <button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>\
+                    <button type="button" class="btn btn-success layer-apply"><i class="fas fa-check"></i></button>\
                     </div>'
                     + '</form>', {
                         maxHeight: $(document).height()*0.8,
