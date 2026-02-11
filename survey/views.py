@@ -194,6 +194,14 @@ def survey_section(request, survey_name, section_name):
 		section_questions = section.questions()
 		survey_session = SurveySession.objects.get(pk=request.session['survey_session_id'])
 
+		# Delete existing answers for this session and section before saving new ones
+		section_question_ids = [q.id for q in section_questions]
+		Answer.objects.filter(
+			survey_session=survey_session,
+			question_id__in=section_question_ids,
+			parent_answer_id__isnull=True,
+		).delete()
+
 		for question in section_questions:
 			result = request.POST.getlist(question.code)
 
@@ -266,14 +274,80 @@ def survey_section(request, survey_name, section_name):
 		return HttpResponseRedirect(next_page)
 
 	else:
-		form = SurveySectionAnswerForm(initial={}, section=section, question=None, survey_session_id=request.session['survey_session_id'], language=selected_language)
+		questions = section.questions()
 
-		questions = section.questions();
+		# Query existing answers for this session and section
+		existing_answers = Answer.objects.filter(
+			survey_session_id=request.session['survey_session_id'],
+			question__in=questions,
+			parent_answer_id__isnull=True,
+		).select_related('question')
+
+		# Build initial dict for scalar fields and geo GeoJSON for geo fields
+		initial = {}
+		existing_geo_answers = {}
+		answers_by_question = {}
+		for answer in existing_answers:
+			q = answer.question
+			answers_by_question.setdefault(q.code, []).append(answer)
+
+		for question in questions:
+			q_answers = answers_by_question.get(question.code, [])
+			if not q_answers:
+				continue
+
+			if question.input_type in ('point', 'line', 'polygon'):
+				# Build GeoJSON features for geo answers
+				features = []
+				for answer in q_answers:
+					geometry = getattr(answer, question.input_type)
+					if geometry is None:
+						continue
+					feature = {
+						'type': 'Feature',
+						'geometry': json.loads(geometry.geojson),
+						'properties': {'question_id': question.code},
+					}
+					# Add sub-question values
+					child_answers = Answer.objects.filter(parent_answer_id=answer).select_related('question')
+					for child in child_answers:
+						sub_q = child.question
+						if child.text is not None:
+							feature['properties'][sub_q.code] = [child.text]
+						elif child.numeric is not None:
+							feature['properties'][sub_q.code] = [str(child.numeric)]
+						elif child.selected_choices:
+							feature['properties'][sub_q.code] = [str(c) for c in child.selected_choices]
+					features.append(feature)
+				if features:
+					existing_geo_answers[question.code] = features
+			else:
+				answer = q_answers[0]
+				if question.input_type in ('text', 'text_line', 'datetime'):
+					if answer.text is not None:
+						initial[question.code] = answer.text
+				elif question.input_type == 'number':
+					if answer.numeric is not None:
+						initial[question.code] = answer.numeric
+				elif question.input_type in ('choice', 'rating'):
+					if answer.selected_choices:
+						initial[question.code] = str(answer.selected_choices[0])
+					elif answer.numeric is not None:
+						initial[question.code] = str(int(answer.numeric))
+				elif question.input_type == 'multichoice':
+					if answer.selected_choices:
+						initial[question.code] = [str(c) for c in answer.selected_choices]
+				elif question.input_type == 'range':
+					if answer.numeric is not None:
+						initial[question.code] = int(answer.numeric)
+
+		form = SurveySectionAnswerForm(initial=initial, section=section, question=None, survey_session_id=request.session['survey_session_id'], language=selected_language)
 
 		subquestions_forms = {}
 		for question in questions:
 			subquestions_forms[question.code] = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=request.session['survey_session_id'], language=selected_language).as_p().replace("/script", "\/script")
-		
+
+		existing_geo_answers_json = json.dumps(existing_geo_answers)
 
 
 	# Get translated section title and subheading for template
@@ -288,6 +362,7 @@ def survey_section(request, survey_name, section_name):
 		'section_title': section_title,
 		'section_subheading': section_subheading,
 		'selected_language': selected_language,
+		'existing_geo_answers_json': existing_geo_answers_json,
 	})
 
 @login_required

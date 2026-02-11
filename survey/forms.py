@@ -188,7 +188,7 @@ class SurveySectionAnswerForm(forms.Form):
     
 
     def __init__(self, initial, section, question, survey_session_id, language=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, initial=initial, **kwargs)
 
         section = section
         survey_session_id = survey_session_id

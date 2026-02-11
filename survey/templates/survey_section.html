@@ -142,7 +142,7 @@
     function onPopupClose(){
 
         var tempLayer = this;
-        
+
         subquestion_form_result = $('#subquestion_form').serializeArray();
         grouped_by_name_result = subquestion_form_result.groupBy("name");
         for (var prop in grouped_by_name_result) {
@@ -151,6 +151,63 @@
 
         toggleInfo(true);
         //toggleDrawbar(false);
+    }
+
+    // Restore existing geo answers from server
+    var existingGeoAnswers = JSON.parse('{{ existing_geo_answers_json|escapejs }}');
+    for (var questionCode in existingGeoAnswers) {
+        var features = existingGeoAnswers[questionCode];
+        for (var i = 0; i < features.length; i++) {
+            var geoFeature = features[i];
+            var geomType = geoFeature.geometry.type;
+            var layer;
+
+            if (geomType === 'Point') {
+                var coords = geoFeature.geometry.coordinates;
+                var btn = $('button.drawbutton[name="' + questionCode + '"]');
+                var color = btn.attr('data-color') || '#000000';
+                var icon = btn.attr('data-icon') || 'fas fa-map-marker-alt';
+                layer = L.marker([coords[1], coords[0]], {
+                    icon: L.icon.fontAwesome({
+                        iconClasses: 'fa ' + icon,
+                        markerColor: color,
+                        iconColor: '#FFF',
+                        iconXOffset: -2,
+                    })
+                });
+            } else if (geomType === 'LineString') {
+                var latlngs = geoFeature.geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
+                var btn = $('button.drawbutton[name="' + questionCode + '"]');
+                var color = btn.attr('data-color') || '#000000';
+                layer = L.polyline(latlngs, {color: color});
+            } else if (geomType === 'Polygon') {
+                var latlngs = geoFeature.geometry.coordinates[0].map(function(c) { return [c[1], c[0]]; });
+                var btn = $('button.drawbutton[name="' + questionCode + '"]');
+                var color = btn.attr('data-color') || '#000000';
+                layer = L.polygon(latlngs, {color: color});
+            }
+
+            if (layer) {
+                var feature = layer.feature = layer.feature || {};
+                feature.type = "Feature";
+                feature.properties = geoFeature.properties;
+
+                layer.bindPopup('<form action="" onsubmit="return false;" id="subquestion_form">' + subquestions_forms[questionCode]
+                    + '<div class="layer-controls">\
+                    <button type="button" class="btn btn-success layer-apply"><i class="far fa-save"></i></button>\
+                    <button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>\
+                    <button type="button" class="btn btn-danger layer-delete"><i class="far fa-trash-alt"></i></button>\
+                    </div>'
+                    + '</form>', {
+                        maxHeight: $(document).height()*0.8,
+                    });
+
+                layer.on("popupopen", onPopupOpen);
+                layer.on("popupclose", onPopupClose);
+
+                editableLayers.addLayer(layer);
+            }
+        }
     }
 
 </script>
