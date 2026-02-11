@@ -149,7 +149,7 @@
                 tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
         }
 
-        toggleInfo(true);
+        if (isMobile()) toggleInfo(true);
         //toggleDrawbar(false);
     }
 

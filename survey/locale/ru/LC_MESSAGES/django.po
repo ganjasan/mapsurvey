@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mapsurvey 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-01 13:59+0000\n"
+"POT-Creation-Date: 2026-02-11 12:04+0000\n"
 "PO-Revision-Date: 2026-02-01 14:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: Russian\n"
@@ -18,63 +18,79 @@ msgstr ""
 "n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
 "(n%100>=11 && n%100<=14)? 2 : 3);\n"
 
-#: survey/models.py:14
+#: survey/models.py:37
 msgid "Only alphanumeric character and \"_\" sign"
 msgstr "Только буквы, цифры и знак \"_\""
 
-#: survey/models.py:23
+#: survey/models.py:46
+msgid "Private"
+msgstr ""
+
+#: survey/models.py:47
+msgid "Demo"
+msgstr ""
+
+#: survey/models.py:48
+msgid "Public"
+msgstr ""
+
+#: survey/models.py:52
 msgid "Text"
 msgstr "Текст"
 
-#: survey/models.py:24
+#: survey/models.py:53
 msgid "Number"
 msgstr "Число"
 
-#: survey/models.py:25
+#: survey/models.py:54
 msgid "Choices"
 msgstr "Выбор"
 
-#: survey/models.py:26
+#: survey/models.py:55
 msgid "Multiple Choices"
 msgstr "Множественный выбор"
 
-#: survey/models.py:27
+#: survey/models.py:56
 msgid "Range"
 msgstr "Диапазон"
 
-#: survey/models.py:28
+#: survey/models.py:57
 msgid "Rating"
 msgstr "Рейтинг"
 
-#: survey/models.py:29
+#: survey/models.py:58
 msgid "Date/Time"
 msgstr "Дата/Время"
 
-#: survey/models.py:30
+#: survey/models.py:59
 msgid "Geo Point"
 msgstr "Геоточка"
 
-#: survey/models.py:31
+#: survey/models.py:60
 msgid "Geo Line"
 msgstr "Геолиния"
 
-#: survey/models.py:32
+#: survey/models.py:61
 msgid "Geo Polygon"
 msgstr "Геополигон"
 
-#: survey/models.py:33
+#: survey/models.py:62
 msgid "Image"
 msgstr "Изображение"
 
-#: survey/models.py:34
+#: survey/models.py:63
 msgid "Line"
 msgstr "Строка"
 
-#: survey/models.py:35
+#: survey/models.py:64
 msgid "HTML"
 msgstr "HTML"
 
-#: survey/models.py:67
+#: survey/models.py:71
+msgid "Selected language code (ISO 639-1)"
+msgstr ""
+
+#: survey/models.py:97
 msgid ""
 "URL to redirect after survey completion. E.g.: /thanks/ or https://example."
 "com"
@@ -82,22 +98,62 @@ msgstr ""
 "URL для перенаправления после завершения опроса. Например: /thanks/ или "
 "https://example.com"
 
-#: survey/models.py:176
+#: survey/models.py:98
+msgid "List of ISO 639-1 language codes, e.g. [\"en\", \"ru\", \"de\"]"
+msgstr ""
+
+#: survey/models.py:99
+msgid "Controls whether survey appears on the landing page"
+msgstr ""
+
+#: survey/models.py:100
+msgid "Marks completed surveys whose results can be shown"
+msgstr ""
+
+#: survey/models.py:188 survey/models.py:272
+msgid "ISO 639-1 language code"
+msgstr ""
+
+#: survey/models.py:218
 msgid "Color"
 msgstr "Цвет"
 
-#: survey/models.py:176
+#: survey/models.py:218
 msgid "HEX color, as #RRGGBB"
 msgstr "HEX цвет, как #RRGGBB"
 
-#: survey/models.py:177
+#: survey/models.py:219
 msgid "Must be Font-Awesome class"
 msgstr "Должен быть классом Font-Awesome"
+
+#: survey/models.py:315
+msgid "Map"
+msgstr ""
+
+#: survey/models.py:316
+msgid "Open Data"
+msgstr ""
+
+#: survey/models.py:317
+msgid "Results"
+msgstr ""
+
+#: survey/models.py:318
+msgid "Article"
+msgstr ""
 
 #: survey/templates/base_survey_template.html:73
 #: survey/templatetags/i18n_extras.py:17
 msgid "Start drawing"
 msgstr "Начать рисовать"
+
+#: survey/templates/base_survey_template.html:84
+msgid "Cancel"
+msgstr "Отмена"
+
+#: survey/templates/base_survey_template.html:85
+msgid "Apply"
+msgstr "Применить"
 
 #: survey/templates/django_registration/activation_complete.html:4
 msgid "Activation"
@@ -186,6 +242,14 @@ msgstr "Далее"
 msgid "Finish"
 msgstr "Завершить"
 
+#: survey/templates/survey_language_select.html:7
+msgid "Select Language"
+msgstr ""
+
+#: survey/templates/survey_language_select.html:60
+msgid "Select your language"
+msgstr ""
+
 #: survey/templatetags/i18n_extras.py:18
 msgid "Finish editing"
 msgstr "Завершить редактировать"
@@ -225,3 +289,29 @@ msgstr "Нажмите на последнюю точку, чтобы закон
 #: survey/templatetags/i18n_extras.py:35
 msgid "<strong>Error:</strong> Shape edges cannot intersect!"
 msgstr "<strong>Ошибка:</strong> края формы не могут пересекаться!"
+
+#, fuzzy
+#~| msgid "Date/Time"
+#~ msgid "Time"
+#~ msgstr "Дата/Время"
+
+#, fuzzy
+#~| msgid "Range"
+#~ msgid "Change"
+#~ msgstr "Диапазон"
+
+#, fuzzy
+#~| msgid "Start"
+#~ msgid "Sat"
+#~ msgstr "Начать"
+
+#, fuzzy
+#~| msgid "Number"
+#~ msgid "November"
+#~ msgstr "Число"
+
+#, fuzzy
+#~| msgid "Number"
+#~ msgctxt "alt. month"
+#~ msgid "November"
+#~ msgstr "Число"

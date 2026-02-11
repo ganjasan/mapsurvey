@@ -12,15 +12,15 @@ The system SHALL detect whether the user's primary pointing device is coarse (fi
 - **THEN** the system SHALL activate `L.Draw.Marker` as before (no crosshair)
 
 ### Requirement: Crosshair overlay display
-When crosshair mode is active, the system SHALL display a fixed overlay centered on the map screen. The overlay SHALL contain the question's marker icon (from the button's `data-icon` attribute) rendered in the question's color (from `data-color`). The overlay container SHALL have `pointer-events: none` so the map remains pannable underneath.
+When crosshair mode is active, the system SHALL display a fixed overlay centered on the map screen. The overlay SHALL render a pin-shaped marker (SVG teardrop, identical to the Leaflet FontAwesome marker shape) filled with the question's color, with the question's FontAwesome icon (from `data-icon`) centered inside the pin in white. The overlay container SHALL have `pointer-events: none` so the map remains pannable underneath.
 
 #### Scenario: Entering crosshair mode
 - **WHEN** a coarse-pointer user clicks a `.drawpoint` button
-- **THEN** the info panel SHALL be hidden, and a crosshair overlay SHALL appear at the center of the map showing the question's icon in the question's color
+- **THEN** on mobile viewports (max-width 768px) the info panel SHALL slide out; on desktop the info panel SHALL remain visible. A crosshair overlay SHALL appear at the center of the map showing a pin marker in the question's color with the question's icon inside.
 
 #### Scenario: Map remains pannable during crosshair mode
 - **WHEN** crosshair mode is active and the user pans the map
-- **THEN** the map SHALL pan normally and the crosshair icon SHALL remain fixed at the center of the screen
+- **THEN** the map SHALL pan normally and the pin marker SHALL remain fixed at the center of the screen
 
 ### Requirement: Apply action places marker
 The crosshair overlay SHALL display an Apply button (green, checkmark icon). Pressing Apply SHALL place a marker at the current map center coordinates.
@@ -35,21 +35,21 @@ The crosshair overlay SHALL display an Apply button (green, checkmark icon). Pre
 
 #### Scenario: Apply without sub-questions returns to info panel
 - **WHEN** the user presses Apply and the question has no sub-questions
-- **THEN** the marker SHALL be placed, crosshair mode SHALL exit, and the info panel SHALL be shown
+- **THEN** the marker SHALL be placed, crosshair mode SHALL exit, and on mobile the info panel SHALL slide back in
 
 ### Requirement: Cancel action discards placement
 The crosshair overlay SHALL display a Cancel button (red, X icon). Pressing Cancel SHALL discard the placement without creating a marker.
 
 #### Scenario: User cancels point placement
 - **WHEN** the user presses the Cancel button during crosshair mode
-- **THEN** no marker SHALL be placed, crosshair mode SHALL exit, and the info panel SHALL be shown
+- **THEN** no marker SHALL be placed, crosshair mode SHALL exit, and on mobile the info panel SHALL slide back in
 
 ### Requirement: Action buttons are touch-accessible
-The Apply and Cancel buttons SHALL have `pointer-events: auto` and a minimum touch target size of 44x44 pixels. They SHALL be positioned below the crosshair icon with sufficient spacing to avoid interfering with map panning.
+The Apply and Cancel buttons SHALL have `pointer-events: auto` and a minimum touch target height of 48 pixels. They SHALL be rectangular with rounded corners, positioned at the bottom of the screen with fixed positioning. Each button SHALL display an icon and a text label.
 
 #### Scenario: Buttons are tappable while map is pannable
 - **WHEN** crosshair mode is active
-- **THEN** the Apply and Cancel buttons SHALL respond to taps, while touches on other areas of the overlay SHALL pass through to the map
+- **THEN** the Apply and Cancel buttons SHALL respond to taps at the bottom of the screen, while touches on other areas of the overlay SHALL pass through to the map
 
 ### Requirement: Only point questions use crosshair mode
 Crosshair mode SHALL apply only to `point` type questions (`.drawpoint` buttons). Line (`.drawline`) and polygon (`.drawpolygon`) questions SHALL continue using their existing drawing behavior regardless of pointer type.
@@ -61,6 +61,28 @@ Crosshair mode SHALL apply only to `point` type questions (`.drawpoint` buttons)
 #### Scenario: Polygon drawing on touch device
 - **WHEN** a coarse-pointer user clicks a `.drawpolygon` button
 - **THEN** the system SHALL use the standard `L.Draw.Polygon` behavior (no crosshair)
+
+### Requirement: Info panel partial width on mobile
+On mobile viewports (max-width 768px), the info panel SHALL NOT cover 100% of the screen width. It SHALL occupy 85% width, leaving a visible strip of the map on the right edge so users can see there is a map behind it.
+
+#### Scenario: Info panel on mobile shows map edge
+- **WHEN** the info panel is visible on a mobile device
+- **THEN** the panel SHALL occupy 85% of the screen width, and approximately 15% of the map SHALL be visible on the right
+
+### Requirement: Info panel slide animation on mobile
+On mobile viewports (max-width 768px), the info panel SHALL animate when showing and hiding. It SHALL use a CSS `transform: translateX()` slide transition (0.3s ease). When hidden, the panel SHALL slide fully off-screen to the left. When shown, it SHALL slide back to its original position. On desktop viewports, the info panel SHALL remain permanently visible and not respond to show/hide toggles.
+
+#### Scenario: Hiding info panel animates on mobile
+- **WHEN** the info panel is hidden on a mobile viewport (e.g., user clicks close or enters draw mode)
+- **THEN** the panel SHALL slide to the left over 0.3 seconds
+
+#### Scenario: Showing info panel animates on mobile
+- **WHEN** the info panel is shown on a mobile viewport (e.g., user clicks show button or exits draw mode)
+- **THEN** the panel SHALL slide in from the left over 0.3 seconds
+
+#### Scenario: Info panel stays visible on desktop
+- **WHEN** the user enters draw mode on a desktop viewport (wider than 768px)
+- **THEN** the info panel SHALL remain visible and not hide
 
 ### Requirement: Data format unchanged
 Markers placed via crosshair mode SHALL produce the same GeoJSON data format in the hidden `.geo-inp` input as markers placed via the standard `L.Draw.Marker` flow. No backend changes are required.

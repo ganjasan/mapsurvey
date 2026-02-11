@@ -19,7 +19,7 @@ The existing code handles point clicks in `base_survey_template.html` (line 436,
 **Non-Goals:**
 - Changing line or polygon drawing behavior
 - Changing the desktop (mouse/trackpad) point placement flow
-- Redesigning the info panel or mobile layout beyond hiding it during crosshair mode
+- Redesigning the info panel content or structure (only layout/animation changes on mobile)
 - Adding GPS/geolocation-based placement
 
 ## Decisions
@@ -35,9 +35,9 @@ The existing code handles point clicks in `base_survey_template.html` (line 436,
 
 `pointer: coarse` detects that the _primary_ pointing device is imprecise (a finger), which is exactly the condition where crosshair mode helps.
 
-### 2. Crosshair as a fixed-position HTML overlay (not a Leaflet layer)
+### 2. Crosshair as a pin-shaped HTML overlay (not a Leaflet layer)
 
-**Choice**: A `<div>` with `position: fixed` centered on the screen, containing a crosshair icon (FontAwesome `fa-crosshairs` or `fa-plus`) and two buttons below.
+**Choice**: A `<div>` with `position: fixed` centered on the screen, containing an SVG pin marker (same teardrop path as `L.Icon.FontAwesome`) with the question's FA icon inside, and two rectangular action buttons fixed at the bottom of the screen.
 
 **Alternatives considered**:
 - Leaflet marker pinned to map center via `map.on('move')` — adds complexity, the marker would need constant repositioning and would interact with Leaflet's internal layer management
@@ -48,17 +48,25 @@ The overlay approach is simpler: it doesn't interact with Leaflet at all. On App
 ### 3. Crosshair overlay structure
 
 ```
-#crosshair-overlay (fixed, centered, z-index: 15, pointer-events: none)
-├── .crosshair-icon (the crosshair marker icon — uses the question's icon and color)
-└── .crosshair-actions (pointer-events: auto)
-    ├── button.crosshair-cancel (red, ✕ icon)
-    └── button.crosshair-apply (green, ✓ icon)
+#crosshair-overlay (fixed, full-screen, z-index: 15, pointer-events: none)
+├── .crosshair-pin (centered — SVG pin + icon inside)
+│   ├── svg (teardrop path filled with question color)
+│   └── i.crosshair-pin-icon (FA icon, white, centered in pin)
+└── .crosshair-actions (fixed bottom, pointer-events: auto)
+    ├── button.crosshair-cancel (red, rectangular, "✕ Cancel")
+    └── button.crosshair-apply (green, rectangular, "✓ Apply")
 ```
 
 - The overlay itself has `pointer-events: none` so the map remains pannable underneath
 - Only the action buttons have `pointer-events: auto`
-- The crosshair icon is positioned at the visual center of the map
-- Buttons are positioned below the crosshair with enough spacing to not interfere with panning
+- The pin marker is centered on screen (same SVG path as `L.Icon.FontAwesome`)
+- Buttons are rectangular, fixed at the bottom of the screen with text labels
+
+### 3a. Info panel improvements
+
+- **Partial width on mobile**: 85% instead of 100%, so the map is visible behind it
+- **Slide animation**: `toggleInfo()` uses CSS class `.hidden` with `transform: translateX(-100%)` instead of `visibility`. Transition: `transform 0.3s ease`
+- This replaces the previous `visibility` toggle which had no animation
 
 ### 4. Integration with existing draw flow
 
@@ -84,9 +92,9 @@ The overlay approach is simpler: it doesn't interact with Leaflet at all. On App
 
 This approach reuses the existing marker creation, popup binding, and serialization code. The only difference is _how_ the lat/lng is determined (map center vs. tap location).
 
-### 5. Crosshair icon reflects the question's marker style
+### 5. Crosshair pin matches the final marker visually
 
-The crosshair should show the same FontAwesome icon and color as the final marker (from `data-icon` and `data-color` attributes on the `.drawpoint` button). This gives the user a preview of what will be placed. The icon is rendered at a larger size (e.g., 40px) for visibility.
+The crosshair renders the same SVG teardrop pin shape as the actual Leaflet marker (path from `L.Icon.FontAwesome.prototype.options.markerPath`), filled with the question's color. The question's FontAwesome icon is overlaid in white inside the pin. This gives the user an exact preview of what will be placed.
 
 ### 6. File organization — all changes in existing files
 

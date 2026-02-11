@@ -74,12 +74,15 @@
 </div>
 
 <div id="crosshair-overlay" style="display: none;">
-    <div class="crosshair-icon">
-        <i class="fas fa-map-marker-alt"></i>
+    <div class="crosshair-pin">
+        <svg width="40" height="64" viewBox="0 0 32 52" xmlns="http://www.w3.org/2000/svg">
+            <path class="crosshair-pin-path" d="M16,1 C7.7146,1 1,7.65636364 1,15.8648485 C1,24.0760606 16,51 16,51 C16,51 31,24.0760606 31,15.8648485 C31,7.65636364 24.2815,1 16,1 L16,1 Z" fill="#000"></path>
+        </svg>
+        <i class="crosshair-pin-icon fas fa-map-marker-alt"></i>
     </div>
     <div class="crosshair-actions">
-        <button type="button" class="crosshair-cancel"><i class="fas fa-times"></i></button>
-        <button type="button" class="crosshair-apply"><i class="fas fa-check"></i></button>
+        <button type="button" class="crosshair-cancel"><i class="fas fa-times"></i> {% trans "Cancel" %}</button>
+        <button type="button" class="crosshair-apply"><i class="fas fa-check"></i> {% trans "Apply" %}</button>
     </div>
 </div>
 
@@ -91,10 +94,19 @@
 </script>
 
 <script type="text/javascript">
-    //nvigation
+    //navigation
+    function isMobile() {
+        return window.matchMedia('(max-width: 768px)').matches;
+    }
+
     function toggleInfo(show) {
-        if(show) { info_page.style.visibility="visible"; showButton.style.visibility="hidden"}
-        else { info_page.style.visibility="hidden"; showButton.style.visibility="visible"}
+        if(show) {
+            info_page.classList.remove('hidden');
+            showButton.style.visibility = "hidden";
+        } else {
+            info_page.classList.add('hidden');
+            showButton.style.visibility = "visible";
+        }
     }
 
     function toggleDrawbar(show){
@@ -274,7 +286,7 @@
     map.addControl(drawControl);
 
     function startDrawMode(question){
-        toggleInfo(false);
+        if (isMobile()) toggleInfo(false);
         toggleDrawbar(true);
 
         currentQ = $(question).attr('name');
@@ -286,7 +298,7 @@
     }
 
     function endDrawMode(){
-        toggleInfo(true);
+        if (isMobile()) toggleInfo(true);
         toggleDrawbar(false);
 
         currentQ = null;
@@ -298,7 +310,7 @@
     }
 
     function startEditMode(layer){
-    	toggleInfo(false);
+    	if (isMobile()) toggleInfo(false);
     	toggleDrawbar(true);
 
     	layer.editing.enable();
@@ -312,7 +324,7 @@
     }
 
     function endEditMode(layer){
-    	toggleInfo(true);
+    	if (isMobile()) toggleInfo(true);
     	toggleDrawbar(false);
 
     	layer.editing.disable();
@@ -323,9 +335,9 @@
         crosshairColor = color;
         crosshairIcon = iconClass;
         var overlay = document.getElementById('crosshair-overlay');
-        var iconEl = overlay.querySelector('.crosshair-icon i');
-        iconEl.className = 'fa ' + iconClass;
-        iconEl.style.color = color;
+        overlay.querySelector('.crosshair-pin-path').setAttribute('fill', color);
+        var iconEl = overlay.querySelector('.crosshair-pin-icon');
+        iconEl.className = 'crosshair-pin-icon fa ' + iconClass;
         overlay.style.display = 'flex';
     }
 
@@ -354,7 +366,7 @@
 
     $('.crosshair-cancel').click(function() {
         hideCrosshair();
-        toggleInfo(true);
+        if (isMobile()) toggleInfo(true);
         currentQ = null;
     });
 
@@ -466,7 +478,7 @@
 
         currentDrawFeature.enable();
 
-        toggleInfo(false);
+        if (isMobile()) toggleInfo(false);
         currentQ = $(this).attr('name')
 
     });
@@ -486,7 +498,7 @@
 
         currentDrawFeature.enable();
 
-        toggleInfo(false);
+        if (isMobile()) toggleInfo(false);
         currentQ = $(this).attr('name')
     })
 
@@ -494,7 +506,7 @@
         var color = $(this).attr('data-color');
         var icon = $(this).attr('data-icon');
 
-        toggleInfo(false);
+        if (isMobile()) toggleInfo(false);
         currentQ = $(this).attr('name');
 
         if (isTouchDevice) {
