@@ -98,6 +98,7 @@ class SurveyHeader(models.Model):
     available_languages = models.JSONField(default=list, blank=True, help_text=_('List of ISO 639-1 language codes, e.g. ["en", "ru", "de"]'))
     visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default="private", help_text=_('Controls whether survey appears on the landing page'))
     is_archived = models.BooleanField(default=False, help_text=_('Marks completed surveys whose results can be shown'))
+    thanks_html = models.JSONField(default=dict, blank=True, help_text=_('Custom HTML for thanks page. Dict keyed by language: {"en": "<h1>Thanks!</h1>", "ru": "<h1>Спасибо!</h1>"} or a plain string.'))
 
     class Meta:
         app_label = 'survey'

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+{% if thanks_html %}
+    {{ thanks_html|safe }}
+{% else %}
+<div class="text-center mt-5">
+    <h2>{% trans "Thank you!" %}</h2>
+    <p>{% trans "Your responses have been recorded." %}</p>
+    <a href="{% url 'survey' survey_name %}" class="btn btn-primary mt-3">{% trans "Take survey again" %}</a>
+</div>
+{% endif %}
+{% endblock %}

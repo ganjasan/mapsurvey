@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import models
@@ -11,6 +11,7 @@ from django import forms
 from django.views.generic import UpdateView
 from .forms import SurveySectionAnswerForm
 from django.http import HttpResponseRedirect, Http404
+from django.urls import reverse
 from django.core.serializers import serialize
 from django.db.models import Count
 import geojson
@@ -282,7 +283,12 @@ def survey_section(request, survey_name, section_name):
 
 					answer.save()
 
-		next_page = ("../" + section.next_section.name) if section.next_section else survey.redirect_url
+		if section.next_section:
+			next_page = "../" + section.next_section.name
+		elif survey.redirect_url == "#":
+			next_page = reverse('survey_thanks', args=[survey_name])
+		else:
+			next_page = survey.redirect_url
 		return HttpResponseRedirect(next_page)
 
 	else:
@@ -606,3 +612,36 @@ def delete_survey(request, survey_name):
 		messages.error(request, f"Survey '{survey_name}' not found")
 
 	return redirect('editor')
+
+
+def survey_thanks(request, survey_name):
+	survey = get_object_or_404(SurveyHeader, name=survey_name)
+	lang = request.session.pop('survey_language', None)
+	request.session.pop('survey_session_id', None)
+
+	thanks_html = resolve_thanks_html(survey.thanks_html, lang)
+
+	return render(request, 'survey_thanks.html', {
+		'survey_name': survey_name,
+		'thanks_html': thanks_html,
+	})
+
+
+def resolve_thanks_html(thanks_html, lang):
+	"""Resolve thanks_html content by language.
+
+	Accepts a dict keyed by language code or a plain string.
+	Fallback chain: requested lang → "en" → first available → None.
+	"""
+	if not thanks_html:
+		return None
+	if isinstance(thanks_html, str):
+		return thanks_html
+	if isinstance(thanks_html, dict):
+		if lang and lang in thanks_html:
+			return thanks_html[lang]
+		if 'en' in thanks_html:
+			return thanks_html['en']
+		if thanks_html:
+			return next(iter(thanks_html.values()))
+	return None

@@ -4476,3 +4476,158 @@ class SurveyProgressIndicatorTest(TestCase):
         """
         response = self.client.get('/surveys/progress_survey/sec2/')
         self.assertContains(response, '2 / 3')
+
+
+class SurveyThanksPageTest(TestCase):
+    """Tests for the built-in survey thanks page."""
+
+    def setUp(self):
+        org = Organization.objects.create(name="Thanks Org")
+        self.survey = SurveyHeader.objects.create(
+            name="thanks_survey",
+            organization=org,
+            redirect_url="#",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="only_section",
+            title="Only Section",
+            code="S1",
+            is_head=True,
+            start_map_postion=Point(30.0, 60.0),
+            start_map_zoom=14,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section,
+            name="Name",
+            input_type="text_line",
+            order_number=1,
+        )
+
+        self.custom_survey = SurveyHeader.objects.create(
+            name="custom_redirect_survey",
+            organization=org,
+            redirect_url="https://example.com/done",
+        )
+        self.custom_section = SurveySection.objects.create(
+            survey_header=self.custom_survey,
+            name="only_section",
+            title="Only Section",
+            code="S1",
+            is_head=True,
+            start_map_postion=Point(30.0, 60.0),
+            start_map_zoom=14,
+        )
+        Question.objects.create(
+            survey_section=self.custom_section,
+            name="Name",
+            input_type="text_line",
+            order_number=1,
+        )
+
+    def test_thanks_page_returns_200_and_clears_session(self):
+        """
+        GIVEN a survey with a completed session
+        WHEN the user visits the thanks page
+        THEN status is 200 and session keys are cleared
+        """
+        # Create a session by visiting the section
+        self.client.get('/surveys/thanks_survey/only_section/')
+        self.assertIn('survey_session_id', self.client.session)
+
+        response = self.client.get('/surveys/thanks_survey/thanks/')
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('survey_session_id', self.client.session)
+        self.assertNotIn('survey_language', self.client.session)
+
+    def test_thanks_page_nonexistent_survey_returns_404(self):
+        """
+        GIVEN no survey with the given name
+        WHEN the user visits the thanks page
+        THEN the server returns 404
+        """
+        response = self.client.get('/surveys/nonexistent/thanks/')
+        self.assertEqual(response.status_code, 404)
+
+    def test_last_section_post_redirects_to_thanks_page(self):
+        """
+        GIVEN a single-section survey with default redirect_url="#"
+        WHEN the user submits the last section
+        THEN the response redirects to the thanks page
+        """
+        self.client.get('/surveys/thanks_survey/only_section/')
+        response = self.client.post('/surveys/thanks_survey/only_section/', {
+            self.question.code: 'Alice',
+        })
+        self.assertRedirects(response, '/surveys/thanks_survey/thanks/', fetch_redirect_response=False)
+
+    def test_last_section_post_with_custom_redirect(self):
+        """
+        GIVEN a single-section survey with custom redirect_url
+        WHEN the user submits the last section
+        THEN the response redirects to the custom URL
+        """
+        self.client.get('/surveys/custom_redirect_survey/only_section/')
+        response = self.client.post('/surveys/custom_redirect_survey/only_section/', {
+            self.custom_section.questions()[0].code: 'Bob',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], 'https://example.com/done')
+
+    def test_thanks_page_empty_thanks_html_shows_default(self):
+        """
+        GIVEN a survey with empty thanks_html
+        WHEN the user visits the thanks page
+        THEN the default message block is displayed (not custom HTML)
+        """
+        response = self.client.get('/surveys/thanks_survey/thanks/')
+        # Check for the "Take survey again" link which is only in the default block
+        self.assertContains(response, '/surveys/thanks_survey/')
+
+    def test_thanks_page_multilingual_renders_correct_language(self):
+        """
+        GIVEN a survey with multilingual thanks_html
+        WHEN the user completed the survey in Russian
+        THEN the thanks page renders the Russian HTML
+        """
+        self.survey.thanks_html = {
+            'en': '<h1>Thanks!</h1>',
+            'ru': '<h1>Спасибо!</h1>',
+        }
+        self.survey.save()
+
+        session = self.client.session
+        session['survey_language'] = 'ru'
+        session.save()
+
+        response = self.client.get('/surveys/thanks_survey/thanks/')
+        self.assertContains(response, '<h1>Спасибо!</h1>')
+        self.assertNotContains(response, 'Thanks!')
+
+    def test_thanks_page_falls_back_to_en(self):
+        """
+        GIVEN a survey with thanks_html that has only "en" key
+        WHEN the user completed the survey in French
+        THEN the thanks page falls back to English content
+        """
+        self.survey.thanks_html = {'en': '<p>Thank you very much!</p>'}
+        self.survey.save()
+
+        session = self.client.session
+        session['survey_language'] = 'fr'
+        session.save()
+
+        response = self.client.get('/surveys/thanks_survey/thanks/')
+        self.assertContains(response, 'Thank you very much!')
+
+    def test_thanks_page_plain_string_renders_directly(self):
+        """
+        GIVEN a survey with thanks_html as a plain string
+        WHEN the user visits the thanks page
+        THEN the string is rendered directly
+        """
+        self.survey.thanks_html = '<h2>Merci!</h2>'
+        self.survey.save()
+
+        response = self.client.get('/surveys/thanks_survey/thanks/')
+        self.assertContains(response, '<h2>Merci!</h2>')

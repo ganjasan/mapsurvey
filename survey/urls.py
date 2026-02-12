@@ -11,6 +11,7 @@ urlpatterns = [
     path('surveys/', views.survey_list, name='survey_list'),
     path('surveys/<str:survey_name>/', views.survey_header, name='survey'),
     path('surveys/<str:survey_name>/language/', views.survey_language_select, name='survey_language_select'),
+    path('surveys/<str:survey_name>/thanks/', views.survey_thanks, name='survey_thanks'),
     path('surveys/<str:survey_name>/<str:section_name>/', views.survey_section, name='section'),
     path('surveys/<str:survey_name>/download', views.download_data, name='download_data'),
     path('stories/<slug:slug>/', views.story_detail, name='story_detail'),

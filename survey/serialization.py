@@ -54,6 +54,7 @@ def serialize_survey_to_dict(survey: SurveyHeader) -> Dict[str, Any]:
         "organization": survey.organization.name if survey.organization else None,
         "redirect_url": survey.redirect_url,
         "available_languages": survey.available_languages or [],
+        "thanks_html": survey.thanks_html or {},
         "sections": serialize_sections(survey),
     }
 
@@ -439,6 +440,7 @@ def create_survey_header(
         organization=organization,
         redirect_url=survey_data.get("redirect_url", "#")[:250],
         available_languages=survey_data.get("available_languages", []),
+        thanks_html=survey_data.get("thanks_html", {}),
     )
 
 
