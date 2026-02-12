@@ -1,8 +1,8 @@
 <div>
-	<button name = "{{ widget.name }}" type="button" class="drawbutton btn btn-light {{ widget.draw_type }}" draw-type="{{widget.draw_type}}" data-color="{{widget.color}}" data-icon="{{widget.icon_class}}" >
+	<button name = "{{ widget.name }}" type="button" class="drawbutton {{ widget.draw_type }}" draw-type="{{widget.draw_type}}" data-color="{{widget.color}}" data-icon="{{widget.icon_class}}" >
 		<div class="geo-question">
-			<div class="geo-question-icon">
-				<i class="{{ widget.draw_icon_class }}" style="font-size:50px; color: {{ widget.color }}"></i>
+			<div class="geo-question-icon" style="background: {{ widget.color }}15;">
+				<i class="{{ widget.draw_icon_class }}" style="font-size:22px; color: {{ widget.color }}"></i>
 			</div>
 			<div class="geo-question-text">
 				<p class="geo-question-title">{{ widget.title }}</p>

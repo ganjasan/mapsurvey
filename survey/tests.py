@@ -4631,3 +4631,129 @@ class SurveyThanksPageTest(TestCase):
 
         response = self.client.get('/surveys/thanks_survey/thanks/')
         self.assertContains(response, '<h2>Merci!</h2>')
+
+
+class QuestionCardStylingTest(TestCase):
+    """Tests for question card wrapper rendering in survey sections."""
+
+    def setUp(self):
+        self.client = Client()
+        self.org = Organization.objects.create(name="Card Test Org")
+        self.survey = SurveyHeader.objects.create(
+            name="card_survey",
+            organization=self.org,
+            redirect_url="#",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="section1",
+            title="Section One",
+            code="S1",
+            is_head=True,
+            start_map_postion=Point(30.5, 60.0),
+            start_map_zoom=14,
+        )
+
+    def test_text_question_renders_in_card(self):
+        """
+        GIVEN a survey section with a text question
+        WHEN the section page is rendered
+        THEN the question is wrapped in a div.question-card
+        """
+        Question.objects.create(
+            survey_section=self.section,
+            name="Your name",
+            input_type="text",
+            order_number=1,
+        )
+        response = self.client.get('/surveys/card_survey/section1/')
+        self.assertContains(response, 'class="question-card"')
+
+    def test_choice_question_renders_in_card(self):
+        """
+        GIVEN a survey section with a choice question
+        WHEN the section page is rendered
+        THEN the question is wrapped in a div.question-card
+        """
+        Question.objects.create(
+            survey_section=self.section,
+            name="Agree?",
+            input_type="choice",
+            choices=[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}],
+            order_number=1,
+        )
+        response = self.client.get('/surveys/card_survey/section1/')
+        self.assertContains(response, 'class="question-card"')
+
+    def test_geo_question_not_in_card(self):
+        """
+        GIVEN a survey section with a point geo question
+        WHEN the section page is rendered
+        THEN the question is NOT wrapped in a div.question-card
+        """
+        Question.objects.create(
+            survey_section=self.section,
+            name="Location",
+            input_type="point",
+            order_number=1,
+        )
+        response = self.client.get('/surveys/card_survey/section1/')
+        self.assertNotContains(response, 'class="question-card"')
+
+    def test_html_question_not_in_card(self):
+        """
+        GIVEN a survey section with an html question
+        WHEN the section page is rendered
+        THEN the question is NOT wrapped in a div.question-card
+        """
+        Question.objects.create(
+            survey_section=self.section,
+            name="Info",
+            input_type="html",
+            subtext="<p>Some info</p>",
+            order_number=1,
+        )
+        response = self.client.get('/surveys/card_survey/section1/')
+        self.assertNotContains(response, 'class="question-card"')
+
+    def test_widget_has_question_type_attribute(self):
+        """
+        GIVEN a survey section with a choice question
+        WHEN a SurveySectionAnswerForm is created
+        THEN the field widget has question_type attribute set to 'choice'
+        """
+        q = Question.objects.create(
+            survey_section=self.section,
+            name="Agree?",
+            input_type="choice",
+            choices=[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}],
+            order_number=1,
+        )
+        form = SurveySectionAnswerForm(
+            initial={}, section=self.section, question=None,
+            survey_session_id=None,
+        )
+        widget = form.fields[q.code].widget
+        self.assertEqual(widget.question_type, 'choice')
+
+    def test_mixed_questions_only_card_types_wrapped(self):
+        """
+        GIVEN a survey section with text and point questions
+        WHEN the section page is rendered
+        THEN only the text question has a question-card wrapper
+        """
+        Question.objects.create(
+            survey_section=self.section,
+            name="Your name",
+            input_type="text",
+            order_number=1,
+        )
+        Question.objects.create(
+            survey_section=self.section,
+            name="Location",
+            input_type="point",
+            order_number=2,
+        )
+        response = self.client.get('/surveys/card_survey/section1/')
+        content = response.content.decode()
+        self.assertEqual(content.count('class="question-card"'), 1)

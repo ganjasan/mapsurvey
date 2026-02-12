@@ -210,6 +210,7 @@ class SurveySectionAnswerForm(forms.Form):
             image_source = question.image.url if question.image else None
 
             self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question, field_label, field_sublabel, field_color, field_icon_class, image_source, language)
+            self.fields[field_name].widget.question_type = question.input_type
 
 
     def save(self):

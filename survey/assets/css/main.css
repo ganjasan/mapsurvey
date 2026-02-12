@@ -1,9 +1,44 @@
+/* ============================================
+   Mapsurvey — Modern Survey Panel
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+
+:root {
+  --panel-bg: #ffffff;
+  --panel-border: rgba(0, 0, 0, 0.06);
+  --card-bg: #f7f8fa;
+  --card-border: rgba(0, 0, 0, 0.06);
+  --card-hover: #f0f2f5;
+  --text-primary: #1a1d21;
+  --text-secondary: #5f6368;
+  --text-tertiary: #9aa0a6;
+  --accent: #4f46e5;
+  --accent-light: #eef2ff;
+  --accent-hover: #4338ca;
+  --input-border: #d1d5db;
+  --input-focus: #4f46e5;
+  --input-bg: #ffffff;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 body {
   width: 100%;
   height: 100%;
-  font-family: 'NotoSans', sans-serif;
-  font-weight: normal;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
 }
@@ -26,59 +61,83 @@ textarea {
 }
 
 ul {
-   list-style: none;
-   padding-left: 0;
+  list-style: none;
+  padding-left: 0;
 }
 
-
+/* ---- Map ---- */
 #map {
-  height: 100vh; 
-  width: 100vw; 
+  height: 100vh;
+  width: 100vw;
   z-index: 0;
 }
 
+/* ---- Survey sidebar panel ---- */
 #info_page {
-  font-size:1em;
+  font-size: 1em;
   position: absolute;
   box-sizing: border-box;
-  max-width: 480px;
-  background-color: #fafafa;
-  padding: 10px 10px 10px 10px;
+  max-width: 460px;
+  width: 420px;
+  background: var(--panel-bg);
+  padding: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   height: 100%;
   z-index: 10;
-  transition: transform 0.3s ease;
-  opacity: 0.95;
-  border: 1px solid black;
-  margin-right:10px;
-  padding-bottom: 20px;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  border: none;
+  border-right: 1px solid var(--panel-border);
+  margin-right: 0;
+  padding-bottom: 0;
   transform: translateX(0);
+  box-shadow: var(--shadow-lg);
 }
 
 #info_page.hidden {
   transform: translateX(-100%);
 }
 
-.geo-inp{
-    height:0;
-    width:0;
-    visibility: hidden;
-    padding:0;
-    margin:0;
-    float:right;
+/* Scrollbar styling */
+#info_page::-webkit-scrollbar {
+  width: 4px;
+}
+#info_page::-webkit-scrollbar-track {
+  background: transparent;
+}
+#info_page::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
 }
 
-.header{
-  display: flex; 
-  font-size: 1.5em;
-  padding: 15px;
+.geo-inp {
+  height: 0;
+  width: 0;
+  visibility: hidden;
+  padding: 0;
+  margin: 0;
+  float: right;
 }
 
-#title{
+/* ---- Header ---- */
+.header {
+  display: flex;
+  align-items: center;
+  font-size: 1.15em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 20px 24px 8px;
+  color: var(--text-primary);
+  line-height: 1.3;
 }
 
-#content{
-  padding: 15px;
+#title {
+  flex: 1;
+}
+
+#content {
+  padding: 8px 24px 24px;
 }
 
 .glyph {
@@ -87,40 +146,369 @@ ul {
   height: 50%;
 }
 
-#section_title{
+#section_title {
   margin-left: 10px;
 }
 
-#showButton{
+/* ---- Show/hide toggle ---- */
+#showButton {
   position: absolute;
-  left:10px;
-  top: 5%;
+  left: 12px;
+  top: 20px;
   z-index: 9;
+  background: var(--panel-bg);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  transition: box-shadow var(--transition);
 }
 
-.drawbutton {
-  margin-bottom: 1em;
+#showButton:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+#closeButton {
+  position: absolute;
+  top: 20px;
+  right: 16px;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition: color var(--transition);
+  font-size: 20px !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+#closeButton:hover {
+  color: var(--text-primary);
+}
+
+/* ---- Progress indicator ---- */
+.survey-progress {
+  text-align: center;
+  font-size: 0.8em;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  padding: 0 24px 4px;
+  letter-spacing: 0.04em;
+}
+
+/* ---- Subheading ---- */
+.subheading {
+  color: var(--text-secondary);
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+/* ============================================
+   Question Cards
+   ============================================ */
+.question-card {
+  background: var(--card-bg);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--card-border);
+  margin-bottom: 12px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.question-card:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.question-card > label {
+  display: block;
+  font-weight: 500;
+  font-size: 0.92em;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  letter-spacing: 0.01em;
+}
+
+/* Text & number inputs */
+.question-card textarea,
+.question-card input[type="text"],
+.question-card input[type="number"] {
   width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  font-size: 1em;
+  font-family: inherit;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  transition: border-color var(--transition), box-shadow var(--transition);
+  outline: none;
 }
 
-.drawbutton p{
+.question-card textarea:focus,
+.question-card input[type="text"]:focus,
+.question-card input[type="number"]:focus {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.question-card textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Range slider */
+.question-card input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #e2e5ea;
+  outline: none;
+  margin: 12px 0;
+}
+
+.question-card input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(79, 70, 229, 0.3);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.question-card input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+}
+
+.question-card input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+
+/* ============================================
+   Rating (inline horizontal radio)
+   ============================================ */
+.question-card--rating > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.question-card--rating > div > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.question-card--rating label:has(input[type="radio"]) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 8px 4px;
+  margin: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  text-align: center;
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.question-card--rating label:has(input[type="radio"]):hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.question-card--rating label:has(input[type="radio"]:checked) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+}
+
+.question-card--rating label:has(input[type="radio"]:checked):hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.question-card--rating label:has(input[type="radio"])::before,
+.question-card--rating label:has(input[type="radio"])::after {
+  display: none;
+}
+
+.question-card--rating label > input[type="radio"] {
+  opacity: 0;
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* ============================================
+   Custom Radio & Checkbox
+   Django 4.x: <div><label><input> text</label></div>
+   ============================================ */
+.question-card label:has(input[type="radio"]),
+.question-card label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 12px 6px 40px;
+  cursor: pointer;
+  position: relative;
+  margin: 0 -4px;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition);
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+.question-card label:has(input[type="radio"]):hover,
+.question-card label:has(input[type="checkbox"]):hover {
+  background: rgba(79, 70, 229, 0.04);
+}
+
+.question-card label > input[type="radio"],
+.question-card label > input[type="checkbox"] {
+  opacity: 0;
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* --- Radio indicator --- */
+.question-card label:has(input[type="radio"])::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--input-border);
+  border-radius: 50%;
+  background: var(--input-bg);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.question-card label:has(input[type="radio"])::after {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%) scale(0);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.question-card label:has(input[type="radio"]:checked)::before {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.question-card label:has(input[type="radio"]:checked)::after {
+  transform: translateY(-50%) scale(1);
+}
+
+/* --- Checkbox indicator --- */
+.question-card label:has(input[type="checkbox"])::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--input-border);
+  border-radius: 6px;
+  background: var(--input-bg);
+  transition: background-color var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+.question-card label:has(input[type="checkbox"])::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 12px;
+  height: 7px;
+  border-left: 2.5px solid #fff;
+  border-bottom: 2.5px solid #fff;
+  transform: translateY(-65%) rotate(-45deg) scale(0);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.question-card label:has(input[type="checkbox"]:checked)::before {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.question-card label:has(input[type="checkbox"]:checked)::after {
+  transform: translateY(-65%) rotate(-45deg) scale(1);
+}
+
+/* ============================================
+   Geo Question Buttons
+   ============================================ */
+.drawbutton {
+  margin-bottom: 12px;
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  padding: 8px 12px;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+}
+
+.drawbutton:hover {
+  background: var(--card-hover);
+  border-color: rgba(79, 70, 229, 0.2);
+  box-shadow: var(--shadow-sm);
+}
+
+.drawbutton:active {
+  transform: scale(0.985);
+}
+
+.drawbutton p {
   margin-bottom: 0px;
 }
 
-/* Geo Question styling */
+/* Geo Question layout inside button */
 .geo-question {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 14px;
   text-align: left;
 }
 
 .geo-question-icon {
   flex-shrink: 0;
-  width: 60px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 10px;
+  background: rgba(79, 70, 229, 0.08);
 }
 
 .geo-question-text {
@@ -131,15 +519,19 @@ ul {
 .geo-question-title {
   margin: 0;
   font-weight: 500;
+  font-size: 0.95em;
+  color: var(--text-primary);
 }
 
 .geo-question-subtitle {
-  margin: 0;
-  font-size: 0.9em;
-  color: #666;
+  margin: 2px 0 0;
+  font-size: 0.85em;
+  color: var(--text-secondary);
 }
 
-/* Layer popup controls (save/edit/delete buttons) */
+/* ============================================
+   Layer popup controls
+   ============================================ */
 .layer-controls {
   display: flex;
   flex-wrap: nowrap;
@@ -155,41 +547,59 @@ ul {
   min-width: 50px;
 }
 
+/* ============================================
+   Navigation buttons
+   ============================================ */
 .next_button {
-  float:right;
+  float: right;
 }
 
 .prev_button {
-  float:left;
+  float: left;
 }
 
-#drawbar{
+.navig_buttons {
+  padding: 16px 24px 24px;
+}
+
+.navig_buttons .btn-dark {
+  background: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-sm) !important;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 0.95em;
+  padding: 12px 0;
+  letter-spacing: 0.01em;
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.navig_buttons .btn-dark:hover {
+  background: var(--accent);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+}
+
+.navig_buttons .btn-dark:active {
+  transform: scale(0.97);
+}
+
+#navig_buttons {
+  padding-top: 8px;
+}
+
+/* ============================================
+   Drawbar
+   ============================================ */
+#drawbar {
   position: absolute;
   left: 45%;
   z-index: 9;
-  top:5%;
+  top: 5%;
 }
 
-#closeButton{
-  position: absolute;
-  top:10px;
-  right:10px;
-}
-
-#navig_buttons{
-	padding-top: 20px;
-}
-
-.survey-progress {
-  text-align: center;
-  font-size: 0.85em;
-  color: #999;
-  padding: 2px 0 4px;
-}
-
-
-
-/* Crosshair overlay for touch point placement */
+/* ============================================
+   Crosshair overlay
+   ============================================ */
 #crosshair-overlay {
   position: fixed;
   top: 0;
@@ -209,7 +619,7 @@ ul {
   width: 40px;
   height: 64px;
   margin-bottom: -10px;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
 
 #crosshair-overlay .crosshair-pin svg {
@@ -239,42 +649,70 @@ ul {
 #crosshair-overlay .crosshair-apply {
   height: 48px;
   padding: 0 24px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: none;
-  font-size: 16px;
+  font-size: 15px;
+  font-family: inherit;
+  font-weight: 500;
   color: #fff;
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+#crosshair-overlay .crosshair-cancel:active,
+#crosshair-overlay .crosshair-apply:active {
+  transform: scale(0.96);
 }
 
 #crosshair-overlay .crosshair-cancel {
-  background-color: #dc3545;
+  background-color: var(--danger);
 }
 
 #crosshair-overlay .crosshair-apply {
-  background-color: #28a745;
+  background-color: var(--success);
 }
 
+/* ============================================
+   Form validation errors
+   ============================================ */
+.question-card .errorlist {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 8px;
+}
+
+.question-card .errorlist li {
+  color: var(--danger);
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
+/* ============================================
+   Mobile
+   ============================================ */
 @media only screen and (max-width: 768px) {
 
   #info_page {
-    font-size:1.2em;
+    font-size: 1.05em;
     position: absolute;
     box-sizing: border-box;
-    width: 85%;
-    max-width: 85%;
+    width: 88%;
+    max-width: 88%;
     height: 100%;
-    background-color: #fafafa;
-    padding: 10px 10px 10px 10px;
+    background: var(--panel-bg);
+    padding: 0;
     overflow-y: auto;
     z-index: 10;
-    transition: transform 0.3s ease;
-    opacity: 0.95;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1;
     left: 0;
     top: 0;
-    border: 1px solid black;
+    border: none;
+    border-right: 1px solid var(--panel-border);
+    box-shadow: var(--shadow-lg);
     transform: translateX(0);
   }
 

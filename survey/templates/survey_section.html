@@ -1,5 +1,5 @@
 {% extends 'base_survey_template.html' %}
-{% load hash i18n %}
+{% load hash i18n question_utils %}
 
 {% block title %}
     {{ section_title }}
@@ -18,7 +18,19 @@
 	<div class='questions'>
 		<form method="post" id="section_question_form">
 			{% csrf_token %}
-        	{{ form.as_p }}
+			{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+			{% for field in form.visible_fields %}
+				{% if field|is_card_question %}
+					<div class="question-card{% if field|question_type == 'rating' %} question-card--rating{% endif %}">
+						{% if field.label %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
+						{{ field.errors }}
+						{{ field }}
+					</div>
+				{% else %}
+					{{ field.errors }}
+					{{ field }}
+				{% endif %}
+			{% endfor %}
         </form>
 	</div>
 {% endblock %}
@@ -28,22 +40,18 @@
         <div class="row">
             <div class="col align-self-start">
                 {% if section.prev_section %}
-                    <a class="btn btn-dark prev_button" style="border-radius: 0; width: 80%" href="../{{ section.prev_section }}" role="button">{% trans "Back" %}</a>
-                   
+                    <a class="btn btn-dark prev_button" style="width: 80%" href="../{{ section.prev_section }}" role="button">{% trans "Back" %}</a>
                 {% endif %}
             </div>
             <div class="col align-self-end">
                 {% if section.next_section %}
-                    <input type="submit" class="btn btn-dark next_button" style="border-radius: 0; width: 80%" form="section_question_form" value="{% trans "Next" %}">
-                    <!-- <a class="btn btn-primary prev_button" href="../{{ section.next_section }}" role="button">{% trans "Next" %}</a> -->
+                    <input type="submit" class="btn btn-dark next_button" style="width: 80%" form="section_question_form" value="{% trans "Next" %}">
                 {% else %}
-                    <input type="submit" class="btn btn-dark next_button" style="border-radius: 0; width: 80%" form="section_question_form" value="{% trans "Finish" %}">
+                    <input type="submit" class="btn btn-dark next_button" style="width: 80%" form="section_question_form" value="{% trans "Finish" %}">
                 {% endif %}
-                
             </div>
         </div>
     </div>
-
 {% endblock %}
 
 {% block section_scripts %}
