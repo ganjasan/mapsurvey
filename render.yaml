@@ -23,7 +23,11 @@ services:
       - key: DEBUG
         value: "0"
       - key: DJANGO_ALLOWED_HOSTS
-        value: "localhost"
+        value: "localhost mapsurvey.org mapsurvey.render.com"
       - key: MAPBOX_ACCESS_TOKEN
         sync: false
+    disk:
+      name: media-storage
+      mountPath: /home/app/web/mediafiles
+      sizeGB: 1
     healthCheckPath: /
