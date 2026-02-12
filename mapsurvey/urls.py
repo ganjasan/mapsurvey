@@ -16,7 +16,6 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
-from django.conf.urls.static import static
 
 
 urlpatterns = [
@@ -32,6 +31,11 @@ if settings.DEBUG:
     urlpatterns = [
         path('__debug__/', include(debug_toolbar.urls)),
     ] + urlpatterns
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-
+# Serve media from local disk (in production whitenoise handles only static files)
+if not getattr(settings, 'USE_S3', False):
+    from django.urls import re_path
+    from django.views.static import serve
+    urlpatterns += [
+        re_path(r'^%s(?P<path>.*)$' % settings.MEDIA_URL.lstrip('/'), serve, {'document_root': settings.MEDIA_ROOT}),
+    ]
