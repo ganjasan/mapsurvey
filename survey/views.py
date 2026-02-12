@@ -624,6 +624,7 @@ def survey_thanks(request, survey_name):
 	return render(request, 'survey_thanks.html', {
 		'survey_name': survey_name,
 		'thanks_html': thanks_html,
+		'lang': lang or 'en',
 	})
 
 
