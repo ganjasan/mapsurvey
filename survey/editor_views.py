@@ -130,14 +130,17 @@ def editor_section_create(request, survey_name):
     survey = get_object_or_404(SurveyHeader, name=survey_name)
     sections = _get_sections_ordered(survey)
 
-    # Generate next section number
+    # Generate next section number (avoid name collisions)
+    existing_names = set(s.name for s in sections)
     count = len(sections) + 1
+    while f'section_{count}' in existing_names:
+        count += 1
     section = SurveySection.objects.create(
         survey_header=survey,
         name=f'section_{count}',
         title=f'Section {count}',
         code=f'S{count}',
-        is_head=(count == 1),
+        is_head=(not sections),
     )
 
     # Append to linked list
@@ -225,7 +228,9 @@ def editor_section_delete(request, survey_name, section_id):
             next_sec.save(update_fields=['is_head'])
 
     section.delete()
-    return HttpResponse('')
+    response = HttpResponse('')
+    response['HX-Trigger-After-Swap'] = 'sectionDeleted'
+    return response
 
 
 # ─── Section reordering ───────────────────────────────────────────────────────

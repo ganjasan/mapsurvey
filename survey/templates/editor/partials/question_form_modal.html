@@ -143,7 +143,17 @@
     window.addChoiceRow = function(code, name) {
         var tbody = document.getElementById('choices-rows');
         var row = document.createElement('tr');
-        var codeVal = code !== undefined ? code : '';
+        var codeVal;
+        if (code !== undefined) {
+            codeVal = code;
+        } else {
+            var maxCode = 0;
+            tbody.querySelectorAll('.choice-code').forEach(function(input) {
+                var v = parseInt(input.value);
+                if (!isNaN(v) && v > maxCode) maxCode = v;
+            });
+            codeVal = maxCode + 1;
+        }
         var nameVal = '';
         var langVals = {};
 

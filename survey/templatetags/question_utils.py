@@ -2,7 +2,7 @@ from django import template
 
 register = template.Library()
 
-CARD_INPUT_TYPES = {'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating'}
+CARD_INPUT_TYPES = {'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating', 'datetime'}
 
 
 @register.filter

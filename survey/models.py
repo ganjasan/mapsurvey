@@ -60,7 +60,7 @@ INPUT_TYPE_CHOICES = (
     ("line", _("Geo Line")),
     ("polygon", _("Geo Polygon")),
     ("image", _("Image")),
-    ("text_line", _("Line")),
+    ("text_line", _("Single Line Text")),
     ("html", _("HTML")),
 )
 

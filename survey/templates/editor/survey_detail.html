@@ -153,6 +153,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     body: JSON.stringify({ section_ids: ids })
                 });
+                // Move HEAD badge to the first section
+                sectionsList.querySelectorAll('.badge-info').forEach(function(b) { b.remove(); });
+                var first = sectionsList.children[0];
+                if (first) {
+                    var badge = document.createElement('span');
+                    badge.className = 'badge badge-info';
+                    badge.style.fontSize = '0.65rem';
+                    badge.textContent = 'HEAD';
+                    first.querySelector('.section-title').after(badge);
+                }
             }
         });
     }
@@ -218,11 +228,22 @@ document.addEventListener('DOMContentLoaded', function() {
         refreshPreview();
     });
 
-    // After section delete, load first remaining section
-    document.body.addEventListener('htmx:afterSwap', function(evt) {
-        if (evt.detail.xhr && evt.detail.xhr.status === 200 && evt.detail.target.closest && evt.detail.target.closest('.section-item')) {
-            var first = document.querySelector('.section-item');
-            if (first) first.click();
+    // After section delete, update HEAD badge and load first remaining section
+    document.body.addEventListener('sectionDeleted', function() {
+        sectionsList.querySelectorAll('.badge-info').forEach(function(b) { b.remove(); });
+        var first = document.querySelector('.section-item');
+        if (first) {
+            var badge = document.createElement('span');
+            badge.className = 'badge badge-info';
+            badge.style.fontSize = '0.65rem';
+            badge.textContent = 'HEAD';
+            first.querySelector('.section-title').after(badge);
+            first.click();
+        } else {
+            document.getElementById('section-content').innerHTML =
+                '<p class="text-muted p-4">No sections yet. Click "New Section" to add one.</p>';
+            var iframe = document.getElementById('preview-frame');
+            if (iframe) iframe.src = 'about:blank';
         }
     });
 

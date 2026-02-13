@@ -181,6 +181,9 @@ class SurveySectionAnswerForm(forms.Form):
             choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
             return forms.ChoiceField(widget=forms.RadioSelect(attrs={'class': 'form-check-inline', 'style': 'margin-right:0;'}), choices=choices, label=label, required=required)
 
+        elif input_type == 'datetime':
+            return forms.DateTimeField(widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}), label=label, required=required)
+
         elif input_type == "html":
             return HTMLField(widget=HTMLTextWidget, label=False, title = label, subtitle=sublabel)
         else:
