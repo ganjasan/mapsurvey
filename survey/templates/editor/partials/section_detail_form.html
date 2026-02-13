@@ -1,0 +1,72 @@
+{% load static %}
+<div class="section-form-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h6><i class="fas fa-layer-group"></i> Section: {{ section.title|default:section.name }}</h6>
+        <button class="btn btn-sm btn-outline-secondary"
+                hx-get="{% url 'editor_section_map_picker' survey.name section.id %}"
+                hx-target="#mapPickerModalBody"
+                hx-swap="innerHTML"
+                data-toggle="modal" data-target="#mapPickerModal">
+            <i class="fas fa-map-marker-alt"></i> Map Position
+        </button>
+    </div>
+    <form method="post" action="{% url 'editor_section_detail' survey.name section.id %}"
+          hx-post="{% url 'editor_section_detail' survey.name section.id %}"
+          hx-swap="none"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+        {% endfor %}
+
+        {% if survey.available_languages %}
+        <div class="translations-section">
+            <p style="font-size:0.85rem;font-weight:600;color:#6b7280;margin-bottom:0.5rem;">Translations</p>
+            {% for lang in survey.available_languages %}
+            <fieldset style="margin-bottom:0.5rem;">
+                <legend style="font-size:0.8rem;font-weight:600;color:var(--accent);">{{ lang|upper }}</legend>
+                <div class="form-group">
+                    <label style="font-size:0.8rem;">Title ({{ lang }})</label>
+                    <input type="text" name="translation_{{ lang }}_title" class="form-control form-control-sm"
+                           value="{% for t_lang, t in translations.items %}{% if t_lang == lang %}{{ t.title|default:'' }}{% endif %}{% endfor %}">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.8rem;">Subheading ({{ lang }})</label>
+                    <input type="text" name="translation_{{ lang }}_subheading" class="form-control form-control-sm"
+                           value="{% for t_lang, t in translations.items %}{% if t_lang == lang %}{{ t.subheading|default:'' }}{% endif %}{% endfor %}">
+                </div>
+            </fieldset>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="margin-top:1rem;">
+            <button type="submit" class="btn btn-sm btn-primary">Save Section</button>
+        </div>
+    </form>
+</div>
+
+<!-- Questions -->
+<div style="margin-top:1.25rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+        <h6 style="margin:0;font-weight:600;"><i class="fas fa-list"></i> Questions</h6>
+    </div>
+
+    <ul class="question-list" id="questions-list">
+        {% for question in questions %}
+            {% include "editor/partials/question_list_item.html" %}
+        {% endfor %}
+    </ul>
+
+    <button class="add-question-btn"
+            hx-get="{% url 'editor_question_create' survey.name section.id %}"
+            hx-target="#questionModalBody"
+            hx-swap="innerHTML"
+            data-toggle="modal" data-target="#questionModal">
+        <i class="fas fa-plus"></i> New Question
+    </button>
+</div>

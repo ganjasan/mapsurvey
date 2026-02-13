@@ -4757,3 +4757,336 @@ class QuestionCardStylingTest(TestCase):
         response = self.client.get('/surveys/card_survey/section1/')
         content = response.content.decode()
         self.assertEqual(content.count('class="question-card"'), 1)
+
+
+class EditorAuthTest(TestCase):
+    """Tests that all editor views require authentication."""
+
+    def test_unauthenticated_redirects_to_login(self):
+        """
+        GIVEN an unauthenticated user
+        WHEN they access any editor URL
+        THEN they are redirected to the login page
+        """
+        urls = [
+            '/editor/surveys/new/',
+            '/editor/surveys/test/',
+        ]
+        for url in urls:
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 302, f"{url} should redirect")
+            self.assertIn('login', response.url, f"{url} should redirect to login")
+
+
+class EditorSurveyCreateTest(TestCase):
+    """Tests for survey creation via the editor."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='editor', password='pass')
+        self.client.login(username='editor', password='pass')
+
+    def test_create_survey_happy_path(self):
+        """
+        GIVEN an authenticated user
+        WHEN they submit the survey creation form with a valid name
+        THEN a SurveyHeader is created with a default section
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'my_new_survey',
+            'redirect_url': '#',
+            'visibility': 'private',
+        })
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='my_new_survey')
+        self.assertIsNotNone(survey)
+        sections = SurveySection.objects.filter(survey_header=survey)
+        self.assertEqual(sections.count(), 1)
+        self.assertTrue(sections.first().is_head)
+
+    def test_create_survey_duplicate_name_rejected(self):
+        """
+        GIVEN an existing survey with name 'dup_survey'
+        WHEN a user tries to create another survey with the same name
+        THEN the form shows an error and no new survey is created
+        """
+        SurveyHeader.objects.create(name='dup_survey')
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'dup_survey',
+            'redirect_url': '#',
+            'visibility': 'private',
+        })
+        self.assertEqual(response.status_code, 200)  # re-renders form
+        self.assertEqual(SurveyHeader.objects.filter(name='dup_survey').count(), 1)
+
+    def test_create_survey_get_renders_form(self):
+        """
+        GIVEN an authenticated user
+        WHEN they GET the creation page
+        THEN the form is rendered
+        """
+        response = self.client.get('/editor/surveys/new/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Create New Survey')
+
+
+class EditorSectionCRUDTest(TestCase):
+    """Tests for section CRUD in the editor."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='editor', password='pass')
+        self.client.login(username='editor', password='pass')
+        self.survey = SurveyHeader.objects.create(name='test_editor', visibility='private')
+        self.section_a = SurveySection.objects.create(
+            survey_header=self.survey, name='a', title='Section A', code='SA', is_head=True,
+        )
+        self.section_b = SurveySection.objects.create(
+            survey_header=self.survey, name='b', title='Section B', code='SB',
+        )
+        self.section_a.next_section = self.section_b
+        self.section_a.save(update_fields=['next_section'])
+        self.section_b.prev_section = self.section_a
+        self.section_b.save(update_fields=['prev_section'])
+
+    def test_create_section_appends_to_linked_list(self):
+        """
+        GIVEN a survey with sections [A, B]
+        WHEN a new section is created
+        THEN it is appended after B in the linked list
+        """
+        response = self.client.post(
+            f'/editor/surveys/test_editor/sections/new/',
+            HTTP_X_CSRFTOKEN='test',
+        )
+        self.assertEqual(response.status_code, 200)
+        new_section = SurveySection.objects.filter(survey_header=self.survey).exclude(
+            id__in=[self.section_a.id, self.section_b.id]
+        ).first()
+        self.assertIsNotNone(new_section)
+        self.section_b.refresh_from_db()
+        self.assertEqual(self.section_b.next_section_id, new_section.id)
+        self.assertEqual(new_section.prev_section_id, self.section_b.id)
+
+    def test_delete_section_relinks_neighbors(self):
+        """
+        GIVEN sections [A → B]
+        WHEN B is deleted
+        THEN A.next_section becomes None
+        """
+        self.client.post(f'/editor/surveys/test_editor/sections/{self.section_b.id}/delete/')
+        self.section_a.refresh_from_db()
+        self.assertIsNone(self.section_a.next_section_id)
+        self.assertFalse(SurveySection.objects.filter(id=self.section_b.id).exists())
+
+    def test_edit_section_title(self):
+        """
+        GIVEN a section with title 'Section A'
+        WHEN the user updates the title to 'Introduction'
+        THEN the section title is updated
+        """
+        response = self.client.post(
+            f'/editor/surveys/test_editor/sections/{self.section_a.id}/',
+            {'title': 'Introduction', 'subheading': '', 'code': 'SA'},
+        )
+        self.section_a.refresh_from_db()
+        self.assertEqual(self.section_a.title, 'Introduction')
+
+
+class EditorSectionReorderTest(TestCase):
+    """Tests for section drag-and-drop reordering."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='editor', password='pass')
+        self.client.login(username='editor', password='pass')
+        self.survey = SurveyHeader.objects.create(name='reorder_test', visibility='private')
+        self.s1 = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='S1', code='S1', is_head=True,
+        )
+        self.s2 = SurveySection.objects.create(
+            survey_header=self.survey, name='s2', title='S2', code='S2',
+        )
+        self.s3 = SurveySection.objects.create(
+            survey_header=self.survey, name='s3', title='S3', code='S3',
+        )
+        # Link: s1 → s2 → s3
+        self.s1.next_section = self.s2
+        self.s1.save(update_fields=['next_section'])
+        self.s2.prev_section = self.s1
+        self.s2.next_section = self.s3
+        self.s2.save(update_fields=['prev_section', 'next_section'])
+        self.s3.prev_section = self.s2
+        self.s3.save(update_fields=['prev_section'])
+
+    def test_reorder_rebuilds_linked_list(self):
+        """
+        GIVEN sections [S1, S2, S3]
+        WHEN reordered to [S3, S1, S2]
+        THEN linked list is rebuilt: S3(head) → S1 → S2
+        """
+        response = self.client.post(
+            '/editor/surveys/reorder_test/sections/reorder/',
+            data=json.dumps({'section_ids': [self.s3.id, self.s1.id, self.s2.id]}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 204)
+
+        self.s1.refresh_from_db()
+        self.s2.refresh_from_db()
+        self.s3.refresh_from_db()
+
+        self.assertTrue(self.s3.is_head)
+        self.assertFalse(self.s1.is_head)
+        self.assertFalse(self.s2.is_head)
+
+        self.assertEqual(self.s3.next_section_id, self.s1.id)
+        self.assertIsNone(self.s3.prev_section_id)
+        self.assertEqual(self.s1.prev_section_id, self.s3.id)
+        self.assertEqual(self.s1.next_section_id, self.s2.id)
+        self.assertEqual(self.s2.prev_section_id, self.s1.id)
+        self.assertIsNone(self.s2.next_section_id)
+
+
+class EditorQuestionCRUDTest(TestCase):
+    """Tests for question CRUD in the editor."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='editor', password='pass')
+        self.client.login(username='editor', password='pass')
+        self.survey = SurveyHeader.objects.create(name='q_test', visibility='private')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section 1', code='S1', is_head=True,
+        )
+
+    def test_create_text_question(self):
+        """
+        GIVEN a section with no questions
+        WHEN a text question is created
+        THEN the question appears in the section with correct attributes
+        """
+        response = self.client.post(
+            f'/editor/surveys/q_test/sections/{self.section.id}/questions/new/',
+            {'name': 'Your feedback', 'input_type': 'text', 'color': '#000000'},
+        )
+        self.assertEqual(response.status_code, 200)
+        q = Question.objects.get(survey_section=self.section, name='Your feedback')
+        self.assertEqual(q.input_type, 'text')
+        self.assertEqual(q.order_number, 1)
+
+    def test_create_choice_question_with_choices(self):
+        """
+        GIVEN a section
+        WHEN a choice question is created with choices JSON
+        THEN the question has correct choices
+        """
+        choices = [{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}]
+        response = self.client.post(
+            f'/editor/surveys/q_test/sections/{self.section.id}/questions/new/',
+            {
+                'name': 'Do you agree?',
+                'input_type': 'choice',
+                'color': '#000000',
+                'choices_json': json.dumps(choices),
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        q = Question.objects.get(survey_section=self.section, name='Do you agree?')
+        self.assertEqual(q.choices, choices)
+
+    def test_delete_question(self):
+        """
+        GIVEN a section with one question
+        WHEN the question is deleted
+        THEN it no longer exists
+        """
+        q = Question.objects.create(
+            survey_section=self.section, name='Delete me', input_type='text',
+        )
+        response = self.client.post(f'/editor/surveys/q_test/questions/{q.id}/delete/')
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Question.objects.filter(id=q.id).exists())
+
+    def test_edit_question(self):
+        """
+        GIVEN a text question
+        WHEN it is edited to change the name
+        THEN the name is updated
+        """
+        q = Question.objects.create(
+            survey_section=self.section, name='Old name', input_type='text',
+        )
+        response = self.client.post(
+            f'/editor/surveys/q_test/questions/{q.id}/edit/',
+            {'name': 'New name', 'input_type': 'text', 'color': '#000000'},
+        )
+        self.assertEqual(response.status_code, 200)
+        q.refresh_from_db()
+        self.assertEqual(q.name, 'New name')
+
+
+class EditorQuestionReorderTest(TestCase):
+    """Tests for question reordering."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='editor', password='pass')
+        self.client.login(username='editor', password='pass')
+        self.survey = SurveyHeader.objects.create(name='qr_test', visibility='private')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', code='S1', is_head=True,
+        )
+        self.q1 = Question.objects.create(
+            survey_section=self.section, name='Q1', input_type='text', order_number=0,
+        )
+        self.q2 = Question.objects.create(
+            survey_section=self.section, name='Q2', input_type='text', order_number=1,
+        )
+        self.q3 = Question.objects.create(
+            survey_section=self.section, name='Q3', input_type='text', order_number=2,
+        )
+
+    def test_reorder_updates_order_number(self):
+        """
+        GIVEN questions [Q1(0), Q2(1), Q3(2)]
+        WHEN reordered to [Q3, Q1, Q2]
+        THEN order_numbers become Q3(0), Q1(1), Q2(2)
+        """
+        response = self.client.post(
+            '/editor/surveys/qr_test/questions/reorder/',
+            data=json.dumps({'question_ids': [self.q3.id, self.q1.id, self.q2.id]}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 204)
+        self.q1.refresh_from_db()
+        self.q2.refresh_from_db()
+        self.q3.refresh_from_db()
+        self.assertEqual(self.q3.order_number, 0)
+        self.assertEqual(self.q1.order_number, 1)
+        self.assertEqual(self.q2.order_number, 2)
+
+
+class EditorSubquestionTest(TestCase):
+    """Tests for sub-question creation."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='editor', password='pass')
+        self.client.login(username='editor', password='pass')
+        self.survey = SurveyHeader.objects.create(name='sub_test', visibility='private')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', code='S1', is_head=True,
+        )
+        self.geo_question = Question.objects.create(
+            survey_section=self.section, name='Mark location', input_type='point',
+        )
+
+    def test_create_subquestion(self):
+        """
+        GIVEN a geo question
+        WHEN a sub-question is created for it
+        THEN the sub-question has parent_question_id set correctly
+        """
+        response = self.client.post(
+            f'/editor/surveys/sub_test/questions/{self.geo_question.id}/subquestions/new/',
+            {'name': 'Rate this place', 'input_type': 'choice', 'color': '#000000',
+             'choices_json': json.dumps([{"code": 1, "name": "Good"}, {"code": 2, "name": "Bad"}])},
+        )
+        self.assertEqual(response.status_code, 200)
+        sub = Question.objects.get(name='Rate this place')
+        self.assertEqual(sub.parent_question_id_id, self.geo_question.id)

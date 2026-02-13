@@ -1,0 +1,24 @@
+<div class="modal-header">
+    <h5 class="modal-title">Survey Settings — {{ survey.name }}</h5>
+    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+</div>
+<form method="post" action="{% url 'editor_survey_settings' survey.name %}"
+      hx-post="{% url 'editor_survey_settings' survey.name %}"
+      hx-swap="none"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    {% csrf_token %}
+    <div class="modal-body">
+        {% for field in form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+            {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+    </div>
+</form>

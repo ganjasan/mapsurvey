@@ -1,0 +1,71 @@
+<div class="modal-header">
+    <h5 class="modal-title">Set Map Position — {{ section.title|default:section.name }}</h5>
+    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+</div>
+<div class="modal-body" style="padding:0;">
+    <div id="map-picker" style="height:400px;width:100%;"></div>
+    <div style="padding:0.75rem 1rem;font-size:0.85rem;color:#6b7280;">
+        Click on the map to set the starting position. Adjust zoom as needed.
+        <br>
+        <span id="map-coords">
+            Lat: {{ section.start_map_postion.y|floatformat:5 }},
+            Lng: {{ section.start_map_postion.x|floatformat:5 }},
+            Zoom: {{ section.start_map_zoom }}
+        </span>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+    <button type="button" class="btn btn-primary" id="save-map-position">Save Position</button>
+</div>
+
+<script>
+(function() {
+    var lat = {{ section.start_map_postion.y }};
+    var lng = {{ section.start_map_postion.x }};
+    var zoom = {{ section.start_map_zoom }};
+
+    // Wait for modal to be visible before initializing map
+    setTimeout(function() {
+        var map = L.map('map-picker').setView([lat, lng], zoom);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        var marker = L.marker([lat, lng]).addTo(map);
+
+        map.on('click', function(e) {
+            lat = e.latlng.lat;
+            lng = e.latlng.lng;
+            marker.setLatLng(e.latlng);
+            document.getElementById('map-coords').textContent =
+                'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + map.getZoom();
+        });
+
+        map.on('zoomend', function() {
+            zoom = map.getZoom();
+            document.getElementById('map-coords').textContent =
+                'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
+        });
+
+        document.getElementById('save-map-position').addEventListener('click', function() {
+            zoom = map.getZoom();
+            var formData = new FormData();
+            formData.append('lat', lat);
+            formData.append('lng', lng);
+            formData.append('zoom', zoom);
+
+            fetch('{% url "editor_section_map_picker" survey.name section.id %}', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                body: formData
+            }).then(function() {
+                $('#mapPickerModal').modal('hide');
+            });
+        });
+
+        // Fix map rendering in modal
+        map.invalidateSize();
+    }, 300);
+})();
+</script>

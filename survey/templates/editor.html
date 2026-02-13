@@ -37,7 +37,7 @@
 				<tr>
 					<td><a href="../surveys/{{survey.name}}">{{survey.name}}</a></td>
 					<td>
-						<a href="#">Edit</a> |
+						<a href="{% url 'editor_survey_detail' survey.name %}">Edit</a> |
 						<a href="../surveys/{{survey.name}}/download">Download Data</a> |
 						<div class="dropdown d-inline">
 							<a class="dropdown-toggle" href="#" role="button" id="exportDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -57,7 +57,7 @@
 		</table>
 
 		<div class="mt-3">
-			<button type="button" class="btn btn-outline-primary">New Survey</button>
+			<a href="{% url 'editor_survey_create' %}" class="btn btn-outline-primary">New Survey</a>
 
 			<button type="button" class="btn btn-outline-secondary" data-toggle="modal" data-target="#importModal">
 				Import Survey

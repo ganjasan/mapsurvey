@@ -16,7 +16,7 @@
         {% endif %}
     </div>
 	<div class='questions'>
-		<form method="post" id="section_question_form">
+		<form method="post" id="section_question_form" {% if preview %}onsubmit="return false;"{% endif %}>
 			{% csrf_token %}
 			{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
 			{% for field in form.visible_fields %}
@@ -36,6 +36,7 @@
 {% endblock %}
 
 {% block navig_buttons %}
+    {% if not preview %}
     <div class="container navig_buttons">
         <div class="row">
             <div class="col align-self-start">
@@ -52,6 +53,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 {% endblock %}
 
 {% block section_scripts %}

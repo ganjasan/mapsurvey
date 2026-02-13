@@ -1,0 +1,30 @@
+{% extends "editor/editor_base.html" %}
+
+{% block page_title %}New Survey{% endblock %}
+
+{% block navbar_content %}
+<span class="survey-name">New Survey</span>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 2rem auto; padding: 0 1rem;">
+    <div class="section-form-card">
+        <h5 style="margin-bottom: 1.5rem; font-weight: 700;">Create New Survey</h5>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+                {% for error in field.errors %}<div class="text-danger" style="font-size:0.85rem;">{{ error }}</div>{% endfor %}
+            </div>
+            {% endfor %}
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+                <button type="submit" class="btn btn-primary">Create Survey</button>
+                <a href="{% url 'editor' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

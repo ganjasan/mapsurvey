@@ -1,0 +1,251 @@
+{% load static %}
+<html>
+<head>
+    <title>{% block page_title %}Survey Editor{% endblock %} – Mapsurvey</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --accent: #4f46e5;
+            --accent-light: #e0e7ff;
+            --sidebar-width: 260px;
+            --preview-width: 380px;
+            --border-color: #e5e7eb;
+            --bg-muted: #f9fafb;
+            --radius: 8px;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            background: var(--bg-muted);
+            color: #1f2937;
+        }
+        .editor-navbar {
+            background: #fff;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .editor-navbar a { color: #6b7280; text-decoration: none; }
+        .editor-navbar a:hover { color: var(--accent); }
+        .editor-navbar .survey-name { font-weight: 700; color: #111827; font-size: 1.1rem; }
+        .editor-navbar .spacer { flex: 1; }
+
+        .editor-container {
+            display: flex;
+            height: calc(100vh - 49px);
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .editor-sidebar {
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            background: #fff;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .section-list { list-style: none; padding: 0; margin: 0; flex: 1; }
+        .section-item {
+            display: flex;
+            align-items: center;
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+            transition: background 0.15s;
+            gap: 0.5rem;
+        }
+        .section-item:hover { background: var(--bg-muted); }
+        .section-item.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+        .section-item .drag-handle {
+            cursor: grab;
+            color: #d1d5db;
+            font-size: 0.9rem;
+            user-select: none;
+        }
+        .section-item .drag-handle:active { cursor: grabbing; }
+        .section-item .section-title { flex: 1; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .section-item .section-delete {
+            opacity: 0;
+            color: #ef4444;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 2px 4px;
+        }
+        .section-item:hover .section-delete { opacity: 0.6; }
+        .section-item .section-delete:hover { opacity: 1; }
+        .sidebar-footer { padding: 0.75rem 1rem; border-top: 1px solid var(--border-color); }
+
+        /* Center panel */
+        .editor-main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+        .section-form-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+        .section-form-card h6 { margin-bottom: 1rem; font-weight: 600; }
+        .section-form-card .form-group { margin-bottom: 0.75rem; }
+        .section-form-card label { font-size: 0.85rem; font-weight: 500; color: #374151; }
+
+        /* Question list */
+        .question-list { list-style: none; padding: 0; margin: 0; }
+        .question-item {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            gap: 0.75rem;
+            transition: box-shadow 0.15s;
+        }
+        .question-item:hover { box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .question-item .drag-handle { cursor: grab; color: #d1d5db; user-select: none; }
+        .question-item .q-name { flex: 1; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .question-item .badge { font-size: 0.7rem; font-weight: 500; }
+        .question-item .q-actions { display: flex; gap: 0.25rem; }
+        .question-item .q-actions button {
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #9ca3af;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .question-item .q-actions button:hover { background: #f3f4f6; color: #374151; }
+        .question-item .q-actions button.text-danger:hover { color: #ef4444; background: #fef2f2; }
+
+        .subquestion-list {
+            list-style: none;
+            padding: 0;
+            margin: 0.25rem 0 0 2rem;
+        }
+        .subquestion-list .question-item {
+            border-left: 3px solid var(--accent-light);
+            font-size: 0.85rem;
+        }
+
+        .add-question-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px dashed #d1d5db;
+            border-radius: var(--radius);
+            background: transparent;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .add-question-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Preview panel */
+        .editor-preview {
+            width: var(--preview-width);
+            min-width: var(--preview-width);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+        }
+        .preview-header {
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .preview-frame {
+            flex: 1;
+            border: none;
+            width: 100%;
+        }
+
+        /* Modal overrides */
+        .editor-modal .modal-content { border-radius: var(--radius); }
+        .editor-modal .modal-header { border-bottom: 1px solid var(--border-color); }
+        .editor-modal .modal-footer { border-top: 1px solid var(--border-color); }
+
+        /* Choices editor */
+        .choices-editor { margin-top: 1rem; }
+        .choices-editor table { width: 100%; font-size: 0.85rem; }
+        .choices-editor th { font-weight: 500; color: #6b7280; padding: 0.25rem 0.5rem; }
+        .choices-editor td { padding: 0.25rem 0.5rem; }
+        .choices-editor input { width: 100%; }
+        .choices-editor .btn-sm { padding: 0.15rem 0.5rem; font-size: 0.8rem; }
+
+        /* Translations section */
+        .translations-section { margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem; }
+        .translations-section legend { font-size: 0.85rem; font-weight: 600; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% block navbar %}
+    <div class="editor-navbar">
+        <a href="{% url 'editor' %}"><i class="fas fa-arrow-left"></i> Dashboard</a>
+        {% block navbar_content %}{% endblock %}
+        <span class="spacer"></span>
+        {% if user.is_authenticated %}
+            <span style="color:#9ca3af;font-size:0.85rem;">{{ user.get_username }}</span>
+            <a href="{% url 'logout' %}" style="font-size:0.85rem;">Logout</a>
+        {% endif %}
+    </div>
+    {% endblock %}
+
+    {% if messages %}
+    <div style="padding: 0.5rem 1rem;">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2" role="alert" style="font-size:0.85rem;">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

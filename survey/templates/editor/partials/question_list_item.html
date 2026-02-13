@@ -1,0 +1,41 @@
+<li class="question-item" data-question-id="{{ question.id }}">
+    <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
+    <span class="q-name">{{ question.name|default:"(unnamed)" }}</span>
+    <span class="badge badge-secondary">{{ question.get_input_type_display }}</span>
+    {% if question.required %}<span class="badge badge-danger">Required</span>{% endif %}
+    <span class="q-actions">
+        <button title="Edit"
+                hx-get="{% url 'editor_question_edit' survey.name question.id %}"
+                hx-target="#questionModalBody"
+                hx-swap="innerHTML"
+                data-toggle="modal" data-target="#questionModal">
+            <i class="fas fa-pen"></i>
+        </button>
+        {% if question.input_type == 'point' or question.input_type == 'line' or question.input_type == 'polygon' %}
+        <button title="Add Sub-question"
+                hx-get="{% url 'editor_subquestion_create' survey.name question.id %}"
+                hx-target="#questionModalBody"
+                hx-swap="innerHTML"
+                data-toggle="modal" data-target="#questionModal">
+            <i class="fas fa-sitemap"></i>
+        </button>
+        {% endif %}
+        <button title="Delete" class="text-danger"
+                hx-post="{% url 'editor_question_delete' survey.name question.id %}"
+                hx-target="closest .question-item"
+                hx-swap="outerHTML"
+                hx-confirm="Delete question '{{ question.name|default:"this question" }}'?"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+            <i class="fas fa-trash"></i>
+        </button>
+    </span>
+</li>
+{% with sub_questions=question.subQuestions %}
+{% if sub_questions %}
+<ul class="subquestion-list">
+    {% for subq in sub_questions %}
+        {% include "editor/partials/question_list_item.html" with question=subq %}
+    {% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
