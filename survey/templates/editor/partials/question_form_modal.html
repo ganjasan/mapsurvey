@@ -14,8 +14,8 @@
         hx-swap="outerHTML"
       {% elif parent %}
         hx-post="{% url 'editor_subquestion_create' survey.name parent.id %}"
-        hx-target="#questions-list"
-        hx-swap="beforeend"
+        hx-target="[data-question-id='{{ parent.id }}']"
+        hx-swap="outerHTML"
       {% else %}
         hx-post="{% url 'editor_question_create' survey.name section.id %}"
         hx-target="#questions-list"

@@ -247,28 +247,31 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#mapPickerModal').modal('hide');
     });
 
-    // Init SortableJS on question list after HTMX loads section detail
+    // Init SortableJS on question list and sub-question lists
+    function initSortableOnList(listEl) {
+        if (!listEl || listEl._sortable) return;
+        listEl._sortable = Sortable.create(listEl, {
+            animation: 150,
+            handle: '.drag-handle',
+            onEnd: function() {
+                var ids = Array.from(listEl.children).map(function(el) {
+                    return el.dataset.questionId;
+                });
+                fetch('{% url "editor_questions_reorder" survey.name %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ question_ids: ids })
+                }).then(function() { refreshPreview(); });
+            }
+        });
+    }
+
     document.body.addEventListener('htmx:afterSettle', function(evt) {
-        var qList = document.getElementById('questions-list');
-        if (qList && !qList._sortable) {
-            qList._sortable = Sortable.create(qList, {
-                animation: 150,
-                handle: '.drag-handle',
-                onEnd: function() {
-                    var ids = Array.from(qList.children).map(function(el) {
-                        return el.dataset.questionId;
-                    });
-                    fetch('{% url "editor_questions_reorder" survey.name %}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        },
-                        body: JSON.stringify({ question_ids: ids })
-                    }).then(function() { refreshPreview(); });
-                }
-            });
-        }
+        initSortableOnList(document.getElementById('questions-list'));
+        document.querySelectorAll('.subquestion-list').forEach(initSortableOnList);
     });
 
     // ── Panel resize & collapse ──

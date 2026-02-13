@@ -445,8 +445,9 @@ def editor_subquestion_create(request, survey_name, parent_id):
                 question.choices = json.loads(choices_json)
             question.save()
             _save_question_translations(request, question, survey)
+            # Return the parent question item (includes sub-questions)
             response = render(request, 'editor/partials/question_list_item.html', {
-                'question': question,
+                'question': parent,
                 'survey': survey,
             })
             response['HX-Trigger'] = 'questionSaved'
