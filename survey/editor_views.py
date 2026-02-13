@@ -6,6 +6,7 @@ from django.contrib.gis.geos import Point
 from django.db import transaction
 from django.db.models import Q, Max
 from django.http import HttpResponse, JsonResponse
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
 from .models import (
@@ -443,6 +444,7 @@ def editor_section_map_picker(request, survey_name, section_id):
 # ─── Live preview ─────────────────────────────────────────────────────────────
 
 @login_required
+@xframe_options_sameorigin
 def editor_section_preview(request, survey_name, section_name):
     survey = get_object_or_404(SurveyHeader, name=survey_name)
     section = get_object_or_404(SurveySection, survey_header=survey, name=section_name)
