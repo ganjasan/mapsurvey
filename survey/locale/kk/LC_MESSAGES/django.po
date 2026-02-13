@@ -1,0 +1,305 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-13 06:45+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: survey/models.py:37
+msgid "Only alphanumeric character and \"_\" sign"
+msgstr ""
+
+#: survey/models.py:46
+msgid "Private"
+msgstr ""
+
+#: survey/models.py:47
+msgid "Demo"
+msgstr ""
+
+#: survey/models.py:48
+msgid "Public"
+msgstr ""
+
+#: survey/models.py:52
+msgid "Text"
+msgstr ""
+
+#: survey/models.py:53
+msgid "Number"
+msgstr ""
+
+#: survey/models.py:54
+msgid "Choices"
+msgstr ""
+
+#: survey/models.py:55
+msgid "Multiple Choices"
+msgstr ""
+
+#: survey/models.py:56
+msgid "Range"
+msgstr ""
+
+#: survey/models.py:57
+msgid "Rating"
+msgstr ""
+
+#: survey/models.py:58
+msgid "Date/Time"
+msgstr ""
+
+#: survey/models.py:59
+msgid "Geo Point"
+msgstr ""
+
+#: survey/models.py:60
+msgid "Geo Line"
+msgstr ""
+
+#: survey/models.py:61
+msgid "Geo Polygon"
+msgstr ""
+
+#: survey/models.py:62
+msgid "Image"
+msgstr ""
+
+#: survey/models.py:63
+msgid "Line"
+msgstr ""
+
+#: survey/models.py:64
+msgid "HTML"
+msgstr ""
+
+#: survey/models.py:71
+msgid "Selected language code (ISO 639-1)"
+msgstr ""
+
+#: survey/models.py:97
+msgid ""
+"URL to redirect after survey completion. E.g.: /thanks/ or https://example."
+"com"
+msgstr ""
+
+#: survey/models.py:98
+msgid "List of ISO 639-1 language codes, e.g. [\"en\", \"ru\", \"de\"]"
+msgstr ""
+
+#: survey/models.py:99
+msgid "Controls whether survey appears on the landing page"
+msgstr ""
+
+#: survey/models.py:100
+msgid "Marks completed surveys whose results can be shown"
+msgstr ""
+
+#: survey/models.py:101
+msgid ""
+"Custom HTML for thanks page. Dict keyed by language: {\"en\": \"<h1>Thanks!</"
+"h1>\", \"ru\": \"<h1>Спасибо!</h1>\"} or a plain string."
+msgstr ""
+
+#: survey/models.py:189 survey/models.py:273
+msgid "ISO 639-1 language code"
+msgstr ""
+
+#: survey/models.py:219
+msgid "Color"
+msgstr ""
+
+#: survey/models.py:219
+msgid "HEX color, as #RRGGBB"
+msgstr ""
+
+#: survey/models.py:220
+msgid "Must be Font-Awesome class"
+msgstr ""
+
+#: survey/models.py:316
+msgid "Map"
+msgstr ""
+
+#: survey/models.py:317
+msgid "Open Data"
+msgstr ""
+
+#: survey/models.py:318
+msgid "Results"
+msgstr ""
+
+#: survey/models.py:319
+msgid "Article"
+msgstr ""
+
+#: survey/templates/base_survey_template.html:74
+#: survey/templatetags/i18n_extras.py:17
+msgid "Start drawing"
+msgstr ""
+
+#: survey/templates/base_survey_template.html:85
+msgid "Cancel"
+msgstr ""
+
+#: survey/templates/base_survey_template.html:86
+msgid "Apply"
+msgstr ""
+
+#: survey/templates/django_registration/activation_complete.html:4
+msgid "Activation"
+msgstr ""
+
+#: survey/templates/django_registration/activation_complete.html:5
+#, python-format
+msgid "Hello, %(account)s!"
+msgstr ""
+
+#: survey/templates/django_registration/activation_complete.html:6
+msgid "Your account has been activated."
+msgstr ""
+
+#: survey/templates/django_registration/activation_complete.html:6
+msgid "Enter"
+msgstr ""
+
+#: survey/templates/django_registration/activation_complete.html:6
+msgid "the site."
+msgstr ""
+
+#: survey/templates/django_registration/activation_email_body.txt:1
+msgid "Site Registration"
+msgstr ""
+
+#: survey/templates/django_registration/activation_email_body.txt:3
+msgid "To activate your account, please follow this link:"
+msgstr ""
+
+#: survey/templates/django_registration/activation_email_body.txt:6
+#: survey/templates/survey_thanks.html:9
+msgid "Thank you!"
+msgstr ""
+
+#: survey/templates/django_registration/activation_email_subject.txt:1
+msgid "Account Activation"
+msgstr ""
+
+#: survey/templates/django_registration/activation_failed.html:4
+msgid "Activation Failed"
+msgstr ""
+
+#: survey/templates/django_registration/registration_complete.html:4
+msgid "Registration Complete"
+msgstr ""
+
+#: survey/templates/django_registration/registration_complete.html:5
+msgid ""
+"Thank you for registering. A confirmation code has been sent to your email. "
+"Please confirm your registration by clicking the link provided."
+msgstr ""
+
+#: survey/templates/django_registration/registration_form.html:8
+#: survey/templates/registration/registration_form.html:8
+msgid "Submit"
+msgstr ""
+
+#: survey/templates/registration/registration_form.html:2
+msgid "Register for an account"
+msgstr ""
+
+#: survey/templates/survey_header.html:21
+msgid "Start"
+msgstr ""
+
+#: survey/templates/survey_header_template.html:19
+#: survey/templates/survey_section.html:44
+#: survey/templates/survey_section_block.html:14
+msgid "Back"
+msgstr ""
+
+#: survey/templates/survey_header_template.html:25
+#: survey/templates/survey_header_template.html:26
+#: survey/templates/survey_section.html:49
+#: survey/templates/survey_section_block.html:20
+msgid "Next"
+msgstr ""
+
+#: survey/templates/survey_header_template.html:28
+#: survey/templates/survey_header_template.html:29
+#: survey/templates/survey_section.html:51
+#: survey/templates/survey_section_block.html:22
+msgid "Finish"
+msgstr ""
+
+#: survey/templates/survey_language_select.html:7
+msgid "Select Language"
+msgstr ""
+
+#: survey/templates/survey_language_select.html:60
+msgid "Select your language"
+msgstr ""
+
+#: survey/templates/survey_thanks.html:10
+msgid "Your responses have been recorded."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:18
+msgid "Finish editing"
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:19
+msgid "Delete"
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:22
+msgid "Click on the map to place a marker."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:25
+msgid "Click to start drawing a shape."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:26
+msgid "Click to continue drawing the shape."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:27
+msgid "Click the first point to close this shape."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:30
+msgid "Click to start drawing a line."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:31
+msgid "Click to continue drawing the line."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:32
+msgid "Click the last point to finish the line."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:35
+msgid "<strong>Error:</strong> Shape edges cannot intersect!"
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:38
+msgid "Search address..."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:39
+msgid "No results found"
+msgstr ""

@@ -20,6 +20,7 @@ urlpatterns = [
     path('editor/surveys/<str:survey_name>/sections/reorder/', editor_views.editor_sections_reorder, name='editor_sections_reorder'),
     path('editor/surveys/<str:survey_name>/sections/<int:section_id>/questions/new/', editor_views.editor_question_create, name='editor_question_create'),
     path('editor/surveys/<str:survey_name>/questions/<int:question_id>/edit/', editor_views.editor_question_edit, name='editor_question_edit'),
+    path('editor/surveys/<str:survey_name>/questions/<int:question_id>/preview/', editor_views.editor_question_preview, name='editor_question_preview'),
     path('editor/surveys/<str:survey_name>/questions/<int:question_id>/delete/', editor_views.editor_question_delete, name='editor_question_delete'),
     path('editor/surveys/<str:survey_name>/questions/reorder/', editor_views.editor_questions_reorder, name='editor_questions_reorder'),
     path('editor/surveys/<str:survey_name>/questions/<int:parent_id>/subquestions/new/', editor_views.editor_subquestion_create, name='editor_subquestion_create'),

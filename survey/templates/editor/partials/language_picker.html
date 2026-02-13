@@ -1,0 +1,103 @@
+<div class="lang-select-wrapper" id="lang-select-wrapper">
+    <div class="lang-select-box" id="lang-select-box">
+        <input type="text" class="lang-select-input" id="lang-search" placeholder="Search languages..." autocomplete="off">
+    </div>
+    <div class="lang-dropdown" id="lang-dropdown"></div>
+</div>
+
+<script>
+(function() {
+    var LANGUAGES = [
+        {code:'af',name:'Afrikaans'},{code:'am',name:'Amharic'},{code:'ar',name:'Arabic'},
+        {code:'az',name:'Azerbaijani'},{code:'be',name:'Belarusian'},{code:'bg',name:'Bulgarian'},
+        {code:'bn',name:'Bengali'},{code:'bs',name:'Bosnian'},{code:'ca',name:'Catalan'},
+        {code:'cs',name:'Czech'},{code:'cy',name:'Welsh'},{code:'da',name:'Danish'},
+        {code:'de',name:'German'},{code:'el',name:'Greek'},{code:'en',name:'English'},
+        {code:'es',name:'Spanish'},{code:'et',name:'Estonian'},{code:'eu',name:'Basque'},
+        {code:'fa',name:'Persian'},{code:'fi',name:'Finnish'},{code:'fr',name:'French'},
+        {code:'ga',name:'Irish'},{code:'gl',name:'Galician'},{code:'gu',name:'Gujarati'},
+        {code:'he',name:'Hebrew'},{code:'hi',name:'Hindi'},{code:'hr',name:'Croatian'},
+        {code:'hu',name:'Hungarian'},{code:'hy',name:'Armenian'},{code:'id',name:'Indonesian'},
+        {code:'is',name:'Icelandic'},{code:'it',name:'Italian'},{code:'ja',name:'Japanese'},
+        {code:'ka',name:'Georgian'},{code:'kk',name:'Kazakh'},{code:'km',name:'Khmer'},
+        {code:'kn',name:'Kannada'},{code:'ko',name:'Korean'},{code:'ky',name:'Kyrgyz'},
+        {code:'lo',name:'Lao'},{code:'lt',name:'Lithuanian'},{code:'lv',name:'Latvian'},
+        {code:'mk',name:'Macedonian'},{code:'ml',name:'Malayalam'},{code:'mn',name:'Mongolian'},
+        {code:'mr',name:'Marathi'},{code:'ms',name:'Malay'},{code:'my',name:'Burmese'},
+        {code:'ne',name:'Nepali'},{code:'nl',name:'Dutch'},{code:'no',name:'Norwegian'},
+        {code:'pa',name:'Punjabi'},{code:'pl',name:'Polish'},{code:'pt',name:'Portuguese'},
+        {code:'ro',name:'Romanian'},{code:'ru',name:'Russian'},{code:'si',name:'Sinhala'},
+        {code:'sk',name:'Slovak'},{code:'sl',name:'Slovenian'},{code:'sq',name:'Albanian'},
+        {code:'sr',name:'Serbian'},{code:'sv',name:'Swedish'},{code:'sw',name:'Swahili'},
+        {code:'ta',name:'Tamil'},{code:'te',name:'Telugu'},{code:'tg',name:'Tajik'},
+        {code:'th',name:'Thai'},{code:'tk',name:'Turkmen'},{code:'tl',name:'Filipino'},
+        {code:'tr',name:'Turkish'},{code:'uk',name:'Ukrainian'},{code:'ur',name:'Urdu'},
+        {code:'uz',name:'Uzbek'},{code:'vi',name:'Vietnamese'},{code:'zh',name:'Chinese'},
+    ];
+
+    var hiddenInput = document.getElementById('id_available_languages');
+    var box = document.getElementById('lang-select-box');
+    var searchInput = document.getElementById('lang-search');
+    var dropdown = document.getElementById('lang-dropdown');
+    var wrapper = document.getElementById('lang-select-wrapper');
+    var selected = [];
+
+    try {
+        var raw = hiddenInput.value;
+        if (raw) selected = JSON.parse(raw.replace(/'/g, '"'));
+    } catch(e) {}
+
+    function sync() {
+        hiddenInput.value = JSON.stringify(selected);
+    }
+
+    function renderTags() {
+        box.querySelectorAll('.lang-tag').forEach(function(t) { t.remove(); });
+        selected.forEach(function(code) {
+            var lang = LANGUAGES.find(function(l) { return l.code === code; });
+            var tag = document.createElement('span');
+            tag.className = 'lang-tag';
+            tag.innerHTML = '<span>' + code.toUpperCase() + (lang ? ' \u2014 ' + lang.name : '') + '</span><button type="button">&times;</button>';
+            tag.querySelector('button').addEventListener('click', function() {
+                selected = selected.filter(function(c) { return c !== code; });
+                sync(); renderTags(); renderDropdown();
+            });
+            box.insertBefore(tag, searchInput);
+        });
+    }
+
+    function renderDropdown() {
+        var q = searchInput.value.toLowerCase();
+        dropdown.innerHTML = '';
+        LANGUAGES.forEach(function(lang) {
+            if (q && lang.code.indexOf(q) === -1 && lang.name.toLowerCase().indexOf(q) === -1) return;
+            var opt = document.createElement('div');
+            opt.className = 'lang-option';
+            if (selected.indexOf(lang.code) !== -1) opt.classList.add('selected');
+            opt.innerHTML = '<span>' + lang.name + '</span><span class="lang-code">' + lang.code + '</span>';
+            opt.addEventListener('click', function() {
+                if (selected.indexOf(lang.code) !== -1) {
+                    selected = selected.filter(function(c) { return c !== lang.code; });
+                } else {
+                    selected.push(lang.code);
+                }
+                sync(); renderTags();
+                searchInput.value = '';
+                renderDropdown();
+                searchInput.focus();
+            });
+            dropdown.appendChild(opt);
+        });
+    }
+
+    searchInput.addEventListener('focus', function() { dropdown.classList.add('open'); renderDropdown(); });
+    searchInput.addEventListener('input', function() { dropdown.classList.add('open'); renderDropdown(); });
+    document.addEventListener('click', function(e) {
+        if (!wrapper.contains(e.target)) dropdown.classList.remove('open');
+    });
+    box.addEventListener('click', function() { searchInput.focus(); });
+
+    renderTags();
+    sync();
+})();
+</script>

@@ -9,7 +9,7 @@ class SurveyHeaderForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'survey_name'}),
             'redirect_url': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '#'}),
-            'available_languages': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '["en", "ru"]'}),
+            'available_languages': forms.HiddenInput(attrs={'id': 'id_available_languages'}),
             'visibility': forms.Select(attrs={'class': 'form-control'}),
             'thanks_html': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': '{"en": "<h1>Thanks!</h1>"}'}),
         }
@@ -37,4 +37,7 @@ class QuestionForm(forms.ModelForm):
             'required': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'color': forms.TextInput(attrs={'class': 'form-control', 'type': 'color'}),
             'icon_class': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'fas fa-map-marker-alt'}),
+        }
+        help_texts = {
+            'icon_class': '<a href="https://fontawesome.com/v5/search" target="_blank" rel="noopener">Font Awesome</a> class',
         }

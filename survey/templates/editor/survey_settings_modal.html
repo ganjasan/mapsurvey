@@ -11,7 +11,12 @@
         {% for field in form %}
         <div class="form-group">
             <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
+            {% if field.name == 'available_languages' %}
+                {{ field }}
+                {% include "editor/partials/language_picker.html" %}
+            {% else %}
+                {{ field }}
+            {% endif %}
             {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
             {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
         </div>

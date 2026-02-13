@@ -15,9 +15,19 @@
 
 {% block content %}
 <div class="editor-container">
+    <!-- Sidebar expand tab (visible when collapsed) -->
+    <div class="panel-expand-tab" id="sidebar-expand" title="Show sections">
+        <i class="fas fa-chevron-right"></i> Sections
+    </div>
+
     <!-- Left Sidebar: Sections -->
-    <aside class="editor-sidebar">
-        <div class="sidebar-header">Sections</div>
+    <aside class="editor-sidebar" id="editor-sidebar">
+        <div class="sidebar-header">
+            <span>Sections</span>
+            <button class="panel-toggle" id="sidebar-collapse" title="Hide sidebar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
         <ul class="section-list" id="sections-list">
             {% for section in sections %}
                 {% include "editor/partials/section_list_item.html" with is_current=forloop.first %}
@@ -33,6 +43,9 @@
             </button>
         </div>
     </aside>
+
+    <!-- Resize handle: sidebar ↔ main -->
+    <div class="resize-handle" id="resize-sidebar"></div>
 
     <!-- Center Panel: Section Detail + Questions -->
     <main class="editor-main" id="editor-main">
@@ -51,12 +64,32 @@
         {% endif %}
     </main>
 
+    <!-- Resize handle: main ↔ preview -->
+    <div class="resize-handle" id="resize-preview"></div>
+
+    <!-- Preview expand tab (visible when collapsed) -->
+    <div class="panel-expand-tab" id="preview-expand" title="Show preview">
+        <i class="fas fa-chevron-left"></i> Preview
+    </div>
+
     <!-- Right Panel: Live Preview -->
-    <aside class="editor-preview">
-        <div class="preview-header">Preview</div>
+    <aside class="editor-preview" id="editor-preview">
+        <div class="preview-header">
+            <span>Preview</span>
+            {% if survey.available_languages %}
+            <select id="preview-lang" style="border:1px solid var(--border-color);border-radius:4px;padding:2px 6px;font-size:0.75rem;color:#374151;background:#fff;outline:none;text-transform:uppercase;cursor:pointer;">
+                {% for lang in survey.available_languages %}
+                <option value="{{ lang }}">{{ lang }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
+            <button class="panel-toggle" id="preview-collapse" title="Hide preview">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
         {% if current_section %}
         <iframe class="preview-frame" id="preview-frame"
-                src="{% url 'editor_section_preview' survey.name current_section.name %}">
+                src="{% url 'editor_section_preview' survey.name current_section.name %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}">
         </iframe>
         {% else %}
         <div style="padding:2rem;text-align:center;color:#9ca3af;font-size:0.85rem;">
@@ -141,23 +174,48 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update preview
         var iframe = document.getElementById('preview-frame');
         if (iframe) {
-            iframe.src = '/editor/surveys/{{ survey.name }}/preview/' + sectionName + '/';
+            iframe.src = buildPreviewUrl(sectionName);
         }
     });
 
-    // Refresh preview after HTMX swaps (debounced)
+    // Preview language
+    var langSelect = document.getElementById('preview-lang');
+    function getPreviewLang() {
+        return langSelect ? langSelect.value : '';
+    }
+    function buildPreviewUrl(sectionName) {
+        var url = '/editor/surveys/{{ survey.name }}/preview/' + sectionName + '/';
+        var lang = getPreviewLang();
+        if (lang) url += '?lang=' + lang;
+        return url;
+    }
+
+    // Refresh preview (debounced)
     var previewTimeout;
-    document.body.addEventListener('htmx:afterSwap', function(evt) {
-        if (evt.detail.target.id === 'settingsModalBody' ||
-            evt.detail.target.id === 'questionModalBody' ||
-            evt.detail.target.id === 'mapPickerModalBody') return;
+    function refreshPreview() {
         clearTimeout(previewTimeout);
         previewTimeout = setTimeout(function() {
             var iframe = document.getElementById('preview-frame');
             if (iframe && iframe.src) {
-                iframe.src = iframe.src;
+                // Rebuild URL to preserve lang param
+                var url = new URL(iframe.src);
+                var lang = getPreviewLang();
+                if (lang) url.searchParams.set('lang', lang);
+                else url.searchParams.delete('lang');
+                iframe.src = url.toString();
             }
         }, 500);
+    }
+
+    if (langSelect) {
+        langSelect.addEventListener('change', function() { refreshPreview(); });
+    }
+
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.id === 'settingsModalBody' ||
+            evt.detail.target.id === 'questionModalBody' ||
+            evt.detail.target.id === 'mapPickerModalBody') return;
+        refreshPreview();
     });
 
     // After section delete, load first remaining section
@@ -166,6 +224,17 @@ document.addEventListener('DOMContentLoaded', function() {
             var first = document.querySelector('.section-item');
             if (first) first.click();
         }
+    });
+
+    // After section saved, refresh preview
+    document.body.addEventListener('sectionSaved', function() {
+        refreshPreview();
+    });
+
+    // After question saved, close modal and refresh preview
+    document.body.addEventListener('questionSaved', function() {
+        $('#questionModal').modal('hide');
+        refreshPreview();
     });
 
     // After settings saved, close modal
@@ -196,11 +265,106 @@ document.addEventListener('DOMContentLoaded', function() {
                             'X-CSRFToken': '{{ csrf_token }}'
                         },
                         body: JSON.stringify({ question_ids: ids })
-                    });
+                    }).then(function() { refreshPreview(); });
                 }
             });
         }
     });
+
+    // ── Panel resize & collapse ──
+    var STORAGE_KEY = 'editor_panels_{{ survey.name }}';
+    var sidebar = document.getElementById('editor-sidebar');
+    var preview = document.getElementById('editor-preview');
+    var resizeSidebar = document.getElementById('resize-sidebar');
+    var resizePreview = document.getElementById('resize-preview');
+    var sidebarCollapseBtn = document.getElementById('sidebar-collapse');
+    var sidebarExpandBtn = document.getElementById('sidebar-expand');
+    var previewCollapseBtn = document.getElementById('preview-collapse');
+    var previewExpandBtn = document.getElementById('preview-expand');
+
+    function savePanelState() {
+        var state = {
+            sidebarWidth: sidebar.style.width || '',
+            previewWidth: preview.style.width || '',
+            sidebarCollapsed: sidebar.classList.contains('collapsed'),
+            previewCollapsed: preview.classList.contains('collapsed')
+        };
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+    }
+
+    function restorePanelState() {
+        try {
+            var raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            var state = JSON.parse(raw);
+            if (state.sidebarWidth) sidebar.style.width = state.sidebarWidth;
+            if (state.previewWidth) preview.style.width = state.previewWidth;
+            if (state.sidebarCollapsed) toggleSidebar(true);
+            if (state.previewCollapsed) togglePreview(true);
+        } catch(e) {}
+    }
+
+    function toggleSidebar(collapsed) {
+        sidebar.classList.toggle('collapsed', collapsed);
+        resizeSidebar.classList.toggle('hidden', collapsed);
+        sidebarExpandBtn.classList.toggle('visible', collapsed);
+        savePanelState();
+    }
+
+    function togglePreview(collapsed) {
+        preview.classList.toggle('collapsed', collapsed);
+        resizePreview.classList.toggle('hidden', collapsed);
+        previewExpandBtn.classList.toggle('visible', collapsed);
+        savePanelState();
+    }
+
+    sidebarCollapseBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleSidebar(true); });
+    sidebarExpandBtn.addEventListener('click', function() { toggleSidebar(false); });
+    previewCollapseBtn.addEventListener('click', function(e) { e.stopPropagation(); togglePreview(true); });
+    previewExpandBtn.addEventListener('click', function() { togglePreview(false); });
+
+    // Drag-to-resize
+    function initResize(handle, targetEl, direction) {
+        var startX, startWidth;
+        handle.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            startX = e.clientX;
+            startWidth = targetEl.getBoundingClientRect().width;
+            handle.classList.add('dragging');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            // Block iframe from stealing mouse events
+            document.querySelectorAll('iframe').forEach(function(f) {
+                f.style.pointerEvents = 'none';
+            });
+
+            function onMove(e) {
+                var delta = e.clientX - startX;
+                var newWidth = direction === 'left'
+                    ? Math.max(140, startWidth + delta)
+                    : Math.max(200, startWidth - delta);
+                targetEl.style.width = newWidth + 'px';
+            }
+            function onUp() {
+                handle.classList.remove('dragging');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                document.querySelectorAll('iframe').forEach(function(f) {
+                    f.style.pointerEvents = '';
+                });
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+                savePanelState();
+            }
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        });
+    }
+
+    initResize(resizeSidebar, sidebar, 'left');
+    initResize(resizePreview, preview, 'right');
+
+    restorePanelState();
 });
 </script>
 {% endblock %}

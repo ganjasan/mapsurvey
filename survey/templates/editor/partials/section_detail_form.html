@@ -10,7 +10,8 @@
             <i class="fas fa-map-marker-alt"></i> Map Position
         </button>
     </div>
-    <form method="post" action="{% url 'editor_section_detail' survey.name section.id %}"
+    <form id="section-form"
+          method="post" action="{% url 'editor_section_detail' survey.name section.id %}"
           hx-post="{% url 'editor_section_detail' survey.name section.id %}"
           hx-swap="none"
           hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
@@ -25,28 +26,29 @@
 
         {% if survey.available_languages %}
         <div class="translations-section">
-            <p style="font-size:0.85rem;font-weight:600;color:#6b7280;margin-bottom:0.5rem;">Translations</p>
-            {% for lang in survey.available_languages %}
-            <fieldset style="margin-bottom:0.5rem;">
-                <legend style="font-size:0.8rem;font-weight:600;color:var(--accent);">{{ lang|upper }}</legend>
-                <div class="form-group">
-                    <label style="font-size:0.8rem;">Title ({{ lang }})</label>
-                    <input type="text" name="translation_{{ lang }}_title" class="form-control form-control-sm"
-                           value="{% for t_lang, t in translations.items %}{% if t_lang == lang %}{{ t.title|default:'' }}{% endif %}{% endfor %}">
-                </div>
-                <div class="form-group">
-                    <label style="font-size:0.8rem;">Subheading ({{ lang }})</label>
-                    <input type="text" name="translation_{{ lang }}_subheading" class="form-control form-control-sm"
-                           value="{% for t_lang, t in translations.items %}{% if t_lang == lang %}{{ t.subheading|default:'' }}{% endif %}{% endfor %}">
-                </div>
-            </fieldset>
-            {% endfor %}
+            <button type="button" class="translations-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
+                <i class="fas fa-chevron-right"></i> Translations
+            </button>
+            <div class="translations-body">
+                {% for lang in survey.available_languages %}
+                <fieldset style="margin-bottom:0.5rem;">
+                    <legend style="font-size:0.8rem;font-weight:600;color:var(--accent);">{{ lang|upper }}</legend>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem;">Title ({{ lang }})</label>
+                        <input type="text" name="translation_{{ lang }}_title" class="form-control form-control-sm"
+                               value="{% for t_lang, t in translations.items %}{% if t_lang == lang %}{{ t.title|default:'' }}{% endif %}{% endfor %}">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem;">Subheading ({{ lang }})</label>
+                        <input type="text" name="translation_{{ lang }}_subheading" class="form-control form-control-sm"
+                               value="{% for t_lang, t in translations.items %}{% if t_lang == lang %}{{ t.subheading|default:'' }}{% endif %}{% endfor %}">
+                    </div>
+                </fieldset>
+                {% endfor %}
+            </div>
         </div>
         {% endif %}
 
-        <div style="margin-top:1rem;">
-            <button type="submit" class="btn btn-sm btn-primary">Save Section</button>
-        </div>
     </form>
 </div>
 
@@ -70,3 +72,26 @@
         <i class="fas fa-plus"></i> New Question
     </button>
 </div>
+
+<script>
+(function() {
+    var form = document.getElementById('section-form');
+    if (!form) return;
+    var timer;
+    function autoSave() {
+        clearTimeout(timer);
+        timer = setTimeout(function() {
+            htmx.trigger(form, 'submit');
+        }, 800);
+    }
+    form.querySelectorAll('input[type="text"], textarea').forEach(function(el) {
+        el.addEventListener('input', autoSave);
+    });
+    form.querySelectorAll('select, input[type="checkbox"]').forEach(function(el) {
+        el.addEventListener('change', function() {
+            clearTimeout(timer);
+            htmx.trigger(form, 'submit');
+        });
+    });
+})();
+</script>

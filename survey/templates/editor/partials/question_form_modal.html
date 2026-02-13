@@ -10,17 +10,22 @@
 </div>
 <form {% if question %}
         hx-post="{% url 'editor_question_edit' survey.name question.id %}"
+        hx-target="[data-question-id='{{ question.id }}']"
+        hx-swap="outerHTML"
       {% elif parent %}
         hx-post="{% url 'editor_subquestion_create' survey.name parent.id %}"
+        hx-target="#questions-list"
+        hx-swap="beforeend"
       {% else %}
         hx-post="{% url 'editor_question_create' survey.name section.id %}"
+        hx-target="#questions-list"
+        hx-swap="beforeend"
       {% endif %}
-      hx-target="#questions-list"
-      hx-swap="beforeend"
       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
       enctype="multipart/form-data">
     {% csrf_token %}
-    <div class="modal-body">
+    <div class="modal-body" style="{% if question %}display:flex;gap:1rem;{% endif %}">
+        <div style="{% if question %}flex:1;min-width:0;{% endif %}">
         {% for field in form %}
         <div class="form-group">
             {% if field.name == 'required' %}
@@ -32,7 +37,7 @@
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {{ field }}
             {% endif %}
-            {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+            {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text|safe }}</small>{% endif %}
             {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
         </div>
         {% endfor %}
@@ -62,27 +67,47 @@
 
         {% if survey.available_languages %}
         <div class="translations-section">
-            <p style="font-size:0.85rem;font-weight:600;color:#6b7280;margin-bottom:0.5rem;">Translations</p>
-            {% for lang in survey.available_languages %}
-            <fieldset style="margin-bottom:0.5rem;">
-                <legend>{{ lang|upper }}</legend>
-                <div class="form-group">
-                    <label style="font-size:0.8rem;">Name ({{ lang }})</label>
-                    <input type="text" name="translation_{{ lang }}_name" class="form-control form-control-sm"
-                           value="{% if question %}{% for t in question.translations.all %}{% if t.language == lang %}{{ t.name|default:'' }}{% endif %}{% endfor %}{% endif %}">
-                </div>
-                <div class="form-group">
-                    <label style="font-size:0.8rem;">Subtext ({{ lang }})</label>
-                    <input type="text" name="translation_{{ lang }}_subtext" class="form-control form-control-sm"
-                           value="{% if question %}{% for t in question.translations.all %}{% if t.language == lang %}{{ t.subtext|default:'' }}{% endif %}{% endfor %}{% endif %}">
-                </div>
-            </fieldset>
-            {% endfor %}
+            <button type="button" class="translations-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
+                <i class="fas fa-chevron-right"></i> Translations
+            </button>
+            <div class="translations-body">
+                {% for lang in survey.available_languages %}
+                <fieldset style="margin-bottom:0.5rem;">
+                    <legend>{{ lang|upper }}</legend>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem;">Name ({{ lang }})</label>
+                        <input type="text" name="translation_{{ lang }}_name" class="form-control form-control-sm"
+                               value="{% if question %}{% for t in question.translations.all %}{% if t.language == lang %}{{ t.name|default:'' }}{% endif %}{% endfor %}{% endif %}">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem;">Subtext ({{ lang }})</label>
+                        <input type="text" name="translation_{{ lang }}_subtext" class="form-control form-control-sm"
+                               value="{% if question %}{% for t in question.translations.all %}{% if t.language == lang %}{{ t.subtext|default:'' }}{% endif %}{% endfor %}{% endif %}">
+                    </div>
+                </fieldset>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        </div>
+
+        {% if question %}
+        <div class="question-preview-panel" style="width:280px;flex-shrink:0;border-left:1px solid var(--border-color);padding-left:1rem;display:flex;flex-direction:column;">
+            <div style="font-size:0.8rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">Preview</div>
+            <iframe id="question-preview-frame"
+                    src="{% url 'editor_question_preview' survey.name question.id %}"
+                    style="flex:1;border:1px solid #e5e7eb;border-radius:6px;width:100%;min-height:200px;background:#fff;">
+            </iframe>
         </div>
         {% endif %}
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        {% if question %}
+        <button type="button" class="btn btn-outline-primary" id="apply-question-btn" onclick="serializeChoices(); applyQuestion();">
+            <i class="fas fa-eye"></i> Apply
+        </button>
+        {% endif %}
         <button type="submit" class="btn btn-primary" onclick="serializeChoices()">Save</button>
     </div>
 </form>
@@ -143,6 +168,133 @@
         tbody.appendChild(row);
     };
 
+    // ── Icon Picker ──
+    (function() {
+        var FA_ICONS = [
+            'fas fa-map-marker-alt','fas fa-map-pin','fas fa-map-marked-alt','fas fa-map','fas fa-map-signs',
+            'fas fa-location-arrow','fas fa-compass','fas fa-street-view','fas fa-route','fas fa-directions',
+            'fas fa-globe','fas fa-globe-americas','fas fa-globe-europe','fas fa-globe-asia','fas fa-globe-africa',
+            'fas fa-home','fas fa-building','fas fa-hospital','fas fa-school','fas fa-church',
+            'fas fa-store','fas fa-warehouse','fas fa-industry','fas fa-landmark','fas fa-monument',
+            'fas fa-university','fas fa-city','fas fa-hotel','fas fa-campground','fas fa-igloo',
+            'fas fa-tree','fas fa-leaf','fas fa-seedling','fas fa-mountain','fas fa-water',
+            'fas fa-umbrella-beach','fas fa-sun','fas fa-cloud','fas fa-snowflake','fas fa-wind',
+            'fas fa-car','fas fa-bus','fas fa-train','fas fa-subway','fas fa-bicycle',
+            'fas fa-motorcycle','fas fa-truck','fas fa-ship','fas fa-plane','fas fa-helicopter',
+            'fas fa-walking','fas fa-running','fas fa-wheelchair','fas fa-parking','fas fa-gas-pump',
+            'fas fa-road','fas fa-traffic-light','fas fa-bridge','fas fa-taxi',
+            'fas fa-user','fas fa-users','fas fa-user-friends','fas fa-child','fas fa-baby',
+            'fas fa-male','fas fa-female','fas fa-people-carry','fas fa-user-tie','fas fa-user-md',
+            'fas fa-star','fas fa-heart','fas fa-flag','fas fa-bell','fas fa-bookmark',
+            'fas fa-thumbs-up','fas fa-thumbs-down','fas fa-check','fas fa-times','fas fa-exclamation-triangle',
+            'fas fa-info-circle','fas fa-question-circle','fas fa-ban','fas fa-lock','fas fa-unlock',
+            'fas fa-camera','fas fa-image','fas fa-video','fas fa-music','fas fa-film',
+            'fas fa-phone','fas fa-envelope','fas fa-wifi','fas fa-signal','fas fa-battery-full',
+            'fas fa-bolt','fas fa-fire','fas fa-tint','fas fa-lightbulb','fas fa-plug',
+            'fas fa-wrench','fas fa-tools','fas fa-hammer','fas fa-hard-hat','fas fa-paint-roller',
+            'fas fa-utensils','fas fa-coffee','fas fa-glass-martini-alt','fas fa-pizza-slice','fas fa-apple-alt',
+            'fas fa-shopping-cart','fas fa-shopping-bag','fas fa-gift','fas fa-money-bill-wave','fas fa-credit-card',
+            'fas fa-medkit','fas fa-stethoscope','fas fa-pills','fas fa-syringe','fas fa-thermometer-half',
+            'fas fa-paw','fas fa-dog','fas fa-cat','fas fa-fish','fas fa-dove',
+            'fas fa-futbol','fas fa-basketball-ball','fas fa-football-ball','fas fa-baseball-ball','fas fa-swimming-pool',
+            'fas fa-dumbbell','fas fa-biking','fas fa-hiking','fas fa-skiing',
+            'fas fa-book','fas fa-graduation-cap','fas fa-pen','fas fa-pencil-alt','fas fa-paint-brush',
+            'fas fa-recycle','fas fa-trash','fas fa-dumpster','fas fa-leaf','fas fa-solar-panel',
+            'fas fa-cross','fas fa-mosque','fas fa-synagogue','fas fa-place-of-worship','fas fa-praying-hands',
+            'fas fa-hands-helping','fas fa-handshake','fas fa-fist-raised','fas fa-hand-peace',
+            'fas fa-binoculars','fas fa-search','fas fa-eye','fas fa-glasses',
+            'fas fa-chess-rook','fas fa-chess','fas fa-puzzle-piece','fas fa-dice','fas fa-gamepad',
+            'far fa-circle','far fa-square','far fa-star','far fa-heart','far fa-flag',
+            'far fa-bookmark','far fa-bell','far fa-envelope','far fa-image','far fa-eye',
+        ];
+
+        var iconInput = document.querySelector('#questionModalBody input[name="icon_class"]');
+        if (!iconInput) return;
+
+        var wrapper = document.createElement('div');
+        wrapper.className = 'icon-picker-wrapper';
+        iconInput.parentNode.insertBefore(wrapper, iconInput);
+
+        var row = document.createElement('div');
+        row.className = 'icon-picker-input-row';
+
+        var preview = document.createElement('div');
+        preview.className = 'icon-picker-preview';
+        function updatePreview() {
+            var val = iconInput.value.trim();
+            preview.innerHTML = val ? '<i class="' + val + '"></i>' : '<i class="fas fa-icons" style="color:#d1d5db;"></i>';
+        }
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'icon-picker-btn';
+        btn.innerHTML = '<i class="fas fa-th"></i>';
+        btn.title = 'Browse icons';
+
+        row.appendChild(preview);
+        row.appendChild(iconInput);
+        row.appendChild(btn);
+        wrapper.appendChild(row);
+
+        var dropdown = document.createElement('div');
+        dropdown.className = 'icon-picker-dropdown';
+
+        var searchBox = document.createElement('div');
+        searchBox.className = 'icon-picker-search';
+        var searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.placeholder = 'Search icons...';
+        searchBox.appendChild(searchInput);
+        dropdown.appendChild(searchBox);
+
+        var grid = document.createElement('div');
+        grid.className = 'icon-picker-grid';
+        dropdown.appendChild(grid);
+        wrapper.appendChild(dropdown);
+
+        function renderGrid(filter) {
+            grid.innerHTML = '';
+            var q = (filter || '').toLowerCase();
+            FA_ICONS.forEach(function(icon) {
+                var name = icon.replace('fas fa-', '').replace('far fa-', '');
+                if (q && name.indexOf(q) === -1) return;
+                var cell = document.createElement('div');
+                cell.className = 'icon-picker-cell';
+                if (iconInput.value.trim() === icon) cell.classList.add('selected');
+                cell.innerHTML = '<i class="' + icon + '"></i>';
+                cell.title = name;
+                cell.addEventListener('click', function() {
+                    iconInput.value = icon;
+                    updatePreview();
+                    dropdown.classList.remove('open');
+                });
+                grid.appendChild(cell);
+            });
+        }
+
+        btn.addEventListener('click', function() {
+            var isOpen = dropdown.classList.toggle('open');
+            if (isOpen) {
+                searchInput.value = '';
+                renderGrid('');
+                searchInput.focus();
+            }
+        });
+
+        searchInput.addEventListener('input', function() {
+            renderGrid(this.value);
+        });
+
+        iconInput.addEventListener('input', updatePreview);
+
+        // Close dropdown on outside click
+        document.addEventListener('click', function(e) {
+            if (!wrapper.contains(e.target)) dropdown.classList.remove('open');
+        });
+
+        updatePreview();
+    })();
+
     window.serializeChoices = function() {
         var rows = document.querySelectorAll('#choices-rows tr');
         var choices = [];
@@ -169,5 +321,35 @@
 
         document.getElementById('choices-json-input').value = choices.length > 0 ? JSON.stringify(choices) : '';
     };
+
+    {% if question %}
+    window.applyQuestion = function() {
+        var form = document.querySelector('#questionModalBody form');
+        var formData = new FormData(form);
+        var btn = document.getElementById('apply-question-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+        fetch(form.getAttribute('hx-post'), {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: formData,
+        }).then(function(resp) {
+            if (resp.ok) {
+                // Update the question list item
+                return resp.text().then(function(html) {
+                    var target = document.querySelector("[data-question-id='{{ question.id }}']");
+                    if (target) target.outerHTML = html;
+                    // Refresh preview iframe
+                    var iframe = document.getElementById('question-preview-frame');
+                    if (iframe) iframe.src = iframe.src;
+                });
+            }
+        }).finally(function() {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-eye"></i> Apply';
+        });
+    };
+    {% endif %}
 })();
 </script>

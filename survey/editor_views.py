@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import Q, Max
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.clickjacking import xframe_options_sameorigin
+from django.utils import translation
 from django.views.decorators.http import require_POST
 
 from .models import (
@@ -281,10 +282,12 @@ def editor_question_create(request, survey_name, section_id):
                 question.choices = json.loads(choices_json)
             question.save()
             _save_question_translations(request, question, survey)
-            return render(request, 'editor/partials/question_list_item.html', {
+            response = render(request, 'editor/partials/question_list_item.html', {
                 'question': question,
                 'survey': survey,
             })
+            response['HX-Trigger'] = 'questionSaved'
+            return response
         # Form invalid — re-render modal with errors
         return render(request, 'editor/partials/question_form_modal.html', {
             'form': form,
@@ -316,10 +319,12 @@ def editor_question_edit(request, survey_name, question_id):
                 q.choices = None
             q.save()
             _save_question_translations(request, q, survey)
-            return render(request, 'editor/partials/question_list_item.html', {
+            response = render(request, 'editor/partials/question_list_item.html', {
                 'question': q,
                 'survey': survey,
             })
+            response['HX-Trigger'] = 'questionSaved'
+            return response
         return render(request, 'editor/partials/question_form_modal.html', {
             'form': form,
             'survey': survey,
@@ -334,6 +339,41 @@ def editor_question_edit(request, survey_name, question_id):
         'section': question.survey_section,
         'question': question,
     })
+
+
+@login_required
+@xframe_options_sameorigin
+def editor_question_preview(request, survey_name, question_id):
+    survey = get_object_or_404(SurveyHeader, name=survey_name)
+    question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
+
+    lang = request.GET.get('lang')
+    if lang and survey.available_languages and lang not in survey.available_languages:
+        lang = None
+    if not lang and survey.available_languages:
+        lang = survey.available_languages[0]
+
+    # Build a form for the whole section, then keep only this question's field
+    form = SurveySectionAnswerForm(
+        initial={}, section=question.survey_section, question=None,
+        survey_session_id=None, language=lang,
+    )
+    for key in list(form.fields.keys()):
+        if key != question.code:
+            del form.fields[key]
+
+    if lang:
+        translation.activate(lang)
+
+    response = render(request, 'editor/partials/question_preview_frame.html', {
+        'form': form,
+        'question': question,
+    })
+
+    if lang:
+        translation.deactivate()
+
+    return response
 
 
 @login_required
@@ -405,10 +445,12 @@ def editor_subquestion_create(request, survey_name, parent_id):
                 question.choices = json.loads(choices_json)
             question.save()
             _save_question_translations(request, question, survey)
-            return render(request, 'editor/partials/question_list_item.html', {
+            response = render(request, 'editor/partials/question_list_item.html', {
                 'question': question,
                 'survey': survey,
             })
+            response['HX-Trigger'] = 'questionSaved'
+            return response
     else:
         form = QuestionForm()
     return render(request, 'editor/partials/question_form_modal.html', {
@@ -449,8 +491,10 @@ def editor_section_preview(request, survey_name, section_name):
     survey = get_object_or_404(SurveyHeader, name=survey_name)
     section = get_object_or_404(SurveySection, survey_header=survey, name=section_name)
 
-    selected_language = None
-    if survey.available_languages:
+    selected_language = request.GET.get('lang')
+    if selected_language and survey.available_languages and selected_language not in survey.available_languages:
+        selected_language = None
+    if not selected_language and survey.available_languages:
         selected_language = survey.available_languages[0]
 
     form = SurveySectionAnswerForm(
@@ -468,7 +512,10 @@ def editor_section_preview(request, survey_name, section_name):
     section_title = section.get_translated_title(selected_language)
     section_subheading = section.get_translated_subheading(selected_language)
 
-    return render(request, 'survey_section.html', {
+    if selected_language:
+        translation.activate(selected_language)
+
+    response = render(request, 'survey_section.html', {
         'form': form,
         'subquestions_forms': subquestions_forms,
         'survey': survey,
@@ -481,3 +528,8 @@ def editor_section_preview(request, survey_name, section_name):
         'section_total': 1,
         'preview': True,
     })
+
+    if selected_language:
+        translation.deactivate()
+
+    return response

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mapsurvey 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-11 12:04+0000\n"
+"POT-Creation-Date: 2026-02-13 06:44+0000\n"
 "PO-Revision-Date: 2026-02-01 14:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: Russian\n"
@@ -110,48 +110,54 @@ msgstr ""
 msgid "Marks completed surveys whose results can be shown"
 msgstr ""
 
-#: survey/models.py:188 survey/models.py:272
+#: survey/models.py:101
+msgid ""
+"Custom HTML for thanks page. Dict keyed by language: {\"en\": \"<h1>Thanks!</"
+"h1>\", \"ru\": \"<h1>Спасибо!</h1>\"} or a plain string."
+msgstr ""
+
+#: survey/models.py:189 survey/models.py:273
 msgid "ISO 639-1 language code"
 msgstr ""
 
-#: survey/models.py:218
+#: survey/models.py:219
 msgid "Color"
 msgstr "Цвет"
 
-#: survey/models.py:218
+#: survey/models.py:219
 msgid "HEX color, as #RRGGBB"
 msgstr "HEX цвет, как #RRGGBB"
 
-#: survey/models.py:219
+#: survey/models.py:220
 msgid "Must be Font-Awesome class"
 msgstr "Должен быть классом Font-Awesome"
 
-#: survey/models.py:315
+#: survey/models.py:316
 msgid "Map"
 msgstr ""
 
-#: survey/models.py:316
+#: survey/models.py:317
 msgid "Open Data"
 msgstr ""
 
-#: survey/models.py:317
+#: survey/models.py:318
 msgid "Results"
 msgstr ""
 
-#: survey/models.py:318
+#: survey/models.py:319
 msgid "Article"
 msgstr ""
 
-#: survey/templates/base_survey_template.html:73
+#: survey/templates/base_survey_template.html:74
 #: survey/templatetags/i18n_extras.py:17
 msgid "Start drawing"
 msgstr "Начать рисовать"
 
-#: survey/templates/base_survey_template.html:84
+#: survey/templates/base_survey_template.html:85
 msgid "Cancel"
 msgstr "Отмена"
 
-#: survey/templates/base_survey_template.html:85
+#: survey/templates/base_survey_template.html:86
 msgid "Apply"
 msgstr "Применить"
 
@@ -185,6 +191,7 @@ msgid "To activate your account, please follow this link:"
 msgstr "Для активации вашего аккаунта необходимо перейти по ссылке:"
 
 #: survey/templates/django_registration/activation_email_body.txt:6
+#: survey/templates/survey_thanks.html:9
 msgid "Thank you!"
 msgstr "Спасибо!"
 
@@ -222,22 +229,21 @@ msgid "Start"
 msgstr "Начать"
 
 #: survey/templates/survey_header_template.html:19
-#: survey/templates/survey_section.html:27
+#: survey/templates/survey_section.html:44
 #: survey/templates/survey_section_block.html:14
 msgid "Back"
 msgstr "Назад"
 
 #: survey/templates/survey_header_template.html:25
 #: survey/templates/survey_header_template.html:26
-#: survey/templates/survey_section.html:33
-#: survey/templates/survey_section.html:34
+#: survey/templates/survey_section.html:49
 #: survey/templates/survey_section_block.html:20
 msgid "Next"
 msgstr "Далее"
 
 #: survey/templates/survey_header_template.html:28
 #: survey/templates/survey_header_template.html:29
-#: survey/templates/survey_section.html:36
+#: survey/templates/survey_section.html:51
 #: survey/templates/survey_section_block.html:22
 msgid "Finish"
 msgstr "Завершить"
@@ -249,6 +255,12 @@ msgstr ""
 #: survey/templates/survey_language_select.html:60
 msgid "Select your language"
 msgstr ""
+
+#: survey/templates/survey_thanks.html:10
+#, fuzzy
+#| msgid "Your account has been activated."
+msgid "Your responses have been recorded."
+msgstr "Ваша учетная запись активирована."
 
 #: survey/templatetags/i18n_extras.py:18
 msgid "Finish editing"
@@ -297,29 +309,3 @@ msgstr "Поиск адреса..."
 #: survey/templatetags/i18n_extras.py:39
 msgid "No results found"
 msgstr "Ничего не найдено"
-
-#, fuzzy
-#~| msgid "Date/Time"
-#~ msgid "Time"
-#~ msgstr "Дата/Время"
-
-#, fuzzy
-#~| msgid "Range"
-#~ msgid "Change"
-#~ msgstr "Диапазон"
-
-#, fuzzy
-#~| msgid "Start"
-#~ msgid "Sat"
-#~ msgstr "Начать"
-
-#, fuzzy
-#~| msgid "Number"
-#~ msgid "November"
-#~ msgstr "Число"
-
-#, fuzzy
-#~| msgid "Number"
-#~ msgctxt "alt. month"
-#~ msgid "November"
-#~ msgstr "Число"
