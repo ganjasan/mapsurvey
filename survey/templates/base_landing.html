@@ -5,6 +5,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Mapsurvey — Geo-spatial surveys for cities{% endblock %}</title>
+    <link rel="icon" href="{% static 'favicon.ico' %}" sizes="any">
+    <link rel="icon" href="{% static 'favicon-32x32.png' %}" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="{% static 'favicon-180x180.png' %}">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#3aafa9">
+    <meta name="description" content="Open source geospatial survey platform. Collect points, lines, and polygons from respondents alongside traditional survey questions.">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{% block og_title %}Mapsurvey — Geo-spatial surveys for cities{% endblock %}">
+    <meta property="og:description" content="Open source geospatial survey platform. Collect spatial data, engage communities, and get actionable maps.">
+    <meta property="og:image" content="{% static 'favicon-512x512.png' %}">
+    <meta name="twitter:card" content="summary">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">

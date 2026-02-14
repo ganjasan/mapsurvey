@@ -1,4 +1,5 @@
 .env*
+!.env.example
 env/
 db.sqlite3
 user_surveys/

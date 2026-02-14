@@ -1,3 +1,5 @@
+import uuid as uuid_mod
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -29,6 +31,31 @@ from .serialization import (
     ExportError,
     EXPORT_MODES,
 )
+
+
+def resolve_survey(survey_slug):
+    """Resolve a survey from a URL slug that may be a UUID or a name.
+
+    Lookup order:
+    1. Try parsing as UUID → lookup by SurveyHeader.uuid
+    2. Fall back to name → lookup by SurveyHeader.name
+    3. If name matches multiple surveys → raise Http404
+
+    Returns SurveyHeader or raises Http404.
+    """
+    try:
+        parsed_uuid = uuid_mod.UUID(str(survey_slug))
+        return get_object_or_404(SurveyHeader, uuid=parsed_uuid)
+    except (ValueError, AttributeError):
+        pass
+
+    surveys = SurveyHeader.objects.filter(name=survey_slug)
+    count = surveys.count()
+    if count == 1:
+        return surveys.first()
+    if count > 1:
+        raise Http404
+    raise Http404
 
 def index(request):
 	surveys = (
@@ -102,13 +129,13 @@ LANGUAGE_NAMES = {
 }
 
 
-def survey_language_select(request, survey_name):
+def survey_language_select(request, survey_slug):
 	"""Display language selection screen for multilingual surveys."""
-	survey = SurveyHeader.objects.get(name=survey_name)
+	survey = resolve_survey(survey_slug)
 
 	if not survey.is_multilingual():
 		# Single-language survey - redirect directly to first section
-		return redirect('survey', survey_name=survey_name)
+		return redirect('survey', survey_slug=str(survey.uuid))
 
 	if request.method == 'POST':
 		selected_language = request.POST.get('language')
@@ -129,7 +156,7 @@ def survey_language_select(request, survey_name):
 			# Redirect to first section
 			start_section = survey.start_section()
 			if start_section:
-				return redirect('section', survey_name=survey_name, section_name=start_section.name)
+				return redirect('section', survey_slug=str(survey.uuid), section_name=start_section.name)
 			return redirect(survey.redirect_url)
 
 	# Build language list with native names
@@ -147,20 +174,21 @@ def survey_language_select(request, survey_name):
 	return render(request, 'survey_language_select.html', context)
 
 
-def survey_header(request, survey_name):
+def survey_header(request, survey_slug):
 	if request.session.get('survey_session_id'):
 		del request.session['survey_session_id']
 	if request.session.get('survey_language'):
 		del request.session['survey_language']
 
-	survey = SurveyHeader.objects.get(name=survey_name)
+	survey = resolve_survey(survey_slug)
 
 	# Redirect to language selection for multilingual surveys
 	if survey.is_multilingual():
-		return redirect('survey_language_select', survey_name=survey_name)
+		return redirect('survey_language_select', survey_slug=str(survey.uuid))
 
 	start_section = survey.start_section()
-	redirect_page = ("../" + survey_name + "/" + start_section.name) if start_section else survey.redirect_url
+	slug = str(survey.uuid)
+	redirect_page = ("../" + slug + "/" + start_section.name) if start_section else survey.redirect_url
 
 	return HttpResponseRedirect(redirect_page)
 	
@@ -169,13 +197,13 @@ def survey_header(request, survey_name):
 	#return render(request, 'survey_header.html', context)
 
 
-def survey_section(request, survey_name, section_name):
+def survey_section(request, survey_slug, section_name):
 
-	survey = SurveyHeader.objects.get(name=survey_name)
+	survey = resolve_survey(survey_slug)
 
 	# For multilingual surveys, redirect to language selection if no language chosen
 	if survey.is_multilingual() and not request.session.get('survey_language'):
-		return redirect('survey_language_select', survey_name=survey_name)
+		return redirect('survey_language_select', survey_slug=str(survey.uuid))
 
 	# Get selected language (None for single-language surveys)
 	selected_language = request.session.get('survey_language')
@@ -286,7 +314,7 @@ def survey_section(request, survey_name, section_name):
 		if section.next_section:
 			next_page = "../" + section.next_section.name
 		elif survey.redirect_url == "#":
-			next_page = reverse('survey_thanks', args=[survey_name])
+			next_page = reverse('survey_thanks', args=[str(survey.uuid)])
 		else:
 			next_page = survey.redirect_url
 		return HttpResponseRedirect(next_page)
@@ -386,11 +414,11 @@ def survey_section(request, survey_name, section_name):
 	})
 
 @login_required
-def download_data(request, survey_name):
+def download_data(request, survey_slug):
 	in_memory = BytesIO()
 	zip = ZipFile(in_memory, "a")
 
-	survey = SurveyHeader.objects.get(name=survey_name)
+	survey = resolve_survey(survey_slug)
 	
 	#обработка гео вопросов
 	geo_questions = survey.geo_questions()	
@@ -515,7 +543,7 @@ def download_data(request, survey_name):
 
 	zip.close()
 	response = HttpResponse(content_type="application/zip")
-	response["Content-Disposition"] = "attachment; filename={filename}.zip".format(filename=survey_name)
+	response["Content-Disposition"] = "attachment; filename={filename}.zip".format(filename=survey.name)
 
 	in_memory.seek(0)
 	response.write(in_memory.read())
@@ -524,7 +552,7 @@ def download_data(request, survey_name):
 
 
 @login_required
-def export_survey(request, survey_name):
+def export_survey(request, survey_uuid):
 	"""Export survey to ZIP archive with specified mode."""
 	mode = request.GET.get('mode', 'structure')
 
@@ -532,11 +560,7 @@ def export_survey(request, survey_name):
 		messages.error(request, f"Invalid export mode '{mode}'")
 		return redirect('editor')
 
-	try:
-		survey = SurveyHeader.objects.get(name=survey_name)
-	except SurveyHeader.DoesNotExist:
-		messages.error(request, f"Survey '{survey_name}' not found")
-		return redirect('editor')
+	survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
 
 	try:
 		in_memory = BytesIO()
@@ -547,7 +571,7 @@ def export_survey(request, survey_name):
 			messages.warning(request, warning)
 
 		response = HttpResponse(content_type="application/zip")
-		response["Content-Disposition"] = f"attachment; filename=survey_{survey_name}_{mode}.zip"
+		response["Content-Disposition"] = f"attachment; filename=survey_{survey.name}_{mode}.zip"
 
 		in_memory.seek(0)
 		response.write(in_memory.read())
@@ -598,31 +622,32 @@ def story_detail(request, slug):
 
 
 @login_required
-def delete_survey(request, survey_name):
+def delete_survey(request, survey_uuid):
 	"""Delete a survey and all related data."""
 	if request.method != 'POST':
 		messages.error(request, "Invalid request method")
 		return redirect('editor')
 
 	try:
-		survey = SurveyHeader.objects.get(name=survey_name)
+		survey = SurveyHeader.objects.get(uuid=survey_uuid)
+		name = survey.name
 		survey.delete()
-		messages.success(request, f"Survey '{survey_name}' deleted successfully")
+		messages.success(request, f"Survey '{name}' deleted successfully")
 	except SurveyHeader.DoesNotExist:
-		messages.error(request, f"Survey '{survey_name}' not found")
+		messages.error(request, "Survey not found")
 
 	return redirect('editor')
 
 
-def survey_thanks(request, survey_name):
-	survey = get_object_or_404(SurveyHeader, name=survey_name)
+def survey_thanks(request, survey_slug):
+	survey = resolve_survey(survey_slug)
 	lang = request.session.pop('survey_language', None)
 	request.session.pop('survey_session_id', None)
 
 	thanks_html = resolve_thanks_html(survey.thanks_html, lang)
 
 	return render(request, 'survey_thanks.html', {
-		'survey_name': survey_name,
+		'survey': survey,
 		'thanks_html': thanks_html,
 		'lang': lang or 'en',
 	})
@@ -646,3 +671,35 @@ def resolve_thanks_html(thanks_html, lang):
 		if thanks_html:
 			return next(iter(thanks_html.values()))
 	return None
+
+
+def robots_txt(request):
+	lines = [
+		"User-agent: *",
+		"Allow: /surveys/",
+		"Allow: /stories/",
+		"Disallow: /admin/",
+		"Disallow: /editor/",
+		"Disallow: /accounts/",
+		"",
+		f"Sitemap: {request.scheme}://{request.get_host()}/sitemap.xml",
+	]
+	return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
+def sitemap_xml(request):
+	base = f"{request.scheme}://{request.get_host()}"
+	surveys = SurveyHeader.objects.filter(
+		visibility__in=['public', 'demo'],
+	)
+	urls = [f"  <url><loc>{base}/</loc></url>"]
+	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
+	for survey in surveys:
+		urls.append(f"  <url><loc>{base}/surveys/{survey.uuid}/</loc></url>")
+	xml = (
+		'<?xml version="1.0" encoding="UTF-8"?>\n'
+		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+		+ "\n".join(urls)
+		+ "\n</urlset>"
+	)
+	return HttpResponse(xml, content_type="application/xml")

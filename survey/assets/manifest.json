@@ -1,0 +1,21 @@
+{
+  "name": "Mapsurvey",
+  "short_name": "Mapsurvey",
+  "description": "Geo-spatial surveys for cities and communities",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3aafa9",
+  "icons": [
+    {
+      "src": "/static/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
