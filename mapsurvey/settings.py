@@ -14,12 +14,16 @@ import os
 from pathlib import Path
 from urllib.parse import urlparse
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-load_dotenv(Path(BASE_DIR) / '.env')
+if load_dotenv:
+    load_dotenv(Path(BASE_DIR) / '.env')
 
 SECRET_KEY = os.environ.get("SECRET_KEY", 'secret')
 
