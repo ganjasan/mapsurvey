@@ -429,12 +429,6 @@ def create_survey_header(
     """Create SurveyHeader from data."""
     name = survey_data["name"]
 
-    # Check if survey already exists
-    if SurveyHeader.objects.filter(name=name).exists():
-        raise ImportError(
-            f"Survey '{name}' already exists. Delete it first or use a different name."
-        )
-
     return SurveyHeader.objects.create(
         name=name[:45],
         organization=organization,
@@ -886,12 +880,18 @@ def import_survey_from_zip(
                 if not survey_name:
                     raise ImportError("Data-only archive missing 'survey_name' field")
 
-                try:
-                    survey = SurveyHeader.objects.get(name=survey_name)
-                except SurveyHeader.DoesNotExist:
+                matches = SurveyHeader.objects.filter(name=survey_name)
+                count = matches.count()
+                if count == 0:
                     raise ImportError(
                         f"Data-only import requires existing survey '{survey_name}'"
                     )
+                if count > 1:
+                    raise ImportError(
+                        f"Multiple surveys found with name '{survey_name}'. "
+                        f"Data-only import requires an unambiguous match."
+                    )
+                survey = matches.first()
 
             # Import structure (in transaction)
             if has_structure:

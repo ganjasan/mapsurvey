@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.contrib.gis.db import models as geomodels
 from django.contrib.gis.geos import Point
@@ -92,8 +94,9 @@ class Organization(models.Model):
 #survey headers
 #example - quality of urban life 
 class SurveyHeader(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     organization = models.ForeignKey("Organization", on_delete=models.SET_NULL, null=True, blank=True)
-    name = models.CharField(max_length=45, unique=True, validators=[validate_url_name])
+    name = models.CharField(max_length=45, validators=[validate_url_name])
     redirect_url = models.CharField(max_length=250, default="#", help_text=_('URL to redirect after survey completion. E.g.: /thanks/ or https://example.com'))
     available_languages = models.JSONField(default=list, blank=True, help_text=_('List of ISO 639-1 language codes, e.g. ["en", "ru", "de"]'))
     visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default="private", help_text=_('Controls whether survey appears on the landing page'))

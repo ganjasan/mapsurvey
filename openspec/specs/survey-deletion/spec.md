@@ -33,11 +33,11 @@ When a survey is deleted, all related data SHALL be removed including sessions, 
 - **AND** all Question records for those sections SHALL be deleted
 
 ### Requirement: Delete action uses POST with CSRF
-The delete action MUST use HTTP POST method with valid CSRF token. GET requests to the delete endpoint SHALL NOT delete data.
+The delete action MUST use HTTP POST method with valid CSRF token to `/editor/delete/<uuid>/`. GET requests to the delete endpoint SHALL NOT delete data.
 
 #### Scenario: POST request deletes survey
-- **WHEN** authenticated user submits POST to delete endpoint with valid CSRF token
-- **THEN** the survey SHALL be deleted
+- **WHEN** authenticated user submits POST to `/editor/delete/<uuid>/` with valid CSRF token
+- **THEN** the survey matching that UUID SHALL be deleted
 - **AND** user SHALL be redirected to editor with success message
 
 #### Scenario: Missing CSRF token rejected
@@ -53,6 +53,6 @@ The system SHALL provide feedback about deletion success or failure via Django m
 - **AND** a success message "Survey '<name>' deleted successfully" is displayed
 
 #### Scenario: Survey not found error
-- **WHEN** user attempts to delete a non-existent survey
+- **WHEN** user attempts to delete a survey with a non-existent UUID
 - **THEN** user is redirected to editor
 - **AND** an error message is displayed

@@ -5,7 +5,7 @@
     <span class="section-title">{{ section.title|default:section.name }}</span>
     {% if section.is_head %}<span class="badge badge-info" style="font-size:0.65rem;">HEAD</span>{% endif %}
     <button class="section-delete"
-            hx-post="{% url 'editor_section_delete' survey.name section.id %}"
+            hx-post="{% url 'editor_section_delete' survey.uuid section.id %}"
             hx-target="closest .section-item"
             hx-swap="outerHTML"
             hx-confirm="Delete section '{{ section.title|default:section.name }}'?"

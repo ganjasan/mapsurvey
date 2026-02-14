@@ -6,7 +6,7 @@
         {% if question.required %}<span class="badge badge-danger">Required</span>{% endif %}
         <span class="q-actions">
             <button title="Edit"
-                    hx-get="{% url 'editor_question_edit' survey.name question.id %}"
+                    hx-get="{% url 'editor_question_edit' survey.uuid question.id %}"
                     hx-target="#questionModalBody"
                     hx-swap="innerHTML"
                     data-toggle="modal" data-target="#questionModal">
@@ -14,7 +14,7 @@
             </button>
             {% if question.input_type == 'point' or question.input_type == 'line' or question.input_type == 'polygon' %}
             <button title="Add Sub-question"
-                    hx-get="{% url 'editor_subquestion_create' survey.name question.id %}"
+                    hx-get="{% url 'editor_subquestion_create' survey.uuid question.id %}"
                     hx-target="#questionModalBody"
                     hx-swap="innerHTML"
                     data-toggle="modal" data-target="#questionModal">
@@ -22,7 +22,7 @@
             </button>
             {% endif %}
             <button title="Delete" class="text-danger"
-                    hx-post="{% url 'editor_question_delete' survey.name question.id %}"
+                    hx-post="{% url 'editor_question_delete' survey.uuid question.id %}"
                     hx-target="closest .question-item"
                     hx-swap="outerHTML"
                     hx-confirm="Delete question '{{ question.name|default:"this question" }}'?"

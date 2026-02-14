@@ -63,7 +63,7 @@ def editor_survey_create(request):
                 code='S1',
                 is_head=True,
             )
-            return redirect('editor_survey_detail', survey_name=survey.name)
+            return redirect('editor_survey_detail', survey_uuid=survey.uuid)
     else:
         form = SurveyHeaderForm()
     return render(request, 'editor/survey_create.html', {'form': form})
@@ -72,8 +72,8 @@ def editor_survey_create(request):
 # ─── Survey editor main page ─────────────────────────────────────────────────
 
 @login_required
-def editor_survey_detail(request, survey_name):
-    survey = get_object_or_404(SurveyHeader, name=survey_name)
+def editor_survey_detail(request, survey_uuid):
+    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
     sections = _get_sections_ordered(survey)
 
     current_section_id = request.GET.get('section')
@@ -105,15 +105,15 @@ def editor_survey_detail(request, survey_name):
 # ─── Survey settings ─────────────────────────────────────────────────────────
 
 @login_required
-def editor_survey_settings(request, survey_name):
-    survey = get_object_or_404(SurveyHeader, name=survey_name)
+def editor_survey_settings(request, survey_uuid):
+    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
     if request.method == 'POST':
         form = SurveyHeaderForm(request.POST, instance=survey)
         if form.is_valid():
             form.save()
             if request.headers.get('HX-Request'):
                 return HttpResponse(status=204, headers={'HX-Trigger': 'settingsSaved'})
-            return redirect('editor_survey_detail', survey_name=survey.name)
+            return redirect('editor_survey_detail', survey_uuid=survey.uuid)
     else:
         form = SurveyHeaderForm(instance=survey)
     return render(request, 'editor/survey_settings_modal.html', {
@@ -126,8 +126,8 @@ def editor_survey_settings(request, survey_name):
 
 @login_required
 @require_POST
-def editor_section_create(request, survey_name):
-    survey = get_object_or_404(SurveyHeader, name=survey_name)
+def editor_section_create(request, survey_uuid):
+    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
     sections = _get_sections_ordered(survey)
 
     # Generate next section number (avoid name collisions)
@@ -159,8 +159,8 @@ def editor_section_create(request, survey_name):
 
 
 @login_required
-def editor_section_detail(request, survey_name, section_id):
-    survey = get_object_or_404(SurveyHeader, name=survey_name)
+def editor_section_detail(request, survey_uuid, section_id):
+    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
     if request.method == 'POST':
@@ -171,7 +171,7 @@ def editor_section_detail(request, survey_name, section_id):
             _save_section_translations(request, section, survey)
             if request.headers.get('HX-Request'):
                 return HttpResponse(status=204, headers={'HX-Trigger': 'sectionSaved'})
-            return redirect('editor_survey_detail', survey_name=survey_name)
+            return redirect('editor_survey_detail', survey_uuid=survey.uuid)
     else:
         form = SurveySectionForm(instance=section)
 
@@ -208,8 +208,8 @@ def _save_section_translations(request, section, survey):
 
 @login_required
 @require_POST
-def editor_section_delete(request, survey_name, section_id):
-    survey = get_object_or_404(SurveyHeader, name=survey_name)
+def editor_section_delete(request, survey_uuid, section_id):
+    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
     prev_sec = section.prev_section
@@ -237,8 +237,8 @@ def editor_section_delete(request, survey_name, section_id):
 
 @login_required
 @require_POST
-def editor_sections_reorder(request, survey_name):
-    survey = get_object_or_404(SurveyHeader, name=survey_name)
+def editor_sections_reorder(request, survey_uuid):
+    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
     section_ids = request.POST.getlist('section_ids[]')
 
     if not section_ids:
@@ -267,8 +267,8 @@ def editor_sections_reorder(request, survey_name):
 # ─── Question CRUD ────────────────────────────────────────────────────────────
 
 @login_required
-def editor_question_create(request, survey_name, section_id):
-    survey = get_object_or_404(SurveyHeader, name=survey_name)
+def editor_question_create(request, survey_uuid, section_id):
+    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
     if request.method == 'POST':
@@ -309,8 +309,8 @@ def editor_question_create(request, survey_name, section_id):
 
 
 @login_required
-def editor_question_edit(request, survey_name, question_id):
-    survey = get_object_or_404(SurveyHeader, name=survey_name)
+def editor_question_edit(request, survey_uuid, question_id):
+    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
 
     if request.method == 'POST':
@@ -348,8 +348,8 @@ def editor_question_edit(request, survey_name, question_id):
 
 @login_required
 @xframe_options_sameorigin
-def editor_question_preview(request, survey_name, question_id):
-    survey = get_object_or_404(SurveyHeader, name=survey_name)
+def editor_question_preview(request, survey_uuid, question_id):
+    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
 
     lang = request.GET.get('lang')
@@ -383,8 +383,8 @@ def editor_question_preview(request, survey_name, question_id):
 
 @login_required
 @require_POST
-def editor_question_delete(request, survey_name, question_id):
-    survey = get_object_or_404(SurveyHeader, name=survey_name)
+def editor_question_delete(request, survey_uuid, question_id):
+    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
     question.delete()
     return HttpResponse('')
@@ -408,8 +408,8 @@ def _save_question_translations(request, question, survey):
 
 @login_required
 @require_POST
-def editor_questions_reorder(request, survey_name):
-    survey = get_object_or_404(SurveyHeader, name=survey_name)
+def editor_questions_reorder(request, survey_uuid):
+    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
     question_ids = request.POST.getlist('question_ids[]')
 
     if not question_ids:
@@ -431,8 +431,8 @@ def editor_questions_reorder(request, survey_name):
 # ─── Sub-question CRUD ────────────────────────────────────────────────────────
 
 @login_required
-def editor_subquestion_create(request, survey_name, parent_id):
-    survey = get_object_or_404(SurveyHeader, name=survey_name)
+def editor_subquestion_create(request, survey_uuid, parent_id):
+    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
     parent = get_object_or_404(Question, id=parent_id, survey_section__survey_header=survey)
 
     if request.method == 'POST':
@@ -470,8 +470,8 @@ def editor_subquestion_create(request, survey_name, parent_id):
 # ─── Section map position picker ─────────────────────────────────────────────
 
 @login_required
-def editor_section_map_picker(request, survey_name, section_id):
-    survey = get_object_or_404(SurveyHeader, name=survey_name)
+def editor_section_map_picker(request, survey_uuid, section_id):
+    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
     if request.method == 'POST':
@@ -493,8 +493,8 @@ def editor_section_map_picker(request, survey_name, section_id):
 
 @login_required
 @xframe_options_sameorigin
-def editor_section_preview(request, survey_name, section_name):
-    survey = get_object_or_404(SurveyHeader, name=survey_name)
+def editor_section_preview(request, survey_uuid, section_name):
+    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
     section = get_object_or_404(SurveySection, survey_header=survey, name=section_name)
 
     selected_language = request.GET.get('lang')

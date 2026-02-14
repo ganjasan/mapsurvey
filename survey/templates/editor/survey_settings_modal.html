@@ -2,8 +2,8 @@
     <h5 class="modal-title">Survey Settings — {{ survey.name }}</h5>
     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
 </div>
-<form method="post" action="{% url 'editor_survey_settings' survey.name %}"
-      hx-post="{% url 'editor_survey_settings' survey.name %}"
+<form method="post" action="{% url 'editor_survey_settings' survey.uuid %}"
+      hx-post="{% url 'editor_survey_settings' survey.uuid %}"
       hx-swap="none"
       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     {% csrf_token %}

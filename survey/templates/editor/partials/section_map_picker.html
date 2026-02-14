@@ -55,7 +55,7 @@
             formData.append('lng', lng);
             formData.append('zoom', zoom);
 
-            fetch('{% url "editor_section_map_picker" survey.name section.id %}', {
+            fetch('{% url "editor_section_map_picker" survey.uuid section.id %}', {
                 method: 'POST',
                 headers: { 'X-CSRFToken': '{{ csrf_token }}' },
                 body: formData

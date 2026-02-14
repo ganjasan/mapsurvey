@@ -9,15 +9,15 @@
     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
 </div>
 <form {% if question %}
-        hx-post="{% url 'editor_question_edit' survey.name question.id %}"
+        hx-post="{% url 'editor_question_edit' survey.uuid question.id %}"
         hx-target="[data-question-id='{{ question.id }}']"
         hx-swap="outerHTML"
       {% elif parent %}
-        hx-post="{% url 'editor_subquestion_create' survey.name parent.id %}"
+        hx-post="{% url 'editor_subquestion_create' survey.uuid parent.id %}"
         hx-target="[data-question-id='{{ parent.id }}']"
         hx-swap="outerHTML"
       {% else %}
-        hx-post="{% url 'editor_question_create' survey.name section.id %}"
+        hx-post="{% url 'editor_question_create' survey.uuid section.id %}"
         hx-target="#questions-list"
         hx-swap="beforeend"
       {% endif %}
@@ -95,7 +95,7 @@
         <div class="question-preview-panel" style="width:280px;flex-shrink:0;border-left:1px solid var(--border-color);padding-left:1rem;display:flex;flex-direction:column;">
             <div style="font-size:0.8rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">Preview</div>
             <iframe id="question-preview-frame"
-                    src="{% url 'editor_question_preview' survey.name question.id %}"
+                    src="{% url 'editor_question_preview' survey.uuid question.id %}"
                     style="flex:1;border:1px solid #e5e7eb;border-radius:6px;width:100%;min-height:200px;background:#fff;">
             </iframe>
         </div>

@@ -6,7 +6,7 @@
 <span class="survey-name">{{ survey.name }}</span>
 <button class="btn btn-sm btn-outline-secondary"
         data-toggle="modal" data-target="#settingsModal"
-        hx-get="{% url 'editor_survey_settings' survey.name %}"
+        hx-get="{% url 'editor_survey_settings' survey.uuid %}"
         hx-target="#settingsModalBody"
         hx-swap="innerHTML">
     <i class="fas fa-cog"></i> Settings
@@ -35,7 +35,7 @@
         </ul>
         <div class="sidebar-footer">
             <button class="add-question-btn"
-                    hx-post="{% url 'editor_section_create' survey.name %}"
+                    hx-post="{% url 'editor_section_create' survey.uuid %}"
                     hx-target="#sections-list"
                     hx-swap="beforeend"
                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
@@ -51,7 +51,7 @@
     <main class="editor-main" id="editor-main">
         {% if current_section %}
         <div id="section-content"
-             hx-get="{% url 'editor_section_detail' survey.name current_section.id %}"
+             hx-get="{% url 'editor_section_detail' survey.uuid current_section.id %}"
              hx-trigger="load"
              hx-swap="innerHTML">
             <div style="text-align:center;padding:2rem;color:#9ca3af;">Loading...</div>
@@ -89,7 +89,7 @@
         </div>
         {% if current_section %}
         <iframe class="preview-frame" id="preview-frame"
-                src="{% url 'editor_section_preview' survey.name current_section.name %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}">
+                src="{% url 'editor_section_preview' survey.uuid current_section.name %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}">
         </iframe>
         {% else %}
         <div style="padding:2rem;text-align:center;color:#9ca3af;font-size:0.85rem;">
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var ids = Array.from(sectionsList.children).map(function(el) {
                     return el.dataset.sectionId;
                 });
-                fetch('{% url "editor_sections_reorder" survey.name %}', {
+                fetch('{% url "editor_sections_reorder" survey.uuid %}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.section-item').forEach(function(el) { el.classList.remove('active'); });
         item.classList.add('active');
         // Load section detail via HTMX
-        htmx.ajax('GET', '/editor/surveys/{{ survey.name }}/sections/' + sectionId + '/', {
+        htmx.ajax('GET', '/editor/surveys/{{ survey.uuid }}/sections/' + sectionId + '/', {
             target: '#section-content',
             swap: 'innerHTML'
         });
@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return langSelect ? langSelect.value : '';
     }
     function buildPreviewUrl(sectionName) {
-        var url = '/editor/surveys/{{ survey.name }}/preview/' + sectionName + '/';
+        var url = '/editor/surveys/{{ survey.uuid }}/preview/' + sectionName + '/';
         var lang = getPreviewLang();
         if (lang) url += '?lang=' + lang;
         return url;
@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var ids = Array.from(listEl.children).map(function(el) {
                     return el.dataset.questionId;
                 });
-                fetch('{% url "editor_questions_reorder" survey.name %}', {
+                fetch('{% url "editor_questions_reorder" survey.uuid %}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ── Panel resize & collapse ──
-    var STORAGE_KEY = 'editor_panels_{{ survey.name }}';
+    var STORAGE_KEY = 'editor_panels_{{ survey.uuid }}';
     var sidebar = document.getElementById('editor-sidebar');
     var preview = document.getElementById('editor-preview');
     var resizeSidebar = document.getElementById('resize-sidebar');

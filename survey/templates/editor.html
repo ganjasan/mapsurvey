@@ -35,21 +35,21 @@
 		  <tbody>
 		  	{% for survey in survey_headers %}
 				<tr>
-					<td><a href="../surveys/{{survey.name}}">{{survey.name}}</a></td>
+					<td><a href="/surveys/{{survey.uuid}}/">{{survey.name}}</a></td>
 					<td>
-						<a href="{% url 'editor_survey_detail' survey.name %}">Edit</a> |
-						<a href="../surveys/{{survey.name}}/download">Download Data</a> |
+						<a href="{% url 'editor_survey_detail' survey.uuid %}">Edit</a> |
+						<a href="/surveys/{{survey.uuid}}/download">Download Data</a> |
 						<div class="dropdown d-inline">
 							<a class="dropdown-toggle" href="#" role="button" id="exportDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 								Export
 							</a>
 							<ul class="dropdown-menu">
-								<li><a class="dropdown-item" href="{% url 'export_survey' survey.name %}?mode=structure">Structure Only</a></li>
-								<li><a class="dropdown-item" href="{% url 'export_survey' survey.name %}?mode=data">Data Only</a></li>
-								<li><a class="dropdown-item" href="{% url 'export_survey' survey.name %}?mode=full">Full Backup</a></li>
+								<li><a class="dropdown-item" href="{% url 'export_survey' survey.uuid %}?mode=structure">Structure Only</a></li>
+								<li><a class="dropdown-item" href="{% url 'export_survey' survey.uuid %}?mode=data">Data Only</a></li>
+								<li><a class="dropdown-item" href="{% url 'export_survey' survey.uuid %}?mode=full">Full Backup</a></li>
 							</ul>
 						</div> |
-						<a href="#" class="text-danger" data-toggle="modal" data-target="#deleteModal" data-survey-name="{{survey.name}}">Delete</a>
+						<a href="#" class="text-danger" data-toggle="modal" data-target="#deleteModal" data-survey-name="{{survey.name}}" data-survey-uuid="{{survey.uuid}}">Delete</a>
 					</td>
 				</tr>
 			{% endfor %}
@@ -123,9 +123,10 @@
 $('#deleteModal').on('show.bs.modal', function (event) {
 	var button = $(event.relatedTarget);
 	var surveyName = button.data('survey-name');
+	var surveyUuid = button.data('survey-uuid');
 	var modal = $(this);
 	modal.find('#deleteSurveyName').text(surveyName);
-	modal.find('#deleteForm').attr('action', '/editor/delete/' + surveyName + '/');
+	modal.find('#deleteForm').attr('action', '/editor/delete/' + surveyUuid + '/');
 });
 </script>
 {% endblock %}

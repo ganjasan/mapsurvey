@@ -56,7 +56,7 @@
         {% if surveys %}
         <div class="survey-cards">
             {% for survey in surveys %}
-            <a href="{% if survey.is_archived %}/surveys/{{ survey.name }}/download{% else %}/surveys/{{ survey.name }}/{% endif %}"
+            <a href="{% if survey.is_archived %}/surveys/{{ survey.uuid }}/download{% else %}/surveys/{{ survey.uuid }}/{% endif %}"
                class="survey-card reveal reveal-delay-{{ forloop.counter }}">
                 <span class="survey-card__badge survey-card__badge--{{ survey.visibility }}{% if survey.is_archived %} survey-card__badge--archived{% endif %}">
                     {% if survey.visibility == "demo" %}Demo{% elif survey.is_archived %}Archived{% else %}Active{% endif %}

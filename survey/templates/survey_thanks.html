@@ -32,7 +32,7 @@
     document.getElementById('share-text').textContent = t('share');
     copied.textContent = t('copied');
 
-    var url = window.location.origin + '{% url "survey" survey_name %}';
+    var url = window.location.origin + '{% url "survey" survey.uuid %}';
 
     btn.addEventListener('click', function() {
         if (navigator.share) {

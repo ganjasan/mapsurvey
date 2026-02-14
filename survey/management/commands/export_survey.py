@@ -2,9 +2,10 @@
 Django management command to export a survey to ZIP archive.
 
 Usage:
-    python manage.py export_survey <survey_name> [--mode=structure|data|full] [--output=file.zip]
+    python manage.py export_survey <survey_name_or_uuid> [--mode=structure|data|full] [--output=file.zip]
 """
 import sys
+import uuid as uuid_mod
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -17,9 +18,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'survey_name',
+            'survey_identifier',
             type=str,
-            help='Name of the survey to export'
+            help='Name or UUID of the survey to export'
         )
         parser.add_argument(
             '--mode',
@@ -37,15 +38,25 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        survey_name = options['survey_name']
+        identifier = options['survey_identifier']
         mode = options['mode']
         output_path = options['output']
 
-        # Find survey
+        # Try UUID first, then name
         try:
-            survey = SurveyHeader.objects.get(name=survey_name)
-        except SurveyHeader.DoesNotExist:
-            raise CommandError(f"Survey '{survey_name}' not found")
+            parsed_uuid = uuid_mod.UUID(identifier)
+            survey = SurveyHeader.objects.get(uuid=parsed_uuid)
+        except (ValueError, SurveyHeader.DoesNotExist):
+            matches = SurveyHeader.objects.filter(name=identifier)
+            count = matches.count()
+            if count == 0:
+                raise CommandError(f"Survey '{identifier}' not found")
+            if count > 1:
+                lines = [f"Multiple surveys found with name '{identifier}':"]
+                for s in matches:
+                    lines.append(f"  - {s.uuid} ({s.name})")
+                raise CommandError("\n".join(lines))
+            survey = matches.first()
 
         # Export
         try:
@@ -54,7 +65,7 @@ class Command(BaseCommand):
                     warnings = export_survey_to_zip(survey, f, mode)
 
                 self.stdout.write(
-                    self.style.SUCCESS(f"Survey '{survey_name}' exported to {output_path}")
+                    self.style.SUCCESS(f"Survey '{survey.name}' exported to {output_path}")
                 )
             else:
                 # Output to stdout (binary mode)

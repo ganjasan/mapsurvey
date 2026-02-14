@@ -713,15 +713,14 @@ class CLICommandTest(TestCase):
             call_command('import_survey', '/nonexistent/path/to/file.zip')
         self.assertIn("not found", str(context.exception))
 
-    def test_import_command_survey_exists(self):
+    def test_import_command_duplicate_name_allowed(self):
         """
         GIVEN a ZIP archive with survey name that already exists
         WHEN import_survey command is called
-        THEN it raises CommandError
+        THEN the import succeeds (duplicate names are allowed)
         """
         import tempfile
         from django.core.management import call_command
-        from django.core.management.base import CommandError
 
         # Export existing survey
         output = BytesIO()
@@ -735,9 +734,8 @@ class CLICommandTest(TestCase):
             with open(import_path, 'wb') as f:
                 f.write(output.read())
 
-            with self.assertRaises(CommandError) as context:
-                call_command('import_survey', import_path)
-            self.assertIn("already exists", str(context.exception))
+            call_command('import_survey', import_path)
+            self.assertEqual(SurveyHeader.objects.filter(name='cli_test_survey').count(), 2)
         finally:
             import os
             os.unlink(import_path)
@@ -1299,17 +1297,20 @@ class ErrorCaseTest(TestCase):
             import_survey_from_zip(import_buffer)
         self.assertIn("survey.name", str(context.exception))
 
-    def test_survey_already_exists(self):
+    def test_survey_duplicate_name_import_allowed(self):
         """
         GIVEN a survey already exists with the same name
         WHEN import_survey_from_zip is called
-        THEN it raises ImportError
+        THEN the import succeeds (duplicate names are allowed)
         """
         SurveyHeader.objects.create(name="duplicate_survey")
 
         survey_data = {
             "version": FORMAT_VERSION,
-            "survey": {"name": "duplicate_survey"},
+            "survey": {
+                "name": "duplicate_survey",
+                "sections": [],
+            },
             "option_groups": []
         }
 
@@ -1318,9 +1319,9 @@ class ErrorCaseTest(TestCase):
             zf.writestr("survey.json", json.dumps(survey_data))
         import_buffer.seek(0)
 
-        with self.assertRaises(ImportError) as context:
-            import_survey_from_zip(import_buffer)
-        self.assertIn("already exists", str(context.exception))
+        result_survey, warnings = import_survey_from_zip(import_buffer)
+        self.assertEqual(result_survey.name, "duplicate_survey")
+        self.assertEqual(SurveyHeader.objects.filter(name="duplicate_survey").count(), 2)
 
     def test_invalid_input_type(self):
         """
@@ -1993,7 +1994,7 @@ class WebViewTest(TestCase):
         WHEN accessing export URL directly
         THEN redirect to login page
         """
-        response = self.client.get('/editor/export/web_test_survey/')
+        response = self.client.get(f'/editor/export/{self.survey.uuid}/')
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
 
@@ -2004,7 +2005,7 @@ class WebViewTest(TestCase):
         THEN download ZIP file with survey.json
         """
         self.client.login(username='testuser', password='testpass123')
-        response = self.client.get('/editor/export/web_test_survey/?mode=structure')
+        response = self.client.get(f'/editor/export/{self.survey.uuid}/?mode=structure')
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/zip')
@@ -2029,7 +2030,7 @@ class WebViewTest(TestCase):
         )
 
         self.client.login(username='testuser', password='testpass123')
-        response = self.client.get('/editor/export/web_test_survey/?mode=data')
+        response = self.client.get(f'/editor/export/{self.survey.uuid}/?mode=data')
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/zip')
@@ -2045,7 +2046,7 @@ class WebViewTest(TestCase):
         THEN download ZIP file with both survey.json and responses.json
         """
         self.client.login(username='testuser', password='testpass123')
-        response = self.client.get('/editor/export/web_test_survey/?mode=full')
+        response = self.client.get(f'/editor/export/{self.survey.uuid}/?mode=full')
 
         self.assertEqual(response.status_code, 200)
 
@@ -2061,7 +2062,7 @@ class WebViewTest(TestCase):
         THEN default to structure mode
         """
         self.client.login(username='testuser', password='testpass123')
-        response = self.client.get('/editor/export/web_test_survey/')
+        response = self.client.get(f'/editor/export/{self.survey.uuid}/')
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('structure.zip', response['Content-Disposition'])
@@ -2069,13 +2070,14 @@ class WebViewTest(TestCase):
     def test_export_survey_not_found(self):
         """
         GIVEN an authenticated user
-        WHEN accessing export URL for non-existent survey
-        THEN redirect with error message
+        WHEN accessing export URL for non-existent survey UUID
+        THEN the server returns 404
         """
+        import uuid
         self.client.login(username='testuser', password='testpass123')
-        response = self.client.get('/editor/export/nonexistent_survey/')
+        response = self.client.get(f'/editor/export/{uuid.uuid4()}/')
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 404)
 
     def test_import_requires_authentication(self):
         """
@@ -2169,11 +2171,11 @@ class WebViewTest(TestCase):
 
         self.assertEqual(response.status_code, 302)
 
-    def test_import_survey_already_exists(self):
+    def test_import_survey_duplicate_name_allowed(self):
         """
         GIVEN an authenticated user and archive with existing survey name
         WHEN posting to import URL
-        THEN redirect with error message
+        THEN the import succeeds (duplicate names are allowed)
         """
         survey_data = {
             "version": FORMAT_VERSION,
@@ -2200,6 +2202,7 @@ class WebViewTest(TestCase):
         response = self.client.post('/editor/import/', {'file': upload_file})
 
         self.assertEqual(response.status_code, 302)
+        self.assertEqual(SurveyHeader.objects.filter(name='web_test_survey').count(), 2)
 
 
 class DeleteSurveyTest(TestCase):
@@ -2239,7 +2242,7 @@ class DeleteSurveyTest(TestCase):
         THEN survey is deleted and user redirected with success message
         """
         self.client.login(username='deleteuser', password='testpass123')
-        response = self.client.post('/editor/delete/delete_test_survey/')
+        response = self.client.post(f'/editor/delete/{self.survey.uuid}/')
 
         self.assertEqual(response.status_code, 302)
         self.assertFalse(SurveyHeader.objects.filter(name="delete_test_survey").exists())
@@ -2250,7 +2253,7 @@ class DeleteSurveyTest(TestCase):
         WHEN accessing delete endpoint
         THEN redirect to login page
         """
-        response = self.client.post('/editor/delete/delete_test_survey/')
+        response = self.client.post(f'/editor/delete/{self.survey.uuid}/')
 
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
@@ -2260,11 +2263,12 @@ class DeleteSurveyTest(TestCase):
     def test_delete_survey_not_found(self):
         """
         GIVEN an authenticated user
-        WHEN attempting to delete non-existent survey
+        WHEN attempting to delete non-existent survey by UUID
         THEN redirect with error message
         """
+        import uuid
         self.client.login(username='deleteuser', password='testpass123')
-        response = self.client.post('/editor/delete/nonexistent_survey/')
+        response = self.client.post(f'/editor/delete/{uuid.uuid4()}/')
 
         self.assertEqual(response.status_code, 302)
 
@@ -2281,7 +2285,7 @@ class DeleteSurveyTest(TestCase):
         self.assertTrue(Question.objects.filter(survey_section=self.section).exists())
 
         self.client.login(username='deleteuser', password='testpass123')
-        self.client.post('/editor/delete/delete_test_survey/')
+        self.client.post(f'/editor/delete/{self.survey.uuid}/')
 
         # All related data should be deleted
         self.assertFalse(SurveySession.objects.filter(pk=self.session.pk).exists())
@@ -2296,7 +2300,7 @@ class DeleteSurveyTest(TestCase):
         THEN request is rejected and survey not deleted
         """
         self.client.login(username='deleteuser', password='testpass123')
-        response = self.client.get('/editor/delete/delete_test_survey/')
+        response = self.client.get(f'/editor/delete/{self.survey.uuid}/')
 
         self.assertEqual(response.status_code, 302)
         # Survey should still exist
@@ -2729,12 +2733,12 @@ class LanguageSelectionTest(TestCase):
         """
         GIVEN a single-language survey
         WHEN user visits language selection URL
-        THEN user is redirected to survey entry
+        THEN user is redirected to survey entry (using UUID)
         """
         response = self.client.get('/surveys/singlelang_test/language/')
 
         self.assertEqual(response.status_code, 302)
-        self.assertIn('singlelang_test', response.url)
+        self.assertIn(str(self.single_lang_survey.uuid), response.url)
 
     def test_language_selection_creates_session_with_language(self):
         """
@@ -4553,13 +4557,13 @@ class SurveyThanksPageTest(TestCase):
         """
         GIVEN a single-section survey with default redirect_url="#"
         WHEN the user submits the last section
-        THEN the response redirects to the thanks page
+        THEN the response redirects to the thanks page (using UUID)
         """
         self.client.get('/surveys/thanks_survey/only_section/')
         response = self.client.post('/surveys/thanks_survey/only_section/', {
             self.question.code: 'Alice',
         })
-        self.assertRedirects(response, '/surveys/thanks_survey/thanks/', fetch_redirect_response=False)
+        self.assertRedirects(response, f'/surveys/{self.survey.uuid}/thanks/', fetch_redirect_response=False)
 
     def test_last_section_post_with_custom_redirect(self):
         """
@@ -4578,11 +4582,11 @@ class SurveyThanksPageTest(TestCase):
         """
         GIVEN a survey with empty thanks_html
         WHEN the user visits the thanks page
-        THEN the default message block is displayed (not custom HTML)
+        THEN the default message block is displayed and share URL uses UUID
         """
         response = self.client.get('/surveys/thanks_survey/thanks/')
-        # Check for the "Take survey again" link which is only in the default block
-        self.assertContains(response, '/surveys/thanks_survey/')
+        # Share URL in JS uses UUID-based survey URL
+        self.assertContains(response, f'/surveys/{self.survey.uuid}/')
 
     def test_thanks_page_multilingual_renders_correct_language(self):
         """
@@ -4768,9 +4772,11 @@ class EditorAuthTest(TestCase):
         WHEN they access any editor URL
         THEN they are redirected to the login page
         """
+        import uuid
+        fake_uuid = uuid.uuid4()
         urls = [
             '/editor/surveys/new/',
-            '/editor/surveys/test/',
+            f'/editor/surveys/{fake_uuid}/',
         ]
         for url in urls:
             response = self.client.get(url)
@@ -4803,11 +4809,11 @@ class EditorSurveyCreateTest(TestCase):
         self.assertEqual(sections.count(), 1)
         self.assertTrue(sections.first().is_head)
 
-    def test_create_survey_duplicate_name_rejected(self):
+    def test_create_survey_duplicate_name_allowed(self):
         """
         GIVEN an existing survey with name 'dup_survey'
         WHEN a user tries to create another survey with the same name
-        THEN the form shows an error and no new survey is created
+        THEN the survey is created (duplicate names are allowed)
         """
         SurveyHeader.objects.create(name='dup_survey')
         response = self.client.post('/editor/surveys/new/', {
@@ -4815,8 +4821,8 @@ class EditorSurveyCreateTest(TestCase):
             'redirect_url': '#',
             'visibility': 'private',
         })
-        self.assertEqual(response.status_code, 200)  # re-renders form
-        self.assertEqual(SurveyHeader.objects.filter(name='dup_survey').count(), 1)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(SurveyHeader.objects.filter(name='dup_survey').count(), 2)
 
     def test_create_survey_get_renders_form(self):
         """
@@ -4854,7 +4860,7 @@ class EditorSectionCRUDTest(TestCase):
         THEN it is appended after B in the linked list
         """
         response = self.client.post(
-            f'/editor/surveys/test_editor/sections/new/',
+            f'/editor/surveys/{self.survey.uuid}/sections/new/',
             HTTP_X_CSRFTOKEN='test',
         )
         self.assertEqual(response.status_code, 200)
@@ -4872,7 +4878,7 @@ class EditorSectionCRUDTest(TestCase):
         WHEN B is deleted
         THEN A.next_section becomes None
         """
-        self.client.post(f'/editor/surveys/test_editor/sections/{self.section_b.id}/delete/')
+        self.client.post(f'/editor/surveys/{self.survey.uuid}/sections/{self.section_b.id}/delete/')
         self.section_a.refresh_from_db()
         self.assertIsNone(self.section_a.next_section_id)
         self.assertFalse(SurveySection.objects.filter(id=self.section_b.id).exists())
@@ -4884,7 +4890,7 @@ class EditorSectionCRUDTest(TestCase):
         THEN the section title is updated
         """
         response = self.client.post(
-            f'/editor/surveys/test_editor/sections/{self.section_a.id}/',
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section_a.id}/',
             {'title': 'Introduction', 'subheading': '', 'code': 'SA'},
         )
         self.section_a.refresh_from_db()
@@ -4923,7 +4929,7 @@ class EditorSectionReorderTest(TestCase):
         THEN linked list is rebuilt: S3(head) → S1 → S2
         """
         response = self.client.post(
-            '/editor/surveys/reorder_test/sections/reorder/',
+            f'/editor/surveys/{self.survey.uuid}/sections/reorder/',
             data=json.dumps({'section_ids': [self.s3.id, self.s1.id, self.s2.id]}),
             content_type='application/json',
         )
@@ -4963,7 +4969,7 @@ class EditorQuestionCRUDTest(TestCase):
         THEN the question appears in the section with correct attributes
         """
         response = self.client.post(
-            f'/editor/surveys/q_test/sections/{self.section.id}/questions/new/',
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
             {'name': 'Your feedback', 'input_type': 'text', 'color': '#000000'},
         )
         self.assertEqual(response.status_code, 200)
@@ -4979,7 +4985,7 @@ class EditorQuestionCRUDTest(TestCase):
         """
         choices = [{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}]
         response = self.client.post(
-            f'/editor/surveys/q_test/sections/{self.section.id}/questions/new/',
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
             {
                 'name': 'Do you agree?',
                 'input_type': 'choice',
@@ -5000,7 +5006,7 @@ class EditorQuestionCRUDTest(TestCase):
         q = Question.objects.create(
             survey_section=self.section, name='Delete me', input_type='text',
         )
-        response = self.client.post(f'/editor/surveys/q_test/questions/{q.id}/delete/')
+        response = self.client.post(f'/editor/surveys/{self.survey.uuid}/questions/{q.id}/delete/')
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Question.objects.filter(id=q.id).exists())
 
@@ -5014,7 +5020,7 @@ class EditorQuestionCRUDTest(TestCase):
             survey_section=self.section, name='Old name', input_type='text',
         )
         response = self.client.post(
-            f'/editor/surveys/q_test/questions/{q.id}/edit/',
+            f'/editor/surveys/{self.survey.uuid}/questions/{q.id}/edit/',
             {'name': 'New name', 'input_type': 'text', 'color': '#000000'},
         )
         self.assertEqual(response.status_code, 200)
@@ -5049,7 +5055,7 @@ class EditorQuestionReorderTest(TestCase):
         THEN order_numbers become Q3(0), Q1(1), Q2(2)
         """
         response = self.client.post(
-            '/editor/surveys/qr_test/questions/reorder/',
+            f'/editor/surveys/{self.survey.uuid}/questions/reorder/',
             data=json.dumps({'question_ids': [self.q3.id, self.q1.id, self.q2.id]}),
             content_type='application/json',
         )
@@ -5083,10 +5089,169 @@ class EditorSubquestionTest(TestCase):
         THEN the sub-question has parent_question_id set correctly
         """
         response = self.client.post(
-            f'/editor/surveys/sub_test/questions/{self.geo_question.id}/subquestions/new/',
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.geo_question.id}/subquestions/new/',
             {'name': 'Rate this place', 'input_type': 'choice', 'color': '#000000',
              'choices_json': json.dumps([{"code": 1, "name": "Good"}, {"code": 2, "name": "Bad"}])},
         )
         self.assertEqual(response.status_code, 200)
         sub = Question.objects.get(name='Rate this place')
         self.assertEqual(sub.parent_question_id_id, self.geo_question.id)
+
+
+class UUIDSurveyIdentificationTest(TestCase):
+    """Tests for UUID-based survey identification and dual-lookup behavior."""
+
+    def setUp(self):
+        self.client = Client()
+        self.org = Organization.objects.create(name="UUID Test Org")
+        self.survey = SurveyHeader.objects.create(
+            name="unique_survey",
+            organization=self.org,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="section1",
+            title="Test Section",
+            code="S1",
+            is_head=True,
+        )
+
+    def test_two_surveys_with_same_name_can_coexist(self):
+        """
+        GIVEN the name field no longer has unique constraint
+        WHEN two surveys are created with the same name
+        THEN both exist in the database with different UUIDs
+        """
+        survey_a = SurveyHeader.objects.create(name="same_name", organization=self.org)
+        survey_b = SurveyHeader.objects.create(name="same_name", organization=self.org)
+
+        self.assertEqual(SurveyHeader.objects.filter(name="same_name").count(), 2)
+        self.assertNotEqual(survey_a.uuid, survey_b.uuid)
+
+    def test_public_url_with_unique_name_resolves(self):
+        """
+        GIVEN a survey with a unique name
+        WHEN accessing the public URL with that name
+        THEN the survey resolves correctly
+        """
+        response = self.client.get('/surveys/unique_survey/')
+        self.assertEqual(response.status_code, 302)  # redirects to section
+
+    def test_public_url_with_ambiguous_name_returns_404(self):
+        """
+        GIVEN two surveys with the same name
+        WHEN accessing the public URL with that name
+        THEN the server returns 404
+        """
+        SurveyHeader.objects.create(name="ambiguous", organization=self.org)
+        SurveyHeader.objects.create(name="ambiguous", organization=self.org)
+
+        response = self.client.get('/surveys/ambiguous/')
+        self.assertEqual(response.status_code, 404)
+
+    def test_public_url_with_uuid_resolves(self):
+        """
+        GIVEN a survey with a UUID
+        WHEN accessing the public URL with that UUID as slug
+        THEN the survey resolves correctly
+        """
+        response = self.client.get(f'/surveys/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 302)  # redirects to section
+
+    def test_public_url_with_uuid_resolves_ambiguous_name(self):
+        """
+        GIVEN two surveys with the same name
+        WHEN accessing the public URL with one survey's UUID
+        THEN the correct survey resolves
+        """
+        survey_a = SurveyHeader.objects.create(name="dup_name", organization=self.org)
+        SurveySection.objects.create(
+            survey_header=survey_a, name="sec1", code="SA", is_head=True,
+        )
+        survey_b = SurveyHeader.objects.create(name="dup_name", organization=self.org)
+        SurveySection.objects.create(
+            survey_header=survey_b, name="sec1", code="SB", is_head=True,
+        )
+
+        response_a = self.client.get(f'/surveys/{survey_a.uuid}/')
+        self.assertEqual(response_a.status_code, 302)
+
+        response_b = self.client.get(f'/surveys/{survey_b.uuid}/')
+        self.assertEqual(response_b.status_code, 302)
+
+    def test_import_survey_with_duplicate_name_succeeds(self):
+        """
+        GIVEN a survey with name 'unique_survey' already exists
+        WHEN importing a ZIP with the same survey name
+        THEN the import succeeds and both surveys coexist
+        """
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "survey": {
+                "name": "unique_survey",
+                "sections": [
+                    {
+                        "name": "imported_sec",
+                        "code": "IS",
+                        "is_head": True,
+                        "questions": []
+                    }
+                ]
+            },
+            "option_groups": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        import_buffer.seek(0)
+
+        result_survey, warnings = import_survey_from_zip(import_buffer)
+
+        self.assertEqual(result_survey.name, "unique_survey")
+        self.assertEqual(SurveyHeader.objects.filter(name="unique_survey").count(), 2)
+        self.assertNotEqual(result_survey.uuid, self.survey.uuid)
+
+    def test_data_only_import_ambiguous_name_raises_error(self):
+        """
+        GIVEN two surveys with the same name
+        WHEN data-only import references that ambiguous name
+        THEN it raises ImportError
+        """
+        SurveyHeader.objects.create(name="unique_survey", organization=self.org)
+        # Now there are two surveys named "unique_survey"
+
+        responses_data = {
+            "version": FORMAT_VERSION,
+            "exported_at": "2024-01-01T12:00:00Z",
+            "survey_name": "unique_survey",
+            "sessions": []
+        }
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("responses.json", json.dumps(responses_data))
+        import_buffer.seek(0)
+
+        with self.assertRaises(ImportError) as context:
+            import_survey_from_zip(import_buffer)
+        self.assertIn("Multiple surveys", str(context.exception))
+
+    def test_survey_has_uuid_auto_generated(self):
+        """
+        GIVEN a new survey created without specifying uuid
+        WHEN the survey is saved
+        THEN it has a non-null UUID automatically assigned
+        """
+        survey = SurveyHeader.objects.create(name="auto_uuid_test")
+        self.assertIsNotNone(survey.uuid)
+
+    def test_survey_uuid_is_unique(self):
+        """
+        GIVEN multiple surveys
+        WHEN checking their UUIDs
+        THEN all UUIDs are distinct
+        """
+        surveys = [SurveyHeader.objects.create(name=f"uuid_test_{i}") for i in range(5)]
+        uuids = [s.uuid for s in surveys]
+        self.assertEqual(len(uuids), len(set(uuids)))

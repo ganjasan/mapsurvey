@@ -151,9 +151,9 @@ The system SHALL provide a management command `import_survey` that creates a sur
 - **WHEN** user runs `import_survey` with a path to non-existent file
 - **THEN** system exits with error code 1 and message "File '<path>' not found"
 
-#### Scenario: Survey already exists
-- **WHEN** user attempts to import a survey with a name that already exists
-- **THEN** system exits with error code 1 and message "Survey '<name>' already exists. Delete it first or use a different name."
+#### Scenario: Duplicate survey name allowed
+- **WHEN** user imports a survey with a name that already exists in the database
+- **THEN** system SHALL create the survey successfully with a new UUID
 
 #### Scenario: Invalid archive format
 - **WHEN** user attempts to import invalid ZIP or missing survey.json
