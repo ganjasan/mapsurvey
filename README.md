@@ -102,18 +102,20 @@ Organization
 |------|-------------|
 | `/editor/` | Dashboard for authenticated users |
 | `/editor/surveys/<uuid>/` | Visual survey editor |
-| `/surveys/<slug>/` | Public survey entry |
+| `/surveys/<slug>/` | Public survey entry (accepts UUID or name) |
 | `/surveys/<slug>/<section>/` | Survey section form |
 | `/surveys/<slug>/download` | Export responses as ZIP |
 | `/admin/` | Django admin |
+| `/robots.txt` | Search engine directives |
+| `/sitemap.xml` | Sitemap for public surveys |
 
 ## Management Commands
 
 ```bash
-# Export a survey (structure, data, or both)
-python manage.py export_survey <name> --mode=structure
-python manage.py export_survey <name> --mode=data
-python manage.py export_survey <name> --mode=full
+# Export a survey by name or UUID (structure, data, or both)
+python manage.py export_survey <name_or_uuid> --mode=structure
+python manage.py export_survey <name_or_uuid> --mode=data
+python manage.py export_survey <name_or_uuid> --mode=full --output survey.zip
 
 # Import a survey from ZIP
 python manage.py import_survey path/to/survey.zip
@@ -178,7 +180,7 @@ See [mapsurvey.org](https://mapsurvey.org) for plans and pricing.
 
 ## Contributing
 
-Contributions are welcome! Please open an issue first to discuss what you'd like to change.
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and guidelines.
 
 ```bash
 # Fork, clone, and set up dev environment
@@ -187,6 +189,10 @@ cd mapsurvey
 ./run_dev.sh --clean
 ./run_tests.sh survey -v2  # make sure tests pass
 ```
+
+## Security
+
+To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 ## License
 
