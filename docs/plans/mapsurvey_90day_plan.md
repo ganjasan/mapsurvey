@@ -13,20 +13,19 @@
 ## WEEK 1: Foundation Setup
 
 ### День 1-2: GitHub & Infrastructure
-- [ ] Создать GitHub organization `mapsurvey`
-- [ ] Setup repositories (core, web-client, mobile, docs, deployment)
-- [ ] Настроить branch protection, CI/CD (GitHub Actions)
-- [ ] Создать initial README с vision statement
-- [ ] Добавить LICENSE файлы (AGPLv3 для core, MIT для mobile)
-- [ ] Setup Discord/Slack community server (пока приватный)
+- [X] Создать GitHub organization `mapsurvey`
+- [X] Setup repositories (core, web-client, mobile, docs, deployment)
+- [X] Настроить branch protection, CI/CD (GitHub Actions)
+- [X] Создать initial README с vision statement
+- [X] Добавить LICENSE файлы (AGPLv3 для core, MIT для mobile)
+- [X] Setup Discord/Slack community server (пока приватный)
 
 **Ответственный**: CTO  
 **Output**: Работающая GitHub инфраструктура
 
 ### День 3-4: Website & Landing Page
 - [x] Купить домен mapsurvey.org
-- [ ] Setup hosting (Vercel/Netlify для статики)
-- [ ] Создать минималистичный landing page:
+- [X] Создать минималистичный landing page:
   - Hero: "Open Source PPGIS for Modern Teams"
   - 3 key benefits vs Maptionnaire (table)
   - GitHub star button

@@ -5,6 +5,7 @@ from django.db import models
 from django.contrib.gis.db import models as geomodels
 from django.contrib.gis.geos import Point
 from datetime import datetime
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from django.core.exceptions import ValidationError
@@ -144,6 +145,14 @@ class Invitation(models.Model):
 
     class Meta:
         app_label = 'survey'
+
+    @property
+    def is_expired(self):
+        return (timezone.now() - self.created_at).days > 7
+
+    @property
+    def is_acceptable(self):
+        return not self.accepted_at and not self.is_expired
 
     def __str__(self):
         return f"{self.email} → {self.organization.name} ({self.role})"

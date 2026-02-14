@@ -236,23 +236,42 @@ def org_send_invitation(request, slug):
     return redirect('org_members', slug=slug)
 
 
-@login_required
 def accept_invitation(request, token):
     """Accept an invitation to join an organization."""
     try:
-        invitation = Invitation.objects.get(token=token)
+        invitation = Invitation.objects.select_related('organization', 'invited_by').get(token=token)
     except Invitation.DoesNotExist:
-        messages.error(request, 'Invalid invitation link.')
-        return redirect('editor')
+        if request.user.is_authenticated:
+            messages.error(request, 'Invalid invitation link.')
+            return redirect('editor')
+        return render(request, 'org/invitation_landing.html', {
+            'error': 'Invalid invitation link.',
+        })
 
     if invitation.accepted_at:
-        messages.info(request, 'This invitation has already been used.')
-        return redirect('editor')
+        if request.user.is_authenticated:
+            messages.info(request, 'This invitation has already been used.')
+            return redirect('editor')
+        return render(request, 'org/invitation_landing.html', {
+            'error': 'This invitation has already been used.',
+        })
 
-    if (timezone.now() - invitation.created_at).days > 7:
-        messages.error(request, 'This invitation has expired.')
-        return redirect('editor')
+    if invitation.is_expired:
+        if request.user.is_authenticated:
+            messages.error(request, 'This invitation has expired.')
+            return redirect('editor')
+        return render(request, 'org/invitation_landing.html', {
+            'error': 'This invitation has expired.',
+        })
 
+    # Unauthenticated user: store token in session and show landing page
+    if not request.user.is_authenticated:
+        request.session['pending_invitation_token'] = str(invitation.token)
+        return render(request, 'org/invitation_landing.html', {
+            'invitation': invitation,
+        })
+
+    # Authenticated user: accept immediately
     Membership.objects.get_or_create(
         user=request.user,
         organization=invitation.organization,

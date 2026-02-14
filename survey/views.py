@@ -37,6 +37,66 @@ from .serialization import (
 )
 
 
+class AsyncEmailRegistrationView(
+    __import__('django_registration.backends.activation.views', fromlist=['RegistrationView']).RegistrationView
+):
+    """Override to send activation email as HTML in a background thread."""
+
+    email_html_template = "django_registration/activation_email.html"
+
+    def send_activation_email(self, user):
+        import threading
+        from django.core.mail import send_mail as _send_mail
+        from django.template.loader import render_to_string
+        from django.conf import settings as conf_settings
+
+        activation_key = self.get_activation_key(user)
+        context = self.get_email_context(activation_key)
+        context["user"] = user
+        subject = "".join(
+            render_to_string(self.email_subject_template, context, self.request).splitlines()
+        )
+        text_body = render_to_string(self.email_body_template, context, self.request)
+        html_body = render_to_string(self.email_html_template, context, self.request)
+
+        threading.Thread(
+            target=_send_mail,
+            kwargs=dict(
+                subject=subject,
+                message=text_body,
+                from_email=conf_settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                html_message=html_body,
+            ),
+            daemon=True,
+        ).start()
+
+
+class DirectActivationView(
+    __import__('django_registration.backends.activation.views', fromlist=['ActivationView']).ActivationView
+):
+    """Activate account directly on GET without showing a form."""
+
+    def get(self, request, *args, **kwargs):
+        activation_key = request.GET.get("activation_key")
+        if not activation_key:
+            from django_registration.exceptions import ActivationError
+            return self.activation_failure(ActivationError("Missing activation key."))
+        try:
+            from django_registration.backends.activation.forms import ActivationForm
+            form = ActivationForm(data={"activation_key": activation_key})
+            if form.is_valid():
+                activated_user = self.activate(form)
+                return redirect("django_registration_activation_complete")
+            else:
+                return render(request, "django_registration/activation_failed.html", {"form": form})
+        except Exception:
+            return render(request, "django_registration/activation_failed.html", {})
+
+    def activation_failure(self, error):
+        return render(self.request, "django_registration/activation_failed.html", {})
+
+
 def resolve_survey(survey_slug):
     """Resolve a survey from a URL slug that may be a UUID or a name.
 

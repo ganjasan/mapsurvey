@@ -476,29 +476,26 @@
         {% block navbar_content %}{% endblock %}
         <span class="spacer"></span>
         {% if user.is_authenticated %}
-            {% if user_orgs|length > 1 %}
             <div class="dropdown d-inline">
                 <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" style="color:#6b7280;font-size:0.85rem;text-decoration:none;">
-                    <i class="fas fa-building" style="margin-right:4px;"></i>{{ active_org.name }}
+                    <i class="fas fa-building" style="margin-right:4px;"></i>{{ active_org.name|default:"No organization" }}
                 </a>
                 <div class="dropdown-menu dropdown-menu-right">
                     {% for o in user_orgs %}
                     <form method="post" action="{% url 'org_switch' %}" class="d-inline">
                         {% csrf_token %}
                         <input type="hidden" name="org_id" value="{{ o.id }}">
-                        <button type="submit" class="dropdown-item {% if o.id == active_org.id %}active{% endif %}">{{ o.name }}</button>
+                        <button type="submit" class="dropdown-item {% if active_org and o.id == active_org.id %}active{% endif %}">{{ o.name }}</button>
                     </form>
                     {% endfor %}
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="{% url 'org_create' %}"><i class="fas fa-plus" style="margin-right:4px;"></i>New Organization</a>
-                    {% if active_org %}<a class="dropdown-item" href="{% url 'org_members' active_org.slug %}"><i class="fas fa-users" style="margin-right:4px;"></i>Members</a>{% endif %}
+                    {% if active_org %}
+                    <a class="dropdown-item" href="{% url 'org_settings' active_org.slug %}"><i class="fas fa-cog" style="margin-right:4px;"></i>Settings</a>
+                    <a class="dropdown-item" href="{% url 'org_members' active_org.slug %}"><i class="fas fa-users" style="margin-right:4px;"></i>Members</a>
+                    {% endif %}
                 </div>
             </div>
-            {% else %}
-                {% if active_org %}
-                <span style="color:#9ca3af;font-size:0.85rem;"><i class="fas fa-building" style="margin-right:4px;"></i>{{ active_org.name }}</span>
-                {% endif %}
-            {% endif %}
             <span style="color:#9ca3af;font-size:0.85rem;">{{ user.get_username }}</span>
             <a href="{% url 'logout' %}" style="font-size:0.85rem;">Logout</a>
         {% endif %}

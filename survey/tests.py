@@ -6347,3 +6347,156 @@ class PersonalOrgCreationTest(TestCase):
         self.assertTrue(Membership.objects.filter(user=user, organization=invite_org, role='editor').exists())
         invitation.refresh_from_db()
         self.assertIsNotNone(invitation.accepted_at)
+
+
+# ─── Invitation Flow for Unregistered Users ──────────────────────────────────
+
+class InvitationFlowTest(TestCase):
+    """Tests for the invitation flow supporting unauthenticated users."""
+
+    def setUp(self):
+        self.org = _make_org('FlowOrg')
+        self.owner = User.objects.create_user(username='flow_owner', password='pass')
+        self.existing_user = User.objects.create_user(username='flow_existing', password='pass', email='flow@test.com')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+
+    def _make_invitation(self, **kwargs):
+        defaults = dict(
+            email='invitee@test.com',
+            organization=self.org,
+            role='editor',
+            invited_by=self.owner,
+        )
+        defaults.update(kwargs)
+        return Invitation.objects.create(**defaults)
+
+    def test_unauthenticated_user_sees_landing_page(self):
+        """
+        GIVEN a valid pending invitation
+        WHEN an unauthenticated user visits the accept URL
+        THEN they see the invitation landing page with org details
+        """
+        invitation = self._make_invitation()
+        response = self.client.get(f'/invitations/{invitation.token}/accept/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.org.name)
+        self.assertContains(response, 'editor')
+        self.assertContains(response, self.owner.username)
+
+    def test_token_stored_in_session(self):
+        """
+        GIVEN a valid pending invitation
+        WHEN an unauthenticated user visits the accept URL
+        THEN the invitation token is stored in the session
+        """
+        invitation = self._make_invitation()
+        self.client.get(f'/invitations/{invitation.token}/accept/')
+        self.assertEqual(
+            self.client.session.get('pending_invitation_token'),
+            str(invitation.token),
+        )
+
+    def test_expired_invitation_shows_error(self):
+        """
+        GIVEN an invitation older than 7 days
+        WHEN an unauthenticated user visits the accept URL
+        THEN they see an expiry error message
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+        invitation = self._make_invitation()
+        Invitation.objects.filter(pk=invitation.pk).update(
+            created_at=timezone.now() - timedelta(days=8)
+        )
+        response = self.client.get(f'/invitations/{invitation.token}/accept/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'expired')
+        self.assertNotIn('pending_invitation_token', self.client.session)
+
+    def test_already_accepted_invitation_shows_info(self):
+        """
+        GIVEN an invitation that has already been accepted
+        WHEN an unauthenticated user visits the accept URL
+        THEN they see an "already used" message
+        """
+        from django.utils import timezone
+        invitation = self._make_invitation(accepted_at=timezone.now())
+        response = self.client.get(f'/invitations/{invitation.token}/accept/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'already been used')
+
+    def test_invalid_token_shows_error(self):
+        """
+        GIVEN a non-existent invitation token
+        WHEN an unauthenticated user visits the accept URL
+        THEN they see an error message
+        """
+        import uuid as _uuid
+        response = self.client.get(f'/invitations/{_uuid.uuid4()}/accept/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Invalid invitation link')
+
+    def test_middleware_processes_pending_token_after_login(self):
+        """
+        GIVEN a pending invitation token stored in the session
+        WHEN the user logs in and the middleware runs
+        THEN the invitation is accepted and membership is created
+        """
+        invitation = self._make_invitation(email='flow@test.com')
+        # Visit accept URL as anonymous to store token
+        self.client.get(f'/invitations/{invitation.token}/accept/')
+        self.assertEqual(
+            self.client.session.get('pending_invitation_token'),
+            str(invitation.token),
+        )
+        # Log in — middleware should pick up the token
+        self.client.login(username='flow_existing', password='pass')
+        self.client.get('/editor/')
+        # Membership should exist
+        self.assertTrue(
+            Membership.objects.filter(
+                user=self.existing_user, organization=self.org, role='editor'
+            ).exists()
+        )
+        invitation.refresh_from_db()
+        self.assertIsNotNone(invitation.accepted_at)
+        # Token should be removed from session
+        self.assertNotIn('pending_invitation_token', self.client.session)
+
+    def test_authenticated_user_still_works_directly(self):
+        """
+        GIVEN an authenticated user and a pending invitation
+        WHEN they visit the accept URL directly
+        THEN they are added to the org immediately (existing behavior)
+        """
+        invitation = self._make_invitation(email='flow@test.com')
+        self.client.login(username='flow_existing', password='pass')
+        response = self.client.get(f'/invitations/{invitation.token}/accept/')
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            Membership.objects.filter(
+                user=self.existing_user, organization=self.org, role='editor'
+            ).exists()
+        )
+        invitation.refresh_from_db()
+        self.assertIsNotNone(invitation.accepted_at)
+
+    def test_middleware_cleans_up_invalid_pending_token(self):
+        """
+        GIVEN a pending invitation token in session that has become invalid
+        WHEN the user logs in and the middleware runs
+        THEN the token is silently removed without error
+        """
+        import uuid as _uuid
+        # Give the user an org so /editor/ doesn't 403
+        personal_org = _make_org('PersonalOrg')
+        Membership.objects.create(user=self.existing_user, organization=personal_org, role='owner')
+        # Manually set a bogus token in session
+        session = self.client.session
+        session['pending_invitation_token'] = str(_uuid.uuid4())
+        session.save()
+        # Log in and visit a page — should not error
+        self.client.login(username='flow_existing', password='pass')
+        response = self.client.get('/editor/')
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('pending_invitation_token', self.client.session)

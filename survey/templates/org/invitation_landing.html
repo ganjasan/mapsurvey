@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Invitation" %} — Mapsurvey{% endblock %}
+
+{% block content_wrapper_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    {% if error %}
+        <div class="auth-message">
+            <span class="auth-icon">&#9888;</span>
+            <h2>{% trans "Invitation Unavailable" %}</h2>
+            <p>{{ error }}</p>
+        </div>
+        <div class="auth-links" style="margin-top: 1.5rem;">
+            <a href="{% url 'login' %}">{% trans "Sign In" %}</a>
+            <span class="auth-divider">|</span>
+            <a href="{% url 'django_registration_register' %}">{% trans "Create Account" %}</a>
+        </div>
+    {% else %}
+        <div class="auth-message">
+            <span class="auth-icon">&#9993;</span>
+            <h2>{% trans "You're Invited!" %}</h2>
+            <p>
+                <strong>{{ invitation.invited_by.username }}</strong>
+                {% trans "has invited you to join" %}
+                <strong>{{ invitation.organization.name }}</strong>
+                {% trans "as" %} <strong>{{ invitation.role }}</strong>.
+            </p>
+        </div>
+
+        <a href="{% url 'login' %}" class="btn-auth" style="display: block; text-align: center; text-decoration: none; margin-top: 1.5rem;">
+            {% trans "Sign In to Accept" %}
+        </a>
+        <a href="{% url 'django_registration_register' %}" class="btn-auth" style="display: block; text-align: center; text-decoration: none; margin-top: 0.75rem; background: #fff; color: #2a7f6f; border: 2px solid #2a7f6f;">
+            {% trans "Create Account" %}
+        </a>
+
+        <p style="margin-top: 1.25rem; font-size: 0.8rem; color: #9ca3af; text-align: center;">
+            {% trans "This invitation expires in 7 days." %}
+        </p>
+    {% endif %}
+</div>
+{% endblock %}

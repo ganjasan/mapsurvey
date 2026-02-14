@@ -1,6 +1,6 @@
-{% load i18n %}{% trans "Site Registration" %}
+{% load i18n %}{% trans "Welcome to Mapsurvey!" %}
 
-{% trans "To activate your account, please follow this link:" %}
-{{ site }}/accounts/activate/{{ activation_key }}/
+{% trans "To activate your account, follow this link:" %}
+{{ scheme }}://{{ site }}/accounts/activate/?activation_key={{ activation_key }}
 
-{% trans "Thank you!" %}
+{% trans "This link expires in" %} {{ expiration_days }} {% trans "day(s)." %}

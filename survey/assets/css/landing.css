@@ -138,6 +138,18 @@ a:hover {
     background: var(--color-border);
 }
 
+.btn-nav-signup {
+    padding: 0.4rem 1.25rem;
+    border: 2px solid var(--color-accent);
+    color: var(--color-accent) !important;
+    transition: all var(--transition-fast);
+}
+
+.btn-nav-signup:hover {
+    background: var(--color-accent);
+    color: var(--color-white) !important;
+}
+
 /* Mobile nav toggle */
 .landing-nav__toggle {
     display: none;

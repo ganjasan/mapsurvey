@@ -98,7 +98,7 @@ def org_permission_required(min_role='viewer'):
         def _wrapped(request, *args, **kwargs):
             if not request.user.is_authenticated:
                 return redirect('login')
-            if not _check_org_role(request.user, request.active_org, min_role):
+            if not request.user.is_superuser and not _check_org_role(request.user, request.active_org, min_role):
                 return HttpResponseForbidden()
             return view_func(request, *args, **kwargs)
         return _wrapped

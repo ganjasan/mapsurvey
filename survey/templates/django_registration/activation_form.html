@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Activate Account" %} — Mapsurvey{% endblock %}
+
+{% block content_wrapper_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-card auth-message">
+    <span class="auth-icon">&#9889;</span>
+    <h2>{% trans "Activate your account" %}</h2>
+
+    {% if form.errors %}
+    <div class="alert alert-danger" style="text-align:left; font-size:0.9rem;">
+        {% for field in form %}
+            {% for error in field.errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>{% trans "Click the button below to activate your account." %}</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.activation_key }}
+        <button type="submit" class="btn-auth" style="margin-top:1.25rem;">{% trans "Activate" %}</button>
+    </form>
+    {% endif %}
+
+    <div class="auth-links">
+        <a href="{% url 'login' %}">{% trans "Back to Sign In" %}</a>
+    </div>
+</div>
+{% endblock %}

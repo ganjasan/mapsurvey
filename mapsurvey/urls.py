@@ -17,11 +17,15 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 
+from survey.views import AsyncEmailRegistrationView, DirectActivationView
+
 
 urlpatterns = [
  	path('', include('survey.urls')),
     path('admin/', admin.site.urls),
-    path('accounts/', include('django_registration.backends.one_step.urls')),
+    path('accounts/register/', AsyncEmailRegistrationView.as_view(), name='django_registration_register'),
+    path('accounts/activate/', DirectActivationView.as_view(), name='django_registration_activate'),
+    path('accounts/', include('django_registration.backends.activation.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
 
 ]
