@@ -6295,15 +6295,15 @@ class CLIImportWithOrgTest(TestCase):
 # ─── Task 3.6: Registration and Personal Org Creation Tests ─────────────────
 
 class PersonalOrgCreationTest(TestCase):
-    """Tests for personal org creation on user activation signal."""
+    """Tests for personal org creation on user registration signal."""
 
     def test_signal_creates_personal_org(self):
         """
-        GIVEN a newly activated user
-        WHEN the user_activated signal fires
+        GIVEN a newly registered user
+        WHEN the user_registered signal fires
         THEN a personal org is created and user is set as owner
         """
-        from django_registration.signals import user_activated
+        from django_registration.signals import user_registered
         from django.test import RequestFactory
         user = User.objects.create_user(username='newuser', password='pass', email='new@test.com')
         factory = RequestFactory()
@@ -6312,7 +6312,7 @@ class PersonalOrgCreationTest(TestCase):
         from django.contrib.sessions.backends.db import SessionStore
         request.session = SessionStore()
 
-        user_activated.send(sender=self.__class__, user=user, request=request)
+        user_registered.send(sender=self.__class__, user=user, request=request)
 
         # Personal org should exist
         self.assertTrue(Membership.objects.filter(user=user, role='owner').exists())
@@ -6322,10 +6322,10 @@ class PersonalOrgCreationTest(TestCase):
     def test_signal_auto_accepts_pending_invitations(self):
         """
         GIVEN a pending invitation for a new user's email
-        WHEN the user activates their account
+        WHEN the user registers
         THEN the invitation is auto-accepted and user joins the org
         """
-        from django_registration.signals import user_activated
+        from django_registration.signals import user_registered
         from django.test import RequestFactory
         from django.contrib.sessions.backends.db import SessionStore
 
@@ -6341,7 +6341,7 @@ class PersonalOrgCreationTest(TestCase):
         request = factory.get('/')
         request.session = SessionStore()
 
-        user_activated.send(sender=self.__class__, user=user, request=request)
+        user_registered.send(sender=self.__class__, user=user, request=request)
 
         # User should have membership in invite_org
         self.assertTrue(Membership.objects.filter(user=user, organization=invite_org, role='editor').exists())

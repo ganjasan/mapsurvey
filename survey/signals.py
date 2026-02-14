@@ -1,13 +1,13 @@
 from django.dispatch import receiver
-from django_registration.signals import user_activated
+from django_registration.signals import user_registered
 
 from .models import Organization, Membership
 
 
-@receiver(user_activated)
-def create_personal_org_on_activation(sender, user, request, **kwargs):
+@receiver(user_registered)
+def create_personal_org_on_registration(sender, user, request, **kwargs):
     """
-    When a new user activates their account, create a personal organization
+    When a new user registers, create a personal organization
     and set it as the active org in their session.
     """
     base_name = f"{user.username}'s workspace"

@@ -21,7 +21,7 @@ from django.conf import settings
 urlpatterns = [
  	path('', include('survey.urls')),
     path('admin/', admin.site.urls),
-    path('accounts/', include('django_registration.backends.activation.urls')),
+    path('accounts/', include('django_registration.backends.one_step.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
 
 ]

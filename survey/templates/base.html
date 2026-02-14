@@ -94,10 +94,43 @@
                 font-size: 0.9rem;
                 border-radius: 6px;
             }
+            .auth-card .form-group {
+                margin-bottom: 1rem;
+            }
+            .auth-card .form-group label {
+                display: block;
+            }
+            .auth-card .form-group input,
+            .auth-card .form-group select,
+            .auth-card .form-group textarea {
+                display: block;
+                width: 100%;
+                border-radius: 6px;
+                border: 1px solid #d1ccc5;
+                padding: 0.6rem 0.85rem;
+                font-size: 0.95rem;
+                transition: border-color 0.15s;
+            }
+            .auth-card .form-group input:focus,
+            .auth-card .form-group select:focus,
+            .auth-card .form-group textarea:focus {
+                border-color: #2a7f6f;
+                box-shadow: 0 0 0 3px rgba(42,127,111,0.12);
+                outline: none;
+            }
             .auth-card .helptext {
+                display: block;
                 font-size: 0.8rem;
                 color: #6b6560;
-                margin-top: 0.2rem;
+                margin-top: 0.25rem;
+            }
+            .auth-card .helptext ul {
+                margin: 0.25rem 0 0 0;
+                padding-left: 1.25rem;
+            }
+            .auth-card .helptext li {
+                font-size: 0.8rem;
+                color: #6b6560;
             }
             .auth-card .errorlist {
                 list-style: none;

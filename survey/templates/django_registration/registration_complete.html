@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Check Your Email" %} — Mapsurvey{% endblock %}
+{% block title %}{% trans "Welcome" %} — Mapsurvey{% endblock %}
 
 {% block content_wrapper_class %}auth-page{% endblock %}
 
 {% block content %}
 <div class="auth-card auth-message">
-    <span class="auth-icon">&#9993;</span>
-    <h2>{% trans "Check Your Email" %}</h2>
-    <p>{% trans "We've sent a confirmation link to your email address. Click the link to activate your account." %}</p>
-    <p style="margin-top: 1rem; font-size: 0.85rem; color: #9ca3af;">{% trans "Didn't receive the email? Check your spam folder." %}</p>
+    <span class="auth-icon">&#10003;</span>
+    <h2>{% trans "Welcome to Mapsurvey!" %}</h2>
+    <p>{% trans "Your account has been created and you are now signed in." %}</p>
+    <a href="{% url 'editor' %}" class="btn-auth" style="display:inline-block; text-align:center; text-decoration:none; margin-top:1.25rem;">{% trans "Go to Dashboard" %}</a>
 </div>
 {% endblock %}
