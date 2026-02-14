@@ -1,6 +1,15 @@
-{% extends "base.html"  %}
+{% extends "base.html" %}
 {% load i18n %}
+
+{% block title %}{% trans "Check Your Email" %} — Mapsurvey{% endblock %}
+
+{% block content_wrapper_class %}auth-page{% endblock %}
+
 {% block content %}
-<h1>{% trans "Registration Complete" %}</h1>
-{% trans "Thank you for registering. A confirmation code has been sent to your email. Please confirm your registration by clicking the link provided." %}<br/><br/>
+<div class="auth-card auth-message">
+    <span class="auth-icon">&#9993;</span>
+    <h2>{% trans "Check Your Email" %}</h2>
+    <p>{% trans "We've sent a confirmation link to your email address. Click the link to activate your account." %}</p>
+    <p style="margin-top: 1rem; font-size: 0.85rem; color: #9ca3af;">{% trans "Didn't receive the email? Check your spam folder." %}</p>
+</div>
 {% endblock %}

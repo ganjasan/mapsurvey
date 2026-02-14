@@ -1,0 +1,60 @@
+<div id="collaborator-list">
+    <h6>Collaborators</h6>
+    <table class="table table-sm table-striped mb-2">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for collab in collaborators %}
+            <tr>
+                <td>{{ collab.user.username }}</td>
+                <td>
+                    <form hx-post="{% url 'editor_collaborator_change_role' survey.uuid collab.id %}"
+                          hx-target="#collaborator-list" hx-swap="outerHTML"
+                          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                        <select name="role" onchange="this.form.requestSubmit()" class="form-control form-control-sm" style="width:auto;">
+                            {% for r in survey_role_choices %}
+                                <option value="{{ r }}" {% if r == collab.role %}selected{% endif %}>{{ r }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </td>
+                <td>
+                    <form hx-post="{% url 'editor_collaborator_remove' survey.uuid collab.id %}"
+                          hx-target="#collaborator-list" hx-swap="outerHTML"
+                          hx-confirm="Remove {{ collab.user.username }}?"
+                          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-muted">No collaborators yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if available_members %}
+    <form hx-post="{% url 'editor_collaborator_add' survey.uuid %}"
+          hx-target="#collaborator-list" hx-swap="outerHTML"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+          class="form-inline mb-2">
+        <select name="user_id" class="form-control form-control-sm mr-1" required>
+            <option value="">Select member...</option>
+            {% for member in available_members %}
+                <option value="{{ member.user_id }}">{{ member.user.username }}</option>
+            {% endfor %}
+        </select>
+        <select name="role" class="form-control form-control-sm mr-1">
+            {% for r in survey_role_choices %}
+                <option value="{{ r }}">{{ r }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-outline-primary btn-sm">Add</button>
+    </form>
+    {% endif %}
+</div>

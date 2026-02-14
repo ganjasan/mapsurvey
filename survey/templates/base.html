@@ -2,42 +2,167 @@
 
 <html>
     <head>
-        <title>Map survey</title>
+        <title>{% block title %}Mapsurvey{% endblock %}</title>
         <link rel="icon" href="{% static 'favicon.ico' %}" sizes="any">
         <link rel="icon" href="{% static 'favicon-32x32.png' %}" type="image/png" sizes="32x32">
         <link rel="apple-touch-icon" href="{% static 'favicon-180x180.png' %}">
         <link rel="manifest" href="{% static 'manifest.json' %}">
         <meta name="theme-color" content="#3aafa9">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
         <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+        <style>
+            .auth-page {
+                min-height: calc(100vh - 56px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #f7f5f2;
+                padding: 2rem 1rem;
+            }
+            .auth-card {
+                background: #fff;
+                border-radius: 10px;
+                box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+                width: 100%;
+                max-width: 420px;
+                padding: 2.5rem 2rem;
+            }
+            .auth-card h2 {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: #1a1a1a;
+                margin-bottom: 0.25rem;
+            }
+            .auth-card .auth-subtitle {
+                color: #6b6560;
+                font-size: 0.95rem;
+                margin-bottom: 1.5rem;
+            }
+            .auth-card .form-control {
+                border-radius: 6px;
+                border: 1px solid #d1ccc5;
+                padding: 0.6rem 0.85rem;
+                font-size: 0.95rem;
+                transition: border-color 0.15s;
+            }
+            .auth-card .form-control:focus {
+                border-color: #2a7f6f;
+                box-shadow: 0 0 0 3px rgba(42,127,111,0.12);
+            }
+            .auth-card label {
+                font-weight: 500;
+                font-size: 0.9rem;
+                color: #374151;
+                margin-bottom: 0.3rem;
+            }
+            .auth-card .btn-auth {
+                width: 100%;
+                padding: 0.65rem;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 0.95rem;
+                background: #2a7f6f;
+                border: none;
+                color: #fff;
+                cursor: pointer;
+                transition: background 0.15s;
+            }
+            .auth-card .btn-auth:hover {
+                background: #1f6558;
+            }
+            .auth-card .auth-links {
+                margin-top: 1.25rem;
+                text-align: center;
+                font-size: 0.9rem;
+            }
+            .auth-card .auth-links a {
+                color: #2a7f6f;
+                text-decoration: none;
+            }
+            .auth-card .auth-links a:hover {
+                text-decoration: underline;
+            }
+            .auth-card .auth-divider {
+                color: #c8c2b8;
+                margin: 0 0.5rem;
+            }
+            .auth-card .alert {
+                font-size: 0.9rem;
+                border-radius: 6px;
+            }
+            .auth-card .helptext {
+                font-size: 0.8rem;
+                color: #6b6560;
+                margin-top: 0.2rem;
+            }
+            .auth-card .errorlist {
+                list-style: none;
+                padding: 0;
+                margin: 0 0 0.5rem 0;
+            }
+            .auth-card .errorlist li {
+                color: #dc3545;
+                font-size: 0.85rem;
+            }
+            .auth-card p > label {
+                display: block;
+            }
+            .auth-card p > input,
+            .auth-card p > select {
+                display: block;
+                width: 100%;
+                border-radius: 6px;
+                border: 1px solid #d1ccc5;
+                padding: 0.6rem 0.85rem;
+                font-size: 0.95rem;
+                transition: border-color 0.15s;
+                margin-bottom: 0.75rem;
+            }
+            .auth-card p > input:focus,
+            .auth-card p > select:focus {
+                border-color: #2a7f6f;
+                box-shadow: 0 0 0 3px rgba(42,127,111,0.12);
+                outline: none;
+            }
+            .auth-message {
+                text-align: center;
+            }
+            .auth-message .auth-icon {
+                font-size: 2.5rem;
+                margin-bottom: 1rem;
+                display: block;
+            }
+            .auth-message p {
+                color: #6b6560;
+                font-size: 0.95rem;
+                line-height: 1.6;
+            }
+        </style>
+        {% block extra_head %}{% endblock %}
     </head>
     <body>
     	<div class="header">
             {% block header %}
                 <nav class="navbar navbar-expand-lg navbar-light bg-light">
-                  <a class="navbar-brand" href="../">Mapsurvey</a>
-                  <!--
-                  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                  </button>
-                -->
+                  <a class="navbar-brand" href="/">Mapsurvey</a>
                   <div class="collapse navbar-collapse d-flex flex-row-reverse" id="navbarNav">
                     <ul class="navbar-nav">
                         {% if user.is_authenticated %}
                             <li class="nav-item"><a class="nav-link" href="#">{{ user.get_username }}</a></li>
-                            <li class="nav-item"><a class="nav-link" href="{% url 'logout'%}">Logout</a></li>   
+                            <li class="nav-item"><a class="nav-link" href="{% url 'logout'%}">Logout</a></li>
                         {% else %}
-                            <li class="nav-item"><a class="nav-link" href="{% url 'login'%}?next={{request.path}}">Login</a></li>   
-                        {% endif %} 
+                            <li class="nav-item"><a class="nav-link" href="{% url 'login'%}?next={{request.path}}">Login</a></li>
+                        {% endif %}
                     </ul>
                   </div>
                 </nav>
             {% endblock %}
     	</div>
-        <div class="content container">
+        <div class="{% block content_wrapper_class %}content container{% endblock %}">
         	{% block content %}
     		{% endblock %}
         </div>

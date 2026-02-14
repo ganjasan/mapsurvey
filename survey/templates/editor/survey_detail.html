@@ -4,6 +4,7 @@
 
 {% block navbar_content %}
 <span class="survey-name">{{ survey.name }}</span>
+{% if effective_role == 'owner' %}
 <button class="btn btn-sm btn-outline-secondary"
         data-toggle="modal" data-target="#settingsModal"
         hx-get="{% url 'editor_survey_settings' survey.uuid %}"
@@ -11,6 +12,8 @@
         hx-swap="innerHTML">
     <i class="fas fa-cog"></i> Settings
 </button>
+{% endif %}
+{% if not can_edit %}<span class="badge badge-secondary ml-2" style="font-size:0.75rem;">Read-only</span>{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -33,6 +36,7 @@
                 {% include "editor/partials/section_list_item.html" with is_current=forloop.first %}
             {% endfor %}
         </ul>
+        {% if can_edit %}
         <div class="sidebar-footer">
             <button class="add-question-btn"
                     hx-post="{% url 'editor_section_create' survey.uuid %}"
@@ -42,6 +46,7 @@
                 <i class="fas fa-plus"></i> New Section
             </button>
         </div>
+        {% endif %}
     </aside>
 
     <!-- Resize handle: sidebar ↔ main -->

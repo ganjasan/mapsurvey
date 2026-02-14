@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ org.name }} — {% trans "Settings" %}{% endblock %}
+
+{% block content_wrapper_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-card" style="max-width:480px;">
+    <h2>{% trans "Organization Settings" %}</h2>
+    <p class="auth-subtitle">{{ org.name }}</p>
+
+    {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="name">{% trans "Name" %}</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ org.name }}" required maxlength="250">
+        </div>
+        <div class="form-group">
+            <label for="slug">{% trans "Slug" %}</label>
+            <input type="text" class="form-control" id="slug" name="slug" value="{{ org.slug }}" required maxlength="100">
+            <small class="helptext">{% trans "URL identifier:" %} /org/{{ org.slug }}/</small>
+        </div>
+        <button type="submit" class="btn-auth">{% trans "Save" %}</button>
+    </form>
+
+    <div class="auth-links">
+        <a href="{% url 'org_members' org.slug %}">{% trans "Members" %}</a>
+        <span class="auth-divider">&middot;</span>
+        <a href="{% url 'editor' %}">{% trans "Back to Dashboard" %}</a>
+    </div>
+</div>
+{% endblock %}

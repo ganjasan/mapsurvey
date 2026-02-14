@@ -10,6 +10,7 @@ import os
 
 from django.core.management.base import BaseCommand, CommandError
 
+from survey.models import Organization
 from survey.serialization import import_survey_from_zip, ImportError as SerializationImportError
 
 
@@ -22,9 +23,27 @@ class Command(BaseCommand):
             type=str,
             help='Path to ZIP file, or "-" to read from stdin'
         )
+        parser.add_argument(
+            '--organization',
+            type=str,
+            default=None,
+            help='Organization name or slug to assign the imported survey to'
+        )
 
     def handle(self, *args, **options):
         file_path = options['file']
+
+        # Resolve organization
+        org = None
+        org_name = options.get('organization')
+        if org_name:
+            try:
+                org = Organization.objects.get(slug=org_name)
+            except Organization.DoesNotExist:
+                try:
+                    org = Organization.objects.get(name=org_name)
+                except Organization.DoesNotExist:
+                    raise CommandError(f"Organization '{org_name}' not found")
 
         # Read from stdin or file
         try:
@@ -42,7 +61,7 @@ class Command(BaseCommand):
 
         # Import
         try:
-            survey, warnings = import_survey_from_zip(input_file)
+            survey, warnings = import_survey_from_zip(input_file, organization=org)
 
             # Show warnings
             for warning in warnings:

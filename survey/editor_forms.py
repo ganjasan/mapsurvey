@@ -5,7 +5,7 @@ from .models import SurveyHeader, SurveySection, Question, Organization
 class SurveyHeaderForm(forms.ModelForm):
     class Meta:
         model = SurveyHeader
-        fields = ['name', 'organization', 'redirect_url', 'available_languages', 'visibility', 'thanks_html']
+        fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'thanks_html']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'survey_name'}),
             'redirect_url': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '#'}),

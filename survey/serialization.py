@@ -349,7 +349,9 @@ def validate_archive(zip_file: zipfile.ZipFile) -> Dict[str, Any]:
 
 def import_structure_from_archive(
     zip_file: zipfile.ZipFile,
-    data: Dict[str, Any]
+    data: Dict[str, Any],
+    organization: Optional[Organization] = None,
+    created_by=None,
 ) -> Tuple[SurveyHeader, Dict[str, str], List[str]]:
     """
     Import survey structure from archive.
@@ -357,6 +359,8 @@ def import_structure_from_archive(
     Args:
         zip_file: The ZIP archive
         data: Parsed survey.json content
+        organization: Override organization (from active org context)
+        created_by: User who initiated the import
 
     Returns:
         Tuple of (created_survey, code_remap_table, warnings)
@@ -367,11 +371,14 @@ def import_structure_from_archive(
     survey_data = data["survey"]
     legacy_option_groups = data.get("option_groups", [])
 
-    # Create organization
-    org = get_or_create_organization(survey_data.get("organization"))
+    # Use provided organization or fall back to archive data
+    if organization is None:
+        org = get_or_create_organization(survey_data.get("organization"))
+    else:
+        org = organization
 
     # Create survey header
-    survey = create_survey_header(survey_data, org)
+    survey = create_survey_header(survey_data, org, created_by=created_by)
 
     # Create sections
     sections_data = survey_data.get("sections", [])
@@ -395,10 +402,13 @@ def import_structure_from_archive(
     return survey, code_remap, warnings
 
 
-def get_or_create_organization(name: Optional[str]) -> Optional[Organization]:
-    """Get existing organization by name or create new one."""
+def get_or_create_organization(name: Optional[str]) -> Organization:
+    """Get existing organization by name or create new one.
+
+    If name is None/empty, creates or gets a default 'Imported' organization.
+    """
     if not name:
-        return None
+        name = 'Imported'
     org, _ = Organization.objects.get_or_create(name=name)
     return org
 
@@ -424,7 +434,8 @@ def convert_legacy_option_group_to_choices(
 
 def create_survey_header(
     survey_data: Dict[str, Any],
-    organization: Optional[Organization]
+    organization: Optional[Organization],
+    created_by=None,
 ) -> SurveyHeader:
     """Create SurveyHeader from data."""
     name = survey_data["name"]
@@ -432,6 +443,7 @@ def create_survey_header(
     return SurveyHeader.objects.create(
         name=name[:45],
         organization=organization,
+        created_by=created_by,
         redirect_url=survey_data.get("redirect_url", "#")[:250],
         available_languages=survey_data.get("available_languages", []),
         thanks_html=survey_data.get("thanks_html", {}),
@@ -845,7 +857,9 @@ def extract_upload_images(
 
 def import_survey_from_zip(
     input_file: IO[bytes],
-    mode: Optional[str] = None
+    mode: Optional[str] = None,
+    organization: Optional[Organization] = None,
+    created_by=None,
 ) -> Tuple[Optional[SurveyHeader], List[str]]:
     """
     Import survey from ZIP archive.
@@ -853,6 +867,8 @@ def import_survey_from_zip(
     Args:
         input_file: File-like object containing ZIP data
         mode: Override mode detection (None = auto-detect from archive)
+        organization: Override organization (from active org context)
+        created_by: User who initiated the import
 
     Returns:
         Tuple of (created_survey_or_none, warnings)
@@ -897,7 +913,9 @@ def import_survey_from_zip(
             if has_structure:
                 with transaction.atomic():
                     survey, code_remap, struct_warnings = import_structure_from_archive(
-                        zf, survey_data
+                        zf, survey_data,
+                        organization=organization,
+                        created_by=created_by,
                     )
                     warnings.extend(struct_warnings)
 

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ org.name }} — {% trans "Members" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 720px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0">{{ org.name }}</h4>
+            <small class="text-muted">{% trans "Members & Invitations" %}</small>
+        </div>
+        <div>
+            {% if is_owner %}<a href="{% url 'org_settings' org.slug %}" class="btn btn-outline-secondary btn-sm mr-1">{% trans "Settings" %}</a>{% endif %}
+            <a href="{% url 'editor' %}" class="btn btn-outline-secondary btn-sm">{% trans "Dashboard" %}</a>
+        </div>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2" role="alert" style="font-size:0.9rem;">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="card mb-4">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>{% trans "User" %}</th>
+                        <th>{% trans "Email" %}</th>
+                        <th>{% trans "Role" %}</th>
+                        <th>{% trans "Joined" %}</th>
+                        {% if can_manage %}<th style="width:80px;"></th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                    <tr>
+                        <td>{{ member.user.username }}{% if member.user == request.user %} <small class="text-muted">({% trans "you" %})</small>{% endif %}</td>
+                        <td class="text-muted">{{ member.user.email }}</td>
+                        <td>
+                            {% if can_manage and member.user != request.user %}
+                                {% if is_owner or member.role != 'owner' %}
+                                <form method="post" action="{% url 'org_change_role' org.slug member.user.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <select name="role" onchange="this.form.submit()" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.85rem;">
+                                        {% for r in role_choices %}
+                                            <option value="{{ r }}" {% if r == member.role %}selected{% endif %}>{{ r }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </form>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ member.role }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge badge-{% if member.role == 'owner' %}primary{% elif member.role == 'admin' %}info{% elif member.role == 'editor' %}success{% else %}secondary{% endif %}">{{ member.role }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted" style="font-size:0.85rem;">{{ member.joined_at|date:"M d, Y" }}</td>
+                        {% if can_manage %}
+                        <td class="text-right">
+                            {% if member.user != request.user %}
+                                {% if is_owner or member.role != 'owner' %}
+                                <form method="post" action="{% url 'org_remove_member' org.slug member.user.id %}" class="d-inline" onsubmit="return confirm('{% trans "Remove" %} {{ member.user.username }}?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" style="font-size:0.75rem;">{% trans "Remove" %}</button>
+                                </form>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if can_manage %}
+    <div class="card mb-4">
+        <div class="card-header" style="font-size:0.9rem;font-weight:600;">{% trans "Invite Member" %}</div>
+        <div class="card-body">
+            <form method="post" action="{% url 'org_send_invitation' org.slug %}" class="form-inline">
+                {% csrf_token %}
+                <div class="form-group mr-2">
+                    <input type="email" class="form-control form-control-sm" name="email" placeholder="user@example.com" required>
+                </div>
+                <div class="form-group mr-2">
+                    <select name="role" class="form-control form-control-sm">
+                        {% for r in role_choices %}
+                            {% if r != 'owner' or is_owner %}
+                            <option value="{{ r }}">{{ r }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">{% trans "Send" %}</button>
+            </form>
+        </div>
+    </div>
+
+    {% if invitations %}
+    <div class="card mb-4">
+        <div class="card-header" style="font-size:0.9rem;font-weight:600;">{% trans "Pending Invitations" %}</div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+                <thead class="thead-light">
+                    <tr><th>{% trans "Email" %}</th><th>{% trans "Role" %}</th><th>{% trans "Sent" %}</th></tr>
+                </thead>
+                <tbody>
+                    {% for inv in invitations %}
+                    <tr>
+                        <td>{{ inv.email }}</td>
+                        <td><span class="badge badge-light">{{ inv.role }}</span></td>
+                        <td class="text-muted" style="font-size:0.85rem;">{{ inv.created_at|date:"M d, Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

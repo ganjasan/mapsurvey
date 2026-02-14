@@ -1,7 +1,15 @@
 {% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Signed Out" %} — Mapsurvey{% endblock %}
+
+{% block content_wrapper_class %}auth-page{% endblock %}
 
 {% block content %}
-<p>Logged out!</p>  
-
-<a href="{% url 'login'%}">Click here to login again.</a>
+<div class="auth-card auth-message">
+    <span class="auth-icon">&#128075;</span>
+    <h2>{% trans "Signed Out" %}</h2>
+    <p>{% trans "You have been signed out successfully." %}</p>
+    <a href="{% url 'login' %}" class="btn-auth" style="display:inline-block; text-align:center; text-decoration:none; margin-top:1.25rem;">{% trans "Sign In Again" %}</a>
+</div>
 {% endblock %}

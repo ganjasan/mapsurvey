@@ -8,6 +8,7 @@ import zipfile
 from .models import (
     Organization, SurveyHeader, SurveySection, Question,
     SurveySession, Answer, ChoicesValidator, Story,
+    Membership, SurveyCollaborator, Invitation,
 )
 from .serialization import (
     serialize_survey_to_dict, serialize_sections,
@@ -16,6 +17,12 @@ from .serialization import (
     import_survey_from_zip, ImportError, FORMAT_VERSION
 )
 from .forms import SurveySectionAnswerForm
+from .permissions import get_effective_survey_role
+
+
+def _make_org(name='TestOrg'):
+    """Helper to create an organization for tests."""
+    return Organization.objects.create(name=name, slug=name.lower().replace(' ', '-'))
 
 
 class SmokeTest(TestCase):
@@ -162,7 +169,8 @@ class DataSerializationTest(TestCase):
 
     def setUp(self):
         """Set up test data for data serialization tests."""
-        self.survey = SurveyHeader.objects.create(name="data_test_survey")
+        self.org = _make_org()
+        self.survey = SurveyHeader.objects.create(name="data_test_survey", organization=self.org)
         self.section = SurveySection.objects.create(
             survey_header=self.survey,
             name="section_data",
@@ -388,7 +396,8 @@ class ZipCreationTest(TestCase):
 
     def setUp(self):
         """Set up test data for ZIP creation tests."""
-        self.survey = SurveyHeader.objects.create(name="zip_test_survey")
+        self.org = _make_org()
+        self.survey = SurveyHeader.objects.create(name="zip_test_survey", organization=self.org)
         self.section = SurveySection.objects.create(
             survey_header=self.survey,
             name="zip_section",
@@ -589,7 +598,8 @@ class CLICommandTest(TestCase):
 
     def setUp(self):
         """Set up test data for CLI tests."""
-        self.survey = SurveyHeader.objects.create(name="cli_test_survey")
+        self.org = _make_org()
+        self.survey = SurveyHeader.objects.create(name="cli_test_survey", organization=self.org)
         self.section = SurveySection.objects.create(
             survey_header=self.survey,
             name="cli_section",
@@ -744,6 +754,9 @@ class CLICommandTest(TestCase):
 class RoundTripTest(TestCase):
     """Tests for export/import round-trip integrity."""
 
+    def setUp(self):
+        self.org = _make_org()
+
     def test_roundtrip_structure_only(self):
         """
         GIVEN a complete survey with sections and questions
@@ -751,10 +764,9 @@ class RoundTripTest(TestCase):
         THEN the imported survey matches the original structure
         """
         # Create original survey
-        org = Organization.objects.create(name="RoundTrip Org")
         survey = SurveyHeader.objects.create(
             name="roundtrip_survey",
-            organization=org,
+            organization=self.org,
             redirect_url="/completed/"
         )
         section1 = SurveySection.objects.create(
@@ -822,7 +834,7 @@ class RoundTripTest(TestCase):
 
         # Verify structure
         self.assertEqual(imported_survey.name, "roundtrip_imported")
-        self.assertEqual(imported_survey.organization.name, "RoundTrip Org")
+        self.assertEqual(imported_survey.organization.name, "TestOrg")
         self.assertEqual(imported_survey.redirect_url, "/completed/")
 
         # Verify sections
@@ -863,7 +875,7 @@ class RoundTripTest(TestCase):
         THEN the imported survey includes all responses
         """
         # Create survey
-        survey = SurveyHeader.objects.create(name="full_roundtrip")
+        survey = SurveyHeader.objects.create(name="full_roundtrip", organization=self.org)
         section = SurveySection.objects.create(
             survey_header=survey,
             name="full_section",
@@ -959,7 +971,7 @@ class RoundTripTest(TestCase):
         WHEN exported and imported
         THEN the geo data is preserved accurately
         """
-        survey = SurveyHeader.objects.create(name="geo_roundtrip")
+        survey = SurveyHeader.objects.create(name="geo_roundtrip", organization=self.org)
         section = SurveySection.objects.create(
             survey_header=survey,
             name="geo_section",
@@ -1039,7 +1051,8 @@ class DataOnlyImportTest(TestCase):
 
     def setUp(self):
         """Create a survey for data-only import tests."""
-        self.survey = SurveyHeader.objects.create(name="existing_survey")
+        self.org = _make_org()
+        self.survey = SurveyHeader.objects.create(name="existing_survey", organization=self.org)
         self.section = SurveySection.objects.create(
             survey_header=self.survey,
             name="existing_section",
@@ -1212,6 +1225,9 @@ class DataOnlyImportTest(TestCase):
 class ErrorCaseTest(TestCase):
     """Tests for error cases during import."""
 
+    def setUp(self):
+        self.org = _make_org()
+
     def test_invalid_zip_file(self):
         """
         GIVEN invalid data that is not a ZIP file
@@ -1303,7 +1319,7 @@ class ErrorCaseTest(TestCase):
         WHEN import_survey_from_zip is called
         THEN the import succeeds (duplicate names are allowed)
         """
-        SurveyHeader.objects.create(name="duplicate_survey")
+        SurveyHeader.objects.create(name="duplicate_survey", organization=self.org)
 
         survey_data = {
             "version": FORMAT_VERSION,
@@ -1369,7 +1385,7 @@ class ErrorCaseTest(TestCase):
         WHEN import_survey_from_zip is called
         THEN it imports with warning and skips the answer
         """
-        survey = SurveyHeader.objects.create(name="missing_ref_survey")
+        survey = SurveyHeader.objects.create(name="missing_ref_survey", organization=self.org)
         section = SurveySection.objects.create(
             survey_header=survey,
             name="missing_ref_section",
@@ -1420,7 +1436,7 @@ class ErrorCaseTest(TestCase):
         WHEN import_survey_from_zip is called
         THEN it imports with warning and skips the choice
         """
-        survey = SurveyHeader.objects.create(name="missing_choice_survey")
+        survey = SurveyHeader.objects.create(name="missing_choice_survey", organization=self.org)
         section = SurveySection.objects.create(
             survey_header=survey,
             name="missing_choice_section",
@@ -1675,6 +1691,9 @@ class ErrorCaseTest(TestCase):
 class CodeRemappingTest(TestCase):
     """Tests for question code remapping on collision."""
 
+    def setUp(self):
+        self.org = _make_org()
+
     def test_code_collision_generates_new_code(self):
         """
         GIVEN an existing question with same code as in archive
@@ -1682,7 +1701,7 @@ class CodeRemappingTest(TestCase):
         THEN it generates a new unique code for the imported question
         """
         # Create existing question with code that will collide
-        existing_survey = SurveyHeader.objects.create(name="existing")
+        existing_survey = SurveyHeader.objects.create(name="existing", organization=self.org)
         existing_section = SurveySection.objects.create(
             survey_header=existing_survey,
             name="existing_section",
@@ -1746,7 +1765,7 @@ class CodeRemappingTest(TestCase):
         THEN responses are linked using remapped code
         """
         # Create existing question with colliding code
-        existing_survey = SurveyHeader.objects.create(name="existing2")
+        existing_survey = SurveyHeader.objects.create(name="existing2", organization=self.org)
         existing_section = SurveySection.objects.create(
             survey_header=existing_survey,
             name="existing_section2",
@@ -1836,7 +1855,7 @@ class CodeRemappingTest(TestCase):
         THEN sub-questions are correctly linked to remapped parent
         """
         # Create colliding code
-        existing_survey = SurveyHeader.objects.create(name="existing3")
+        existing_survey = SurveyHeader.objects.create(name="existing3", organization=self.org)
         existing_section = SurveySection.objects.create(
             survey_header=existing_survey,
             name="existing_section3",
@@ -1911,7 +1930,7 @@ class CodeRemappingTest(TestCase):
         THEN all colliding codes are remapped uniquely
         """
         # Create multiple existing questions
-        existing_survey = SurveyHeader.objects.create(name="existing4")
+        existing_survey = SurveyHeader.objects.create(name="existing4", organization=self.org)
         existing_section = SurveySection.objects.create(
             survey_header=existing_survey,
             name="existing_section4",
@@ -1970,11 +1989,13 @@ class WebViewTest(TestCase):
     def setUp(self):
         """Set up test data and client."""
         self.client = Client()
+        self.org = _make_org()
         self.user = User.objects.create_user(
             username='testuser',
             password='testpass123'
         )
-        self.survey = SurveyHeader.objects.create(name="web_test_survey")
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="web_test_survey", organization=self.org)
         self.section = SurveySection.objects.create(
             survey_header=self.survey,
             name="web_section",
@@ -2211,11 +2232,13 @@ class DeleteSurveyTest(TestCase):
     def setUp(self):
         """Set up test data and client."""
         self.client = Client()
+        self.org = _make_org()
         self.user = User.objects.create_user(
             username='deleteuser',
             password='testpass123'
         )
-        self.survey = SurveyHeader.objects.create(name="delete_test_survey")
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="delete_test_survey", organization=self.org)
         self.section = SurveySection.objects.create(
             survey_header=self.survey,
             name="delete_section",
@@ -2264,13 +2287,13 @@ class DeleteSurveyTest(TestCase):
         """
         GIVEN an authenticated user
         WHEN attempting to delete non-existent survey by UUID
-        THEN redirect with error message
+        THEN return 404
         """
         import uuid
         self.client.login(username='deleteuser', password='testpass123')
         response = self.client.post(f'/editor/delete/{uuid.uuid4()}/')
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 404)
 
     def test_delete_survey_cascade_deletes_related_data(self):
         """
@@ -2362,6 +2385,7 @@ class TranslationModelsTest(TestCase):
         """
         survey = SurveyHeader.objects.create(
             name="single_lang_survey",
+            organization=self.org,
             available_languages=[]
         )
         self.assertFalse(survey.is_multilingual())
@@ -2372,7 +2396,7 @@ class TranslationModelsTest(TestCase):
         WHEN is_multilingual() is called
         THEN it returns False
         """
-        survey = SurveyHeader.objects.create(name="default_survey")
+        survey = SurveyHeader.objects.create(name="default_survey", organization=self.org)
         self.assertFalse(survey.is_multilingual())
 
     def test_section_translation_creation(self):
@@ -3962,14 +3986,16 @@ class MultilingualIntegrationTest(TestCase):
 class SurveyHeaderVisibilityTest(TestCase):
     """Tests for SurveyHeader visibility and is_archived fields."""
 
+    def setUp(self):
+        self.org = _make_org()
+
     def test_default_visibility_is_private(self):
         """
         GIVEN a new SurveyHeader
         WHEN created without specifying visibility
         THEN visibility should default to 'private'
         """
-        org = Organization.objects.create(name="TestOrg")
-        survey = SurveyHeader.objects.create(name="test_vis", organization=org)
+        survey = SurveyHeader.objects.create(name="test_vis", organization=self.org)
         self.assertEqual(survey.visibility, "private")
 
     def test_default_is_archived_is_false(self):
@@ -3978,7 +4004,7 @@ class SurveyHeaderVisibilityTest(TestCase):
         WHEN created without specifying is_archived
         THEN is_archived should default to False
         """
-        survey = SurveyHeader.objects.create(name="test_arch")
+        survey = SurveyHeader.objects.create(name="test_arch", organization=self.org)
         self.assertFalse(survey.is_archived)
 
     def test_visibility_choices(self):
@@ -3988,12 +4014,15 @@ class SurveyHeaderVisibilityTest(TestCase):
         THEN each value should be accepted
         """
         for vis in ("private", "demo", "public"):
-            survey = SurveyHeader.objects.create(name=f"test_{vis}", visibility=vis)
+            survey = SurveyHeader.objects.create(name=f"test_{vis}", visibility=vis, organization=self.org)
             self.assertEqual(survey.visibility, vis)
 
 
 class StoryModelTest(TestCase):
     """Tests for the Story model."""
+
+    def setUp(self):
+        self.org = _make_org()
 
     def test_create_story(self):
         """
@@ -4036,7 +4065,7 @@ class StoryModelTest(TestCase):
         WHEN created
         THEN the story should reference that survey
         """
-        survey = SurveyHeader.objects.create(name="linked_survey")
+        survey = SurveyHeader.objects.create(name="linked_survey", organization=self.org)
         story = Story.objects.create(
             title="Linked", slug="linked", story_type="results", survey=survey,
         )
@@ -4110,7 +4139,7 @@ class LandingPageViewTest(TestCase):
         WHEN the landing page is rendered
         THEN no surveys appear in context
         """
-        SurveyHeader.objects.create(name="hidden", visibility="private")
+        SurveyHeader.objects.create(name="hidden", visibility="private", organization=self.org)
         response = self.client.get('/')
         self.assertEqual(len(response.context['surveys']), 0)
 
@@ -4130,6 +4159,7 @@ class StoryDetailViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
+        self.org = _make_org()
 
     def test_published_story_returns_200(self):
         """
@@ -4172,7 +4202,7 @@ class StoryDetailViewTest(TestCase):
         THEN the page includes the survey name in the response
         """
         from django.utils import timezone
-        survey = SurveyHeader.objects.create(name="linked_surv")
+        survey = SurveyHeader.objects.create(name="linked_surv", organization=self.org)
         Story.objects.create(
             title="With Survey", slug="with-survey", story_type="results",
             is_published=True, published_date=timezone.now(), survey=survey,
@@ -4788,7 +4818,9 @@ class EditorSurveyCreateTest(TestCase):
     """Tests for survey creation via the editor."""
 
     def setUp(self):
+        self.org = _make_org()
         self.user = User.objects.create_user(username='editor', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
         self.client.login(username='editor', password='pass')
 
     def test_create_survey_happy_path(self):
@@ -4815,7 +4847,7 @@ class EditorSurveyCreateTest(TestCase):
         WHEN a user tries to create another survey with the same name
         THEN the survey is created (duplicate names are allowed)
         """
-        SurveyHeader.objects.create(name='dup_survey')
+        SurveyHeader.objects.create(name='dup_survey', organization=self.org)
         response = self.client.post('/editor/surveys/new/', {
             'name': 'dup_survey',
             'redirect_url': '#',
@@ -4839,9 +4871,11 @@ class EditorSectionCRUDTest(TestCase):
     """Tests for section CRUD in the editor."""
 
     def setUp(self):
+        self.org = _make_org()
         self.user = User.objects.create_user(username='editor', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
         self.client.login(username='editor', password='pass')
-        self.survey = SurveyHeader.objects.create(name='test_editor', visibility='private')
+        self.survey = SurveyHeader.objects.create(name='test_editor', visibility='private', organization=self.org)
         self.section_a = SurveySection.objects.create(
             survey_header=self.survey, name='a', title='Section A', code='SA', is_head=True,
         )
@@ -4901,9 +4935,11 @@ class EditorSectionReorderTest(TestCase):
     """Tests for section drag-and-drop reordering."""
 
     def setUp(self):
+        self.org = _make_org()
         self.user = User.objects.create_user(username='editor', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
         self.client.login(username='editor', password='pass')
-        self.survey = SurveyHeader.objects.create(name='reorder_test', visibility='private')
+        self.survey = SurveyHeader.objects.create(name='reorder_test', visibility='private', organization=self.org)
         self.s1 = SurveySection.objects.create(
             survey_header=self.survey, name='s1', title='S1', code='S1', is_head=True,
         )
@@ -4955,9 +4991,11 @@ class EditorQuestionCRUDTest(TestCase):
     """Tests for question CRUD in the editor."""
 
     def setUp(self):
+        self.org = _make_org()
         self.user = User.objects.create_user(username='editor', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
         self.client.login(username='editor', password='pass')
-        self.survey = SurveyHeader.objects.create(name='q_test', visibility='private')
+        self.survey = SurveyHeader.objects.create(name='q_test', visibility='private', organization=self.org)
         self.section = SurveySection.objects.create(
             survey_header=self.survey, name='sec1', title='Section 1', code='S1', is_head=True,
         )
@@ -5032,9 +5070,11 @@ class EditorQuestionReorderTest(TestCase):
     """Tests for question reordering."""
 
     def setUp(self):
+        self.org = _make_org()
         self.user = User.objects.create_user(username='editor', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
         self.client.login(username='editor', password='pass')
-        self.survey = SurveyHeader.objects.create(name='qr_test', visibility='private')
+        self.survey = SurveyHeader.objects.create(name='qr_test', visibility='private', organization=self.org)
         self.section = SurveySection.objects.create(
             survey_header=self.survey, name='sec1', code='S1', is_head=True,
         )
@@ -5072,9 +5112,11 @@ class EditorSubquestionTest(TestCase):
     """Tests for sub-question creation."""
 
     def setUp(self):
+        self.org = _make_org()
         self.user = User.objects.create_user(username='editor', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
         self.client.login(username='editor', password='pass')
-        self.survey = SurveyHeader.objects.create(name='sub_test', visibility='private')
+        self.survey = SurveyHeader.objects.create(name='sub_test', visibility='private', organization=self.org)
         self.section = SurveySection.objects.create(
             survey_header=self.survey, name='sec1', code='S1', is_head=True,
         )
@@ -5243,7 +5285,7 @@ class UUIDSurveyIdentificationTest(TestCase):
         WHEN the survey is saved
         THEN it has a non-null UUID automatically assigned
         """
-        survey = SurveyHeader.objects.create(name="auto_uuid_test")
+        survey = SurveyHeader.objects.create(name="auto_uuid_test", organization=self.org)
         self.assertIsNotNone(survey.uuid)
 
     def test_survey_uuid_is_unique(self):
@@ -5252,6 +5294,1056 @@ class UUIDSurveyIdentificationTest(TestCase):
         WHEN checking their UUIDs
         THEN all UUIDs are distinct
         """
-        surveys = [SurveyHeader.objects.create(name=f"uuid_test_{i}") for i in range(5)]
+        surveys = [SurveyHeader.objects.create(name=f"uuid_test_{i}", organization=self.org) for i in range(5)]
         uuids = [s.uuid for s in surveys]
         self.assertEqual(len(uuids), len(set(uuids)))
+
+
+# ─── Task 2.6: Permission Resolution Logic Tests ────────────────────────────
+
+class PermissionResolutionTest(TestCase):
+    """Tests for permission resolution logic (org baseline + survey collaborator)."""
+
+    def setUp(self):
+        self.org = _make_org('PermOrg')
+        self.survey = SurveyHeader.objects.create(name='perm_survey', organization=self.org)
+        self.owner_user = User.objects.create_user(username='org_owner', password='pass')
+        self.admin_user = User.objects.create_user(username='org_admin', password='pass')
+        self.editor_user = User.objects.create_user(username='org_editor', password='pass')
+        self.viewer_user = User.objects.create_user(username='org_viewer', password='pass')
+        self.nonmember = User.objects.create_user(username='nonmember', password='pass')
+
+        Membership.objects.create(user=self.owner_user, organization=self.org, role='owner')
+        Membership.objects.create(user=self.admin_user, organization=self.org, role='admin')
+        Membership.objects.create(user=self.editor_user, organization=self.org, role='editor')
+        Membership.objects.create(user=self.viewer_user, organization=self.org, role='viewer')
+
+    def test_org_owner_gets_survey_owner_role(self):
+        """
+        GIVEN an org owner with no explicit survey collaborator entry
+        WHEN get_effective_survey_role is called
+        THEN effective role is 'owner'
+        """
+        role = get_effective_survey_role(self.owner_user, self.survey)
+        self.assertEqual(role, 'owner')
+
+    def test_org_admin_gets_survey_owner_role(self):
+        """
+        GIVEN an org admin with no explicit survey collaborator entry
+        WHEN get_effective_survey_role is called
+        THEN effective role is 'owner' (admin maps to survey owner)
+        """
+        role = get_effective_survey_role(self.admin_user, self.survey)
+        self.assertEqual(role, 'owner')
+
+    def test_org_editor_gets_none_without_collaborator(self):
+        """
+        GIVEN an org editor with no explicit survey collaborator entry
+        WHEN get_effective_survey_role is called
+        THEN effective role is None (editor gets no implicit access to others' surveys)
+        """
+        role = get_effective_survey_role(self.editor_user, self.survey)
+        self.assertIsNone(role)
+
+    def test_org_editor_with_collaborator_gets_collaborator_role(self):
+        """
+        GIVEN an org editor who is a survey collaborator with 'editor' role
+        WHEN get_effective_survey_role is called
+        THEN effective role is 'editor'
+        """
+        SurveyCollaborator.objects.create(user=self.editor_user, survey=self.survey, role='editor')
+        role = get_effective_survey_role(self.editor_user, self.survey)
+        self.assertEqual(role, 'editor')
+
+    def test_org_viewer_gets_viewer_baseline(self):
+        """
+        GIVEN an org viewer with no explicit survey collaborator entry
+        WHEN get_effective_survey_role is called
+        THEN effective role is 'viewer'
+        """
+        role = get_effective_survey_role(self.viewer_user, self.survey)
+        self.assertEqual(role, 'viewer')
+
+    def test_org_viewer_with_editor_collaborator_gets_editor(self):
+        """
+        GIVEN an org viewer who has an explicit 'editor' collaborator role
+        WHEN get_effective_survey_role is called
+        THEN effective role is 'editor' (max of viewer baseline and editor collab)
+        """
+        SurveyCollaborator.objects.create(user=self.viewer_user, survey=self.survey, role='editor')
+        role = get_effective_survey_role(self.viewer_user, self.survey)
+        self.assertEqual(role, 'editor')
+
+    def test_org_viewer_with_owner_collaborator_gets_owner(self):
+        """
+        GIVEN an org viewer who has an explicit 'owner' collaborator role
+        WHEN get_effective_survey_role is called
+        THEN effective role is 'owner'
+        """
+        SurveyCollaborator.objects.create(user=self.viewer_user, survey=self.survey, role='owner')
+        role = get_effective_survey_role(self.viewer_user, self.survey)
+        self.assertEqual(role, 'owner')
+
+    def test_nonmember_gets_none(self):
+        """
+        GIVEN a user who is not a member of the org
+        WHEN get_effective_survey_role is called
+        THEN effective role is None
+        """
+        role = get_effective_survey_role(self.nonmember, self.survey)
+        self.assertIsNone(role)
+
+    def test_unauthenticated_user_gets_none(self):
+        """
+        GIVEN an anonymous (unauthenticated) user object
+        WHEN get_effective_survey_role is called
+        THEN effective role is None
+        """
+        from django.contrib.auth.models import AnonymousUser
+        role = get_effective_survey_role(AnonymousUser(), self.survey)
+        self.assertIsNone(role)
+
+    def test_org_editor_with_viewer_collaborator_gets_viewer(self):
+        """
+        GIVEN an org editor who has an explicit 'viewer' collaborator role
+        WHEN get_effective_survey_role is called
+        THEN effective role is 'viewer' (editor baseline is None, collab is viewer)
+        """
+        SurveyCollaborator.objects.create(user=self.editor_user, survey=self.survey, role='viewer')
+        role = get_effective_survey_role(self.editor_user, self.survey)
+        self.assertEqual(role, 'viewer')
+
+
+# ─── Task 4.8: Organization CRUD and Member Management Tests ────────────────
+
+class OrgCRUDTest(TestCase):
+    """Tests for organization creation, settings, and member management."""
+
+    def setUp(self):
+        self.owner = User.objects.create_user(username='org_owner', password='pass')
+        self.admin = User.objects.create_user(username='org_admin', password='pass')
+        self.viewer = User.objects.create_user(username='org_viewer', password='pass')
+        self.outsider = User.objects.create_user(username='outsider', password='pass')
+
+        self.org = _make_org('TestCrudOrg')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        Membership.objects.create(user=self.admin, organization=self.org, role='admin')
+        Membership.objects.create(user=self.viewer, organization=self.org, role='viewer')
+
+    def test_create_org_as_authenticated_user(self):
+        """
+        GIVEN an authenticated user
+        WHEN they POST to org creation with a name
+        THEN a new org is created and they become owner
+        """
+        self.client.login(username='outsider', password='pass')
+        response = self.client.post('/org/new/', {'name': 'My New Org'})
+        self.assertEqual(response.status_code, 302)
+        org = Organization.objects.get(name='My New Org')
+        self.assertTrue(Membership.objects.filter(user=self.outsider, organization=org, role='owner').exists())
+
+    def test_create_org_unauthenticated_redirects(self):
+        """
+        GIVEN an unauthenticated user
+        WHEN they access org creation
+        THEN they are redirected to login
+        """
+        response = self.client.post('/org/new/', {'name': 'Nope'})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('login', response.url)
+
+    def test_org_settings_owner_can_edit(self):
+        """
+        GIVEN an org owner
+        WHEN they POST updated settings
+        THEN the org is updated
+        """
+        self.client.login(username='org_owner', password='pass')
+        response = self.client.post(f'/org/{self.org.slug}/settings/', {
+            'name': 'Updated Name',
+            'slug': self.org.slug,
+        })
+        self.assertEqual(response.status_code, 302)
+        self.org.refresh_from_db()
+        self.assertEqual(self.org.name, 'Updated Name')
+
+    def test_org_settings_non_owner_forbidden(self):
+        """
+        GIVEN an org admin (not owner)
+        WHEN they access org settings
+        THEN they get 403
+        """
+        self.client.login(username='org_admin', password='pass')
+        response = self.client.get(f'/org/{self.org.slug}/settings/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_change_role_by_owner(self):
+        """
+        GIVEN an org owner
+        WHEN they change a viewer's role to editor
+        THEN the role is updated
+        """
+        self.client.login(username='org_owner', password='pass')
+        response = self.client.post(
+            f'/org/{self.org.slug}/members/{self.viewer.id}/role/',
+            {'role': 'editor'},
+        )
+        self.assertEqual(response.status_code, 302)
+        m = Membership.objects.get(user=self.viewer, organization=self.org)
+        self.assertEqual(m.role, 'editor')
+
+    def test_admin_cannot_change_owner_role(self):
+        """
+        GIVEN an org admin
+        WHEN they try to change an owner's role
+        THEN they get 403
+        """
+        self.client.login(username='org_admin', password='pass')
+        response = self.client.post(
+            f'/org/{self.org.slug}/members/{self.owner.id}/role/',
+            {'role': 'editor'},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_admin_cannot_promote_to_owner(self):
+        """
+        GIVEN an org admin
+        WHEN they try to promote a viewer to owner
+        THEN they get 403
+        """
+        self.client.login(username='org_admin', password='pass')
+        response = self.client.post(
+            f'/org/{self.org.slug}/members/{self.viewer.id}/role/',
+            {'role': 'owner'},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_remove_member_by_owner(self):
+        """
+        GIVEN an org owner
+        WHEN they remove a viewer member
+        THEN the membership is deleted
+        """
+        self.client.login(username='org_owner', password='pass')
+        response = self.client.post(
+            f'/org/{self.org.slug}/members/{self.viewer.id}/remove/',
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Membership.objects.filter(user=self.viewer, organization=self.org).exists())
+
+    def test_cannot_remove_last_owner(self):
+        """
+        GIVEN only one owner in the org
+        WHEN they try to remove themselves
+        THEN the removal is rejected
+        """
+        self.client.login(username='org_owner', password='pass')
+        response = self.client.post(
+            f'/org/{self.org.slug}/members/{self.owner.id}/remove/',
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Membership.objects.filter(user=self.owner, organization=self.org).exists())
+
+    def test_admin_cannot_remove_owner(self):
+        """
+        GIVEN an org admin
+        WHEN they try to remove an owner
+        THEN they get 403
+        """
+        self.client.login(username='org_admin', password='pass')
+        response = self.client.post(
+            f'/org/{self.org.slug}/members/{self.owner.id}/remove/',
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_outsider_cannot_view_members(self):
+        """
+        GIVEN a user not in the org
+        WHEN they try to view members
+        THEN they get 403
+        """
+        self.client.login(username='outsider', password='pass')
+        response = self.client.get(f'/org/{self.org.slug}/members/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_viewer_can_view_members(self):
+        """
+        GIVEN an org viewer
+        WHEN they view the members page
+        THEN they get 200
+        """
+        self.client.login(username='org_viewer', password='pass')
+        response = self.client.get(f'/org/{self.org.slug}/members/')
+        self.assertEqual(response.status_code, 200)
+
+
+# ─── Task 5.8: Invitation Tests ─────────────────────────────────────────────
+
+class InvitationTest(TestCase):
+    """Tests for the invitation system."""
+
+    def setUp(self):
+        self.org = _make_org('InviteOrg')
+        self.owner = User.objects.create_user(username='inv_owner', password='pass')
+        self.admin = User.objects.create_user(username='inv_admin', password='pass')
+        self.existing_user = User.objects.create_user(username='existing', password='pass', email='existing@test.com')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        Membership.objects.create(user=self.admin, organization=self.org, role='admin')
+
+    def test_send_invitation_as_owner(self):
+        """
+        GIVEN an org owner
+        WHEN they send an invitation to an email
+        THEN an Invitation record is created
+        """
+        self.client.login(username='inv_owner', password='pass')
+        response = self.client.post(f'/org/{self.org.slug}/invite/', {
+            'email': 'newuser@test.com',
+            'role': 'editor',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Invitation.objects.filter(email='newuser@test.com', organization=self.org).exists())
+
+    def test_send_invitation_admin_cannot_invite_as_owner(self):
+        """
+        GIVEN an org admin
+        WHEN they try to send an invitation with role 'owner'
+        THEN the invitation is not created (admin cannot invite owners)
+        """
+        self.client.login(username='inv_admin', password='pass')
+        response = self.client.post(f'/org/{self.org.slug}/invite/', {
+            'email': 'newowner@test.com',
+            'role': 'owner',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Invitation.objects.filter(email='newowner@test.com', role='owner').exists())
+
+    def test_accept_invitation_as_existing_user(self):
+        """
+        GIVEN an existing user and a pending invitation
+        WHEN they visit the accept URL
+        THEN they are added to the org
+        """
+        invitation = Invitation.objects.create(
+            email='existing@test.com', organization=self.org, role='editor', invited_by=self.owner,
+        )
+        self.client.login(username='existing', password='pass')
+        response = self.client.get(f'/invitations/{invitation.token}/accept/')
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Membership.objects.filter(user=self.existing_user, organization=self.org, role='editor').exists())
+        invitation.refresh_from_db()
+        self.assertIsNotNone(invitation.accepted_at)
+
+    def test_accept_already_used_invitation(self):
+        """
+        GIVEN an invitation that has already been accepted
+        WHEN a user visits the accept URL
+        THEN they see an info message and are redirected
+        """
+        from django.utils import timezone
+        invitation = Invitation.objects.create(
+            email='existing@test.com', organization=self.org, role='editor',
+            invited_by=self.owner, accepted_at=timezone.now(),
+        )
+        self.client.login(username='existing', password='pass')
+        response = self.client.get(f'/invitations/{invitation.token}/accept/')
+        self.assertEqual(response.status_code, 302)
+
+    def test_accept_expired_invitation(self):
+        """
+        GIVEN an invitation older than 7 days
+        WHEN a user visits the accept URL
+        THEN they see an error and are redirected
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+        invitation = Invitation.objects.create(
+            email='existing@test.com', organization=self.org, role='editor', invited_by=self.owner,
+        )
+        # Manually backdate the created_at
+        Invitation.objects.filter(pk=invitation.pk).update(created_at=timezone.now() - timedelta(days=8))
+        self.client.login(username='existing', password='pass')
+        response = self.client.get(f'/invitations/{invitation.token}/accept/')
+        self.assertEqual(response.status_code, 302)
+        # User should NOT be added to org
+        self.assertFalse(Membership.objects.filter(user=self.existing_user, organization=self.org).exists())
+
+    def test_duplicate_invitation_replaces_existing(self):
+        """
+        GIVEN an existing invitation for an email
+        WHEN a new invitation is sent to the same email
+        THEN the old one is replaced
+        """
+        Invitation.objects.create(
+            email='dup@test.com', organization=self.org, role='viewer', invited_by=self.owner,
+        )
+        self.client.login(username='inv_owner', password='pass')
+        self.client.post(f'/org/{self.org.slug}/invite/', {
+            'email': 'dup@test.com',
+            'role': 'editor',
+        })
+        invitations = Invitation.objects.filter(email='dup@test.com', organization=self.org)
+        self.assertEqual(invitations.count(), 1)
+        self.assertEqual(invitations.first().role, 'editor')
+
+    def test_invalid_token_shows_error(self):
+        """
+        GIVEN a non-existent invitation token
+        WHEN a user visits the accept URL
+        THEN they are redirected with error
+        """
+        import uuid
+        self.client.login(username='existing', password='pass')
+        response = self.client.get(f'/invitations/{uuid.uuid4()}/accept/')
+        self.assertEqual(response.status_code, 302)
+
+
+# ─── Task 6.5: Organization Switcher Tests ──────────────────────────────────
+
+class OrgSwitcherTest(TestCase):
+    """Tests for the organization switcher."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='switcher', password='pass')
+        self.org_a = _make_org('OrgA')
+        self.org_b = _make_org('OrgB')
+        Membership.objects.create(user=self.user, organization=self.org_a, role='owner')
+        Membership.objects.create(user=self.user, organization=self.org_b, role='editor')
+
+    def test_switch_org_sets_session(self):
+        """
+        GIVEN a user with membership in two orgs
+        WHEN they POST to switch_org with org_b's id
+        THEN the session active_org_id is updated
+        """
+        self.client.login(username='switcher', password='pass')
+        response = self.client.post('/org/switch/', {'org_id': self.org_b.id})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.client.session['active_org_id'], self.org_b.id)
+
+    def test_switch_to_invalid_org_ignored(self):
+        """
+        GIVEN a user
+        WHEN they try to switch to an org they're not a member of
+        THEN the switch is silently ignored
+        """
+        other_org = _make_org('OtherOrg')
+        self.client.login(username='switcher', password='pass')
+        # First ensure there is an active org
+        self.client.post('/org/switch/', {'org_id': self.org_a.id})
+        old_org_id = self.client.session['active_org_id']
+        self.client.post('/org/switch/', {'org_id': other_org.id})
+        # Should stay the same (or fall back)
+        self.assertNotEqual(self.client.session.get('active_org_id'), other_org.id)
+
+    def test_middleware_fallback_on_login(self):
+        """
+        GIVEN a user with membership in one org
+        WHEN they log in without active_org_id in session
+        THEN middleware sets active_org to their first org
+        """
+        solo_user = User.objects.create_user(username='solo', password='pass')
+        solo_org = _make_org('SoloOrg')
+        Membership.objects.create(user=solo_user, organization=solo_org, role='owner')
+
+        self.client.login(username='solo', password='pass')
+        response = self.client.get('/editor/')
+        self.assertEqual(self.client.session.get('active_org_id'), solo_org.id)
+
+    def test_switch_org_requires_post(self):
+        """
+        GIVEN an authenticated user
+        WHEN they send GET to switch_org
+        THEN it is rejected (405 Method Not Allowed)
+        """
+        self.client.login(username='switcher', password='pass')
+        response = self.client.get('/org/switch/')
+        self.assertEqual(response.status_code, 405)
+
+    def test_dashboard_shows_surveys_for_active_org(self):
+        """
+        GIVEN surveys in org_a and org_b
+        WHEN user views editor dashboard with org_a active
+        THEN only org_a surveys are shown
+        """
+        survey_a = SurveyHeader.objects.create(name='survey_a', organization=self.org_a)
+        survey_b = SurveyHeader.objects.create(name='survey_b', organization=self.org_b)
+
+        self.client.login(username='switcher', password='pass')
+        self.client.post('/org/switch/', {'org_id': self.org_a.id})
+        response = self.client.get('/editor/')
+        self.assertContains(response, 'survey_a')
+        self.assertNotContains(response, 'survey_b')
+
+
+# ─── Task 7.9: Editor View Permission Tests ─────────────────────────────────
+
+class EditorPermissionTest(TestCase):
+    """Tests for permission checks on all editor view actions."""
+
+    def setUp(self):
+        self.org = _make_org('EditorPermOrg')
+        self.owner = User.objects.create_user(username='ep_owner', password='pass')
+        self.editor = User.objects.create_user(username='ep_editor', password='pass')
+        self.viewer = User.objects.create_user(username='ep_viewer', password='pass')
+        self.outsider = User.objects.create_user(username='ep_outsider', password='pass')
+
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        Membership.objects.create(user=self.editor, organization=self.org, role='editor')
+        Membership.objects.create(user=self.viewer, organization=self.org, role='viewer')
+
+        self.survey = SurveyHeader.objects.create(name='ep_survey', organization=self.org, created_by=self.owner)
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section 1', code='S1', is_head=True,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, code='Q1', name='Test Q', input_type='text', order_number=1,
+        )
+        # Give editor explicit collaborator access
+        SurveyCollaborator.objects.create(user=self.editor, survey=self.survey, role='editor')
+
+    def test_viewer_cannot_create_survey(self):
+        """
+        GIVEN an org viewer
+        WHEN they try to create a survey
+        THEN they get 403
+        """
+        self.client.login(username='ep_viewer', password='pass')
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'forbidden_survey', 'redirect_url': '#', 'visibility': 'private',
+        })
+        self.assertEqual(response.status_code, 403)
+
+    def test_editor_can_create_survey(self):
+        """
+        GIVEN an org editor
+        WHEN they create a survey
+        THEN it succeeds and is assigned to the active org
+        """
+        self.client.login(username='ep_editor', password='pass')
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'editor_survey', 'redirect_url': '#', 'visibility': 'private',
+        })
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='editor_survey')
+        self.assertEqual(survey.organization, self.org)
+        self.assertEqual(survey.created_by, self.editor)
+
+    def test_viewer_sees_read_only_badge(self):
+        """
+        GIVEN an org viewer
+        WHEN they view a survey detail page
+        THEN they see the read-only badge
+        """
+        self.client.login(username='ep_viewer', password='pass')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Read-only')
+
+    def test_viewer_cannot_create_section(self):
+        """
+        GIVEN an org viewer
+        WHEN they try to create a section
+        THEN they get 403
+        """
+        self.client.login(username='ep_viewer', password='pass')
+        response = self.client.post(f'/editor/surveys/{self.survey.uuid}/sections/new/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_editor_can_create_section(self):
+        """
+        GIVEN an org editor with survey collaborator role
+        WHEN they create a section
+        THEN it succeeds
+        """
+        self.client.login(username='ep_editor', password='pass')
+        response = self.client.post(f'/editor/surveys/{self.survey.uuid}/sections/new/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(SurveySection.objects.filter(survey_header=self.survey).count(), 2)
+
+    def test_viewer_cannot_delete_question(self):
+        """
+        GIVEN an org viewer
+        WHEN they try to delete a question
+        THEN they get 403
+        """
+        self.client.login(username='ep_viewer', password='pass')
+        response = self.client.post(f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/delete/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_editor_can_delete_question(self):
+        """
+        GIVEN an org editor with survey collaborator role
+        WHEN they delete a question
+        THEN it succeeds
+        """
+        self.client.login(username='ep_editor', password='pass')
+        response = self.client.post(f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/delete/')
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Question.objects.filter(id=self.question.id).exists())
+
+    def test_viewer_cannot_reorder_sections(self):
+        """
+        GIVEN an org viewer
+        WHEN they try to reorder sections
+        THEN they get 403
+        """
+        self.client.login(username='ep_viewer', password='pass')
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/reorder/',
+            json.dumps({'section_ids': [self.section.id]}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_outsider_gets_404_on_survey_detail(self):
+        """
+        GIVEN a user not in the org
+        WHEN they try to view a survey in that org
+        THEN they get 404
+        """
+        other_org = _make_org('OutsiderOrg')
+        Membership.objects.create(user=self.outsider, organization=other_org, role='owner')
+        self.client.login(username='ep_outsider', password='pass')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 404)
+
+    def test_editor_without_collab_cannot_edit_others_survey(self):
+        """
+        GIVEN an org editor with no collaborator entry for a survey
+        WHEN they try to access that survey
+        THEN they get 403 (editor baseline is None without collab)
+        """
+        other_survey = SurveyHeader.objects.create(name='other_survey', organization=self.org, created_by=self.owner)
+        SurveySection.objects.create(
+            survey_header=other_survey, name='osec', code='OS', is_head=True,
+        )
+        self.client.login(username='ep_editor', password='pass')
+        response = self.client.get(f'/editor/surveys/{other_survey.uuid}/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_editor_cannot_access_settings(self):
+        """
+        GIVEN an org editor with 'editor' collaborator role
+        WHEN they try to access survey settings
+        THEN they get 403 (settings require 'owner')
+        """
+        self.client.login(username='ep_editor', password='pass')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_owner_can_access_settings(self):
+        """
+        GIVEN an org owner
+        WHEN they access survey settings
+        THEN they get 200
+        """
+        self.client.login(username='ep_owner', password='pass')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings/')
+        self.assertEqual(response.status_code, 200)
+
+
+# ─── Task 8.4: Export/Import/Delete Permission Tests ────────────────────────
+
+class ExportImportDeletePermissionTest(TestCase):
+    """Tests for export, import, and delete permission checks."""
+
+    def setUp(self):
+        self.org = _make_org('EIDOrg')
+        self.owner = User.objects.create_user(username='eid_owner', password='pass')
+        self.editor = User.objects.create_user(username='eid_editor', password='pass')
+        self.viewer = User.objects.create_user(username='eid_viewer', password='pass')
+
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        Membership.objects.create(user=self.editor, organization=self.org, role='editor')
+        Membership.objects.create(user=self.viewer, organization=self.org, role='viewer')
+
+        self.survey = SurveyHeader.objects.create(name='eid_survey', organization=self.org)
+        SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', code='S1', is_head=True,
+        )
+
+    def test_viewer_can_export(self):
+        """
+        GIVEN an org viewer
+        WHEN they export a survey
+        THEN the export succeeds (viewers have read access)
+        """
+        self.client.login(username='eid_viewer', password='pass')
+        response = self.client.get(f'/editor/export/{self.survey.uuid}/?mode=structure')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/zip')
+
+    def test_viewer_cannot_import(self):
+        """
+        GIVEN an org viewer
+        WHEN they try to import a survey
+        THEN they get 403
+        """
+        self.client.login(username='eid_viewer', password='pass')
+        buf = BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zf:
+            zf.writestr('survey.json', json.dumps({
+                'version': '1.0',
+                'survey': {'name': 'forbidden', 'sections': [{'name': 's', 'code': 'S', 'is_head': True, 'questions': []}]},
+            }))
+        buf.seek(0)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        f = SimpleUploadedFile('test.zip', buf.read(), content_type='application/zip')
+        response = self.client.post('/editor/import/', {'file': f})
+        self.assertEqual(response.status_code, 403)
+
+    def test_editor_can_import(self):
+        """
+        GIVEN an org editor
+        WHEN they import a survey
+        THEN it succeeds and the survey is assigned to the active org
+        """
+        self.client.login(username='eid_editor', password='pass')
+        buf = BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zf:
+            zf.writestr('survey.json', json.dumps({
+                'version': '1.0',
+                'survey': {'name': 'imported_survey', 'sections': [{'name': 's', 'code': 'S', 'is_head': True, 'questions': []}]},
+            }))
+        buf.seek(0)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        f = SimpleUploadedFile('test.zip', buf.read(), content_type='application/zip')
+        response = self.client.post('/editor/import/', {'file': f})
+        self.assertEqual(response.status_code, 302)
+        imported = SurveyHeader.objects.get(name='imported_survey')
+        self.assertEqual(imported.organization, self.org)
+
+    def test_viewer_cannot_delete(self):
+        """
+        GIVEN an org viewer
+        WHEN they try to delete a survey
+        THEN they get 403
+        """
+        self.client.login(username='eid_viewer', password='pass')
+        response = self.client.post(f'/editor/delete/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(SurveyHeader.objects.filter(pk=self.survey.pk).exists())
+
+    def test_editor_cannot_delete(self):
+        """
+        GIVEN an org editor (even with survey collaborator editor role)
+        WHEN they try to delete a survey
+        THEN they get 403 (delete requires owner)
+        """
+        SurveyCollaborator.objects.create(user=self.editor, survey=self.survey, role='editor')
+        self.client.login(username='eid_editor', password='pass')
+        response = self.client.post(f'/editor/delete/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(SurveyHeader.objects.filter(pk=self.survey.pk).exists())
+
+    def test_owner_can_delete(self):
+        """
+        GIVEN an org owner
+        WHEN they delete a survey
+        THEN it is deleted
+        """
+        self.client.login(username='eid_owner', password='pass')
+        response = self.client.post(f'/editor/delete/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(SurveyHeader.objects.filter(pk=self.survey.pk).exists())
+
+    def test_export_survey_in_different_org_returns_404(self):
+        """
+        GIVEN a survey in org_a
+        WHEN a user with active_org=org_b tries to export it
+        THEN they get 404
+        """
+        org_b = _make_org('OtherEIDOrg')
+        other_user = User.objects.create_user(username='eid_other', password='pass')
+        Membership.objects.create(user=other_user, organization=org_b, role='owner')
+        self.client.login(username='eid_other', password='pass')
+        response = self.client.get(f'/editor/export/{self.survey.uuid}/?mode=structure')
+        self.assertEqual(response.status_code, 404)
+
+
+# ─── Task 9.7: Collaborator Management Tests ────────────────────────────────
+
+class CollaboratorManagementTest(TestCase):
+    """Tests for add/change/remove collaborators and last-owner protection."""
+
+    def setUp(self):
+        self.org = _make_org('CollabOrg')
+        self.owner = User.objects.create_user(username='coll_owner', password='pass')
+        self.member = User.objects.create_user(username='coll_member', password='pass')
+        self.editor = User.objects.create_user(username='coll_editor', password='pass')
+
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        Membership.objects.create(user=self.member, organization=self.org, role='viewer')
+        Membership.objects.create(user=self.editor, organization=self.org, role='editor')
+
+        self.survey = SurveyHeader.objects.create(name='collab_survey', organization=self.org, created_by=self.owner)
+        SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        SurveyCollaborator.objects.create(user=self.owner, survey=self.survey, role='owner')
+
+    def test_owner_can_add_collaborator(self):
+        """
+        GIVEN a survey owner
+        WHEN they add an org member as a collaborator
+        THEN the collaborator record is created
+        """
+        self.client.login(username='coll_owner', password='pass')
+        response = self.client.post(f'/editor/surveys/{self.survey.uuid}/collaborators/add/', {
+            'user_id': self.member.id,
+            'role': 'editor',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(SurveyCollaborator.objects.filter(
+            user=self.member, survey=self.survey, role='editor',
+        ).exists())
+
+    def test_non_owner_cannot_add_collaborator(self):
+        """
+        GIVEN an org editor with survey editor role
+        WHEN they try to add a collaborator
+        THEN they get 403
+        """
+        SurveyCollaborator.objects.create(user=self.editor, survey=self.survey, role='editor')
+        self.client.login(username='coll_editor', password='pass')
+        response = self.client.post(f'/editor/surveys/{self.survey.uuid}/collaborators/add/', {
+            'user_id': self.member.id,
+            'role': 'viewer',
+        })
+        self.assertEqual(response.status_code, 403)
+
+    def test_change_collaborator_role(self):
+        """
+        GIVEN a survey owner and an existing collaborator
+        WHEN they change the collaborator's role
+        THEN the role is updated
+        """
+        collab = SurveyCollaborator.objects.create(user=self.member, survey=self.survey, role='viewer')
+        self.client.login(username='coll_owner', password='pass')
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/collaborators/{collab.id}/role/',
+            {'role': 'editor'},
+        )
+        self.assertEqual(response.status_code, 200)
+        collab.refresh_from_db()
+        self.assertEqual(collab.role, 'editor')
+
+    def test_remove_collaborator(self):
+        """
+        GIVEN a survey owner and a collaborator
+        WHEN they remove the collaborator
+        THEN the collaborator record is deleted
+        """
+        collab = SurveyCollaborator.objects.create(user=self.member, survey=self.survey, role='viewer')
+        self.client.login(username='coll_owner', password='pass')
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/collaborators/{collab.id}/remove/',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(SurveyCollaborator.objects.filter(user=self.member, survey=self.survey).exists())
+
+    def test_cannot_remove_last_survey_owner(self):
+        """
+        GIVEN a survey with only one owner collaborator
+        WHEN they try to remove that owner
+        THEN they get 400 error
+        """
+        self.client.login(username='coll_owner', password='pass')
+        owner_collab = SurveyCollaborator.objects.get(user=self.owner, survey=self.survey)
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/collaborators/{owner_collab.id}/remove/',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue(SurveyCollaborator.objects.filter(user=self.owner, survey=self.survey).exists())
+
+    def test_can_remove_owner_when_multiple_owners_exist(self):
+        """
+        GIVEN a survey with two owner collaborators
+        WHEN one owner removes the other
+        THEN the removal succeeds
+        """
+        SurveyCollaborator.objects.create(user=self.member, survey=self.survey, role='owner')
+        self.client.login(username='coll_owner', password='pass')
+        member_collab = SurveyCollaborator.objects.get(user=self.member, survey=self.survey)
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/collaborators/{member_collab.id}/remove/',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(SurveyCollaborator.objects.filter(user=self.member, survey=self.survey).exists())
+
+    def test_add_non_org_member_rejected(self):
+        """
+        GIVEN a user not in the org
+        WHEN survey owner tries to add them as collaborator
+        THEN it is rejected with 400
+        """
+        outsider = User.objects.create_user(username='coll_outsider', password='pass')
+        self.client.login(username='coll_owner', password='pass')
+        response = self.client.post(f'/editor/surveys/{self.survey.uuid}/collaborators/add/', {
+            'user_id': outsider.id,
+            'role': 'viewer',
+        })
+        self.assertEqual(response.status_code, 400)
+
+
+# ─── Task 11.3: CLI Import with Organization Tests ──────────────────────────
+
+class CLIImportWithOrgTest(TestCase):
+    """Tests for the import_survey management command with --organization."""
+
+    def setUp(self):
+        self.org = _make_org('CLIOrg')
+        self.other_org = _make_org('OtherCLIOrg')
+        self.survey_data = {
+            'version': '1.0',
+            'survey': {
+                'name': 'cli_import_test',
+                'sections': [{
+                    'name': 'sec1', 'code': 'S1', 'is_head': True, 'questions': [],
+                }],
+            },
+        }
+
+    def _create_zip(self):
+        buf = BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zf:
+            zf.writestr('survey.json', json.dumps(self.survey_data))
+        buf.seek(0)
+        return buf
+
+    def test_import_with_org_name(self):
+        """
+        GIVEN a ZIP archive and an existing organization
+        WHEN import_survey is called with --organization=<name>
+        THEN the survey is assigned to that organization
+        """
+        from django.core.management import call_command
+        from io import StringIO
+        buf = self._create_zip()
+        import tempfile, os
+        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as f:
+            f.write(buf.read())
+            f.flush()
+            try:
+                call_command('import_survey', f.name, organization='CLIOrg', stdout=StringIO())
+                survey = SurveyHeader.objects.get(name='cli_import_test')
+                self.assertEqual(survey.organization, self.org)
+            finally:
+                os.unlink(f.name)
+
+    def test_import_with_org_slug(self):
+        """
+        GIVEN a ZIP archive and an existing organization
+        WHEN import_survey is called with --organization=<slug>
+        THEN the survey is assigned to that organization
+        """
+        from django.core.management import call_command
+        from io import StringIO
+        buf = self._create_zip()
+        import tempfile, os
+        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as f:
+            f.write(buf.read())
+            f.flush()
+            try:
+                call_command('import_survey', f.name, organization=self.other_org.slug, stdout=StringIO())
+                survey = SurveyHeader.objects.get(name='cli_import_test')
+                self.assertEqual(survey.organization, self.other_org)
+            finally:
+                os.unlink(f.name)
+
+    def test_import_with_unknown_org_raises_error(self):
+        """
+        GIVEN a ZIP archive
+        WHEN import_survey is called with --organization=<nonexistent>
+        THEN it raises CommandError
+        """
+        from django.core.management import call_command, CommandError
+        from io import StringIO
+        buf = self._create_zip()
+        import tempfile, os
+        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as f:
+            f.write(buf.read())
+            f.flush()
+            try:
+                with self.assertRaises(CommandError):
+                    call_command('import_survey', f.name, organization='nonexistent', stderr=StringIO())
+            finally:
+                os.unlink(f.name)
+
+    def test_import_without_org_uses_default(self):
+        """
+        GIVEN a ZIP archive without --organization
+        WHEN import_survey is called
+        THEN the survey is assigned based on archive data or default
+        """
+        from django.core.management import call_command
+        from io import StringIO
+        buf = self._create_zip()
+        import tempfile, os
+        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as f:
+            f.write(buf.read())
+            f.flush()
+            try:
+                call_command('import_survey', f.name, stdout=StringIO())
+                survey = SurveyHeader.objects.get(name='cli_import_test')
+                self.assertIsNotNone(survey.organization)
+            finally:
+                os.unlink(f.name)
+
+
+# ─── Task 3.6: Registration and Personal Org Creation Tests ─────────────────
+
+class PersonalOrgCreationTest(TestCase):
+    """Tests for personal org creation on user activation signal."""
+
+    def test_signal_creates_personal_org(self):
+        """
+        GIVEN a newly activated user
+        WHEN the user_activated signal fires
+        THEN a personal org is created and user is set as owner
+        """
+        from django_registration.signals import user_activated
+        from django.test import RequestFactory
+        user = User.objects.create_user(username='newuser', password='pass', email='new@test.com')
+        factory = RequestFactory()
+        request = factory.get('/')
+        # Simulate session
+        from django.contrib.sessions.backends.db import SessionStore
+        request.session = SessionStore()
+
+        user_activated.send(sender=self.__class__, user=user, request=request)
+
+        # Personal org should exist
+        self.assertTrue(Membership.objects.filter(user=user, role='owner').exists())
+        membership = Membership.objects.get(user=user, role='owner')
+        self.assertIn(user.username, membership.organization.name)
+
+    def test_signal_auto_accepts_pending_invitations(self):
+        """
+        GIVEN a pending invitation for a new user's email
+        WHEN the user activates their account
+        THEN the invitation is auto-accepted and user joins the org
+        """
+        from django_registration.signals import user_activated
+        from django.test import RequestFactory
+        from django.contrib.sessions.backends.db import SessionStore
+
+        invite_org = _make_org('InviteTargetOrg')
+        inviter = User.objects.create_user(username='inviter', password='pass')
+        Membership.objects.create(user=inviter, organization=invite_org, role='owner')
+        invitation = Invitation.objects.create(
+            email='newbie@test.com', organization=invite_org, role='editor', invited_by=inviter,
+        )
+
+        user = User.objects.create_user(username='newbie', password='pass', email='newbie@test.com')
+        factory = RequestFactory()
+        request = factory.get('/')
+        request.session = SessionStore()
+
+        user_activated.send(sender=self.__class__, user=user, request=request)
+
+        # User should have membership in invite_org
+        self.assertTrue(Membership.objects.filter(user=user, organization=invite_org, role='editor').exists())
+        invitation.refresh_from_db()
+        self.assertIsNotNone(invitation.accepted_at)

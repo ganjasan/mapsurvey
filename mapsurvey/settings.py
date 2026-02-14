@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'survey.middleware.ActiveOrgMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
@@ -75,6 +76,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'survey.context_processors.mapbox',
                 'survey.context_processors.contact',
+                'survey.context_processors.active_org',
             ],
         },
     },
@@ -207,14 +209,15 @@ ACCOUNT_ACTIVATION_DAYS = 1
 MAPBOX_URL = os.environ.get('MAPBOX_URL', 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}')
 MAPBOX_ACCESS_TOKEN = os.environ.get('MAPBOX_ACCESS_TOKEN', '')
 
-# для отправки кода активации
+# Email backend
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 AUTH_USER_EMAIL_UNIQUE = True
-EMAIL_HOST = 'localhost'
-EMAIL_PORT = 25
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
-EMAIL_USE_TLS = False
-DEFAULT_FROM_EMAIL = 'info@mapsurvey.ru'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 25))
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False').lower() in ('true', '1')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@mapsurvey.org')
 
 # Landing page contact
 CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'konuchovartem@gmail.com')

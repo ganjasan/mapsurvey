@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "New Organization" %} — Mapsurvey{% endblock %}
+
+{% block content_wrapper_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h2>{% trans "New Organization" %}</h2>
+    <p class="auth-subtitle">{% trans "Create a workspace for your team." %}</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="name">{% trans "Organization Name" %}</label>
+            <input type="text" class="form-control" id="name" name="name" required maxlength="250" autofocus>
+        </div>
+        <button type="submit" class="btn-auth">{% trans "Create" %}</button>
+    </form>
+
+    <div class="auth-links">
+        <a href="{% url 'editor' %}">{% trans "Back to Dashboard" %}</a>
+    </div>
+</div>
+{% endblock %}

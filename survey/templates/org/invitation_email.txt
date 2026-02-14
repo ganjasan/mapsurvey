@@ -1,0 +1,5 @@
+{{ inviter }} has invited you to join "{{ org_name }}" as {{ role }} on Mapsurvey.
+
+Accept the invitation: {{ accept_url }}
+
+This invitation expires in 7 days.

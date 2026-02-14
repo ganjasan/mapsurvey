@@ -1,6 +1,17 @@
 {% extends "base.html" %}
 {% load i18n %}
+
+{% block title %}{% trans "Activation Failed" %} — Mapsurvey{% endblock %}
+
+{% block content_wrapper_class %}auth-page{% endblock %}
+
 {% block content %}
-<h1>{% trans "Activation Failed" %}</h1>
-<p>{{ activation_error.message }}</p>
+<div class="auth-card auth-message">
+    <span class="auth-icon" style="color: #dc3545;">&#10007;</span>
+    <h2>{% trans "Activation Failed" %}</h2>
+    <p>{{ activation_error.message }}</p>
+    <div class="auth-links" style="margin-top:1.25rem;">
+        <a href="{% url 'django_registration_register' %}">{% trans "Try registering again" %}</a>
+    </div>
+</div>
 {% endblock %}

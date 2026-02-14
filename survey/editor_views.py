@@ -1,6 +1,5 @@
 import json
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.gis.geos import Point
 from django.db import transaction
@@ -12,10 +11,15 @@ from django.views.decorators.http import require_POST
 
 from .models import (
     SurveyHeader, SurveySection, SurveySectionTranslation,
-    Question, QuestionTranslation,
+    Question, QuestionTranslation, SurveyCollaborator,
+    Membership, SURVEY_ROLE_CHOICES,
 )
 from .editor_forms import SurveyHeaderForm, SurveySectionForm, QuestionForm
 from .forms import SurveySectionAnswerForm
+from .permissions import (
+    org_permission_required, survey_permission_required,
+    get_effective_survey_role,
+)
 
 
 def _get_sections_ordered(survey):
@@ -49,12 +53,21 @@ def _get_sections_ordered(survey):
 
 # ─── Survey creation ─────────────────────────────────────────────────────────
 
-@login_required
+@org_permission_required('editor')
 def editor_survey_create(request):
     if request.method == 'POST':
         form = SurveyHeaderForm(request.POST)
         if form.is_valid():
-            survey = form.save()
+            survey = form.save(commit=False)
+            survey.organization = request.active_org
+            survey.created_by = request.user
+            survey.save()
+            # Create SurveyCollaborator owner entry
+            SurveyCollaborator.objects.create(
+                user=request.user,
+                survey=survey,
+                role='owner',
+            )
             # Create default first section
             SurveySection.objects.create(
                 survey_header=survey,
@@ -71,9 +84,9 @@ def editor_survey_create(request):
 
 # ─── Survey editor main page ─────────────────────────────────────────────────
 
-@login_required
+@survey_permission_required('viewer')
 def editor_survey_detail(request, survey_uuid):
-    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+    survey = request.survey
     sections = _get_sections_ordered(survey)
 
     current_section_id = request.GET.get('section')
@@ -94,19 +107,23 @@ def editor_survey_detail(request, survey_uuid):
             ).order_by('order_number')
         )
 
+    can_edit = request.effective_survey_role in ('editor', 'owner')
+
     return render(request, 'editor/survey_detail.html', {
         'survey': survey,
         'sections': sections,
         'current_section': current_section,
         'questions': questions,
+        'effective_role': request.effective_survey_role,
+        'can_edit': can_edit,
     })
 
 
 # ─── Survey settings ─────────────────────────────────────────────────────────
 
-@login_required
+@survey_permission_required('owner')
 def editor_survey_settings(request, survey_uuid):
-    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+    survey = request.survey
     if request.method == 'POST':
         form = SurveyHeaderForm(request.POST, instance=survey)
         if form.is_valid():
@@ -124,10 +141,10 @@ def editor_survey_settings(request, survey_uuid):
 
 # ─── Section CRUD ─────────────────────────────────────────────────────────────
 
-@login_required
+@survey_permission_required('editor')
 @require_POST
 def editor_section_create(request, survey_uuid):
-    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+    survey = request.survey
     sections = _get_sections_ordered(survey)
 
     # Generate next section number (avoid name collisions)
@@ -158,9 +175,9 @@ def editor_section_create(request, survey_uuid):
     })
 
 
-@login_required
+@survey_permission_required('editor')
 def editor_section_detail(request, survey_uuid, section_id):
-    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+    survey = request.survey
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
     if request.method == 'POST':
@@ -206,10 +223,10 @@ def _save_section_translations(request, section, survey):
             SurveySectionTranslation.objects.filter(section=section, language=lang).delete()
 
 
-@login_required
+@survey_permission_required('editor')
 @require_POST
 def editor_section_delete(request, survey_uuid, section_id):
-    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+    survey = request.survey
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
     prev_sec = section.prev_section
@@ -235,10 +252,10 @@ def editor_section_delete(request, survey_uuid, section_id):
 
 # ─── Section reordering ───────────────────────────────────────────────────────
 
-@login_required
+@survey_permission_required('editor')
 @require_POST
 def editor_sections_reorder(request, survey_uuid):
-    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+    survey = request.survey
     section_ids = request.POST.getlist('section_ids[]')
 
     if not section_ids:
@@ -266,9 +283,9 @@ def editor_sections_reorder(request, survey_uuid):
 
 # ─── Question CRUD ────────────────────────────────────────────────────────────
 
-@login_required
+@survey_permission_required('editor')
 def editor_question_create(request, survey_uuid, section_id):
-    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+    survey = request.survey
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
     if request.method == 'POST':
@@ -308,9 +325,9 @@ def editor_question_create(request, survey_uuid, section_id):
     })
 
 
-@login_required
+@survey_permission_required('editor')
 def editor_question_edit(request, survey_uuid, question_id):
-    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+    survey = request.survey
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
 
     if request.method == 'POST':
@@ -346,10 +363,10 @@ def editor_question_edit(request, survey_uuid, question_id):
     })
 
 
-@login_required
+@survey_permission_required('viewer')
 @xframe_options_sameorigin
 def editor_question_preview(request, survey_uuid, question_id):
-    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+    survey = request.survey
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
 
     lang = request.GET.get('lang')
@@ -381,10 +398,10 @@ def editor_question_preview(request, survey_uuid, question_id):
     return response
 
 
-@login_required
+@survey_permission_required('editor')
 @require_POST
 def editor_question_delete(request, survey_uuid, question_id):
-    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+    survey = request.survey
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
     question.delete()
     return HttpResponse('')
@@ -406,10 +423,10 @@ def _save_question_translations(request, question, survey):
 
 # ─── Question reordering ─────────────────────────────────────────────────────
 
-@login_required
+@survey_permission_required('editor')
 @require_POST
 def editor_questions_reorder(request, survey_uuid):
-    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+    survey = request.survey
     question_ids = request.POST.getlist('question_ids[]')
 
     if not question_ids:
@@ -430,9 +447,9 @@ def editor_questions_reorder(request, survey_uuid):
 
 # ─── Sub-question CRUD ────────────────────────────────────────────────────────
 
-@login_required
+@survey_permission_required('editor')
 def editor_subquestion_create(request, survey_uuid, parent_id):
-    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+    survey = request.survey
     parent = get_object_or_404(Question, id=parent_id, survey_section__survey_header=survey)
 
     if request.method == 'POST':
@@ -469,9 +486,9 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
 
 # ─── Section map position picker ─────────────────────────────────────────────
 
-@login_required
+@survey_permission_required('editor')
 def editor_section_map_picker(request, survey_uuid, section_id):
-    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+    survey = request.survey
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
     if request.method == 'POST':
@@ -491,10 +508,10 @@ def editor_section_map_picker(request, survey_uuid, section_id):
 
 # ─── Live preview ─────────────────────────────────────────────────────────────
 
-@login_required
+@survey_permission_required('viewer')
 @xframe_options_sameorigin
 def editor_section_preview(request, survey_uuid, section_name):
-    survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+    survey = request.survey
     section = get_object_or_404(SurveySection, survey_header=survey, name=section_name)
 
     selected_language = request.GET.get('lang')
@@ -539,3 +556,100 @@ def editor_section_preview(request, survey_uuid, section_name):
         translation.deactivate()
 
     return response
+
+
+# ─── Collaborator management ────────────────────────────────────────────────
+
+@survey_permission_required('owner')
+def editor_survey_collaborators(request, survey_uuid):
+    """List collaborators for a survey (HTMX partial)."""
+    survey = request.survey
+    collaborators = SurveyCollaborator.objects.filter(survey=survey).select_related('user')
+    # Org members who are not already collaborators (for the add form)
+    existing_user_ids = collaborators.values_list('user_id', flat=True)
+    available_members = Membership.objects.filter(
+        organization=survey.organization,
+    ).exclude(user_id__in=existing_user_ids).select_related('user')
+
+    return render(request, 'editor/partials/collaborator_list.html', {
+        'survey': survey,
+        'collaborators': collaborators,
+        'available_members': available_members,
+        'survey_role_choices': [r[0] for r in SURVEY_ROLE_CHOICES],
+    })
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_collaborator_add(request, survey_uuid):
+    """Add a collaborator to the survey."""
+    survey = request.survey
+    user_id = request.POST.get('user_id')
+    role = request.POST.get('role', 'viewer')
+
+    if role not in ('owner', 'editor', 'viewer'):
+        return HttpResponse(status=400)
+
+    # Verify user is a member of the org
+    membership = Membership.objects.filter(
+        organization=survey.organization, user_id=user_id,
+    ).first()
+    if not membership:
+        return HttpResponse(status=400)
+
+    SurveyCollaborator.objects.get_or_create(
+        user_id=user_id, survey=survey,
+        defaults={'role': role},
+    )
+
+    return _render_collaborator_list(request, survey)
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_collaborator_change_role(request, survey_uuid, collaborator_id):
+    """Change a collaborator's role."""
+    survey = request.survey
+    collab = get_object_or_404(SurveyCollaborator, id=collaborator_id, survey=survey)
+    new_role = request.POST.get('role')
+
+    if new_role not in ('owner', 'editor', 'viewer'):
+        return HttpResponse(status=400)
+
+    collab.role = new_role
+    collab.save(update_fields=['role'])
+
+    return _render_collaborator_list(request, survey)
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_collaborator_remove(request, survey_uuid, collaborator_id):
+    """Remove a collaborator. Cannot remove the last survey owner."""
+    survey = request.survey
+    collab = get_object_or_404(SurveyCollaborator, id=collaborator_id, survey=survey)
+
+    # Prevent removing the last owner
+    if collab.role == 'owner':
+        owner_count = SurveyCollaborator.objects.filter(survey=survey, role='owner').count()
+        if owner_count <= 1:
+            return HttpResponse('Cannot remove the last survey owner', status=400)
+
+    collab.delete()
+    return _render_collaborator_list(request, survey)
+
+
+def _render_collaborator_list(request, survey):
+    """Helper to re-render the collaborator list partial."""
+    collaborators = SurveyCollaborator.objects.filter(survey=survey).select_related('user')
+    existing_user_ids = collaborators.values_list('user_id', flat=True)
+    available_members = Membership.objects.filter(
+        organization=survey.organization,
+    ).exclude(user_id__in=existing_user_ids).select_related('user')
+
+    return render(request, 'editor/partials/collaborator_list.html', {
+        'survey': survey,
+        'collaborators': collaborators,
+        'available_members': available_members,
+        'survey_role_choices': [r[0] for r in SURVEY_ROLE_CHOICES],
+    })

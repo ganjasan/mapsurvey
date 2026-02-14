@@ -1,10 +1,38 @@
 {% extends "base.html" %}
-{% block title %}{% trans "Register for an account" %}{% endblock %}
+{% load i18n %}
+
+{% block title %}{% trans "Create Account" %} — Mapsurvey{% endblock %}
+
+{% block content_wrapper_class %}auth-page{% endblock %}
 
 {% block content %}
-<form method="post" action="">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="{% trans 'Submit' %}" />
-</form>
+<div class="auth-card">
+    <h2>{% trans "Create Account" %}</h2>
+    <p class="auth-subtitle">{% trans "Sign up to create and manage geo-surveys." %}</p>
+
+    <form method="post" action="">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+                <small class="helptext">{{ field.help_text }}</small>
+            {% endif %}
+            {% if field.errors %}
+                <ul class="errorlist">
+                {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn-auth">{% trans "Register" %}</button>
+    </form>
+
+    <div class="auth-links">
+        <a href="{% url 'login' %}">{% trans "Already have an account? Sign in" %}</a>
+    </div>
+</div>
 {% endblock %}

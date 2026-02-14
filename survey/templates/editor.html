@@ -37,7 +37,7 @@
 				<tr>
 					<td><a href="/surveys/{{survey.uuid}}/">{{survey.name}}</a></td>
 					<td>
-						<a href="{% url 'editor_survey_detail' survey.uuid %}">Edit</a> |
+						<a href="{% url 'editor_survey_detail' survey.uuid %}">{% if org_role == 'viewer' %}View{% else %}Edit{% endif %}</a> |
 						<a href="/surveys/{{survey.uuid}}/download">Download Data</a> |
 						<div class="dropdown d-inline">
 							<a class="dropdown-toggle" href="#" role="button" id="exportDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -48,14 +48,17 @@
 								<li><a class="dropdown-item" href="{% url 'export_survey' survey.uuid %}?mode=data">Data Only</a></li>
 								<li><a class="dropdown-item" href="{% url 'export_survey' survey.uuid %}?mode=full">Full Backup</a></li>
 							</ul>
-						</div> |
-						<a href="#" class="text-danger" data-toggle="modal" data-target="#deleteModal" data-survey-name="{{survey.name}}" data-survey-uuid="{{survey.uuid}}">Delete</a>
+						</div>
+						{% if org_role == 'owner' or org_role == 'admin' %}
+						| <a href="#" class="text-danger" data-toggle="modal" data-target="#deleteModal" data-survey-name="{{survey.name}}" data-survey-uuid="{{survey.uuid}}">Delete</a>
+						{% endif %}
 					</td>
 				</tr>
 			{% endfor %}
 		  </tbody>
 		</table>
 
+		{% if org_role != 'viewer' %}
 		<div class="mt-3">
 			<a href="{% url 'editor_survey_create' %}" class="btn btn-outline-primary">New Survey</a>
 
@@ -63,6 +66,7 @@
 				Import Survey
 			</button>
 		</div>
+		{% endif %}
 	</div>
 
 	<!-- Delete Confirmation Modal -->

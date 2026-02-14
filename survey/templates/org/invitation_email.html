@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="margin:0;padding:0;background:#f7f5f2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f5f2;padding:40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:10px;overflow:hidden;max-width:480px;width:100%;">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background:#2a7f6f;padding:24px 32px;">
+                            <span style="color:#ffffff;font-size:18px;font-weight:700;letter-spacing:0.5px;">Mapsurvey</span>
+                        </td>
+                    </tr>
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding:32px;">
+                            <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;">You're invited!</h1>
+                            <p style="margin:0 0 24px;font-size:15px;color:#6b6560;line-height:1.6;">
+                                <strong>{{ inviter }}</strong> has invited you to join
+                                <strong>{{ org_name }}</strong> as <strong>{{ role }}</strong>.
+                            </p>
+                            <table cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{ accept_url }}"
+                                           style="display:inline-block;background:#2a7f6f;color:#ffffff;text-decoration:none;padding:12px 32px;border-radius:6px;font-size:15px;font-weight:600;">
+                                            Accept Invitation
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin:24px 0 0;font-size:13px;color:#9ca3af;line-height:1.5;">
+                                If the button doesn't work, copy and paste this link into your browser:<br>
+                                <a href="{{ accept_url }}" style="color:#2a7f6f;word-break:break-all;">{{ accept_url }}</a>
+                            </p>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding:16px 32px;border-top:1px solid #ede9e1;font-size:12px;color:#c8c2b8;">
+                            This invitation expires in 7 days.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

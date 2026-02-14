@@ -1,5 +1,6 @@
 import uuid
 
+from django.conf import settings
 from django.db import models
 from django.contrib.gis.db import models as geomodels
 from django.contrib.gis.geos import Point
@@ -8,7 +9,22 @@ from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, BaseValidator
+from django.utils.text import slugify
 import random
+
+
+ORG_ROLE_CHOICES = (
+    ("owner", _("Owner")),
+    ("admin", _("Admin")),
+    ("editor", _("Editor")),
+    ("viewer", _("Viewer")),
+)
+
+SURVEY_ROLE_CHOICES = (
+    ("owner", _("Owner")),
+    ("editor", _("Editor")),
+    ("viewer", _("Viewer")),
+)
 
 
 class ChoicesValidator(BaseValidator):
@@ -80,22 +96,62 @@ class SurveySession(models.Model):
             self.__acache = Answer.objects.filter(Q(survey_session=self) & Q(parent_answer_id__isnull=True))
         return self.__acache
 
-#organizations
-#example - QULLAB
 class Organization(models.Model):
     name = models.CharField(max_length=250)
-    
+    slug = models.SlugField(max_length=100, unique=True)
+
     class Meta:
         app_label = 'survey'
 
     def __str__(self):
         return self.name
 
-#survey headers
-#example - quality of urban life 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name)[:100] or 'org'
+            slug = base_slug
+            counter = 2
+            while Organization.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                suffix = f'-{counter}'
+                slug = base_slug[:100 - len(suffix)] + suffix
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+
+
+class Membership(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='memberships')
+    organization = models.ForeignKey('Organization', on_delete=models.CASCADE, related_name='memberships')
+    role = models.CharField(max_length=10, choices=ORG_ROLE_CHOICES, default='viewer')
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'survey'
+        unique_together = ('user', 'organization')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.organization.name} ({self.role})"
+
+
+class Invitation(models.Model):
+    email = models.EmailField()
+    organization = models.ForeignKey('Organization', on_delete=models.CASCADE, related_name='invitations')
+    role = models.CharField(max_length=10, choices=ORG_ROLE_CHOICES, default='viewer')
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    invited_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_invitations')
+    created_at = models.DateTimeField(auto_now_add=True)
+    accepted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+
+    def __str__(self):
+        return f"{self.email} → {self.organization.name} ({self.role})"
+
 class SurveyHeader(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    organization = models.ForeignKey("Organization", on_delete=models.SET_NULL, null=True, blank=True)
+    organization = models.ForeignKey("Organization", on_delete=models.CASCADE)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_surveys')
     name = models.CharField(max_length=45, validators=[validate_url_name])
     redirect_url = models.CharField(max_length=250, default="#", help_text=_('URL to redirect after survey completion. E.g.: /thanks/ or https://example.com'))
     available_languages = models.JSONField(default=list, blank=True, help_text=_('List of ISO 639-1 language codes, e.g. ["en", "ru", "de"]'))
@@ -139,6 +195,19 @@ class SurveyHeader(models.Model):
 
     def is_multilingual(self):
         return bool(self.available_languages and len(self.available_languages) > 0)
+
+
+class SurveyCollaborator(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='survey_collaborations')
+    survey = models.ForeignKey('SurveyHeader', on_delete=models.CASCADE, related_name='collaborators')
+    role = models.CharField(max_length=10, choices=SURVEY_ROLE_CHOICES, default='viewer')
+
+    class Meta:
+        app_label = 'survey'
+        unique_together = ('user', 'survey')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.survey.name} ({self.role})"
 
 
 #survey sections

@@ -5,9 +5,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import models
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import translation
-from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story
+from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator
+from .permissions import (
+    org_permission_required, survey_permission_required,
+    get_effective_survey_role, get_org_membership, SURVEY_ROLE_RANK,
+)
 from datetime import datetime
 from django import forms
 from django.views.generic import UpdateView
@@ -78,11 +82,32 @@ def index(request):
 		'stories': stories,
 	})
 
-@login_required
+@org_permission_required('viewer')
 def editor(request):
-	survey_list = SurveyHeader.objects.all()
+	org = request.active_org
+	membership = get_org_membership(request.user, org)
+	org_role = membership.role if membership else None
+
+	if org_role in ('owner', 'admin'):
+		# Owner/admin see all surveys in the org
+		survey_list = SurveyHeader.objects.filter(organization=org)
+	elif org_role == 'editor':
+		# Editor sees own surveys + surveys where they are a collaborator
+		collaborated_survey_ids = SurveyCollaborator.objects.filter(
+			user=request.user,
+		).values_list('survey_id', flat=True)
+		survey_list = SurveyHeader.objects.filter(
+			Q(organization=org) & (
+				Q(created_by=request.user) | Q(id__in=collaborated_survey_ids)
+			)
+		).distinct()
+	else:
+		# Viewer sees all surveys (read-only)
+		survey_list = SurveyHeader.objects.filter(organization=org)
+
 	context = {
 		"survey_headers": survey_list,
+		"org_role": org_role,
 	}
 	return render(request, "editor.html", context)
 
@@ -551,7 +576,7 @@ def download_data(request, survey_slug):
 	return response
 
 
-@login_required
+@survey_permission_required('viewer')
 def export_survey(request, survey_uuid):
 	"""Export survey to ZIP archive with specified mode."""
 	mode = request.GET.get('mode', 'structure')
@@ -560,7 +585,7 @@ def export_survey(request, survey_uuid):
 		messages.error(request, f"Invalid export mode '{mode}'")
 		return redirect('editor')
 
-	survey = get_object_or_404(SurveyHeader, uuid=survey_uuid)
+	survey = request.survey
 
 	try:
 		in_memory = BytesIO()
@@ -583,7 +608,7 @@ def export_survey(request, survey_uuid):
 		return redirect('editor')
 
 
-@login_required
+@org_permission_required('editor')
 def import_survey(request):
 	"""Import survey from uploaded ZIP archive."""
 	if request.method != 'POST':
@@ -596,13 +621,23 @@ def import_survey(request):
 	uploaded_file = request.FILES['file']
 
 	try:
-		survey, warnings = import_survey_from_zip(uploaded_file)
+		survey, warnings = import_survey_from_zip(
+			uploaded_file,
+			organization=request.active_org,
+			created_by=request.user,
+		)
 
 		# Show warnings
 		for warning in warnings:
 			messages.warning(request, warning)
 
 		if survey:
+			# Create SurveyCollaborator owner entry for imported survey
+			SurveyCollaborator.objects.get_or_create(
+				user=request.user,
+				survey=survey,
+				defaults={'role': 'owner'},
+			)
 			messages.success(request, f"Survey '{survey.name}' imported successfully")
 		else:
 			messages.success(request, "Data imported successfully")
@@ -621,20 +656,17 @@ def story_detail(request, slug):
 	return render(request, 'story_detail.html', {'story': story})
 
 
-@login_required
+@survey_permission_required('owner')
 def delete_survey(request, survey_uuid):
 	"""Delete a survey and all related data."""
 	if request.method != 'POST':
 		messages.error(request, "Invalid request method")
 		return redirect('editor')
 
-	try:
-		survey = SurveyHeader.objects.get(uuid=survey_uuid)
-		name = survey.name
-		survey.delete()
-		messages.success(request, f"Survey '{name}' deleted successfully")
-	except SurveyHeader.DoesNotExist:
-		messages.error(request, "Survey not found")
+	survey = request.survey
+	name = survey.name
+	survey.delete()
+	messages.success(request, f"Survey '{name}' deleted successfully")
 
 	return redirect('editor')
 
