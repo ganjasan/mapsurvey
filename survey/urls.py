@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 
 from . import views
 from . import editor_views
@@ -14,11 +14,11 @@ urlpatterns = [
     # Organization management
     path('org/new/', org_views.org_create, name='org_create'),
     path('org/switch/', org_views.switch_org, name='org_switch'),
-    path('org/<slug:slug>/settings/', org_views.org_settings, name='org_settings'),
-    path('org/<slug:slug>/members/', org_views.org_members, name='org_members'),
-    path('org/<slug:slug>/members/<int:user_id>/role/', org_views.org_change_role, name='org_change_role'),
-    path('org/<slug:slug>/members/<int:user_id>/remove/', org_views.org_remove_member, name='org_remove_member'),
-    path('org/<slug:slug>/invite/', org_views.org_send_invitation, name='org_send_invitation'),
+    re_path(r'^org/(?P<slug>[-.\w]+)/settings/$', org_views.org_settings, name='org_settings'),
+    re_path(r'^org/(?P<slug>[-.\w]+)/members/$', org_views.org_members, name='org_members'),
+    re_path(r'^org/(?P<slug>[-.\w]+)/members/(?P<user_id>\d+)/role/$', org_views.org_change_role, name='org_change_role'),
+    re_path(r'^org/(?P<slug>[-.\w]+)/members/(?P<user_id>\d+)/remove/$', org_views.org_remove_member, name='org_remove_member'),
+    re_path(r'^org/(?P<slug>[-.\w]+)/invite/$', org_views.org_send_invitation, name='org_send_invitation'),
     path('invitations/<uuid:token>/accept/', org_views.accept_invitation, name='accept_invitation'),
 
     # WYSIWYG survey editor

@@ -1,4 +1,5 @@
 from django.dispatch import receiver
+from django.utils.text import slugify
 from django_registration.signals import user_registered
 
 from .models import Organization, Membership
@@ -12,7 +13,7 @@ def create_personal_org_on_registration(sender, user, request, **kwargs):
     """
     base_name = f"{user.username}'s workspace"
     name = base_name
-    base_slug = f"{user.username}-workspace"
+    base_slug = slugify(f"{user.username}-workspace")[:100] or 'workspace'
     slug = base_slug
     counter = 2
 
