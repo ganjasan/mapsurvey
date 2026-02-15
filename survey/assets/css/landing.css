@@ -45,6 +45,7 @@ html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
 }
 
 body.landing-body {
@@ -621,8 +622,9 @@ a:hover {
 
 .landing-footer__links {
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem 1.5rem;
     list-style: none;
+    flex-wrap: wrap;
 }
 
 .landing-footer__links a {
