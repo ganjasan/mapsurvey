@@ -94,6 +94,7 @@ def _serialize_question(question: Question) -> Dict[str, Any]:
         "subtext": question.subtext,
         "input_type": question.input_type,
         "choices": question.choices,
+        "geometries": question.geometries,
         "required": question.required,
         "color": question.color,
         "icon_class": question.icon_class,
@@ -165,6 +166,7 @@ def _serialize_answer(answer: Answer) -> Dict[str, Any]:
         "point": geo_to_wkt(answer.point),
         "line": geo_to_wkt(answer.line),
         "polygon": geo_to_wkt(answer.polygon),
+        "geometry_id": answer.geometry_id,
         "choices": serialize_choices(answer),
         "sub_answers": [
             _serialize_answer(sub_a)
@@ -557,6 +559,7 @@ def _create_question(
         subtext=question_data.get("subtext", "")[:512] if question_data.get("subtext") else None,
         input_type=input_type[:80],
         choices=choices,
+        geometries=question_data.get("geometries"),
         required=question_data.get("required", False),
         color=question_data.get("color", "#000000")[:7],
         icon_class=question_data.get("icon_class", "")[:80] if question_data.get("icon_class") else None,
@@ -779,6 +782,7 @@ def create_answer(
         point=wkt_to_geo(answer_data.get("point"), "point"),
         line=wkt_to_geo(answer_data.get("line"), "line"),
         polygon=wkt_to_geo(answer_data.get("polygon"), "polygon"),
+        geometry_id=answer_data.get("geometry_id"),
     )
 
     # Link choices by name -> code

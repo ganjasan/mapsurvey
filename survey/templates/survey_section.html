@@ -200,60 +200,157 @@
     var existingGeoAnswers = JSON.parse('{{ existing_geo_answers_json|escapejs }}');
     for (var questionCode in existingGeoAnswers) {
         var features = existingGeoAnswers[questionCode];
-        for (var i = 0; i < features.length; i++) {
-            var geoFeature = features[i];
-            var geomType = geoFeature.geometry.type;
-            var layer;
 
-            if (geomType === 'Point') {
-                var coords = geoFeature.geometry.coordinates;
-                var btn = $('button.drawbutton[name="' + questionCode + '"]');
-                var color = btn.attr('data-color') || '#000000';
-                var icon = btn.attr('data-icon') || 'fas fa-map-marker-alt';
-                layer = L.marker([coords[1], coords[0]], {
-                    icon: L.icon.fontAwesome({
-                        iconClasses: 'fa ' + icon,
-                        markerColor: color,
-                        iconColor: '#FFF',
-                        iconXOffset: -2,
-                    })
+        // Check if this is a pressure question
+        var isPressure = $('button.pressurebutton[name="' + questionCode + '"]').length > 0;
+
+        if (isPressure) {
+            // Pressure: match features to predefined layers by geometry_id
+            for (var i = 0; i < features.length; i++) {
+                var geoFeature = features[i];
+                var geometryId = geoFeature.properties.geometry_id;
+                if (!geometryId) continue;
+
+                var group = pressureGroups[questionCode];
+                if (!group) continue;
+
+                group.eachLayer(function(layer) {
+                    if (layer._pressureShapeId === geometryId) {
+                        // Copy saved properties into layer
+                        for (var key in geoFeature.properties) {
+                            layer.feature.properties[key] = geoFeature.properties[key];
+                        }
+                        markPressureAnswered(questionCode, geometryId);
+                    }
                 });
-            } else if (geomType === 'LineString') {
-                var latlngs = geoFeature.geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
-                var btn = $('button.drawbutton[name="' + questionCode + '"]');
-                var color = btn.attr('data-color') || '#000000';
-                layer = L.polyline(latlngs, {color: color});
-            } else if (geomType === 'Polygon') {
-                var latlngs = geoFeature.geometry.coordinates[0].map(function(c) { return [c[1], c[0]]; });
-                var btn = $('button.drawbutton[name="' + questionCode + '"]');
-                var color = btn.attr('data-color') || '#000000';
-                layer = L.polygon(latlngs, {color: color});
             }
+        } else {
+            // Regular geo questions: create new layers
+            for (var i = 0; i < features.length; i++) {
+                var geoFeature = features[i];
+                var geomType = geoFeature.geometry.type;
+                var layer;
 
-            if (layer) {
-                var feature = layer.feature = layer.feature || {};
-                feature.type = "Feature";
-                feature.properties = geoFeature.properties;
-
-                var formId = 'subquestion_form_' + L.Util.stamp(layer);
-                layer._formId = formId;
-
-                layer.bindPopup('<form action="" onsubmit="return false;" id="' + formId + '">' + subquestions_forms[questionCode]
-                    + '<div class="layer-controls">\
-                    <button type="button" class="btn btn-danger layer-delete"><i class="far fa-trash-alt"></i></button>\
-                    <button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>\
-                    <button type="button" class="btn btn-success layer-apply"><i class="fas fa-check"></i></button>\
-                    </div>'
-                    + '</form>', {
-                        maxHeight: $(document).height()*0.8,
+                if (geomType === 'Point') {
+                    var coords = geoFeature.geometry.coordinates;
+                    var btn = $('button.drawbutton[name="' + questionCode + '"]');
+                    var color = btn.attr('data-color') || '#000000';
+                    var icon = btn.attr('data-icon') || 'fas fa-map-marker-alt';
+                    layer = L.marker([coords[1], coords[0]], {
+                        icon: L.icon.fontAwesome({
+                            iconClasses: 'fa ' + icon,
+                            markerColor: color,
+                            iconColor: '#FFF',
+                            iconXOffset: -2,
+                        })
                     });
+                } else if (geomType === 'LineString') {
+                    var latlngs = geoFeature.geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
+                    var btn = $('button.drawbutton[name="' + questionCode + '"]');
+                    var color = btn.attr('data-color') || '#000000';
+                    layer = L.polyline(latlngs, {color: color});
+                } else if (geomType === 'Polygon') {
+                    var latlngs = geoFeature.geometry.coordinates[0].map(function(c) { return [c[1], c[0]]; });
+                    var btn = $('button.drawbutton[name="' + questionCode + '"]');
+                    var color = btn.attr('data-color') || '#000000';
+                    layer = L.polygon(latlngs, {color: color});
+                }
 
-                layer.on("popupopen", onPopupOpen);
-                layer.on("popupclose", onPopupClose);
+                if (layer) {
+                    var feature = layer.feature = layer.feature || {};
+                    feature.type = "Feature";
+                    feature.properties = geoFeature.properties;
 
-                editableLayers.addLayer(layer);
+                    var formId = 'subquestion_form_' + L.Util.stamp(layer);
+                    layer._formId = formId;
+
+                    layer.bindPopup('<form action="" onsubmit="return false;" id="' + formId + '">' + subquestions_forms[questionCode]
+                        + '<div class="layer-controls">\
+                        <button type="button" class="btn btn-danger layer-delete"><i class="far fa-trash-alt"></i></button>\
+                        <button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>\
+                        <button type="button" class="btn btn-success layer-apply"><i class="fas fa-check"></i></button>\
+                        </div>'
+                        + '</form>', {
+                            maxHeight: $(document).height()*0.8,
+                        });
+
+                    layer.on("popupopen", onPopupOpen);
+                    layer.on("popupclose", onPopupClose);
+
+                    editableLayers.addLayer(layer);
+                }
             }
         }
+    }
+
+    // ── Pressure shape click handlers ──────────────────────────────
+    for (var qCode in pressureGroups) {
+        (function(questionCode) {
+            pressureGroups[questionCode].eachLayer(function(layer) {
+                layer.on('click', function() {
+                    var geometryId = layer._pressureShapeId;
+                    var formId = 'subquestion_form_' + geometryId;
+                    layer._formId = formId;
+
+                    if (!subquestions_forms[questionCode]) return;
+
+                    layer.bindPopup('<form action="" onsubmit="return false;" id="' + formId + '">' + subquestions_forms[questionCode]
+                        + '<div class="layer-controls">\
+                        <button type="button" class="btn btn-success layer-apply"><i class="fas fa-check"></i></button>\
+                        </div>'
+                        + '</form>', {
+                            maxHeight: $(document).height()*0.8,
+                        });
+
+                    layer.on("popupopen", function pressurePopupOpen() {
+                        var tempLayer = this;
+                        var $popup = $(tempLayer.getPopup().getElement());
+                        var $form = $popup.find('form');
+
+                        // Load properties into form fields
+                        var properties = tempLayer.feature.properties;
+                        for (var key in properties) {
+                            if (key !== 'question_id' && key !== 'geometry_id') {
+                                var element = $form.find('*[name=' + key + ']');
+                                if (element.length > 1) {
+                                    let type = element[0].type;
+                                    if (type === 'checkbox' || type === 'radio') {
+                                        properties[key].forEach(function(val) {
+                                            $form.find('*[name=' + key + '][value=' + val + ']').prop('checked', true);
+                                        });
+                                    }
+                                } else {
+                                    element.val(properties[key]);
+                                }
+                            }
+                        }
+
+                        $popup.find("button.layer-apply").click(function() {
+                            var subquestion_form_result = $('#' + tempLayer._formId).serializeArray();
+                            var grouped_by_name_result = subquestion_form_result.groupBy("name");
+                            for (var prop in grouped_by_name_result) {
+                                tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value; });
+                            }
+                            markPressureAnswered(questionCode, geometryId);
+                            tempLayer.closePopup();
+                            toggleInfo(true);
+                        });
+                    });
+
+                    layer.on("popupclose", function pressurePopupClose() {
+                        var tempLayer = this;
+                        var subquestion_form_result = $('#' + tempLayer._formId).serializeArray();
+                        var grouped_by_name_result = subquestion_form_result.groupBy("name");
+                        for (var prop in grouped_by_name_result) {
+                            tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value; });
+                        }
+                        toggleInfo(true);
+                    });
+
+                    layer.openPopup();
+                });
+            });
+        })(qCode);
     }
 
 </script>

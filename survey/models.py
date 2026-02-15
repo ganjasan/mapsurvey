@@ -81,6 +81,7 @@ INPUT_TYPE_CHOICES = (
     ("image", _("Image")),
     ("text_line", _("Single Line Text")),
     ("html", _("HTML")),
+    ("pressure", _("Geometry Pressure")),
 )
 
 class SurveySession(models.Model):
@@ -189,7 +190,7 @@ class SurveyHeader(models.Model):
 
     def geo_questions(self):
         if not hasattr(self, "__gqcache"):
-            self.__gqcache = Question.objects.filter(Q(survey_section__in=SurveySection.objects.filter(survey_header=self)) & Q(input_type__in=['point','line','polygon']))
+            self.__gqcache = Question.objects.filter(Q(survey_section__in=SurveySection.objects.filter(survey_header=self)) & Q(input_type__in=['point','line','polygon','pressure']))
         return self.__gqcache
 
     def sessions(self):
@@ -300,12 +301,13 @@ class Question(models.Model):
     color = models.CharField(verbose_name=_(u'Color'), max_length=7, help_text=_(u'HEX color, as #RRGGBB'), default="#000000")
     icon_class = models.CharField(default="", max_length=80, help_text=_(u'Must be Font-Awesome class'), blank=True, null=True)
     image = models.ImageField(upload_to ='images/', null=True, blank=True)
+    geometries = models.JSONField(null=True, blank=True)
 
     class Meta:
         app_label = 'survey'
 
     def __str__(self):
-        return self.name 
+        return self.name
 
     def subQuestions(self):
     	if not hasattr(self, "__sqcache"):
@@ -375,6 +377,7 @@ class Answer(models.Model):
     point = geomodels.PointField(null=True, blank=True)
     line = geomodels.LineStringField(null=True, blank=True)
     polygon = geomodels.PolygonField(null=True, blank=True)
+    geometry_id = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         app_label = 'survey'

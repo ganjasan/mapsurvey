@@ -12,7 +12,7 @@
                     data-toggle="modal" data-target="#questionModal">
                 <i class="fas fa-pen"></i>
             </button>
-            {% if question.input_type == 'point' or question.input_type == 'line' or question.input_type == 'polygon' %}
+            {% if question.input_type == 'point' or question.input_type == 'line' or question.input_type == 'polygon' or question.input_type == 'pressure' %}
             <button title="Add Sub-question"
                     hx-get="{% url 'editor_subquestion_create' survey.uuid question.id %}"
                     hx-target="#questionModalBody"

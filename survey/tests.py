@@ -6500,3 +6500,193 @@ class InvitationFlowTest(TestCase):
         response = self.client.get('/editor/')
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('pending_invitation_token', self.client.session)
+
+
+class PressureQuestionTest(TestCase):
+    """Tests for the pressure question type."""
+
+    def setUp(self):
+        self.client = Client()
+        self.org = _make_org('PressureOrg')
+        self.survey = SurveyHeader.objects.create(
+            name="pressure_survey",
+            organization=self.org,
+            redirect_url="#",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="section1",
+            title="Section 1",
+            code="S1",
+            is_head=True,
+        )
+        self.pressure_q = Question.objects.create(
+            survey_section=self.section,
+            name="Rate zones",
+            input_type="pressure",
+            color="#ff0000",
+            order_number=1,
+            geometries=[
+                {
+                    "id": "shape_a",
+                    "geometry": {"type": "Point", "coordinates": [30.3, 59.9]},
+                    "label": "Main Stage",
+                    "color": "#ff0000",
+                    "icon_class": "fas fa-music",
+                },
+                {
+                    "id": "shape_b",
+                    "geometry": {"type": "Polygon", "coordinates": [[[30.0, 59.0], [30.1, 59.0], [30.1, 59.1], [30.0, 59.1], [30.0, 59.0]]]},
+                    "label": "Food Court",
+                    "color": "#00ff00",
+                    "icon_class": "fas fa-utensils",
+                },
+            ],
+        )
+        self.sub_q = Question.objects.create(
+            survey_section=self.section,
+            name="Rating",
+            input_type="number",
+            parent_question_id=self.pressure_q,
+            order_number=1,
+        )
+
+    def test_pressure_question_save_retrieve(self):
+        """
+        GIVEN a question with input_type="pressure" and geometries JSON
+        WHEN we retrieve it from the database
+        THEN the geometries field is preserved correctly
+        """
+        q = Question.objects.get(pk=self.pressure_q.pk)
+        self.assertEqual(q.input_type, "pressure")
+        self.assertEqual(len(q.geometries), 2)
+        self.assertEqual(q.geometries[0]["id"], "shape_a")
+        self.assertEqual(q.geometries[1]["geometry"]["type"], "Polygon")
+
+    def test_answer_geometry_id_save_retrieve(self):
+        """
+        GIVEN an answer with geometry_id set
+        WHEN we retrieve it from the database
+        THEN geometry_id is preserved
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        answer = Answer.objects.create(
+            survey_session=session,
+            question=self.pressure_q,
+            point=Point(30.3, 59.9, srid=4326),
+            geometry_id="shape_a",
+        )
+        fetched = Answer.objects.get(pk=answer.pk)
+        self.assertEqual(fetched.geometry_id, "shape_a")
+
+    def test_geo_questions_includes_pressure(self):
+        """
+        GIVEN a survey with a pressure question
+        WHEN we call geo_questions()
+        THEN the pressure question is included
+        """
+        geo_qs = list(self.survey.geo_questions())
+        codes = [q.code for q in geo_qs]
+        self.assertIn(self.pressure_q.code, codes)
+
+    def test_pressure_answer_in_existing_geo_answers(self):
+        """
+        GIVEN a saved pressure answer with geometry_id
+        WHEN the respondent revisits the section via GET
+        THEN existing_geo_answers contains the answer with geometry_id
+        """
+        # Visit section to create session
+        self.client.get(f'/surveys/pressure_survey/section1/')
+        session_id = self.client.session['survey_session_id']
+        session = SurveySession.objects.get(pk=session_id)
+
+        Answer.objects.create(
+            survey_session=session,
+            question=self.pressure_q,
+            point=Point(30.3, 59.9, srid=4326),
+            geometry_id="shape_a",
+        )
+
+        response = self.client.get(f'/surveys/pressure_survey/section1/')
+        geo_data = json.loads(response.context['existing_geo_answers_json'])
+        self.assertIn(self.pressure_q.code, geo_data)
+        features = geo_data[self.pressure_q.code]
+        self.assertEqual(len(features), 1)
+        self.assertEqual(features[0]['properties']['geometry_id'], 'shape_a')
+
+    def test_serialization_roundtrip_geometries(self):
+        """
+        GIVEN a survey with a pressure question and geometries
+        WHEN we export and import it
+        THEN the geometries are preserved on the question
+        """
+        from .serialization import export_survey_to_zip, import_survey_from_zip
+
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, mode="structure")
+
+        buf.seek(0)
+        imported_survey, warnings = import_survey_from_zip(buf)
+
+        imported_q = Question.objects.filter(
+            survey_section__survey_header=imported_survey,
+            input_type="pressure",
+        ).first()
+        self.assertIsNotNone(imported_q)
+        self.assertEqual(len(imported_q.geometries), 2)
+        self.assertEqual(imported_q.geometries[0]["id"], "shape_a")
+
+    def test_serialization_roundtrip_geometry_id(self):
+        """
+        GIVEN a survey with pressure answers and geometry_id
+        WHEN we export and import it
+        THEN geometry_id is preserved on the answers
+        """
+        from .serialization import export_survey_to_zip, import_survey_from_zip
+
+        session = SurveySession.objects.create(survey=self.survey)
+        parent_answer = Answer.objects.create(
+            survey_session=session,
+            question=self.pressure_q,
+            point=Point(30.3, 59.9, srid=4326),
+            geometry_id="shape_a",
+        )
+        Answer.objects.create(
+            survey_session=session,
+            question=self.sub_q,
+            parent_answer_id=parent_answer,
+            numeric=5.0,
+            geometry_id="shape_a",
+        )
+
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, mode="full")
+
+        buf.seek(0)
+        imported_survey, warnings = import_survey_from_zip(buf)
+
+        imported_answers = Answer.objects.filter(
+            survey_session__survey=imported_survey,
+            geometry_id="shape_a",
+        )
+        self.assertTrue(imported_answers.exists())
+
+    def test_non_pressure_answer_has_null_geometry_id(self):
+        """
+        GIVEN a regular text answer
+        WHEN created without geometry_id
+        THEN geometry_id is None
+        """
+        text_q = Question.objects.create(
+            survey_section=self.section,
+            name="Name",
+            input_type="text",
+            order_number=2,
+        )
+        session = SurveySession.objects.create(survey=self.survey)
+        answer = Answer.objects.create(
+            survey_session=session,
+            question=text_q,
+            text="Test",
+        )
+        self.assertIsNone(answer.geometry_id)

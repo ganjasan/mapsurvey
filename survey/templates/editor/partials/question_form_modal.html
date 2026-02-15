@@ -65,6 +65,14 @@
         </div>
         <input type="hidden" name="choices_json" id="choices-json-input">
 
+        <!-- Geometries editor for pressure questions -->
+        <div class="geometries-editor" id="geometries-editor" style="display:none;">
+            <label style="font-weight:600;">Predefined Shapes</label>
+            <div id="geometries-map" style="height:250px;border:1px solid #ddd;border-radius:6px;margin-bottom:8px;"></div>
+            <div id="geometries-list"></div>
+            <input type="hidden" name="geometries_json" id="geometries-json-input">
+        </div>
+
         {% if survey.available_languages %}
         <div class="translations-section">
             <button type="button" class="translations-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
@@ -104,11 +112,11 @@
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
         {% if question %}
-        <button type="button" class="btn btn-outline-primary" id="apply-question-btn" onclick="serializeChoices(); applyQuestion();">
+        <button type="button" class="btn btn-outline-primary" id="apply-question-btn" onclick="serializeChoices(); serializeGeometries(); applyQuestion();">
             <i class="fas fa-eye"></i> Apply
         </button>
         {% endif %}
-        <button type="submit" class="btn btn-primary" onclick="serializeChoices()">Save</button>
+        <button type="submit" class="btn btn-primary" onclick="serializeChoices(); serializeGeometries();">Save</button>
     </div>
 </form>
 
@@ -118,12 +126,20 @@
     var choicesEditor = document.getElementById('choices-editor');
     var inputTypeSelect = document.querySelector('#questionModalBody select[name="input_type"]');
     var choiceTypes = ['choice', 'multichoice', 'range', 'rating'];
+    var geometriesEditor = document.getElementById('geometries-editor');
 
     function toggleChoicesEditor() {
         if (inputTypeSelect && choiceTypes.indexOf(inputTypeSelect.value) !== -1) {
             choicesEditor.style.display = 'block';
         } else {
             choicesEditor.style.display = 'none';
+        }
+        // Toggle geometries editor for pressure
+        if (inputTypeSelect && inputTypeSelect.value === 'pressure') {
+            geometriesEditor.style.display = 'block';
+            initGeometriesMap();
+        } else {
+            geometriesEditor.style.display = 'none';
         }
     }
 
@@ -330,6 +346,135 @@
         });
 
         document.getElementById('choices-json-input').value = choices.length > 0 ? JSON.stringify(choices) : '';
+    };
+
+    // ── Geometries editor for pressure questions ──
+    var geomMap = null;
+    var geomDrawLayers = null;
+    var geomShapes = [];  // Array of {id, geometry, label, color, icon_class, layer}
+
+    function initGeometriesMap() {
+        if (geomMap) return;
+        var mapDiv = document.getElementById('geometries-map');
+        if (!mapDiv) return;
+        geomMap = L.map(mapDiv).setView([59.945, 30.317], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OSM',
+            maxZoom: 19,
+        }).addTo(geomMap);
+
+        geomDrawLayers = new L.FeatureGroup();
+        geomMap.addLayer(geomDrawLayers);
+
+        var drawControl = new L.Control.Draw({
+            position: 'topright',
+            draw: {
+                polygon: true,
+                polyline: true,
+                marker: true,
+                circlemarker: false,
+                circle: false,
+                rectangle: false,
+            },
+            edit: { featureGroup: geomDrawLayers, remove: false, edit: false },
+        });
+        geomMap.addControl(drawControl);
+
+        geomMap.on('draw:created', function(e) {
+            var layer = e.layer;
+            var geojson = layer.toGeoJSON();
+            var id = crypto.randomUUID ? crypto.randomUUID() : ('shape_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
+            var shape = {
+                id: id,
+                geometry: geojson.geometry,
+                label: '',
+                color: '#4f46e5',
+                icon_class: 'fas fa-map-marker-alt',
+                layer: layer,
+            };
+            geomShapes.push(shape);
+            geomDrawLayers.addLayer(layer);
+            renderGeomList();
+        });
+
+        // Load existing geometries
+        {% if question and question.geometries %}
+        var existingGeoms = {{ question.geometries|safe }};
+        existingGeoms.forEach(function(shape) {
+            var geom = shape.geometry;
+            var layer;
+            if (geom.type === 'Point') {
+                var c = geom.coordinates;
+                layer = L.marker([c[1], c[0]]);
+            } else if (geom.type === 'LineString') {
+                layer = L.polyline(geom.coordinates.map(function(c) { return [c[1], c[0]]; }));
+            } else if (geom.type === 'Polygon') {
+                layer = L.polygon(geom.coordinates[0].map(function(c) { return [c[1], c[0]]; }));
+            }
+            if (layer) {
+                geomDrawLayers.addLayer(layer);
+                geomShapes.push({
+                    id: shape.id,
+                    geometry: shape.geometry,
+                    label: shape.label || '',
+                    color: shape.color || '#4f46e5',
+                    icon_class: shape.icon_class || 'fas fa-map-marker-alt',
+                    layer: layer,
+                });
+            }
+        });
+        if (geomShapes.length > 0) {
+            geomMap.fitBounds(geomDrawLayers.getBounds().pad(0.1));
+        }
+        renderGeomList();
+        {% endif %}
+
+        setTimeout(function() { geomMap.invalidateSize(); }, 200);
+    }
+
+    function renderGeomList() {
+        var list = document.getElementById('geometries-list');
+        list.innerHTML = '';
+        geomShapes.forEach(function(shape, idx) {
+            var row = document.createElement('div');
+            row.className = 'geometry-row';
+            row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;';
+            row.innerHTML =
+                '<span style="font-size:0.8rem;color:#888;">' + shape.geometry.type + '</span>' +
+                '<input type="text" class="form-control form-control-sm" placeholder="Label" value="' + (shape.label || '').replace(/"/g, '&quot;') + '" data-idx="' + idx + '" data-field="label" style="flex:1;">' +
+                '<input type="color" value="' + (shape.color || '#4f46e5') + '" data-idx="' + idx + '" data-field="color" style="width:36px;height:30px;border:none;padding:0;">' +
+                '<input type="text" class="form-control form-control-sm" placeholder="Icon class" value="' + (shape.icon_class || '').replace(/"/g, '&quot;') + '" data-idx="' + idx + '" data-field="icon_class" style="width:140px;">' +
+                '<button type="button" class="btn btn-sm btn-outline-danger" data-idx="' + idx + '">&times;</button>';
+            list.appendChild(row);
+
+            // Event listeners
+            row.querySelectorAll('input').forEach(function(inp) {
+                inp.addEventListener('input', function() {
+                    var i = parseInt(this.getAttribute('data-idx'));
+                    var field = this.getAttribute('data-field');
+                    if (field) geomShapes[i][field] = this.value;
+                });
+            });
+            row.querySelector('button').addEventListener('click', function() {
+                var i = parseInt(this.getAttribute('data-idx'));
+                geomDrawLayers.removeLayer(geomShapes[i].layer);
+                geomShapes.splice(i, 1);
+                renderGeomList();
+            });
+        });
+    }
+
+    window.serializeGeometries = function() {
+        var output = geomShapes.map(function(s) {
+            return {
+                id: s.id,
+                geometry: s.layer ? s.layer.toGeoJSON().geometry : s.geometry,
+                label: s.label,
+                color: s.color,
+                icon_class: s.icon_class,
+            };
+        });
+        document.getElementById('geometries-json-input').value = output.length > 0 ? JSON.stringify(output) : '';
     };
 
     {% if question %}

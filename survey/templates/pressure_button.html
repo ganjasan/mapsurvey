@@ -1,0 +1,14 @@
+<div>
+	<button name="{{ widget.name }}" type="button" class="pressurebutton" data-color="{{ widget.color }}" data-icon="{{ widget.icon_class }}" data-geometries="{{ widget.geometries }}">
+		<div class="geo-question">
+			<div class="geo-question-icon" style="background: {{ widget.color }}15;">
+				<i class="fas fa-hand-pointer" style="font-size:22px; color: {{ widget.color }}"></i>
+			</div>
+			<div class="geo-question-text">
+				<p class="geo-question-title">{{ widget.title }}</p>
+				{% if widget.subtitle %}<p class="geo-question-subtitle">{{ widget.subtitle }}</p>{% endif %}
+			</div>
+		</div>
+	</button>
+	<input type="text" name="{{ widget.name }}" hidden class="geo-inp">
+</div>

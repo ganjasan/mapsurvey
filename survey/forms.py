@@ -3,6 +3,7 @@ from django.forms import widgets
 from .models import SurveySection, Question, Answer, INPUT_TYPE_CHOICES, SurveySession
 from django.utils import html
 import logging
+import json
 from django import forms
 from django.utils.safestring import mark_safe
 import re
@@ -81,6 +82,21 @@ class PolygonDrawButtonWidget(LeafletDrawButtonWidget):
     draw_type = 'drawpolygon'
     template_name = 'polygon_draw_button.html'
 
+class PressureButtonWidget(LeafletDrawButtonWidget):
+    draw_type = 'pressure'
+    template_name = 'pressure_button.html'
+
+    def __init__(self, attrs=None):
+        if attrs is not None:
+            attrs = attrs.copy()
+            self.geometries = attrs.pop('geometries', '[]')
+        super().__init__(attrs)
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['widget']['geometries'] = self.geometries
+        return context
+
 
 class ShowImageWidget(widgets.Widget):
     template_name = 'show_image.html'
@@ -117,6 +133,17 @@ class LeafletDrawButtonField(forms.Field):
         attrs['draw_icon_class'] = self.draw_icon_class
 
         return attrs
+
+class PressureField(LeafletDrawButtonField):
+    def __init__(self, *, geometries='[]', **kwargs):
+        self.geometries = geometries
+        super().__init__(**kwargs)
+
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        attrs['geometries'] = self.geometries
+        return attrs
+
 
 class ShowImageField(forms.Field):
     def __init__(self, *, image_source, **kwargs):
@@ -186,6 +213,16 @@ class SurveySectionAnswerForm(forms.Form):
 
         elif input_type == "html":
             return HTMLField(widget=HTMLTextWidget, label=False, title = label, subtitle=sublabel)
+
+        elif input_type == 'pressure':
+            return PressureField(
+                widget=PressureButtonWidget, label=False,
+                title=label, subtitle=sublabel,
+                color=color, icon_class=icon_class,
+                draw_icon_class='fas fa-hand-pointer',
+                geometries=json.dumps(question.geometries or []),
+                required=False,
+            )
         else:
             return forms.CharField(widget=forms.Textarea)
     

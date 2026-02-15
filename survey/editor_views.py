@@ -302,6 +302,12 @@ def editor_question_create(request, survey_uuid, section_id):
             choices_json = request.POST.get('choices_json', '').strip()
             if choices_json:
                 question.choices = json.loads(choices_json)
+            # Handle geometries for pressure questions
+            geometries_json = request.POST.get('geometries_json', '').strip()
+            if geometries_json:
+                question.geometries = json.loads(geometries_json)
+            elif question.input_type == 'pressure':
+                question.geometries = []
             question.save()
             _save_question_translations(request, question, survey)
             response = render(request, 'editor/partials/question_list_item.html', {
@@ -339,6 +345,12 @@ def editor_question_edit(request, survey_uuid, question_id):
                 q.choices = json.loads(choices_json)
             elif q.input_type not in ('choice', 'multichoice', 'range', 'rating'):
                 q.choices = None
+            # Handle geometries for pressure questions
+            geometries_json = request.POST.get('geometries_json', '').strip()
+            if geometries_json:
+                q.geometries = json.loads(geometries_json)
+            elif q.input_type != 'pressure':
+                q.geometries = None
             q.save()
             _save_question_translations(request, q, survey)
             response = render(request, 'editor/partials/question_list_item.html', {

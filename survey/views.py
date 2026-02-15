@@ -334,17 +334,31 @@ def survey_section(request, survey_slug, section_name):
 			if (result != []):
 				if not question.choices:
 					result = result[0]
-					if (question.input_type in ['point', 'line', 'polygon']):
+					if (question.input_type in ['point', 'line', 'polygon', 'pressure']):
 						geostr_list = result.split('|')
 						for geostr in geostr_list:
 							if geostr != '':
-								answer = Answer(survey_session=survey_session, question=question)
-
 								gj = geojson.loads(geostr)
 								geometry = geojson.dumps(gj['geometry'])
 								resultToSave = GEOSGeometry(geometry)
 
-								if question.input_type == "point":
+								# Extract geometry_id for pressure questions
+								geom_id = gj.get('properties', {}).get('geometry_id')
+
+								answer = Answer(survey_session=survey_session, question=question)
+								if geom_id:
+									answer.geometry_id = geom_id
+
+								if question.input_type == "pressure":
+									# Dispatch by GeoJSON geometry type
+									geom_type = gj['geometry']['type']
+									if geom_type == "Point":
+										answer.point = resultToSave
+									elif geom_type == "LineString":
+										answer.line = resultToSave
+									elif geom_type == "Polygon":
+										answer.polygon = resultToSave
+								elif question.input_type == "point":
 									answer.point = resultToSave
 								elif question.input_type == "line":
 									answer.line = resultToSave
@@ -356,9 +370,11 @@ def survey_section(request, survey_slug, section_name):
 								#сохранить properties как ответы наследники
 								properties = gj['properties'];
 								for key, value in properties.items():
-									if key != 'question_id':
+									if key not in ('question_id', 'geometry_id'):
 										sub_question = Question.objects.get(Q(survey_section=section) & Q(code=key))
 										sub_answer = Answer(survey_session=survey_session, question=sub_question, parent_answer_id = answer)
+										if geom_id:
+											sub_answer.geometry_id = geom_id
 										if not sub_question.choices:
 											if (sub_question.input_type == 'text' or sub_question.input_type == 'text_line') and value and value[0]:
 												sub_answer.text = value[0]
@@ -427,11 +443,15 @@ def survey_section(request, survey_slug, section_name):
 			if not q_answers:
 				continue
 
-			if question.input_type in ('point', 'line', 'polygon'):
+			if question.input_type in ('point', 'line', 'polygon', 'pressure'):
 				# Build GeoJSON features for geo answers
 				features = []
 				for answer in q_answers:
-					geometry = getattr(answer, question.input_type)
+					# For pressure, dispatch geometry field by checking which is non-null
+					if question.input_type == 'pressure':
+						geometry = answer.point or answer.line or answer.polygon
+					else:
+						geometry = getattr(answer, question.input_type)
 					if geometry is None:
 						continue
 					feature = {
@@ -439,6 +459,9 @@ def survey_section(request, survey_slug, section_name):
 						'geometry': json.loads(geometry.geojson),
 						'properties': {'question_id': question.code},
 					}
+					# Include geometry_id for pressure answers
+					if answer.geometry_id:
+						feature['properties']['geometry_id'] = answer.geometry_id
 					# Add sub-question values
 					child_answers = Answer.objects.filter(parent_answer_id=answer).select_related('question')
 					for child in child_answers:
@@ -509,14 +532,12 @@ def download_data(request, survey_slug):
 	geo_questions = survey.geo_questions()	
 
 	for question in geo_questions:
-		
+
 		layer_properties = {
 			"survey": question.survey_section.survey_header.name,
 			"survey_section": question.survey_section.name,
 			"required": question.required,
 		}
-
-		#layer_str = geojson_template.format(layer_name = question.name, properties=layer_properties)
 
 		#получить ответы
 		features = []
@@ -524,7 +545,21 @@ def download_data(request, survey_slug):
 		for answer in answers:
 			#получить геометрию
 			geo_type = question.input_type
-			if geo_type == "polygon":
+			coordinates = None
+			geometry_type = None
+
+			if geo_type == "pressure":
+				# Dispatch by checking which geo field is populated
+				if answer.point:
+					coordinates = [answer.point.coords[0], answer.point.coords[1]]
+					geometry_type = "Point"
+				elif answer.line:
+					coordinates = [[i[0],i[1]] for i in answer.line.coords]
+					geometry_type = "LineString"
+				elif answer.polygon:
+					coordinates = [[[i[0],i[1]] for i in answer.polygon.coords[0]]]
+					geometry_type = "Polygon"
+			elif geo_type == "polygon":
 				coordinates =  [[[i[0],i[1]] for i in answer.polygon.coords[0]]]
 				geometry_type = "Polygon"
 			elif geo_type == "line":
@@ -533,6 +568,9 @@ def download_data(request, survey_slug):
 			elif geo_type == "point":
 				coordinates =  [answer.point.coords[0], answer.point.coords[1]]
 				geometry_type = "Point"
+
+			if coordinates is None or geometry_type is None:
+				continue
 
 			#получить properties из subquestions
 			subquestions = question.subQuestions()
@@ -543,22 +581,29 @@ def download_data(request, survey_slug):
 				input_type = key.input_type
 				if (input_type == "text" or input_type == "text_line"):
 					if subanswers[key]:
-						answer = subanswers[key][0]
-						result = answer.text
+						sub_a = subanswers[key][0]
+						result = sub_a.text
 				elif input_type == "number" or input_type == "range":
 					if subanswers[key]:
-						answer = subanswers[key][0]
-						result = answer.numeric
+						sub_a = subanswers[key][0]
+						result = sub_a.numeric
 				elif input_type == "choice" or input_type == "rating":
 					if subanswers[key]:
-						answer = subanswers[key][0]
-						names = answer.get_selected_choice_names()
+						sub_a = subanswers[key][0]
+						names = sub_a.get_selected_choice_names()
 						result = names[0] if names else ""
 				elif input_type == "multichoice":
 					if subanswers[key]:
 						result = subanswers[key][0].get_selected_choice_names()
 
 				properties[key.name] = result
+
+			# Add geometry_id and geometry_label for pressure answers
+			if answer.geometry_id and question.geometries:
+				properties["geometry_id"] = answer.geometry_id
+				shape = next((s for s in question.geometries if s['id'] == answer.geometry_id), None)
+				if shape:
+					properties["geometry_label"] = shape.get('label', '')
 
 			properties["session"] = str(answer.survey_session)
 
@@ -572,21 +617,17 @@ def download_data(request, survey_slug):
 			}
 
 			features.append(feature)
-		
+
 		geojson_dict = {
-			"type": "FeatureCollection", 
+			"type": "FeatureCollection",
 			"name": question.name,
 			"crs": {"type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }},
 			"properties": layer_properties,
 			"features": features,
-		} 
+		}
 
 		geojson_str = json.dumps(geojson_dict, ensure_ascii=False).encode('utf8')
 
-		#сформировать geojson файл
-		#geojson_str = serialize('geojson', answers, geometry_field=question.input_type)
-		
-		#cформировать файлы
 		zip.writestr(question.name + '.geojson', geojson_str)
 
 	#обработка обычных вопросов
@@ -613,7 +654,18 @@ def download_data(request, survey_slug):
 			else:
 				continue
 
-			properties[answer.question.name] = result
+			# Build column name with geometry_id suffix for pressure sub-answers
+			col_name = answer.question.name
+			if answer.geometry_id:
+				properties["geometry_id"] = answer.geometry_id
+				# Look up label from parent question's geometries
+				parent = answer.parent_answer_id
+				if parent and parent.question.geometries:
+					shape = next((s for s in parent.question.geometries if s['id'] == answer.geometry_id), None)
+					if shape:
+						properties["geometry_label"] = shape.get('label', '')
+
+			properties[col_name] = result
 
 		properties["session"] = str(session)
 		properties["datetime"] = session.start_datetime

@@ -413,13 +413,100 @@
         currentQ = null;
     });
 
+    // ── Pressure question rendering ──────────────────────────────────
+    var pressureGroups = {};      // questionCode -> L.FeatureGroup
+    var pressureAnswered = {};    // questionCode -> Set of geometry_id
+
+    $('.pressurebutton').each(function() {
+        var btn = $(this);
+        var questionCode = btn.attr('name');
+        var geometriesJson = btn.attr('data-geometries');
+        var shapes = [];
+        try { shapes = JSON.parse(geometriesJson); } catch(e) {}
+        if (!shapes.length) return;
+
+        var group = new L.FeatureGroup();
+        pressureGroups[questionCode] = group;
+        pressureAnswered[questionCode] = new Set();
+
+        shapes.forEach(function(shape) {
+            var geom = shape.geometry;
+            var layer;
+            var color = shape.color || '#666';
+
+            if (geom.type === 'Point') {
+                var coords = geom.coordinates;
+                layer = L.marker([coords[1], coords[0]], {
+                    icon: L.icon.fontAwesome({
+                        iconClasses: 'fa ' + (shape.icon_class || 'fas fa-map-marker-alt'),
+                        markerColor: color,
+                        iconColor: '#FFF',
+                        iconXOffset: -2,
+                    }),
+                    opacity: 0.5,
+                });
+            } else if (geom.type === 'LineString') {
+                var latlngs = geom.coordinates.map(function(c) { return [c[1], c[0]]; });
+                layer = L.polyline(latlngs, {color: color, opacity: 0.5});
+            } else if (geom.type === 'Polygon') {
+                var latlngs = geom.coordinates[0].map(function(c) { return [c[1], c[0]]; });
+                layer = L.polygon(latlngs, {color: color, fillColor: color, fillOpacity: 0.15, opacity: 0.5});
+            }
+
+            if (!layer) return;
+
+            var feature = layer.feature = layer.feature || {};
+            feature.type = "Feature";
+            feature.geometry = geom;
+            feature.properties = {
+                question_id: questionCode,
+                geometry_id: shape.id,
+            };
+            layer._pressureShapeId = shape.id;
+            layer._pressureQuestionCode = questionCode;
+
+            group.addLayer(layer);
+        });
+
+        map.addLayer(group);
+    });
+
+    function markPressureAnswered(questionCode, geometryId) {
+        pressureAnswered[questionCode] = pressureAnswered[questionCode] || new Set();
+        pressureAnswered[questionCode].add(geometryId);
+        var group = pressureGroups[questionCode];
+        if (!group) return;
+        group.eachLayer(function(layer) {
+            if (layer._pressureShapeId === geometryId) {
+                if (layer instanceof L.Marker) {
+                    layer.setOpacity(1);
+                } else {
+                    layer.setStyle({opacity: 1, fillOpacity: 0.35});
+                }
+            }
+        });
+    }
+
+    // ── Form submission: collect geo + pressure data ──────────────────
     $("#section_question_form").submit(function(e){
-    	// First, collect geo data from map layers
+    	// First, collect geo data from editable layers
     	editableLayers.eachLayer(function(layer){
     		let valueOfInput = $(".geo-inp[name='" + layer.feature.properties.question_id + "'").val();
     		valueOfInput += (JSON.stringify(layer.toGeoJSON()) + "|");
         	$(".geo-inp[name='" + layer.feature.properties.question_id + "'").val(valueOfInput);
     	});
+
+    	// Collect pressure data from pressure groups
+    	for (var qCode in pressureGroups) {
+    	    var answered = pressureAnswered[qCode] || new Set();
+    	    pressureGroups[qCode].eachLayer(function(layer) {
+    	        if (answered.has(layer._pressureShapeId)) {
+    	            let valueOfInput = $(".geo-inp[name='" + qCode + "'").val() || '';
+    	            valueOfInput += (JSON.stringify(layer.toGeoJSON()) + "|");
+    	            $(".geo-inp[name='" + qCode + "'").val(valueOfInput);
+    	        }
+    	    });
+    	}
 
     	// Validate required geo fields
     	let isValid = true;

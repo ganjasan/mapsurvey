@@ -492,6 +492,44 @@ ul {
   margin-bottom: 0px;
 }
 
+/* Pressure question button */
+.pressurebutton {
+  margin-bottom: 12px;
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+}
+
+.pressurebutton:hover {
+  background: var(--card-hover);
+  border-color: rgba(79, 70, 229, 0.2);
+  box-shadow: var(--shadow-sm);
+}
+
+.pressurebutton:active {
+  transform: scale(0.985);
+}
+
+.pressurebutton p {
+  margin-bottom: 0px;
+}
+
+/* Geometries editor in question form modal */
+.geometries-editor {
+  margin-top: 1rem;
+}
+
+.geometry-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
 /* Geo Question layout inside button */
 .geo-question {
   display: flex;
