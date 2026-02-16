@@ -8,6 +8,7 @@
   - Archived: `openspec/changes/archive/2026-02-01-survey-import-export/`
 
 ## Features
+- [ ] Надо попробовать создать точную копию Let's try this out from https://www.partimap.eu/en, https://k-monitor.hu/technology
 
 - [ ] Add user geolocation tracking with survey responses
   - Use browser Geolocation API to get user coordinates
