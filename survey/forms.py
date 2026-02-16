@@ -89,12 +89,12 @@ class PressureButtonWidget(LeafletDrawButtonWidget):
     def __init__(self, attrs=None):
         if attrs is not None:
             attrs = attrs.copy()
-            self.geometries = attrs.pop('geometries', '[]')
+            attrs.pop('geometries', None)
         super().__init__(attrs)
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
-        context['widget']['geometries'] = self.geometries
+        context['widget']['geometries'] = context['widget']['attrs'].get('geometries', '[]')
         return context
 
 
