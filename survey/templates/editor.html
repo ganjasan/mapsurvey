@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load survey_filters %}
 
 {% block content %}
 <style>
@@ -25,17 +26,30 @@
 	</div>
 
 	<div class="items">
+		<div class="mb-3">
+			{% if show_archived %}
+			<a href="?show_archived=0" class="btn btn-sm btn-outline-secondary">Hide Archived</a>
+			{% else %}
+			<a href="?show_archived=1" class="btn btn-sm btn-outline-secondary">Show Archived</a>
+			{% endif %}
+		</div>
+
 		<table class="table table-striped">
 		  <thead>
 			<tr>
 			  <th>Survey</th>
+			  <th>Status</th>
 			  <th>Actions</th>
 			</tr>
 		  </thead>
 		  <tbody>
 		  	{% for survey in survey_headers %}
 				<tr>
-					<td><a href="/surveys/{{survey.uuid}}/">{{survey.name}}</a></td>
+					<td>
+						<a href="/surveys/{{survey.uuid}}/">{{survey.name}}</a>
+						{% if survey.version_number > 1 %}<span class="badge badge-light ml-1" style="font-size:0.65rem;">v{{ survey.version_number }}</span>{% endif %}
+					</td>
+					<td><span class="badge badge-{{ survey.status|status_badge_class }}">{{ survey.get_status_display }}</span></td>
 					<td>
 						<a href="{% url 'editor_survey_detail' survey.uuid %}">{% if org_role == 'viewer' %}View{% else %}Edit{% endif %}</a> |
 						<a href="/surveys/{{survey.uuid}}/download">Download Data</a> |

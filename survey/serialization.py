@@ -55,6 +55,9 @@ def serialize_survey_to_dict(survey: SurveyHeader) -> Dict[str, Any]:
         "redirect_url": survey.redirect_url,
         "available_languages": survey.available_languages or [],
         "thanks_html": survey.thanks_html or {},
+        "status": survey.status,
+        "has_password": survey.has_password(),
+        "version": survey.version_number,
         "sections": serialize_sections(survey),
     }
 
@@ -437,7 +440,11 @@ def create_survey_header(
     organization: Optional[Organization],
     created_by=None,
 ) -> SurveyHeader:
-    """Create SurveyHeader from data."""
+    """Create SurveyHeader from data.
+
+    Reads status from data (defaults to 'draft').
+    Never imports password_hash or test_token for security.
+    """
     name = survey_data["name"]
 
     return SurveyHeader.objects.create(
@@ -447,6 +454,9 @@ def create_survey_header(
         redirect_url=survey_data.get("redirect_url", "#")[:250],
         available_languages=survey_data.get("available_languages", []),
         thanks_html=survey_data.get("thanks_html", {}),
+        status=survey_data.get("status", "draft"),
+        version_number=survey_data.get("version", 1),
+        is_canonical=True,
     )
 
 
@@ -908,6 +918,13 @@ def import_survey_from_zip(
                         f"Data-only import requires an unambiguous match."
                     )
                 survey = matches.first()
+
+            # Warn if exported survey had password protection
+            if has_structure and survey_data.get("survey", {}).get("has_password"):
+                warnings.append(
+                    "Survey had password protection in export. "
+                    "Password not imported for security — set new password in editor."
+                )
 
             # Import structure (in transaction)
             if has_structure:

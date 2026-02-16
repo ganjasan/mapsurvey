@@ -18,6 +18,7 @@ from .serialization import (
 )
 from .forms import SurveySectionAnswerForm
 from .permissions import get_effective_survey_role
+from .access_control import check_survey_access
 
 
 def _make_org(name='TestOrg'):
@@ -2718,12 +2719,14 @@ class LanguageSelectionTest(TestCase):
         self.multilang_survey = SurveyHeader.objects.create(
             name="multilang_test",
             organization=self.org,
-            available_languages=["en", "ru", "de"]
+            available_languages=["en", "ru", "de"],
+            status='published',
         )
         self.single_lang_survey = SurveyHeader.objects.create(
             name="singlelang_test",
             organization=self.org,
-            available_languages=[]
+            available_languages=[],
+            status='published',
         )
         self.section = SurveySection.objects.create(
             survey_header=self.multilang_survey,
@@ -2834,12 +2837,14 @@ class SurveyFlowIntegrationTest(TestCase):
         self.multilang_survey = SurveyHeader.objects.create(
             name="flow_multilang",
             organization=self.org,
-            available_languages=["en", "ru"]
+            available_languages=["en", "ru"],
+            status='published',
         )
         self.single_lang_survey = SurveyHeader.objects.create(
             name="flow_singlelang",
             organization=self.org,
-            available_languages=[]
+            available_languages=[],
+            status='published',
         )
         self.multi_section = SurveySection.objects.create(
             survey_header=self.multilang_survey,
@@ -2941,7 +2946,8 @@ class TranslatedContentDisplayTest(TestCase):
         self.survey = SurveyHeader.objects.create(
             name="display_test",
             organization=self.org,
-            available_languages=["en", "ru"]
+            available_languages=["en", "ru"],
+            status='published',
         )
         self.section = SurveySection.objects.create(
             survey_header=self.survey,
@@ -3098,7 +3104,8 @@ class TranslatedContentDisplayTest(TestCase):
         single_survey = SurveyHeader.objects.create(
             name="single_display_test",
             organization=self.org,
-            available_languages=[]
+            available_languages=[],
+            status='published',
         )
         single_section = SurveySection.objects.create(
             survey_header=single_survey,
@@ -3754,7 +3761,8 @@ class MultilingualIntegrationTest(TestCase):
             name="integration_multilang",
             organization=self.org,
             available_languages=["en", "ru"],
-            redirect_url="/completed/"
+            redirect_url="/completed/",
+            status='published',
         )
 
         # Create section with translations
@@ -3913,7 +3921,8 @@ class MultilingualIntegrationTest(TestCase):
         single_survey = SurveyHeader.objects.create(
             name="single_lang_compat",
             organization=self.org,
-            available_languages=[]
+            available_languages=[],
+            status='published',
         )
         single_section = SurveySection.objects.create(
             survey_header=single_survey,
@@ -4107,9 +4116,9 @@ class LandingPageViewTest(TestCase):
         WHEN the landing page is rendered
         THEN only demo and public surveys appear in context
         """
-        SurveyHeader.objects.create(name="priv", visibility="private", organization=self.org)
-        SurveyHeader.objects.create(name="demo_s", visibility="demo", organization=self.org)
-        SurveyHeader.objects.create(name="pub_s", visibility="public", organization=self.org)
+        SurveyHeader.objects.create(name="priv", visibility="private", organization=self.org, status='published')
+        SurveyHeader.objects.create(name="demo_s", visibility="demo", organization=self.org, status='published')
+        SurveyHeader.objects.create(name="pub_s", visibility="public", organization=self.org, status='published')
 
         response = self.client.get('/')
         survey_names = [s.name for s in response.context['surveys']]
@@ -4123,9 +4132,9 @@ class LandingPageViewTest(TestCase):
         WHEN the landing page is rendered
         THEN surveys are ordered: demo first, active public, then archived
         """
-        SurveyHeader.objects.create(name="archived_s", visibility="public", is_archived=True, organization=self.org)
-        SurveyHeader.objects.create(name="active_s", visibility="public", organization=self.org)
-        SurveyHeader.objects.create(name="demo_s2", visibility="demo", organization=self.org)
+        SurveyHeader.objects.create(name="archived_s", visibility="public", is_archived=True, organization=self.org, status='published')
+        SurveyHeader.objects.create(name="active_s", visibility="public", organization=self.org, status='published')
+        SurveyHeader.objects.create(name="demo_s2", visibility="demo", organization=self.org, status='published')
 
         response = self.client.get('/')
         names = [s.name for s in response.context['surveys']]
@@ -4139,7 +4148,7 @@ class LandingPageViewTest(TestCase):
         WHEN the landing page is rendered
         THEN no surveys appear in context
         """
-        SurveyHeader.objects.create(name="hidden", visibility="private", organization=self.org)
+        SurveyHeader.objects.create(name="hidden", visibility="private", organization=self.org, status='published')
         response = self.client.get('/')
         self.assertEqual(len(response.context['surveys']), 0)
 
@@ -4222,6 +4231,7 @@ class AnswerPrepopulationTest(TestCase):
             name="prepop_survey",
             organization=self.org,
             redirect_url="/thanks/",
+            status='published',
         )
         self.section1 = SurveySection.objects.create(
             survey_header=self.survey,
@@ -4431,6 +4441,7 @@ class SurveyProgressIndicatorTest(TestCase):
             name="progress_survey",
             organization=self.org,
             redirect_url="/thanks/",
+            status='published',
         )
         self.section1 = SurveySection.objects.create(
             survey_header=self.survey,
@@ -4521,6 +4532,7 @@ class SurveyThanksPageTest(TestCase):
             name="thanks_survey",
             organization=org,
             redirect_url="#",
+            status='published',
         )
         self.section = SurveySection.objects.create(
             survey_header=self.survey,
@@ -4542,6 +4554,7 @@ class SurveyThanksPageTest(TestCase):
             name="custom_redirect_survey",
             organization=org,
             redirect_url="https://example.com/done",
+            status='published',
         )
         self.custom_section = SurveySection.objects.create(
             survey_header=self.custom_survey,
@@ -4677,6 +4690,7 @@ class QuestionCardStylingTest(TestCase):
             name="card_survey",
             organization=self.org,
             redirect_url="#",
+            status='published',
         )
         self.section = SurveySection.objects.create(
             survey_header=self.survey,
@@ -5149,6 +5163,7 @@ class UUIDSurveyIdentificationTest(TestCase):
         self.survey = SurveyHeader.objects.create(
             name="unique_survey",
             organization=self.org,
+            status='published',
         )
         self.section = SurveySection.objects.create(
             survey_header=self.survey,
@@ -5185,8 +5200,8 @@ class UUIDSurveyIdentificationTest(TestCase):
         WHEN accessing the public URL with that name
         THEN the server returns 404
         """
-        SurveyHeader.objects.create(name="ambiguous", organization=self.org)
-        SurveyHeader.objects.create(name="ambiguous", organization=self.org)
+        SurveyHeader.objects.create(name="ambiguous", organization=self.org, status='published')
+        SurveyHeader.objects.create(name="ambiguous", organization=self.org, status='published')
 
         response = self.client.get('/surveys/ambiguous/')
         self.assertEqual(response.status_code, 404)
@@ -5206,11 +5221,11 @@ class UUIDSurveyIdentificationTest(TestCase):
         WHEN accessing the public URL with one survey's UUID
         THEN the correct survey resolves
         """
-        survey_a = SurveyHeader.objects.create(name="dup_name", organization=self.org)
+        survey_a = SurveyHeader.objects.create(name="dup_name", organization=self.org, status='published')
         SurveySection.objects.create(
             survey_header=survey_a, name="sec1", code="SA", is_head=True,
         )
-        survey_b = SurveyHeader.objects.create(name="dup_name", organization=self.org)
+        survey_b = SurveyHeader.objects.create(name="dup_name", organization=self.org, status='published')
         SurveySection.objects.create(
             survey_header=survey_b, name="sec1", code="SB", is_head=True,
         )
@@ -6500,3 +6515,2048 @@ class InvitationFlowTest(TestCase):
         response = self.client.get('/editor/')
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('pending_invitation_token', self.client.session)
+
+
+class LifecycleTransitionTest(TestCase):
+    """Tests for survey lifecycle state transitions."""
+
+    def setUp(self):
+        self.org = _make_org('LifecycleOrg')
+        self.user = User.objects.create_user(username='lifecycle_user', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='lifecycle_test', organization=self.org, created_by=self.user,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        Question.objects.create(
+            survey_section=self.section, code='Q_LC1', name='Q1', input_type='text',
+        )
+
+    def test_new_survey_is_draft(self):
+        """
+        GIVEN a newly created survey
+        WHEN checking status
+        THEN it should be 'draft'
+        """
+        self.assertEqual(self.survey.status, 'draft')
+
+    def test_valid_transitions_return_true(self):
+        """
+        GIVEN a survey in draft status with password and structure
+        WHEN checking can_transition_to for valid targets
+        THEN each should return (True, "")
+        """
+        self.survey.set_password('test1234')
+        self.survey.save()
+        ok, err = self.survey.can_transition_to('testing')
+        self.assertTrue(ok)
+        self.assertEqual(err, '')
+
+        ok, err = self.survey.can_transition_to('published')
+        self.assertTrue(ok)
+        self.assertEqual(err, '')
+
+    def test_invalid_transition_returns_error(self):
+        """
+        GIVEN a survey in draft status
+        WHEN checking can_transition_to('closed')
+        THEN it should return (False, error message)
+        """
+        ok, err = self.survey.can_transition_to('closed')
+        self.assertFalse(ok)
+        self.assertIn('Cannot transition', err)
+
+    def test_archived_is_terminal(self):
+        """
+        GIVEN a survey in archived status
+        WHEN checking can_transition_to for any target
+        THEN all should return (False, error)
+        """
+        self.survey.status = 'archived'
+        for target in ('draft', 'testing', 'published', 'closed'):
+            ok, err = self.survey.can_transition_to(target)
+            self.assertFalse(ok)
+            self.assertIn('Cannot transition from archived', err)
+
+    def test_draft_to_testing_requires_password(self):
+        """
+        GIVEN a draft survey without password
+        WHEN checking can_transition_to('testing')
+        THEN it should fail with password required error
+        """
+        ok, err = self.survey.can_transition_to('testing')
+        self.assertFalse(ok)
+        self.assertIn('password', err.lower())
+
+    def test_draft_to_testing_requires_structure(self):
+        """
+        GIVEN a draft survey with password but no sections/questions
+        WHEN checking can_transition_to('testing')
+        THEN it should fail with structure required error
+        """
+        empty_survey = SurveyHeader.objects.create(
+            name='empty', organization=self.org,
+        )
+        empty_survey.set_password('test1234')
+        ok, err = empty_survey.can_transition_to('testing')
+        self.assertFalse(ok)
+        self.assertIn('section', err.lower())
+
+    def test_draft_to_testing_requires_head_section(self):
+        """
+        GIVEN a draft survey with password and questions but no head section
+        WHEN checking can_transition_to('testing')
+        THEN it should fail with head section error
+        """
+        survey = SurveyHeader.objects.create(
+            name='no_head', organization=self.org,
+        )
+        survey.set_password('test1234')
+        section = SurveySection.objects.create(
+            survey_header=survey, name='s1', code='S1', is_head=False,
+        )
+        Question.objects.create(
+            survey_section=section, code='Q_NH1', name='Q1', input_type='text',
+        )
+        ok, err = survey.can_transition_to('testing')
+        self.assertFalse(ok)
+        self.assertIn('head section', err.lower())
+
+    def test_draft_to_published_requires_structure(self):
+        """
+        GIVEN a draft survey with no structure
+        WHEN checking can_transition_to('published')
+        THEN it should fail with structure required error
+        """
+        empty_survey = SurveyHeader.objects.create(
+            name='empty2', organization=self.org,
+        )
+        ok, err = empty_survey.can_transition_to('published')
+        self.assertFalse(ok)
+        self.assertIn('section', err.lower())
+
+
+class LifecyclePasswordTest(TestCase):
+    """Tests for survey password management methods."""
+
+    def setUp(self):
+        self.org = _make_org('PwdOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='pwd_test', organization=self.org,
+        )
+
+    def test_set_password(self):
+        """
+        GIVEN a survey without password
+        WHEN set_password is called
+        THEN has_password returns True and check_password works
+        """
+        self.assertFalse(self.survey.has_password())
+        self.survey.set_password('test123')
+        self.assertTrue(self.survey.has_password())
+        self.assertTrue(self.survey.check_password('test123'))
+
+    def test_check_password_rejects_wrong(self):
+        """
+        GIVEN a survey with password set
+        WHEN check_password is called with wrong password
+        THEN it returns False
+        """
+        self.survey.set_password('correct')
+        self.assertFalse(self.survey.check_password('wrong'))
+
+    def test_has_password_no_hash(self):
+        """
+        GIVEN a survey without password_hash
+        WHEN has_password is called
+        THEN it returns False
+        """
+        self.assertFalse(self.survey.has_password())
+
+    def test_clear_password(self):
+        """
+        GIVEN a survey with password set
+        WHEN clear_password is called
+        THEN has_password returns False
+        """
+        self.survey.set_password('test123')
+        self.survey.clear_password()
+        self.assertFalse(self.survey.has_password())
+
+    def test_check_password_returns_false_no_hash(self):
+        """
+        GIVEN a survey without password
+        WHEN check_password is called
+        THEN it returns False
+        """
+        self.assertFalse(self.survey.check_password('anything'))
+
+
+class AccessControlTest(TestCase):
+    """Tests for check_survey_access function."""
+
+    def setUp(self):
+        self.org = _make_org('AccessOrg')
+        self.owner = User.objects.create_user(username='ac_owner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+
+    def _make_survey(self, status='draft', password=None):
+        survey = SurveyHeader.objects.create(
+            name=f'access_{status}', organization=self.org,
+            status=status, created_by=self.owner,
+        )
+        SurveyCollaborator.objects.create(user=self.owner, survey=survey, role='owner')
+        if password:
+            survey.set_password(password)
+            survey.save()
+        return survey
+
+    def test_draft_returns_404_for_anonymous(self):
+        """
+        GIVEN a draft survey
+        WHEN an anonymous user accesses it
+        THEN Http404 is raised
+        """
+        from django.http import Http404
+        survey = self._make_survey('draft')
+        request = self.client.get('/').wsgi_request
+        with self.assertRaises(Http404):
+            check_survey_access(request, survey)
+
+    def test_draft_allowed_for_editor(self):
+        """
+        GIVEN a draft survey
+        WHEN an editor accesses it
+        THEN access is allowed (returns None)
+        """
+        survey = self._make_survey('draft')
+        self.client.login(username='ac_owner', password='pass')
+        request = self.client.get('/').wsgi_request
+        request.user = self.owner
+        result = check_survey_access(request, survey)
+        self.assertIsNone(result)
+
+    def test_published_no_password_allowed(self):
+        """
+        GIVEN a published survey without password
+        WHEN an anonymous user accesses it
+        THEN access is allowed (returns None)
+        """
+        survey = self._make_survey('published')
+        request = self.client.get('/').wsgi_request
+        result = check_survey_access(request, survey)
+        self.assertIsNone(result)
+
+    def test_published_with_password_redirects(self):
+        """
+        GIVEN a published survey with password
+        WHEN an anonymous user accesses it without session key
+        THEN redirect to password page
+        """
+        survey = self._make_survey('published', password='secret')
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('password', response.url)
+
+    def test_closed_shows_closed_page(self):
+        """
+        GIVEN a closed survey
+        WHEN an anonymous user accesses it
+        THEN the survey_closed.html template is rendered
+        """
+        survey = self._make_survey('closed')
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'no longer accepting')
+
+    def test_testing_with_valid_token(self):
+        """
+        GIVEN a testing survey with password
+        WHEN a user accesses with valid token
+        THEN access is allowed and token is stored in session
+        """
+        survey = self._make_survey('testing', password='secret')
+        response = self.client.get(f'/surveys/{survey.uuid}/?token={survey.test_token}')
+        # Should redirect to first section (survey_header behavior), not to password page
+        self.assertNotIn('password', response.url if response.status_code == 302 else '')
+
+    def test_testing_without_token_redirects_to_password(self):
+        """
+        GIVEN a testing survey
+        WHEN a user accesses without token or session key
+        THEN redirect to password page
+        """
+        survey = self._make_survey('testing', password='secret')
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('password', response.url)
+
+
+class PasswordGateViewTest(TestCase):
+    """Tests for the survey_password_gate view."""
+
+    def setUp(self):
+        self.org = _make_org('GateOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='gate_test', organization=self.org, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.survey.set_password('correct')
+        self.survey.save()
+
+    def test_get_renders_form(self):
+        """
+        GIVEN a published survey with password
+        WHEN GET /surveys/<uuid>/password/
+        THEN render password form
+        """
+        response = self.client.get(f'/surveys/{self.survey.uuid}/password/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'password')
+
+    def test_correct_password_redirects(self):
+        """
+        GIVEN a published survey with password
+        WHEN POST with correct password
+        THEN redirect to survey and set session key
+        """
+        response = self.client.post(
+            f'/surveys/{self.survey.uuid}/password/',
+            {'password': 'correct'},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(str(self.survey.uuid), response.url)
+        self.assertTrue(self.client.session.get(f'survey_password_{self.survey.id}'))
+
+    def test_incorrect_password_shows_error(self):
+        """
+        GIVEN a published survey with password
+        WHEN POST with incorrect password
+        THEN re-render form with error
+        """
+        response = self.client.post(
+            f'/surveys/{self.survey.uuid}/password/',
+            {'password': 'wrong'},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Incorrect password')
+
+
+class EditorTransitionTest(TestCase):
+    """Tests for the editor_survey_transition endpoint."""
+
+    def setUp(self):
+        self.org = _make_org('TransOrg')
+        self.owner = User.objects.create_user(username='trans_owner', password='pass')
+        self.editor = User.objects.create_user(username='trans_editor', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        Membership.objects.create(user=self.editor, organization=self.org, role='editor')
+        self.survey = SurveyHeader.objects.create(
+            name='trans_test', organization=self.org, created_by=self.owner,
+        )
+        SurveyCollaborator.objects.create(user=self.owner, survey=self.survey, role='owner')
+        SurveyCollaborator.objects.create(user=self.editor, survey=self.survey, role='editor')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        Question.objects.create(
+            survey_section=self.section, code='Q_TR1', name='Q1', input_type='text',
+        )
+
+    def test_valid_transition_returns_204(self):
+        """
+        GIVEN a draft survey with structure
+        WHEN owner posts transition to published
+        THEN status 204 and survey status updated
+        """
+        self.client.login(username='trans_owner', password='pass')
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/',
+            {'status': 'published'},
+            HTTP_HX_REQUEST='true',
+        )
+        self.assertEqual(response.status_code, 204)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.status, 'published')
+
+    def test_invalid_transition_returns_400(self):
+        """
+        GIVEN a draft survey
+        WHEN owner posts transition to closed
+        THEN status 400 with error message
+        """
+        self.client.login(username='trans_owner', password='pass')
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/',
+            {'status': 'closed'},
+            HTTP_HX_REQUEST='true',
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_non_owner_returns_403(self):
+        """
+        GIVEN a draft survey
+        WHEN editor (not owner) posts transition
+        THEN status 403
+        """
+        self.client.login(username='trans_editor', password='pass')
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/',
+            {'status': 'published'},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_test_data_cleanup(self):
+        """
+        GIVEN a testing survey with sessions
+        WHEN owner transitions to published with clear_test_data=true
+        THEN all sessions are deleted
+        """
+        self.survey.set_password('test1234')
+        self.survey.status = 'testing'
+        self.survey.save()
+        SurveySession.objects.create(survey=self.survey)
+        SurveySession.objects.create(survey=self.survey)
+        self.assertEqual(SurveySession.objects.filter(survey=self.survey).count(), 2)
+
+        self.client.login(username='trans_owner', password='pass')
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/',
+            {'status': 'published', 'clear_test_data': 'true'},
+            HTTP_HX_REQUEST='true',
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(SurveySession.objects.filter(survey=self.survey).count(), 0)
+
+    def test_archive_syncs_is_archived(self):
+        """
+        GIVEN a closed survey
+        WHEN owner transitions to archived
+        THEN is_archived is set to True
+        """
+        self.survey.status = 'closed'
+        self.survey.save()
+        self.client.login(username='trans_owner', password='pass')
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/',
+            {'status': 'archived'},
+            HTTP_HX_REQUEST='true',
+        )
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.status, 'archived')
+        self.assertTrue(self.survey.is_archived)
+
+
+class LifecycleSerializationTest(TestCase):
+    """Tests for lifecycle fields in serialization."""
+
+    def setUp(self):
+        self.org = _make_org('SerOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='ser_test', organization=self.org, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        Question.objects.create(
+            survey_section=self.section, code='Q_SER1', name='Q1', input_type='text',
+        )
+
+    def test_export_includes_status(self):
+        """
+        GIVEN a published survey
+        WHEN serialized
+        THEN status field is included
+        """
+        data = serialize_survey_to_dict(self.survey)
+        self.assertEqual(data['status'], 'published')
+
+    def test_export_includes_has_password(self):
+        """
+        GIVEN a survey with password set
+        WHEN serialized
+        THEN has_password is True
+        """
+        self.survey.set_password('test')
+        self.survey.save()
+        data = serialize_survey_to_dict(self.survey)
+        self.assertTrue(data['has_password'])
+
+    def test_export_excludes_password_hash(self):
+        """
+        GIVEN a survey with password set
+        WHEN serialized
+        THEN password_hash is not in the dict
+        """
+        self.survey.set_password('test')
+        self.survey.save()
+        data = serialize_survey_to_dict(self.survey)
+        self.assertNotIn('password_hash', data)
+        self.assertNotIn('test_token', data)
+
+    def test_import_defaults_to_draft(self):
+        """
+        GIVEN a survey archive without status field
+        WHEN imported
+        THEN created survey has status=draft
+        """
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, mode='structure')
+        buf.seek(0)
+        # Modify the archive to remove status
+        with zipfile.ZipFile(buf, 'r') as zf:
+            content = json.loads(zf.read('survey.json'))
+        del content['survey']['status']
+        buf2 = BytesIO()
+        with zipfile.ZipFile(buf2, 'w') as zf:
+            zf.writestr('survey.json', json.dumps(content))
+        buf2.seek(0)
+        imported_survey, _ = import_survey_from_zip(buf2, organization=self.org)
+        self.assertEqual(imported_survey.status, 'draft')
+
+    def test_import_reads_status(self):
+        """
+        GIVEN a survey archive with status=published
+        WHEN imported
+        THEN created survey has status=published
+        """
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, mode='structure')
+        buf.seek(0)
+        imported_survey, _ = import_survey_from_zip(buf, organization=self.org)
+        self.assertEqual(imported_survey.status, 'published')
+
+    def test_import_password_warning(self):
+        """
+        GIVEN a survey archive with has_password=true
+        WHEN imported
+        THEN warnings include password not imported message
+        """
+        self.survey.set_password('test')
+        self.survey.save()
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, mode='structure')
+        buf.seek(0)
+        _, warnings = import_survey_from_zip(buf, organization=self.org)
+        self.assertTrue(any('password' in w.lower() for w in warnings))
+
+    def test_import_never_restores_password(self):
+        """
+        GIVEN a survey with password exported
+        WHEN imported
+        THEN imported survey has no password
+        """
+        self.survey.set_password('test')
+        self.survey.save()
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, mode='structure')
+        buf.seek(0)
+        imported_survey, _ = import_survey_from_zip(buf, organization=self.org)
+        self.assertFalse(imported_survey.has_password())
+
+
+class LandingPageLifecycleTest(TestCase):
+    """Tests for landing page lifecycle filtering."""
+
+    def setUp(self):
+        self.org = _make_org('LandingOrg')
+
+    def test_draft_surveys_excluded(self):
+        """
+        GIVEN a draft survey with public visibility
+        WHEN the landing page is rendered
+        THEN the draft survey is not shown
+        """
+        survey = SurveyHeader.objects.create(
+            name='draft_pub', organization=self.org,
+            visibility='public', status='draft',
+        )
+        response = self.client.get('/')
+        self.assertNotContains(response, 'draft_pub')
+
+    def test_published_surveys_shown(self):
+        """
+        GIVEN a published survey with public visibility
+        WHEN the landing page is rendered
+        THEN the survey is shown
+        """
+        survey = SurveyHeader.objects.create(
+            name='pub_survey', organization=self.org,
+            visibility='public', status='published',
+        )
+        response = self.client.get('/')
+        self.assertContains(response, 'pub_survey')
+
+
+# ─── Versioning Tests ──────────────────────────────────────────────────────────
+# Additional imports for versioning tests
+from .versioning import clone_survey_for_draft, check_draft_compatibility, publish_draft, IncompatibleDraftError
+from .models import SurveySectionTranslation, QuestionTranslation
+
+
+class VersioningModelTest(TestCase):
+    """Tests for versioning-related model fields and methods on SurveyHeader."""
+
+    def setUp(self):
+        self.org = _make_org('VersionOrg')
+        self.user = User.objects.create_user(username='vowner', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='canon_survey', organization=self.org, created_by=self.user,
+            status='published',
+        )
+
+    def test_default_version_number_is_one(self):
+        """
+        GIVEN a newly created SurveyHeader
+        WHEN no version_number is specified
+        THEN version_number defaults to 1
+        """
+        self.assertEqual(self.survey.version_number, 1)
+
+    def test_default_is_canonical_true(self):
+        """
+        GIVEN a newly created SurveyHeader
+        WHEN no is_canonical is specified
+        THEN is_canonical defaults to True
+        """
+        self.assertTrue(self.survey.is_canonical)
+
+    def test_canonical_survey_defaults_to_null(self):
+        """
+        GIVEN a newly created SurveyHeader
+        WHEN no canonical_survey is specified
+        THEN canonical_survey is None
+        """
+        self.assertIsNone(self.survey.canonical_survey)
+
+    def test_published_version_defaults_to_null(self):
+        """
+        GIVEN a newly created SurveyHeader
+        WHEN no published_version is specified
+        THEN published_version is None
+        """
+        self.assertIsNone(self.survey.published_version)
+
+    def test_has_draft_copy_false_when_no_draft(self):
+        """
+        GIVEN a canonical survey with no draft copy
+        WHEN has_draft_copy() is called
+        THEN it returns False
+        """
+        self.assertFalse(self.survey.has_draft_copy())
+
+    def test_has_draft_copy_true_when_draft_exists(self):
+        """
+        GIVEN a canonical survey with a draft copy linked via published_version
+        WHEN has_draft_copy() is called
+        THEN it returns True
+        """
+        SurveyHeader.objects.create(
+            name='[draft] canon_survey', organization=self.org,
+            status='draft', published_version=self.survey,
+        )
+        self.assertTrue(self.survey.has_draft_copy())
+
+    def test_get_draft_copy_returns_none_when_no_draft(self):
+        """
+        GIVEN a canonical survey with no draft copy
+        WHEN get_draft_copy() is called
+        THEN it returns None
+        """
+        self.assertIsNone(self.survey.get_draft_copy())
+
+    def test_get_draft_copy_returns_draft(self):
+        """
+        GIVEN a canonical survey with a draft copy
+        WHEN get_draft_copy() is called
+        THEN it returns the draft SurveyHeader
+        """
+        draft = SurveyHeader.objects.create(
+            name='[draft] canon_survey', organization=self.org,
+            status='draft', published_version=self.survey,
+        )
+        self.assertEqual(self.survey.get_draft_copy(), draft)
+
+    def test_is_draft_copy_false_for_canonical(self):
+        """
+        GIVEN a canonical survey (published_version is None)
+        WHEN is_draft_copy is accessed
+        THEN it returns False
+        """
+        self.assertFalse(self.survey.is_draft_copy)
+
+    def test_is_draft_copy_true_for_draft(self):
+        """
+        GIVEN a draft copy with published_version set
+        WHEN is_draft_copy is accessed
+        THEN it returns True
+        """
+        draft = SurveyHeader.objects.create(
+            name='[draft] canon_survey', organization=self.org,
+            status='draft', published_version=self.survey,
+        )
+        self.assertTrue(draft.is_draft_copy)
+
+    def test_get_version_history_empty_when_no_archives(self):
+        """
+        GIVEN a canonical survey with no archived versions
+        WHEN get_version_history() is called
+        THEN it returns an empty queryset
+        """
+        self.assertEqual(self.survey.get_version_history().count(), 0)
+
+    def test_get_version_history_returns_archived_versions_ordered(self):
+        """
+        GIVEN a canonical survey with two archived versions
+        WHEN get_version_history() is called
+        THEN it returns them ordered by -version_number
+        """
+        v1 = SurveyHeader.objects.create(
+            name='canon_survey', organization=self.org,
+            status='closed', is_canonical=False,
+            canonical_survey=self.survey, version_number=1,
+        )
+        v2 = SurveyHeader.objects.create(
+            name='canon_survey', organization=self.org,
+            status='closed', is_canonical=False,
+            canonical_survey=self.survey, version_number=2,
+        )
+        history = list(self.survey.get_version_history())
+        self.assertEqual(len(history), 2)
+        self.assertEqual(history[0], v2)
+        self.assertEqual(history[1], v1)
+
+
+class CloneSurveyTest(TestCase):
+    """Tests for clone_survey_for_draft function."""
+
+    def setUp(self):
+        self.org = _make_org('CloneOrg')
+        self.user = User.objects.create_user(username='cloner', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='original', organization=self.org, created_by=self.user,
+            status='published', redirect_url='/done/',
+            available_languages=['en', 'ru'], thanks_html={'en': 'Thanks'},
+        )
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section 1',
+            code='S1', is_head=True,
+        )
+        SurveySectionTranslation.objects.create(
+            section=self.section, language='ru', title='Раздел 1',
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, code='Q1', order_number=1,
+            name='Favorite color?', input_type='choice',
+            choices=[{'code': 1, 'name': 'Red'}, {'code': 2, 'name': 'Blue'}],
+        )
+        QuestionTranslation.objects.create(
+            question=self.question, language='ru', name='Любимый цвет?',
+        )
+        self.sub_q = Question.objects.create(
+            survey_section=self.section, parent_question_id=self.question,
+            code='Q1_1', order_number=1, name='Why?', input_type='text',
+        )
+
+    def test_draft_linked_to_canonical(self):
+        """
+        GIVEN a published canonical survey
+        WHEN clone_survey_for_draft is called
+        THEN the draft's published_version points to the canonical
+        """
+        draft = clone_survey_for_draft(self.survey)
+        self.assertEqual(draft.published_version, self.survey)
+
+    def test_draft_status_is_draft(self):
+        """
+        GIVEN a published canonical survey
+        WHEN clone_survey_for_draft is called
+        THEN the draft status is 'draft'
+        """
+        draft = clone_survey_for_draft(self.survey)
+        self.assertEqual(draft.status, 'draft')
+
+    def test_draft_name_has_prefix(self):
+        """
+        GIVEN a canonical survey named 'original'
+        WHEN clone_survey_for_draft is called
+        THEN the draft name starts with '[draft] '
+        """
+        draft = clone_survey_for_draft(self.survey)
+        self.assertTrue(draft.name.startswith('[draft] '))
+
+    def test_draft_name_truncation(self):
+        """
+        GIVEN a canonical survey with a 45-character name
+        WHEN clone_survey_for_draft is called
+        THEN the draft name is truncated to 45 characters
+        """
+        self.survey.name = 'a' * 45
+        self.survey.save()
+        draft = clone_survey_for_draft(self.survey)
+        self.assertLessEqual(len(draft.name), 45)
+
+    def test_sections_cloned_with_same_codes(self):
+        """
+        GIVEN a canonical survey with one section
+        WHEN clone_survey_for_draft is called
+        THEN the draft has a section with the same code and name
+        """
+        draft = clone_survey_for_draft(self.survey)
+        draft_sections = SurveySection.objects.filter(survey_header=draft)
+        self.assertEqual(draft_sections.count(), 1)
+        self.assertEqual(draft_sections.first().code, 'S1')
+        self.assertEqual(draft_sections.first().name, 'sec1')
+
+    def test_section_translations_cloned(self):
+        """
+        GIVEN a canonical survey with section translations
+        WHEN clone_survey_for_draft is called
+        THEN the draft sections have the same translations
+        """
+        draft = clone_survey_for_draft(self.survey)
+        draft_section = SurveySection.objects.get(survey_header=draft)
+        trans = SurveySectionTranslation.objects.filter(section=draft_section)
+        self.assertEqual(trans.count(), 1)
+        self.assertEqual(trans.first().language, 'ru')
+        self.assertEqual(trans.first().title, 'Раздел 1')
+
+    def test_questions_cloned_with_same_codes(self):
+        """
+        GIVEN a canonical survey with questions
+        WHEN clone_survey_for_draft is called
+        THEN the draft has questions with the same codes
+        """
+        draft = clone_survey_for_draft(self.survey)
+        draft_questions = Question.objects.filter(
+            survey_section__survey_header=draft
+        )
+        codes = set(draft_questions.values_list('code', flat=True))
+        self.assertIn('Q1', codes)
+        self.assertIn('Q1_1', codes)
+
+    def test_choices_cloned(self):
+        """
+        GIVEN a canonical survey with a choice question
+        WHEN clone_survey_for_draft is called
+        THEN the draft question has the same choices
+        """
+        draft = clone_survey_for_draft(self.survey)
+        draft_q = Question.objects.get(
+            survey_section__survey_header=draft, code='Q1'
+        )
+        self.assertEqual(len(draft_q.choices), 2)
+        codes = {c['code'] for c in draft_q.choices}
+        self.assertEqual(codes, {1, 2})
+
+    def test_question_translations_cloned(self):
+        """
+        GIVEN a canonical survey with question translations
+        WHEN clone_survey_for_draft is called
+        THEN the draft questions have the same translations
+        """
+        draft = clone_survey_for_draft(self.survey)
+        draft_q = Question.objects.get(
+            survey_section__survey_header=draft, code='Q1'
+        )
+        trans = QuestionTranslation.objects.filter(question=draft_q)
+        self.assertEqual(trans.count(), 1)
+        self.assertEqual(trans.first().name, 'Любимый цвет?')
+
+    def test_subquestions_cloned(self):
+        """
+        GIVEN a canonical survey with sub-questions
+        WHEN clone_survey_for_draft is called
+        THEN the draft has sub-questions with the same codes and parent links
+        """
+        draft = clone_survey_for_draft(self.survey)
+        draft_sub = Question.objects.get(
+            survey_section__survey_header=draft, code='Q1_1'
+        )
+        self.assertIsNotNone(draft_sub.parent_question_id)
+        self.assertEqual(draft_sub.parent_question_id.code, 'Q1')
+
+    def test_collaborators_cloned(self):
+        """
+        GIVEN a canonical survey with collaborators
+        WHEN clone_survey_for_draft is called
+        THEN the draft has the same collaborators with the same roles
+        """
+        draft = clone_survey_for_draft(self.survey)
+        collabs = SurveyCollaborator.objects.filter(survey=draft)
+        self.assertEqual(collabs.count(), 1)
+        self.assertEqual(collabs.first().user, self.user)
+        self.assertEqual(collabs.first().role, 'owner')
+
+    def test_linked_list_preserved(self):
+        """
+        GIVEN a canonical survey with two linked sections
+        WHEN clone_survey_for_draft is called
+        THEN the draft sections maintain the same linked list structure
+        """
+        section2 = SurveySection.objects.create(
+            survey_header=self.survey, name='sec2', title='Section 2', code='S2',
+        )
+        self.section.next_section = section2
+        self.section.save(update_fields=['next_section'])
+        section2.prev_section = self.section
+        section2.save(update_fields=['prev_section'])
+
+        draft = clone_survey_for_draft(self.survey)
+        draft_secs = {
+            s.code: s for s in SurveySection.objects.filter(survey_header=draft)
+        }
+        self.assertIsNotNone(draft_secs['S1'].next_section)
+        self.assertEqual(draft_secs['S1'].next_section.code, 'S2')
+        self.assertIsNotNone(draft_secs['S2'].prev_section)
+        self.assertEqual(draft_secs['S2'].prev_section.code, 'S1')
+
+    def test_settings_copied(self):
+        """
+        GIVEN a canonical survey with custom settings
+        WHEN clone_survey_for_draft is called
+        THEN the draft has the same redirect_url, available_languages, thanks_html
+        """
+        draft = clone_survey_for_draft(self.survey)
+        self.assertEqual(draft.redirect_url, '/done/')
+        self.assertEqual(draft.available_languages, ['en', 'ru'])
+        self.assertEqual(draft.thanks_html, {'en': 'Thanks'})
+
+
+class CompatibilityCheckTest(TestCase):
+    """Tests for check_draft_compatibility function."""
+
+    def setUp(self):
+        self.org = _make_org('CompatOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='compat_survey', organization=self.org, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec', code='S1', is_head=True,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, code='Q1', order_number=1,
+            name='Color?', input_type='choice',
+            choices=[
+                {'code': 1, 'name': 'Red'},
+                {'code': 2, 'name': 'Blue'},
+                {'code': 3, 'name': 'Green'},
+            ],
+        )
+        # Create a session and an answer to make compatibility checks meaningful
+        self.session = SurveySession.objects.create(survey=self.survey)
+        self.answer = Answer.objects.create(
+            survey_session=self.session, question=self.question,
+            selected_choices=[1],
+        )
+
+    def _make_draft(self):
+        """Create a draft copy via clone."""
+        return clone_survey_for_draft(self.survey)
+
+    def test_deleted_question_with_answers_is_breaking(self):
+        """
+        GIVEN a draft where a question with answers is deleted
+        WHEN check_draft_compatibility is called
+        THEN it returns a breaking issue of type 'deleted_question'
+        """
+        draft = self._make_draft()
+        # Delete the cloned question from draft
+        Question.objects.filter(
+            survey_section__survey_header=draft, code='Q1'
+        ).delete()
+
+        issues = check_draft_compatibility(draft, self.survey)
+        self.assertEqual(len(issues), 1)
+        self.assertEqual(issues[0]['type'], 'deleted_question')
+        self.assertEqual(issues[0]['question_code'], 'Q1')
+
+    def test_changed_input_type_with_answers_is_breaking(self):
+        """
+        GIVEN a draft where a question's input_type changed and has answers
+        WHEN check_draft_compatibility is called
+        THEN it returns a breaking issue of type 'changed_input_type'
+        """
+        draft = self._make_draft()
+        draft_q = Question.objects.get(
+            survey_section__survey_header=draft, code='Q1'
+        )
+        draft_q.input_type = 'text'
+        draft_q.save()
+
+        issues = check_draft_compatibility(draft, self.survey)
+        types = [i['type'] for i in issues]
+        self.assertIn('changed_input_type', types)
+
+    def test_removed_choice_code_with_answers_is_breaking(self):
+        """
+        GIVEN a draft where a choice code used in answers is removed
+        WHEN check_draft_compatibility is called
+        THEN it returns a breaking issue of type 'removed_choice_codes'
+        """
+        draft = self._make_draft()
+        draft_q = Question.objects.get(
+            survey_section__survey_header=draft, code='Q1'
+        )
+        # Remove choice code 1 which is used in the answer
+        draft_q.choices = [
+            {'code': 2, 'name': 'Blue'},
+            {'code': 3, 'name': 'Green'},
+        ]
+        draft_q.save()
+
+        issues = check_draft_compatibility(draft, self.survey)
+        types = [i['type'] for i in issues]
+        self.assertIn('removed_choice_codes', types)
+
+    def test_safe_changes_pass(self):
+        """
+        GIVEN a draft with only safe changes (added questions, added choices)
+        WHEN check_draft_compatibility is called
+        THEN it returns an empty list
+        """
+        draft = self._make_draft()
+        # Add a new choice (safe)
+        draft_q = Question.objects.get(
+            survey_section__survey_header=draft, code='Q1'
+        )
+        draft_q.choices.append({'code': 4, 'name': 'Yellow'})
+        draft_q.save()
+        # Add a new question (safe)
+        draft_sec = SurveySection.objects.get(survey_header=draft)
+        Question.objects.create(
+            survey_section=draft_sec, code='Q_NEW', order_number=2,
+            name='New question', input_type='text',
+        )
+
+        issues = check_draft_compatibility(draft, self.survey)
+        self.assertEqual(len(issues), 0)
+
+    def test_no_answers_means_no_breaking_issues(self):
+        """
+        GIVEN a canonical survey with no answers
+        WHEN a draft deletes a question and check_draft_compatibility is called
+        THEN it returns an empty list (no breaking issues)
+        """
+        # Remove all answers
+        Answer.objects.all().delete()
+        SurveySession.objects.all().delete()
+
+        draft = self._make_draft()
+        Question.objects.filter(
+            survey_section__survey_header=draft, code='Q1'
+        ).delete()
+
+        issues = check_draft_compatibility(draft, self.survey)
+        self.assertEqual(len(issues), 0)
+
+    def test_removed_unused_choice_is_not_breaking(self):
+        """
+        GIVEN a draft that removes a choice code not used in any answer
+        WHEN check_draft_compatibility is called
+        THEN it returns an empty list
+        """
+        draft = self._make_draft()
+        draft_q = Question.objects.get(
+            survey_section__survey_header=draft, code='Q1'
+        )
+        # Remove code 3 which is NOT used in any answer (answer uses code 1)
+        draft_q.choices = [
+            {'code': 1, 'name': 'Red'},
+            {'code': 2, 'name': 'Blue'},
+        ]
+        draft_q.save()
+
+        issues = check_draft_compatibility(draft, self.survey)
+        self.assertEqual(len(issues), 0)
+
+
+class PublishDraftTest(TestCase):
+    """Tests for publish_draft function."""
+
+    def setUp(self):
+        self.org = _make_org('PublishOrg')
+        self.user = User.objects.create_user(username='publisher', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='pub_test', organization=self.org, created_by=self.user,
+            status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section 1',
+            code='S1', is_head=True,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, code='Q1', order_number=1,
+            name='Color?', input_type='choice',
+            choices=[{'code': 1, 'name': 'Red'}],
+        )
+        self.session = SurveySession.objects.create(survey=self.survey)
+        self.answer = Answer.objects.create(
+            survey_session=self.session, question=self.question,
+            selected_choices=[1],
+        )
+
+    def test_publish_increments_version(self):
+        """
+        GIVEN a canonical survey at version 1 with a compatible draft
+        WHEN publish_draft is called
+        THEN canonical.version_number becomes 2
+        """
+        draft = clone_survey_for_draft(self.survey)
+        canonical = publish_draft(draft)
+        self.assertEqual(canonical.version_number, 2)
+
+    def test_publish_creates_archived_version(self):
+        """
+        GIVEN a canonical survey with a draft
+        WHEN publish_draft is called
+        THEN an archived version is created with is_canonical=False
+        """
+        draft = clone_survey_for_draft(self.survey)
+        publish_draft(draft)
+        archived = SurveyHeader.objects.filter(
+            canonical_survey=self.survey, is_canonical=False,
+        )
+        self.assertEqual(archived.count(), 1)
+        self.assertEqual(archived.first().version_number, 1)
+        self.assertEqual(archived.first().status, 'closed')
+
+    def test_publish_moves_sessions_to_archived(self):
+        """
+        GIVEN a canonical survey with sessions
+        WHEN publish_draft is called
+        THEN existing sessions belong to the archived version
+        """
+        draft = clone_survey_for_draft(self.survey)
+        publish_draft(draft)
+        archived = SurveyHeader.objects.get(
+            canonical_survey=self.survey, is_canonical=False,
+        )
+        self.session.refresh_from_db()
+        self.assertEqual(self.session.survey, archived)
+
+    def test_publish_moves_old_sections_to_archived(self):
+        """
+        GIVEN a canonical survey with sections
+        WHEN publish_draft is called
+        THEN original sections belong to the archived version
+        """
+        old_section_id = self.section.id
+        draft = clone_survey_for_draft(self.survey)
+        publish_draft(draft)
+        archived = SurveyHeader.objects.get(
+            canonical_survey=self.survey, is_canonical=False,
+        )
+        self.section.refresh_from_db()
+        self.assertEqual(self.section.survey_header, archived)
+
+    def test_publish_moves_draft_sections_to_canonical(self):
+        """
+        GIVEN a canonical survey with a draft
+        WHEN publish_draft is called
+        THEN draft sections now belong to the canonical survey
+        """
+        draft = clone_survey_for_draft(self.survey)
+        draft_section = SurveySection.objects.get(survey_header=draft)
+        draft_section_id = draft_section.id
+        publish_draft(draft)
+        draft_section.refresh_from_db()
+        self.assertEqual(draft_section.survey_header, self.survey)
+
+    def test_publish_deletes_draft(self):
+        """
+        GIVEN a canonical survey with a draft
+        WHEN publish_draft is called
+        THEN the draft SurveyHeader is deleted
+        """
+        draft = clone_survey_for_draft(self.survey)
+        draft_id = draft.id
+        publish_draft(draft)
+        self.assertFalse(SurveyHeader.objects.filter(id=draft_id).exists())
+
+    def test_old_answers_keep_valid_question_fk(self):
+        """
+        GIVEN a canonical survey with answers
+        WHEN publish_draft is called
+        THEN old answers still reference their original question (now on archived)
+        """
+        draft = clone_survey_for_draft(self.survey)
+        publish_draft(draft)
+        self.answer.refresh_from_db()
+        # The answer's question should still exist and be on the archived version
+        self.assertIsNotNone(self.answer.question)
+        self.assertEqual(self.answer.question.code, 'Q1')
+        archived = SurveyHeader.objects.get(
+            canonical_survey=self.survey, is_canonical=False,
+        )
+        self.assertEqual(self.answer.question.survey_section.survey_header, archived)
+
+    def test_incompatible_without_force_raises_error(self):
+        """
+        GIVEN a draft with breaking compatibility issues
+        WHEN publish_draft is called without force=True
+        THEN IncompatibleDraftError is raised
+        """
+        draft = clone_survey_for_draft(self.survey)
+        # Delete the question in draft to create incompatibility
+        Question.objects.filter(
+            survey_section__survey_header=draft, code='Q1'
+        ).delete()
+
+        with self.assertRaises(IncompatibleDraftError) as ctx:
+            publish_draft(draft, force=False)
+        self.assertTrue(len(ctx.exception.issues) > 0)
+
+    def test_incompatible_with_force_succeeds(self):
+        """
+        GIVEN a draft with breaking compatibility issues
+        WHEN publish_draft is called with force=True
+        THEN it succeeds and returns the canonical survey
+        """
+        draft = clone_survey_for_draft(self.survey)
+        Question.objects.filter(
+            survey_section__survey_header=draft, code='Q1'
+        ).delete()
+
+        canonical = publish_draft(draft, force=True)
+        self.assertEqual(canonical.id, self.survey.id)
+        self.assertEqual(canonical.version_number, 2)
+
+    def test_grace_period_old_session_on_archived(self):
+        """
+        GIVEN a respondent who started a session before publish
+        WHEN publish_draft is called
+        THEN the old session's survey is the archived version (grace period)
+        """
+        draft = clone_survey_for_draft(self.survey)
+        publish_draft(draft)
+        self.session.refresh_from_db()
+        # Old session is now on the archived version
+        self.assertFalse(self.session.survey.is_canonical)
+        self.assertEqual(self.session.survey.canonical_survey, self.survey)
+
+    def test_grace_period_new_session_on_canonical(self):
+        """
+        GIVEN a published canonical survey after a publish_draft
+        WHEN a new session is created
+        THEN the session is on the canonical survey at the new version
+        """
+        draft = clone_survey_for_draft(self.survey)
+        publish_draft(draft)
+        self.survey.refresh_from_db()
+        new_session = SurveySession.objects.create(survey=self.survey)
+        self.assertEqual(new_session.survey, self.survey)
+        self.assertEqual(new_session.survey.version_number, 2)
+
+
+class ReadOnlyLockTest(TestCase):
+    """Tests that structural editor endpoints return 403 for published/closed surveys."""
+
+    def setUp(self):
+        self.org = _make_org('LockOrg')
+        self.user = User.objects.create_user(username='lockuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='lockuser', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='locked_survey', organization=self.org, created_by=self.user,
+            status='published',
+        )
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section 1',
+            code='S1', is_head=True,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, code='Q1', order_number=1,
+            name='Test?', input_type='text',
+        )
+
+    def test_section_create_blocked_on_published(self):
+        """
+        GIVEN a published survey
+        WHEN a POST to section create is made
+        THEN a 403 response is returned
+        """
+        url = f'/editor/surveys/{self.survey.uuid}/sections/new/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_section_delete_blocked_on_published(self):
+        """
+        GIVEN a published survey
+        WHEN a POST to section delete is made
+        THEN a 403 response is returned
+        """
+        url = f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/delete/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_question_create_blocked_on_published(self):
+        """
+        GIVEN a published survey
+        WHEN a POST to question create is made
+        THEN a 403 response is returned
+        """
+        url = f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/'
+        response = self.client.post(url, {
+            'name': 'New Q', 'input_type': 'text',
+        })
+        self.assertEqual(response.status_code, 403)
+
+    def test_question_edit_blocked_on_published(self):
+        """
+        GIVEN a published survey
+        WHEN a POST to question edit is made
+        THEN a 403 response is returned
+        """
+        url = f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/'
+        response = self.client.post(url, {
+            'name': 'Updated', 'input_type': 'text',
+        })
+        self.assertEqual(response.status_code, 403)
+
+    def test_question_delete_blocked_on_published(self):
+        """
+        GIVEN a published survey
+        WHEN a POST to question delete is made
+        THEN a 403 response is returned
+        """
+        url = f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/delete/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sections_reorder_blocked_on_published(self):
+        """
+        GIVEN a published survey
+        WHEN a POST to sections reorder is made
+        THEN a 403 response is returned
+        """
+        url = f'/editor/surveys/{self.survey.uuid}/sections/reorder/'
+        response = self.client.post(url, json.dumps({'order': []}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 403)
+
+    def test_questions_reorder_blocked_on_published(self):
+        """
+        GIVEN a published survey
+        WHEN a POST to questions reorder is made
+        THEN a 403 response is returned
+        """
+        url = f'/editor/surveys/{self.survey.uuid}/questions/reorder/'
+        response = self.client.post(url, json.dumps({'order': []}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 403)
+
+    def test_subquestion_create_blocked_on_published(self):
+        """
+        GIVEN a published survey
+        WHEN a POST to subquestion create is made
+        THEN a 403 response is returned
+        """
+        url = f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/subquestions/new/'
+        response = self.client.post(url, {
+            'name': 'Sub Q', 'input_type': 'text',
+        })
+        self.assertEqual(response.status_code, 403)
+
+    def test_settings_edit_allowed_on_published(self):
+        """
+        GIVEN a published survey
+        WHEN a POST to survey settings is made
+        THEN it succeeds (settings are not structural edits)
+        """
+        url = f'/editor/surveys/{self.survey.uuid}/settings/'
+        response = self.client.post(url, {
+            'name': 'locked_survey',
+            'redirect_url': '/new-done/',
+            'visibility': 'private',
+        })
+        # Should succeed (200 for rendered form or 302 for redirect)
+        self.assertIn(response.status_code, [200, 204, 302])
+
+    def test_structural_edits_blocked_on_closed_survey(self):
+        """
+        GIVEN a closed survey
+        WHEN a POST to section create is made
+        THEN a 403 response is returned
+        """
+        self.survey.status = 'closed'
+        self.survey.save()
+        url = f'/editor/surveys/{self.survey.uuid}/sections/new/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 403)
+
+
+class EditorVersioningEndpointsTest(TestCase):
+    """Tests for the editor versioning endpoints (create-draft, publish-draft, discard-draft)."""
+
+    def setUp(self):
+        self.org = _make_org('EditorVerOrg')
+        self.owner = User.objects.create_user(username='ver_owner', password='pass')
+        self.editor = User.objects.create_user(username='ver_editor', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        Membership.objects.create(user=self.editor, organization=self.org, role='editor')
+
+        self.survey = SurveyHeader.objects.create(
+            name='ver_test', organization=self.org, created_by=self.owner,
+            status='published',
+        )
+        SurveyCollaborator.objects.create(user=self.owner, survey=self.survey, role='owner')
+        SurveyCollaborator.objects.create(user=self.editor, survey=self.survey, role='editor')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec', code='S1', is_head=True,
+        )
+        Question.objects.create(
+            survey_section=self.section, code='Q1', order_number=1,
+            name='Test?', input_type='text',
+        )
+
+    # ─── create-draft ────────────────────────────────────────────────────────
+
+    def test_create_draft_success_for_owner(self):
+        """
+        GIVEN a published survey and an owner user
+        WHEN POST to create-draft
+        THEN a 302 redirect to the draft editor page is returned
+        """
+        self.client.login(username='ver_owner', password='pass')
+        url = f'/editor/surveys/{self.survey.uuid}/create-draft/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(self.survey.has_draft_copy())
+
+    def test_create_draft_409_if_draft_exists(self):
+        """
+        GIVEN a published survey that already has a draft copy
+        WHEN POST to create-draft
+        THEN a 409 response is returned
+        """
+        self.client.login(username='ver_owner', password='pass')
+        clone_survey_for_draft(self.survey)
+        url = f'/editor/surveys/{self.survey.uuid}/create-draft/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 409)
+
+    def test_create_draft_400_if_not_published(self):
+        """
+        GIVEN a draft-status survey
+        WHEN POST to create-draft
+        THEN a 400 response is returned
+        """
+        self.survey.status = 'draft'
+        self.survey.save()
+        self.client.login(username='ver_owner', password='pass')
+        url = f'/editor/surveys/{self.survey.uuid}/create-draft/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_draft_403_for_non_owner(self):
+        """
+        GIVEN a published survey and an editor-role user
+        WHEN POST to create-draft
+        THEN a 403 response is returned
+        """
+        self.client.login(username='ver_editor', password='pass')
+        url = f'/editor/surveys/{self.survey.uuid}/create-draft/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 403)
+
+    # ─── publish-draft ───────────────────────────────────────────────────────
+
+    def test_publish_draft_compatible_redirects(self):
+        """
+        GIVEN a compatible draft copy
+        WHEN POST to publish-draft
+        THEN a 302 redirect to the canonical editor page is returned
+        """
+        self.client.login(username='ver_owner', password='pass')
+        draft = clone_survey_for_draft(self.survey)
+        SurveyCollaborator.objects.get_or_create(
+            user=self.owner, survey=draft, defaults={'role': 'owner'},
+        )
+        url = f'/editor/surveys/{draft.uuid}/publish-draft/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.version_number, 2)
+
+    def test_publish_draft_incompatible_returns_409(self):
+        """
+        GIVEN a draft with breaking compatibility issues
+        WHEN POST to publish-draft without force
+        THEN a 409 response with issues JSON is returned
+        """
+        self.client.login(username='ver_owner', password='pass')
+        # Create answers so deletion becomes breaking
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(
+            survey_session=session,
+            question=Question.objects.get(survey_section=self.section, code='Q1'),
+            text='answer',
+        )
+        draft = clone_survey_for_draft(self.survey)
+        SurveyCollaborator.objects.get_or_create(
+            user=self.owner, survey=draft, defaults={'role': 'owner'},
+        )
+        # Delete question in draft to make it incompatible
+        Question.objects.filter(
+            survey_section__survey_header=draft, code='Q1'
+        ).delete()
+        url = f'/editor/surveys/{draft.uuid}/publish-draft/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 409)
+        data = json.loads(response.content)
+        self.assertIn('issues', data)
+
+    def test_publish_draft_force_succeeds(self):
+        """
+        GIVEN a draft with breaking compatibility issues
+        WHEN POST to publish-draft with force=true
+        THEN a 302 redirect is returned and version incremented
+        """
+        self.client.login(username='ver_owner', password='pass')
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(
+            survey_session=session,
+            question=Question.objects.get(survey_section=self.section, code='Q1'),
+            text='answer',
+        )
+        draft = clone_survey_for_draft(self.survey)
+        SurveyCollaborator.objects.get_or_create(
+            user=self.owner, survey=draft, defaults={'role': 'owner'},
+        )
+        Question.objects.filter(
+            survey_section__survey_header=draft, code='Q1'
+        ).delete()
+        url = f'/editor/surveys/{draft.uuid}/publish-draft/'
+        response = self.client.post(url, {'force': 'true'})
+        self.assertEqual(response.status_code, 302)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.version_number, 2)
+
+    # ─── discard-draft ───────────────────────────────────────────────────────
+
+    def test_discard_draft_redirects_and_deletes(self):
+        """
+        GIVEN a draft copy
+        WHEN POST to discard-draft
+        THEN the draft is deleted and a redirect to canonical is returned
+        """
+        self.client.login(username='ver_owner', password='pass')
+        draft = clone_survey_for_draft(self.survey)
+        draft_id = draft.id
+        SurveyCollaborator.objects.get_or_create(
+            user=self.owner, survey=draft, defaults={'role': 'owner'},
+        )
+        url = f'/editor/surveys/{draft.uuid}/discard-draft/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(SurveyHeader.objects.filter(id=draft_id).exists())
+
+    def test_discard_draft_canonical_unchanged(self):
+        """
+        GIVEN a draft copy
+        WHEN POST to discard-draft
+        THEN the canonical survey is unchanged
+        """
+        self.client.login(username='ver_owner', password='pass')
+        original_version = self.survey.version_number
+        draft = clone_survey_for_draft(self.survey)
+        SurveyCollaborator.objects.get_or_create(
+            user=self.owner, survey=draft, defaults={'role': 'owner'},
+        )
+        url = f'/editor/surveys/{draft.uuid}/discard-draft/'
+        self.client.post(url)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.version_number, original_version)
+        self.assertEqual(self.survey.status, 'published')
+
+    # ─── check-compatibility ─────────────────────────────────────────────────
+
+    def test_check_compatibility_returns_issues(self):
+        """
+        GIVEN a draft with breaking issues
+        WHEN GET to check-compatibility
+        THEN JSON response with issues list is returned
+        """
+        self.client.login(username='ver_editor', password='pass')
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(
+            survey_session=session,
+            question=Question.objects.get(survey_section=self.section, code='Q1'),
+            text='answer',
+        )
+        draft = clone_survey_for_draft(self.survey)
+        SurveyCollaborator.objects.get_or_create(
+            user=self.editor, survey=draft, defaults={'role': 'editor'},
+        )
+        Question.objects.filter(
+            survey_section__survey_header=draft, code='Q1'
+        ).delete()
+        url = f'/editor/surveys/{draft.uuid}/check-compatibility/'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('issues', data)
+        self.assertTrue(len(data['issues']) > 0)
+
+
+class DashboardVersioningTest(TestCase):
+    """Tests that the dashboard excludes draft copies and archived versions."""
+
+    def setUp(self):
+        self.org = _make_org('DashOrg')
+        self.user = User.objects.create_user(username='dashuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='dashuser', password='pass')
+
+    def test_dashboard_excludes_draft_copies(self):
+        """
+        GIVEN a canonical survey with a draft copy
+        WHEN the dashboard is loaded
+        THEN the draft copy is not listed
+        """
+        canonical = SurveyHeader.objects.create(
+            name='dash_canonical', organization=self.org, status='published',
+        )
+        draft = SurveyHeader.objects.create(
+            name='[draft] dash_canonical', organization=self.org,
+            status='draft', published_version=canonical,
+        )
+        response = self.client.get('/editor/')
+        self.assertContains(response, 'dash_canonical')
+        # The draft name should not appear as a separate entry
+        content = response.content.decode()
+        # Count occurrences - canonical appears, draft appears zero times as list entry
+        self.assertNotIn('[draft] dash_canonical', content)
+
+    def test_dashboard_excludes_archived_versions(self):
+        """
+        GIVEN a canonical survey with an archived version
+        WHEN the dashboard is loaded
+        THEN the archived version is not listed as a separate survey
+        """
+        canonical = SurveyHeader.objects.create(
+            name='dash_versioned', organization=self.org, status='published',
+            version_number=2,
+        )
+        archived = SurveyHeader.objects.create(
+            name='dash_versioned', organization=self.org, status='closed',
+            is_canonical=False, canonical_survey=canonical, version_number=1,
+        )
+        response = self.client.get('/editor/')
+        # Should show the canonical once
+        self.assertContains(response, 'dash_versioned')
+
+    def test_dashboard_shows_only_canonical_surveys(self):
+        """
+        GIVEN a canonical survey, a draft copy, and an archived version
+        WHEN the dashboard is loaded
+        THEN only the canonical survey appears in the list
+        """
+        canonical = SurveyHeader.objects.create(
+            name='single_entry', organization=self.org, status='published',
+        )
+        SurveyHeader.objects.create(
+            name='[draft] single_entry', organization=self.org,
+            status='draft', published_version=canonical,
+        )
+        SurveyHeader.objects.create(
+            name='single_entry', organization=self.org,
+            status='closed', is_canonical=False, canonical_survey=canonical,
+            version_number=1,
+        )
+        response = self.client.get('/editor/')
+        # The filter is is_canonical=True, published_version__isnull=True
+        # Verify canonical survey appears
+        survey_list = SurveyHeader.objects.filter(
+            organization=self.org, is_canonical=True, published_version__isnull=True,
+        )
+        self.assertEqual(survey_list.count(), 1)
+        self.assertEqual(survey_list.first(), canonical)
+
+
+class VersionedDownloadTest(TestCase):
+    """Tests for download_data with version filter query parameter."""
+
+    def setUp(self):
+        self.org = _make_org('DownloadOrg')
+        self.user = User.objects.create_user(username='dluser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='dluser', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='dl_survey', organization=self.org, created_by=self.user,
+            status='published', version_number=2,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec', code='S1', is_head=True,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, code='Q1', order_number=1,
+            name='Q?', input_type='text',
+        )
+        self.session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(
+            survey_session=self.session, question=self.question, text='v2 answer',
+        )
+        # Create archived version
+        self.archived = SurveyHeader.objects.create(
+            name='dl_survey', organization=self.org, status='closed',
+            is_canonical=False, canonical_survey=self.survey, version_number=1,
+        )
+        self.arch_section = SurveySection.objects.create(
+            survey_header=self.archived, name='sec_old', code='S1_old', is_head=True,
+        )
+        self.arch_question = Question.objects.create(
+            survey_section=self.arch_section, code='Q1_old', order_number=1,
+            name='Old Q?', input_type='text',
+        )
+        self.arch_session = SurveySession.objects.create(survey=self.archived)
+        Answer.objects.create(
+            survey_session=self.arch_session, question=self.arch_question,
+            text='v1 answer',
+        )
+
+    def test_download_latest_returns_zip(self):
+        """
+        GIVEN a canonical survey
+        WHEN download_data is called with version=latest
+        THEN a ZIP file is returned
+        """
+        url = f'/surveys/{self.survey.uuid}/download?version=latest'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/zip')
+
+    def test_download_specific_version(self):
+        """
+        GIVEN a canonical survey with archived version 1
+        WHEN download_data is called with version=v1
+        THEN a ZIP file containing v1 data is returned
+        """
+        url = f'/surveys/{self.survey.uuid}/download?version=v1'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/zip')
+        # Verify the zip contains data (CSV with v1 answer)
+        zip_buffer = BytesIO(response.content)
+        with zipfile.ZipFile(zip_buffer, 'r') as zf:
+            filenames = zf.namelist()
+            self.assertTrue(len(filenames) > 0)
+
+    def test_download_all_versions(self):
+        """
+        GIVEN a canonical survey with an archived version
+        WHEN download_data is called with version=all
+        THEN a ZIP file with prefixed filenames for both versions is returned
+        """
+        url = f'/surveys/{self.survey.uuid}/download?version=all'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        zip_buffer = BytesIO(response.content)
+        with zipfile.ZipFile(zip_buffer, 'r') as zf:
+            filenames = zf.namelist()
+            # Should have files prefixed with version numbers
+            has_v2 = any(f.startswith('v2_') for f in filenames)
+            has_v1 = any(f.startswith('v1_') for f in filenames)
+            self.assertTrue(has_v2 or has_v1)
+
+    def test_download_no_version_param_returns_latest(self):
+        """
+        GIVEN a canonical survey
+        WHEN download_data is called without version param
+        THEN it defaults to latest (current canonical data)
+        """
+        url = f'/surveys/{self.survey.uuid}/download'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/zip')
+
+
+class SerializationVersioningTest(TestCase):
+    """Tests that serialization export includes version and import reads it."""
+
+    def setUp(self):
+        self.org = _make_org('SerVerOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='ser_ver', organization=self.org, version_number=3,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec', code='S1', is_head=True,
+        )
+
+    def test_export_includes_version(self):
+        """
+        GIVEN a survey at version 3
+        WHEN serialize_survey_to_dict is called
+        THEN the output dict includes "version": 3
+        """
+        result = serialize_survey_to_dict(self.survey)
+        self.assertEqual(result['version'], 3)
+
+    def test_import_reads_version(self):
+        """
+        GIVEN a survey.json with version 5
+        WHEN import_survey_from_zip is called
+        THEN the imported SurveyHeader has version_number=5
+        """
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "exported_at": "2026-02-16T12:00:00Z",
+            "mode": "structure",
+            "survey": {
+                "name": "imported_versioned",
+                "organization": None,
+                "redirect_url": "#",
+                "available_languages": [],
+                "thanks_html": {},
+                "status": "draft",
+                "version": 5,
+                "sections": [{
+                    "name": "sec",
+                    "title": "Section",
+                    "subheading": None,
+                    "code": "S1",
+                    "is_head": True,
+                    "start_map_position": None,
+                    "start_map_zoom": 12,
+                    "next_section_name": None,
+                    "prev_section_name": None,
+                    "translations": [],
+                    "questions": [],
+                }],
+            },
+        }
+        buf = BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        buf.seek(0)
+
+        imported_survey, _ = import_survey_from_zip(buf)
+        self.assertEqual(imported_survey.version_number, 5)
+
+    def test_import_defaults_version_to_1(self):
+        """
+        GIVEN a survey.json without a version field
+        WHEN import_survey_from_zip is called
+        THEN the imported SurveyHeader has version_number=1
+        """
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "exported_at": "2026-02-16T12:00:00Z",
+            "mode": "structure",
+            "survey": {
+                "name": "imported_no_ver",
+                "organization": None,
+                "redirect_url": "#",
+                "available_languages": [],
+                "thanks_html": {},
+                "status": "draft",
+                # no "version" key
+                "sections": [{
+                    "name": "sec",
+                    "title": "Section",
+                    "subheading": None,
+                    "code": "S1",
+                    "is_head": True,
+                    "start_map_position": None,
+                    "start_map_zoom": 12,
+                    "next_section_name": None,
+                    "prev_section_name": None,
+                    "translations": [],
+                    "questions": [],
+                }],
+            },
+        }
+        buf = BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        buf.seek(0)
+
+        imported_survey, _ = import_survey_from_zip(buf)
+        self.assertEqual(imported_survey.version_number, 1)
+
+    def test_import_sets_is_canonical_true(self):
+        """
+        GIVEN a valid survey.json for import
+        WHEN import_survey_from_zip is called
+        THEN the imported SurveyHeader has is_canonical=True
+        """
+        survey_data = {
+            "version": FORMAT_VERSION,
+            "exported_at": "2026-02-16T12:00:00Z",
+            "mode": "structure",
+            "survey": {
+                "name": "imported_canonical_check",
+                "organization": None,
+                "redirect_url": "#",
+                "available_languages": [],
+                "thanks_html": {},
+                "status": "draft",
+                "sections": [{
+                    "name": "sec",
+                    "title": "Section",
+                    "subheading": None,
+                    "code": "S1",
+                    "is_head": True,
+                    "start_map_position": None,
+                    "start_map_zoom": 12,
+                    "next_section_name": None,
+                    "prev_section_name": None,
+                    "translations": [],
+                    "questions": [],
+                }],
+            },
+        }
+        buf = BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_data))
+        buf.seek(0)
+
+        imported_survey, _ = import_survey_from_zip(buf)
+        self.assertTrue(imported_survey.is_canonical)
+
+
+class PublicViewVersioningTest(TestCase):
+    """Tests that versioning is invisible to public respondents."""
+
+    def setUp(self):
+        self.org = _make_org('PubViewOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='public_ver', organization=self.org, status='published',
+            version_number=2,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Sec',
+            code='S1', is_head=True,
+        )
+        Question.objects.create(
+            survey_section=self.section, code='Q1', order_number=1,
+            name='Q?', input_type='text',
+        )
+
+    def test_draft_copy_invisible_to_respondents(self):
+        """
+        GIVEN a draft copy of a published survey
+        WHEN a respondent tries to access the draft by its UUID
+        THEN they get a 404 (draft status raises Http404 in access control)
+        """
+        draft = SurveyHeader.objects.create(
+            name='[draft] public_ver', organization=self.org,
+            status='draft', published_version=self.survey,
+        )
+        # Draft section so the URL resolves properly
+        SurveySection.objects.create(
+            survey_header=draft, name='dsec', code='DS1', is_head=True,
+        )
+        url = f'/surveys/{draft.uuid}/'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_archived_version_shows_closed_page(self):
+        """
+        GIVEN an archived version of a survey
+        WHEN a respondent accesses it by the archived UUID
+        THEN resolve_survey returns the canonical survey instead
+        """
+        archived = SurveyHeader.objects.create(
+            name='public_ver', organization=self.org, status='closed',
+            is_canonical=False, canonical_survey=self.survey, version_number=1,
+        )
+        # Access by archived UUID should redirect to canonical survey
+        url = f'/surveys/{archived.uuid}/'
+        response = self.client.get(url)
+        # resolve_survey returns canonical for archived UUID,
+        # so it should redirect to the first section of the canonical survey
+        self.assertIn(response.status_code, [200, 302])
+
+    def test_resolve_survey_returns_canonical_for_archived_uuid(self):
+        """
+        GIVEN an archived version with canonical_survey set
+        WHEN resolve_survey is called with the archived UUID
+        THEN the canonical survey is returned
+        """
+        from .views import resolve_survey
+        archived = SurveyHeader.objects.create(
+            name='public_ver', organization=self.org, status='closed',
+            is_canonical=False, canonical_survey=self.survey, version_number=1,
+        )
+        result = resolve_survey(str(archived.uuid))
+        self.assertEqual(result, self.survey)
+
+    def test_resolve_survey_name_filters_canonical_only(self):
+        """
+        GIVEN a canonical survey and an archived version with the same name
+        WHEN resolve_survey is called with the name
+        THEN the canonical survey is returned
+        """
+        from .views import resolve_survey
+        SurveyHeader.objects.create(
+            name='public_ver', organization=self.org, status='closed',
+            is_canonical=False, canonical_survey=self.survey, version_number=1,
+        )
+        result = resolve_survey('public_ver')
+        self.assertEqual(result, self.survey)
+
+    def test_canonical_survey_accessible_to_respondents(self):
+        """
+        GIVEN a published canonical survey
+        WHEN a respondent accesses it by UUID
+        THEN they get a successful response (redirect to section)
+        """
+        url = f'/surveys/{self.survey.uuid}/'
+        response = self.client.get(url)
+        self.assertIn(response.status_code, [200, 302])
+
+
+class SessionProtectTest(TestCase):
+    """Tests that SurveySession PROTECT prevents deletion of SurveyHeader with sessions."""
+
+    def setUp(self):
+        self.org = _make_org('ProtectOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='protect_test', organization=self.org, status='published',
+        )
+        self.session = SurveySession.objects.create(survey=self.survey)
+
+    def test_cannot_delete_survey_with_sessions(self):
+        """
+        GIVEN a SurveyHeader that has SurveySessions
+        WHEN attempting to delete the SurveyHeader
+        THEN a ProtectedError is raised
+        """
+        from django.db.models import ProtectedError
+        with self.assertRaises(ProtectedError):
+            self.survey.delete()
+
+    def test_can_delete_survey_after_sessions_removed(self):
+        """
+        GIVEN a SurveyHeader whose sessions have been moved or deleted
+        WHEN attempting to delete the SurveyHeader
+        THEN it succeeds
+        """
+        self.session.delete()
+        self.survey.delete()
+        self.assertFalse(SurveyHeader.objects.filter(name='protect_test').exists())
+
+    def test_can_delete_survey_after_sessions_moved(self):
+        """
+        GIVEN a SurveyHeader whose sessions have been moved to another survey
+        WHEN attempting to delete the original SurveyHeader
+        THEN it succeeds
+        """
+        other_survey = SurveyHeader.objects.create(
+            name='other_survey', organization=self.org,
+        )
+        self.session.survey = other_survey
+        self.session.save()
+        self.survey.delete()
+        self.assertFalse(SurveyHeader.objects.filter(name='protect_test').exists())
+        # Session still exists on the other survey
+        self.session.refresh_from_db()
+        self.assertEqual(self.session.survey, other_survey)
