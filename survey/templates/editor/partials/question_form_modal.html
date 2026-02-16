@@ -68,10 +68,14 @@
         <!-- Geometries editor for pressure questions -->
         <div class="geometries-editor" id="geometries-editor" style="display:none;">
             <label style="font-weight:600;">Predefined Shapes</label>
-            <div id="geometries-map" style="height:250px;border:1px solid #ddd;border-radius:6px;margin-bottom:8px;"></div>
+            <button type="button" class="btn btn-outline-primary btn-sm" id="open-geometries-map-btn" onclick="openGeometriesModal()" style="margin-bottom:8px;">
+                <i class="fas fa-map"></i> Open Map Editor
+            </button>
             <div id="geometries-list"></div>
             <input type="hidden" name="geometries_json" id="geometries-json-input">
         </div>
+
+        <!-- Geometries map modal is appended to body via JS to avoid nested modal issues -->
 
         {% if survey.available_languages %}
         <div class="translations-section">
@@ -137,7 +141,6 @@
         // Toggle geometries editor for pressure
         if (inputTypeSelect && inputTypeSelect.value === 'pressure') {
             geometriesEditor.style.display = 'block';
-            initGeometriesMap();
         } else {
             geometriesEditor.style.display = 'none';
         }
@@ -352,11 +355,62 @@
     var geomMap = null;
     var geomDrawLayers = null;
     var geomShapes = [];  // Array of {id, geometry, label, color, icon_class, layer}
+    var geomMapInitialized = false;
+
+    // Load existing geometries into geomShapes (without map layers yet)
+    {% if question and question.geometries %}
+    (function() {
+        var existingGeoms = {{ question.geometries|safe }};
+        existingGeoms.forEach(function(shape) {
+            geomShapes.push({
+                id: shape.id,
+                geometry: shape.geometry,
+                label: shape.label || '',
+                color: shape.color || '#4f46e5',
+                icon_class: shape.icon_class || 'fas fa-map-marker-alt',
+                layer: null,
+            });
+        });
+    })();
+    {% endif %}
+
+    // Create fullscreen map modal (appended to body to avoid nested modal issues)
+    var geomModalEl = null;
+    (function() {
+        // Remove any previous instance
+        var old = document.getElementById('geometriesMapModal');
+        if (old) old.remove();
+
+        var div = document.createElement('div');
+        div.innerHTML =
+            '<div class="modal fade" id="geometriesMapModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false" style="z-index:1060;">' +
+                '<div class="modal-dialog modal-dialog-centered" role="document" style="max-width:95vw;width:95vw;margin:1rem auto;">' +
+                    '<div class="modal-content" style="height:90vh;">' +
+                        '<div class="modal-header py-2">' +
+                            '<h6 class="modal-title"><i class="fas fa-draw-polygon"></i> Draw Predefined Shapes</h6>' +
+                            '<button type="button" class="close" onclick="closeGeometriesModal()"><span>&times;</span></button>' +
+                        '</div>' +
+                        '<div class="modal-body p-0" style="flex:1;overflow:hidden;">' +
+                            '<div id="geometries-map" style="width:100%;height:100%;"></div>' +
+                        '</div>' +
+                        '<div class="modal-footer py-2">' +
+                            '<span class="text-muted mr-auto" style="font-size:0.8rem;" id="geom-shape-count"></span>' +
+                            '<button type="button" class="btn btn-primary btn-sm" onclick="closeGeometriesModal()">' +
+                                '<i class="fas fa-check"></i> Done' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        geomModalEl = div.firstChild;
+        document.body.appendChild(geomModalEl);
+    })();
 
     function initGeometriesMap() {
-        if (geomMap) return;
+        if (geomMapInitialized) return;
         var mapDiv = document.getElementById('geometries-map');
         if (!mapDiv) return;
+
         geomMap = L.map(mapDiv).setView([59.945, 30.317], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OSM',
@@ -376,7 +430,7 @@
                 circle: false,
                 rectangle: false,
             },
-            edit: { featureGroup: geomDrawLayers, remove: false, edit: false },
+            edit: { featureGroup: geomDrawLayers, remove: true, edit: true },
         });
         geomMap.addControl(drawControl);
 
@@ -394,13 +448,23 @@
             };
             geomShapes.push(shape);
             geomDrawLayers.addLayer(layer);
-            renderGeomList();
+            updateShapeCount();
         });
 
-        // Load existing geometries
-        {% if question and question.geometries %}
-        var existingGeoms = {{ question.geometries|safe }};
-        existingGeoms.forEach(function(shape) {
+        geomMap.on('draw:deleted', function(e) {
+            e.layers.eachLayer(function(layer) {
+                for (var i = geomShapes.length - 1; i >= 0; i--) {
+                    if (geomShapes[i].layer === layer) {
+                        geomShapes.splice(i, 1);
+                        break;
+                    }
+                }
+            });
+            updateShapeCount();
+        });
+
+        // Create map layers for existing shapes
+        geomShapes.forEach(function(shape) {
             var geom = shape.geometry;
             var layer;
             if (geom.type === 'Point') {
@@ -412,25 +476,43 @@
                 layer = L.polygon(geom.coordinates[0].map(function(c) { return [c[1], c[0]]; }));
             }
             if (layer) {
+                shape.layer = layer;
                 geomDrawLayers.addLayer(layer);
-                geomShapes.push({
-                    id: shape.id,
-                    geometry: shape.geometry,
-                    label: shape.label || '',
-                    color: shape.color || '#4f46e5',
-                    icon_class: shape.icon_class || 'fas fa-map-marker-alt',
-                    layer: layer,
-                });
             }
         });
         if (geomShapes.length > 0) {
             geomMap.fitBounds(geomDrawLayers.getBounds().pad(0.1));
         }
-        renderGeomList();
-        {% endif %}
 
-        setTimeout(function() { geomMap.invalidateSize(); }, 200);
+        geomMapInitialized = true;
+        updateShapeCount();
     }
+
+    function updateShapeCount() {
+        var el = document.getElementById('geom-shape-count');
+        if (el) el.textContent = geomShapes.length + ' shape(s)';
+        // Update button badge
+        var btn = document.getElementById('open-geometries-map-btn');
+        if (btn) btn.innerHTML = '<i class="fas fa-map"></i> Open Map Editor (' + geomShapes.length + ')';
+    }
+
+    window.openGeometriesModal = function() {
+        $('#geometriesMapModal').modal('show');
+        // Init map after modal is shown (needs visible container for correct sizing)
+        $('#geometriesMapModal').one('shown.bs.modal', function() {
+            initGeometriesMap();
+            geomMap.invalidateSize();
+        });
+    };
+
+    window.closeGeometriesModal = function() {
+        // Sync layer geometries back (in case user dragged/edited shapes)
+        geomShapes.forEach(function(s) {
+            if (s.layer) s.geometry = s.layer.toGeoJSON().geometry;
+        });
+        $('#geometriesMapModal').modal('hide');
+        renderGeomList();
+    };
 
     function renderGeomList() {
         var list = document.getElementById('geometries-list');
@@ -440,7 +522,7 @@
             row.className = 'geometry-row';
             row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;';
             row.innerHTML =
-                '<span style="font-size:0.8rem;color:#888;">' + shape.geometry.type + '</span>' +
+                '<span style="font-size:0.8rem;color:#888;min-width:60px;">' + shape.geometry.type + '</span>' +
                 '<input type="text" class="form-control form-control-sm" placeholder="Label" value="' + (shape.label || '').replace(/"/g, '&quot;') + '" data-idx="' + idx + '" data-field="label" style="flex:1;">' +
                 '<input type="color" value="' + (shape.color || '#4f46e5') + '" data-idx="' + idx + '" data-field="color" style="width:36px;height:30px;border:none;padding:0;">' +
                 '<input type="text" class="form-control form-control-sm" placeholder="Icon class" value="' + (shape.icon_class || '').replace(/"/g, '&quot;') + '" data-idx="' + idx + '" data-field="icon_class" style="width:140px;">' +
@@ -457,11 +539,20 @@
             });
             row.querySelector('button').addEventListener('click', function() {
                 var i = parseInt(this.getAttribute('data-idx'));
-                geomDrawLayers.removeLayer(geomShapes[i].layer);
+                if (geomDrawLayers && geomShapes[i].layer) {
+                    geomDrawLayers.removeLayer(geomShapes[i].layer);
+                }
                 geomShapes.splice(i, 1);
                 renderGeomList();
+                updateShapeCount();
             });
         });
+    }
+
+    // Render initial list if editing existing question
+    if (geomShapes.length > 0) {
+        renderGeomList();
+        updateShapeCount();
     }
 
     window.serializeGeometries = function() {
@@ -476,6 +567,19 @@
         });
         document.getElementById('geometries-json-input').value = output.length > 0 ? JSON.stringify(output) : '';
     };
+
+    // Clean up geometries map modal when question modal closes
+    $('#questionModal').one('hidden.bs.modal', function() {
+        if (geomMap) {
+            geomMap.remove();
+            geomMap = null;
+        }
+        if (geomModalEl) {
+            geomModalEl.remove();
+            geomModalEl = null;
+        }
+        geomMapInitialized = false;
+    });
 
     {% if question %}
     window.applyQuestion = function() {
