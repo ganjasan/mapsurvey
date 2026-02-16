@@ -27,6 +27,7 @@ import json
 from zipfile import ZipFile
 import pandas as pd
 
+from .access_control import check_survey_access
 from .serialization import (
     export_survey_to_zip,
     import_survey_from_zip,
@@ -101,18 +102,23 @@ def resolve_survey(survey_slug):
 
     Lookup order:
     1. Try parsing as UUID → lookup by SurveyHeader.uuid
-    2. Fall back to name → lookup by SurveyHeader.name
+       - If it hits an archived version, return the canonical survey instead
+    2. Fall back to name → lookup by SurveyHeader.name (canonical only)
     3. If name matches multiple surveys → raise Http404
 
     Returns SurveyHeader or raises Http404.
     """
     try:
         parsed_uuid = uuid_mod.UUID(str(survey_slug))
-        return get_object_or_404(SurveyHeader, uuid=parsed_uuid)
+        survey = get_object_or_404(SurveyHeader, uuid=parsed_uuid)
+        # If this is an archived version, return the canonical instead
+        if not survey.is_canonical and survey.canonical_survey_id:
+            return survey.canonical_survey
+        return survey
     except (ValueError, AttributeError):
         pass
 
-    surveys = SurveyHeader.objects.filter(name=survey_slug)
+    surveys = SurveyHeader.objects.filter(name=survey_slug, is_canonical=True)
     count = surveys.count()
     if count == 1:
         return surveys.first()
@@ -121,7 +127,26 @@ def resolve_survey(survey_slug):
     raise Http404
 
 def index(request):
-	return render(request, 'landing.html')
+	surveys = (
+		SurveyHeader.objects
+		.filter(visibility__in=['demo', 'public'], is_canonical=True, published_version__isnull=True)
+		.exclude(status='draft')
+		.select_related('organization')
+		.annotate(session_count=Count('surveysession'))
+		.order_by(
+			models.Case(
+				models.When(visibility='demo', then=0),
+				models.When(is_archived=False, then=1),
+				default=2,
+				output_field=models.IntegerField(),
+			)
+		)
+	)
+	stories = Story.objects.filter(is_published=True).order_by('-published_date')
+	return render(request, 'landing.html', {
+		'surveys': surveys,
+		'stories': stories,
+	})
 
 @org_permission_required('viewer')
 def editor(request):
@@ -146,9 +171,17 @@ def editor(request):
 		# Viewer sees all surveys (read-only)
 		survey_list = SurveyHeader.objects.filter(organization=org)
 
+	# Exclude draft copies and archived versions from dashboard
+	survey_list = survey_list.filter(is_canonical=True, published_version__isnull=True)
+
+	show_archived = request.GET.get('show_archived') == '1'
+	if not show_archived:
+		survey_list = survey_list.exclude(status='archived')
+
 	context = {
 		"survey_headers": survey_list,
 		"org_role": org_role,
+		"show_archived": show_archived,
 	}
 	return render(request, "editor.html", context)
 
@@ -199,6 +232,10 @@ def survey_language_select(request, survey_slug):
 	"""Display language selection screen for multilingual surveys."""
 	survey = resolve_survey(survey_slug)
 
+	access_response = check_survey_access(request, survey)
+	if access_response is not None:
+		return access_response
+
 	if not survey.is_multilingual():
 		# Single-language survey - redirect directly to first section
 		return redirect('survey', survey_slug=str(survey.uuid))
@@ -248,6 +285,10 @@ def survey_header(request, survey_slug):
 
 	survey = resolve_survey(survey_slug)
 
+	access_response = check_survey_access(request, survey)
+	if access_response is not None:
+		return access_response
+
 	# Redirect to language selection for multilingual surveys
 	if survey.is_multilingual():
 		return redirect('survey_language_select', survey_slug=str(survey.uuid))
@@ -267,6 +308,10 @@ def survey_section(request, survey_slug, section_name):
 
 	survey = resolve_survey(survey_slug)
 
+	access_response = check_survey_access(request, survey)
+	if access_response is not None:
+		return access_response
+
 	# For multilingual surveys, redirect to language selection if no language chosen
 	if survey.is_multilingual() and not request.session.get('survey_language'):
 		return redirect('survey_language_select', survey_slug=str(survey.uuid))
@@ -280,7 +325,20 @@ def survey_section(request, survey_slug, section_name):
 		survey_session.save()
 		request.session['survey_session_id'] = survey_session.id
 
-	section = SurveySection.objects.get(Q(survey_header=survey) & Q(name=section_name))
+	# Version routing: use the session's survey for section lookup
+	# (may be an archived version if respondent started before a new version was published)
+	session_survey = survey
+	if request.session.get('survey_session_id'):
+		try:
+			existing_session = SurveySession.objects.get(pk=request.session['survey_session_id'])
+			session_survey = existing_session.survey
+		except SurveySession.DoesNotExist:
+			# Session was deleted — create a new one against canonical
+			survey_session = SurveySession(survey=survey, language=selected_language)
+			survey_session.save()
+			request.session['survey_session_id'] = survey_session.id
+
+	section = SurveySection.objects.get(Q(survey_header=session_survey) & Q(name=section_name))
 
 	# Compute progress: current section index (1-based) and total sections
 	section_current = 1
@@ -479,15 +537,66 @@ def survey_section(request, survey_slug, section_name):
 		'section_total': section_total,
 	})
 
+def _get_version_surveys(survey, version_param):
+	"""Resolve which survey(s) to export based on version parameter.
+
+	Returns list of (survey, prefix) tuples. prefix is empty string for single-version export.
+	"""
+	if not version_param or version_param == 'latest':
+		return [(survey, '')]
+
+	if version_param == 'all':
+		# Current canonical + all archived versions
+		result = [(survey, f'v{survey.version_number}_')]
+		for archived in survey.get_version_history():
+			result.append((archived, f'v{archived.version_number}_'))
+		return result
+
+	# Parse "vN" format
+	if version_param.startswith('v') and version_param[1:].isdigit():
+		version_num = int(version_param[1:])
+		if version_num == survey.version_number:
+			return [(survey, '')]
+		archived = SurveyHeader.objects.filter(
+			canonical_survey=survey, version_number=version_num, is_canonical=False
+		).first()
+		if archived:
+			return [(archived, '')]
+
+	return [(survey, '')]
+
+
 @login_required
 def download_data(request, survey_slug):
 	in_memory = BytesIO()
 	zip = ZipFile(in_memory, "a")
 
 	survey = resolve_survey(survey_slug)
-	
+
+	version_param = request.GET.get('version')
+	version_surveys = _get_version_surveys(survey, version_param)
+
+	for target_survey, prefix in version_surveys:
+		_export_survey_data(zip, target_survey, prefix)
+
+	#Windows bug fix
+	for file in zip.filelist:
+		file.create_system = 0
+
+	zip.close()
+	response = HttpResponse(content_type="application/zip")
+	response["Content-Disposition"] = "attachment; filename={filename}.zip".format(filename=survey.name)
+
+	in_memory.seek(0)
+	response.write(in_memory.read())
+
+	return response
+
+
+def _export_survey_data(zip, survey, prefix=''):
+	"""Export a single survey's data into the zip with optional filename prefix."""
 	#обработка гео вопросов
-	geo_questions = survey.geo_questions()	
+	geo_questions = survey.geo_questions()
 
 	for question in geo_questions:
 		
@@ -568,7 +677,7 @@ def download_data(request, survey_slug):
 		#geojson_str = serialize('geojson', answers, geometry_field=question.input_type)
 		
 		#cформировать файлы
-		zip.writestr(question.name + '.geojson', geojson_str)
+		zip.writestr(prefix + question.name + '.geojson', geojson_str)
 
 	#обработка обычных вопросов
 
@@ -580,6 +689,8 @@ def download_data(request, survey_slug):
 		answers = session.answers()
 		result = ""
 		for answer in answers:
+			if not answer.question:
+				continue
 			input_type = answer.question.input_type
 
 			if (input_type == "text" or input_type == "text_line"):
@@ -600,21 +711,7 @@ def download_data(request, survey_slug):
 		properties["datetime"] = session.start_datetime
 		properties_list.append(properties)
 
-	zip.writestr(survey.name + '.csv', pd.DataFrame(properties_list).to_csv())
-
-
-	#Windows bug fix
-	for file in zip.filelist:
-		file.create_system = 0
-
-	zip.close()
-	response = HttpResponse(content_type="application/zip")
-	response["Content-Disposition"] = "attachment; filename={filename}.zip".format(filename=survey.name)
-
-	in_memory.seek(0)
-	response.write(in_memory.read())
-
-	return response
+	zip.writestr(prefix + survey.name + '.csv', pd.DataFrame(properties_list).to_csv())
 
 
 @survey_permission_required('viewer')
@@ -706,14 +803,49 @@ def delete_survey(request, survey_uuid):
 
 	survey = request.survey
 	name = survey.name
+	# Delete sessions first (PROTECT FK prevents cascade deletion)
+	SurveySession.objects.filter(survey=survey).delete()
+	# Also delete sessions on archived versions
+	for archived in SurveyHeader.objects.filter(canonical_survey=survey, is_canonical=False):
+		SurveySession.objects.filter(survey=archived).delete()
+		archived.delete()
 	survey.delete()
 	messages.success(request, f"Survey '{name}' deleted successfully")
 
 	return redirect('editor')
 
 
+def survey_password_gate(request, survey_slug):
+	survey = resolve_survey(survey_slug)
+	error = None
+
+	if request.method == 'POST':
+		password = request.POST.get('password', '')
+		if survey.check_password(password):
+			request.session[f'survey_password_{survey.id}'] = True
+			# Also grant test access if in testing state
+			if survey.status == 'testing':
+				request.session[f'test_access_{survey.id}'] = True
+			return redirect('survey', survey_slug=str(survey.uuid))
+		else:
+			error = 'Incorrect password'
+
+	return render(request, 'survey_password.html', {
+		'survey': survey,
+		'error': error,
+	})
+
+
 def survey_thanks(request, survey_slug):
 	survey = resolve_survey(survey_slug)
+
+	# Allow access if user just completed the survey (has active session)
+	has_active_session = 'survey_session_id' in request.session
+	if not has_active_session:
+		access_response = check_survey_access(request, survey)
+		if access_response:
+			return access_response
+
 	lang = request.session.pop('survey_language', None)
 	request.session.pop('survey_session_id', None)
 
