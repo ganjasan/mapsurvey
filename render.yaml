@@ -5,6 +5,7 @@ databases:
     user: mapsurvey
     postgresMajorVersion: 16
     ipAllowList: []
+    previewPlan: basic-256mb
 
 services:
   - type: web
@@ -13,6 +14,8 @@ services:
     plan: starter
     dockerfilePath: ./Dockerfile
     dockerContext: .
+    previews:
+      generation: automatic
     envVars:
       - key: DATABASE_URL
         fromDatabase:
