@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import translation
 from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator
@@ -173,6 +173,14 @@ def editor(request):
 
 	# Exclude draft copies and archived versions from dashboard
 	survey_list = survey_list.filter(is_canonical=True, published_version__isnull=True)
+
+	# Prefetch archived versions for version-aware download dropdown
+	archived_versions_prefetch = Prefetch(
+		'versions',
+		queryset=SurveyHeader.objects.filter(is_canonical=False).order_by('-version_number'),
+		to_attr='prefetched_archived_versions',
+	)
+	survey_list = survey_list.prefetch_related(archived_versions_prefetch)
 
 	show_archived = request.GET.get('show_archived') == '1'
 	if not show_archived:

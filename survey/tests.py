@@ -8231,6 +8231,78 @@ class DashboardVersioningTest(TestCase):
         self.assertEqual(survey_list.first(), canonical)
 
 
+class DashboardVersionDownloadUITest(TestCase):
+    """Tests for version-aware download dropdown in the editor dashboard."""
+
+    def setUp(self):
+        self.org = _make_org('DlUIOrg')
+        self.user = User.objects.create_user(username='dluiuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='dluiuser', password='pass')
+
+    def test_single_version_shows_plain_download_link(self):
+        """
+        GIVEN a survey with version_number=1 and no archived versions
+        WHEN the dashboard is loaded
+        THEN a plain "Download Data" link is shown (no dropdown)
+        """
+        survey = SurveyHeader.objects.create(
+            name='single_v', organization=self.org, status='published',
+            version_number=1,
+        )
+        response = self.client.get('/editor/')
+        content = response.content.decode()
+        self.assertIn(f'/surveys/{survey.uuid}/download', content)
+        self.assertNotIn('?version=all', content)
+
+    def test_multi_version_shows_download_dropdown(self):
+        """
+        GIVEN a survey with version_number=3 and two archived versions
+        WHEN the dashboard is loaded
+        THEN a dropdown is shown with "All Versions", "Current (v3)", "v2", and "v1"
+        """
+        canonical = SurveyHeader.objects.create(
+            name='multi_v', organization=self.org, status='published',
+            version_number=3,
+        )
+        SurveyHeader.objects.create(
+            name='multi_v', organization=self.org, status='closed',
+            is_canonical=False, canonical_survey=canonical, version_number=2,
+        )
+        SurveyHeader.objects.create(
+            name='multi_v', organization=self.org, status='closed',
+            is_canonical=False, canonical_survey=canonical, version_number=1,
+        )
+        response = self.client.get('/editor/')
+        content = response.content.decode()
+        self.assertIn('?version=all', content)
+        self.assertIn('?version=latest', content)
+        self.assertIn('Current (v3)', content)
+        self.assertIn('?version=v2', content)
+        self.assertIn('?version=v1', content)
+
+    def test_prefetched_versions_avoid_n_plus_one(self):
+        """
+        GIVEN multiple surveys with archived versions
+        WHEN the dashboard is loaded
+        THEN archived versions are prefetched (available as prefetched_archived_versions)
+        """
+        for i in range(3):
+            canonical = SurveyHeader.objects.create(
+                name=f'prefetch_test_{i}', organization=self.org,
+                status='published', version_number=2,
+            )
+            SurveyHeader.objects.create(
+                name=f'prefetch_test_{i}', organization=self.org,
+                status='closed', is_canonical=False,
+                canonical_survey=canonical, version_number=1,
+            )
+        response = self.client.get('/editor/')
+        surveys = response.context['survey_headers']
+        for s in surveys:
+            self.assertTrue(hasattr(s, 'prefetched_archived_versions'))
+
+
 class VersionedDownloadTest(TestCase):
     """Tests for download_data with version filter query parameter."""
 

@@ -52,7 +52,23 @@
 					<td><span class="badge badge-{{ survey.status|status_badge_class }}">{{ survey.get_status_display }}</span></td>
 					<td>
 						<a href="{% url 'editor_survey_detail' survey.uuid %}">{% if org_role == 'viewer' %}View{% else %}Edit{% endif %}</a> |
-						<a href="/surveys/{{survey.uuid}}/download">Download Data</a> |
+						{% if survey.prefetched_archived_versions %}
+						<div class="dropdown d-inline">
+							<a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								Download Data
+							</a>
+							<ul class="dropdown-menu">
+								<li><a class="dropdown-item" href="/surveys/{{survey.uuid}}/download?version=all">All Versions</a></li>
+								<li><a class="dropdown-item" href="/surveys/{{survey.uuid}}/download?version=latest">Current (v{{ survey.version_number }})</a></li>
+								{% for archived in survey.prefetched_archived_versions %}
+								<li><a class="dropdown-item" href="/surveys/{{survey.uuid}}/download?version=v{{ archived.version_number }}">v{{ archived.version_number }}</a></li>
+								{% endfor %}
+							</ul>
+						</div>
+						{% else %}
+						<a href="/surveys/{{survey.uuid}}/download">Download Data</a>
+						{% endif %}
+						|
 						<div class="dropdown d-inline">
 							<a class="dropdown-toggle" href="#" role="button" id="exportDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 								Export
