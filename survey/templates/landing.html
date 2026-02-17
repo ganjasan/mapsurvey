@@ -1,124 +1,438 @@
 {% extends "base_landing.html" %}
+{% load i18n %}
 
 {% block content %}
 
 {# ===== Hero ===== #}
 <section class="hero" id="hero">
-    <div class="landing-inner">
-        <h1 class="hero__headline">Geo-spatial surveys for&nbsp;cities and&nbsp;communities</h1>
-        <p class="hero__description">
-            We design and run geo-surveys for architecture, urban&nbsp;planning, and urbanism firms.
-            Collect spatial data, engage communities, and get actionable maps&nbsp;and&nbsp;analytics.
-        </p>
-        <div class="hero__cta-group">
-            <a href="#contact" class="btn-primary-landing">Order a Survey</a>
-            <a href="#surveys" class="btn-secondary-landing">Browse Surveys</a>
-        </div>
-    </div>
-</section>
-
-{# ===== How It Works ===== #}
-<section class="how-it-works" id="how-it-works">
-    <div class="landing-inner">
-        <p class="section-title">How it works</p>
-        <div class="how-it-works__grid">
-            <div class="how-it-works__step reveal">
-                <div class="how-it-works__number">01</div>
-                <div class="how-it-works__step-title">Describe your task</div>
-                <p class="how-it-works__step-text">
-                    Tell us about your project, target area, and what data you need.
-                    We'll figure out the best survey structure.
-                </p>
-            </div>
-            <div class="how-it-works__step reveal reveal-delay-1">
-                <div class="how-it-works__number">02</div>
-                <div class="how-it-works__step-title">We create a geo-survey</div>
-                <p class="how-it-works__step-text">
-                    We design questions, set up map interactions, and deploy the survey — ready for respondents.
-                </p>
-            </div>
-            <div class="how-it-works__step reveal reveal-delay-2">
-                <div class="how-it-works__number">03</div>
-                <div class="how-it-works__step-title">You get data and maps</div>
-                <p class="how-it-works__step-text">
-                    Receive GeoJSON, CSV, and interactive maps with all collected responses. Ready for analysis and reports.
-                </p>
-            </div>
-        </div>
-    </div>
-</section>
-
-{# ===== Survey Cards ===== #}
-<section class="surveys-section" id="surveys">
-    <div class="landing-inner">
-        <p class="section-title">Surveys</p>
-        <h2 class="section-heading">Explore our surveys</h2>
-        {% if surveys %}
-        <div class="survey-cards">
-            {% for survey in surveys %}
-            <a href="{% if survey.is_archived %}/surveys/{{ survey.uuid }}/download{% else %}/surveys/{{ survey.uuid }}/{% endif %}"
-               class="survey-card reveal reveal-delay-{{ forloop.counter }}">
-                <span class="survey-card__badge survey-card__badge--{{ survey.visibility }}{% if survey.is_archived %} survey-card__badge--archived{% endif %}">
-                    {% if survey.visibility == "demo" %}Demo{% elif survey.is_archived %}Archived{% else %}Active{% endif %}
-                </span>
-                <div class="survey-card__name">{{ survey.name }}</div>
-                {% if survey.organization %}
-                <div class="survey-card__org">{{ survey.organization.name }}</div>
-                {% endif %}
-                <div class="survey-card__responses">{{ survey.session_count }} response{{ survey.session_count|pluralize }}</div>
-            </a>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="section-empty">No public surveys yet. Contact us to start one.</p>
-        {% endif %}
-    </div>
-</section>
-
-{# ===== Stories ===== #}
-<section class="stories-section" id="stories">
-    <div class="landing-inner">
-        <p class="section-title">Stories</p>
-        <h2 class="section-heading">Results, maps, and open data</h2>
-        {% if stories %}
-        <div class="story-cards">
-            {% for story in stories %}
-            <a href="/stories/{{ story.slug }}/" class="story-card reveal reveal-delay-{{ forloop.counter }}">
-                {% if story.cover_image %}
-                <img src="{{ story.cover_image.url }}" alt="{{ story.title }}" class="story-card__image">
+    <div class="hero__grid">
+        <div class="hero__content">
+            <h1 class="hero__headline">{% trans "Open-source platform for participatory mapping" %}</h1>
+            <p class="hero__description">
+                {% trans "Create map-based surveys where people mark places, draw routes, and outline areas. Free to start. Open source. Self-host if you want." %}
+            </p>
+            <div class="hero__cta-group">
+                {% if user.is_authenticated %}
+                <a href="{% url 'editor' %}" class="btn-primary-landing">{% trans "Go to Dashboard" %}</a>
                 {% else %}
-                <div class="story-card__placeholder"></div>
+                <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">{% trans "Try Free" %}</a>
                 {% endif %}
-                <div class="story-card__body">
-                    <span class="story-card__badge">{{ story.get_story_type_display }}</span>
-                    <div class="story-card__title">{{ story.title }}</div>
-                    {% if story.published_date %}
-                    <div class="story-card__date">{{ story.published_date|date:"j M Y" }}</div>
+                {% if GITHUB_REPO_URL %}
+                <a href="{{ GITHUB_REPO_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">
+                    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                    {% trans "Self-Host" %}
+                </a>
+                {% endif %}
+            </div>
+            <div class="hero__badges">
+                <span class="hero__badge">{% trans "Open Source" %}</span>
+                <span class="hero__badge">{% trans "Free to Start" %}</span>
+                <span class="hero__badge">{% trans "Self-Hostable" %}</span>
+                <span class="hero__badge">{% trans "GDPR-Friendly" %}</span>
+            </div>
+        </div>
+        <div class="hero__visual">
+            <div class="hero__map-viewport">
+                <div class="hero__map-chrome">
+                    <span class="hero__map-dot"></span>
+                    <span class="hero__map-dot"></span>
+                    <span class="hero__map-dot"></span>
+                </div>
+                <div class="hero__map-canvas">
+                    <svg class="hero__map-svg" viewBox="0 0 480 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <pattern id="heroGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--color-grid)" stroke-width="0.5"/>
+                            </pattern>
+                        </defs>
+                        <rect width="480" height="320" fill="var(--color-map-bg)"/>
+                        <rect width="480" height="320" fill="url(#heroGrid)"/>
+                        <path d="M0 180 Q120 160 200 200 T400 170 T480 190" stroke="var(--color-map-road)" stroke-width="3" fill="none"/>
+                        <path d="M100 0 Q110 80 130 160 T160 320" stroke="var(--color-map-road)" stroke-width="2" fill="none"/>
+                        <path d="M300 0 Q290 100 320 200 T350 320" stroke="var(--color-map-road)" stroke-width="2" fill="none"/>
+                        <polygon points="180,80 260,60 300,120 280,180 200,170 160,130" fill="var(--color-accent)" fill-opacity="0.15" stroke="var(--color-accent)" stroke-width="2" stroke-dasharray="6 3"/>
+                        <polyline points="60,260 120,230 200,250 280,220 360,240" fill="none" stroke="var(--color-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="120" cy="230" r="6" fill="var(--color-accent)" stroke="white" stroke-width="2"/>
+                        <circle cx="280" cy="220" r="6" fill="var(--color-accent)" stroke="white" stroke-width="2"/>
+                        <circle cx="380" cy="100" r="6" fill="var(--color-teal)" stroke="white" stroke-width="2"/>
+                        <g transform="translate(220, 90)">
+                            <path d="M0-24C-8-24-14-18-14-10C-14-2 0 12 0 12S14-2 14-10C14-18 8-24 0-24Z" fill="var(--color-accent)"/>
+                            <circle cx="0" cy="-10" r="5" fill="white"/>
+                        </g>
+                        <text x="10" y="16" fill="var(--color-map-label)" font-family="var(--font-mono)" font-size="9" opacity="0.5">59.93°N</text>
+                        <text x="410" y="310" fill="var(--color-map-label)" font-family="var(--font-mono)" font-size="9" opacity="0.5">30.32°E</text>
+                    </svg>
+                    <div class="hero__map-toolbar">
+                        <span class="hero__tool hero__tool--active" title="{% trans "Point" %}">
+                            <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="6" r="4" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 10V14" stroke="currentColor" stroke-width="1.5"/></svg>
+                        </span>
+                        <span class="hero__tool" title="{% trans "Line" %}">
+                            <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 13L8 5L13 3" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="hero__tool" title="{% trans "Polygon" %}">
+                            <svg width="16" height="16" viewBox="0 0 16 16"><polygon points="8,2 14,6 12,13 4,13 2,6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ===== Problem → Solution ===== #}
+<section class="problem-solution" id="problem-solution">
+    <div class="landing-inner">
+        <p class="section-eyebrow reveal">{% trans "Why Mapsurvey" %}</p>
+        <h2 class="section-heading reveal">{% trans "What changes when your tools are open" %}</h2>
+        <div class="ps__table reveal">
+            <div class="ps__row ps__row--header">
+                <div class="ps__cell ps__cell--label"></div>
+                <div class="ps__cell ps__cell--before">{% trans "Without Mapsurvey" %}</div>
+                <div class="ps__cell ps__cell--after">{% trans "With Mapsurvey" %}</div>
+            </div>
+            <div class="ps__row">
+                <div class="ps__cell ps__cell--label">{% trans "Cost" %}</div>
+                <div class="ps__cell ps__cell--before">{% trans "$1,400+ per project" %}</div>
+                <div class="ps__cell ps__cell--after">{% trans "Free — start right now" %}</div>
+            </div>
+            <div class="ps__row">
+                <div class="ps__cell ps__cell--label">{% trans "Data control" %}</div>
+                <div class="ps__cell ps__cell--before">{% trans "Locked on vendor servers" %}</div>
+                <div class="ps__cell ps__cell--after">{% trans "Self-host on your infrastructure" %}</div>
+            </div>
+            <div class="ps__row">
+                <div class="ps__cell ps__cell--label">{% trans "Geometry" %}</div>
+                <div class="ps__cell ps__cell--before">{% trans "Pins on a map only" %}</div>
+                <div class="ps__cell ps__cell--after">{% trans "Points, routes, and areas" %}</div>
+            </div>
+            <div class="ps__row">
+                <div class="ps__cell ps__cell--label">{% trans "Export" %}</div>
+                <div class="ps__cell ps__cell--before">{% trans "Data locked inside platform" %}</div>
+                <div class="ps__cell ps__cell--after">{% trans "GeoJSON + CSV, ready for GIS" %}</div>
+            </div>
+            <div class="ps__row">
+                <div class="ps__cell ps__cell--label">{% trans "Source code" %}</div>
+                <div class="ps__cell ps__cell--before">{% trans "Closed, can't customize" %}</div>
+                <div class="ps__cell ps__cell--after">{% trans "Open source — fork and adapt" %}</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ===== Features ===== #}
+<section class="features" id="features">
+    <div class="landing-inner">
+        <p class="section-eyebrow reveal">{% trans "Capabilities" %}</p>
+        <h2 class="section-heading reveal">{% trans "Everything you need for spatial surveys" %}</h2>
+        <div class="features__grid">
+            <div class="feature-card reveal">
+                <div class="feature-card__icon">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M14 20V26" stroke="currentColor" stroke-width="1.5"/><path d="M10 24H18" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="12" r="3" fill="currentColor" opacity="0.2"/></svg>
+                </div>
+                <h3 class="feature-card__title">{% trans "Interactive map surveys" %}</h3>
+                <p class="feature-card__text">{% trans "Respondents mark places, draw routes, and outline areas directly on the map. Mobile-friendly with crosshair mode for precise input." %}</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-1">
+                <div class="feature-card__icon">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="3" width="22" height="22" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M8 10H20M8 14H16M8 18H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </div>
+                <h3 class="feature-card__title">{% trans "13 question types" %}</h3>
+                <p class="feature-card__text">{% trans "Text, number, choice, rating, date, image — plus three cartographic types. Sub-questions that appear based on answers. Visual drag-and-drop editor." %}</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-2">
+                <div class="feature-card__icon">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="11" stroke="currentColor" stroke-width="1.5"/><path d="M14 3V25M3 14H25" stroke="currentColor" stroke-width="1" opacity="0.3"/><text x="7" y="13" font-size="7" fill="currentColor" font-weight="600">A</text><text x="16" y="19" font-size="7" fill="currentColor" font-weight="600">&#1041;</text></svg>
+                </div>
+                <h3 class="feature-card__title">{% trans "Multilingual surveys" %}</h3>
+                <p class="feature-card__text">{% trans "One survey, multiple languages. Questions, choices, and the thank-you page all support translation. Respondents pick their language on entry." %}</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-3">
+                <div class="feature-card__icon">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 22L6 8L14 4L22 8V22" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 8L14 12L22 8" stroke="currentColor" stroke-width="1.5"/><path d="M14 12V26" stroke="currentColor" stroke-width="1.5"/></svg>
+                </div>
+                <h3 class="feature-card__title">{% trans "Data export" %}</h3>
+                <p class="feature-card__text">{% trans "Download responses with geodata in a single ZIP. GeoJSON + CSV, ready for QGIS, Excel, Python, or R. Import and export survey structures for reuse." %}</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-4">
+                <div class="feature-card__icon">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="5" y="8" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M9 12H11M9 16H15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5 8L14 3L23 8" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/></svg>
+                </div>
+                <h3 class="feature-card__title">{% trans "Deploy in minutes" %}</h3>
+                <p class="feature-card__text">{% trans "Three commands in the terminal and the platform runs on your server. Or just sign up on mapsurvey.org — nothing to install." %}</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-5">
+                <div class="feature-card__icon">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 4C8.48 4 4 8.48 4 14s4.48 10 10 10 10-4.48 10-10S19.52 4 14 4z" stroke="currentColor" stroke-width="1.5"/><path d="M10 14.5L13 17.5L19 11.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <h3 class="feature-card__title">{% trans "Open source" %}</h3>
+                <p class="feature-card__text">{% trans "Full source code on GitHub. Adapt, extend, contribute. AGPLv3 license guarantees the code stays open forever." %}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ===== Demo ===== #}
+<section class="demo-section" id="demo">
+    <div class="landing-inner">
+        <p class="section-eyebrow reveal">{% trans "Try it" %}</p>
+        <h2 class="section-heading reveal">{% trans "See it in action" %}</h2>
+        <div class="demo__container reveal">
+            {% if DEMO_SURVEY_URL %}
+            <div class="demo__iframe-wrap">
+                <iframe src="{{ DEMO_SURVEY_URL }}" class="demo__iframe" title="{% trans "Mapsurvey live demo" %}" loading="lazy" allow="geolocation"></iframe>
+            </div>
+            <p class="demo__caption">{% trans "This is a live survey. Try it — then create your own in 2 minutes." %}</p>
+            <div class="demo__cta">
+                {% if user.is_authenticated %}
+                <a href="{% url 'editor' %}" class="btn-primary-landing">{% trans "Create Your Own Mapsurvey" %}</a>
+                {% else %}
+                <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">{% trans "Create Your Own Mapsurvey" %}</a>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="demo__placeholder">
+                <div class="demo__placeholder-inner">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="1.5" opacity="0.3"/><polygon points="20,16 34,24 20,32" fill="currentColor" opacity="0.4"/></svg>
+                    <p>{% trans "Live demo coming soon." %}</p>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'editor' %}" class="btn-primary-landing btn--sm">{% trans "Create your first survey" %}</a>
+                    {% else %}
+                    <a href="{% url 'django_registration_register' %}" class="btn-primary-landing btn--sm">{% trans "Sign up to try it free" %}</a>
                     {% endif %}
                 </div>
-            </a>
-            {% endfor %}
+            </div>
+            {% endif %}
         </div>
-        {% else %}
-        <p class="section-empty">Stories coming soon.</p>
-        {% endif %}
     </div>
 </section>
 
-{# ===== Contact ===== #}
-<section class="contact-section" id="contact">
+{# ===== Comparison ===== #}
+<section class="comparison" id="comparison">
     <div class="landing-inner">
-        <p class="section-title">Get in touch</p>
-        <h2 class="section-heading">Ready to run a survey?<br>Let's talk.</h2>
-        <div class="contact__channels">
-            {% if CONTACT_EMAIL %}
-            <a href="mailto:{{ CONTACT_EMAIL }}?subject=Survey%20inquiry" class="contact__link contact__link--email">
-                {{ CONTACT_EMAIL }}
-            </a>
+        <p class="section-eyebrow reveal">{% trans "Compare" %}</p>
+        <h2 class="section-heading reveal">{% trans "How Mapsurvey stacks up" %}</h2>
+        <div class="comparison__wrap reveal">
+            <table class="comparison__table">
+                <thead>
+                    <tr>
+                        <th class="comparison__feature-col"></th>
+                        <th class="comparison__product comparison__product--highlight">Mapsurvey</th>
+                        <th class="comparison__product">Maptionnaire</th>
+                        <th class="comparison__product">KoBoToolbox</th>
+                        <th class="comparison__product">ArcGIS Survey123</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{% trans "Open source" %}</td>
+                        <td class="comparison__product--highlight"><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-no">&#10007;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-no">&#10007;</span></td>
+                    </tr>
+                    <tr>
+                        <td>{% trans "Self-hostable" %}</td>
+                        <td class="comparison__product--highlight"><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-no">&#10007;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                        <td>{% trans "Enterprise only" %}</td>
+                    </tr>
+                    <tr>
+                        <td>{% trans "Cost" %}</td>
+                        <td class="comparison__product--highlight"><strong>{% trans "Free" %}</strong></td>
+                        <td>{% trans "~$1,400/project" %}</td>
+                        <td>{% trans "Free (NGOs)" %}</td>
+                        <td>{% trans "$5K–25K+/yr" %}</td>
+                    </tr>
+                    <tr>
+                        <td>{% trans "Mark a place" %}</td>
+                        <td class="comparison__product--highlight"><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>{% trans "Draw a route" %}</td>
+                        <td class="comparison__product--highlight"><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-partial">&#10003;*</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>{% trans "Outline an area" %}</td>
+                        <td class="comparison__product--highlight"><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-partial">&#10003;*</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>{% trans "Geodata export" %}</td>
+                        <td class="comparison__product--highlight"><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>{% trans "Public-facing surveys" %}</td>
+                        <td class="comparison__product--highlight"><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-no">&#10007;</span></td>
+                        <td><span class="cmp-no">&#10007;</span></td>
+                    </tr>
+                    <tr>
+                        <td>{% trans "Visual editor" %}</td>
+                        <td class="comparison__product--highlight"><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>{% trans "Data sovereignty" %}</td>
+                        <td class="comparison__product--highlight"><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-no">&#10007;</span></td>
+                        <td><span class="cmp-yes">&#10003;</span></td>
+                        <td><span class="cmp-no">&#10007;</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="comparison__footnote reveal">{% trans "*KoBoToolbox collects routes and areas, but does not display them on the map — only in export files." %}</p>
+        <p class="comparison__tagline reveal">{% blocktrans %}Other platforms charge $1,400+ per project. <strong>Mapsurvey is free.</strong>{% endblocktrans %}</p>
+    </div>
+</section>
+
+{# ===== Use Cases ===== #}
+<section class="use-cases" id="use-cases">
+    <div class="landing-inner">
+        <p class="section-eyebrow reveal">{% trans "Who it's for" %}</p>
+        <h2 class="section-heading reveal">{% trans "Built for people who shape places" %}</h2>
+        <div class="use-cases__grid">
+            <div class="use-case-card reveal">
+                <div class="use-case-card__icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="4" y="14" width="8" height="14" stroke="currentColor" stroke-width="1.5"/><rect x="12" y="8" width="8" height="20" stroke="currentColor" stroke-width="1.5"/><rect x="20" y="4" width="8" height="24" stroke="currentColor" stroke-width="1.5"/></svg>
+                </div>
+                <h3 class="use-case-card__title">{% trans "Urban Planning" %}</h3>
+                <p class="use-case-card__text">{% trans "Ask residents where they need bike lanes, where crossings feel dangerous, where parks are missing. People draw routes and outline neighborhoods — not just drop pins." %}</p>
+            </div>
+            <div class="use-case-card reveal reveal-delay-1">
+                <div class="use-case-card__icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M8 26C8 22 11.6 18 16 18C20.4 18 24 22 24 26" stroke="currentColor" stroke-width="1.5"/><path d="M16 8V16M12 12H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </div>
+                <h3 class="use-case-card__title">{% trans "Academic Research" %}</h3>
+                <p class="use-case-card__text">{% trans "Run spatial studies without paying for expensive platforms. Download results, analyze in your tools, publish. Cite the open-source tool in your papers." %}</p>
+            </div>
+            <div class="use-case-card reveal reveal-delay-2">
+                <div class="use-case-card__icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M16 4L4 10V22L16 28L28 22V10L16 4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 10L16 16L28 10" stroke="currentColor" stroke-width="1.5"/><path d="M16 16V28" stroke="currentColor" stroke-width="1.5"/></svg>
+                </div>
+                <h3 class="use-case-card__title">{% trans "Civic Tech & NGOs" %}</h3>
+                <p class="use-case-card__text">{% trans "Deploy on your own server for participatory budgeting, public space assessments, or transit route planning. Full control, zero vendor lock-in." %}</p>
+            </div>
+            <div class="use-case-card reveal reveal-delay-3">
+                <div class="use-case-card__icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="6" y="6" width="20" height="20" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M6 12H26M12 6V26" stroke="currentColor" stroke-width="1.5"/><circle cx="19" cy="19" r="3" stroke="currentColor" stroke-width="1.5"/></svg>
+                </div>
+                <h3 class="use-case-card__title">{% trans "Municipalities" %}</h3>
+                <p class="use-case-card__text">{% trans "Citizen data never leaves your infrastructure. No vendor lock-in. No annual subscription. Compliant with data sovereignty requirements." %}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ===== Tech Stack + Quick Start ===== #}
+<section class="tech-section" id="tech-stack">
+    <div class="landing-inner">
+        <p class="section-eyebrow reveal">{% trans "Under the hood" %}</p>
+        <h2 class="section-heading reveal">{% trans "Built on proven foundations" %}</h2>
+        <div class="tech__grid">
+            <div class="tech__stack reveal">
+                <div class="tech__terminal">
+                    <div class="tech__terminal-chrome">
+                        <span class="tech__term-dot"></span>
+                        <span class="tech__term-dot"></span>
+                        <span class="tech__term-dot"></span>
+                        <span class="tech__term-title">architecture</span>
+                    </div>
+                    <pre class="tech__terminal-body"><code>Django 4.2 + GeoDjango + PostGIS
+├── Survey engine
+│   dynamic forms, session management
+├── Visual editor
+│   HTMX + SortableJS, 3-column layout
+├── Data export
+│   GeoJSON + CSV in one ZIP
+├── Import / export
+│   survey structure as JSON
+└── Leaflet widgets
+    point / line / polygon drawing</code></pre>
+                </div>
+                <ul class="tech__points">
+                    <li>{% trans "Python/Django — the most popular stack in civic tech" %}</li>
+                    <li>{% trans "PostGIS — native spatial queries, proximity analysis" %}</li>
+                    <li>{% trans "HTMX instead of SPA — minimal JS, server rendering" %}</li>
+                    <li>{% trans "Docker Compose — deploy in 3 commands" %}</li>
+                    <li>{% trans "AGPLv3 — guaranteed to stay open" %}</li>
+                </ul>
+                {% if GITHUB_REPO_URL %}
+                <a href="{{ GITHUB_REPO_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">
+                    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                    {% trans "View on GitHub" %}
+                </a>
+                {% endif %}
+            </div>
+            <div class="tech__quickstart reveal reveal-delay-1" id="quick-start">
+                <h3 class="tech__quickstart-title">{% trans "Prefer to self-host?" %}<br>{% trans "Three commands." %}</h3>
+                <div class="tech__terminal">
+                    <div class="tech__terminal-chrome">
+                        <span class="tech__term-dot"></span>
+                        <span class="tech__term-dot"></span>
+                        <span class="tech__term-dot"></span>
+                        <span class="tech__term-title">terminal</span>
+                    </div>
+                    <pre class="tech__terminal-body"><code><span class="tech__prompt">$</span> git clone {{ GITHUB_REPO_URL }}.git
+<span class="tech__prompt">$</span> cp .env.example .env && docker compose up --build
+<span class="tech__prompt">$</span> open http://localhost:8000  <span class="tech__comment"># {% trans "done." %}</span></code></pre>
+                </div>
+                <p class="tech__quickstart-note">{% trans "Want full control? Self-host Mapsurvey on your own infrastructure." %}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ===== Social Proof ===== #}
+<section class="social-proof" id="social-proof">
+    <div class="landing-inner">
+        <div class="social-proof__grid reveal">
+            {% if GITHUB_REPO_URL %}
+            <div class="social-proof__item">
+                <img src="https://img.shields.io/github/stars/ganjasan/mapsurvey?style=flat&logo=github&label=GitHub%20Stars&color=1B2A4A" alt="GitHub stars" class="social-proof__badge" loading="lazy" width="140" height="20">
+            </div>
             {% endif %}
-            {% if CONTACT_TELEGRAM %}
-            <a href="https://t.me/{{ CONTACT_TELEGRAM }}" class="contact__link contact__link--telegram" target="_blank" rel="noopener">
-                Telegram
+            <div class="social-proof__item">
+                <span class="social-proof__text">{% trans "Built with the same technologies as Instagram, Pinterest, and NASA" %}</span>
+            </div>
+            <div class="social-proof__item">
+                <span class="social-proof__text">{% trans "Born from urban research at ITMO University, St. Petersburg" %}</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ===== Pricing (hidden for now) ===== #}
+
+{# ===== Final CTA ===== #}
+<section class="final-cta">
+    <div class="landing-inner">
+        <h2 class="final-cta__heading reveal">{% trans "Ready to collect spatial data from your community?" %}</h2>
+        <div class="final-cta__buttons reveal">
+            {% if user.is_authenticated %}
+            <a href="{% url 'editor' %}" class="btn-primary-landing">{% trans "Go to Dashboard" %}</a>
+            {% else %}
+            <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">{% trans "Try Free" %}</a>
+            {% endif %}
+            {% if GITHUB_REPO_URL %}
+            <a href="{{ GITHUB_REPO_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                {% trans "View on GitHub" %}
             </a>
             {% endif %}
         </div>
@@ -137,8 +451,22 @@
                 observer.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.15 });
+    }, { threshold: 0.12 });
     reveals.forEach(function(el) { observer.observe(el); });
+})();
+
+// Navbar shrink on scroll
+(function() {
+    var nav = document.getElementById('main-nav');
+    if (!nav) return;
+    var scrolled = false;
+    window.addEventListener('scroll', function() {
+        var shouldShrink = window.scrollY > 60;
+        if (shouldShrink !== scrolled) {
+            scrolled = shouldShrink;
+            nav.classList.toggle('is-scrolled', scrolled);
+        }
+    }, { passive: true });
 })();
 </script>
 
