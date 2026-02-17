@@ -79,6 +79,20 @@
                 GitHub
             </a></li>
             {% endif %}
+            <li class="landing-nav__lang">
+                {% get_current_language as LANGUAGE_CODE %}
+                <form action="{% url 'set_language' %}" method="post" class="lang-switch">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    {% if LANGUAGE_CODE == 'ru' %}
+                    <button type="submit" name="language" value="en" class="lang-switch__btn" title="Switch to English">EN</button>
+                    <span class="lang-switch__current">RU</span>
+                    {% else %}
+                    <span class="lang-switch__current">EN</span>
+                    <button type="submit" name="language" value="ru" class="lang-switch__btn" title="Переключить на русский">RU</button>
+                    {% endif %}
+                </form>
+            </li>
             <li><span class="nav-sep"></span></li>
             {% if user.is_authenticated %}
                 <li><a href="{% url 'editor' %}" class="btn-nav-action">{% trans "Dashboard" %}</a></li>

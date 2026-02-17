@@ -22,6 +22,7 @@ from survey.views import AsyncEmailRegistrationView, DirectActivationView
 
 urlpatterns = [
  	path('', include('survey.urls')),
+    path('i18n/', include('django.conf.urls.i18n')),
     path('admin/', admin.site.urls),
     path('accounts/register/', AsyncEmailRegistrationView.as_view(), name='django_registration_register'),
     path('accounts/activate/', DirectActivationView.as_view(), name='django_registration_activate'),

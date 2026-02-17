@@ -5,3 +5,4 @@
 - [x] Rewrite `landing.css` — complete styling for new sections, responsive layout, dark mode, scroll reveal animations — using `frontend-design` skill
 - [x] Add i18n markup — wrap all user-visible text in `{% trans %}` / `{% blocktrans %}`, generate EN and RU `.po` files
 - [x] Write tests — landing page renders for anon/auth users, SEO meta tags present, correct navbar links, no survey/story queries
+- [x] Add language switcher to landing navbar — enable `LocaleMiddleware`, add `LANGUAGES` setting, add `set_language` URL, add EN/RU toggle button in `base_landing.html` navbar
