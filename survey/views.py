@@ -19,7 +19,6 @@ from .forms import SurveySectionAnswerForm
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
 from django.core.serializers import serialize
-from django.db.models import Count
 import geojson
 from django.contrib.gis.geos import GEOSGeometry
 import sys
@@ -122,25 +121,7 @@ def resolve_survey(survey_slug):
     raise Http404
 
 def index(request):
-	surveys = (
-		SurveyHeader.objects
-		.filter(visibility__in=['demo', 'public'])
-		.select_related('organization')
-		.annotate(session_count=Count('surveysession'))
-		.order_by(
-			models.Case(
-				models.When(visibility='demo', then=0),
-				models.When(is_archived=False, then=1),
-				default=2,
-				output_field=models.IntegerField(),
-			)
-		)
-	)
-	stories = Story.objects.filter(is_published=True).order_by('-published_date')
-	return render(request, 'landing.html', {
-		'surveys': surveys,
-		'stories': stories,
-	})
+	return render(request, 'landing.html')
 
 @org_permission_required('viewer')
 def editor(request):

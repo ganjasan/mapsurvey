@@ -1,0 +1,8 @@
+- [x] Add `GITHUB_REPO_URL` and `DEMO_SURVEY_URL` to Django settings and context processor
+- [x] Simplify the `index` view — remove survey/story querysets, pass only SEO and config context
+- [x] Rebuild `base_landing.html` — new navbar (Features, Demo, Pricing, Docs, GitHub, Sign In, mobile hamburger), new footer (product links, social links, language switcher, license notice), SEO head blocks (meta tags, OG, Twitter Card, JSON-LD, hreflang, canonical)
+- [x] Rewrite `landing.html` with all new sections — hero, problem-solution, features, demo, comparison, use-cases, tech-stack + quick-start, social proof, pricing — using `frontend-design` skill for production-grade HTML+CSS
+- [x] Rewrite `landing.css` — complete styling for new sections, responsive layout, dark mode, scroll reveal animations — using `frontend-design` skill
+- [x] Add i18n markup — wrap all user-visible text in `{% trans %}` / `{% blocktrans %}`, generate EN and RU `.po` files
+- [x] Write tests — landing page renders for anon/auth users, SEO meta tags present, correct navbar links, no survey/story queries
+- [x] Add language switcher to landing navbar — enable `LocaleMiddleware`, add `LANGUAGES` setting, add `set_language` URL, add EN/RU toggle button in `base_landing.html` navbar

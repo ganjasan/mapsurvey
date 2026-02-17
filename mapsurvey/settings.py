@@ -61,6 +61,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -69,6 +70,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
+
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 ROOT_URLCONF = 'mapsurvey.urls'
 
@@ -143,7 +146,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en'
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('ru', 'Русский'),
+]
 
 TIME_ZONE = 'UTC'
 
@@ -229,6 +237,8 @@ EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False').lower() in ('true', '1'
 EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() in ('true', '1')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@mapsurvey.org')
 
-# Landing page contact
+# Landing page
 CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'konuchovartem@gmail.com')
 CONTACT_TELEGRAM = os.environ.get('CONTACT_TELEGRAM', 'Konuchovartem')
+GITHUB_REPO_URL = os.environ.get('GITHUB_REPO_URL', 'https://github.com/ganjasan/mapsurvey')
+DEMO_SURVEY_URL = os.environ.get('DEMO_SURVEY_URL', '')

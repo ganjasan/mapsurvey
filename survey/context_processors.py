@@ -14,6 +14,8 @@ def contact(request):
     return {
         'CONTACT_EMAIL': getattr(settings, 'CONTACT_EMAIL', ''),
         'CONTACT_TELEGRAM': getattr(settings, 'CONTACT_TELEGRAM', ''),
+        'GITHUB_REPO_URL': getattr(settings, 'GITHUB_REPO_URL', ''),
+        'DEMO_SURVEY_URL': getattr(settings, 'DEMO_SURVEY_URL', ''),
     }
 
 
