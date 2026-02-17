@@ -1,3 +1,6 @@
+previews:
+    generation: automatic
+
 databases:
   - name: mapsurvey-db
     plan: basic-256mb
@@ -14,8 +17,6 @@ services:
     plan: starter
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    previews:
-      generation: automatic
     envVars:
       - key: DATABASE_URL
         fromDatabase:
