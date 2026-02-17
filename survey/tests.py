@@ -4077,81 +4077,122 @@ class LandingPageViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.org = Organization.objects.create(name="TestOrg")
 
     def test_anonymous_sees_landing_page(self):
         """
         GIVEN an unauthenticated user
         WHEN navigating to /
-        THEN the system renders the landing page (not a redirect)
+        THEN the system renders the landing page with sign-up CTA
         """
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'landing.html')
+        self.assertContains(response, 'Sign Up Free')
+        self.assertContains(response, 'Sign In')
+        self.assertNotContains(response, 'Go to Dashboard')
 
-    def test_authenticated_sees_landing_page(self):
+    def test_authenticated_sees_dashboard_cta(self):
         """
         GIVEN an authenticated user
         WHEN navigating to /
-        THEN the system renders the landing page (not a redirect)
+        THEN the system renders the landing page with dashboard CTA
         """
         User.objects.create_user('testuser', password='pass')
         self.client.login(username='testuser', password='pass')
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'landing.html')
+        self.assertContains(response, 'Go to Dashboard')
+        self.assertNotContains(response, 'Sign Up Free')
 
-    def test_only_visible_surveys_shown(self):
+    def test_no_survey_queries(self):
         """
-        GIVEN surveys with different visibility settings
-        WHEN the landing page is rendered
-        THEN only demo and public surveys appear in context
+        GIVEN the landing page view
+        WHEN rendering the page
+        THEN no survey or story querysets are passed in context
         """
-        SurveyHeader.objects.create(name="priv", visibility="private", organization=self.org)
-        SurveyHeader.objects.create(name="demo_s", visibility="demo", organization=self.org)
-        SurveyHeader.objects.create(name="pub_s", visibility="public", organization=self.org)
-
         response = self.client.get('/')
-        survey_names = [s.name for s in response.context['surveys']]
-        self.assertNotIn("priv", survey_names)
-        self.assertIn("demo_s", survey_names)
-        self.assertIn("pub_s", survey_names)
+        self.assertNotIn('surveys', response.context)
+        self.assertNotIn('stories', response.context)
 
-    def test_survey_ordering_demo_active_archived(self):
+    def test_seo_meta_tags_present(self):
         """
-        GIVEN demo, active public, and archived surveys
-        WHEN the landing page is rendered
-        THEN surveys are ordered: demo first, active public, then archived
+        GIVEN the landing page
+        WHEN rendered
+        THEN essential SEO meta tags are present in the HTML
         """
-        SurveyHeader.objects.create(name="archived_s", visibility="public", is_archived=True, organization=self.org)
-        SurveyHeader.objects.create(name="active_s", visibility="public", organization=self.org)
-        SurveyHeader.objects.create(name="demo_s2", visibility="demo", organization=self.org)
-
         response = self.client.get('/')
-        names = [s.name for s in response.context['surveys']]
-        self.assertEqual(names[0], "demo_s2")
-        self.assertEqual(names[1], "active_s")
-        self.assertEqual(names[2], "archived_s")
+        content = response.content.decode()
+        self.assertIn('<meta name="description"', content)
+        self.assertIn('<link rel="canonical"', content)
+        self.assertIn('hreflang="en"', content)
+        self.assertIn('hreflang="ru"', content)
+        self.assertIn('og:title', content)
+        self.assertIn('twitter:card', content)
+        self.assertIn('application/ld+json', content)
 
-    def test_no_surveys_section_when_all_private(self):
+    def test_landing_page_sections_present(self):
         """
-        GIVEN all surveys have visibility 'private'
-        WHEN the landing page is rendered
-        THEN no surveys appear in context
+        GIVEN the landing page
+        WHEN rendered
+        THEN all major sections are present
         """
-        SurveyHeader.objects.create(name="hidden", visibility="private", organization=self.org)
         response = self.client.get('/')
-        self.assertEqual(len(response.context['surveys']), 0)
+        content = response.content.decode()
+        self.assertIn('id="hero"', content)
+        self.assertIn('id="problem-solution"', content)
+        self.assertIn('id="features"', content)
+        self.assertIn('id="comparison"', content)
+        self.assertIn('id="use-cases"', content)
+        self.assertIn('id="tech-stack"', content)
+        self.assertIn('id="social-proof"', content)
 
-    def test_no_stories_when_none_published(self):
+    def test_github_link_present(self):
         """
-        GIVEN no published stories
+        GIVEN the GITHUB_REPO_URL setting is configured
         WHEN the landing page is rendered
-        THEN stories context is empty
+        THEN GitHub links appear in the page
         """
-        Story.objects.create(title="Draft", slug="draft", story_type="article", is_published=False)
         response = self.client.get('/')
-        self.assertEqual(len(response.context['stories']), 0)
+        self.assertContains(response, 'github.com')
+
+    def test_navbar_links(self):
+        """
+        GIVEN the landing page
+        WHEN rendered
+        THEN the navbar contains correct anchor links
+        """
+        response = self.client.get('/')
+        content = response.content.decode()
+        self.assertIn('href="#features"', content)
+        self.assertIn('href="#demo"', content)
+        self.assertIn('href="#demo"', content)
+        # Pricing section removed — verify it's not in navbar
+        self.assertNotIn('href="#pricing"', content)
+
+    def test_comparison_table_products(self):
+        """
+        GIVEN the landing page comparison section
+        WHEN rendered
+        THEN it lists the competing products
+        """
+        response = self.client.get('/')
+        content = response.content.decode()
+        self.assertIn('Mapsurvey', content)
+        self.assertIn('Maptionnaire', content)
+        self.assertIn('KoBoToolbox', content)
+        self.assertIn('ArcGIS Survey123', content)
+
+    def test_schema_org_structured_data(self):
+        """
+        GIVEN the landing page
+        WHEN rendered
+        THEN Schema.org SoftwareApplication structured data is present
+        """
+        response = self.client.get('/')
+        content = response.content.decode()
+        self.assertIn('"@type": "SoftwareApplication"', content)
+        self.assertIn('"name": "Mapsurvey"', content)
 
 
 class StoryDetailViewTest(TestCase):
