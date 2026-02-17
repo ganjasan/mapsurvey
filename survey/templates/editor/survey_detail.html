@@ -11,13 +11,11 @@
         {{ survey.name }}
     {% endif %}
 </span>
-<span class="badge badge-{{ survey.status|status_badge_class }} ml-2" style="font-size:0.75rem;">{{ survey.get_status_display }}</span>
-<span class="badge badge-light ml-1" style="font-size:0.75rem;">v{{ survey.version_number }}</span>
 
 {% if effective_role == 'owner' and survey.status != 'archived' and not survey.is_draft_copy %}
-<div class="dropdown d-inline ml-2">
-    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-toggle="dropdown">
-        <i class="fas fa-exchange-alt"></i>
+<div class="status-dropdown dropdown d-inline">
+    <button class="btn btn-sm btn-{{ survey.status|status_badge_class }} dropdown-toggle status-badge-btn" data-toggle="dropdown">
+        {{ survey.get_status_display }} &middot; v{{ survey.version_number }}
     </button>
     <div class="dropdown-menu">
         {% if survey.status == 'draft' %}
@@ -34,20 +32,8 @@
         {% endif %}
     </div>
 </div>
-
-<button class="btn btn-sm btn-outline-secondary ml-1"
-        data-toggle="modal" data-target="#passwordModal">
-    <i class="fas fa-lock"></i>
-</button>
-{% endif %}
-
-{% if show_edit_published %}
-<form method="post" action="{% url 'editor_create_draft' survey.uuid %}" class="d-inline ml-2">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-sm btn-primary">
-        <i class="fas fa-edit"></i> Edit Published Survey
-    </button>
-</form>
+{% else %}
+<span class="badge badge-{{ survey.status|status_badge_class }} ml-2 status-badge-static">{{ survey.get_status_display }} &middot; v{{ survey.version_number }}</span>
 {% endif %}
 
 {% if show_draft_actions %}
@@ -55,7 +41,7 @@
     <i class="fas fa-upload"></i> Publish Version
 </button>
 <button class="btn btn-sm btn-outline-danger ml-1" data-toggle="modal" data-target="#discardDraftModal">
-    <i class="fas fa-trash"></i> Discard Draft
+    <i class="fas fa-trash"></i> Discard
 </button>
 {% endif %}
 
@@ -65,25 +51,23 @@
         hx-get="{% url 'editor_survey_settings' survey.uuid %}"
         hx-target="#settingsModalBody"
         hx-swap="innerHTML">
-    <i class="fas fa-cog"></i> Settings
+    <i class="fas fa-cog"></i>
 </button>
 {% endif %}
-{% if not can_edit %}<span class="badge badge-secondary ml-2" style="font-size:0.75rem;">Read-only</span>{% endif %}
 {% endblock %}
 
 {% block content %}
 {% if is_read_only and not survey.is_draft_copy %}
 <div class="alert alert-warning mb-0 rounded-0 text-center" style="font-size:0.85rem;">
-    <i class="fas fa-lock"></i> This survey is <strong>read-only</strong>. To make changes, create a draft copy.
+    <i class="fas fa-lock"></i> This survey is <strong>read-only</strong>.
     {% if draft_copy %}
-    <a href="{% url 'editor_survey_detail' draft_copy.uuid %}" class="ml-2">Go to draft &rarr;</a>
+    <a href="{% url 'editor_survey_detail' draft_copy.uuid %}" class="ml-2 btn btn-sm btn-outline-dark">Go to draft &rarr;</a>
+    {% elif show_edit_published %}
+    <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" class="d-inline ml-2">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-primary">Create a draft copy</button>
+    </form>
     {% endif %}
-</div>
-{% endif %}
-{% if draft_copy and not survey.is_draft_copy %}
-<div class="alert alert-info mb-0 rounded-0 text-center" style="font-size:0.85rem;">
-    <i class="fas fa-pencil-alt"></i> An active draft exists.
-    <a href="{% url 'editor_survey_detail' draft_copy.uuid %}">Continue editing draft &rarr;</a>
 </div>
 {% endif %}
 <div class="editor-container">
@@ -270,17 +254,6 @@
 {% endif %}
 
 {% if effective_role == 'owner' %}
-<!-- Password Management Modal -->
-<div class="modal fade editor-modal" id="passwordModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div id="passwordModalBody">
-                {% include "editor/partials/survey_password_modal.html" %}
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Publish Confirmation Modal (testing → published) -->
 <div class="modal fade editor-modal" id="publishConfirmModal" tabindex="-1">
     <div class="modal-dialog">

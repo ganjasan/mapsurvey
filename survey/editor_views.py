@@ -784,7 +784,7 @@ def editor_create_draft(request, survey_uuid):
         return HttpResponse('Only published surveys can have draft copies', status=400)
 
     if survey.has_draft_copy():
-        return HttpResponse('A draft copy already exists', status=409)
+        return redirect('editor_survey_detail', survey_uuid=survey.get_draft_copy().uuid)
 
     draft = clone_survey_for_draft(survey)
     return redirect('editor_survey_detail', survey_uuid=draft.uuid)

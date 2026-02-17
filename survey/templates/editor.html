@@ -49,7 +49,35 @@
 						<a href="/surveys/{{survey.uuid}}/">{{survey.name}}</a>
 						{% if survey.version_number > 1 %}<span class="badge badge-light ml-1" style="font-size:0.65rem;">v{{ survey.version_number }}</span>{% endif %}
 					</td>
-					<td><span class="badge badge-{{ survey.status|status_badge_class }}">{{ survey.get_status_display }}</span></td>
+					<td>
+					{% if org_role == 'owner' or org_role == 'admin' %}
+					{% if survey.status != 'archived' %}
+					<div class="dropdown d-inline">
+						<button class="btn btn-sm btn-{{ survey.status|status_badge_class }} dropdown-toggle" style="font-size:0.75rem;padding:0.15rem 0.5rem;border-radius:20px;" data-toggle="dropdown">
+							{{ survey.get_status_display }}
+						</button>
+						<div class="dropdown-menu">
+							{% if survey.status == 'draft' %}
+							<button class="dropdown-item" onclick="doTransition('{{ survey.uuid }}', 'testing')">Move to Testing</button>
+							<button class="dropdown-item" onclick="doTransition('{{ survey.uuid }}', 'published')">Publish</button>
+							{% elif survey.status == 'testing' %}
+							<button class="dropdown-item" onclick="showPublishConfirm('{{ survey.uuid }}')">Publish</button>
+							<button class="dropdown-item" onclick="doTransition('{{ survey.uuid }}', 'draft')">Back to Draft</button>
+							{% elif survey.status == 'published' %}
+							<button class="dropdown-item" onclick="doTransition('{{ survey.uuid }}', 'closed')">Close Survey</button>
+							{% elif survey.status == 'closed' %}
+							<button class="dropdown-item" onclick="doTransition('{{ survey.uuid }}', 'published')">Reopen</button>
+							<button class="dropdown-item" onclick="doTransition('{{ survey.uuid }}', 'archived')">Archive</button>
+							{% endif %}
+						</div>
+					</div>
+					{% else %}
+					<span class="badge badge-{{ survey.status|status_badge_class }}">{{ survey.get_status_display }}</span>
+					{% endif %}
+					{% else %}
+					<span class="badge badge-{{ survey.status|status_badge_class }}">{{ survey.get_status_display }}</span>
+					{% endif %}
+				</td>
 					<td>
 						<a href="{% url 'editor_survey_detail' survey.uuid %}">{% if org_role == 'viewer' %}View{% else %}Edit{% endif %}</a> |
 						{% if survey.prefetched_archived_versions %}
@@ -153,6 +181,33 @@
 			</div>
 		</div>
 	</div>
+{% if org_role == 'owner' or org_role == 'admin' %}
+<!-- Publish Confirmation Modal (testing → published) -->
+<div class="modal fade" id="publishConfirmModal" tabindex="-1">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Publish Survey</h5>
+				<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+			</div>
+			<div class="modal-body">
+				<p>You are about to publish this survey and make it available to respondents.</p>
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" id="clearTestData" checked>
+					<label class="form-check-label" for="clearTestData">
+						Delete all test responses (recommended)
+					</label>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+				<button type="button" class="btn btn-success" id="confirmPublishBtn">Publish</button>
+			</div>
+		</div>
+	</div>
+</div>
+{% endif %}
+
 <script>
 $('#deleteModal').on('show.bs.modal', function (event) {
 	var button = $(event.relatedTarget);
@@ -161,6 +216,50 @@ $('#deleteModal').on('show.bs.modal', function (event) {
 	var modal = $(this);
 	modal.find('#deleteSurveyName').text(surveyName);
 	modal.find('#deleteForm').attr('action', '/editor/delete/' + surveyUuid + '/');
+});
+
+function doTransition(uuid, status) {
+	var form = new FormData();
+	form.append('status', status);
+	fetch('/editor/surveys/' + uuid + '/transition/', {
+		method: 'POST',
+		headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+		body: form,
+	}).then(function(resp) {
+		if (resp.ok) {
+			window.location.reload();
+		} else {
+			resp.text().then(function(msg) { alert(msg); });
+		}
+	});
+}
+
+var _publishUuid = null;
+function showPublishConfirm(uuid) {
+	_publishUuid = uuid;
+	$('#publishConfirmModal').modal('show');
+}
+
+$(document).ready(function() {
+	$('#confirmPublishBtn').on('click', function() {
+		if (!_publishUuid) return;
+		var form = new FormData();
+		form.append('status', 'published');
+		if (document.getElementById('clearTestData').checked) {
+			form.append('clear_test_data', 'true');
+		}
+		fetch('/editor/surveys/' + _publishUuid + '/transition/', {
+			method: 'POST',
+			headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+			body: form,
+		}).then(function(resp) {
+			if (resp.ok) {
+				window.location.reload();
+			} else {
+				resp.text().then(function(msg) { alert(msg); });
+			}
+		});
+	});
 });
 </script>
 {% endblock %}
