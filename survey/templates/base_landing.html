@@ -79,6 +79,7 @@
                 GitHub
             </a></li>
             {% endif %}
+            {# Language switcher — disabled until RU translations are complete
             <li class="landing-nav__lang">
                 {% get_current_language as LANGUAGE_CODE %}
                 <form action="{% url 'set_language' %}" method="post" class="lang-switch">
@@ -93,6 +94,7 @@
                     {% endif %}
                 </form>
             </li>
+            #}
             <li><span class="nav-sep"></span></li>
             {% if user.is_authenticated %}
                 <li><a href="{% url 'editor' %}" class="btn-nav-action">{% trans "Dashboard" %}</a></li>
