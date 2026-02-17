@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import models
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, Count
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import translation
 from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator

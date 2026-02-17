@@ -27,9 +27,43 @@ services:
       - key: DEBUG
         value: "0"
       - key: DJANGO_ALLOWED_HOSTS
-        value: "localhost mapsurvey.org mapsurvey.render.com"
+        value: "localhost mapsurvey.org mapsurvey.render.com *.render.com"
       - key: MAPBOX_ACCESS_TOKEN
         sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: DEMO_SURVEY_URL
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: DJANGO_SUPERUSER_USERNAME
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: EMAIL_BACKEND
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: EMAIL_HOST
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: EMAIL_PORT
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: EMAIL_USE_SSL
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: EMAIL_HOST_USER
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
     disk:
       name: media-storage
       mountPath: /home/app/web/mediafiles
