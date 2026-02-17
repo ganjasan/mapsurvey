@@ -139,6 +139,14 @@
                 font-size: 0.95rem;
                 transition: border-color 0.15s;
             }
+            .auth-card .input-group {
+                display: flex;
+            }
+            .auth-card .input-group input {
+                width: 1%;
+                flex: 1 1 auto;
+                border-radius: 6px 0 0 6px;
+            }
             .auth-card .form-group input:focus,
             .auth-card .form-group select:focus,
             .auth-card .form-group textarea:focus {
@@ -202,6 +210,18 @@
                 font-size: 0.95rem;
                 line-height: 1.6;
             }
+            .pwd-toggle-btn {
+                border: 1px solid #d1ccc5;
+                border-left: none;
+                background: #fff;
+                color: #6b7280;
+                cursor: pointer;
+                padding: 0 0.75rem;
+                display: flex;
+                align-items: center;
+                border-radius: 0 6px 6px 0;
+            }
+            .pwd-toggle-btn:hover { color: #374151; }
         </style>
         {% block extra_head %}{% endblock %}
     </head>
@@ -247,5 +267,41 @@
         	{% block footer %}
         	{% endblock %}
         </div>
+    <script>
+    document.querySelectorAll('input[type="password"]').forEach(function(input) {
+        var group = input.closest('.input-group');
+        if (group) {
+            var append = group.querySelector('.input-group-append');
+            if (!append) {
+                append = document.createElement('div');
+                append.className = 'input-group-append';
+                group.appendChild(append);
+            }
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn pwd-toggle-btn';
+            btn.innerHTML = '<i class="fas fa-eye"></i>';
+            append.prepend(btn);
+        } else {
+            var wrapper = document.createElement('div');
+            wrapper.className = 'input-group';
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+            var append = document.createElement('div');
+            append.className = 'input-group-append';
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn pwd-toggle-btn';
+            btn.innerHTML = '<i class="fas fa-eye"></i>';
+            append.appendChild(btn);
+            wrapper.appendChild(append);
+        }
+        btn.addEventListener('click', function() {
+            var isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            this.innerHTML = isPassword ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+        });
+    });
+    </script>
     </body>
 </html>

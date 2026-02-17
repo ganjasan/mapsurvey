@@ -1,4 +1,4 @@
-import uuid
+import uuid as uuid_module
 
 from django.conf import settings
 from django.db import models
@@ -11,6 +11,7 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, BaseValidator
 from django.utils.text import slugify
+from django.contrib.auth.hashers import make_password, check_password as django_check_password
 import random
 
 
@@ -61,6 +62,22 @@ def validate_url_name(value):
     return url_name_validator(value)
 
 
+STATUS_CHOICES = (
+    ("draft", _("Draft")),
+    ("testing", _("Testing")),
+    ("published", _("Published")),
+    ("closed", _("Closed")),
+    ("archived", _("Archived")),
+)
+
+VALID_TRANSITIONS = {
+    "draft": ["testing", "published"],
+    "testing": ["draft", "published"],
+    "published": ["closed"],
+    "closed": ["published", "archived"],
+    "archived": [],
+}
+
 VISIBILITY_CHOICES = (
     ("private", _("Private")),
     ("demo", _("Demo")),
@@ -84,7 +101,7 @@ INPUT_TYPE_CHOICES = (
 )
 
 class SurveySession(models.Model):
-    survey = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE)
+    survey = models.ForeignKey("SurveyHeader", on_delete=models.PROTECT)
     start_datetime = models.DateTimeField(default=datetime.now)
     end_datetime = models.DateTimeField(null=True, blank=True)
     language = models.CharField(max_length=10, null=True, blank=True, help_text=_('Selected language code (ISO 639-1)'))
@@ -138,7 +155,7 @@ class Invitation(models.Model):
     email = models.EmailField()
     organization = models.ForeignKey('Organization', on_delete=models.CASCADE, related_name='invitations')
     role = models.CharField(max_length=10, choices=ORG_ROLE_CHOICES, default='viewer')
-    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    token = models.UUIDField(default=uuid_module.uuid4, unique=True, editable=False)
     invited_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_invitations')
     created_at = models.DateTimeField(auto_now_add=True)
     accepted_at = models.DateTimeField(null=True, blank=True)
@@ -158,7 +175,7 @@ class Invitation(models.Model):
         return f"{self.email} → {self.organization.name} ({self.role})"
 
 class SurveyHeader(models.Model):
-    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    uuid = models.UUIDField(default=uuid_module.uuid4, unique=True, editable=False)
     organization = models.ForeignKey("Organization", on_delete=models.CASCADE)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_surveys')
     name = models.CharField(max_length=45, validators=[validate_url_name])
@@ -167,12 +184,87 @@ class SurveyHeader(models.Model):
     visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default="private", help_text=_('Controls whether survey appears on the landing page'))
     is_archived = models.BooleanField(default=False, help_text=_('Marks completed surveys whose results can be shown'))
     thanks_html = models.JSONField(default=dict, blank=True, help_text=_('Custom HTML for thanks page. Dict keyed by language: {"en": "<h1>Thanks!</h1>", "ru": "<h1>Спасибо!</h1>"} or a plain string.'))
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
+    password_hash = models.CharField(max_length=128, null=True, blank=True)
+    test_token = models.UUIDField(default=uuid_module.uuid4, unique=True)
+
+    # Versioning fields
+    canonical_survey = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='versions',
+        help_text=_('For archived versions, points to the canonical survey')
+    )
+    version_number = models.PositiveIntegerField(default=1)
+    is_canonical = models.BooleanField(default=True, db_index=True)
+    published_version = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='draft_copies',
+        help_text=_('For draft copies, points to the canonical survey being edited')
+    )
 
     class Meta:
         app_label = 'survey'
+        indexes = [
+            models.Index(fields=['canonical_survey', '-version_number']),
+        ]
 
     def __str__(self):
         return self.name
+
+    def set_password(self, raw_password):
+        self.password_hash = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        if not self.password_hash:
+            return False
+        return django_check_password(raw_password, self.password_hash)
+
+    def has_password(self):
+        return bool(self.password_hash)
+
+    def clear_password(self):
+        self.password_hash = None
+
+    def regenerate_test_token(self):
+        self.test_token = uuid_module.uuid4()
+
+    def get_test_url(self, request):
+        from django.urls import reverse
+        base_url = reverse('survey_header', kwargs={'survey_slug': str(self.uuid)})
+        return request.build_absolute_uri(f'{base_url}?token={self.test_token}')
+
+    def can_accept_responses(self):
+        return self.status in ("testing", "published")
+
+    def can_transition_to(self, new_status):
+        valid = VALID_TRANSITIONS.get(self.status, [])
+        if new_status not in valid:
+            if not valid:
+                return False, f"Cannot transition from {self.status}"
+            return False, f"Cannot transition from {self.status} to {new_status}"
+
+        if new_status == "testing":
+            if not self._has_survey_structure():
+                return False, "Survey must have at least one section with questions"
+            if not self._has_head_section():
+                return False, "Survey must have a head section"
+
+        if new_status == "published" and self.status == "draft":
+            if not self._has_survey_structure():
+                return False, "Survey must have at least one section with questions"
+            if not self._has_head_section():
+                return False, "Survey must have a head section"
+
+        return True, ""
+
+    def _has_survey_structure(self):
+        sections = SurveySection.objects.filter(survey_header=self)
+        if not sections.exists():
+            return False
+        return Question.objects.filter(survey_section__in=sections).exists()
+
+    def _has_head_section(self):
+        return SurveySection.objects.filter(survey_header=self, is_head=True).exists()
 
     def start_section(self):
         if not hasattr(self, "__sscache"):
@@ -204,6 +296,22 @@ class SurveyHeader(models.Model):
 
     def is_multilingual(self):
         return bool(self.available_languages and len(self.available_languages) > 0)
+
+    # Versioning methods
+    def has_draft_copy(self):
+        return self.draft_copies.exists()
+
+    def get_draft_copy(self):
+        return self.draft_copies.first()
+
+    @property
+    def is_draft_copy(self):
+        return self.published_version_id is not None
+
+    def get_version_history(self):
+        return SurveyHeader.objects.filter(
+            canonical_survey=self, is_canonical=False
+        ).order_by('-version_number')
 
 
 class SurveyCollaborator(models.Model):

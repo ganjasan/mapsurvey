@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ survey.name }} - {% trans "Survey Closed" %}{% endblock %}
+
+{% block content %}
+<div class="container text-center" style="max-width: 500px; margin-top: 100px;">
+    <i class="fas fa-clipboard-check fa-3x text-muted mb-4" style="display:block;"></i>
+    <h3>{{ survey.name }}</h3>
+    <p class="text-muted mt-3">{% trans "This survey is no longer accepting responses." %}</p>
+    <a href="{% url 'index' %}" class="btn btn-outline-primary mt-4">{% trans "Back to Home" %}</a>
+</div>
+{% endblock %}

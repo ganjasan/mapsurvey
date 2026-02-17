@@ -10,7 +10,7 @@ from django.utils import translation
 from django.views.decorators.http import require_POST
 
 from .models import (
-    SurveyHeader, SurveySection, SurveySectionTranslation,
+    SurveyHeader, SurveySession, SurveySection, SurveySectionTranslation,
     Question, QuestionTranslation, SurveyCollaborator,
     Membership, SURVEY_ROLE_CHOICES,
 )
@@ -20,6 +20,14 @@ from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role,
 )
+from .versioning import clone_survey_for_draft, check_draft_compatibility, publish_draft, IncompatibleDraftError
+
+
+def _check_structural_edit_allowed(survey):
+    """Return HttpResponse(403) if survey is read-only, else None."""
+    if survey.status in ('published', 'closed'):
+        return HttpResponse('Structural edits are not allowed on published or closed surveys', status=403)
+    return None
 
 
 def _get_sections_ordered(survey):
@@ -108,6 +116,15 @@ def editor_survey_detail(request, survey_uuid):
         )
 
     can_edit = request.effective_survey_role in ('editor', 'owner')
+    is_read_only = survey.status in ('published', 'closed')
+    is_owner = request.effective_survey_role == 'owner'
+
+    # Versioning context
+    draft_copy = survey.get_draft_copy() if not survey.is_draft_copy else None
+    show_edit_published = (
+        is_owner and survey.status == 'published' and not survey.has_draft_copy()
+    )
+    show_draft_actions = is_owner and survey.is_draft_copy
 
     return render(request, 'editor/survey_detail.html', {
         'survey': survey,
@@ -115,7 +132,12 @@ def editor_survey_detail(request, survey_uuid):
         'current_section': current_section,
         'questions': questions,
         'effective_role': request.effective_survey_role,
-        'can_edit': can_edit,
+        'can_edit': can_edit and not is_read_only,
+        'is_read_only': is_read_only,
+        'is_owner': is_owner,
+        'draft_copy': draft_copy,
+        'show_edit_published': show_edit_published,
+        'show_draft_actions': show_draft_actions,
     })
 
 
@@ -145,6 +167,9 @@ def editor_survey_settings(request, survey_uuid):
 @require_POST
 def editor_section_create(request, survey_uuid):
     survey = request.survey
+    blocked = _check_structural_edit_allowed(survey)
+    if blocked:
+        return blocked
     sections = _get_sections_ordered(survey)
 
     # Generate next section number (avoid name collisions)
@@ -181,6 +206,9 @@ def editor_section_detail(request, survey_uuid, section_id):
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
     if request.method == 'POST':
+        blocked = _check_structural_edit_allowed(survey)
+        if blocked:
+            return blocked
         form = SurveySectionForm(request.POST, instance=section)
         if form.is_valid():
             form.save()
@@ -227,6 +255,9 @@ def _save_section_translations(request, section, survey):
 @require_POST
 def editor_section_delete(request, survey_uuid, section_id):
     survey = request.survey
+    blocked = _check_structural_edit_allowed(survey)
+    if blocked:
+        return blocked
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
     prev_sec = section.prev_section
@@ -256,6 +287,9 @@ def editor_section_delete(request, survey_uuid, section_id):
 @require_POST
 def editor_sections_reorder(request, survey_uuid):
     survey = request.survey
+    blocked = _check_structural_edit_allowed(survey)
+    if blocked:
+        return blocked
     section_ids = request.POST.getlist('section_ids[]')
 
     if not section_ids:
@@ -286,6 +320,9 @@ def editor_sections_reorder(request, survey_uuid):
 @survey_permission_required('editor')
 def editor_question_create(request, survey_uuid, section_id):
     survey = request.survey
+    blocked = _check_structural_edit_allowed(survey)
+    if blocked:
+        return blocked
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
     if request.method == 'POST':
@@ -328,6 +365,9 @@ def editor_question_create(request, survey_uuid, section_id):
 @survey_permission_required('editor')
 def editor_question_edit(request, survey_uuid, question_id):
     survey = request.survey
+    blocked = _check_structural_edit_allowed(survey)
+    if blocked:
+        return blocked
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
 
     if request.method == 'POST':
@@ -402,6 +442,9 @@ def editor_question_preview(request, survey_uuid, question_id):
 @require_POST
 def editor_question_delete(request, survey_uuid, question_id):
     survey = request.survey
+    blocked = _check_structural_edit_allowed(survey)
+    if blocked:
+        return blocked
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
     question.delete()
     return HttpResponse('')
@@ -427,6 +470,9 @@ def _save_question_translations(request, question, survey):
 @require_POST
 def editor_questions_reorder(request, survey_uuid):
     survey = request.survey
+    blocked = _check_structural_edit_allowed(survey)
+    if blocked:
+        return blocked
     question_ids = request.POST.getlist('question_ids[]')
 
     if not question_ids:
@@ -450,6 +496,9 @@ def editor_questions_reorder(request, survey_uuid):
 @survey_permission_required('editor')
 def editor_subquestion_create(request, survey_uuid, parent_id):
     survey = request.survey
+    blocked = _check_structural_edit_allowed(survey)
+    if blocked:
+        return blocked
     parent = get_object_or_404(Question, id=parent_id, survey_section__survey_header=survey)
 
     if request.method == 'POST':
@@ -492,6 +541,9 @@ def editor_section_map_picker(request, survey_uuid, section_id):
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
     if request.method == 'POST':
+        blocked = _check_structural_edit_allowed(survey)
+        if blocked:
+            return blocked
         lat = float(request.POST.get('lat', 59.945))
         lng = float(request.POST.get('lng', 30.317))
         zoom = int(request.POST.get('zoom', 12))
@@ -653,3 +705,129 @@ def _render_collaborator_list(request, survey):
         'available_members': available_members,
         'survey_role_choices': [r[0] for r in SURVEY_ROLE_CHOICES],
     })
+
+
+# ─── Lifecycle transitions ──────────────────────────────────────────────────
+
+@survey_permission_required('owner')
+@require_POST
+def editor_survey_transition(request, survey_uuid):
+    """Transition survey to a new lifecycle status."""
+    survey = request.survey
+    new_status = request.POST.get('status', '')
+
+    can, error = survey.can_transition_to(new_status)
+    if not can:
+        return HttpResponse(error, status=400)
+
+    # Test data cleanup on testing → published
+    if survey.status == 'testing' and new_status == 'published':
+        if request.POST.get('clear_test_data') == 'true':
+            SurveySession.objects.filter(survey=survey).delete()
+
+    survey.status = new_status
+
+    # Sync is_archived flag
+    if new_status == 'archived':
+        survey.is_archived = True
+
+    survey.save(update_fields=['status', 'is_archived'])
+
+    if request.headers.get('HX-Request'):
+        return HttpResponse(status=204, headers={'HX-Trigger': 'statusChanged'})
+    return redirect('editor_survey_detail', survey_uuid=survey.uuid)
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_survey_password(request, survey_uuid):
+    """Manage survey password and test token."""
+    survey = request.survey
+    action = request.POST.get('action', '')
+
+    if action == 'set':
+        password = request.POST.get('password', '')
+        if len(password) < 4:
+            return HttpResponse('Password must be at least 4 characters', status=400)
+        survey.set_password(password)
+        survey.save(update_fields=['password_hash'])
+
+    elif action == 'remove':
+        survey.clear_password()
+        survey.save(update_fields=['password_hash'])
+
+    elif action == 'regenerate_token':
+        survey.regenerate_test_token()
+        survey.save(update_fields=['test_token'])
+
+    else:
+        return HttpResponse('Invalid action', status=400)
+
+    if request.headers.get('HX-Request'):
+        return render(request, 'editor/partials/survey_password_modal.html', {
+            'survey': survey,
+        })
+    return redirect('editor_survey_detail', survey_uuid=survey.uuid)
+
+
+# ─── Versioning endpoints ──────────────────────────────────────────────────
+
+@survey_permission_required('owner')
+@require_POST
+def editor_create_draft(request, survey_uuid):
+    """Create a draft copy of a published survey for editing."""
+    survey = request.survey
+
+    if survey.status != 'published':
+        return HttpResponse('Only published surveys can have draft copies', status=400)
+
+    if survey.has_draft_copy():
+        return redirect('editor_survey_detail', survey_uuid=survey.get_draft_copy().uuid)
+
+    draft = clone_survey_for_draft(survey)
+    return redirect('editor_survey_detail', survey_uuid=draft.uuid)
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_publish_draft(request, survey_uuid):
+    """Publish a draft copy as a new version of the canonical survey."""
+    survey = request.survey
+
+    if not survey.is_draft_copy:
+        return HttpResponse('This survey is not a draft copy', status=400)
+
+    force = request.POST.get('force') == 'true'
+
+    try:
+        canonical = publish_draft(survey, force=force)
+    except IncompatibleDraftError as e:
+        return JsonResponse({'issues': e.issues}, status=409)
+
+    return redirect('editor_survey_detail', survey_uuid=canonical.uuid)
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_discard_draft(request, survey_uuid):
+    """Discard a draft copy without affecting the canonical survey."""
+    survey = request.survey
+
+    if not survey.is_draft_copy:
+        return HttpResponse('This survey is not a draft copy', status=400)
+
+    canonical = survey.published_version
+    survey.delete()
+    return redirect('editor_survey_detail', survey_uuid=canonical.uuid)
+
+
+@survey_permission_required('editor')
+def editor_check_compatibility(request, survey_uuid):
+    """Check backward compatibility of a draft against its canonical survey."""
+    survey = request.survey
+
+    if not survey.is_draft_copy:
+        return JsonResponse({'error': 'Not a draft copy'}, status=400)
+
+    issues = check_draft_compatibility(survey, survey.published_version)
+    return JsonResponse({'issues': issues})
