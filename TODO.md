@@ -8,6 +8,7 @@
   - Archived: `openspec/changes/archive/2026-02-01-survey-import-export/`
 
 ## Features
+- [ ] Надо попробовать создать точную копию Let's try this out from https://www.partimap.eu/en, https://k-monitor.hu/technology
 
 - [ ] Add user geolocation tracking with survey responses
   - Use browser Geolocation API to get user coordinates
@@ -22,6 +23,9 @@
 
 ## Editor
 
+- [ ] Кнопка «Посмотреть опрос» в редакторе
+  - Добавить кнопку для перехода на публичную страницу опроса из редактора
+
 - [x] Implement Delete Survey button in `/editor/` 01.02.26
   - Add `delete_survey` view with confirmation
   - Add URL route `/editor/delete/<name>/`
@@ -33,6 +37,12 @@
   - Иконка вопроса налезает на текст
   - Текст subtext обтекает иконку некорректно
   - Нужно исправить CSS для `.geo-question` или аналогичного класса
+
+- [x] Пароль на опросе не работает
+  - Тестовый опрос публично доступен любому пользователю
+  - Парольная защита не блокирует доступ к опросу
+
+- [ ] Не отображаются иконки в браузере Opera
 
 - [ ] Slider (range input) отображается без рисок
   - Добавить tick marks для визуализации значений
