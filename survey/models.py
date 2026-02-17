@@ -244,8 +244,6 @@ class SurveyHeader(models.Model):
             return False, f"Cannot transition from {self.status} to {new_status}"
 
         if new_status == "testing":
-            if not self.has_password():
-                return False, "Testing state requires a password"
             if not self._has_survey_structure():
                 return False, "Survey must have at least one section with questions"
             if not self._has_head_section():

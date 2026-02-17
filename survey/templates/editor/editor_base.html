@@ -535,6 +535,43 @@
 
     {% block content %}{% endblock %}
 
+    <script>
+    function initPasswordToggles(root) {
+        (root || document).querySelectorAll('input[type="password"]:not([data-pwd-toggle])').forEach(function(input) {
+            input.setAttribute('data-pwd-toggle', '1');
+            var group = input.closest('.input-group');
+            if (group) {
+                var append = group.querySelector('.input-group-append');
+                if (!append) {
+                    append = document.createElement('div');
+                    append.className = 'input-group-append';
+                    group.appendChild(append);
+                }
+            } else {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'input-group';
+                input.parentNode.insertBefore(wrapper, input);
+                wrapper.appendChild(input);
+                var append = document.createElement('div');
+                append.className = 'input-group-append';
+                wrapper.appendChild(append);
+            }
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-outline-secondary';
+            btn.style.cssText = 'border-color:#ced4da;color:#6b7280;';
+            btn.innerHTML = '<i class="fas fa-eye"></i>';
+            append.prepend(btn);
+            btn.addEventListener('click', function() {
+                var isPassword = input.type === 'password';
+                input.type = isPassword ? 'text' : 'password';
+                this.innerHTML = isPassword ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+            });
+        });
+    }
+    document.addEventListener('DOMContentLoaded', function() { initPasswordToggles(); });
+    document.body.addEventListener('htmx:afterSettle', function(e) { initPasswordToggles(e.detail.target); });
+    </script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

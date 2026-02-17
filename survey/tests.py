@@ -6630,40 +6630,37 @@ class LifecycleTransitionTest(TestCase):
             self.assertFalse(ok)
             self.assertIn('Cannot transition from archived', err)
 
-    def test_draft_to_testing_requires_password(self):
+    def test_draft_to_testing_without_password_allowed(self):
         """
-        GIVEN a draft survey without password
+        GIVEN a draft survey without password but with valid structure
         WHEN checking can_transition_to('testing')
-        THEN it should fail with password required error
+        THEN it should succeed (password is optional)
         """
         ok, err = self.survey.can_transition_to('testing')
-        self.assertFalse(ok)
-        self.assertIn('password', err.lower())
+        self.assertTrue(ok)
 
     def test_draft_to_testing_requires_structure(self):
         """
-        GIVEN a draft survey with password but no sections/questions
+        GIVEN a draft survey with no sections/questions
         WHEN checking can_transition_to('testing')
         THEN it should fail with structure required error
         """
         empty_survey = SurveyHeader.objects.create(
             name='empty', organization=self.org,
         )
-        empty_survey.set_password('test1234')
         ok, err = empty_survey.can_transition_to('testing')
         self.assertFalse(ok)
         self.assertIn('section', err.lower())
 
     def test_draft_to_testing_requires_head_section(self):
         """
-        GIVEN a draft survey with password and questions but no head section
+        GIVEN a draft survey with questions but no head section
         WHEN checking can_transition_to('testing')
         THEN it should fail with head section error
         """
         survey = SurveyHeader.objects.create(
             name='no_head', organization=self.org,
         )
-        survey.set_password('test1234')
         section = SurveySection.objects.create(
             survey_header=survey, name='s1', code='S1', is_head=False,
         )

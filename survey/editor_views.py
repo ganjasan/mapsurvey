@@ -753,8 +753,6 @@ def editor_survey_password(request, survey_uuid):
         survey.save(update_fields=['password_hash'])
 
     elif action == 'remove':
-        if survey.status == 'testing':
-            return HttpResponse('Cannot remove password while in Testing status', status=400)
         survey.clear_password()
         survey.save(update_fields=['password_hash'])
 

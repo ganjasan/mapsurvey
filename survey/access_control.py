@@ -33,7 +33,7 @@ def check_survey_access(request, survey):
 
 
 def _check_testing_access(request, survey):
-    """Testing surveys require a valid test token or password."""
+    """Testing surveys require a valid test token or password (if set)."""
     session_key = f'test_access_{survey.id}'
 
     # Already validated in this session
@@ -51,6 +51,10 @@ def _check_testing_access(request, survey):
                 return None
         except (ValueError, AttributeError):
             pass
+
+    # If no password set, allow open access in testing
+    if not survey.has_password():
+        return None
 
     # Check password session
     password_key = f'survey_password_{survey.id}'
