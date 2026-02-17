@@ -139,6 +139,14 @@
                 font-size: 0.95rem;
                 transition: border-color 0.15s;
             }
+            .auth-card .input-group {
+                display: flex;
+            }
+            .auth-card .input-group .form-control {
+                width: 1%;
+                flex: 1 1 auto;
+                border-radius: 6px 0 0 6px;
+            }
             .auth-card .form-group input:focus,
             .auth-card .form-group select:focus,
             .auth-card .form-group textarea:focus {
@@ -260,34 +268,9 @@
         	{% endblock %}
         </div>
     <script>
-    document.querySelectorAll('input[type="password"]').forEach(function(input) {
-        if (input.closest('.input-group')) {
-            var append = input.closest('.input-group').querySelector('.input-group-append');
-            if (!append) {
-                append = document.createElement('div');
-                append.className = 'input-group-append';
-                input.closest('.input-group').appendChild(append);
-            }
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'btn pwd-toggle-btn';
-            btn.innerHTML = '<i class="fas fa-eye"></i>';
-            append.prepend(btn);
-        } else {
-            var wrapper = document.createElement('div');
-            wrapper.className = 'input-group';
-            input.parentNode.insertBefore(wrapper, input);
-            wrapper.appendChild(input);
-            var append = document.createElement('div');
-            append.className = 'input-group-append';
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'btn pwd-toggle-btn';
-            btn.innerHTML = '<i class="fas fa-eye"></i>';
-            append.appendChild(btn);
-            wrapper.appendChild(append);
-        }
+    document.querySelectorAll('.pwd-toggle-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
+            var input = this.closest('.input-group').querySelector('input');
             var isPassword = input.type === 'password';
             input.type = isPassword ? 'text' : 'password';
             this.innerHTML = isPassword ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
