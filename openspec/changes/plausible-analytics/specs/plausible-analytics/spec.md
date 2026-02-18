@@ -1,30 +1,26 @@
 ## ADDED Requirements
 
-### Requirement: Plausible script is configurable via environment variables
-The system SHALL read `PLAUSIBLE_DOMAIN` and `PLAUSIBLE_SCRIPT_URL` from environment variables. `PLAUSIBLE_DOMAIN` defaults to empty string. `PLAUSIBLE_SCRIPT_URL` defaults to `https://plausible.io/js/script.js`. Both values SHALL be exposed to all templates via an `analytics` context processor.
+### Requirement: Plausible script is configurable via environment variable
+The system SHALL read `PLAUSIBLE_SCRIPT_URL` from an environment variable. It defaults to empty string (analytics disabled). The value SHALL be exposed to all templates via an `analytics` context processor.
 
-#### Scenario: Environment variables are set
-- **WHEN** `PLAUSIBLE_DOMAIN` is set to `example.com` in the environment
-- **THEN** the context processor SHALL inject `PLAUSIBLE_DOMAIN='example.com'` and `PLAUSIBLE_SCRIPT_URL` into every template context
+#### Scenario: Environment variable is set
+- **WHEN** `PLAUSIBLE_SCRIPT_URL` is set to a Plausible script URL (e.g., `https://plausible.io/js/pa-lwntAkTnmyk5UaA7Vjaw4.js`)
+- **THEN** the context processor SHALL inject `PLAUSIBLE_SCRIPT_URL` into every template context
 
-#### Scenario: Environment variables are not set
-- **WHEN** `PLAUSIBLE_DOMAIN` is not set in the environment
-- **THEN** the context processor SHALL inject `PLAUSIBLE_DOMAIN=''` (empty string) into every template context
+#### Scenario: Environment variable is not set
+- **WHEN** `PLAUSIBLE_SCRIPT_URL` is not set in the environment
+- **THEN** the context processor SHALL inject `PLAUSIBLE_SCRIPT_URL=''` (empty string) into every template context
 
 ### Requirement: Plausible script tag renders on all pages when configured
-The system SHALL render a `<script defer data-domain="..." src="..."></script>` tag in the `<head>` of every page when `PLAUSIBLE_DOMAIN` is non-empty. The script tag SHALL be included via a shared template partial (`partials/_analytics.html`) in all 4 base templates: `base_survey_template.html`, `base.html`, `base_landing.html`, `editor/editor_base.html`.
+The system SHALL render the Plausible `<script async src="..."></script>` tag and init block in the `<head>` of every page when `PLAUSIBLE_SCRIPT_URL` is non-empty. The script SHALL be included via a shared template partial (`partials/_analytics.html`) in all 4 base templates: `base_survey_template.html`, `base.html`, `base_landing.html`, `editor/editor_base.html`.
 
 #### Scenario: Analytics enabled
-- **WHEN** `PLAUSIBLE_DOMAIN` is set to `mapsurvey.org`
-- **THEN** every page SHALL contain `<script defer data-domain="mapsurvey.org" src="https://plausible.io/js/script.js"></script>` in the HTML head
+- **WHEN** `PLAUSIBLE_SCRIPT_URL` is set
+- **THEN** every page SHALL contain the async script tag and `plausible.init()` block in the HTML head
 
 #### Scenario: Analytics disabled
-- **WHEN** `PLAUSIBLE_DOMAIN` is empty or unset
+- **WHEN** `PLAUSIBLE_SCRIPT_URL` is empty or unset
 - **THEN** no Plausible script tag SHALL appear in any page's HTML
-
-#### Scenario: Self-hosted Plausible
-- **WHEN** `PLAUSIBLE_SCRIPT_URL` is set to `https://stats.example.com/js/script.js`
-- **THEN** the script tag's `src` attribute SHALL use that URL instead of the default
 
 ### Requirement: Yandex Metrica is removed
 The hardcoded Yandex Metrica script (counter ID 53686546) SHALL be removed from `base_survey_template.html`. No Yandex Metrica code SHALL remain in any template.
@@ -37,7 +33,7 @@ The hardcoded Yandex Metrica script (counter ID 53686546) SHALL be removed from 
 The system SHALL fire a `survey_start` Plausible custom event when a respondent views the first section of a survey. The event SHALL include a `survey` property with the survey name.
 
 #### Scenario: First section loaded
-- **WHEN** `PLAUSIBLE_DOMAIN` is configured AND the respondent loads the first section of a survey (no previous section exists)
+- **WHEN** `PLAUSIBLE_SCRIPT_URL` is configured AND the respondent loads the first section of a survey (no previous section exists)
 - **THEN** the page SHALL call `plausible('survey_start', {props: {survey: '<survey_name>'}})` on page load
 
 #### Scenario: Non-first section loaded
@@ -48,14 +44,14 @@ The system SHALL fire a `survey_start` Plausible custom event when a respondent 
 The system SHALL fire a `survey_section_complete` Plausible custom event when a respondent submits a section form. The event SHALL include `survey`, `section`, and `section_number` properties.
 
 #### Scenario: Section form submitted
-- **WHEN** `PLAUSIBLE_DOMAIN` is configured AND the respondent submits a section form
+- **WHEN** `PLAUSIBLE_SCRIPT_URL` is configured AND the respondent submits a section form
 - **THEN** the page SHALL call `plausible('survey_section_complete', {props: {survey: '<name>', section: '<section_name>', section_number: <N>}})` before the form navigates away
 
 ### Requirement: Survey complete event fires on thanks page
 The system SHALL fire a `survey_complete` Plausible custom event when the thanks page loads. The event SHALL include a `survey` property with the survey name.
 
 #### Scenario: Thanks page loaded
-- **WHEN** `PLAUSIBLE_DOMAIN` is configured AND the respondent reaches the thanks page
+- **WHEN** `PLAUSIBLE_SCRIPT_URL` is configured AND the respondent reaches the thanks page
 - **THEN** the page SHALL call `plausible('survey_complete', {props: {survey: '<survey_name>'}})` on page load
 
 ### Requirement: Events are guarded against blocked scripts

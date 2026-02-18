@@ -58,6 +58,21 @@
 
 {% block section_scripts %}
 
+{% if PLAUSIBLE_SCRIPT_URL %}
+<script>
+{% if section_current == 1 %}
+if (typeof plausible !== 'undefined') {
+    plausible('survey_start', {props: {survey: '{{ survey.name|escapejs }}'}});
+}
+{% endif %}
+document.getElementById('section_question_form').addEventListener('submit', function() {
+    if (typeof plausible !== 'undefined') {
+        plausible('survey_section_complete', {props: {survey: '{{ survey.name|escapejs }}', section: '{{ section.name|escapejs }}', section_number: {{ section_current }}}});
+    }
+});
+</script>
+{% endif %}
+
 <script type="text/javascript">
 
     //var map = L.map('map', {zoomControl: false}).setView(["{{ section.start_map_postion.y }}".replace(",","."), "{{ section.start_map_postion.x }}".replace(",",".")], "{{ section.start_map_zoom }}");

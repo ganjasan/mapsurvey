@@ -19,6 +19,12 @@ def contact(request):
     }
 
 
+def analytics(request):
+    return {
+        'PLAUSIBLE_SCRIPT_URL': getattr(settings, 'PLAUSIBLE_SCRIPT_URL', ''),
+    }
+
+
 def active_org(request):
     """Inject active organization and user's org list into template context."""
     if not hasattr(request, 'user') or not request.user.is_authenticated:
