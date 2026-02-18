@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models import Q, Prefetch, Count
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import translation
+from django.utils.translation import override as lang_override
 from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator
 from .permissions import (
     org_permission_required, survey_permission_required,
@@ -126,6 +127,7 @@ def resolve_survey(survey_slug):
         raise Http404
     raise Http404
 
+@lang_override('en')
 def index(request):
 	surveys = (
 		SurveyHeader.objects

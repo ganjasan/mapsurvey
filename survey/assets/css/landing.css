@@ -765,93 +765,6 @@ a:hover { color: var(--color-accent-hover); }
 }
 
 /* ============================
-   COMPARISON TABLE
-   ============================ */
-.comparison {
-    padding: var(--section-padding);
-}
-
-.comparison__wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-bg-elevated);
-}
-
-.comparison__table {
-    width: 100%;
-    min-width: 640px;
-    border-collapse: collapse;
-    font-size: 0.9375rem;
-}
-
-.comparison__table thead {
-    position: sticky;
-    top: 0;
-}
-
-.comparison__table th {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 0.875rem;
-    padding: 1rem 1.25rem;
-    text-align: center;
-    background: var(--color-bg-warm);
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-text);
-}
-
-.comparison__feature-col {
-    width: 180px;
-    text-align: left !important;
-}
-
-.comparison__table td {
-    padding: 0.75rem 1.25rem;
-    text-align: center;
-    border-bottom: 1px solid var(--color-border-light);
-    color: var(--color-text-secondary);
-}
-
-.comparison__table tr:last-child td { border-bottom: none; }
-
-.comparison__table td:first-child {
-    font-family: var(--font-display);
-    font-weight: 500;
-    font-size: 0.875rem;
-    text-align: left;
-    color: var(--color-text);
-}
-
-/* Highlight Mapsurvey column */
-.comparison__product--highlight {
-    background: var(--color-accent-light) !important;
-    color: var(--color-accent) !important;
-    font-weight: 600;
-}
-
-.cmp-yes { color: var(--color-accent); font-weight: 700; font-size: 1.125rem; }
-.cmp-no { color: var(--color-text-tertiary); font-size: 1.125rem; }
-.cmp-partial { color: var(--color-text-secondary); font-size: 1.125rem; }
-
-.comparison__footnote {
-    margin-top: 1rem;
-    font-size: 0.8125rem;
-    color: var(--color-text-tertiary);
-    font-style: italic;
-}
-
-.comparison__tagline {
-    margin-top: 1.5rem;
-    font-family: var(--font-display);
-    font-size: 1.125rem;
-    color: var(--color-text-secondary);
-}
-
-.comparison__tagline strong { color: var(--color-accent); }
-
-/* ============================
    USE CASES
    ============================ */
 .use-cases {
@@ -1506,9 +1419,6 @@ a:hover { color: var(--color-accent-hover); }
     /* Pricing */
     .pricing__grid { grid-template-columns: 1fr; }
     .pricing-card:nth-child(3) { max-width: none; }
-
-    /* Comparison — horizontal scroll */
-    .comparison__wrap { margin: 0 calc(-1 * var(--section-inline-pad)); border-radius: 0; border-left: none; border-right: none; max-width: 100vw; }
 
     /* Footer */
     .landing-footer__inner {
