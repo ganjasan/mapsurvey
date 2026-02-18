@@ -1,6 +1,18 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
+{% block extra_head %}
+{% if PLAUSIBLE_SCRIPT_URL %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof plausible !== 'undefined') {
+        plausible('survey_complete', {props: {survey: '{{ survey.name|escapejs }}'}});
+    }
+});
+</script>
+{% endif %}
+{% endblock %}
+
 {% block content %}
 {% if thanks_html %}
     {{ thanks_html|safe }}

@@ -89,6 +89,7 @@ TEMPLATES = [
                 'survey.context_processors.mapbox',
                 'survey.context_processors.contact',
                 'survey.context_processors.active_org',
+                'survey.context_processors.analytics',
             ],
         },
     },
@@ -236,6 +237,9 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False').lower() in ('true', '1')
 EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() in ('true', '1')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@mapsurvey.org')
+
+# Plausible Analytics
+PLAUSIBLE_SCRIPT_URL = os.environ.get('PLAUSIBLE_SCRIPT_URL', '')
 
 # Landing page
 CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'konuchovartem@gmail.com')
