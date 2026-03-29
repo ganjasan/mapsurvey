@@ -230,6 +230,10 @@ MAPBOX_ACCESS_TOKEN = os.environ.get('MAPBOX_ACCESS_TOKEN', '')
 # Email backend
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 AUTH_USER_EMAIL_UNIQUE = True
+
+AUTHENTICATION_BACKENDS = [
+    'survey.backends.EmailOrUsernameBackend',
+]
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 25))
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')

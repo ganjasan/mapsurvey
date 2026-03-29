@@ -22,14 +22,14 @@
 
     {% if form.errors %}
     <div class="alert alert-danger">
-        {% trans "Invalid username or password. Please try again." %}
+        {% trans "Invalid username/email or password. Please try again." %}
     </div>
     {% endif %}
 
     <form method="post" action="{% url 'login' %}">
         {% csrf_token %}
         <div class="form-group">
-            <label for="id_username">{{ form.username.label }}</label>
+            <label for="id_username">{% trans "Username or Email" %}</label>
             <input type="text" name="username" id="id_username" class="form-control" autofocus required>
         </div>
         <div class="form-group">
