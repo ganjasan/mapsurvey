@@ -1,3 +1,4 @@
+import re
 import uuid as uuid_mod
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -595,12 +596,17 @@ def download_data(request, survey_slug):
 
 	zip.close()
 	response = HttpResponse(content_type="application/zip")
-	response["Content-Disposition"] = "attachment; filename={filename}.zip".format(filename=survey.name)
+	response["Content-Disposition"] = "attachment; filename={filename}.zip".format(filename=_sanitize_filename(survey.name))
 
 	in_memory.seek(0)
 	response.write(in_memory.read())
 
 	return response
+
+
+def _sanitize_filename(name):
+	"""Remove characters that are invalid in Windows filenames."""
+	return re.sub(r'[<>:"/\\|?*]', '_', name)
 
 
 def _export_survey_data(zip, survey, prefix=''):
@@ -687,7 +693,7 @@ def _export_survey_data(zip, survey, prefix=''):
 		#geojson_str = serialize('geojson', answers, geometry_field=question.input_type)
 		
 		#cформировать файлы
-		zip.writestr(prefix + question.name + '.geojson', geojson_str)
+		zip.writestr(prefix + _sanitize_filename(question.name) + '.geojson', geojson_str)
 
 	#обработка обычных вопросов
 
@@ -721,7 +727,7 @@ def _export_survey_data(zip, survey, prefix=''):
 		properties["datetime"] = session.start_datetime
 		properties_list.append(properties)
 
-	zip.writestr(prefix + survey.name + '.csv', pd.DataFrame(properties_list).to_csv())
+	zip.writestr(prefix + _sanitize_filename(survey.name) + '.csv', pd.DataFrame(properties_list).to_csv())
 
 
 @survey_permission_required('viewer')
@@ -744,7 +750,7 @@ def export_survey(request, survey_uuid):
 			messages.warning(request, warning)
 
 		response = HttpResponse(content_type="application/zip")
-		response["Content-Disposition"] = f"attachment; filename=survey_{survey.name}_{mode}.zip"
+		response["Content-Disposition"] = f"attachment; filename=survey_{_sanitize_filename(survey.name)}_{mode}.zip"
 
 		in_memory.seek(0)
 		response.write(in_memory.read())
