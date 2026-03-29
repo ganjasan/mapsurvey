@@ -4,4 +4,6 @@ env/
 db.sqlite3
 user_surveys/
 .claude/mcp.json
-docs/infrastructure.md
+docs/
+staticfiles/
+mediafiles/
