@@ -48,6 +48,7 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/collaborators/<int:collaborator_id>/role/', editor_views.editor_collaborator_change_role, name='editor_collaborator_change_role'),
     path('editor/surveys/<uuid:survey_uuid>/collaborators/<int:collaborator_id>/remove/', editor_views.editor_collaborator_remove, name='editor_collaborator_remove'),
 
+    path('trust/', views.trust_page, name='trust_page'),
     path('surveys/', views.survey_list, name='survey_list'),
     path('surveys/<str:survey_slug>/', views.survey_header, name='survey'),
     path('surveys/<str:survey_slug>/language/', views.survey_language_select, name='survey_language_select'),

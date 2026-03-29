@@ -894,6 +894,11 @@ def resolve_thanks_html(thanks_html, lang):
 	return None
 
 
+@lang_override('en')
+def trust_page(request):
+	return render(request, 'trust.html')
+
+
 def robots_txt(request):
 	lines = [
 		"User-agent: *",
@@ -914,6 +919,7 @@ def sitemap_xml(request):
 		visibility__in=['public', 'demo'],
 	)
 	urls = [f"  <url><loc>{base}/</loc></url>"]
+	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
 	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
 	for survey in surveys:
 		urls.append(f"  <url><loc>{base}/surveys/{survey.uuid}/</loc></url>")

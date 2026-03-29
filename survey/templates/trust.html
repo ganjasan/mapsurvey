@@ -1,0 +1,152 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}Trust & Security — Mapsurvey{% endblock %}
+{% block meta_description %}Everything your IT security team needs to know about Mapsurvey: GDPR compliance, EU data residency, open-source transparency, and security measures.{% endblock %}
+{% block meta_keywords %}GDPR, data privacy, trust, security, data processing agreement, DPA, EU data residency, open source, SOC 2{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/trust/{% endblock %}
+{% block og_url %}https://mapsurvey.org/trust/{% endblock %}
+{% block og_title %}Trust & Security — Mapsurvey{% endblock %}
+
+{% block content %}
+<section class="trust-hero">
+    <div class="landing-inner">
+        <p class="section-eyebrow">Trust & Security</p>
+        <h1 class="trust-hero__headline">Built for institutional confidence</h1>
+        <p class="trust-hero__subtitle">
+            Everything your IT security team needs to know before approving Mapsurvey
+            for institutional use.
+        </p>
+    </div>
+</section>
+
+<div class="trust-content">
+    <div class="landing-inner">
+
+        {# === Data Privacy (GDPR) === #}
+        <section class="trust-section" id="data-privacy">
+            <h2 class="trust-section__title">
+                <span class="trust-section__icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </span>
+                Data Privacy (GDPR)
+            </h2>
+            <p class="trust-section__lead">Survey respondents remain fully anonymous. Mapsurvey collects no personal data from people filling out surveys.</p>
+            <ul class="trust-checklist">
+                <li><strong>No login required</strong> for survey respondents — anyone with the link can participate</li>
+                <li><strong>No cookies</strong> used for tracking or analytics purposes</li>
+                <li><strong>No IP addresses</strong> stored in survey responses or server logs</li>
+                <li><strong>No analytics</strong> tied to individual responses — aggregated data only</li>
+                <li><strong>No third-party trackers</strong> or advertising scripts</li>
+                <li><strong>Survey creators</strong> need an account (email and password only) — no further personal data required</li>
+            </ul>
+        </section>
+
+        {# === Hosting & Data Residency === #}
+        <section class="trust-section" id="hosting">
+            <h2 class="trust-section__title">
+                <span class="trust-section__icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                </span>
+                Hosting & Data Residency
+            </h2>
+            <p class="trust-section__lead">All data is stored and processed within the European Union.</p>
+            <ul class="trust-checklist">
+                <li><strong>Hosted on Render.com</strong> — Frankfurt, Germany (EU region)</li>
+                <li><strong>Data stays in the EU</strong> — no cross-border transfers outside the European Economic Area</li>
+                <li><strong>Render is SOC 2 Type II certified</strong> — independently audited security controls</li>
+                <li><strong>PostgreSQL database</strong> with encrypted connections (TLS)</li>
+                <li><strong>Self-hosting option</strong> — deploy on your own infrastructure for full data sovereignty</li>
+            </ul>
+        </section>
+
+        {# === Open Source & Transparency === #}
+        <section class="trust-section" id="open-source">
+            <h2 class="trust-section__title">
+                <span class="trust-section__icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                </span>
+                Open Source & Transparency
+            </h2>
+            <p class="trust-section__lead">The entire codebase is publicly available for audit and review.</p>
+            <ul class="trust-checklist">
+                {% if GITHUB_REPO_URL %}
+                <li><strong>Full source code</strong> available on <a href="{{ GITHUB_REPO_URL }}" target="_blank" rel="noopener">GitHub</a></li>
+                {% endif %}
+                <li><strong>Licensed under AGPLv3</strong> — guarantees source availability and user freedom</li>
+                <li><strong>Anyone can audit</strong> the code, verify claims, and inspect data handling</li>
+                <li><strong>No obfuscation</strong> — what you see in the repository is what runs in production</li>
+            </ul>
+        </section>
+
+        {# === Security === #}
+        <section class="trust-section" id="security">
+            <h2 class="trust-section__title">
+                <span class="trust-section__icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </span>
+                Security
+            </h2>
+            <p class="trust-section__lead">Industry-standard security practices are enforced at every layer.</p>
+            <ul class="trust-checklist">
+                <li><strong>HTTPS everywhere</strong> — all traffic encrypted in transit via TLS</li>
+                <li><strong>Django security framework</strong> — built-in CSRF protection, XSS prevention, SQL injection safeguards, clickjacking protection</li>
+                <li><strong>Password hashing</strong> — user passwords stored using PBKDF2 with SHA-256 (Django default)</li>
+                <li><strong>No third-party scripts</strong> — no external JavaScript, trackers, or CDN dependencies in the survey-taking flow</li>
+                <li><strong>Content Security Policy</strong> — strict headers to prevent code injection</li>
+                <li><strong>Regular dependency updates</strong> — security patches applied promptly</li>
+            </ul>
+        </section>
+
+        {# === Data Ownership === #}
+        <section class="trust-section" id="data-ownership">
+            <h2 class="trust-section__title">
+                <span class="trust-section__icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </span>
+                Data Ownership
+            </h2>
+            <p class="trust-section__lead">Survey creators retain full ownership of all collected data.</p>
+            <ul class="trust-checklist">
+                <li><strong>Your data is yours</strong> — Mapsurvey claims no rights over survey content or responses</li>
+                <li><strong>Export at any time</strong> — download responses as GeoJSON and CSV with a single click</li>
+                <li><strong>Delete at any time</strong> — removing a survey permanently deletes all associated data</li>
+                <li><strong>Account deletion</strong> — deleting your account removes all surveys, responses, and personal information</li>
+                <li><strong>No vendor lock-in</strong> — standard data formats ensure portability to other tools</li>
+            </ul>
+        </section>
+
+        {# === Who is behind Mapsurvey === #}
+        <section class="trust-section" id="about">
+            <h2 class="trust-section__title">
+                <span class="trust-section__icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </span>
+                Who is behind Mapsurvey
+            </h2>
+            <p class="trust-section__lead">
+                Mapsurvey is an independent open-source project created and maintained by Artem Konuchov.
+                It is not affiliated with any government, corporation, or commercial entity.
+                The project is driven by the need for accessible, privacy-respecting participatory mapping tools.
+            </p>
+        </section>
+
+        {# === DPA Download === #}
+        <section class="trust-section trust-section--cta" id="dpa">
+            <h2 class="trust-section__title">Data Processing Agreement</h2>
+            <p class="trust-section__lead">
+                For institutional users who require a formal Data Processing Agreement (DPA),
+                we provide a ready-to-sign template that covers data handling, security measures,
+                sub-processors, and GDPR compliance obligations.
+            </p>
+            <a href="{% static 'dpa/mapsurvey-dpa.pdf' %}" class="trust-dpa-btn" download>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download DPA Template (PDF)
+            </a>
+        </section>
+
+    </div>
+</div>
+{% endblock %}
