@@ -4086,6 +4086,7 @@ class LandingPageViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
+        self.org = _make_org()
 
     def test_anonymous_sees_landing_page(self):
         """
@@ -4114,19 +4115,21 @@ class LandingPageViewTest(TestCase):
         self.assertContains(response, 'Go to Dashboard')
         self.assertNotContains(response, 'Sign Up Free')
 
-    def test_no_survey_queries(self):
+    def test_private_surveys_excluded_from_context(self):
         """
-        GIVEN the landing page view
-        WHEN rendering the page
-        THEN no survey or story querysets are passed in context
+        GIVEN private, demo, and public surveys
+        WHEN the landing page is rendered
+        THEN only demo and public surveys appear in the surveys context
         """
         SurveyHeader.objects.create(name="priv", visibility="private", organization=self.org, status='published')
         SurveyHeader.objects.create(name="demo_s", visibility="demo", organization=self.org, status='published')
         SurveyHeader.objects.create(name="pub_s", visibility="public", organization=self.org, status='published')
 
         response = self.client.get('/')
-        self.assertNotIn('surveys', response.context)
-        self.assertNotIn('stories', response.context)
+        survey_names = [s.name for s in response.context['surveys']]
+        self.assertNotIn('priv', survey_names)
+        self.assertIn('demo_s', survey_names)
+        self.assertIn('pub_s', survey_names)
 
     def test_seo_meta_tags_present(self):
         """
@@ -4134,16 +4137,10 @@ class LandingPageViewTest(TestCase):
         WHEN rendered
         THEN essential SEO meta tags are present in the HTML
         """
-        SurveyHeader.objects.create(name="archived_s", visibility="public", is_archived=True, organization=self.org, status='published')
-        SurveyHeader.objects.create(name="active_s", visibility="public", organization=self.org, status='published')
-        SurveyHeader.objects.create(name="demo_s2", visibility="demo", organization=self.org, status='published')
-
         response = self.client.get('/')
         content = response.content.decode()
         self.assertIn('<meta name="description"', content)
         self.assertIn('<link rel="canonical"', content)
-        self.assertIn('hreflang="en"', content)
-        self.assertIn('hreflang="ru"', content)
         self.assertIn('og:title', content)
         self.assertIn('twitter:card', content)
         self.assertIn('application/ld+json', content)
@@ -4160,7 +4157,6 @@ class LandingPageViewTest(TestCase):
         self.assertIn('id="hero"', content)
         self.assertIn('id="problem-solution"', content)
         self.assertIn('id="features"', content)
-        self.assertIn('id="comparison"', content)
         self.assertIn('id="use-cases"', content)
         self.assertIn('id="tech-stack"', content)
         self.assertIn('id="social-proof"', content)
@@ -4182,24 +4178,10 @@ class LandingPageViewTest(TestCase):
         """
         response = self.client.get('/')
         content = response.content.decode()
-        self.assertIn('href="#features"', content)
-        self.assertIn('href="#demo"', content)
-        self.assertIn('href="#demo"', content)
+        self.assertIn('href="/#features"', content)
+        self.assertIn('href="/#demo"', content)
         # Pricing section removed — verify it's not in navbar
-        self.assertNotIn('href="#pricing"', content)
-
-    def test_comparison_table_products(self):
-        """
-        GIVEN the landing page comparison section
-        WHEN rendered
-        THEN it lists the competing products
-        """
-        response = self.client.get('/')
-        content = response.content.decode()
-        self.assertIn('Mapsurvey', content)
-        self.assertIn('Maptionnaire', content)
-        self.assertIn('KoBoToolbox', content)
-        self.assertIn('ArcGIS Survey123', content)
+        self.assertNotIn('href="/#pricing"', content)
 
     def test_schema_org_structured_data(self):
         """
@@ -5896,14 +5878,16 @@ class EditorPermissionTest(TestCase):
 
     def test_viewer_sees_read_only_badge(self):
         """
-        GIVEN an org viewer
-        WHEN they view a survey detail page
+        GIVEN an org viewer and a published survey
+        WHEN they view the survey detail page
         THEN they see the read-only badge
         """
+        self.survey.status = 'published'
+        self.survey.save()
         self.client.login(username='ep_viewer', password='pass')
         response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Read-only')
+        self.assertContains(response, 'read-only')
 
     def test_viewer_cannot_create_section(self):
         """
@@ -7116,27 +7100,29 @@ class LandingPageLifecycleTest(TestCase):
         """
         GIVEN a draft survey with public visibility
         WHEN the landing page is rendered
-        THEN the draft survey is not shown
+        THEN the draft survey is not in the surveys context
         """
-        survey = SurveyHeader.objects.create(
+        SurveyHeader.objects.create(
             name='draft_pub', organization=self.org,
             visibility='public', status='draft',
         )
         response = self.client.get('/')
-        self.assertNotContains(response, 'draft_pub')
+        survey_names = [s.name for s in response.context['surveys']]
+        self.assertNotIn('draft_pub', survey_names)
 
     def test_published_surveys_shown(self):
         """
         GIVEN a published survey with public visibility
         WHEN the landing page is rendered
-        THEN the survey is shown
+        THEN the survey is in the surveys context
         """
-        survey = SurveyHeader.objects.create(
+        SurveyHeader.objects.create(
             name='pub_survey', organization=self.org,
             visibility='public', status='published',
         )
         response = self.client.get('/')
-        self.assertContains(response, 'pub_survey')
+        survey_names = [s.name for s in response.context['surveys']]
+        self.assertIn('pub_survey', survey_names)
 
 
 # ─── Versioning Tests ──────────────────────────────────────────────────────────

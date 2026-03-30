@@ -417,7 +417,7 @@ def survey_section(request, survey_slug, section_name):
 											else:
 												pass
 										else:
-											if(sub_question.input_type == 'range') and value and value[0]:
+											if sub_question.input_type in ('number', 'range') and value and value[0]:
 												sub_answer.numeric = float(value[0])
 											else:
 												sub_answer.selected_choices = [int(v) for v in value if v]
@@ -439,7 +439,7 @@ def survey_section(request, survey_slug, section_name):
 
 				else:
 					answer = Answer(survey_session=survey_session, question=question)
-					if  question.input_type == "range":
+					if question.input_type in ("number", "range"):
 						answer.numeric = float(result[0])
 					else:
 						answer.selected_choices = [int(r) for r in result if r]
@@ -654,7 +654,12 @@ def _export_survey_data(zip, survey, prefix=''):
 				elif input_type == "number" or input_type == "range":
 					if subanswers[key]:
 						answer = subanswers[key][0]
-						result = answer.numeric
+						if answer.numeric is not None:
+							result = answer.numeric
+						elif answer.selected_choices:
+							result = answer.selected_choices[0]
+						else:
+							result = ""
 				elif input_type == "choice" or input_type == "rating":
 					if subanswers[key]:
 						answer = subanswers[key][0]
@@ -712,7 +717,12 @@ def _export_survey_data(zip, survey, prefix=''):
 			if (input_type == "text" or input_type == "text_line"):
 				result = answer.text
 			elif input_type == "number" or input_type == "range":
-				result = answer.numeric
+				if answer.numeric is not None:
+					result = answer.numeric
+				elif answer.selected_choices:
+					result = answer.selected_choices[0]
+				else:
+					result = ""
 			elif input_type == "choice" or input_type == "rating":
 				names = answer.get_selected_choice_names()
 				result = names[0] if names else ""
