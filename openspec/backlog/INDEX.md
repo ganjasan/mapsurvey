@@ -24,7 +24,8 @@
 | 14 | feature | [Limit geopoint count per question](feature-limit-geopoint-count.md) | medium | frontend | — | 2026-03-30 |
 | 14 | feature | [Feedback Widget](feature-feedback-widget.md) | medium | general | — | 2026-03-30 |
 | 14 | idea | [Digital Contour Maps — Geography Education](idea-digital-contour-maps-education.md) | medium | general | — | 2026-03-26 |
-| 15 | feature | [Progress bar for entire survey](feature-progress-bar.md) | low | frontend | — | 2026-03-26 |
-| 16 | feature | [Answer choice templates](feature-answer-choice-templates.md) | low | frontend | — | 2026-03-26 |
-| 17 | feature | [Audio upload question type](feature-audio-upload.md) | low | backend | — | 2026-03-26 |
-| 18 | improvement | [Survey visual customization (fonts, colors)](improvement-survey-visual-customization.md) | low | frontend | — | 2026-03-26 |
+| 15 | feature | [Geolocation Map Centering](feature-geolocation-map-centering.md) | medium | frontend | — | 2026-04-01 |
+| 16 | feature | [Progress bar for entire survey](feature-progress-bar.md) | low | frontend | — | 2026-03-26 |
+| 17 | feature | [Answer choice templates](feature-answer-choice-templates.md) | low | frontend | — | 2026-03-26 |
+| 18 | feature | [Audio upload question type](feature-audio-upload.md) | low | backend | — | 2026-03-26 |
+| 19 | improvement | [Survey visual customization (fonts, colors)](improvement-survey-visual-customization.md) | low | frontend | — | 2026-03-26 |

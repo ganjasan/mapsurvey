@@ -337,8 +337,9 @@ class SurveySection(models.Model):
     subheading = models.CharField(max_length=4096, null=True, blank=True) #Several question about your home area quality
     code = models.CharField(max_length=8)
 
-    start_map_postion = geomodels.PointField(default='POINT(30.317 59.945)')
+    start_map_postion = geomodels.PointField(default='POINT(13.405 52.52)')
     start_map_zoom = models.IntegerField(default=12)
+    use_geolocation = models.BooleanField(default=False)
 
     next_section = models.ForeignKey("SurveySection", null=True, blank=True, on_delete=models.SET_NULL, related_name='survey_next_section')
     prev_section = models.ForeignKey("SurveySection", null=True, blank=True, on_delete=models.SET_NULL, related_name='survey_prev_section')

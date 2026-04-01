@@ -7090,6 +7090,57 @@ class LifecycleSerializationTest(TestCase):
         self.assertFalse(imported_survey.has_password())
 
 
+class GeolocationSerializationTest(TestCase):
+    """Tests for use_geolocation field in serialization."""
+
+    def setUp(self):
+        self.org = _make_org('GeoLocOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='geoloc_test', organization=self.org, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+            use_geolocation=True,
+        )
+        Question.objects.create(
+            survey_section=self.section, code='Q1', name='Q1', input_type='point',
+        )
+
+    def test_export_import_roundtrip_preserves_use_geolocation(self):
+        """
+        GIVEN a section with use_geolocation=True
+        WHEN exported and re-imported
+        THEN the imported section has use_geolocation=True
+        """
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, mode='structure')
+        buf.seek(0)
+        imported_survey, _ = import_survey_from_zip(buf, organization=self.org)
+        imported_section = SurveySection.objects.get(survey_header=imported_survey)
+        self.assertTrue(imported_section.use_geolocation)
+
+    def test_import_without_use_geolocation_defaults_to_false(self):
+        """
+        GIVEN a survey archive without use_geolocation field in section data
+        WHEN imported
+        THEN the imported section has use_geolocation=False
+        """
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, mode='structure')
+        buf.seek(0)
+        with zipfile.ZipFile(buf, 'r') as zf:
+            content = json.loads(zf.read('survey.json'))
+        for s in content['survey']['sections']:
+            s.pop('use_geolocation', None)
+        buf2 = BytesIO()
+        with zipfile.ZipFile(buf2, 'w') as zf:
+            zf.writestr('survey.json', json.dumps(content))
+        buf2.seek(0)
+        imported_survey, _ = import_survey_from_zip(buf2, organization=self.org)
+        imported_section = SurveySection.objects.get(survey_header=imported_survey)
+        self.assertFalse(imported_section.use_geolocation)
+
+
 class LandingPageLifecycleTest(TestCase):
     """Tests for landing page lifecycle filtering."""
 

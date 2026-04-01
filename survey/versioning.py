@@ -71,6 +71,7 @@ def clone_survey_for_draft(canonical):
             code=section.code,
             start_map_postion=section.start_map_postion,
             start_map_zoom=section.start_map_zoom,
+            use_geolocation=section.use_geolocation,
             # next/prev resolved after all sections created
         )
         old_to_new_section[section.pk] = new_section

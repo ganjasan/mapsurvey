@@ -76,6 +76,7 @@ def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
             "is_head": section.is_head,
             "start_map_position": section.start_map_postion.wkt if section.start_map_postion else None,
             "start_map_zoom": section.start_map_zoom,
+            "use_geolocation": section.use_geolocation,
             "next_section_name": section.next_section.name if section.next_section else None,
             "prev_section_name": section.prev_section.name if section.prev_section else None,
             "translations": [
@@ -486,8 +487,9 @@ def create_sections(
             subheading=section_data.get("subheading"),
             code=section_data.get("code", "")[:8],
             is_head=section_data.get("is_head", False),
-            start_map_postion=start_map_position or Point(30.317, 59.945),
+            start_map_postion=start_map_position or Point(13.405, 52.52),
             start_map_zoom=section_data.get("start_map_zoom") or 12,
+            use_geolocation=section_data.get("use_geolocation", False),
             # next_section and prev_section are resolved later
         )
 

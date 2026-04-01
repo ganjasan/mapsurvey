@@ -3,7 +3,7 @@
     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
 </div>
 <div class="modal-body" style="padding:0;">
-    <div id="map-picker" style="height:400px;width:100%;"></div>
+    <div id="map-picker" style="height:400px;width:100%;position:relative;"></div>
     <div style="padding:0.75rem 1rem;font-size:0.85rem;color:#6b7280;">
         Click on the map to set the starting position. Adjust zoom as needed.
         <br>
@@ -12,6 +12,18 @@
             Lng: {{ section.start_map_postion.x|floatformat:5 }},
             Zoom: {{ section.start_map_zoom }}
         </span>
+    </div>
+    <div style="padding:0 1rem 0.75rem;">
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="use-geolocation"
+                   {% if section.use_geolocation %}checked{% endif %}>
+            <label class="form-check-label" for="use-geolocation"
+                   style="font-size:0.85rem;cursor:pointer;"
+                   title="When enabled, the map will auto-center on the respondent's browser location. Falls back to the configured position if geolocation is denied or unavailable.">
+                Use respondent's geolocation
+                <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
+            </label>
+        </div>
     </div>
 </div>
 <div class="modal-footer">
@@ -28,8 +40,10 @@
     // Wait for modal to be visible before initializing map
     setTimeout(function() {
         var map = L.map('map-picker').setView([lat, lng], zoom);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap'
+        L.tileLayer('{{ MAPBOX_URL }}', {
+            attribution: 'Data &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
+            maxZoom: 23,
+            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
         }).addTo(map);
 
         var marker = L.marker([lat, lng]).addTo(map);
@@ -54,6 +68,7 @@
             formData.append('lat', lat);
             formData.append('lng', lng);
             formData.append('zoom', zoom);
+            formData.append('use_geolocation', document.getElementById('use-geolocation').checked ? '1' : '0');
 
             fetch('{% url "editor_section_map_picker" survey.uuid section.id %}', {
                 method: 'POST',
@@ -63,6 +78,36 @@
                 $('#mapPickerModal').modal('hide');
             });
         });
+
+        // "My location" button
+        var LocateControl = L.Control.extend({
+            options: { position: 'topright' },
+            onAdd: function() {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                var link = L.DomUtil.create('a', '', container);
+                link.href = '#';
+                link.title = 'My location';
+                link.setAttribute('role', 'button');
+                link.setAttribute('aria-label', 'My location');
+                link.style.cssText = 'font-size:16px;line-height:30px;width:30px;height:30px;display:block;text-align:center;cursor:pointer;background:#fff;';
+                link.textContent = '\uD83D\uDCCD';
+                L.DomEvent.on(link, 'click', function(e) {
+                    L.DomEvent.preventDefault(e);
+                    L.DomEvent.stopPropagation(e);
+                    if (!navigator.geolocation) return;
+                    navigator.geolocation.getCurrentPosition(function(pos) {
+                        lat = pos.coords.latitude;
+                        lng = pos.coords.longitude;
+                        map.setView([lat, lng], 15);
+                        marker.setLatLng([lat, lng]);
+                        document.getElementById('map-coords').textContent =
+                            'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + map.getZoom();
+                    });
+                });
+                return container;
+            }
+        });
+        map.addControl(new LocateControl());
 
         // Fix map rendering in modal
         map.invalidateSize();

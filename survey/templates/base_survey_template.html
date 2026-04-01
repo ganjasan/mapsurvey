@@ -122,6 +122,57 @@
 
     }).addTo(map);
 
+    // Geolocation
+    var useGeolocation = {{ section.use_geolocation|yesno:"true,false" }};
+    var geoMarker = null;
+
+    function locateUser() {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                var lat = position.coords.latitude;
+                var lng = position.coords.longitude;
+                map.setView([lat, lng], 13);
+                if (geoMarker) {
+                    geoMarker.setLatLng([lat, lng]);
+                } else {
+                    geoMarker = L.circleMarker([lat, lng], {
+                        radius: 8, fillColor: '#4285F4', color: '#fff',
+                        weight: 2, fillOpacity: 0.9
+                    }).addTo(map);
+                }
+            },
+            function(error) {
+                console.log('Geolocation failed:', error.message);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+        );
+    }
+
+    if (useGeolocation) {
+        locateUser();
+
+        var LocateControl = L.Control.extend({
+            options: { position: 'bottomright' },
+            onAdd: function() {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                var link = L.DomUtil.create('a', '', container);
+                link.href = '#';
+                link.title = 'Locate me';
+                link.setAttribute('role', 'button');
+                link.setAttribute('aria-label', 'Locate me');
+                link.style.cssText = 'font-size:18px;line-height:30px;width:30px;height:30px;display:block;text-align:center;cursor:pointer;';
+                link.textContent = '\uD83D\uDCCD';
+                L.DomEvent.on(link, 'click', function(e) {
+                    L.DomEvent.preventDefault(e);
+                    locateUser();
+                });
+                return container;
+            }
+        });
+        map.addControl(new LocateControl());
+    }
+
     L.Draw.Polyline.prototype._onTouch = L.Util.falseFn;
     L.Draw.Polygon.prototype._onTouch = L.Util.falseFn;
 
