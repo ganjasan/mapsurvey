@@ -9139,3 +9139,282 @@ class AnalyticsViewTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Hello')
+
+
+class CrossFilteringServiceTest(TestCase):
+    """Tests for cross-filtering analytics features."""
+
+    def setUp(self):
+        from .analytics import SurveyAnalyticsService
+        self.SurveyAnalyticsService = SurveyAnalyticsService
+
+        self.org = _make_org('CrossFilterOrg')
+        self.user = User.objects.create_user('cfowner', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+
+        self.survey = SurveyHeader.objects.create(
+            name='crossfilter_test', organization=self.org,
+            created_by=self.user, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.q_gender = Question.objects.create(
+            survey_section=self.section, name='Gender', code='qg',
+            input_type='choice', order_number=1,
+            choices=[{'code': 1, 'name': 'Male'}, {'code': 2, 'name': 'Female'}],
+        )
+        self.q_rating = Question.objects.create(
+            survey_section=self.section, name='Rating', code='qr',
+            input_type='rating', order_number=2,
+            choices=[
+                {'code': 1, 'name': 'Bad'},
+                {'code': 2, 'name': 'OK'},
+                {'code': 3, 'name': 'Good'},
+            ],
+        )
+        self.q_text = Question.objects.create(
+            survey_section=self.section, name='Comment', code='qt',
+            input_type='text', order_number=3,
+        )
+        self.q_point = Question.objects.create(
+            survey_section=self.section, name='Location', code='qp',
+            input_type='point', order_number=4,
+        )
+
+        # Session 1: Male, Good rating, "Nice" comment, point
+        self.s1 = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=self.s1, question=self.q_gender, selected_choices=[1])
+        Answer.objects.create(survey_session=self.s1, question=self.q_rating, selected_choices=[3])
+        Answer.objects.create(survey_session=self.s1, question=self.q_text, text='Nice')
+        Answer.objects.create(survey_session=self.s1, question=self.q_point, point=Point(2.35, 48.86))
+
+        # Session 2: Female, Bad rating, "Awful" comment
+        self.s2 = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=self.s2, question=self.q_gender, selected_choices=[2])
+        Answer.objects.create(survey_session=self.s2, question=self.q_rating, selected_choices=[1])
+        Answer.objects.create(survey_session=self.s2, question=self.q_text, text='Awful')
+
+        # Session 3: Male, Bad rating, "Meh" comment
+        self.s3 = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=self.s3, question=self.q_gender, selected_choices=[1])
+        Answer.objects.create(survey_session=self.s3, question=self.q_rating, selected_choices=[1])
+        Answer.objects.create(survey_session=self.s3, question=self.q_text, text='Meh')
+
+    def test_answer_matrix_structure(self):
+        """
+        GIVEN 3 sessions with choice and rating answers
+        WHEN get_answer_matrix is called
+        THEN returns list of session dicts with correct structure
+        """
+        service = self.SurveyAnalyticsService(self.survey)
+        matrix = service.get_answer_matrix()
+
+        self.assertEqual(len(matrix), 3)
+        sids = {m['sid'] for m in matrix}
+        self.assertEqual(sids, {self.s1.id, self.s2.id, self.s3.id})
+
+        for entry in matrix:
+            self.assertIn('sid', entry)
+            self.assertIn('d', entry)
+            self.assertIn('a', entry)
+            # Each session should have gender and rating answers
+            self.assertIn(str(self.q_gender.id), entry['a'])
+            self.assertIn(str(self.q_rating.id), entry['a'])
+            # Text and point questions should NOT be in matrix
+            self.assertNotIn(str(self.q_text.id), entry['a'])
+            self.assertNotIn(str(self.q_point.id), entry['a'])
+
+    def test_answer_matrix_values(self):
+        """
+        GIVEN session 1 with Male (1) and Good (3)
+        WHEN get_answer_matrix is called
+        THEN session 1 entry has correct choice codes
+        """
+        service = self.SurveyAnalyticsService(self.survey)
+        matrix = service.get_answer_matrix()
+
+        s1_entry = next(m for m in matrix if m['sid'] == self.s1.id)
+        self.assertEqual(s1_entry['a'][str(self.q_gender.id)], [1])
+        self.assertEqual(s1_entry['a'][str(self.q_rating.id)], [3])
+
+    def test_geo_feature_has_session_id(self):
+        """
+        GIVEN a session with a point answer
+        WHEN get_geo_feature_collection is called
+        THEN each feature has session_id in properties
+        """
+        service = self.SurveyAnalyticsService(self.survey)
+        fc = service.get_geo_feature_collection()
+
+        self.assertEqual(len(fc['features']), 1)
+        self.assertEqual(fc['features'][0]['properties']['session_id'], self.s1.id)
+
+    def test_question_stats_has_choice_codes(self):
+        """
+        GIVEN a choice question
+        WHEN get_question_stats is called
+        THEN stat includes choice_codes and choice_codes_json
+        """
+        service = self.SurveyAnalyticsService(self.survey)
+        stat = service.get_question_stats(self.q_gender)
+
+        self.assertEqual(stat['choice_codes'], [1, 2])
+        self.assertEqual(stat['choice_codes_json'], '[1, 2]')
+
+    def test_text_answers_filtered_by_session_ids(self):
+        """
+        GIVEN 3 text answers from 3 sessions
+        WHEN get_text_answers is called with session_ids={s1, s3}
+        THEN returns only 2 answers from those sessions
+        """
+        service = self.SurveyAnalyticsService(self.survey)
+        result = service.get_text_answers(
+            self.q_text, session_ids={self.s1.id, self.s3.id},
+        )
+
+        self.assertEqual(result['total'], 2)
+        texts = {a.text for a in result['answers']}
+        self.assertEqual(texts, {'Nice', 'Meh'})
+
+    def test_text_answers_empty_session_ids(self):
+        """
+        GIVEN 3 text answers
+        WHEN get_text_answers is called with session_ids=set() (empty)
+        THEN returns 0 answers
+        """
+        service = self.SurveyAnalyticsService(self.survey)
+        result = service.get_text_answers(self.q_text, session_ids=set())
+
+        self.assertEqual(result['total'], 0)
+        self.assertEqual(len(result['answers']), 0)
+
+    def test_text_answers_no_filter(self):
+        """
+        GIVEN 3 text answers
+        WHEN get_text_answers is called with session_ids=None
+        THEN returns all 3 answers
+        """
+        service = self.SurveyAnalyticsService(self.survey)
+        result = service.get_text_answers(self.q_text, session_ids=None)
+
+        self.assertEqual(result['total'], 3)
+
+
+class CrossFilteringViewTest(TestCase):
+    """Tests for cross-filtering view helpers and endpoints."""
+
+    def setUp(self):
+        self.org = _make_org('CrossFilterViewOrg')
+        self.owner = User.objects.create_user('cfvowner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.login(username='cfvowner', password='pass')
+
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+        self.survey = SurveyHeader.objects.create(
+            name='cfview_test', organization=self.org,
+            created_by=self.owner, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.q_choice = Question.objects.create(
+            survey_section=self.section, name='Color', code='qc',
+            input_type='choice', order_number=1,
+            choices=[{'code': 1, 'name': 'Red'}, {'code': 2, 'name': 'Blue'}],
+        )
+        self.q_text = Question.objects.create(
+            survey_section=self.section, name='Why', code='qw',
+            input_type='text', order_number=2,
+        )
+
+        # Session A: Red, "I like red"
+        self.sa = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=self.sa, question=self.q_choice, selected_choices=[1])
+        Answer.objects.create(survey_session=self.sa, question=self.q_text, text='I like red')
+
+        # Session B: Blue, "I like blue"
+        self.sb = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=self.sb, question=self.q_choice, selected_choices=[2])
+        Answer.objects.create(survey_session=self.sb, question=self.q_text, text='I like blue')
+
+    def test_parse_filter_param_valid(self):
+        """
+        GIVEN a valid filter string '7:1,3;12:2'
+        WHEN _parse_filter_param is called
+        THEN returns correct dict
+        """
+        from .analytics_views import _parse_filter_param
+        result = _parse_filter_param('7:1,3;12:2')
+        self.assertEqual(result, {7: [1, 3], 12: [2]})
+
+    def test_parse_filter_param_empty(self):
+        """
+        GIVEN an empty string
+        WHEN _parse_filter_param is called
+        THEN returns empty dict
+        """
+        from .analytics_views import _parse_filter_param
+        self.assertEqual(_parse_filter_param(''), {})
+        self.assertEqual(_parse_filter_param(None), {})
+
+    def test_parse_filter_param_invalid(self):
+        """
+        GIVEN an invalid filter string
+        WHEN _parse_filter_param is called
+        THEN returns empty dict without raising
+        """
+        from .analytics_views import _parse_filter_param
+        self.assertEqual(_parse_filter_param('garbage'), {})
+        self.assertEqual(_parse_filter_param('abc:xyz'), {})
+
+    def test_resolve_filtered_session_ids_single_filter(self):
+        """
+        GIVEN sessions with Red(1) and Blue(2) answers
+        WHEN _resolve_filtered_session_ids filters for Red (code=1)
+        THEN returns only session A
+        """
+        from .analytics_views import _resolve_filtered_session_ids
+        result = _resolve_filtered_session_ids(
+            self.survey, {self.q_choice.id: [1]},
+        )
+        self.assertEqual(result, {self.sa.id})
+
+    def test_resolve_filtered_session_ids_no_filter(self):
+        """
+        GIVEN no filters
+        WHEN _resolve_filtered_session_ids is called with empty dict
+        THEN returns None (no filtering)
+        """
+        from .analytics_views import _resolve_filtered_session_ids
+        result = _resolve_filtered_session_ids(self.survey, {})
+        self.assertIsNone(result)
+
+    def test_dashboard_includes_answer_matrix(self):
+        """
+        GIVEN a survey with choice answers
+        WHEN GET analytics dashboard
+        THEN response contains answer-matrix-data script tag
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/analytics/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'answer-matrix-data')
+        self.assertContains(response, 'FilterManager')
+
+    def test_text_answers_with_filter_param(self):
+        """
+        GIVEN sessions with Red and Blue answers
+        WHEN GET text answers with filters=<choice_id>:1 (Red only)
+        THEN returns only the text answer from the Red session
+        """
+        filters = f'{self.q_choice.id}:1'
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/analytics/questions/{self.q_text.id}/text/'
+            f'?filters={filters}'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'I like red')
+        self.assertNotContains(response, 'I like blue')

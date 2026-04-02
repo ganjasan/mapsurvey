@@ -14,13 +14,22 @@
 
     {% if stat.type == 'choices' %}
     <p class="mb-1"><small class="text-muted">{{ stat.total_answers }} answer{{ stat.total_answers|pluralize }}</small></p>
-    <canvas id="chart-q-{{ stat.question.id }}" height="50"></canvas>
+    <canvas id="chart-q-{{ stat.question.id }}" height="50" style="cursor:pointer;"></canvas>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        new Chart(document.getElementById('chart-q-{{ stat.question.id }}'), {
+        var qid = '{{ stat.question.id }}';
+        var codes = JSON.parse('{{ stat.choice_codes_json|escapejs }}');
+        var labels = JSON.parse('{{ stat.choice_labels_json|escapejs }}');
+
+        window.analyticsChartCodes.set(qid, codes);
+        for (var i = 0; i < codes.length; i++) {
+            window.analyticsChoiceLabels.set(qid + ':' + codes[i], labels[i]);
+        }
+
+        var chart = new Chart(document.getElementById('chart-q-' + qid), {
             type: 'bar',
             data: {
-                labels: JSON.parse('{{ stat.choice_labels_json|escapejs }}'),
+                labels: labels,
                 datasets: [{
                     data: JSON.parse('{{ stat.choice_counts_json|escapejs }}'),
                     backgroundColor: 'rgba(79, 70, 229, 0.7)',
@@ -33,9 +42,15 @@
                 plugins: { legend: { display: false } },
                 scales: {
                     x: { beginAtZero: true, ticks: { precision: 0 } }
+                },
+                onClick: function(event, elements) {
+                    if (!elements.length || !window.filterManager) return;
+                    var idx = elements[0].index;
+                    window.filterManager.toggleFilter(qid, codes[idx]);
                 }
             }
         });
+        window.analyticsCharts.set(qid, chart);
     });
     </script>
 

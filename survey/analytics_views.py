@@ -1,10 +1,58 @@
 import json
 
+from django.db.models import Q
 from django.shortcuts import render, get_object_or_404
 
-from .models import Question
+from .models import Question, Answer
 from .permissions import survey_permission_required
 from .analytics import SurveyAnalyticsService
+
+
+def _parse_filter_param(filters_str):
+    """Parse '7:1,3;12:2' into {7: [1, 3], 12: [2]}. Returns {} on error."""
+    if not filters_str:
+        return {}
+    result = {}
+    try:
+        for part in filters_str.split(';'):
+            part = part.strip()
+            if not part:
+                continue
+            qid_str, codes_str = part.split(':', 1)
+            qid = int(qid_str)
+            codes = [int(c) for c in codes_str.split(',') if c.strip()]
+            if codes:
+                result[qid] = codes
+    except (ValueError, AttributeError):
+        return {}
+    return result
+
+
+def _resolve_filtered_session_ids(survey, filter_map):
+    """Return set of session PKs matching ALL filters (AND across questions, OR within)."""
+    if not filter_map:
+        return None
+
+    session_sets = None
+    for question_id, codes in filter_map.items():
+        q_obj = Q()
+        for code in codes:
+            q_obj |= Q(selected_choices__contains=[code])
+        matching = set(
+            Answer.objects
+            .filter(
+                question_id=question_id,
+                question__survey_section__survey_header=survey,
+            )
+            .filter(q_obj)
+            .values_list('survey_session_id', flat=True)
+        )
+        if session_sets is None:
+            session_sets = matching
+        else:
+            session_sets = session_sets & matching
+
+    return session_sets if session_sets is not None else set()
 
 
 @survey_permission_required('viewer')
@@ -17,6 +65,12 @@ def analytics_dashboard(request, survey_uuid):
     daily = service.get_daily_sessions()
     geo_collection = service.get_geo_feature_collection()
     question_stats = service.get_all_question_stats()
+    answer_matrix = service.get_answer_matrix()
+
+    text_question_ids = [
+        stat['question'].id for stat in question_stats
+        if stat['type'] == 'text'
+    ]
 
     return render(request, 'editor/analytics_dashboard.html', {
         'survey': survey,
@@ -27,6 +81,8 @@ def analytics_dashboard(request, survey_uuid):
         'geo_json': json.dumps(geo_collection),
         'geo_features_count': len(geo_collection['features']),
         'question_stats': question_stats,
+        'answer_matrix_json': json.dumps(answer_matrix),
+        'text_question_ids_json': json.dumps(text_question_ids),
     })
 
 
@@ -50,7 +106,13 @@ def analytics_text_answers(request, survey_uuid, question_id):
     except (ValueError, TypeError):
         page_size = 20
 
-    result = service.get_text_answers(question, page=page, page_size=page_size)
+    filters_str = request.GET.get('filters', '')
+    filter_map = _parse_filter_param(filters_str)
+    session_ids = _resolve_filtered_session_ids(survey, filter_map)
+
+    result = service.get_text_answers(
+        question, page=page, page_size=page_size, session_ids=session_ids,
+    )
 
     return render(request, 'editor/partials/analytics_text_answers.html', {
         'survey': survey,

@@ -37,6 +37,45 @@
     .number-stats .ns-item { text-align: center; }
     .number-stats .ns-value { font-size: 1.25rem; font-weight: 600; color: var(--accent); }
     .number-stats .ns-label { font-size: 0.75rem; color: #6b7280; }
+
+    .analytics-divider {
+        border: none;
+        border-top: 2px solid var(--border-color);
+        margin: 1.5rem 0;
+    }
+    .analytics-section-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #9ca3af;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+    }
+    #filter-pills-bar {
+        display: none;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 1rem;
+        padding: 0.5rem 0.75rem;
+        background: #f0f0ff;
+        border-radius: var(--radius);
+        border: 1px solid #d0d0ff;
+    }
+    .filter-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.6rem;
+        background: #fff;
+        border: 1px solid var(--accent);
+        border-radius: 999px;
+        font-size: 0.78rem;
+        color: var(--accent);
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .filter-pill:hover { background: #eef; }
 </style>
 {% endblock %}
 
@@ -47,11 +86,218 @@
 
 {% block content %}
 <div class="analytics-main">
+    <div class="analytics-section-label">Overview</div>
     {% include "editor/partials/analytics_overview.html" %}
     {% include "editor/partials/analytics_daily_chart.html" %}
+
+    <hr class="analytics-divider">
+
+    <div class="analytics-section-label">Questions &amp; Responses</div>
+    <div id="filter-pills-bar"></div>
+
     {% if geo_features_count %}
     {% include "editor/partials/analytics_geo_map.html" %}
     {% endif %}
     {% include "editor/partials/analytics_question_stats.html" %}
 </div>
+
+<script type="application/json" id="answer-matrix-data">{{ answer_matrix_json|safe }}</script>
+
+<script>
+window.analyticsCharts = new Map();
+window.analyticsChartCodes = new Map();
+window.analyticsChoiceLabels = new Map();
+
+function _escapeHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.textContent;
+}
+
+function FilterManager(matrix) {
+    this._matrix = matrix;
+    this.filters = new Map();
+    this.filteredSids = null;
+    this.textQuestionIds = [];
+}
+
+FilterManager.prototype.toggleFilter = function(qid, code) {
+    qid = String(qid);
+    code = Number(code);
+    if (!this.filters.has(qid)) {
+        this.filters.set(qid, new Set());
+    }
+    var codes = this.filters.get(qid);
+    if (codes.has(code)) {
+        codes.delete(code);
+        if (codes.size === 0) this.filters.delete(qid);
+    } else {
+        codes.add(code);
+    }
+    this._apply();
+};
+
+FilterManager.prototype.clearAll = function() {
+    this.filters.clear();
+    this._apply();
+};
+
+FilterManager.prototype._apply = function() {
+    this._recompute();
+    this._updateCharts();
+    this._updateGeoMap();
+    this._updatePills();
+    this._updateTextAnswers();
+};
+
+FilterManager.prototype.getFilterParam = function() {
+    if (this.filters.size === 0) return '';
+    var parts = [];
+    this.filters.forEach(function(codes, qid) {
+        parts.push(qid + ':' + Array.from(codes).join(','));
+    });
+    return parts.join(';');
+};
+
+FilterManager.prototype._recompute = function() {
+    if (this.filters.size === 0) {
+        this.filteredSids = null;
+        return;
+    }
+    var result = new Set();
+    var self = this;
+    this._matrix.forEach(function(session) {
+        var passes = true;
+        self.filters.forEach(function(codes, qid) {
+            if (!passes) return;
+            var sessionCodes = session.a[qid];
+            if (!sessionCodes) { passes = false; return; }
+            var hasMatch = false;
+            codes.forEach(function(c) {
+                if (sessionCodes.indexOf(c) !== -1) hasMatch = true;
+            });
+            if (!hasMatch) passes = false;
+        });
+        if (passes) result.add(session.sid);
+    });
+    this.filteredSids = result;
+};
+
+FilterManager.prototype._updateCharts = function() {
+    var self = this;
+    window.analyticsCharts.forEach(function(chart, qid) {
+        var chartCodes = window.analyticsChartCodes.get(qid);
+        var qFilters = self.filters.get(qid);
+        var hasAnyFilter = self.filters.size > 0;
+        var isFilterSource = qFilters && qFilters.size > 0;
+
+        // Only recompute data for charts that are NOT the filter source
+        if (!isFilterSource) {
+            chart.data.datasets[0].data = self._computeCounts(qid);
+        }
+
+        chart.data.datasets[0].backgroundColor = chart.data.datasets[0].data.map(function(_, idx) {
+            if (!chartCodes) return 'rgba(79, 70, 229, 0.7)';
+            var code = chartCodes[idx];
+            if (qFilters && qFilters.has(code)) return 'rgba(79, 70, 229, 1.0)';
+            if (hasAnyFilter) return 'rgba(79, 70, 229, 0.35)';
+            return 'rgba(79, 70, 229, 0.7)';
+        });
+        chart.update('none');
+    });
+};
+
+FilterManager.prototype._computeCounts = function(qid) {
+    var codes = window.analyticsChartCodes.get(qid);
+    if (!codes) return [];
+    var tally = {};
+    codes.forEach(function(c) { tally[c] = 0; });
+    var self = this;
+    this._matrix.forEach(function(session) {
+        if (self.filteredSids !== null && !self.filteredSids.has(session.sid)) return;
+        var sessionCodes = session.a[qid];
+        if (!sessionCodes) return;
+        sessionCodes.forEach(function(c) {
+            if (tally.hasOwnProperty(c)) tally[c]++;
+        });
+    });
+    return codes.map(function(c) { return tally[c] || 0; });
+};
+
+FilterManager.prototype._updateGeoMap = function() {
+    if (!window.geoLayersBySid || !window.geoGroup) return;
+    var self = this;
+    window.geoLayersBySid.forEach(function(layer, sid) {
+        if (self.filteredSids === null || self.filteredSids.has(sid)) {
+            if (!window.geoGroup.hasLayer(layer)) window.geoGroup.addLayer(layer);
+        } else {
+            window.geoGroup.removeLayer(layer);
+        }
+    });
+};
+
+FilterManager.prototype._updatePills = function() {
+    var bar = document.getElementById('filter-pills-bar');
+    if (!bar) return;
+    if (this.filters.size === 0) {
+        while (bar.firstChild) bar.removeChild(bar.firstChild);
+        bar.style.display = 'none';
+        return;
+    }
+    bar.style.display = 'flex';
+    while (bar.firstChild) bar.removeChild(bar.firstChild);
+
+    var label = document.createElement('span');
+    label.style.cssText = 'font-size:0.8rem;color:#6b7280;align-self:center;';
+    label.textContent = 'Filters:';
+    bar.appendChild(label);
+
+    var self = this;
+    this.filters.forEach(function(codes, qid) {
+        codes.forEach(function(code) {
+            var pillLabel = window.analyticsChoiceLabels.get(qid + ':' + code) || String(code);
+            var pill = document.createElement('span');
+            pill.className = 'filter-pill';
+            pill.textContent = pillLabel + ' \u00d7';
+            pill.addEventListener('click', function() {
+                self.toggleFilter(qid, code);
+            });
+            bar.appendChild(pill);
+        });
+    });
+
+    var clearBtn = document.createElement('button');
+    clearBtn.className = 'btn btn-sm btn-link';
+    clearBtn.style.cssText = 'font-size:0.8rem;padding:0 0.5rem;';
+    clearBtn.textContent = 'Clear all';
+    clearBtn.addEventListener('click', function() {
+        self.clearAll();
+    });
+    bar.appendChild(clearBtn);
+};
+
+FilterManager.prototype._updateTextAnswers = function() {
+    if (!this.textQuestionIds || !this.textQuestionIds.length) return;
+    this.textQuestionIds.forEach(function(qid) {
+        if (typeof loadTextAnswers === 'function') {
+            loadTextAnswers(qid, 1, 20);
+        }
+    });
+};
+
+function loadTextAnswers(qid, page, pageSize) {
+    var filters = window.filterManager ? window.filterManager.getFilterParam() : '';
+    var url = '{% url "analytics_text_answers" survey.uuid 0 %}'.replace(/\/0\/$/, '/' + qid + '/')
+              + '?page=' + page + '&page_size=' + pageSize
+              + (filters ? '&filters=' + encodeURIComponent(filters) : '');
+    htmx.ajax('GET', url, {target: '#text-answers-' + qid, swap: 'innerHTML'});
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var matrixEl = document.getElementById('answer-matrix-data');
+    var matrix = JSON.parse(matrixEl.textContent);
+    window.filterManager = new FilterManager(matrix);
+    window.filterManager.textQuestionIds = JSON.parse('{{ text_question_ids_json|escapejs }}');
+});
+</script>
 {% endblock %}

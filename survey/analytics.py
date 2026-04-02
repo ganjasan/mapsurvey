@@ -124,6 +124,7 @@ class SurveyAnalyticsService:
                 'properties': {
                     'question': a.question.name,
                     'type': a.question.input_type,
+                    'session_id': a.survey_session_id,
                 },
             })
 
@@ -160,8 +161,10 @@ class SurveyAnalyticsService:
                 counts.get(c['code'], 0)
                 for c in (question.choices or [])
             ]
+            stat['choice_codes'] = [c['code'] for c in (question.choices or [])]
             stat['choice_labels_json'] = json.dumps(stat['choice_labels'], ensure_ascii=False)
             stat['choice_counts_json'] = json.dumps(stat['choice_counts'])
+            stat['choice_codes_json'] = json.dumps(stat['choice_codes'])
             stat['total_answers'] = answers.count()
 
         elif question.input_type in ('number', 'range'):
@@ -250,7 +253,7 @@ class SurveyAnalyticsService:
 
         return [self.get_question_stats(q) for q in questions]
 
-    def get_text_answers(self, question, page=1, page_size=20):
+    def get_text_answers(self, question, page=1, page_size=20, session_ids=None):
         """Return paginated text answers for a question."""
         page_size = min(max(page_size, 5), 100)
 
@@ -261,6 +264,8 @@ class SurveyAnalyticsService:
             .select_related('survey_session')
             .order_by('-survey_session__start_datetime')
         )
+        if session_ids is not None:
+            qs = qs.filter(survey_session_id__in=session_ids)
         total = qs.count()
         total_pages = max(1, (total + page_size - 1) // page_size)
         page = min(max(page, 1), total_pages)
@@ -274,3 +279,35 @@ class SurveyAnalyticsService:
             'total': total,
             'page_size': page_size,
         }
+
+    def get_answer_matrix(self):
+        """Return compact per-session choice data for client-side cross-filtering."""
+        rows = (
+            Answer.objects
+            .filter(
+                question__survey_section__survey_header=self.survey,
+                question__input_type__in=['choice', 'multichoice', 'rating'],
+            )
+            .exclude(selected_choices__isnull=True)
+            .values(
+                'survey_session_id',
+                'survey_session__start_datetime',
+                'question_id',
+                'selected_choices',
+            )
+            .order_by('survey_session_id')
+        )
+
+        sessions = {}
+        for row in rows:
+            sid = row['survey_session_id']
+            if sid not in sessions:
+                sessions[sid] = {
+                    'sid': sid,
+                    'd': str(row['survey_session__start_datetime'].date()),
+                    'a': {},
+                }
+            qid = str(row['question_id'])
+            sessions[sid]['a'][qid] = row['selected_choices'] or []
+
+        return list(sessions.values())

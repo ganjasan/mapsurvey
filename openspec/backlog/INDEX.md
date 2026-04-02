@@ -30,10 +30,11 @@
 | 26 | feature | [UTM parameters & link generator (Phase 3)](feature-utm-link-generator.md) | medium | frontend | survey-analytics | 2026-04-02 |
 | 27 | feature | [A/B testing via survey versions (Phase 4)](feature-ab-testing.md) | medium | backend | survey-analytics | 2026-04-02 |
 | 28 | feature | [Cross-filtering in analytics dashboard](feature-analytics-cross-filtering.md) | medium | frontend | survey-analytics | 2026-04-02 |
-| 29 | feature | [Feedback Widget](feature-feedback-widget.md) | medium | general | — | 2026-03-30 |
-| 30 | idea | [Digital Contour Maps — Geography Education](idea-digital-contour-maps-education.md) | medium | general | — | 2026-03-26 |
-| 31 | feature | [Geolocation Map Centering](feature-geolocation-map-centering.md) | medium | frontend | — | 2026-04-01 |
-| 32 | feature | [Progress bar for entire survey](feature-progress-bar.md) | low | frontend | — | 2026-03-26 |
-| 33 | feature | [Answer choice templates](feature-answer-choice-templates.md) | low | frontend | — | 2026-03-26 |
-| 34 | feature | [Audio upload question type](feature-audio-upload.md) | low | backend | — | 2026-03-26 |
-| 35 | improvement | [Survey visual customization (fonts, colors)](improvement-survey-visual-customization.md) | low | frontend | — | 2026-03-26 |
+| 29 | feature | [Interactive analytics map](feature-interactive-analytics-map.md) | medium | frontend | survey-analytics | 2026-04-02 |
+| 30 | feature | [Feedback Widget](feature-feedback-widget.md) | medium | general | — | 2026-03-30 |
+| 31 | idea | [Digital Contour Maps — Geography Education](idea-digital-contour-maps-education.md) | medium | general | — | 2026-03-26 |
+| 32 | feature | [Geolocation Map Centering](feature-geolocation-map-centering.md) | medium | frontend | — | 2026-04-01 |
+| 33 | feature | [Progress bar for entire survey](feature-progress-bar.md) | low | frontend | — | 2026-03-26 |
+| 34 | feature | [Answer choice templates](feature-answer-choice-templates.md) | low | frontend | — | 2026-03-26 |
+| 35 | feature | [Audio upload question type](feature-audio-upload.md) | low | backend | — | 2026-03-26 |
+| 36 | improvement | [Survey visual customization (fonts, colors)](improvement-survey-visual-customization.md) | low | frontend | — | 2026-03-26 |

@@ -23,27 +23,43 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    var layer = L.geoJSON(geoData, {
-        pointToLayer: function(feature, latlng) {
-            var idx = questionNames.indexOf(feature.properties.question) % colors.length;
-            return L.circleMarker(latlng, {
+    window.geoLayersBySid = new Map();
+    window.geoGroup = L.layerGroup().addTo(map);
+
+    geoData.features.forEach(function(f) {
+        var sid = f.properties.session_id;
+        if (!window.geoLayersBySid.has(sid)) {
+            var sessionGroup = L.layerGroup();
+            window.geoLayersBySid.set(sid, sessionGroup);
+            window.geoGroup.addLayer(sessionGroup);
+        }
+
+        var colorIdx = questionNames.indexOf(f.properties.question) % colors.length;
+        var featureLayer;
+
+        if (f.geometry.type === 'Point') {
+            var coords = f.geometry.coordinates;
+            featureLayer = L.circleMarker(L.latLng(coords[1], coords[0]), {
                 radius: 5,
-                color: colors[idx],
-                fillColor: colors[idx],
+                color: colors[colorIdx],
+                fillColor: colors[colorIdx],
                 fillOpacity: 0.7,
                 weight: 1,
             });
-        },
-        style: function(feature) {
-            var idx = questionNames.indexOf(feature.properties.question) % colors.length;
-            return { color: colors[idx], weight: 2, fillOpacity: 0.2 };
-        },
-        onEachFeature: function(feature, layer) {
-            var p = feature.properties;
-            layer.bindPopup('<strong>' + p.question + '</strong><br><small>' + p.type + '</small>');
+        } else {
+            featureLayer = L.geoJSON(f, {
+                style: function() {
+                    return { color: colors[colorIdx], weight: 2, fillOpacity: 0.2 };
+                }
+            });
         }
-    }).addTo(map);
 
-    map.fitBounds(layer.getBounds().pad(0.1));
+        var popupText = '<strong>' + _escapeHtml(f.properties.question) + '</strong><br><small>' + _escapeHtml(f.properties.type) + '</small>';
+        featureLayer.bindPopup(popupText);
+        window.geoLayersBySid.get(sid).addLayer(featureLayer);
+    });
+
+    var allBounds = L.geoJSON(geoData).getBounds();
+    map.fitBounds(allBounds.pad(0.1));
 });
 </script>
