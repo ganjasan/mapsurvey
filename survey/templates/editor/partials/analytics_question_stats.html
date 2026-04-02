@@ -1,0 +1,84 @@
+{% load survey_filters %}
+
+<h6 style="font-weight:700; margin-bottom:0.75rem;">Question Statistics</h6>
+
+{% for stat in question_stats %}
+<div class="analytics-section">
+    <div class="q-stat-header">
+        <div>
+            <strong style="font-size:0.95rem;">{{ stat.question.name }}</strong>
+            <br><small class="text-muted">{{ stat.section.title|default:stat.section.name }}</small>
+        </div>
+        <span class="badge badge-secondary">{{ stat.question.input_type }}</span>
+    </div>
+
+    {% if stat.type == 'choices' %}
+    <p class="mb-1"><small class="text-muted">{{ stat.total_answers }} answer{{ stat.total_answers|pluralize }}</small></p>
+    <canvas id="chart-q-{{ stat.question.id }}" height="50"></canvas>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        new Chart(document.getElementById('chart-q-{{ stat.question.id }}'), {
+            type: 'bar',
+            data: {
+                labels: JSON.parse('{{ stat.choice_labels_json|escapejs }}'),
+                datasets: [{
+                    data: JSON.parse('{{ stat.choice_counts_json|escapejs }}'),
+                    backgroundColor: 'rgba(79, 70, 229, 0.7)',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { precision: 0 } }
+                }
+            }
+        });
+    });
+    </script>
+
+    {% elif stat.type == 'number' %}
+    <div class="number-stats">
+        <div class="ns-item">
+            <div class="ns-value">{{ stat.count }}</div>
+            <div class="ns-label">Answers</div>
+        </div>
+        <div class="ns-item">
+            <div class="ns-value">{{ stat.avg|default:"–" }}</div>
+            <div class="ns-label">Average</div>
+        </div>
+        <div class="ns-item">
+            <div class="ns-value">{{ stat.median|default:"–" }}</div>
+            <div class="ns-label">Median</div>
+        </div>
+        <div class="ns-item">
+            <div class="ns-value">{{ stat.min_val|default:"–" }}</div>
+            <div class="ns-label">Min</div>
+        </div>
+        <div class="ns-item">
+            <div class="ns-value">{{ stat.max_val|default:"–" }}</div>
+            <div class="ns-label">Max</div>
+        </div>
+    </div>
+
+    {% elif stat.type == 'text' %}
+    <p class="mb-1"><small class="text-muted">{{ stat.total_answers }} text answer{{ stat.total_answers|pluralize }}</small></p>
+    <div id="text-answers-{{ stat.question.id }}"
+         hx-get="{% url 'analytics_text_answers' survey.uuid stat.question.id %}"
+         hx-trigger="revealed"
+         hx-swap="innerHTML">
+        <span class="text-muted" style="font-size:0.85rem;">Loading...</span>
+    </div>
+
+    {% elif stat.type == 'geo' %}
+    <p class="mb-1"><small class="text-muted">{{ stat.total_answers }} geo feature{{ stat.total_answers|pluralize }} — see map above</small></p>
+
+    {% else %}
+    <p class="mb-1"><small class="text-muted">{{ stat.total_answers }} answer{{ stat.total_answers|pluralize }}</small></p>
+    {% endif %}
+</div>
+{% empty %}
+<p class="text-muted">No questions in this survey.</p>
+{% endfor %}

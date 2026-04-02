@@ -1,0 +1,47 @@
+<div class="analytics-section">
+    <h6>Daily Responses</h6>
+    <canvas id="dailyChart" height="80"></canvas>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var dailyData = JSON.parse('{{ daily_data_json|escapejs }}');
+    var labels = dailyData.map(function(d) { return d.date; });
+    var totals = dailyData.map(function(d) { return d.total; });
+    var completed = dailyData.map(function(d) { return d.completed; });
+
+    new Chart(document.getElementById('dailyChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Total Sessions',
+                    data: totals,
+                    backgroundColor: 'rgba(79, 70, 229, 0.15)',
+                    borderColor: 'rgba(79, 70, 229, 0.6)',
+                    borderWidth: 1,
+                    order: 2,
+                },
+                {
+                    label: 'Completed',
+                    data: completed,
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    borderWidth: 1,
+                    order: 1,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top', labels: { font: { size: 12 } } }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 } }
+            }
+        }
+    });
+});
+</script>

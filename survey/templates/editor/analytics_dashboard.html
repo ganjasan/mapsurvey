@@ -1,0 +1,57 @@
+{% extends "editor/editor_base.html" %}
+
+{% block page_title %}Analytics – {{ survey.name }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+    .analytics-main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+    .stat-cards { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card {
+        flex: 1;
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        text-align: center;
+    }
+    .stat-card .stat-value { font-size: 2rem; font-weight: 700; color: var(--accent); }
+    .stat-card .stat-label { font-size: 0.85rem; color: #6b7280; margin-top: 0.25rem; }
+    .analytics-section {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+    .analytics-section h6 { font-weight: 700; margin-bottom: 1rem; }
+    #analytics-map { height: 400px; border-radius: var(--radius); }
+    .q-stat-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+    .q-stat-header .badge { font-size: 0.7rem; font-weight: 500; flex-shrink: 0; }
+    .number-stats { display: flex; gap: 1.5rem; margin-top: 0.5rem; }
+    .number-stats .ns-item { text-align: center; }
+    .number-stats .ns-value { font-size: 1.25rem; font-weight: 600; color: var(--accent); }
+    .number-stats .ns-label { font-size: 0.75rem; color: #6b7280; }
+</style>
+{% endblock %}
+
+{% block navbar_content %}
+<a href="{% url 'editor_survey_detail' survey.uuid %}" class="survey-name" style="text-decoration:none;">{{ survey.name }}</a>
+<span style="color:#9ca3af;font-size:0.9rem;">/ Analytics</span>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-main">
+    {% include "editor/partials/analytics_overview.html" %}
+    {% include "editor/partials/analytics_daily_chart.html" %}
+    {% if geo_features_count %}
+    {% include "editor/partials/analytics_geo_map.html" %}
+    {% endif %}
+    {% include "editor/partials/analytics_question_stats.html" %}
+</div>
+{% endblock %}

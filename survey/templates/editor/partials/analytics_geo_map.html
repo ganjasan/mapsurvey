@@ -1,0 +1,49 @@
+<div class="analytics-section">
+    <h6>Response Map <small class="text-muted">({{ geo_features_count }} features)</small></h6>
+    <div id="analytics-map"></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var geoData = JSON.parse('{{ geo_json|escapejs }}');
+    if (!geoData.features.length) return;
+
+    var map = L.map('analytics-map');
+    L.tileLayer('{{ MAPBOX_URL }}', {
+        attribution: 'Data &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
+        maxZoom: 18,
+        accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
+    }).addTo(map);
+
+    var colors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+    var questionNames = [];
+    geoData.features.forEach(function(f) {
+        if (questionNames.indexOf(f.properties.question) === -1) {
+            questionNames.push(f.properties.question);
+        }
+    });
+
+    var layer = L.geoJSON(geoData, {
+        pointToLayer: function(feature, latlng) {
+            var idx = questionNames.indexOf(feature.properties.question) % colors.length;
+            return L.circleMarker(latlng, {
+                radius: 5,
+                color: colors[idx],
+                fillColor: colors[idx],
+                fillOpacity: 0.7,
+                weight: 1,
+            });
+        },
+        style: function(feature) {
+            var idx = questionNames.indexOf(feature.properties.question) % colors.length;
+            return { color: colors[idx], weight: 2, fillOpacity: 0.2 };
+        },
+        onEachFeature: function(feature, layer) {
+            var p = feature.properties;
+            layer.bindPopup('<strong>' + p.question + '</strong><br><small>' + p.type + '</small>');
+        }
+    }).addTo(map);
+
+    map.fitBounds(layer.getBounds().pad(0.1));
+});
+</script>

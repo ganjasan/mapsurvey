@@ -14,3 +14,4 @@ Allow survey creators to define skip/branching logic so that questions are shown
 - Requested by: bisq (geography student)
 - The existing sub-question (parent_question / parent_answer) model may serve as a partial foundation, but full conditional visibility across arbitrary questions is a new capability
 - Should work within the same section and ideally across sections
+- **Real case (Lyon transit survey, bisqunours, 561 sessions):** Question "SI HABITANT DU 8E SEULEMENT: improvement suggestions for 8th arrondissement" is visible to all 98 respondents, but only ~16 selected arrondissement 8. Need: show question X only if answer to question Y = value Z

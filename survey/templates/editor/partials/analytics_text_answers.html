@@ -1,0 +1,37 @@
+<div>
+{% if answers %}
+    <div class="d-flex align-items-center mb-2" style="gap:0.5rem;">
+        <small class="text-muted">{{ total }} answer{{ total|pluralize }}, page {{ page }} of {{ total_pages }}</small>
+        <select class="form-control form-control-sm d-inline-block ml-auto" style="width:auto;font-size:0.8rem;"
+                onchange="htmx.ajax('GET', '{% url 'analytics_text_answers' survey.uuid question.id %}?page=1&page_size=' + this.value, {target: '#text-answers-{{ question.id }}', swap: 'innerHTML'})">
+            <option value="10" {% if page_size == 10 %}selected{% endif %}>10 / page</option>
+            <option value="20" {% if page_size == 20 %}selected{% endif %}>20 / page</option>
+            <option value="50" {% if page_size == 50 %}selected{% endif %}>50 / page</option>
+        </select>
+    </div>
+    <ul class="list-unstyled mb-2" style="font-size:0.875rem;">
+        {% for answer in answers %}
+        <li style="padding:0.4rem 0; border-bottom:1px solid var(--border-color);">
+            {{ answer.text|linebreaksbr }}
+            <br><small class="text-muted">{{ answer.survey_session.start_datetime|date:"Y-m-d H:i" }}</small>
+        </li>
+        {% endfor %}
+    </ul>
+    <div class="d-flex" style="gap:0.5rem;">
+        {% if page > 1 %}
+        <button class="btn btn-sm btn-outline-secondary"
+                hx-get="{% url 'analytics_text_answers' survey.uuid question.id %}?page={{ page|add:'-1' }}&page_size={{ page_size }}"
+                hx-target="#text-answers-{{ question.id }}"
+                hx-swap="innerHTML">&laquo; Prev</button>
+        {% endif %}
+        {% if page < total_pages %}
+        <button class="btn btn-sm btn-outline-secondary"
+                hx-get="{% url 'analytics_text_answers' survey.uuid question.id %}?page={{ page|add:'1' }}&page_size={{ page_size }}"
+                hx-target="#text-answers-{{ question.id }}"
+                hx-swap="innerHTML">Next &raquo;</button>
+        {% endif %}
+    </div>
+{% else %}
+    <p class="text-muted mb-0" style="font-size:0.85rem;">No text answers yet.</p>
+{% endif %}
+</div>

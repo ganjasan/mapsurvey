@@ -45,6 +45,10 @@
 </button>
 {% endif %}
 
+<a href="{% url 'editor_survey_analytics' survey.uuid %}" class="btn btn-sm btn-outline-secondary ml-1" title="Analytics">
+    <i class="fas fa-chart-bar"></i>
+</a>
+
 {% if effective_role == 'owner' %}
 <button class="btn btn-sm btn-outline-secondary ml-1"
         data-toggle="modal" data-target="#settingsModal"
