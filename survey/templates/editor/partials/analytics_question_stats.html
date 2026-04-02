@@ -83,30 +83,152 @@
         </div>
     </div>
     {% if stat.hist_labels_json %}
-    <canvas id="hist-q-{{ stat.question.id }}" height="40" style="margin-top:0.75rem;"></canvas>
+    <div class="q-filter-pills" data-qid="num-{{ stat.question.id }}" style="display:none;flex-wrap:wrap;gap:0.3rem;margin-top:0.5rem;"></div>
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;">
+        <label style="font-size:0.75rem;color:#9ca3af;margin:0;">Step:</label>
+        <input type="number" id="bin-step-{{ stat.question.id }}" class="form-control form-control-sm"
+               style="width:70px;font-size:0.78rem;" min="0.1" step="any">
+    </div>
+    <div id="hist-container-{{ stat.question.id }}" style="position:relative;user-select:none;margin-top:0.5rem;">
+        <canvas id="hist-q-{{ stat.question.id }}" height="40"></canvas>
+        <div class="hist-shade-left" style="position:absolute;top:0;left:0;bottom:0;background:rgba(79,70,229,0.06);pointer-events:none;display:none;border-right:2px solid var(--accent);"></div>
+        <div class="hist-shade-right" style="position:absolute;top:0;right:0;bottom:0;background:rgba(79,70,229,0.06);pointer-events:none;display:none;border-left:2px solid var(--accent);"></div>
+        <div class="hist-handle-left" style="position:absolute;top:0;bottom:0;width:8px;background:var(--accent);cursor:ew-resize;border-radius:3px;opacity:0.6;z-index:2;"></div>
+        <div class="hist-handle-right" style="position:absolute;top:0;bottom:0;width:8px;background:var(--accent);cursor:ew-resize;border-radius:3px;opacity:0.6;z-index:2;"></div>
+    </div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        new Chart(document.getElementById('hist-q-{{ stat.question.id }}'), {
+        var qid = '{{ stat.question.id }}';
+        var allValues = [];
+        var minVal = {{ stat.min_val }}, maxVal = {{ stat.max_val }};
+        window.analyticsQuestionNames.set(qid, '{{ stat.question.name|escapejs }}');
+
+        // Collect all numeric values from matrix for dynamic rebinning
+        var matrixEl = document.getElementById('answer-matrix-data');
+        var matrix = JSON.parse(matrixEl.textContent);
+        matrix.forEach(function(s) { if (s.n && s.n[qid] !== undefined) allValues.push(s.n[qid]); });
+
+        function computeBinsFromStep(step) {
+            if (!allValues.length || minVal === maxVal) return { labels: [String(minVal)], counts: [allValues.length], bins: [[minVal, maxVal]] };
+            var nBins = Math.max(1, Math.min(50, Math.ceil((maxVal - minVal) / step)));
+            var labels = [], bins = [], counts = new Array(nBins).fill(0);
+            for (var i = 0; i < nBins; i++) {
+                var lo = minVal + i * step, hi = Math.min(lo + step, maxVal);
+                bins.push([Math.round(lo*100)/100, Math.round(hi*100)/100]);
+                labels.push(step >= 1 ? Math.round(lo) + '-' + Math.round(hi) : lo.toFixed(1) + '-' + hi.toFixed(1));
+            }
+            allValues.forEach(function(v) {
+                var idx = Math.min(Math.floor((v - minVal) / step), nBins - 1);
+                counts[idx]++;
+            });
+            return { labels: labels, counts: counts, bins: bins };
+        }
+
+        // Default step: Sturges' rule
+        var defaultBins = Math.max(5, Math.ceil(Math.log2(allValues.length) + 1));
+        var defaultStep = Math.round((maxVal - minVal) / defaultBins * 10) / 10 || 1;
+        var stepInput = document.getElementById('bin-step-' + qid);
+        stepInput.value = defaultStep;
+
+        var histData = computeBinsFromStep(defaultStep);
+        window.analyticsHistBins.set(qid, histData.bins);
+
+        var histChart = new Chart(document.getElementById('hist-q-' + qid), {
             type: 'bar',
             data: {
-                labels: JSON.parse('{{ stat.hist_labels_json|escapejs }}'),
-                datasets: [{
-                    data: JSON.parse('{{ stat.hist_counts_json|escapejs }}'),
-                    backgroundColor: 'rgba(79, 70, 229, 0.5)',
-                    borderColor: 'rgba(79, 70, 229, 0.8)',
-                    borderWidth: 1,
-                    borderRadius: 2,
-                }]
+                labels: histData.labels,
+                datasets: [{ data: histData.counts, backgroundColor: 'rgba(79, 70, 229, 0.5)', borderColor: 'rgba(79, 70, 229, 0.8)', borderWidth: 1, borderRadius: 2 }]
             },
             options: {
                 responsive: true,
                 plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { font: { size: 10 }, maxRotation: 45 } },
-                    y: { beginAtZero: true, ticks: { precision: 0 } }
-                }
+                scales: { x: { ticks: { font: { size: 10 }, maxRotation: 45 } }, y: { beginAtZero: true, ticks: { precision: 0 } } }
             }
         });
+        window.analyticsHistCharts.set(qid, histChart);
+
+        stepInput.addEventListener('change', function() {
+            var step = Math.max(0.1, parseFloat(this.value) || defaultStep);
+            this.value = step;
+            histData = computeBinsFromStep(step);
+            window.analyticsHistBins.set(qid, histData.bins);
+            histChart.data.labels = histData.labels;
+            histChart.data.datasets[0].data = histData.counts;
+            histChart.data.datasets[0].backgroundColor = 'rgba(79, 70, 229, 0.5)';
+            histChart.update('none');
+            positionHandles();
+        });
+
+        // Range handles
+        var container = document.getElementById('hist-container-' + qid);
+        var shadeL = container.querySelector('.hist-shade-left');
+        var shadeR = container.querySelector('.hist-shade-right');
+        var handleL = container.querySelector('.hist-handle-left');
+        var handleR = container.querySelector('.hist-handle-right');
+        var rangeLeft = 0, rangeRight = 1;
+
+        function positionHandles() {
+            var w = container.offsetWidth;
+            var lx = Math.round(rangeLeft * w);
+            var rx = Math.round(rangeRight * w);
+            handleL.style.left = (lx - 4) + 'px';
+            handleR.style.left = (rx - 4) + 'px';
+            var noSel = rangeLeft <= 0.001 && rangeRight >= 0.999;
+            shadeL.style.display = noSel ? 'none' : 'block';
+            shadeR.style.display = noSel ? 'none' : 'block';
+            if (!noSel) { shadeL.style.width = lx + 'px'; shadeR.style.width = (w - rx) + 'px'; }
+        }
+
+        function pctToValue(pct) {
+            return Math.round((minVal + pct * (maxVal - minVal)) * 10) / 10;
+        }
+
+        function applySelection() {
+            if (rangeLeft <= 0.001 && rangeRight >= 0.999) {
+                if (window.filterManager) window.filterManager.setNumericRange(qid, null, null);
+                return;
+            }
+            var lo = pctToValue(rangeLeft), hi = pctToValue(rangeRight);
+            if (window.filterManager) window.filterManager.setNumericRange(qid, lo, hi);
+        }
+
+        // Drag
+        var dragging = null;
+        handleL.addEventListener('mousedown', function(e) { e.preventDefault(); dragging = 'left'; startDrag(); });
+        handleR.addEventListener('mousedown', function(e) { e.preventDefault(); dragging = 'right'; startDrag(); });
+        function startDrag() {
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('mouseup', onDragEnd);
+        }
+        function onDrag(e) {
+            if (!dragging) return;
+            var rect = container.getBoundingClientRect();
+            var pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            if (dragging === 'left') rangeLeft = Math.min(pct, rangeRight - 0.01);
+            else rangeRight = Math.max(pct, rangeLeft + 0.01);
+            positionHandles();
+        }
+        function onDragEnd() {
+            if (!dragging) return;
+            dragging = null;
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('mouseup', onDragEnd);
+            applySelection();
+        }
+
+        // Reset handler
+        if (!window._resetNumericHandles) window._resetNumericHandles = function() {};
+        var origReset = window._resetNumericHandles;
+        window._resetNumericHandles = function(targetQid) {
+            if (targetQid === qid) {
+                rangeLeft = 0; rangeRight = 1;
+                positionHandles();
+            }
+            origReset(targetQid);
+        };
+
+        positionHandles();
+        window.addEventListener('resize', positionHandles);
     });
     </script>
     {% endif %}

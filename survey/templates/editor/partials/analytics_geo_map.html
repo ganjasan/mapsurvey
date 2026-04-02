@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
             div.appendChild(body);
 
             questionNames.forEach(function(name, idx) {
-                var item = document.createElement('label');
+                var item = document.createElement('div');
                 item.className = 'geo-legend-item';
 
                 var cb = document.createElement('input');
@@ -267,19 +267,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 swatch.className = 'geo-legend-swatch';
                 swatch.style.backgroundColor = colors[idx % colors.length];
 
+                // Label + swatch are clickable for zoom-to-layer
+                var zoomArea = document.createElement('span');
+                zoomArea.style.cssText = 'flex:1;display:flex;align-items:center;gap:0.3rem;cursor:pointer;';
+                zoomArea.title = 'Zoom to layer';
+                zoomArea.appendChild(swatch);
                 var label = document.createElement('span');
                 label.textContent = name;
                 label.style.flex = '1';
-
-                var zoomBtn = document.createElement('button');
-                zoomBtn.style.cssText = 'border:none;background:none;cursor:pointer;color:#9ca3af;font-size:0.7rem;padding:0 2px;flex-shrink:0;';
-                var zoomIcon = document.createElement('i');
-                zoomIcon.className = 'fas fa-crosshairs';
-                zoomBtn.appendChild(zoomIcon);
-                zoomBtn.title = 'Zoom to layer';
-                zoomBtn.addEventListener('click', function(ev) {
-                    ev.preventDefault();
-                    ev.stopPropagation();
+                zoomArea.appendChild(label);
+                var aimIcon = document.createElement('i');
+                aimIcon.className = 'fas fa-crosshairs';
+                aimIcon.style.cssText = 'color:#9ca3af;font-size:0.7rem;';
+                zoomArea.appendChild(aimIcon);
+                zoomArea.addEventListener('click', function() {
                     var bounds = L.latLngBounds([]);
                     window.geoFeatureLayers.forEach(function(entry) {
                         if (entry.question !== name) return;
@@ -293,9 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 item.appendChild(cb);
-                item.appendChild(swatch);
-                item.appendChild(label);
-                item.appendChild(zoomBtn);
+                item.appendChild(zoomArea);
                 body.appendChild(item);
             });
 

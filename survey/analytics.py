@@ -23,10 +23,12 @@ def _compute_histogram(values, min_val, max_val, max_bins=15):
     bin_width = (max_val - min_val) / n_bins
 
     labels = []
+    bins = []
     counts = [0] * n_bins
     for i in range(n_bins):
         lo = min_val + i * bin_width
         hi = lo + bin_width
+        bins.append([lo, hi])
         if bin_width >= 1:
             labels.append('{:.0f}-{:.0f}'.format(lo, hi))
         else:
@@ -38,7 +40,7 @@ def _compute_histogram(values, min_val, max_val, max_bins=15):
             idx = n_bins - 1
         counts[idx] += 1
 
-    return {'labels': labels, 'counts': counts}
+    return {'labels': labels, 'counts': counts, 'bins': bins}
 
 
 def _get_last_section(survey):
@@ -98,39 +100,83 @@ class SurveyAnalyticsService:
 
     def get_daily_sessions(self):
         """Return list of {date, total, completed} dicts ordered by date."""
+        hourly = self.get_hourly_sessions()
+        buckets = {}
+        for h in hourly:
+            d = h['h'][:10]
+            if d not in buckets:
+                buckets[d] = {'date': d, 'total': 0, 'completed': 0}
+            buckets[d]['total'] += h['t']
+            buckets[d]['completed'] += h['c']
+        return sorted(buckets.values(), key=lambda x: x['date'])
+
+    def get_session_hours(self):
+        """Return compact list of [sid, hour_iso, completed] for timeline filtering."""
         last_section = _get_last_section(self.survey)
 
-        daily = (
+        sessions = (
             SurveySession.objects
             .filter(survey=self.survey)
-            .annotate(date=TruncDate('start_datetime'))
-            .values('date')
-            .annotate(total=Count('id'))
-            .order_by('date')
+            .values_list('id', 'start_datetime')
+            .order_by('start_datetime')
         )
 
-        # Completed per day
-        completed_by_day = {}
+        completed_ids = set()
         if last_section:
-            completed_daily = (
+            completed_ids = set(
                 SurveySession.objects
                 .filter(
                     survey=self.survey,
                     answer__question__survey_section=last_section,
                 )
-                .annotate(date=TruncDate('start_datetime'))
-                .values('date')
-                .annotate(completed=Count('id', distinct=True))
-                .order_by('date')
+                .distinct()
+                .values_list('id', flat=True)
             )
-            completed_by_day = {r['date']: r['completed'] for r in completed_daily}
 
         result = []
-        for row in daily:
+        for sid, dt in sessions:
+            if dt:
+                result.append([sid, dt.strftime('%Y-%m-%dT%H'), sid in completed_ids])
+        return result
+
+    def get_hourly_sessions(self):
+        """Return list of {h, t, c} dicts — hour bucket, total, completed."""
+        from django.db.models.functions import TruncHour
+        last_section = _get_last_section(self.survey)
+
+        hourly = (
+            SurveySession.objects
+            .filter(survey=self.survey)
+            .annotate(hour=TruncHour('start_datetime'))
+            .values('hour')
+            .annotate(total=Count('id'))
+            .order_by('hour')
+        )
+
+        completed_by_hour = {}
+        if last_section:
+            completed_hourly = (
+                SurveySession.objects
+                .filter(
+                    survey=self.survey,
+                    answer__question__survey_section=last_section,
+                )
+                .annotate(hour=TruncHour('start_datetime'))
+                .values('hour')
+                .annotate(completed=Count('id', distinct=True))
+                .order_by('hour')
+            )
+            completed_by_hour = {
+                r['hour'].isoformat(): r['completed'] for r in completed_hourly
+            }
+
+        result = []
+        for row in hourly:
+            h_iso = row['hour'].isoformat()
             result.append({
-                'date': str(row['date']),
-                'total': row['total'],
-                'completed': completed_by_day.get(row['date'], 0),
+                'h': h_iso,
+                't': row['total'],
+                'c': completed_by_hour.get(h_iso, 0),
             })
         return result
 
@@ -221,6 +267,7 @@ class SurveyAnalyticsService:
                 hist = _compute_histogram(values, agg['min_val'], agg['max_val'])
                 stat['hist_labels_json'] = json.dumps(hist['labels'], ensure_ascii=False)
                 stat['hist_counts_json'] = json.dumps(hist['counts'])
+                stat['hist_bins_json'] = json.dumps(hist['bins'])
 
         elif question.input_type in ('text', 'text_line'):
             stat['type'] = 'text'
@@ -319,8 +366,9 @@ class SurveyAnalyticsService:
         }
 
     def get_answer_matrix(self):
-        """Return compact per-session choice data for client-side cross-filtering."""
-        rows = (
+        """Return compact per-session choice + numeric data for client-side cross-filtering."""
+        # Choice answers
+        choice_rows = (
             Answer.objects
             .filter(
                 question__survey_section__survey_header=self.survey,
@@ -337,15 +385,45 @@ class SurveyAnalyticsService:
         )
 
         sessions = {}
-        for row in rows:
+        for row in choice_rows:
             sid = row['survey_session_id']
             if sid not in sessions:
                 sessions[sid] = {
                     'sid': sid,
                     'd': str(row['survey_session__start_datetime'].date()),
                     'a': {},
+                    'n': {},
                 }
             qid = str(row['question_id'])
             sessions[sid]['a'][qid] = row['selected_choices'] or []
+
+        # Numeric answers
+        numeric_rows = (
+            Answer.objects
+            .filter(
+                question__survey_section__survey_header=self.survey,
+                question__input_type__in=['number', 'range'],
+                numeric__isnull=False,
+            )
+            .values(
+                'survey_session_id',
+                'survey_session__start_datetime',
+                'question_id',
+                'numeric',
+            )
+            .order_by('survey_session_id')
+        )
+
+        for row in numeric_rows:
+            sid = row['survey_session_id']
+            if sid not in sessions:
+                sessions[sid] = {
+                    'sid': sid,
+                    'd': str(row['survey_session__start_datetime'].date()),
+                    'a': {},
+                    'n': {},
+                }
+            qid = str(row['question_id'])
+            sessions[sid]['n'][qid] = row['numeric']
 
         return list(sessions.values())

@@ -187,12 +187,12 @@
 <div class="analytics-main">
     <div class="analytics-section-label">Overview</div>
     {% include "editor/partials/analytics_overview.html" %}
-    {% include "editor/partials/analytics_daily_chart.html" %}
 
     <hr class="analytics-divider">
 
     <div class="analytics-section-label">Questions &amp; Responses</div>
     <div id="filter-pills-bar"></div>
+    {% include "editor/partials/analytics_daily_chart.html" %}
 
     {% if geo_features_count %}
     {% include "editor/partials/analytics_geo_map.html" %}
@@ -201,12 +201,15 @@
 </div>
 
 <script type="application/json" id="answer-matrix-data">{{ answer_matrix_json|safe }}</script>
+<script type="application/json" id="session-hours-data">{{ session_hours_json|safe }}</script>
 
 <script>
 window.analyticsCharts = new Map();
 window.analyticsChartCodes = new Map();
 window.analyticsChoiceLabels = new Map();
 window.analyticsQuestionNames = new Map();
+window.analyticsHistBins = new Map();
+window.analyticsHistCharts = new Map();
 
 function _escapeHtml(str) {
     var div = document.createElement('div');
@@ -217,7 +220,9 @@ function _escapeHtml(str) {
 function FilterManager(matrix) {
     this._matrix = matrix;
     this.filters = new Map();
+    this.numericRanges = new Map();
     this.geoSelection = null;
+    this.timeSelection = null;
     this.filteredSids = null;
     this._choiceFilteredSids = null;
     this.textQuestionIds = [];
@@ -256,9 +261,27 @@ FilterManager.prototype.toggleGeoSid = function(sid) {
     this._apply();
 };
 
+FilterManager.prototype.setTimeSelection = function(sids) {
+    this.timeSelection = sids;
+    this._apply();
+};
+
+FilterManager.prototype.setNumericRange = function(qid, min, max) {
+    qid = String(qid);
+    if (min === null || max === null) {
+        this.numericRanges.delete(qid);
+    } else {
+        this.numericRanges.set(qid, { min: min, max: max });
+    }
+    this._apply();
+};
+
 FilterManager.prototype.clearAll = function() {
     this.filters.clear();
+    this.numericRanges.clear();
     this.geoSelection = null;
+    this.timeSelection = null;
+    if (window._resetTimelineHandles) window._resetTimelineHandles();
     this._apply();
 };
 
@@ -267,6 +290,7 @@ FilterManager.prototype._apply = function() {
     this._updateCharts();
     this._updateGeoMap();
     this._updateGeoMapSelection();
+    this._updateTimeline();
     this._updatePills();
     this._updateTextAnswers();
 };
@@ -281,19 +305,22 @@ FilterManager.prototype.getFilterParam = function() {
 };
 
 FilterManager.prototype._recompute = function() {
-    if (this.filters.size === 0 && this.geoSelection === null) {
+    var hasChoiceOrNumeric = this.filters.size > 0 || this.numericRanges.size > 0;
+    if (!hasChoiceOrNumeric && this.geoSelection === null && this.timeSelection === null) {
         this.filteredSids = null;
         this._choiceFilteredSids = null;
         return;
     }
 
-    // Choice filters only
+    // Choice + numeric filters
     var choiceResult = null;
-    if (this.filters.size > 0) {
+    if (hasChoiceOrNumeric) {
         choiceResult = new Set();
         var self = this;
+
         this._matrix.forEach(function(session) {
             var passes = true;
+            // Check choice filters
             self.filters.forEach(function(codes, qid) {
                 if (!passes) return;
                 var sessionCodes = session.a[qid];
@@ -304,22 +331,42 @@ FilterManager.prototype._recompute = function() {
                 });
                 if (!hasMatch) passes = false;
             });
+            // Check numeric range filters
+            if (passes) {
+                self.numericRanges.forEach(function(range, qid) {
+                    if (!passes) return;
+                    var val = session.n ? session.n[qid] : undefined;
+                    if (val === undefined) { passes = false; return; }
+                    if (val < range.min || val > range.max) passes = false;
+                });
+            }
             if (passes) choiceResult.add(session.sid);
         });
     }
     this._choiceFilteredSids = choiceResult;
 
-    // Full filter: choice + geo intersection (for charts and text)
+    // Full filter: choice + geo + time intersection (for charts and text)
     var result = choiceResult;
+
+    // Intersect with geo selection
     if (this.geoSelection !== null) {
         if (result === null) {
             result = new Set(this.geoSelection);
         } else {
-            var intersected = new Set();
-            this.geoSelection.forEach(function(sid) {
-                if (result.has(sid)) intersected.add(sid);
-            });
-            result = intersected;
+            var g = new Set();
+            this.geoSelection.forEach(function(sid) { if (result.has(sid)) g.add(sid); });
+            result = g;
+        }
+    }
+
+    // Intersect with time selection
+    if (this.timeSelection !== null) {
+        if (result === null) {
+            result = new Set(this.timeSelection);
+        } else {
+            var t = new Set();
+            this.timeSelection.forEach(function(sid) { if (result.has(sid)) t.add(sid); });
+            result = t;
         }
     }
 
@@ -348,6 +395,42 @@ FilterManager.prototype._updateCharts = function() {
         });
         chart.update('none');
     });
+
+    // Update histogram charts
+    var hasAnyFilter = self.filters.size > 0 || self.numericRanges.size > 0
+        || self.geoSelection !== null || self.timeSelection !== null;
+    window.analyticsHistCharts.forEach(function(chart, qid) {
+        var bins = window.analyticsHistBins.get(qid);
+        if (!bins) return;
+        var range = self.numericRanges.get(qid);
+        var isSource = !!range;
+
+        // Recompute counts if not source
+        if (!isSource) {
+            var counts = new Array(bins.length).fill(0);
+            self._matrix.forEach(function(session) {
+                if (self.filteredSids !== null && !self.filteredSids.has(session.sid)) return;
+                var val = session.n ? session.n[qid] : undefined;
+                if (val === undefined) return;
+                for (var i = 0; i < bins.length; i++) {
+                    if (val >= bins[i][0] && val <= bins[i][1]) { counts[i]++; break; }
+                }
+            });
+            chart.data.datasets[0].data = counts;
+        }
+
+        // Shade bins outside selected range
+        chart.data.datasets[0].backgroundColor = chart.data.datasets[0].data.map(function(_, idx) {
+            if (range) {
+                var binMid = (bins[idx][0] + bins[idx][1]) / 2;
+                if (binMid >= range.min && binMid <= range.max) return 'rgba(79, 70, 229, 0.8)';
+                return 'rgba(79, 70, 229, 0.15)';
+            }
+            if (hasAnyFilter) return 'rgba(79, 70, 229, 0.25)';
+            return 'rgba(79, 70, 229, 0.5)';
+        });
+        chart.update('none');
+    });
 };
 
 FilterManager.prototype._computeCounts = function(qid) {
@@ -371,8 +454,17 @@ FilterManager.prototype._updateGeoMap = function() {
     if (!window.geoFeatureLayers || !window.geoGroup) return;
     var self = this;
     var qVisible = window.geoQuestionVisible;
-    // Map visibility uses choice filters only, not geo selection (map highlights, doesn't filter)
+    // Map visibility uses choice + numeric + time filters, but NOT geo selection (map highlights, doesn't filter)
     var sids = self._choiceFilteredSids;
+    if (self.timeSelection !== null) {
+        if (sids === null) {
+            sids = new Set(self.timeSelection);
+        } else {
+            var t = new Set();
+            self.timeSelection.forEach(function(sid) { if (sids.has(sid)) t.add(sid); });
+            sids = t;
+        }
+    }
     window.geoFeatureLayers.forEach(function(entry) {
         var sidOk = sids === null || sids.has(entry.sid);
         var qOk = !qVisible || qVisible.get(entry.question) !== false;
@@ -401,10 +493,60 @@ FilterManager.prototype._updateGeoMapSelection = function() {
     });
 };
 
+FilterManager.prototype._updateTimeline = function() {
+    if (!window._timelineChart || !window._sessionHours) return;
+    // Don't recompute timeline when it is the filter source
+    if (this.timeSelection !== null && this.filters.size === 0 && this.numericRanges.size === 0 && this.geoSelection === null) return;
+    // Use filteredSids excluding timeSelection for timeline display
+    var sids = this._choiceFilteredSids;
+    if (this.geoSelection !== null) {
+        if (sids === null) {
+            sids = new Set(this.geoSelection);
+        } else {
+            var g = new Set();
+            var s = sids;
+            this.geoSelection.forEach(function(sid) { if (s.has(sid)) g.add(sid); });
+            sids = g;
+        }
+    }
+    if (sids === null) {
+        if (typeof window._updateTimelineFromHourly === 'function') {
+            window._updateTimelineFromHourly();
+        }
+        return;
+    }
+    // Filter session_hours by filteredSids and re-bucket
+    var gran = document.getElementById('timeline-granularity');
+    var fromInput = document.getElementById('timeline-from');
+    var toInput = document.getElementById('timeline-to');
+    if (!gran || !fromInput || !toInput) return;
+
+    var from = fromInput.value;
+    var to = toInput.value;
+    var granVal = gran.value;
+
+    var buckets = {};
+    window._sessionHours.forEach(function(entry) {
+        var sid = entry[0], h = entry[1], completed = entry[2];
+        if (!sids.has(sid)) return;
+        if ((from && h < from) || (to && h > to)) return;
+        var key = window._timelineBucketKey(h, granVal);
+        if (!buckets[key]) buckets[key] = { total: 0, completed: 0 };
+        buckets[key].total += 1;
+        if (completed) buckets[key].completed += 1;
+    });
+
+    var keys = Object.keys(buckets).sort();
+    window._timelineChart.data.labels = keys.map(function(k) { return window._timelineFormatLabel(k, granVal); });
+    window._timelineChart.data.datasets[0].data = keys.map(function(k) { return buckets[k].total; });
+    window._timelineChart.data.datasets[1].data = keys.map(function(k) { return buckets[k].completed; });
+    window._timelineChart.update('none');
+};
+
 FilterManager.prototype._updatePills = function() {
     var bar = document.getElementById('filter-pills-bar');
     if (!bar) return;
-    if (this.filters.size === 0 && this.geoSelection === null) {
+    if (this.filters.size === 0 && this.numericRanges.size === 0 && this.geoSelection === null && this.timeSelection === null) {
         while (bar.firstChild) bar.removeChild(bar.firstChild);
         bar.style.display = 'none';
         document.querySelectorAll('.q-filter-pills').forEach(function(c) {
@@ -437,6 +579,19 @@ FilterManager.prototype._updatePills = function() {
         });
     });
 
+    this.numericRanges.forEach(function(range, qid) {
+        var qName = window.analyticsQuestionNames ? window.analyticsQuestionNames.get(qid) : null;
+        var pillText = (qName ? qName + ': ' : '') + range.min + ' \u2013 ' + range.max;
+        var pill = document.createElement('span');
+        pill.className = 'filter-pill';
+        pill.textContent = pillText + ' \u00d7';
+        pill.addEventListener('click', function() {
+            self.setNumericRange(qid, null, null);
+            if (window._resetNumericHandles) window._resetNumericHandles(qid);
+        });
+        bar.appendChild(pill);
+    });
+
     if (this.geoSelection !== null) {
         var geoPill = document.createElement('span');
         geoPill.className = 'filter-pill';
@@ -445,6 +600,22 @@ FilterManager.prototype._updatePills = function() {
             self.setGeoSelection(null);
         });
         bar.appendChild(geoPill);
+    }
+
+    if (this.timeSelection !== null && window._timelineSelectionRange) {
+        var tr = window._timelineSelectionRange;
+        function makeTimePill(label) {
+            var pill = document.createElement('span');
+            pill.className = 'filter-pill';
+            pill.textContent = label + ' \u00d7';
+            pill.addEventListener('click', function() {
+                self.setTimeSelection(null);
+                if (window._resetTimelineHandles) window._resetTimelineHandles();
+            });
+            return pill;
+        }
+        if (tr.from) bar.appendChild(makeTimePill('From: ' + tr.from));
+        if (tr.to) bar.appendChild(makeTimePill('To: ' + tr.to));
     }
 
     var clearBtn = document.createElement('button');
@@ -463,7 +634,6 @@ FilterManager.prototype._updatePills = function() {
         while (container.firstChild) container.removeChild(container.firstChild);
 
         if (qid === 'geo') {
-            // Geo map: show geo selection pill
             if (self2.geoSelection === null) {
                 container.style.display = 'none';
                 return;
@@ -477,6 +647,50 @@ FilterManager.prototype._updatePills = function() {
                 self2.setGeoSelection(null);
             });
             container.appendChild(geoPill);
+            return;
+        }
+
+        if (qid === 'timeline') {
+            var tr = window._timelineSelectionRange;
+            if (self2.timeSelection === null || !tr || (!tr.from && !tr.to)) {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'flex';
+            function makeLocalTimePill(label) {
+                var p = document.createElement('span');
+                p.className = 'filter-pill';
+                p.style.fontSize = '0.72rem';
+                p.textContent = label + ' \u00d7';
+                p.addEventListener('click', function() {
+                    self2.setTimeSelection(null);
+                    if (window._resetTimelineHandles) window._resetTimelineHandles();
+                });
+                return p;
+            }
+            if (tr.from) container.appendChild(makeLocalTimePill('From: ' + tr.from));
+            if (tr.to) container.appendChild(makeLocalTimePill('To: ' + tr.to));
+            return;
+        }
+
+        // Numeric range pills (data-qid="num-<id>")
+        if (qid.indexOf('num-') === 0) {
+            var numQid = qid.slice(4);
+            var range = self2.numericRanges.get(numQid);
+            if (!range) {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'flex';
+            var rPill = document.createElement('span');
+            rPill.className = 'filter-pill';
+            rPill.style.fontSize = '0.72rem';
+            rPill.textContent = range.min + ' \u2013 ' + range.max + ' \u00d7';
+            rPill.addEventListener('click', function() {
+                self2.setNumericRange(numQid, null, null);
+                if (window._resetNumericHandles) window._resetNumericHandles(numQid);
+            });
+            container.appendChild(rPill);
             return;
         }
 

@@ -62,7 +62,8 @@ def analytics_dashboard(request, survey_uuid):
     service = SurveyAnalyticsService(survey)
 
     overview = service.get_overview()
-    daily = service.get_daily_sessions()
+    hourly_sessions = service.get_hourly_sessions()
+    session_hours = service.get_session_hours()
     geo_collection = service.get_geo_feature_collection()
     question_stats = service.get_all_question_stats()
     answer_matrix = service.get_answer_matrix()
@@ -77,7 +78,8 @@ def analytics_dashboard(request, survey_uuid):
         'total_sessions': overview['total_sessions'],
         'completed_count': overview['completed_count'],
         'completion_rate': overview['completion_rate'],
-        'daily_data_json': json.dumps(daily),
+        'hourly_data_json': json.dumps(hourly_sessions),
+        'session_hours_json': json.dumps(session_hours),
         'geo_json': json.dumps(geo_collection),
         'geo_features_count': len(geo_collection['features']),
         'question_stats': question_stats,

@@ -1,23 +1,53 @@
 <div class="analytics-section">
-    <h6>Daily Responses</h6>
-    <canvas id="dailyChart" height="80"></canvas>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+        <h6 style="margin:0;">Response Timeline</h6>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+            <input type="datetime-local" id="timeline-from" class="form-control form-control-sm" style="width:auto;font-size:0.78rem;">
+            <span style="color:#9ca3af;font-size:0.78rem;">&ndash;</span>
+            <input type="datetime-local" id="timeline-to" class="form-control form-control-sm" style="width:auto;font-size:0.78rem;">
+            <select id="timeline-granularity" class="form-control form-control-sm" style="width:auto;font-size:0.78rem;">
+                <option value="hour">Hour</option>
+                <option value="day" selected>Day</option>
+                <option value="week">Week</option>
+                <option value="month">Month</option>
+            </select>
+            <button class="expand-btn" onclick="enterFocusMode(this.closest('.analytics-section'))"><i class="fas fa-expand"></i></button>
+        </div>
+    </div>
+    <div class="q-filter-pills" data-qid="timeline" style="display:none;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.4rem;"></div>
+    <div id="timeline-container" style="position:relative;user-select:none;">
+        <canvas id="dailyChart" height="80"></canvas>
+        <div id="tl-shade-left" style="position:absolute;top:0;left:0;bottom:0;background:rgba(79,70,229,0.06);pointer-events:none;border-right:2px solid var(--accent);"></div>
+        <div id="tl-shade-right" style="position:absolute;top:0;right:0;bottom:0;background:rgba(79,70,229,0.06);pointer-events:none;border-left:2px solid var(--accent);"></div>
+        <div id="tl-handle-left" style="position:absolute;top:0;bottom:0;width:8px;background:var(--accent);cursor:ew-resize;border-radius:3px;opacity:0.6;z-index:2;"></div>
+        <div id="tl-handle-right" style="position:absolute;top:0;bottom:0;width:8px;background:var(--accent);cursor:ew-resize;border-radius:3px;opacity:0.6;z-index:2;"></div>
+    </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var dailyData = JSON.parse('{{ daily_data_json|escapejs }}');
-    var labels = dailyData.map(function(d) { return d.date; });
-    var totals = dailyData.map(function(d) { return d.total; });
-    var completed = dailyData.map(function(d) { return d.completed; });
+    var hourlyData = JSON.parse('{{ hourly_data_json|escapejs }}');
 
-    new Chart(document.getElementById('dailyChart'), {
+    var shEl = document.getElementById('session-hours-data');
+    window._sessionHours = shEl ? JSON.parse(shEl.textContent) : [];
+
+    var fromInput = document.getElementById('timeline-from');
+    var toInput = document.getElementById('timeline-to');
+    var granSelect = document.getElementById('timeline-granularity');
+
+    if (hourlyData.length) {
+        fromInput.value = hourlyData[0].h.slice(0, 16);
+        toInput.value = hourlyData[hourlyData.length - 1].h.slice(0, 13) + ':59';
+    }
+
+    window._timelineChart = new Chart(document.getElementById('dailyChart'), {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: [],
             datasets: [
                 {
                     label: 'Total Sessions',
-                    data: totals,
+                    data: [],
                     backgroundColor: 'rgba(79, 70, 229, 0.15)',
                     borderColor: 'rgba(79, 70, 229, 0.6)',
                     borderWidth: 1,
@@ -25,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 {
                     label: 'Completed',
-                    data: completed,
+                    data: [],
                     backgroundColor: 'rgba(16, 185, 129, 0.7)',
                     borderColor: 'rgba(16, 185, 129, 1)',
                     borderWidth: 1,
@@ -39,9 +69,179 @@ document.addEventListener('DOMContentLoaded', function() {
                 legend: { position: 'top', labels: { font: { size: 12 } } }
             },
             scales: {
-                y: { beginAtZero: true, ticks: { precision: 0 } }
+                y: { beginAtZero: true, ticks: { precision: 0 } },
+                x: { ticks: { font: { size: 10 }, maxRotation: 45 } }
             }
         }
     });
+
+    window._timelineBucketKey = function(hourStr, gran) {
+        if (gran === 'hour') return hourStr.slice(0, 13);
+        if (gran === 'day') return hourStr.slice(0, 10);
+        if (gran === 'month') return hourStr.slice(0, 7);
+        if (gran === 'week') {
+            var dt = new Date(hourStr);
+            var day = dt.getDay();
+            var diff = dt.getDate() - day + (day === 0 ? -6 : 1);
+            var monday = new Date(dt.getFullYear(), dt.getMonth(), diff);
+            return monday.toISOString().slice(0, 10);
+        }
+        return hourStr.slice(0, 10);
+    };
+
+    window._timelineFormatLabel = function(key, gran) {
+        if (gran === 'hour') return key.replace('T', ' ') + ':00';
+        return key;
+    };
+
+    // Display update — controlled by datetime inputs + granularity
+    window._updateTimelineFromHourly = function() {
+        var from = fromInput.value;
+        var to = toInput.value;
+        var gran = granSelect.value;
+
+        var filtered = hourlyData.filter(function(h) {
+            return (!from || h.h >= from) && (!to || h.h <= to);
+        });
+
+        var buckets = {};
+        filtered.forEach(function(h) {
+            var key = window._timelineBucketKey(h.h, gran);
+            if (!buckets[key]) buckets[key] = { total: 0, completed: 0 };
+            buckets[key].total += h.t;
+            buckets[key].completed += h.c;
+        });
+
+        var keys = Object.keys(buckets).sort();
+        window._timelineChart.data.labels = keys.map(function(k) { return window._timelineFormatLabel(k, gran); });
+        window._timelineChart.data.datasets[0].data = keys.map(function(k) { return buckets[k].total; });
+        window._timelineChart.data.datasets[1].data = keys.map(function(k) { return buckets[k].completed; });
+        window._timelineChart.update('none');
+    };
+
+    function onDisplayChange() {
+        window._updateTimelineFromHourly();
+        // If filter active, reapply with new display range
+        if (window.filterManager && window.filterManager.timeSelection !== null) {
+            applyHandleSelection();
+        }
+    }
+
+    fromInput.addEventListener('change', onDisplayChange);
+    toInput.addEventListener('change', onDisplayChange);
+    granSelect.addEventListener('change', onDisplayChange);
+
+    window._updateTimelineFromHourly();
+
+    // --- Range handle selection (cross-filter) ---
+    var container = document.getElementById('timeline-container');
+    var shadeL = document.getElementById('tl-shade-left');
+    var shadeR = document.getElementById('tl-shade-right');
+    var handleL = document.getElementById('tl-handle-left');
+    var handleR = document.getElementById('tl-handle-right');
+
+    var rangeLeft = 0, rangeRight = 1;
+
+    function positionHandles() {
+        var w = container.offsetWidth;
+        var lx = Math.round(rangeLeft * w);
+        var rx = Math.round(rangeRight * w);
+        handleL.style.left = (lx - 4) + 'px';
+        handleR.style.left = (rx - 4) + 'px';
+        shadeL.style.width = lx + 'px';
+        shadeR.style.width = (w - rx) + 'px';
+    }
+
+    // Handles at full range = no selection, hide shades
+    function updateShadeVisibility() {
+        var noSelection = rangeLeft <= 0.001 && rangeRight >= 0.999;
+        shadeL.style.display = noSelection ? 'none' : 'block';
+        shadeR.style.display = noSelection ? 'none' : 'block';
+    }
+
+    function getDisplayedRange() {
+        var from = fromInput.value;
+        var to = toInput.value;
+        return hourlyData.filter(function(h) {
+            return (!from || h.h >= from) && (!to || h.h <= to);
+        });
+    }
+
+    function rangeToTimestamp(pct) {
+        var displayed = getDisplayedRange();
+        if (!displayed.length) return '';
+        var idx = Math.round(pct * (displayed.length - 1));
+        idx = Math.max(0, Math.min(idx, displayed.length - 1));
+        return displayed[idx].h;
+    }
+
+    function applyHandleSelection() {
+        if (rangeLeft <= 0.001 && rangeRight >= 0.999) {
+            // Full range = clear time selection
+            window._timelineSelectionRange = null;
+            if (window.filterManager) window.filterManager.setTimeSelection(null);
+            return;
+        }
+        var fromTs = rangeToTimestamp(rangeLeft);
+        var toTs = rangeToTimestamp(rangeRight);
+        if (!fromTs || !toTs || !window._sessionHours) return;
+
+        // Store human-readable range for pills (strip timezone offset)
+        function cleanTs(ts) { return ts.replace('T', ' ').replace(/[+-]\d{2}:\d{2}.*$/, ''); }
+        window._timelineSelectionRange = {
+            from: rangeLeft > 0.001 ? cleanTs(fromTs) : null,
+            to: rangeRight < 0.999 ? cleanTs(toTs) : null,
+        };
+
+        var matchingSids = new Set();
+        window._sessionHours.forEach(function(entry) {
+            var h = entry[1];
+            if (h >= fromTs && h <= toTs) matchingSids.add(entry[0]);
+        });
+        if (window.filterManager) {
+            window.filterManager.setTimeSelection(matchingSids.size > 0 ? matchingSids : null);
+        }
+    }
+
+    window._resetTimelineHandles = function() {
+        rangeLeft = 0;
+        rangeRight = 1;
+        window._timelineSelectionRange = null;
+        positionHandles();
+        updateShadeVisibility();
+    };
+
+    // Drag
+    var dragging = null;
+    handleL.addEventListener('mousedown', function(e) { e.preventDefault(); dragging = 'left'; startDrag(); });
+    handleR.addEventListener('mousedown', function(e) { e.preventDefault(); dragging = 'right'; startDrag(); });
+
+    function startDrag() {
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', onDragEnd);
+    }
+    function onDrag(e) {
+        if (!dragging) return;
+        var rect = container.getBoundingClientRect();
+        var pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        if (dragging === 'left') {
+            rangeLeft = Math.min(pct, rangeRight - 0.01);
+        } else {
+            rangeRight = Math.max(pct, rangeLeft + 0.01);
+        }
+        positionHandles();
+        updateShadeVisibility();
+    }
+    function onDragEnd() {
+        if (!dragging) return;
+        dragging = null;
+        document.removeEventListener('mousemove', onDrag);
+        document.removeEventListener('mouseup', onDragEnd);
+        applyHandleSelection();
+    }
+
+    positionHandles();
+    updateShadeVisibility();
+    window.addEventListener('resize', positionHandles);
 });
 </script>
