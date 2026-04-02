@@ -76,6 +76,82 @@
         white-space: nowrap;
     }
     .filter-pill:hover { background: #eef; }
+
+    /* Focus mode */
+    .expand-btn {
+        border: none; background: none; cursor: pointer;
+        color: #9ca3af; font-size: 0.85rem; padding: 0.2rem 0.4rem;
+        border-radius: 4px; flex-shrink: 0;
+    }
+    .expand-btn:hover { color: var(--accent); background: var(--accent-light); }
+
+    .analytics-main.focus-entering .analytics-section,
+    .analytics-main.focus-entering #analytics-sidebar-wrapper {
+        animation: focusFadeIn 0.3s ease-out both;
+    }
+    .analytics-main.focus-exiting .analytics-section {
+        animation: focusFadeIn 0.25s ease-out both;
+    }
+    @keyframes focusFadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .analytics-main.focus-mode {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1rem;
+        max-width: 1600px;
+        align-items: start;
+    }
+    .analytics-main.focus-mode > .analytics-section-label,
+    .analytics-main.focus-mode > .stat-cards,
+    .analytics-main.focus-mode > .analytics-divider,
+    .analytics-main.focus-mode > #filter-pills-bar {
+        grid-column: 1 / -1;
+    }
+    .analytics-main.focus-mode > .analytics-section.is-focused {
+        grid-column: 1;
+        grid-row: span 20;
+    }
+    .analytics-main.focus-mode > .analytics-section.is-focused #analytics-map {
+        height: calc(100vh - 220px);
+    }
+    #analytics-sidebar-wrapper {
+        grid-column: 2;
+        max-height: calc(100vh - 160px);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    #analytics-sidebar-wrapper .analytics-section { margin-bottom: 0; }
+
+    /* Geo legend */
+    .geo-legend {
+        background: #fff;
+        border-radius: var(--radius);
+        border: 1px solid var(--border-color);
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        max-width: 220px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .geo-legend-toggle {
+        cursor: pointer; font-weight: 600; font-size: 0.75rem;
+        color: #6b7280; display: flex; align-items: center; gap: 0.3rem;
+    }
+    .geo-legend-toggle:hover { color: var(--accent); }
+    .geo-legend-body { margin-top: 0.4rem; }
+    .geo-legend-body.collapsed { display: none; }
+    .geo-legend-item {
+        display: flex; align-items: center; gap: 0.4rem;
+        padding: 0.15rem 0; cursor: pointer;
+    }
+    .geo-legend-item input { margin: 0; cursor: pointer; }
+    .geo-legend-swatch {
+        width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
 </style>
 {% endblock %}
 
@@ -107,6 +183,7 @@
 window.analyticsCharts = new Map();
 window.analyticsChartCodes = new Map();
 window.analyticsChoiceLabels = new Map();
+window.analyticsQuestionNames = new Map();
 
 function _escapeHtml(str) {
     var div = document.createElement('div');
@@ -117,6 +194,7 @@ function _escapeHtml(str) {
 function FilterManager(matrix) {
     this._matrix = matrix;
     this.filters = new Map();
+    this.geoSelection = null;
     this.filteredSids = null;
     this.textQuestionIds = [];
 }
@@ -137,8 +215,14 @@ FilterManager.prototype.toggleFilter = function(qid, code) {
     this._apply();
 };
 
+FilterManager.prototype.setGeoSelection = function(sids) {
+    this.geoSelection = sids;
+    this._apply();
+};
+
 FilterManager.prototype.clearAll = function() {
     this.filters.clear();
+    this.geoSelection = null;
     this._apply();
 };
 
@@ -146,6 +230,7 @@ FilterManager.prototype._apply = function() {
     this._recompute();
     this._updateCharts();
     this._updateGeoMap();
+    this._updateGeoMapSelection();
     this._updatePills();
     this._updateTextAnswers();
 };
@@ -160,26 +245,45 @@ FilterManager.prototype.getFilterParam = function() {
 };
 
 FilterManager.prototype._recompute = function() {
-    if (this.filters.size === 0) {
+    if (this.filters.size === 0 && this.geoSelection === null) {
         this.filteredSids = null;
         return;
     }
-    var result = new Set();
-    var self = this;
-    this._matrix.forEach(function(session) {
-        var passes = true;
-        self.filters.forEach(function(codes, qid) {
-            if (!passes) return;
-            var sessionCodes = session.a[qid];
-            if (!sessionCodes) { passes = false; return; }
-            var hasMatch = false;
-            codes.forEach(function(c) {
-                if (sessionCodes.indexOf(c) !== -1) hasMatch = true;
+    var result = null;
+
+    // Choice filters
+    if (this.filters.size > 0) {
+        result = new Set();
+        var self = this;
+        this._matrix.forEach(function(session) {
+            var passes = true;
+            self.filters.forEach(function(codes, qid) {
+                if (!passes) return;
+                var sessionCodes = session.a[qid];
+                if (!sessionCodes) { passes = false; return; }
+                var hasMatch = false;
+                codes.forEach(function(c) {
+                    if (sessionCodes.indexOf(c) !== -1) hasMatch = true;
+                });
+                if (!hasMatch) passes = false;
             });
-            if (!hasMatch) passes = false;
+            if (passes) result.add(session.sid);
         });
-        if (passes) result.add(session.sid);
-    });
+    }
+
+    // Geo selection — intersect with choice filter results
+    if (this.geoSelection !== null) {
+        if (result === null) {
+            result = new Set(this.geoSelection);
+        } else {
+            var intersected = new Set();
+            this.geoSelection.forEach(function(sid) {
+                if (result.has(sid)) intersected.add(sid);
+            });
+            result = intersected;
+        }
+    }
+
     this.filteredSids = result;
 };
 
@@ -225,13 +329,33 @@ FilterManager.prototype._computeCounts = function(qid) {
 };
 
 FilterManager.prototype._updateGeoMap = function() {
-    if (!window.geoLayersBySid || !window.geoGroup) return;
+    if (!window.geoFeatureLayers || !window.geoGroup) return;
     var self = this;
-    window.geoLayersBySid.forEach(function(layer, sid) {
-        if (self.filteredSids === null || self.filteredSids.has(sid)) {
-            if (!window.geoGroup.hasLayer(layer)) window.geoGroup.addLayer(layer);
+    var qVisible = window.geoQuestionVisible;
+    window.geoFeatureLayers.forEach(function(entry) {
+        var sidOk = self.filteredSids === null || self.filteredSids.has(entry.sid);
+        var qOk = !qVisible || qVisible.get(entry.question) !== false;
+        if (sidOk && qOk) {
+            if (!window.geoGroup.hasLayer(entry.layer)) window.geoGroup.addLayer(entry.layer);
         } else {
-            window.geoGroup.removeLayer(layer);
+            window.geoGroup.removeLayer(entry.layer);
+        }
+    });
+};
+
+FilterManager.prototype._updateGeoMapSelection = function() {
+    if (!window.geoFeatureLayers) return;
+    var sel = this.geoSelection;
+    var hasSelection = sel !== null && sel.size > 0;
+    window.geoFeatureLayers.forEach(function(entry) {
+        var isSelected = hasSelection && sel.has(entry.sid);
+        var fillOpacity = hasSelection ? (isSelected ? 0.9 : 0.15) : 0.7;
+        var weight = isSelected ? 3 : 1;
+        if (typeof entry.layer.setStyle === 'function') {
+            entry.layer.setStyle({ fillOpacity: fillOpacity, opacity: 1.0, weight: weight });
+        }
+        if (typeof entry.layer.setRadius === 'function') {
+            entry.layer.setRadius(isSelected ? 8 : 5);
         }
     });
 };
@@ -239,7 +363,7 @@ FilterManager.prototype._updateGeoMap = function() {
 FilterManager.prototype._updatePills = function() {
     var bar = document.getElementById('filter-pills-bar');
     if (!bar) return;
-    if (this.filters.size === 0) {
+    if (this.filters.size === 0 && this.geoSelection === null) {
         while (bar.firstChild) bar.removeChild(bar.firstChild);
         bar.style.display = 'none';
         return;
@@ -254,17 +378,29 @@ FilterManager.prototype._updatePills = function() {
 
     var self = this;
     this.filters.forEach(function(codes, qid) {
+        var qName = window.analyticsQuestionNames ? window.analyticsQuestionNames.get(qid) : null;
         codes.forEach(function(code) {
-            var pillLabel = window.analyticsChoiceLabels.get(qid + ':' + code) || String(code);
+            var choiceLabel = window.analyticsChoiceLabels.get(qid + ':' + code) || String(code);
+            var pillText = qName ? qName + ': ' + choiceLabel : choiceLabel;
             var pill = document.createElement('span');
             pill.className = 'filter-pill';
-            pill.textContent = pillLabel + ' \u00d7';
+            pill.textContent = pillText + ' \u00d7';
             pill.addEventListener('click', function() {
                 self.toggleFilter(qid, code);
             });
             bar.appendChild(pill);
         });
     });
+
+    if (this.geoSelection !== null) {
+        var geoPill = document.createElement('span');
+        geoPill.className = 'filter-pill';
+        geoPill.textContent = 'Map selection (' + this.geoSelection.size + ') \u00d7';
+        geoPill.addEventListener('click', function() {
+            self.setGeoSelection(null);
+        });
+        bar.appendChild(geoPill);
+    }
 
     var clearBtn = document.createElement('button');
     clearBtn.className = 'btn btn-sm btn-link';
@@ -284,6 +420,114 @@ FilterManager.prototype._updateTextAnswers = function() {
         }
     });
 };
+
+/* Focus mode */
+window.focusedSection = null;
+window._focusSavedOrder = [];
+
+function enterFocusMode(sectionEl) {
+    if (window.focusedSection) exitFocusMode();
+    var main = document.querySelector('.analytics-main');
+    var sections = Array.from(main.querySelectorAll(':scope > .analytics-section'));
+
+    // Save original order as indices
+    window._focusSavedOrder = sections.map(function(el, i) {
+        return { el: el, index: i };
+    });
+
+    // Create sidebar wrapper
+    var sidebar = document.createElement('div');
+    sidebar.id = 'analytics-sidebar-wrapper';
+
+    // Move non-focused sections into sidebar
+    sections.forEach(function(s) {
+        if (s !== sectionEl) sidebar.appendChild(s);
+    });
+
+    main.appendChild(sidebar);
+    sectionEl.classList.add('is-focused');
+    main.classList.add('focus-mode');
+    main.classList.add('focus-entering');
+    window.focusedSection = sectionEl;
+
+    // Update expand button to collapse
+    var btn = sectionEl.querySelector('.expand-btn');
+    if (btn) {
+        btn.textContent = '';
+        var icon = document.createElement('i');
+        icon.className = 'fas fa-compress';
+        btn.appendChild(icon);
+        btn.onclick = function() { exitFocusMode(); };
+    }
+
+    _resizeAfterFocus();
+    setTimeout(function() { main.classList.remove('focus-entering'); }, 350);
+}
+
+function exitFocusMode() {
+    var main = document.querySelector('.analytics-main');
+    var sidebar = document.getElementById('analytics-sidebar-wrapper');
+    if (!sidebar) return;
+
+    // Move all children out of sidebar back to main first
+    while (sidebar.firstChild) {
+        main.appendChild(sidebar.firstChild);
+    }
+    sidebar.remove();
+
+    // Re-order sections to original positions
+    var ordered = window._focusSavedOrder.slice().sort(function(a, b) { return a.index - b.index; });
+    // Find the insertion anchor (first non-section element after the divider, or end of main)
+    var allSections = Array.from(main.querySelectorAll(':scope > .analytics-section'));
+    var anchor = null;
+    var children = Array.from(main.children);
+    for (var i = 0; i < children.length; i++) {
+        if (children[i].id === 'filter-pills-bar') {
+            anchor = children[i].nextSibling;
+            break;
+        }
+    }
+    // Re-append in original order after anchor
+    ordered.forEach(function(item) {
+        if (anchor) {
+            main.insertBefore(item.el, anchor);
+            anchor = item.el.nextSibling;
+        } else {
+            main.appendChild(item.el);
+        }
+    });
+
+    main.classList.remove('focus-mode');
+    main.classList.add('focus-exiting');
+    setTimeout(function() { main.classList.remove('focus-exiting'); }, 300);
+
+    if (window.focusedSection) {
+        window.focusedSection.classList.remove('is-focused');
+        var btn = window.focusedSection.querySelector('.expand-btn');
+        if (btn) {
+            btn.textContent = '';
+            var icon = document.createElement('i');
+            icon.className = 'fas fa-expand';
+            btn.appendChild(icon);
+            btn.onclick = function() { enterFocusMode(btn.closest('.analytics-section')); };
+        }
+    }
+    window.focusedSection = null;
+    window._focusSavedOrder = [];
+
+    _resizeAfterFocus();
+}
+
+function _resizeAfterFocus() {
+    requestAnimationFrame(function() {
+        if (window.analyticsCharts) {
+            window.analyticsCharts.forEach(function(chart) { chart.resize(); });
+        }
+        if (window.analyticsMap) {
+            setTimeout(function() { window.analyticsMap.invalidateSize(); }, 50);
+        }
+    });
+}
 
 function loadTextAnswers(qid, page, pageSize) {
     var filters = window.filterManager ? window.filterManager.getFilterParam() : '';

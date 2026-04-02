@@ -9,7 +9,10 @@
             <strong style="font-size:0.95rem;">{{ stat.question.name }}</strong>
             <br><small class="text-muted">{{ stat.section.title|default:stat.section.name }}</small>
         </div>
-        <span class="badge badge-secondary">{{ stat.question.input_type }}</span>
+        <div style="display:flex;align-items:center;gap:0.4rem;">
+            <span class="badge badge-secondary">{{ stat.question.input_type }}</span>
+            <button class="expand-btn" onclick="enterFocusMode(this.closest('.analytics-section'))"><i class="fas fa-expand"></i></button>
+        </div>
     </div>
 
     {% if stat.type == 'choices' %}
@@ -22,6 +25,7 @@
         var labels = JSON.parse('{{ stat.choice_labels_json|escapejs }}');
 
         window.analyticsChartCodes.set(qid, codes);
+        window.analyticsQuestionNames.set(qid, '{{ stat.question.name|escapejs }}');
         for (var i = 0; i < codes.length; i++) {
             window.analyticsChoiceLabels.set(qid + ':' + codes[i], labels[i]);
         }
@@ -77,6 +81,34 @@
             <div class="ns-label">Max</div>
         </div>
     </div>
+    {% if stat.hist_labels_json %}
+    <canvas id="hist-q-{{ stat.question.id }}" height="40" style="margin-top:0.75rem;"></canvas>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        new Chart(document.getElementById('hist-q-{{ stat.question.id }}'), {
+            type: 'bar',
+            data: {
+                labels: JSON.parse('{{ stat.hist_labels_json|escapejs }}'),
+                datasets: [{
+                    data: JSON.parse('{{ stat.hist_counts_json|escapejs }}'),
+                    backgroundColor: 'rgba(79, 70, 229, 0.5)',
+                    borderColor: 'rgba(79, 70, 229, 0.8)',
+                    borderWidth: 1,
+                    borderRadius: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { font: { size: 10 }, maxRotation: 45 } },
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
+                }
+            }
+        });
+    });
+    </script>
+    {% endif %}
 
     {% elif stat.type == 'text' %}
     <p class="mb-1"><small class="text-muted">{{ stat.total_answers }} text answer{{ stat.total_answers|pluralize }}</small></p>

@@ -1,5 +1,8 @@
 <div class="analytics-section">
-    <h6>Response Map <small class="text-muted">({{ geo_features_count }} features)</small></h6>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <h6 style="margin:0;">Response Map <small class="text-muted">({{ geo_features_count }} features)</small></h6>
+        <button class="expand-btn" onclick="enterFocusMode(this.closest('.analytics-section'))"><i class="fas fa-expand"></i></button>
+    </div>
     <div id="analytics-map"></div>
 </div>
 
@@ -8,7 +11,10 @@ document.addEventListener('DOMContentLoaded', function() {
     var geoData = JSON.parse('{{ geo_json|escapejs }}');
     if (!geoData.features.length) return;
 
-    var map = L.map('analytics-map');
+    var map = L.map('analytics-map', { zoomControl: false });
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    window.analyticsMap = map;
+
     L.tileLayer('{{ MAPBOX_URL }}', {
         attribution: 'Data &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
         maxZoom: 18,
@@ -23,18 +29,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    window.geoLayersBySid = new Map();
+    window.geoFeatureLayers = [];
+    window.geoQuestionVisible = new Map();
     window.geoGroup = L.layerGroup().addTo(map);
+
+    questionNames.forEach(function(name) {
+        window.geoQuestionVisible.set(name, true);
+    });
 
     geoData.features.forEach(function(f) {
         var sid = f.properties.session_id;
-        if (!window.geoLayersBySid.has(sid)) {
-            var sessionGroup = L.layerGroup();
-            window.geoLayersBySid.set(sid, sessionGroup);
-            window.geoGroup.addLayer(sessionGroup);
-        }
-
-        var colorIdx = questionNames.indexOf(f.properties.question) % colors.length;
+        var qName = f.properties.question;
+        var colorIdx = questionNames.indexOf(qName) % colors.length;
         var featureLayer;
 
         if (f.geometry.type === 'Point') {
@@ -54,12 +60,106 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        var popupText = '<strong>' + _escapeHtml(f.properties.question) + '</strong><br><small>' + _escapeHtml(f.properties.type) + '</small>';
-        featureLayer.bindPopup(popupText);
-        window.geoLayersBySid.get(sid).addLayer(featureLayer);
+        // Click-to-select
+        featureLayer.on('click', function(e) {
+            if (e.originalEvent) L.DomEvent.stop(e.originalEvent);
+            if (window.filterManager) {
+                window.filterManager.setGeoSelection(new Set([sid]));
+            }
+        });
+
+        window.geoGroup.addLayer(featureLayer);
+        window.geoFeatureLayers.push({ layer: featureLayer, sid: sid, question: qName, color: colors[colorIdx] });
     });
 
+    // Click on empty map deselects
+    map.on('click', function() {
+        if (window.filterManager && window.filterManager.geoSelection !== null) {
+            window.filterManager.setGeoSelection(null);
+        }
+    });
+
+    // Fit bounds
     var allBounds = L.geoJSON(geoData).getBounds();
     map.fitBounds(allBounds.pad(0.1));
+
+    // Legend control
+    var LegendControl = L.Control.extend({
+        onAdd: function() {
+            var div = L.DomUtil.create('div', 'geo-legend');
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+
+            var toggle = document.createElement('div');
+            toggle.className = 'geo-legend-toggle';
+            var icon = document.createElement('i');
+            icon.className = 'fas fa-layer-group';
+            toggle.appendChild(icon);
+            toggle.appendChild(document.createTextNode(' Layers'));
+            div.appendChild(toggle);
+
+            var body = document.createElement('div');
+            body.className = 'geo-legend-body collapsed';
+            div.appendChild(body);
+
+            questionNames.forEach(function(name, idx) {
+                var item = document.createElement('label');
+                item.className = 'geo-legend-item';
+
+                var cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.checked = true;
+                cb.addEventListener('change', function() {
+                    window.geoQuestionVisible.set(name, cb.checked);
+                    if (window.filterManager) {
+                        window.filterManager._updateGeoMap();
+                        window.filterManager._updateGeoMapSelection();
+                    }
+                });
+
+                var swatch = document.createElement('span');
+                swatch.className = 'geo-legend-swatch';
+                swatch.style.backgroundColor = colors[idx % colors.length];
+
+                var label = document.createElement('span');
+                label.textContent = name;
+                label.style.flex = '1';
+
+                var zoomBtn = document.createElement('button');
+                zoomBtn.style.cssText = 'border:none;background:none;cursor:pointer;color:#9ca3af;font-size:0.7rem;padding:0 2px;flex-shrink:0;';
+                var zoomIcon = document.createElement('i');
+                zoomIcon.className = 'fas fa-crosshairs';
+                zoomBtn.appendChild(zoomIcon);
+                zoomBtn.title = 'Zoom to layer';
+                zoomBtn.addEventListener('click', function(ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    var bounds = L.latLngBounds([]);
+                    window.geoFeatureLayers.forEach(function(entry) {
+                        if (entry.question !== name) return;
+                        if (typeof entry.layer.getLatLng === 'function') {
+                            bounds.extend(entry.layer.getLatLng());
+                        } else if (typeof entry.layer.getBounds === 'function') {
+                            bounds.extend(entry.layer.getBounds());
+                        }
+                    });
+                    if (bounds.isValid()) map.fitBounds(bounds.pad(0.1));
+                });
+
+                item.appendChild(cb);
+                item.appendChild(swatch);
+                item.appendChild(label);
+                item.appendChild(zoomBtn);
+                body.appendChild(item);
+            });
+
+            toggle.addEventListener('click', function() {
+                body.classList.toggle('collapsed');
+            });
+
+            return div;
+        }
+    });
+    new LegendControl({ position: 'topleft' }).addTo(map);
 });
 </script>

@@ -9,6 +9,38 @@ from .models import (
 )
 
 
+def _compute_histogram(values, min_val, max_val, max_bins=15):
+    """Compute histogram bins for a list of numeric values."""
+    import math
+    if not values:
+        return {'labels': [], 'counts': []}
+
+    if min_val == max_val:
+        return {'labels': [str(min_val)], 'counts': [len(values)]}
+
+    # Sturges' rule for bin count, capped
+    n_bins = min(max_bins, max(5, int(math.ceil(math.log2(len(values)) + 1))))
+    bin_width = (max_val - min_val) / n_bins
+
+    labels = []
+    counts = [0] * n_bins
+    for i in range(n_bins):
+        lo = min_val + i * bin_width
+        hi = lo + bin_width
+        if bin_width >= 1:
+            labels.append('{:.0f}-{:.0f}'.format(lo, hi))
+        else:
+            labels.append('{:.1f}-{:.1f}'.format(lo, hi))
+
+    for v in values:
+        idx = int((v - min_val) / bin_width)
+        if idx >= n_bins:
+            idx = n_bins - 1
+        counts[idx] += 1
+
+    return {'labels': labels, 'counts': counts}
+
+
 def _get_last_section(survey):
     """Return the last section in linked-list order, or None."""
     sections = list(SurveySection.objects.filter(survey_header=survey))
@@ -183,6 +215,12 @@ class SurveyAnalyticsService:
             stat['min_val'] = agg['min_val']
             stat['max_val'] = agg['max_val']
             stat['median'] = round(statistics.median(values), 1) if values else None
+
+            # Histogram bins
+            if values and agg['min_val'] is not None and agg['max_val'] is not None:
+                hist = _compute_histogram(values, agg['min_val'], agg['max_val'])
+                stat['hist_labels_json'] = json.dumps(hist['labels'], ensure_ascii=False)
+                stat['hist_counts_json'] = json.dumps(hist['counts'])
 
         elif question.input_type in ('text', 'text_line'):
             stat['type'] = 'text'
