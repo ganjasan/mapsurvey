@@ -3,13 +3,32 @@
         <h6 style="margin:0;">Response Map <small class="text-muted">({{ geo_features_count }} features)</small></h6>
         <button class="expand-btn" onclick="enterFocusMode(this.closest('.analytics-section'))"><i class="fas fa-expand"></i></button>
     </div>
+    <div class="q-filter-pills" data-qid="geo" style="display:none;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.4rem;"></div>
     <div id="analytics-map"></div>
+</div>
+
+<!-- Session detail modal shell -->
+<div class="modal fade" id="sessionDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0 font-weight-bold">Session Details</h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body" id="sessionDetailModalBody">
+                <div class="text-center text-muted py-4">Loading...</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var geoData = JSON.parse('{{ geo_json|escapejs }}');
     if (!geoData.features.length) return;
+
+    window.geoToolMode = 'pointer';
+    window._sessionMiniMap = null;
 
     var map = L.map('analytics-map', { zoomControl: false });
     L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -37,6 +56,17 @@ document.addEventListener('DOMContentLoaded', function() {
         window.geoQuestionVisible.set(name, true);
     });
 
+    // Draw handlers
+    var drawShapeOpts = { color: '#4f46e5', weight: 2, fillOpacity: 0.08, dashArray: '4,4' };
+    var rectHandler = new L.Draw.Rectangle(map, { shapeOptions: drawShapeOpts });
+    var polyHandler = new L.Draw.Polygon(map, { shapeOptions: drawShapeOpts });
+
+    var _featureClicked = false;
+    var _ctrlHeld = false;
+    document.addEventListener('keydown', function(e) { if (e.key === 'Control') _ctrlHeld = true; });
+    document.addEventListener('keyup', function(e) { if (e.key === 'Control') _ctrlHeld = false; });
+
+    // Build feature layers
     geoData.features.forEach(function(f) {
         var sid = f.properties.session_id;
         var qName = f.properties.question;
@@ -60,11 +90,18 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Click-to-select
+        // Mode-aware click handler
         featureLayer.on('click', function(e) {
-            if (e.originalEvent) L.DomEvent.stop(e.originalEvent);
-            if (window.filterManager) {
-                window.filterManager.setGeoSelection(new Set([sid]));
+            _featureClicked = true;
+            var mode = window.geoToolMode || 'pointer';
+            if (mode === 'pointer') {
+                if (e.originalEvent && e.originalEvent.ctrlKey) {
+                    if (window.filterManager) window.filterManager.toggleGeoSid(sid);
+                } else {
+                    if (window.filterManager) window.filterManager.setGeoSelection(new Set([sid]));
+                }
+            } else if (mode === 'details') {
+                openSessionDetailModal(sid);
             }
         });
 
@@ -72,16 +109,125 @@ document.addEventListener('DOMContentLoaded', function() {
         window.geoFeatureLayers.push({ layer: featureLayer, sid: sid, question: qName, color: colors[colorIdx] });
     });
 
-    // Click on empty map deselects
+    // Map click — reset feature click flag only, never deselect
     map.on('click', function() {
-        if (window.filterManager && window.filterManager.geoSelection !== null) {
-            window.filterManager.setGeoSelection(null);
-        }
+        _featureClicked = false;
     });
+
+    // Draw:created — rectangle and polygon selection
+    map.on('draw:created', function(e) {
+        var matchingSids = new Set();
+        window.geoFeatureLayers.forEach(function(entry) {
+            if (!window.geoGroup.hasLayer(entry.layer)) return;
+            if (e.layerType === 'rectangle') {
+                var bounds = e.layer.getBounds();
+                if (typeof entry.layer.getLatLng === 'function') {
+                    if (bounds.contains(entry.layer.getLatLng())) matchingSids.add(entry.sid);
+                } else if (typeof entry.layer.getBounds === 'function') {
+                    if (bounds.intersects(entry.layer.getBounds())) matchingSids.add(entry.sid);
+                }
+            } else if (e.layerType === 'polygon') {
+                if (typeof entry.layer.getLatLng === 'function') {
+                    var pt = entry.layer.getLatLng();
+                    if (_pointInPolygon(pt, e.layer)) matchingSids.add(entry.sid);
+                } else if (typeof entry.layer.getBounds === 'function') {
+                    if (e.layer.getBounds().intersects(entry.layer.getBounds())) matchingSids.add(entry.sid);
+                }
+            }
+        });
+        if (window.filterManager) {
+            if (_ctrlHeld && window.filterManager.geoSelection !== null && matchingSids.size > 0) {
+                // Ctrl held — add to existing selection
+                var merged = new Set(window.filterManager.geoSelection);
+                matchingSids.forEach(function(sid) { merged.add(sid); });
+                window.filterManager.setGeoSelection(merged);
+            } else {
+                window.filterManager.setGeoSelection(matchingSids.size > 0 ? matchingSids : null);
+            }
+        }
+        window.setGeoTool('pointer');
+    });
+
+    // Point-in-polygon helper (ray casting)
+    function _pointInPolygon(latlng, polygonLayer) {
+        var polyPoints = polygonLayer.getLatLngs()[0];
+        var x = latlng.lat, y = latlng.lng;
+        var inside = false;
+        for (var i = 0, j = polyPoints.length - 1; i < polyPoints.length; j = i++) {
+            var xi = polyPoints[i].lat, yi = polyPoints[i].lng;
+            var xj = polyPoints[j].lat, yj = polyPoints[j].lng;
+            if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) {
+                inside = !inside;
+            }
+        }
+        return inside;
+    }
 
     // Fit bounds
     var allBounds = L.geoJSON(geoData).getBounds();
     map.fitBounds(allBounds.pad(0.1));
+
+    // Tool switching
+    window.setGeoTool = function(name) {
+        window.geoToolMode = name;
+        document.querySelectorAll('.geo-toolbar-btn').forEach(function(btn) {
+            btn.classList.toggle('active', btn.dataset.tool === name);
+        });
+        rectHandler.disable();
+        polyHandler.disable();
+        if (name === 'rectangle') rectHandler.enable();
+        if (name === 'polygon') polyHandler.enable();
+    };
+
+    // Session detail modal
+    function openSessionDetailModal(sid) {
+        var body = document.getElementById('sessionDetailModalBody');
+        body.textContent = '';
+        var spinner = document.createElement('div');
+        spinner.className = 'text-center text-muted py-4';
+        var spinIcon = document.createElement('i');
+        spinIcon.className = 'fas fa-spinner fa-spin';
+        spinner.appendChild(spinIcon);
+        spinner.appendChild(document.createTextNode(' Loading...'));
+        body.appendChild(spinner);
+
+        if (window._sessionMiniMap) {
+            window._sessionMiniMap.remove();
+            window._sessionMiniMap = null;
+        }
+        $('#sessionDetailModal').modal('show');
+        var url = '{% url "analytics_session_detail" survey.uuid 0 %}'.replace(/\/0\/$/, '/' + sid + '/');
+        htmx.ajax('GET', url, { target: '#sessionDetailModalBody', swap: 'innerHTML' });
+    }
+
+    // Toolbar control
+    var ToolbarControl = L.Control.extend({
+        onAdd: function() {
+            var div = L.DomUtil.create('div', 'geo-toolbar');
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+            var tools = [
+                { name: 'pointer',   icon: 'fa-mouse-pointer', title: 'Select (click, Ctrl+click to add)' },
+                { name: 'rectangle', icon: 'fa-vector-square',  title: 'Rectangle select' },
+                { name: 'polygon',   icon: 'fa-draw-polygon',   title: 'Polygon select' },
+                { name: 'details',   icon: 'fa-info-circle',    title: 'Session details' },
+            ];
+            tools.forEach(function(t) {
+                var btn = document.createElement('button');
+                btn.className = 'geo-toolbar-btn';
+                btn.dataset.tool = t.name;
+                btn.title = t.title;
+                if (t.name === 'pointer') btn.classList.add('active');
+                var icon = document.createElement('i');
+                icon.className = 'fas ' + t.icon;
+                btn.appendChild(icon);
+                btn.addEventListener('click', function() { window.setGeoTool(t.name); });
+                div.appendChild(btn);
+            });
+            return div;
+        }
+    });
+    new ToolbarControl({ position: 'topright' }).addTo(map);
 
     // Legend control
     var LegendControl = L.Control.extend({
@@ -92,9 +238,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             var toggle = document.createElement('div');
             toggle.className = 'geo-legend-toggle';
-            var icon = document.createElement('i');
-            icon.className = 'fas fa-layer-group';
-            toggle.appendChild(icon);
+            var tIcon = document.createElement('i');
+            tIcon.className = 'fas fa-layer-group';
+            toggle.appendChild(tIcon);
             toggle.appendChild(document.createTextNode(' Layers'));
             div.appendChild(toggle);
 

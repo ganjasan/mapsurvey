@@ -1,0 +1,91 @@
+<div>
+    <div class="d-flex align-items-center mb-3" style="gap:0.75rem;">
+        <small class="text-muted">
+            <i class="fas fa-clock"></i>
+            {{ session.start_datetime|date:"Y-m-d H:i" }}
+        </small>
+        <span class="badge badge-secondary">Session #{{ session.id }}</span>
+    </div>
+
+    {% if answer_rows %}
+    <table class="table table-sm table-striped" style="font-size:0.85rem;">
+        <thead>
+            <tr>
+                <th style="width:30%;">Question</th>
+                <th>Answer</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in answer_rows %}
+            <tr>
+                <td>
+                    <strong>{{ row.question_name }}</strong>
+                    <br><small class="text-muted">{{ row.section_name }}</small>
+                </td>
+                <td>{{ row.value }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No answers in this session.</p>
+    {% endif %}
+
+    {% if has_geo %}
+    <div id="session-mini-map" style="height:200px;border-radius:6px;margin-top:0.5rem;"></div>
+    <script>
+    (function() {
+        function initMiniMap() {
+            if (window._sessionMiniMap) {
+                window._sessionMiniMap.remove();
+                window._sessionMiniMap = null;
+            }
+            var container = document.getElementById('session-mini-map');
+            if (!container) return;
+
+            var geoData = {{ geo_json|safe }};
+            var map = L.map('session-mini-map', { zoomControl: true });
+            window._sessionMiniMap = map;
+
+            L.tileLayer('{{ MAPBOX_URL }}', {
+                attribution: '&copy; OpenStreetMap',
+                maxZoom: 18,
+                accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
+            }).addTo(map);
+
+            var colors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+            var qNames = [];
+            geoData.features.forEach(function(f) {
+                if (qNames.indexOf(f.properties.question) === -1) qNames.push(f.properties.question);
+            });
+
+            geoData.features.forEach(function(f) {
+                var ci = qNames.indexOf(f.properties.question) % colors.length;
+                var layer;
+                if (f.geometry.type === 'Point') {
+                    var c = f.geometry.coordinates;
+                    layer = L.circleMarker(L.latLng(c[1], c[0]), {
+                        radius: 6, color: colors[ci], fillColor: colors[ci], fillOpacity: 0.8
+                    });
+                } else {
+                    layer = L.geoJSON(f, { style: function() {
+                        return { color: colors[ci], weight: 2, fillOpacity: 0.3 };
+                    }});
+                }
+                layer.addTo(map);
+            });
+
+            var allBounds = L.geoJSON(geoData).getBounds();
+            if (allBounds.isValid()) map.fitBounds(allBounds.pad(0.15));
+        }
+
+        var modalEl = document.getElementById('sessionDetailModal');
+        if ($(modalEl).hasClass('show')) {
+            setTimeout(initMiniMap, 50);
+        } else {
+            $('#sessionDetailModal').one('shown.bs.modal', initMiniMap);
+        }
+    })();
+    </script>
+    {% endif %}
+</div>

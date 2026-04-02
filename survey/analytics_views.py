@@ -3,7 +3,7 @@ import json
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404
 
-from .models import Question, Answer
+from .models import Question, Answer, SurveySession
 from .permissions import survey_permission_required
 from .analytics import SurveyAnalyticsService
 
@@ -118,4 +118,57 @@ def analytics_text_answers(request, survey_uuid, question_id):
         'survey': survey,
         'question': question,
         **result,
+    })
+
+
+@survey_permission_required('viewer')
+def analytics_session_detail(request, survey_uuid, session_id):
+    """HTMX partial: all answers for one session, with mini-map geo data."""
+    survey = request.survey
+    session = get_object_or_404(SurveySession, id=session_id, survey=survey)
+
+    answers = (
+        Answer.objects
+        .filter(survey_session=session, parent_answer_id__isnull=True)
+        .select_related('question', 'question__survey_section')
+        .order_by('question__survey_section__id', 'question__order_number')
+    )
+
+    answer_rows = []
+    geo_features = []
+    for a in answers:
+        q = a.question
+        if q.input_type in ('choice', 'multichoice', 'rating'):
+            value = ', '.join(a.get_selected_choice_names()) or '\u2014'
+        elif q.input_type in ('number', 'range'):
+            value = str(a.numeric) if a.numeric is not None else '\u2014'
+        elif q.input_type in ('text', 'text_line', 'datetime'):
+            value = a.text or '\u2014'
+        elif q.input_type in ('point', 'line', 'polygon'):
+            geom = a.point or a.line or a.polygon
+            if geom:
+                geo_features.append({
+                    'type': 'Feature',
+                    'geometry': json.loads(geom.geojson),
+                    'properties': {'question': q.name, 'type': q.input_type},
+                })
+                value = q.input_type + ' feature'
+            else:
+                value = '\u2014'
+        else:
+            value = '\u2014'
+
+        answer_rows.append({
+            'question_name': q.name,
+            'section_name': q.survey_section.title or q.survey_section.name,
+            'input_type': q.input_type,
+            'value': value,
+        })
+
+    return render(request, 'editor/partials/analytics_session_detail.html', {
+        'survey': survey,
+        'session': session,
+        'answer_rows': answer_rows,
+        'geo_json': json.dumps({'type': 'FeatureCollection', 'features': geo_features}),
+        'has_geo': bool(geo_features),
     })

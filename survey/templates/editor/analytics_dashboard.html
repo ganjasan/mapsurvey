@@ -4,6 +4,8 @@
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <style>
     .analytics-main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
     .stat-cards { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
@@ -152,6 +154,27 @@
     .geo-legend-swatch {
         width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
     }
+
+    /* Map toolbar */
+    .geo-toolbar {
+        background: #fff;
+        border-radius: var(--radius);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        padding: 4px;
+        gap: 2px;
+    }
+    .geo-toolbar-btn {
+        width: 30px; height: 30px;
+        border: none; background: none;
+        border-radius: 4px; cursor: pointer;
+        color: #6b7280; font-size: 0.85rem;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .geo-toolbar-btn:hover { background: var(--accent-light); color: var(--accent); }
+    .geo-toolbar-btn.active { background: var(--accent); color: #fff; }
 </style>
 {% endblock %}
 
@@ -196,6 +219,7 @@ function FilterManager(matrix) {
     this.filters = new Map();
     this.geoSelection = null;
     this.filteredSids = null;
+    this._choiceFilteredSids = null;
     this.textQuestionIds = [];
 }
 
@@ -217,6 +241,18 @@ FilterManager.prototype.toggleFilter = function(qid, code) {
 
 FilterManager.prototype.setGeoSelection = function(sids) {
     this.geoSelection = sids;
+    this._apply();
+};
+
+FilterManager.prototype.toggleGeoSid = function(sid) {
+    if (this.geoSelection === null) {
+        this.geoSelection = new Set([sid]);
+    } else {
+        var s = new Set(this.geoSelection);
+        if (s.has(sid)) { s.delete(sid); }
+        else { s.add(sid); }
+        this.geoSelection = s.size > 0 ? s : null;
+    }
     this._apply();
 };
 
@@ -247,13 +283,14 @@ FilterManager.prototype.getFilterParam = function() {
 FilterManager.prototype._recompute = function() {
     if (this.filters.size === 0 && this.geoSelection === null) {
         this.filteredSids = null;
+        this._choiceFilteredSids = null;
         return;
     }
-    var result = null;
 
-    // Choice filters
+    // Choice filters only
+    var choiceResult = null;
     if (this.filters.size > 0) {
-        result = new Set();
+        choiceResult = new Set();
         var self = this;
         this._matrix.forEach(function(session) {
             var passes = true;
@@ -267,11 +304,13 @@ FilterManager.prototype._recompute = function() {
                 });
                 if (!hasMatch) passes = false;
             });
-            if (passes) result.add(session.sid);
+            if (passes) choiceResult.add(session.sid);
         });
     }
+    this._choiceFilteredSids = choiceResult;
 
-    // Geo selection — intersect with choice filter results
+    // Full filter: choice + geo intersection (for charts and text)
+    var result = choiceResult;
     if (this.geoSelection !== null) {
         if (result === null) {
             result = new Set(this.geoSelection);
@@ -332,8 +371,10 @@ FilterManager.prototype._updateGeoMap = function() {
     if (!window.geoFeatureLayers || !window.geoGroup) return;
     var self = this;
     var qVisible = window.geoQuestionVisible;
+    // Map visibility uses choice filters only, not geo selection (map highlights, doesn't filter)
+    var sids = self._choiceFilteredSids;
     window.geoFeatureLayers.forEach(function(entry) {
-        var sidOk = self.filteredSids === null || self.filteredSids.has(entry.sid);
+        var sidOk = sids === null || sids.has(entry.sid);
         var qOk = !qVisible || qVisible.get(entry.question) !== false;
         if (sidOk && qOk) {
             if (!window.geoGroup.hasLayer(entry.layer)) window.geoGroup.addLayer(entry.layer);
@@ -366,6 +407,10 @@ FilterManager.prototype._updatePills = function() {
     if (this.filters.size === 0 && this.geoSelection === null) {
         while (bar.firstChild) bar.removeChild(bar.firstChild);
         bar.style.display = 'none';
+        document.querySelectorAll('.q-filter-pills').forEach(function(c) {
+            while (c.firstChild) c.removeChild(c.firstChild);
+            c.style.display = 'none';
+        });
         return;
     }
     bar.style.display = 'flex';
@@ -410,6 +455,49 @@ FilterManager.prototype._updatePills = function() {
         self.clearAll();
     });
     bar.appendChild(clearBtn);
+
+    // Per-question pills
+    var self2 = this;
+    document.querySelectorAll('.q-filter-pills').forEach(function(container) {
+        var qid = container.dataset.qid;
+        while (container.firstChild) container.removeChild(container.firstChild);
+
+        if (qid === 'geo') {
+            // Geo map: show geo selection pill
+            if (self2.geoSelection === null) {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'flex';
+            var geoPill = document.createElement('span');
+            geoPill.className = 'filter-pill';
+            geoPill.style.fontSize = '0.72rem';
+            geoPill.textContent = 'Map selection (' + self2.geoSelection.size + ') \u00d7';
+            geoPill.addEventListener('click', function() {
+                self2.setGeoSelection(null);
+            });
+            container.appendChild(geoPill);
+            return;
+        }
+
+        var qFilters = self2.filters.get(qid);
+        if (!qFilters || qFilters.size === 0) {
+            container.style.display = 'none';
+            return;
+        }
+        container.style.display = 'flex';
+        qFilters.forEach(function(code) {
+            var choiceLabel = window.analyticsChoiceLabels.get(qid + ':' + code) || String(code);
+            var pill = document.createElement('span');
+            pill.className = 'filter-pill';
+            pill.style.fontSize = '0.72rem';
+            pill.textContent = choiceLabel + ' \u00d7';
+            pill.addEventListener('click', function() {
+                self2.toggleFilter(qid, code);
+            });
+            container.appendChild(pill);
+        });
+    });
 };
 
 FilterManager.prototype._updateTextAnswers = function() {

@@ -47,6 +47,7 @@ urlpatterns = [
     # Analytics
     path('editor/surveys/<uuid:survey_uuid>/analytics/', analytics_views.analytics_dashboard, name='editor_survey_analytics'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/questions/<int:question_id>/text/', analytics_views.analytics_text_answers, name='analytics_text_answers'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/', analytics_views.analytics_session_detail, name='analytics_session_detail'),
 
     path('editor/surveys/<uuid:survey_uuid>/collaborators/', editor_views.editor_survey_collaborators, name='editor_survey_collaborators'),
     path('editor/surveys/<uuid:survey_uuid>/collaborators/add/', editor_views.editor_collaborator_add, name='editor_collaborator_add'),

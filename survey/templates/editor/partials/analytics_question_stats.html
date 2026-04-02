@@ -16,6 +16,7 @@
     </div>
 
     {% if stat.type == 'choices' %}
+    <div class="q-filter-pills" data-qid="{{ stat.question.id }}" style="display:none;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.4rem;"></div>
     <p class="mb-1"><small class="text-muted">{{ stat.total_answers }} answer{{ stat.total_answers|pluralize }}</small></p>
     <canvas id="chart-q-{{ stat.question.id }}" height="50" style="cursor:pointer;"></canvas>
     <script>
