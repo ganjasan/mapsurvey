@@ -103,6 +103,7 @@ def analytics_dashboard(request, survey_uuid):
         'completion_by_referrer': perf_service.get_completion_by_referrer(),
         'page_load_stats': perf_service.get_page_load_stats(),
         'time_on_section': perf_service.get_time_on_section(),
+        'campaign_breakdown': perf_service.get_campaign_breakdown(),
     })
 
 

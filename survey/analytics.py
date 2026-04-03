@@ -704,3 +704,47 @@ class PerformanceAnalyticsService:
                 'count': len(values),
             })
         return result
+
+    def get_campaign_breakdown(self):
+        """Return started/completed/rate per UTM source+medium+campaign triple."""
+        completed_sids = set(
+            self._events_qs()
+            .filter(event_type='survey_complete')
+            .values_list('session_id', flat=True)
+        )
+
+        starts = list(
+            self._events_qs()
+            .filter(event_type='session_start')
+            .values('session_id', 'metadata')
+        )
+
+        buckets = {}
+        for row in starts:
+            m = row['metadata'] or {}
+            source = m.get('utm_source', '').strip()
+            if not source:
+                continue
+            medium = m.get('utm_medium', '')
+            campaign = m.get('utm_campaign', '')
+            key = (source, medium, campaign)
+            if key not in buckets:
+                buckets[key] = {'started': 0, 'completed': 0}
+            buckets[key]['started'] += 1
+            if row['session_id'] in completed_sids:
+                buckets[key]['completed'] += 1
+
+        return sorted(
+            [
+                {
+                    'utm_source': src,
+                    'utm_medium': med,
+                    'utm_campaign': camp,
+                    'started': data['started'],
+                    'completed': data['completed'],
+                    'rate': round(data['completed'] / data['started'] * 100) if data['started'] else 0,
+                }
+                for (src, med, camp), data in buckets.items()
+            ],
+            key=lambda x: -x['started'],
+        )

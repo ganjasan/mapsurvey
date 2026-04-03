@@ -48,6 +48,9 @@
 <a href="{% url 'editor_survey_analytics' survey.uuid %}" class="btn btn-sm btn-outline-secondary ml-1" title="Analytics">
     <i class="fas fa-chart-bar"></i>
 </a>
+<a href="{% url 'editor_survey_share' survey.uuid %}" class="btn btn-sm btn-outline-secondary ml-1" title="Share">
+    <i class="fas fa-share-alt"></i>
+</a>
 
 {% if effective_role == 'owner' %}
 <button class="btn btn-sm btn-outline-secondary ml-1"

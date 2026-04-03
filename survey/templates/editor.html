@@ -81,6 +81,7 @@
 					<td>
 						<a href="{% url 'editor_survey_detail' survey.uuid %}">{% if org_role == 'viewer' %}View{% else %}Edit{% endif %}</a> |
 						<a href="{% url 'editor_survey_analytics' survey.uuid %}">Analytics</a> |
+						<a href="{% url 'editor_survey_share' survey.uuid %}">Share</a> |
 						{% if survey.prefetched_archived_versions %}
 						<div class="dropdown d-inline">
 							<a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

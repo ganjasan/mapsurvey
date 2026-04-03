@@ -145,6 +145,40 @@ class SurveyEvent(models.Model):
         return f'{self.event_type} @ {self.created_at} (session {self.session_id})'
 
 
+class TrackedLink(models.Model):
+    """Saved tracking links with UTM parameters for a survey."""
+    survey = models.ForeignKey('SurveyHeader', on_delete=models.CASCADE, related_name='tracked_links')
+    utm_source = models.CharField(max_length=100)
+    utm_medium = models.CharField(max_length=100, blank=True)
+    utm_campaign = models.CharField(max_length=100, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        parts = [self.utm_source]
+        if self.utm_medium:
+            parts.append(self.utm_medium)
+        if self.utm_campaign:
+            parts.append(self.utm_campaign)
+        return ' / '.join(parts)
+
+    def build_url(self, request=None):
+        """Return full survey URL with UTM params."""
+        from urllib.parse import urlencode
+        params = {'utm_source': self.utm_source}
+        if self.utm_medium:
+            params['utm_medium'] = self.utm_medium
+        if self.utm_campaign:
+            params['utm_campaign'] = self.utm_campaign
+        path = f'/surveys/{self.survey.uuid}/?{urlencode(params)}'
+        if request is not None:
+            return request.build_absolute_uri(path)
+        return path
+
+
 class Organization(models.Model):
     name = models.CharField(max_length=250)
     slug = models.SlugField(max_length=100, unique=True)

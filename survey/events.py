@@ -105,20 +105,41 @@ def _parse_user_agent(ua):
     return {'device_type': device_type, 'os': os_name, 'browser': browser}
 
 
+_UTM_KEYS = ('utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content')
+
+
+def store_utm_in_session(request):
+    """Persist UTM params from request.GET into session for later capture."""
+    params = {}
+    for key in _UTM_KEYS:
+        val = request.GET.get(key, '').strip()[:200]
+        if val:
+            params[key] = val
+    if params:
+        request.session['utm_params'] = params
+
+
+def _consume_utm_from_session(request):
+    """Return stored UTM params from session and clear them."""
+    return request.session.pop('utm_params', {})
+
+
 def build_session_start_metadata(request):
     """
-    Extract user agent, referrer, and device info from request for session_start event.
+    Extract user agent, referrer, device info, and UTM params for session_start event.
     """
     raw_referrer = request.META.get('HTTP_REFERER', '')
     host, bucket = _classify_referrer(raw_referrer)
     raw_ua = request.META.get('HTTP_USER_AGENT', '')
     device_info = _parse_user_agent(raw_ua)
+    utm = _consume_utm_from_session(request)
     return {
         'user_agent': raw_ua[:512],
         'referrer_raw': raw_referrer[:512],
         'referrer_host': host,
         'referrer_type': bucket,
         **device_info,
+        **utm,
     }
 
 

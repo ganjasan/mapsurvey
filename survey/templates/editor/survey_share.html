@@ -1,0 +1,196 @@
+{% extends "editor/editor_base.html" %}
+
+{% block page_title %}Share – {{ survey.name }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+    .share-main { max-width: 800px; margin: 0 auto; padding: 1.5rem; }
+    .share-section {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+    .share-section h6 { font-weight: 700; margin-bottom: 1rem; }
+    .link-url {
+        font-family: monospace;
+        font-size: 0.8rem;
+        word-break: break-all;
+        color: var(--accent);
+    }
+    .btn-icon {
+        border: none; background: none; cursor: pointer;
+        color: #6b7280; padding: 0.25rem 0.4rem; border-radius: 4px;
+    }
+    .btn-icon:hover { color: var(--accent); background: var(--accent-light); }
+    #qrModal {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5); display: none;
+        align-items: center; justify-content: center; z-index: 1000;
+    }
+    #qrModal.active { display: flex; }
+    #qrModalContent {
+        background: #fff; border-radius: var(--radius);
+        padding: 2rem; text-align: center; max-width: 350px;
+    }
+    #qrModalContent .qr-url {
+        font-size: 0.75rem; color: #6b7280; margin-top: 1rem;
+        word-break: break-all;
+    }
+</style>
+{% endblock %}
+
+{% block navbar_content %}
+<a href="{% url 'editor_survey_detail' survey.uuid %}" class="survey-name" style="text-decoration:none;">{{ survey.name }}</a>
+<span style="color:#9ca3af;font-size:0.9rem;">/ Share</span>
+<a href="{% url 'editor_survey_analytics' survey.uuid %}" class="btn btn-sm btn-outline-secondary ml-2" title="Analytics">
+    <i class="fas fa-chart-bar"></i>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="share-main">
+
+    <!-- Create Tracking Link -->
+    <div class="share-section">
+        <h6>Create Tracking Link</h6>
+        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem;">
+            Add UTM parameters to track where your survey responses come from.
+            Share the generated link via email, social media, or print it as a QR code.
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
+                <div>
+                    <label style="font-size:0.8rem;font-weight:500;">{{ form.utm_source.label }} <span style="color:#ef4444;">*</span></label>
+                    {{ form.utm_source }}
+                    {% if form.utm_source.errors %}
+                    <div style="color:#ef4444;font-size:0.75rem;margin-top:0.2rem;">{{ form.utm_source.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div>
+                    <label style="font-size:0.8rem;font-weight:500;">{{ form.utm_medium.label }}</label>
+                    {{ form.utm_medium }}
+                </div>
+                <div>
+                    <label style="font-size:0.8rem;font-weight:500;">{{ form.utm_campaign.label }}</label>
+                    {{ form.utm_campaign }}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary mt-3">
+                Create Link
+            </button>
+        </form>
+    </div>
+
+    <!-- Your Tracking Links -->
+    <div class="share-section">
+        <h6>Your Tracking Links</h6>
+        {% if links %}
+        <table style="width:100%;font-size:0.875rem;border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">Source</th>
+                    <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">Medium</th>
+                    <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">Campaign</th>
+                    <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in links %}
+                <tr id="link-row-{{ item.obj.id }}" style="border-bottom:1px solid #f3f4f6;">
+                    <td style="padding:0.5rem 0;font-weight:500;">{{ item.obj.utm_source }}</td>
+                    <td style="padding:0.5rem 0;color:#6b7280;">{{ item.obj.utm_medium|default:"--" }}</td>
+                    <td style="padding:0.5rem 0;color:#6b7280;">{{ item.obj.utm_campaign|default:"--" }}</td>
+                    <td style="padding:0.5rem 0;text-align:right;white-space:nowrap;">
+                        <button class="btn-icon" onclick="copyLink(this, '{{ item.url|escapejs }}')" title="Copy URL">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button class="btn-icon" onclick="showQr('{{ item.url|escapejs }}')" title="QR Code">
+                            <i class="fas fa-qrcode"></i>
+                        </button>
+                        <form method="post" action="{% url 'editor_survey_share_delete' survey.uuid item.obj.id %}"
+                              style="display:inline;"
+                              hx-post="{% url 'editor_survey_share_delete' survey.uuid item.obj.id %}"
+                              hx-target="#link-row-{{ item.obj.id }}"
+                              hx-swap="outerHTML">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-icon" title="Delete"
+                                    onclick="return confirm('Delete this link?');"
+                                    style="color:#ef4444;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                <tr style="border-bottom:1px solid #f3f4f6;">
+                    <td colspan="4" style="padding:0.2rem 0 0.5rem;">
+                        <span class="link-url">{{ item.url }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:#9ca3af;font-size:0.9rem;text-align:center;padding:2rem 0;">
+            No tracking links yet. Create one above to start tracking campaign performance.
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- Plain survey link -->
+    <div class="share-section">
+        <h6>Direct Link</h6>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+            <input type="text" readonly class="form-control" style="font-family:monospace;font-size:0.85rem;"
+                   id="direct-link" value="{{ request.scheme }}://{{ request.get_host }}/surveys/{{ survey.uuid }}/">
+            <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(this, document.getElementById('direct-link').value)">
+                <i class="fas fa-copy"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="showQr(document.getElementById('direct-link').value)">
+                <i class="fas fa-qrcode"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- QR Modal -->
+<div id="qrModal" onclick="if(event.target===this)closeQr();">
+    <div id="qrModalContent">
+        <div id="qrContainer"></div>
+        <div class="qr-url" id="qrUrl"></div>
+        <button class="btn btn-sm btn-outline-secondary mt-3" onclick="closeQr()">Close</button>
+    </div>
+</div>
+
+<script>
+function copyLink(btn, url) {
+    navigator.clipboard.writeText(url).then(function() {
+        var icon = btn.querySelector('i');
+        if (icon) {
+            var origClass = icon.className;
+            icon.className = 'fas fa-check';
+            setTimeout(function() { icon.className = origClass; }, 1500);
+        }
+    });
+}
+
+function showQr(url) {
+    var container = document.getElementById('qrContainer');
+    container.textContent = '';
+    new QRCode(container, {text: url, width: 256, height: 256});
+    document.getElementById('qrUrl').textContent = url;
+    document.getElementById('qrModal').classList.add('active');
+}
+
+function closeQr() {
+    document.getElementById('qrModal').classList.remove('active');
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeQr();
+});
+</script>
+{% endblock %}

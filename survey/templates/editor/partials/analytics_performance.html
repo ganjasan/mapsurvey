@@ -245,4 +245,36 @@
 </div>
 {% endif %}
 
+<!-- Campaign Breakdown -->
+{% if campaign_breakdown %}
+<div class="analytics-section">
+    <h6>Campaign Breakdown</h6>
+    <p style="font-size:0.8rem;color:#9ca3af;margin-bottom:0.75rem;">Sessions from tracked UTM links. Create links on the <a href="{% url 'editor_survey_share' survey.uuid %}">Share</a> page.</p>
+    <table style="width:100%;font-size:0.875rem;border-collapse:collapse;">
+        <thead>
+            <tr style="border-bottom:1px solid var(--border-color);">
+                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">Source</th>
+                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">Medium</th>
+                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">Campaign</th>
+                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Started</th>
+                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Completed</th>
+                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in campaign_breakdown %}
+            <tr style="border-bottom:1px solid #f3f4f6;">
+                <td style="padding:0.4rem 0;font-weight:500;">{{ row.utm_source }}</td>
+                <td style="padding:0.4rem 0;color:#6b7280;">{{ row.utm_medium|default:"--" }}</td>
+                <td style="padding:0.4rem 0;color:#6b7280;">{{ row.utm_campaign|default:"--" }}</td>
+                <td style="padding:0.4rem 0;text-align:right;">{{ row.started }}</td>
+                <td style="padding:0.4rem 0;text-align:right;">{{ row.completed }}</td>
+                <td style="padding:0.4rem 0;text-align:right;font-weight:600;">{{ row.rate }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
 {% endif %}

@@ -183,6 +183,9 @@
 {% block navbar_content %}
 <a href="{% url 'editor_survey_detail' survey.uuid %}" class="survey-name" style="text-decoration:none;">{{ survey.name }}</a>
 <span style="color:#9ca3af;font-size:0.9rem;">/ Analytics</span>
+<a href="{% url 'editor_survey_share' survey.uuid %}" class="btn btn-sm btn-outline-secondary ml-2" title="Share">
+    <i class="fas fa-share-alt"></i>
+</a>
 {% endblock %}
 
 {% block content %}

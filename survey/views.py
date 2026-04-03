@@ -18,7 +18,7 @@ from datetime import datetime
 from django import forms
 from django.views.generic import UpdateView
 from .forms import SurveySectionAnswerForm
-from .events import emit_event, build_session_start_metadata
+from .events import emit_event, build_session_start_metadata, store_utm_in_session
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
 from django.core.serializers import serialize
@@ -244,6 +244,10 @@ def survey_language_select(request, survey_slug):
 	"""Display language selection screen for multilingual surveys."""
 	survey = resolve_survey(survey_slug)
 
+	# Capture UTM params on GET (before language choice redirect)
+	if request.method == 'GET':
+		store_utm_in_session(request)
+
 	access_response = check_survey_access(request, survey)
 	if access_response is not None:
 		return access_response
@@ -295,8 +299,12 @@ def survey_header(request, survey_slug):
 		del request.session['survey_session_id']
 	if request.session.get('survey_language'):
 		del request.session['survey_language']
+	request.session.pop('utm_params', None)
 
 	survey = resolve_survey(survey_slug)
+
+	# Capture UTM params before redirect (they'd be lost otherwise)
+	store_utm_in_session(request)
 
 	access_response = check_survey_access(request, survey)
 	if access_response is not None:

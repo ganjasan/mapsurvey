@@ -19,8 +19,9 @@ from .serialization import (
 from .forms import SurveySectionAnswerForm
 from .permissions import get_effective_survey_role
 from .access_control import check_survey_access
-from .models import SurveyEvent
+from .models import SurveyEvent, TrackedLink
 from .events import emit_event, _classify_referrer, _parse_user_agent, build_session_start_metadata
+from .analytics import PerformanceAnalyticsService
 
 
 def _make_org(name='TestOrg'):
@@ -9998,3 +9999,201 @@ class PerformanceAnalyticsServiceTest(TestCase):
         self.assertEqual(result[0]['started'], 2)
         self.assertEqual(result[0]['completed'], 1)
         self.assertEqual(result[0]['rate'], 50)
+
+
+class UtmCaptureTest(TestCase):
+    """Tests for UTM param capture via session storage and event metadata."""
+
+    def setUp(self):
+        self.client = Client()
+        self.org = _make_org('UtmOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='utmsurvey', organization=self.org, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', is_head=True, code='S1',
+        )
+
+    def test_utm_stored_in_session_on_survey_entry(self):
+        """
+        GIVEN a published survey
+        WHEN the entry URL is visited with utm_source param
+        THEN utm_params are stored in the session
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/?utm_source=newsletter&utm_medium=email')
+        self.assertIn('utm_params', self.client.session)
+        self.assertEqual(self.client.session['utm_params']['utm_source'], 'newsletter')
+        self.assertEqual(self.client.session['utm_params']['utm_medium'], 'email')
+
+    def test_utm_appears_in_session_start_event(self):
+        """
+        GIVEN utm_params stored in session from survey entry
+        WHEN the first section is visited (creating session_start event)
+        THEN the event metadata contains utm_source
+        """
+        # Visit entry URL to store UTM, then follow redirect to section
+        self.client.get(f'/surveys/{self.survey.uuid}/?utm_source=social&utm_campaign=spring')
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        event = SurveyEvent.objects.filter(event_type='session_start').last()
+        self.assertIsNotNone(event)
+        self.assertEqual(event.metadata.get('utm_source'), 'social')
+        self.assertEqual(event.metadata.get('utm_campaign'), 'spring')
+
+    def test_utm_consumed_after_session_start(self):
+        """
+        GIVEN utm_params stored in session
+        WHEN the session_start event fires
+        THEN utm_params are removed from the session
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/?utm_source=test')
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        self.assertNotIn('utm_params', self.client.session)
+
+    def test_no_utm_does_not_break(self):
+        """
+        GIVEN a request with no UTM params
+        WHEN the session_start event fires
+        THEN no utm_source in metadata and no error
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        event = SurveyEvent.objects.filter(event_type='session_start').last()
+        self.assertIsNotNone(event)
+        self.assertNotIn('utm_source', event.metadata)
+
+
+class TrackedLinkModelTest(TestCase):
+    """Tests for TrackedLink model."""
+
+    def setUp(self):
+        self.org = _make_org('LinkOrg')
+        self.survey = SurveyHeader.objects.create(name='linksurvey', organization=self.org)
+
+    def test_build_url_includes_all_params(self):
+        """
+        GIVEN a TrackedLink with source, medium, campaign
+        WHEN build_url is called
+        THEN the returned URL contains all three utm params
+        """
+        link = TrackedLink.objects.create(
+            survey=self.survey, utm_source='fb', utm_medium='social', utm_campaign='q1',
+        )
+        url = link.build_url()
+        self.assertIn('utm_source=fb', url)
+        self.assertIn('utm_medium=social', url)
+        self.assertIn('utm_campaign=q1', url)
+
+    def test_build_url_omits_blank_params(self):
+        """
+        GIVEN a TrackedLink with only utm_source
+        WHEN build_url is called
+        THEN the URL contains utm_source but not utm_medium or utm_campaign
+        """
+        link = TrackedLink.objects.create(
+            survey=self.survey, utm_source='direct',
+        )
+        url = link.build_url()
+        self.assertIn('utm_source=direct', url)
+        self.assertNotIn('utm_medium', url)
+        self.assertNotIn('utm_campaign', url)
+
+
+class ShareViewTest(TestCase):
+    """Tests for the Share page view."""
+
+    def setUp(self):
+        self.client = Client()
+        self.org = _make_org('ShareOrg')
+        self.user = User.objects.create_user('shareuser', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='sharesurvey', organization=self.org, created_by=self.user,
+        )
+        self.client.login(username='shareuser', password='pw')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+    def test_share_page_get_returns_200(self):
+        """
+        GIVEN an authenticated editor user
+        WHEN the share page is requested via GET
+        THEN the response is 200
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/share/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_share_page_post_creates_link(self):
+        """
+        GIVEN an authenticated editor user
+        WHEN a POST with utm_source is submitted
+        THEN a TrackedLink is created and user is redirected
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/share/',
+            {'utm_source': 'newsletter', 'utm_medium': 'email', 'utm_campaign': ''},
+        )
+        self.assertEqual(TrackedLink.objects.filter(survey=self.survey).count(), 1)
+        self.assertRedirects(response, f'/editor/surveys/{self.survey.uuid}/share/')
+
+    def test_share_page_post_missing_source(self):
+        """
+        GIVEN an authenticated editor user
+        WHEN a POST with empty utm_source is submitted
+        THEN no TrackedLink is created
+        """
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/share/',
+            {'utm_source': '', 'utm_medium': '', 'utm_campaign': ''},
+        )
+        self.assertEqual(TrackedLink.objects.filter(survey=self.survey).count(), 0)
+
+    def test_share_link_delete(self):
+        """
+        GIVEN a TrackedLink exists
+        WHEN DELETE POST is sent
+        THEN the link is removed
+        """
+        link = TrackedLink.objects.create(survey=self.survey, utm_source='test')
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/share/{link.id}/delete/',
+        )
+        self.assertFalse(TrackedLink.objects.filter(id=link.id).exists())
+
+
+class CampaignAnalyticsTest(TestCase):
+    """Tests for campaign breakdown analytics."""
+
+    def setUp(self):
+        self.org = _make_org('CampOrg')
+        self.survey = SurveyHeader.objects.create(name='campsurvey', organization=self.org)
+        self.s1 = SurveySession.objects.create(survey=self.survey)
+        self.s2 = SurveySession.objects.create(survey=self.survey)
+        emit_event(self.s1, 'session_start', {'utm_source': 'newsletter', 'utm_medium': 'email', 'utm_campaign': 'q1'})
+        emit_event(self.s2, 'session_start', {'utm_source': 'newsletter', 'utm_medium': 'email', 'utm_campaign': 'q1'})
+        emit_event(self.s1, 'survey_complete')
+
+    def test_campaign_groups_by_utm_triple(self):
+        """
+        GIVEN two sessions with same UTM params, one completed
+        WHEN get_campaign_breakdown is called
+        THEN one row with started=2, completed=1, rate=50
+        """
+        svc = PerformanceAnalyticsService(self.survey)
+        result = svc.get_campaign_breakdown()
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['utm_source'], 'newsletter')
+        self.assertEqual(result[0]['started'], 2)
+        self.assertEqual(result[0]['completed'], 1)
+        self.assertEqual(result[0]['rate'], 50)
+
+    def test_campaign_excludes_non_utm_sessions(self):
+        """
+        GIVEN a session_start with no utm_source
+        WHEN get_campaign_breakdown is called
+        THEN that session is excluded
+        """
+        s3 = SurveySession.objects.create(survey=self.survey)
+        emit_event(s3, 'session_start', {'referrer_type': 'direct'})
+        svc = PerformanceAnalyticsService(self.survey)
+        result = svc.get_campaign_breakdown()
+        self.assertEqual(len(result), 1)
