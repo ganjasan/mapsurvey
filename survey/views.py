@@ -18,6 +18,7 @@ from datetime import datetime
 from django import forms
 from django.views.generic import UpdateView
 from .forms import SurveySectionAnswerForm
+from .events import emit_event, build_session_start_metadata
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
 from django.core.serializers import serialize
@@ -266,6 +267,7 @@ def survey_language_select(request, survey_slug):
 			survey_session.save()
 			request.session['survey_session_id'] = survey_session.id
 			request.session['survey_language'] = selected_language
+			emit_event(survey_session, 'session_start', build_session_start_metadata(request))
 
 			# Redirect to first section
 			start_section = survey.start_section()
@@ -335,6 +337,7 @@ def survey_section(request, survey_slug, section_name):
 		survey_session = SurveySession(survey=survey, language=selected_language)
 		survey_session.save()
 		request.session['survey_session_id'] = survey_session.id
+		emit_event(survey_session, 'session_start', build_session_start_metadata(request))
 
 	# Version routing: use the session's survey for section lookup
 	# (may be an archived version if respondent started before a new version was published)
@@ -348,6 +351,7 @@ def survey_section(request, survey_slug, section_name):
 			survey_session = SurveySession(survey=survey, language=selected_language)
 			survey_session.save()
 			request.session['survey_session_id'] = survey_session.id
+			emit_event(survey_session, 'session_start', build_session_start_metadata(request))
 
 	section = SurveySection.objects.get(Q(survey_header=session_survey) & Q(name=section_name))
 
@@ -446,6 +450,10 @@ def survey_section(request, survey_slug, section_name):
 
 					answer.save()
 
+		emit_event(survey_session, 'section_submit', {
+			'section_name': section.name, 'section_index': section_current,
+		})
+
 		if section.next_section:
 			next_page = "../" + section.next_section.name
 		elif survey.redirect_url == "#":
@@ -455,6 +463,15 @@ def survey_section(request, survey_slug, section_name):
 		return HttpResponseRedirect(next_page)
 
 	else:
+		# Emit section_view event
+		try:
+			_sess = SurveySession.objects.get(pk=request.session['survey_session_id'])
+			emit_event(_sess, 'section_view', {
+				'section_name': section.name, 'section_index': section_current,
+			})
+		except SurveySession.DoesNotExist:
+			pass
+
 		questions = section.questions()
 
 		# Query existing answers for this session and section
@@ -871,6 +888,15 @@ def survey_thanks(request, survey_slug):
 		access_response = check_survey_access(request, survey)
 		if access_response:
 			return access_response
+
+	# Emit survey_complete event before clearing session
+	session_id = request.session.get('survey_session_id')
+	if session_id:
+		try:
+			_sess = SurveySession.objects.get(pk=session_id)
+			emit_event(_sess, 'survey_complete')
+		except SurveySession.DoesNotExist:
+			pass
 
 	lang = request.session.pop('survey_language', None)
 	request.session.pop('survey_session_id', None)

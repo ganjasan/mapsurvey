@@ -114,6 +114,36 @@ class SurveySession(models.Model):
             self.__acache = Answer.objects.filter(Q(survey_session=self) & Q(parent_answer_id__isnull=True))
         return self.__acache
 
+EVENT_TYPE_CHOICES = (
+    ('session_start',   'Session Start'),
+    ('section_view',    'Section View'),
+    ('section_submit',  'Section Submit'),
+    ('survey_complete', 'Survey Complete'),
+    ('page_load',       'Page Load'),
+)
+
+
+class SurveyEvent(models.Model):
+    """Append-only event log for respondent behavior tracking."""
+    session = models.ForeignKey(
+        'SurveySession', null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='events',
+    )
+    event_type = models.CharField(max_length=30, choices=EVENT_TYPE_CHOICES, db_index=True)
+    created_at = models.DateTimeField(default=timezone.now, db_index=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        indexes = [
+            models.Index(fields=['session', 'event_type']),
+            models.Index(fields=['session', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.event_type} @ {self.created_at} (session {self.session_id})'
+
+
 class Organization(models.Model):
     name = models.CharField(max_length=250)
     slug = models.SlugField(max_length=100, unique=True)

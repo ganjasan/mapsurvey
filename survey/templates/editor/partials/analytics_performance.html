@@ -1,0 +1,221 @@
+{% if not event_summary.session_starts %}
+<div class="analytics-section" style="text-align:center;color:#9ca3af;padding:3rem;">
+    <div style="font-size:1.5rem;margin-bottom:0.5rem;">No event data yet</div>
+    <p>Performance events are recorded once respondents start filling out the survey.<br>
+    Events will appear here after the first respondent visits a published survey.</p>
+</div>
+{% else %}
+
+<!-- Summary cards -->
+<div class="stat-cards">
+    <div class="stat-card">
+        <div class="stat-value">{{ event_summary.session_starts }}</div>
+        <div class="stat-label">Sessions Started</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ event_summary.completions }}</div>
+        <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ event_summary.completion_rate }}%</div>
+        <div class="stat-label">Completion Rate</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">
+            {% if event_summary.median_load_ms %}{{ event_summary.median_load_ms }}ms{% else %}&mdash;{% endif %}
+        </div>
+        <div class="stat-label">Median Page Load</div>
+    </div>
+</div>
+
+<!-- Section Funnel -->
+{% if funnel %}
+<div class="analytics-section">
+    <h6>Section Funnel</h6>
+    <p style="font-size:0.8rem;color:#9ca3af;margin-bottom:1rem;">Views vs. submissions per section. Drop rate shows the percentage of respondents who viewed but did not submit.</p>
+
+    {% for step in funnel %}
+    <div style="margin-bottom:1rem;">
+        <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.3rem;">
+            <span style="font-weight:500;">{{ step.section_title }}</span>
+            <span>
+                <span style="color:var(--accent);font-weight:600;">{{ step.views }}</span> views
+                &rarr;
+                <span style="color:#059669;font-weight:600;">{{ step.submits }}</span> submits
+                {% if step.drop_rate > 0 %}
+                <span style="color:#ef4444;font-size:0.8rem;margin-left:0.5rem;">&minus;{{ step.drop_rate }}%</span>
+                {% endif %}
+            </span>
+        </div>
+        <div style="display:flex;gap:2px;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
+            {% if step.views > 0 %}
+            <div style="background:#059669;width:{% widthratio step.submits step.views 100 %}%;height:100%;border-radius:4px 0 0 4px;transition:width 0.4s;" title="Submitted"></div>
+            <div style="background:#fca5a5;flex:1;height:100%;border-radius:0 4px 4px 0;" title="Dropped"></div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Funnel chart -->
+    <div style="margin-top:1.5rem;">
+        <canvas id="funnelChart" height="60"></canvas>
+    </div>
+</div>
+
+<script>
+(function() {
+    var funnel = {{ funnel_json|safe }};
+    if (!funnel.length) return;
+    var labels = funnel.map(function(f) { return f.section_title; });
+    var views = funnel.map(function(f) { return f.views; });
+    var submits = funnel.map(function(f) { return f.submits; });
+    new Chart(document.getElementById('funnelChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Views', data: views, backgroundColor: 'rgba(99,102,241,0.3)', borderColor: 'rgb(99,102,241)', borderWidth: 1 },
+                { label: 'Submits', data: submits, backgroundColor: 'rgba(5,150,105,0.3)', borderColor: 'rgb(5,150,105)', borderWidth: 1 },
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } },
+            scales: { y: { beginAtZero: true } },
+        }
+    });
+})();
+</script>
+{% endif %}
+
+<!-- Traffic Sources -->
+{% if referrer_breakdown %}
+<div class="analytics-section">
+    <h6>Traffic Sources</h6>
+    <table style="width:100%;font-size:0.875rem;border-collapse:collapse;">
+        <thead>
+            <tr style="border-bottom:1px solid var(--border-color);">
+                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">Source</th>
+                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Sessions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in referrer_breakdown %}
+            <tr style="border-bottom:1px solid #f3f4f6;">
+                <td style="padding:0.4rem 0;">
+                    {% if row.referrer_type == 'direct' %}
+                        <span style="color:#6b7280;">Direct / Unknown</span>
+                    {% elif row.referrer_type == 'google' %}
+                        Google
+                    {% elif row.referrer_type == 'bing' %}
+                        Bing
+                    {% elif row.referrer_type == 'social' %}
+                        Social
+                    {% elif row.referrer_type == 'email' %}
+                        Email
+                    {% else %}
+                        Other
+                    {% endif %}
+                </td>
+                <td style="padding:0.4rem 0;text-align:right;font-weight:600;">{{ row.count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Device / OS / Browser -->
+{% if device_breakdown.device_types %}
+<div class="analytics-section">
+    <h6>Devices, OS &amp; Browsers</h6>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;">
+        <!-- Device type -->
+        <div>
+            <div style="font-size:0.8rem;color:#6b7280;font-weight:500;margin-bottom:0.5rem;">Platform</div>
+            {% for row in device_breakdown.device_types %}
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;border-bottom:1px solid #f3f4f6;">
+                <span>{{ row.name|title }}</span>
+                <span style="font-weight:600;">{{ row.count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <!-- OS -->
+        <div>
+            <div style="font-size:0.8rem;color:#6b7280;font-weight:500;margin-bottom:0.5rem;">OS</div>
+            {% for row in device_breakdown.os %}
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;border-bottom:1px solid #f3f4f6;">
+                <span>{{ row.name }}</span>
+                <span style="font-weight:600;">{{ row.count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <!-- Browser -->
+        <div>
+            <div style="font-size:0.8rem;color:#6b7280;font-weight:500;margin-bottom:0.5rem;">Browser</div>
+            {% for row in device_breakdown.browsers %}
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;border-bottom:1px solid #f3f4f6;">
+                <span>{{ row.name }}</span>
+                <span style="font-weight:600;">{{ row.count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Completion Rate by Source -->
+{% if completion_by_referrer %}
+<div class="analytics-section">
+    <h6>Completion Rate by Source</h6>
+    <table style="width:100%;font-size:0.875rem;border-collapse:collapse;">
+        <thead>
+            <tr style="border-bottom:1px solid var(--border-color);">
+                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">Source</th>
+                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Started</th>
+                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Completed</th>
+                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in completion_by_referrer %}
+            <tr style="border-bottom:1px solid #f3f4f6;">
+                <td style="padding:0.4rem 0;">{{ row.referrer_type }}</td>
+                <td style="padding:0.4rem 0;text-align:right;">{{ row.started }}</td>
+                <td style="padding:0.4rem 0;text-align:right;">{{ row.completed }}</td>
+                <td style="padding:0.4rem 0;text-align:right;font-weight:600;">{{ row.rate }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Page Load Stats -->
+{% if page_load_stats %}
+<div class="analytics-section">
+    <h6>Page Load Time by Section</h6>
+    <table style="width:100%;font-size:0.875rem;border-collapse:collapse;">
+        <thead>
+            <tr style="border-bottom:1px solid var(--border-color);">
+                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">Section</th>
+                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Avg</th>
+                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Median</th>
+                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Samples</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in page_load_stats %}
+            <tr style="border-bottom:1px solid #f3f4f6;">
+                <td style="padding:0.4rem 0;">{{ row.section_name }}</td>
+                <td style="padding:0.4rem 0;text-align:right;font-weight:600;">{{ row.avg_ms }}ms</td>
+                <td style="padding:0.4rem 0;text-align:right;">{{ row.median_ms }}ms</td>
+                <td style="padding:0.4rem 0;text-align:right;color:#9ca3af;">{{ row.count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% endif %}

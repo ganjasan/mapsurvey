@@ -19,6 +19,8 @@ from .serialization import (
 from .forms import SurveySectionAnswerForm
 from .permissions import get_effective_survey_role
 from .access_control import check_survey_access
+from .models import SurveyEvent
+from .events import emit_event, _classify_referrer, _parse_user_agent, build_session_start_metadata
 
 
 def _make_org(name='TestOrg'):
@@ -9509,3 +9511,446 @@ class SessionDetailViewTest(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
+
+
+class UserAgentParserTest(TestCase):
+    """Tests for user agent parsing into device, OS, and browser."""
+
+    def test_chrome_windows_desktop(self):
+        """
+        GIVEN a Chrome on Windows UA string
+        WHEN _parse_user_agent is called
+        THEN device_type=desktop, os=Windows, browser=Chrome
+        """
+        ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        result = _parse_user_agent(ua)
+        self.assertEqual(result['device_type'], 'desktop')
+        self.assertEqual(result['os'], 'Windows')
+        self.assertEqual(result['browser'], 'Chrome')
+
+    def test_safari_iphone_mobile(self):
+        """
+        GIVEN an iPhone Safari UA string
+        WHEN _parse_user_agent is called
+        THEN device_type=mobile, os=iOS, browser=Safari
+        """
+        ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+        result = _parse_user_agent(ua)
+        self.assertEqual(result['device_type'], 'mobile')
+        self.assertEqual(result['os'], 'iOS')
+        self.assertEqual(result['browser'], 'Safari')
+
+    def test_firefox_linux_desktop(self):
+        """
+        GIVEN a Firefox on Linux UA string
+        WHEN _parse_user_agent is called
+        THEN device_type=desktop, os=Linux, browser=Firefox
+        """
+        ua = 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/119.0'
+        result = _parse_user_agent(ua)
+        self.assertEqual(result['device_type'], 'desktop')
+        self.assertEqual(result['os'], 'Linux')
+        self.assertEqual(result['browser'], 'Firefox')
+
+    def test_android_chrome_mobile(self):
+        """
+        GIVEN a Chrome on Android mobile UA string
+        WHEN _parse_user_agent is called
+        THEN device_type=mobile, os=Android, browser=Chrome
+        """
+        ua = 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
+        result = _parse_user_agent(ua)
+        self.assertEqual(result['device_type'], 'mobile')
+        self.assertEqual(result['os'], 'Android')
+        self.assertEqual(result['browser'], 'Chrome')
+
+    def test_ipad_tablet(self):
+        """
+        GIVEN an iPad UA string
+        WHEN _parse_user_agent is called
+        THEN device_type=tablet, os=iOS
+        """
+        ua = 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+        result = _parse_user_agent(ua)
+        self.assertEqual(result['device_type'], 'tablet')
+        self.assertEqual(result['os'], 'iOS')
+
+    def test_empty_ua(self):
+        """
+        GIVEN an empty UA string
+        WHEN _parse_user_agent is called
+        THEN all fields are 'unknown'
+        """
+        result = _parse_user_agent('')
+        self.assertEqual(result['device_type'], 'unknown')
+        self.assertEqual(result['os'], 'unknown')
+        self.assertEqual(result['browser'], 'unknown')
+
+    def test_edge_browser(self):
+        """
+        GIVEN an Edge browser UA string
+        WHEN _parse_user_agent is called
+        THEN browser=Edge
+        """
+        ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
+        result = _parse_user_agent(ua)
+        self.assertEqual(result['browser'], 'Edge')
+
+    def test_yandex_browser(self):
+        """
+        GIVEN a Yandex Browser UA string
+        WHEN _parse_user_agent is called
+        THEN browser=Yandex
+        """
+        ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 YaBrowser/24.1.0 Safari/537.36'
+        result = _parse_user_agent(ua)
+        self.assertEqual(result['browser'], 'Yandex')
+
+
+class ReferrerClassificationTest(TestCase):
+    """Tests for referrer hostname extraction and bucketing."""
+
+    def test_google_referrer(self):
+        """
+        GIVEN a referrer URL from google.com
+        WHEN _classify_referrer is called
+        THEN it returns host 'google.com' and bucket 'google'
+        """
+        host, bucket = _classify_referrer('https://www.google.com/search?q=survey')
+        self.assertEqual(bucket, 'google')
+        self.assertEqual(host, 'google.com')
+
+    def test_direct_empty_referrer(self):
+        """
+        GIVEN an empty referrer string
+        WHEN _classify_referrer is called
+        THEN it returns empty host and bucket 'direct'
+        """
+        host, bucket = _classify_referrer('')
+        self.assertEqual(bucket, 'direct')
+        self.assertEqual(host, '')
+
+    def test_direct_none_referrer(self):
+        """
+        GIVEN None as referrer
+        WHEN _classify_referrer is called
+        THEN it returns empty host and bucket 'direct'
+        """
+        host, bucket = _classify_referrer(None)
+        self.assertEqual(bucket, 'direct')
+        self.assertEqual(host, '')
+
+    def test_social_instagram(self):
+        """
+        GIVEN a referrer URL from instagram.com
+        WHEN _classify_referrer is called
+        THEN it returns bucket 'social'
+        """
+        host, bucket = _classify_referrer('https://l.instagram.com/redirect?u=...')
+        self.assertEqual(bucket, 'social')
+
+    def test_unknown_domain_is_other(self):
+        """
+        GIVEN a referrer URL from an unrecognized domain
+        WHEN _classify_referrer is called
+        THEN it returns the bare hostname and bucket 'other'
+        """
+        host, bucket = _classify_referrer('https://example-blog.com/post/1')
+        self.assertEqual(bucket, 'other')
+        self.assertEqual(host, 'example-blog.com')
+
+    def test_www_prefix_stripped(self):
+        """
+        GIVEN a referrer with www.facebook.com
+        WHEN _classify_referrer is called
+        THEN it returns 'facebook.com' and bucket 'social'
+        """
+        host, bucket = _classify_referrer('https://www.facebook.com/share')
+        self.assertEqual(host, 'facebook.com')
+        self.assertEqual(bucket, 'social')
+
+
+class EmitEventTest(TestCase):
+    """Tests for the emit_event function."""
+
+    def setUp(self):
+        self.org = _make_org('EventOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='event_survey', organization=self.org, status='published',
+        )
+        self.session = SurveySession.objects.create(survey=self.survey)
+
+    def test_emit_creates_event_row(self):
+        """
+        GIVEN a saved SurveySession
+        WHEN emit_event is called with event_type='section_view'
+        THEN a SurveyEvent row is created with correct fields
+        """
+        emit_event(self.session, 'section_view', {'section_name': 'intro'})
+        ev = SurveyEvent.objects.get(session=self.session, event_type='section_view')
+        self.assertEqual(ev.metadata['section_name'], 'intro')
+
+    def test_emit_with_none_session(self):
+        """
+        GIVEN None as session
+        WHEN emit_event is called
+        THEN no exception is raised and no row is created
+        """
+        emit_event(None, 'section_view')
+        self.assertEqual(SurveyEvent.objects.count(), 0)
+
+    def test_emit_swallows_db_error(self):
+        """
+        GIVEN an unsaved session with no PK
+        WHEN emit_event is called
+        THEN no exception propagates to the caller
+        """
+        unsaved = SurveySession(survey=self.survey)
+        try:
+            emit_event(unsaved, 'session_start')
+        except Exception as e:
+            self.fail(f'emit_event raised unexpectedly: {e}')
+
+
+class EventIntegrationTest(TestCase):
+    """Tests for event emission in survey views."""
+
+    def setUp(self):
+        self.client = Client()
+        self.org = _make_org('EventIntOrg')
+        self.user = User.objects.create_user('eventuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='event_int_survey', organization=self.org,
+            created_by=self.user, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, name='Q1', code='q1',
+            input_type='text', order_number=1,
+        )
+
+    def test_session_start_on_first_visit(self):
+        """
+        GIVEN a published survey with one section
+        WHEN a GET to the first section is made without an existing session
+        THEN a session_start and section_view SurveyEvent are created
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        self.assertTrue(SurveyEvent.objects.filter(event_type='session_start').exists())
+        self.assertTrue(SurveyEvent.objects.filter(event_type='section_view').exists())
+
+    def test_no_duplicate_session_start_on_revisit(self):
+        """
+        GIVEN a session already created from visiting section s1
+        WHEN the same section is visited again (back navigation)
+        THEN no additional session_start event is created
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        start_count = SurveyEvent.objects.filter(event_type='session_start').count()
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        self.assertEqual(
+            SurveyEvent.objects.filter(event_type='session_start').count(),
+            start_count,
+        )
+
+    def test_section_submit_on_post(self):
+        """
+        GIVEN an active session on section s1
+        WHEN a POST with answer data is made
+        THEN a section_submit event is created
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        self.client.post(f'/surveys/{self.survey.uuid}/s1/', {'q1': 'hello'})
+        self.assertTrue(SurveyEvent.objects.filter(event_type='section_submit').exists())
+
+    def test_survey_complete_on_thanks(self):
+        """
+        GIVEN an active session that submitted the last section
+        WHEN the thanks page is visited
+        THEN a survey_complete event is created
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        self.client.post(f'/surveys/{self.survey.uuid}/s1/', {'q1': 'hello'})
+        self.client.get(f'/surveys/{self.survey.uuid}/thanks/')
+        self.assertTrue(SurveyEvent.objects.filter(event_type='survey_complete').exists())
+
+    def test_session_start_captures_referrer(self):
+        """
+        GIVEN a request with HTTP_REFERER from google.com
+        WHEN the first section is visited
+        THEN the session_start event metadata contains referrer_type='google'
+        """
+        self.client.get(
+            f'/surveys/{self.survey.uuid}/s1/',
+            HTTP_REFERER='https://www.google.com/search?q=test',
+        )
+        ev = SurveyEvent.objects.get(event_type='session_start')
+        self.assertEqual(ev.metadata['referrer_type'], 'google')
+        self.assertEqual(ev.metadata['referrer_host'], 'google.com')
+
+
+class PageLoadTrackingTest(TestCase):
+    """Tests for the fire-and-forget page_load AJAX endpoint."""
+
+    def setUp(self):
+        self.client = Client()
+        self.org = _make_org('PLOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='pl_survey', organization=self.org, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        # Visit section to create session
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        self.session = SurveySession.objects.first()
+
+    def test_valid_payload_creates_event(self):
+        """
+        GIVEN a valid session_id matching the server session and a load_ms value
+        WHEN POST is sent to /surveys/track/page-load/
+        THEN response is 204 and a page_load SurveyEvent is created
+        """
+        response = self.client.post(
+            '/surveys/track/page-load/',
+            data=json.dumps({
+                'session_id': self.session.pk,
+                'load_ms': 1500,
+                'section_name': 's1',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 204)
+        ev = SurveyEvent.objects.filter(event_type='page_load').first()
+        self.assertIsNotNone(ev)
+        self.assertEqual(ev.metadata['load_ms'], 1500)
+
+    def test_mismatched_session_returns_204_silently(self):
+        """
+        GIVEN a session_id in payload that does not match the server session
+        WHEN POST is sent to /surveys/track/page-load/
+        THEN response is 204 and no page_load event is created
+        """
+        response = self.client.post(
+            '/surveys/track/page-load/',
+            data=json.dumps({
+                'session_id': 99999,
+                'load_ms': 1000,
+                'section_name': 's1',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(SurveyEvent.objects.filter(event_type='page_load').exists())
+
+    def test_missing_fields_returns_400(self):
+        """
+        GIVEN a payload missing required fields
+        WHEN POST is sent to /surveys/track/page-load/
+        THEN response is 400
+        """
+        response = self.client.post(
+            '/surveys/track/page-load/',
+            data=json.dumps({'section_name': 's1'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_invalid_load_ms_returns_400(self):
+        """
+        GIVEN a load_ms value of 0 (invalid)
+        WHEN POST is sent to /surveys/track/page-load/
+        THEN response is 400
+        """
+        response = self.client.post(
+            '/surveys/track/page-load/',
+            data=json.dumps({
+                'session_id': self.session.pk,
+                'load_ms': 0,
+                'section_name': 's1',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+
+
+class PerformanceAnalyticsServiceTest(TestCase):
+    """Tests for PerformanceAnalyticsService query methods."""
+
+    def setUp(self):
+        self.org = _make_org('PerfOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='perf_survey', organization=self.org, status='published',
+        )
+        self.s1 = SurveySession.objects.create(survey=self.survey)
+        self.s2 = SurveySession.objects.create(survey=self.survey)
+
+    def test_event_summary_counts(self):
+        """
+        GIVEN two sessions, one completed
+        WHEN get_event_summary is called
+        THEN session_starts=2, completions=1, completion_rate=50
+        """
+        from .analytics import PerformanceAnalyticsService
+        emit_event(self.s1, 'session_start')
+        emit_event(self.s2, 'session_start')
+        emit_event(self.s1, 'survey_complete')
+
+        svc = PerformanceAnalyticsService(self.survey)
+        summary = svc.get_event_summary()
+        self.assertEqual(summary['session_starts'], 2)
+        self.assertEqual(summary['completions'], 1)
+        self.assertEqual(summary['completion_rate'], 50)
+
+    def test_referrer_breakdown_groups_by_type(self):
+        """
+        GIVEN two session_start events from google and one direct
+        WHEN get_referrer_breakdown is called
+        THEN google has count 2 and appears first
+        """
+        from .analytics import PerformanceAnalyticsService
+        emit_event(self.s1, 'session_start', {'referrer_type': 'google'})
+        emit_event(self.s2, 'session_start', {'referrer_type': 'google'})
+        s3 = SurveySession.objects.create(survey=self.survey)
+        emit_event(s3, 'session_start', {'referrer_type': 'direct'})
+
+        svc = PerformanceAnalyticsService(self.survey)
+        refs = svc.get_referrer_breakdown()
+        self.assertEqual(refs[0]['referrer_type'], 'google')
+        self.assertEqual(refs[0]['count'], 2)
+
+    def test_empty_survey_returns_safe_defaults(self):
+        """
+        GIVEN a survey with no events
+        WHEN all service methods are called
+        THEN they return empty lists or zero counts without error
+        """
+        from .analytics import PerformanceAnalyticsService
+        svc = PerformanceAnalyticsService(self.survey)
+        summary = svc.get_event_summary()
+        self.assertEqual(summary['session_starts'], 0)
+        self.assertIsNone(summary['median_load_ms'])
+        self.assertEqual(svc.get_funnel(), [])
+        self.assertEqual(svc.get_referrer_breakdown(), [])
+        self.assertEqual(svc.get_page_load_stats(), [])
+
+    def test_completion_by_referrer(self):
+        """
+        GIVEN two sessions from 'social', one completed
+        WHEN get_completion_by_referrer is called
+        THEN social has started=2, completed=1, rate=50
+        """
+        from .analytics import PerformanceAnalyticsService
+        emit_event(self.s1, 'session_start', {'referrer_type': 'social'})
+        emit_event(self.s2, 'session_start', {'referrer_type': 'social'})
+        emit_event(self.s1, 'survey_complete')
+
+        svc = PerformanceAnalyticsService(self.survey)
+        result = svc.get_completion_by_referrer()
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['started'], 2)
+        self.assertEqual(result[0]['completed'], 1)
+        self.assertEqual(result[0]['rate'], 50)

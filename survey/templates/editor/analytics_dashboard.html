@@ -186,6 +186,24 @@
 {% endblock %}
 
 {% block content %}
+<!-- Tab bar -->
+<div style="max-width:1100px;margin:0 auto;padding:1.5rem 1.5rem 0;">
+    <div style="display:flex;gap:0;border-bottom:2px solid var(--border-color);margin-bottom:0;">
+        <button class="analytics-tab active" data-tab="responses"
+                onclick="switchAnalyticsTab('responses')"
+                style="padding:0.5rem 1.25rem;border:none;background:none;border-bottom:3px solid var(--accent);margin-bottom:-2px;font-weight:600;cursor:pointer;color:var(--accent);font-size:0.9rem;">
+            Responses
+        </button>
+        <button class="analytics-tab" data-tab="performance"
+                onclick="switchAnalyticsTab('performance')"
+                style="padding:0.5rem 1.25rem;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;color:#6b7280;font-size:0.9rem;">
+            Performance
+        </button>
+    </div>
+</div>
+
+<!-- Responses tab -->
+<div id="pane-responses">
 <div class="analytics-main">
     <div class="analytics-section-label">Overview</div>
     {% include "editor/partials/analytics_overview.html" %}
@@ -201,6 +219,27 @@
     {% endif %}
     {% include "editor/partials/analytics_question_stats.html" %}
 </div>
+</div>
+
+<!-- Performance tab -->
+<div id="pane-performance" style="display:none;">
+    <div class="analytics-main">
+        {% include "editor/partials/analytics_performance.html" %}
+    </div>
+</div>
+
+<script>
+function switchAnalyticsTab(tab) {
+    document.getElementById('pane-responses').style.display = tab === 'responses' ? '' : 'none';
+    document.getElementById('pane-performance').style.display = tab === 'performance' ? '' : 'none';
+    document.querySelectorAll('.analytics-tab').forEach(function(btn) {
+        var isActive = btn.dataset.tab === tab;
+        btn.style.borderBottomColor = isActive ? 'var(--accent)' : 'transparent';
+        btn.style.fontWeight = isActive ? '600' : 'normal';
+        btn.style.color = isActive ? 'var(--accent)' : '#6b7280';
+    });
+}
+</script>
 
 <script type="application/json" id="answer-matrix-data">{{ answer_matrix_json|safe }}</script>
 <script type="application/json" id="session-hours-data">{{ session_hours_json|safe }}</script>

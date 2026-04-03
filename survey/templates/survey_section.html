@@ -273,6 +273,33 @@ document.getElementById('section_question_form').addEventListener('submit', func
 
 </script>
 
+<!-- Page load tracking beacon -->
+<script>
+(function() {
+    var sessionId = {{ request.session.survey_session_id|default:"null" }};
+    var sectionName = "{{ section.name|escapejs }}";
+    if (!sessionId) return;
+
+    window.addEventListener('load', function() {
+        var loadMs = Math.round(performance.now());
+        var url = '/surveys/track/page-load/';
+        var payload = JSON.stringify({
+            session_id: sessionId,
+            load_ms: loadMs,
+            section_name: sectionName
+        });
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon(url, new Blob([payload], {type: 'application/json'}));
+        } else {
+            fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: payload,
+                keepalive: true
+            }).catch(function() {});
+        }
+    });
+})();
+</script>
+
 {% endblock %}
-
-

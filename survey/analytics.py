@@ -5,7 +5,7 @@ from django.db.models import Count, Avg, Min, Max
 from django.db.models.functions import TruncHour
 
 from .models import (
-    SurveySession, SurveySection, Answer, Question,
+    SurveySession, SurveySection, Answer, Question, SurveyEvent,
 )
 
 
@@ -477,3 +477,198 @@ class SurveyAnalyticsService:
             })
 
         return answer_rows, geo_features
+
+
+class PerformanceAnalyticsService:
+    """Read-only performance/funnel analytics from SurveyEvent data."""
+
+    def __init__(self, survey):
+        self.survey = survey
+
+    def _events_qs(self):
+        return SurveyEvent.objects.filter(session__survey=self.survey)
+
+    def get_event_summary(self):
+        """Return top-level counts: session_starts, completions, median_load_ms."""
+        qs = self._events_qs()
+        starts = qs.filter(event_type='session_start').count()
+        completions = qs.filter(event_type='survey_complete').count()
+
+        load_values = list(
+            qs.filter(event_type='page_load')
+            .values_list('metadata', flat=True)
+        )
+        load_ms_values = [
+            m.get('load_ms') for m in load_values
+            if isinstance(m, dict) and isinstance(m.get('load_ms'), (int, float))
+            and 0 < m.get('load_ms', 0) <= 120_000
+        ]
+        median_ms = round(statistics.median(load_ms_values)) if load_ms_values else None
+
+        return {
+            'session_starts': starts,
+            'completions': completions,
+            'completion_rate': round(completions / starts * 100) if starts else 0,
+            'page_load_count': len(load_ms_values),
+            'median_load_ms': median_ms,
+        }
+
+    def get_funnel(self):
+        """Return per-section views/submits/drop_rate in linked-list order."""
+        qs = self._events_qs()
+
+        # Fetch all section_view and section_submit events
+        view_events = list(
+            qs.filter(event_type='section_view')
+            .values_list('metadata', flat=True)
+        )
+        submit_events = list(
+            qs.filter(event_type='section_submit')
+            .values_list('metadata', flat=True)
+        )
+
+        # Count by section_name
+        views_map = {}
+        for m in view_events:
+            name = (m or {}).get('section_name', '')
+            if name:
+                views_map[name] = views_map.get(name, 0) + 1
+
+        submit_map = {}
+        for m in submit_events:
+            name = (m or {}).get('section_name', '')
+            if name:
+                submit_map[name] = submit_map.get(name, 0) + 1
+
+        # Order by linked-list section order
+        sections = _get_ordered_sections(self.survey)
+        result = []
+        for s in sections:
+            v = views_map.get(s.name, 0)
+            sub = submit_map.get(s.name, 0)
+            drop_rate = round((v - sub) / v * 100) if v > 0 else 0
+            result.append({
+                'section_name': s.name,
+                'section_title': s.title or s.name,
+                'views': v,
+                'submits': sub,
+                'drop_rate': drop_rate,
+            })
+        return result
+
+    def _session_start_metadata(self):
+        """Fetch all session_start metadata dicts (cached per instance)."""
+        if not hasattr(self, '_ss_meta_cache'):
+            self._ss_meta_cache = list(
+                self._events_qs()
+                .filter(event_type='session_start')
+                .values_list('metadata', flat=True)
+            )
+        return self._ss_meta_cache
+
+    def get_referrer_breakdown(self):
+        """Return list of {referrer_type, count} sorted descending."""
+        counts = {}
+        for m in self._session_start_metadata():
+            ref_type = (m or {}).get('referrer_type', 'direct')
+            counts[ref_type] = counts.get(ref_type, 0) + 1
+
+        return sorted(
+            [{'referrer_type': k, 'count': v} for k, v in counts.items()],
+            key=lambda x: -x['count'],
+        )
+
+    def get_device_breakdown(self):
+        """Return {device_types, os, browsers} — each a list of {name, count} sorted descending."""
+        device_counts = {}
+        os_counts = {}
+        browser_counts = {}
+
+        for m in self._session_start_metadata():
+            m = m or {}
+            dt = m.get('device_type', 'unknown')
+            device_counts[dt] = device_counts.get(dt, 0) + 1
+            os_name = m.get('os', 'unknown')
+            os_counts[os_name] = os_counts.get(os_name, 0) + 1
+            br = m.get('browser', 'unknown')
+            browser_counts[br] = browser_counts.get(br, 0) + 1
+
+        def _sorted_list(d):
+            return sorted(
+                [{'name': k, 'count': v} for k, v in d.items()],
+                key=lambda x: -x['count'],
+            )
+
+        return {
+            'device_types': _sorted_list(device_counts),
+            'os': _sorted_list(os_counts),
+            'browsers': _sorted_list(browser_counts),
+        }
+
+    def get_completion_by_referrer(self):
+        """Return started/completed/rate per referrer_type."""
+        # Get completed session IDs
+        completed_sids = set(
+            self._events_qs()
+            .filter(event_type='survey_complete')
+            .values_list('session_id', flat=True)
+        )
+
+        # Get all session_start events with referrer_type
+        starts = list(
+            self._events_qs()
+            .filter(event_type='session_start')
+            .values('session_id', 'metadata')
+        )
+
+        buckets = {}
+        for row in starts:
+            ref = (row['metadata'] or {}).get('referrer_type', 'direct')
+            if ref not in buckets:
+                buckets[ref] = {'started': 0, 'completed': 0}
+            buckets[ref]['started'] += 1
+            if row['session_id'] in completed_sids:
+                buckets[ref]['completed'] += 1
+
+        return sorted(
+            [
+                {
+                    'referrer_type': ref,
+                    'started': data['started'],
+                    'completed': data['completed'],
+                    'rate': round(data['completed'] / data['started'] * 100) if data['started'] else 0,
+                }
+                for ref, data in buckets.items()
+            ],
+            key=lambda x: -x['started'],
+        )
+
+    def get_page_load_stats(self):
+        """Return avg page load per section."""
+        events = list(
+            self._events_qs()
+            .filter(event_type='page_load')
+            .values_list('metadata', flat=True)
+        )
+
+        by_section = {}
+        for m in events:
+            if not isinstance(m, dict):
+                continue
+            name = m.get('section_name', '')
+            ms = m.get('load_ms')
+            if name and isinstance(ms, (int, float)) and 0 < ms <= 120_000:
+                by_section.setdefault(name, []).append(ms)
+
+        sections = _get_ordered_sections(self.survey)
+        section_order = {s.name: i for i, s in enumerate(sections)}
+
+        result = []
+        for name, values in sorted(by_section.items(), key=lambda x: section_order.get(x[0], 999)):
+            result.append({
+                'section_name': name,
+                'avg_ms': round(sum(values) / len(values)),
+                'median_ms': round(statistics.median(values)),
+                'count': len(values),
+            })
+        return result
