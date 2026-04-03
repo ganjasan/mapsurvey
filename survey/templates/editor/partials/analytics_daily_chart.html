@@ -17,10 +17,6 @@
     <div class="q-filter-pills" data-qid="timeline" style="display:none;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.4rem;"></div>
     <div id="timeline-container" style="position:relative;user-select:none;">
         <canvas id="dailyChart" height="80"></canvas>
-        <div id="tl-shade-left" style="position:absolute;top:0;left:0;bottom:0;background:rgba(79,70,229,0.06);pointer-events:none;border-right:2px solid var(--accent);"></div>
-        <div id="tl-shade-right" style="position:absolute;top:0;right:0;bottom:0;background:rgba(79,70,229,0.06);pointer-events:none;border-left:2px solid var(--accent);"></div>
-        <div id="tl-handle-left" style="position:absolute;top:0;bottom:0;width:8px;background:var(--accent);cursor:ew-resize;border-radius:3px;opacity:0.6;z-index:2;"></div>
-        <div id="tl-handle-right" style="position:absolute;top:0;bottom:0;width:8px;background:var(--accent);cursor:ew-resize;border-radius:3px;opacity:0.6;z-index:2;"></div>
     </div>
 </div>
 
@@ -119,11 +115,12 @@ document.addEventListener('DOMContentLoaded', function() {
         window._timelineChart.update('none');
     };
 
+    var _tlSliderRef = null; // set after RangeSlider init below
     function onDisplayChange() {
         window._updateTimelineFromHourly();
         // If filter active, reapply with new display range
-        if (window.filterManager && window.filterManager.timeSelection !== null) {
-            applyHandleSelection();
+        if (_tlSliderRef && window.filterManager && window.filterManager.timeSelection !== null) {
+            _tlSliderRef._fireFilter();
         }
     }
 
@@ -135,29 +132,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Range handle selection (cross-filter) ---
     var container = document.getElementById('timeline-container');
-    var shadeL = document.getElementById('tl-shade-left');
-    var shadeR = document.getElementById('tl-shade-right');
-    var handleL = document.getElementById('tl-handle-left');
-    var handleR = document.getElementById('tl-handle-right');
-
-    var rangeLeft = 0, rangeRight = 1;
-
-    function positionHandles() {
-        var w = container.offsetWidth;
-        var lx = Math.round(rangeLeft * w);
-        var rx = Math.round(rangeRight * w);
-        handleL.style.left = (lx - 4) + 'px';
-        handleR.style.left = (rx - 4) + 'px';
-        shadeL.style.width = lx + 'px';
-        shadeR.style.width = (w - rx) + 'px';
-    }
-
-    // Handles at full range = no selection, hide shades
-    function updateShadeVisibility() {
-        var noSelection = rangeLeft <= 0.001 && rangeRight >= 0.999;
-        shadeL.style.display = noSelection ? 'none' : 'block';
-        shadeR.style.display = noSelection ? 'none' : 'block';
-    }
 
     function getDisplayedRange() {
         var from = fromInput.value;
@@ -175,73 +149,65 @@ document.addEventListener('DOMContentLoaded', function() {
         return displayed[idx].h;
     }
 
-    function applyHandleSelection() {
-        if (rangeLeft <= 0.001 && rangeRight >= 0.999) {
-            // Full range = clear time selection
-            window._timelineSelectionRange = null;
-            if (window.filterManager) window.filterManager.setTimeSelection(null);
-            return;
-        }
-        var fromTs = rangeToTimestamp(rangeLeft);
-        var toTs = rangeToTimestamp(rangeRight);
-        if (!fromTs || !toTs || !window._sessionHours) return;
-
-        // Store human-readable range for pills (strip timezone offset)
-        function cleanTs(ts) { return ts.replace('T', ' ').replace(/[+-]\d{2}:\d{2}.*$/, ''); }
-        window._timelineSelectionRange = {
-            from: rangeLeft > 0.001 ? cleanTs(fromTs) : null,
-            to: rangeRight < 0.999 ? cleanTs(toTs) : null,
-        };
-
-        var matchingSids = new Set();
-        window._sessionHours.forEach(function(entry) {
-            var h = entry[1];
-            if (h >= fromTs && h <= toTs) matchingSids.add(entry[0]);
-        });
-        if (window.filterManager) {
-            window.filterManager.setTimeSelection(matchingSids.size > 0 ? matchingSids : null);
-        }
+    function formatTimestamp(pct) {
+        var ts = rangeToTimestamp(pct);
+        return ts ? ts.replace('T', ' ').slice(0, 16) : '';
     }
+
+    var tlSlider = new RangeSlider(container, {
+        formatValue: formatTimestamp,
+        parseInput: function(lo, hi) {
+            // lo, hi are datetime-local strings
+            var displayed = getDisplayedRange();
+            if (!displayed.length) return { left: 0, right: 1 };
+            var leftPct = 0, rightPct = 1;
+            if (lo && lo !== '') {
+                for (var i = 0; i < displayed.length; i++) {
+                    if (displayed[i].h >= lo) { leftPct = i / (displayed.length - 1); break; }
+                }
+            }
+            if (hi && hi !== '') {
+                for (var j = displayed.length - 1; j >= 0; j--) {
+                    if (displayed[j].h <= hi) { rightPct = j / (displayed.length - 1); break; }
+                }
+            }
+            return { left: leftPct, right: rightPct };
+        },
+        onFilter: function(left, right) {
+            if (left <= 0.001 && right >= 0.999) {
+                window._timelineSelectionRange = null;
+                if (window.filterManager) window.filterManager.setTimeSelection(null);
+                return;
+            }
+            var fromTs = rangeToTimestamp(left);
+            var toTs = rangeToTimestamp(right);
+            if (!fromTs || !toTs || !window._sessionHours) return;
+
+            function cleanTs(ts) { return ts.replace('T', ' ').replace(/[+-]\d{2}:\d{2}.*$/, ''); }
+            window._timelineSelectionRange = {
+                from: left > 0.001 ? cleanTs(fromTs) : null,
+                to: right < 0.999 ? cleanTs(toTs) : null,
+            };
+
+            var matchingSids = new Set();
+            window._sessionHours.forEach(function(entry) {
+                var h = entry[1];
+                if (h >= fromTs && h <= toTs) matchingSids.add(entry[0]);
+            });
+            if (window.filterManager) {
+                window.filterManager.setTimeSelection(matchingSids.size > 0 ? matchingSids : null);
+            }
+        },
+        onReset: function() {
+            window._timelineSelectionRange = null;
+        },
+    });
+    tlSlider.setDatetimeMode();
+    _tlSliderRef = tlSlider;
 
     window._resetTimelineHandles = function() {
-        rangeLeft = 0;
-        rangeRight = 1;
+        tlSlider.reset();
         window._timelineSelectionRange = null;
-        positionHandles();
-        updateShadeVisibility();
     };
-
-    // Drag
-    var dragging = null;
-    handleL.addEventListener('mousedown', function(e) { e.preventDefault(); dragging = 'left'; startDrag(); });
-    handleR.addEventListener('mousedown', function(e) { e.preventDefault(); dragging = 'right'; startDrag(); });
-
-    function startDrag() {
-        document.addEventListener('mousemove', onDrag);
-        document.addEventListener('mouseup', onDragEnd);
-    }
-    function onDrag(e) {
-        if (!dragging) return;
-        var rect = container.getBoundingClientRect();
-        var pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        if (dragging === 'left') {
-            rangeLeft = Math.min(pct, rangeRight - 0.01);
-        } else {
-            rangeRight = Math.max(pct, rangeLeft + 0.01);
-        }
-        positionHandles();
-        updateShadeVisibility();
-    }
-    function onDragEnd() {
-        if (!dragging) return;
-        dragging = null;
-        document.removeEventListener('mousemove', onDrag);
-        document.removeEventListener('mouseup', onDragEnd);
-        applyHandleSelection();
-    }
-
-    positionHandles();
-    updateShadeVisibility();
-    window.addEventListener('resize', positionHandles);
 });
 </script>

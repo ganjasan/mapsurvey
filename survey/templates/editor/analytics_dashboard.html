@@ -2,8 +2,10 @@
 
 {% block page_title %}Analytics – {{ survey.name }}{% endblock %}
 
+{% load static %}
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/range-slider.js' %}"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <style>
@@ -225,7 +227,10 @@ function FilterManager(matrix) {
     this.timeSelection = null;
     this.filteredSids = null;
     this._choiceFilteredSids = null;
+    this._mapSids = null;
+    this._timelineSids = null;
     this.textQuestionIds = [];
+    this._components = [];
 }
 
 FilterManager.prototype.toggleFilter = function(qid, code) {
@@ -277,22 +282,35 @@ FilterManager.prototype.setNumericRange = function(qid, min, max) {
 };
 
 FilterManager.prototype.clearAll = function() {
+    var numQids = Array.from(this.numericRanges.keys());
     this.filters.clear();
     this.numericRanges.clear();
     this.geoSelection = null;
     this.timeSelection = null;
     if (window._resetTimelineHandles) window._resetTimelineHandles();
+    numQids.forEach(function(qid) {
+        if (window._resetNumericHandles) window._resetNumericHandles(qid);
+    });
     this._apply();
+};
+
+FilterManager.prototype._intersect = function(a, b) {
+    if (a === null && b === null) return null;
+    if (a === null) return new Set(b);
+    if (b === null) return new Set(a);
+    var r = new Set();
+    b.forEach(function(sid) { if (a.has(sid)) r.add(sid); });
+    return r;
+};
+
+FilterManager.prototype.registerComponent = function(fn) {
+    this._components.push(fn);
 };
 
 FilterManager.prototype._apply = function() {
     this._recompute();
-    this._updateCharts();
-    this._updateGeoMap();
-    this._updateGeoMapSelection();
-    this._updateTimeline();
-    this._updatePills();
-    this._updateTextAnswers();
+    var self = this;
+    this._components.forEach(function(fn) { fn.call(self); });
 };
 
 FilterManager.prototype.getFilterParam = function() {
@@ -309,6 +327,8 @@ FilterManager.prototype._recompute = function() {
     if (!hasChoiceOrNumeric && this.geoSelection === null && this.timeSelection === null) {
         this.filteredSids = null;
         this._choiceFilteredSids = null;
+        this._mapSids = null;
+        this._timelineSids = null;
         return;
     }
 
@@ -345,102 +365,138 @@ FilterManager.prototype._recompute = function() {
     }
     this._choiceFilteredSids = choiceResult;
 
-    // Full filter: choice + geo + time intersection (for charts and text)
-    var result = choiceResult;
+    // Precompute per-component SID sets
+    // Map: choice + numeric + time (excludes geo — map highlights geo, doesn't filter by it)
+    this._mapSids = this._intersect(choiceResult, this.timeSelection);
+    // Timeline: choice + numeric + geo (excludes time — timeline is the time filter source)
+    this._timelineSids = this._intersect(choiceResult, this.geoSelection);
+    // Full: all filters combined (for charts, pills, text)
+    this.filteredSids = this._intersect(
+        this._intersect(choiceResult, this.geoSelection),
+        this.timeSelection
+    );
+};
 
-    // Intersect with geo selection
-    if (this.geoSelection !== null) {
-        if (result === null) {
-            result = new Set(this.geoSelection);
-        } else {
-            var g = new Set();
-            this.geoSelection.forEach(function(sid) { if (result.has(sid)) g.add(sid); });
-            result = g;
+// Compute filtered SID set excluding one specific filter (leave-one-out cross-filter).
+// excludeType: 'choice' or 'numeric', excludeQid: the question to skip.
+// Returns null if no other filters are active (= all sessions pass).
+FilterManager.prototype._crossFilterSids = function(excludeType, excludeQid) {
+    var self = this;
+    var otherChoices = (excludeType === 'choice') ? self.filters.size - 1 : self.filters.size;
+    var otherNumerics = (excludeType === 'numeric') ? self.numericRanges.size - 1 : self.numericRanges.size;
+    if (otherChoices <= 0 && otherNumerics <= 0 && !self.geoSelection && !self.timeSelection) return null;
+
+    var result = new Set();
+    self._matrix.forEach(function(session) {
+        var passes = true;
+        self.filters.forEach(function(codes, fqid) {
+            if (!passes || (excludeType === 'choice' && fqid === excludeQid)) return;
+            var sc = session.a[fqid];
+            if (!sc) { passes = false; return; }
+            var m = false;
+            codes.forEach(function(c) { if (sc.indexOf(c) !== -1) m = true; });
+            if (!m) passes = false;
+        });
+        if (passes) {
+            self.numericRanges.forEach(function(r, rqid) {
+                if (!passes || (excludeType === 'numeric' && rqid === excludeQid)) return;
+                var v = session.n ? session.n[rqid] : undefined;
+                if (v === undefined) { passes = false; return; }
+                if (v < r.min || v > r.max) passes = false;
+            });
         }
-    }
-
-    // Intersect with time selection
-    if (this.timeSelection !== null) {
-        if (result === null) {
-            result = new Set(this.timeSelection);
-        } else {
-            var t = new Set();
-            this.timeSelection.forEach(function(sid) { if (result.has(sid)) t.add(sid); });
-            result = t;
-        }
-    }
-
-    this.filteredSids = result;
+        if (passes && self.geoSelection && !self.geoSelection.has(session.sid)) passes = false;
+        if (passes && self.timeSelection && !self.timeSelection.has(session.sid)) passes = false;
+        if (passes) result.add(session.sid);
+    });
+    return result;
 };
 
 FilterManager.prototype._updateCharts = function() {
     var self = this;
+    var hasAnyFilter = self.filters.size > 0 || self.numericRanges.size > 0
+        || self.geoSelection !== null || self.timeSelection !== null;
+
+    // Bin assignment helper — must match computeBinsFromStep formula
+    function binIndex(val, bins) {
+        var binMin = bins[0][0];
+        var binStep = bins[0][1] - bins[0][0];
+        if (binStep <= 0) return 0;
+        var idx = Math.min(Math.floor((val - binMin) / binStep), bins.length - 1);
+        return idx >= 0 ? idx : -1;
+    }
+
+    // Cross-filter (Power BI):
+    //   Source chart → recompute from all OTHER filters (own filter only highlights)
+    //   Non-source chart → recompute from all filters (filteredSids)
+
+    // --- Choice charts ---
     window.analyticsCharts.forEach(function(chart, qid) {
         var chartCodes = window.analyticsChartCodes.get(qid);
         var qFilters = self.filters.get(qid);
-        var hasAnyFilter = self.filters.size > 0;
         var isFilterSource = qFilters && qFilters.size > 0;
 
-        // Only recompute data for charts that are NOT the filter source
-        if (!isFilterSource) {
-            chart.data.datasets[0].data = self._computeCounts(qid);
+        if (isFilterSource) {
+            // Source: recompute from all filters EXCEPT own choice
+            var crossSids = self._crossFilterSids('choice', qid);
+            chart.data.datasets[0].data = self._computeCountsFrom(qid, crossSids);
+        } else {
+            // Non-source: recompute from all filters
+            chart.data.datasets[0].data = self._computeCountsFrom(qid, self.filteredSids);
         }
 
         chart.data.datasets[0].backgroundColor = chart.data.datasets[0].data.map(function(_, idx) {
             if (!chartCodes) return 'rgba(79, 70, 229, 0.7)';
+            if (!hasAnyFilter) return 'rgba(79, 70, 229, 0.7)';
             var code = chartCodes[idx];
-            if (qFilters && qFilters.has(code)) return 'rgba(79, 70, 229, 1.0)';
-            if (hasAnyFilter) return 'rgba(79, 70, 229, 0.35)';
+            if (isFilterSource) {
+                return qFilters.has(code) ? 'rgba(79, 70, 229, 1.0)' : 'rgba(79, 70, 229, 0.35)';
+            }
             return 'rgba(79, 70, 229, 0.7)';
         });
         chart.update('none');
     });
 
-    // Update histogram charts
-    var hasAnyFilter = self.filters.size > 0 || self.numericRanges.size > 0
-        || self.geoSelection !== null || self.timeSelection !== null;
+    // --- Histogram charts ---
     window.analyticsHistCharts.forEach(function(chart, qid) {
         var bins = window.analyticsHistBins.get(qid);
         if (!bins) return;
         var range = self.numericRanges.get(qid);
         var isSource = !!range;
 
-        // Recompute counts if not source
-        if (!isSource) {
-            var counts = new Array(bins.length).fill(0);
-            self._matrix.forEach(function(session) {
-                if (self.filteredSids !== null && !self.filteredSids.has(session.sid)) return;
-                var val = session.n ? session.n[qid] : undefined;
-                if (val === undefined) return;
-                for (var i = 0; i < bins.length; i++) {
-                    if (val >= bins[i][0] && val <= bins[i][1]) { counts[i]++; break; }
-                }
-            });
-            chart.data.datasets[0].data = counts;
-        }
+        // Determine which SID set to use
+        var sids = isSource ? self._crossFilterSids('numeric', qid) : self.filteredSids;
 
-        // Shade bins outside selected range
+        var counts = new Array(bins.length).fill(0);
+        self._matrix.forEach(function(session) {
+            if (sids !== null && !sids.has(session.sid)) return;
+            var val = session.n ? session.n[qid] : undefined;
+            if (val === undefined) return;
+            var idx = binIndex(val, bins);
+            if (idx >= 0) counts[idx]++;
+        });
+        chart.data.datasets[0].data = counts;
+
         chart.data.datasets[0].backgroundColor = chart.data.datasets[0].data.map(function(_, idx) {
             if (range) {
                 var binMid = (bins[idx][0] + bins[idx][1]) / 2;
                 if (binMid >= range.min && binMid <= range.max) return 'rgba(79, 70, 229, 0.8)';
                 return 'rgba(79, 70, 229, 0.15)';
             }
-            if (hasAnyFilter) return 'rgba(79, 70, 229, 0.25)';
+            if (!hasAnyFilter) return 'rgba(79, 70, 229, 0.5)';
             return 'rgba(79, 70, 229, 0.5)';
         });
         chart.update('none');
     });
 };
 
-FilterManager.prototype._computeCounts = function(qid) {
+FilterManager.prototype._computeCountsFrom = function(qid, sids) {
     var codes = window.analyticsChartCodes.get(qid);
     if (!codes) return [];
     var tally = {};
     codes.forEach(function(c) { tally[c] = 0; });
-    var self = this;
     this._matrix.forEach(function(session) {
-        if (self.filteredSids !== null && !self.filteredSids.has(session.sid)) return;
+        if (sids !== null && !sids.has(session.sid)) return;
         var sessionCodes = session.a[qid];
         if (!sessionCodes) return;
         sessionCodes.forEach(function(c) {
@@ -452,19 +508,8 @@ FilterManager.prototype._computeCounts = function(qid) {
 
 FilterManager.prototype._updateGeoMap = function() {
     if (!window.geoFeatureLayers || !window.geoGroup) return;
-    var self = this;
+    var sids = this._mapSids;
     var qVisible = window.geoQuestionVisible;
-    // Map visibility uses choice + numeric + time filters, but NOT geo selection (map highlights, doesn't filter)
-    var sids = self._choiceFilteredSids;
-    if (self.timeSelection !== null) {
-        if (sids === null) {
-            sids = new Set(self.timeSelection);
-        } else {
-            var t = new Set();
-            self.timeSelection.forEach(function(sid) { if (sids.has(sid)) t.add(sid); });
-            sids = t;
-        }
-    }
     window.geoFeatureLayers.forEach(function(entry) {
         var sidOk = sids === null || sids.has(entry.sid);
         var qOk = !qVisible || qVisible.get(entry.question) !== false;
@@ -495,20 +540,9 @@ FilterManager.prototype._updateGeoMapSelection = function() {
 
 FilterManager.prototype._updateTimeline = function() {
     if (!window._timelineChart || !window._sessionHours) return;
-    // Don't recompute timeline when it is the filter source
+    // Don't recompute timeline when it is the only active filter
     if (this.timeSelection !== null && this.filters.size === 0 && this.numericRanges.size === 0 && this.geoSelection === null) return;
-    // Use filteredSids excluding timeSelection for timeline display
-    var sids = this._choiceFilteredSids;
-    if (this.geoSelection !== null) {
-        if (sids === null) {
-            sids = new Set(this.geoSelection);
-        } else {
-            var g = new Set();
-            var s = sids;
-            this.geoSelection.forEach(function(sid) { if (s.has(sid)) g.add(sid); });
-            sids = g;
-        }
-    }
+    var sids = this._timelineSids;
     if (sids === null) {
         if (typeof window._updateTimelineFromHourly === 'function') {
             window._updateTimelineFromHourly();
@@ -541,6 +575,34 @@ FilterManager.prototype._updateTimeline = function() {
     window._timelineChart.data.datasets[0].data = keys.map(function(k) { return buckets[k].total; });
     window._timelineChart.data.datasets[1].data = keys.map(function(k) { return buckets[k].completed; });
     window._timelineChart.update('none');
+};
+
+FilterManager.prototype._updateNumericStats = function() {
+    var self = this;
+    document.querySelectorAll('[data-num-stats]').forEach(function(el) {
+        var qid = el.dataset.numStats;
+        var values = [];
+        self._matrix.forEach(function(session) {
+            if (self.filteredSids !== null && !self.filteredSids.has(session.sid)) return;
+            var val = session.n ? session.n[qid] : undefined;
+            if (val !== undefined) values.push(val);
+        });
+        el.querySelector('[data-ns="count"]').textContent = values.length;
+        if (values.length > 0) {
+            values.sort(function(a, b) { return a - b; });
+            var sum = values.reduce(function(a, b) { return a + b; }, 0);
+            el.querySelector('[data-ns="avg"]').textContent = (sum / values.length).toFixed(1);
+            var mid = Math.floor(values.length / 2);
+            var median = values.length % 2 !== 0 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
+            el.querySelector('[data-ns="median"]').textContent = median.toFixed(1);
+            el.querySelector('[data-ns="min"]').textContent = values[0];
+            el.querySelector('[data-ns="max"]').textContent = values[values.length - 1];
+        } else {
+            ['avg', 'median', 'min', 'max'].forEach(function(k) {
+                el.querySelector('[data-ns="' + k + '"]').textContent = '\u2013';
+            });
+        }
+    });
 };
 
 FilterManager.prototype._updatePills = function() {
@@ -825,6 +887,12 @@ function _resizeAfterFocus() {
         if (window.analyticsCharts) {
             window.analyticsCharts.forEach(function(chart) { chart.resize(); });
         }
+        if (window.analyticsHistCharts) {
+            window.analyticsHistCharts.forEach(function(chart) { chart.resize(); });
+        }
+        if (window._timelineChart) {
+            window._timelineChart.resize();
+        }
         if (window.analyticsMap) {
             setTimeout(function() { window.analyticsMap.invalidateSize(); }, 50);
         }
@@ -844,6 +912,16 @@ document.addEventListener('DOMContentLoaded', function() {
     var matrix = JSON.parse(matrixEl.textContent);
     window.filterManager = new FilterManager(matrix);
     window.filterManager.textQuestionIds = JSON.parse('{{ text_question_ids_json|escapejs }}');
+
+    // Register components — order matters for UX (charts update before pills)
+    var fm = window.filterManager;
+    fm.registerComponent(FilterManager.prototype._updateCharts);
+    fm.registerComponent(FilterManager.prototype._updateNumericStats);
+    fm.registerComponent(FilterManager.prototype._updateGeoMap);
+    fm.registerComponent(FilterManager.prototype._updateGeoMapSelection);
+    fm.registerComponent(FilterManager.prototype._updateTimeline);
+    fm.registerComponent(FilterManager.prototype._updatePills);
+    fm.registerComponent(FilterManager.prototype._updateTextAnswers);
 });
 </script>
 {% endblock %}

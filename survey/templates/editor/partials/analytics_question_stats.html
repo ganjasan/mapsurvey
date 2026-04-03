@@ -60,25 +60,25 @@
     </script>
 
     {% elif stat.type == 'number' %}
-    <div class="number-stats">
+    <div class="number-stats" data-num-stats="{{ stat.question.id }}">
         <div class="ns-item">
-            <div class="ns-value">{{ stat.count }}</div>
+            <div class="ns-value" data-ns="count">{{ stat.count }}</div>
             <div class="ns-label">Answers</div>
         </div>
         <div class="ns-item">
-            <div class="ns-value">{{ stat.avg|default:"–" }}</div>
+            <div class="ns-value" data-ns="avg">{{ stat.avg|default:"–" }}</div>
             <div class="ns-label">Average</div>
         </div>
         <div class="ns-item">
-            <div class="ns-value">{{ stat.median|default:"–" }}</div>
+            <div class="ns-value" data-ns="median">{{ stat.median|default:"–" }}</div>
             <div class="ns-label">Median</div>
         </div>
         <div class="ns-item">
-            <div class="ns-value">{{ stat.min_val|default:"–" }}</div>
+            <div class="ns-value" data-ns="min">{{ stat.min_val|default:"–" }}</div>
             <div class="ns-label">Min</div>
         </div>
         <div class="ns-item">
-            <div class="ns-value">{{ stat.max_val|default:"–" }}</div>
+            <div class="ns-value" data-ns="max">{{ stat.max_val|default:"–" }}</div>
             <div class="ns-label">Max</div>
         </div>
     </div>
@@ -91,10 +91,6 @@
     </div>
     <div id="hist-container-{{ stat.question.id }}" style="position:relative;user-select:none;margin-top:0.5rem;">
         <canvas id="hist-q-{{ stat.question.id }}" height="40"></canvas>
-        <div class="hist-shade-left" style="position:absolute;top:0;left:0;bottom:0;background:rgba(79,70,229,0.06);pointer-events:none;display:none;border-right:2px solid var(--accent);"></div>
-        <div class="hist-shade-right" style="position:absolute;top:0;right:0;bottom:0;background:rgba(79,70,229,0.06);pointer-events:none;display:none;border-left:2px solid var(--accent);"></div>
-        <div class="hist-handle-left" style="position:absolute;top:0;bottom:0;width:8px;background:var(--accent);cursor:ew-resize;border-radius:3px;opacity:0.6;z-index:2;"></div>
-        <div class="hist-handle-right" style="position:absolute;top:0;bottom:0;width:8px;background:var(--accent);cursor:ew-resize;border-radius:3px;opacity:0.6;z-index:2;"></div>
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -156,79 +152,46 @@
             histChart.data.datasets[0].data = histData.counts;
             histChart.data.datasets[0].backgroundColor = 'rgba(79, 70, 229, 0.5)';
             histChart.update('none');
-            positionHandles();
         });
 
-        // Range handles
+        // Range slider
         var container = document.getElementById('hist-container-' + qid);
-        var shadeL = container.querySelector('.hist-shade-left');
-        var shadeR = container.querySelector('.hist-shade-right');
-        var handleL = container.querySelector('.hist-handle-left');
-        var handleR = container.querySelector('.hist-handle-right');
-        var rangeLeft = 0, rangeRight = 1;
-
-        function positionHandles() {
-            var w = container.offsetWidth;
-            var lx = Math.round(rangeLeft * w);
-            var rx = Math.round(rangeRight * w);
-            handleL.style.left = (lx - 4) + 'px';
-            handleR.style.left = (rx - 4) + 'px';
-            var noSel = rangeLeft <= 0.001 && rangeRight >= 0.999;
-            shadeL.style.display = noSel ? 'none' : 'block';
-            shadeR.style.display = noSel ? 'none' : 'block';
-            if (!noSel) { shadeL.style.width = lx + 'px'; shadeR.style.width = (w - rx) + 'px'; }
-        }
 
         function pctToValue(pct) {
             return Math.round((minVal + pct * (maxVal - minVal)) * 10) / 10;
         }
-
-        function applySelection() {
-            if (rangeLeft <= 0.001 && rangeRight >= 0.999) {
-                if (window.filterManager) window.filterManager.setNumericRange(qid, null, null);
-                return;
-            }
-            var lo = pctToValue(rangeLeft), hi = pctToValue(rangeRight);
-            if (window.filterManager) window.filterManager.setNumericRange(qid, lo, hi);
+        function valueToPct(val) {
+            if (maxVal === minVal) return 0;
+            return Math.max(0, Math.min(1, (val - minVal) / (maxVal - minVal)));
         }
 
-        // Drag
-        var dragging = null;
-        handleL.addEventListener('mousedown', function(e) { e.preventDefault(); dragging = 'left'; startDrag(); });
-        handleR.addEventListener('mousedown', function(e) { e.preventDefault(); dragging = 'right'; startDrag(); });
-        function startDrag() {
-            document.addEventListener('mousemove', onDrag);
-            document.addEventListener('mouseup', onDragEnd);
-        }
-        function onDrag(e) {
-            if (!dragging) return;
-            var rect = container.getBoundingClientRect();
-            var pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-            if (dragging === 'left') rangeLeft = Math.min(pct, rangeRight - 0.01);
-            else rangeRight = Math.max(pct, rangeLeft + 0.01);
-            positionHandles();
-        }
-        function onDragEnd() {
-            if (!dragging) return;
-            dragging = null;
-            document.removeEventListener('mousemove', onDrag);
-            document.removeEventListener('mouseup', onDragEnd);
-            applySelection();
-        }
+        var slider = new RangeSlider(container, {
+            formatValue: pctToValue,
+            parseInput: function(lo, hi) {
+                lo = parseFloat(lo); hi = parseFloat(hi);
+                if (isNaN(lo)) lo = minVal;
+                if (isNaN(hi)) hi = maxVal;
+                lo = Math.max(minVal, Math.min(maxVal, lo));
+                hi = Math.max(minVal, Math.min(maxVal, hi));
+                if (lo > hi) { var tmp = lo; lo = hi; hi = tmp; }
+                return { left: valueToPct(lo), right: valueToPct(hi) };
+            },
+            onFilter: function(left, right) {
+                if (left <= 0.001 && right >= 0.999) {
+                    if (window.filterManager) window.filterManager.setNumericRange(qid, null, null);
+                } else {
+                    if (window.filterManager) window.filterManager.setNumericRange(qid, pctToValue(left), pctToValue(right));
+                }
+            },
+        });
 
         // Reset handler
         if (!window._resetNumericHandles) window._resetNumericHandles = function() {};
         var origReset = window._resetNumericHandles;
         window._resetNumericHandles = function(targetQid) {
-            if (targetQid === qid) {
-                rangeLeft = 0; rangeRight = 1;
-                positionHandles();
-            }
+            if (targetQid === qid) slider.reset();
             origReset(targetQid);
         };
-
-        positionHandles();
-        window.addEventListener('resize', positionHandles);
     });
     </script>
     {% endif %}
