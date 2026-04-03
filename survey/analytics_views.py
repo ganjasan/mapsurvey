@@ -102,6 +102,7 @@ def analytics_dashboard(request, survey_uuid):
         'device_breakdown': perf_service.get_device_breakdown(),
         'completion_by_referrer': perf_service.get_completion_by_referrer(),
         'page_load_stats': perf_service.get_page_load_stats(),
+        'time_on_section': perf_service.get_time_on_section(),
     })
 
 
@@ -158,47 +159,69 @@ def analytics_session_detail(request, survey_uuid, session_id):
     })
 
 
+_ALLOWED_CLIENT_EVENTS = {'page_load', 'page_leave'}
+
+
 @csrf_exempt
 @require_POST
-def analytics_track_page_load(request):
-    """Public fire-and-forget endpoint for client-side page_load events.
+def analytics_track_event(request):
+    """Public fire-and-forget endpoint for client-side events (page_load, page_leave).
 
     Security: session_id validated against request.session.
-    Rate limited to 10 events/hour/session via Django cache.
+    Rate limited to 20 events/hour/survey_session via Django cache.
     """
     content_type = request.content_type or ''
     if 'application/json' not in content_type:
         return JsonResponse({'error': 'bad content-type'}, status=400)
 
-    # Rate limit
-    rl_key = f"pageload_rl_{request.session.session_key or 'anon'}"
-    count = cache.get(rl_key, 0)
-    if count >= 10:
-        return JsonResponse({}, status=429)
-    cache.set(rl_key, count + 1, 3600)
-
     try:
         body = json.loads(request.body)
         client_session_id = int(body['session_id'])
-        load_ms = int(body['load_ms'])
+        event_type = str(body.get('event_type', ''))
         section_name = str(body.get('section_name', ''))[:100]
     except (KeyError, ValueError, TypeError, json.JSONDecodeError):
         return JsonResponse({'error': 'bad payload'}, status=400)
 
-    if load_ms <= 0 or load_ms > 120_000:
-        return JsonResponse({'error': 'invalid timing'}, status=400)
+    if event_type not in _ALLOWED_CLIENT_EVENTS:
+        return JsonResponse({'error': 'invalid event_type'}, status=400)
 
-    # Validate session ownership
+    # Validate session ownership via server session.
+    # Fall back to DB lookup for page_leave — the thanks page may have
+    # already cleared survey_session_id before the beacon arrives.
     server_session_id = request.session.get('survey_session_id')
-    if server_session_id != client_session_id:
+    if server_session_id and server_session_id != client_session_id:
         return JsonResponse({}, status=204)
+    if not server_session_id and not SurveySession.objects.filter(pk=client_session_id).exists():
+        return JsonResponse({}, status=204)
+
+    # Rate limit keyed on survey_session_id
+    rl_key = f"evt_rl_{client_session_id}"
+    count = cache.get(rl_key, 0)
+    if count >= 20:
+        return JsonResponse({}, status=429)
+    cache.set(rl_key, count + 1, 3600)
+
+    # Build metadata based on event type
+    metadata = {'section_name': section_name}
+    if event_type == 'page_load':
+        try:
+            load_ms = int(body['load_ms'])
+        except (KeyError, ValueError, TypeError):
+            return JsonResponse({'error': 'bad payload'}, status=400)
+        if load_ms <= 0 or load_ms > 120_000:
+            return JsonResponse({'error': 'invalid timing'}, status=400)
+        metadata['load_ms'] = load_ms
+    elif event_type == 'page_leave':
+        try:
+            time_on_page_ms = int(body.get('time_on_page_ms', 0))
+        except (ValueError, TypeError):
+            time_on_page_ms = 0
+        if 0 < time_on_page_ms <= 3_600_000:  # cap at 1 hour
+            metadata['time_on_page_ms'] = time_on_page_ms
 
     try:
         session = SurveySession.objects.get(pk=client_session_id)
-        emit_event(session, 'page_load', {
-            'section_name': section_name,
-            'load_ms': load_ms,
-        })
+        emit_event(session, event_type, metadata)
     except SurveySession.DoesNotExist:
         pass
 

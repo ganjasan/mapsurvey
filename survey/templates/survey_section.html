@@ -273,32 +273,54 @@ document.getElementById('section_question_form').addEventListener('submit', func
 
 </script>
 
-<!-- Page load tracking beacon -->
+<!-- Event tracking beacons -->
 <script>
 (function() {
     var sessionId = {{ request.session.survey_session_id|default:"null" }};
     var sectionName = "{{ section.name|escapejs }}";
+    var trackUrl = '/surveys/track/event/';
     if (!sessionId) return;
 
-    window.addEventListener('load', function() {
-        var loadMs = Math.round(performance.now());
-        var url = '/surveys/track/page-load/';
-        var payload = JSON.stringify({
-            session_id: sessionId,
-            load_ms: loadMs,
-            section_name: sectionName
-        });
+    function sendBeaconJson(payload) {
+        var json = JSON.stringify(payload);
         if (navigator.sendBeacon) {
-            navigator.sendBeacon(url, new Blob([payload], {type: 'application/json'}));
+            navigator.sendBeacon(trackUrl, new Blob([json], {type: 'application/json'}));
         } else {
-            fetch(url, {
+            fetch(trackUrl, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: payload,
-                keepalive: true
+                body: json, keepalive: true
             }).catch(function() {});
         }
+    }
+
+    // Page load timing
+    window.addEventListener('load', function() {
+        sendBeaconJson({
+            event_type: 'page_load',
+            session_id: sessionId,
+            load_ms: Math.round(performance.now()),
+            section_name: sectionName
+        });
     });
+
+    // Page leave — fires when user navigates away or closes tab
+    var _pageStart = Date.now();
+    var _leaveSent = false;
+    function sendLeave() {
+        if (_leaveSent) return;
+        _leaveSent = true;
+        sendBeaconJson({
+            event_type: 'page_leave',
+            session_id: sessionId,
+            time_on_page_ms: Date.now() - _pageStart,
+            section_name: sectionName
+        });
+    }
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') sendLeave();
+    });
+    window.addEventListener('pagehide', sendLeave);
 })();
 </script>
 

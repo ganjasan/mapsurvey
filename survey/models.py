@@ -120,6 +120,7 @@ EVENT_TYPE_CHOICES = (
     ('section_submit',  'Section Submit'),
     ('survey_complete', 'Survey Complete'),
     ('page_load',       'Page Load'),
+    ('page_leave',      'Page Leave'),
 )
 
 

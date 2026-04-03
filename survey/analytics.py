@@ -672,3 +672,35 @@ class PerformanceAnalyticsService:
                 'count': len(values),
             })
         return result
+
+    def get_time_on_section(self):
+        """Return avg/median time spent per section from page_leave events."""
+        events = list(
+            self._events_qs()
+            .filter(event_type='page_leave')
+            .values_list('metadata', flat=True)
+        )
+
+        by_section = {}
+        for m in events:
+            if not isinstance(m, dict):
+                continue
+            name = m.get('section_name', '')
+            ms = m.get('time_on_page_ms')
+            if name and isinstance(ms, (int, float)) and 0 < ms <= 3_600_000:
+                by_section.setdefault(name, []).append(ms)
+
+        sections = _get_ordered_sections(self.survey)
+        section_order = {s.name: i for i, s in enumerate(sections)}
+
+        result = []
+        for name, values in sorted(by_section.items(), key=lambda x: section_order.get(x[0], 999)):
+            avg_s = round(sum(values) / len(values) / 1000)
+            median_s = round(statistics.median(values) / 1000)
+            result.append({
+                'section_name': name,
+                'avg_seconds': avg_s,
+                'median_seconds': median_s,
+                'count': len(values),
+            })
+        return result

@@ -9808,15 +9808,16 @@ class PageLoadTrackingTest(TestCase):
         self.client.get(f'/surveys/{self.survey.uuid}/s1/')
         self.session = SurveySession.objects.first()
 
-    def test_valid_payload_creates_event(self):
+    def test_valid_page_load_creates_event(self):
         """
         GIVEN a valid session_id matching the server session and a load_ms value
-        WHEN POST is sent to /surveys/track/page-load/
+        WHEN POST is sent to /surveys/track/event/ with event_type=page_load
         THEN response is 204 and a page_load SurveyEvent is created
         """
         response = self.client.post(
-            '/surveys/track/page-load/',
+            '/surveys/track/event/',
             data=json.dumps({
+                'event_type': 'page_load',
                 'session_id': self.session.pk,
                 'load_ms': 1500,
                 'section_name': 's1',
@@ -9828,15 +9829,37 @@ class PageLoadTrackingTest(TestCase):
         self.assertIsNotNone(ev)
         self.assertEqual(ev.metadata['load_ms'], 1500)
 
+    def test_valid_page_leave_creates_event(self):
+        """
+        GIVEN a valid session and time_on_page_ms
+        WHEN POST is sent with event_type=page_leave
+        THEN response is 204 and a page_leave SurveyEvent is created
+        """
+        response = self.client.post(
+            '/surveys/track/event/',
+            data=json.dumps({
+                'event_type': 'page_leave',
+                'session_id': self.session.pk,
+                'time_on_page_ms': 45000,
+                'section_name': 's1',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 204)
+        ev = SurveyEvent.objects.filter(event_type='page_leave').first()
+        self.assertIsNotNone(ev)
+        self.assertEqual(ev.metadata['time_on_page_ms'], 45000)
+
     def test_mismatched_session_returns_204_silently(self):
         """
         GIVEN a session_id in payload that does not match the server session
-        WHEN POST is sent to /surveys/track/page-load/
-        THEN response is 204 and no page_load event is created
+        WHEN POST is sent to /surveys/track/event/
+        THEN response is 204 and no event is created
         """
         response = self.client.post(
-            '/surveys/track/page-load/',
+            '/surveys/track/event/',
             data=json.dumps({
+                'event_type': 'page_load',
                 'session_id': 99999,
                 'load_ms': 1000,
                 'section_name': 's1',
@@ -9846,15 +9869,35 @@ class PageLoadTrackingTest(TestCase):
         self.assertEqual(response.status_code, 204)
         self.assertFalse(SurveyEvent.objects.filter(event_type='page_load').exists())
 
-    def test_missing_fields_returns_400(self):
+    def test_invalid_event_type_returns_400(self):
         """
-        GIVEN a payload missing required fields
-        WHEN POST is sent to /surveys/track/page-load/
+        GIVEN an event_type not in the allowed set
+        WHEN POST is sent to /surveys/track/event/
         THEN response is 400
         """
         response = self.client.post(
-            '/surveys/track/page-load/',
-            data=json.dumps({'section_name': 's1'}),
+            '/surveys/track/event/',
+            data=json.dumps({
+                'event_type': 'session_start',
+                'session_id': self.session.pk,
+                'section_name': 's1',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_missing_fields_returns_400(self):
+        """
+        GIVEN a payload missing session_id
+        WHEN POST is sent to /surveys/track/event/
+        THEN response is 400
+        """
+        response = self.client.post(
+            '/surveys/track/event/',
+            data=json.dumps({
+                'event_type': 'page_load',
+                'section_name': 's1',
+            }),
             content_type='application/json',
         )
         self.assertEqual(response.status_code, 400)
@@ -9862,12 +9905,13 @@ class PageLoadTrackingTest(TestCase):
     def test_invalid_load_ms_returns_400(self):
         """
         GIVEN a load_ms value of 0 (invalid)
-        WHEN POST is sent to /surveys/track/page-load/
+        WHEN POST is sent to /surveys/track/event/
         THEN response is 400
         """
         response = self.client.post(
-            '/surveys/track/page-load/',
+            '/surveys/track/event/',
             data=json.dumps({
+                'event_type': 'page_load',
                 'session_id': self.session.pk,
                 'load_ms': 0,
                 'section_name': 's1',

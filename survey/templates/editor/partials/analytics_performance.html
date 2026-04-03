@@ -191,6 +191,33 @@
 </div>
 {% endif %}
 
+<!-- Time on Section -->
+{% if time_on_section %}
+<div class="analytics-section">
+    <h6>Time on Section</h6>
+    <table style="width:100%;font-size:0.875rem;border-collapse:collapse;">
+        <thead>
+            <tr style="border-bottom:1px solid var(--border-color);">
+                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">Section</th>
+                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Avg</th>
+                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Median</th>
+                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Samples</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in time_on_section %}
+            <tr style="border-bottom:1px solid #f3f4f6;">
+                <td style="padding:0.4rem 0;">{{ row.section_name }}</td>
+                <td style="padding:0.4rem 0;text-align:right;font-weight:600;">{{ row.avg_seconds }}s</td>
+                <td style="padding:0.4rem 0;text-align:right;">{{ row.median_seconds }}s</td>
+                <td style="padding:0.4rem 0;text-align:right;color:#9ca3af;">{{ row.count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
 <!-- Page Load Stats -->
 {% if page_load_stats %}
 <div class="analytics-section">
