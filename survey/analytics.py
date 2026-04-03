@@ -2,7 +2,7 @@ import json
 import statistics
 
 from django.db.models import Count, Avg, Min, Max
-from django.db.models.functions import TruncDate
+from django.db.models.functions import TruncHour
 
 from .models import (
     SurveySession, SurveySection, Answer, Question,
@@ -43,29 +43,32 @@ def _compute_histogram(values, min_val, max_val, max_bins=15):
     return {'labels': labels, 'counts': counts, 'bins': bins}
 
 
-def _get_last_section(survey):
-    """Return the last section in linked-list order, or None."""
+def _get_ordered_sections(survey):
+    """Return sections in linked-list traversal order."""
     sections = list(SurveySection.objects.filter(survey_header=survey))
     if not sections:
-        return None
-
+        return []
     by_id = {s.id: s for s in sections}
-    head = None
-    for s in sections:
-        if s.is_head:
-            head = s
-            break
-    if head is None:
-        return sections[-1]
-
+    head = next((s for s in sections if s.is_head), None)
+    if not head:
+        return sections
+    ordered = []
     current = head
     visited = set()
-    last = head
     while current and current.id not in visited:
-        last = current
+        ordered.append(current)
         visited.add(current.id)
         current = by_id.get(current.next_section_id)
-    return last
+    for s in sections:
+        if s.id not in visited:
+            ordered.append(s)
+    return ordered
+
+
+def _get_last_section(survey):
+    """Return the last section in linked-list order, or None."""
+    ordered = _get_ordered_sections(survey)
+    return ordered[-1] if ordered else None
 
 
 class SurveyAnalyticsService:
@@ -141,7 +144,6 @@ class SurveyAnalyticsService:
 
     def get_hourly_sessions(self):
         """Return list of {h, t, c} dicts — hour bucket, total, completed."""
-        from django.db.models.functions import TruncHour
         last_section = _get_last_section(self.survey)
 
         hourly = (
@@ -211,112 +213,120 @@ class SurveyAnalyticsService:
             'features': features,
         }
 
-    def get_question_stats(self, question):
-        """Return stat dict for a single question, dispatched by input_type."""
-        stat = {
-            'question': question,
-            'section': question.survey_section,
+    def _stats_choices(self, question):
+        """Compute stats for choice/multichoice/rating questions."""
+        answers = Answer.objects.filter(
+            question=question,
+        ).exclude(selected_choices__isnull=True)
+
+        counts = {}
+        for choice in (question.choices or []):
+            counts[choice['code']] = 0
+        for a in answers:
+            for code in (a.selected_choices or []):
+                counts[code] = counts.get(code, 0) + 1
+
+        choices = question.choices or []
+        choice_labels = [question.get_choice_name(c['code']) for c in choices]
+        choice_counts = [counts.get(c['code'], 0) for c in choices]
+        choice_codes = [c['code'] for c in choices]
+        return {
+            'type': 'choices',
+            'choice_labels': choice_labels,
+            'choice_counts': choice_counts,
+            'choice_codes': choice_codes,
+            'choice_labels_json': json.dumps(choice_labels, ensure_ascii=False),
+            'choice_counts_json': json.dumps(choice_counts),
+            'choice_codes_json': json.dumps(choice_codes),
+            'total_answers': answers.count(),
         }
 
-        if question.input_type in ('choice', 'multichoice', 'rating'):
-            answers = Answer.objects.filter(
-                question=question,
-            ).exclude(selected_choices__isnull=True)
+    def _stats_number(self, question):
+        """Compute stats for number/range questions."""
+        qs = Answer.objects.filter(question=question, numeric__isnull=False)
+        agg = qs.aggregate(
+            avg=Avg('numeric'),
+            min_val=Min('numeric'),
+            max_val=Max('numeric'),
+            count=Count('id'),
+        )
+        values = list(qs.values_list('numeric', flat=True))
 
-            counts = {}
-            for choice in (question.choices or []):
-                counts[choice['code']] = 0
-            for a in answers:
-                for code in (a.selected_choices or []):
-                    counts[code] = counts.get(code, 0) + 1
+        result = {
+            'type': 'number',
+            'count': agg['count'],
+            'avg': round(agg['avg'], 1) if agg['avg'] is not None else None,
+            'min_val': agg['min_val'],
+            'max_val': agg['max_val'],
+            'median': round(statistics.median(values), 1) if values else None,
+        }
+        if values and agg['min_val'] is not None and agg['max_val'] is not None:
+            hist = _compute_histogram(values, agg['min_val'], agg['max_val'])
+            result['hist_labels_json'] = json.dumps(hist['labels'], ensure_ascii=False)
+            result['hist_counts_json'] = json.dumps(hist['counts'])
+            result['hist_bins_json'] = json.dumps(hist['bins'])
+        return result
 
-            stat['type'] = 'choices'
-            stat['choice_labels'] = [
-                question.get_choice_name(c['code'])
-                for c in (question.choices or [])
-            ]
-            stat['choice_counts'] = [
-                counts.get(c['code'], 0)
-                for c in (question.choices or [])
-            ]
-            stat['choice_codes'] = [c['code'] for c in (question.choices or [])]
-            stat['choice_labels_json'] = json.dumps(stat['choice_labels'], ensure_ascii=False)
-            stat['choice_counts_json'] = json.dumps(stat['choice_counts'])
-            stat['choice_codes_json'] = json.dumps(stat['choice_codes'])
-            stat['total_answers'] = answers.count()
-
-        elif question.input_type in ('number', 'range'):
-            qs = Answer.objects.filter(question=question, numeric__isnull=False)
-            agg = qs.aggregate(
-                avg=Avg('numeric'),
-                min_val=Min('numeric'),
-                max_val=Max('numeric'),
-                count=Count('id'),
-            )
-            values = list(qs.values_list('numeric', flat=True))
-
-            stat['type'] = 'number'
-            stat['count'] = agg['count']
-            stat['avg'] = round(agg['avg'], 1) if agg['avg'] is not None else None
-            stat['min_val'] = agg['min_val']
-            stat['max_val'] = agg['max_val']
-            stat['median'] = round(statistics.median(values), 1) if values else None
-
-            # Histogram bins
-            if values and agg['min_val'] is not None and agg['max_val'] is not None:
-                hist = _compute_histogram(values, agg['min_val'], agg['max_val'])
-                stat['hist_labels_json'] = json.dumps(hist['labels'], ensure_ascii=False)
-                stat['hist_counts_json'] = json.dumps(hist['counts'])
-                stat['hist_bins_json'] = json.dumps(hist['bins'])
-
-        elif question.input_type in ('text', 'text_line'):
-            stat['type'] = 'text'
-            stat['total_answers'] = (
+    def _stats_text(self, question):
+        """Compute stats for text/text_line questions."""
+        return {
+            'type': 'text',
+            'total_answers': (
                 Answer.objects
                 .filter(question=question, text__isnull=False)
                 .exclude(text='')
                 .count()
-            )
+            ),
+        }
 
-        elif question.input_type in ('point', 'line', 'polygon'):
-            geo_field = question.input_type
-            stat['type'] = 'geo'
-            stat['total_answers'] = (
+    def _stats_geo(self, question):
+        """Compute stats for point/line/polygon questions."""
+        geo_field = question.input_type
+        return {
+            'type': 'geo',
+            'total_answers': (
                 Answer.objects
                 .filter(question=question)
                 .exclude(**{f'{geo_field}__isnull': True})
                 .count()
-            )
+            ),
+        }
 
-        else:
-            stat['type'] = 'other'
-            stat['total_answers'] = Answer.objects.filter(question=question).count()
+    def _stats_other(self, question):
+        """Compute stats for unknown question types."""
+        return {
+            'type': 'other',
+            'total_answers': Answer.objects.filter(question=question).count(),
+        }
 
+    _STAT_DISPATCH = {
+        'choice': _stats_choices,
+        'multichoice': _stats_choices,
+        'rating': _stats_choices,
+        'number': _stats_number,
+        'range': _stats_number,
+        'text': _stats_text,
+        'text_line': _stats_text,
+        'point': _stats_geo,
+        'line': _stats_geo,
+        'polygon': _stats_geo,
+    }
+
+    def get_question_stats(self, question):
+        """Return stat dict for a single question, dispatched by input_type."""
+        handler = self._STAT_DISPATCH.get(question.input_type, self._stats_other)
+        stat = {
+            'question': question,
+            'section': question.survey_section,
+        }
+        stat.update(handler(self, question))
         return stat
 
     def get_all_question_stats(self):
         """Return ordered list of stat dicts for all top-level questions."""
-        # Get sections in linked-list order
-        sections = list(SurveySection.objects.filter(survey_header=self.survey))
-        if not sections:
+        ordered_sections = _get_ordered_sections(self.survey)
+        if not ordered_sections:
             return []
-
-        by_id = {s.id: s for s in sections}
-        head = next((s for s in sections if s.is_head), None)
-
-        if head:
-            ordered_sections = []
-            current = head
-            visited = set()
-            while current and current.id not in visited:
-                ordered_sections.append(current)
-                visited.add(current.id)
-                current = by_id.get(current.next_section_id)
-            for s in sections:
-                if s.id not in visited:
-                    ordered_sections.append(s)
-        else:
-            ordered_sections = sections
 
         section_order = {s.id: i for i, s in enumerate(ordered_sections)}
 
@@ -384,18 +394,17 @@ class SurveyAnalyticsService:
             .order_by('survey_session_id')
         )
 
-        sessions = {}
-        for row in choice_rows:
-            sid = row['survey_session_id']
+        def ensure_session(sid, dt):
             if sid not in sessions:
                 sessions[sid] = {
-                    'sid': sid,
-                    'd': str(row['survey_session__start_datetime'].date()),
-                    'a': {},
-                    'n': {},
+                    'sid': sid, 'd': str(dt.date()), 'a': {}, 'n': {},
                 }
-            qid = str(row['question_id'])
-            sessions[sid]['a'][qid] = row['selected_choices'] or []
+            return sessions[sid]
+
+        sessions = {}
+        for row in choice_rows:
+            entry = ensure_session(row['survey_session_id'], row['survey_session__start_datetime'])
+            entry['a'][str(row['question_id'])] = row['selected_choices'] or []
 
         # Numeric answers
         numeric_rows = (
@@ -415,15 +424,53 @@ class SurveyAnalyticsService:
         )
 
         for row in numeric_rows:
-            sid = row['survey_session_id']
-            if sid not in sessions:
-                sessions[sid] = {
-                    'sid': sid,
-                    'd': str(row['survey_session__start_datetime'].date()),
-                    'a': {},
-                    'n': {},
-                }
-            qid = str(row['question_id'])
-            sessions[sid]['n'][qid] = row['numeric']
+            entry = ensure_session(row['survey_session_id'], row['survey_session__start_datetime'])
+            entry['n'][str(row['question_id'])] = row['numeric']
 
         return list(sessions.values())
+
+    def format_session_answers(self, session):
+        """Format all answers for a session into display rows and geo features.
+
+        Returns (answer_rows, geo_features) where answer_rows is a list of dicts
+        and geo_features is a list of GeoJSON Feature dicts.
+        """
+        answers = (
+            Answer.objects
+            .filter(survey_session=session, parent_answer_id__isnull=True)
+            .select_related('question', 'question__survey_section')
+            .order_by('question__survey_section__id', 'question__order_number')
+        )
+
+        answer_rows = []
+        geo_features = []
+        for a in answers:
+            q = a.question
+            if q.input_type in ('choice', 'multichoice', 'rating'):
+                value = ', '.join(a.get_selected_choice_names()) or '\u2014'
+            elif q.input_type in ('number', 'range'):
+                value = str(a.numeric) if a.numeric is not None else '\u2014'
+            elif q.input_type in ('text', 'text_line', 'datetime'):
+                value = a.text or '\u2014'
+            elif q.input_type in ('point', 'line', 'polygon'):
+                geom = a.point or a.line or a.polygon
+                if geom:
+                    geo_features.append({
+                        'type': 'Feature',
+                        'geometry': json.loads(geom.geojson),
+                        'properties': {'question': q.name, 'type': q.input_type},
+                    })
+                    value = q.input_type + ' feature'
+                else:
+                    value = '\u2014'
+            else:
+                value = '\u2014'
+
+            answer_rows.append({
+                'question_name': q.name,
+                'section_name': q.survey_section.title or q.survey_section.name,
+                'input_type': q.input_type,
+                'value': value,
+            })
+
+        return answer_rows, geo_features

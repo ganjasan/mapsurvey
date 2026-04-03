@@ -60,25 +60,25 @@
     </script>
 
     {% elif stat.type == 'number' %}
-    <div class="number-stats">
+    <div class="number-stats" data-num-stats="{{ stat.question.id }}">
         <div class="ns-item">
-            <div class="ns-value">{{ stat.count }}</div>
+            <div class="ns-value" data-ns="count">{{ stat.count }}</div>
             <div class="ns-label">Answers</div>
         </div>
         <div class="ns-item">
-            <div class="ns-value">{{ stat.avg|default:"–" }}</div>
+            <div class="ns-value" data-ns="avg">{{ stat.avg|default:"–" }}</div>
             <div class="ns-label">Average</div>
         </div>
         <div class="ns-item">
-            <div class="ns-value">{{ stat.median|default:"–" }}</div>
+            <div class="ns-value" data-ns="median">{{ stat.median|default:"–" }}</div>
             <div class="ns-label">Median</div>
         </div>
         <div class="ns-item">
-            <div class="ns-value">{{ stat.min_val|default:"–" }}</div>
+            <div class="ns-value" data-ns="min">{{ stat.min_val|default:"–" }}</div>
             <div class="ns-label">Min</div>
         </div>
         <div class="ns-item">
-            <div class="ns-value">{{ stat.max_val|default:"–" }}</div>
+            <div class="ns-value" data-ns="max">{{ stat.max_val|default:"–" }}</div>
             <div class="ns-label">Max</div>
         </div>
     </div>

@@ -225,7 +225,10 @@ function FilterManager(matrix) {
     this.timeSelection = null;
     this.filteredSids = null;
     this._choiceFilteredSids = null;
+    this._mapSids = null;
+    this._timelineSids = null;
     this.textQuestionIds = [];
+    this._components = [];
 }
 
 FilterManager.prototype.toggleFilter = function(qid, code) {
@@ -285,14 +288,23 @@ FilterManager.prototype.clearAll = function() {
     this._apply();
 };
 
+FilterManager.prototype._intersect = function(a, b) {
+    if (a === null && b === null) return null;
+    if (a === null) return new Set(b);
+    if (b === null) return new Set(a);
+    var r = new Set();
+    b.forEach(function(sid) { if (a.has(sid)) r.add(sid); });
+    return r;
+};
+
+FilterManager.prototype.registerComponent = function(fn) {
+    this._components.push(fn);
+};
+
 FilterManager.prototype._apply = function() {
     this._recompute();
-    this._updateCharts();
-    this._updateGeoMap();
-    this._updateGeoMapSelection();
-    this._updateTimeline();
-    this._updatePills();
-    this._updateTextAnswers();
+    var self = this;
+    this._components.forEach(function(fn) { fn.call(self); });
 };
 
 FilterManager.prototype.getFilterParam = function() {
@@ -309,6 +321,8 @@ FilterManager.prototype._recompute = function() {
     if (!hasChoiceOrNumeric && this.geoSelection === null && this.timeSelection === null) {
         this.filteredSids = null;
         this._choiceFilteredSids = null;
+        this._mapSids = null;
+        this._timelineSids = null;
         return;
     }
 
@@ -345,32 +359,16 @@ FilterManager.prototype._recompute = function() {
     }
     this._choiceFilteredSids = choiceResult;
 
-    // Full filter: choice + geo + time intersection (for charts and text)
-    var result = choiceResult;
-
-    // Intersect with geo selection
-    if (this.geoSelection !== null) {
-        if (result === null) {
-            result = new Set(this.geoSelection);
-        } else {
-            var g = new Set();
-            this.geoSelection.forEach(function(sid) { if (result.has(sid)) g.add(sid); });
-            result = g;
-        }
-    }
-
-    // Intersect with time selection
-    if (this.timeSelection !== null) {
-        if (result === null) {
-            result = new Set(this.timeSelection);
-        } else {
-            var t = new Set();
-            this.timeSelection.forEach(function(sid) { if (result.has(sid)) t.add(sid); });
-            result = t;
-        }
-    }
-
-    this.filteredSids = result;
+    // Precompute per-component SID sets
+    // Map: choice + numeric + time (excludes geo — map highlights geo, doesn't filter by it)
+    this._mapSids = this._intersect(choiceResult, this.timeSelection);
+    // Timeline: choice + numeric + geo (excludes time — timeline is the time filter source)
+    this._timelineSids = this._intersect(choiceResult, this.geoSelection);
+    // Full: all filters combined (for charts, pills, text)
+    this.filteredSids = this._intersect(
+        this._intersect(choiceResult, this.geoSelection),
+        this.timeSelection
+    );
 };
 
 FilterManager.prototype._updateCharts = function() {
@@ -452,19 +450,8 @@ FilterManager.prototype._computeCounts = function(qid) {
 
 FilterManager.prototype._updateGeoMap = function() {
     if (!window.geoFeatureLayers || !window.geoGroup) return;
-    var self = this;
+    var sids = this._mapSids;
     var qVisible = window.geoQuestionVisible;
-    // Map visibility uses choice + numeric + time filters, but NOT geo selection (map highlights, doesn't filter)
-    var sids = self._choiceFilteredSids;
-    if (self.timeSelection !== null) {
-        if (sids === null) {
-            sids = new Set(self.timeSelection);
-        } else {
-            var t = new Set();
-            self.timeSelection.forEach(function(sid) { if (sids.has(sid)) t.add(sid); });
-            sids = t;
-        }
-    }
     window.geoFeatureLayers.forEach(function(entry) {
         var sidOk = sids === null || sids.has(entry.sid);
         var qOk = !qVisible || qVisible.get(entry.question) !== false;
@@ -495,20 +482,9 @@ FilterManager.prototype._updateGeoMapSelection = function() {
 
 FilterManager.prototype._updateTimeline = function() {
     if (!window._timelineChart || !window._sessionHours) return;
-    // Don't recompute timeline when it is the filter source
+    // Don't recompute timeline when it is the only active filter
     if (this.timeSelection !== null && this.filters.size === 0 && this.numericRanges.size === 0 && this.geoSelection === null) return;
-    // Use filteredSids excluding timeSelection for timeline display
-    var sids = this._choiceFilteredSids;
-    if (this.geoSelection !== null) {
-        if (sids === null) {
-            sids = new Set(this.geoSelection);
-        } else {
-            var g = new Set();
-            var s = sids;
-            this.geoSelection.forEach(function(sid) { if (s.has(sid)) g.add(sid); });
-            sids = g;
-        }
-    }
+    var sids = this._timelineSids;
     if (sids === null) {
         if (typeof window._updateTimelineFromHourly === 'function') {
             window._updateTimelineFromHourly();
@@ -541,6 +517,34 @@ FilterManager.prototype._updateTimeline = function() {
     window._timelineChart.data.datasets[0].data = keys.map(function(k) { return buckets[k].total; });
     window._timelineChart.data.datasets[1].data = keys.map(function(k) { return buckets[k].completed; });
     window._timelineChart.update('none');
+};
+
+FilterManager.prototype._updateNumericStats = function() {
+    var self = this;
+    document.querySelectorAll('[data-num-stats]').forEach(function(el) {
+        var qid = el.dataset.numStats;
+        var values = [];
+        self._matrix.forEach(function(session) {
+            if (self.filteredSids !== null && !self.filteredSids.has(session.sid)) return;
+            var val = session.n ? session.n[qid] : undefined;
+            if (val !== undefined) values.push(val);
+        });
+        el.querySelector('[data-ns="count"]').textContent = values.length;
+        if (values.length > 0) {
+            values.sort(function(a, b) { return a - b; });
+            var sum = values.reduce(function(a, b) { return a + b; }, 0);
+            el.querySelector('[data-ns="avg"]').textContent = (sum / values.length).toFixed(1);
+            var mid = Math.floor(values.length / 2);
+            var median = values.length % 2 !== 0 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
+            el.querySelector('[data-ns="median"]').textContent = median.toFixed(1);
+            el.querySelector('[data-ns="min"]').textContent = values[0];
+            el.querySelector('[data-ns="max"]').textContent = values[values.length - 1];
+        } else {
+            ['avg', 'median', 'min', 'max'].forEach(function(k) {
+                el.querySelector('[data-ns="' + k + '"]').textContent = '\u2013';
+            });
+        }
+    });
 };
 
 FilterManager.prototype._updatePills = function() {
@@ -844,6 +848,16 @@ document.addEventListener('DOMContentLoaded', function() {
     var matrix = JSON.parse(matrixEl.textContent);
     window.filterManager = new FilterManager(matrix);
     window.filterManager.textQuestionIds = JSON.parse('{{ text_question_ids_json|escapejs }}');
+
+    // Register components — order matters for UX (charts update before pills)
+    var fm = window.filterManager;
+    fm.registerComponent(FilterManager.prototype._updateCharts);
+    fm.registerComponent(FilterManager.prototype._updateNumericStats);
+    fm.registerComponent(FilterManager.prototype._updateGeoMap);
+    fm.registerComponent(FilterManager.prototype._updateGeoMapSelection);
+    fm.registerComponent(FilterManager.prototype._updateTimeline);
+    fm.registerComponent(FilterManager.prototype._updatePills);
+    fm.registerComponent(FilterManager.prototype._updateTextAnswers);
 });
 </script>
 {% endblock %}
