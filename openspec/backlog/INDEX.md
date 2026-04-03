@@ -36,13 +36,14 @@
 | 32 | feature | [A/B testing via survey versions (Phase 4)](feature-ab-testing.md) | medium | backend | survey-analytics | 2026-04-02 |
 | 33 | feature | [Cross-filtering in analytics dashboard](feature-analytics-cross-filtering.md) | medium | frontend | survey-analytics | 2026-04-02 |
 | 34 | feature | [Interactive analytics map](feature-interactive-analytics-map.md) | medium | frontend | survey-analytics | 2026-04-02 |
-| 35 | feature | [Multi-color selection sets for analytics comparison](feature-analytics-multi-select-comparison.md) | medium | frontend | survey-analytics | 2026-04-02 |
-| 36 | feature | [Feedback Widget](feature-feedback-widget.md) | medium | general | — | 2026-03-30 |
-| 37 | idea | [Digital Contour Maps — Geography Education](idea-digital-contour-maps-education.md) | medium | general | — | 2026-03-26 |
-| 38 | feature | [Geolocation Map Centering](feature-geolocation-map-centering.md) | medium | frontend | — | 2026-04-01 |
-| 39 | feature | [Progress bar for entire survey](feature-progress-bar.md) | low | frontend | — | 2026-03-26 |
-| 40 | feature | [Answer choice templates](feature-answer-choice-templates.md) | low | frontend | — | 2026-03-26 |
-| 41 | feature | [Audio upload question type](feature-audio-upload.md) | low | backend | — | 2026-03-26 |
-| 42 | improvement | [Survey visual customization (fonts, colors)](improvement-survey-visual-customization.md) | low | frontend | — | 2026-03-26 |
-| 43 | feature | [Narrative mapping (story + map point)](feature-narrative-mapping.md) | low | frontend | community-engagement | 2026-04-02 |
-| 44 | feature | [Repeatable question groups](feature-repeatable-question-groups.md) | low | backend | community-engagement | 2026-04-02 |
+| 35 | feature | [Analytics: hide/show and reorder questions](feature-analytics-question-visibility-order.md) | medium | frontend | survey-analytics | 2026-04-03 |
+| 36 | feature | [Multi-color selection sets for analytics comparison](feature-analytics-multi-select-comparison.md) | medium | frontend | survey-analytics | 2026-04-02 |
+| 37 | feature | [Feedback Widget](feature-feedback-widget.md) | medium | general | — | 2026-03-30 |
+| 38 | idea | [Digital Contour Maps — Geography Education](idea-digital-contour-maps-education.md) | medium | general | — | 2026-03-26 |
+| 39 | feature | [Geolocation Map Centering](feature-geolocation-map-centering.md) | medium | frontend | — | 2026-04-01 |
+| 40 | feature | [Progress bar for entire survey](feature-progress-bar.md) | low | frontend | — | 2026-03-26 |
+| 41 | feature | [Answer choice templates](feature-answer-choice-templates.md) | low | frontend | — | 2026-03-26 |
+| 42 | feature | [Audio upload question type](feature-audio-upload.md) | low | backend | — | 2026-03-26 |
+| 43 | improvement | [Survey visual customization (fonts, colors)](improvement-survey-visual-customization.md) | low | frontend | — | 2026-03-26 |
+| 44 | feature | [Narrative mapping (story + map point)](feature-narrative-mapping.md) | low | frontend | community-engagement | 2026-04-02 |
+| 45 | feature | [Repeatable question groups](feature-repeatable-question-groups.md) | low | backend | community-engagement | 2026-04-02 |

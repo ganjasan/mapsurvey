@@ -314,12 +314,15 @@ class SurveyAnalyticsService:
 
     def get_question_stats(self, question):
         """Return stat dict for a single question, dispatched by input_type."""
-        handler = self._STAT_DISPATCH.get(question.input_type, self._stats_other)
+        handler = self._STAT_DISPATCH.get(question.input_type)
         stat = {
             'question': question,
             'section': question.survey_section,
         }
-        stat.update(handler(self, question))
+        if handler is not None:
+            stat.update(handler(self, question))
+        else:
+            stat.update(self._stats_other(question))
         return stat
 
     def get_all_question_stats(self):

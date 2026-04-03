@@ -901,7 +901,7 @@ function _resizeAfterFocus() {
 
 function loadTextAnswers(qid, page, pageSize) {
     var filters = window.filterManager ? window.filterManager.getFilterParam() : '';
-    var url = '{% url "analytics_text_answers" survey.uuid 0 %}'.replace(/\/0\/$/, '/' + qid + '/')
+    var url = '{% url "analytics_text_answers" survey.uuid 0 %}'.replace('/0/text/', '/' + qid + '/text/')
               + '?page=' + page + '&page_size=' + pageSize
               + (filters ? '&filters=' + encodeURIComponent(filters) : '');
     htmx.ajax('GET', url, {target: '#text-answers-' + qid, swap: 'innerHTML'});
