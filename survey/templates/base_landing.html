@@ -57,11 +57,7 @@
 <body class="landing-body">
     <nav class="landing-nav" id="main-nav">
         <a href="/" class="landing-nav__brand">
-            <svg class="landing-nav__logo" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-                <circle cx="11" cy="11" r="10" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M6 14L11 5L16 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="11" cy="14" r="2" fill="currentColor"/>
-            </svg>
+            <img class="landing-nav__logo" src="{% static 'favicon-32x32.png' %}" width="22" height="22" alt="" aria-hidden="true">
             Mapsurvey
         </a>
         <button class="landing-nav__toggle" aria-label="{% trans "Toggle navigation" %}" aria-expanded="false"
@@ -120,16 +116,14 @@
                     <li><a href="/#demo">{% trans "Demo" %}</a></li>
                 </ul>
             </div>
+            {% if GITHUB_REPO_URL %}
             <div class="landing-footer__col">
-                <div class="landing-footer__col-title">{% trans "Developers" %}</div>
+                <div class="landing-footer__col-title">{% trans "Open Source" %}</div>
                 <ul class="landing-footer__links">
-                    {% if GITHUB_REPO_URL %}
                     <li><a href="{{ GITHUB_REPO_URL }}" target="_blank" rel="noopener">GitHub</a></li>
-                    {% endif %}
-                    <li><a href="/#quick-start">{% trans "Quick Start" %}</a></li>
-                    <li><a href="/#tech-stack">{% trans "Architecture" %}</a></li>
                 </ul>
             </div>
+            {% endif %}
             <div class="landing-footer__col">
                 <div class="landing-footer__col-title">{% trans "Legal" %}</div>
                 <ul class="landing-footer__links">
