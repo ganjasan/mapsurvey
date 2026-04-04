@@ -349,7 +349,10 @@ class SurveyAnalyticsService:
             q.order_number,
         ))
 
-        return [self.get_question_stats(q) for q in questions]
+        return [
+            self.get_question_stats(q) for q in questions
+            if q.input_type not in ('point', 'line', 'polygon')
+        ]
 
     def get_text_answers(self, question, page=1, page_size=20, session_ids=None):
         """Return paginated text answers for a question."""
