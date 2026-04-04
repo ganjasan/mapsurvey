@@ -252,6 +252,9 @@ class SurveyHeader(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
     password_hash = models.CharField(max_length=128, null=True, blank=True)
     test_token = models.UUIDField(default=uuid_module.uuid4, unique=True)
+    cover_image = models.ImageField(upload_to='covers/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # Versioning fields
     canonical_survey = models.ForeignKey(

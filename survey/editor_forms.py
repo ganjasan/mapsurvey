@@ -5,13 +5,14 @@ from .models import SurveyHeader, SurveySection, Question, Organization
 class SurveyHeaderForm(forms.ModelForm):
     class Meta:
         model = SurveyHeader
-        fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'thanks_html']
+        fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'thanks_html', 'cover_image']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'survey_name'}),
             'redirect_url': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '#'}),
             'available_languages': forms.HiddenInput(attrs={'id': 'id_available_languages'}),
             'visibility': forms.Select(attrs={'class': 'form-control'}),
             'thanks_html': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': '{"en": "<h1>Thanks!</h1>"}'}),
+            'cover_image': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
         }
 
 

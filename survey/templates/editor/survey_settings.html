@@ -1,0 +1,79 @@
+{% extends "editor/editor_base.html" %}
+{% load survey_filters %}
+
+{% block page_title %}Settings – {{ survey.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .settings-main { max-width: 800px; margin: 0 auto; padding: 1.5rem; }
+    .settings-section {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+    .settings-section h6 {
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block navbar_content %}
+<span class="survey-name">{{ survey.name }}</span>
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="settings" hide_status_badge=False %}
+{% endblock %}
+
+{% block content %}
+<div class="settings-main">
+
+    <!-- Survey Settings -->
+    <div class="settings-section">
+        <h6><i class="fas fa-sliders-h mr-1"></i> General</h6>
+        <form method="post" action="{% url 'editor_survey_settings' survey.uuid %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% if field.name == 'available_languages' %}
+                    {{ field }}
+                    {% include "editor/partials/language_picker.html" %}
+                {% elif field.name == 'cover_image' %}
+                    {% if survey.cover_image %}
+                    <div class="mb-2">
+                        <img src="{{ survey.cover_image.url }}" style="max-width:200px;max-height:120px;border-radius:6px;border:1px solid var(--border-color);">
+                    </div>
+                    {% endif %}
+                    {{ field }}
+                {% else %}
+                    {{ field }}
+                {% endif %}
+                {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+                {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-sm">Save Settings</button>
+        </form>
+    </div>
+
+    <!-- Collaborators -->
+    <div class="settings-section">
+        <h6><i class="fas fa-users mr-1"></i> Collaborators</h6>
+        <div hx-get="{% url 'editor_survey_collaborators' survey.uuid %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+        </div>
+    </div>
+
+    <!-- Password & Test Access -->
+    <div class="settings-section">
+        <h6><i class="fas fa-lock mr-1"></i> Password & Test Access</h6>
+        <div class="password-container">
+            {% include "editor/partials/survey_password_modal.html" %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

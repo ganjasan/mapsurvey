@@ -1,0 +1,39 @@
+{% comment %}
+Shared navigation tabs for survey management pages.
+Requires: survey (SurveyHeader), active_tab (string: "editor"|"analytics"|"share")
+Optional: effective_role (string), hide_status_badge (bool)
+{% endcomment %}
+{% load survey_filters %}
+{% if not hide_status_badge %}
+<span class="badge badge-{{ survey.status|status_badge_class }} ml-2 status-badge-static">{{ survey.get_status_display }} &middot; v{{ survey.version_number }}</span>
+{% endif %}
+<div class="survey-nav-tabs">
+    <a href="{% url 'editor_survey_detail' survey.uuid %}"
+       class="survey-nav-tab{% if active_tab == 'editor' %} active{% endif %}"
+       title="Editor">
+        <i class="fas fa-pen"></i> Editor
+    </a>
+    <a href="{% url 'editor_survey_analytics' survey.uuid %}"
+       class="survey-nav-tab{% if active_tab == 'analytics' %} active{% endif %}"
+       title="Analytics">
+        <i class="fas fa-chart-bar"></i> Analytics
+    </a>
+    <a href="{% url 'editor_survey_share' survey.uuid %}"
+       class="survey-nav-tab{% if active_tab == 'share' %} active{% endif %}"
+       title="Share">
+        <i class="fas fa-share-alt"></i> Share
+    </a>
+    {% if effective_role == 'owner' %}
+    <a href="{% url 'editor_survey_settings' survey.uuid %}"
+       class="survey-nav-tab{% if active_tab == 'settings' %} active{% endif %}"
+       title="Settings">
+        <i class="fas fa-cog"></i> Settings
+    </a>
+    {% endif %}
+</div>
+<a href="{% url 'survey' survey_slug=survey.uuid %}"
+   class="btn btn-sm btn-outline-primary ml-2"
+   target="_blank"
+   title="Open survey in a new tab">
+    <i class="fas fa-external-link-alt"></i> Preview
+</a>

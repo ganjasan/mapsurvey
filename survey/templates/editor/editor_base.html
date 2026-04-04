@@ -487,6 +487,46 @@
         .translations-toggle.open i { transform: rotate(90deg); }
         .translations-body { display: none; }
         .translations-body.open { display: block; }
+
+        /* Survey nav tabs */
+        .survey-nav-tabs {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            margin-left: 0.75rem;
+            background: #f3f4f6;
+            border-radius: 6px;
+            padding: 2px;
+        }
+        .survey-nav-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.65rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #6b7280;
+            text-decoration: none;
+            border: none;
+            background: none;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            line-height: 1.4;
+        }
+        .survey-nav-tab:hover {
+            color: var(--accent);
+            background: #fff;
+            text-decoration: none;
+        }
+        .survey-nav-tab.active {
+            color: var(--accent);
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
+        .survey-nav-tab i {
+            font-size: 0.75rem;
+        }
     </style>
     {% block extra_head %}{% endblock %}
 </head>

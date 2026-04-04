@@ -190,8 +190,22 @@ def editor(request):
 	if not show_archived:
 		survey_list = survey_list.exclude(status='archived')
 
+	# Annotate with session count
+	survey_list = survey_list.annotate(
+		session_count=Count('surveysession', distinct=True),
+	)
+
+	# Compute completion KPIs per survey
+	from .analytics import SurveyAnalyticsService
+	surveys_with_kpi = []
+	for survey in survey_list:
+		overview = SurveyAnalyticsService(survey).get_overview()
+		survey.completed_count = overview['completed_count']
+		survey.completion_rate = overview['completion_rate']
+		surveys_with_kpi.append(survey)
+
 	context = {
-		"survey_headers": survey_list,
+		"survey_headers": surveys_with_kpi,
 		"org_role": org_role,
 		"show_archived": show_archived,
 	}

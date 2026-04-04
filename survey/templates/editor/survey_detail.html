@@ -36,29 +36,14 @@
 <span class="badge badge-{{ survey.status|status_badge_class }} ml-2 status-badge-static">{{ survey.get_status_display }} &middot; v{{ survey.version_number }}</span>
 {% endif %}
 
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="editor" hide_status_badge=True %}
+
 {% if show_draft_actions %}
 <button class="btn btn-sm btn-success ml-2" onclick="checkAndPublishDraft()">
     <i class="fas fa-upload"></i> Publish Version
 </button>
 <button class="btn btn-sm btn-outline-danger ml-1" data-toggle="modal" data-target="#discardDraftModal">
     <i class="fas fa-trash"></i> Discard
-</button>
-{% endif %}
-
-<a href="{% url 'editor_survey_analytics' survey.uuid %}" class="btn btn-sm btn-outline-secondary ml-1" title="Analytics">
-    <i class="fas fa-chart-bar"></i>
-</a>
-<a href="{% url 'editor_survey_share' survey.uuid %}" class="btn btn-sm btn-outline-secondary ml-1" title="Share">
-    <i class="fas fa-share-alt"></i>
-</a>
-
-{% if effective_role == 'owner' %}
-<button class="btn btn-sm btn-outline-secondary ml-1"
-        data-toggle="modal" data-target="#settingsModal"
-        hx-get="{% url 'editor_survey_settings' survey.uuid %}"
-        hx-target="#settingsModalBody"
-        hx-swap="innerHTML">
-    <i class="fas fa-cog"></i>
 </button>
 {% endif %}
 {% endblock %}
@@ -164,17 +149,6 @@
     </aside>
 </div>
 
-<!-- Settings Modal -->
-<div class="modal fade editor-modal" id="settingsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div id="settingsModalBody">
-                <div style="padding:2rem;text-align:center;color:#9ca3af;">Loading...</div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Question Form Modal -->
 <div class="modal fade editor-modal" id="questionModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -248,9 +222,9 @@
             <div class="modal-body">
                 <p>Discard this draft? All changes will be lost.</p>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer d-flex align-items-center">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <form method="post" action="{% url 'editor_discard_draft' survey.uuid %}" class="d-inline">
+                <form method="post" action="{% url 'editor_discard_draft' survey.uuid %}" class="d-inline mb-0">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger">Discard</button>
                 </form>
@@ -379,8 +353,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.body.addEventListener('htmx:afterSwap', function(evt) {
-        if (evt.detail.target.id === 'settingsModalBody' ||
-            evt.detail.target.id === 'questionModalBody' ||
+        if (evt.detail.target.id === 'questionModalBody' ||
             evt.detail.target.id === 'mapPickerModalBody') return;
         refreshPreview();
     });
@@ -413,11 +386,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.addEventListener('questionSaved', function() {
         $('#questionModal').modal('hide');
         refreshPreview();
-    });
-
-    // After settings saved, close modal
-    document.body.addEventListener('settingsSaved', function() {
-        $('#settingsModal').modal('hide');
     });
 
     // After map position saved, close modal

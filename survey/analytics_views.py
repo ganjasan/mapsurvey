@@ -84,6 +84,7 @@ def analytics_dashboard(request, survey_uuid):
 
     return render(request, 'editor/analytics_dashboard.html', {
         'survey': survey,
+        'effective_role': request.effective_survey_role,
         'total_sessions': overview['total_sessions'],
         'completed_count': overview['completed_count'],
         'completion_rate': overview['completion_rate'],

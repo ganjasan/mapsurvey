@@ -147,17 +147,16 @@ def editor_survey_detail(request, survey_uuid):
 def editor_survey_settings(request, survey_uuid):
     survey = request.survey
     if request.method == 'POST':
-        form = SurveyHeaderForm(request.POST, instance=survey)
+        form = SurveyHeaderForm(request.POST, request.FILES, instance=survey)
         if form.is_valid():
             form.save()
-            if request.headers.get('HX-Request'):
-                return HttpResponse(status=204, headers={'HX-Trigger': 'settingsSaved'})
-            return redirect('editor_survey_detail', survey_uuid=survey.uuid)
+            return redirect('editor_survey_settings', survey_uuid=survey.uuid)
     else:
         form = SurveyHeaderForm(instance=survey)
-    return render(request, 'editor/survey_settings_modal.html', {
+    return render(request, 'editor/survey_settings.html', {
         'survey': survey,
         'form': form,
+        'effective_role': request.effective_survey_role,
     })
 
 
