@@ -545,11 +545,13 @@ document.addEventListener('DOMContentLoaded', function() {
         row.appendChild(cb);
 
         if (slot.type === 'features') {
-            // Color swatch
-            var swatch = document.createElement('span');
-            swatch.className = 'geo-legend-swatch';
-            swatch.style.backgroundColor = slot.color;
-            row.appendChild(swatch);
+            // Geometry type icon (colored)
+            var geomIcons = { 'Point': 'fa-circle', 'LineString': 'fa-route', 'Polygon': 'fa-draw-polygon' };
+            var geomIcon = document.createElement('i');
+            geomIcon.className = 'fas ' + (geomIcons[slot.geomType] || 'fa-circle');
+            geomIcon.className += ' geo-legend-geom-icon';
+            geomIcon.style.color = slot.color;
+            row.appendChild(geomIcon);
 
             // Label
             var label = document.createElement('span');
