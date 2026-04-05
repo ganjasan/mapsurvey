@@ -517,11 +517,20 @@ class SurveyAnalyticsService:
         elif q.input_type in ('text', 'text_line', 'datetime'):
             return answer.text or '—'
         elif q.input_type == 'point' and answer.point:
-            return '{:.2f}, {:.2f}'.format(answer.point.y, answer.point.x)
+            try:
+                return '{:.2f}, {:.2f}'.format(answer.point.y, answer.point.x)
+            except Exception:
+                return 'point'
         elif q.input_type == 'line' and answer.line:
-            return '{} vertices'.format(len(answer.line.coords))
+            try:
+                return '{} vertices'.format(len(answer.line.coords))
+            except Exception:
+                return 'line'
         elif q.input_type == 'polygon' and answer.polygon:
-            return '{} vertices'.format(len(answer.polygon.exterior.coords) - 1)
+            try:
+                return '{} vertices'.format(len(answer.polygon.exterior.coords) - 1)
+            except Exception:
+                return 'polygon'
         return '—'
 
     def get_table_page(self, page=1, page_size=50, session_ids=None,
