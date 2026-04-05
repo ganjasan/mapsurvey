@@ -114,7 +114,7 @@
             {% if col.key == 'id' %}#{{ row.id }}
             {% elif col.key == 'start_datetime' %}{{ row.start_datetime|date:"M j, Y H:i" }}
             {% elif col.key == 'language' %}{{ row.language }}
-            {% else %}{% with cell_val=row.cells|hash:col.key %}{{ cell_val|default:"\u2014" }}{% endwith %}
+            {% else %}{% with cell_val=row.cells|hash:col.key %}{{ cell_val|default:"—" }}{% endwith %}
             {% endif %}
         </td>
         {% endfor %}

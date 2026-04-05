@@ -511,18 +511,18 @@ class SurveyAnalyticsService:
         q = answer.question
         if q.input_type in ('choice', 'multichoice', 'rating'):
             names = answer.get_selected_choice_names()
-            return ', '.join(names) if names else '\u2014'
+            return ', '.join(names) if names else '—'
         elif q.input_type in ('number', 'range'):
-            return str(answer.numeric) if answer.numeric is not None else '\u2014'
+            return str(answer.numeric) if answer.numeric is not None else '—'
         elif q.input_type in ('text', 'text_line', 'datetime'):
-            return answer.text or '\u2014'
+            return answer.text or '—'
         elif q.input_type == 'point' and answer.point:
             return '{:.2f}, {:.2f}'.format(answer.point.y, answer.point.x)
         elif q.input_type == 'line' and answer.line:
             return '{} vertices'.format(len(answer.line.coords))
         elif q.input_type == 'polygon' and answer.polygon:
             return '{} vertices'.format(len(answer.polygon.exterior.coords) - 1)
-        return '\u2014'
+        return '—'
 
     def get_table_page(self, page=1, page_size=50, session_ids=None,
                        sort_col=None, sort_dir='asc', col_search=None):
@@ -567,15 +567,16 @@ class SurveyAnalyticsService:
         all_sessions = list(qs.order_by('-start_datetime'))
 
         # Bulk fetch answers for all sessions
+        session_pks = [s.id for s in all_sessions]
         answer_qs = (
             Answer.objects
             .filter(
-                survey_session_id__in=[s.id for s in all_sessions],
+                survey_session_id__in=session_pks,
                 parent_answer_id__isnull=True,
                 question_id__in=question_ids,
             )
             .select_related('question')
-        )
+        ) if session_pks else Answer.objects.none()
 
         # Pivot: {session_id: {question_id: formatted_value}}
         cell_map = {}
@@ -592,7 +593,7 @@ class SurveyAnalyticsService:
                 'session_id': s.id,
                 'id': s.id,
                 'start_datetime': s.start_datetime,
-                'language': s.language or '\u2014',
+                'language': s.language or '—',
                 'cells': cells,
             }
             rows.append(row)
@@ -605,7 +606,7 @@ class SurveyAnalyticsService:
                     if col_key in ('id', 'start_datetime', 'language'):
                         val = str(row.get(col_key, ''))
                     else:
-                        val = row['cells'].get(col_key, '\u2014')
+                        val = row['cells'].get(col_key, '—')
                     if search_lower not in val.lower():
                         return False
                 return True
@@ -618,7 +619,7 @@ class SurveyAnalyticsService:
         else:
             # Sort by question column value
             rows.sort(
-                key=lambda r: (r['cells'].get(sort_col, '\u2014') == '\u2014', r['cells'].get(sort_col, '')),
+                key=lambda r: (r['cells'].get(sort_col, '—') == '—', r['cells'].get(sort_col, '')),
                 reverse=reverse,
             )
 
