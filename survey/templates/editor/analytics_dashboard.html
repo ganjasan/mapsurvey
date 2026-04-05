@@ -103,9 +103,12 @@
     .attr-col-menu-item { padding: 6px 12px; cursor: pointer; font-size: 0.82rem; }
     .attr-col-menu-item:hover { background: #f0f0f0; }
     .attr-col-menu-item i { width: 18px; color: #6b7280; }
-    #pane-table:fullscreen { background: #fff; padding: 1rem; }
-    #pane-table:fullscreen > div { max-width: 100%; height: 100%; display: flex; flex-direction: column; }
-    #pane-table:fullscreen .attr-table-wrapper { max-height: none; flex: 1; }
+    #pane-table:fullscreen { background: #fff; }
+    #pane-table:fullscreen > div { max-width: 100%; width: 100%; height: 100%; padding: 0.75rem; display: flex; flex-direction: column; }
+    #pane-table:fullscreen #pane-table-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    #pane-table:fullscreen .attr-table-toolbar { flex-shrink: 0; }
+    #pane-table:fullscreen .attr-table-wrapper { max-height: none; flex: 1; min-height: 0; overflow: auto; }
+    #pane-table:fullscreen .attr-pagination { flex-shrink: 0; }
     .filter-pill {
         display: inline-flex;
         align-items: center;
