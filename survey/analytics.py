@@ -481,6 +481,166 @@ class SurveyAnalyticsService:
 
         return answer_rows, geo_features
 
+    # ── Attribute table ─────────────────────────────────────────────
+
+    def _get_ordered_questions(self):
+        """Return flat list of top-level questions in section-linked-list order."""
+        ordered_sections = _get_ordered_sections(self.survey)
+        section_order = {s.id: i for i, s in enumerate(ordered_sections)}
+
+        questions = list(
+            Question.objects
+            .filter(
+                survey_section__survey_header=self.survey,
+                parent_question_id__isnull=True,
+            )
+            .exclude(input_type__in=('html', 'image'))
+            .select_related('survey_section')
+        )
+
+        questions.sort(key=lambda q: (
+            section_order.get(q.survey_section_id, 999),
+            q.order_number,
+        ))
+
+        return questions
+
+    @staticmethod
+    def _format_cell(answer):
+        """Format a single Answer to a display string for the attribute table."""
+        q = answer.question
+        if q.input_type in ('choice', 'multichoice', 'rating'):
+            names = answer.get_selected_choice_names()
+            return ', '.join(names) if names else '\u2014'
+        elif q.input_type in ('number', 'range'):
+            return str(answer.numeric) if answer.numeric is not None else '\u2014'
+        elif q.input_type in ('text', 'text_line', 'datetime'):
+            return answer.text or '\u2014'
+        elif q.input_type == 'point' and answer.point:
+            return '{:.2f}, {:.2f}'.format(answer.point.y, answer.point.x)
+        elif q.input_type == 'line' and answer.line:
+            return '{} vertices'.format(len(answer.line.coords))
+        elif q.input_type == 'polygon' and answer.polygon:
+            return '{} vertices'.format(len(answer.polygon.exterior.coords) - 1)
+        return '\u2014'
+
+    def get_table_page(self, page=1, page_size=50, session_ids=None,
+                       sort_col=None, sort_dir='asc', col_search=None):
+        """Return one page of session rows with formatted answer values.
+
+        Args:
+            page: 1-based page number
+            page_size: rows per page
+            session_ids: set of session PKs to include (from FilterManager), or None for all
+            sort_col: 'id', 'start_datetime', 'language', or str(question_id)
+            sort_dir: 'asc' or 'desc'
+            col_search: dict {col_key: search_string} for per-column text filter
+
+        Returns:
+            dict with columns, rows, page, total_pages, total, page_size, sort_col, sort_dir
+        """
+        col_search = col_search or {}
+        if not sort_col:
+            sort_col = 'start_datetime'
+
+        questions = self._get_ordered_questions()
+        question_ids = [q.id for q in questions]
+
+        # Build columns list
+        system_cols = [
+            {'key': 'id', 'label': '#', 'input_type': None},
+            {'key': 'start_datetime', 'label': 'Start time', 'input_type': None},
+            {'key': 'language', 'label': 'Language', 'input_type': None},
+        ]
+        question_cols = [
+            {'key': str(q.id), 'label': q.name or '', 'input_type': q.input_type}
+            for q in questions
+        ]
+        columns = system_cols + question_cols
+
+        # Base session queryset
+        qs = SurveySession.objects.filter(survey=self.survey)
+        if session_ids is not None:
+            qs = qs.filter(pk__in=session_ids)
+
+        # Fetch all matching sessions + their answers in bulk
+        all_sessions = list(qs.order_by('-start_datetime'))
+
+        # Bulk fetch answers for all sessions
+        answer_qs = (
+            Answer.objects
+            .filter(
+                survey_session_id__in=[s.id for s in all_sessions],
+                parent_answer_id__isnull=True,
+                question_id__in=question_ids,
+            )
+            .select_related('question')
+        )
+
+        # Pivot: {session_id: {question_id: formatted_value}}
+        cell_map = {}
+        for a in answer_qs:
+            if a.survey_session_id not in cell_map:
+                cell_map[a.survey_session_id] = {}
+            cell_map[a.survey_session_id][str(a.question_id)] = self._format_cell(a)
+
+        # Build rows
+        rows = []
+        for s in all_sessions:
+            cells = cell_map.get(s.id, {})
+            row = {
+                'session_id': s.id,
+                'id': s.id,
+                'start_datetime': s.start_datetime,
+                'language': s.language or '\u2014',
+                'cells': cells,
+            }
+            rows.append(row)
+
+        # Per-column search filter
+        if col_search:
+            def matches_search(row):
+                for col_key, search_str in col_search.items():
+                    search_lower = search_str.lower()
+                    if col_key in ('id', 'start_datetime', 'language'):
+                        val = str(row.get(col_key, ''))
+                    else:
+                        val = row['cells'].get(col_key, '\u2014')
+                    if search_lower not in val.lower():
+                        return False
+                return True
+            rows = [r for r in rows if matches_search(r)]
+
+        # Sort
+        reverse = (sort_dir == 'desc')
+        if sort_col in ('id', 'start_datetime', 'language'):
+            rows.sort(key=lambda r: (r.get(sort_col) is None, r.get(sort_col, '')), reverse=reverse)
+        else:
+            # Sort by question column value
+            rows.sort(
+                key=lambda r: (r['cells'].get(sort_col, '\u2014') == '\u2014', r['cells'].get(sort_col, '')),
+                reverse=reverse,
+            )
+
+        # Paginate
+        total = len(rows)
+        total_pages = max(1, (total + page_size - 1) // page_size)
+        page = min(max(page, 1), total_pages)
+        offset = (page - 1) * page_size
+        page_rows = rows[offset:offset + page_size]
+
+        return {
+            'columns': columns,
+            'rows': page_rows,
+            'page': page,
+            'total_pages': total_pages,
+            'total': total,
+            'page_size': page_size,
+            'sort_col': sort_col,
+            'sort_dir': sort_dir,
+            'col_search': col_search,
+        }
+
 
 class PerformanceAnalyticsService:
     """Read-only performance/funnel analytics from SurveyEvent data."""

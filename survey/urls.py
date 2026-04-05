@@ -49,6 +49,7 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/analytics/', analytics_views.analytics_dashboard, name='editor_survey_analytics'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/questions/<int:question_id>/text/', analytics_views.analytics_text_answers, name='analytics_text_answers'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/', analytics_views.analytics_session_detail, name='analytics_session_detail'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/table/', analytics_views.analytics_table, name='analytics_table'),
 
     # Share & tracking links
     path('editor/surveys/<uuid:survey_uuid>/share/', share_views.share_page, name='editor_survey_share'),

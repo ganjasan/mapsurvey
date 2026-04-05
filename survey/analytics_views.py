@@ -161,6 +161,41 @@ def analytics_session_detail(request, survey_uuid, session_id):
     })
 
 
+@survey_permission_required('viewer')
+def analytics_table(request, survey_uuid):
+    """HTMX partial: paginated attribute table of all sessions."""
+    survey = request.survey
+    service = SurveyAnalyticsService(survey)
+
+    # Reuse existing filter parsing
+    filter_map = _parse_filter_param(request.GET.get('filters', ''))
+    session_ids = _resolve_filtered_session_ids(survey, filter_map)
+
+    try:
+        page = int(request.GET.get('page', 1))
+    except (ValueError, TypeError):
+        page = 1
+
+    sort_col = request.GET.get('sort', 'start_datetime')
+    sort_dir = request.GET.get('dir', 'desc')
+
+    # Per-column search: search_<col_key>=value
+    col_search = {}
+    for k, v in request.GET.items():
+        if k.startswith('search_') and v.strip():
+            col_search[k[7:]] = v.strip()
+
+    result = service.get_table_page(
+        page=page, session_ids=session_ids,
+        sort_col=sort_col, sort_dir=sort_dir, col_search=col_search,
+    )
+
+    return render(request, 'editor/partials/analytics_table.html', {
+        'survey': survey,
+        **result,
+    })
+
+
 _ALLOWED_CLIENT_EVENTS = {'page_load', 'page_leave'}
 
 

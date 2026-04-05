@@ -1,0 +1,157 @@
+{% load tz hash %}
+{# HTMX-swappable partial: attribute table with toolbar, sort, search, pagination #}
+
+<div class="attr-table-toolbar">
+    <div class="attr-table-toolbar-left">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleHideFieldsPopover()" title="Show/hide columns">
+            <i class="fas fa-columns"></i> Hide fields
+        </button>
+        <span class="text-muted ml-2" style="font-size:0.85rem;">{{ total }} result{{ total|pluralize }}</span>
+    </div>
+    <div class="attr-table-toolbar-right">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleTableFullscreen()" title="Toggle fullscreen">
+            <i class="fas fa-expand"></i>
+        </button>
+    </div>
+</div>
+
+{# Hidden state form — carries current state for HTMX requests #}
+<form id="table-state-form">
+    <input type="hidden" name="filters" value="">
+    <input type="hidden" name="sort" value="{{ sort_col }}">
+    <input type="hidden" name="dir" value="{{ sort_dir }}">
+    <input type="hidden" name="page" value="{{ page }}">
+    {% for key, val in col_search.items %}
+    <input type="hidden" name="search_{{ key }}" value="{{ val }}">
+    {% endfor %}
+</form>
+
+{# Hide fields popover #}
+<div id="hide-fields-popover" style="display:none;" class="attr-hide-popover">
+    <div style="font-weight:600;margin-bottom:0.5rem;font-size:0.85rem;">Visible columns</div>
+    {% for col in columns %}
+    <label style="display:block;font-size:0.82rem;cursor:pointer;padding:2px 0;">
+        <input type="checkbox" checked data-hide-col="{{ col.key }}"
+               onchange="setColHidden('{{ col.key }}', !this.checked)">
+        {% if col.input_type == 'point' %}<i class="fas fa-map-marker-alt" style="color:#1E88E5;width:16px;"></i>
+        {% elif col.input_type == 'line' %}<i class="fas fa-route" style="color:#43A047;width:16px;"></i>
+        {% elif col.input_type == 'polygon' %}<i class="fas fa-draw-polygon" style="color:#8E24AA;width:16px;"></i>
+        {% elif col.input_type == 'number' or col.input_type == 'range' %}<i class="fas fa-hashtag" style="color:#FB8C00;width:16px;"></i>
+        {% elif col.input_type == 'choice' or col.input_type == 'multichoice' or col.input_type == 'rating' %}<i class="fas fa-list" style="color:#00897B;width:16px;"></i>
+        {% elif col.input_type == 'datetime' %}<i class="fas fa-clock" style="color:#6b7280;width:16px;"></i>
+        {% elif col.input_type == 'text' or col.input_type == 'text_line' %}<i class="fas fa-font" style="color:#6b7280;width:16px;"></i>
+        {% elif col.input_type is None %}<i class="fas fa-cog" style="color:#9e9e9e;width:16px;"></i>
+        {% endif %}
+        {{ col.label|truncatechars:30 }}
+    </label>
+    {% endfor %}
+</div>
+
+<div class="attr-table-wrapper">
+<table class="table table-sm table-bordered table-hover attr-table">
+<thead>
+    {# Header row with column names + sort + menu #}
+    <tr>
+        <th class="attr-th-actions" style="width:40px;"></th>
+        {% for col in columns %}
+        <th data-col="{{ col.key }}" class="attr-th">
+            <div class="attr-th-content">
+                <span class="attr-th-label">
+                    {% if col.input_type == 'point' %}<i class="fas fa-map-marker-alt" style="color:#1E88E5;"></i>
+                    {% elif col.input_type == 'line' %}<i class="fas fa-route" style="color:#43A047;"></i>
+                    {% elif col.input_type == 'polygon' %}<i class="fas fa-draw-polygon" style="color:#8E24AA;"></i>
+                    {% elif col.input_type == 'number' or col.input_type == 'range' %}<i class="fas fa-hashtag" style="color:#FB8C00;"></i>
+                    {% elif col.input_type == 'choice' or col.input_type == 'multichoice' or col.input_type == 'rating' %}<i class="fas fa-list" style="color:#00897B;"></i>
+                    {% elif col.input_type == 'datetime' %}<i class="fas fa-clock" style="color:#6b7280;"></i>
+                    {% elif col.input_type == 'text' or col.input_type == 'text_line' %}<i class="fas fa-font" style="color:#6b7280;"></i>
+                    {% endif %}
+                    {{ col.label|truncatechars:25 }}
+                </span>
+                <span class="attr-th-sort"
+                      onclick="tableSort('{{ col.key }}')"
+                      title="Sort">
+                    {% if sort_col == col.key and sort_dir == 'asc' %}
+                    <i class="fas fa-sort-up"></i>
+                    {% elif sort_col == col.key and sort_dir == 'desc' %}
+                    <i class="fas fa-sort-down"></i>
+                    {% else %}
+                    <i class="fas fa-sort" style="opacity:0.3;"></i>
+                    {% endif %}
+                </span>
+                <span class="attr-th-menu" onclick="toggleColMenu(this, '{{ col.key }}')" title="Column options">
+                    <i class="fas fa-ellipsis-v" style="opacity:0.4;"></i>
+                </span>
+            </div>
+        </th>
+        {% endfor %}
+    </tr>
+    {# Search row #}
+    <tr class="attr-search-row">
+        <td></td>
+        {% for col in columns %}
+        <td data-col="{{ col.key }}">
+            <input type="text"
+                   class="form-control form-control-sm attr-search-input"
+                   placeholder="Search"
+                   name="search_{{ col.key }}"
+                   value="{% with sv=col_search|hash:col.key %}{{ sv|default:'' }}{% endwith %}"
+                   data-search-col="{{ col.key }}"
+                   oninput="tableSearchDebounced()">
+        </td>
+        {% endfor %}
+    </tr>
+</thead>
+<tbody>
+    {% for row in rows %}
+    <tr>
+        <td class="attr-td-actions">
+            <button type="button" class="btn btn-sm btn-link p-0" onclick="loadSessionDetail({{ row.session_id }})" title="View details">
+                <i class="fas fa-eye" style="color:var(--accent);"></i>
+            </button>
+        </td>
+        {% for col in columns %}
+        <td data-col="{{ col.key }}">
+            {% if col.key == 'id' %}#{{ row.id }}
+            {% elif col.key == 'start_datetime' %}{{ row.start_datetime|date:"M j, Y H:i" }}
+            {% elif col.key == 'language' %}{{ row.language }}
+            {% else %}{% with cell_val=row.cells|hash:col.key %}{{ cell_val|default:"\u2014" }}{% endwith %}
+            {% endif %}
+        </td>
+        {% endfor %}
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="{{ columns|length|add:1 }}" class="text-center text-muted py-4">
+            No responses{% if col_search %} matching your search{% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+</div>
+
+{# Pagination #}
+{% if total_pages > 1 %}
+<div class="attr-pagination">
+    <button class="btn btn-sm btn-outline-secondary"
+            {% if page <= 1 %}disabled{% endif %}
+            onclick="tablePage({{ page|add:'-1' }})">
+        <i class="fas fa-chevron-left"></i> Prev
+    </button>
+    <span class="text-muted mx-2" style="font-size:0.85rem;">Page {{ page }} of {{ total_pages }}</span>
+    <button class="btn btn-sm btn-outline-secondary"
+            {% if page >= total_pages %}disabled{% endif %}
+            onclick="tablePage({{ page|add:'1' }})">
+        Next <i class="fas fa-chevron-right"></i>
+    </button>
+</div>
+{% endif %}
+
+{# Column menu dropdown (hidden, positioned by JS) #}
+<div id="attr-col-menu" style="display:none;" class="attr-col-menu-dropdown">
+    <div class="attr-col-menu-item" onclick="tableSort(window._menuCol, 'asc')"><i class="fas fa-sort-alpha-down"></i> Sort A→Z</div>
+    <div class="attr-col-menu-item" onclick="tableSort(window._menuCol, 'desc')"><i class="fas fa-sort-alpha-up"></i> Sort Z→A</div>
+    <hr style="margin:4px 0;">
+    <div class="attr-col-menu-item" onclick="setColHidden(window._menuCol, true); closeColMenu()"><i class="fas fa-eye-slash"></i> Hide field</div>
+    <div class="attr-col-menu-item" onclick="toggleColFrozen(window._menuCol); closeColMenu()"><i class="fas fa-thumbtack"></i> Freeze field</div>
+</div>

@@ -67,6 +67,40 @@
         border-radius: var(--radius);
         border: 1px solid #d0d0ff;
     }
+
+    /* Attribute table */
+    .attr-table-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+    .attr-table-toolbar-left { display: flex; align-items: center; gap: 0.5rem; }
+    .attr-table-toolbar-right { display: flex; align-items: center; gap: 0.5rem; }
+    .attr-table-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: var(--radius); }
+    .attr-table { margin-bottom: 0; font-size: 0.82rem; }
+    .attr-table th, .attr-table td { white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; padding: 0.35rem 0.5rem; vertical-align: middle; }
+    .attr-th { position: relative; background: #f8f9fa; }
+    .attr-th-content { display: flex; align-items: center; gap: 4px; }
+    .attr-th-label { flex: 1; overflow: hidden; text-overflow: ellipsis; font-weight: 600; font-size: 0.8rem; }
+    .attr-th-sort { cursor: pointer; padding: 2px; }
+    .attr-th-sort:hover { opacity: 1 !important; }
+    .attr-th-menu { cursor: pointer; padding: 2px; }
+    .attr-th-menu:hover i { opacity: 1 !important; }
+    .attr-th-actions { background: #f8f9fa; }
+    .attr-td-actions { text-align: center; }
+    .attr-search-row td { padding: 2px 4px; background: #f8f9fa; }
+    .attr-search-input { font-size: 0.78rem; padding: 2px 6px; height: 26px; }
+    .attr-pagination { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.75rem; padding: 0.5rem; }
+    .col-hidden { display: none !important; }
+    .col-frozen { position: sticky; left: 0; background: #fff; z-index: 2; box-shadow: 2px 0 4px rgba(0,0,0,0.05); }
+    .attr-hide-popover {
+        position: absolute; z-index: 1000; background: #fff; border: 1px solid var(--border-color);
+        border-radius: var(--radius); padding: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        max-height: 400px; overflow-y: auto; min-width: 220px;
+    }
+    .attr-col-menu-dropdown {
+        position: absolute; z-index: 1001; background: #fff; border: 1px solid var(--border-color);
+        border-radius: var(--radius); padding: 4px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 160px;
+    }
+    .attr-col-menu-item { padding: 6px 12px; cursor: pointer; font-size: 0.82rem; }
+    .attr-col-menu-item:hover { background: #f0f0f0; }
+    .attr-col-menu-item i { width: 18px; color: #6b7280; }
     .filter-pill {
         display: inline-flex;
         align-items: center;
@@ -279,6 +313,11 @@
                 style="padding:0.5rem 1.25rem;border:none;background:none;border-bottom:3px solid var(--accent);margin-bottom:-2px;font-weight:600;cursor:pointer;color:var(--accent);font-size:0.9rem;">
             Responses
         </button>
+        <button class="analytics-tab" data-tab="table"
+                onclick="switchAnalyticsTab('table')"
+                style="padding:0.5rem 1.25rem;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;color:#6b7280;font-size:0.9rem;">
+            Table
+        </button>
         <button class="analytics-tab" data-tab="performance"
                 onclick="switchAnalyticsTab('performance')"
                 style="padding:0.5rem 1.25rem;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;color:#6b7280;font-size:0.9rem;">
@@ -306,6 +345,15 @@
 </div>
 </div>
 
+<!-- Table tab -->
+<div id="pane-table" style="display:none;">
+    <div style="max-width:1600px;margin:0 auto;padding:1.5rem;position:relative;">
+        <div id="pane-table-content">
+            <div class="text-center text-muted py-5"><i class="fas fa-table mr-2"></i>Click Table tab to load data</div>
+        </div>
+    </div>
+</div>
+
 <!-- Performance tab -->
 <div id="pane-performance" style="display:none;">
     <div class="analytics-main">
@@ -313,9 +361,27 @@
     </div>
 </div>
 
+<!-- Session detail modal (shared by geo map and table) -->
+<div class="modal fade" id="sessionDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0 font-weight-bold">Session Details</h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body" id="sessionDetailModalBody">
+                <div class="text-center text-muted py-4">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+var _tableLoaded = false;
+
 function switchAnalyticsTab(tab) {
     document.getElementById('pane-responses').style.display = tab === 'responses' ? '' : 'none';
+    document.getElementById('pane-table').style.display = tab === 'table' ? '' : 'none';
     document.getElementById('pane-performance').style.display = tab === 'performance' ? '' : 'none';
     document.querySelectorAll('.analytics-tab').forEach(function(btn) {
         var isActive = btn.dataset.tab === tab;
@@ -323,7 +389,187 @@ function switchAnalyticsTab(tab) {
         btn.style.fontWeight = isActive ? '600' : 'normal';
         btn.style.color = isActive ? 'var(--accent)' : '#6b7280';
     });
+    if (tab === 'table' && !_tableLoaded) {
+        _tableLoaded = true;
+        loadTable();
+    }
 }
+
+/* ── Attribute table functions ──────────────────────────────────── */
+
+var _tableUrl = '{% url "analytics_table" survey.uuid %}';
+
+function loadTable(extraParams) {
+    var fm = window.filterManager;
+    var filters = fm ? fm.getFilterParam() : '';
+    var form = document.getElementById('table-state-form');
+    var sort = 'start_datetime', dir = 'desc', page = '1';
+    var searchParams = '';
+    if (form) {
+        sort = form.querySelector('[name=sort]').value || 'start_datetime';
+        dir = form.querySelector('[name=dir]').value || 'desc';
+        page = '1';
+        form.querySelectorAll('input[name^="search_"]').forEach(function(inp) {
+            if (inp.value) searchParams += '&' + inp.name + '=' + encodeURIComponent(inp.value);
+        });
+    }
+    if (extraParams) {
+        if (extraParams.sort) sort = extraParams.sort;
+        if (extraParams.dir) dir = extraParams.dir;
+        if (extraParams.page) page = extraParams.page;
+    }
+    var url = _tableUrl + '?sort=' + sort + '&dir=' + dir + '&page=' + page
+              + (filters ? '&filters=' + encodeURIComponent(filters) : '')
+              + searchParams;
+    htmx.ajax('GET', url, {target: '#pane-table-content', swap: 'innerHTML'});
+}
+
+function tableSort(colKey, forceDir) {
+    var form = document.getElementById('table-state-form');
+    var currentSort = form ? form.querySelector('[name=sort]').value : '';
+    var currentDir = form ? form.querySelector('[name=dir]').value : 'desc';
+    var newDir = forceDir || (colKey === currentSort && currentDir === 'asc' ? 'desc' : 'asc');
+    loadTable({sort: colKey, dir: newDir, page: '1'});
+    closeColMenu();
+}
+
+var _searchTimer = null;
+function tableSearchDebounced() {
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(function() {
+        var form = document.getElementById('table-state-form');
+        document.querySelectorAll('.attr-search-input').forEach(function(inp) {
+            var existing = form.querySelector('[name="' + inp.name + '"]');
+            if (existing) { existing.value = inp.value; }
+            else {
+                var hidden = document.createElement('input');
+                hidden.type = 'hidden'; hidden.name = inp.name; hidden.value = inp.value;
+                form.appendChild(hidden);
+            }
+        });
+        loadTable({page: '1'});
+    }, 500);
+}
+
+function tablePage(p) {
+    loadTable({page: String(p)});
+}
+
+/* Session detail modal */
+function loadSessionDetail(sid) {
+    var body = document.getElementById('sessionDetailModalBody');
+    body.textContent = '';
+    var spinner = document.createElement('div');
+    spinner.className = 'text-center text-muted py-4';
+    var icon = document.createElement('i');
+    icon.className = 'fas fa-spinner fa-spin';
+    spinner.appendChild(icon);
+    spinner.appendChild(document.createTextNode(' Loading...'));
+    body.appendChild(spinner);
+    if (window._sessionMiniMap) { window._sessionMiniMap.remove(); window._sessionMiniMap = null; }
+    $('#sessionDetailModal').modal('show');
+    var url = '{% url "analytics_session_detail" survey.uuid 0 %}'.replace(/\/0\/$/, '/' + sid + '/');
+    htmx.ajax('GET', url, { target: '#sessionDetailModalBody', swap: 'innerHTML' });
+}
+
+/* Column hide/freeze (localStorage) */
+var _colStateKey = 'attrTable_{{ survey.uuid }}';
+
+function _getColState() {
+    try { return JSON.parse(localStorage.getItem(_colStateKey)) || {hidden: [], frozen: []}; }
+    catch(e) { return {hidden: [], frozen: []}; }
+}
+function _saveColState(state) {
+    localStorage.setItem(_colStateKey, JSON.stringify(state));
+}
+
+function applyColState() {
+    var state = _getColState();
+    document.querySelectorAll('[data-col]').forEach(function(el) {
+        el.classList.remove('col-hidden', 'col-frozen');
+    });
+    (state.hidden || []).forEach(function(key) {
+        document.querySelectorAll('[data-col="' + key + '"]').forEach(function(el) {
+            el.classList.add('col-hidden');
+        });
+    });
+    (state.frozen || []).forEach(function(key) {
+        document.querySelectorAll('[data-col="' + key + '"]').forEach(function(el) {
+            el.classList.add('col-frozen');
+        });
+    });
+    document.querySelectorAll('[data-hide-col]').forEach(function(cb) {
+        cb.checked = !(state.hidden || []).includes(cb.dataset.hideCol);
+    });
+}
+
+function setColHidden(key, hidden) {
+    var state = _getColState();
+    state.hidden = state.hidden || [];
+    if (hidden && !state.hidden.includes(key)) state.hidden.push(key);
+    else if (!hidden) state.hidden = state.hidden.filter(function(k) { return k !== key; });
+    _saveColState(state);
+    applyColState();
+}
+
+function toggleColFrozen(key) {
+    var state = _getColState();
+    state.frozen = state.frozen || [];
+    if (state.frozen.includes(key)) state.frozen = state.frozen.filter(function(k) { return k !== key; });
+    else state.frozen.push(key);
+    _saveColState(state);
+    applyColState();
+}
+
+function toggleHideFieldsPopover() {
+    var pop = document.getElementById('hide-fields-popover');
+    pop.style.display = pop.style.display === 'none' ? '' : 'none';
+}
+
+/* Column header menu */
+function toggleColMenu(trigger, colKey) {
+    var menu = document.getElementById('attr-col-menu');
+    if (menu.style.display !== 'none' && window._menuCol === colKey) {
+        closeColMenu(); return;
+    }
+    window._menuCol = colKey;
+    var rect = trigger.getBoundingClientRect();
+    var container = document.getElementById('pane-table-content');
+    var cRect = container.getBoundingClientRect();
+    menu.style.left = (rect.left - cRect.left) + 'px';
+    menu.style.top = (rect.bottom - cRect.top + 2) + 'px';
+    menu.style.display = '';
+}
+function closeColMenu() {
+    var menu = document.getElementById('attr-col-menu');
+    if (menu) menu.style.display = 'none';
+}
+
+function toggleTableFullscreen() {
+    var pane = document.getElementById('pane-table');
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+    } else {
+        pane.requestFullscreen().catch(function() {});
+    }
+}
+
+/* Re-apply column state after every HTMX swap of the table */
+document.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target && evt.detail.target.id === 'pane-table-content') {
+        applyColState();
+        closeColMenu();
+    }
+});
+
+/* Click outside to close menus */
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.attr-th-menu') && !e.target.closest('#attr-col-menu')) closeColMenu();
+    if (!e.target.closest('.attr-hide-popover') && !e.target.closest('[onclick*="toggleHideFieldsPopover"]')) {
+        var pop = document.getElementById('hide-fields-popover');
+        if (pop) pop.style.display = 'none';
+    }
+});
 </script>
 
 <script type="application/json" id="answer-matrix-data">{{ answer_matrix_json|safe }}</script>
@@ -900,6 +1146,13 @@ FilterManager.prototype._updateTextAnswers = function() {
     });
 };
 
+FilterManager.prototype._updateTable = function() {
+    if (!_tableLoaded) return;
+    var pane = document.getElementById('pane-table');
+    if (pane && pane.style.display === 'none') return;
+    loadTable();
+};
+
 /* Focus mode */
 window.focusedSection = null;
 window._focusSavedOrder = [];
@@ -1037,6 +1290,7 @@ document.addEventListener('DOMContentLoaded', function() {
     fm.registerComponent(FilterManager.prototype._updateTimeline);
     fm.registerComponent(FilterManager.prototype._updatePills);
     fm.registerComponent(FilterManager.prototype._updateTextAnswers);
+    fm.registerComponent(FilterManager.prototype._updateTable);
 });
 </script>
 {% endblock %}
