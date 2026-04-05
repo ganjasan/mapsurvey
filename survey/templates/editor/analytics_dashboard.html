@@ -77,7 +77,9 @@
     .attr-table .attr-search-row td { position: sticky; top: 33px; z-index: 3; }
     .attr-table { margin-bottom: 0; font-size: 0.82rem; width: 100%; min-width: max-content; }
     .attr-table th, .attr-table td { white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; padding: 0.35rem 0.5rem; vertical-align: middle; }
-    .attr-th { position: relative; background: #f8f9fa; }
+    .attr-th { position: relative; background: #f8f9fa; cursor: grab; }
+    .attr-th.sortable-ghost { opacity: 0.4; background: #e8e8ff; }
+    .attr-th.sortable-chosen { cursor: grabbing; }
     .attr-th-content { display: flex; align-items: center; gap: 4px; }
     .attr-th-label { flex: 1; overflow: hidden; text-overflow: ellipsis; font-weight: 600; font-size: 0.8rem; }
     .attr-th-sort { cursor: pointer; padding: 2px; }
@@ -493,6 +495,33 @@ function _saveColState(state) {
 
 function applyColState() {
     var state = _getColState();
+    // Apply column order (reorder DOM)
+    if (state.colOrder && state.colOrder.length) {
+        var table = document.querySelector('.attr-table');
+        if (table) {
+            var rows = table.querySelectorAll('tr');
+            rows.forEach(function(row) {
+                var actionCell = row.children[0]; // eye button or empty th — stays first
+                var cells = Array.from(row.querySelectorAll('[data-col]'));
+                if (!cells.length) return;
+                // Build map of col_key → cell
+                var cellMap = {};
+                cells.forEach(function(c) { cellMap[c.dataset.col] = c; });
+                // Reorder: known order first, then remaining in original order
+                var ordered = [];
+                state.colOrder.forEach(function(key) {
+                    if (cellMap[key]) { ordered.push(cellMap[key]); delete cellMap[key]; }
+                });
+                // Append any columns not in saved order (new questions added after save)
+                cells.forEach(function(c) {
+                    if (cellMap[c.dataset.col]) ordered.push(c);
+                });
+                // Re-append in order (after action cell)
+                ordered.forEach(function(c) { row.appendChild(c); });
+            });
+        }
+    }
+    // Apply hidden/frozen
     document.querySelectorAll('[data-col]').forEach(function(el) {
         el.classList.remove('col-hidden', 'col-frozen');
     });
@@ -508,6 +537,50 @@ function applyColState() {
     });
     document.querySelectorAll('[data-hide-col]').forEach(function(cb) {
         cb.checked = !(state.hidden || []).includes(cb.dataset.hideCol);
+    });
+    // Init SortableJS on header row
+    _initColSortable();
+}
+
+function _initColSortable() {
+    var headerRow = document.querySelector('.attr-table thead tr:first-child');
+    if (!headerRow || headerRow._sortableInit) return;
+    headerRow._sortableInit = true;
+    new Sortable(headerRow, {
+        animation: 150,
+        draggable: '.attr-th',
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        onEnd: function() {
+            // Read new order from header
+            var ths = headerRow.querySelectorAll('.attr-th[data-col]');
+            var newOrder = Array.from(ths).map(function(th) { return th.dataset.col; });
+            // Reorder body rows to match
+            var table = document.querySelector('.attr-table');
+            var bodyRows = table.querySelectorAll('tbody tr');
+            bodyRows.forEach(function(row) {
+                var cells = Array.from(row.querySelectorAll('[data-col]'));
+                var cellMap = {};
+                cells.forEach(function(c) { cellMap[c.dataset.col] = c; });
+                newOrder.forEach(function(key) {
+                    if (cellMap[key]) row.appendChild(cellMap[key]);
+                });
+            });
+            // Also reorder search row
+            var searchRow = table.querySelector('.attr-search-row');
+            if (searchRow) {
+                var sCells = Array.from(searchRow.querySelectorAll('[data-col]'));
+                var sMap = {};
+                sCells.forEach(function(c) { sMap[c.dataset.col] = c; });
+                newOrder.forEach(function(key) {
+                    if (sMap[key]) searchRow.appendChild(sMap[key]);
+                });
+            }
+            // Save to localStorage
+            var state = _getColState();
+            state.colOrder = newOrder;
+            _saveColState(state);
+        }
     });
 }
 
