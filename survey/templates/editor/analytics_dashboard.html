@@ -72,7 +72,9 @@
     .attr-table-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
     .attr-table-toolbar-left { display: flex; align-items: center; gap: 0.5rem; }
     .attr-table-toolbar-right { display: flex; align-items: center; gap: 0.5rem; }
-    .attr-table-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: var(--radius); }
+    .attr-table-wrapper { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 200px); border: 1px solid var(--border-color); border-radius: var(--radius); }
+    .attr-table thead th { position: sticky; top: 0; z-index: 3; }
+    .attr-table .attr-search-row td { position: sticky; top: 33px; z-index: 3; }
     .attr-table { margin-bottom: 0; font-size: 0.82rem; }
     .attr-table th, .attr-table td { white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; padding: 0.35rem 0.5rem; vertical-align: middle; }
     .attr-th { position: relative; background: #f8f9fa; }
