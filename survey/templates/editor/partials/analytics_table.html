@@ -56,6 +56,7 @@
         {% for col in columns %}
         <th data-col="{{ col.key }}" class="attr-th">
             <div class="attr-th-content">
+                <span class="attr-th-grip" title="Drag to reorder"><i class="fas fa-grip-vertical"></i></span>
                 <span class="attr-th-label">
                     {% if col.input_type == 'point' %}<i class="fas fa-map-marker-alt" style="color:#1E88E5;"></i>
                     {% elif col.input_type == 'line' %}<i class="fas fa-route" style="color:#43A047;"></i>

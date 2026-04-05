@@ -81,6 +81,9 @@
     .attr-th.sortable-ghost { opacity: 0.4; background: #e8e8ff; }
     .attr-th.sortable-chosen { cursor: grabbing; }
     .attr-th-content { display: flex; align-items: center; gap: 4px; }
+    .attr-th-grip { color: #ccc; cursor: grab; padding: 0 2px; font-size: 0.7rem; }
+    .attr-th-grip:hover { color: #999; }
+    .attr-th.sortable-chosen .attr-th-grip { cursor: grabbing; }
     .attr-th-label { flex: 1; overflow: hidden; text-overflow: ellipsis; font-weight: 600; font-size: 0.8rem; }
     .attr-th-sort { cursor: pointer; padding: 2px; }
     .attr-th-sort:hover { opacity: 1 !important; }
@@ -549,6 +552,7 @@ function _initColSortable() {
     new Sortable(headerRow, {
         animation: 150,
         draggable: '.attr-th',
+        handle: '.attr-th-grip',
         ghostClass: 'sortable-ghost',
         chosenClass: 'sortable-chosen',
         onEnd: function() {
