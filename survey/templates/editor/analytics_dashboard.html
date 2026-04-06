@@ -599,8 +599,14 @@ function _restoreDataLayout() {
         var state = JSON.parse(localStorage.getItem(_dataLayoutKey));
         if (state && state.activePanel) {
             switchDataPanel(state.activePanel);
+            return;
         }
     } catch(e) {}
+    // Default: load table on first visit
+    if (!_tableLoaded) {
+        _tableLoaded = true;
+        loadTable();
+    }
 }
 _restoreDataLayout();
 
