@@ -243,7 +243,7 @@
                     {% if issue == 'empty' %}<span class="badge badge-dark" style="font-size:0.7rem;cursor:help;" title="Session has 0 answers">Empty</span>
                     {% elif issue == 'incomplete' %}<span class="badge badge-warning text-dark" style="font-size:0.7rem;cursor:help;" title="Session did not reach the last section">Incomplete</span>
                     {% elif issue == 'missing_required' %}<span class="badge badge-danger" style="font-size:0.7rem;cursor:help;" title="Required question was skipped in a visited section">Missing req.</span>
-                    {% elif issue == 'fast' %}<span class="badge badge-info" style="font-size:0.7rem;cursor:help;" title="Session completed suspiciously fast">Fast</span>
+                    {% elif issue == 'fast' %}<span class="badge badge-warning text-dark" style="font-size:0.7rem;cursor:help;" title="Session completed suspiciously fast">Fast</span>
                     {% elif issue == 'duplicate' %}<span class="badge badge-secondary" style="font-size:0.7rem;cursor:help;" title="Same browser submitted multiple sessions within the detection window">Duplicate</span>
                     {% endif %}
                 {% empty %}
