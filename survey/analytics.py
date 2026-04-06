@@ -975,6 +975,12 @@ class SurveyAnalyticsService:
                 return True
             rows = [r for r in rows if matches_search(r)]
 
+        # Normalize cell value to string for filter matching
+        def _normalize_val(v):
+            if isinstance(v, list):
+                return [str(item) if item else '' for item in v]
+            return str(v) if v and v != '—' else ''
+
         # Compute unique values per column BEFORE col_filters (for dropdowns)
         unique_values = {}
         _VALUE_SYSTEM_COLS = {'validation_status', 'language', 'issues', 'tags'}
@@ -986,16 +992,16 @@ class SurveyAnalyticsService:
                 v = r.get(col['key'], '')
                 if isinstance(v, list):
                     for item in v:
-                        vals.add(str(item) if item else '—')
+                        vals.add(str(item) if item else '')
                 else:
-                    vals.add(str(v) if v else '—')
+                    vals.add(str(v) if v else '')
             unique_values[col['key']] = sorted(vals)
         for col in question_cols:
             if col['input_type'] in ('choice', 'multichoice', 'rating'):
                 vals = set()
                 for r in rows:
                     v = r['cells'].get(col['key'], '—')
-                    vals.add(v)
+                    vals.add(v if v != '—' else '')
                 unique_values[col['key']] = sorted(vals)
 
         # Typed column filters
@@ -1012,12 +1018,16 @@ class SurveyAnalyticsService:
                     if ftype == 'values':
                         allowed = set(filt.get('values', []))
                         val = _get_cell_val(row, col_key)
-                        # For list fields (tags, issues), check intersection
+                        # Normalize: empty → '' to match unique_values convention
                         if isinstance(val, list):
-                            if not (set(str(v) for v in val) & allowed):
+                            normalized = set(str(v) if v else '' for v in val)
+                            if not val:
+                                normalized = {''}
+                            if not (normalized & allowed):
                                 return False
                         else:
-                            if str(val) not in allowed:
+                            normalized = str(val) if val and val != '—' else ''
+                            if normalized not in allowed:
                                 return False
                     elif ftype == 'range':
                         val = _get_cell_val(row, col_key)

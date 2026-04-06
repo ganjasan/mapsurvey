@@ -448,7 +448,8 @@ function openColFilter(evt, colKey, inputType) {
             cb.type = 'checkbox'; cb.className = 'cf-val-cb'; cb.value = v;
             cb.checked = selectedSet.size === 0 || selectedSet.has(v);
             var txt = document.createElement('span');
-            txt.textContent = v || '(empty)';
+            txt.textContent = v || '— (empty)';
+            if (!v) txt.style.color = '#9ca3af';
             label.appendChild(cb);
             label.appendChild(txt);
             list.appendChild(label);
