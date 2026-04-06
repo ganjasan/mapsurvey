@@ -108,14 +108,12 @@
     .attr-col-menu-item { padding: 6px 12px; cursor: pointer; font-size: 0.82rem; }
     .attr-col-menu-item:hover { background: #f0f0f0; }
     .attr-col-menu-item i { width: 18px; color: #6b7280; }
-    #pane-table:fullscreen { background: #fff; }
-    #pane-table:fullscreen > div { max-width: 100% !important; width: 100%; height: 100%; margin: 0 !important; padding: 0.75rem !important; display: flex; flex-direction: row; }
-    #pane-table:fullscreen #pane-table-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-    #pane-table:fullscreen .attr-table-toolbar { flex-shrink: 0; }
-    #pane-table:fullscreen .attr-table-wrapper { max-height: none; flex: 1; min-height: 0; overflow: auto; }
-    #pane-table:fullscreen .attr-pagination { flex-shrink: 0; }
-    #pane-table:fullscreen #anomalies-sidebar { max-height: 100%; }
-    #pane-table:fullscreen #anomalies-strip { max-height: 100%; }
+    #pane-data:fullscreen { background: #fff; }
+    #pane-data:fullscreen #data-split-container { max-width: 100% !important; width: 100%; height: calc(100% - 40px); padding: 0.5rem !important; }
+    #pane-data:fullscreen #pane-table-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    #pane-data:fullscreen .attr-table-toolbar { flex-shrink: 0; }
+    #pane-data:fullscreen .attr-table-wrapper { max-height: none; flex: 1; min-height: 0; overflow: auto; }
+    #pane-data:fullscreen .attr-pagination { flex-shrink: 0; }
     .filter-pill {
         display: inline-flex;
         align-items: center;
@@ -320,18 +318,13 @@
 {% endblock %}
 
 {% block content %}
-<!-- Tab bar -->
-<div style="max-width:1100px;margin:0 auto;padding:1.5rem 1.5rem 0;">
+<!-- Primary tab bar -->
+<div style="max-width:1600px;margin:0 auto;padding:1.5rem 1.5rem 0;">
     <div style="display:flex;gap:0;border-bottom:2px solid var(--border-color);margin-bottom:0;">
-        <button class="analytics-tab active" data-tab="responses"
-                onclick="switchAnalyticsTab('responses')"
+        <button class="analytics-tab active" data-tab="data"
+                onclick="switchAnalyticsTab('data')"
                 style="padding:0.5rem 1.25rem;border:none;background:none;border-bottom:3px solid var(--accent);margin-bottom:-2px;font-weight:600;cursor:pointer;color:var(--accent);font-size:0.9rem;">
-            Responses
-        </button>
-        <button class="analytics-tab" data-tab="table"
-                onclick="switchAnalyticsTab('table')"
-                style="padding:0.5rem 1.25rem;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;color:#6b7280;font-size:0.9rem;">
-            Table
+            Data
         </button>
         <button class="analytics-tab" data-tab="performance"
                 onclick="switchAnalyticsTab('performance')"
@@ -341,48 +334,81 @@
     </div>
 </div>
 
-<!-- Responses tab -->
-<div id="pane-responses">
-<div class="analytics-main">
-    <div class="analytics-section-label">Overview</div>
-    {% include "editor/partials/analytics_overview.html" %}
+<!-- Data workspace -->
+<div id="pane-data">
+    {# Sub-panel tab bar #}
+    <div style="max-width:1600px;margin:0 auto;padding:0.5rem 1.5rem 0;display:flex;align-items:center;gap:0;">
+        <button class="data-panel-tab active" data-panel="table" onclick="switchDataPanel('table')"
+                style="padding:0.35rem 1rem;border:none;background:none;border-bottom:2px solid var(--accent);cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--accent);">
+            <i class="fas fa-table" style="margin-right:4px;"></i>Table
+        </button>
+        <button class="data-panel-tab" data-panel="map" onclick="switchDataPanel('map')"
+                style="padding:0.35rem 1rem;border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;font-size:0.82rem;color:#6b7280;">
+            <i class="fas fa-map" style="margin-right:4px;"></i>Map
+        </button>
+        <button class="data-panel-tab" data-panel="charts" onclick="switchDataPanel('charts')"
+                style="padding:0.35rem 1rem;border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;font-size:0.82rem;color:#6b7280;">
+            <i class="fas fa-chart-bar" style="margin-right:4px;"></i>Charts
+        </button>
+        <button class="data-panel-tab" data-panel="anomalies" onclick="switchDataPanel('anomalies')"
+                style="padding:0.35rem 1rem;border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;font-size:0.82rem;color:#6b7280;">
+            <i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i>Anomalies
+        </button>
+        <span style="flex:1;"></span>
+        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="pinCurrentPanel()" title="Pin this panel to create a split view" id="pin-panel-btn">
+            <i class="fas fa-columns"></i> Pin
+        </button>
+        <button class="btn btn-sm btn-outline-secondary ml-1" style="font-size:0.75rem;display:none;" onclick="unpinPanel()" title="Close split view" id="unpin-panel-btn">
+            <i class="fas fa-times"></i> Unsplit
+        </button>
+    </div>
 
-    <hr class="analytics-divider">
-
-    <div class="analytics-section-label">Questions &amp; Responses</div>
-    <div id="filter-pills-bar"></div>
-    {% include "editor/partials/analytics_daily_chart.html" %}
-
-    {% if geo_features_count %}
-    {% include "editor/partials/analytics_geo_map.html" %}
-    {% endif %}
-    {% include "editor/partials/analytics_question_stats.html" %}
-</div>
-</div>
-
-<!-- Table tab -->
-<div id="pane-table" style="display:none;">
-    <div style="max-width:1600px;margin:0 auto;padding:1.5rem;position:relative;display:flex;gap:0;">
-        <div id="pane-table-content" style="flex:1;min-width:0;">
-            <div class="text-center text-muted py-5"><i class="fas fa-table mr-2"></i>Click Table tab to load data</div>
-        </div>
-        {# Collapsed strip #}
-        <div id="anomalies-strip" style="display:none;width:28px;flex-shrink:0;border-left:1px solid #e5e7eb;cursor:pointer;background:#f8f9fa;position:relative;" onclick="expandAnomaliesSidebar()" title="Expand Violations panel">
-            <div style="writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);padding:12px 4px;font-size:0.75rem;font-weight:600;color:#6b7280;white-space:nowrap;display:flex;align-items:center;gap:6px;">
-                <i class="fas fa-exclamation-triangle" style="color:#d97706;"></i>
-                <span>Violations</span>
-                <span id="anomalies-strip-count" class="badge badge-warning" style="font-size:0.65rem;"></span>
+    {# Split container #}
+    <div id="data-split-container" style="max-width:1600px;margin:0 auto;padding:0.75rem 1.5rem;display:flex;position:relative;">
+        {# Primary panel #}
+        <div id="data-primary" style="flex:1;min-width:0;overflow:auto;">
+            {# Table sub-panel #}
+            <div id="data-panel-table" class="data-panel">
+                <div id="pane-table" style="position:relative;display:flex;gap:0;">
+                    <div id="pane-table-content" style="flex:1;min-width:0;">
+                        <div class="text-center text-muted py-5"><i class="fas fa-table mr-2"></i>Loading table...</div>
+                    </div>
+                </div>
+            </div>
+            {# Map sub-panel #}
+            <div id="data-panel-map" class="data-panel" style="display:none;">
+                {% if geo_features_count %}
+                {% include "editor/partials/analytics_geo_map.html" %}
+                {% else %}
+                <div class="text-center text-muted py-5"><i class="fas fa-map mr-2"></i>No geo questions in this survey</div>
+                {% endif %}
+            </div>
+            {# Charts sub-panel #}
+            <div id="data-panel-charts" class="data-panel" style="display:none;">
+                <div class="analytics-main">
+                    <div class="analytics-section-label">Overview</div>
+                    {% include "editor/partials/analytics_overview.html" %}
+                    <hr class="analytics-divider">
+                    <div class="analytics-section-label">Questions &amp; Responses</div>
+                    <div id="filter-pills-bar"></div>
+                    {% include "editor/partials/analytics_daily_chart.html" %}
+                    {% include "editor/partials/analytics_question_stats.html" %}
+                </div>
+            </div>
+            {# Anomalies sub-panel #}
+            <div id="data-panel-anomalies" class="data-panel" style="display:none;">
+                <div style="padding:0.5rem;font-size:0.85rem;">
+                    <h6 style="font-weight:600;"><i class="fas fa-exclamation-triangle" style="color:#d97706;margin-right:4px;"></i>Violations</h6>
+                    <div id="anomalies-errors"></div>
+                    <div id="anomalies-warnings" class="mt-2"></div>
+                </div>
             </div>
         </div>
-        {# Expanded sidebar #}
-        <div id="anomalies-sidebar" style="display:none;width:220px;flex-shrink:0;border-left:1px solid #e5e7eb;padding:0.75rem;font-size:0.82rem;overflow-y:auto;background:#f9fafb;box-shadow:-2px 0 6px rgba(0,0,0,0.04);">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <strong style="font-size:0.85rem;"><i class="fas fa-exclamation-triangle" style="color:#d97706;margin-right:4px;"></i>Violations</strong>
-                <button class="btn btn-sm btn-link p-0" onclick="collapseAnomaliesSidebar()" title="Collapse"><i class="fas fa-chevron-right" style="color:#9ca3af;"></i></button>
-            </div>
-            <div id="anomalies-errors"></div>
-            <div id="anomalies-warnings" class="mt-2"></div>
-        </div>
+        {# Resize divider (hidden until pinned) #}
+        <div id="data-split-divider" style="display:none;width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;border-radius:3px;margin:0 2px;"
+             onmousedown="startSplitResize(event)"></div>
+        {# Secondary (pinned) panel #}
+        <div id="data-secondary" style="display:none;flex:1;min-width:0;overflow:auto;"></div>
     </div>
 </div>
 
@@ -438,10 +464,11 @@
 
 <script>
 var _tableLoaded = false;
+var _activeDataPanel = 'table';
+var _pinnedPanel = null;
 
 function switchAnalyticsTab(tab) {
-    document.getElementById('pane-responses').style.display = tab === 'responses' ? '' : 'none';
-    document.getElementById('pane-table').style.display = tab === 'table' ? '' : 'none';
+    document.getElementById('pane-data').style.display = tab === 'data' ? '' : 'none';
     document.getElementById('pane-performance').style.display = tab === 'performance' ? '' : 'none';
     document.querySelectorAll('.analytics-tab').forEach(function(btn) {
         var isActive = btn.dataset.tab === tab;
@@ -449,11 +476,133 @@ function switchAnalyticsTab(tab) {
         btn.style.fontWeight = isActive ? '600' : 'normal';
         btn.style.color = isActive ? 'var(--accent)' : '#6b7280';
     });
-    if (tab === 'table' && !_tableLoaded) {
+    if (tab === 'data' && !_tableLoaded) {
         _tableLoaded = true;
         loadTable();
     }
 }
+
+function switchDataPanel(panel) {
+    _activeDataPanel = panel;
+    var primary = document.getElementById('data-primary');
+    primary.querySelectorAll('.data-panel').forEach(function(p) {
+        p.style.display = 'none';
+    });
+    var target = document.getElementById('data-panel-' + panel);
+    if (target) target.style.display = '';
+
+    document.querySelectorAll('.data-panel-tab').forEach(function(btn) {
+        var isActive = btn.dataset.panel === panel;
+        btn.style.borderBottomColor = isActive ? 'var(--accent)' : 'transparent';
+        btn.style.fontWeight = isActive ? '600' : 'normal';
+        btn.style.color = isActive ? 'var(--accent)' : '#6b7280';
+    });
+
+    if (panel === 'table' && !_tableLoaded) {
+        _tableLoaded = true;
+        loadTable();
+    }
+    if (panel === 'anomalies') {
+        updateAnomaliesSidebar();
+    }
+    _saveDataLayout();
+}
+
+function pinCurrentPanel() {
+    if (_pinnedPanel) return;
+    // Pin the current panel to the right — show a picker for the second panel
+    _pinnedPanel = _activeDataPanel;
+    var secondary = document.getElementById('data-secondary');
+    var divider = document.getElementById('data-split-divider');
+
+    // Clone the current panel content into secondary
+    var sourcePanel = document.getElementById('data-panel-' + _pinnedPanel);
+    if (!sourcePanel) return;
+
+    // Move source to secondary
+    secondary.textContent = '';
+    secondary.appendChild(sourcePanel);
+    secondary.style.display = '';
+    divider.style.display = '';
+    sourcePanel.style.display = '';
+
+    // Switch primary to next available panel
+    var panels = ['table', 'map', 'charts', 'anomalies'];
+    var next = panels.find(function(p) { return p !== _pinnedPanel; });
+    switchDataPanel(next);
+
+    document.getElementById('pin-panel-btn').style.display = 'none';
+    document.getElementById('unpin-panel-btn').style.display = '';
+    _saveDataLayout();
+}
+
+function unpinPanel() {
+    if (!_pinnedPanel) return;
+    var secondary = document.getElementById('data-secondary');
+    var divider = document.getElementById('data-split-divider');
+    var primary = document.getElementById('data-primary');
+
+    // Move pinned panel back to primary
+    var pinnedEl = document.getElementById('data-panel-' + _pinnedPanel);
+    if (pinnedEl) {
+        pinnedEl.style.display = 'none';
+        primary.appendChild(pinnedEl);
+    }
+
+    secondary.style.display = 'none';
+    secondary.textContent = '';
+    divider.style.display = 'none';
+    _pinnedPanel = null;
+
+    document.getElementById('pin-panel-btn').style.display = '';
+    document.getElementById('unpin-panel-btn').style.display = 'none';
+    _saveDataLayout();
+}
+
+/* Split resize */
+function startSplitResize(e) {
+    e.preventDefault();
+    var container = document.getElementById('data-split-container');
+    var primary = document.getElementById('data-primary');
+    var secondary = document.getElementById('data-secondary');
+    var startX = e.clientX;
+    var startW = primary.offsetWidth;
+    var totalW = container.offsetWidth - 10; // minus divider
+
+    function onMove(e) {
+        var dx = e.clientX - startX;
+        var newW = Math.max(200, Math.min(totalW - 200, startW + dx));
+        var pct = (newW / totalW * 100);
+        primary.style.flex = '0 0 ' + pct + '%';
+        secondary.style.flex = '0 0 ' + (100 - pct) + '%';
+    }
+    function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        _saveDataLayout();
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+}
+
+/* Save/restore layout */
+var _dataLayoutKey = 'dataLayout_{{ survey.uuid }}';
+function _saveDataLayout() {
+    var state = {
+        activePanel: _activeDataPanel,
+        pinnedPanel: _pinnedPanel,
+    };
+    localStorage.setItem(_dataLayoutKey, JSON.stringify(state));
+}
+function _restoreDataLayout() {
+    try {
+        var state = JSON.parse(localStorage.getItem(_dataLayoutKey));
+        if (state && state.activePanel) {
+            switchDataPanel(state.activePanel);
+        }
+    } catch(e) {}
+}
+_restoreDataLayout();
 
 /* ── Attribute table functions ──────────────────────────────────── */
 
@@ -719,41 +868,22 @@ function updateAnomaliesSidebar() {
     if (!dataEl) return;
     var counts = {};
     try { counts = JSON.parse(dataEl.textContent); } catch(e) { return; }
-    var sidebar = document.getElementById('anomalies-sidebar');
-    var strip = document.getElementById('anomalies-strip');
     var total = Object.values(counts).reduce(function(a, b) { return a + b; }, 0);
-    if (total === 0) {
-        sidebar.style.display = 'none';
-        strip.style.display = 'none';
-        return;
+
+    // Update anomalies tab badge
+    var anomTab = document.querySelector('.data-panel-tab[data-panel="anomalies"]');
+    if (anomTab && total > 0) {
+        var existing = anomTab.querySelector('.anom-badge');
+        if (!existing) {
+            var b = document.createElement('span');
+            b.className = 'badge badge-warning anom-badge';
+            b.style.cssText = 'font-size:0.65rem;margin-left:4px;';
+            anomTab.appendChild(b);
+            existing = b;
+        }
+        existing.textContent = total;
     }
-    // Count errors vs warnings
-    var errorCount = 0, warnCount = 0;
-    for (var k in _ANOMALY_ERRORS) { errorCount += (counts[k] || 0); }
-    for (var k in _ANOMALY_WARNINGS) { warnCount += (counts[k] || 0); }
-    // Update strip badge — red if errors, yellow if only warnings
-    var stripCount = document.getElementById('anomalies-strip-count');
-    if (stripCount) {
-        stripCount.textContent = total;
-        stripCount.className = 'badge ' + (errorCount > 0 ? 'badge-danger' : 'badge-warning');
-    }
-    // Update sidebar title
-    var titleEl = sidebar.querySelector('strong');
-    if (titleEl) {
-        titleEl.textContent = '';
-        var icon = document.createElement('i');
-        icon.className = 'fas fa-exclamation-triangle';
-        icon.style.cssText = 'color:#d97706;margin-right:4px;';
-        titleEl.appendChild(icon);
-        titleEl.appendChild(document.createTextNode('Violations'));
-    }
-    if (_anomaliesSidebarExpanded) {
-        sidebar.style.display = '';
-        strip.style.display = 'none';
-    } else {
-        sidebar.style.display = 'none';
-        strip.style.display = '';
-    }
+    if (total === 0) return;
     var activeFilters = new Set();
     var filterEl = document.getElementById('active-issues-filter');
     if (filterEl) {
@@ -788,17 +918,7 @@ function updateAnomaliesSidebar() {
     renderGroup('anomalies-errors', _ANOMALY_ERRORS, 'Errors');
     renderGroup('anomalies-warnings', _ANOMALY_WARNINGS, 'Warnings');
 }
-var _anomaliesSidebarExpanded = true;
-function collapseAnomaliesSidebar() {
-    _anomaliesSidebarExpanded = false;
-    document.getElementById('anomalies-sidebar').style.display = 'none';
-    document.getElementById('anomalies-strip').style.display = '';
-}
-function expandAnomaliesSidebar() {
-    _anomaliesSidebarExpanded = true;
-    document.getElementById('anomalies-sidebar').style.display = '';
-    document.getElementById('anomalies-strip').style.display = 'none';
-}
+/* Anomalies panel is now a full sub-panel, no sidebar toggle needed */
 function selectAllFlagged() {
     // Select rows that have issue badges or lint error/warning icons
     document.querySelectorAll('.row-select-cb').forEach(function(cb) {
@@ -1061,7 +1181,7 @@ function closeColMenu() {
 }
 
 function toggleTableFullscreen() {
-    var pane = document.getElementById('pane-table');
+    var pane = document.getElementById('pane-data');
     if (document.fullscreenElement) {
         document.exitFullscreen();
     } else {
@@ -1664,7 +1784,7 @@ FilterManager.prototype._updateTextAnswers = function() {
 
 FilterManager.prototype._updateTable = function() {
     if (!_tableLoaded) return;
-    var pane = document.getElementById('pane-table');
+    var pane = document.getElementById('pane-data');
     if (pane && pane.style.display === 'none') return;
     loadTable();
 };
