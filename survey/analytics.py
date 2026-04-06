@@ -975,6 +975,29 @@ class SurveyAnalyticsService:
                 return True
             rows = [r for r in rows if matches_search(r)]
 
+        # Compute unique values per column BEFORE col_filters (for dropdowns)
+        unique_values = {}
+        _VALUE_SYSTEM_COLS = {'validation_status', 'language', 'issues', 'tags'}
+        for col in system_cols:
+            if col['key'] not in _VALUE_SYSTEM_COLS:
+                continue
+            vals = set()
+            for r in rows:
+                v = r.get(col['key'], '')
+                if isinstance(v, list):
+                    for item in v:
+                        vals.add(str(item) if item else '—')
+                else:
+                    vals.add(str(v) if v else '—')
+            unique_values[col['key']] = sorted(vals)
+        for col in question_cols:
+            if col['input_type'] in ('choice', 'multichoice', 'rating'):
+                vals = set()
+                for r in rows:
+                    v = r['cells'].get(col['key'], '—')
+                    vals.add(v)
+                unique_values[col['key']] = sorted(vals)
+
         # Typed column filters
         col_filters = col_filters or {}
         if col_filters:
@@ -1023,31 +1046,6 @@ class SurveyAnalyticsService:
                             return False
                 return True
             rows = [r for r in rows if matches_col_filters(r)]
-
-        # Compute unique values per column (for filter dropdowns)
-        # Only for columns that benefit from value-based filtering
-        unique_values = {}
-        _VALUE_FILTER_SYSTEM = {'validation_status', 'language'}
-        for col in system_cols:
-            if col['key'] in _VALUE_FILTER_SYSTEM:
-                vals = set()
-                for r in rows:
-                    v = r.get(col['key'], '')
-                    if isinstance(v, list):
-                        for item in v:
-                            if item: vals.add(str(item))
-                    elif v and v != '—':
-                        vals.add(str(v))
-                unique_values[col['key']] = sorted(vals)
-        for col in question_cols:
-            if col['input_type'] in ('choice', 'multichoice', 'rating', 'number', 'range'):
-                vals = set()
-                for r in rows:
-                    v = r['cells'].get(col['key'], '—')
-                    if v and v != '—':
-                        vals.add(v)
-                if len(vals) <= 50:  # Only provide unique values if reasonable count
-                    unique_values[col['key']] = sorted(vals)
 
         # Sort
         reverse = (sort_dir == 'desc')
