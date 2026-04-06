@@ -108,8 +108,15 @@
     .attr-col-menu-item { padding: 6px 12px; cursor: pointer; font-size: 0.82rem; }
     .attr-col-menu-item:hover { background: #f0f0f0; }
     .attr-col-menu-item i { width: 18px; color: #6b7280; }
-    #pane-data:fullscreen { background: #fff; }
-    #pane-data:fullscreen #data-split-container { max-width: 100% !important; width: 100%; height: calc(100% - 40px); padding: 0.5rem !important; }
+    .data-panel:fullscreen { background: #fff; padding: 1rem; overflow: auto; }
+    #pane-data:fullscreen { background: #fff; height: 100vh !important; }
+    #pane-data:fullscreen > div:first-child { display: none !important; }
+    #pane-data:fullscreen #data-split-container { max-width: 100% !important; width: 100%; flex: 1; padding: 0.5rem !important; }
+    #data-panel-map { display: flex; flex-direction: column; height: 100%; overflow: hidden !important; }
+    #data-panel-map .analytics-section { flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 0; padding: 0.5rem; }
+    #data-panel-map #analytics-map { flex: 1; min-height: 0; height: auto !important; }
+    #data-primary { display: flex; flex-direction: column; }
+    #data-primary > .data-panel { flex: 1; min-height: 0; overflow: auto; }
     #pane-data:fullscreen #pane-table-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
     #pane-data:fullscreen .attr-table-toolbar { flex-shrink: 0; }
     #pane-data:fullscreen .attr-table-wrapper { max-height: none; flex: 1; min-height: 0; overflow: auto; }
@@ -319,7 +326,7 @@
 
 {% block content %}
 <!-- Primary tab bar -->
-<div style="max-width:1600px;margin:0 auto;padding:1.5rem 1.5rem 0;">
+<div style="padding:0.75rem 1.5rem 0;">
     <div style="display:flex;gap:0;border-bottom:2px solid var(--border-color);margin-bottom:0;">
         <button class="analytics-tab active" data-tab="data"
                 onclick="switchAnalyticsTab('data')"
@@ -335,9 +342,9 @@
 </div>
 
 <!-- Data workspace -->
-<div id="pane-data">
+<div id="pane-data" style="display:flex;flex-direction:column;height:calc(100vh - 100px);">
     {# Sub-panel tab bar #}
-    <div style="max-width:1600px;margin:0 auto;padding:0.5rem 1.5rem 0;display:flex;align-items:center;gap:0;">
+    <div style="padding:0.5rem 1.5rem 0;display:flex;align-items:center;gap:0;flex-shrink:0;">
         <button class="data-panel-tab active" data-panel="table" onclick="switchDataPanel('table')"
                 style="padding:0.35rem 1rem;border:none;background:none;border-bottom:2px solid var(--accent);cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--accent);">
             <i class="fas fa-table" style="margin-right:4px;"></i>Table
@@ -350,10 +357,6 @@
                 style="padding:0.35rem 1rem;border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;font-size:0.82rem;color:#6b7280;">
             <i class="fas fa-chart-bar" style="margin-right:4px;"></i>Charts
         </button>
-        <button class="data-panel-tab" data-panel="anomalies" onclick="switchDataPanel('anomalies')"
-                style="padding:0.35rem 1rem;border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;font-size:0.82rem;color:#6b7280;">
-            <i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i>Anomalies
-        </button>
         <span style="flex:1;"></span>
         <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="pinCurrentPanel()" title="Split view: show two panels side by side" id="pin-panel-btn">
             <i class="fas fa-columns"></i> Split
@@ -363,20 +366,82 @@
         </button>
     </div>
 
+    {# Shared selection toolbar — visible when sessions are selected #}
+    <div id="selection-toolbar" style="display:none;padding:0.25rem 1.5rem;background:#e8f0fe;border-radius:4px;margin:0 1.5rem;flex-shrink:0;font-size:0.82rem;display:none;">
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+            <button class="btn btn-sm btn-link p-0" onclick="selectionManager.clear()" title="Clear selection" style="color:#1a56db;">
+                <i class="fas fa-times"></i>
+            </button>
+            <span id="sel-count" style="font-weight:600;">0 selected</span>
+            <span style="border-left:1px solid #bfdbfe;height:16px;margin:0 4px;"></span>
+            {% if is_editor %}
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-toggle="dropdown" style="font-size:0.78rem;">
+                    <i class="fas fa-check-circle"></i> Status
+                </button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="#" onclick="bulkSetStatus(''); return false;">— No status</a>
+                    <a class="dropdown-item" href="#" onclick="bulkSetStatus('approved'); return false;">Approved</a>
+                    <a class="dropdown-item" href="#" onclick="bulkSetStatus('not_approved'); return false;">Not approved</a>
+                    <a class="dropdown-item" href="#" onclick="bulkSetStatus('on_hold'); return false;">On hold</a>
+                </div>
+            </div>
+            {% if show_trash %}
+            <button class="btn btn-sm btn-outline-success" style="font-size:0.78rem;" onclick="bulkRestore()"><i class="fas fa-undo"></i> Restore</button>
+            <button class="btn btn-sm btn-outline-danger" style="font-size:0.78rem;" onclick="bulkHardDelete()"><i class="fas fa-times-circle"></i> Delete</button>
+            {% else %}
+            <button class="btn btn-sm btn-outline-danger" style="font-size:0.78rem;" onclick="bulkTrash()"><i class="fas fa-trash-alt"></i> Trash</button>
+            {% endif %}
+            {% endif %}
+            <span style="border-left:1px solid #bfdbfe;height:16px;margin:0 4px;"></span>
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.78rem;" onclick="selectionManager.invert()" title="Invert selection">
+                <i class="fas fa-exchange-alt"></i> Invert
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.78rem;" onclick="selectionManager.hideSelected()" title="Hide selected sessions">
+                <i class="fas fa-eye-slash"></i> Hide
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.78rem;" onclick="selectionManager.keepOnlySelected()" title="Keep only selected, hide rest">
+                <i class="fas fa-filter"></i> Keep only
+            </button>
+        </div>
+    </div>
+    <div id="hidden-indicator" style="display:none;padding:0.15rem 1.5rem;flex-shrink:0;">
+        <button class="btn btn-sm btn-link p-0" style="font-size:0.78rem;color:#6b7280;" onclick="selectionManager.showAll()">
+            <i class="fas fa-eye"></i> <span id="hidden-count">0</span> hidden — Show all
+        </button>
+    </div>
+
     {# Split container #}
-    <div id="data-split-container" style="max-width:1600px;margin:0 auto;padding:0.75rem 1.5rem;display:flex;position:relative;">
+    <div id="data-split-container" style="padding:0.75rem 1.5rem;display:flex;position:relative;flex:1;min-height:0;overflow:hidden;">
         {# Primary panel #}
-        <div id="data-primary" style="flex:1;min-width:0;overflow:auto;">
+        <div id="data-primary" style="flex:1;min-width:0;overflow:hidden;">
             {# Table sub-panel #}
             <div id="data-panel-table" class="data-panel">
-                <div id="pane-table" style="position:relative;display:flex;gap:0;">
-                    <div id="pane-table-content" style="flex:1;min-width:0;">
+                <div id="pane-table" style="position:relative;display:flex;gap:0;height:100%;">
+                    <div id="pane-table-content" style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
                         <div class="text-center text-muted py-5"><i class="fas fa-table mr-2"></i>Loading table...</div>
+                    </div>
+                    {# Collapsed strip #}
+                    <div id="anomalies-strip" style="display:none;width:28px;flex-shrink:0;border-left:1px solid #e5e7eb;cursor:pointer;background:#f8f9fa;position:relative;" onclick="expandAnomaliesSidebar()" title="Expand Violations panel">
+                        <div style="writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);padding:12px 4px;font-size:0.75rem;font-weight:600;color:#6b7280;white-space:nowrap;display:flex;align-items:center;gap:6px;">
+                            <i class="fas fa-exclamation-triangle" style="color:#d97706;"></i>
+                            <span>Violations</span>
+                            <span id="anomalies-strip-count" class="badge badge-warning" style="font-size:0.65rem;"></span>
+                        </div>
+                    </div>
+                    {# Expanded sidebar #}
+                    <div id="anomalies-sidebar" style="display:none;width:220px;flex-shrink:0;border-left:1px solid #e5e7eb;padding:0.75rem;font-size:0.82rem;overflow-y:auto;background:#f9fafb;box-shadow:-2px 0 6px rgba(0,0,0,0.04);">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="font-size:0.85rem;"><i class="fas fa-exclamation-triangle" style="color:#d97706;margin-right:4px;"></i>Violations</strong>
+                            <button class="btn btn-sm btn-link p-0" onclick="collapseAnomaliesSidebar()" title="Collapse"><i class="fas fa-chevron-right" style="color:#9ca3af;"></i></button>
+                        </div>
+                        <div id="anomalies-errors"></div>
+                        <div id="anomalies-warnings" class="mt-2"></div>
                     </div>
                 </div>
             </div>
-            {# Map sub-panel #}
-            <div id="data-panel-map" class="data-panel" style="display:none;">
+            {# Map sub-panel — use visibility instead of display:none so Leaflet can init properly #}
+            <div id="data-panel-map" class="data-panel" style="visibility:hidden;position:absolute;left:-9999px;width:100%;">
                 {% if geo_features_count %}
                 {% include "editor/partials/analytics_geo_map.html" %}
                 {% else %}
@@ -385,6 +450,11 @@
             </div>
             {# Charts sub-panel #}
             <div id="data-panel-charts" class="data-panel" style="display:none;">
+                <div style="text-align:right;padding:0.25rem 0.5rem;">
+                    <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="togglePanelFullscreen('data-panel-charts')" title="Toggle fullscreen">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
                 <div class="analytics-main">
                     <div class="analytics-section-label">Overview</div>
                     {% include "editor/partials/analytics_overview.html" %}
@@ -393,14 +463,6 @@
                     <div id="filter-pills-bar"></div>
                     {% include "editor/partials/analytics_daily_chart.html" %}
                     {% include "editor/partials/analytics_question_stats.html" %}
-                </div>
-            </div>
-            {# Anomalies sub-panel #}
-            <div id="data-panel-anomalies" class="data-panel" style="display:none;">
-                <div style="padding:0.5rem;font-size:0.85rem;">
-                    <h6 style="font-weight:600;"><i class="fas fa-exclamation-triangle" style="color:#d97706;margin-right:4px;"></i>Violations</h6>
-                    <div id="anomalies-errors"></div>
-                    <div id="anomalies-warnings" class="mt-2"></div>
                 </div>
             </div>
         </div>
@@ -463,6 +525,51 @@
 </div>
 
 <script>
+/* ── SelectionManager ─────────────────────────────────────────── */
+window.selectionManager = (function() {
+    var _selected = new Set();
+    var _hidden = new Set();
+    var _allSessionIds = new Set();
+    var _listeners = [];
+
+    function _notify() { _listeners.forEach(function(fn) { fn(); }); }
+
+    return {
+        init: function(allIds) { _allSessionIds = new Set(allIds); },
+        onChange: function(fn) { _listeners.push(fn); },
+
+        select: function(ids) { ids.forEach(function(id) { _selected.add(id); }); _notify(); },
+        deselect: function(ids) { ids.forEach(function(id) { _selected.delete(id); }); _notify(); },
+        toggle: function(id) { if (_selected.has(id)) _selected.delete(id); else _selected.add(id); _notify(); },
+        clear: function() { _selected.clear(); _notify(); },
+        setSelection: function(ids) { _selected = new Set(ids); _notify(); },
+
+        invert: function() {
+            var newSel = new Set();
+            _allSessionIds.forEach(function(id) { if (!_selected.has(id) && !_hidden.has(id)) newSel.add(id); });
+            _selected = newSel; _notify();
+        },
+        hideSelected: function() {
+            _selected.forEach(function(id) { _hidden.add(id); });
+            _selected.clear(); _notify();
+        },
+        keepOnlySelected: function() {
+            _allSessionIds.forEach(function(id) { if (!_selected.has(id)) _hidden.add(id); });
+            _notify();
+        },
+        showAll: function() { _hidden.clear(); _notify(); },
+
+        isSelected: function(id) { return _selected.has(id); },
+        isHidden: function(id) { return _hidden.has(id); },
+        getSelected: function() { return _selected; },
+        getHidden: function() { return _hidden; },
+        count: function() { return _selected.size; },
+        hiddenCount: function() { return _hidden.size; },
+        hasSelection: function() { return _selected.size > 0; },
+        hasHidden: function() { return _hidden.size > 0; },
+    };
+})();
+
 var _tableLoaded = false;
 var _activeDataPanel = 'table';
 var _pinnedPanel = null;
@@ -482,14 +589,33 @@ function switchAnalyticsTab(tab) {
     }
 }
 
+function _hidePanel(el) {
+    if (el.id === 'data-panel-map') {
+        el.style.visibility = 'hidden';
+        el.style.position = 'absolute';
+        el.style.left = '-9999px';
+    } else {
+        el.style.display = 'none';
+    }
+}
+function _showPanel(el) {
+    if (el.id === 'data-panel-map') {
+        el.style.visibility = '';
+        el.style.position = '';
+        el.style.left = '';
+    } else {
+        el.style.display = '';
+    }
+}
+
 function switchDataPanel(panel) {
     _activeDataPanel = panel;
     var primary = document.getElementById('data-primary');
     primary.querySelectorAll('.data-panel').forEach(function(p) {
-        p.style.display = 'none';
+        _hidePanel(p);
     });
     var target = document.getElementById('data-panel-' + panel);
-    if (target) target.style.display = '';
+    if (target) _showPanel(target);
 
     document.querySelectorAll('.data-panel-tab').forEach(function(btn) {
         var isActive = btn.dataset.panel === panel;
@@ -502,8 +628,30 @@ function switchDataPanel(panel) {
         _tableLoaded = true;
         loadTable();
     }
-    if (panel === 'anomalies') {
-        updateAnomaliesSidebar();
+    if (panel === 'map') {
+        // Leaflet needs invalidateSize after container becomes visible
+        setTimeout(function() {
+            var m = window.analyticsMap || window._geoMap;
+            if (m) {
+                m.invalidateSize();
+                // Force tile layer to reload
+                m.eachLayer(function(layer) {
+                    if (layer.redraw) layer.redraw();
+                });
+                // Re-fit bounds if features exist
+                var allLayers = [];
+                m.eachLayer(function(l) {
+                    if (l.getBounds) allLayers.push(l);
+                    else if (l.getLatLng) allLayers.push(l);
+                });
+                if (allLayers.length > 1) {
+                    try {
+                        var fg = L.featureGroup(allLayers);
+                        m.fitBounds(fg.getBounds().pad(0.02));
+                    } catch(e) {}
+                }
+            }
+        }, 150);
     }
     _saveDataLayout();
 }
@@ -595,20 +743,82 @@ function _saveDataLayout() {
     localStorage.setItem(_dataLayoutKey, JSON.stringify(state));
 }
 function _restoreDataLayout() {
+    var panel = 'table';
     try {
         var state = JSON.parse(localStorage.getItem(_dataLayoutKey));
-        if (state && state.activePanel) {
-            switchDataPanel(state.activePanel);
-            return;
-        }
+        if (state && state.activePanel) panel = state.activePanel;
     } catch(e) {}
-    // Default: load table on first visit
+    switchDataPanel(panel);
+}
+// Defer restore until after all functions are defined
+document.addEventListener('DOMContentLoaded', function() {
+    _restoreDataLayout();
     if (!_tableLoaded) {
         _tableLoaded = true;
         loadTable();
     }
-}
-_restoreDataLayout();
+
+    // ── SelectionManager listeners ──────────────────────────────
+    selectionManager.onChange(function() {
+        var count = selectionManager.count();
+        var hiddenCount = selectionManager.hiddenCount();
+
+        // Update shared toolbar
+        var toolbar = document.getElementById('selection-toolbar');
+        if (toolbar) toolbar.style.display = count > 0 ? '' : 'none';
+        var countEl = document.getElementById('sel-count');
+        if (countEl) countEl.textContent = count + ' selected';
+        var hiddenBar = document.getElementById('hidden-indicator');
+        if (hiddenBar) hiddenBar.style.display = hiddenCount > 0 ? '' : 'none';
+        var hiddenCountEl = document.getElementById('hidden-count');
+        if (hiddenCountEl) hiddenCountEl.textContent = hiddenCount;
+
+        // Sync Table checkboxes
+        document.querySelectorAll('.row-select-cb').forEach(function(cb) {
+            var sid = parseInt(cb.dataset.sessionId);
+            cb.checked = selectionManager.isSelected(sid);
+            var tr = cb.closest('tr');
+            if (tr) tr.style.display = selectionManager.isHidden(sid) ? 'none' : '';
+        });
+        var selectAll = document.getElementById('select-all-cb');
+        if (selectAll) {
+            var allCbs = document.querySelectorAll('.row-select-cb');
+            var checkedCount = document.querySelectorAll('.row-select-cb:checked').length;
+            selectAll.checked = checkedCount > 0 && checkedCount === allCbs.length;
+            selectAll.indeterminate = checkedCount > 0 && checkedCount < allCbs.length;
+        }
+
+        // Sync Map features
+        var m = window.analyticsMap;
+        if (m && window.layerManager) {
+            m.eachLayer(function(layer) {
+                if (!layer.feature) return;
+                var sid = layer.feature.properties ? layer.feature.properties.session_id : null;
+                if (!sid) return;
+                var hidden = selectionManager.isHidden(sid);
+                var selected = selectionManager.isSelected(sid);
+                if (hidden) {
+                    if (layer.setStyle) layer.setStyle({opacity: 0, fillOpacity: 0});
+                    if (layer.setRadius) layer.setRadius(0);
+                } else if (count > 0 && !selected) {
+                    if (layer.setStyle) layer.setStyle({opacity: 0.15, fillOpacity: 0.08});
+                } else {
+                    if (layer.setStyle) layer.setStyle({opacity: 1, fillOpacity: 0.7});
+                }
+            });
+        }
+
+        // Update old bulk toolbar visibility
+        var bulkToolbar = document.getElementById('toolbar-bulk');
+        var normalToolbar = document.getElementById('toolbar-normal');
+        if (bulkToolbar && normalToolbar) {
+            bulkToolbar.style.display = count > 0 ? '' : 'none';
+            normalToolbar.style.display = count > 0 ? 'none' : '';
+            var bulkCount = document.getElementById('bulk-count');
+            if (bulkCount) bulkCount.textContent = count + ' selected';
+        }
+    });
+});
 
 /* ── Attribute table functions ──────────────────────────────────── */
 
@@ -863,33 +1073,71 @@ function _buildGroupCheckbox(labelText, groupKeys, activeSet, container, groupTo
     return row;
 }
 function applyViolationCheckboxes() {
-    var keys = [];
+    var keys = new Set();
     document.querySelectorAll('.violation-cb:checked').forEach(function(cb) {
-        keys.push(cb.dataset.violationKey);
+        keys.add(cb.dataset.violationKey);
     });
-    changeIssuesFilter(keys.join(','));
+    if (keys.size === 0) {
+        if (window.selectionManager) selectionManager.clear();
+        return;
+    }
+    // Find session IDs matching any checked violation by reading DOM
+    var matchIds = [];
+    document.querySelectorAll('.row-select-cb').forEach(function(cb) {
+        var row = cb.closest('tr');
+        var match = false;
+        row.querySelectorAll('.badge').forEach(function(badge) {
+            var text = badge.textContent.trim().toLowerCase();
+            var badgeMap = {
+                'empty': 'empty', 'incomplete': 'incomplete', 'missing req.': 'missing_required',
+                'fast': 'fast', 'duplicate': 'duplicate',
+            };
+            var key = badgeMap[text];
+            if (key && keys.has(key)) match = true;
+        });
+        row.querySelectorAll('[title]').forEach(function(el) {
+            var title = el.getAttribute('title') || '';
+            if (title.indexOf('self-intersecting') !== -1 && keys.has('self_intersection')) match = true;
+            if (title.indexOf('not answered') !== -1 && keys.has('empty_required')) match = true;
+            if (title.indexOf('outside') !== -1 && keys.has('out_of_range')) match = true;
+            if (title.indexOf('outlier') !== -1 && (keys.has('numeric_outlier') || keys.has('area_outlier'))) match = true;
+            if (title.indexOf('short') !== -1 && keys.has('short_text')) match = true;
+        });
+        if (match) matchIds.push(parseInt(cb.dataset.sessionId));
+    });
+    if (window.selectionManager) selectionManager.setSelection(matchIds);
 }
 function updateAnomaliesSidebar() {
     var dataEl = document.getElementById('anomaly-counts-data');
     if (!dataEl) return;
     var counts = {};
     try { counts = JSON.parse(dataEl.textContent); } catch(e) { return; }
+    var sidebar = document.getElementById('anomalies-sidebar');
+    var strip = document.getElementById('anomalies-strip');
     var total = Object.values(counts).reduce(function(a, b) { return a + b; }, 0);
-
-    // Update anomalies tab badge
-    var anomTab = document.querySelector('.data-panel-tab[data-panel="anomalies"]');
-    if (anomTab && total > 0) {
-        var existing = anomTab.querySelector('.anom-badge');
-        if (!existing) {
-            var b = document.createElement('span');
-            b.className = 'badge badge-warning anom-badge';
-            b.style.cssText = 'font-size:0.65rem;margin-left:4px;';
-            anomTab.appendChild(b);
-            existing = b;
-        }
-        existing.textContent = total;
+    if (total === 0) {
+        if (sidebar) sidebar.style.display = 'none';
+        if (strip) strip.style.display = 'none';
+        return;
     }
-    if (total === 0) return;
+    // Count errors vs warnings
+    var errorCount = 0, warnCount = 0;
+    for (var k in _ANOMALY_ERRORS) { errorCount += (counts[k] || 0); }
+    for (var k in _ANOMALY_WARNINGS) { warnCount += (counts[k] || 0); }
+    // Update strip badge
+    var stripCount = document.getElementById('anomalies-strip-count');
+    if (stripCount) {
+        stripCount.textContent = total;
+        stripCount.className = 'badge ' + (errorCount > 0 ? 'badge-danger' : 'badge-warning');
+    }
+    // Show sidebar or strip based on state
+    if (_anomaliesSidebarExpanded) {
+        if (sidebar) sidebar.style.display = '';
+        if (strip) strip.style.display = 'none';
+    } else {
+        if (sidebar) sidebar.style.display = 'none';
+        if (strip) strip.style.display = '';
+    }
     var activeFilters = new Set();
     var filterEl = document.getElementById('active-issues-filter');
     if (filterEl) {
@@ -924,7 +1172,17 @@ function updateAnomaliesSidebar() {
     renderGroup('anomalies-errors', _ANOMALY_ERRORS, 'Errors');
     renderGroup('anomalies-warnings', _ANOMALY_WARNINGS, 'Warnings');
 }
-/* Anomalies panel is now a full sub-panel, no sidebar toggle needed */
+var _anomaliesSidebarExpanded = true;
+function collapseAnomaliesSidebar() {
+    _anomaliesSidebarExpanded = false;
+    document.getElementById('anomalies-sidebar').style.display = 'none';
+    document.getElementById('anomalies-strip').style.display = '';
+}
+function expandAnomaliesSidebar() {
+    _anomaliesSidebarExpanded = true;
+    document.getElementById('anomalies-sidebar').style.display = '';
+    document.getElementById('anomalies-strip').style.display = 'none';
+}
 function selectAllFlagged() {
     // Select rows that have issue badges or lint error/warning icons
     document.querySelectorAll('.row-select-cb').forEach(function(cb) {
@@ -934,6 +1192,32 @@ function selectAllFlagged() {
         cb.checked = !!(hasBadge || hasLint);
     });
     updateBulkToolbar();
+}
+
+/* Row visibility */
+function hideSelectedRows() {
+    document.querySelectorAll('.row-select-cb:checked').forEach(function(cb) {
+        cb.closest('tr').style.display = 'none';
+        cb.checked = false;
+    });
+    updateBulkToolbar();
+    var btn = document.getElementById('show-all-rows-btn');
+    if (btn) btn.style.display = '';
+}
+function invertSelection() {
+    document.querySelectorAll('.row-select-cb').forEach(function(cb) {
+        if (cb.closest('tr').style.display !== 'none') {
+            cb.checked = !cb.checked;
+        }
+    });
+    updateBulkToolbar();
+}
+function showAllRows() {
+    document.querySelectorAll('tbody tr').forEach(function(tr) {
+        tr.style.display = '';
+    });
+    var btn = document.getElementById('show-all-rows-btn');
+    if (btn) btn.style.display = 'none';
 }
 
 /* Validation Settings */
@@ -1185,6 +1469,32 @@ function closeColMenu() {
     var menu = document.getElementById('attr-col-menu');
     if (menu) menu.style.display = 'none';
 }
+
+function togglePanelFullscreen(panelId) {
+    var panel = document.getElementById(panelId);
+    if (!panel) return;
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+    } else {
+        panel.requestFullscreen().catch(function() {});
+    }
+}
+// Resize maps on fullscreen change + move modal into fullscreen element
+document.addEventListener('fullscreenchange', function() {
+    var modal = document.getElementById('sessionDetailModal');
+    if (!modal) return;
+    if (document.fullscreenElement) {
+        // Move modal inside fullscreen element so it's visible
+        document.fullscreenElement.appendChild(modal);
+    } else {
+        // Move modal back to body
+        document.body.appendChild(modal);
+    }
+    setTimeout(function() {
+        var m = window.analyticsMap || window._geoMap;
+        if (m) m.invalidateSize();
+    }, 200);
+});
 
 function toggleTableFullscreen() {
     var pane = document.getElementById('pane-data');

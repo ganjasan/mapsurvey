@@ -6,6 +6,11 @@
 .attr-th-filter { cursor: pointer; padding: 0 2px; }
 .attr-th-filter:hover i { opacity: 0.8 !important; }
 .attr-th-filter.active i { opacity: 1 !important; color: #1a56db !important; }
+/* Freeze checkbox and actions columns */
+.attr-table th:nth-child(1), .attr-table td:nth-child(1) { position: sticky; left: 0; z-index: 2; background: #fff; }
+.attr-table th:nth-child(2), .attr-table td:nth-child(2) { position: sticky; left: 28px; z-index: 2; background: #fff; }
+.attr-table thead th:nth-child(1), .attr-table thead th:nth-child(2) { z-index: 3; }
+.table-secondary td:nth-child(1), .table-secondary td:nth-child(2) { background: #e2e3e5 !important; }
 </style>
 <script type="application/json" id="anomaly-counts-data">{{ anomaly_counts_json|safe }}</script>
 <script type="application/json" id="unique-values-data">{{ unique_values_json|safe }}</script>
@@ -50,6 +55,9 @@
         {% if issues_filter_list %}
         <button type="button" class="btn btn-sm btn-link p-0 ml-1" style="font-size:0.75rem;color:#6b7280;" onclick="changeIssuesFilter('')">Clear all</button>
         {% endif %}
+        <button type="button" id="show-all-rows-btn" class="btn btn-sm btn-link p-0 ml-2" style="font-size:0.75rem;color:#6b7280;display:none;" onclick="showAllRows()">
+            <i class="fas fa-eye"></i> Show hidden
+        </button>
     </div>
     <div class="attr-table-toolbar-right">
         {% if is_editor %}
@@ -93,6 +101,13 @@
             <i class="fas fa-trash-alt"></i> Trash
         </button>
         {% endif %}
+        <span style="border-left:1px solid #bfdbfe;height:20px;margin:0 4px;"></span>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="hideSelectedRows()" title="Hide selected rows">
+            <i class="fas fa-eye-slash"></i> Hide
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="invertSelection()" title="Invert selection">
+            <i class="fas fa-exchange-alt"></i> Invert
+        </button>
     </div>
 </div>
 {% endif %}
@@ -135,7 +150,7 @@
     {% endfor %}
 </div>
 
-<div class="attr-table-wrapper">
+<div class="attr-table-wrapper" style="flex:1;min-height:0;overflow:auto;">
 <table class="table table-sm table-bordered table-hover attr-table">
 <thead>
     {# Header row with column names + sort + menu #}
@@ -284,7 +299,7 @@
 </div>
 
 {# Pagination #}
-<div class="attr-pagination">
+<div class="attr-pagination" style="flex-shrink:0;">
     {% if total_pages > 1 %}
     <button class="btn btn-sm btn-outline-secondary"
             {% if page <= 1 %}disabled{% endif %}
@@ -334,6 +349,7 @@
 
 <script>
 function getSelectedIds() {
+    if (window.selectionManager) return Array.from(window.selectionManager.getSelected());
     var ids = [];
     document.querySelectorAll('.row-select-cb:checked').forEach(function(cb) {
         ids.push(parseInt(cb.dataset.sessionId));
@@ -361,14 +377,15 @@ function updateBulkToolbar() {
     }
 }
 function toggleSelectAll(checked) {
-    document.querySelectorAll('.row-select-cb').forEach(function(cb) { cb.checked = checked; });
-    updateBulkToolbar();
+    var ids = [];
+    document.querySelectorAll('.row-select-cb').forEach(function(cb) { ids.push(parseInt(cb.dataset.sessionId)); });
+    if (window.selectionManager) {
+        if (checked) window.selectionManager.select(ids);
+        else window.selectionManager.clear();
+    }
 }
 function clearSelection() {
-    document.querySelectorAll('.row-select-cb').forEach(function(cb) { cb.checked = false; });
-    var selectAll = document.getElementById('select-all-cb');
-    if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
-    updateBulkToolbar();
+    if (window.selectionManager) window.selectionManager.clear();
 }
 function toggleShowTrash() {
     var form = document.getElementById('table-state-form');
@@ -386,10 +403,24 @@ function changeIssuesFilter(val) {
     form.querySelector('[name=issues]').value = val;
     loadTable({page: '1'});
 }
-// Wire checkboxes to toolbar update
+// Wire checkboxes to SelectionManager
 document.querySelectorAll('.row-select-cb').forEach(function(cb) {
-    cb.addEventListener('change', updateBulkToolbar);
+    cb.addEventListener('change', function() {
+        var sid = parseInt(this.dataset.sessionId);
+        if (window.selectionManager) {
+            if (this.checked) window.selectionManager.select([sid]);
+            else window.selectionManager.deselect([sid]);
+        }
+    });
 });
+// Init SelectionManager with all visible session IDs
+(function() {
+    var allIds = [];
+    document.querySelectorAll('.row-select-cb').forEach(function(cb) {
+        allIds.push(parseInt(cb.dataset.sessionId));
+    });
+    if (window.selectionManager) window.selectionManager.init(allIds);
+})();
 
 // ── Column Filters ──────────────────────────────────────────────
 var _uniqueValues = {};

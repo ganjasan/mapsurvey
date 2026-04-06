@@ -1,7 +1,7 @@
 <div class="analytics-section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
         <h6 style="margin:0;">Response Map <small class="text-muted">({{ geo_features_count }} features)</small></h6>
-        <button class="expand-btn" onclick="enterFocusMode(this.closest('.analytics-section'))"><i class="fas fa-expand"></i></button>
+        <button class="expand-btn" onclick="togglePanelFullscreen('data-panel-map')"><i class="fas fa-expand"></i></button>
     </div>
     <div class="q-filter-pills" data-qid="geo" style="display:none;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.4rem;"></div>
     <div id="analytics-map"></div>
@@ -102,6 +102,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     _featureClicked = true;
                     var mode = window.geoToolMode || 'pointer';
                     if (mode === 'pointer') {
+                        if (window.selectionManager) {
+                            if (e.originalEvent && e.originalEvent.ctrlKey) {
+                                window.selectionManager.toggle(sid);
+                            } else {
+                                window.selectionManager.setSelection([sid]);
+                            }
+                        }
                         if (e.originalEvent && e.originalEvent.ctrlKey) {
                             if (window.filterManager) window.filterManager.toggleGeoSid(sid);
                         } else {
@@ -353,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     var allBounds = L.geoJSON(geoData).getBounds();
-    map.fitBounds(allBounds.pad(0.1));
+    map.fitBounds(allBounds.pad(0.02));
 
     // ── Tool switching ────────────────────────────────────────────
     window.setGeoTool = function(name) {
@@ -541,7 +548,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (typeof entry.layer.getLatLng === 'function') bounds.extend(entry.layer.getLatLng());
                     else if (typeof entry.layer.getBounds === 'function') bounds.extend(entry.layer.getBounds());
                 });
-                if (bounds.isValid()) map.fitBounds(bounds.pad(0.1));
+                if (bounds.isValid()) map.fitBounds(bounds.pad(0.02));
             });
             row.appendChild(label);
 
