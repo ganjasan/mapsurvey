@@ -798,6 +798,16 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
+        // Sync SelectionManager → FilterManager geoSelection (for pills)
+        if (window.filterManager) {
+            if (count > 0) {
+                window.filterManager.geoSelection = new Set(selectionManager.getSelected());
+            } else {
+                window.filterManager.geoSelection = null;
+            }
+            window.filterManager._updatePills();
+        }
+
         // Update old bulk toolbar visibility
         var bulkToolbar = document.getElementById('toolbar-bulk');
         var normalToolbar = document.getElementById('toolbar-normal');
@@ -1960,9 +1970,10 @@ FilterManager.prototype._updatePills = function() {
     if (this.geoSelection !== null) {
         var geoPill = document.createElement('span');
         geoPill.className = 'filter-pill';
-        geoPill.textContent = 'Map selection (' + this.geoSelection.size + ') \u00d7';
+        geoPill.textContent = 'Selected (' + this.geoSelection.size + ') \u00d7';
         geoPill.addEventListener('click', function() {
             self.setGeoSelection(null);
+            if (window.selectionManager) window.selectionManager.clear();
         });
         bar.appendChild(geoPill);
     }
