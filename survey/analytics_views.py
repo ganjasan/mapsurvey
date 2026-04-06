@@ -197,10 +197,34 @@ def analytics_table(request, survey_uuid):
     issues_filter_raw = request.GET.get('issues', '').strip()
     issues_filter = [f for f in issues_filter_raw.split(',') if f] if issues_filter_raw else None
 
+    # Typed column filters: cf_<col_key>=v:val1|val2 or r:min|max or d:min|max or t:query
+    col_filters = {}
+    for k, v in request.GET.items():
+        if k.startswith('cf_') and v.strip():
+            col_key = k[3:]
+            val = v.strip()
+            if val.startswith('v:'):
+                col_filters[col_key] = {'type': 'values', 'values': val[2:].split('|')}
+            elif val.startswith('r:'):
+                parts = val[2:].split('|')
+                filt = {'type': 'range'}
+                if len(parts) >= 1 and parts[0]: filt['min'] = parts[0]
+                if len(parts) >= 2 and parts[1]: filt['max'] = parts[1]
+                col_filters[col_key] = filt
+            elif val.startswith('d:'):
+                parts = val[2:].split('|')
+                filt = {'type': 'date_range'}
+                if len(parts) >= 1 and parts[0]: filt['min'] = parts[0]
+                if len(parts) >= 2 and parts[1]: filt['max'] = parts[1]
+                col_filters[col_key] = filt
+            elif val.startswith('t:'):
+                col_filters[col_key] = {'type': 'text', 'query': val[2:]}
+
     result = service.get_table_page(
         page=page, page_size=page_size, session_ids=session_ids,
         sort_col=sort_col, sort_dir=sort_dir, col_search=col_search,
         show_trash=show_trash, issues_filter=issues_filter,
+        col_filters=col_filters,
     )
 
     return render(request, 'editor/partials/analytics_table.html', {
@@ -211,6 +235,9 @@ def analytics_table(request, survey_uuid):
         'issues_filter': ','.join(issues_filter) if issues_filter else '',
         'issues_filter_list': issues_filter or [],
         'anomaly_counts_json': json.dumps(result.pop('anomaly_counts', {})),
+        'unique_values_json': json.dumps(result.pop('unique_values', {})),
+        'col_filters_json': json.dumps(col_filters),
+        'col_filters_params': {k: v for k, v in request.GET.items() if k.startswith('cf_') and v.strip()},
         **result,
     })
 

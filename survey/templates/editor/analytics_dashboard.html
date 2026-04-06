@@ -481,11 +481,19 @@ function loadTable(extraParams) {
     var trash = form ? (form.querySelector('[name=trash]') || {}).value : '0';
     var pageSize = form ? (form.querySelector('[name=page_size]') || {}).value : '';
     var issuesVal = form ? (form.querySelector('[name=issues]') || {}).value : '';
+    // Collect cf_ column filter params
+    var cfParams = '';
+    if (form) {
+        form.querySelectorAll('input[name^="cf_"]').forEach(function(inp) {
+            if (inp.value) cfParams += '&' + inp.name + '=' + encodeURIComponent(inp.value);
+        });
+    }
     var url = _tableUrl + '?sort=' + sort + '&dir=' + dir + '&page=' + page
               + (pageSize ? '&page_size=' + pageSize : '')
               + (filters ? '&filters=' + encodeURIComponent(filters) : '')
               + (trash === '1' ? '&trash=1' : '')
               + (issuesVal ? '&issues=' + encodeURIComponent(issuesVal) : '')
+              + cfParams
               + searchParams;
     htmx.ajax('GET', url, {target: '#pane-table-content', swap: 'innerHTML'});
 }

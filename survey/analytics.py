@@ -829,7 +829,7 @@ class SurveyAnalyticsService:
 
     def get_table_page(self, page=1, page_size=50, session_ids=None,
                        sort_col=None, sort_dir='asc', col_search=None,
-                       show_trash=False, issues_filter=None):
+                       show_trash=False, issues_filter=None, col_filters=None):
         """Return one page of session rows with formatted answer values.
 
         Args:
@@ -961,7 +961,7 @@ class SurveyAnalyticsService:
 
             rows = [r for r in rows if _row_matches_filters(r, filter_set)]
 
-        # Per-column search filter
+        # Per-column search filter (legacy text search)
         if col_search:
             def matches_search(row):
                 for col_key, search_str in col_search.items():
@@ -974,6 +974,80 @@ class SurveyAnalyticsService:
                         return False
                 return True
             rows = [r for r in rows if matches_search(r)]
+
+        # Typed column filters
+        col_filters = col_filters or {}
+        if col_filters:
+            def _get_cell_val(row, col_key):
+                if col_key in ('id', 'validation_status', 'issues', 'tags', 'start_datetime', 'language'):
+                    return row.get(col_key, '')
+                return row['cells'].get(col_key, '—')
+
+            def matches_col_filters(row):
+                for col_key, filt in col_filters.items():
+                    ftype = filt.get('type')
+                    if ftype == 'values':
+                        allowed = set(filt.get('values', []))
+                        val = _get_cell_val(row, col_key)
+                        # For list fields (tags, issues), check intersection
+                        if isinstance(val, list):
+                            if not (set(str(v) for v in val) & allowed):
+                                return False
+                        else:
+                            if str(val) not in allowed:
+                                return False
+                    elif ftype == 'range':
+                        val = _get_cell_val(row, col_key)
+                        try:
+                            num = float(val) if not isinstance(val, (int, float)) else val
+                        except (ValueError, TypeError):
+                            return False
+                        fmin = filt.get('min')
+                        fmax = filt.get('max')
+                        if fmin is not None and num < float(fmin):
+                            return False
+                        if fmax is not None and num > float(fmax):
+                            return False
+                    elif ftype == 'date_range':
+                        val = row.get(col_key)
+                        if val is None:
+                            return False
+                        val_str = val.strftime('%Y-%m-%d') if hasattr(val, 'strftime') else str(val)[:10]
+                        if filt.get('min') and val_str < filt['min']:
+                            return False
+                        if filt.get('max') and val_str > filt['max']:
+                            return False
+                    elif ftype == 'text':
+                        val = str(_get_cell_val(row, col_key))
+                        if filt.get('query', '').lower() not in val.lower():
+                            return False
+                return True
+            rows = [r for r in rows if matches_col_filters(r)]
+
+        # Compute unique values per column (for filter dropdowns)
+        # Only for columns that benefit from value-based filtering
+        unique_values = {}
+        _VALUE_FILTER_SYSTEM = {'validation_status', 'language'}
+        for col in system_cols:
+            if col['key'] in _VALUE_FILTER_SYSTEM:
+                vals = set()
+                for r in rows:
+                    v = r.get(col['key'], '')
+                    if isinstance(v, list):
+                        for item in v:
+                            if item: vals.add(str(item))
+                    elif v and v != '—':
+                        vals.add(str(v))
+                unique_values[col['key']] = sorted(vals)
+        for col in question_cols:
+            if col['input_type'] in ('choice', 'multichoice', 'rating', 'number', 'range'):
+                vals = set()
+                for r in rows:
+                    v = r['cells'].get(col['key'], '—')
+                    if v and v != '—':
+                        vals.add(v)
+                if len(vals) <= 50:  # Only provide unique values if reasonable count
+                    unique_values[col['key']] = sorted(vals)
 
         # Sort
         reverse = (sort_dir == 'desc')
@@ -1008,6 +1082,7 @@ class SurveyAnalyticsService:
             'sort_dir': sort_dir,
             'col_search': col_search,
             'anomaly_counts': anomaly_counts,
+            'unique_values': unique_values,
         }
 
 

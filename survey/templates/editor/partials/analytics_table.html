@@ -1,7 +1,15 @@
 {% load tz hash survey_filters %}
 {# HTMX-swappable partial: attribute table with toolbar, sort, search, pagination #}
-<style>.cell-editable { cursor: text; } .cell-editable:hover { background: #f0f4ff; border-radius: 2px; }</style>
+<style>
+.cell-editable { cursor: text; }
+.cell-editable:hover { background: #f0f4ff; border-radius: 2px; }
+.attr-th-filter { cursor: pointer; padding: 0 2px; }
+.attr-th-filter:hover i { opacity: 0.8 !important; }
+.attr-th-filter.active i { opacity: 1 !important; color: #1a56db !important; }
+</style>
 <script type="application/json" id="anomaly-counts-data">{{ anomaly_counts_json|safe }}</script>
+<script type="application/json" id="unique-values-data">{{ unique_values_json|safe }}</script>
+<script type="application/json" id="col-filters-data">{{ col_filters_json|safe }}</script>
 <script type="text/plain" id="active-issues-filter">{{ issues_filter }}</script>
 
 {# Normal toolbar — visible when no rows selected #}
@@ -101,6 +109,9 @@
     {% for key, val in col_search.items %}
     <input type="hidden" name="search_{{ key }}" value="{{ val }}">
     {% endfor %}
+    {% for key, val in col_filters_params.items %}
+    <input type="hidden" name="{{ key }}" value="{{ val }}">
+    {% endfor %}
 </form>
 
 {# Hide fields popover #}
@@ -160,6 +171,9 @@
                     <i class="fas fa-sort" style="opacity:0.3;"></i>
                     {% endif %}
                 </span>
+                <span class="attr-th-filter" onclick="openColFilter(event, '{{ col.key }}', '{{ col.input_type }}')" title="Filter">
+                    <i class="fas fa-filter" style="opacity:0.3;font-size:0.65rem;"></i>
+                </span>
                 <span class="attr-th-menu" onclick="toggleColMenu(this, '{{ col.key }}')" title="Column options">
                     <i class="fas fa-ellipsis-v" style="opacity:0.4;"></i>
                 </span>
@@ -167,19 +181,14 @@
         </th>
         {% endfor %}
     </tr>
-    {# Search row #}
-    <tr class="attr-search-row">
+    {# Filter indicator row #}
+    <tr class="attr-filter-row" style="font-size:0.7rem;">
         <td></td>
         <td></td>
         {% for col in columns %}
-        <td data-col="{{ col.key }}">
-            <input type="text"
-                   class="form-control form-control-sm attr-search-input"
-                   placeholder="Search"
-                   name="search_{{ col.key }}"
-                   value="{% with sv=col_search|hash:col.key %}{{ sv|default:'' }}{% endwith %}"
-                   data-search-col="{{ col.key }}"
-                   oninput="tableSearchDebounced()">
+        <td data-col="{{ col.key }}" class="attr-filter-indicator" data-filter-col="{{ col.key }}"
+            style="padding:1px 4px;color:#6b7280;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+            onclick="openColFilter(event, '{{ col.key }}', '{{ col.input_type }}')">
         </td>
         {% endfor %}
     </tr>
@@ -301,6 +310,19 @@
     </span>
 </div>
 
+{# Filter dropdown (hidden, positioned by JS) #}
+<div id="col-filter-dropdown" style="display:none;position:absolute;z-index:100;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.12);padding:8px;min-width:180px;max-width:260px;font-size:0.8rem;">
+    <div id="cf-header" style="font-weight:600;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+        <span id="cf-title">Filter</span>
+        <button type="button" style="border:none;background:none;cursor:pointer;color:#9ca3af;font-size:0.85rem;" onclick="closeColFilter()">&times;</button>
+    </div>
+    <div id="cf-body"></div>
+    <div style="display:flex;gap:4px;margin-top:8px;">
+        <button class="btn btn-sm btn-primary" style="flex:1;font-size:0.75rem;" onclick="applyColFilter()">Apply</button>
+        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="clearColFilter()">Clear</button>
+    </div>
+</div>
+
 {# Column menu dropdown (hidden, positioned by JS) #}
 <div id="attr-col-menu" style="display:none;" class="attr-col-menu-dropdown">
     <div class="attr-col-menu-item" onclick="tableSort(window._menuCol, 'asc')"><i class="fas fa-sort-alpha-down"></i> Sort A→Z</div>
@@ -367,6 +389,218 @@ function changeIssuesFilter(val) {
 // Wire checkboxes to toolbar update
 document.querySelectorAll('.row-select-cb').forEach(function(cb) {
     cb.addEventListener('change', updateBulkToolbar);
+});
+
+// ── Column Filters ──────────────────────────────────────────────
+var _uniqueValues = {};
+try { _uniqueValues = JSON.parse(document.getElementById('unique-values-data').textContent); } catch(e) {}
+var _colFilters = {};
+try { _colFilters = JSON.parse(document.getElementById('col-filters-data').textContent); } catch(e) {}
+var _filterCol = null;
+
+function _getFilterType(colKey, inputType) {
+    if (colKey === 'start_datetime') return 'date_range';
+    if (inputType === 'number' || inputType === 'range') return 'range';
+    if (inputType === 'text' || inputType === 'text_line' || inputType === 'point' || inputType === 'line' || inputType === 'polygon') return 'text';
+    // Default: values (choice, status, language, etc.)
+    return 'values';
+}
+
+function openColFilter(evt, colKey, inputType) {
+    evt.stopPropagation();
+    _filterCol = colKey;
+    var dd = document.getElementById('col-filter-dropdown');
+    var body = document.getElementById('cf-body');
+    body.textContent = '';
+
+    var ftype = _getFilterType(colKey, inputType);
+    var existing = _colFilters[colKey] || {};
+
+    if (ftype === 'values') {
+        var vals = _uniqueValues[colKey] || [];
+        var selectedSet = new Set((existing.values || []));
+        // Search box
+        var search = document.createElement('input');
+        search.type = 'text';
+        search.placeholder = 'Search...';
+        search.className = 'form-control form-control-sm mb-1';
+        search.style.fontSize = '0.75rem';
+        body.appendChild(search);
+        // Select all / clear
+        var controls = document.createElement('div');
+        controls.style.cssText = 'display:flex;gap:8px;margin-bottom:4px;font-size:0.7rem;';
+        var selAll = document.createElement('a');
+        selAll.href = '#'; selAll.textContent = 'Select all';
+        selAll.onclick = function(e) { e.preventDefault(); body.querySelectorAll('.cf-val-cb').forEach(function(c) { if(c.parentElement.style.display!=='none') c.checked = true; }); };
+        var clrAll = document.createElement('a');
+        clrAll.href = '#'; clrAll.textContent = 'Clear';
+        clrAll.onclick = function(e) { e.preventDefault(); body.querySelectorAll('.cf-val-cb').forEach(function(c) { c.checked = false; }); };
+        controls.appendChild(selAll);
+        controls.appendChild(clrAll);
+        body.appendChild(controls);
+        // Checkboxes
+        var list = document.createElement('div');
+        list.style.cssText = 'max-height:200px;overflow-y:auto;';
+        vals.forEach(function(v) {
+            var label = document.createElement('label');
+            label.style.cssText = 'display:flex;align-items:center;gap:4px;padding:1px 0;margin:0;font-weight:normal;cursor:pointer;';
+            var cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.className = 'cf-val-cb'; cb.value = v;
+            cb.checked = selectedSet.size === 0 || selectedSet.has(v);
+            var txt = document.createElement('span');
+            txt.textContent = v || '(empty)';
+            label.appendChild(cb);
+            label.appendChild(txt);
+            list.appendChild(label);
+        });
+        body.appendChild(list);
+        search.addEventListener('input', function() {
+            var q = this.value.toLowerCase();
+            list.querySelectorAll('label').forEach(function(l) {
+                l.style.display = l.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+            });
+        });
+        if (vals.length === 0) {
+            var empty = document.createElement('div');
+            empty.className = 'text-muted';
+            empty.textContent = 'No values';
+            body.appendChild(empty);
+        }
+    } else if (ftype === 'range') {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:4px;align-items:center;';
+        var minI = document.createElement('input');
+        minI.type = 'number'; minI.step = 'any'; minI.placeholder = 'Min';
+        minI.className = 'form-control form-control-sm'; minI.id = 'cf-range-min';
+        minI.style.cssText = 'font-size:0.75rem;width:80px;';
+        minI.value = existing.min || '';
+        var sep = document.createElement('span');
+        sep.textContent = '–';
+        var maxI = document.createElement('input');
+        maxI.type = 'number'; maxI.step = 'any'; maxI.placeholder = 'Max';
+        maxI.className = 'form-control form-control-sm'; maxI.id = 'cf-range-max';
+        maxI.style.cssText = 'font-size:0.75rem;width:80px;';
+        maxI.value = existing.max || '';
+        row.appendChild(minI); row.appendChild(sep); row.appendChild(maxI);
+        body.appendChild(row);
+    } else if (ftype === 'date_range') {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:4px;align-items:center;';
+        var minD = document.createElement('input');
+        minD.type = 'date'; minD.className = 'form-control form-control-sm'; minD.id = 'cf-date-min';
+        minD.style.cssText = 'font-size:0.75rem;';
+        minD.value = existing.min || '';
+        var sep = document.createElement('span');
+        sep.textContent = '–';
+        var maxD = document.createElement('input');
+        maxD.type = 'date'; maxD.className = 'form-control form-control-sm'; maxD.id = 'cf-date-max';
+        maxD.style.cssText = 'font-size:0.75rem;';
+        maxD.value = existing.max || '';
+        row.appendChild(minD); row.appendChild(sep); row.appendChild(maxD);
+        body.appendChild(row);
+    } else { // text
+        var inp = document.createElement('input');
+        inp.type = 'text'; inp.placeholder = 'Contains...';
+        inp.className = 'form-control form-control-sm'; inp.id = 'cf-text-query';
+        inp.style.fontSize = '0.75rem';
+        inp.value = existing.query || '';
+        body.appendChild(inp);
+    }
+
+    // Position near the trigger
+    var trigger = evt.currentTarget;
+    var container = document.getElementById('pane-table-content');
+    var cRect = container.getBoundingClientRect();
+    var tRect = trigger.getBoundingClientRect();
+    dd.style.left = (tRect.left - cRect.left) + 'px';
+    dd.style.top = (tRect.bottom - cRect.top + 2) + 'px';
+    dd.style.display = '';
+    dd.dataset.filterType = ftype;
+}
+
+function closeColFilter() {
+    document.getElementById('col-filter-dropdown').style.display = 'none';
+    _filterCol = null;
+}
+
+function applyColFilter() {
+    var dd = document.getElementById('col-filter-dropdown');
+    var ftype = dd.dataset.filterType;
+    var form = document.getElementById('table-state-form');
+
+    // Remove existing cf_ for this column
+    var existingInput = form.querySelector('[name="cf_' + _filterCol + '"]');
+    if (existingInput) existingInput.remove();
+
+    var val = '';
+    if (ftype === 'values') {
+        var checked = [];
+        dd.querySelectorAll('.cf-val-cb:checked').forEach(function(cb) { checked.push(cb.value); });
+        var allCbs = dd.querySelectorAll('.cf-val-cb');
+        if (checked.length > 0 && checked.length < allCbs.length) {
+            val = 'v:' + checked.join('|');
+        }
+    } else if (ftype === 'range') {
+        var mn = (document.getElementById('cf-range-min') || {}).value || '';
+        var mx = (document.getElementById('cf-range-max') || {}).value || '';
+        if (mn || mx) val = 'r:' + mn + '|' + mx;
+    } else if (ftype === 'date_range') {
+        var mn = (document.getElementById('cf-date-min') || {}).value || '';
+        var mx = (document.getElementById('cf-date-max') || {}).value || '';
+        if (mn || mx) val = 'd:' + mn + '|' + mx;
+    } else if (ftype === 'text') {
+        var q = (document.getElementById('cf-text-query') || {}).value || '';
+        if (q) val = 't:' + q;
+    }
+
+    if (val) {
+        var inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = 'cf_' + _filterCol; inp.value = val;
+        form.appendChild(inp);
+    }
+    closeColFilter();
+    loadTable({page: '1'});
+}
+
+function clearColFilter() {
+    var form = document.getElementById('table-state-form');
+    var existingInput = form.querySelector('[name="cf_' + _filterCol + '"]');
+    if (existingInput) existingInput.remove();
+    closeColFilter();
+    loadTable({page: '1'});
+}
+
+// Show active filter indicators
+(function() {
+    var indicators = {
+        'values': function(f) { return f.values.length + ' selected'; },
+        'range': function(f) { return (f.min || '∞') + ' – ' + (f.max || '∞'); },
+        'date_range': function(f) { return (f.min || '...') + ' – ' + (f.max || '...'); },
+        'text': function(f) { return '"' + f.query + '"'; },
+    };
+    for (var col in _colFilters) {
+        var cell = document.querySelector('.attr-filter-indicator[data-filter-col="' + col + '"]');
+        if (cell) {
+            var f = _colFilters[col];
+            cell.textContent = indicators[f.type] ? indicators[f.type](f) : '';
+            cell.style.color = '#1a56db';
+            cell.style.fontWeight = '600';
+        }
+    }
+})();
+
+// Highlight active filter icons
+for (var col in _colFilters) {
+    var th = document.querySelector('th[data-col="' + col + '"] .attr-th-filter');
+    if (th) th.classList.add('active');
+}
+
+// Close filter dropdown on outside click
+document.addEventListener('click', function(e) {
+    var dd = document.getElementById('col-filter-dropdown');
+    if (dd && dd.style.display !== 'none' && !dd.contains(e.target)) {
+        closeColFilter();
+    }
 });
 // Inline cell editing
 function startCellEdit(span, sid, qid, inputType, choicesJson) {
