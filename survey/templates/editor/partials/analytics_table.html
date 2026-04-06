@@ -240,11 +240,11 @@
                 {% endif %}
             {% elif col.key == 'issues' %}
                 {% for issue in row.issues %}
-                    {% if issue == 'empty' %}<span class="badge badge-dark" style="font-size:0.7rem;">Empty</span>
-                    {% elif issue == 'incomplete' %}<span class="badge badge-warning text-dark" style="font-size:0.7rem;">Incomplete</span>
-                    {% elif issue == 'missing_required' %}<span class="badge badge-danger" style="font-size:0.7rem;">Missing req.</span>
-                    {% elif issue == 'fast' %}<span class="badge badge-info" style="font-size:0.7rem;">Fast</span>
-                    {% elif issue == 'duplicate' %}<span class="badge badge-secondary" style="font-size:0.7rem;">Duplicate</span>
+                    {% if issue == 'empty' %}<span class="badge badge-dark" style="font-size:0.7rem;" title="Session has 0 answers">Empty</span>
+                    {% elif issue == 'incomplete' %}<span class="badge badge-warning text-dark" style="font-size:0.7rem;" title="Session did not reach the last section">Incomplete</span>
+                    {% elif issue == 'missing_required' %}<span class="badge badge-danger" style="font-size:0.7rem;" title="Required question was skipped in a visited section">Missing req.</span>
+                    {% elif issue == 'fast' %}<span class="badge badge-info" style="font-size:0.7rem;" title="Session completed suspiciously fast">Fast</span>
+                    {% elif issue == 'duplicate' %}<span class="badge badge-secondary" style="font-size:0.7rem;" title="Same browser submitted multiple sessions within the detection window">Duplicate</span>
                     {% endif %}
                 {% empty %}
                     <span style="color:#9ca3af;">—</span>
