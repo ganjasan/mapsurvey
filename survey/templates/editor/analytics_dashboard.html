@@ -404,6 +404,16 @@
             </div>
             {# Map sub-panel — use visibility instead of display:none so Leaflet can init properly #}
             <div id="data-panel-map" class="data-panel" style="visibility:hidden;position:absolute;left:-9999px;width:100%;">
+                <div class="panel-selection-bar" style="display:none;padding:0.25rem 0.75rem;background:#e8f0fe;border-radius:4px;margin:0.25rem;flex-shrink:0;font-size:0.8rem;">
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <button class="btn btn-sm btn-link p-0" onclick="selectionManager.clear()" style="color:#1a56db;"><i class="fas fa-times"></i></button>
+                        <span class="panel-sel-count" style="font-weight:600;">0 selected</span>
+                        <span style="border-left:1px solid #bfdbfe;height:16px;"></span>
+                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.hideSelected()"><i class="fas fa-eye-slash"></i> Hide</button>
+                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.keepOnlySelected()"><i class="fas fa-filter"></i> Keep only</button>
+                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> Invert</button>
+                    </div>
+                </div>
                 {% if geo_features_count %}
                 {% include "editor/partials/analytics_geo_map.html" %}
                 {% else %}
@@ -412,6 +422,16 @@
             </div>
             {# Charts sub-panel #}
             <div id="data-panel-charts" class="data-panel" style="display:none;">
+                <div class="panel-selection-bar" style="display:none;padding:0.25rem 0.75rem;background:#e8f0fe;border-radius:4px;margin:0.25rem;flex-shrink:0;font-size:0.8rem;">
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <button class="btn btn-sm btn-link p-0" onclick="selectionManager.clear()" style="color:#1a56db;"><i class="fas fa-times"></i></button>
+                        <span class="panel-sel-count" style="font-weight:600;">0 selected</span>
+                        <span style="border-left:1px solid #bfdbfe;height:16px;"></span>
+                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.hideSelected()"><i class="fas fa-eye-slash"></i> Hide</button>
+                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.keepOnlySelected()"><i class="fas fa-filter"></i> Keep only</button>
+                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> Invert</button>
+                    </div>
+                </div>
                 <div style="text-align:right;padding:0.25rem 0.5rem;">
                     <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="togglePanelFullscreen('data-panel-charts')" title="Toggle fullscreen">
                         <i class="fas fa-expand"></i>
@@ -724,6 +744,13 @@ document.addEventListener('DOMContentLoaded', function() {
     selectionManager.onChange(function() {
         var count = selectionManager.count();
         var hiddenCount = selectionManager.hiddenCount();
+
+        // Update panel selection bars (Map, Charts)
+        document.querySelectorAll('.panel-selection-bar').forEach(function(bar) {
+            bar.style.display = count > 0 ? '' : 'none';
+            var countEl = bar.querySelector('.panel-sel-count');
+            if (countEl) countEl.textContent = count + ' selected';
+        });
 
         // Update hidden indicator
         var hiddenBar = document.getElementById('hidden-indicator');
