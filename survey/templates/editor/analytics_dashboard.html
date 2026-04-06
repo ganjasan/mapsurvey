@@ -366,45 +366,7 @@
         </button>
     </div>
 
-    {# Shared selection toolbar — visible when sessions are selected #}
-    <div id="selection-toolbar" style="display:none;padding:0.25rem 1.5rem;background:#e8f0fe;border-radius:4px;margin:0 1.5rem;flex-shrink:0;font-size:0.82rem;display:none;">
-        <div style="display:flex;align-items:center;gap:0.5rem;">
-            <button class="btn btn-sm btn-link p-0" onclick="selectionManager.clear()" title="Clear selection" style="color:#1a56db;">
-                <i class="fas fa-times"></i>
-            </button>
-            <span id="sel-count" style="font-weight:600;">0 selected</span>
-            <span style="border-left:1px solid #bfdbfe;height:16px;margin:0 4px;"></span>
-            {% if is_editor %}
-            <div class="btn-group">
-                <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-toggle="dropdown" style="font-size:0.78rem;">
-                    <i class="fas fa-check-circle"></i> Status
-                </button>
-                <div class="dropdown-menu">
-                    <a class="dropdown-item" href="#" onclick="bulkSetStatus(''); return false;">— No status</a>
-                    <a class="dropdown-item" href="#" onclick="bulkSetStatus('approved'); return false;">Approved</a>
-                    <a class="dropdown-item" href="#" onclick="bulkSetStatus('not_approved'); return false;">Not approved</a>
-                    <a class="dropdown-item" href="#" onclick="bulkSetStatus('on_hold'); return false;">On hold</a>
-                </div>
-            </div>
-            {% if show_trash %}
-            <button class="btn btn-sm btn-outline-success" style="font-size:0.78rem;" onclick="bulkRestore()"><i class="fas fa-undo"></i> Restore</button>
-            <button class="btn btn-sm btn-outline-danger" style="font-size:0.78rem;" onclick="bulkHardDelete()"><i class="fas fa-times-circle"></i> Delete</button>
-            {% else %}
-            <button class="btn btn-sm btn-outline-danger" style="font-size:0.78rem;" onclick="bulkTrash()"><i class="fas fa-trash-alt"></i> Trash</button>
-            {% endif %}
-            {% endif %}
-            <span style="border-left:1px solid #bfdbfe;height:16px;margin:0 4px;"></span>
-            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.78rem;" onclick="selectionManager.invert()" title="Invert selection">
-                <i class="fas fa-exchange-alt"></i> Invert
-            </button>
-            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.78rem;" onclick="selectionManager.hideSelected()" title="Hide selected sessions">
-                <i class="fas fa-eye-slash"></i> Hide
-            </button>
-            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.78rem;" onclick="selectionManager.keepOnlySelected()" title="Keep only selected, hide rest">
-                <i class="fas fa-filter"></i> Keep only
-            </button>
-        </div>
-    </div>
+    {# Hidden indicator — shows when sessions are hidden via SelectionManager #}
     <div id="hidden-indicator" style="display:none;padding:0.15rem 1.5rem;flex-shrink:0;">
         <button class="btn btn-sm btn-link p-0" style="font-size:0.78rem;color:#6b7280;" onclick="selectionManager.showAll()">
             <i class="fas fa-eye"></i> <span id="hidden-count">0</span> hidden — Show all
@@ -763,11 +725,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var count = selectionManager.count();
         var hiddenCount = selectionManager.hiddenCount();
 
-        // Update shared toolbar
-        var toolbar = document.getElementById('selection-toolbar');
-        if (toolbar) toolbar.style.display = count > 0 ? '' : 'none';
-        var countEl = document.getElementById('sel-count');
-        if (countEl) countEl.textContent = count + ' selected';
+        // Update hidden indicator
         var hiddenBar = document.getElementById('hidden-indicator');
         if (hiddenBar) hiddenBar.style.display = hiddenCount > 0 ? '' : 'none';
         var hiddenCountEl = document.getElementById('hidden-count');
