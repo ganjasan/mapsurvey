@@ -785,10 +785,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (hidden) {
                     if (layer.setStyle) layer.setStyle({opacity: 0, fillOpacity: 0});
                     if (layer.setRadius) layer.setRadius(0);
-                } else if (count > 0 && !selected) {
-                    if (layer.setStyle) layer.setStyle({opacity: 0.15, fillOpacity: 0.08});
+                } else if (count > 0 && selected) {
+                    if (layer.setStyle) layer.setStyle({opacity: 1, fillOpacity: 0.85, weight: 2});
+                    if (layer.setRadius) layer.setRadius(7);
+                } else if (count > 0) {
+                    if (layer.setStyle) layer.setStyle({opacity: 0.25, fillOpacity: 0.1, weight: 1});
+                    if (layer.setRadius) layer.setRadius(4);
                 } else {
-                    if (layer.setStyle) layer.setStyle({opacity: 1, fillOpacity: 0.7});
+                    if (layer.setStyle) layer.setStyle({opacity: 0.8, fillOpacity: 0.7, weight: 1});
+                    if (layer.setRadius) layer.setRadius(5);
                 }
             });
         }
