@@ -785,14 +785,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (hidden) {
                     if (layer.setStyle) layer.setStyle({opacity: 0, fillOpacity: 0});
                     if (layer.setRadius) layer.setRadius(0);
-                } else if (selected) {
-                    // Highlight: bright color, thick border
-                    if (layer.setStyle) layer.setStyle({opacity: 1, fillOpacity: 0.9, weight: 3, color: '#f59e0b'});
-                    if (layer.setRadius) layer.setRadius(8);
+                } else if (count > 0 && !selected) {
+                    if (layer.setStyle) layer.setStyle({opacity: 0.15, fillOpacity: 0.08});
                 } else {
-                    // Normal: restore default
-                    if (layer.setStyle) layer.setStyle({opacity: 0.8, fillOpacity: 0.7, weight: 1});
-                    if (layer.setRadius) layer.setRadius(5);
+                    if (layer.setStyle) layer.setStyle({opacity: 1, fillOpacity: 0.7});
                 }
             });
         }
