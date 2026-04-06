@@ -798,13 +798,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Sync SelectionManager → FilterManager geoSelection (for pills)
+        // Update pills to show selection count
         if (window.filterManager) {
-            if (count > 0) {
-                window.filterManager.geoSelection = new Set(selectionManager.getSelected());
-            } else {
-                window.filterManager.geoSelection = null;
-            }
             window.filterManager._updatePills();
         }
 
@@ -1545,8 +1540,6 @@ function FilterManager(matrix) {
     this._matrix = matrix;
     this.filters = new Map();
     this.numericRanges = new Map();
-    this.geoSelection = null;
-    this.timeSelection = null;
     this.filteredSids = null;
     this._choiceFilteredSids = null;
     this._mapSids = null;
@@ -1571,28 +1564,6 @@ FilterManager.prototype.toggleFilter = function(qid, code) {
     this._apply();
 };
 
-FilterManager.prototype.setGeoSelection = function(sids) {
-    this.geoSelection = sids;
-    this._apply();
-};
-
-FilterManager.prototype.toggleGeoSid = function(sid) {
-    if (this.geoSelection === null) {
-        this.geoSelection = new Set([sid]);
-    } else {
-        var s = new Set(this.geoSelection);
-        if (s.has(sid)) { s.delete(sid); }
-        else { s.add(sid); }
-        this.geoSelection = s.size > 0 ? s : null;
-    }
-    this._apply();
-};
-
-FilterManager.prototype.setTimeSelection = function(sids) {
-    this.timeSelection = sids;
-    this._apply();
-};
-
 FilterManager.prototype.setNumericRange = function(qid, min, max) {
     qid = String(qid);
     if (min === null || max === null) {
@@ -1607,12 +1578,10 @@ FilterManager.prototype.clearAll = function() {
     var numQids = Array.from(this.numericRanges.keys());
     this.filters.clear();
     this.numericRanges.clear();
-    this.geoSelection = null;
-    this.timeSelection = null;
-    if (window._resetTimelineHandles) window._resetTimelineHandles();
     numQids.forEach(function(qid) {
         if (window._resetNumericHandles) window._resetNumericHandles(qid);
     });
+    if (window.selectionManager) window.selectionManager.clear();
     this._apply();
 };
 
@@ -1646,7 +1615,7 @@ FilterManager.prototype.getFilterParam = function() {
 
 FilterManager.prototype._recompute = function() {
     var hasChoiceOrNumeric = this.filters.size > 0 || this.numericRanges.size > 0;
-    if (!hasChoiceOrNumeric && this.geoSelection === null && this.timeSelection === null) {
+    if (!hasChoiceOrNumeric) {
         this.filteredSids = null;
         this._choiceFilteredSids = null;
         this._mapSids = null;
@@ -1654,49 +1623,37 @@ FilterManager.prototype._recompute = function() {
         return;
     }
 
-    // Choice + numeric filters
-    var choiceResult = null;
-    if (hasChoiceOrNumeric) {
-        choiceResult = new Set();
-        var self = this;
+    // Choice + numeric filters only
+    var choiceResult = new Set();
+    var self = this;
 
-        this._matrix.forEach(function(session) {
-            var passes = true;
-            // Check choice filters
-            self.filters.forEach(function(codes, qid) {
-                if (!passes) return;
-                var sessionCodes = session.a[qid];
-                if (!sessionCodes) { passes = false; return; }
-                var hasMatch = false;
-                codes.forEach(function(c) {
-                    if (sessionCodes.indexOf(c) !== -1) hasMatch = true;
-                });
-                if (!hasMatch) passes = false;
+    this._matrix.forEach(function(session) {
+        var passes = true;
+        self.filters.forEach(function(codes, qid) {
+            if (!passes) return;
+            var sessionCodes = session.a[qid];
+            if (!sessionCodes) { passes = false; return; }
+            var hasMatch = false;
+            codes.forEach(function(c) {
+                if (sessionCodes.indexOf(c) !== -1) hasMatch = true;
             });
-            // Check numeric range filters
-            if (passes) {
-                self.numericRanges.forEach(function(range, qid) {
-                    if (!passes) return;
-                    var val = session.n ? session.n[qid] : undefined;
-                    if (val === undefined) { passes = false; return; }
-                    if (val < range.min || val > range.max) passes = false;
-                });
-            }
-            if (passes) choiceResult.add(session.sid);
+            if (!hasMatch) passes = false;
         });
-    }
-    this._choiceFilteredSids = choiceResult;
+        if (passes) {
+            self.numericRanges.forEach(function(range, qid) {
+                if (!passes) return;
+                var val = session.n ? session.n[qid] : undefined;
+                if (val === undefined) { passes = false; return; }
+                if (val < range.min || val > range.max) passes = false;
+            });
+        }
+        if (passes) choiceResult.add(session.sid);
+    });
 
-    // Precompute per-component SID sets
-    // Map: choice + numeric + time (excludes geo — map highlights geo, doesn't filter by it)
-    this._mapSids = this._intersect(choiceResult, this.timeSelection);
-    // Timeline: choice + numeric + geo (excludes time — timeline is the time filter source)
-    this._timelineSids = this._intersect(choiceResult, this.geoSelection);
-    // Full: all filters combined (for charts, pills, text)
-    this.filteredSids = this._intersect(
-        this._intersect(choiceResult, this.geoSelection),
-        this.timeSelection
-    );
+    this._choiceFilteredSids = choiceResult;
+    this._mapSids = choiceResult;
+    this._timelineSids = choiceResult;
+    this.filteredSids = choiceResult;
 };
 
 // Compute filtered SID set excluding one specific filter (leave-one-out cross-filter).
@@ -1706,7 +1663,7 @@ FilterManager.prototype._crossFilterSids = function(excludeType, excludeQid) {
     var self = this;
     var otherChoices = (excludeType === 'choice') ? self.filters.size - 1 : self.filters.size;
     var otherNumerics = (excludeType === 'numeric') ? self.numericRanges.size - 1 : self.numericRanges.size;
-    if (otherChoices <= 0 && otherNumerics <= 0 && !self.geoSelection && !self.timeSelection) return null;
+    if (otherChoices <= 0 && otherNumerics <= 0) return null;
 
     var result = new Set();
     self._matrix.forEach(function(session) {
@@ -1727,8 +1684,6 @@ FilterManager.prototype._crossFilterSids = function(excludeType, excludeQid) {
                 if (v < r.min || v > r.max) passes = false;
             });
         }
-        if (passes && self.geoSelection && !self.geoSelection.has(session.sid)) passes = false;
-        if (passes && self.timeSelection && !self.timeSelection.has(session.sid)) passes = false;
         if (passes) result.add(session.sid);
     });
     return result;
@@ -1736,8 +1691,7 @@ FilterManager.prototype._crossFilterSids = function(excludeType, excludeQid) {
 
 FilterManager.prototype._updateCharts = function() {
     var self = this;
-    var hasAnyFilter = self.filters.size > 0 || self.numericRanges.size > 0
-        || self.geoSelection !== null || self.timeSelection !== null;
+    var hasAnyFilter = self.filters.size > 0 || self.numericRanges.size > 0;
 
     // Bin assignment helper — must match computeBinsFromStep formula
     function binIndex(val, bins) {
@@ -1833,28 +1787,13 @@ FilterManager.prototype._updateGeoMap = function() {
 };
 
 FilterManager.prototype._updateGeoMapSelection = function() {
-    var features = window.layerManager ? window.layerManager.getFeatureLayers() : [];
-    if (!features.length) return;
-    var sel = this.geoSelection;
-    var hasSelection = sel !== null && sel.size > 0;
-    features.forEach(function(entry) {
-        if (!window.analyticsMap || !window.analyticsMap.hasLayer(entry.layer)) return;
-        var isSelected = hasSelection && sel.has(entry.sid);
-        var fillOpacity = hasSelection ? (isSelected ? 0.9 : 0.15) : 0.7;
-        var weight = isSelected ? 3 : 1;
-        if (typeof entry.layer.setStyle === 'function') {
-            entry.layer.setStyle({ fillOpacity: fillOpacity, opacity: 1.0, weight: weight });
-        }
-        if (typeof entry.layer.setRadius === 'function') {
-            entry.layer.setRadius(isSelected ? 8 : 5);
-        }
-    });
+    // Selection highlighting handled by SelectionManager listener
 };
 
 FilterManager.prototype._updateTimeline = function() {
     if (!window._timelineChart || !window._sessionHours) return;
     // Don't recompute timeline when it is the only active filter
-    if (this.timeSelection !== null && this.filters.size === 0 && this.numericRanges.size === 0 && this.geoSelection === null) return;
+    // Skip if no choice/numeric filters active
     var sids = this._timelineSids;
     if (sids === null) {
         if (typeof window._updateTimelineFromHourly === 'function') {
@@ -1921,7 +1860,7 @@ FilterManager.prototype._updateNumericStats = function() {
 FilterManager.prototype._updatePills = function() {
     var bar = document.getElementById('filter-pills-bar');
     if (!bar) return;
-    if (this.filters.size === 0 && this.numericRanges.size === 0 && this.geoSelection === null && this.timeSelection === null) {
+    if (this.filters.size === 0 && this.numericRanges.size === 0) {
         while (bar.firstChild) bar.removeChild(bar.firstChild);
         bar.style.display = 'none';
         document.querySelectorAll('.q-filter-pills').forEach(function(c) {
@@ -1967,31 +1906,15 @@ FilterManager.prototype._updatePills = function() {
         bar.appendChild(pill);
     });
 
-    if (this.geoSelection !== null) {
-        var geoPill = document.createElement('span');
-        geoPill.className = 'filter-pill';
-        geoPill.textContent = 'Selected (' + this.geoSelection.size + ') \u00d7';
-        geoPill.addEventListener('click', function() {
-            self.setGeoSelection(null);
-            if (window.selectionManager) window.selectionManager.clear();
+    // Selection pill (from SelectionManager)
+    if (window.selectionManager && window.selectionManager.hasSelection()) {
+        var selPill = document.createElement('span');
+        selPill.className = 'filter-pill';
+        selPill.textContent = 'Selected (' + window.selectionManager.count() + ') \u00d7';
+        selPill.addEventListener('click', function() {
+            window.selectionManager.clear();
         });
-        bar.appendChild(geoPill);
-    }
-
-    if (this.timeSelection !== null && window._timelineSelectionRange) {
-        var tr = window._timelineSelectionRange;
-        function makeTimePill(label) {
-            var pill = document.createElement('span');
-            pill.className = 'filter-pill';
-            pill.textContent = label + ' \u00d7';
-            pill.addEventListener('click', function() {
-                self.setTimeSelection(null);
-                if (window._resetTimelineHandles) window._resetTimelineHandles();
-            });
-            return pill;
-        }
-        if (tr.from) bar.appendChild(makeTimePill('From: ' + tr.from));
-        if (tr.to) bar.appendChild(makeTimePill('To: ' + tr.to));
+        bar.appendChild(selPill);
     }
 
     var clearBtn = document.createElement('button');
@@ -2009,30 +1932,14 @@ FilterManager.prototype._updatePills = function() {
         var qid = container.dataset.qid;
         while (container.firstChild) container.removeChild(container.firstChild);
 
-        if (qid === 'geo') {
-            if (self2.geoSelection === null) {
-                container.style.display = 'none';
-                return;
-            }
-            container.style.display = 'flex';
-            var geoPill = document.createElement('span');
-            geoPill.className = 'filter-pill';
-            geoPill.style.fontSize = '0.72rem';
-            geoPill.textContent = 'Map selection (' + self2.geoSelection.size + ') \u00d7';
-            geoPill.addEventListener('click', function() {
-                self2.setGeoSelection(null);
-            });
-            container.appendChild(geoPill);
+        if (qid === 'geo' || qid === 'timeline') {
+            // Selection handled by SelectionManager, not FilterManager
+            container.style.display = 'none';
             return;
         }
 
-        if (qid === 'timeline') {
-            var tr = window._timelineSelectionRange;
-            if (self2.timeSelection === null || !tr || (!tr.from && !tr.to)) {
-                container.style.display = 'none';
-                return;
-            }
-            container.style.display = 'flex';
+        if (false) {
+            // Removed: timeline pills — kept as dead code guard
             function makeLocalTimePill(label) {
                 var p = document.createElement('span');
                 p.className = 'filter-pill';

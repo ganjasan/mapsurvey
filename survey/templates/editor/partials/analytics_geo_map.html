@@ -109,11 +109,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 window.selectionManager.setSelection([sid]);
                             }
                         }
-                        if (e.originalEvent && e.originalEvent.ctrlKey) {
-                            if (window.filterManager) window.filterManager.toggleGeoSid(sid);
-                        } else {
-                            if (window.filterManager) window.filterManager.setGeoSelection(new Set([sid]));
-                        }
                     } else if (mode === 'details') {
                         openSessionDetailModal(sid);
                     }
@@ -313,7 +308,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('keydown', function(e) { if (e.key === 'Control') _ctrlHeld = true; });
     document.addEventListener('keyup', function(e) { if (e.key === 'Control') _ctrlHeld = false; });
 
-    map.on('click', function() { _featureClicked = false; });
+    map.on('click', function() {
+        if (!_featureClicked && window.selectionManager && window.selectionManager.hasSelection()) {
+            window.selectionManager.clear();
+        }
+        _featureClicked = false;
+    });
 
     map.on('draw:created', function(e) {
         var allFeatures = window.layerManager.getFeatureLayers();
@@ -335,13 +335,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-        if (window.filterManager) {
-            if (_ctrlHeld && window.filterManager.geoSelection !== null && matchingSids.size > 0) {
-                var merged = new Set(window.filterManager.geoSelection);
-                matchingSids.forEach(function(sid) { merged.add(sid); });
-                window.filterManager.setGeoSelection(merged);
+        if (window.selectionManager) {
+            if (_ctrlHeld && matchingSids.size > 0) {
+                window.selectionManager.select(Array.from(matchingSids));
+            } else if (matchingSids.size > 0) {
+                window.selectionManager.setSelection(Array.from(matchingSids));
             } else {
-                window.filterManager.setGeoSelection(matchingSids.size > 0 ? matchingSids : null);
+                window.selectionManager.clear();
             }
         }
         window.setGeoTool('pointer');
