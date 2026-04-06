@@ -626,8 +626,23 @@ def download_data(request, survey_slug):
 	version_param = request.GET.get('version')
 	version_surveys = _get_version_surveys(survey, version_param)
 
+	include_all = request.GET.get('include_all') == '1'
+
+	# Pre-compute excluded session IDs (trashed + not_approved)
+	excluded_session_ids = set()
+	if not include_all:
+		for target_survey, _ in version_surveys:
+			excluded_session_ids |= set(
+				SurveySession.objects
+				.filter(survey=target_survey)
+				.filter(
+					Q(is_deleted=True) | Q(validation_status='not_approved')
+				)
+				.values_list('id', flat=True)
+			)
+
 	for target_survey, prefix in version_surveys:
-		_export_survey_data(zip, target_survey, prefix)
+		_export_survey_data(zip, target_survey, prefix, excluded_session_ids)
 
 	#Windows bug fix
 	for file in zip.filelist:
@@ -648,25 +663,35 @@ def _sanitize_filename(name):
 	return re.sub(r'[<>:"/\\|?*]', '_', name)
 
 
-def _export_survey_data(zip, survey, prefix=''):
-	"""Export a single survey's data into the zip with optional filename prefix."""
+def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
+	"""Export a single survey's data into the zip with optional filename prefix.
+
+	Args:
+		excluded_session_ids: set of session PKs to skip (trashed + not_approved).
+			Empty set or None means export all.
+	"""
+	if excluded_session_ids is None:
+		excluded_session_ids = set()
+
 	#обработка гео вопросов
 	geo_questions = survey.geo_questions()
 
 	for question in geo_questions:
-		
+
 		layer_properties = {
 			"survey": question.survey_section.survey_header.name,
 			"survey_section": question.survey_section.name,
 			"required": question.required,
 		}
 
-		#layer_str = geojson_template.format(layer_name = question.name, properties=layer_properties)
-
 		#получить ответы
 		features = []
 		answers = question.answers()
 		for answer in answers:
+			# Skip excluded sessions
+			if answer.survey_session_id in excluded_session_ids:
+				continue
+
 			#получить геометрию
 			geo_type = question.input_type
 			if geo_type == "polygon":
@@ -711,6 +736,8 @@ def _export_survey_data(zip, survey, prefix=''):
 				properties[key.name] = result
 
 			properties["session"] = str(answer.survey_session)
+			properties["session_id"] = answer.survey_session_id
+			properties["validation_status"] = answer.survey_session.validation_status or ''
 
 			feature = {
 				"type": "Feature",
@@ -722,21 +749,17 @@ def _export_survey_data(zip, survey, prefix=''):
 			}
 
 			features.append(feature)
-		
+
 		geojson_dict = {
-			"type": "FeatureCollection", 
+			"type": "FeatureCollection",
 			"name": question.name,
 			"crs": {"type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }},
 			"properties": layer_properties,
 			"features": features,
-		} 
+		}
 
 		geojson_str = json.dumps(geojson_dict, ensure_ascii=False).encode('utf8')
 
-		#сформировать geojson файл
-		#geojson_str = serialize('geojson', answers, geometry_field=question.input_type)
-		
-		#cформировать файлы
 		zip.writestr(prefix + _sanitize_filename(question.name) + '.geojson', geojson_str)
 
 	#обработка обычных вопросов
@@ -745,6 +768,10 @@ def _export_survey_data(zip, survey, prefix=''):
 
 	properties_list = []
 	for session in sessions:
+		# Skip excluded sessions
+		if session.id in excluded_session_ids:
+			continue
+
 		properties = {}
 		answers = session.answers()
 		result = ""
@@ -773,7 +800,9 @@ def _export_survey_data(zip, survey, prefix=''):
 			properties[answer.question.name] = result
 
 		properties["session"] = str(session)
+		properties["session_id"] = session.id
 		properties["datetime"] = session.start_datetime
+		properties["validation_status"] = session.validation_status or ''
 		properties_list.append(properties)
 
 	zip.writestr(prefix + _sanitize_filename(survey.name) + '.csv', pd.DataFrame(properties_list).to_csv())

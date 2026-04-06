@@ -2,14 +2,14 @@ import json
 
 from django.core.cache import cache
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .models import Question, Answer, SurveySession
+from .models import Question, Answer, SurveySession, VALIDATION_STATUS_CHOICES
 from .permissions import survey_permission_required
-from .analytics import SurveyAnalyticsService, PerformanceAnalyticsService
+from .analytics import SurveyAnalyticsService, PerformanceAnalyticsService, SessionValidationService
 from .events import emit_event
 
 
@@ -48,6 +48,7 @@ def _resolve_filtered_session_ids(survey, filter_map):
             .filter(
                 question_id=question_id,
                 question__survey_section__survey_header=survey,
+                survey_session__is_deleted=False,
             )
             .filter(q_obj)
             .values_list('survey_session_id', flat=True)
@@ -88,6 +89,7 @@ def analytics_dashboard(request, survey_uuid):
         'total_sessions': overview['total_sessions'],
         'completed_count': overview['completed_count'],
         'completion_rate': overview['completion_rate'],
+        'flagged_count': overview['flagged_count'],
         'hourly_data_json': json.dumps(hourly_sessions),
         'session_hours_json': json.dumps(session_hours),
         'geo_json': json.dumps(geo_collection),
@@ -165,11 +167,12 @@ def analytics_session_detail(request, survey_uuid, session_id):
 def analytics_table(request, survey_uuid):
     """HTMX partial: paginated attribute table of all sessions."""
     survey = request.survey
-    service = SurveyAnalyticsService(survey)
+    show_trash = request.GET.get('trash') == '1'
+    service = SurveyAnalyticsService(survey, include_deleted=show_trash)
 
-    # Reuse existing filter parsing
+    # Reuse existing filter parsing (ignored in trash mode)
     filter_map = _parse_filter_param(request.GET.get('filters', ''))
-    session_ids = _resolve_filtered_session_ids(survey, filter_map)
+    session_ids = _resolve_filtered_session_ids(survey, filter_map) if not show_trash else None
 
     try:
         page = int(request.GET.get('page', 1))
@@ -179,21 +182,249 @@ def analytics_table(request, survey_uuid):
     sort_col = request.GET.get('sort', 'start_datetime')
     sort_dir = request.GET.get('dir', 'desc')
 
+    try:
+        page_size = int(request.GET.get('page_size', 50))
+    except (ValueError, TypeError):
+        page_size = 50
+    page_size = min(max(page_size, 10), 500)
+
     # Per-column search: search_<col_key>=value
     col_search = {}
     for k, v in request.GET.items():
         if k.startswith('search_') and v.strip():
             col_search[k[7:]] = v.strip()
 
+    issues_filter_raw = request.GET.get('issues', '').strip()
+    issues_filter = [f for f in issues_filter_raw.split(',') if f] if issues_filter_raw else None
+
     result = service.get_table_page(
-        page=page, session_ids=session_ids,
+        page=page, page_size=page_size, session_ids=session_ids,
         sort_col=sort_col, sort_dir=sort_dir, col_search=col_search,
+        show_trash=show_trash, issues_filter=issues_filter,
     )
 
     return render(request, 'editor/partials/analytics_table.html', {
         'survey': survey,
+        'show_trash': show_trash,
+        'is_editor': request.effective_survey_role in ('editor', 'owner'),
+        'page_size_options': [10, 25, 50, 100, 250, 500],
+        'issues_filter': ','.join(issues_filter) if issues_filter else '',
+        'issues_filter_list': issues_filter or [],
+        'anomaly_counts_json': json.dumps(result.pop('anomaly_counts', {})),
         **result,
     })
+
+
+@survey_permission_required('editor')
+def analytics_validation_settings(request, survey_uuid):
+    """GET: return current validation settings. POST: save new settings."""
+    survey = request.survey
+    if request.method == 'POST':
+        try:
+            body = json.loads(request.body)
+        except (json.JSONDecodeError, AttributeError):
+            return HttpResponse(status=400)
+        allowed_keys = {'fast_threshold_seconds', 'duplicate_window_hours'}
+        settings = {k: v for k, v in body.items() if k in allowed_keys}
+        survey.validation_settings = settings
+        survey.save(update_fields=['validation_settings'])
+        return HttpResponse(status=204)
+    return JsonResponse(survey.validation_settings or {
+        'fast_threshold_seconds': 30,
+        'duplicate_window_hours': 1,
+    })
+
+
+@survey_permission_required('editor')
+@require_POST
+def analytics_answer_edit(request, survey_uuid, session_id, question_id):
+    """Edit or create an answer value for a session+question pair."""
+    session = get_object_or_404(SurveySession, id=session_id, survey=request.survey)
+    question = get_object_or_404(
+        Question, id=question_id,
+        survey_section__survey_header=request.survey,
+        parent_question_id__isnull=True,
+    )
+    try:
+        body = json.loads(request.body)
+        value = body.get('value')
+    except (json.JSONDecodeError, AttributeError):
+        return HttpResponse(status=400)
+
+    # Get or create the answer
+    answer, _ = Answer.objects.get_or_create(
+        survey_session=session, question=question, parent_answer_id__isnull=True,
+        defaults={},
+    )
+
+    # Set value based on question type
+    itype = question.input_type
+    if itype in ('text', 'text_line', 'datetime'):
+        answer.text = str(value) if value is not None else ''
+        answer.save(update_fields=['text'])
+    elif itype in ('number', 'range'):
+        try:
+            answer.numeric = float(value) if value not in (None, '') else None
+        except (ValueError, TypeError):
+            return HttpResponse(status=400)
+        answer.save(update_fields=['numeric'])
+    elif itype in ('choice', 'rating'):
+        try:
+            answer.selected_choices = [int(value)] if value not in (None, '') else []
+        except (ValueError, TypeError):
+            return HttpResponse(status=400)
+        answer.save(update_fields=['selected_choices'])
+    elif itype == 'multichoice':
+        if not isinstance(value, list):
+            return HttpResponse(status=400)
+        try:
+            answer.selected_choices = [int(v) for v in value]
+        except (ValueError, TypeError):
+            return HttpResponse(status=400)
+        answer.save(update_fields=['selected_choices'])
+    else:
+        return HttpResponse(status=400)
+
+    return HttpResponse(status=204)
+
+
+@survey_permission_required('editor')
+@require_POST
+def analytics_session_update_tags(request, survey_uuid, session_id):
+    """Update tags and notes on a session."""
+    session = get_object_or_404(SurveySession, id=session_id, survey=request.survey)
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, AttributeError):
+        return HttpResponse(status=400)
+    if 'tags' in body:
+        tags = body['tags']
+        if not isinstance(tags, list) or not all(isinstance(t, str) for t in tags):
+            return HttpResponse(status=400)
+        session.tags = [t.strip() for t in tags if t.strip()]
+    if 'notes' in body:
+        session.notes = str(body['notes'])[:2000]
+    session.save(update_fields=['tags', 'notes'])
+    return HttpResponse(status=204)
+
+
+@survey_permission_required('editor')
+@require_POST
+def analytics_session_set_status(request, survey_uuid, session_id):
+    """Set validation_status on a session."""
+    session = get_object_or_404(SurveySession, id=session_id, survey=request.survey, is_deleted=False)
+    status = request.POST.get('validation_status', '')
+    svc = SessionValidationService()
+    try:
+        svc.set_status(session, status)
+    except ValueError:
+        return HttpResponse(status=400)
+    return HttpResponse(status=204)
+
+
+@survey_permission_required('editor')
+@require_POST
+def analytics_session_trash(request, survey_uuid, session_id):
+    """Soft-delete a session (move to trash)."""
+    session = get_object_or_404(SurveySession, id=session_id, survey=request.survey, is_deleted=False)
+    svc = SessionValidationService()
+    svc.trash(session)
+    return HttpResponse(status=204, headers={'HX-Trigger': 'sessionTrashed'})
+
+
+@survey_permission_required('editor')
+@require_POST
+def analytics_session_restore(request, survey_uuid, session_id):
+    """Restore a trashed session."""
+    session = get_object_or_404(SurveySession, id=session_id, survey=request.survey, is_deleted=True)
+    svc = SessionValidationService()
+    svc.restore(session)
+    return HttpResponse(status=204, headers={'HX-Trigger': 'sessionRestored'})
+
+
+@survey_permission_required('editor')
+@require_POST
+def analytics_session_hard_delete(request, survey_uuid, session_id):
+    """Permanently delete a trashed session and all its answers."""
+    session = get_object_or_404(SurveySession, id=session_id, survey=request.survey, is_deleted=True)
+    svc = SessionValidationService()
+    svc.hard_delete(session)
+    return HttpResponse(status=204, headers={'HX-Trigger': 'sessionDeleted'})
+
+
+def _parse_bulk_session_ids(request, survey):
+    """Parse JSON body and return list of SurveySession objects for the given IDs."""
+    try:
+        body = json.loads(request.body)
+        ids = body.get('session_ids', [])
+    except (json.JSONDecodeError, AttributeError):
+        return []
+    if not isinstance(ids, list):
+        return []
+    return list(SurveySession.objects.filter(id__in=ids, survey=survey))
+
+
+@survey_permission_required('editor')
+@require_POST
+def analytics_bulk_set_status(request, survey_uuid):
+    """Bulk set validation_status on multiple sessions."""
+    from django.db import transaction
+    sessions = _parse_bulk_session_ids(request, request.survey)
+    try:
+        body = json.loads(request.body)
+        status = body.get('status', '')
+    except (json.JSONDecodeError, AttributeError):
+        return HttpResponse(status=400)
+    svc = SessionValidationService()
+    try:
+        with transaction.atomic():
+            for s in sessions:
+                svc.set_status(s, status)
+    except ValueError:
+        return HttpResponse(status=400)
+    return HttpResponse(status=204, headers={'HX-Trigger': 'bulkActionDone'})
+
+
+@survey_permission_required('editor')
+@require_POST
+def analytics_bulk_trash(request, survey_uuid):
+    """Bulk soft-delete multiple sessions."""
+    from django.db import transaction
+    sessions = _parse_bulk_session_ids(request, request.survey)
+    svc = SessionValidationService()
+    with transaction.atomic():
+        for s in sessions:
+            if not s.is_deleted:
+                svc.trash(s)
+    return HttpResponse(status=204, headers={'HX-Trigger': 'bulkActionDone'})
+
+
+@survey_permission_required('editor')
+@require_POST
+def analytics_bulk_restore(request, survey_uuid):
+    """Bulk restore multiple trashed sessions."""
+    from django.db import transaction
+    sessions = _parse_bulk_session_ids(request, request.survey)
+    svc = SessionValidationService()
+    with transaction.atomic():
+        for s in sessions:
+            if s.is_deleted:
+                svc.restore(s)
+    return HttpResponse(status=204, headers={'HX-Trigger': 'bulkActionDone'})
+
+
+@survey_permission_required('editor')
+@require_POST
+def analytics_bulk_hard_delete(request, survey_uuid):
+    """Bulk permanently delete multiple trashed sessions."""
+    from django.db import transaction
+    sessions = _parse_bulk_session_ids(request, request.survey)
+    svc = SessionValidationService()
+    with transaction.atomic():
+        for s in sessions:
+            if s.is_deleted:
+                svc.hard_delete(s)
+    return HttpResponse(status=204, headers={'HX-Trigger': 'bulkActionDone'})
 
 
 _ALLOWED_CLIENT_EVENTS = {'page_load', 'page_leave'}

@@ -378,6 +378,25 @@ def editor_question_edit(request, survey_uuid, question_id):
                 q.choices = json.loads(choices_json)
             elif q.input_type not in ('choice', 'multichoice', 'range', 'rating'):
                 q.choices = None
+            # Validation settings per question type
+            vs = {}
+            if q.input_type in ('number', 'range'):
+                for key in ('min_value', 'max_value', 'outlier_sigma'):
+                    val = request.POST.get(f'vs_{key}', '').strip()
+                    if val:
+                        try: vs[key] = float(val)
+                        except ValueError: pass
+            elif q.input_type in ('text', 'text_line'):
+                val = request.POST.get('vs_min_length', '').strip()
+                if val:
+                    try: vs['min_length'] = int(val)
+                    except ValueError: pass
+            elif q.input_type == 'polygon':
+                val = request.POST.get('vs_area_outlier_factor', '').strip()
+                if val:
+                    try: vs['area_outlier_factor'] = float(val)
+                    except ValueError: pass
+            q.validation_settings = vs
             q.save()
             _save_question_translations(request, q, survey)
             response = render(request, 'editor/partials/question_list_item.html', {

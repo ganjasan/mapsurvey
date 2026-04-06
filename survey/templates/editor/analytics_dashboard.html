@@ -360,9 +360,26 @@
 
 <!-- Table tab -->
 <div id="pane-table" style="display:none;">
-    <div style="max-width:1600px;margin:0 auto;padding:1.5rem;position:relative;">
-        <div id="pane-table-content">
+    <div style="max-width:1600px;margin:0 auto;padding:1.5rem;position:relative;display:flex;gap:0;">
+        <div id="pane-table-content" style="flex:1;min-width:0;">
             <div class="text-center text-muted py-5"><i class="fas fa-table mr-2"></i>Click Table tab to load data</div>
+        </div>
+        {# Collapsed strip #}
+        <div id="anomalies-strip" style="display:none;width:28px;flex-shrink:0;border-left:1px solid #e5e7eb;cursor:pointer;background:#f8f9fa;position:relative;" onclick="expandAnomaliesSidebar()" title="Expand Violations panel">
+            <div style="writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);padding:12px 4px;font-size:0.75rem;font-weight:600;color:#6b7280;white-space:nowrap;display:flex;align-items:center;gap:6px;">
+                <i class="fas fa-exclamation-triangle" style="color:#d97706;"></i>
+                <span>Violations</span>
+                <span id="anomalies-strip-count" class="badge badge-warning" style="font-size:0.65rem;"></span>
+            </div>
+        </div>
+        {# Expanded sidebar #}
+        <div id="anomalies-sidebar" style="display:none;width:220px;flex-shrink:0;border-left:1px solid #e5e7eb;padding:0.75rem;font-size:0.82rem;overflow-y:auto;background:#f9fafb;box-shadow:-2px 0 6px rgba(0,0,0,0.04);">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <strong style="font-size:0.85rem;"><i class="fas fa-exclamation-triangle" style="color:#d97706;margin-right:4px;"></i>Violations</strong>
+                <button class="btn btn-sm btn-link p-0" onclick="collapseAnomaliesSidebar()" title="Collapse"><i class="fas fa-chevron-right" style="color:#9ca3af;"></i></button>
+            </div>
+            <div id="anomalies-errors"></div>
+            <div id="anomalies-warnings" class="mt-2"></div>
         </div>
     </div>
 </div>
@@ -384,6 +401,34 @@
             </div>
             <div class="modal-body" id="sessionDetailModalBody">
                 <div class="text-center text-muted py-4">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Validation Settings Modal #}
+<div class="modal fade" id="validationSettingsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-cog"></i> Validation Settings</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label style="font-size:0.85rem;font-weight:600;">Fast completion threshold (seconds)</label>
+                    <input type="number" id="vs-fast-threshold" class="form-control form-control-sm" value="30" min="1" step="1">
+                    <small class="text-muted">Sessions completed faster than this are flagged</small>
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.85rem;font-weight:600;">Duplicate detection window (hours)</label>
+                    <input type="number" id="vs-dup-window" class="form-control form-control-sm" value="1" min="0.1" step="0.5">
+                    <small class="text-muted">Sessions from same browser within this window are flagged</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                <button class="btn btn-sm btn-primary" onclick="saveValidationSettings()">Save</button>
             </div>
         </div>
     </div>
@@ -431,8 +476,14 @@ function loadTable(extraParams) {
         if (extraParams.dir) dir = extraParams.dir;
         if (extraParams.page) page = extraParams.page;
     }
+    var trash = form ? (form.querySelector('[name=trash]') || {}).value : '0';
+    var pageSize = form ? (form.querySelector('[name=page_size]') || {}).value : '';
+    var issuesVal = form ? (form.querySelector('[name=issues]') || {}).value : '';
     var url = _tableUrl + '?sort=' + sort + '&dir=' + dir + '&page=' + page
+              + (pageSize ? '&page_size=' + pageSize : '')
               + (filters ? '&filters=' + encodeURIComponent(filters) : '')
+              + (trash === '1' ? '&trash=1' : '')
+              + (issuesVal ? '&issues=' + encodeURIComponent(issuesVal) : '')
               + searchParams;
     htmx.ajax('GET', url, {target: '#pane-table-content', swap: 'innerHTML'});
 }
@@ -485,6 +536,360 @@ function loadSessionDetail(sid) {
     htmx.ajax('GET', url, { target: '#sessionDetailModalBody', swap: 'innerHTML' });
 }
 
+/* Session validation actions */
+function _getCsrfToken() {
+    var m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+}
+function _sessionAction(url, callback) {
+    fetch(url, {
+        method: 'POST',
+        headers: {'X-CSRFToken': _getCsrfToken()},
+    }).then(function(resp) {
+        if (resp.ok) { loadTable(); if (callback) callback(); }
+    });
+}
+function setSessionStatus(sel, sid) {
+    var url = '{% url "analytics_set_status" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': _getCsrfToken(),
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'validation_status=' + encodeURIComponent(sel.value),
+    });
+}
+function trashSession(sid) {
+    if (!confirm('Move session #' + sid + ' to trash?')) return;
+    var url = '{% url "analytics_session_trash" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+    _sessionAction(url, function() { $('#sessionDetailModal').modal('hide'); });
+}
+function restoreSession(sid) {
+    var url = '{% url "analytics_session_restore" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+    _sessionAction(url, function() { $('#sessionDetailModal').modal('hide'); });
+}
+function hardDeleteSession(sid) {
+    if (!confirm('Permanently delete session #' + sid + '? This cannot be undone.')) return;
+    var url = '{% url "analytics_session_hard_delete" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+    _sessionAction(url, function() { $('#sessionDetailModal').modal('hide'); });
+}
+
+/* Bulk operations */
+function _bulkAction(url, body, confirmMsg) {
+    if (confirmMsg && !confirm(confirmMsg)) return;
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': _getCsrfToken(),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+    }).then(function(resp) {
+        if (resp.ok) loadTable();
+    });
+}
+function bulkSetStatus(status) {
+    var ids = getSelectedIds();
+    if (!ids.length) return;
+    _bulkAction(
+        '{% url "analytics_bulk_set_status" survey.uuid %}',
+        {session_ids: ids, status: status}
+    );
+}
+function bulkTrash() {
+    var ids = getSelectedIds();
+    if (!ids.length) return;
+    _bulkAction(
+        '{% url "analytics_bulk_trash" survey.uuid %}',
+        {session_ids: ids},
+        'Move ' + ids.length + ' session(s) to trash?'
+    );
+}
+function bulkRestore() {
+    var ids = getSelectedIds();
+    if (!ids.length) return;
+    _bulkAction(
+        '{% url "analytics_bulk_restore" survey.uuid %}',
+        {session_ids: ids}
+    );
+}
+function bulkHardDelete() {
+    var ids = getSelectedIds();
+    if (!ids.length) return;
+    _bulkAction(
+        '{% url "analytics_bulk_hard_delete" survey.uuid %}',
+        {session_ids: ids},
+        'Permanently delete ' + ids.length + ' session(s)? This cannot be undone.'
+    );
+}
+
+/* Anomalies sidebar */
+var _ANOMALY_ERRORS = {
+    'empty': {label: 'Empty sessions', icon: 'fas fa-ban', color: '#374151'},
+    'incomplete': {label: 'Incomplete', icon: 'fas fa-exclamation-triangle', color: '#d97706'},
+    'missing_required': {label: 'Missing required', icon: 'fas fa-asterisk', color: '#dc2626'},
+    'fast': {label: 'Fast completion', icon: 'fas fa-bolt', color: '#2563eb'},
+    'duplicate': {label: 'Duplicate', icon: 'fas fa-copy', color: '#6b7280'},
+    'self_intersection': {label: 'Self-intersection', icon: 'fas fa-draw-polygon', color: '#dc2626'},
+    'empty_required': {label: 'Empty required field', icon: 'fas fa-exclamation-circle', color: '#dc2626'},
+    'out_of_range': {label: 'Out of range', icon: 'fas fa-arrow-up', color: '#dc2626'},
+};
+var _ANOMALY_WARNINGS = {
+    'numeric_outlier': {label: 'Numeric outlier', icon: 'fas fa-chart-line', color: '#d97706'},
+    'short_text': {label: 'Short text', icon: 'fas fa-font', color: '#d97706'},
+    'area_outlier': {label: 'Area outlier', icon: 'fas fa-expand-arrows-alt', color: '#d97706'},
+};
+function _buildAnomalyItem(key, def, count, isActive) {
+    var row = document.createElement('label');
+    row.className = 'd-flex align-items-center py-1';
+    row.style.cssText = 'cursor:pointer;border-radius:3px;padding:2px 4px 2px 20px;margin:0;font-weight:normal;';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'violation-cb';
+    cb.dataset.violationKey = key;
+    cb.checked = isActive;
+    cb.style.marginRight = '6px';
+    cb.addEventListener('change', function() { applyViolationCheckboxes(); });
+    var icon = document.createElement('i');
+    icon.className = def.icon;
+    icon.style.cssText = 'color:' + def.color + ';width:16px;font-size:0.75rem;';
+    var label = document.createElement('span');
+    label.style.cssText = 'flex:1;margin-left:4px;';
+    label.textContent = def.label;
+    var badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.style.cssText = 'background:' + def.color + ';color:#fff;font-size:0.7rem;';
+    badge.textContent = count;
+    row.appendChild(cb);
+    row.appendChild(icon);
+    row.appendChild(label);
+    row.appendChild(badge);
+    return row;
+}
+function _buildGroupCheckbox(labelText, groupKeys, activeSet, container, groupTotal) {
+    var row = document.createElement('label');
+    row.className = 'd-flex align-items-center';
+    row.style.cssText = 'font-weight:600;font-size:0.75rem;text-transform:uppercase;color:#6b7280;margin:0;padding:2px 0;cursor:pointer;';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.style.marginRight = '6px';
+    var activeKeys = groupKeys.filter(function(k) { return activeSet.has(k); });
+    cb.checked = activeKeys.length === groupKeys.length && groupKeys.length > 0;
+    cb.indeterminate = activeKeys.length > 0 && activeKeys.length < groupKeys.length;
+    cb.addEventListener('change', function() {
+        container.querySelectorAll('.violation-cb').forEach(function(c) { c.checked = cb.checked; });
+        applyViolationCheckboxes();
+    });
+    cb.className = 'violation-group-cb';
+    var text = document.createElement('span');
+    text.style.flex = '1';
+    text.textContent = labelText;
+    row.appendChild(cb);
+    row.appendChild(text);
+    if (groupTotal > 0) {
+        var badgeColor = (labelText.toLowerCase().indexOf('error') !== -1) ? '#dc3545' : '#d97706';
+        var badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.style.cssText = 'font-size:0.65rem;background:' + badgeColor + ';color:#fff;margin-left:auto;';
+        badge.textContent = groupTotal;
+        row.appendChild(badge);
+    }
+    return row;
+}
+function applyViolationCheckboxes() {
+    var keys = [];
+    document.querySelectorAll('.violation-cb:checked').forEach(function(cb) {
+        keys.push(cb.dataset.violationKey);
+    });
+    changeIssuesFilter(keys.join(','));
+}
+function updateAnomaliesSidebar() {
+    var dataEl = document.getElementById('anomaly-counts-data');
+    if (!dataEl) return;
+    var counts = {};
+    try { counts = JSON.parse(dataEl.textContent); } catch(e) { return; }
+    var sidebar = document.getElementById('anomalies-sidebar');
+    var strip = document.getElementById('anomalies-strip');
+    var total = Object.values(counts).reduce(function(a, b) { return a + b; }, 0);
+    if (total === 0) {
+        sidebar.style.display = 'none';
+        strip.style.display = 'none';
+        return;
+    }
+    // Count errors vs warnings
+    var errorCount = 0, warnCount = 0;
+    for (var k in _ANOMALY_ERRORS) { errorCount += (counts[k] || 0); }
+    for (var k in _ANOMALY_WARNINGS) { warnCount += (counts[k] || 0); }
+    // Update strip badge — red if errors, yellow if only warnings
+    var stripCount = document.getElementById('anomalies-strip-count');
+    if (stripCount) {
+        stripCount.textContent = total;
+        stripCount.className = 'badge ' + (errorCount > 0 ? 'badge-danger' : 'badge-warning');
+    }
+    // Update sidebar title
+    var titleEl = sidebar.querySelector('strong');
+    if (titleEl) {
+        titleEl.textContent = '';
+        var icon = document.createElement('i');
+        icon.className = 'fas fa-exclamation-triangle';
+        icon.style.cssText = 'color:#d97706;margin-right:4px;';
+        titleEl.appendChild(icon);
+        titleEl.appendChild(document.createTextNode('Violations'));
+    }
+    if (_anomaliesSidebarExpanded) {
+        sidebar.style.display = '';
+        strip.style.display = 'none';
+    } else {
+        sidebar.style.display = 'none';
+        strip.style.display = '';
+    }
+    var activeFilters = new Set();
+    var filterEl = document.getElementById('active-issues-filter');
+    if (filterEl) {
+        filterEl.textContent.trim().split(',').forEach(function(f) { if (f) activeFilters.add(f); });
+    }
+    function renderGroup(containerId, defs, groupLabel) {
+        var container = document.getElementById(containerId);
+        container.textContent = '';
+        var visibleKeys = [];
+        var groupTotal = 0;
+        for (var key in defs) {
+            var c = counts[key] || 0;
+            if (c > 0) visibleKeys.push(key);
+            groupTotal += c;
+        }
+        container.appendChild(_buildGroupCheckbox(groupLabel, visibleKeys, activeFilters, container, groupTotal));
+        var hasAny = false;
+        for (var key in defs) {
+            var c = counts[key] || 0;
+            if (c === 0) continue;
+            hasAny = true;
+            container.appendChild(_buildAnomalyItem(key, defs[key], c, activeFilters.has(key)));
+        }
+        if (!hasAny) {
+            var none = document.createElement('div');
+            none.className = 'text-muted';
+            none.style.fontSize = '0.75rem';
+            none.textContent = 'None';
+            container.appendChild(none);
+        }
+    }
+    renderGroup('anomalies-errors', _ANOMALY_ERRORS, 'Errors');
+    renderGroup('anomalies-warnings', _ANOMALY_WARNINGS, 'Warnings');
+}
+var _anomaliesSidebarExpanded = true;
+function collapseAnomaliesSidebar() {
+    _anomaliesSidebarExpanded = false;
+    document.getElementById('anomalies-sidebar').style.display = 'none';
+    document.getElementById('anomalies-strip').style.display = '';
+}
+function expandAnomaliesSidebar() {
+    _anomaliesSidebarExpanded = true;
+    document.getElementById('anomalies-sidebar').style.display = '';
+    document.getElementById('anomalies-strip').style.display = 'none';
+}
+function selectAllFlagged() {
+    // Select rows that have issue badges or lint error/warning icons
+    document.querySelectorAll('.row-select-cb').forEach(function(cb) {
+        var row = cb.closest('tr');
+        var hasBadge = row.querySelector('.badge-dark, .badge-warning, .badge-danger, .badge-info, .badge-secondary');
+        var hasLint = row.querySelector('.fa-exclamation-circle, .fa-exclamation-triangle');
+        cb.checked = !!(hasBadge || hasLint);
+    });
+    updateBulkToolbar();
+}
+
+/* Validation Settings */
+function openValidationSettings() {
+    var url = '{% url "analytics_validation_settings" survey.uuid %}';
+    fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+        document.getElementById('vs-fast-threshold').value = data.fast_threshold_seconds || 30;
+        document.getElementById('vs-dup-window').value = data.duplicate_window_hours || 1;
+        $('#validationSettingsModal').modal('show');
+    });
+}
+function saveValidationSettings() {
+    var url = '{% url "analytics_validation_settings" survey.uuid %}';
+    var data = {
+        fast_threshold_seconds: parseFloat(document.getElementById('vs-fast-threshold').value) || 30,
+        duplicate_window_hours: parseFloat(document.getElementById('vs-dup-window').value) || 1,
+    };
+    fetch(url, {
+        method: 'POST',
+        headers: {'X-CSRFToken': _getCsrfToken(), 'Content-Type': 'application/json'},
+        body: JSON.stringify(data),
+    }).then(function(r) {
+        if (r.ok) { $('#validationSettingsModal').modal('hide'); loadTable(); }
+    });
+}
+
+/* Detail modal inline edit */
+function startDetailEdit(sid, qid, inputType, btn) {
+    var valSpan = document.getElementById('detail-val-' + qid);
+    if (!valSpan) return;
+    var current = valSpan.textContent.trim();
+    if (current === '\u2014') current = '';
+    var input = document.createElement('input');
+    input.type = (inputType === 'number' || inputType === 'range') ? 'number' : 'text';
+    input.value = current;
+    input.className = 'form-control form-control-sm d-inline-block';
+    input.style.cssText = 'width:70%;font-size:0.8rem;height:24px;';
+    valSpan.textContent = '';
+    valSpan.appendChild(input);
+    btn.style.display = 'none';
+    input.focus();
+    input.addEventListener('blur', function() {
+        var val = input.value;
+        if (inputType === 'number' || inputType === 'range') val = val === '' ? null : parseFloat(val);
+        var url = '{% url "analytics_answer_edit" survey.uuid 0 0 %}'.replace('/0/answers/0/', '/' + sid + '/answers/' + qid + '/');
+        fetch(url, {
+            method: 'POST',
+            headers: {'X-CSRFToken': _getCsrfToken(), 'Content-Type': 'application/json'},
+            body: JSON.stringify({value: val}),
+        }).then(function(resp) {
+            if (resp.ok) { loadSessionDetail(sid); loadTable(); }
+        });
+    });
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    });
+}
+
+/* Tags & Notes */
+function addSessionTag(sid, input) {
+    var tag = input.value.trim();
+    if (!tag) return;
+    var container = input.parentElement;
+    var existing = [];
+    container.querySelectorAll('.badge').forEach(function(b) { existing.push(b.textContent.trim()); });
+    existing.push(tag);
+    var url = '{% url "analytics_session_update_tags" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+    fetch(url, {
+        method: 'POST',
+        headers: {'X-CSRFToken': _getCsrfToken(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({tags: existing}),
+    }).then(function(resp) {
+        if (resp.ok) {
+            var badge = document.createElement('span');
+            badge.className = 'badge badge-info';
+            badge.style.fontWeight = 'normal';
+            badge.textContent = tag;
+            container.insertBefore(badge, input);
+            input.value = '';
+            loadTable();
+        }
+    });
+}
+function saveSessionNotes(sid, textarea) {
+    var url = '{% url "analytics_session_update_tags" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+    fetch(url, {
+        method: 'POST',
+        headers: {'X-CSRFToken': _getCsrfToken(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({notes: textarea.value}),
+    });
+}
+
 /* Column hide/freeze (localStorage) */
 var _colStateKey = 'attrTable_{{ survey.uuid }}';
 
@@ -504,23 +909,38 @@ function applyColState() {
         if (table) {
             var rows = table.querySelectorAll('tr');
             rows.forEach(function(row) {
-                var actionCell = row.children[0]; // eye button or empty th — stays first
                 var cells = Array.from(row.querySelectorAll('[data-col]'));
                 if (!cells.length) return;
                 // Build map of col_key → cell
                 var cellMap = {};
                 cells.forEach(function(c) { cellMap[c.dataset.col] = c; });
-                // Reorder: known order first, then remaining in original order
-                var ordered = [];
-                state.colOrder.forEach(function(key) {
-                    if (cellMap[key]) { ordered.push(cellMap[key]); delete cellMap[key]; }
+                // Server order of keys (default)
+                var serverOrder = cells.map(function(c) { return c.dataset.col; });
+                // Saved order: only keys that still exist
+                var savedSet = new Set();
+                state.colOrder.forEach(function(k) { savedSet.add(k); });
+                // New columns = in server order but not in saved order
+                // Insert them at their server position
+                var merged = [];
+                var savedIdx = 0;
+                var savedKeys = state.colOrder.filter(function(k) { return cellMap[k]; });
+                // Start with saved order, splice in new cols at server-relative positions
+                var newCols = serverOrder.filter(function(k) { return !savedSet.has(k); });
+                // Simple approach: saved order first, new cols inserted at their server index
+                var result = savedKeys.slice();
+                newCols.forEach(function(key) {
+                    var serverPos = serverOrder.indexOf(key);
+                    // Find insertion point: after the last result item whose server index < serverPos
+                    var insertAt = 0;
+                    for (var i = 0; i < result.length; i++) {
+                        if (serverOrder.indexOf(result[i]) < serverPos) insertAt = i + 1;
+                    }
+                    result.splice(insertAt, 0, key);
                 });
-                // Append any columns not in saved order (new questions added after save)
-                cells.forEach(function(c) {
-                    if (cellMap[c.dataset.col]) ordered.push(c);
+                // Re-append in order
+                result.forEach(function(key) {
+                    if (cellMap[key]) row.appendChild(cellMap[key]);
                 });
-                // Re-append in order (after action cell)
-                ordered.forEach(function(c) { row.appendChild(c); });
             });
         }
     }
@@ -644,6 +1064,7 @@ document.addEventListener('htmx:afterSwap', function(evt) {
     if (evt.detail.target && evt.detail.target.id === 'pane-table-content') {
         applyColState();
         closeColMenu();
+        updateAnomaliesSidebar();
     }
 });
 

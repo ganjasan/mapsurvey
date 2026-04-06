@@ -153,6 +153,10 @@ def serialize_sessions(survey: SurveyHeader) -> List[Dict[str, Any]]:
             "start_datetime": session.start_datetime.isoformat() if session.start_datetime else None,
             "end_datetime": session.end_datetime.isoformat() if session.end_datetime else None,
             "language": session.language,
+            "validation_status": session.validation_status,
+            "is_deleted": session.is_deleted,
+            "tags": session.tags or [],
+            "notes": session.notes or '',
             "answers": serialize_answers(session),
         })
 

@@ -1,19 +1,93 @@
-{% load tz hash %}
+{% load tz hash survey_filters %}
 {# HTMX-swappable partial: attribute table with toolbar, sort, search, pagination #}
+<style>.cell-editable { cursor: text; } .cell-editable:hover { background: #f0f4ff; border-radius: 2px; }</style>
+<script type="application/json" id="anomaly-counts-data">{{ anomaly_counts_json|safe }}</script>
+<script type="text/plain" id="active-issues-filter">{{ issues_filter }}</script>
 
-<div class="attr-table-toolbar">
+{# Normal toolbar — visible when no rows selected #}
+<div class="attr-table-toolbar" id="toolbar-normal">
     <div class="attr-table-toolbar-left">
         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleHideFieldsPopover()" title="Show/hide columns">
             <i class="fas fa-columns"></i> Hide fields
         </button>
-        <span class="text-muted ml-2" style="font-size:0.85rem;">{{ total }} result{{ total|pluralize }}</span>
+        {% if is_editor %}
+        <button type="button" id="trash-toggle-btn"
+                class="btn btn-sm {% if show_trash %}btn-warning{% else %}btn-outline-secondary{% endif %}"
+                onclick="toggleShowTrash()" title="Show/hide trash">
+            <i class="fas fa-trash-alt"></i> Trash
+        </button>
+        {% endif %}
+        <select class="form-control form-control-sm d-inline-block ml-2"
+                style="width:auto;font-size:0.82rem;height:28px;"
+                onchange="changeIssuesFilter(this.value)">
+            <option value="" {% if not issues_filter %}selected{% endif %}>All sessions</option>
+            <option value="empty" {% if issues_filter == 'empty' %}selected{% endif %}>Empty</option>
+            <option value="incomplete" {% if issues_filter == 'incomplete' %}selected{% endif %}>Incomplete</option>
+            <option value="missing_required" {% if issues_filter == 'missing_required' %}selected{% endif %}>Missing required</option>
+            <option value="fast" {% if issues_filter == 'fast' %}selected{% endif %}>Fast completion</option>
+            <option value="duplicate" {% if issues_filter == 'duplicate' %}selected{% endif %}>Duplicate</option>
+            <option value="has_errors" {% if issues_filter == 'has_errors' %}selected{% endif %}>Has answer errors</option>
+            <option value="has_warnings" {% if issues_filter == 'has_warnings' %}selected{% endif %}>Has answer warnings</option>
+        </select>
+        <span class="text-muted ml-2" style="font-size:0.85rem;">
+            {{ total }} {% if show_trash %}trashed{% else %}result{{ total|pluralize }}{% endif %}
+        </span>
+        {% for f in issues_filter_list %}
+        <span class="badge badge-pill" style="background:#e8f0fe;color:#1a56db;font-size:0.78rem;font-weight:500;margin-left:0.25rem;">
+            {{ f }}
+            <button type="button" style="border:none;background:none;color:#1a56db;font-size:0.85rem;padding:0 0 0 4px;cursor:pointer;line-height:1;"
+                    onclick="toggleIssueFilter('{{ f }}')" title="Remove filter">&times;</button>
+        </span>
+        {% endfor %}
+        {% if issues_filter_list %}
+        <button type="button" class="btn btn-sm btn-link p-0 ml-1" style="font-size:0.75rem;color:#6b7280;" onclick="changeIssuesFilter('')">Clear all</button>
+        {% endif %}
     </div>
     <div class="attr-table-toolbar-right">
+        {% if is_editor %}
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openValidationSettings()" title="Validation settings">
+            <i class="fas fa-cog"></i>
+        </button>
+        {% endif %}
         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleTableFullscreen()" title="Toggle fullscreen">
             <i class="fas fa-expand"></i>
         </button>
     </div>
 </div>
+{# Bulk toolbar — visible when rows are selected #}
+{% if is_editor %}
+<div class="attr-table-toolbar" id="toolbar-bulk" style="display:none;background:#e8f0fe;border-radius:4px;">
+    <div class="attr-table-toolbar-left" style="gap:0.5rem;">
+        <button type="button" class="btn btn-sm btn-link" onclick="clearSelection()" title="Deselect all" style="padding:0;">
+            <i class="fas fa-times"></i>
+        </button>
+        <span style="font-size:0.85rem;font-weight:600;" id="bulk-count">0 selected</span>
+        <div class="btn-group ml-2">
+            <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-toggle="dropdown">
+                <i class="fas fa-check-circle"></i> Status
+            </button>
+            <div class="dropdown-menu">
+                <a class="dropdown-item" href="#" onclick="bulkSetStatus(''); return false;">— No status</a>
+                <a class="dropdown-item" href="#" onclick="bulkSetStatus('approved'); return false;">Approved</a>
+                <a class="dropdown-item" href="#" onclick="bulkSetStatus('not_approved'); return false;">Not approved</a>
+                <a class="dropdown-item" href="#" onclick="bulkSetStatus('on_hold'); return false;">On hold</a>
+            </div>
+        </div>
+        {% if show_trash %}
+        <button type="button" class="btn btn-sm btn-outline-success" onclick="bulkRestore()">
+            <i class="fas fa-undo"></i> Restore
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="bulkHardDelete()">
+            <i class="fas fa-times-circle"></i> Delete permanently
+        </button>
+        {% else %}
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="bulkTrash()">
+            <i class="fas fa-trash-alt"></i> Trash
+        </button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 
 {# Hidden state form — carries current state for HTMX requests #}
 <form id="table-state-form">
@@ -21,6 +95,9 @@
     <input type="hidden" name="sort" value="{{ sort_col }}">
     <input type="hidden" name="dir" value="{{ sort_dir }}">
     <input type="hidden" name="page" value="{{ page }}">
+    <input type="hidden" name="page_size" value="{{ page_size }}">
+    <input type="hidden" name="trash" value="{% if show_trash %}1{% else %}0{% endif %}">
+    <input type="hidden" name="issues" value="{{ issues_filter }}">
     {% for key, val in col_search.items %}
     <input type="hidden" name="search_{{ key }}" value="{{ val }}">
     {% endfor %}
@@ -52,7 +129,11 @@
 <thead>
     {# Header row with column names + sort + menu #}
     <tr>
-        <th class="attr-th-actions" style="width:40px;"></th>
+        <th style="width:28px;text-align:center;background:#f8f9fa;">
+            <input type="checkbox" id="select-all-cb" title="Select / deselect all"
+                   onchange="toggleSelectAll(this.checked)">
+        </th>
+        <th class="attr-th-actions" style="width:56px;"></th>
         {% for col in columns %}
         <th data-col="{{ col.key }}" class="attr-th">
             <div class="attr-th-content">
@@ -89,6 +170,7 @@
     {# Search row #}
     <tr class="attr-search-row">
         <td></td>
+        <td></td>
         {% for col in columns %}
         <td data-col="{{ col.key }}">
             <input type="text"
@@ -104,26 +186,87 @@
 </thead>
 <tbody>
     {% for row in rows %}
-    <tr>
+    <tr {% if row.is_deleted %}class="table-secondary"{% endif %}>
+        <td style="text-align:center;width:28px;">
+            <input type="checkbox" class="row-select-cb" data-session-id="{{ row.session_id }}">
+        </td>
         <td class="attr-td-actions">
             <button type="button" class="btn btn-sm btn-link p-0" onclick="loadSessionDetail({{ row.session_id }})" title="View details">
                 <i class="fas fa-eye" style="color:var(--accent);"></i>
             </button>
+            {% if is_editor %}
+            {% if row.is_deleted %}
+            <button type="button" class="btn btn-sm btn-link p-0" onclick="restoreSession({{ row.session_id }})" title="Restore">
+                <i class="fas fa-undo" style="color:#28a745;"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-link p-0" onclick="hardDeleteSession({{ row.session_id }})" title="Delete permanently">
+                <i class="fas fa-times-circle" style="color:#dc3545;"></i>
+            </button>
+            {% else %}
+            <button type="button" class="btn btn-sm btn-link p-0" onclick="trashSession({{ row.session_id }})" title="Move to trash">
+                <i class="fas fa-trash-alt" style="color:#9ca3af;"></i>
+            </button>
+            {% endif %}
+            {% endif %}
         </td>
         {% for col in columns %}
         <td data-col="{{ col.key }}">
             {% if col.key == 'id' %}#{{ row.id }}
+            {% elif col.key == 'validation_status' %}
+                {% if is_editor and not row.is_deleted %}
+                <select class="form-control form-control-sm validation-select"
+                        data-session-id="{{ row.session_id }}"
+                        style="font-size:0.75rem;padding:1px 4px;height:24px;width:auto;min-width:90px;{% if row.validation_status == 'approved' %}border-color:#28a745;color:#28a745;{% elif row.validation_status == 'not_approved' %}border-color:#dc3545;color:#dc3545;{% elif row.validation_status == 'on_hold' %}border-color:#fd7e14;color:#fd7e14;{% endif %}"
+                        onchange="setSessionStatus(this, {{ row.session_id }})">
+                    <option value="" {% if not row.validation_status %}selected{% endif %}>—</option>
+                    <option value="approved" {% if row.validation_status == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="not_approved" {% if row.validation_status == 'not_approved' %}selected{% endif %}>Not approved</option>
+                    <option value="on_hold" {% if row.validation_status == 'on_hold' %}selected{% endif %}>On hold</option>
+                </select>
+                {% else %}
+                    {% if row.validation_status == 'approved' %}<span class="badge badge-success">Approved</span>
+                    {% elif row.validation_status == 'not_approved' %}<span class="badge badge-danger">Not approved</span>
+                    {% elif row.validation_status == 'on_hold' %}<span class="badge badge-warning">On hold</span>
+                    {% else %}—{% endif %}
+                {% endif %}
+            {% elif col.key == 'issues' %}
+                {% for issue in row.issues %}
+                    {% if issue == 'empty' %}<span class="badge badge-dark" style="font-size:0.7rem;">Empty</span>
+                    {% elif issue == 'incomplete' %}<span class="badge badge-warning text-dark" style="font-size:0.7rem;">Incomplete</span>
+                    {% elif issue == 'missing_required' %}<span class="badge badge-danger" style="font-size:0.7rem;">Missing req.</span>
+                    {% elif issue == 'fast' %}<span class="badge badge-info" style="font-size:0.7rem;">Fast</span>
+                    {% elif issue == 'duplicate' %}<span class="badge badge-secondary" style="font-size:0.7rem;">Duplicate</span>
+                    {% endif %}
+                {% empty %}
+                    <span style="color:#9ca3af;">—</span>
+                {% endfor %}
+            {% elif col.key == 'tags' %}
+                {% for tag in row.tags %}
+                    <span class="badge badge-info" style="font-size:0.7rem;font-weight:normal;">{{ tag }}</span>
+                {% empty %}
+                    <span style="color:#9ca3af;">—</span>
+                {% endfor %}
             {% elif col.key == 'start_datetime' %}{{ row.start_datetime|date:"M j, Y H:i" }}
             {% elif col.key == 'language' %}{{ row.language }}
-            {% else %}{% with cell_val=row.cells|hash:col.key %}{{ cell_val|default:"—" }}{% endwith %}
+            {% else %}
+                {% with cell_lints=row.lints|hash:col.key %}
+                {% with has_error=cell_lints|join:','|truncatechars:1 %}
+                <span class="cell-display{% if is_editor %} cell-editable{% endif %}"
+                      {% if is_editor %}ondblclick="startCellEdit(this, {{ row.session_id }}, '{{ col.key }}', '{{ col.input_type }}', '{{ col.choices_json|escapejs }}')"{% endif %}
+                      {% if cell_lints %}title="{{ cell_lints|lint_tooltip }}" style="background:{% if 'self_intersection' in cell_lints or 'empty_required' in cell_lints or 'out_of_range' in cell_lints %}#fff5f5{% else %}#fffbeb{% endif %};display:inline-flex;align-items:center;gap:3px;padding:0 3px;border-radius:3px;border:1px solid {% if 'self_intersection' in cell_lints or 'empty_required' in cell_lints or 'out_of_range' in cell_lints %}#fecaca{% else %}#fde68a{% endif %};cursor:help;"{% endif %}>
+                    {% if cell_lints %}{% if 'self_intersection' in cell_lints or 'empty_required' in cell_lints or 'out_of_range' in cell_lints %}<i class="fas fa-exclamation-circle" style="color:#dc3545;font-size:0.7rem;"></i>{% else %}<i class="fas fa-exclamation-triangle" style="color:#f59e0b;font-size:0.7rem;"></i>{% endif %}{% endif %}
+                {% endwith %}
+                    {% with cell_val=row.cells|hash:col.key %}{{ cell_val|default:"—" }}{% endwith %}
+                </span>
+                {% endwith %}
             {% endif %}
         </td>
         {% endfor %}
     </tr>
     {% empty %}
     <tr>
-        <td colspan="{{ columns|length|add:1 }}" class="text-center text-muted py-4">
-            No responses{% if col_search %} matching your search{% endif %}
+        <td colspan="{{ columns|length|add:2 }}" class="text-center text-muted py-4">
+            {% if show_trash %}No trashed sessions{% elif col_search %}No responses matching your search{% else %}No responses{% endif %}
         </td>
     </tr>
     {% endfor %}
@@ -132,8 +275,8 @@
 </div>
 
 {# Pagination #}
-{% if total_pages > 1 %}
 <div class="attr-pagination">
+    {% if total_pages > 1 %}
     <button class="btn btn-sm btn-outline-secondary"
             {% if page <= 1 %}disabled{% endif %}
             onclick="tablePage({{ page|add:'-1' }})">
@@ -145,8 +288,18 @@
             onclick="tablePage({{ page|add:'1' }})">
         Next <i class="fas fa-chevron-right"></i>
     </button>
+    {% endif %}
+    <span class="ml-auto" style="font-size:0.82rem;">
+        <label class="text-muted mb-0">Rows:
+            <select class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82rem;padding:1px 4px;height:24px;"
+                    onchange="changePageSize(this.value)">
+                {% for opt in page_size_options %}
+                <option value="{{ opt }}" {% if opt == page_size %}selected{% endif %}>{{ opt }}</option>
+                {% endfor %}
+            </select>
+        </label>
+    </span>
 </div>
-{% endif %}
 
 {# Column menu dropdown (hidden, positioned by JS) #}
 <div id="attr-col-menu" style="display:none;" class="attr-col-menu-dropdown">
@@ -156,3 +309,124 @@
     <div class="attr-col-menu-item" onclick="setColHidden(window._menuCol, true); closeColMenu()"><i class="fas fa-eye-slash"></i> Hide field</div>
     <div class="attr-col-menu-item" onclick="toggleColFrozen(window._menuCol); closeColMenu()"><i class="fas fa-thumbtack"></i> Freeze field</div>
 </div>
+
+<script>
+function getSelectedIds() {
+    var ids = [];
+    document.querySelectorAll('.row-select-cb:checked').forEach(function(cb) {
+        ids.push(parseInt(cb.dataset.sessionId));
+    });
+    return ids;
+}
+function updateBulkToolbar() {
+    var ids = getSelectedIds();
+    var normal = document.getElementById('toolbar-normal');
+    var bulk = document.getElementById('toolbar-bulk');
+    if (!bulk) return;
+    if (ids.length > 0) {
+        normal.style.display = 'none';
+        bulk.style.display = '';
+        document.getElementById('bulk-count').textContent = ids.length + ' selected';
+    } else {
+        normal.style.display = '';
+        bulk.style.display = 'none';
+    }
+    var selectAll = document.getElementById('select-all-cb');
+    var allCbs = document.querySelectorAll('.row-select-cb');
+    if (selectAll && allCbs.length > 0) {
+        selectAll.checked = ids.length === allCbs.length;
+        selectAll.indeterminate = ids.length > 0 && ids.length < allCbs.length;
+    }
+}
+function toggleSelectAll(checked) {
+    document.querySelectorAll('.row-select-cb').forEach(function(cb) { cb.checked = checked; });
+    updateBulkToolbar();
+}
+function clearSelection() {
+    document.querySelectorAll('.row-select-cb').forEach(function(cb) { cb.checked = false; });
+    var selectAll = document.getElementById('select-all-cb');
+    if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
+    updateBulkToolbar();
+}
+function toggleShowTrash() {
+    var form = document.getElementById('table-state-form');
+    var inp = form.querySelector('[name=trash]');
+    inp.value = inp.value === '1' ? '0' : '1';
+    loadTable({page: '1'});
+}
+function changePageSize(size) {
+    var form = document.getElementById('table-state-form');
+    form.querySelector('[name=page_size]').value = size;
+    loadTable({page: '1'});
+}
+function changeIssuesFilter(val) {
+    var form = document.getElementById('table-state-form');
+    form.querySelector('[name=issues]').value = val;
+    loadTable({page: '1'});
+}
+// Wire checkboxes to toolbar update
+document.querySelectorAll('.row-select-cb').forEach(function(cb) {
+    cb.addEventListener('change', updateBulkToolbar);
+});
+// Inline cell editing
+function startCellEdit(span, sid, qid, inputType, choicesJson) {
+    if (span.querySelector('input, select')) return; // already editing
+    var currentVal = span.textContent.trim();
+    if (currentVal === '—') currentVal = '';
+    var input;
+    if (inputType === 'choice' || inputType === 'rating' || inputType === 'multichoice') {
+        var choices = [];
+        try { choices = JSON.parse(choicesJson); } catch(e) {}
+        input = document.createElement('select');
+        input.className = 'form-control form-control-sm';
+        input.style.cssText = 'font-size:0.8rem;height:24px;padding:1px 4px;width:100%;';
+        var opt0 = document.createElement('option');
+        opt0.value = ''; opt0.textContent = '—';
+        input.appendChild(opt0);
+        choices.forEach(function(c) {
+            var opt = document.createElement('option');
+            opt.value = c.code;
+            opt.textContent = typeof c.name === 'string' ? c.name : (c.name.en || Object.values(c.name)[0] || c.code);
+            if (currentVal && opt.textContent.trim() === currentVal.trim()) opt.selected = true;
+            input.appendChild(opt);
+        });
+    } else if (inputType === 'number' || inputType === 'range') {
+        input = document.createElement('input');
+        input.type = 'number';
+        input.step = 'any';
+        input.value = currentVal;
+        input.className = 'form-control form-control-sm';
+        input.style.cssText = 'font-size:0.8rem;height:24px;padding:1px 4px;width:100%;';
+    } else {
+        input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentVal;
+        input.className = 'form-control form-control-sm';
+        input.style.cssText = 'font-size:0.8rem;height:24px;padding:1px 4px;width:100%;';
+    }
+    span.textContent = '';
+    span.appendChild(input);
+    input.focus();
+    input.addEventListener('blur', function() { saveCellEdit(span, sid, qid, inputType, input); });
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+        if (e.key === 'Escape') { loadTable(); }
+    });
+}
+function saveCellEdit(span, sid, qid, inputType, input) {
+    var val = input.value;
+    if (inputType === 'number' || inputType === 'range') {
+        val = val === '' ? null : parseFloat(val);
+    } else if (inputType === 'choice' || inputType === 'rating') {
+        val = val === '' ? null : parseInt(val);
+    }
+    var url = '{% url "analytics_answer_edit" survey.uuid 0 0 %}'.replace('/0/answers/0/', '/' + sid + '/answers/' + qid + '/');
+    fetch(url, {
+        method: 'POST',
+        headers: {'X-CSRFToken': _getCsrfToken(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({value: val}),
+    }).then(function(resp) {
+        if (resp.ok) loadTable();
+    });
+}
+</script>

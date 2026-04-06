@@ -100,11 +100,37 @@ INPUT_TYPE_CHOICES = (
     ("html", _("HTML")),
 )
 
+VALIDATION_STATUS_CHOICES = (
+    ('', 'No status'),
+    ('approved', 'Approved'),
+    ('not_approved', 'Not approved'),
+    ('on_hold', 'On hold'),
+)
+
+
+class SurveySessionQuerySet(models.QuerySet):
+    def active(self):
+        return self.filter(is_deleted=False)
+
+    def deleted(self):
+        return self.filter(is_deleted=True)
+
+
 class SurveySession(models.Model):
     survey = models.ForeignKey("SurveyHeader", on_delete=models.PROTECT)
     start_datetime = models.DateTimeField(default=datetime.now)
     end_datetime = models.DateTimeField(null=True, blank=True)
     language = models.CharField(max_length=10, null=True, blank=True, help_text=_('Selected language code (ISO 639-1)'))
+    validation_status = models.CharField(
+        max_length=15, blank=True, default='',
+        choices=VALIDATION_STATUS_CHOICES, db_index=True,
+    )
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    tags = models.JSONField(default=list, blank=True)
+    notes = models.TextField(default='', blank=True)
+
+    objects = SurveySessionQuerySet.as_manager()
 
     class Meta:
         app_label = 'survey'
@@ -253,6 +279,7 @@ class SurveyHeader(models.Model):
     password_hash = models.CharField(max_length=128, null=True, blank=True)
     test_token = models.UUIDField(default=uuid_module.uuid4, unique=True)
     cover_image = models.ImageField(upload_to='covers/', null=True, blank=True)
+    validation_settings = models.JSONField(default=dict, blank=True, help_text=_('Survey-level validation thresholds: {fast_threshold_seconds, duplicate_window_hours}'))
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -474,6 +501,7 @@ class Question(models.Model):
     input_type = models.CharField(max_length=80, choices=INPUT_TYPE_CHOICES)
     choices = models.JSONField(null=True, blank=True, validators=[ChoicesValidator()])
     required = models.BooleanField(default=False)
+    validation_settings = models.JSONField(default=dict, blank=True, help_text=_('Per-question validation: {min_value, max_value, outlier_sigma, min_length, area_outlier_factor}'))
     color = models.CharField(verbose_name=_(u'Color'), max_length=7, help_text=_(u'HEX color, as #RRGGBB'), default="#000000")
     icon_class = models.CharField(default="", max_length=80, help_text=_(u'Must be Font-Awesome class'), blank=True, null=True)
     image = models.ImageField(upload_to ='images/', null=True, blank=True)

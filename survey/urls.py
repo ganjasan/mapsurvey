@@ -50,6 +50,17 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/analytics/questions/<int:question_id>/text/', analytics_views.analytics_text_answers, name='analytics_text_answers'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/', analytics_views.analytics_session_detail, name='analytics_session_detail'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/table/', analytics_views.analytics_table, name='analytics_table'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/validation-settings/', analytics_views.analytics_validation_settings, name='analytics_validation_settings'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/tags/', analytics_views.analytics_session_update_tags, name='analytics_session_update_tags'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/answers/<int:question_id>/edit/', analytics_views.analytics_answer_edit, name='analytics_answer_edit'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/status/', analytics_views.analytics_session_set_status, name='analytics_set_status'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/trash/', analytics_views.analytics_session_trash, name='analytics_session_trash'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/restore/', analytics_views.analytics_session_restore, name='analytics_session_restore'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/delete/', analytics_views.analytics_session_hard_delete, name='analytics_session_hard_delete'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/bulk/status/', analytics_views.analytics_bulk_set_status, name='analytics_bulk_set_status'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/bulk/trash/', analytics_views.analytics_bulk_trash, name='analytics_bulk_trash'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/bulk/restore/', analytics_views.analytics_bulk_restore, name='analytics_bulk_restore'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/bulk/delete/', analytics_views.analytics_bulk_hard_delete, name='analytics_bulk_hard_delete'),
 
     # Share & tracking links
     path('editor/surveys/<uuid:survey_uuid>/share/', share_views.share_page, name='editor_survey_share'),

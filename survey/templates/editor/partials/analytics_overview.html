@@ -11,4 +11,10 @@
         <div class="stat-value">{{ completion_rate }}%</div>
         <div class="stat-label">Completion Rate</div>
     </div>
+    {% if flagged_count %}
+    <div class="stat-card" style="border-color:#fd7e14;">
+        <div class="stat-value" style="color:#fd7e14;">{{ flagged_count }}</div>
+        <div class="stat-label">Flagged</div>
+    </div>
+    {% endif %}
 </div>
