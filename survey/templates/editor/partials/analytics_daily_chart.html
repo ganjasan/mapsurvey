@@ -118,8 +118,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var _tlSliderRef = null; // set after RangeSlider init below
     function onDisplayChange() {
         window._updateTimelineFromHourly();
-        // If filter active, reapply with new display range
-        if (_tlSliderRef && window.filterManager && window.filterManager.timeSelection !== null) {
+        // If time filter active, reapply with new display range
+        if (_tlSliderRef && window.filterManager && window.filterManager.timeRange !== null) {
             _tlSliderRef._fireFilter();
         }
     }
@@ -176,12 +176,12 @@ document.addEventListener('DOMContentLoaded', function() {
         onFilter: function(left, right) {
             if (left <= 0.001 && right >= 0.999) {
                 window._timelineSelectionRange = null;
-                if (window.filterManager) window.filterManager.setTimeSelection(null);
+                if (window.filterManager) window.filterManager.setTimeRange(null, null);
                 return;
             }
             var fromTs = rangeToTimestamp(left);
             var toTs = rangeToTimestamp(right);
-            if (!fromTs || !toTs || !window._sessionHours) return;
+            if (!fromTs || !toTs) return;
 
             function cleanTs(ts) { return ts.replace('T', ' ').replace(/[+-]\d{2}:\d{2}.*$/, ''); }
             window._timelineSelectionRange = {
@@ -189,13 +189,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 to: right < 0.999 ? cleanTs(toTs) : null,
             };
 
-            var matchingSids = new Set();
-            window._sessionHours.forEach(function(entry) {
-                var h = entry[1];
-                if (h >= fromTs && h <= toTs) matchingSids.add(entry[0]);
-            });
             if (window.filterManager) {
-                window.filterManager.setTimeSelection(matchingSids.size > 0 ? matchingSids : null);
+                // Truncate to hour precision to match _sessionHours format (YYYY-MM-DDTHH)
+                window.filterManager.setTimeRange(
+                    fromTs ? fromTs.slice(0, 13) : null,
+                    toTs ? toTs.slice(0, 13) : null
+                );
             }
         },
         onReset: function() {

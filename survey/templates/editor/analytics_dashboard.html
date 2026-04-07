@@ -368,7 +368,7 @@
 
     {# Hidden indicator — shows when sessions are hidden via SelectionManager #}
     <div id="hidden-indicator" style="display:none;padding:0.15rem 1.5rem;flex-shrink:0;">
-        <button class="btn btn-sm btn-link p-0" style="font-size:0.78rem;color:#6b7280;" onclick="selectionManager.showAll()">
+        <button class="btn btn-sm btn-link p-0" style="font-size:0.78rem;color:#6b7280;" onclick="filterManager.showAll()">
             <i class="fas fa-eye"></i> <span id="hidden-count">0</span> hidden — Show all
         </button>
     </div>
@@ -409,8 +409,8 @@
                         <button class="btn btn-sm btn-link p-0" onclick="selectionManager.clear()" style="color:#1a56db;"><i class="fas fa-times"></i></button>
                         <span class="panel-sel-count" style="font-weight:600;">0 selected</span>
                         <span style="border-left:1px solid #bfdbfe;height:16px;"></span>
-                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.hideSelected()"><i class="fas fa-eye-slash"></i> Hide</button>
-                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.keepOnlySelected()"><i class="fas fa-filter"></i> Keep only</button>
+                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.hideSelected()"><i class="fas fa-eye-slash"></i> Hide</button>
+                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.keepOnlySelected()"><i class="fas fa-filter"></i> Keep only</button>
                         <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> Invert</button>
                     </div>
                 </div>
@@ -427,8 +427,8 @@
                         <button class="btn btn-sm btn-link p-0" onclick="selectionManager.clear()" style="color:#1a56db;"><i class="fas fa-times"></i></button>
                         <span class="panel-sel-count" style="font-weight:600;">0 selected</span>
                         <span style="border-left:1px solid #bfdbfe;height:16px;"></span>
-                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.hideSelected()"><i class="fas fa-eye-slash"></i> Hide</button>
-                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.keepOnlySelected()"><i class="fas fa-filter"></i> Keep only</button>
+                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.hideSelected()"><i class="fas fa-eye-slash"></i> Hide</button>
+                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.keepOnlySelected()"><i class="fas fa-filter"></i> Keep only</button>
                         <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> Invert</button>
                     </div>
                 </div>
@@ -510,7 +510,6 @@
 /* ── SelectionManager ─────────────────────────────────────────── */
 window.selectionManager = (function() {
     var _selected = new Set();
-    var _hidden = new Set();
     var _allSessionIds = new Set();
     var _listeners = [];
 
@@ -527,28 +526,17 @@ window.selectionManager = (function() {
         setSelection: function(ids) { _selected = new Set(ids); _notify(); },
 
         invert: function() {
+            var universe = window.filterManager ? window.filterManager.getVisibleSids() : _allSessionIds;
+            if (universe === null) universe = _allSessionIds;
             var newSel = new Set();
-            _allSessionIds.forEach(function(id) { if (!_selected.has(id) && !_hidden.has(id)) newSel.add(id); });
+            universe.forEach(function(id) { if (!_selected.has(id)) newSel.add(id); });
             _selected = newSel; _notify();
         },
-        hideSelected: function() {
-            _selected.forEach(function(id) { _hidden.add(id); });
-            _selected.clear(); _notify();
-        },
-        keepOnlySelected: function() {
-            _allSessionIds.forEach(function(id) { if (!_selected.has(id)) _hidden.add(id); });
-            _notify();
-        },
-        showAll: function() { _hidden.clear(); _notify(); },
 
         isSelected: function(id) { return _selected.has(id); },
-        isHidden: function(id) { return _hidden.has(id); },
         getSelected: function() { return _selected; },
-        getHidden: function() { return _hidden; },
         count: function() { return _selected.size; },
-        hiddenCount: function() { return _hidden.size; },
         hasSelection: function() { return _selected.size > 0; },
-        hasHidden: function() { return _hidden.size > 0; },
     };
 })();
 
@@ -634,6 +622,10 @@ function switchDataPanel(panel) {
                 }
             }
         }, 150);
+    }
+    if (panel === 'charts') {
+        // Re-position range slider handles after container becomes visible
+        setTimeout(function() { window.dispatchEvent(new Event('resize')); }, 50);
     }
     _saveDataLayout();
 }
@@ -742,77 +734,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ── SelectionManager listeners ──────────────────────────────
     selectionManager.onChange(function() {
-        var count = selectionManager.count();
-        var hiddenCount = selectionManager.hiddenCount();
-
-        // Update panel selection bars (Map, Charts)
-        document.querySelectorAll('.panel-selection-bar').forEach(function(bar) {
-            bar.style.display = count > 0 ? '' : 'none';
-            var countEl = bar.querySelector('.panel-sel-count');
-            if (countEl) countEl.textContent = count + ' selected';
-        });
-
-        // Update hidden indicator
-        var hiddenBar = document.getElementById('hidden-indicator');
-        if (hiddenBar) hiddenBar.style.display = hiddenCount > 0 ? '' : 'none';
-        var hiddenCountEl = document.getElementById('hidden-count');
-        if (hiddenCountEl) hiddenCountEl.textContent = hiddenCount;
-
-        // Sync Table checkboxes
-        document.querySelectorAll('.row-select-cb').forEach(function(cb) {
-            var sid = parseInt(cb.dataset.sessionId);
-            cb.checked = selectionManager.isSelected(sid);
-            var tr = cb.closest('tr');
-            if (tr) tr.style.display = selectionManager.isHidden(sid) ? 'none' : '';
-        });
-        var selectAll = document.getElementById('select-all-cb');
-        if (selectAll) {
-            var allCbs = document.querySelectorAll('.row-select-cb');
-            var checkedCount = document.querySelectorAll('.row-select-cb:checked').length;
-            selectAll.checked = checkedCount > 0 && checkedCount === allCbs.length;
-            selectAll.indeterminate = checkedCount > 0 && checkedCount < allCbs.length;
-        }
-
-        // Sync Map features
-        var m = window.analyticsMap;
-        if (m && window.layerManager) {
-            m.eachLayer(function(layer) {
-                if (!layer.feature) return;
-                var sid = layer.feature.properties ? layer.feature.properties.session_id : null;
-                if (!sid) return;
-                var hidden = selectionManager.isHidden(sid);
-                var selected = selectionManager.isSelected(sid);
-                if (hidden) {
-                    if (layer.setStyle) layer.setStyle({opacity: 0, fillOpacity: 0});
-                    if (layer.setRadius) layer.setRadius(0);
-                } else if (count > 0 && selected) {
-                    if (layer.setStyle) layer.setStyle({opacity: 1, fillOpacity: 0.85, weight: 3});
-                    if (layer.setRadius) layer.setRadius(8);
-                } else {
-                    // Default / unselected: restore initial style
-                    if (layer.setRadius) {
-                        layer.setStyle({opacity: 1, fillOpacity: 0.7, weight: 1});
-                        layer.setRadius(5);
-                    } else if (layer.setStyle) {
-                        layer.setStyle({opacity: 1, fillOpacity: 0.2, weight: 2});
-                    }
-                }
-            });
-        }
-
-        // Update pills to show selection count
-        if (window.filterManager) {
-            window.filterManager._updatePills();
-        }
-
-        // Update old bulk toolbar visibility
-        var bulkToolbar = document.getElementById('toolbar-bulk');
-        var normalToolbar = document.getElementById('toolbar-normal');
-        if (bulkToolbar && normalToolbar) {
-            bulkToolbar.style.display = count > 0 ? '' : 'none';
-            normalToolbar.style.display = count > 0 ? 'none' : '';
-            var bulkCount = document.getElementById('bulk-count');
-            if (bulkCount) bulkCount.textContent = count + ' selected';
+        if (window.filterManager && !window.filterManager._applying) {
+            window.filterManager._renderSelection();
         }
     });
 });
@@ -1191,32 +1114,6 @@ function selectAllFlagged() {
     updateBulkToolbar();
 }
 
-/* Row visibility */
-function hideSelectedRows() {
-    document.querySelectorAll('.row-select-cb:checked').forEach(function(cb) {
-        cb.closest('tr').style.display = 'none';
-        cb.checked = false;
-    });
-    updateBulkToolbar();
-    var btn = document.getElementById('show-all-rows-btn');
-    if (btn) btn.style.display = '';
-}
-function invertSelection() {
-    document.querySelectorAll('.row-select-cb').forEach(function(cb) {
-        if (cb.closest('tr').style.display !== 'none') {
-            cb.checked = !cb.checked;
-        }
-    });
-    updateBulkToolbar();
-}
-function showAllRows() {
-    document.querySelectorAll('tbody tr').forEach(function(tr) {
-        tr.style.display = '';
-    });
-    var btn = document.getElementById('show-all-rows-btn');
-    if (btn) btn.style.display = 'none';
-}
-
 /* Validation Settings */
 function openValidationSettings() {
     var url = '{% url "analytics_validation_settings" survey.uuid %}';
@@ -1542,12 +1439,13 @@ function FilterManager(matrix) {
     this._matrix = matrix;
     this.filters = new Map();
     this.numericRanges = new Map();
-    this.filteredSids = null;
-    this._choiceFilteredSids = null;
-    this._mapSids = null;
-    this._timelineSids = null;
+    this.timeRange = null;          // {from, to} | null
+    this._hiddenSids = new Set();
+    this.visibleSids = null;        // null = all visible
+    this._choiceNumericSids = null; // before time range (for timeline cross-filter)
     this.textQuestionIds = [];
     this._components = [];
+    this._allSessionIds = new Set(matrix.map(function(s) { return s.sid; }));
 }
 
 FilterManager.prototype.toggleFilter = function(qid, code) {
@@ -1580,9 +1478,12 @@ FilterManager.prototype.clearAll = function() {
     var numQids = Array.from(this.numericRanges.keys());
     this.filters.clear();
     this.numericRanges.clear();
+    this.timeRange = null;
+    this._hiddenSids.clear();
     numQids.forEach(function(qid) {
         if (window._resetNumericHandles) window._resetNumericHandles(qid);
     });
+    if (window._resetTimelineHandles) window._resetTimelineHandles();
     if (window.selectionManager) window.selectionManager.clear();
     this._apply();
 };
@@ -1601,9 +1502,11 @@ FilterManager.prototype.registerComponent = function(fn) {
 };
 
 FilterManager.prototype._apply = function() {
+    this._applying = true;
     this._recompute();
     var self = this;
     this._components.forEach(function(fn) { fn.call(self); });
+    this._applying = false;
 };
 
 FilterManager.prototype.getFilterParam = function() {
@@ -1615,47 +1518,104 @@ FilterManager.prototype.getFilterParam = function() {
     return parts.join(';');
 };
 
+FilterManager.prototype.setTimeRange = function(from, to) {
+    this.timeRange = (from || to) ? { from: from, to: to } : null;
+    this._apply();
+};
+
+FilterManager.prototype.hideSelected = function() {
+    var sm = window.selectionManager;
+    if (!sm) return;
+    var sel = sm.getSelected();
+    sel.forEach(function(id) { this._hiddenSids.add(id); }.bind(this));
+    sm.clear();
+    this._apply();
+};
+
+FilterManager.prototype.keepOnlySelected = function() {
+    var sm = window.selectionManager;
+    if (!sm) return;
+    var sel = sm.getSelected();
+    var universe = this.visibleSids || this._allSessionIds;
+    universe.forEach(function(id) {
+        if (!sel.has(id)) this._hiddenSids.add(id);
+    }.bind(this));
+    sm.clear();
+    this._apply();
+};
+
+FilterManager.prototype.showAll = function() {
+    this._hiddenSids.clear();
+    this._apply();
+};
+
+FilterManager.prototype.getVisibleSids = function() {
+    return this.visibleSids;
+};
+
+FilterManager.prototype._visibleMatrix = function() {
+    if (this._hiddenSids.size === 0) return this._matrix;
+    var hidden = this._hiddenSids;
+    return this._matrix.filter(function(s) { return !hidden.has(s.sid); });
+};
+
 FilterManager.prototype._recompute = function() {
     var hasChoiceOrNumeric = this.filters.size > 0 || this.numericRanges.size > 0;
-    if (!hasChoiceOrNumeric) {
-        this.filteredSids = null;
-        this._choiceFilteredSids = null;
-        this._mapSids = null;
-        this._timelineSids = null;
-        return;
-    }
-
-    // Choice + numeric filters only
-    var choiceResult = new Set();
+    var hasTime = !!this.timeRange;
+    var hasHidden = this._hiddenSids.size > 0;
     var self = this;
 
-    this._matrix.forEach(function(session) {
-        var passes = true;
-        self.filters.forEach(function(codes, qid) {
-            if (!passes) return;
-            var sessionCodes = session.a[qid];
-            if (!sessionCodes) { passes = false; return; }
-            var hasMatch = false;
-            codes.forEach(function(c) {
-                if (sessionCodes.indexOf(c) !== -1) hasMatch = true;
-            });
-            if (!hasMatch) passes = false;
-        });
-        if (passes) {
-            self.numericRanges.forEach(function(range, qid) {
+    // Phase 1: choice + numeric filters on visible (non-hidden) matrix
+    var choiceNumericResult = null;
+    if (hasChoiceOrNumeric) {
+        choiceNumericResult = new Set();
+        self._visibleMatrix().forEach(function(session) {
+            var passes = true;
+            self.filters.forEach(function(codes, qid) {
                 if (!passes) return;
-                var val = session.n ? session.n[qid] : undefined;
-                if (val === undefined) { passes = false; return; }
-                if (val < range.min || val > range.max) passes = false;
+                var sessionCodes = session.a[qid];
+                if (!sessionCodes) { passes = false; return; }
+                var hasMatch = false;
+                codes.forEach(function(c) {
+                    if (sessionCodes.indexOf(c) !== -1) hasMatch = true;
+                });
+                if (!hasMatch) passes = false;
             });
-        }
-        if (passes) choiceResult.add(session.sid);
-    });
+            if (passes) {
+                self.numericRanges.forEach(function(range, qid) {
+                    if (!passes) return;
+                    var val = session.n ? session.n[qid] : undefined;
+                    if (val === undefined) { passes = false; return; }
+                    if (val < range.min || val > range.max) passes = false;
+                });
+            }
+            if (passes) choiceNumericResult.add(session.sid);
+        });
+    }
+    this._choiceNumericSids = choiceNumericResult;
 
-    this._choiceFilteredSids = choiceResult;
-    this._mapSids = choiceResult;
-    this._timelineSids = choiceResult;
-    this.filteredSids = choiceResult;
+    // Phase 2: intersect with time range
+    var result = choiceNumericResult;
+    if (hasTime) {
+        var tr = this.timeRange;
+        var timeSids = new Set();
+        (window._sessionHours || []).forEach(function(entry) {
+            var sid = entry[0], h = entry[1];
+            if (hasHidden && self._hiddenSids.has(sid)) return;
+            if ((!tr.from || h >= tr.from) && (!tr.to || h <= tr.to)) timeSids.add(sid);
+        });
+        result = self._intersect(result, timeSids);
+    }
+
+    // Phase 3: if only hidden active (no filters/time), build visible set
+    if (!hasChoiceOrNumeric && !hasTime && hasHidden) {
+        result = new Set();
+        self._allSessionIds.forEach(function(id) {
+            if (!self._hiddenSids.has(id)) result.add(id);
+        });
+    }
+
+    this.visibleSids = result;
 };
 
 // Compute filtered SID set excluding one specific filter (leave-one-out cross-filter).
@@ -1668,7 +1628,7 @@ FilterManager.prototype._crossFilterSids = function(excludeType, excludeQid) {
     if (otherChoices <= 0 && otherNumerics <= 0) return null;
 
     var result = new Set();
-    self._matrix.forEach(function(session) {
+    self._visibleMatrix().forEach(function(session) {
         var passes = true;
         self.filters.forEach(function(codes, fqid) {
             if (!passes || (excludeType === 'choice' && fqid === excludeQid)) return;
@@ -1706,7 +1666,7 @@ FilterManager.prototype._updateCharts = function() {
 
     // Cross-filter (Power BI):
     //   Source chart → recompute from all OTHER filters (own filter only highlights)
-    //   Non-source chart → recompute from all filters (filteredSids)
+    //   Non-source chart → recompute from all filters (visibleSids)
 
     // --- Choice charts ---
     window.analyticsCharts.forEach(function(chart, qid) {
@@ -1715,12 +1675,10 @@ FilterManager.prototype._updateCharts = function() {
         var isFilterSource = qFilters && qFilters.size > 0;
 
         if (isFilterSource) {
-            // Source: recompute from all filters EXCEPT own choice
             var crossSids = self._crossFilterSids('choice', qid);
             chart.data.datasets[0].data = self._computeCountsFrom(qid, crossSids);
         } else {
-            // Non-source: recompute from all filters
-            chart.data.datasets[0].data = self._computeCountsFrom(qid, self.filteredSids);
+            chart.data.datasets[0].data = self._computeCountsFrom(qid, self.visibleSids);
         }
 
         chart.data.datasets[0].backgroundColor = chart.data.datasets[0].data.map(function(_, idx) {
@@ -1732,6 +1690,11 @@ FilterManager.prototype._updateCharts = function() {
             }
             return 'rgba(79, 70, 229, 0.7)';
         });
+        // Save base state for _renderSelection overlay
+        chart._baseCounts = chart.data.datasets[0].data.slice();
+        chart._baseColors = chart.data.datasets[0].backgroundColor instanceof Array
+            ? chart.data.datasets[0].backgroundColor.slice()
+            : chart.data.datasets[0].backgroundColor;
         chart.update('none');
     });
 
@@ -1742,11 +1705,10 @@ FilterManager.prototype._updateCharts = function() {
         var range = self.numericRanges.get(qid);
         var isSource = !!range;
 
-        // Determine which SID set to use
-        var sids = isSource ? self._crossFilterSids('numeric', qid) : self.filteredSids;
+        var sids = isSource ? self._crossFilterSids('numeric', qid) : self.visibleSids;
 
         var counts = new Array(bins.length).fill(0);
-        self._matrix.forEach(function(session) {
+        self._visibleMatrix().forEach(function(session) {
             if (sids !== null && !sids.has(session.sid)) return;
             var val = session.n ? session.n[qid] : undefined;
             if (val === undefined) return;
@@ -1764,6 +1726,11 @@ FilterManager.prototype._updateCharts = function() {
             if (!hasAnyFilter) return 'rgba(79, 70, 229, 0.5)';
             return 'rgba(79, 70, 229, 0.5)';
         });
+        // Save base state for _renderSelection overlay
+        chart._baseCounts = chart.data.datasets[0].data.slice();
+        chart._baseColors = chart.data.datasets[0].backgroundColor instanceof Array
+            ? chart.data.datasets[0].backgroundColor.slice()
+            : chart.data.datasets[0].backgroundColor;
         chart.update('none');
     });
 };
@@ -1773,7 +1740,7 @@ FilterManager.prototype._computeCountsFrom = function(qid, sids) {
     if (!codes) return [];
     var tally = {};
     codes.forEach(function(c) { tally[c] = 0; });
-    this._matrix.forEach(function(session) {
+    this._visibleMatrix().forEach(function(session) {
         if (sids !== null && !sids.has(session.sid)) return;
         var sessionCodes = session.a[qid];
         if (!sessionCodes) return;
@@ -1785,25 +1752,23 @@ FilterManager.prototype._computeCountsFrom = function(qid, sids) {
 };
 
 FilterManager.prototype._updateGeoMap = function() {
-    if (window.layerManager) window.layerManager.setFilter(this._mapSids);
-};
-
-FilterManager.prototype._updateGeoMapSelection = function() {
-    // Selection highlighting handled by SelectionManager listener
+    if (window.layerManager) window.layerManager.setFilter(this.visibleSids);
 };
 
 FilterManager.prototype._updateTimeline = function() {
     if (!window._timelineChart || !window._sessionHours) return;
-    // Don't recompute timeline when it is the only active filter
-    // Skip if no choice/numeric filters active
-    var sids = this._timelineSids;
-    if (sids === null) {
+    // Timeline cross-filters by choice/numeric only (not by own time range)
+    var sids = this._choiceNumericSids;
+    var hidden = this._hiddenSids;
+    var hasHidden = hidden.size > 0;
+
+    if (sids === null && !hasHidden) {
         if (typeof window._updateTimelineFromHourly === 'function') {
             window._updateTimelineFromHourly();
         }
         return;
     }
-    // Filter session_hours by filteredSids and re-bucket
+
     var gran = document.getElementById('timeline-granularity');
     var fromInput = document.getElementById('timeline-from');
     var toInput = document.getElementById('timeline-to');
@@ -1816,7 +1781,8 @@ FilterManager.prototype._updateTimeline = function() {
     var buckets = {};
     window._sessionHours.forEach(function(entry) {
         var sid = entry[0], h = entry[1], completed = entry[2];
-        if (!sids.has(sid)) return;
+        if (hasHidden && hidden.has(sid)) return;
+        if (sids !== null && !sids.has(sid)) return;
         if ((from && h < from) || (to && h > to)) return;
         var key = window._timelineBucketKey(h, granVal);
         if (!buckets[key]) buckets[key] = { total: 0, completed: 0 };
@@ -1836,8 +1802,8 @@ FilterManager.prototype._updateNumericStats = function() {
     document.querySelectorAll('[data-num-stats]').forEach(function(el) {
         var qid = el.dataset.numStats;
         var values = [];
-        self._matrix.forEach(function(session) {
-            if (self.filteredSids !== null && !self.filteredSids.has(session.sid)) return;
+        self._visibleMatrix().forEach(function(session) {
+            if (self.visibleSids !== null && !self.visibleSids.has(session.sid)) return;
             var val = session.n ? session.n[qid] : undefined;
             if (val !== undefined) values.push(val);
         });
@@ -1862,7 +1828,11 @@ FilterManager.prototype._updateNumericStats = function() {
 FilterManager.prototype._updatePills = function() {
     var bar = document.getElementById('filter-pills-bar');
     if (!bar) return;
-    if (this.filters.size === 0 && this.numericRanges.size === 0) {
+    var self = this;
+    var hasAnything = this.filters.size > 0 || this.numericRanges.size > 0 || !!this.timeRange || this._hiddenSids.size > 0;
+    var hasSel = window.selectionManager && window.selectionManager.hasSelection();
+
+    if (!hasAnything && !hasSel) {
         while (bar.firstChild) bar.removeChild(bar.firstChild);
         bar.style.display = 'none';
         document.querySelectorAll('.q-filter-pills').forEach(function(c) {
@@ -1879,7 +1849,6 @@ FilterManager.prototype._updatePills = function() {
     label.textContent = 'Filters:';
     bar.appendChild(label);
 
-    var self = this;
     this.filters.forEach(function(codes, qid) {
         var qName = window.analyticsQuestionNames ? window.analyticsQuestionNames.get(qid) : null;
         codes.forEach(function(code) {
@@ -1888,9 +1857,7 @@ FilterManager.prototype._updatePills = function() {
             var pill = document.createElement('span');
             pill.className = 'filter-pill';
             pill.textContent = pillText + ' \u00d7';
-            pill.addEventListener('click', function() {
-                self.toggleFilter(qid, code);
-            });
+            pill.addEventListener('click', function() { self.toggleFilter(qid, code); });
             bar.appendChild(pill);
         });
     });
@@ -1908,14 +1875,35 @@ FilterManager.prototype._updatePills = function() {
         bar.appendChild(pill);
     });
 
-    // Selection pill (from SelectionManager)
-    if (window.selectionManager && window.selectionManager.hasSelection()) {
+    // Time range pill
+    if (this.timeRange) {
+        var tr = window._timelineSelectionRange || this.timeRange;
+        var timePill = document.createElement('span');
+        timePill.className = 'filter-pill';
+        timePill.textContent = 'Time: ' + (tr.from || '\u2026') + ' \u2013 ' + (tr.to || '\u2026') + ' \u00d7';
+        timePill.addEventListener('click', function() {
+            self.timeRange = null;
+            if (window._resetTimelineHandles) window._resetTimelineHandles();
+            self._apply();
+        });
+        bar.appendChild(timePill);
+    }
+
+    // Hidden pill
+    if (this._hiddenSids.size > 0) {
+        var hiddenPill = document.createElement('span');
+        hiddenPill.className = 'filter-pill';
+        hiddenPill.textContent = this._hiddenSids.size + ' hidden \u00d7';
+        hiddenPill.addEventListener('click', function() { self.showAll(); });
+        bar.appendChild(hiddenPill);
+    }
+
+    // Selection pill
+    if (hasSel) {
         var selPill = document.createElement('span');
         selPill.className = 'filter-pill';
         selPill.textContent = 'Selected (' + window.selectionManager.count() + ') \u00d7';
-        selPill.addEventListener('click', function() {
-            window.selectionManager.clear();
-        });
+        selPill.addEventListener('click', function() { window.selectionManager.clear(); });
         bar.appendChild(selPill);
     }
 
@@ -1923,67 +1911,39 @@ FilterManager.prototype._updatePills = function() {
     clearBtn.className = 'btn btn-sm btn-link';
     clearBtn.style.cssText = 'font-size:0.8rem;padding:0 0.5rem;';
     clearBtn.textContent = 'Clear all';
-    clearBtn.addEventListener('click', function() {
-        self.clearAll();
-    });
+    clearBtn.addEventListener('click', function() { self.clearAll(); });
     bar.appendChild(clearBtn);
 
     // Per-question pills
-    var self2 = this;
     document.querySelectorAll('.q-filter-pills').forEach(function(container) {
         var qid = container.dataset.qid;
         while (container.firstChild) container.removeChild(container.firstChild);
 
         if (qid === 'geo' || qid === 'timeline') {
-            // Selection handled by SelectionManager, not FilterManager
             container.style.display = 'none';
-            return;
-        }
-
-        if (false) {
-            // Removed: timeline pills — kept as dead code guard
-            function makeLocalTimePill(label) {
-                var p = document.createElement('span');
-                p.className = 'filter-pill';
-                p.style.fontSize = '0.72rem';
-                p.textContent = label + ' \u00d7';
-                p.addEventListener('click', function() {
-                    self2.setTimeSelection(null);
-                    if (window._resetTimelineHandles) window._resetTimelineHandles();
-                });
-                return p;
-            }
-            if (tr.from) container.appendChild(makeLocalTimePill('From: ' + tr.from));
-            if (tr.to) container.appendChild(makeLocalTimePill('To: ' + tr.to));
             return;
         }
 
         // Numeric range pills (data-qid="num-<id>")
         if (qid.indexOf('num-') === 0) {
             var numQid = qid.slice(4);
-            var range = self2.numericRanges.get(numQid);
-            if (!range) {
-                container.style.display = 'none';
-                return;
-            }
+            var range = self.numericRanges.get(numQid);
+            if (!range) { container.style.display = 'none'; return; }
             container.style.display = 'flex';
             var rPill = document.createElement('span');
             rPill.className = 'filter-pill';
             rPill.style.fontSize = '0.72rem';
             rPill.textContent = range.min + ' \u2013 ' + range.max + ' \u00d7';
             rPill.addEventListener('click', function() {
-                self2.setNumericRange(numQid, null, null);
+                self.setNumericRange(numQid, null, null);
                 if (window._resetNumericHandles) window._resetNumericHandles(numQid);
             });
             container.appendChild(rPill);
             return;
         }
 
-        var qFilters = self2.filters.get(qid);
-        if (!qFilters || qFilters.size === 0) {
-            container.style.display = 'none';
-            return;
-        }
+        var qFilters = self.filters.get(qid);
+        if (!qFilters || qFilters.size === 0) { container.style.display = 'none'; return; }
         container.style.display = 'flex';
         qFilters.forEach(function(code) {
             var choiceLabel = window.analyticsChoiceLabels.get(qid + ':' + code) || String(code);
@@ -1991,9 +1951,7 @@ FilterManager.prototype._updatePills = function() {
             pill.className = 'filter-pill';
             pill.style.fontSize = '0.72rem';
             pill.textContent = choiceLabel + ' \u00d7';
-            pill.addEventListener('click', function() {
-                self2.toggleFilter(qid, code);
-            });
+            pill.addEventListener('click', function() { self.toggleFilter(qid, code); });
             container.appendChild(pill);
         });
     });
@@ -2006,6 +1964,180 @@ FilterManager.prototype._updateTextAnswers = function() {
             loadTextAnswers(qid, 1, 20);
         }
     });
+};
+
+FilterManager.prototype._renderSelection = function() {
+    var sm = window.selectionManager;
+    var count = sm ? sm.count() : 0;
+    var hiddenCount = this._hiddenSids.size;
+
+    // Panel selection bars (Map, Charts)
+    document.querySelectorAll('.panel-selection-bar').forEach(function(bar) {
+        bar.style.display = count > 0 ? '' : 'none';
+        var countEl = bar.querySelector('.panel-sel-count');
+        if (countEl) countEl.textContent = count + ' selected';
+    });
+
+    // Hidden indicator
+    var hiddenBar = document.getElementById('hidden-indicator');
+    if (hiddenBar) hiddenBar.style.display = hiddenCount > 0 ? '' : 'none';
+    var hiddenCountEl = document.getElementById('hidden-count');
+    if (hiddenCountEl) hiddenCountEl.textContent = hiddenCount;
+
+    // Table checkboxes + row visibility
+    var hidden = this._hiddenSids;
+    document.querySelectorAll('.row-select-cb').forEach(function(cb) {
+        var sid = parseInt(cb.dataset.sessionId);
+        cb.checked = sm ? sm.isSelected(sid) : false;
+        var tr = cb.closest('tr');
+        if (tr) tr.style.display = hidden.has(sid) ? 'none' : '';
+    });
+    var showAllBtn = document.getElementById('show-all-rows-btn');
+    if (showAllBtn) showAllBtn.style.display = hiddenCount > 0 ? '' : 'none';
+    var selectAll = document.getElementById('select-all-cb');
+    if (selectAll) {
+        var allCbs = document.querySelectorAll('.row-select-cb');
+        var checkedCount = document.querySelectorAll('.row-select-cb:checked').length;
+        selectAll.checked = checkedCount > 0 && checkedCount === allCbs.length;
+        selectAll.indeterminate = checkedCount > 0 && checkedCount < allCbs.length;
+    }
+
+    // Map feature styling
+    var m = window.analyticsMap;
+    if (m && window.layerManager) {
+        m.eachLayer(function(layer) {
+            if (!layer.feature) return;
+            var sid = layer.feature.properties ? layer.feature.properties.session_id : null;
+            if (!sid) return;
+            var selected = sm ? sm.isSelected(sid) : false;
+            if (count > 0 && selected) {
+                if (layer.setRadius) {
+                    layer.setStyle({opacity: 1, fillOpacity: 0.8, weight: 2});
+                    layer.setRadius(7);
+                } else if (layer.setStyle) {
+                    layer.setStyle({opacity: 1, fillOpacity: 0.6, weight: 4});
+                }
+            } else {
+                // Default / unselected: restore initial style
+                if (layer.setRadius) {
+                    layer.setStyle({opacity: 1, fillOpacity: 0.7, weight: 1});
+                    layer.setRadius(5);
+                } else if (layer.setStyle) {
+                    layer.setStyle({opacity: 1, fillOpacity: 0.2, weight: 2});
+                }
+            }
+        });
+    }
+
+    // Chart selection highlighting — stacked overlay showing selected proportion
+    function _setStacked(chart, on) {
+        if (!chart.options.scales.x) chart.options.scales.x = {};
+        if (!chart.options.scales.y) chart.options.scales.y = {};
+        chart.options.scales.x.stacked = on;
+        chart.options.scales.y.stacked = on;
+        chart.options.scales.x.beginAtZero = true;
+    }
+
+    function _ensureBaseCounts(chart) {
+        // Save original totals before first modification
+        if (!chart._baseCounts && chart.data.datasets[0]) {
+            chart._baseCounts = chart.data.datasets[0].data.slice();
+            var bg = chart.data.datasets[0].backgroundColor;
+            chart._baseColors = bg instanceof Array ? bg.slice() : bg;
+        }
+    }
+
+    if (count === 0) {
+        // No selection — restore single dataset with base colors
+        var restoreCharts = [];
+        window.analyticsCharts.forEach(function(c) { restoreCharts.push(c); });
+        window.analyticsHistCharts.forEach(function(c) { restoreCharts.push(c); });
+        restoreCharts.forEach(function(chart) {
+            if (chart.data.datasets.length > 1) chart.data.datasets.splice(1);
+            if (chart._baseCounts) chart.data.datasets[0].data = chart._baseCounts.slice();
+            if (chart._baseColors) {
+                chart.data.datasets[0].backgroundColor = chart._baseColors instanceof Array ? chart._baseColors.slice() : chart._baseColors;
+            }
+            _setStacked(chart, false);
+            chart.update('none');
+        });
+    } else {
+        var matrix = this._visibleMatrix();
+        var selectedSet = sm.getSelected();
+
+        // Choice charts — stacked: selected (bright) + unselected (dim)
+        window.analyticsCharts.forEach(function(chart, qid) {
+            var codes = window.analyticsChartCodes.get(qid);
+            if (!codes) return;
+            _ensureBaseCounts(chart);
+            var totals = chart._baseCounts;
+            var selCounts = new Array(codes.length).fill(0);
+            matrix.forEach(function(session) {
+                if (!selectedSet.has(session.sid)) return;
+                var sc = session.a[qid];
+                if (sc) sc.forEach(function(c) {
+                    var idx = codes.indexOf(c);
+                    if (idx !== -1) selCounts[idx]++;
+                });
+            });
+            var unselCounts = totals.map(function(t, i) { return Math.max(0, t - selCounts[i]); });
+
+            chart.data.datasets[0].data = selCounts;
+            chart.data.datasets[0].backgroundColor = 'rgba(79, 70, 229, 0.9)';
+            chart.data.datasets[0].borderRadius = 0;
+            if (chart.data.datasets.length < 2) {
+                chart.data.datasets.push({ data: unselCounts, backgroundColor: 'rgba(79, 70, 229, 0.15)', borderRadius: 4 });
+            } else {
+                chart.data.datasets[1].data = unselCounts;
+                chart.data.datasets[1].backgroundColor = 'rgba(79, 70, 229, 0.15)';
+            }
+            _setStacked(chart, true);
+            chart.update('none');
+        });
+
+        // Histogram charts — same stacked overlay
+        window.analyticsHistCharts.forEach(function(chart, qid) {
+            var bins = window.analyticsHistBins.get(qid);
+            if (!bins) return;
+            _ensureBaseCounts(chart);
+            var totals = chart._baseCounts;
+            var selCounts = new Array(bins.length).fill(0);
+            matrix.forEach(function(session) {
+                if (!selectedSet.has(session.sid)) return;
+                var val = session.n ? session.n[qid] : undefined;
+                if (val === undefined) return;
+                var binStep = bins[0][1] - bins[0][0];
+                if (binStep <= 0) { selCounts[0]++; return; }
+                var idx = Math.min(Math.floor((val - bins[0][0]) / binStep), bins.length - 1);
+                if (idx >= 0) selCounts[idx]++;
+            });
+            var unselCounts = totals.map(function(t, i) { return Math.max(0, t - selCounts[i]); });
+
+            chart.data.datasets[0].data = selCounts;
+            chart.data.datasets[0].backgroundColor = 'rgba(79, 70, 229, 0.8)';
+            if (chart.data.datasets.length < 2) {
+                chart.data.datasets.push({ data: unselCounts, backgroundColor: 'rgba(79, 70, 229, 0.12)', borderWidth: 1 });
+            } else {
+                chart.data.datasets[1].data = unselCounts;
+                chart.data.datasets[1].backgroundColor = 'rgba(79, 70, 229, 0.12)';
+            }
+            _setStacked(chart, true);
+            chart.update('none');
+        });
+    }
+
+    // Bulk toolbar
+    var bulkToolbar = document.getElementById('toolbar-bulk');
+    var normalToolbar = document.getElementById('toolbar-normal');
+    if (bulkToolbar && normalToolbar) {
+        bulkToolbar.style.display = count > 0 ? '' : 'none';
+        normalToolbar.style.display = count > 0 ? 'none' : '';
+        var bulkCount = document.getElementById('bulk-count');
+        if (bulkCount) bulkCount.textContent = count + ' selected';
+    }
+
+    // Pills (includes selection pill)
+    this._updatePills();
 };
 
 FilterManager.prototype._updateTable = function() {
@@ -2143,16 +2275,15 @@ document.addEventListener('DOMContentLoaded', function() {
     window.filterManager = new FilterManager(matrix);
     window.filterManager.textQuestionIds = JSON.parse('{{ text_question_ids_json|escapejs }}');
 
-    // Register components — order matters for UX (charts update before pills)
+    // Register components — order matters for UX (charts update before rendering)
     var fm = window.filterManager;
     fm.registerComponent(FilterManager.prototype._updateCharts);
     fm.registerComponent(FilterManager.prototype._updateNumericStats);
     fm.registerComponent(FilterManager.prototype._updateGeoMap);
-    fm.registerComponent(FilterManager.prototype._updateGeoMapSelection);
     fm.registerComponent(FilterManager.prototype._updateTimeline);
-    fm.registerComponent(FilterManager.prototype._updatePills);
     fm.registerComponent(FilterManager.prototype._updateTextAnswers);
     fm.registerComponent(FilterManager.prototype._updateTable);
+    fm.registerComponent(FilterManager.prototype._renderSelection);
 });
 </script>
 {% endblock %}

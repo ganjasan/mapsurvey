@@ -90,6 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         radius: 5, color: color, fillColor: color,
                         fillOpacity: 0.7, weight: 1, pane: paneName,
                     });
+                    featureLayer.feature = f;
                     slot.allPoints.push([coords[1], coords[0]]);
                 } else {
                     featureLayer = L.geoJSON(f, {
@@ -516,7 +517,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cb.checked = slot.visible;
         cb.addEventListener('change', function() {
             window.layerManager.setLayerVisible(id, cb.checked);
-            if (window.filterManager) window.filterManager._updateGeoMapSelection();
+            if (window.filterManager) window.filterManager._renderSelection();
         });
         row.appendChild(cb);
 

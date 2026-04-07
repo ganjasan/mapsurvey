@@ -55,7 +55,7 @@
         {% if issues_filter_list %}
         <button type="button" class="btn btn-sm btn-link p-0 ml-1" style="font-size:0.75rem;color:#6b7280;" onclick="changeIssuesFilter('')">Clear all</button>
         {% endif %}
-        <button type="button" id="show-all-rows-btn" class="btn btn-sm btn-link p-0 ml-2" style="font-size:0.75rem;color:#6b7280;display:none;" onclick="showAllRows()">
+        <button type="button" id="show-all-rows-btn" class="btn btn-sm btn-link p-0 ml-2" style="font-size:0.75rem;color:#6b7280;display:none;" onclick="filterManager.showAll()">
             <i class="fas fa-eye"></i> Show hidden
         </button>
     </div>
@@ -102,10 +102,10 @@
         </button>
         {% endif %}
         <span style="border-left:1px solid #bfdbfe;height:20px;margin:0 4px;"></span>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectionManager.hideSelected()" title="Hide selected rows">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="filterManager.hideSelected()" title="Hide selected rows">
             <i class="fas fa-eye-slash"></i> Hide
         </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectionManager.keepOnlySelected()" title="Keep only selected, hide rest">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="filterManager.keepOnlySelected()" title="Keep only selected, hide rest">
             <i class="fas fa-filter"></i> Keep only
         </button>
         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectionManager.invert()" title="Invert selection">

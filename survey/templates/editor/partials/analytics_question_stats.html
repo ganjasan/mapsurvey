@@ -49,9 +49,30 @@
                     x: { beginAtZero: true, ticks: { precision: 0 } }
                 },
                 onClick: function(event, elements) {
-                    if (!elements.length || !window.filterManager) return;
+                    if (!elements.length) return;
                     var idx = elements[0].index;
-                    window.filterManager.toggleFilter(qid, codes[idx]);
+                    var code = codes[idx];
+                    var fm = window.filterManager;
+                    var sm = window.selectionManager;
+                    if (!fm || !sm) return;
+                    var vis = fm.getVisibleSids();
+                    var matchIds = [];
+                    fm._visibleMatrix().forEach(function(session) {
+                        if (vis !== null && !vis.has(session.sid)) return;
+                        var sc = session.a[qid];
+                        if (sc && sc.indexOf(code) !== -1) matchIds.push(session.sid);
+                    });
+                    var ctrlKey = event.native && event.native.ctrlKey;
+                    if (ctrlKey) {
+                        // Ctrl+click: toggle these sessions in current selection
+                        var prev = sm.getSelected();
+                        var allIn = matchIds.length > 0 && matchIds.every(function(id) { return prev.has(id); });
+                        if (allIn) { sm.deselect(matchIds); } else { sm.select(matchIds); }
+                    } else {
+                        var prev = sm.getSelected();
+                        var same = matchIds.length > 0 && matchIds.length === prev.size && matchIds.every(function(id) { return prev.has(id); });
+                        if (same) { sm.clear(); } else { sm.setSelection(matchIds); }
+                    }
                 }
             }
         });
@@ -177,10 +198,22 @@
                 return { left: valueToPct(lo), right: valueToPct(hi) };
             },
             onFilter: function(left, right) {
+                var fm = window.filterManager;
+                var sm = window.selectionManager;
+                if (!fm || !sm) return;
                 if (left <= 0.001 && right >= 0.999) {
-                    if (window.filterManager) window.filterManager.setNumericRange(qid, null, null);
+                    sm.clear();
                 } else {
-                    if (window.filterManager) window.filterManager.setNumericRange(qid, pctToValue(left), pctToValue(right));
+                    var lo = pctToValue(left), hi = pctToValue(right);
+                    var vis = fm.getVisibleSids();
+                    var matchIds = [];
+                    fm._visibleMatrix().forEach(function(session) {
+                        if (vis !== null && !vis.has(session.sid)) return;
+                        var val = session.n ? session.n[qid] : undefined;
+                        if (val === undefined) return;
+                        if (val >= lo && val <= hi) matchIds.push(session.sid);
+                    });
+                    sm.setSelection(matchIds);
                 }
             },
         });
@@ -189,7 +222,10 @@
         if (!window._resetNumericHandles) window._resetNumericHandles = function() {};
         var origReset = window._resetNumericHandles;
         window._resetNumericHandles = function(targetQid) {
-            if (targetQid === qid) slider.reset();
+            if (targetQid === qid) {
+                slider.reset();
+                if (window.selectionManager) window.selectionManager.clear();
+            }
             origReset(targetQid);
         };
     });
