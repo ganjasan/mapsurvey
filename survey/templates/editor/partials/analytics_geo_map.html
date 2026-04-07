@@ -99,7 +99,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 featureLayer.on('click', function(e) {
-                    _featureClicked = true;
                     var mode = window.geoToolMode || 'pointer';
                     if (mode === 'pointer') {
                         if (window.selectionManager) {
@@ -303,17 +302,10 @@ document.addEventListener('DOMContentLoaded', function() {
     var rectHandler = new L.Draw.Rectangle(map, { shapeOptions: drawShapeOpts });
     var polyHandler = new L.Draw.Polygon(map, { shapeOptions: drawShapeOpts });
 
-    var _featureClicked = false;
     var _ctrlHeld = false;
     document.addEventListener('keydown', function(e) { if (e.key === 'Control') _ctrlHeld = true; });
     document.addEventListener('keyup', function(e) { if (e.key === 'Control') _ctrlHeld = false; });
 
-    map.on('click', function() {
-        if (!_featureClicked && window.selectionManager && window.selectionManager.hasSelection()) {
-            window.selectionManager.clear();
-        }
-        _featureClicked = false;
-    });
 
     map.on('draw:created', function(e) {
         var allFeatures = window.layerManager.getFeatureLayers();
