@@ -112,11 +112,40 @@
     #pane-data:fullscreen { background: #fff; height: 100vh !important; }
     #pane-data:fullscreen > div:first-child { display: none !important; }
     #pane-data:fullscreen #data-split-container { max-width: 100% !important; width: 100%; flex: 1; padding: 0.5rem !important; }
+    #pane-data:fullscreen .split-pane-tabbar { display: none !important; }
     #data-panel-map { display: flex; flex-direction: column; height: 100%; overflow: hidden !important; }
     #data-panel-map .analytics-section { flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 0; padding: 0.5rem; }
     #data-panel-map #analytics-map { flex: 1; min-height: 0; height: auto !important; }
-    #data-primary { display: flex; flex-direction: column; }
-    #data-primary > .data-panel { flex: 1; min-height: 0; overflow: auto; }
+    /* Split pane tree */
+    .split-pane-leaf { display: flex; flex-direction: column; overflow: hidden; }
+    .split-pane-tabbar {
+        display: flex; align-items: center; background: #f8f9fa;
+        border-bottom: 1px solid var(--border-color); padding: 0 0.5rem;
+        flex-shrink: 0; min-height: 30px;
+    }
+    .split-pane-tab {
+        padding: 0.2rem 0.7rem; border: none; background: none;
+        border-bottom: 2px solid transparent; cursor: pointer;
+        font-size: 0.78rem; color: #6b7280; white-space: nowrap;
+    }
+    .split-pane-tab.active { border-bottom-color: var(--accent); font-weight: 600; color: var(--accent); }
+    .split-pane-tab:hover { color: var(--accent); }
+    .split-pane-actions { margin-left: auto; display: flex; gap: 2px; align-items: center; }
+    .split-pane-actions button {
+        border: none; background: none; cursor: pointer;
+        color: #9ca3af; font-size: 0.7rem; padding: 2px 5px; border-radius: 3px;
+    }
+    .split-pane-actions button:hover { background: #e5e7eb; color: #374151; }
+    .split-pane-actions button:disabled { opacity: 0.3; cursor: default; }
+    .split-pane-actions button:disabled:hover { background: none; color: #9ca3af; }
+    .split-pane-actions .icon-split-down { transform: rotate(90deg); }
+    .split-pane-content { flex: 1; min-height: 0; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+    .split-pane-content > .data-panel { flex: 1; min-height: 0; overflow: auto; }
+    .split-divider { background: #e5e7eb; flex-shrink: 0; border-radius: 3px; }
+    .split-divider:hover { background: #d1d5db; }
+    .split-divider.horizontal { width: 6px; cursor: col-resize; margin: 0 2px; }
+    .split-divider.vertical { height: 6px; cursor: row-resize; margin: 2px 0; }
+    #panel-pool { display: none; }
     #pane-data:fullscreen #pane-table-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
     #pane-data:fullscreen .attr-table-toolbar { flex-shrink: 0; }
     #pane-data:fullscreen .attr-table-wrapper { max-height: none; flex: 1; min-height: 0; overflow: auto; }
@@ -343,29 +372,6 @@
 
 <!-- Data workspace -->
 <div id="pane-data" style="display:flex;flex-direction:column;height:calc(100vh - 100px);">
-    {# Sub-panel tab bar #}
-    <div style="padding:0.5rem 1.5rem 0;display:flex;align-items:center;gap:0;flex-shrink:0;">
-        <button class="data-panel-tab active" data-panel="table" onclick="switchDataPanel('table')"
-                style="padding:0.35rem 1rem;border:none;background:none;border-bottom:2px solid var(--accent);cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--accent);">
-            <i class="fas fa-table" style="margin-right:4px;"></i>Table
-        </button>
-        <button class="data-panel-tab" data-panel="map" onclick="switchDataPanel('map')"
-                style="padding:0.35rem 1rem;border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;font-size:0.82rem;color:#6b7280;">
-            <i class="fas fa-map" style="margin-right:4px;"></i>Map
-        </button>
-        <button class="data-panel-tab" data-panel="charts" onclick="switchDataPanel('charts')"
-                style="padding:0.35rem 1rem;border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;font-size:0.82rem;color:#6b7280;">
-            <i class="fas fa-chart-bar" style="margin-right:4px;"></i>Charts
-        </button>
-        <span style="flex:1;"></span>
-        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="pinCurrentPanel()" title="Split view: show two panels side by side" id="pin-panel-btn">
-            <i class="fas fa-columns"></i> Split
-        </button>
-        <button class="btn btn-sm btn-outline-secondary ml-1" style="font-size:0.75rem;display:none;" onclick="unpinPanel()" title="Close split view" id="unpin-panel-btn">
-            <i class="fas fa-times"></i> Unsplit
-        </button>
-    </div>
-
     {# Hidden indicator — shows when sessions are hidden via SelectionManager #}
     <div id="hidden-indicator" style="display:none;padding:0.15rem 1.5rem;flex-shrink:0;">
         <button class="btn btn-sm btn-link p-0" style="font-size:0.78rem;color:#6b7280;" onclick="filterManager.showAll()">
@@ -373,86 +379,82 @@
         </button>
     </div>
 
-    {# Split container #}
+    {# Split container — tree is rendered here by JS #}
     <div id="data-split-container" style="padding:0.75rem 1.5rem;display:flex;position:relative;flex:1;min-height:0;overflow:hidden;">
-        {# Primary panel #}
-        <div id="data-primary" style="flex:1;min-width:0;overflow:hidden;">
-            {# Table sub-panel #}
-            <div id="data-panel-table" class="data-panel">
-                <div id="pane-table" style="position:relative;display:flex;gap:0;height:100%;">
-                    <div id="pane-table-content" style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
-                        <div class="text-center text-muted py-5"><i class="fas fa-table mr-2"></i>Loading table...</div>
-                    </div>
-                    {# Collapsed strip #}
-                    <div id="anomalies-strip" style="display:none;width:28px;flex-shrink:0;border-left:1px solid #e5e7eb;cursor:pointer;background:#f8f9fa;position:relative;" onclick="expandAnomaliesSidebar()" title="Expand Violations panel">
-                        <div style="writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);padding:12px 4px;font-size:0.75rem;font-weight:600;color:#6b7280;white-space:nowrap;display:flex;align-items:center;gap:6px;">
-                            <i class="fas fa-exclamation-triangle" style="color:#d97706;"></i>
-                            <span>Violations</span>
-                            <span id="anomalies-strip-count" class="badge badge-warning" style="font-size:0.65rem;"></span>
-                        </div>
-                    </div>
-                    {# Expanded sidebar #}
-                    <div id="anomalies-sidebar" style="display:none;width:220px;flex-shrink:0;border-left:1px solid #e5e7eb;padding:0.75rem;font-size:0.82rem;overflow-y:auto;background:#f9fafb;box-shadow:-2px 0 6px rgba(0,0,0,0.04);">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <strong style="font-size:0.85rem;"><i class="fas fa-exclamation-triangle" style="color:#d97706;margin-right:4px;"></i>Violations</strong>
-                            <button class="btn btn-sm btn-link p-0" onclick="collapseAnomaliesSidebar()" title="Collapse"><i class="fas fa-chevron-right" style="color:#9ca3af;"></i></button>
-                        </div>
-                        <div id="anomalies-errors"></div>
-                        <div id="anomalies-warnings" class="mt-2"></div>
-                    </div>
+    </div>
+</div>
+
+{# Panel pool — panels live here when not assigned to a pane #}
+<div id="panel-pool">
+    {# Table sub-panel #}
+    <div id="data-panel-table" class="data-panel">
+        <div id="pane-table" style="position:relative;display:flex;gap:0;height:100%;">
+            <div id="pane-table-content" style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
+                <div class="text-center text-muted py-5"><i class="fas fa-table mr-2"></i>Loading table...</div>
+            </div>
+            {# Collapsed strip #}
+            <div id="anomalies-strip" style="display:none;width:28px;flex-shrink:0;border-left:1px solid #e5e7eb;cursor:pointer;background:#f8f9fa;position:relative;" onclick="expandAnomaliesSidebar()" title="Expand Violations panel">
+                <div style="writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);padding:12px 4px;font-size:0.75rem;font-weight:600;color:#6b7280;white-space:nowrap;display:flex;align-items:center;gap:6px;">
+                    <i class="fas fa-exclamation-triangle" style="color:#d97706;"></i>
+                    <span>Violations</span>
+                    <span id="anomalies-strip-count" class="badge badge-warning" style="font-size:0.65rem;"></span>
                 </div>
             </div>
-            {# Map sub-panel — use visibility instead of display:none so Leaflet can init properly #}
-            <div id="data-panel-map" class="data-panel" style="visibility:hidden;position:absolute;left:-9999px;width:100%;">
-                <div class="panel-selection-bar" style="display:none;padding:0.25rem 0.75rem;background:#e8f0fe;border-radius:4px;margin:0.25rem;flex-shrink:0;font-size:0.8rem;">
-                    <div style="display:flex;align-items:center;gap:0.5rem;">
-                        <button class="btn btn-sm btn-link p-0" onclick="selectionManager.clear()" style="color:#1a56db;"><i class="fas fa-times"></i></button>
-                        <span class="panel-sel-count" style="font-weight:600;">0 selected</span>
-                        <span style="border-left:1px solid #bfdbfe;height:16px;"></span>
-                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.hideSelected()"><i class="fas fa-eye-slash"></i> Hide</button>
-                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.keepOnlySelected()"><i class="fas fa-filter"></i> Keep only</button>
-                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> Invert</button>
-                    </div>
+            {# Expanded sidebar #}
+            <div id="anomalies-sidebar" style="display:none;width:220px;flex-shrink:0;border-left:1px solid #e5e7eb;padding:0.75rem;font-size:0.82rem;overflow-y:auto;background:#f9fafb;box-shadow:-2px 0 6px rgba(0,0,0,0.04);">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <strong style="font-size:0.85rem;"><i class="fas fa-exclamation-triangle" style="color:#d97706;margin-right:4px;"></i>Violations</strong>
+                    <button class="btn btn-sm btn-link p-0" onclick="collapseAnomaliesSidebar()" title="Collapse"><i class="fas fa-chevron-right" style="color:#9ca3af;"></i></button>
                 </div>
-                {% if geo_features_count %}
-                {% include "editor/partials/analytics_geo_map.html" %}
-                {% else %}
-                <div class="text-center text-muted py-5"><i class="fas fa-map mr-2"></i>No geo questions in this survey</div>
-                {% endif %}
-            </div>
-            {# Charts sub-panel #}
-            <div id="data-panel-charts" class="data-panel" style="display:none;">
-                <div class="panel-selection-bar" style="display:none;padding:0.25rem 0.75rem;background:#e8f0fe;border-radius:4px;margin:0.25rem;flex-shrink:0;font-size:0.8rem;">
-                    <div style="display:flex;align-items:center;gap:0.5rem;">
-                        <button class="btn btn-sm btn-link p-0" onclick="selectionManager.clear()" style="color:#1a56db;"><i class="fas fa-times"></i></button>
-                        <span class="panel-sel-count" style="font-weight:600;">0 selected</span>
-                        <span style="border-left:1px solid #bfdbfe;height:16px;"></span>
-                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.hideSelected()"><i class="fas fa-eye-slash"></i> Hide</button>
-                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.keepOnlySelected()"><i class="fas fa-filter"></i> Keep only</button>
-                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> Invert</button>
-                    </div>
-                </div>
-                <div style="text-align:right;padding:0.25rem 0.5rem;">
-                    <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="togglePanelFullscreen('data-panel-charts')" title="Toggle fullscreen">
-                        <i class="fas fa-expand"></i>
-                    </button>
-                </div>
-                <div class="analytics-main">
-                    <div class="analytics-section-label">Overview</div>
-                    {% include "editor/partials/analytics_overview.html" %}
-                    <hr class="analytics-divider">
-                    <div class="analytics-section-label">Questions &amp; Responses</div>
-                    <div id="filter-pills-bar"></div>
-                    {% include "editor/partials/analytics_daily_chart.html" %}
-                    {% include "editor/partials/analytics_question_stats.html" %}
-                </div>
+                <div id="anomalies-errors"></div>
+                <div id="anomalies-warnings" class="mt-2"></div>
             </div>
         </div>
-        {# Resize divider (hidden until pinned) #}
-        <div id="data-split-divider" style="display:none;width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;border-radius:3px;margin:0 2px;"
-             onmousedown="startSplitResize(event)"></div>
-        {# Secondary (pinned) panel #}
-        <div id="data-secondary" style="display:none;flex:1;min-width:0;overflow:auto;"></div>
+    </div>
+    {# Map sub-panel — use visibility instead of display:none so Leaflet can init properly #}
+    <div id="data-panel-map" class="data-panel" style="visibility:hidden;position:absolute;left:-9999px;width:100%;">
+        <div class="panel-selection-bar" style="display:none;padding:0.25rem 0.75rem;background:#e8f0fe;border-radius:4px;margin:0.25rem;flex-shrink:0;font-size:0.8rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <button class="btn btn-sm btn-link p-0" onclick="selectionManager.clear()" style="color:#1a56db;"><i class="fas fa-times"></i></button>
+                <span class="panel-sel-count" style="font-weight:600;">0 selected</span>
+                <span style="border-left:1px solid #bfdbfe;height:16px;"></span>
+                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.hideSelected()"><i class="fas fa-eye-slash"></i> Hide</button>
+                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.keepOnlySelected()"><i class="fas fa-filter"></i> Keep only</button>
+                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> Invert</button>
+            </div>
+        </div>
+        {% if geo_features_count %}
+        {% include "editor/partials/analytics_geo_map.html" %}
+        {% else %}
+        <div class="text-center text-muted py-5"><i class="fas fa-map mr-2"></i>No geo questions in this survey</div>
+        {% endif %}
+    </div>
+    {# Charts sub-panel #}
+    <div id="data-panel-charts" class="data-panel" style="display:none;">
+        <div class="panel-selection-bar" style="display:none;padding:0.25rem 0.75rem;background:#e8f0fe;border-radius:4px;margin:0.25rem;flex-shrink:0;font-size:0.8rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <button class="btn btn-sm btn-link p-0" onclick="selectionManager.clear()" style="color:#1a56db;"><i class="fas fa-times"></i></button>
+                <span class="panel-sel-count" style="font-weight:600;">0 selected</span>
+                <span style="border-left:1px solid #bfdbfe;height:16px;"></span>
+                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.hideSelected()"><i class="fas fa-eye-slash"></i> Hide</button>
+                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.keepOnlySelected()"><i class="fas fa-filter"></i> Keep only</button>
+                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> Invert</button>
+            </div>
+        </div>
+        <div style="text-align:right;padding:0.25rem 0.5rem;">
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="togglePanelFullscreen('data-panel-charts')" title="Toggle fullscreen">
+                <i class="fas fa-expand"></i>
+            </button>
+        </div>
+        <div class="analytics-main">
+            <div class="analytics-section-label">Overview</div>
+            {% include "editor/partials/analytics_overview.html" %}
+            <hr class="analytics-divider">
+            <div class="analytics-section-label">Questions &amp; Responses</div>
+            <div id="filter-pills-bar"></div>
+            {% include "editor/partials/analytics_daily_chart.html" %}
+            {% include "editor/partials/analytics_question_stats.html" %}
+        </div>
     </div>
 </div>
 
@@ -541,24 +543,74 @@ window.selectionManager = (function() {
 })();
 
 var _tableLoaded = false;
-var _activeDataPanel = 'table';
-var _pinnedPanel = null;
 
-function switchAnalyticsTab(tab) {
-    document.getElementById('pane-data').style.display = tab === 'data' ? '' : 'none';
-    document.getElementById('pane-performance').style.display = tab === 'performance' ? '' : 'none';
-    document.querySelectorAll('.analytics-tab').forEach(function(btn) {
-        var isActive = btn.dataset.tab === tab;
-        btn.style.borderBottomColor = isActive ? 'var(--accent)' : 'transparent';
-        btn.style.fontWeight = isActive ? '600' : 'normal';
-        btn.style.color = isActive ? 'var(--accent)' : '#6b7280';
-    });
-    if (tab === 'data' && !_tableLoaded) {
-        _tableLoaded = true;
-        loadTable();
+/* ── Split Pane Tree ───────────────────────────────────────────── */
+var _PANELS = [
+    { id: 'table',  label: 'Table',  icon: 'fa-table' },
+    { id: 'map',    label: 'Map',    icon: 'fa-map' },
+    { id: 'charts', label: 'Charts', icon: 'fa-chart-bar' },
+];
+var _splitTree = { type: 'leaf', id: 'pane-0', panel: 'table' };
+var _nextPaneId = 1;
+var _nextSplitId = 1;
+
+/* ── Tree helpers ──────────────────────────────────────────────── */
+function _findNode(tree, id) {
+    if (tree.id === id) return tree;
+    if (tree.type === 'split') {
+        for (var i = 0; i < tree.children.length; i++) {
+            var found = _findNode(tree.children[i], id);
+            if (found) return found;
+        }
     }
+    return null;
 }
 
+function _findParent(tree, id) {
+    if (tree.type !== 'split') return null;
+    for (var i = 0; i < tree.children.length; i++) {
+        if (tree.children[i].id === id) return { node: tree, index: i };
+        var found = _findParent(tree.children[i], id);
+        if (found) return found;
+    }
+    return null;
+}
+
+function _replaceNode(tree, id, replacement) {
+    if (tree.id === id) return replacement;
+    if (tree.type === 'split') {
+        return {
+            type: 'split', id: tree.id, direction: tree.direction,
+            sizes: tree.sizes.slice(),
+            children: tree.children.map(function(c) { return _replaceNode(c, id, replacement); })
+        };
+    }
+    return tree;
+}
+
+function _allLeaves(tree) {
+    if (tree.type === 'leaf') return [tree];
+    var result = [];
+    tree.children.forEach(function(c) { result = result.concat(_allLeaves(c)); });
+    return result;
+}
+
+function _usedPanels(tree) {
+    var s = new Set();
+    _allLeaves(tree).forEach(function(l) { s.add(l.panel); });
+    return s;
+}
+
+function _findLeafByPanel(tree, panelId) {
+    if (tree.type === 'leaf') return tree.panel === panelId ? tree : null;
+    for (var i = 0; i < tree.children.length; i++) {
+        var found = _findLeafByPanel(tree.children[i], panelId);
+        if (found) return found;
+    }
+    return null;
+}
+
+/* ── Panel visibility helpers ──────────────────────────────────── */
 function _hidePanel(el) {
     if (el.id === 'data-panel-map') {
         el.style.visibility = 'hidden';
@@ -578,155 +630,330 @@ function _showPanel(el) {
     }
 }
 
-function switchDataPanel(panel) {
-    _activeDataPanel = panel;
-    var primary = document.getElementById('data-primary');
-    primary.querySelectorAll('.data-panel').forEach(function(p) {
-        _hidePanel(p);
-    });
-    var target = document.getElementById('data-panel-' + panel);
-    if (target) _showPanel(target);
-
-    document.querySelectorAll('.data-panel-tab').forEach(function(btn) {
-        var isActive = btn.dataset.panel === panel;
-        btn.style.borderBottomColor = isActive ? 'var(--accent)' : 'transparent';
-        btn.style.fontWeight = isActive ? '600' : 'normal';
-        btn.style.color = isActive ? 'var(--accent)' : '#6b7280';
-    });
-
-    if (panel === 'table' && !_tableLoaded) {
+function _postShowPanel(panelId) {
+    if (panelId === 'table' && !_tableLoaded) {
         _tableLoaded = true;
         loadTable();
     }
-    if (panel === 'map') {
-        // Leaflet needs invalidateSize after container becomes visible
+    if (panelId === 'map') {
         setTimeout(function() {
             var m = window.analyticsMap || window._geoMap;
             if (m) {
                 m.invalidateSize();
-                // Force tile layer to reload
-                m.eachLayer(function(layer) {
-                    if (layer.redraw) layer.redraw();
-                });
-                // Re-fit bounds if features exist
+                m.eachLayer(function(layer) { if (layer.redraw) layer.redraw(); });
                 var allLayers = [];
                 m.eachLayer(function(l) {
                     if (l.getBounds) allLayers.push(l);
                     else if (l.getLatLng) allLayers.push(l);
                 });
                 if (allLayers.length > 1) {
-                    try {
-                        var fg = L.featureGroup(allLayers);
-                        m.fitBounds(fg.getBounds().pad(0.02));
-                    } catch(e) {}
+                    try { m.fitBounds(L.featureGroup(allLayers).getBounds().pad(0.02)); } catch(e) {}
                 }
             }
         }, 150);
     }
-    if (panel === 'charts') {
-        // Re-position range slider handles after container becomes visible
+    if (panelId === 'charts') {
         setTimeout(function() { window.dispatchEvent(new Event('resize')); }, 50);
     }
-    _saveDataLayout();
 }
 
-function pinCurrentPanel() {
-    if (_pinnedPanel) return;
-    // Pin the current panel to the right — show a picker for the second panel
-    _pinnedPanel = _activeDataPanel;
-    var secondary = document.getElementById('data-secondary');
-    var divider = document.getElementById('data-split-divider');
-
-    // Clone the current panel content into secondary
-    var sourcePanel = document.getElementById('data-panel-' + _pinnedPanel);
-    if (!sourcePanel) return;
-
-    // Move source to secondary
-    secondary.textContent = '';
-    secondary.appendChild(sourcePanel);
-    secondary.style.display = '';
-    divider.style.display = '';
-    sourcePanel.style.display = '';
-
-    // Switch primary to next available panel
-    var panels = ['table', 'map', 'charts', 'anomalies'];
-    var next = panels.find(function(p) { return p !== _pinnedPanel; });
-    switchDataPanel(next);
-
-    document.getElementById('pin-panel-btn').style.display = 'none';
-    document.getElementById('unpin-panel-btn').style.display = '';
-    _saveDataLayout();
-}
-
-function unpinPanel() {
-    if (!_pinnedPanel) return;
-    var secondary = document.getElementById('data-secondary');
-    var divider = document.getElementById('data-split-divider');
-    var primary = document.getElementById('data-primary');
-
-    // Move pinned panel back to primary
-    var pinnedEl = document.getElementById('data-panel-' + _pinnedPanel);
-    if (pinnedEl) {
-        pinnedEl.style.display = 'none';
-        primary.appendChild(pinnedEl);
-    }
-
-    secondary.style.display = 'none';
-    secondary.textContent = '';
-    divider.style.display = 'none';
-    _pinnedPanel = null;
-
-    document.getElementById('pin-panel-btn').style.display = '';
-    document.getElementById('unpin-panel-btn').style.display = 'none';
-    _saveDataLayout();
-}
-
-/* Split resize */
-function startSplitResize(e) {
-    e.preventDefault();
+/* ── DOM rendering ─────────────────────────────────────────────── */
+function _renderTree() {
     var container = document.getElementById('data-split-container');
-    var primary = document.getElementById('data-primary');
-    var secondary = document.getElementById('data-secondary');
-    var startX = e.clientX;
-    var startW = primary.offsetWidth;
-    var totalW = container.offsetWidth - 10; // minus divider
+    var pool = document.getElementById('panel-pool');
+    // Detach all panels to pool
+    _PANELS.forEach(function(p) {
+        var el = document.getElementById('data-panel-' + p.id);
+        if (el) {
+            _hidePanel(el);
+            pool.appendChild(el);
+        }
+    });
+    // Clear container
+    while (container.firstChild) container.removeChild(container.firstChild);
+    // Build tree DOM
+    container.appendChild(_buildNode(_splitTree));
+    // Post-render: trigger panel setup for visible panels
+    _allLeaves(_splitTree).forEach(function(leaf) {
+        _postShowPanel(leaf.panel);
+    });
+}
 
-    function onMove(e) {
-        var dx = e.clientX - startX;
-        var newW = Math.max(200, Math.min(totalW - 200, startW + dx));
-        var pct = (newW / totalW * 100);
-        primary.style.flex = '0 0 ' + pct + '%';
-        secondary.style.flex = '0 0 ' + (100 - pct) + '%';
+function _buildNode(node) {
+    if (node.type === 'leaf') return _buildLeaf(node);
+    return _buildSplit(node);
+}
+
+function _buildLeaf(node) {
+    var wrapper = document.createElement('div');
+    wrapper.className = 'split-pane-leaf';
+    wrapper.dataset.paneId = node.id;
+    wrapper.style.cssText = 'flex:1;min-width:0;min-height:0;';
+
+    // Tab bar
+    var tabBar = document.createElement('div');
+    tabBar.className = 'split-pane-tabbar';
+    _PANELS.forEach(function(p) {
+        var btn = document.createElement('button');
+        btn.className = 'split-pane-tab' + (p.id === node.panel ? ' active' : '');
+        var icon = document.createElement('i');
+        icon.className = 'fas ' + p.icon;
+        icon.style.marginRight = '3px';
+        btn.appendChild(icon);
+        btn.appendChild(document.createTextNode(p.label));
+        btn.onclick = function() { setPanePanel(node.id, p.id); };
+        tabBar.appendChild(btn);
+    });
+
+    // Actions: split right, split down, close
+    var actions = document.createElement('div');
+    actions.className = 'split-pane-actions';
+    var used = _usedPanels(_splitTree);
+    var canSplit = used.size < _PANELS.length;
+    var leaves = _allLeaves(_splitTree);
+    var canClose = leaves.length > 1;
+
+    var splitRightBtn = document.createElement('button');
+    splitRightBtn.title = 'Split Right';
+    var splitRightIcon = document.createElement('i');
+    splitRightIcon.className = 'fas fa-columns';
+    splitRightBtn.appendChild(splitRightIcon);
+    splitRightBtn.disabled = !canSplit;
+    splitRightBtn.onclick = function() { splitPane(node.id, 'horizontal'); };
+    actions.appendChild(splitRightBtn);
+
+    var splitDownBtn = document.createElement('button');
+    splitDownBtn.title = 'Split Down';
+    var splitDownIcon = document.createElement('i');
+    splitDownIcon.className = 'fas fa-columns icon-split-down';
+    splitDownBtn.appendChild(splitDownIcon);
+    splitDownBtn.disabled = !canSplit;
+    splitDownBtn.onclick = function() { splitPane(node.id, 'vertical'); };
+    actions.appendChild(splitDownBtn);
+
+    var closeBtn = document.createElement('button');
+    closeBtn.title = 'Close Pane';
+    var closeIcon = document.createElement('i');
+    closeIcon.className = 'fas fa-times';
+    closeBtn.appendChild(closeIcon);
+    closeBtn.disabled = !canClose;
+    closeBtn.onclick = function() { closePane(node.id); };
+    actions.appendChild(closeBtn);
+
+    tabBar.appendChild(actions);
+    wrapper.appendChild(tabBar);
+
+    // Content
+    var content = document.createElement('div');
+    content.className = 'split-pane-content';
+    var panelEl = document.getElementById('data-panel-' + node.panel);
+    if (panelEl) {
+        content.appendChild(panelEl);
+        _showPanel(panelEl);
+    }
+    wrapper.appendChild(content);
+
+    return wrapper;
+}
+
+function _buildSplit(node) {
+    var wrapper = document.createElement('div');
+    wrapper.dataset.splitId = node.id;
+    var isH = node.direction === 'horizontal';
+    wrapper.style.cssText = 'display:flex;flex:1;min-height:0;min-width:0;overflow:hidden;'
+        + 'flex-direction:' + (isH ? 'row' : 'column') + ';';
+
+    var first = _buildNode(node.children[0]);
+    first.style.flex = '0 0 ' + node.sizes[0] + '%';
+    wrapper.appendChild(first);
+
+    // Divider
+    var divider = document.createElement('div');
+    divider.className = 'split-divider ' + (isH ? 'horizontal' : 'vertical');
+    divider.onmousedown = function(e) { startSplitResize(node.id, e); };
+    wrapper.appendChild(divider);
+
+    var second = _buildNode(node.children[1]);
+    second.style.flex = '0 0 ' + node.sizes[1] + '%';
+    wrapper.appendChild(second);
+
+    return wrapper;
+}
+
+/* ── Core actions ──────────────────────────────────────────────── */
+function splitPane(paneId, direction) {
+    var used = _usedPanels(_splitTree);
+    var available = null;
+    for (var i = 0; i < _PANELS.length; i++) {
+        if (!used.has(_PANELS[i].id)) { available = _PANELS[i].id; break; }
+    }
+    if (!available) return;
+
+    var oldLeaf = _findNode(_splitTree, paneId);
+    if (!oldLeaf || oldLeaf.type !== 'leaf') return;
+
+    var newLeaf = { type: 'leaf', id: 'pane-' + (_nextPaneId++), panel: available };
+    var newSplit = {
+        type: 'split',
+        id: 'split-' + (_nextSplitId++),
+        direction: direction,
+        children: [
+            { type: 'leaf', id: oldLeaf.id, panel: oldLeaf.panel },
+            newLeaf
+        ],
+        sizes: [50, 50]
+    };
+    _splitTree = _replaceNode(_splitTree, paneId, newSplit);
+    _renderTree();
+    _saveLayout();
+}
+
+function closePane(paneId) {
+    var leaves = _allLeaves(_splitTree);
+    if (leaves.length <= 1) return;
+
+    var parentInfo = _findParent(_splitTree, paneId);
+    if (!parentInfo) return;
+
+    var parent = parentInfo.node;
+    var siblingIndex = parentInfo.index === 0 ? 1 : 0;
+    var sibling = parent.children[siblingIndex];
+
+    _splitTree = _replaceNode(_splitTree, parent.id, sibling);
+    _renderTree();
+    _saveLayout();
+}
+
+function setPanePanel(paneId, panelId) {
+    var leaf = _findNode(_splitTree, paneId);
+    if (!leaf || leaf.type !== 'leaf') return;
+    if (leaf.panel === panelId) return;
+
+    var otherLeaf = _findLeafByPanel(_splitTree, panelId);
+    if (otherLeaf) {
+        // Swap panels between panes
+        var oldPanel = leaf.panel;
+        var newLeaf = { type: 'leaf', id: leaf.id, panel: panelId };
+        _splitTree = _replaceNode(_splitTree, leaf.id, newLeaf);
+        var newOther = { type: 'leaf', id: otherLeaf.id, panel: oldPanel };
+        _splitTree = _replaceNode(_splitTree, otherLeaf.id, newOther);
+    } else {
+        _splitTree = _replaceNode(_splitTree, leaf.id, { type: 'leaf', id: leaf.id, panel: panelId });
+    }
+    _renderTree();
+    _saveLayout();
+}
+
+/* ── Resize ────────────────────────────────────────────────────── */
+function startSplitResize(splitId, e) {
+    e.preventDefault();
+    var splitNode = _findNode(_splitTree, splitId);
+    if (!splitNode || splitNode.type !== 'split') return;
+
+    var containerEl = document.querySelector('[data-split-id="' + splitId + '"]');
+    if (!containerEl) return;
+
+    var isH = splitNode.direction === 'horizontal';
+    var firstChild = containerEl.children[0];
+    var startPos = isH ? e.clientX : e.clientY;
+    var startSize = isH ? firstChild.offsetWidth : firstChild.offsetHeight;
+    var totalSize = (isH ? containerEl.offsetWidth : containerEl.offsetHeight) - 10;
+
+    function onMove(ev) {
+        var delta = (isH ? ev.clientX : ev.clientY) - startPos;
+        var newSize = Math.max(200, Math.min(totalSize - 200, startSize + delta));
+        var pct = (newSize / totalSize * 100);
+        splitNode.sizes[0] = pct;
+        splitNode.sizes[1] = 100 - pct;
+        containerEl.children[0].style.flex = '0 0 ' + pct + '%';
+        containerEl.children[2].style.flex = '0 0 ' + (100 - pct) + '%';
     }
     function onUp() {
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
-        _saveDataLayout();
+        // Refresh map if visible
+        var m = window.analyticsMap || window._geoMap;
+        if (m) setTimeout(function() { m.invalidateSize(); }, 50);
+        _saveLayout();
     }
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
 }
 
-/* Save/restore layout */
+/* ── Top-level tab switching ───────────────────────────────────── */
+function switchAnalyticsTab(tab) {
+    document.getElementById('pane-data').style.display = tab === 'data' ? '' : 'none';
+    document.getElementById('pane-performance').style.display = tab === 'performance' ? '' : 'none';
+    document.querySelectorAll('.analytics-tab').forEach(function(btn) {
+        var isActive = btn.dataset.tab === tab;
+        btn.style.borderBottomColor = isActive ? 'var(--accent)' : 'transparent';
+        btn.style.fontWeight = isActive ? '600' : 'normal';
+        btn.style.color = isActive ? 'var(--accent)' : '#6b7280';
+    });
+    if (tab === 'data') {
+        // Re-render to fix any sizing issues
+        _allLeaves(_splitTree).forEach(function(leaf) { _postShowPanel(leaf.panel); });
+    }
+}
+
+/* ── Save/restore layout ───────────────────────────────────────── */
 var _dataLayoutKey = 'dataLayout_{{ survey.uuid }}';
-function _saveDataLayout() {
-    var state = {
-        activePanel: _activeDataPanel,
-        pinnedPanel: _pinnedPanel,
+
+function _serializeTree(tree) {
+    if (tree.type === 'leaf') return { t: 'l', p: tree.panel };
+    return {
+        t: 's', d: tree.direction, sz: tree.sizes,
+        c: tree.children.map(_serializeTree)
     };
-    localStorage.setItem(_dataLayoutKey, JSON.stringify(state));
 }
-function _restoreDataLayout() {
-    var panel = 'table';
+
+var _PANEL_IDS = new Set(_PANELS.map(function(p) { return p.id; }));
+
+function _deserializeTree(data) {
+    if (!data || (data.t !== 'l' && data.t !== 's')) {
+        return { type: 'leaf', id: 'pane-' + (_nextPaneId++), panel: _PANELS[0].id };
+    }
+    if (data.t === 'l') {
+        var panel = _PANEL_IDS.has(data.p) ? data.p : _PANELS[0].id;
+        return { type: 'leaf', id: 'pane-' + (_nextPaneId++), panel: panel };
+    }
+    if (!Array.isArray(data.c) || data.c.length !== 2) {
+        return { type: 'leaf', id: 'pane-' + (_nextPaneId++), panel: _PANELS[0].id };
+    }
+    return {
+        type: 'split', id: 'split-' + (_nextSplitId++),
+        direction: data.d === 'vertical' ? 'vertical' : 'horizontal',
+        sizes: Array.isArray(data.sz) ? data.sz : [50, 50],
+        children: data.c.map(_deserializeTree)
+    };
+}
+
+function _saveLayout() {
+    localStorage.setItem(_dataLayoutKey, JSON.stringify({
+        version: 2,
+        tree: _serializeTree(_splitTree)
+    }));
+}
+
+function _restoreLayout() {
     try {
-        var state = JSON.parse(localStorage.getItem(_dataLayoutKey));
-        if (state && state.activePanel) panel = state.activePanel;
+        var raw = JSON.parse(localStorage.getItem(_dataLayoutKey));
+        if (!raw) return;
+        if (raw.version === 2 && raw.tree) {
+            _nextPaneId = 1; _nextSplitId = 1;
+            _splitTree = _deserializeTree(raw.tree);
+        } else if (raw.activePanel) {
+            // Migrate old format
+            _splitTree = { type: 'leaf', id: 'pane-0', panel: raw.activePanel };
+            _nextPaneId = 1;
+        }
     } catch(e) {}
-    switchDataPanel(panel);
 }
+
 // Defer restore until after all functions are defined
 document.addEventListener('DOMContentLoaded', function() {
-    _restoreDataLayout();
+    _restoreLayout();
+    _renderTree();
     if (!_tableLoaded) {
         _tableLoaded = true;
         loadTable();

@@ -165,6 +165,18 @@
     @media (max-width: 480px) {
         .card-cover, .card-cover-placeholder { height: 90px; }
     }
+    .badge-beta {
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        background: #f59e0b;
+        color: #fff;
+        padding: 1px 5px;
+        border-radius: 3px;
+        vertical-align: middle;
+        margin-left: 2px;
+    }
 </style>
 {% endblock %}
 
@@ -240,7 +252,7 @@
             </a>
             <div class="card-actions">
                 <a href="{% url 'editor_survey_detail' survey.uuid %}"><i class="fas fa-pen"></i> Editor</a>
-                <a href="{% url 'editor_survey_analytics' survey.uuid %}"><i class="fas fa-chart-bar"></i> Analytics</a>
+                <a href="{% url 'editor_survey_analytics' survey.uuid %}"><i class="fas fa-chart-bar"></i> Analytics <span class="badge-beta">beta</span></a>
                 <a href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-share-alt"></i> Share</a>
                 <span class="spacer"></span>
                 {% include "editor/_survey_more_menu.html" %}
@@ -281,7 +293,7 @@
             </a>
             <div class="row-actions">
                 <a href="{% url 'editor_survey_detail' survey.uuid %}" title="Editor"><i class="fas fa-pen"></i></a>
-                <a href="{% url 'editor_survey_analytics' survey.uuid %}" title="Analytics"><i class="fas fa-chart-bar"></i></a>
+                <a href="{% url 'editor_survey_analytics' survey.uuid %}" title="Analytics (Beta)"><i class="fas fa-chart-bar"></i></a>
                 <a href="{% url 'editor_survey_share' survey.uuid %}" title="Share"><i class="fas fa-share-alt"></i></a>
                 <a href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Preview" class="preview-btn"><i class="fas fa-external-link-alt"></i> Preview</a>
                 {% include "editor/_survey_more_menu.html" %}
