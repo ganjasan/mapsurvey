@@ -18,6 +18,7 @@ whitenoise = "*"
 django-storages = "*"
 boto3 = "*"
 pillow = "*"
+celery = {extras = ["redis"], version = "*"}
 
 [requires]
 python_version = "3.9"

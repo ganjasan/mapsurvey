@@ -32,6 +32,28 @@ services:
       retries: 3
       start_period: 30s
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - 6379:6379
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  celery:
+    build: .
+    command: celery -A mapsurvey worker -l info
+    env_file:
+      - ./.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   dbbackups:
   postgres-data:

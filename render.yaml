@@ -11,6 +11,11 @@ databases:
     previewPlan: basic-256mb
 
 services:
+  - type: redis
+    name: mapsurvey-redis
+    plan: free
+    ipAllowList: []
+
   - type: web
     name: mapsurvey
     runtime: docker
@@ -64,8 +69,68 @@ services:
       - key: EMAIL_HOST_PASSWORD
         sync: false
         previewEnvRenderServiceName: mapsurvey
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: mapsurvey-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: mapsurvey-redis
+          property: connectionString
+      - key: NEWSLETTER_SITE_URL
+        value: "https://mapsurvey.org"
     disk:
       name: media-storage
       mountPath: /home/app/web/mediafiles
       sizeGB: 1
     healthCheckPath: /
+
+  - type: worker
+    name: mapsurvey-celery
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: celery -A mapsurvey worker -l info --concurrency 2
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mapsurvey-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: mapsurvey-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: mapsurvey-redis
+          property: connectionString
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: EMAIL_BACKEND
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: EMAIL_HOST
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: EMAIL_PORT
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: EMAIL_USE_SSL
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: EMAIL_HOST_USER
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: NEWSLETTER_SITE_URL
+        value: "https://mapsurvey.org"

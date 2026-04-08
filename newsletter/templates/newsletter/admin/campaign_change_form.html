@@ -1,0 +1,271 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block extrahead %}
+{{ block.super }}
+<link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet">
+<style>
+    /* Override Django admin flex layout for the body_html field */
+    .field-body_html .flex-container {
+        display: block !important;
+    }
+    #quill-editor {
+        min-height: 300px;
+        background: #fff;
+        border: 1px solid #ccc;
+    }
+    #quill-editor .ql-editor {
+        min-height: 250px;
+    }
+    .newsletter-actions {
+        margin: 20px 0;
+        padding: 16px;
+        background: #f8f8f8;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .newsletter-actions h3 {
+        margin: 0 0 12px;
+        font-size: 14px;
+    }
+    .newsletter-actions .btn {
+        display: inline-block;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        margin-right: 8px;
+    }
+    .btn-preview { background: #417690; color: #fff; }
+    .btn-test { background: #79aec8; color: #fff; }
+    .btn-send { background: #2a7f6f; color: #fff; }
+    .btn-send:disabled { background: #ccc; cursor: not-allowed; }
+    .test-send-form { display: none; margin-top: 12px; }
+    .test-send-form input[type="email"] {
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 250px;
+    }
+    #preview-modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 9999;
+    }
+    #preview-modal .modal-content {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 560px;
+        max-height: 80vh;
+        background: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    }
+    #preview-modal .modal-close {
+        position: absolute;
+        top: 8px; right: 12px;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+        z-index: 1;
+        background: #fff;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        text-align: center;
+        line-height: 32px;
+    }
+    #preview-iframe {
+        width: 100%;
+        height: 70vh;
+        border: none;
+    }
+    .status-msg {
+        margin-top: 8px;
+        font-size: 13px;
+        padding: 6px 10px;
+        border-radius: 4px;
+    }
+    .status-msg.success { background: #dff0d8; color: #3c763d; }
+    .status-msg.error { background: #f2dede; color: #a94442; }
+</style>
+{% endblock %}
+
+{% block after_related_objects %}
+{{ block.super }}
+
+{% if original %}
+<div class="newsletter-actions">
+    <h3>Newsletter Actions</h3>
+    <button type="button" class="btn btn-preview" onclick="previewCampaign()">Preview</button>
+    <button type="button" class="btn btn-test" onclick="toggleTestSend()">Test Send</button>
+    {% if can_send %}
+    <button type="button" class="btn btn-send" id="send-btn"
+        data-recipient-count="{{ recipient_count }}"
+        onclick="sendCampaign()">
+        Send to {{ recipient_count }} recipients
+    </button>
+    {% else %}
+    <button type="button" class="btn btn-send" disabled>
+        Already {{ original.status }}
+    </button>
+    {% endif %}
+    <div class="test-send-form" id="test-send-form">
+        <input type="email" id="test-email" placeholder="test@example.com">
+        <button type="button" class="btn btn-test" onclick="doTestSend()">Send Test</button>
+    </div>
+    <div id="action-status"></div>
+</div>
+{% endif %}
+
+<div id="preview-modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closePreview()">&times;</span>
+        <iframe id="preview-iframe"></iframe>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
+<script>
+(function() {
+    if (typeof Quill === 'undefined') {
+        console.warn('Quill not loaded — falling back to plain textarea');
+        return;
+    }
+
+    const textarea = document.getElementById('id_body_html');
+    if (!textarea) return;
+
+    // Create editor div next to textarea
+    const editorDiv = document.createElement('div');
+    editorDiv.id = 'quill-editor';
+    textarea.parentNode.insertBefore(editorDiv, textarea.nextSibling);
+
+    try {
+        var quill = new Quill('#quill-editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ header: [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ color: [] }, { background: [] }],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    ['link', 'image'],
+                    ['blockquote', 'code-block'],
+                    ['clean'],
+                ],
+            },
+        });
+    } catch (e) {
+        console.error('Quill init failed:', e);
+        editorDiv.remove();
+        return;
+    }
+
+    // Only hide textarea after Quill successfully initialized
+    textarea.style.display = 'none';
+
+    // Load existing content
+    if (textarea.value) {
+        quill.root.innerHTML = textarea.value;
+    }
+
+    // Sync on every change
+    quill.on('text-change', function() {
+        textarea.value = quill.root.innerHTML;
+    });
+
+    // Also sync before form submit
+    var form = textarea.closest('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            textarea.value = quill.root.innerHTML;
+        });
+    }
+})();
+
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function showStatus(msg, isError) {
+    const el = document.getElementById('action-status');
+    // Clear previous status
+    while (el.firstChild) el.removeChild(el.firstChild);
+    const div = document.createElement('div');
+    div.className = 'status-msg ' + (isError ? 'error' : 'success');
+    div.textContent = msg;
+    el.appendChild(div);
+    setTimeout(function() { while (el.firstChild) el.removeChild(el.firstChild); }, 5000);
+}
+
+function previewCampaign() {
+    // Use iframe src to load preview safely
+    document.getElementById('preview-iframe').src = '../preview/';
+    document.getElementById('preview-modal').style.display = 'block';
+}
+
+function closePreview() {
+    document.getElementById('preview-modal').style.display = 'none';
+    document.getElementById('preview-iframe').src = '';
+}
+
+document.getElementById('preview-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) closePreview();
+});
+
+function toggleTestSend() {
+    const form = document.getElementById('test-send-form');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function doTestSend() {
+    const email = document.getElementById('test-email').value;
+    if (!email) return;
+
+    const formData = new FormData();
+    formData.append('email', email);
+
+    fetch('../test-send/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrfToken() },
+        credentials: 'same-origin',
+        body: formData,
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        showStatus(data.message || data.error, !!data.error);
+    })
+    .catch(function(e) { showStatus('Request failed: ' + e, true); });
+}
+
+function sendCampaign() {
+    const btn = document.getElementById('send-btn');
+    const count = btn ? btn.dataset.recipientCount : '?';
+
+    if (!confirm('Send to ' + count + ' recipients? This cannot be undone.')) return;
+
+    fetch('../send/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrfToken() },
+        credentials: 'same-origin',
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            showStatus(data.message, false);
+            if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+        } else {
+            showStatus(data.error, true);
+        }
+    })
+    .catch(function(e) { showStatus('Request failed: ' + e, true); });
+}
+</script>
+{% endblock %}

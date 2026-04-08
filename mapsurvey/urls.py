@@ -28,7 +28,7 @@ urlpatterns = [
     path('accounts/activate/', DirectActivationView.as_view(), name='django_registration_activate'),
     path('accounts/', include('django_registration.backends.activation.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
-
+    path('nl/', include('newsletter.urls', namespace='newsletter')),
 ]
 
 if settings.DEBUG:

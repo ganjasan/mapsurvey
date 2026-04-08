@@ -53,8 +53,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'debug_toolbar',
     'django_registration',
-    'storages'
-
+    'storages',
+    'newsletter',
 ]
 
 MIDDLEWARE = [
@@ -250,3 +250,15 @@ CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'konuchovartem@gmail.com')
 CONTACT_TELEGRAM = os.environ.get('CONTACT_TELEGRAM', 'Konuchovartem')
 GITHUB_REPO_URL = os.environ.get('GITHUB_REPO_URL', 'https://github.com/ganjasan/mapsurvey')
 DEMO_SURVEY_URL = os.environ.get('DEMO_SURVEY_URL', '')
+
+# Celery
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_TASK_ALWAYS_EAGER = os.environ.get('CELERY_TASK_ALWAYS_EAGER', 'False').lower() == 'true'
+
+# Newsletter
+NEWSLETTER_SITE_URL = os.environ.get('NEWSLETTER_SITE_URL', 'https://mapsurvey.org')
+NEWSLETTER_PHYSICAL_ADDRESS = os.environ.get(
+    'NEWSLETTER_PHYSICAL_ADDRESS',
+    'Kyrgyzstan, Bishkek, 11 mkr., d. 14, kv. 53, 720049'
+)

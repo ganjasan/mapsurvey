@@ -30,9 +30,9 @@ if [ "$CLEAN" = true ]; then
     echo "✓ Database volume removed"
 fi
 
-# Start database container
-echo "🐘 Starting PostgreSQL..."
-docker compose up -d db 2>/dev/null || docker-compose up -d db 2>/dev/null
+# Start database and Redis containers
+echo "🐘 Starting PostgreSQL and Redis..."
+docker compose up -d db redis 2>/dev/null || docker-compose up -d db redis 2>/dev/null
 
 # Wait for database to be ready (check from host via mapped port)
 echo "⏳ Waiting for database..."
@@ -58,6 +58,7 @@ done < .env
 
 export SQL_HOST=localhost
 export SQL_PORT=5434
+export CELERY_BROKER_URL=redis://localhost:6379/0
 
 # Run migrations
 echo "🔄 Running migrations..."
@@ -68,6 +69,20 @@ if [ "$CLEAN" = true ]; then
     echo "👤 Creating superuser..."
     python manage.py createsuperuser --noinput 2>/dev/null || echo "Superuser already exists or credentials not set"
 fi
+
+# Start Celery worker in background
+echo "🔴 Starting Celery worker..."
+celery -A mapsurvey worker -l info &
+CELERY_PID=$!
+echo "✓ Celery worker started (PID $CELERY_PID)"
+
+cleanup() {
+    echo ""
+    echo "Stopping Celery worker..."
+    kill $CELERY_PID 2>/dev/null
+    wait $CELERY_PID 2>/dev/null
+}
+trap cleanup EXIT
 
 # Start development server with hot-reload
 echo ""
