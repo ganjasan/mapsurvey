@@ -1451,7 +1451,10 @@ msgstr ""
 msgid "Go to Dashboard"
 msgstr ""
 
-msgid "Try Free"
+msgid "Create Your Mapsurvey"
+msgstr ""
+
+msgid "Try Demo Survey"
 msgstr ""
 
 msgid "Self-Host"

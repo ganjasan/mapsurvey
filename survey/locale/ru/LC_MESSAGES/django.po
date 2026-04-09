@@ -1514,8 +1514,11 @@ msgstr ""
 msgid "Go to Dashboard"
 msgstr "Перейти в панель управления"
 
-msgid "Try Free"
-msgstr "Попробовать бесплатно"
+msgid "Create Your Mapsurvey"
+msgstr "Создать свой Mapsurvey"
+
+msgid "Try Demo Survey"
+msgstr "Попробовать демо"
 
 msgid "Self-Host"
 msgstr "Свой сервер"
