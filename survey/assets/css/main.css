@@ -588,13 +588,52 @@ ul {
 }
 
 /* ============================================
-   Drawbar
+   Drawbar (Cancel / Finish drawing)
    ============================================ */
 #drawbar {
-  position: absolute;
-  left: 45%;
-  z-index: 9;
-  top: 5%;
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  display: flex;
+  gap: 12px;
+}
+
+#draw-cancel,
+#draw-finish {
+  height: 48px;
+  padding: 0 24px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 15px;
+  font-family: inherit;
+  font-weight: 500;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+  cursor: pointer;
+}
+
+#draw-cancel:active,
+#draw-finish:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+#draw-cancel {
+  background-color: var(--danger);
+}
+
+#draw-finish {
+  background-color: var(--success);
+}
+
+#draw-finish:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* ============================================

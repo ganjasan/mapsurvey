@@ -62,8 +62,9 @@
 	</div>
 </div>
 
-<div id="drawbar" style="visibility: hidden;">
-    <button id='draw_button' type="button" class="btn btn-primary" data-mode='start_draw'>{% trans "Start drawing" %}</button>
+<div id="drawbar" style="display: none;">
+    <button type="button" id="draw-cancel"><i class="fas fa-times"></i> {% trans "Cancel" %}</button>
+    <button type="button" id="draw-finish" disabled><i class="fas fa-check"></i> {% trans "Finish drawing" %}</button>
 </div>
 
 <div id="crosshair-overlay" style="display: none;">
@@ -103,8 +104,8 @@
     }
 
     function toggleDrawbar(show){
-        if (show){drawbar.style.visibility="visible";}
-        else{drawbar.style.visibility="hidden"}
+        if (show){drawbar.style.display="flex";}
+        else{drawbar.style.display="none";}
     }
 
     var mapboxUrl = '{{ MAPBOX_URL }}';
@@ -331,33 +332,30 @@
     var drawControl = new L.Control.Draw(drawPluginOptions);
     map.addControl(drawControl);
 
-    function startDrawMode(question){
-        toggleInfo(false);
+    // Track the minimum vertex count for current draw type
+    var drawMinVertices = 0;
+
+    function showDrawbar(mode) {
+        var $cancel = $('#draw-cancel');
+        var $finish = $('#draw-finish');
+
+        if (mode === 'draw') {
+            $cancel.show();
+            $finish.prop('disabled', true).html('<i class="fas fa-check"></i> ' + i18n.finishDrawing);
+        } else if (mode === 'edit') {
+            $cancel.hide();
+            $finish.prop('disabled', false).html('<i class="fas fa-check"></i> ' + i18n.finishEditing);
+        }
         toggleDrawbar(true);
-
-        currentQ = $(question).attr('name');
-
-        $("#draw_button").attr('draw-type',  $(question).attr('draw-type'));
-        $("#draw_button").attr('data-color', $(question).attr('data-color'));
-        $('#draw_button').attr('data-mode', 'start_draw');
-        $('#draw_button').text(i18n.startDrawing);
     }
 
-    function endDrawMode(){
-        toggleInfo(true);
+    function hideDrawbar() {
         toggleDrawbar(false);
-
-        currentQ = null;
-
-        if (currentDrawFeature) {
-            currentDrawFeature.disable();
-            currentDrawFeature = null;
-        }
+        drawMinVertices = 0;
     }
 
     function startEditMode(layer){
     	toggleInfo(false);
-    	toggleDrawbar(true);
 
     	// Finish any previous edit first (single-edit enforcement)
     	if (currentEditLayer) {
@@ -367,15 +365,13 @@
     	layer.editing.enable();
     	currentEditLayer = layer;
 
-		$('#draw_button').attr('data-mode', 'end_edit');
-        $('#draw_button').text(i18n.finishEditing);
-
+        showDrawbar('edit');
         layer.closePopup();
     }
 
     function endEditMode(layer){
     	toggleInfo(true);
-    	toggleDrawbar(false);
+    	hideDrawbar();
 
     	layer.editing.disable();
     	currentEditLayer = null;
@@ -494,77 +490,70 @@
     	}
     })
 
-    $('#draw_button').click(function(){
-        mode = $(this).attr('data-mode');
+    // --- Draw action bar buttons ---
 
-        if (mode == "start_draw"){
-            let draw_type = $(this).attr('draw-type');
-            if (draw_type == "drawpolygon")
-                currentDrawFeature = new L.Draw.Polygon(map);
-            else if (draw_type == "drawline")
-                currentDrawFeature = new L.Draw.Polyline(map);
-            
-            currentDrawFeature.setOptions(
-                {
-                        shapeOptions:{
-                            color:$(this).attr('data-color'),
-                        }
-                }
-                
-            )
-            
-            currentDrawFeature.enable();
-
-            $(this).attr('data-mode', 'stop_draw');
-            $(this).text(i18n.delete);
-        }else if (mode == "end_edit"){
-        	endEditMode(currentEditLayer);
-        }
-        else{
+    $('#draw-cancel').click(function() {
+        if (currentDrawFeature) {
             currentDrawFeature.disable();
-            $(this).attr('data-mode', 'start_draw');
-            $(this).text(i18n.startDrawing);
+            currentDrawFeature = null;
+        }
+        hideDrawbar();
+        toggleInfo(true);
+        currentQ = null;
+    });
+
+    $('#draw-finish').click(function() {
+        if (currentEditLayer) {
+            endEditMode(currentEditLayer);
+        } else if (currentDrawFeature && currentDrawFeature.completeShape) {
+            currentDrawFeature.completeShape();
         }
     });
 
+    // Track vertex additions to enable/disable Finish button
+    map.on('draw:drawvertex', function() {
+        if (currentDrawFeature && currentDrawFeature._markers) {
+            var count = currentDrawFeature._markers.length;
+            $('#draw-finish').prop('disabled', count < drawMinVertices);
+        }
+    });
+
+    // Hide drawbar when drawing completes (draw:created fires after completeShape or manual close)
+    map.on('draw:created', function() {
+        hideDrawbar();
+    });
+
+    // --- Geo question draw buttons ---
+
     $('.drawpolygon').click(function() {
-        //startDrawMode(this);
+        if (currentDrawFeature) {
+            currentDrawFeature.disable();
+            currentDrawFeature = null;
+        }
         currentDrawFeature = new L.Draw.Polygon(map);
-
-        currentDrawFeature.setOptions(
-                {
-                        shapeOptions:{
-                            color:$(this).attr('data-color'),
-                        }
-                }
-                
-            )
-
+        currentDrawFeature.setOptions({ shapeOptions: { color: $(this).attr('data-color') } });
         currentDrawFeature.enable();
 
         toggleInfo(false);
-        currentQ = $(this).attr('name')
-
+        currentQ = $(this).attr('name');
+        drawMinVertices = 3;
+        showDrawbar('draw');
     });
 
     $('.drawline').click(function() {
-        //startDrawMode(this);
+        if (currentDrawFeature) {
+            currentDrawFeature.disable();
+            currentDrawFeature = null;
+        }
         currentDrawFeature = new L.Draw.Polyline(map);
-
-        currentDrawFeature.setOptions(
-                {
-                        shapeOptions:{
-                            color:$(this).attr('data-color'),
-                        }
-                }
-                
-            )
-
+        currentDrawFeature.setOptions({ shapeOptions: { color: $(this).attr('data-color') } });
         currentDrawFeature.enable();
 
         toggleInfo(false);
-        currentQ = $(this).attr('name')
-    })
+        currentQ = $(this).attr('name');
+        drawMinVertices = 2;
+        showDrawbar('draw');
+    });
 
     $('.drawpoint').click(function() {
         var color = $(this).attr('data-color');

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mapsurvey 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-13 06:44+0000\n"
+"POT-Creation-Date: 2026-04-13 07:47+0000\n"
 "PO-Revision-Date: 2026-02-11 14:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: Kyrgyz\n"
@@ -15,179 +15,326 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: survey/models.py:37
-msgid "Only alphanumeric character and \"_\" sign"
+#: survey/models.py:19 survey/models.py:26
+msgid "Owner"
 msgstr ""
 
-#: survey/models.py:46
-msgid "Private"
+#: survey/models.py:20
+msgid "Admin"
 msgstr ""
 
-#: survey/models.py:47
-msgid "Demo"
+#: survey/models.py:21 survey/models.py:27
+msgid "Editor"
 msgstr ""
 
-#: survey/models.py:48
-msgid "Public"
-msgstr ""
-
-#: survey/models.py:52
-msgid "Text"
-msgstr ""
-
-#: survey/models.py:53
-msgid "Number"
-msgstr ""
-
-#: survey/models.py:54
-msgid "Choices"
-msgstr ""
-
-#: survey/models.py:55
-msgid "Multiple Choices"
-msgstr ""
-
-#: survey/models.py:56
-msgid "Range"
+#: survey/models.py:22 survey/models.py:28
+msgid "Viewer"
 msgstr ""
 
 #: survey/models.py:57
+msgid "Only alphanumeric character and \"_\" sign"
+msgstr ""
+
+#: survey/models.py:66
+msgid "Draft"
+msgstr ""
+
+#: survey/models.py:67
+msgid "Testing"
+msgstr ""
+
+#: survey/models.py:68
+msgid "Published"
+msgstr ""
+
+#: survey/models.py:69
+msgid "Closed"
+msgstr ""
+
+#: survey/models.py:70
+msgid "Archived"
+msgstr ""
+
+#: survey/models.py:82
+msgid "Private"
+msgstr ""
+
+#: survey/models.py:83 survey/templates/base_landing.html:69
+#: survey/templates/base_landing.html:116
+msgid "Demo"
+msgstr ""
+
+#: survey/models.py:84
+msgid "Public"
+msgstr ""
+
+#: survey/models.py:88
+msgid "Text"
+msgstr ""
+
+#: survey/models.py:89
+msgid "Number"
+msgstr ""
+
+#: survey/models.py:90
+msgid "Choices"
+msgstr ""
+
+#: survey/models.py:91
+msgid "Multiple Choices"
+msgstr ""
+
+#: survey/models.py:92
+msgid "Range"
+msgstr ""
+
+#: survey/models.py:93
 msgid "Rating"
 msgstr ""
 
-#: survey/models.py:58
+#: survey/models.py:94
 msgid "Date/Time"
 msgstr ""
 
-#: survey/models.py:59
+#: survey/models.py:95
 msgid "Geo Point"
 msgstr ""
 
-#: survey/models.py:60
+#: survey/models.py:96
 msgid "Geo Line"
 msgstr ""
 
-#: survey/models.py:61
+#: survey/models.py:97
 msgid "Geo Polygon"
 msgstr ""
 
-#: survey/models.py:62
+#: survey/models.py:98
 msgid "Image"
 msgstr ""
 
-#: survey/models.py:63
-msgid "Line"
-msgstr ""
-
-#: survey/models.py:64
-msgid "HTML"
-msgstr ""
-
-#: survey/models.py:71
-msgid "Selected language code (ISO 639-1)"
-msgstr ""
-
-#: survey/models.py:97
-msgid ""
-"URL to redirect after survey completion. E.g.: /thanks/ or https://example."
-"com"
-msgstr ""
-
-#: survey/models.py:98
-msgid "List of ISO 639-1 language codes, e.g. [\"en\", \"ru\", \"de\"]"
-msgstr ""
-
 #: survey/models.py:99
-msgid "Controls whether survey appears on the landing page"
+msgid "Single Line Text"
 msgstr ""
 
 #: survey/models.py:100
+msgid "HTML"
+msgstr ""
+
+#: survey/models.py:123
+msgid "Selected language code (ISO 639-1)"
+msgstr ""
+
+#: survey/models.py:273
+msgid ""
+"URL to redirect after survey completion. E.g.: /thanks/ or "
+"https://example.com"
+msgstr ""
+
+#: survey/models.py:274
+msgid "List of ISO 639-1 language codes, e.g. [\"en\", \"ru\", \"de\"]"
+msgstr ""
+
+#: survey/models.py:275
+msgid "Controls whether survey appears on the landing page"
+msgstr ""
+
+#: survey/models.py:276
 msgid "Marks completed surveys whose results can be shown"
 msgstr ""
 
-#: survey/models.py:101
+#: survey/models.py:277
 msgid ""
-"Custom HTML for thanks page. Dict keyed by language: {\"en\": \"<h1>Thanks!</"
-"h1>\", \"ru\": \"<h1>Спасибо!</h1>\"} or a plain string."
+"Custom HTML for thanks page. Dict keyed by language: {\"en\": "
+"\"<h1>Thanks!</h1>\", \"ru\": \"<h1>Спасибо!</h1>\"} or a plain string."
 msgstr ""
 
-#: survey/models.py:189 survey/models.py:273
+#: survey/models.py:282
+msgid ""
+"Survey-level validation thresholds: {fast_threshold_seconds, "
+"duplicate_window_hours}"
+msgstr ""
+
+#: survey/models.py:290
+msgid "For archived versions, points to the canonical survey"
+msgstr ""
+
+#: survey/models.py:297
+msgid "For draft copies, points to the canonical survey being edited"
+msgstr ""
+
+#: survey/models.py:474 survey/models.py:559
 msgid "ISO 639-1 language code"
 msgstr ""
 
-#: survey/models.py:219
+#: survey/models.py:504
+msgid ""
+"Per-question validation: {min_value, max_value, outlier_sigma, min_length, "
+"area_outlier_factor}"
+msgstr ""
+
+#: survey/models.py:505
 msgid "Color"
 msgstr ""
 
-#: survey/models.py:219
+#: survey/models.py:505
 msgid "HEX color, as #RRGGBB"
 msgstr ""
 
-#: survey/models.py:220
+#: survey/models.py:506
 msgid "Must be Font-Awesome class"
 msgstr ""
 
-#: survey/models.py:316
+#: survey/models.py:602
 msgid "Map"
 msgstr ""
 
-#: survey/models.py:317
+#: survey/models.py:603
 msgid "Open Data"
 msgstr ""
 
-#: survey/models.py:318
+#: survey/models.py:604
 msgid "Results"
 msgstr ""
 
-#: survey/models.py:319
+#: survey/models.py:605
 msgid "Article"
 msgstr ""
 
-#: survey/templates/base_survey_template.html:74
-#: survey/templatetags/i18n_extras.py:17
-msgid "Start drawing"
-msgstr "Тартууну баштоо"
+#: survey/templates/base_landing.html:7
+msgid ""
+"Mapsurvey — Open-Source Participatory Mapping Platform | Free PPGIS Tool"
+msgstr ""
 
-#: survey/templates/base_survey_template.html:85
+#: survey/templates/base_landing.html:16
+msgid ""
+"Create map-based surveys where people mark places, draw routes, and outline "
+"areas. Free to start, open source, self-hostable. The open-source "
+"alternative to Maptionnaire."
+msgstr ""
+
+#: survey/templates/base_landing.html:23 survey/templates/base_landing.html:27
+msgid "Mapsurvey — Open-Source Participatory Mapping"
+msgstr ""
+
+#: survey/templates/base_landing.html:24 survey/templates/base_landing.html:28
+msgid ""
+"Create map-based surveys where people mark places, draw routes, and outline "
+"areas. Free & open source."
+msgstr ""
+
+#: survey/templates/base_landing.html:63
+msgid "Toggle navigation"
+msgstr ""
+
+#: survey/templates/base_landing.html:68
+#: survey/templates/base_landing.html:115
+msgid "Features"
+msgstr ""
+
+#: survey/templates/base_landing.html:70
+msgid "Trust"
+msgstr ""
+
+#: survey/templates/base_landing.html:95
+#: survey/templates/org/org_members.html:15
+msgid "Dashboard"
+msgstr ""
+
+#: survey/templates/base_landing.html:96
+msgid "Logout"
+msgstr ""
+
+#: survey/templates/base_landing.html:98
+#: survey/templates/django_registration/activation_complete.html:13
+#: survey/templates/org/invitation_landing.html:17
+#: survey/templates/registration/login.html:10
+#: survey/templates/registration/login.html:40
+#: survey/templates/registration/password_reset_complete.html:13
+msgid "Sign In"
+msgstr ""
+
+#: survey/templates/base_landing.html:99
+msgid "Sign Up Free"
+msgstr ""
+
+#: survey/templates/base_landing.html:110
+msgid "Open-source platform for participatory mapping"
+msgstr ""
+
+#: survey/templates/base_landing.html:113
+msgid "Product"
+msgstr ""
+
+#: survey/templates/base_landing.html:121 survey/templates/landing.html:28
+msgid "Open Source"
+msgstr ""
+
+#: survey/templates/base_landing.html:128
+msgid "Legal"
+msgstr ""
+
+#: survey/templates/base_landing.html:130
+msgid "Trust & Security"
+msgstr ""
+
+#: survey/templates/base_landing.html:134
+msgid "Connect"
+msgstr ""
+
+#: survey/templates/base_landing.html:137
+#: survey/templates/org/org_members.html:34
+#: survey/templates/org/org_members.html:112
+msgid "Email"
+msgstr ""
+
+#: survey/templates/base_landing.html:148
+msgid ""
+"Mapsurvey is open-source software licensed under <a "
+"href=\"https://www.gnu.org/licenses/agpl-3.0.html\" target=\"_blank\" "
+"rel=\"noopener\">AGPLv3</a>"
+msgstr ""
+
+#: survey/templates/base_survey_template.html:66
+#: survey/templates/base_survey_template.html:78
+#: survey/templatetags/i18n_extras.py:20
 msgid "Cancel"
 msgstr "Жокко чыгаруу"
 
-#: survey/templates/base_survey_template.html:86
+#: survey/templates/base_survey_template.html:67
+#: survey/templatetags/i18n_extras.py:18
+#, fuzzy
+#| msgid "Finish editing"
+msgid "Finish drawing"
+msgstr "Түзөтүүнү аяктоо"
+
+#: survey/templates/base_survey_template.html:79
 msgid "Apply"
 msgstr "Колдонуу"
 
 #: survey/templates/django_registration/activation_complete.html:4
-msgid "Activation"
+#: survey/templates/django_registration/activation_complete.html:11
+msgid "Account Activated"
 msgstr ""
 
-#: survey/templates/django_registration/activation_complete.html:5
+#: survey/templates/django_registration/activation_complete.html:12
 #, python-format
-msgid "Hello, %(account)s!"
-msgstr ""
-
-#: survey/templates/django_registration/activation_complete.html:6
-msgid "Your account has been activated."
-msgstr ""
-
-#: survey/templates/django_registration/activation_complete.html:6
-msgid "Enter"
-msgstr ""
-
-#: survey/templates/django_registration/activation_complete.html:6
-msgid "the site."
+msgid "Welcome, %(account)s! Your account is now active."
 msgstr ""
 
 #: survey/templates/django_registration/activation_email_body.txt:1
-msgid "Site Registration"
+msgid "Welcome to Mapsurvey!"
 msgstr ""
 
 #: survey/templates/django_registration/activation_email_body.txt:3
-msgid "To activate your account, please follow this link:"
+msgid "To activate your account, follow this link:"
 msgstr ""
 
 #: survey/templates/django_registration/activation_email_body.txt:6
-#: survey/templates/survey_thanks.html:9
-msgid "Thank you!"
+msgid "This link expires in"
+msgstr ""
+
+#: survey/templates/django_registration/activation_email_body.txt:6
+msgid "day(s)."
 msgstr ""
 
 #: survey/templates/django_registration/activation_email_subject.txt:1
@@ -195,27 +342,537 @@ msgid "Account Activation"
 msgstr ""
 
 #: survey/templates/django_registration/activation_failed.html:4
+#: survey/templates/django_registration/activation_failed.html:11
 msgid "Activation Failed"
 msgstr ""
 
+#: survey/templates/django_registration/activation_failed.html:14
+msgid "Try registering again"
+msgstr ""
+
+#: survey/templates/django_registration/activation_form.html:4
+msgid "Activate Account"
+msgstr ""
+
+#: survey/templates/django_registration/activation_form.html:11
+msgid "Activate your account"
+msgstr ""
+
+#: survey/templates/django_registration/activation_form.html:25
+msgid "Click the button below to activate your account."
+msgstr ""
+
+#: survey/templates/django_registration/activation_form.html:29
+msgid "Activate"
+msgstr ""
+
+#: survey/templates/django_registration/activation_form.html:34
+#: survey/templates/django_registration/registration_complete.html:15
+msgid "Back to Sign In"
+msgstr ""
+
 #: survey/templates/django_registration/registration_complete.html:4
-msgid "Registration Complete"
+#: survey/templates/registration/password_reset_done.html:11
+msgid "Check Your Email"
 msgstr ""
 
-#: survey/templates/django_registration/registration_complete.html:5
+#: survey/templates/django_registration/registration_complete.html:11
+msgid "Check your email"
+msgstr ""
+
+#: survey/templates/django_registration/registration_complete.html:12
 msgid ""
-"Thank you for registering. A confirmation code has been sent to your email. "
-"Please confirm your registration by clicking the link provided."
+"We've sent an activation link to your email address. Please click the link "
+"to activate your account."
 msgstr ""
 
-#: survey/templates/django_registration/registration_form.html:8
-#: survey/templates/registration/registration_form.html:8
-msgid "Submit"
+#: survey/templates/django_registration/registration_complete.html:13
+msgid "The link will expire in 24 hours."
 msgstr ""
 
-#: survey/templates/registration/registration_form.html:2
-msgid "Register for an account"
+#: survey/templates/django_registration/registration_form.html:4
+#: survey/templates/django_registration/registration_form.html:10
+#: survey/templates/org/invitation_landing.html:19
+#: survey/templates/org/invitation_landing.html:37
+#: survey/templates/registration/registration_form.html:4
+#: survey/templates/registration/registration_form.html:10
+msgid "Create Account"
 msgstr ""
+
+#: survey/templates/django_registration/registration_form.html:11
+#: survey/templates/registration/registration_form.html:11
+msgid "Sign up to create and manage geo-surveys."
+msgstr ""
+
+#: survey/templates/django_registration/registration_form.html:31
+#: survey/templates/registration/registration_form.html:31
+msgid "Register"
+msgstr ""
+
+#: survey/templates/django_registration/registration_form.html:43
+#: survey/templates/registration/registration_form.html:35
+msgid "Already have an account? Sign in"
+msgstr ""
+
+#: survey/templates/landing.html:10
+msgid "Collect spatial feedback from your community"
+msgstr ""
+
+#: survey/templates/landing.html:12
+msgid ""
+"Create map-based surveys where people mark places, draw routes, and outline "
+"areas. Free to start. No coding required."
+msgstr ""
+
+#: survey/templates/landing.html:16 survey/templates/landing.html:214
+msgid "Go to Dashboard"
+msgstr ""
+
+#: survey/templates/landing.html:18 survey/templates/landing.html:200
+#: survey/templates/landing.html:202 survey/templates/landing.html:216
+msgid "Create Your Mapsurvey"
+msgstr ""
+
+#: survey/templates/landing.html:23
+msgid "Try Demo Survey"
+msgstr ""
+
+#: survey/templates/landing.html:29
+msgid "Free to Start"
+msgstr ""
+
+#: survey/templates/landing.html:30
+msgid "No Coding Required"
+msgstr ""
+
+#: survey/templates/landing.html:31
+msgid "GDPR-Friendly"
+msgstr ""
+
+#: survey/templates/landing.html:66
+msgid "Point"
+msgstr ""
+
+#: survey/templates/landing.html:69
+msgid "Line"
+msgstr ""
+
+#: survey/templates/landing.html:72
+msgid "Polygon"
+msgstr ""
+
+#: survey/templates/landing.html:85
+msgid "Who it's for"
+msgstr ""
+
+#: survey/templates/landing.html:86
+msgid "Built for people who shape places"
+msgstr ""
+
+#: survey/templates/landing.html:92
+msgid "Urban Planners"
+msgstr ""
+
+#: survey/templates/landing.html:93
+msgid ""
+"Ask residents where they need bike lanes, where crossings feel dangerous, "
+"where parks are missing. People draw routes and outline neighborhoods — not "
+"just drop pins."
+msgstr ""
+
+#: survey/templates/landing.html:99
+msgid "Researchers & Students"
+msgstr ""
+
+#: survey/templates/landing.html:100
+msgid ""
+"Run spatial studies without expensive platforms. Download GeoJSON + CSV, "
+"analyze in QGIS, R, or Python. Cite the open-source tool in your papers."
+msgstr ""
+
+#: survey/templates/landing.html:106
+msgid "Community Organizations"
+msgstr ""
+
+#: survey/templates/landing.html:107
+msgid ""
+"Engage your community in mapping what matters. Multilingual, mobile-"
+"friendly, easy to share. Perfect for participatory budgeting and public "
+"space assessments."
+msgstr ""
+
+#: survey/templates/landing.html:113
+msgid "Municipalities & Government"
+msgstr ""
+
+#: survey/templates/landing.html:114
+msgid ""
+"Citizen data stays on your infrastructure. No vendor lock-in, no annual "
+"subscription. Compliant with data sovereignty and GDPR requirements."
+msgstr ""
+
+#: survey/templates/landing.html:123
+msgid "Try it"
+msgstr ""
+
+#: survey/templates/landing.html:124
+msgid "See how a Mapsurvey works"
+msgstr ""
+
+#: survey/templates/landing.html:125
+msgid ""
+"Take a 2-minute demo survey — mark places, draw routes, answer questions on "
+"the map."
+msgstr ""
+
+#: survey/templates/landing.html:128
+msgid "Try the Demo Survey"
+msgstr ""
+
+#: survey/templates/landing.html:133
+msgid "Create your first survey"
+msgstr ""
+
+#: survey/templates/landing.html:135
+msgid "Sign up to try it free"
+msgstr ""
+
+#: survey/templates/landing.html:145
+msgid "Capabilities"
+msgstr ""
+
+#: survey/templates/landing.html:146
+msgid "Everything you need for spatial surveys"
+msgstr ""
+
+#: survey/templates/landing.html:152
+msgid "Interactive map surveys"
+msgstr ""
+
+#: survey/templates/landing.html:153
+msgid ""
+"Respondents mark places, draw routes, and outline areas directly on the map."
+" Mobile-friendly with crosshair mode for precise input."
+msgstr ""
+
+#: survey/templates/landing.html:159
+msgid "Visual survey editor"
+msgstr ""
+
+#: survey/templates/landing.html:160
+msgid ""
+"Drag-and-drop editor with live preview. 13 question types including text, "
+"choice, rating, image, and three map types. Sub-questions, sections, "
+"translations — no coding required."
+msgstr ""
+
+#: survey/templates/landing.html:166
+msgid "Multilingual surveys"
+msgstr ""
+
+#: survey/templates/landing.html:167
+msgid ""
+"One survey, multiple languages. Questions, choices, and the thank-you page "
+"all support translation. Respondents pick their language on entry."
+msgstr ""
+
+#: survey/templates/landing.html:173
+msgid "Built-in analytics"
+msgstr ""
+
+#: survey/templates/landing.html:174
+msgid ""
+"Response maps, charts, completion funnel, device breakdown, and time-on-"
+"section — all in one dashboard. Track campaigns with UTM links and shareable"
+" pages."
+msgstr ""
+
+#: survey/templates/landing.html:180
+msgid "Team collaboration"
+msgstr ""
+
+#: survey/templates/landing.html:181
+msgid ""
+"Create organizations, invite team members with roles, and collaborate on "
+"surveys. Survey versioning keeps your published data safe while you edit the"
+" next draft."
+msgstr ""
+
+#: survey/templates/landing.html:187
+msgid "Export to GIS"
+msgstr ""
+
+#: survey/templates/landing.html:188
+msgid ""
+"Download responses as GeoJSON + CSV in a single ZIP — ready for QGIS, "
+"ArcGIS, R, or Python. Export by version. Import and reuse survey structures "
+"across projects."
+msgstr ""
+
+#: survey/templates/landing.html:197
+msgid "Ready to create your own?"
+msgstr ""
+
+#: survey/templates/landing.html:211
+msgid "Free to use. Open source. Start in minutes."
+msgstr ""
+
+#: survey/templates/landing.html:221
+msgid "View on GitHub"
+msgstr ""
+
+#: survey/templates/org/invitation_landing.html:4
+msgid "Invitation"
+msgstr ""
+
+#: survey/templates/org/invitation_landing.html:13
+msgid "Invitation Unavailable"
+msgstr ""
+
+#: survey/templates/org/invitation_landing.html:24
+msgid "You're Invited!"
+msgstr ""
+
+#: survey/templates/org/invitation_landing.html:27
+msgid "has invited you to join"
+msgstr ""
+
+#: survey/templates/org/invitation_landing.html:29
+msgid "as"
+msgstr ""
+
+#: survey/templates/org/invitation_landing.html:34
+msgid "Sign In to Accept"
+msgstr ""
+
+#: survey/templates/org/invitation_landing.html:41
+msgid "This invitation expires in 7 days."
+msgstr ""
+
+#: survey/templates/org/org_members.html:4
+#: survey/templates/org/org_settings.html:34
+msgid "Members"
+msgstr ""
+
+#: survey/templates/org/org_members.html:11
+msgid "Members & Invitations"
+msgstr ""
+
+#: survey/templates/org/org_members.html:14
+#: survey/templates/org/org_settings.html:4
+msgid "Settings"
+msgstr ""
+
+#: survey/templates/org/org_members.html:33
+msgid "User"
+msgstr ""
+
+#: survey/templates/org/org_members.html:35
+#: survey/templates/org/org_members.html:112
+msgid "Role"
+msgstr ""
+
+#: survey/templates/org/org_members.html:36
+msgid "Joined"
+msgstr ""
+
+#: survey/templates/org/org_members.html:43
+msgid "you"
+msgstr ""
+
+#: survey/templates/org/org_members.html:68
+#: survey/templates/org/org_members.html:70
+msgid "Remove"
+msgstr ""
+
+#: survey/templates/org/org_members.html:85
+msgid "Invite Member"
+msgstr ""
+
+#: survey/templates/org/org_members.html:101
+msgid "Send"
+msgstr ""
+
+#: survey/templates/org/org_members.html:108
+msgid "Pending Invitations"
+msgstr ""
+
+#: survey/templates/org/org_members.html:112
+msgid "Sent"
+msgstr ""
+
+#: survey/templates/org/org_new.html:4 survey/templates/org/org_new.html:10
+msgid "New Organization"
+msgstr ""
+
+#: survey/templates/org/org_new.html:11
+msgid "Create a workspace for your team."
+msgstr ""
+
+#: survey/templates/org/org_new.html:16
+msgid "Organization Name"
+msgstr ""
+
+#: survey/templates/org/org_new.html:19
+msgid "Create"
+msgstr ""
+
+#: survey/templates/org/org_new.html:23
+#: survey/templates/org/org_settings.html:36
+msgid "Back to Dashboard"
+msgstr ""
+
+#: survey/templates/org/org_settings.html:10
+msgid "Organization Settings"
+msgstr ""
+
+#: survey/templates/org/org_settings.html:22
+msgid "Name"
+msgstr ""
+
+#: survey/templates/org/org_settings.html:26
+msgid "Slug"
+msgstr ""
+
+#: survey/templates/org/org_settings.html:28
+msgid "URL identifier:"
+msgstr ""
+
+#: survey/templates/org/org_settings.html:30
+msgid "Save"
+msgstr ""
+
+#: survey/templates/registration/logged_out.html:4
+#: survey/templates/registration/logged_out.html:11
+msgid "Signed Out"
+msgstr ""
+
+#: survey/templates/registration/logged_out.html:12
+msgid "You have been signed out successfully."
+msgstr ""
+
+#: survey/templates/registration/logged_out.html:13
+msgid "Sign In Again"
+msgstr ""
+
+#: survey/templates/registration/login.html:14
+msgid ""
+"Your account doesn't have access to this page. Please sign in with a "
+"different account."
+msgstr ""
+
+#: survey/templates/registration/login.html:16
+msgid "Please sign in to continue."
+msgstr ""
+
+#: survey/templates/registration/login.html:19
+msgid "Welcome back to Mapsurvey."
+msgstr ""
+
+#: survey/templates/registration/login.html:25
+msgid "Invalid username/email or password. Please try again."
+msgstr ""
+
+#: survey/templates/registration/login.html:32
+msgid "Username or Email"
+msgstr ""
+
+#: survey/templates/registration/login.html:44
+msgid "Forgot password?"
+msgstr ""
+
+#: survey/templates/registration/login.html:46
+msgid "Create an account"
+msgstr ""
+
+#: survey/templates/registration/password_reset_complete.html:4
+#: survey/templates/registration/password_reset_complete.html:11
+msgid "Password Changed"
+msgstr ""
+
+#: survey/templates/registration/password_reset_complete.html:12
+msgid "Your password has been set successfully."
+msgstr ""
+
+#: survey/templates/registration/password_reset_confirm.html:4
+#: survey/templates/registration/password_reset_confirm.html:11
+msgid "Set New Password"
+msgstr ""
+
+#: survey/templates/registration/password_reset_confirm.html:12
+msgid "Enter and confirm your new password."
+msgstr ""
+
+#: survey/templates/registration/password_reset_confirm.html:17
+msgid "New password"
+msgstr ""
+
+#: survey/templates/registration/password_reset_confirm.html:26
+msgid "Confirm password"
+msgstr ""
+
+#: survey/templates/registration/password_reset_confirm.html:34
+msgid "Change Password"
+msgstr ""
+
+#: survey/templates/registration/password_reset_confirm.html:39
+msgid "Link Invalid"
+msgstr ""
+
+#: survey/templates/registration/password_reset_confirm.html:40
+msgid "This password reset link is invalid or has already been used."
+msgstr ""
+
+#: survey/templates/registration/password_reset_confirm.html:42
+msgid "Request a new reset link"
+msgstr ""
+
+#: survey/templates/registration/password_reset_done.html:4
+msgid "Email Sent"
+msgstr ""
+
+#: survey/templates/registration/password_reset_done.html:12
+msgid ""
+"We've emailed you instructions for resetting your password. If you don't "
+"receive it in a few minutes, check your spam folder."
+msgstr ""
+
+#: survey/templates/registration/password_reset_done.html:14
+#: survey/templates/registration/password_reset_form.html:28
+msgid "Back to sign in"
+msgstr ""
+
+#: survey/templates/registration/password_reset_form.html:4
+#: survey/templates/registration/password_reset_form.html:10
+msgid "Reset Password"
+msgstr ""
+
+#: survey/templates/registration/password_reset_form.html:11
+msgid ""
+"Enter your email address and we'll send you a link to reset your password."
+msgstr ""
+
+#: survey/templates/registration/password_reset_form.html:21
+#, fuzzy
+#| msgid "Search address..."
+msgid "Email address"
+msgstr "Дарек издөө..."
+
+#: survey/templates/registration/password_reset_form.html:24
+msgid "Send Reset Link"
+msgstr ""
+
+#: survey/templates/survey_closed.html:4
+msgid "Survey Closed"
+msgstr "Сурамжылоо жабык"
+
+#: survey/templates/survey_closed.html:10
+msgid "This survey is no longer accepting responses."
+msgstr "Бул сурамжылоо жооптарды кабыл албайт."
+
+#: survey/templates/survey_closed.html:11
+msgid "Back to Home"
+msgstr "Башкы бетке"
 
 #: survey/templates/survey_header.html:21
 msgid "Start"
@@ -251,54 +908,78 @@ msgstr "Тилиңизди тандаңыз"
 msgid "Select your language"
 msgstr "Тилиңизди тандаңыз"
 
-#: survey/templates/survey_thanks.html:10
-msgid "Your responses have been recorded."
-msgstr ""
+#: survey/templates/survey_password.html:4
+msgid "Password Required"
+msgstr "Сырсөз талап кылынат"
 
-#: survey/templatetags/i18n_extras.py:18
+#: survey/templates/survey_password.html:13
+msgid "This survey requires a password to access."
+msgstr "Бул сурамжылоого кирүү үчүн сырсөз талап кылынат."
+
+#: survey/templates/survey_password.html:23
+msgid "Enter password"
+msgstr "Сырсөздү киргизиңиз"
+
+#: survey/templates/survey_password.html:25
+msgid "Continue"
+msgstr "Улантуу"
+
+#: survey/templates/survey_thanks.html:21
+msgid "Thank you!"
+msgstr "Рахмат!"
+
+#: survey/templates/survey_thanks.html:22
+msgid "Your responses have been recorded."
+msgstr "Жоопторуңуз жазылды."
+
+#: survey/templatetags/i18n_extras.py:17
+msgid "Start drawing"
+msgstr "Тартууну баштоо"
+
+#: survey/templatetags/i18n_extras.py:19
 msgid "Finish editing"
 msgstr "Түзөтүүнү аяктоо"
 
-#: survey/templatetags/i18n_extras.py:19
+#: survey/templatetags/i18n_extras.py:21
 msgid "Delete"
 msgstr "Өчүрүү"
 
-#: survey/templatetags/i18n_extras.py:22
+#: survey/templatetags/i18n_extras.py:24
 msgid "Click on the map to place a marker."
 msgstr "Маркерди коюу үчүн картаны басыңыз."
 
-#: survey/templatetags/i18n_extras.py:25
+#: survey/templatetags/i18n_extras.py:27
 msgid "Click to start drawing a shape."
 msgstr "Фигураны тартууну баштоо үчүн басыңыз."
 
-#: survey/templatetags/i18n_extras.py:26
+#: survey/templatetags/i18n_extras.py:28
 msgid "Click to continue drawing the shape."
 msgstr "Фигураны тартууну улантуу үчүн басыңыз."
 
-#: survey/templatetags/i18n_extras.py:27
+#: survey/templatetags/i18n_extras.py:29
 msgid "Click the first point to close this shape."
 msgstr "Бул фигураны жабуу үчүн биринчи чекитти басыңыз."
 
-#: survey/templatetags/i18n_extras.py:30
+#: survey/templatetags/i18n_extras.py:32
 msgid "Click to start drawing a line."
 msgstr "Сызыкты тартууну баштоо үчүн басыңыз."
 
-#: survey/templatetags/i18n_extras.py:31
+#: survey/templatetags/i18n_extras.py:33
 msgid "Click to continue drawing the line."
 msgstr "Сызыкты тартууну улантуу үчүн басыңыз."
 
-#: survey/templatetags/i18n_extras.py:32
+#: survey/templatetags/i18n_extras.py:34
 msgid "Click the last point to finish the line."
 msgstr "Сызыкты аяктоо үчүн акыркы чекитти басыңыз."
 
-#: survey/templatetags/i18n_extras.py:35
+#: survey/templatetags/i18n_extras.py:37
 msgid "<strong>Error:</strong> Shape edges cannot intersect!"
 msgstr "<strong>Ката:</strong> Фигуранын четтери кесилишпеши керек!"
 
-#: survey/templatetags/i18n_extras.py:38
+#: survey/templatetags/i18n_extras.py:40
 msgid "Search address..."
 msgstr "Дарек издөө..."
 
-#: survey/templatetags/i18n_extras.py:39
+#: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Эч нерсе табылган жок"

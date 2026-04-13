@@ -354,6 +354,10 @@ def survey_section(request, survey_slug, section_name):
 	# Get selected language (None for single-language surveys)
 	selected_language = request.session.get('survey_language')
 
+	# Activate Django i18n so {% trans %} renders in the selected language
+	if selected_language:
+		translation.activate(selected_language)
+
 	#если сессия на задана, то создать запись сессии
 	if  not request.session.get('survey_session_id'):
 		survey_session = SurveySession(survey=survey, language=selected_language)

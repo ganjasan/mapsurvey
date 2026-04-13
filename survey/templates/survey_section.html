@@ -123,7 +123,8 @@ document.getElementById('section_question_form').addEventListener('submit', func
             layer.openPopup();
 
         }else{
-            endDrawMode();            
+            toggleInfo(true);
+            currentQ = null;            
         }    
     });
 
@@ -158,7 +159,8 @@ document.getElementById('section_question_form').addEventListener('submit', func
         $popup.find("button.layer-delete").click(function(){
             editableLayers.removeLayer(tempLayer);
 
-            endDrawMode();
+            toggleInfo(true);
+            currentQ = null;
         })
 
         $popup.find("button.layer-edit").click(function(){
@@ -194,7 +196,8 @@ document.getElementById('section_question_form').addEventListener('submit', func
 
             tempLayer.closePopup();
 
-            endDrawMode();
+            toggleInfo(true);
+            currentQ = null;
 
         })
     }

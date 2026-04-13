@@ -15,7 +15,9 @@ def i18n_json():
     translations = {
         # Draw button labels
         'startDrawing': _('Start drawing'),
+        'finishDrawing': _('Finish drawing'),
         'finishEditing': _('Finish editing'),
+        'cancel': _('Cancel'),
         'delete': _('Delete'),
 
         # Marker tooltips
