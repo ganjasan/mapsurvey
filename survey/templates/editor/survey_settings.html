@@ -40,6 +40,31 @@
                 {% if field.name == 'available_languages' %}
                     {{ field }}
                     {% include "editor/partials/language_picker.html" %}
+                {% elif field.name == 'basemaps' %}
+                    {{ field }}
+                    <div style="margin-top:0.4rem;">
+                        {% for slug, label in basemap_choices %}
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input basemap-cb" type="checkbox"
+                                   id="bm_{{ slug }}" value="{{ slug }}"
+                                   {% if slug in survey.basemaps %}checked{% endif %}>
+                            <label class="form-check-label" for="bm_{{ slug }}">{{ label }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <script>
+                    (function(){
+                        var inp = document.getElementById('id_basemaps');
+                        var cbs = document.querySelectorAll('.basemap-cb');
+                        function sync(){
+                            var v = [];
+                            cbs.forEach(function(c){ if (c.checked) v.push(c.value); });
+                            inp.value = JSON.stringify(v.length ? v : ['streets']);
+                        }
+                        sync();
+                        cbs.forEach(function(c){ c.addEventListener('change', sync); });
+                    })();
+                    </script>
                 {% elif field.name == 'cover_image' %}
                     {% if survey.cover_image %}
                     <div class="mb-2">

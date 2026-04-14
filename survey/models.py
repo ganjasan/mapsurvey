@@ -70,6 +70,16 @@ STATUS_CHOICES = (
     ("archived", _("Archived")),
 )
 
+def default_basemaps():
+    return ['streets', 'satellite', 'topo']
+
+
+BASEMAP_CHOICES = [
+    ('streets', _('Streets')),
+    ('satellite', _('Satellite')),
+    ('topo', _('Topo')),
+]
+
 VALID_TRANSITIONS = {
     "draft": ["testing", "published"],
     "testing": ["draft", "published"],
@@ -280,6 +290,7 @@ class SurveyHeader(models.Model):
     test_token = models.UUIDField(default=uuid_module.uuid4, unique=True)
     cover_image = models.ImageField(upload_to='covers/', null=True, blank=True)
     validation_settings = models.JSONField(default=dict, blank=True, help_text=_('Survey-level validation thresholds: {fast_threshold_seconds, duplicate_window_hours}'))
+    basemaps = models.JSONField(default=default_basemaps, blank=True, help_text=_('Enabled basemaps for respondent map. List from: ["streets", "satellite", "topo"]'))
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 

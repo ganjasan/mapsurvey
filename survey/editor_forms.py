@@ -5,7 +5,7 @@ from .models import SurveyHeader, SurveySection, Question, Organization
 class SurveyHeaderForm(forms.ModelForm):
     class Meta:
         model = SurveyHeader
-        fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'thanks_html', 'cover_image']
+        fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'thanks_html', 'cover_image', 'basemaps']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'survey_name'}),
             'redirect_url': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '#'}),
@@ -13,7 +13,16 @@ class SurveyHeaderForm(forms.ModelForm):
             'visibility': forms.Select(attrs={'class': 'form-control'}),
             'thanks_html': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': '{"en": "<h1>Thanks!</h1>"}'}),
             'cover_image': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
+            'basemaps': forms.HiddenInput(attrs={'id': 'id_basemaps'}),
         }
+
+
+    def clean_basemaps(self):
+        VALID = {'streets', 'satellite', 'topo'}
+        value = self.cleaned_data.get('basemaps') or []
+        if not isinstance(value, list):
+            raise forms.ValidationError("Invalid basemaps value.")
+        return [slug for slug in value if slug in VALID]
 
 
 class SurveySectionForm(forms.ModelForm):

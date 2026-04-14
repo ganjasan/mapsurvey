@@ -58,6 +58,7 @@ def serialize_survey_to_dict(survey: SurveyHeader) -> Dict[str, Any]:
         "status": survey.status,
         "has_password": survey.has_password(),
         "version": survey.version_number,
+        "basemaps": survey.basemaps or [],
         "sections": serialize_sections(survey),
     }
 
@@ -461,6 +462,7 @@ def create_survey_header(
         thanks_html=survey_data.get("thanks_html", {}),
         status=survey_data.get("status", "draft"),
         version_number=survey_data.get("version", 1),
+        basemaps=survey_data.get("basemaps", ['streets', 'satellite', 'topo']),
         is_canonical=True,
     )
 

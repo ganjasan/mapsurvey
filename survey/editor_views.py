@@ -12,7 +12,7 @@ from django.views.decorators.http import require_POST
 from .models import (
     SurveyHeader, SurveySession, SurveySection, SurveySectionTranslation,
     Question, QuestionTranslation, SurveyCollaborator,
-    Membership, SURVEY_ROLE_CHOICES,
+    Membership, SURVEY_ROLE_CHOICES, BASEMAP_CHOICES,
 )
 from .editor_forms import SurveyHeaderForm, SurveySectionForm, QuestionForm
 from .forms import SurveySectionAnswerForm
@@ -157,6 +157,7 @@ def editor_survey_settings(request, survey_uuid):
         'survey': survey,
         'form': form,
         'effective_role': request.effective_survey_role,
+        'basemap_choices': BASEMAP_CHOICES,
     })
 
 

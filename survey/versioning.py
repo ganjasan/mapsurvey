@@ -45,6 +45,7 @@ def clone_survey_for_draft(canonical):
         visibility=canonical.visibility,
         thanks_html=canonical.thanks_html,
         password_hash=canonical.password_hash,
+        basemaps=canonical.basemaps,
         status="draft",
         published_version=canonical,
     )
@@ -284,6 +285,7 @@ def publish_draft(draft, force=False):
         canonical.visibility = draft.visibility
         canonical.redirect_url = draft.redirect_url
         canonical.thanks_html = draft.thanks_html
+        canonical.basemaps = draft.basemaps
 
         # 6. Increment version
         canonical.version_number += 1

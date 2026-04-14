@@ -11487,3 +11487,117 @@ class ValidationSettingsTest(TestCase):
         data = json.loads(resp.content)
         self.assertEqual(data['fast_threshold_seconds'], 60)
         self.assertEqual(data['duplicate_window_hours'], 2)
+
+
+class BasemapTest(TestCase):
+    """Tests for satellite/topographic basemap options."""
+
+    def setUp(self):
+        self.org = _make_org('BasemapOrg')
+        self.user = User.objects.create_user(username='bmuser', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='basemap_test', organization=self.org, created_by=self.user,
+            status='published', basemaps=['satellite', 'topo'],
+        )
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section',
+            code='S1', is_head=True,
+        )
+        Question.objects.create(
+            survey_section=self.section, code='Q1', order_number=1,
+            name='Mark a point', input_type='point',
+        )
+
+    def test_basemaps_field_defaults_to_all_three(self):
+        """
+        GIVEN a new SurveyHeader with no basemaps specified
+        WHEN the survey is created
+        THEN basemaps defaults to all three layers
+        """
+        survey = SurveyHeader.objects.create(
+            name='default_bm', organization=self.org, created_by=self.user,
+        )
+        self.assertEqual(survey.basemaps, ['streets', 'satellite', 'topo'])
+
+    def test_respondent_page_renders_satellite_tile_url(self):
+        """
+        GIVEN a survey with basemaps=["satellite", "topo"]
+        WHEN the respondent loads the section page
+        THEN the HTML contains the Esri satellite tile URL
+        """
+        resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.assertContains(resp, 'server.arcgisonline.com')
+
+    def test_respondent_page_renders_topo_tile_url(self):
+        """
+        GIVEN a survey with basemaps=["satellite", "topo"]
+        WHEN the respondent loads the section page
+        THEN the HTML contains the OpenTopoMap tile URL
+        """
+        resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.assertContains(resp, 'tile.opentopomap.org')
+
+    def test_empty_basemaps_falls_back_to_streets_in_js(self):
+        """
+        GIVEN a survey with basemaps=[]
+        WHEN the respondent loads the section page
+        THEN the JS fallback renders streets
+        """
+        self.survey.basemaps = []
+        self.survey.save()
+        resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.assertContains(resp, "['streets']")
+
+    def test_serialization_includes_basemaps(self):
+        """
+        GIVEN a survey with basemaps=["satellite", "topo"]
+        WHEN serialize_survey_to_dict is called
+        THEN the result includes basemaps key with the list
+        """
+        result = serialize_survey_to_dict(self.survey)
+        self.assertEqual(result['basemaps'], ['satellite', 'topo'])
+
+    def test_import_preserves_basemaps(self):
+        """
+        GIVEN an exported survey with basemaps=["satellite"]
+        WHEN imported via import_survey_from_zip
+        THEN the new SurveyHeader has basemaps=["satellite"]
+        """
+        self.survey.basemaps = ['satellite']
+        self.survey.save()
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf)
+        buf.seek(0)
+        imported, warnings = import_survey_from_zip(buf, organization=self.org, created_by=self.user)
+        self.assertEqual(imported.basemaps, ['satellite'])
+
+    def test_clone_copies_basemaps(self):
+        """
+        GIVEN a published survey with basemaps=["satellite", "topo"]
+        WHEN clone_survey_for_draft is called
+        THEN the draft has the same basemaps
+        """
+        from .versioning import clone_survey_for_draft
+        draft = clone_survey_for_draft(self.survey)
+        self.assertEqual(draft.basemaps, ['satellite', 'topo'])
+
+    def test_editor_settings_saves_basemaps(self):
+        """
+        GIVEN a logged-in survey owner
+        WHEN basemaps are submitted via the settings form
+        THEN the survey's basemaps field is updated
+        """
+        self.client.login(username='bmuser', password='pass')
+        url = f'/editor/surveys/{self.survey.uuid}/settings/'
+        resp = self.client.post(url, {
+            'name': self.survey.name,
+            'redirect_url': '#',
+            'available_languages': '[]',
+            'visibility': 'private',
+            'thanks_html': '{}',
+            'basemaps': '["streets", "satellite"]',
+        })
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.basemaps, ['streets', 'satellite'])

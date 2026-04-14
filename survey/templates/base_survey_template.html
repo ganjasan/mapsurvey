@@ -115,13 +115,7 @@
 
     L.control.zoom({position: 'bottomright'}).addTo(map);
 
-    L.tileLayer(
-        mapboxUrl, {
-            attribution: 'Data © <a href="http://osm.org/copyright">OpenStreetMap</a>',
-            maxZoom: 23,
-            accessToken: mapboxAccessToken,
-
-    }).addTo(map);
+    {% include "partials/basemap_layers.html" %}
 
     // Geolocation
     var useGeolocation = {{ section.use_geolocation|yesno:"true,false" }};
