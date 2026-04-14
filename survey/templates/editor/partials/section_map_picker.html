@@ -8,21 +8,44 @@
         Click on the map to set the starting position. Adjust zoom as needed.
         <br>
         <span id="map-coords">
-            Lat: {{ section.start_map_postion.y|floatformat:5 }},
-            Lng: {{ section.start_map_postion.x|floatformat:5 }},
-            Zoom: {{ section.start_map_zoom }}
+            {% if section.start_map_postion %}
+                Lat: {{ section.start_map_postion.y|floatformat:5 }},
+                Lng: {{ section.start_map_postion.x|floatformat:5 }},
+                Zoom: {{ section.start_map_zoom|default:"12" }}
+            {% else %}
+                No position set (inherits from survey or previous section)
+            {% endif %}
         </span>
     </div>
     <div style="padding:0 1rem 0.75rem;">
-        <div class="form-check">
+        <div class="form-check mb-2">
+            <input type="checkbox" class="form-check-input" id="clear-position"
+                   {% if not section.start_map_postion %}checked{% endif %}>
+            <label class="form-check-label" for="clear-position"
+                   style="font-size:0.85rem;cursor:pointer;"
+                   title="When checked, this section inherits map position from the survey default or keeps the respondent's current view.">
+                Inherit position (don't override)
+                <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
+            </label>
+        </div>
+        <div class="form-check mb-2">
             <input type="checkbox" class="form-check-input" id="use-geolocation"
                    {% if section.use_geolocation %}checked{% endif %}>
             <label class="form-check-label" for="use-geolocation"
                    style="font-size:0.85rem;cursor:pointer;"
-                   title="When enabled, the map will auto-center on the respondent's browser location. Falls back to the configured position if geolocation is denied or unavailable.">
-                Use respondent's geolocation
+                   title="When enabled, the map will fly to the respondent's browser location on this section.">
+                Fly to respondent's geolocation
                 <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
             </label>
+        </div>
+        <div class="form-group mb-0" style="font-size:0.85rem;">
+            <label for="override-basemap" style="margin-bottom:0.25rem;">Override basemap</label>
+            <select id="override-basemap" class="form-control form-control-sm" style="max-width:200px;">
+                <option value="">— Inherit —</option>
+                {% for slug, label in basemap_choices %}
+                    <option value="{{ slug }}" {% if section.override_basemap == slug %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
         </div>
     </div>
 </div>
@@ -33,9 +56,10 @@
 
 <script>
 (function() {
-    var lat = {{ section.start_map_postion.y }};
-    var lng = {{ section.start_map_postion.x }};
-    var zoom = {{ section.start_map_zoom }};
+    var hasPosition = {{ section.start_map_postion|yesno:"true,false" }};
+    var lat = hasPosition ? {{ section.start_map_postion.y|default:"52.52" }} : {{ survey.start_map_postion.y|default:"52.52" }};
+    var lng = hasPosition ? {{ section.start_map_postion.x|default:"13.405" }} : {{ survey.start_map_postion.x|default:"13.405" }};
+    var zoom = {{ section.start_map_zoom|default:"12" }};
 
     var mapboxUrl = '{{ MAPBOX_URL }}';
     var mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
@@ -45,29 +69,49 @@
         var map = L.map('map-picker').setView([lat, lng], zoom);
         {% include "partials/basemap_layers.html" %}
 
-        var marker = L.marker([lat, lng]).addTo(map);
+        var marker = hasPosition ? L.marker([lat, lng]).addTo(map) : null;
+
+        // Toggle map picker interactivity based on inherit checkbox
+        var clearCb = document.getElementById('clear-position');
+        var pickerDiv = document.getElementById('map-picker');
+        function updatePickerState() {
+            pickerDiv.style.opacity = clearCb.checked ? '0.5' : '1';
+            pickerDiv.style.pointerEvents = clearCb.checked ? 'none' : 'auto';
+            if (clearCb.checked && marker) {
+                map.removeLayer(marker);
+                marker = null;
+            }
+        }
+        clearCb.addEventListener('change', updatePickerState);
+        updatePickerState();
 
         map.on('click', function(e) {
+            if (clearCb.checked) return;
             lat = e.latlng.lat;
             lng = e.latlng.lng;
-            marker.setLatLng(e.latlng);
+            if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
+            else { marker.setLatLng(e.latlng); }
             document.getElementById('map-coords').textContent =
                 'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + map.getZoom();
         });
 
         map.on('zoomend', function() {
             zoom = map.getZoom();
-            document.getElementById('map-coords').textContent =
-                'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
+            if (!clearCb.checked) {
+                document.getElementById('map-coords').textContent =
+                    'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
+            }
         });
 
         document.getElementById('save-map-position').addEventListener('click', function() {
             zoom = map.getZoom();
             var formData = new FormData();
+            formData.append('clear_position', clearCb.checked ? '1' : '0');
             formData.append('lat', lat);
             formData.append('lng', lng);
             formData.append('zoom', zoom);
             formData.append('use_geolocation', document.getElementById('use-geolocation').checked ? '1' : '0');
+            formData.append('override_basemap', document.getElementById('override-basemap').value);
 
             fetch('{% url "editor_section_map_picker" survey.uuid section.id %}', {
                 method: 'POST',
@@ -98,7 +142,10 @@
                         lat = pos.coords.latitude;
                         lng = pos.coords.longitude;
                         map.setView([lat, lng], 15);
-                        marker.setLatLng([lat, lng]);
+                        if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
+                        else { marker.setLatLng([lat, lng]); }
+                        clearCb.checked = false;
+                        updatePickerState();
                         document.getElementById('map-coords').textContent =
                             'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + map.getZoom();
                     });

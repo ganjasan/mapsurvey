@@ -5,7 +5,7 @@ from .models import SurveyHeader, SurveySection, Question, Organization
 class SurveyHeaderForm(forms.ModelForm):
     class Meta:
         model = SurveyHeader
-        fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'thanks_html', 'cover_image', 'basemaps']
+        fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'thanks_html', 'cover_image', 'basemaps', 'default_basemap']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'survey_name'}),
             'redirect_url': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '#'}),
@@ -14,6 +14,7 @@ class SurveyHeaderForm(forms.ModelForm):
             'thanks_html': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': '{"en": "<h1>Thanks!</h1>"}'}),
             'cover_image': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
             'basemaps': forms.HiddenInput(attrs={'id': 'id_basemaps'}),
+            'default_basemap': forms.Select(attrs={'class': 'form-control'}),
         }
 
 

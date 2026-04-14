@@ -563,19 +563,29 @@ def editor_section_map_picker(request, survey_uuid, section_id):
         blocked = _check_structural_edit_allowed(survey)
         if blocked:
             return blocked
-        lat = float(request.POST.get('lat', 52.52))
-        lng = float(request.POST.get('lng', 13.405))
-        zoom = int(request.POST.get('zoom', 12))
         use_geolocation = request.POST.get('use_geolocation', '0') == '1'
-        section.start_map_postion = Point(lng, lat)
-        section.start_map_zoom = zoom
+        clear_position = request.POST.get('clear_position', '0') == '1'
+        override_basemap = request.POST.get('override_basemap', '') or None
+
+        if clear_position:
+            section.start_map_postion = None
+            section.start_map_zoom = None
+        else:
+            lat = float(request.POST.get('lat', 52.52))
+            lng = float(request.POST.get('lng', 13.405))
+            zoom = int(request.POST.get('zoom', 12))
+            section.start_map_postion = Point(lng, lat)
+            section.start_map_zoom = zoom
+
         section.use_geolocation = use_geolocation
-        section.save(update_fields=['start_map_postion', 'start_map_zoom', 'use_geolocation'])
+        section.override_basemap = override_basemap
+        section.save(update_fields=['start_map_postion', 'start_map_zoom', 'use_geolocation', 'override_basemap'])
         return HttpResponse(status=204, headers={'HX-Trigger': 'mapPositionSaved'})
 
     return render(request, 'editor/partials/section_map_picker.html', {
         'survey': survey,
         'section': section,
+        'basemap_choices': BASEMAP_CHOICES,
     })
 
 
