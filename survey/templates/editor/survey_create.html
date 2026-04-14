@@ -49,11 +49,60 @@
                 {% for error in field.errors %}<div class="text-danger" style="font-size:0.85rem;">{{ error }}</div>{% endfor %}
             </div>
             {% endfor %}
+            <!-- Map Position -->
+            <div class="form-group">
+                <label>Default Map Position</label>
+                <div id="create-map-picker" style="height:250px;width:100%;border-radius:6px;border:1px solid #dee2e6;margin-bottom:0.5rem;"></div>
+                <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.5rem;">
+                    <span id="create-map-coords">Click map to set position</span>
+                </div>
+                <input type="hidden" name="map_lat" id="create-map-lat" value="">
+                <input type="hidden" name="map_lng" id="create-map-lng" value="">
+                <input type="hidden" name="map_zoom" id="create-map-zoom" value="">
+                <div class="form-check mb-1">
+                    <input type="checkbox" class="form-check-input" id="create-use-geolocation" name="use_geolocation" value="1">
+                    <label class="form-check-label" for="create-use-geolocation" style="font-size:0.85rem;cursor:pointer;">
+                        Auto-center on respondent's location
+                    </label>
+                </div>
+            </div>
+
             <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
                 <button type="submit" class="btn btn-primary">Create Survey</button>
                 <a href="{% url 'editor' %}" class="btn btn-outline-secondary">Cancel</a>
             </div>
         </form>
+
+        <script>
+        (function() {
+            var lat = 52.52, lng = 13.405, zoom = 12;
+            var marker = null;
+
+            var map = L.map('create-map-picker').setView([lat, lng], zoom);
+            L.tileLayer('{{ MAPBOX_URL }}', {
+                attribution: '&copy; OpenStreetMap',
+                maxZoom: 23,
+                accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
+            }).addTo(map);
+
+            map.on('click', function(e) {
+                lat = e.latlng.lat; lng = e.latlng.lng;
+                if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
+                else { marker.setLatLng(e.latlng); }
+                document.getElementById('create-map-lat').value = lat;
+                document.getElementById('create-map-lng').value = lng;
+                document.getElementById('create-map-zoom').value = map.getZoom();
+                document.getElementById('create-map-coords').textContent =
+                    'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + map.getZoom();
+            });
+
+            map.on('zoomend', function() {
+                document.getElementById('create-map-zoom').value = map.getZoom();
+            });
+
+            setTimeout(function() { map.invalidateSize(); }, 200);
+        })();
+        </script>
     </div>
 </div>
 {% endblock %}

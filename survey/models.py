@@ -294,6 +294,7 @@ class SurveyHeader(models.Model):
     default_basemap = models.CharField(max_length=20, null=True, blank=True, choices=BASEMAP_CHOICES, help_text=_('Default basemap shown to respondents. If null, first from basemaps list.'))
     start_map_postion = geomodels.PointField(null=True, blank=True, help_text=_('Default map position for the survey. Sections inherit this if not overridden.'))
     start_map_zoom = models.IntegerField(null=True, blank=True, help_text=_('Default map zoom for the survey. Sections inherit this if not overridden.'))
+    use_geolocation = models.BooleanField(default=False, help_text=_('Auto-center map on respondent location when entering the survey.'))
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 

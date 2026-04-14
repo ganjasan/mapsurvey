@@ -82,7 +82,8 @@
     var _initialMapState = {
         lat: {{ initial_map_lat }},
         lng: {{ initial_map_lng }},
-        zoom: {{ initial_map_zoom }}
+        zoom: {{ initial_map_zoom }},
+        useGeolocation: {{ initial_use_geolocation|yesno:"true,false" }}
     };
     var _mapInitialized = false;
 
@@ -693,10 +694,11 @@
         toggleInfo(true);
 
         // 2. Map position transition
+        var isFirstLoad = !_mapInitialized;
         var lat = parseFloat(dataEl.dataset.mapLat);
         var lng = parseFloat(dataEl.dataset.mapLng);
         var zoom = parseInt(dataEl.dataset.mapZoom, 10);
-        if (_mapInitialized && !isNaN(lat) && !isNaN(lng) && !isNaN(zoom)) {
+        if (!isFirstLoad && !isNaN(lat) && !isNaN(lng) && !isNaN(zoom)) {
             map.flyTo([lat, lng], zoom, {animate: true, duration: 0.8});
         }
         _mapInitialized = true;
@@ -705,8 +707,12 @@
         var basemap = dataEl.dataset.mapBasemap;
         if (basemap) { switchBasemap(basemap); }
 
-        // 4. Geolocation (per-section)
-        if (dataEl.dataset.useGeolocation === 'true') { locateUser(); }
+        // 4. Geolocation: survey-level on first load, per-section on subsequent
+        if (isFirstLoad && _initialMapState.useGeolocation) {
+            locateUser();
+        } else if (!isFirstLoad && dataEl.dataset.useGeolocation === 'true') {
+            locateUser();
+        }
 
         // 5. Load subquestions_forms from json_script
         var sqEl = document.getElementById('sq-forms-data');

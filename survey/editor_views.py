@@ -69,6 +69,15 @@ def editor_survey_create(request):
             survey = form.save(commit=False)
             survey.organization = request.active_org
             survey.created_by = request.user
+            # Map position from hidden fields
+            map_lat = request.POST.get('map_lat')
+            map_lng = request.POST.get('map_lng')
+            map_zoom = request.POST.get('map_zoom')
+            if map_lat and map_lng:
+                survey.start_map_postion = Point(float(map_lng), float(map_lat))
+            if map_zoom:
+                survey.start_map_zoom = int(map_zoom)
+            survey.use_geolocation = request.POST.get('use_geolocation') == '1'
             survey.save()
             # Create SurveyCollaborator owner entry
             SurveyCollaborator.objects.create(
@@ -182,7 +191,8 @@ def editor_survey_map_position(request, survey_uuid):
         survey.start_map_postion = Point(lng, lat)
         survey.start_map_zoom = zoom
 
-    survey.save(update_fields=['start_map_postion', 'start_map_zoom'])
+    survey.use_geolocation = request.POST.get('use_geolocation', '0') == '1'
+    survey.save(update_fields=['start_map_postion', 'start_map_zoom', 'use_geolocation'])
     return HttpResponse(status=204)
 
 

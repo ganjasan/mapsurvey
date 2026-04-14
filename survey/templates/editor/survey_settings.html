@@ -108,6 +108,16 @@
                 Use default (Berlin)
             </label>
         </div>
+        <div class="form-check mb-2">
+            <input type="checkbox" class="form-check-input" id="survey-use-geolocation"
+                   {% if survey.use_geolocation %}checked{% endif %}>
+            <label class="form-check-label" for="survey-use-geolocation"
+                   style="font-size:0.85rem;cursor:pointer;"
+                   title="Auto-center the map on the respondent's browser location when they first enter the survey.">
+                Auto-center on respondent's location
+                <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
+            </label>
+        </div>
         <button type="button" class="btn btn-primary btn-sm" id="save-survey-map-position">
             <i class="fas fa-save mr-1"></i> Save Map Position
         </button>
@@ -164,6 +174,7 @@
             formData.append('lat', lat);
             formData.append('lng', lng);
             formData.append('zoom', zoom);
+            formData.append('use_geolocation', document.getElementById('survey-use-geolocation').checked ? '1' : '0');
 
             fetch('{% url "editor_survey_map_position" survey.uuid %}', {
                 method: 'POST',

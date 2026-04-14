@@ -49,6 +49,7 @@ def clone_survey_for_draft(canonical):
         default_basemap=canonical.default_basemap,
         start_map_postion=canonical.start_map_postion,
         start_map_zoom=canonical.start_map_zoom,
+        use_geolocation=canonical.use_geolocation,
         status="draft",
         published_version=canonical,
     )
@@ -293,6 +294,7 @@ def publish_draft(draft, force=False):
         canonical.default_basemap = draft.default_basemap
         canonical.start_map_postion = draft.start_map_postion
         canonical.start_map_zoom = draft.start_map_zoom
+        canonical.use_geolocation = draft.use_geolocation
 
         # 6. Increment version
         canonical.version_number += 1

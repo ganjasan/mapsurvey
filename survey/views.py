@@ -637,6 +637,8 @@ def survey_section(request, survey_slug, section_name):
 		else:
 			ctx['initial_map_zoom'] = 12
 
+		ctx['initial_use_geolocation'] = survey.use_geolocation
+
 		return render(request, 'survey_section.html', ctx)
 
 def _get_version_surveys(survey, version_param):
