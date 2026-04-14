@@ -85,6 +85,22 @@
                 accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
             }).addTo(map);
 
+            // Try to geolocate the survey creator
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    lat = pos.coords.latitude;
+                    lng = pos.coords.longitude;
+                    zoom = 13;
+                    map.setView([lat, lng], zoom);
+                    marker = L.marker([lat, lng]).addTo(map);
+                    document.getElementById('create-map-lat').value = lat;
+                    document.getElementById('create-map-lng').value = lng;
+                    document.getElementById('create-map-zoom').value = zoom;
+                    document.getElementById('create-map-coords').textContent =
+                        'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
+                }, function() {}, { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 });
+            }
+
             map.on('click', function(e) {
                 lat = e.latlng.lat; lng = e.latlng.lng;
                 if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
