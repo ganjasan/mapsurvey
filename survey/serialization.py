@@ -20,7 +20,7 @@ from .models import (
     Organization, SurveyHeader, SurveySection, Question,
     SurveySession, Answer,
     INPUT_TYPE_CHOICES, SurveySectionTranslation,
-    QuestionTranslation,
+    QuestionTranslation, default_basemaps,
 )
 
 # Format version for compatibility checking
@@ -466,7 +466,7 @@ def create_survey_header(
         thanks_html=survey_data.get("thanks_html", {}),
         status=survey_data.get("status", "draft"),
         version_number=survey_data.get("version", 1),
-        basemaps=survey_data.get("basemaps", ['streets', 'satellite', 'topo']),
+        basemaps=survey_data.get("basemaps", default_basemaps()),
         default_basemap=survey_data.get("default_basemap"),
         start_map_postion=GEOSGeometry(survey_data["start_map_position"]) if survey_data.get("start_map_position") else None,
         start_map_zoom=survey_data.get("start_map_zoom"),

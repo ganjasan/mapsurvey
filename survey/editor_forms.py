@@ -1,5 +1,5 @@
 from django import forms
-from .models import SurveyHeader, SurveySection, Question, Organization
+from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP_CHOICES
 
 
 class SurveyHeaderForm(forms.ModelForm):
@@ -19,7 +19,7 @@ class SurveyHeaderForm(forms.ModelForm):
 
 
     def clean_basemaps(self):
-        VALID = {'streets', 'satellite', 'topo'}
+        VALID = {slug for slug, _ in BASEMAP_CHOICES}
         value = self.cleaned_data.get('basemaps') or []
         if not isinstance(value, list):
             raise forms.ValidationError("Invalid basemaps value.")

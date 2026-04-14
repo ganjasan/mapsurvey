@@ -327,6 +327,24 @@
         currentQ = null;
     });
 
+    // --- Helpers ---
+    function _buildPopupHtml(formId, sqHtml) {
+        return '<form action="" onsubmit="return false;" id="' + formId + '">' + sqHtml
+            + '<div class="layer-controls">'
+            + '<button type="button" class="btn btn-danger layer-delete"><i class="far fa-trash-alt"></i></button>'
+            + '<button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>'
+            + '<button type="button" class="btn btn-success layer-apply"><i class="fas fa-check"></i></button>'
+            + '</div></form>';
+    }
+
+    function _getDrawButtonAttrs(questionCode) {
+        var btn = $('button.drawbutton[name="' + questionCode + '"]');
+        return {
+            color: btn.attr('data-color') || '#000000',
+            icon: btn.attr('data-icon') || 'fas fa-map-marker-alt'
+        };
+    }
+
     // --- Basemap switching ---
     function switchBasemap(slug) {
         if (!window._basemapLayers || !window._basemapLayers[slug]) return;
@@ -358,15 +376,9 @@
 
         var sqHtml = window._subquestionsForms[currentQ] || '';
 
-        layer.bindPopup('<form action="" onsubmit="return false;" id="' + formId + '">' + sqHtml
-            + '<div class="layer-controls">\
-            <button type="button" class="btn btn-danger layer-delete"><i class="far fa-trash-alt"></i></button>\
-            <button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>\
-            <button type="button" class="btn btn-success layer-apply"><i class="fas fa-check"></i></button>\
-            </div>'
-            + '</form>', {
-                maxHeight: $(document).height()*0.8,
-            });
+        layer.bindPopup(_buildPopupHtml(formId, sqHtml), {
+            maxHeight: $(document).height()*0.8,
+        });
 
         layer.on("popupopen", onPopupOpen);
         layer.on("popupclose", onPopupClose);
@@ -461,6 +473,7 @@
     function restoreGeoAnswers(existingGeoAnswers) {
         for (var questionCode in existingGeoAnswers) {
             var features = existingGeoAnswers[questionCode];
+            var attrs = _getDrawButtonAttrs(questionCode);
             for (var i = 0; i < features.length; i++) {
                 var geoFeature = features[i];
                 var geomType = geoFeature.geometry.type;
@@ -468,27 +481,20 @@
 
                 if (geomType === 'Point') {
                     var coords = geoFeature.geometry.coordinates;
-                    var btn = $('button.drawbutton[name="' + questionCode + '"]');
-                    var color = btn.attr('data-color') || '#000000';
-                    var icon = btn.attr('data-icon') || 'fas fa-map-marker-alt';
                     layer = L.marker([coords[1], coords[0]], {
                         icon: L.icon.fontAwesome({
-                            iconClasses: 'fa ' + icon,
-                            markerColor: color,
+                            iconClasses: 'fa ' + attrs.icon,
+                            markerColor: attrs.color,
                             iconColor: '#FFF',
                             iconXOffset: -2,
                         })
                     });
                 } else if (geomType === 'LineString') {
                     var latlngs = geoFeature.geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
-                    var btn = $('button.drawbutton[name="' + questionCode + '"]');
-                    var color = btn.attr('data-color') || '#000000';
-                    layer = L.polyline(latlngs, {color: color});
+                    layer = L.polyline(latlngs, {color: attrs.color});
                 } else if (geomType === 'Polygon') {
                     var latlngs = geoFeature.geometry.coordinates[0].map(function(c) { return [c[1], c[0]]; });
-                    var btn = $('button.drawbutton[name="' + questionCode + '"]');
-                    var color = btn.attr('data-color') || '#000000';
-                    layer = L.polygon(latlngs, {color: color});
+                    layer = L.polygon(latlngs, {color: attrs.color});
                 }
 
                 if (layer) {
@@ -500,15 +506,9 @@
                     layer._formId = formId;
                     var sqHtml = window._subquestionsForms[questionCode] || '';
 
-                    layer.bindPopup('<form action="" onsubmit="return false;" id="' + formId + '">' + sqHtml
-                        + '<div class="layer-controls">\
-                        <button type="button" class="btn btn-danger layer-delete"><i class="far fa-trash-alt"></i></button>\
-                        <button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>\
-                        <button type="button" class="btn btn-success layer-apply"><i class="fas fa-check"></i></button>\
-                        </div>'
-                        + '</form>', {
-                            maxHeight: $(document).height()*0.8,
-                        });
+                    layer.bindPopup(_buildPopupHtml(formId, sqHtml), {
+                        maxHeight: $(document).height()*0.8,
+                    });
 
                     layer.on("popupopen", onPopupOpen);
                     layer.on("popupclose", onPopupClose);
@@ -524,6 +524,12 @@
 
     function initTracking(sessionId, sectionName, sectionCurrent) {
         if (_trackingState.sendLeave) { _trackingState.sendLeave(); }
+        // Always clean up previous listener before potentially returning early
+        if (_trackingState._visHandler) {
+            document.removeEventListener('visibilitychange', _trackingState._visHandler);
+            _trackingState._visHandler = null;
+        }
+        _trackingState.sendLeave = null;
 
         var trackUrl = '/surveys/track/event/';
         if (!sessionId) return;
@@ -562,7 +568,6 @@
         });
 
         // Page leave on tab close / navigation away
-        document.removeEventListener('visibilitychange', _trackingState._visHandler);
         _trackingState._visHandler = function() {
             if (document.visibilityState === 'hidden') sendLeave();
         };

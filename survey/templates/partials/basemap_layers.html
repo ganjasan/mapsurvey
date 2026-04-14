@@ -1,6 +1,7 @@
 (function() {
     var _enabled = {{ survey.basemaps|safe }};
     if (!_enabled || !_enabled.length) _enabled = ['streets'];
+    var _defaultSlug = '{{ survey.default_basemap|default:"" }}' || _enabled[0];
 
     var _providers = {
         'streets':   { name: 'Streets',   url: mapboxUrl, opts: { attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 23, accessToken: mapboxAccessToken }},
@@ -10,15 +11,17 @@
 
     window._basemapLayers = {};
     var _baseMaps = {};
-    var _first = null;
     _enabled.forEach(function(slug) {
         var p = _providers[slug];
         if (!p) return;
         var layer = L.tileLayer(p.url, p.opts);
         _baseMaps[p.name] = layer;
         window._basemapLayers[slug] = layer;
-        if (!_first) { _first = layer; _first.addTo(map); }
     });
+
+    // Apply default basemap (or first enabled)
+    var defaultLayer = window._basemapLayers[_defaultSlug] || window._basemapLayers[_enabled[0]];
+    if (defaultLayer) defaultLayer.addTo(map);
 
     if (Object.keys(_baseMaps).length > 1) {
         L.control.layers(_baseMaps, null, { position: 'topright', collapsed: true }).addTo(map);

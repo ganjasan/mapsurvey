@@ -629,7 +629,7 @@ def editor_section_preview(request, survey_uuid, section_name):
         'section_title': section_title,
         'section_subheading': section_subheading,
         'selected_language': selected_language,
-        'existing_geo_answers_json': '{}',
+        'existing_geo_answers': {},
         'section_current': 1,
         'section_total': 1,
         'preview': True,
