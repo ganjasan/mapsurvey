@@ -668,6 +668,10 @@ def editor_section_preview(request, survey_uuid, section_name):
         'section_current': 1,
         'section_total': 1,
         'preview': True,
+        'initial_map_lat': section.start_map_postion.y if section.start_map_postion else (survey.start_map_postion.y if survey.start_map_postion else 52.52),
+        'initial_map_lng': section.start_map_postion.x if section.start_map_postion else (survey.start_map_postion.x if survey.start_map_postion else 13.405),
+        'initial_map_zoom': section.start_map_zoom if section.start_map_zoom is not None else (survey.start_map_zoom if survey.start_map_zoom is not None else 12),
+        'initial_use_geolocation': survey.use_geolocation,
     })
 
     if selected_language:
