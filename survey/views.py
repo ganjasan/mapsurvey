@@ -339,6 +339,96 @@ def survey_header(request, survey_slug):
 	#return render(request, 'survey_header.html', context)
 
 
+def _build_section_context(request, survey, session_survey, section, selected_language, section_current, section_total):
+	"""Build template context for a survey section (used by both GET and POST→next)."""
+	questions = section.questions()
+
+	# Query existing answers for this session and section
+	existing_answers = Answer.objects.filter(
+		survey_session_id=request.session['survey_session_id'],
+		question__in=questions,
+		parent_answer_id__isnull=True,
+	).select_related('question')
+
+	# Build initial dict for scalar fields and geo GeoJSON for geo fields
+	initial = {}
+	existing_geo_answers = {}
+	answers_by_question = {}
+	for answer in existing_answers:
+		q = answer.question
+		answers_by_question.setdefault(q.code, []).append(answer)
+
+	for question in questions:
+		q_answers = answers_by_question.get(question.code, [])
+		if not q_answers:
+			continue
+
+		if question.input_type in ('point', 'line', 'polygon'):
+			features = []
+			for answer in q_answers:
+				geometry = getattr(answer, question.input_type)
+				if geometry is None:
+					continue
+				feature = {
+					'type': 'Feature',
+					'geometry': json.loads(geometry.geojson),
+					'properties': {'question_id': question.code},
+				}
+				child_answers = Answer.objects.filter(parent_answer_id=answer).select_related('question')
+				for child in child_answers:
+					sub_q = child.question
+					if child.text is not None:
+						feature['properties'][sub_q.code] = [child.text]
+					elif child.numeric is not None:
+						feature['properties'][sub_q.code] = [str(child.numeric)]
+					elif child.selected_choices:
+						feature['properties'][sub_q.code] = [str(c) for c in child.selected_choices]
+				features.append(feature)
+			if features:
+				existing_geo_answers[question.code] = features
+		else:
+			answer = q_answers[0]
+			if question.input_type in ('text', 'text_line', 'datetime'):
+				if answer.text is not None:
+					initial[question.code] = answer.text
+			elif question.input_type == 'number':
+				if answer.numeric is not None:
+					initial[question.code] = answer.numeric
+			elif question.input_type in ('choice', 'rating'):
+				if answer.selected_choices:
+					initial[question.code] = str(answer.selected_choices[0])
+				elif answer.numeric is not None:
+					initial[question.code] = str(int(answer.numeric))
+			elif question.input_type == 'multichoice':
+				if answer.selected_choices:
+					initial[question.code] = [str(c) for c in answer.selected_choices]
+			elif question.input_type == 'range':
+				if answer.numeric is not None:
+					initial[question.code] = int(answer.numeric)
+
+	form = SurveySectionAnswerForm(initial=initial, section=section, question=None, survey_session_id=request.session['survey_session_id'], language=selected_language)
+
+	subquestions_forms = {}
+	for question in questions:
+		subquestions_forms[question.code] = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=request.session['survey_session_id'], language=selected_language).as_p()
+
+	section_title = section.get_translated_title(selected_language)
+	section_subheading = section.get_translated_subheading(selected_language)
+
+	return {
+		'form': form,
+		'subquestions_forms': subquestions_forms,
+		'existing_geo_answers': existing_geo_answers,
+		'survey': survey,
+		'section': section,
+		'section_title': section_title,
+		'section_subheading': section_subheading,
+		'selected_language': selected_language,
+		'section_current': section_current,
+		'section_total': section_total,
+	}
+
+
 def survey_section(request, survey_slug, section_name):
 
 	survey = resolve_survey(survey_slug)
@@ -480,6 +570,24 @@ def survey_section(request, survey_slug, section_name):
 			'section_name': section.name, 'section_index': section_current,
 		})
 
+		is_htmx = request.headers.get('HX-Request') == 'true'
+
+		if is_htmx:
+			if section.next_section:
+				next_sec = section.next_section
+				# Recompute progress for next section
+				next_current = section_current + 1
+				next_ctx = _build_section_context(request, survey, session_survey, next_sec, selected_language, next_current, section_total)
+				return render(request, 'partials/survey_section_partial.html', next_ctx)
+			else:
+				if survey.redirect_url == "#":
+					redirect_target = reverse('survey_thanks', args=[str(survey.uuid)])
+				else:
+					redirect_target = survey.redirect_url
+				response = HttpResponse()
+				response['HX-Redirect'] = redirect_target
+				return response
+
 		if section.next_section:
 			next_page = "../" + section.next_section.name
 		elif survey.redirect_url == "#":
@@ -489,6 +597,8 @@ def survey_section(request, survey_slug, section_name):
 		return HttpResponseRedirect(next_page)
 
 	else:
+		is_htmx = request.headers.get('HX-Request') == 'true'
+
 		# Emit section_view event
 		try:
 			_sess = SurveySession.objects.get(pk=request.session['survey_session_id'])
@@ -498,98 +608,36 @@ def survey_section(request, survey_slug, section_name):
 		except SurveySession.DoesNotExist:
 			pass
 
-		questions = section.questions()
+		ctx = _build_section_context(request, survey, session_survey, section, selected_language, section_current, section_total)
 
-		# Query existing answers for this session and section
-		existing_answers = Answer.objects.filter(
-			survey_session_id=request.session['survey_session_id'],
-			question__in=questions,
-			parent_answer_id__isnull=True,
-		).select_related('question')
+		if is_htmx:
+			return render(request, 'partials/survey_section_partial.html', ctx)
 
-		# Build initial dict for scalar fields and geo GeoJSON for geo fields
-		initial = {}
-		existing_geo_answers = {}
-		answers_by_question = {}
-		for answer in existing_answers:
-			q = answer.question
-			answers_by_question.setdefault(q.code, []).append(answer)
+		# Full page render — add initial map state for the shell
+		head_section = section
+		# Walk back to head for initial map state
+		while head_section.prev_section:
+			head_section = head_section.prev_section
 
-		for question in questions:
-			q_answers = answers_by_question.get(question.code, [])
-			if not q_answers:
-				continue
+		# Survey-level defaults take priority, then head section, then Berlin fallback
+		if survey.start_map_postion:
+			ctx['initial_map_lat'] = survey.start_map_postion.y
+			ctx['initial_map_lng'] = survey.start_map_postion.x
+		elif head_section.start_map_postion:
+			ctx['initial_map_lat'] = head_section.start_map_postion.y
+			ctx['initial_map_lng'] = head_section.start_map_postion.x
+		else:
+			ctx['initial_map_lat'] = 52.52
+			ctx['initial_map_lng'] = 13.405
 
-			if question.input_type in ('point', 'line', 'polygon'):
-				# Build GeoJSON features for geo answers
-				features = []
-				for answer in q_answers:
-					geometry = getattr(answer, question.input_type)
-					if geometry is None:
-						continue
-					feature = {
-						'type': 'Feature',
-						'geometry': json.loads(geometry.geojson),
-						'properties': {'question_id': question.code},
-					}
-					# Add sub-question values
-					child_answers = Answer.objects.filter(parent_answer_id=answer).select_related('question')
-					for child in child_answers:
-						sub_q = child.question
-						if child.text is not None:
-							feature['properties'][sub_q.code] = [child.text]
-						elif child.numeric is not None:
-							feature['properties'][sub_q.code] = [str(child.numeric)]
-						elif child.selected_choices:
-							feature['properties'][sub_q.code] = [str(c) for c in child.selected_choices]
-					features.append(feature)
-				if features:
-					existing_geo_answers[question.code] = features
-			else:
-				answer = q_answers[0]
-				if question.input_type in ('text', 'text_line', 'datetime'):
-					if answer.text is not None:
-						initial[question.code] = answer.text
-				elif question.input_type == 'number':
-					if answer.numeric is not None:
-						initial[question.code] = answer.numeric
-				elif question.input_type in ('choice', 'rating'):
-					if answer.selected_choices:
-						initial[question.code] = str(answer.selected_choices[0])
-					elif answer.numeric is not None:
-						initial[question.code] = str(int(answer.numeric))
-				elif question.input_type == 'multichoice':
-					if answer.selected_choices:
-						initial[question.code] = [str(c) for c in answer.selected_choices]
-				elif question.input_type == 'range':
-					if answer.numeric is not None:
-						initial[question.code] = int(answer.numeric)
+		if survey.start_map_zoom is not None:
+			ctx['initial_map_zoom'] = survey.start_map_zoom
+		elif head_section.start_map_zoom is not None:
+			ctx['initial_map_zoom'] = head_section.start_map_zoom
+		else:
+			ctx['initial_map_zoom'] = 12
 
-		form = SurveySectionAnswerForm(initial=initial, section=section, question=None, survey_session_id=request.session['survey_session_id'], language=selected_language)
-
-		subquestions_forms = {}
-		for question in questions:
-			subquestions_forms[question.code] = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=request.session['survey_session_id'], language=selected_language).as_p().replace("/script", "\/script")
-
-		existing_geo_answers_json = json.dumps(existing_geo_answers)
-
-
-	# Get translated section title and subheading for template
-	section_title = section.get_translated_title(selected_language)
-	section_subheading = section.get_translated_subheading(selected_language)
-
-	return render(request, 'survey_section.html', {
-		'form': form,
-		'subquestions_forms': subquestions_forms,
-		'survey': survey,
-		'section': section,
-		'section_title': section_title,
-		'section_subheading': section_subheading,
-		'selected_language': selected_language,
-		'existing_geo_answers_json': existing_geo_answers_json,
-		'section_current': section_current,
-		'section_total': section_total,
-	})
+		return render(request, 'survey_section.html', ctx)
 
 def _get_version_surveys(survey, version_param):
 	"""Resolve which survey(s) to export based on version parameter.

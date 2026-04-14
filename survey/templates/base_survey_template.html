@@ -21,14 +21,14 @@
     <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
    integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
    crossorigin=""></script>
-    
+
     <!-- bootstrap -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     <!-- end bootstrap -->
-    
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js" type="text/javascript"></script>
 
@@ -37,6 +37,9 @@
    <script type="text/javascript" src="{% static 'js/L.Icon.FontAwesome.js' %}"></script>
    <!--end fa markers -->
 
+   <!-- HTMX -->
+   <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
 </head>
 
 
@@ -44,22 +47,9 @@
         <i class="fas fa-angle-double-right" style="font-size:28px; width:28px; height:28px;"></i>
 </button>
 <div id="info_page" class="d-flex flex-column">
-    <div class="header">
-        <div id='title'>
-        	{% block title %}
-        	{% endblock %}
-        </div>
-        <i id="closeButton" class="fas fa-angle-double-left" onclick="toggleInfo(false)" style="font-size:28px; width:28px; height:28px;"></i>
+    <div id="section-panel" hx-target="this" hx-swap="innerHTML">
+        {% block section_panel_content %}{% endblock %}
     </div>
-    {% block progress %}{% endblock %}
-    <div id='content'>
-    	{% block content %}
-    	{% endblock %}
-	</div>
-	<div id='navig_buttons' class="mt-auto">
-		{% block navig_buttons %}
-		{% endblock %}
-	</div>
 </div>
 
 <div id="drawbar" style="display: none;">
@@ -88,6 +78,14 @@
 </script>
 
 <script type="text/javascript">
+    // Initial map state from server (first section or survey defaults)
+    var _initialMapState = {
+        lat: {{ initial_map_lat }},
+        lng: {{ initial_map_lng }},
+        zoom: {{ initial_map_zoom }}
+    };
+    var _mapInitialized = false;
+
     //navigation
     function isMobile() {
         return window.matchMedia('(max-width: 768px)').matches;
@@ -110,15 +108,15 @@
 
     var mapboxUrl = '{{ MAPBOX_URL }}';
     var mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
-    
-    var map = L.map('map', {zoomControl: false}).setView(["{{ section.start_map_postion.y }}".replace(",","."), "{{ section.start_map_postion.x }}".replace(",",".")], "{{ section.start_map_zoom }}");
+
+    var map = L.map('map', {zoomControl: false}).setView([_initialMapState.lat, _initialMapState.lng], _initialMapState.zoom);
 
     L.control.zoom({position: 'bottomright'}).addTo(map);
 
+    // Basemap layers — also populates window._basemapLayers
     {% include "partials/basemap_layers.html" %}
 
     // Geolocation
-    var useGeolocation = {{ section.use_geolocation|yesno:"true,false" }};
     var geoMarker = null;
 
     function locateUser() {
@@ -127,7 +125,7 @@
             function(position) {
                 var lat = position.coords.latitude;
                 var lng = position.coords.longitude;
-                map.setView([lat, lng], 13);
+                map.flyTo([lat, lng], 13, {animate: true, duration: 0.8});
                 if (geoMarker) {
                     geoMarker.setLatLng([lat, lng]);
                 } else {
@@ -144,157 +142,72 @@
         );
     }
 
-    if (useGeolocation) {
-        locateUser();
-
-        var LocateControl = L.Control.extend({
-            options: { position: 'bottomright' },
-            onAdd: function() {
-                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-                var link = L.DomUtil.create('a', '', container);
-                link.href = '#';
-                link.title = 'Locate me';
-                link.setAttribute('role', 'button');
-                link.setAttribute('aria-label', 'Locate me');
-                link.style.cssText = 'font-size:18px;line-height:30px;width:30px;height:30px;display:block;text-align:center;cursor:pointer;';
-                link.textContent = '\uD83D\uDCCD';
-                L.DomEvent.on(link, 'click', function(e) {
-                    L.DomEvent.preventDefault(e);
-                    locateUser();
-                });
-                return container;
-            }
-        });
-        map.addControl(new LocateControl());
-    }
+    // Locate me button (added once, persists)
+    var LocateControl = L.Control.extend({
+        options: { position: 'bottomright' },
+        onAdd: function() {
+            var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            var link = L.DomUtil.create('a', '', container);
+            link.href = '#';
+            link.title = 'Locate me';
+            link.setAttribute('role', 'button');
+            link.setAttribute('aria-label', 'Locate me');
+            link.style.cssText = 'font-size:18px;line-height:30px;width:30px;height:30px;display:block;text-align:center;cursor:pointer;';
+            link.textContent = '\uD83D\uDCCD';
+            L.DomEvent.on(link, 'click', function(e) {
+                L.DomEvent.preventDefault(e);
+                locateUser();
+            });
+            return container;
+        }
+    });
+    map.addControl(new LocateControl());
 
     L.Draw.Polyline.prototype._onTouch = L.Util.falseFn;
     L.Draw.Polygon.prototype._onTouch = L.Util.falseFn;
 
     //l18n
     L.drawLocal = {
-    // format: {
-    //  numeric: {
-    //      delimiters: {
-    //          thousands: ',',
-    //          decimal: '.'
-    //      }
-    //  }
-    // },
         draw: {
             toolbar: {
-                // #TODO: this should be reorganized where actions are nested in actions
-                // ex: actions.undo  or actions.cancel
-                actions: {
-                    title: 'Cancel drawing',
-                    text: 'Cancel'
-                },
-                finish: {
-                    title: 'Finish drawing',
-                    text: 'Finish'
-                },
-                undo: {
-                    title: 'Delete last point drawn',
-                    text: 'Delete last point'
-                },
+                actions: { title: 'Cancel drawing', text: 'Cancel' },
+                finish: { title: 'Finish drawing', text: 'Finish' },
+                undo: { title: 'Delete last point drawn', text: 'Delete last point' },
                 buttons: {
-                    polyline: 'Draw a polyline',
-                    polygon: 'Draw a polygon',
-                    rectangle: 'Draw a rectangle',
-                    circle: 'Draw a circle',
-                    marker: 'Draw a marker',
-                    circlemarker: 'Draw a circlemarker'
+                    polyline: 'Draw a polyline', polygon: 'Draw a polygon',
+                    rectangle: 'Draw a rectangle', circle: 'Draw a circle',
+                    marker: 'Draw a marker', circlemarker: 'Draw a circlemarker'
                 }
             },
             handlers: {
-                circle: {
-                    tooltip: {
-                        start: 'Click and drag to draw circle.'
-                    },
-                    radius: 'Radius'
-                },
-                circlemarker: {
-                    tooltip: {
-                        start: 'Click map to place circle marker.'
-                    }
-                },
-                marker: {
-                    tooltip: {
-                        start: i18n.clickToPlaceMarker
-                    }
-                },
-                polygon: {
-                    tooltip: {
-                        start: i18n.clickToStartShape,
-                        cont: i18n.clickToContinueShape,
-                        end: i18n.clickFirstPointToClose
-                    }
-                },
-                polyline: {
-                    error: i18n.shapeEdgesCannotIntersect,
-                    tooltip: {
-                        start: i18n.clickToStartLine,
-                        cont: i18n.clickToContinueLine,
-                        end: i18n.clickLastPointToFinish
-                    }
-                },
-                rectangle: {
-                    tooltip: {
-                        start: 'Click and drag to draw rectangle.'
-                    }
-                },
-                simpleshape: {
-                    tooltip: {
-                        end: 'Release mouse to finish drawing.'
-                    }
-                }
+                circle: { tooltip: { start: 'Click and drag to draw circle.' }, radius: 'Radius' },
+                circlemarker: { tooltip: { start: 'Click map to place circle marker.' } },
+                marker: { tooltip: { start: i18n.clickToPlaceMarker } },
+                polygon: { tooltip: { start: i18n.clickToStartShape, cont: i18n.clickToContinueShape, end: i18n.clickFirstPointToClose } },
+                polyline: { error: i18n.shapeEdgesCannotIntersect, tooltip: { start: i18n.clickToStartLine, cont: i18n.clickToContinueLine, end: i18n.clickLastPointToFinish } },
+                rectangle: { tooltip: { start: 'Click and drag to draw rectangle.' } },
+                simpleshape: { tooltip: { end: 'Release mouse to finish drawing.' } }
             }
         },
         edit: {
             toolbar: {
                 actions: {
-                    save: {
-                        title: 'Save changes',
-                        text: 'Save'
-                    },
-                    cancel: {
-                        title: 'Cancel editing, discards all changes',
-                        text: 'Cancel'
-                    },
-                    clearAll: {
-                        title: 'Clear all layers',
-                        text: 'Clear All'
-                    }
+                    save: { title: 'Save changes', text: 'Save' },
+                    cancel: { title: 'Cancel editing, discards all changes', text: 'Cancel' },
+                    clearAll: { title: 'Clear all layers', text: 'Clear All' }
                 },
-                buttons: {
-                    edit: 'Edit layers',
-                    editDisabled: 'No layers to edit',
-                    remove: 'Delete layers',
-                    removeDisabled: 'No layers to delete'
-                }
+                buttons: { edit: 'Edit layers', editDisabled: 'No layers to edit', remove: 'Delete layers', removeDisabled: 'No layers to delete' }
             },
             handlers: {
-                edit: {
-                    tooltip: {
-                        text: 'Drag handles or markers to edit features.',
-                        subtext: 'Click cancel to undo changes.'
-                    }
-                },
-                remove: {
-                    tooltip: {
-                        text: 'Click on a feature to remove.'
-                    }
-                }
+                edit: { tooltip: { text: 'Drag handles or markers to edit features.', subtext: 'Click cancel to undo changes.' } },
+                remove: { tooltip: { text: 'Click on a feature to remove.' } }
             }
         }
     };
 
     var editableLayers = new L.FeatureGroup();
-
     var currentQ = null;
-
     var currentDrawFeature = null;
-
     var currentEditLayer = null;
 
     // Crosshair mode state
@@ -302,37 +215,26 @@
     var crosshairIcon = null;
     var crosshairEditLayer = null;
     var crosshairEditOriginalLatLng = null;
-        
+
     map.addLayer(editableLayers);
 
     var drawPluginOptions = {
           position: 'topright',
-          draw: {
-            polygon: false,
-            marker:false,
-            polyline:false,
-            circlemarker: false,
-            circle:false,
-            rectangle: false,
-            },
-          edit: {
-            featureGroup: editableLayers, //REQUIRED!!
-            remove: false,
-            edit:false
-          },
+          draw: { polygon: false, marker:false, polyline:false, circlemarker: false, circle:false, rectangle: false },
+          edit: { featureGroup: editableLayers, remove: false, edit:false },
         };
 
-    // Initialise the draw control and pass it the FeatureGroup of editable layers
     var drawControl = new L.Control.Draw(drawPluginOptions);
     map.addControl(drawControl);
 
-    // Track the minimum vertex count for current draw type
     var drawMinVertices = 0;
+
+    // Per-section data (populated by initSection)
+    window._subquestionsForms = {};
 
     function showDrawbar(mode) {
         var $cancel = $('#draw-cancel');
         var $finish = $('#draw-finish');
-
         if (mode === 'draw') {
             $cancel.show();
             $finish.prop('disabled', true).html('<i class="fas fa-check"></i> ' + i18n.finishDrawing);
@@ -349,26 +251,19 @@
     }
 
     function startEditMode(layer){
-    	toggleInfo(false);
-
-    	// Finish any previous edit first (single-edit enforcement)
-    	if (currentEditLayer) {
-    	    currentEditLayer.editing.disable();
-    	}
-
-    	layer.editing.enable();
-    	currentEditLayer = layer;
-
+        toggleInfo(false);
+        if (currentEditLayer) { currentEditLayer.editing.disable(); }
+        layer.editing.enable();
+        currentEditLayer = layer;
         showDrawbar('edit');
         layer.closePopup();
     }
 
     function endEditMode(layer){
-    	toggleInfo(true);
-    	hideDrawbar();
-
-    	layer.editing.disable();
-    	currentEditLayer = null;
+        toggleInfo(true);
+        hideDrawbar();
+        layer.editing.disable();
+        currentEditLayer = null;
     }
 
     function showCrosshair(color, iconClass, editLayer) {
@@ -391,7 +286,6 @@
         crosshairIcon = null;
     }
 
-    // Get LatLng at the pin tip (bottom of the crosshair pin, 32px below screen center)
     function getCrosshairLatLng() {
         var size = map.getSize();
         var pinTipPoint = L.point(size.x / 2, size.y / 2 + 32);
@@ -400,9 +294,7 @@
 
     $('.crosshair-apply').click(function() {
         var pinLatLng = getCrosshairLatLng();
-
         if (crosshairEditLayer) {
-            // Edit mode: move the existing marker to new position
             crosshairEditLayer.setLatLng(pinLatLng);
             crosshairEditLayer.setOpacity(1);
             crosshairEditLayer = null;
@@ -410,7 +302,6 @@
             hideCrosshair();
             toggleInfo(true);
         } else {
-            // New placement mode: create a new marker
             var layer = L.marker(pinLatLng, {
                 icon: L.icon.fontAwesome({
                     iconClasses: 'fa ' + crosshairIcon,
@@ -419,17 +310,13 @@
                     iconXOffset: -2,
                 })
             });
-
             hideCrosshair();
-
-            // Fire draw:created so survey_section.html handles popup/layer setup
             map.fire('draw:created', {layerType: 'marker', layer: layer});
         }
     });
 
     $('.crosshair-cancel').click(function() {
         if (crosshairEditLayer) {
-            // Edit mode: restore marker visibility at original position
             crosshairEditLayer.setLatLng(crosshairEditOriginalLatLng);
             crosshairEditLayer.setOpacity(1);
             crosshairEditLayer = null;
@@ -440,57 +327,331 @@
         currentQ = null;
     });
 
-    $("#section_question_form").submit(function(e){
-    	// First, collect geo data from map layers
-    	editableLayers.eachLayer(function(layer){
-    		let valueOfInput = $(".geo-inp[name='" + layer.feature.properties.question_id + "'").val();
-    		valueOfInput += (JSON.stringify(layer.toGeoJSON()) + "|");
-        	$(".geo-inp[name='" + layer.feature.properties.question_id + "'").val(valueOfInput);
-    	});
+    // --- Basemap switching ---
+    function switchBasemap(slug) {
+        if (!window._basemapLayers || !window._basemapLayers[slug]) return;
+        for (var key in window._basemapLayers) {
+            if (map.hasLayer(window._basemapLayers[key])) {
+                map.removeLayer(window._basemapLayers[key]);
+            }
+        }
+        map.addLayer(window._basemapLayers[slug]);
+    }
 
-    	// Validate required geo fields
-    	let isValid = true;
-    	let firstInvalidField = null;
-
-    	// Remove previous error styling
-    	$('.drawbutton').css('border', '');
-
-    	$('.geo-inp[data-required="true"]').each(function() {
-    		if (!$(this).val()) {
-    			isValid = false;
-    			// Find the corresponding draw button and highlight it
-    			let fieldName = $(this).attr('name');
-    			let drawButton = $('button.drawbutton[name="' + fieldName + '"]');
-    			drawButton.css('border', '3px solid #dc3545');
-
-    			if (!firstInvalidField) {
-    				firstInvalidField = drawButton;
-    			}
-    		}
-    	});
-
-    	if (!isValid) {
-    		e.preventDefault();
-
-    		// Scroll to first invalid field
-    		if (firstInvalidField) {
-    			$('html, body').animate({
-    				scrollTop: firstInvalidField.offset().top - 100
-    			}, 300);
-    		}
-
-    		alert('Please complete all required map questions before proceeding.');
-    		return false;
-    	}
-    })
-
-    // --- Draw action bar buttons ---
-
-    $('#draw-cancel').click(function() {
+    // --- draw:created handler (persistent, uses window._subquestionsForms) ---
+    map.on('draw:created', function(e) {
         if (currentDrawFeature) {
             currentDrawFeature.disable();
             currentDrawFeature = null;
         }
+
+        var type = e.layerType,
+            layer = e.layer,
+            feature = layer.feature = layer.feature || {};
+
+        feature.type = feature.type || "Feature";
+        var props = feature.properties = feature.properties || {};
+        props.question_id = currentQ;
+
+        var formId = 'subquestion_form_' + L.Util.stamp(layer);
+        layer._formId = formId;
+
+        var sqHtml = window._subquestionsForms[currentQ] || '';
+
+        layer.bindPopup('<form action="" onsubmit="return false;" id="' + formId + '">' + sqHtml
+            + '<div class="layer-controls">\
+            <button type="button" class="btn btn-danger layer-delete"><i class="far fa-trash-alt"></i></button>\
+            <button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>\
+            <button type="button" class="btn btn-success layer-apply"><i class="fas fa-check"></i></button>\
+            </div>'
+            + '</form>', {
+                maxHeight: $(document).height()*0.8,
+            });
+
+        layer.on("popupopen", onPopupOpen);
+        layer.on("popupclose", onPopupClose);
+
+        editableLayers.addLayer(layer);
+
+        if (sqHtml) {
+            layer.openPopup();
+        } else {
+            toggleInfo(true);
+            currentQ = null;
+        }
+    });
+
+    // Hide drawbar when drawing completes
+    map.on('draw:created', function() {
+        hideDrawbar();
+    });
+
+    function onPopupOpen(){
+        var tempLayer = this;
+        var $popup = $(tempLayer.getPopup().getElement());
+        var $form = $popup.find('form');
+
+        var properties = tempLayer.feature.properties;
+        for (var key in properties){
+            if (key != 'question_id'){
+                var element = $form.find('*[name=' + key +']');
+                if (element.length>1) {
+                    let type = element[0].type
+                    if (type == 'checkbox' || type == 'radio'){
+                        properties[key].forEach(function(val) {
+                            $form.find('*[name=' + key + '][value='+ val +']').prop('checked', true);
+                        });
+                    }
+                }
+                else{
+                    element.val(properties[key]);
+                }
+            }
+        }
+
+        tempLayer.editing.disable();
+
+        $popup.find("button.layer-delete").click(function(){
+            editableLayers.removeLayer(tempLayer);
+            toggleInfo(true);
+            currentQ = null;
+        })
+
+        $popup.find("button.layer-edit").click(function(){
+            if (tempLayer instanceof L.Marker) {
+                var questionId = tempLayer.feature.properties.question_id;
+                var btn = $('button.drawbutton[name="' + questionId + '"]');
+                var color = btn.attr('data-color') || '#000000';
+                var icon = btn.attr('data-icon') || 'fas fa-map-marker-alt';
+                tempLayer.closePopup();
+                tempLayer.setOpacity(0);
+                toggleInfo(false);
+                var markerPoint = map.latLngToContainerPoint(tempLayer.getLatLng());
+                var targetCenter = map.containerPointToLatLng(L.point(markerPoint.x, markerPoint.y - 32));
+                map.panTo(targetCenter);
+                showCrosshair(color, icon, tempLayer);
+            } else {
+                startEditMode(tempLayer);
+            }
+        })
+
+        $popup.find("button.layer-apply").click(function(){
+            var subquestion_form_result = $('#' + tempLayer._formId).serializeArray();
+            var grouped_by_name_result = subquestion_form_result.groupBy("name");
+            for (var prop in grouped_by_name_result) {
+                tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
+            }
+            tempLayer.closePopup();
+            toggleInfo(true);
+            currentQ = null;
+        })
+    }
+
+    function onPopupClose(){
+        var tempLayer = this;
+        var subquestion_form_result = $('#' + tempLayer._formId).serializeArray();
+        var grouped_by_name_result = subquestion_form_result.groupBy("name");
+        for (var prop in grouped_by_name_result) {
+            tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
+        }
+        toggleInfo(true);
+    }
+
+    // --- Restore geo answers from server data ---
+    function restoreGeoAnswers(existingGeoAnswers) {
+        for (var questionCode in existingGeoAnswers) {
+            var features = existingGeoAnswers[questionCode];
+            for (var i = 0; i < features.length; i++) {
+                var geoFeature = features[i];
+                var geomType = geoFeature.geometry.type;
+                var layer;
+
+                if (geomType === 'Point') {
+                    var coords = geoFeature.geometry.coordinates;
+                    var btn = $('button.drawbutton[name="' + questionCode + '"]');
+                    var color = btn.attr('data-color') || '#000000';
+                    var icon = btn.attr('data-icon') || 'fas fa-map-marker-alt';
+                    layer = L.marker([coords[1], coords[0]], {
+                        icon: L.icon.fontAwesome({
+                            iconClasses: 'fa ' + icon,
+                            markerColor: color,
+                            iconColor: '#FFF',
+                            iconXOffset: -2,
+                        })
+                    });
+                } else if (geomType === 'LineString') {
+                    var latlngs = geoFeature.geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
+                    var btn = $('button.drawbutton[name="' + questionCode + '"]');
+                    var color = btn.attr('data-color') || '#000000';
+                    layer = L.polyline(latlngs, {color: color});
+                } else if (geomType === 'Polygon') {
+                    var latlngs = geoFeature.geometry.coordinates[0].map(function(c) { return [c[1], c[0]]; });
+                    var btn = $('button.drawbutton[name="' + questionCode + '"]');
+                    var color = btn.attr('data-color') || '#000000';
+                    layer = L.polygon(latlngs, {color: color});
+                }
+
+                if (layer) {
+                    var feature = layer.feature = layer.feature || {};
+                    feature.type = "Feature";
+                    feature.properties = geoFeature.properties;
+
+                    var formId = 'subquestion_form_' + L.Util.stamp(layer);
+                    layer._formId = formId;
+                    var sqHtml = window._subquestionsForms[questionCode] || '';
+
+                    layer.bindPopup('<form action="" onsubmit="return false;" id="' + formId + '">' + sqHtml
+                        + '<div class="layer-controls">\
+                        <button type="button" class="btn btn-danger layer-delete"><i class="far fa-trash-alt"></i></button>\
+                        <button type="button" class="btn btn-primary layer-edit"><i class="far fa-edit"></i></button>\
+                        <button type="button" class="btn btn-success layer-apply"><i class="fas fa-check"></i></button>\
+                        </div>'
+                        + '</form>', {
+                            maxHeight: $(document).height()*0.8,
+                        });
+
+                    layer.on("popupopen", onPopupOpen);
+                    layer.on("popupclose", onPopupClose);
+
+                    editableLayers.addLayer(layer);
+                }
+            }
+        }
+    }
+
+    // --- Event tracking ---
+    var _trackingState = { sendLeave: null };
+
+    function initTracking(sessionId, sectionName, sectionCurrent) {
+        if (_trackingState.sendLeave) { _trackingState.sendLeave(); }
+
+        var trackUrl = '/surveys/track/event/';
+        if (!sessionId) return;
+
+        var _sectionStart = Date.now();
+        var _leaveSent = false;
+
+        function sendBeaconJson(payload) {
+            var json = JSON.stringify(payload);
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(trackUrl, new Blob([json], {type: 'application/json'}));
+            } else {
+                fetch(trackUrl, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: json, keepalive: true }).catch(function() {});
+            }
+        }
+
+        function sendLeave() {
+            if (_leaveSent) return;
+            _leaveSent = true;
+            sendBeaconJson({
+                event_type: 'page_leave',
+                session_id: sessionId,
+                time_on_page_ms: Date.now() - _sectionStart,
+                section_name: sectionName
+            });
+        }
+
+        _trackingState.sendLeave = sendLeave;
+
+        // Section load timing
+        sendBeaconJson({
+            event_type: 'page_load',
+            session_id: sessionId,
+            load_ms: Math.round(performance.now()),
+            section_name: sectionName
+        });
+
+        // Page leave on tab close / navigation away
+        document.removeEventListener('visibilitychange', _trackingState._visHandler);
+        _trackingState._visHandler = function() {
+            if (document.visibilityState === 'hidden') sendLeave();
+        };
+        document.addEventListener('visibilitychange', _trackingState._visHandler);
+    }
+
+    // --- Geo serialization + validation (before HTMX sends POST) ---
+    $(document).on('htmx:configRequest', function(evt) {
+        var form = evt.detail.elt;
+        if (!form || form.id !== 'section_question_form') return;
+
+        // Collect geo data from map layers
+        editableLayers.eachLayer(function(layer){
+            var inp = $(".geo-inp[name='" + layer.feature.properties.question_id + "']");
+            inp.val(inp.val() + JSON.stringify(layer.toGeoJSON()) + "|");
+        });
+
+        // Validate required geo fields
+        var isValid = true;
+        $('.drawbutton').css('border', '');
+        $('.geo-inp[data-required="true"]').each(function() {
+            if (!$(this).val()) {
+                isValid = false;
+                $('button.drawbutton[name="' + $(this).attr('name') + '"]').css('border', '3px solid #dc3545');
+            }
+        });
+
+        if (!isValid) {
+            evt.detail.cancel = true;
+            alert('Please complete all required map questions before proceeding.');
+        }
+    });
+
+    // --- Plausible section_complete on successful POST ---
+    $(document).on('htmx:afterRequest', function(evt) {
+        var el = evt.detail.elt;
+        if (!el || el.id !== 'section_question_form') return;
+        if (evt.detail.successful && typeof plausible !== 'undefined') {
+            var dataEl = document.getElementById('section-data');
+            if (dataEl) {
+                plausible('survey_section_complete', {props: {
+                    survey: dataEl.dataset.surveyName,
+                    section: dataEl.dataset.sectionName,
+                    section_number: parseInt(dataEl.dataset.sectionCurrent, 10)
+                }});
+            }
+        }
+    });
+
+    // --- Send page_leave before HTMX navigation ---
+    $(document).on('htmx:beforeRequest', function(evt) {
+        if (_trackingState.sendLeave) _trackingState.sendLeave();
+    });
+
+    // --- Draw button handlers (delegated for HTMX swaps) ---
+    $(document).on('click', '.drawpolygon', function() {
+        if (currentDrawFeature) { currentDrawFeature.disable(); currentDrawFeature = null; }
+        currentDrawFeature = new L.Draw.Polygon(map);
+        currentDrawFeature.setOptions({ shapeOptions: { color: $(this).attr('data-color') } });
+        currentDrawFeature.enable();
+        toggleInfo(false);
+        currentQ = $(this).attr('name');
+        drawMinVertices = 3;
+        showDrawbar('draw');
+    });
+
+    $(document).on('click', '.drawline', function() {
+        if (currentDrawFeature) { currentDrawFeature.disable(); currentDrawFeature = null; }
+        currentDrawFeature = new L.Draw.Polyline(map);
+        currentDrawFeature.setOptions({ shapeOptions: { color: $(this).attr('data-color') } });
+        currentDrawFeature.enable();
+        toggleInfo(false);
+        currentQ = $(this).attr('name');
+        drawMinVertices = 2;
+        showDrawbar('draw');
+    });
+
+    $(document).on('click', '.drawpoint', function() {
+        var color = $(this).attr('data-color');
+        var icon = $(this).attr('data-icon');
+        toggleInfo(false);
+        currentQ = $(this).attr('name');
+        showButton.style.visibility = "hidden";
+        showCrosshair(color, icon);
+    });
+
+    // --- Draw action bar buttons ---
+    $('#draw-cancel').click(function() {
+        if (currentDrawFeature) { currentDrawFeature.disable(); currentDrawFeature = null; }
         hideDrawbar();
         toggleInfo(true);
         currentQ = null;
@@ -504,7 +665,6 @@
         }
     });
 
-    // Track vertex additions to enable/disable Finish button
     map.on('draw:drawvertex', function() {
         if (currentDrawFeature && currentDrawFeature._markers) {
             var count = currentDrawFeature._markers.length;
@@ -512,59 +672,72 @@
         }
     });
 
-    // Hide drawbar when drawing completes (draw:created fires after completeShape or manual close)
-    map.on('draw:created', function() {
+    // =====================================================================
+    // initSection() — called after each HTMX swap and on initial page load
+    // =====================================================================
+    function initSection() {
+        var dataEl = document.getElementById('section-data');
+        if (!dataEl) return;
+
+        // 1. Clear map state from previous section
+        editableLayers.clearLayers();
+        if (currentDrawFeature) { currentDrawFeature.disable(); currentDrawFeature = null; }
+        if (currentEditLayer) { currentEditLayer.editing.disable(); currentEditLayer = null; }
+        hideCrosshair();
         hideDrawbar();
-    });
+        toggleInfo(true);
 
-    // --- Geo question draw buttons ---
-
-    $('.drawpolygon').click(function() {
-        if (currentDrawFeature) {
-            currentDrawFeature.disable();
-            currentDrawFeature = null;
+        // 2. Map position transition
+        var lat = parseFloat(dataEl.dataset.mapLat);
+        var lng = parseFloat(dataEl.dataset.mapLng);
+        var zoom = parseInt(dataEl.dataset.mapZoom, 10);
+        if (_mapInitialized && !isNaN(lat) && !isNaN(lng) && !isNaN(zoom)) {
+            map.flyTo([lat, lng], zoom, {animate: true, duration: 0.8});
         }
-        currentDrawFeature = new L.Draw.Polygon(map);
-        currentDrawFeature.setOptions({ shapeOptions: { color: $(this).attr('data-color') } });
-        currentDrawFeature.enable();
+        _mapInitialized = true;
 
-        toggleInfo(false);
-        currentQ = $(this).attr('name');
-        drawMinVertices = 3;
-        showDrawbar('draw');
-    });
+        // 3. Basemap override
+        var basemap = dataEl.dataset.mapBasemap;
+        if (basemap) { switchBasemap(basemap); }
 
-    $('.drawline').click(function() {
-        if (currentDrawFeature) {
-            currentDrawFeature.disable();
-            currentDrawFeature = null;
+        // 4. Geolocation (per-section)
+        if (dataEl.dataset.useGeolocation === 'true') { locateUser(); }
+
+        // 5. Load subquestions_forms from json_script
+        var sqEl = document.getElementById('sq-forms-data');
+        window._subquestionsForms = sqEl ? JSON.parse(sqEl.textContent) : {};
+
+        // 6. Restore geo answers from json_script
+        var geoEl = document.getElementById('geo-answers-data');
+        var existingGeoAnswers = geoEl ? JSON.parse(geoEl.textContent) : {};
+        restoreGeoAnswers(existingGeoAnswers);
+
+        // 7. Event tracking
+        var sessionId = parseInt(dataEl.dataset.sessionId, 10) || null;
+        var sectionName = dataEl.dataset.sectionName || '';
+        var sectionCurrent = parseInt(dataEl.dataset.sectionCurrent, 10) || 0;
+        initTracking(sessionId, sectionName, sectionCurrent);
+
+        // 8. Plausible survey_start on first section
+        if (typeof plausible !== 'undefined' && sectionCurrent === 1) {
+            plausible('survey_start', {props: {survey: dataEl.dataset.surveyName}});
         }
-        currentDrawFeature = new L.Draw.Polyline(map);
-        currentDrawFeature.setOptions({ shapeOptions: { color: $(this).attr('data-color') } });
-        currentDrawFeature.enable();
 
-        toggleInfo(false);
-        currentQ = $(this).attr('name');
-        drawMinVertices = 2;
-        showDrawbar('draw');
+        // 9. Scroll to top
+        var infoPage = document.getElementById('info_page');
+        if (infoPage) infoPage.scrollTop = 0;
+    }
+
+    // Initial page load
+    document.addEventListener('DOMContentLoaded', initSection);
+
+    // After HTMX swap
+    document.body.addEventListener('htmx:afterSettle', function(evt) {
+        if (evt.detail.target && evt.detail.target.id === 'section-panel') {
+            initSection();
+        }
     });
 
-    $('.drawpoint').click(function() {
-        var color = $(this).attr('data-color');
-        var icon = $(this).attr('data-icon');
-
-        toggleInfo(false);
-        currentQ = $(this).attr('name');
-
-        showButton.style.visibility = "hidden";
-        showCrosshair(color, icon);
-    })
-    
 </script>
 
-{% block section_scripts %}
-{% endblock %}
-
 </body>
-
-

@@ -4367,7 +4367,7 @@ class AnswerPrepopulationTest(TestCase):
         """
         GIVEN a section with a point geo answer saved
         WHEN the user revisits the section via GET
-        THEN existing_geo_answers_json context contains correct GeoJSON
+        THEN existing_geo_answers context contains correct GeoJSON
         """
         # Create session and save a point answer directly
         self._visit_section('section1')
@@ -4381,8 +4381,7 @@ class AnswerPrepopulationTest(TestCase):
 
         # Revisit section1
         response = self._visit_section('section1')
-        geo_json_str = response.context['existing_geo_answers_json']
-        geo_data = json.loads(geo_json_str)
+        geo_data = response.context['existing_geo_answers']
 
         self.assertIn(self.point_q.code, geo_data)
         features = geo_data[self.point_q.code]
@@ -4432,9 +4431,9 @@ class AnswerPrepopulationTest(TestCase):
         THEN no geo answers are present in the context
         """
         response = self._visit_section('section1')
-        geo_json_str = response.context['existing_geo_answers_json']
+        geo_data = response.context['existing_geo_answers']
 
-        self.assertEqual(json.loads(geo_json_str), {})
+        self.assertEqual(geo_data, {})
 
     def test_resubmission_does_not_affect_other_sections(self):
         """
@@ -8797,30 +8796,35 @@ class PlausibleAnalyticsTest(TestCase):
         """
         GIVEN PLAUSIBLE_SCRIPT_URL is configured
         WHEN the first section of a survey is loaded
-        THEN the page contains a survey_start event script
+        THEN the page contains plausible integration and section data with section_current=1
         """
         with self.settings(PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js'):
             response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            # Plausible survey_start fires via JS when sectionCurrent === 1
             self.assertContains(response, "plausible('survey_start'")
-            self.assertContains(response, "survey: 'analytics_survey'")
+            self.assertContains(response, 'data-section-current="1"')
 
-    def test_no_survey_start_event_on_non_first_section(self):
+    def test_no_survey_start_on_non_first_section_via_htmx(self):
         """
         GIVEN PLAUSIBLE_SCRIPT_URL is configured
-        WHEN a non-first section is loaded
-        THEN the page does NOT contain a survey_start event script
+        WHEN a non-first section is loaded via HTMX
+        THEN the partial contains data-section-current != 1 (JS skips survey_start)
         """
         with self.settings(PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js'):
-            # Visit first section to create a session
             self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-            response = self.client.get(f'/surveys/{self.survey.uuid}/section2/')
+            response = self.client.get(
+                f'/surveys/{self.survey.uuid}/section2/',
+                HTTP_HX_REQUEST='true',
+            )
+            self.assertContains(response, 'data-section-current="2"')
+            # HTMX partial doesn't include the shell JS with plausible
             self.assertNotContains(response, "plausible('survey_start'")
 
     def test_survey_section_complete_event_present(self):
         """
         GIVEN PLAUSIBLE_SCRIPT_URL is configured
         WHEN a survey section page is loaded
-        THEN the page contains a survey_section_complete event script
+        THEN the shell contains plausible survey_section_complete handler
         """
         with self.settings(PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js'):
             response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
@@ -8838,17 +8842,15 @@ class PlausibleAnalyticsTest(TestCase):
             response = self.client.get(f'/surveys/{self.survey.uuid}/thanks/')
             self.assertContains(response, "plausible('survey_complete'")
 
-    def test_no_events_when_plausible_disabled(self):
+    def test_no_plausible_script_tag_when_disabled(self):
         """
         GIVEN PLAUSIBLE_SCRIPT_URL is empty
-        WHEN survey pages are loaded
-        THEN no custom event scripts appear
+        WHEN a survey section page is loaded
+        THEN no Plausible script tag is included (the JS guards with typeof plausible check)
         """
         with self.settings(PLAUSIBLE_SCRIPT_URL=''):
-            self.client.get(f'/surveys/{self.survey.uuid}/section1/')
             response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-            self.assertNotContains(response, "plausible('survey_start'")
-            self.assertNotContains(response, "plausible('survey_section_complete'")
+            self.assertNotContains(response, 'plausible.io/js/')
 
     def test_plausible_on_editor_page(self):
         """

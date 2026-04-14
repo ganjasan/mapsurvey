@@ -59,6 +59,9 @@ def serialize_survey_to_dict(survey: SurveyHeader) -> Dict[str, Any]:
         "has_password": survey.has_password(),
         "version": survey.version_number,
         "basemaps": survey.basemaps or [],
+        "default_basemap": survey.default_basemap,
+        "start_map_position": survey.start_map_postion.wkt if survey.start_map_postion else None,
+        "start_map_zoom": survey.start_map_zoom,
         "sections": serialize_sections(survey),
     }
 
@@ -78,6 +81,7 @@ def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
             "start_map_position": section.start_map_postion.wkt if section.start_map_postion else None,
             "start_map_zoom": section.start_map_zoom,
             "use_geolocation": section.use_geolocation,
+            "override_basemap": section.override_basemap,
             "next_section_name": section.next_section.name if section.next_section else None,
             "prev_section_name": section.prev_section.name if section.prev_section else None,
             "translations": [
@@ -463,6 +467,9 @@ def create_survey_header(
         status=survey_data.get("status", "draft"),
         version_number=survey_data.get("version", 1),
         basemaps=survey_data.get("basemaps", ['streets', 'satellite', 'topo']),
+        default_basemap=survey_data.get("default_basemap"),
+        start_map_postion=GEOSGeometry(survey_data["start_map_position"]) if survey_data.get("start_map_position") else None,
+        start_map_zoom=survey_data.get("start_map_zoom"),
         is_canonical=True,
     )
 
@@ -493,9 +500,10 @@ def create_sections(
             subheading=section_data.get("subheading"),
             code=section_data.get("code", "")[:8],
             is_head=section_data.get("is_head", False),
-            start_map_postion=start_map_position or Point(13.405, 52.52),
-            start_map_zoom=section_data.get("start_map_zoom") or 12,
+            start_map_postion=start_map_position,
+            start_map_zoom=section_data.get("start_map_zoom"),
             use_geolocation=section_data.get("use_geolocation", False),
+            override_basemap=section_data.get("override_basemap"),
             # next_section and prev_section are resolved later
         )
 

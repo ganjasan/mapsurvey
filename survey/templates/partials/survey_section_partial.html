@@ -1,0 +1,81 @@
+{% load hash i18n question_utils %}
+
+<div id="section-data"
+     data-map-lat="{{ section.start_map_postion.y|default:'' }}"
+     data-map-lng="{{ section.start_map_postion.x|default:'' }}"
+     data-map-zoom="{{ section.start_map_zoom|default:'' }}"
+     data-use-geolocation="{{ section.use_geolocation|yesno:'true,false' }}"
+     data-map-basemap="{{ section.override_basemap|default:'' }}"
+     data-session-id="{{ request.session.survey_session_id|default:'' }}"
+     data-section-name="{{ section.name|escapejs }}"
+     data-section-current="{{ section_current }}"
+     data-section-total="{{ section_total }}"
+     data-survey-name="{{ survey.name|escapejs }}">
+
+    <div class="header">
+        <div id='title'>
+            {{ section_title }}
+        </div>
+        <i id="closeButton" class="fas fa-angle-double-left" onclick="toggleInfo(false)" style="font-size:28px; width:28px; height:28px;"></i>
+    </div>
+
+    <div class="survey-progress">{{ section_current }} / {{ section_total }}</div>
+
+    <div id='content'>
+        <div class='subheading'>
+            {% if section_subheading %}
+                {{ section_subheading | safe }}
+            {% endif %}
+        </div>
+        <div class='questions'>
+            <form method="post" id="section_question_form"
+                  hx-post="{% url 'section' survey_slug=survey.uuid section_name=section.name %}"
+                  hx-target="#section-panel"
+                  hx-swap="innerHTML"
+                  {% if preview %}hx-disable="true"{% endif %}>
+                {% csrf_token %}
+                {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                {% for field in form.visible_fields %}
+                    {% if field|is_card_question %}
+                        <div class="question-card{% if field|question_type == 'rating' %} question-card--rating{% endif %}">
+                            {% if field.label %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
+                            {{ field.errors }}
+                            {{ field }}
+                        </div>
+                    {% else %}
+                        {{ field.errors }}
+                        {{ field }}
+                    {% endif %}
+                {% endfor %}
+            </form>
+        </div>
+    </div>
+
+    <div id='navig_buttons' class="mt-auto">
+        {% if not preview %}
+        <div class="container navig_buttons">
+            <div class="row">
+                <div class="col align-self-start">
+                    {% if section.prev_section %}
+                        <a class="btn btn-dark prev_button" style="width: 80%"
+                           hx-get="{% url 'section' survey_slug=survey.uuid section_name=section.prev_section.name %}"
+                           hx-target="#section-panel"
+                           hx-swap="innerHTML"
+                           role="button">{% trans "Back" %}</a>
+                    {% endif %}
+                </div>
+                <div class="col align-self-end">
+                    {% if section.next_section %}
+                        <input type="submit" class="btn btn-dark next_button" style="width: 80%" form="section_question_form" value="{% trans "Next" %}">
+                    {% else %}
+                        <input type="submit" class="btn btn-dark next_button" style="width: 80%" form="section_question_form" value="{% trans "Finish" %}">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {{ subquestions_forms|json_script:"sq-forms-data" }}
+    {{ existing_geo_answers|json_script:"geo-answers-data" }}
+</div>

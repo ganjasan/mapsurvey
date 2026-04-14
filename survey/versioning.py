@@ -46,6 +46,9 @@ def clone_survey_for_draft(canonical):
         thanks_html=canonical.thanks_html,
         password_hash=canonical.password_hash,
         basemaps=canonical.basemaps,
+        default_basemap=canonical.default_basemap,
+        start_map_postion=canonical.start_map_postion,
+        start_map_zoom=canonical.start_map_zoom,
         status="draft",
         published_version=canonical,
     )
@@ -73,6 +76,7 @@ def clone_survey_for_draft(canonical):
             start_map_postion=section.start_map_postion,
             start_map_zoom=section.start_map_zoom,
             use_geolocation=section.use_geolocation,
+            override_basemap=section.override_basemap,
             # next/prev resolved after all sections created
         )
         old_to_new_section[section.pk] = new_section
@@ -286,6 +290,9 @@ def publish_draft(draft, force=False):
         canonical.redirect_url = draft.redirect_url
         canonical.thanks_html = draft.thanks_html
         canonical.basemaps = draft.basemaps
+        canonical.default_basemap = draft.default_basemap
+        canonical.start_map_postion = draft.start_map_postion
+        canonical.start_map_zoom = draft.start_map_zoom
 
         # 6. Increment version
         canonical.version_number += 1
