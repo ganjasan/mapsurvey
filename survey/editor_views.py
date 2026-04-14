@@ -87,7 +87,10 @@ def editor_survey_create(request):
             return redirect('editor_survey_detail', survey_uuid=survey.uuid)
     else:
         form = SurveyHeaderForm()
-    return render(request, 'editor/survey_create.html', {'form': form})
+    return render(request, 'editor/survey_create.html', {
+        'form': form,
+        'basemap_choices': BASEMAP_CHOICES,
+    })
 
 
 # ─── Survey editor main page ─────────────────────────────────────────────────
