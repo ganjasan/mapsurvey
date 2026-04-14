@@ -570,9 +570,16 @@ def survey_section(request, survey_slug, section_name):
 			'section_name': section.name, 'section_index': section_current,
 		})
 
+		nav_direction = request.POST.get('nav_direction', 'forward')
 		is_htmx = request.headers.get('HX-Request') == 'true'
 
 		if is_htmx:
+			if nav_direction == 'back' and section.prev_section:
+				prev_sec = section.prev_section
+				prev_current = section_current - 1
+				prev_ctx = _build_section_context(request, survey, session_survey, prev_sec, selected_language, prev_current, section_total)
+				return render(request, 'partials/survey_section_partial.html', prev_ctx)
+
 			if section.next_section:
 				next_sec = section.next_section
 				# Recompute progress for next section
@@ -587,6 +594,9 @@ def survey_section(request, survey_slug, section_name):
 				response = HttpResponse()
 				response['HX-Redirect'] = redirect_target
 				return response
+
+		if nav_direction == 'back' and section.prev_section:
+			return HttpResponseRedirect("../" + section.prev_section.name)
 
 		if section.next_section:
 			next_page = "../" + section.next_section.name

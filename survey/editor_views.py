@@ -269,6 +269,7 @@ def editor_section_detail(request, survey_uuid, section_id):
         'form': form,
         'translations': translations,
         'questions': questions,
+        'is_read_only': survey.status in ('published', 'closed'),
     })
 
 
@@ -379,6 +380,7 @@ def editor_question_create(request, survey_uuid, section_id):
             response = render(request, 'editor/partials/question_list_item.html', {
                 'question': question,
                 'survey': survey,
+                'is_read_only': survey.status in ('published', 'closed'),
             })
             response['HX-Trigger'] = 'questionSaved'
             return response
@@ -438,6 +440,7 @@ def editor_question_edit(request, survey_uuid, question_id):
             response = render(request, 'editor/partials/question_list_item.html', {
                 'question': q,
                 'survey': survey,
+                'is_read_only': survey.status in ('published', 'closed'),
             })
             response['HX-Trigger'] = 'questionSaved'
             return response
@@ -574,6 +577,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
             response = render(request, 'editor/partials/question_list_item.html', {
                 'question': parent,
                 'survey': survey,
+                'is_read_only': survey.status in ('published', 'closed'),
             })
             response['HX-Trigger'] = 'questionSaved'
             return response

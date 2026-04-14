@@ -1,5 +1,6 @@
 import json
 
+from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
@@ -492,7 +493,7 @@ def analytics_track_event(request):
     # Rate limit keyed on survey_session_id
     rl_key = f"evt_rl_{client_session_id}"
     count = cache.get(rl_key, 0)
-    if count >= 20:
+    if count >= settings.TRACK_EVENT_RATE_LIMIT:
         return JsonResponse({}, status=429)
     cache.set(rl_key, count + 1, 3600)
 

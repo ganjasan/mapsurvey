@@ -5,28 +5,34 @@
         <span class="badge badge-secondary">{{ question.get_input_type_display }}</span>
         {% if question.required %}<span class="badge badge-danger">Required</span>{% endif %}
         <span class="q-actions">
-            <button title="Edit"
+            <button title="{% if is_read_only %}Create a draft to edit{% else %}Edit{% endif %}"
+                    {% if not is_read_only %}
                     hx-get="{% url 'editor_question_edit' survey.uuid question.id %}"
                     hx-target="#questionModalBody"
                     hx-swap="innerHTML"
-                    data-toggle="modal" data-target="#questionModal">
+                    data-toggle="modal" data-target="#questionModal"
+                    {% else %}disabled{% endif %}>
                 <i class="fas fa-pen"></i>
             </button>
             {% if question.input_type == 'point' or question.input_type == 'line' or question.input_type == 'polygon' %}
-            <button title="Add Sub-question"
+            <button title="{% if is_read_only %}Create a draft to edit{% else %}Add Sub-question{% endif %}"
+                    {% if not is_read_only %}
                     hx-get="{% url 'editor_subquestion_create' survey.uuid question.id %}"
                     hx-target="#questionModalBody"
                     hx-swap="innerHTML"
-                    data-toggle="modal" data-target="#questionModal">
+                    data-toggle="modal" data-target="#questionModal"
+                    {% else %}disabled{% endif %}>
                 <i class="fas fa-sitemap"></i>
             </button>
             {% endif %}
-            <button title="Delete" class="text-danger"
+            <button title="{% if is_read_only %}Create a draft to edit{% else %}Delete{% endif %}" class="text-danger"
+                    {% if not is_read_only %}
                     hx-post="{% url 'editor_question_delete' survey.uuid question.id %}"
                     hx-target="closest .question-item"
                     hx-swap="outerHTML"
                     hx-confirm="Delete question '{{ question.name|default:"this question" }}'?"
-                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                    {% else %}disabled{% endif %}>
                 <i class="fas fa-trash"></i>
             </button>
         </span>

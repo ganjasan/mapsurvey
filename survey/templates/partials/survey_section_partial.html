@@ -1,9 +1,9 @@
-{% load hash i18n question_utils %}
+{% load hash i18n question_utils l10n %}
 
 <div id="section-data"
-     data-map-lat="{{ section.start_map_postion.y|default:'' }}"
-     data-map-lng="{{ section.start_map_postion.x|default:'' }}"
-     data-map-zoom="{{ section.start_map_zoom|default:'' }}"
+     data-map-lat="{{ section.start_map_postion.y|default:''|unlocalize }}"
+     data-map-lng="{{ section.start_map_postion.x|default:''|unlocalize }}"
+     data-map-zoom="{{ section.start_map_zoom|default:''|unlocalize }}"
      data-use-geolocation="{{ section.use_geolocation|yesno:'true,false' }}"
      data-map-basemap="{{ section.override_basemap|default:'' }}"
      data-session-id="{{ request.session.survey_session_id|default:'' }}"
@@ -57,18 +57,16 @@
             <div class="row">
                 <div class="col align-self-start">
                     {% if section.prev_section %}
-                        <a class="btn btn-dark prev_button" style="width: 80%"
-                           hx-get="{% url 'section' survey_slug=survey.uuid section_name=section.prev_section.name %}"
-                           hx-target="#section-panel"
-                           hx-swap="innerHTML"
-                           role="button">{% trans "Back" %}</a>
+                        <button type="submit" class="btn btn-outline-primary prev_button" style="width: 80%"
+                                form="section_question_form"
+                                name="nav_direction" value="back">{% trans "Back" %}</button>
                     {% endif %}
                 </div>
                 <div class="col align-self-end">
                     {% if section.next_section %}
-                        <input type="submit" class="btn btn-dark next_button" style="width: 80%" form="section_question_form" value="{% trans "Next" %}">
+                        <input type="submit" class="btn btn-primary next_button" style="width: 80%" form="section_question_form" value="{% trans "Next" %}">
                     {% else %}
-                        <input type="submit" class="btn btn-dark next_button" style="width: 80%" form="section_question_form" value="{% trans "Finish" %}">
+                        <input type="submit" class="btn btn-primary next_button" style="width: 80%" form="section_question_form" value="{% trans "Finish" %}">
                     {% endif %}
                 </div>
             </div>

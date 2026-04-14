@@ -49,8 +49,9 @@
 {% endblock %}
 
 {% block content %}
+<div style="display:flex;flex-direction:column;height:calc(100vh - 49px);">
 {% if is_read_only and not survey.is_draft_copy %}
-<div class="alert alert-warning mb-0 rounded-0 text-center" style="font-size:0.85rem;">
+<div class="alert alert-warning mb-0 rounded-0 text-center flex-shrink-0" style="font-size:0.85rem;">
     <i class="fas fa-lock"></i> This survey is <strong>read-only</strong>.
     {% if draft_copy %}
     <a href="{% url 'editor_survey_detail' draft_copy.uuid %}" class="ml-2 btn btn-sm btn-outline-dark">Go to draft &rarr;</a>
@@ -62,7 +63,7 @@
     {% endif %}
 </div>
 {% endif %}
-<div class="editor-container">
+<div class="editor-container" style="flex:1;min-height:0;">
     <!-- Sidebar expand tab (visible when collapsed) -->
     <div class="panel-expand-tab" id="sidebar-expand" title="Show sections">
         <i class="fas fa-chevron-right"></i> Sections
@@ -81,17 +82,18 @@
                 {% include "editor/partials/section_list_item.html" with is_current=forloop.first %}
             {% endfor %}
         </ul>
-        {% if can_edit %}
         <div class="sidebar-footer">
             <button class="add-question-btn"
+                    title="{% if is_read_only %}Create a draft to edit{% endif %}"
+                    {% if not is_read_only %}
                     hx-post="{% url 'editor_section_create' survey.uuid %}"
                     hx-target="#sections-list"
                     hx-swap="beforeend"
-                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                    {% else %}disabled{% endif %}>
                 <i class="fas fa-plus"></i> New Section
             </button>
         </div>
-        {% endif %}
     </aside>
 
     <!-- Resize handle: sidebar ↔ main -->
@@ -148,6 +150,7 @@
         {% endif %}
     </aside>
 </div>
+</div><!-- /editor-content-wrapper -->
 
 <!-- Question Form Modal -->
 <div class="modal fade editor-modal" id="questionModal" tabindex="-1">

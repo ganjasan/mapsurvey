@@ -39,6 +39,9 @@ if RENDER_EXTERNAL_HOSTNAME:
 # CSRF trusted origins (build from ALLOWED_HOSTS)
 CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in ALLOWED_HOSTS if host and host != 'localhost']
 
+# Analytics: max client-side tracking events per survey session per hour
+TRACK_EVENT_RATE_LIMIT = int(os.environ.get("TRACK_EVENT_RATE_LIMIT", 120))
+
 # Application definition
 
 INSTALLED_APPS = [

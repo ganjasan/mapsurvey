@@ -1,4 +1,4 @@
-{% load static i18n i18n_extras %}
+{% load static i18n i18n_extras l10n %}
 <head>
     {% include "partials/_analytics.html" %}
 
@@ -79,12 +79,14 @@
 
 <script type="text/javascript">
     // Initial map state from server (first section or survey defaults)
+    {% localize off %}
     var _initialMapState = {
         lat: {{ initial_map_lat }},
         lng: {{ initial_map_lng }},
         zoom: {{ initial_map_zoom }},
         useGeolocation: {{ initial_use_geolocation|yesno:"true,false" }}
     };
+    {% endlocalize %}
     var _mapInitialized = false;
 
     //navigation
@@ -580,25 +582,34 @@
         var form = evt.detail.elt;
         if (!form || form.id !== 'section_question_form') return;
 
-        // Collect geo data from map layers
+        var isBack = evt.detail.parameters['nav_direction'] === 'back';
+
+        // Collect geo data from map layers into HTMX parameters
+        // (modifying DOM alone is too late — HTMX already collected form values)
         editableLayers.eachLayer(function(layer){
-            var inp = $(".geo-inp[name='" + layer.feature.properties.question_id + "']");
-            inp.val(inp.val() + JSON.stringify(layer.toGeoJSON()) + "|");
+            var qid = layer.feature.properties.question_id;
+            var geoJson = JSON.stringify(layer.toGeoJSON()) + "|";
+            if (!evt.detail.parameters[qid]) evt.detail.parameters[qid] = '';
+            evt.detail.parameters[qid] += geoJson;
+            // Also update DOM for the required-field validation below
+            $(".geo-inp[name='" + qid + "']").val(evt.detail.parameters[qid]);
         });
 
-        // Validate required geo fields
-        var isValid = true;
-        $('.drawbutton').css('border', '');
-        $('.geo-inp[data-required="true"]').each(function() {
-            if (!$(this).val()) {
-                isValid = false;
-                $('button.drawbutton[name="' + $(this).attr('name') + '"]').css('border', '3px solid #dc3545');
+        // Validate required geo fields (skip when going back)
+        if (!isBack) {
+            var isValid = true;
+            $('.drawbutton').css('border', '');
+            $('.geo-inp[data-required="true"]').each(function() {
+                if (!$(this).val()) {
+                    isValid = false;
+                    $('button.drawbutton[name="' + $(this).attr('name') + '"]').css('border', '3px solid #dc3545');
+                }
+            });
+
+            if (!isValid) {
+                evt.detail.cancel = true;
+                alert('Please complete all required map questions before proceeding.');
             }
-        });
-
-        if (!isValid) {
-            evt.detail.cancel = true;
-            alert('Please complete all required map questions before proceeding.');
         }
     });
 
