@@ -161,6 +161,28 @@ def editor_survey_settings(request, survey_uuid):
     })
 
 
+# ─── Survey map position ─────────────────────────────────────────────────────
+
+@survey_permission_required('owner')
+@require_POST
+def editor_survey_map_position(request, survey_uuid):
+    survey = request.survey
+    clear_position = request.POST.get('clear_position', '0') == '1'
+
+    if clear_position:
+        survey.start_map_postion = None
+        survey.start_map_zoom = None
+    else:
+        lat = float(request.POST.get('lat', 52.52))
+        lng = float(request.POST.get('lng', 13.405))
+        zoom = int(request.POST.get('zoom', 12))
+        survey.start_map_postion = Point(lng, lat)
+        survey.start_map_zoom = zoom
+
+    survey.save(update_fields=['start_map_postion', 'start_map_zoom'])
+    return HttpResponse(status=204)
+
+
 # ─── Section CRUD ─────────────────────────────────────────────────────────────
 
 @survey_permission_required('editor')

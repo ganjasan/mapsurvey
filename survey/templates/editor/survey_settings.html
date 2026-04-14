@@ -83,6 +83,105 @@
         </form>
     </div>
 
+    <!-- Default Map Position -->
+    <div class="settings-section">
+        <h6><i class="fas fa-map-marker-alt mr-1"></i> Default Map Position</h6>
+        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+            Set the default starting position and zoom for the survey map. Sections can override this individually.
+        </p>
+        <div id="survey-map-picker" style="height:300px;width:100%;border-radius:var(--radius);border:1px solid var(--border-color);margin-bottom:0.75rem;"></div>
+        <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+            <span id="survey-map-coords">
+                {% if survey.start_map_postion %}
+                    Lat: {{ survey.start_map_postion.y|floatformat:5 }},
+                    Lng: {{ survey.start_map_postion.x|floatformat:5 }},
+                    Zoom: {{ survey.start_map_zoom|default:"12" }}
+                {% else %}
+                    No position set (Berlin default)
+                {% endif %}
+            </span>
+        </div>
+        <div class="form-check mb-2">
+            <input type="checkbox" class="form-check-input" id="survey-clear-position"
+                   {% if not survey.start_map_postion %}checked{% endif %}>
+            <label class="form-check-label" for="survey-clear-position" style="font-size:0.85rem;cursor:pointer;">
+                Use default (Berlin)
+            </label>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="save-survey-map-position">
+            <i class="fas fa-save mr-1"></i> Save Map Position
+        </button>
+        <span id="survey-map-saved" style="display:none;color:#10b981;font-size:0.85rem;margin-left:0.5rem;">Saved!</span>
+    </div>
+
+    <script>
+    (function() {
+        var hasPosition = {{ survey.start_map_postion|yesno:"true,false" }};
+        var lat = hasPosition ? {{ survey.start_map_postion.y|default:"52.52" }} : 52.52;
+        var lng = hasPosition ? {{ survey.start_map_postion.x|default:"13.405" }} : 13.405;
+        var zoom = {{ survey.start_map_zoom|default:"12" }};
+
+        var map = L.map('survey-map-picker').setView([lat, lng], zoom);
+        L.tileLayer('{{ MAPBOX_URL }}', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
+            maxZoom: 23,
+            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
+        }).addTo(map);
+
+        var marker = hasPosition ? L.marker([lat, lng]).addTo(map) : null;
+        var clearCb = document.getElementById('survey-clear-position');
+        var pickerDiv = document.getElementById('survey-map-picker');
+
+        function updatePickerState() {
+            pickerDiv.style.opacity = clearCb.checked ? '0.5' : '1';
+            pickerDiv.style.pointerEvents = clearCb.checked ? 'none' : 'auto';
+            if (clearCb.checked && marker) { map.removeLayer(marker); marker = null; }
+        }
+        clearCb.addEventListener('change', updatePickerState);
+        updatePickerState();
+
+        map.on('click', function(e) {
+            if (clearCb.checked) return;
+            lat = e.latlng.lat; lng = e.latlng.lng;
+            if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
+            else { marker.setLatLng(e.latlng); }
+            document.getElementById('survey-map-coords').textContent =
+                'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + map.getZoom();
+        });
+
+        map.on('zoomend', function() {
+            zoom = map.getZoom();
+            if (!clearCb.checked) {
+                document.getElementById('survey-map-coords').textContent =
+                    'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
+            }
+        });
+
+        document.getElementById('save-survey-map-position').addEventListener('click', function() {
+            zoom = map.getZoom();
+            var formData = new FormData();
+            formData.append('clear_position', clearCb.checked ? '1' : '0');
+            formData.append('lat', lat);
+            formData.append('lng', lng);
+            formData.append('zoom', zoom);
+
+            fetch('{% url "editor_survey_map_position" survey.uuid %}', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                body: formData
+            }).then(function(resp) {
+                if (resp.ok) {
+                    var el = document.getElementById('survey-map-saved');
+                    el.style.display = 'inline';
+                    setTimeout(function() { el.style.display = 'none'; }, 2000);
+                }
+            });
+        });
+
+        setTimeout(function() { map.invalidateSize(); }, 200);
+    })();
+    </script>
+
     <!-- Collaborators -->
     <div class="settings-section">
         <h6><i class="fas fa-users mr-1"></i> Collaborators</h6>
