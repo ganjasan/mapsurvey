@@ -9,6 +9,7 @@ from .models import (
     Organization, SurveyHeader, SurveySection, Question,
     SurveySession, Answer, ChoicesValidator, Story,
     Membership, SurveyCollaborator, Invitation,
+    Competitor, ComparisonPage,
 )
 from .serialization import (
     serialize_survey_to_dict, serialize_sections,
@@ -11487,3 +11488,267 @@ class ValidationSettingsTest(TestCase):
         data = json.loads(resp.content)
         self.assertEqual(data['fast_threshold_seconds'], 60)
         self.assertEqual(data['duplicate_window_hours'], 2)
+
+
+class CompetitorComparisonPagesTests(TestCase):
+    """Tests for competitor comparison pages (/alternatives/, /vs/, /migrate-from-)."""
+
+    def setUp(self):
+        """Set up test data for comparison page tests."""
+        from datetime import date
+        self.today = date(2026, 4, 18)
+        Competitor.objects.filter(slug='maptionnaire').delete()
+        self.competitor = Competitor.objects.create(
+            slug='maptionnaire',
+            display_name='Maptionnaire',
+            is_active=True,
+        )
+        self.alt_page = ComparisonPage.objects.create(
+            competitor=self.competitor,
+            page_type='alternative',
+            status='published',
+            last_fact_checked=self.today,
+        )
+        self.vs_page = ComparisonPage.objects.create(
+            competitor=self.competitor,
+            page_type='vs',
+            status='draft',
+            last_fact_checked=self.today,
+        )
+        self.migrate_page = ComparisonPage.objects.create(
+            competitor=self.competitor,
+            page_type='migrate',
+            status='draft',
+            last_fact_checked=self.today,
+        )
+        self.staff_user = User.objects.create_user(
+            username='staff', password='pw', is_staff=True
+        )
+        self.regular_user = User.objects.create_user(
+            username='user', password='pw', is_staff=False
+        )
+
+    def test_published_page_returns_200_for_anonymous(self):
+        """
+        GIVEN a published ComparisonPage
+        WHEN an anonymous visitor requests the URL
+        THEN the page renders with status 200
+        """
+        resp = self.client.get('/alternatives/maptionnaire/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Maptionnaire')
+
+    def test_draft_page_returns_404_for_anonymous(self):
+        """
+        GIVEN a draft ComparisonPage
+        WHEN an anonymous visitor requests the URL
+        THEN the response is 404
+        """
+        resp = self.client.get('/vs/maptionnaire/')
+        self.assertEqual(resp.status_code, 404)
+
+    def test_draft_page_returns_200_for_staff_with_banner(self):
+        """
+        GIVEN a draft ComparisonPage
+        WHEN a staff user requests the URL
+        THEN the page renders with status 200 and contains the draft banner
+        """
+        self.client.login(username='staff', password='pw')
+        resp = self.client.get('/vs/maptionnaire/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'draft-banner')
+
+    def test_draft_page_returns_404_for_non_staff_authenticated_user(self):
+        """
+        GIVEN a draft ComparisonPage
+        WHEN a non-staff authenticated user requests the URL
+        THEN the response is 404
+        """
+        self.client.login(username='user', password='pw')
+        resp = self.client.get('/vs/maptionnaire/')
+        self.assertEqual(resp.status_code, 404)
+
+    def test_published_page_has_no_draft_banner(self):
+        """
+        GIVEN a published ComparisonPage
+        WHEN any visitor views it
+        THEN the rendered HTML does not contain the draft banner
+        """
+        self.client.login(username='staff', password='pw')
+        resp = self.client.get('/alternatives/maptionnaire/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, 'draft-banner')
+
+    def test_migrate_page_url(self):
+        """
+        GIVEN a migrate-type ComparisonPage
+        WHEN requested at /migrate-from-<slug>/
+        THEN it is served by the comparison_page view
+        """
+        self.client.login(username='staff', password='pw')
+        resp = self.client.get('/migrate-from-maptionnaire/')
+        self.assertEqual(resp.status_code, 200)
+
+    def test_nonexistent_competitor_returns_404(self):
+        """
+        GIVEN no ComparisonPage for a slug
+        WHEN any visitor requests the URL
+        THEN the response is 404
+        """
+        resp = self.client.get('/alternatives/doesnotexist/')
+        self.assertEqual(resp.status_code, 404)
+
+    def test_legal_disclaimer_present_on_page(self):
+        """
+        GIVEN a published comparison page
+        WHEN any visitor views it
+        THEN the rendered HTML contains the trademark disclaimer and fact-check date
+        """
+        resp = self.client.get('/alternatives/maptionnaire/')
+        self.assertContains(resp, 'registered trademark')
+        self.assertContains(resp, 'not affiliated')
+        self.assertContains(resp, self.today.strftime('%B %Y'))
+
+    def test_hub_renders_for_anonymous_with_only_published_competitors(self):
+        """
+        GIVEN a competitor with mixed published/draft pages
+        WHEN an anonymous visitor requests the hub
+        THEN the hub renders the card with only published page links
+        """
+        resp = self.client.get('/alternatives/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Maptionnaire')
+        self.assertContains(resp, '/alternatives/maptionnaire/')
+        self.assertNotContains(resp, '/vs/maptionnaire/')
+        self.assertNotContains(resp, '/migrate-from-maptionnaire/')
+
+    def test_hub_shows_all_pages_for_staff_with_draft_labels(self):
+        """
+        GIVEN mixed published/draft pages
+        WHEN a staff user requests the hub
+        THEN all pages appear with draft labels on unpublished ones
+        """
+        self.client.login(username='staff', password='pw')
+        resp = self.client.get('/alternatives/')
+        self.assertContains(resp, '/alternatives/maptionnaire/')
+        self.assertContains(resp, '/vs/maptionnaire/')
+        self.assertContains(resp, '/migrate-from-maptionnaire/')
+        self.assertContains(resp, 'Draft')
+
+    def test_hub_hides_inactive_competitor(self):
+        """
+        GIVEN an inactive competitor with a published page
+        WHEN an anonymous visitor requests the hub
+        THEN the inactive competitor does not appear
+        """
+        inactive = Competitor.objects.create(
+            slug='hidden',
+            display_name='HiddenProduct',
+            is_active=False,
+        )
+        ComparisonPage.objects.create(
+            competitor=inactive,
+            page_type='alternative',
+            status='published',
+            last_fact_checked=self.today,
+        )
+        resp = self.client.get('/alternatives/')
+        self.assertNotContains(resp, 'HiddenProduct')
+
+    def test_hub_hides_competitor_with_no_published_pages_from_anonymous(self):
+        """
+        GIVEN an active competitor with only draft pages
+        WHEN an anonymous visitor requests the hub
+        THEN the competitor card is not shown
+        """
+        ComparisonPage.objects.filter(
+            competitor=self.competitor, page_type='alternative'
+        ).update(status='draft')
+        resp = self.client.get('/alternatives/')
+        self.assertNotContains(resp, 'Maptionnaire')
+
+    def test_sitemap_includes_hub_always(self):
+        """
+        GIVEN any state of comparison pages
+        WHEN a crawler requests /sitemap.xml
+        THEN the response contains /alternatives/
+        """
+        resp = self.client.get('/sitemap.xml')
+        self.assertContains(resp, '/alternatives/</loc>')
+
+    def test_sitemap_includes_published_pages_but_not_drafts(self):
+        """
+        GIVEN one published and two draft pages
+        WHEN a crawler requests /sitemap.xml
+        THEN only the published URL appears
+        """
+        resp = self.client.get('/sitemap.xml')
+        self.assertContains(resp, '/alternatives/maptionnaire/</loc>')
+        self.assertNotContains(resp, '/vs/maptionnaire/</loc>')
+        self.assertNotContains(resp, '/migrate-from-maptionnaire/</loc>')
+
+    def test_english_rendering_regardless_of_session_language(self):
+        """
+        GIVEN a session with ru language
+        WHEN visitor requests a comparison page
+        THEN the page renders in English
+        """
+        session = self.client.session
+        session['django_language'] = 'ru'
+        session.save()
+        resp = self.client.get('/alternatives/maptionnaire/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'open-source')
+
+    def test_canonical_url_present_per_page(self):
+        """
+        GIVEN different comparison URLs
+        WHEN rendered
+        THEN each has its own canonical URL
+        """
+        resp = self.client.get('/alternatives/maptionnaire/')
+        self.assertContains(resp, '<link rel="canonical" href="https://mapsurvey.org/alternatives/maptionnaire/">')
+
+    def test_template_exists_for_every_comparison_page_row(self):
+        """
+        GIVEN every ComparisonPage row in the database
+        WHEN we try to resolve its template
+        THEN each template file must exist (prevents slug/template drift)
+        """
+        from django.template.loader import get_template
+        from django.template import TemplateDoesNotExist
+
+        for page in ComparisonPage.objects.select_related('competitor').all():
+            template_name = f'comparisons/{page.competitor.slug}/{page.page_type}.html'
+            try:
+                get_template(template_name)
+            except TemplateDoesNotExist:
+                self.fail(
+                    f"Missing template {template_name} for "
+                    f"ComparisonPage({page.competitor.slug}, {page.page_type})"
+                )
+
+    def test_unique_together_competitor_page_type(self):
+        """
+        GIVEN an existing (competitor, page_type) pair
+        WHEN inserting a duplicate
+        THEN IntegrityError is raised
+        """
+        from django.db import IntegrityError, transaction
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                ComparisonPage.objects.create(
+                    competitor=self.competitor,
+                    page_type='alternative',
+                    status='draft',
+                    last_fact_checked=self.today,
+                )
+
+    def test_footer_contains_compare_link_on_landing_base(self):
+        """
+        GIVEN any page extending base_landing.html
+        WHEN rendered
+        THEN the footer contains a link to /alternatives/
+        """
+        resp = self.client.get('/trust/')
+        self.assertContains(resp, 'href="/alternatives/"')

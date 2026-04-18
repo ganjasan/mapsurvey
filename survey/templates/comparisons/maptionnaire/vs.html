@@ -1,0 +1,218 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}Mapsurvey vs Maptionnaire — Detailed Comparison 2026{% endblock %}
+{% block meta_description %}A detailed, feature-by-feature comparison of Mapsurvey and Maptionnaire: survey building, geo input, data export, analytics, pricing, and hosting.{% endblock %}
+{% block meta_keywords %}Mapsurvey vs Maptionnaire, Maptionnaire vs Mapsurvey, Maptionnaire comparison, participatory mapping comparison, PPGIS comparison{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/vs/maptionnaire/{% endblock %}
+{% block og_url %}https://mapsurvey.org/vs/maptionnaire/{% endblock %}
+{% block og_title %}Mapsurvey vs Maptionnaire — Detailed Comparison{% endblock %}
+
+{% block extra_head %}
+<meta property="og:type" content="article">
+{% endblock %}
+
+{% block content %}
+{% if is_draft %}{% include "comparisons/_draft_banner.html" %}{% endif %}
+
+<section class="trust-hero">
+    <div class="landing-inner">
+        <p class="section-eyebrow">Comparison</p>
+        <h1 class="trust-hero__headline">Mapsurvey vs Maptionnaire</h1>
+        <p class="trust-hero__subtitle">
+            Both platforms let you build map-based surveys where participants mark places, draw routes,
+            and outline areas. The difference is in pricing model, licensing, and data sovereignty.
+        </p>
+    </div>
+</section>
+
+<div class="trust-content">
+    <div class="landing-inner">
+
+        <section class="trust-section" id="tldr">
+            <h2 class="trust-section__title">TL;DR</h2>
+            <ul class="trust-checklist">
+                <li><strong>Choose Maptionnaire</strong> if you need a mature commercial product with bundled premium support, have budget for per-survey pricing, and prefer a fully managed platform with a long track record in Nordic participatory planning</li>
+                <li><strong>Choose Mapsurvey</strong> if you need open-source transparency, want to self-host for data sovereignty, or run multiple surveys without multiplying costs</li>
+            </ul>
+            <!-- FACT-CHECK: framing assumes Maptionnaire still positions as mature commercial with premium support included — verify on maptionnaire.com -->
+        </section>
+
+        <section class="trust-section" id="survey-building">
+            <h2 class="trust-section__title">Survey building</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Feature</th>
+                        <th scope="col">Mapsurvey</th>
+                        <th scope="col">Maptionnaire</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Drag-and-drop editor</td><td class="yes">Yes</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                    <tr><td>Live preview</td><td class="yes">Yes</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                    <tr><td>Sub-questions (conditional)</td><td class="yes">Yes</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                    <tr><td>Question types</td><td>13</td><td class="no"><!-- FACT-CHECK: count on maptionnaire.com/product --></td></tr>
+                    <tr><td>Import / export survey structure</td><td class="yes">JSON export, importable across accounts</td><td class="no"><!-- FACT-CHECK --></td></tr>
+                    <tr><td>Per-question translations</td><td class="yes">Yes</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="trust-section" id="geo-input">
+            <h2 class="trust-section__title">Geo input</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Feature</th>
+                        <th scope="col">Mapsurvey</th>
+                        <th scope="col">Maptionnaire</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Point input</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+                    <tr><td>Line drawing</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+                    <tr><td>Polygon drawing</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+                    <tr><td>Mobile crosshair mode</td><td class="yes">Yes</td><td class="no"><!-- FACT-CHECK --></td></tr>
+                    <tr><td>Geolocation-based centering</td><td class="yes">Yes (opt-in per section)</td><td class="no"><!-- FACT-CHECK --></td></tr>
+                    <tr><td>Custom basemaps (WMS/WFS)</td><td>Roadmap</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="trust-section" id="analytics">
+            <h2 class="trust-section__title">Analytics &amp; data</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Feature</th>
+                        <th scope="col">Mapsurvey</th>
+                        <th scope="col">Maptionnaire</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Response dashboard</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+                    <tr><td>Heatmaps</td><td class="yes">Yes (configurable radius/blur)</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                    <tr><td>Completion funnel</td><td class="yes">Yes</td><td class="no"><!-- FACT-CHECK --></td></tr>
+                    <tr><td>Filter by attribute / geography</td><td class="yes">Yes</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                    <tr><td>UTM campaign tracking</td><td class="yes">Yes</td><td class="no"><!-- FACT-CHECK --></td></tr>
+                    <tr><td>Session validation (mark bad/duplicate responses)</td><td class="yes">Yes</td><td class="no"><!-- FACT-CHECK --></td></tr>
+                    <tr><td>GeoJSON export</td><td class="yes">Yes</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                    <tr><td>CSV export</td><td class="yes">Yes</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                    <tr><td>Shapefile export</td><td>Roadmap</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="trust-section" id="pricing-licensing">
+            <h2 class="trust-section__title">Pricing &amp; licensing</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Feature</th>
+                        <th scope="col">Mapsurvey</th>
+                        <th scope="col">Maptionnaire</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Free tier</td><td class="yes">Unlimited on mapsurvey.org</td><td class="no">Limited trial <!-- FACT-CHECK --></td></tr>
+                    <tr><td>Per-survey pricing</td><td class="no">No</td><td class="yes">Yes</td></tr>
+                    <tr><td>Per-seat pricing</td><td class="no">No</td><td class="no"><!-- FACT-CHECK: verify Maptionnaire doesn't charge per-seat --></td></tr>
+                    <tr><td>Open-source license</td><td class="yes">AGPLv3</td><td class="no">Proprietary</td></tr>
+                    <tr><td>Source code access</td><td class="yes">GitHub</td><td class="no">Closed</td></tr>
+                    <tr><td>Self-hosting option</td><td class="yes">Docker, any cloud or on-prem</td><td class="no">Not offered <!-- FACT-CHECK --></td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="trust-section" id="hosting-compliance">
+            <h2 class="trust-section__title">Hosting &amp; compliance</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Feature</th>
+                        <th scope="col">Mapsurvey</th>
+                        <th scope="col">Maptionnaire</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>EU data residency</td><td class="yes">Frankfurt (Render.com)</td><td class="yes">Finland <!-- FACT-CHECK --></td></tr>
+                    <tr><td>GDPR compliant</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+                    <tr><td>DPA template available</td><td class="yes">Free download on /trust/</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                    <tr><td>SOC 2 audited infrastructure</td><td class="yes">Via Render.com</td><td class="no"><!-- FACT-CHECK --></td></tr>
+                    <tr><td>Air-gapped / on-prem deployment</td><td class="yes">Yes (self-host)</td><td class="no">Not offered <!-- FACT-CHECK --></td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="trust-section" id="choosing">
+            <h2 class="trust-section__title">Choosing between them</h2>
+            <p class="trust-section__lead"><strong>Choose Maptionnaire if:</strong></p>
+            <ul class="trust-checklist">
+                <li>You value a mature commercial product with a long track record in Nordic participatory planning</li>
+                <li>Your organization's procurement prefers a Finnish/EU commercial vendor over open-source</li>
+                <li>You're already running on Maptionnaire and switching cost outweighs the savings</li>
+                <li>You need features currently on Mapsurvey's roadmap (custom WMS/WFS basemaps, Shapefile export) today</li>
+            </ul>
+            <p class="trust-section__lead"><strong>Choose Mapsurvey if:</strong></p>
+            <ul class="trust-checklist">
+                <li>You need open-source transparency for audit, academic publication, or institutional policy</li>
+                <li>You want to self-host for data sovereignty or air-gapped environments</li>
+                <li>You run many surveys and per-survey pricing adds up fast</li>
+                <li>Your budget for GIS tooling is tight — research groups, NGOs, small municipalities</li>
+            </ul>
+        </section>
+
+        <section class="trust-section" id="pricing-snapshot">
+            <h2 class="trust-section__title">Pricing snapshot</h2>
+            <div class="pricing-side-by-side">
+                <div class="pricing-side-by-side__card pricing-side-by-side__card--highlight">
+                    <div class="pricing-side-by-side__product">Mapsurvey</div>
+                    <div class="pricing-side-by-side__price">Free</div>
+                    <ul class="trust-checklist">
+                        <li>Unlimited surveys on mapsurvey.org</li>
+                        <li>Free self-hosting under AGPLv3</li>
+                        <li>No per-seat, per-response, or per-survey fees</li>
+                    </ul>
+                </div>
+                <div class="pricing-side-by-side__card">
+                    <div class="pricing-side-by-side__product">Maptionnaire</div>
+                    <div class="pricing-side-by-side__price">Custom quote</div>
+                    <ul class="trust-checklist">
+                        <li>Three tiers: Point, Collect, Communicate</li>
+                        <li>Pricing based on surveys published, not seats</li>
+                        <li>Enterprise packages available on request <!-- FACT-CHECK: verify against maptionnaire.com/subscription --></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="trust-section" id="screenshots">
+            <h2 class="trust-section__title">Mapsurvey in action</h2>
+            <p class="trust-section__lead">
+                <!-- TODO: replace these placeholder blocks with real screenshots. Target:
+                     /static/imgs/comparisons/maptionnaire/editor.png (1400×900) — editor view with sidebar + live preview
+                     /static/imgs/comparisons/maptionnaire/analytics.png (1400×900) — analytics with map + stats + heatmap
+                     Add descriptive alt text for each. -->
+                <em>Screenshots coming soon — editor view and analytics dashboard.</em>
+            </p>
+        </section>
+
+        <section class="trust-section trust-section--cta">
+            <h2 class="trust-section__title">Try Mapsurvey</h2>
+            <p class="trust-section__lead">
+                See whether Mapsurvey fits your next participatory mapping project.
+            </p>
+            <div class="comparison-cta-group">
+                <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">Create Your Mapsurvey</a>
+                {% if DEMO_SURVEY_URL %}
+                <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing">Try Demo Survey</a>
+                {% endif %}
+            </div>
+        </section>
+
+        {% include "comparisons/_legal_disclaimer.html" %}
+
+    </div>
+</div>
+{% endblock %}

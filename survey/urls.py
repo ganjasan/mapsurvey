@@ -72,6 +72,16 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/collaborators/<int:collaborator_id>/remove/', editor_views.editor_collaborator_remove, name='editor_collaborator_remove'),
 
     path('trust/', views.trust_page, name='trust_page'),
+
+    # Competitor comparison pages
+    path('alternatives/', views.comparisons_hub, name='comparisons_hub'),
+    path('alternatives/<slug:competitor_slug>/', views.comparison_page,
+         kwargs={'page_type': 'alternative'}, name='comparison_alternative'),
+    path('vs/<slug:competitor_slug>/', views.comparison_page,
+         kwargs={'page_type': 'vs'}, name='comparison_vs'),
+    path('migrate-from-<slug:competitor_slug>/', views.comparison_page,
+         kwargs={'page_type': 'migrate'}, name='comparison_migrate'),
+
     path('surveys/track/event/', analytics_views.analytics_track_event, name='track_event'),
     path('surveys/', views.survey_list, name='survey_list'),
     path('surveys/<str:survey_slug>/', views.survey_header, name='survey'),

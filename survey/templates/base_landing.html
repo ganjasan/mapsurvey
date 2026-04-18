@@ -131,6 +131,12 @@
                 </ul>
             </div>
             <div class="landing-footer__col">
+                <div class="landing-footer__col-title">{% trans "Compare" %}</div>
+                <ul class="landing-footer__links">
+                    <li><a href="{% url 'comparisons_hub' %}">{% trans "Alternatives" %}</a></li>
+                </ul>
+            </div>
+            <div class="landing-footer__col">
                 <div class="landing-footer__col-title">{% trans "Connect" %}</div>
                 <ul class="landing-footer__links">
                     {% if CONTACT_EMAIL %}

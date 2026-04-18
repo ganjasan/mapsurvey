@@ -9,7 +9,10 @@ from django.db.models import Q, Prefetch, Count
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import translation
 from django.utils.translation import override as lang_override
-from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator
+from .models import (
+    SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator,
+    Competitor, ComparisonPage, COMPARISON_URL_TEMPLATES,
+)
 from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role, get_org_membership, SURVEY_ROLE_RANK,
@@ -990,6 +993,51 @@ def trust_page(request):
 	return render(request, 'trust.html')
 
 
+@lang_override('en')
+def comparison_page(request, page_type, competitor_slug):
+	try:
+		page = ComparisonPage.objects.select_related('competitor').get(
+			competitor__slug=competitor_slug,
+			page_type=page_type,
+		)
+	except ComparisonPage.DoesNotExist:
+		raise Http404("Comparison page not found")
+
+	if page.status == 'draft' and not request.user.is_staff:
+		raise Http404("Comparison page not found")
+
+	template_name = f'comparisons/{page.competitor.slug}/{page.page_type}.html'
+	context = {
+		'competitor': page.competitor,
+		'page': page,
+		'is_draft': page.status == 'draft',
+	}
+	return render(request, template_name, context)
+
+
+@lang_override('en')
+def comparisons_hub(request):
+	is_staff = request.user.is_staff
+	competitors_qs = Competitor.objects.filter(is_active=True).prefetch_related('comparison_pages')
+
+	entries = []
+	for competitor in competitors_qs:
+		pages = list(competitor.comparison_pages.all())
+		if not is_staff:
+			pages = [p for p in pages if p.status == 'published']
+		if not pages:
+			continue
+		entries.append({
+			'competitor': competitor,
+			'pages': pages,
+		})
+
+	return render(request, 'comparisons/hub.html', {
+		'entries': entries,
+		'is_staff_preview': is_staff,
+	})
+
+
 def robots_txt(request):
 	lines = [
 		"User-agent: *",
@@ -1011,9 +1059,14 @@ def sitemap_xml(request):
 	)
 	urls = [f"  <url><loc>{base}/</loc></url>"]
 	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
+	urls.append(f"  <url><loc>{base}/alternatives/</loc></url>")
 	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
 	for survey in surveys:
 		urls.append(f"  <url><loc>{base}/surveys/{survey.uuid}/</loc></url>")
+	published_pages = ComparisonPage.objects.filter(status='published').select_related('competitor')
+	for page in published_pages:
+		path = COMPARISON_URL_TEMPLATES[page.page_type].format(slug=page.competitor.slug)
+		urls.append(f"  <url><loc>{base}{path}</loc></url>")
 	xml = (
 		'<?xml version="1.0" encoding="UTF-8"?>\n'
 		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'

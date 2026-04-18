@@ -626,3 +626,56 @@ class Story(models.Model):
     def get_story_type_display_label(self):
         return dict(STORY_TYPE_CHOICES).get(self.story_type, self.story_type)
 
+
+COMPARISON_PAGE_TYPE_CHOICES = (
+    ("alternative", _("Alternative")),
+    ("vs", _("Vs")),
+    ("migrate", _("Migrate")),
+)
+
+COMPARISON_URL_TEMPLATES = {
+    'alternative': '/alternatives/{slug}/',
+    'vs': '/vs/{slug}/',
+    'migrate': '/migrate-from-{slug}/',
+}
+
+COMPARISON_PAGE_STATUS_CHOICES = (
+    ("draft", _("Draft")),
+    ("published", _("Published")),
+)
+
+
+class Competitor(models.Model):
+    slug = models.SlugField(max_length=60, unique=True)
+    display_name = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['display_name']
+
+    def __str__(self):
+        return self.display_name
+
+
+class ComparisonPage(models.Model):
+    competitor = models.ForeignKey(
+        Competitor, on_delete=models.CASCADE, related_name='comparison_pages'
+    )
+    page_type = models.CharField(max_length=20, choices=COMPARISON_PAGE_TYPE_CHOICES)
+    status = models.CharField(
+        max_length=20, choices=COMPARISON_PAGE_STATUS_CHOICES, default='draft'
+    )
+    last_fact_checked = models.DateField()
+
+    class Meta:
+        app_label = 'survey'
+        unique_together = [('competitor', 'page_type')]
+        ordering = ['competitor', 'page_type']
+
+    def __str__(self):
+        return f"{self.competitor.display_name} — {self.get_page_type_display()} ({self.status})"
+
+    def get_absolute_url(self):
+        return COMPARISON_URL_TEMPLATES[self.page_type].format(slug=self.competitor.slug)

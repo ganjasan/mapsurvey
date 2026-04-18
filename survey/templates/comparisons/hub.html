@@ -1,0 +1,60 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}Alternatives to Participatory Mapping Tools — Mapsurvey{% endblock %}
+{% block meta_description %}Compare Mapsurvey to other participatory mapping tools. Free, open-source alternatives to paid platforms for community engagement and PPGIS surveys.{% endblock %}
+{% block meta_keywords %}participatory mapping alternatives, PPGIS alternatives, community engagement platform comparison, map survey tool comparison{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/alternatives/{% endblock %}
+{% block og_url %}https://mapsurvey.org/alternatives/{% endblock %}
+{% block og_title %}Alternatives to Participatory Mapping Tools — Mapsurvey{% endblock %}
+
+{% block content %}
+<section class="trust-hero">
+    <div class="landing-inner">
+        <p class="section-eyebrow">Compare</p>
+        <h1 class="trust-hero__headline">Alternatives to popular participatory mapping tools</h1>
+        <p class="trust-hero__subtitle">
+            Honest, side-by-side comparisons with other platforms used for community engagement,
+            PPGIS surveys, and map-based public consultations.
+        </p>
+    </div>
+</section>
+
+<div class="trust-content">
+    <div class="landing-inner">
+        {% if entries %}
+        <section class="competitor-hub-grid" aria-label="Competitor comparisons">
+            {% for entry in entries %}
+            <article class="competitor-hub-card">
+                <h2 class="competitor-hub-card__title">Mapsurvey vs {{ entry.competitor.display_name }}</h2>
+                <ul class="competitor-hub-card__links">
+                    {% for page in entry.pages %}
+                    <li>
+                        {% if page.page_type == 'alternative' %}
+                        <a href="{% url 'comparison_alternative' competitor_slug=entry.competitor.slug %}">
+                            {{ entry.competitor.display_name }} alternative
+                        </a>
+                        {% elif page.page_type == 'vs' %}
+                        <a href="{% url 'comparison_vs' competitor_slug=entry.competitor.slug %}">
+                            Detailed comparison
+                        </a>
+                        {% elif page.page_type == 'migrate' %}
+                        <a href="{% url 'comparison_migrate' competitor_slug=entry.competitor.slug %}">
+                            Migration guide
+                        </a>
+                        {% endif %}
+                        {% if page.status == 'draft' %}<span class="competitor-hub-card__draft-label">Draft</span>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </article>
+            {% endfor %}
+        </section>
+        {% else %}
+        <section class="trust-section">
+            <p class="trust-section__lead">No comparisons published yet — check back soon.</p>
+        </section>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

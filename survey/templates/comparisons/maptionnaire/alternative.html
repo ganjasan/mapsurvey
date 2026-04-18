@@ -1,0 +1,146 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}Maptionnaire Alternative — Mapsurvey | Free & Open-Source{% endblock %}
+{% block meta_description %}Looking for a Maptionnaire alternative? Mapsurvey is a free, open-source participatory mapping platform with no per-survey pricing and optional self-hosting.{% endblock %}
+{% block meta_keywords %}Maptionnaire alternative, open source Maptionnaire, free Maptionnaire alternative, Maptionnaire vs open source, participatory mapping free{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/alternatives/maptionnaire/{% endblock %}
+{% block og_url %}https://mapsurvey.org/alternatives/maptionnaire/{% endblock %}
+{% block og_title %}Maptionnaire Alternative — Mapsurvey{% endblock %}
+
+{% block extra_head %}
+<meta property="og:type" content="article">
+{% endblock %}
+
+{% block content %}
+{% if is_draft %}{% include "comparisons/_draft_banner.html" %}{% endif %}
+
+<section class="trust-hero">
+    <div class="landing-inner">
+        <p class="section-eyebrow">Mapsurvey vs Maptionnaire</p>
+        <h1 class="trust-hero__headline">A free, open-source Maptionnaire alternative</h1>
+        <p class="trust-hero__subtitle">
+            Mapsurvey is a participatory mapping platform with no per-survey pricing, full data export,
+            and optional self-hosting. Same core job as Maptionnaire — different economics.
+        </p>
+    </div>
+</section>
+
+<div class="trust-content">
+    <div class="landing-inner">
+
+        <section class="trust-section" id="why-switch">
+            <h2 class="trust-section__title">Why teams choose Mapsurvey</h2>
+            <ul class="trust-checklist">
+                <li><strong>Free to start</strong> — no per-survey fees, no seat licensing, no tier that gates your first real project</li>
+                <li><strong>Open source (AGPLv3)</strong> — audit the code, fork it, or run it yourself. No vendor lock-in</li>
+                <li><strong>EU data residency</strong> — hosted in Frankfurt, Germany; self-host option for full sovereignty</li>
+                <li><strong>Standard data export</strong> — GeoJSON and CSV out of the box, importable in QGIS, ArcGIS, R or Python without conversion</li>
+            </ul>
+        </section>
+
+        <section class="trust-section" id="comparison-table">
+            <h2 class="trust-section__title">Feature comparison at a glance</h2>
+            <p class="trust-section__lead">
+                Both platforms cover the essentials of participatory mapping. The differences concentrate
+                in pricing model, licensing, and deployment flexibility.
+            </p>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Feature</th>
+                        <th scope="col">Mapsurvey</th>
+                        <th scope="col">Maptionnaire</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Map-based survey creation</td>
+                        <td class="yes">Yes</td>
+                        <td class="yes">Yes</td>
+                    </tr>
+                    <tr>
+                        <td>Point, line, polygon drawing</td>
+                        <td class="yes">Yes</td>
+                        <td class="yes">Yes</td>
+                    </tr>
+                    <tr>
+                        <td>Multilingual surveys</td>
+                        <td class="yes">Yes</td>
+                        <td class="yes">Yes</td>
+                    </tr>
+                    <tr>
+                        <td>Free tier for real projects</td>
+                        <td class="yes">Yes — unlimited</td>
+                        <td class="no">No <!-- FACT-CHECK: confirm no real free tier on maptionnaire.com/subscription --></td>
+                    </tr>
+                    <tr>
+                        <td>Open-source code</td>
+                        <td class="yes">AGPLv3 on GitHub</td>
+                        <td class="no">Proprietary</td>
+                    </tr>
+                    <tr>
+                        <td>Self-hosting (Docker)</td>
+                        <td class="yes">Yes</td>
+                        <td class="no">No <!-- FACT-CHECK: verify no on-prem option --></td>
+                    </tr>
+                    <tr>
+                        <td>GeoJSON + CSV export</td>
+                        <td class="yes">Built-in</td>
+                        <td class="yes">Yes <!-- FACT-CHECK: confirm native formats on export --></td>
+                    </tr>
+                    <tr>
+                        <td>Per-survey pricing</td>
+                        <td>Not applicable (free)</td>
+                        <td>Yes <!-- FACT-CHECK: confirm pricing dimension --></td>
+                    </tr>
+                    <tr>
+                        <td>Data hosted in EU</td>
+                        <td class="yes">Frankfurt, Germany</td>
+                        <td class="yes">Finland <!-- FACT-CHECK: confirm primary hosting region --></td>
+                    </tr>
+                    <tr>
+                        <td>GDPR compliant</td>
+                        <td class="yes">Yes</td>
+                        <td class="yes">Yes</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="trust-section__lead" style="margin-top: 1rem; font-size: 0.9rem; color: var(--color-text-tertiary);">
+                For the full 30-row breakdown across survey building, geo input, analytics, and hosting,
+                see the <a href="{% url 'comparison_vs' competitor_slug='maptionnaire' %}">detailed comparison</a>.
+            </p>
+        </section>
+
+        <section class="trust-section" id="pricing">
+            <h2 class="trust-section__title">Pricing</h2>
+            <p class="trust-section__lead">
+                Maptionnaire offers three subscription tiers — <strong>Point</strong>, <strong>Collect</strong>, and <strong>Communicate</strong> —
+                with pricing based on the number of surveys you publish rather than seats or responses.
+                Specific prices are not listed publicly; enterprise customers receive a custom quote.
+                <!-- FACT-CHECK: tier names verified via maptionnaire.com/subscription 2026-04-18; prices intentionally not quoted — not public -->
+            </p>
+            <p class="trust-section__lead">
+                Mapsurvey is free for hosted use on mapsurvey.org, and free to run yourself under AGPLv3.
+                We do not charge per survey, per response, or per team member.
+            </p>
+        </section>
+
+        <section class="trust-section trust-section--cta">
+            <h2 class="trust-section__title">Try it yourself</h2>
+            <p class="trust-section__lead">
+                The fastest way to know whether Mapsurvey fits your project is to create one and see.
+            </p>
+            <div class="comparison-cta-group">
+                <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">Create Your Mapsurvey</a>
+                {% if DEMO_SURVEY_URL %}
+                <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing">Try Demo Survey</a>
+                {% endif %}
+            </div>
+        </section>
+
+        {% include "comparisons/_legal_disclaimer.html" %}
+
+    </div>
+</div>
+{% endblock %}

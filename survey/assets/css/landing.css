@@ -1332,3 +1332,249 @@ a:hover { color: var(--color-accent-hover); }
         padding-left: 0;
     }
 }
+
+
+/* ==========================================================
+   Comparison Pages
+   ========================================================== */
+
+/* Staff draft banner — sticky top bar */
+.draft-banner {
+    background: #FFEAA7;
+    color: #6C4F00;
+    padding: 0.65rem 1.5rem;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    border-bottom: 1px solid #E0C870;
+}
+
+.draft-banner strong {
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-right: 0.5rem;
+}
+
+/* Competitor hub grid */
+.competitor-hub-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin: 2rem 0 4rem;
+}
+
+.competitor-hub-card {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.competitor-hub-card:hover {
+    border-color: var(--color-accent);
+}
+
+.competitor-hub-card__title {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    color: var(--color-primary);
+}
+
+.competitor-hub-card__links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.competitor-hub-card__links li {
+    margin-bottom: 0.65rem;
+}
+
+.competitor-hub-card__links a {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.competitor-hub-card__links a:hover {
+    text-decoration: underline;
+}
+
+.competitor-hub-card__draft-label {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.1rem 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    background: #FFEAA7;
+    color: #6C4F00;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Comparison feature table */
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-family: var(--font-body);
+}
+
+.comparison-table th,
+.comparison-table td {
+    padding: 0.85rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-light);
+    vertical-align: top;
+}
+
+.comparison-table thead th {
+    background: var(--color-bg-warm);
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--color-primary);
+    border-bottom: 2px solid var(--color-border);
+}
+
+.comparison-table td.yes {
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+.comparison-table td.no {
+    color: var(--color-text-tertiary);
+}
+
+.comparison-table__group {
+    font-family: var(--font-display);
+    font-weight: 600;
+    background: var(--color-bg);
+    color: var(--color-primary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Pricing side-by-side */
+.pricing-side-by-side {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.pricing-side-by-side__card {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+}
+
+.pricing-side-by-side__card--highlight {
+    border-color: var(--color-accent);
+    border-width: 2px;
+}
+
+.pricing-side-by-side__product {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
+}
+
+.pricing-side-by-side__price {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    margin: 0.5rem 0 1rem;
+}
+
+/* Migration steps */
+.migration-step {
+    display: flex;
+    gap: 1.25rem;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.migration-step:last-child {
+    border-bottom: none;
+}
+
+.migration-step__num {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: var(--color-accent-light);
+    color: var(--color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.migration-step__content h3 {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+    color: var(--color-primary);
+}
+
+.migration-step__content p {
+    margin: 0;
+    color: var(--color-text-secondary);
+}
+
+/* CTA button group for comparison pages */
+.comparison-cta-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+/* Legal disclaimer */
+.comparison-disclaimer {
+    margin: 3rem 0 1rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--color-bg-warm);
+    border-left: 3px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    color: var(--color-text-tertiary);
+    font-family: var(--font-body);
+    line-height: 1.55;
+}
+
+.comparison-disclaimer p {
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .competitor-hub-grid,
+    .pricing-side-by-side {
+        grid-template-columns: 1fr;
+    }
+
+    .comparison-table {
+        font-size: 0.9rem;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+        padding: 0.65rem 0.75rem;
+    }
+}
+

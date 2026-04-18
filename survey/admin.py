@@ -5,6 +5,7 @@ from .models import (
     SurveySession,
     SurveySectionTranslation, QuestionTranslation,
     Story,
+    Competitor, ComparisonPage,
 )
 from leaflet.admin import LeafletGeoAdmin
 
@@ -62,3 +63,26 @@ class StoryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Story, StoryAdmin)
+
+
+class ComparisonPageInline(admin.TabularInline):
+    model = ComparisonPage
+    extra = 0
+    fields = ('page_type', 'status', 'last_fact_checked')
+
+
+class CompetitorAdmin(admin.ModelAdmin):
+    list_display = ('slug', 'display_name', 'is_active')
+    list_filter = ('is_active',)
+    prepopulated_fields = {'slug': ('display_name',)}
+    inlines = [ComparisonPageInline]
+
+
+class ComparisonPageAdmin(admin.ModelAdmin):
+    list_display = ('competitor', 'page_type', 'status', 'last_fact_checked')
+    list_filter = ('status', 'page_type', 'competitor')
+    list_editable = ('status',)
+
+
+admin.site.register(Competitor, CompetitorAdmin)
+admin.site.register(ComparisonPage, ComparisonPageAdmin)

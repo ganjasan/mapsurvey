@@ -1,0 +1,182 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}Migrate from Maptionnaire to Mapsurvey — Step-by-Step Guide{% endblock %}
+{% block meta_description %}Step-by-step guide to migrate your participatory mapping project from Maptionnaire to Mapsurvey. Export data, recreate surveys, map features.{% endblock %}
+{% block meta_keywords %}migrate from Maptionnaire, Maptionnaire export, Maptionnaire migration, switch from Maptionnaire, Maptionnaire data export{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/migrate-from-maptionnaire/{% endblock %}
+{% block og_url %}https://mapsurvey.org/migrate-from-maptionnaire/{% endblock %}
+{% block og_title %}Migrate from Maptionnaire to Mapsurvey{% endblock %}
+
+{% block extra_head %}
+<meta property="og:type" content="article">
+{% endblock %}
+
+{% block content %}
+{% if is_draft %}{% include "comparisons/_draft_banner.html" %}{% endif %}
+
+<section class="trust-hero">
+    <div class="landing-inner">
+        <p class="section-eyebrow">Migration Guide</p>
+        <h1 class="trust-hero__headline">Migrate from Maptionnaire to Mapsurvey</h1>
+        <p class="trust-hero__subtitle">
+            A practical, step-by-step guide for teams switching participatory mapping platforms.
+            Export your data, recreate surveys, and keep running — usually in under a day.
+        </p>
+    </div>
+</section>
+
+<div class="trust-content">
+    <div class="landing-inner">
+
+        <section class="trust-section" id="steps">
+            <h2 class="trust-section__title">Migration steps</h2>
+
+            <div class="migration-step">
+                <div class="migration-step__num">1</div>
+                <div class="migration-step__content">
+                    <h3>Export your data from Maptionnaire</h3>
+                    <p>
+                        Download survey responses and geographic features from your Maptionnaire admin.
+                        <!-- FACT-CHECK: confirm Maptionnaire export formats — Shapefile, GeoJSON, CSV, Excel? -->
+                        If you have ongoing surveys, run the export during a quiet period — respondents who submit
+                        after your export won't appear in the file.
+                    </p>
+                </div>
+            </div>
+
+            <div class="migration-step">
+                <div class="migration-step__num">2</div>
+                <div class="migration-step__content">
+                    <h3>Prepare your data</h3>
+                    <p>
+                        Geographic features export cleanly to GeoJSON in WGS84 (EPSG:4326) — the format Mapsurvey uses natively.
+                        Attribute responses (text, choice, numeric) map directly to Mapsurvey question types.
+                        For multilingual surveys, verify each language variant is preserved in its own column.
+                        <!-- FACT-CHECK: confirm how Maptionnaire exports multilingual response columns -->
+                    </p>
+                </div>
+            </div>
+
+            <div class="migration-step">
+                <div class="migration-step__num">3</div>
+                <div class="migration-step__content">
+                    <h3>Create your Mapsurvey account</h3>
+                    <p>
+                        Sign up at <a href="{% url 'django_registration_register' %}">mapsurvey.org</a> —
+                        free, no credit card. Create an organization if you want to collaborate with colleagues.
+                    </p>
+                </div>
+            </div>
+
+            <div class="migration-step">
+                <div class="migration-step__num">4</div>
+                <div class="migration-step__content">
+                    <h3>Recreate your survey</h3>
+                    <p>
+                        In the Mapsurvey editor, rebuild your questionnaire structure: create a new survey,
+                        add sections matching your Maptionnaire pages, add questions across 13 available types
+                        (text, choice, rating, point/line/polygon, image, and more), configure translations
+                        if your survey is multilingual. For a 20–30 question survey, expect 30–60 minutes
+                        in the editor.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="trust-section" id="feature-mapping">
+            <h2 class="trust-section__title">Feature mapping</h2>
+            <p class="trust-section__lead">
+                Common Maptionnaire features and their Mapsurvey equivalents.
+            </p>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Maptionnaire feature</th>
+                        <th scope="col">Mapsurvey equivalent</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Marker / pin question <!-- FACT-CHECK terminology --></td><td><code>point</code> question type</td></tr>
+                    <tr><td>Route drawing</td><td><code>line</code> question type</td></tr>
+                    <tr><td>Area / polygon drawing</td><td><code>polygon</code> question type</td></tr>
+                    <tr><td>Text question</td><td><code>text</code> (paragraph) or <code>text_line</code> (single line)</td></tr>
+                    <tr><td>Choice question</td><td><code>choice</code> (single) or <code>multichoice</code> (multiple)</td></tr>
+                    <tr><td>Numeric slider</td><td><code>range</code> or <code>number</code></td></tr>
+                    <tr><td>Rating scale</td><td><code>rating</code></td></tr>
+                    <tr><td>Date / time picker</td><td><code>datetime</code></td></tr>
+                    <tr><td>Image upload</td><td><code>image</code></td></tr>
+                    <tr><td>HTML content block</td><td><code>html</code> content block</td></tr>
+                    <tr><td>Sub-questions / conditional</td><td><code>parent_question</code> field on any question</td></tr>
+                    <tr><td>Custom thank-you page</td><td><code>thanks_html</code> (multilingual supported)</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="trust-section" id="whats-different">
+            <h2 class="trust-section__title">What's different</h2>
+            <p class="trust-section__lead"><strong>You'll need to adjust:</strong></p>
+            <ul class="trust-checklist">
+                <li>URLs change — respondent links will point to <code>mapsurvey.org/surveys/&lt;slug&gt;</code> or your self-hosted domain</li>
+                <li>If you used custom CSS / branding on Maptionnaire, plan design time on Mapsurvey — we have editor settings for basic branding; deeper customization requires template edits on self-hosted installs</li>
+                <li>Analytics dashboards look different — Mapsurvey groups analytics under one survey with a stats sidebar, filter panel, and map view. The IDE-style panel layout (map, table, charts, anomalies) is part of the v2 data management release</li>
+                <li>PDF reports — Mapsurvey does not currently generate PDF reports; export to CSV/GeoJSON and analyze in QGIS, R, or Python instead <!-- FACT-CHECK: confirm Maptionnaire has PDF report feature --></li>
+            </ul>
+            <p class="trust-section__lead"><strong>You'll gain:</strong></p>
+            <ul class="trust-checklist">
+                <li>No per-survey fees — run as many surveys as you want</li>
+                <li>Source code access — audit the platform, fork it, or self-host</li>
+                <li>Survey versioning — publish a draft alongside your live survey without breaking respondent links</li>
+                <li>Standard open data formats (GeoJSON, CSV) with no vendor-specific fields</li>
+            </ul>
+        </section>
+
+        <section class="trust-section" id="faq">
+            <h2 class="trust-section__title">FAQ</h2>
+            <p class="trust-section__lead"><strong>How long does a migration take?</strong></p>
+            <p class="trust-section__lead">
+                For a single survey with 20–30 questions: half a day to rebuild the structure in the editor,
+                plus your own testing time. For an organization with 5+ active surveys: plan 2–3 days.
+            </p>
+            <p class="trust-section__lead"><strong>Can we run both platforms in parallel during migration?</strong></p>
+            <p class="trust-section__lead">
+                Yes. Keep your Maptionnaire subscription active while you test Mapsurvey. When confident,
+                redirect new respondents to Mapsurvey and let your Maptionnaire surveys wind down.
+            </p>
+            <p class="trust-section__lead"><strong>Is there a bulk import tool for Maptionnaire data?</strong></p>
+            <p class="trust-section__lead">
+                Not out of the box. For large migrations (hundreds of surveys or millions of responses),
+                contact us and we can help write an import script. For standard projects, manual rebuild
+                in the editor is faster than scripting.
+            </p>
+            <p class="trust-section__lead"><strong>Is my data safe during the transition?</strong></p>
+            <p class="trust-section__lead">
+                Yes — Mapsurvey data is stored in the EU (Frankfurt), encrypted in transit (TLS), and fully
+                exportable at any time. See our <a href="{% url 'trust_page' %}">Trust page</a> for details.
+            </p>
+            <p class="trust-section__lead"><strong>What if we want to switch back?</strong></p>
+            <p class="trust-section__lead">
+                Mapsurvey exports everything as GeoJSON + CSV — standard formats any platform can import.
+                No vendor lock-in, no switching fee.
+            </p>
+        </section>
+
+        <section class="trust-section trust-section--cta">
+            <h2 class="trust-section__title">Talk to us about your migration</h2>
+            <p class="trust-section__lead">
+                Migrating an active project or a complex survey setup? We can help you map your existing
+                data structure to Mapsurvey and answer platform-specific questions.
+            </p>
+            <div class="comparison-cta-group">
+                {% if CONTACT_EMAIL %}
+                <a href="mailto:{{ CONTACT_EMAIL }}?subject=Maptionnaire%20migration" class="btn-primary-landing">Email us about migration</a>
+                {% endif %}
+                <a href="{% url 'django_registration_register' %}" class="btn-secondary-landing">Create your account</a>
+            </div>
+        </section>
+
+        {% include "comparisons/_legal_disclaimer.html" %}
+
+    </div>
+</div>
+{% endblock %}
