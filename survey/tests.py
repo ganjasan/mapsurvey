@@ -11515,12 +11515,6 @@ class CompetitorComparisonPagesTests(TestCase):
             status='draft',
             last_fact_checked=self.today,
         )
-        self.migrate_page = ComparisonPage.objects.create(
-            competitor=self.competitor,
-            page_type='migrate',
-            status='draft',
-            last_fact_checked=self.today,
-        )
         self.staff_user = User.objects.create_user(
             username='staff', password='pw', is_staff=True
         )
@@ -11579,16 +11573,6 @@ class CompetitorComparisonPagesTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertNotContains(resp, 'draft-banner')
 
-    def test_migrate_page_url(self):
-        """
-        GIVEN a migrate-type ComparisonPage
-        WHEN requested at /migrate-from-<slug>/
-        THEN it is served by the comparison_page view
-        """
-        self.client.login(username='staff', password='pw')
-        resp = self.client.get('/migrate-from-maptionnaire/')
-        self.assertEqual(resp.status_code, 200)
-
     def test_nonexistent_competitor_returns_404(self):
         """
         GIVEN no ComparisonPage for a slug
@@ -11620,7 +11604,6 @@ class CompetitorComparisonPagesTests(TestCase):
         self.assertContains(resp, 'Maptionnaire')
         self.assertContains(resp, '/alternatives/maptionnaire/')
         self.assertNotContains(resp, '/vs/maptionnaire/')
-        self.assertNotContains(resp, '/migrate-from-maptionnaire/')
 
     def test_hub_shows_all_pages_for_staff_with_draft_labels(self):
         """
@@ -11632,7 +11615,6 @@ class CompetitorComparisonPagesTests(TestCase):
         resp = self.client.get('/alternatives/')
         self.assertContains(resp, '/alternatives/maptionnaire/')
         self.assertContains(resp, '/vs/maptionnaire/')
-        self.assertContains(resp, '/migrate-from-maptionnaire/')
         self.assertContains(resp, 'Draft')
 
     def test_hub_hides_inactive_competitor(self):
@@ -11678,14 +11660,13 @@ class CompetitorComparisonPagesTests(TestCase):
 
     def test_sitemap_includes_published_pages_but_not_drafts(self):
         """
-        GIVEN one published and two draft pages
+        GIVEN one published and one draft page
         WHEN a crawler requests /sitemap.xml
         THEN only the published URL appears
         """
         resp = self.client.get('/sitemap.xml')
         self.assertContains(resp, '/alternatives/maptionnaire/</loc>')
         self.assertNotContains(resp, '/vs/maptionnaire/</loc>')
-        self.assertNotContains(resp, '/migrate-from-maptionnaire/</loc>')
 
     def test_english_rendering_regardless_of_session_language(self):
         """

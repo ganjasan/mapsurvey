@@ -36,7 +36,7 @@
 
 - [x] 7.1 Create `survey/templates/comparisons/maptionnaire/alternative.html` extending `base_landing.html`: override SEO blocks (title "Maptionnaire Alternative — Mapsurvey | Free & Open-Source", meta_description, meta_keywords "Maptionnaire alternative, open source Maptionnaire, free Maptionnaire, Maptionnaire vs open source", canonical to `/alternatives/maptionnaire/`, og_type='article'); {% include "_draft_banner.html" %} when `is_draft`; hero; "Why teams switch" section (4 bullets); short comparison table (8-10 rows); pricing snapshot paragraph; CTA row with "Create Your Mapsurvey" + "Try Demo Survey"; {% include "_legal_disclaimer.html" %}
 - [x] 7.2 Create `survey/templates/comparisons/maptionnaire/vs.html` extending `base_landing.html`: SEO blocks for "Mapsurvey vs Maptionnaire"; hero; TL;DR paragraph; full comparison table grouped into sections (Survey building, Geo input, Data export, Analytics, Pricing, Hosting, Licensing) with 20-30 rows total; "Choose X if..." balanced section; pricing side-by-side visual; 2 inline placeholders for screenshots (editor + analytics) with `{# TODO: replace with /static/imgs/comparisons/... #}` markers; CTA; disclaimer
-- [x] 7.3 Create `survey/templates/comparisons/maptionnaire/migrate.html` extending `base_landing.html`: SEO blocks for "Migrate from Maptionnaire"; hero; Step 1: Export from Maptionnaire; Step 2: Prepare data; Step 3: Create Mapsurvey account; Step 4: Import/recreate survey; feature mapping table (your Maptionnaire X → Mapsurvey Y); "What's different" section; FAQ (3-5 Q/A pairs); CTA with email link "Talk to us about migration"; disclaimer
+- [x] 7.3 ~~Create `survey/templates/comparisons/maptionnaire/migrate.html`~~ — **dropped from v1**, template removed in migration 0029; URL pattern retained for future competitors extending `base_landing.html`: SEO blocks for "Migrate from Maptionnaire"; hero; Step 1: Export from Maptionnaire; Step 2: Prepare data; Step 3: Create Mapsurvey account; Step 4: Import/recreate survey; feature mapping table (your Maptionnaire X → Mapsurvey Y); "What's different" section; FAQ (3-5 Q/A pairs); CTA with email link "Talk to us about migration"; disclaimer
 
 ## 8. CSS
 
@@ -52,12 +52,12 @@
 
 - [x] 10.1 Create `docs/marketing/comparisons/maptionnaire/alternative.md` with full draft copy: hero headline + subheading, "why switch" 4 bullets, 8-10 row comparison table (markdown GFM), pricing paragraph, CTA text. Mark unverified claims with `<!-- FACT-CHECK: description -->` inline
 - [x] 10.2 Create `docs/marketing/comparisons/maptionnaire/vs.md` with draft: TL;DR, full 20-30 row comparison table grouped by category, balanced "Choose X if..." section, pricing side-by-side table, all facts with FACT-CHECK markers where uncertain
-- [x] 10.3 Create `docs/marketing/comparisons/maptionnaire/migrate.md` with draft: 4-step migration guide, feature mapping table, what's different section, FAQ
+- [x] 10.3 ~~Create `docs/marketing/comparisons/maptionnaire/migrate.md`~~ — **dropped from v1** together with the template with draft: 4-step migration guide, feature mapping table, what's different section, FAQ
 
 ## 11. Database Seed Data
 
 - [x] 11.1 Create `Competitor` row (via data migration `0028_seed_maptionnaire_comparison.py`): `slug='maptionnaire'`, `display_name='Maptionnaire'`, `is_active=True`
-- [x] 11.2 Create three `ComparisonPage` rows (via same data migration) linked to Maptionnaire: one per `page_type` ('alternative', 'vs', 'migrate'), all `status='draft'`, `last_fact_checked=today`
+- [x] 11.2 Create `ComparisonPage` rows (via same data migration). Migration 0029 subsequently removes the Maptionnaire `migrate` row; effective seed is two pages per Maptionnaire. linked to Maptionnaire: one per `page_type` ('alternative', 'vs', 'migrate'), all `status='draft'`, `last_fact_checked=today`
 
 ## 12. Tests
 

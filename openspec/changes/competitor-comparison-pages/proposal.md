@@ -8,9 +8,9 @@ Users actively search for "Maptionnaire alternative" and related comparison quer
   - `/alternatives/` — hub page listing all published competitor comparisons
   - `/alternatives/<competitor>/` — "looking for X alternative" broad-intent page
   - `/vs/<competitor>/` — detailed head-to-head feature comparison
-  - `/migrate-from-<competitor>/` — migration guide for high-intent users
+  - `/migrate-from-<competitor>/` — migration guide for high-intent users (architecture keeps this URL pattern; Maptionnaire v1 does not ship this page — see note below)
 - Introduce two new models: `Competitor` (slug, display name, is_active) and `ComparisonPage` (FK competitor, page_type, status, last_fact_checked)
-- Ship Maptionnaire as the first competitor on v1 (all three pages + one hub entry)
+- Ship Maptionnaire as the first competitor on v1 with two pages: `alternative` and `vs`. The `migrate` page type remains in the schema for future competitors; Maptionnaire's migration guide is deferred until we can source reliable facts about Maptionnaire's export formats.
 - Draft content authored in markdown files under `docs/marketing/comparisons/<competitor>/*.md`; production content lives in Django templates converted by hand once reviewed
 - Status field gates publication: `draft` → 404 for anonymous users, visible to staff with preview banner; `published` → live and included in `sitemap.xml`
 - Add trademark/non-affiliation legal disclaimer to every comparison page showing `last_fact_checked` date
