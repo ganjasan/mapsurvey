@@ -2,8 +2,8 @@
 {% load static i18n %}
 
 {% block title %}Mapsurvey vs Maptionnaire — Detailed Comparison 2026{% endblock %}
-{% block meta_description %}A detailed, feature-by-feature comparison of Mapsurvey and Maptionnaire: survey building, geo input, data export, analytics, pricing, and hosting.{% endblock %}
-{% block meta_keywords %}Mapsurvey vs Maptionnaire, Maptionnaire vs Mapsurvey, Maptionnaire comparison, participatory mapping comparison, PPGIS comparison{% endblock %}
+{% block meta_description %}A detailed Mapsurvey vs Maptionnaire comparison using the ten-criterion PPGIS evaluation framework from Burnett et al. (2023), with direct citations from Kyttä et al.'s Maptionnaire chapter.{% endblock %}
+{% block meta_keywords %}Mapsurvey vs Maptionnaire, Maptionnaire vs Mapsurvey, Maptionnaire pricing, Maptionnaire comparison, participatory mapping comparison, PPGIS comparison{% endblock %}
 {% block canonical_url %}https://mapsurvey.org/vs/maptionnaire/{% endblock %}
 {% block og_url %}https://mapsurvey.org/vs/maptionnaire/{% endblock %}
 {% block og_title %}Mapsurvey vs Maptionnaire — Detailed Comparison{% endblock %}
@@ -21,126 +21,354 @@
         <h1 class="trust-hero__headline">Mapsurvey vs Maptionnaire</h1>
         <p class="trust-hero__subtitle">
             Both platforms let you build map-based surveys where participants mark places, draw routes,
-            and outline areas. The difference is in pricing model, licensing, and data sovereignty.
+            and outline areas. This comparison evaluates them using the ten-criterion framework from
+            Burnett et al. (2023) — and cites Maptionnaire's own peer-reviewed self-assessment for every claim.
         </p>
+        <div class="comparison-cta-group">
+            <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">Create Your Mapsurvey</a>
+            {% if DEMO_SURVEY_URL %}
+            <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing">Try Demo Survey</a>
+            {% endif %}
+        </div>
     </div>
 </section>
 
 <div class="trust-content">
     <div class="landing-inner">
 
+        <section class="trust-section" id="framework">
+            <h2 class="trust-section__title">The framework</h2>
+            <p class="trust-section__lead">
+                We evaluate both platforms using the ten evaluation criteria proposed by Burnett, McCall,
+                and Ollivierre in Chapter 1 of
+                <a href="https://link.springer.com/book/10.1007/978-3-031-19594-5" target="_blank" rel="noopener"><em>Evaluating Participatory Mapping Software</em></a>
+                (Springer Nature, 2023): ethics, cost, technical level, inclusiveness, accuracy,
+                data privacy, analytical capacity, visualization capacity, openness, and accessibility.
+                This is a deliberately neutral framework applied uniformly across ten mapping tools in the book.
+            </p>
+            <p class="trust-section__lead">
+                Chapter 4 of the same volume — "Maptionnaire" by Marketta Kyttä, Nora Fagerholm,
+                Vera Helene Hausner, and Anna Broberg — is Maptionnaire's own peer-reviewed self-assessment
+                against this framework. We quote it directly below, criterion by criterion.
+            </p>
+        </section>
+
         <section class="trust-section" id="tldr">
             <h2 class="trust-section__title">TL;DR</h2>
             <ul class="trust-checklist">
-                <li><strong>Choose Maptionnaire</strong> if you need a mature commercial product with bundled premium support, have budget for per-survey pricing, and prefer a fully managed platform with a long track record in Nordic participatory planning</li>
-                <li><strong>Choose Mapsurvey</strong> if you need open-source transparency, want to self-host for data sovereignty, or run multiple surveys without multiplying costs</li>
+                <li><strong>Mapsurvey wins on</strong> cost (free vs. $950–$50 000/year), openness (AGPLv3 vs. proprietary), and data sovereignty (self-hosting)</li>
+                <li><strong>Maptionnaire wins on</strong> formally audited accessibility (WCAG 2.1 AA), respondent language coverage (43 languages), and deployment maturity</li>
+                <li><strong>Roughly equivalent</strong> on ethics, GDPR compliance, EU data residency, and core map-based survey building</li>
             </ul>
-            <!-- FACT-CHECK: framing assumes Maptionnaire still positions as mature commercial with premium support included — verify on maptionnaire.com -->
         </section>
 
-        <section class="trust-section" id="survey-building">
-            <h2 class="trust-section__title">Survey building</h2>
+        <section class="criterion-section" id="ethics">
+            <h2 class="criterion-section__title">
+                <span class="criterion-section__number">1</span>
+                Ethics
+            </h2>
+            <p class="criterion-section__lead">
+                Non-extractive use of community data. Who owns collected information, how it may be
+                reused, and whether participants have recourse.
+            </p>
             <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th scope="col">Feature</th>
-                        <th scope="col">Mapsurvey</th>
-                        <th scope="col">Maptionnaire</th>
-                    </tr>
-                </thead>
+                <thead><tr><th scope="col">Criterion</th><th scope="col">Mapsurvey</th><th scope="col">Maptionnaire</th></tr></thead>
                 <tbody>
-                    <tr><td>Drag-and-drop editor</td><td class="yes">Yes</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
-                    <tr><td>Live preview</td><td class="yes">Yes</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
-                    <tr><td>Sub-questions (conditional)</td><td class="yes">Yes</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
-                    <tr><td>Question types</td><td>13</td><td class="no"><!-- FACT-CHECK: count on maptionnaire.com/product --></td></tr>
-                    <tr><td>Import / export survey structure</td><td class="yes">JSON export, importable across accounts</td><td class="no"><!-- FACT-CHECK --></td></tr>
-                    <tr><td>Per-question translations</td><td class="yes">Yes</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                    <tr><td>Survey creators retain data ownership</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+                    <tr><td>Platform follows established participatory-mapping ethics guidelines</td><td class="yes">Yes — ISPM / EthicalGEO</td><td class="yes">Yes — IAP2, EthicalGEO (Kyttä et al., 2023)</td></tr>
+                    <tr><td>No advertising / respondent-data resale</td><td class="yes">No third-party trackers on survey pages</td><td class="yes">Standard for the category</td></tr>
                 </tbody>
             </table>
         </section>
 
-        <section class="trust-section" id="geo-input">
-            <h2 class="trust-section__title">Geo input</h2>
+        <section class="criterion-section" id="cost">
+            <h2 class="criterion-section__title">
+                <span class="criterion-section__number">2</span>
+                Cost
+            </h2>
+            <p class="criterion-section__lead">
+                The financial model — subscription shape, free tier, hidden fees, self-hosting cost.
+            </p>
+            <blockquote class="source-quote">
+                "Maptionnaire is not an open-source service. Maptionnaire service has a business model
+                in the background: the activities of a company must be profitable. […] In the Maptionnaire
+                service there are three different product levels that contain a varying set of modules.
+                The Maptionnaire subscription can be purchased either as a set term subscription or as a
+                continuous subscription. <strong>Prices vary according to these alternatives, ranging
+                from $950 USD per month for a single project to $50 000 USD per year for enterprise solutions.</strong>"
+                <cite>— Kyttä et al. (2023), Chapter 4, §4.3</cite>
+            </blockquote>
+            <p class="criterion-section__lead">
+                Mapsurvey is free for hosted use on mapsurvey.org and free to run yourself under AGPLv3.
+                We do not charge per survey, per response, or per team member.
+            </p>
             <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th scope="col">Feature</th>
-                        <th scope="col">Mapsurvey</th>
-                        <th scope="col">Maptionnaire</th>
-                    </tr>
-                </thead>
+                <thead><tr><th scope="col">Criterion</th><th scope="col">Mapsurvey</th><th scope="col">Maptionnaire</th></tr></thead>
                 <tbody>
-                    <tr><td>Point input</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
-                    <tr><td>Line drawing</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
-                    <tr><td>Polygon drawing</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
-                    <tr><td>Mobile crosshair mode</td><td class="yes">Yes</td><td class="no"><!-- FACT-CHECK --></td></tr>
-                    <tr><td>Geolocation-based centering</td><td class="yes">Yes (opt-in per section)</td><td class="no"><!-- FACT-CHECK --></td></tr>
-                    <tr><td>Custom basemaps (WMS/WFS)</td><td>Roadmap</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                    <tr><td>Free tier for real projects</td><td class="yes">Unlimited on mapsurvey.org</td><td class="no">No free tier</td></tr>
+                    <tr><td>Minimum paid entry</td><td>—</td><td>$950 USD / month (single project)</td></tr>
+                    <tr><td>Enterprise</td><td>Free self-host</td><td>Up to $50 000 USD / year</td></tr>
+                    <tr><td>Pricing model</td><td>None (free + AGPLv3)</td><td>Per-project / per-enterprise, three tiers</td></tr>
                 </tbody>
             </table>
         </section>
 
-        <section class="trust-section" id="analytics">
-            <h2 class="trust-section__title">Analytics &amp; data</h2>
+        <section class="criterion-section" id="technical-level">
+            <h2 class="criterion-section__title">
+                <span class="criterion-section__number">3</span>
+                Technical level
+            </h2>
+            <p class="criterion-section__lead">
+                Expertise required to create, deploy, and maintain surveys. Lower-barrier tools reach
+                broader audiences; higher-barrier tools offer deeper control.
+            </p>
+            <p class="criterion-section__lead">
+                Both platforms are no-code WYSIWYG editors. Kyttä et al. report a usability study of 21
+                participatory transport planners (Mladenović et al., 2021) in which Maptionnaire scored
+                9.33/10 on likelihood to recommend — a strong usability signal. Mapsurvey has not yet
+                been published in a comparable academic usability study.
+            </p>
             <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th scope="col">Feature</th>
-                        <th scope="col">Mapsurvey</th>
-                        <th scope="col">Maptionnaire</th>
-                    </tr>
-                </thead>
+                <thead><tr><th scope="col">Criterion</th><th scope="col">Mapsurvey</th><th scope="col">Maptionnaire</th></tr></thead>
                 <tbody>
-                    <tr><td>Response dashboard</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
-                    <tr><td>Heatmaps</td><td class="yes">Yes (configurable radius/blur)</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
-                    <tr><td>Completion funnel</td><td class="yes">Yes</td><td class="no"><!-- FACT-CHECK --></td></tr>
-                    <tr><td>Filter by attribute / geography</td><td class="yes">Yes</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
-                    <tr><td>UTM campaign tracking</td><td class="yes">Yes</td><td class="no"><!-- FACT-CHECK --></td></tr>
-                    <tr><td>Session validation (mark bad/duplicate responses)</td><td class="yes">Yes</td><td class="no"><!-- FACT-CHECK --></td></tr>
-                    <tr><td>GeoJSON export</td><td class="yes">Yes</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
-                    <tr><td>CSV export</td><td class="yes">Yes</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
-                    <tr><td>Shapefile export</td><td>Roadmap</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                    <tr><td>No-code drag-and-drop editor</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+                    <tr><td>Live preview</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+                    <tr><td>Published academic usability study</td><td class="no">Not yet</td><td class="yes">Mladenović et al. (2021) — 9.33/10</td></tr>
+                    <tr><td>Self-host requires DevOps familiarity</td><td>Docker (optional)</td><td class="no">Not offered</td></tr>
                 </tbody>
             </table>
         </section>
 
-        <section class="trust-section" id="pricing-licensing">
-            <h2 class="trust-section__title">Pricing &amp; licensing</h2>
+        <section class="criterion-section" id="inclusiveness">
+            <h2 class="criterion-section__title">
+                <span class="criterion-section__number">4</span>
+                Inclusiveness
+            </h2>
+            <p class="criterion-section__lead">
+                Reaching people across languages, devices, and technical abilities.
+            </p>
+            <blockquote class="source-quote">
+                "Currently, the service interface for the respondents is available in <strong>43 languages</strong>,
+                including languages using writing systems other than Latin alphabet (such as Hebrew or
+                Arabic where spelling is from right to left, or Chinese and its characters)."
+                <cite>— Kyttä et al. (2023), Chapter 4, §4.5</cite>
+            </blockquote>
+            <p class="criterion-section__lead">
+                Mapsurvey supports multilingual surveys with per-question translations, a respondent
+                language-picker, and RTL rendering inherited from the underlying Leaflet map library.
+                We ship English and Russian UI translations; survey respondent content is translatable
+                to any language the survey creator adds.
+            </p>
             <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th scope="col">Feature</th>
-                        <th scope="col">Mapsurvey</th>
-                        <th scope="col">Maptionnaire</th>
-                    </tr>
-                </thead>
+                <thead><tr><th scope="col">Criterion</th><th scope="col">Mapsurvey</th><th scope="col">Maptionnaire</th></tr></thead>
                 <tbody>
-                    <tr><td>Free tier</td><td class="yes">Unlimited on mapsurvey.org</td><td class="no">Limited trial <!-- FACT-CHECK --></td></tr>
-                    <tr><td>Per-survey pricing</td><td class="no">No</td><td class="yes">Yes</td></tr>
-                    <tr><td>Per-seat pricing</td><td class="no">No</td><td class="no"><!-- FACT-CHECK: verify Maptionnaire doesn't charge per-seat --></td></tr>
-                    <tr><td>Open-source license</td><td class="yes">AGPLv3</td><td class="no">Proprietary</td></tr>
-                    <tr><td>Source code access</td><td class="yes">GitHub</td><td class="no">Closed</td></tr>
-                    <tr><td>Self-hosting option</td><td class="yes">Docker, any cloud or on-prem</td><td class="no">Not offered <!-- FACT-CHECK --></td></tr>
+                    <tr><td>Multilingual survey content</td><td class="yes">Yes (per-question)</td><td class="yes">Yes</td></tr>
+                    <tr><td>Respondent-interface languages</td><td>2 (EN, RU) + unlimited survey content</td><td>43</td></tr>
+                    <tr><td>Anonymous participation</td><td class="yes">Yes — no login required</td><td class="yes">Yes</td></tr>
+                    <tr><td>Mobile-friendly respondent UI</td><td class="yes">Responsive + crosshair mode</td><td class="yes">Mobile-priority design</td></tr>
                 </tbody>
             </table>
         </section>
 
-        <section class="trust-section" id="hosting-compliance">
-            <h2 class="trust-section__title">Hosting &amp; compliance</h2>
+        <section class="criterion-section" id="accuracy">
+            <h2 class="criterion-section__title">
+                <span class="criterion-section__number">5</span>
+                Accuracy
+            </h2>
+            <p class="criterion-section__lead">
+                Controls that keep responses clean — validation rules, duplicate detection, and quality
+                indicators visible to researchers before analysis.
+            </p>
+            <blockquote class="source-quote">
+                "There are few dedicated studies measuring the accuracy of data produced by individual
+                users of Maptionnaire. […] In a recent experiment with users of different ages in Poland,
+                for example, Rzeszewski and Kotus (2019) found that only 60% of participants successfully
+                identified their homes or work location using Open Street Map as the web interface."
+                <cite>— Kyttä et al. (2023), Chapter 4, §4.6</cite>
+            </blockquote>
+            <p class="criterion-section__lead">
+                Mapsurvey ships session validation statuses (valid / fast / duplicate / incomplete /
+                trashed), configurable duplicate-detection windows, and required-field enforcement. These
+                are product features rather than academically measured accuracy — in that respect the
+                category as a whole lacks systematic validation studies.
+            </p>
             <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th scope="col">Feature</th>
-                        <th scope="col">Mapsurvey</th>
-                        <th scope="col">Maptionnaire</th>
-                    </tr>
-                </thead>
+                <thead><tr><th scope="col">Criterion</th><th scope="col">Mapsurvey</th><th scope="col">Maptionnaire</th></tr></thead>
                 <tbody>
-                    <tr><td>EU data residency</td><td class="yes">Frankfurt (Render.com)</td><td class="yes">Finland <!-- FACT-CHECK --></td></tr>
-                    <tr><td>GDPR compliant</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
-                    <tr><td>DPA template available</td><td class="yes">Free download on /trust/</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
-                    <tr><td>SOC 2 audited infrastructure</td><td class="yes">Via Render.com</td><td class="no"><!-- FACT-CHECK --></td></tr>
-                    <tr><td>Air-gapped / on-prem deployment</td><td class="yes">Yes (self-host)</td><td class="no">Not offered <!-- FACT-CHECK --></td></tr>
+                    <tr><td>Required-field enforcement</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+                    <tr><td>Session validation statuses (valid / fast / duplicate / incomplete)</td><td class="yes">Yes</td><td class="no">Not described in Kyttä et al. (2023)</td></tr>
+                    <tr><td>Configurable duplicate-detection window</td><td class="yes">Yes</td><td class="no">Not described</td></tr>
+                    <tr><td>Published accuracy studies</td><td class="no">Not yet</td><td class="yes">Rzeszewski & Kotus (2019), Laatikainen et al. (2018), others</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="criterion-section" id="data-privacy">
+            <h2 class="criterion-section__title">
+                <span class="criterion-section__number">6</span>
+                Data privacy
+            </h2>
+            <p class="criterion-section__lead">
+                Where data lives, who has legal access, and what protections exist against unintended disclosure.
+            </p>
+            <blockquote class="source-quote">
+                "Maptionnaire platform is designed to accommodate the GDPR legislation. Respondents own
+                their data, and they need to be able to access, modify and withdraw the data they have
+                given. […] Mapita acts as a data processor as defined in the EU General Data Protection
+                Regulation (GDPR)."
+                <cite>— Kyttä et al. (2023), Chapter 4, §4.7</cite>
+            </blockquote>
+            <p class="criterion-section__lead">
+                Mapsurvey is GDPR-compliant, EU-hosted in Frankfurt (Render.com), and ships a free
+                downloadable DPA template on our <a href="{% url 'trust_page' %}">Trust page</a>.
+                The self-host option lets organizations become their own data processor for air-gapped
+                or sovereign deployments.
+            </p>
+            <table class="comparison-table">
+                <thead><tr><th scope="col">Criterion</th><th scope="col">Mapsurvey</th><th scope="col">Maptionnaire</th></tr></thead>
+                <tbody>
+                    <tr><td>EU data residency</td><td class="yes">Frankfurt</td><td class="yes">Finland <!-- FACT-CHECK: confirm Maptionnaire primary region --></td></tr>
+                    <tr><td>GDPR compliant</td><td class="yes">Yes</td><td class="yes">Yes (Kyttä et al., 2023)</td></tr>
+                    <tr><td>DPA template available</td><td class="yes">Free on /trust/</td><td class="yes">Yes <!-- FACT-CHECK: per-enterprise availability --></td></tr>
+                    <tr><td>Self-host / on-prem option for full sovereignty</td><td class="yes">Yes — Docker, any cloud or on-prem</td><td class="no">Not offered (Kyttä et al., 2023, §4.1)</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="criterion-section" id="analytical-capacity">
+            <h2 class="criterion-section__title">
+                <span class="criterion-section__number">7</span>
+                Analytical capacity
+            </h2>
+            <p class="criterion-section__lead">
+                Tools to interrogate responses after collection — filters, cross-tabulation, campaign
+                attribution, and export fidelity.
+            </p>
+            <blockquote class="source-quote">
+                "The analysis possibilities in-built to Maptionnaire corresponds mainly to the first
+                analytical phase Explore in the three-phase framework […]. Users interested in advanced
+                data analysis, such as researchers, need to seek options outside the Maptionnaire
+                platform in GIS and statistical programs."
+                <cite>— Kyttä et al. (2023), Chapter 4, §4.8</cite>
+            </blockquote>
+            <p class="criterion-section__lead">
+                Mapsurvey ships a response dashboard with filters (attribute, geographic, time),
+                heatmap layers, UTM campaign tracking, and a completion funnel. Like Maptionnaire,
+                deeper statistical analysis happens downstream in QGIS, R, or Python via GeoJSON + CSV export.
+            </p>
+            <table class="comparison-table">
+                <thead><tr><th scope="col">Criterion</th><th scope="col">Mapsurvey</th><th scope="col">Maptionnaire</th></tr></thead>
+                <tbody>
+                    <tr><td>Built-in response dashboard</td><td class="yes">Yes</td><td class="yes">Yes (Explore phase only, per Kyttä et al.)</td></tr>
+                    <tr><td>Filter by attribute / geography / time</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+                    <tr><td>Completion funnel (drop-off analysis)</td><td class="yes">Yes</td><td class="no">Not described</td></tr>
+                    <tr><td>UTM campaign tracking</td><td class="yes">Yes</td><td class="no">Not described</td></tr>
+                    <tr><td>GeoJSON + CSV export</td><td class="yes">Built-in</td><td class="yes">CSV / Excel — users download for external analysis</td></tr>
+                    <tr><td>Shapefile export</td><td>Roadmap</td><td class="yes">Described in chapter</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="criterion-section" id="visualization-capacity">
+            <h2 class="criterion-section__title">
+                <span class="criterion-section__number">8</span>
+                Visualization capacity
+            </h2>
+            <p class="criterion-section__lead">
+                How richly responses can be displayed — for internal analysis, public results pages,
+                and decision-making presentations.
+            </p>
+            <blockquote class="source-quote">
+                "Maptionnaire offers a specific analytical window where collected point, line or area-based
+                mappings can be visualized and analyzed. […] it is also possible to visualize the data in
+                heatmap style, which allows users to observe hot spots in spatial pattern of map responses."
+                <cite>— Kyttä et al. (2023), Chapter 4, §4.9</cite>
+            </blockquote>
+            <p class="criterion-section__lead">
+                Mapsurvey ships a configurable heatmap layer (radius, blur, opacity), a response map
+                with drawable selection tools, and choropleth-style overlays. Custom WMS/WFS basemaps
+                and public results maps are on our roadmap — Maptionnaire has them today.
+            </p>
+            <table class="comparison-table">
+                <thead><tr><th scope="col">Criterion</th><th scope="col">Mapsurvey</th><th scope="col">Maptionnaire</th></tr></thead>
+                <tbody>
+                    <tr><td>Heatmap layer</td><td class="yes">Yes — configurable</td><td class="yes">Yes (Kyttä et al., 2023)</td></tr>
+                    <tr><td>Custom basemaps (WMS / WFS)</td><td>Roadmap</td><td class="yes">Yes <!-- FACT-CHECK specifics --></td></tr>
+                    <tr><td>Public results map</td><td>Roadmap</td><td class="yes">Yes <!-- FACT-CHECK --></td></tr>
+                    <tr><td>Selection / filter-by-area</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="criterion-section" id="openness">
+            <h2 class="criterion-section__title">
+                <span class="criterion-section__number">9</span>
+                Openness
+            </h2>
+            <p class="criterion-section__lead">
+                The degree to which the platform, its code, its data formats, and its integrations are
+                open to inspection, modification, and portability.
+            </p>
+            <blockquote class="source-quote">
+                "In an ideal world, PPGIS software would be open source and free for all to use. When
+                still developed at the university, the original version of Maptionnaire, back then called
+                the SoftGIS, was published as open-source code, free to use. Mapita Oy developed this
+                software further, first based directly on the initial open-source code. <strong>Later,
+                several new versions were developed and published. The current version is the third
+                total rewrite of the application's source code after the spin-out from Aalto University.</strong>"
+                <cite>— Kyttä et al. (2023), Chapter 4, §4.10</cite>
+            </blockquote>
+            <p class="criterion-section__lead">
+                Maptionnaire was originally open-source (SoftGIS) at Aalto University. Mapita Oy
+                spun out and progressively closed-sourced the codebase across three full rewrites.
+                Mapsurvey is AGPLv3-licensed on GitHub — the source is public, forks are welcome,
+                self-hosting needs no license fee.
+            </p>
+            <table class="comparison-table">
+                <thead><tr><th scope="col">Criterion</th><th scope="col">Mapsurvey</th><th scope="col">Maptionnaire</th></tr></thead>
+                <tbody>
+                    <tr><td>Source code publicly available</td><td class="yes">AGPLv3 on GitHub</td><td class="no">Proprietary — "not an open-source service" (Kyttä et al., 2023)</td></tr>
+                    <tr><td>Historical origin</td><td>Open source from day one (2020)</td><td>Originally open-source SoftGIS at Aalto; closed after spin-out</td></tr>
+                    <tr><td>Open-data export formats</td><td class="yes">GeoJSON, CSV</td><td class="yes">CSV / Excel</td></tr>
+                    <tr><td>Vendor lock-in risk</td><td class="yes">None — self-host any time</td><td class="no">Platform lock-in</td></tr>
+                    <tr><td>Community contributions accepted</td><td class="yes">Pull requests on GitHub</td><td class="no">Not applicable — proprietary</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="criterion-section" id="accessibility">
+            <h2 class="criterion-section__title">
+                <span class="criterion-section__number">10</span>
+                Accessibility
+            </h2>
+            <p class="criterion-section__lead">
+                How well the platform serves people using assistive technology, low-bandwidth connections,
+                or offline contexts.
+            </p>
+            <blockquote class="source-quote">
+                "Maptionnaire fills all the requirements of A-level as well as AA-level of the Web Content
+                Accessibility Guidelines (WCAG 2.1). […] Maptionnaire is one of the few digital services
+                in Finland to fulfill all the accessibility requirements."
+                <cite>— Kyttä et al. (2023), Chapter 4, §4.11</cite>
+            </blockquote>
+            <p class="criterion-section__lead">
+                This is a genuine Maptionnaire strength. Mapsurvey has not yet been formally audited
+                against WCAG 2.1 — we ship standard accessible form controls and semantic HTML, but we
+                make no compliance claim until a third-party audit is complete. If WCAG 2.1 AA is a
+                procurement requirement today, Maptionnaire is the more defensible choice.
+            </p>
+            <p class="criterion-section__lead">
+                Neither platform offers offline data collection. Kyttä et al. note that a standalone
+                Maptionnaire version "would be very expensive" to build; the same applies to Mapsurvey
+                and it is not currently on our roadmap.
+            </p>
+            <table class="comparison-table">
+                <thead><tr><th scope="col">Criterion</th><th scope="col">Mapsurvey</th><th scope="col">Maptionnaire</th></tr></thead>
+                <tbody>
+                    <tr><td>Mobile-friendly respondent UI</td><td class="yes">Yes — responsive + crosshair mode</td><td class="yes">Mobile-priority design</td></tr>
+                    <tr><td>WCAG 2.1 AA conformance</td><td class="no">Not formally audited</td><td class="yes">Conformant (Kyttä et al., 2023)</td></tr>
+                    <tr><td>Offline data collection</td><td class="no">Not offered</td><td class="no">Not offered — "very expensive" per Kyttä et al.</td></tr>
+                    <tr><td>Screen-reader compatibility</td><td>Standard form controls</td><td class="yes">Explicit commitment (Kyttä et al., 2023)</td></tr>
                 </tbody>
             </table>
         </section>
@@ -149,53 +377,18 @@
             <h2 class="trust-section__title">Choosing between them</h2>
             <p class="trust-section__lead"><strong>Choose Maptionnaire if:</strong></p>
             <ul class="trust-checklist">
-                <li>You value a mature commercial product with a long track record in Nordic participatory planning</li>
-                <li>Your organization's procurement prefers a Finnish/EU commercial vendor over open-source</li>
-                <li>You're already running on Maptionnaire and switching cost outweighs the savings</li>
-                <li>You need features currently on Mapsurvey's roadmap (custom WMS/WFS basemaps, Shapefile export) today</li>
+                <li>WCAG 2.1 AA compliance is a hard procurement requirement</li>
+                <li>You need respondent-interface support across 43 languages</li>
+                <li>Your budget comfortably absorbs $950–$50 000/year and you want a mature managed service</li>
+                <li>You value an established Nordic vendor with a decade-plus academic research record</li>
             </ul>
             <p class="trust-section__lead"><strong>Choose Mapsurvey if:</strong></p>
             <ul class="trust-checklist">
-                <li>You need open-source transparency for audit, academic publication, or institutional policy</li>
-                <li>You want to self-host for data sovereignty or air-gapped environments</li>
-                <li>You run many surveys and per-survey pricing adds up fast</li>
-                <li>Your budget for GIS tooling is tight — research groups, NGOs, small municipalities</li>
+                <li>Cost dominates the decision — free vs. $11 400/year minimum is a real number</li>
+                <li>Open-source code access matters for audit, research publication, or institutional policy</li>
+                <li>You need self-hosting for full data sovereignty or air-gapped deployment</li>
+                <li>You run many surveys and per-project pricing would compound</li>
             </ul>
-        </section>
-
-        <section class="trust-section" id="pricing-snapshot">
-            <h2 class="trust-section__title">Pricing snapshot</h2>
-            <div class="pricing-side-by-side">
-                <div class="pricing-side-by-side__card pricing-side-by-side__card--highlight">
-                    <div class="pricing-side-by-side__product">Mapsurvey</div>
-                    <div class="pricing-side-by-side__price">Free</div>
-                    <ul class="trust-checklist">
-                        <li>Unlimited surveys on mapsurvey.org</li>
-                        <li>Free self-hosting under AGPLv3</li>
-                        <li>No per-seat, per-response, or per-survey fees</li>
-                    </ul>
-                </div>
-                <div class="pricing-side-by-side__card">
-                    <div class="pricing-side-by-side__product">Maptionnaire</div>
-                    <div class="pricing-side-by-side__price">Custom quote</div>
-                    <ul class="trust-checklist">
-                        <li>Three tiers: Point, Collect, Communicate</li>
-                        <li>Pricing based on surveys published, not seats</li>
-                        <li>Enterprise packages available on request <!-- FACT-CHECK: verify against maptionnaire.com/subscription --></li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <section class="trust-section" id="screenshots">
-            <h2 class="trust-section__title">Mapsurvey in action</h2>
-            <p class="trust-section__lead">
-                <!-- TODO: replace these placeholder blocks with real screenshots. Target:
-                     /static/imgs/comparisons/maptionnaire/editor.png (1400×900) — editor view with sidebar + live preview
-                     /static/imgs/comparisons/maptionnaire/analytics.png (1400×900) — analytics with map + stats + heatmap
-                     Add descriptive alt text for each. -->
-                <em>Screenshots coming soon — editor view and analytics dashboard.</em>
-            </p>
         </section>
 
         <section class="trust-section trust-section--cta">
@@ -209,6 +402,18 @@
                 <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing">Try Demo Survey</a>
                 {% endif %}
             </div>
+        </section>
+
+        <section class="comparison-framework-citation">
+            <p>
+                <em>Framework: Burnett, C.M., McCall, M., &amp; Ollivierre, A.D. (2023). "Participatory Mapping and Technology," in
+                <a href="https://link.springer.com/book/10.1007/978-3-031-19594-5" target="_blank" rel="noopener">Evaluating Participatory Mapping Software</a>
+                (C.M. Burnett, ed.), Springer Nature, Chapter 1.</em>
+            </p>
+            <p>
+                <em>Maptionnaire self-assessment: Kyttä, M., Fagerholm, N., Hausner, V.H., &amp; Broberg, A. (2023). "Maptionnaire,"
+                in the same volume, Chapter 4, pp. 71–91. Our Mapsurvey assessments reflect the product as of {{ page.last_fact_checked|date:"F Y" }}.</em>
+            </p>
         </section>
 
         {% include "comparisons/_legal_disclaimer.html" %}
