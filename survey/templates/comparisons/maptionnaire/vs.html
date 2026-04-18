@@ -57,7 +57,7 @@
             <h2 class="trust-section__title">TL;DR</h2>
             <ul class="trust-checklist">
                 <li><strong>Mapsurvey wins on</strong> cost (free vs. $950–$50 000/year), openness (AGPLv3 vs. proprietary), and data sovereignty (self-hosting)</li>
-                <li><strong>Maptionnaire wins on</strong> formally audited accessibility (WCAG 2.1 AA), respondent language coverage (43 languages), and deployment maturity</li>
+                <li><strong>Maptionnaire wins on</strong> formally audited accessibility (WCAG 2.1 AA) and deployment maturity</li>
                 <li><strong>Roughly equivalent</strong> on ethics, GDPR compliance, EU data residency, and core map-based survey building</li>
             </ul>
         </section>
@@ -154,18 +154,18 @@
                 <cite>— Kyttä et al. (2023), Chapter 4, §4.5</cite>
             </blockquote>
             <p class="criterion-section__lead">
-                Mapsurvey supports multilingual surveys with per-question translations, a respondent
-                language-picker, and RTL rendering inherited from the underlying Leaflet map library.
-                We ship English and Russian UI translations; survey respondent content is translatable
-                to any language the survey creator adds.
+                Mapsurvey supports multilingual surveys with per-question translations and a respondent
+                language picker covering 75 languages, including right-to-left scripts (Hebrew, Arabic)
+                and non-Latin character sets (Chinese, Japanese, Korean, Cyrillic, and others).
             </p>
             <table class="comparison-table">
                 <thead><tr><th scope="col">Criterion</th><th scope="col">Mapsurvey</th><th scope="col">Maptionnaire</th></tr></thead>
                 <tbody>
-                    <tr><td>Multilingual survey content</td><td class="yes">Yes (per-question)</td><td class="yes">Yes</td></tr>
-                    <tr><td>Respondent-interface languages</td><td>2 (EN, RU) + unlimited survey content</td><td>43</td></tr>
+                    <tr><td>Respondent-interface languages</td><td class="yes">75</td><td class="yes">43</td></tr>
+                    <tr><td>Right-to-left scripts (Hebrew, Arabic)</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+                    <tr><td>Non-Latin character sets (Chinese, Cyrillic, etc.)</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
                     <tr><td>Anonymous participation</td><td class="yes">Yes — no login required</td><td class="yes">Yes</td></tr>
-                    <tr><td>Mobile-friendly respondent UI</td><td class="yes">Responsive + crosshair mode</td><td class="yes">Mobile-priority design</td></tr>
+                    <tr><td>Mobile-friendly respondent UI</td><td class="yes">Responsive and touch-optimized</td><td class="yes">Mobile-priority design</td></tr>
                 </tbody>
             </table>
         </section>
@@ -365,7 +365,7 @@
             <table class="comparison-table">
                 <thead><tr><th scope="col">Criterion</th><th scope="col">Mapsurvey</th><th scope="col">Maptionnaire</th></tr></thead>
                 <tbody>
-                    <tr><td>Mobile-friendly respondent UI</td><td class="yes">Yes — responsive + crosshair mode</td><td class="yes">Mobile-priority design</td></tr>
+                    <tr><td>Mobile-friendly respondent UI</td><td class="yes">Yes — responsive and touch-optimized</td><td class="yes">Mobile-priority design</td></tr>
                     <tr><td>WCAG 2.1 AA conformance</td><td class="no">Not formally audited</td><td class="yes">Conformant (Kyttä et al., 2023)</td></tr>
                     <tr><td>Offline data collection</td><td class="no">Not offered</td><td class="no">Not offered — "very expensive" per Kyttä et al.</td></tr>
                     <tr><td>Screen-reader compatibility</td><td>Standard form controls</td><td class="yes">Explicit commitment (Kyttä et al., 2023)</td></tr>
@@ -378,7 +378,6 @@
             <p class="trust-section__lead"><strong>Choose Maptionnaire if:</strong></p>
             <ul class="trust-checklist">
                 <li>WCAG 2.1 AA compliance is a hard procurement requirement</li>
-                <li>You need respondent-interface support across 43 languages</li>
                 <li>Your budget comfortably absorbs $950–$50 000/year and you want a mature managed service</li>
                 <li>You value an established Nordic vendor with a decade-plus academic research record</li>
             </ul>
