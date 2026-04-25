@@ -301,6 +301,8 @@ def publish_draft(draft, force=False):
         canonical.save()
 
         # 7. Delete draft (sections already moved, so just the header)
+        # Remove any test sessions created against the draft
+        SurveySession.objects.filter(survey=draft).delete()
         draft.delete()
 
     return canonical
