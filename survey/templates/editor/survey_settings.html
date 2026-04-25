@@ -97,16 +97,9 @@
                     Lng: {{ survey.start_map_postion.x|floatformat:5 }},
                     Zoom: {{ survey.start_map_zoom|default:"12" }}
                 {% else %}
-                    No position set (Berlin default)
+                    Click the map to set position
                 {% endif %}
             </span>
-        </div>
-        <div class="form-check mb-2">
-            <input type="checkbox" class="form-check-input" id="survey-clear-position"
-                   {% if not survey.start_map_postion %}checked{% endif %}>
-            <label class="form-check-label" for="survey-clear-position" style="font-size:0.85rem;cursor:pointer;">
-                Use default (Berlin)
-            </label>
         </div>
         <div class="form-check mb-2">
             <input type="checkbox" class="form-check-input" id="survey-use-geolocation"
@@ -139,19 +132,21 @@
         }).addTo(map);
 
         var marker = hasPosition ? L.marker([lat, lng]).addTo(map) : null;
-        var clearCb = document.getElementById('survey-clear-position');
-        var pickerDiv = document.getElementById('survey-map-picker');
 
-        function updatePickerState() {
-            pickerDiv.style.opacity = clearCb.checked ? '0.5' : '1';
-            pickerDiv.style.pointerEvents = clearCb.checked ? 'none' : 'auto';
-            if (clearCb.checked && marker) { map.removeLayer(marker); marker = null; }
+        // Auto-geolocate when no position is set yet
+        if (!hasPosition && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                lat = pos.coords.latitude;
+                lng = pos.coords.longitude;
+                zoom = 13;
+                map.setView([lat, lng], zoom);
+                marker = L.marker([lat, lng]).addTo(map);
+                document.getElementById('survey-map-coords').textContent =
+                    'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
+            }, function() {}, { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 });
         }
-        clearCb.addEventListener('change', updatePickerState);
-        updatePickerState();
 
         map.on('click', function(e) {
-            if (clearCb.checked) return;
             lat = e.latlng.lat; lng = e.latlng.lng;
             if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
             else { marker.setLatLng(e.latlng); }
@@ -161,16 +156,13 @@
 
         map.on('zoomend', function() {
             zoom = map.getZoom();
-            if (!clearCb.checked) {
-                document.getElementById('survey-map-coords').textContent =
-                    'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
-            }
+            document.getElementById('survey-map-coords').textContent =
+                'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
         });
 
         document.getElementById('save-survey-map-position').addEventListener('click', function() {
             zoom = map.getZoom();
             var formData = new FormData();
-            formData.append('clear_position', clearCb.checked ? '1' : '0');
             formData.append('lat', lat);
             formData.append('lng', lng);
             formData.append('zoom', zoom);

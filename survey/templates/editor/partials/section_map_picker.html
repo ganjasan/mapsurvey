@@ -57,9 +57,12 @@
 <script>
 (function() {
     var hasPosition = {{ section.start_map_postion|yesno:"true,false" }};
-    var lat = hasPosition ? {{ section.start_map_postion.y|default:"52.52" }} : {{ survey.start_map_postion.y|default:"52.52" }};
-    var lng = hasPosition ? {{ section.start_map_postion.x|default:"13.405" }} : {{ survey.start_map_postion.x|default:"13.405" }};
-    var zoom = {{ section.start_map_zoom|default:"12" }};
+    var inheritLat = {{ survey.start_map_postion.y|default:"52.52" }};
+    var inheritLng = {{ survey.start_map_postion.x|default:"13.405" }};
+    var inheritZoom = {{ survey.start_map_zoom|default:"12" }};
+    var lat = hasPosition ? {{ section.start_map_postion.y|default:"52.52" }} : inheritLat;
+    var lng = hasPosition ? {{ section.start_map_postion.x|default:"13.405" }} : inheritLng;
+    var zoom = hasPosition ? {{ section.start_map_zoom|default:"12" }} : inheritZoom;
 
     var mapboxUrl = '{{ MAPBOX_URL }}';
     var mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
@@ -74,12 +77,33 @@
         // Toggle map picker interactivity based on inherit checkbox
         var clearCb = document.getElementById('clear-position');
         var pickerDiv = document.getElementById('map-picker');
+        var savedLat = lat, savedLng = lng, savedZoom = zoom;
+        var inheritMarker = null;
         function updatePickerState() {
-            pickerDiv.style.opacity = clearCb.checked ? '0.5' : '1';
-            pickerDiv.style.pointerEvents = clearCb.checked ? 'none' : 'auto';
-            if (clearCb.checked && marker) {
-                map.removeLayer(marker);
-                marker = null;
+            if (clearCb.checked) {
+                // Save current custom position so it can be restored on uncheck
+                if (marker) { savedLat = lat; savedLng = lng; savedZoom = zoom; }
+                // Remove custom marker, show inherited position
+                if (marker) { map.removeLayer(marker); marker = null; }
+                if (!inheritMarker) {
+                    inheritMarker = L.marker([inheritLat, inheritLng], {
+                        opacity: 0.6
+                    }).addTo(map);
+                }
+                map.flyTo([inheritLat, inheritLng], inheritZoom, {animate: true, duration: 0.5});
+                pickerDiv.style.pointerEvents = 'none';
+                document.getElementById('map-coords').textContent =
+                    'Inheriting: Lat: ' + inheritLat.toFixed(5) + ', Lng: ' + inheritLng.toFixed(5) + ', Zoom: ' + inheritZoom;
+            } else {
+                // Remove inherit marker, restore custom state
+                if (inheritMarker) { map.removeLayer(inheritMarker); inheritMarker = null; }
+                pickerDiv.style.pointerEvents = 'auto';
+                if (savedLat !== inheritLat || savedLng !== inheritLng) {
+                    map.flyTo([savedLat, savedLng], savedZoom, {animate: true, duration: 0.5});
+                    if (!marker) { marker = L.marker([savedLat, savedLng]).addTo(map); }
+                    document.getElementById('map-coords').textContent =
+                        'Lat: ' + savedLat.toFixed(5) + ', Lng: ' + savedLng.toFixed(5) + ', Zoom: ' + savedZoom;
+                }
             }
         }
         clearCb.addEventListener('change', updatePickerState);
@@ -117,8 +141,12 @@
                 method: 'POST',
                 headers: { 'X-CSRFToken': '{{ csrf_token }}' },
                 body: formData
-            }).then(function() {
-                $('#mapPickerModal').modal('hide');
+            }).then(function(resp) {
+                if (resp.ok) {
+                    $('#mapPickerModal').modal('hide');
+                } else {
+                    alert('Failed to save: survey may be read-only. Create a draft to edit.');
+                }
             });
         });
 
