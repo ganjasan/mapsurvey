@@ -795,12 +795,13 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 						result = names[0] if names else ""
 				elif input_type == "multichoice":
 					if subanswers[key]:
-						result = subanswers[key][0].get_selected_choice_names()
+						result = "; ".join(subanswers[key][0].get_selected_choice_names())
 
 				properties[key.name] = result
 
 			properties["session"] = str(answer.survey_session)
 			properties["session_id"] = answer.survey_session_id
+			properties["language"] = answer.survey_session.language or ''
 			properties["validation_status"] = answer.survey_session.validation_status or ''
 
 			feature = {
@@ -857,7 +858,7 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 				names = answer.get_selected_choice_names()
 				result = names[0] if names else ""
 			elif input_type == "multichoice":
-				result = answer.get_selected_choice_names()
+				result = "; ".join(answer.get_selected_choice_names())
 			else:
 				continue
 
@@ -866,6 +867,7 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 		properties["session"] = str(session)
 		properties["session_id"] = session.id
 		properties["datetime"] = session.start_datetime
+		properties["language"] = session.language or ''
 		properties["validation_status"] = session.validation_status or ''
 		properties_list.append(properties)
 
