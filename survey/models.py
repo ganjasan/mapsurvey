@@ -70,6 +70,16 @@ STATUS_CHOICES = (
     ("archived", _("Archived")),
 )
 
+def default_basemaps():
+    return ['streets', 'satellite', 'topo']
+
+
+BASEMAP_CHOICES = [
+    ('streets', _('Streets')),
+    ('satellite', _('Satellite')),
+    ('topo', _('Topo')),
+]
+
 VALID_TRANSITIONS = {
     "draft": ["testing", "published"],
     "testing": ["draft", "published"],
@@ -280,6 +290,11 @@ class SurveyHeader(models.Model):
     test_token = models.UUIDField(default=uuid_module.uuid4, unique=True)
     cover_image = models.ImageField(upload_to='covers/', null=True, blank=True)
     validation_settings = models.JSONField(default=dict, blank=True, help_text=_('Survey-level validation thresholds: {fast_threshold_seconds, duplicate_window_hours}'))
+    basemaps = models.JSONField(default=default_basemaps, blank=True, help_text=_('Enabled basemaps for respondent map. List from: ["streets", "satellite", "topo"]'))
+    default_basemap = models.CharField(max_length=20, null=True, blank=True, choices=BASEMAP_CHOICES, help_text=_('Default basemap shown to respondents. If null, first from basemaps list.'))
+    start_map_postion = geomodels.PointField(null=True, blank=True, help_text=_('Default map position for the survey. Sections inherit this if not overridden.'))
+    start_map_zoom = models.IntegerField(null=True, blank=True, help_text=_('Default map zoom for the survey. Sections inherit this if not overridden.'))
+    use_geolocation = models.BooleanField(default=False, help_text=_('Auto-center map on respondent location when entering the survey.'))
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -432,9 +447,10 @@ class SurveySection(models.Model):
     subheading = models.CharField(max_length=4096, null=True, blank=True) #Several question about your home area quality
     code = models.CharField(max_length=8)
 
-    start_map_postion = geomodels.PointField(default='POINT(13.405 52.52)')
-    start_map_zoom = models.IntegerField(default=12)
-    use_geolocation = models.BooleanField(default=False)
+    start_map_postion = geomodels.PointField(null=True, blank=True, help_text=_('Override map position for this section. Null = keep current map position.'))
+    start_map_zoom = models.IntegerField(null=True, blank=True, help_text=_('Override map zoom for this section. Null = keep current zoom.'))
+    use_geolocation = models.BooleanField(default=False, help_text=_('If true, fly to respondent location when entering this section.'))
+    override_basemap = models.CharField(max_length=20, null=True, blank=True, choices=BASEMAP_CHOICES, help_text=_('Override basemap for this section. Null = keep current basemap.'))
 
     next_section = models.ForeignKey("SurveySection", null=True, blank=True, on_delete=models.SET_NULL, related_name='survey_next_section')
     prev_section = models.ForeignKey("SurveySection", null=True, blank=True, on_delete=models.SET_NULL, related_name='survey_prev_section')

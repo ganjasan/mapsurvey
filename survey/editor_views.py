@@ -12,7 +12,7 @@ from django.views.decorators.http import require_POST
 from .models import (
     SurveyHeader, SurveySession, SurveySection, SurveySectionTranslation,
     Question, QuestionTranslation, SurveyCollaborator,
-    Membership, SURVEY_ROLE_CHOICES,
+    Membership, SURVEY_ROLE_CHOICES, BASEMAP_CHOICES,
 )
 from .editor_forms import SurveyHeaderForm, SurveySectionForm, QuestionForm
 from .forms import SurveySectionAnswerForm
@@ -69,6 +69,15 @@ def editor_survey_create(request):
             survey = form.save(commit=False)
             survey.organization = request.active_org
             survey.created_by = request.user
+            # Map position from hidden fields
+            map_lat = request.POST.get('map_lat')
+            map_lng = request.POST.get('map_lng')
+            map_zoom = request.POST.get('map_zoom')
+            if map_lat and map_lng:
+                survey.start_map_postion = Point(float(map_lng), float(map_lat))
+            if map_zoom:
+                survey.start_map_zoom = int(map_zoom)
+            survey.use_geolocation = request.POST.get('use_geolocation') == '1'
             survey.save()
             # Create SurveyCollaborator owner entry
             SurveyCollaborator.objects.create(
@@ -87,7 +96,10 @@ def editor_survey_create(request):
             return redirect('editor_survey_detail', survey_uuid=survey.uuid)
     else:
         form = SurveyHeaderForm()
-    return render(request, 'editor/survey_create.html', {'form': form})
+    return render(request, 'editor/survey_create.html', {
+        'form': form,
+        'basemap_choices': BASEMAP_CHOICES,
+    })
 
 
 # ─── Survey editor main page ─────────────────────────────────────────────────
@@ -157,7 +169,31 @@ def editor_survey_settings(request, survey_uuid):
         'survey': survey,
         'form': form,
         'effective_role': request.effective_survey_role,
+        'basemap_choices': BASEMAP_CHOICES,
     })
+
+
+# ─── Survey map position ─────────────────────────────────────────────────────
+
+@survey_permission_required('owner')
+@require_POST
+def editor_survey_map_position(request, survey_uuid):
+    survey = request.survey
+    clear_position = request.POST.get('clear_position', '0') == '1'
+
+    if clear_position:
+        survey.start_map_postion = None
+        survey.start_map_zoom = None
+    else:
+        lat = float(request.POST.get('lat', 52.52))
+        lng = float(request.POST.get('lng', 13.405))
+        zoom = int(request.POST.get('zoom', 12))
+        survey.start_map_postion = Point(lng, lat)
+        survey.start_map_zoom = zoom
+
+    survey.use_geolocation = request.POST.get('use_geolocation', '0') == '1'
+    survey.save(update_fields=['start_map_postion', 'start_map_zoom', 'use_geolocation'])
+    return HttpResponse(status=204)
 
 
 # ─── Section CRUD ─────────────────────────────────────────────────────────────
@@ -233,6 +269,7 @@ def editor_section_detail(request, survey_uuid, section_id):
         'form': form,
         'translations': translations,
         'questions': questions,
+        'is_read_only': survey.status in ('published', 'closed'),
     })
 
 
@@ -343,6 +380,7 @@ def editor_question_create(request, survey_uuid, section_id):
             response = render(request, 'editor/partials/question_list_item.html', {
                 'question': question,
                 'survey': survey,
+                'is_read_only': survey.status in ('published', 'closed'),
             })
             response['HX-Trigger'] = 'questionSaved'
             return response
@@ -402,6 +440,7 @@ def editor_question_edit(request, survey_uuid, question_id):
             response = render(request, 'editor/partials/question_list_item.html', {
                 'question': q,
                 'survey': survey,
+                'is_read_only': survey.status in ('published', 'closed'),
             })
             response['HX-Trigger'] = 'questionSaved'
             return response
@@ -538,6 +577,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
             response = render(request, 'editor/partials/question_list_item.html', {
                 'question': parent,
                 'survey': survey,
+                'is_read_only': survey.status in ('published', 'closed'),
             })
             response['HX-Trigger'] = 'questionSaved'
             return response
@@ -562,19 +602,29 @@ def editor_section_map_picker(request, survey_uuid, section_id):
         blocked = _check_structural_edit_allowed(survey)
         if blocked:
             return blocked
-        lat = float(request.POST.get('lat', 52.52))
-        lng = float(request.POST.get('lng', 13.405))
-        zoom = int(request.POST.get('zoom', 12))
         use_geolocation = request.POST.get('use_geolocation', '0') == '1'
-        section.start_map_postion = Point(lng, lat)
-        section.start_map_zoom = zoom
+        clear_position = request.POST.get('clear_position', '0') == '1'
+        override_basemap = request.POST.get('override_basemap', '') or None
+
+        if clear_position:
+            section.start_map_postion = None
+            section.start_map_zoom = None
+        else:
+            lat = float(request.POST.get('lat', 52.52))
+            lng = float(request.POST.get('lng', 13.405))
+            zoom = int(request.POST.get('zoom', 12))
+            section.start_map_postion = Point(lng, lat)
+            section.start_map_zoom = zoom
+
         section.use_geolocation = use_geolocation
-        section.save(update_fields=['start_map_postion', 'start_map_zoom', 'use_geolocation'])
+        section.override_basemap = override_basemap
+        section.save(update_fields=['start_map_postion', 'start_map_zoom', 'use_geolocation', 'override_basemap'])
         return HttpResponse(status=204, headers={'HX-Trigger': 'mapPositionSaved'})
 
     return render(request, 'editor/partials/section_map_picker.html', {
         'survey': survey,
         'section': section,
+        'basemap_choices': BASEMAP_CHOICES,
     })
 
 
@@ -618,10 +668,14 @@ def editor_section_preview(request, survey_uuid, section_name):
         'section_title': section_title,
         'section_subheading': section_subheading,
         'selected_language': selected_language,
-        'existing_geo_answers_json': '{}',
+        'existing_geo_answers': {},
         'section_current': 1,
         'section_total': 1,
         'preview': True,
+        'initial_map_lat': section.start_map_postion.y if section.start_map_postion else (survey.start_map_postion.y if survey.start_map_postion else 52.52),
+        'initial_map_lng': section.start_map_postion.x if section.start_map_postion else (survey.start_map_postion.x if survey.start_map_postion else 13.405),
+        'initial_map_zoom': section.start_map_zoom if section.start_map_zoom is not None else (survey.start_map_zoom if survey.start_map_zoom is not None else 12),
+        'initial_use_geolocation': survey.use_geolocation,
     })
 
     if selected_language:

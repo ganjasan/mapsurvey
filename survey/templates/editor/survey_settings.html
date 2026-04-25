@@ -40,6 +40,31 @@
                 {% if field.name == 'available_languages' %}
                     {{ field }}
                     {% include "editor/partials/language_picker.html" %}
+                {% elif field.name == 'basemaps' %}
+                    {{ field }}
+                    <div style="margin-top:0.4rem;">
+                        {% for slug, label in basemap_choices %}
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input basemap-cb" type="checkbox"
+                                   id="bm_{{ slug }}" value="{{ slug }}"
+                                   {% if slug in survey.basemaps %}checked{% endif %}>
+                            <label class="form-check-label" for="bm_{{ slug }}">{{ label }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <script>
+                    (function(){
+                        var inp = document.getElementById('id_basemaps');
+                        var cbs = document.querySelectorAll('.basemap-cb');
+                        function sync(){
+                            var v = [];
+                            cbs.forEach(function(c){ if (c.checked) v.push(c.value); });
+                            inp.value = JSON.stringify(v.length ? v : ['streets']);
+                        }
+                        sync();
+                        cbs.forEach(function(c){ c.addEventListener('change', sync); });
+                    })();
+                    </script>
                 {% elif field.name == 'cover_image' %}
                     {% if survey.cover_image %}
                     <div class="mb-2">
@@ -57,6 +82,108 @@
             <button type="submit" class="btn btn-primary btn-sm">Save Settings</button>
         </form>
     </div>
+
+    <!-- Default Map Position -->
+    <div class="settings-section">
+        <h6><i class="fas fa-map-marker-alt mr-1"></i> Default Map Position</h6>
+        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+            Set the default starting position and zoom for the survey map. Sections can override this individually.
+        </p>
+        <div id="survey-map-picker" style="height:300px;width:100%;border-radius:var(--radius);border:1px solid var(--border-color);margin-bottom:0.75rem;"></div>
+        <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+            <span id="survey-map-coords">
+                {% if survey.start_map_postion %}
+                    Lat: {{ survey.start_map_postion.y|floatformat:5 }},
+                    Lng: {{ survey.start_map_postion.x|floatformat:5 }},
+                    Zoom: {{ survey.start_map_zoom|default:"12" }}
+                {% else %}
+                    Click the map to set position
+                {% endif %}
+            </span>
+        </div>
+        <div class="form-check mb-2">
+            <input type="checkbox" class="form-check-input" id="survey-use-geolocation"
+                   {% if survey.use_geolocation %}checked{% endif %}>
+            <label class="form-check-label" for="survey-use-geolocation"
+                   style="font-size:0.85rem;cursor:pointer;"
+                   title="Auto-center the map on the respondent's browser location when they first enter the survey.">
+                Auto-center on respondent's location
+                <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
+            </label>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="save-survey-map-position">
+            <i class="fas fa-save mr-1"></i> Save Map Position
+        </button>
+        <span id="survey-map-saved" style="display:none;color:#10b981;font-size:0.85rem;margin-left:0.5rem;">Saved!</span>
+    </div>
+
+    <script>
+    (function() {
+        var hasPosition = {{ survey.start_map_postion|yesno:"true,false" }};
+        var lat = hasPosition ? {{ survey.start_map_postion.y|default:"52.52" }} : 52.52;
+        var lng = hasPosition ? {{ survey.start_map_postion.x|default:"13.405" }} : 13.405;
+        var zoom = {{ survey.start_map_zoom|default:"12" }};
+
+        var map = L.map('survey-map-picker').setView([lat, lng], zoom);
+        L.tileLayer('{{ MAPBOX_URL }}', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
+            maxZoom: 23,
+            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
+        }).addTo(map);
+
+        var marker = hasPosition ? L.marker([lat, lng]).addTo(map) : null;
+
+        // Auto-geolocate when no position is set yet
+        if (!hasPosition && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                lat = pos.coords.latitude;
+                lng = pos.coords.longitude;
+                zoom = 13;
+                map.setView([lat, lng], zoom);
+                marker = L.marker([lat, lng]).addTo(map);
+                document.getElementById('survey-map-coords').textContent =
+                    'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
+            }, function() {}, { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 });
+        }
+
+        map.on('click', function(e) {
+            lat = e.latlng.lat; lng = e.latlng.lng;
+            if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
+            else { marker.setLatLng(e.latlng); }
+            document.getElementById('survey-map-coords').textContent =
+                'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + map.getZoom();
+        });
+
+        map.on('zoomend', function() {
+            zoom = map.getZoom();
+            document.getElementById('survey-map-coords').textContent =
+                'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
+        });
+
+        document.getElementById('save-survey-map-position').addEventListener('click', function() {
+            zoom = map.getZoom();
+            var formData = new FormData();
+            formData.append('lat', lat);
+            formData.append('lng', lng);
+            formData.append('zoom', zoom);
+            formData.append('use_geolocation', document.getElementById('survey-use-geolocation').checked ? '1' : '0');
+
+            fetch('{% url "editor_survey_map_position" survey.uuid %}', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                body: formData
+            }).then(function(resp) {
+                if (resp.ok) {
+                    var el = document.getElementById('survey-map-saved');
+                    el.style.display = 'inline';
+                    setTimeout(function() { el.style.display = 'none'; }, 2000);
+                }
+            });
+        });
+
+        setTimeout(function() { map.invalidateSize(); }, 200);
+    })();
+    </script>
 
     <!-- Collaborators -->
     <div class="settings-section">

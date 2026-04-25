@@ -38,6 +38,37 @@ class HTMLField(forms.Field):
         return attrs
 
 
+class RangeWidget(widgets.Input):
+    """Range input with tick marks and min/max labels."""
+    input_type = 'range'
+
+    def __init__(self, attrs=None, choices=None):
+        super().__init__(attrs)
+        self.choices = choices or []
+
+    def render(self, name, value, attrs=None, renderer=None):
+        input_html = super().render(name, value, attrs, renderer)
+
+        ticks_html = '<div class="range-ticks">' + ''.join(
+            '<span></span>' for _ in self.choices
+        ) + '</div>' if self.choices else ''
+
+        if self.choices:
+            first = self.choices[0]
+            last = self.choices[-1]
+            first_label = first["name"] if isinstance(first["name"], str) else (first["name"].get("en") or next(iter(first["name"].values())))
+            last_label = last["name"] if isinstance(last["name"], str) else (last["name"].get("en") or next(iter(last["name"].values())))
+            labels_html = (
+                f'<div class="range-labels">'
+                f'<span>{html.escape(str(first_label))}</span>'
+                f'<span>{html.escape(str(last_label))}</span></div>'
+            )
+        else:
+            labels_html = ''
+
+        return mark_safe(input_html + ticks_html + labels_html)
+
+
 class LeafletDrawButtonWidget(widgets.Widget):
 
     draw_type = None
@@ -157,10 +188,11 @@ class SurveySectionAnswerForm(forms.Form):
             )
 
         elif input_type == 'range':
-            codes = [c["code"] for c in (question.choices or [])]
+            choices = question.choices or []
+            codes = [c["code"] for c in choices]
             minimum = min(codes) if codes else 0
             maximum = max(codes) if codes else 10
-            return forms.IntegerField(widget=forms.NumberInput(attrs={'type':'range', 'step': '1', 'min':str(minimum), 'max':str(maximum)}), label=label, required=required)
+            return forms.IntegerField(widget=RangeWidget(attrs={'step': '1', 'min': str(minimum), 'max': str(maximum)}, choices=choices), label=label, required=required)
 
         elif input_type == 'point':
             draw_icon_class = icon_class if icon_class else "fas fa-map-marker-alt"

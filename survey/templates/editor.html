@@ -254,6 +254,7 @@
                 <a href="{% url 'editor_survey_detail' survey.uuid %}"><i class="fas fa-pen"></i> Editor</a>
                 <a href="{% url 'editor_survey_analytics' survey.uuid %}"><i class="fas fa-chart-bar"></i> Analytics <span class="badge-beta">beta</span></a>
                 <a href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-share-alt"></i> Share</a>
+                <a href="{% url 'editor_survey_settings' survey.uuid %}"><i class="fas fa-cog"></i> Settings</a>
                 <span class="spacer"></span>
                 {% include "editor/_survey_more_menu.html" %}
             </div>
@@ -295,6 +296,7 @@
                 <a href="{% url 'editor_survey_detail' survey.uuid %}" title="Editor"><i class="fas fa-pen"></i></a>
                 <a href="{% url 'editor_survey_analytics' survey.uuid %}" title="Analytics (Beta)"><i class="fas fa-chart-bar"></i></a>
                 <a href="{% url 'editor_survey_share' survey.uuid %}" title="Share"><i class="fas fa-share-alt"></i></a>
+                <a href="{% url 'editor_survey_settings' survey.uuid %}" title="Settings"><i class="fas fa-cog"></i></a>
                 <a href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Preview" class="preview-btn"><i class="fas fa-external-link-alt"></i> Preview</a>
                 {% include "editor/_survey_more_menu.html" %}
             </div>

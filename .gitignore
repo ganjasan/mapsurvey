@@ -7,3 +7,5 @@ user_surveys/
 docs/
 staticfiles/
 mediafiles/
+.playwright-mcp/
+.pytest_cache/

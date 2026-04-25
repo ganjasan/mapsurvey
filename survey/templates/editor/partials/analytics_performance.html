@@ -125,6 +125,29 @@
 </div>
 {% endif %}
 
+<!-- Language breakdown (multilingual surveys only) -->
+{% if language_breakdown and language_breakdown|length > 1 %}
+<div class="analytics-section">
+    <h6>Languages</h6>
+    <table style="width:100%;font-size:0.875rem;border-collapse:collapse;">
+        <thead>
+            <tr style="border-bottom:1px solid var(--border-color);">
+                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">Language</th>
+                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">Sessions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in language_breakdown %}
+            <tr style="border-bottom:1px solid #f3f4f6;">
+                <td style="padding:0.4rem 0;">{{ row.language }}</td>
+                <td style="padding:0.4rem 0;text-align:right;font-weight:600;">{{ row.count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
 <!-- Device / OS / Browser -->
 {% if device_breakdown.device_types %}
 <div class="analytics-section">

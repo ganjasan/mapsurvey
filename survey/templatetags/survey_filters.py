@@ -19,7 +19,8 @@ def status_badge_class(status):
 @register.filter
 def cover_gradient(name):
     """Generate a deterministic gradient CSS from a string."""
-    h = hash(name or '') % 360
+    import hashlib
+    h = int(hashlib.md5((name or '').encode()).hexdigest(), 16) % 360
     return f'linear-gradient(135deg, hsl({h}, 55%, 50%), hsl({(h + 40) % 360}, 45%, 40%))'
 
 

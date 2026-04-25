@@ -266,7 +266,24 @@ ul {
   border-radius: 3px;
   background: #e2e5ea;
   outline: none;
-  margin: 12px 0;
+  margin: 16px 0 4px;
+}
+.range-ticks {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 10px;
+}
+.range-ticks span {
+  width: 1px;
+  height: 6px;
+  background: #ccc;
+}
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 2px;
 }
 
 .question-card input[type="range"]::-webkit-slider-thumb {

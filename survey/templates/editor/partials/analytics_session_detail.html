@@ -91,14 +91,13 @@
             if (!container) return;
 
             var geoData = {{ geo_json|safe }};
+            var mapboxUrl = '{{ MAPBOX_URL }}';
+            var mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
+
             var map = L.map('session-mini-map', { zoomControl: true });
             window._sessionMiniMap = map;
 
-            L.tileLayer('{{ MAPBOX_URL }}', {
-                attribution: '&copy; OpenStreetMap',
-                maxZoom: 18,
-                accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
-            }).addTo(map);
+            {% include "partials/basemap_layers.html" %}
 
             var colors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
             var qNames = [];

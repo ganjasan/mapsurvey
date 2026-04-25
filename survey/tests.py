@@ -4158,11 +4158,9 @@ class LandingPageViewTest(TestCase):
         response = self.client.get('/')
         content = response.content.decode()
         self.assertIn('id="hero"', content)
-        self.assertIn('id="problem-solution"', content)
-        self.assertIn('id="features"', content)
         self.assertIn('id="use-cases"', content)
-        self.assertIn('id="tech-stack"', content)
-        self.assertIn('id="social-proof"', content)
+        self.assertIn('id="demo"', content)
+        self.assertIn('id="features"', content)
 
     def test_github_link_present(self):
         """
@@ -4367,7 +4365,7 @@ class AnswerPrepopulationTest(TestCase):
         """
         GIVEN a section with a point geo answer saved
         WHEN the user revisits the section via GET
-        THEN existing_geo_answers_json context contains correct GeoJSON
+        THEN existing_geo_answers context contains correct GeoJSON
         """
         # Create session and save a point answer directly
         self._visit_section('section1')
@@ -4381,8 +4379,7 @@ class AnswerPrepopulationTest(TestCase):
 
         # Revisit section1
         response = self._visit_section('section1')
-        geo_json_str = response.context['existing_geo_answers_json']
-        geo_data = json.loads(geo_json_str)
+        geo_data = response.context['existing_geo_answers']
 
         self.assertIn(self.point_q.code, geo_data)
         features = geo_data[self.point_q.code]
@@ -4432,9 +4429,9 @@ class AnswerPrepopulationTest(TestCase):
         THEN no geo answers are present in the context
         """
         response = self._visit_section('section1')
-        geo_json_str = response.context['existing_geo_answers_json']
+        geo_data = response.context['existing_geo_answers']
 
-        self.assertEqual(json.loads(geo_json_str), {})
+        self.assertEqual(geo_data, {})
 
     def test_resubmission_does_not_affect_other_sections(self):
         """
@@ -8797,30 +8794,35 @@ class PlausibleAnalyticsTest(TestCase):
         """
         GIVEN PLAUSIBLE_SCRIPT_URL is configured
         WHEN the first section of a survey is loaded
-        THEN the page contains a survey_start event script
+        THEN the page contains plausible integration and section data with section_current=1
         """
         with self.settings(PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js'):
             response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            # Plausible survey_start fires via JS when sectionCurrent === 1
             self.assertContains(response, "plausible('survey_start'")
-            self.assertContains(response, "survey: 'analytics_survey'")
+            self.assertContains(response, 'data-section-current="1"')
 
-    def test_no_survey_start_event_on_non_first_section(self):
+    def test_no_survey_start_on_non_first_section_via_htmx(self):
         """
         GIVEN PLAUSIBLE_SCRIPT_URL is configured
-        WHEN a non-first section is loaded
-        THEN the page does NOT contain a survey_start event script
+        WHEN a non-first section is loaded via HTMX
+        THEN the partial contains data-section-current != 1 (JS skips survey_start)
         """
         with self.settings(PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js'):
-            # Visit first section to create a session
             self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-            response = self.client.get(f'/surveys/{self.survey.uuid}/section2/')
+            response = self.client.get(
+                f'/surveys/{self.survey.uuid}/section2/',
+                HTTP_HX_REQUEST='true',
+            )
+            self.assertContains(response, 'data-section-current="2"')
+            # HTMX partial doesn't include the shell JS with plausible
             self.assertNotContains(response, "plausible('survey_start'")
 
     def test_survey_section_complete_event_present(self):
         """
         GIVEN PLAUSIBLE_SCRIPT_URL is configured
         WHEN a survey section page is loaded
-        THEN the page contains a survey_section_complete event script
+        THEN the shell contains plausible survey_section_complete handler
         """
         with self.settings(PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js'):
             response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
@@ -8838,17 +8840,15 @@ class PlausibleAnalyticsTest(TestCase):
             response = self.client.get(f'/surveys/{self.survey.uuid}/thanks/')
             self.assertContains(response, "plausible('survey_complete'")
 
-    def test_no_events_when_plausible_disabled(self):
+    def test_no_plausible_script_tag_when_disabled(self):
         """
         GIVEN PLAUSIBLE_SCRIPT_URL is empty
-        WHEN survey pages are loaded
-        THEN no custom event scripts appear
+        WHEN a survey section page is loaded
+        THEN no Plausible script tag is included (the JS guards with typeof plausible check)
         """
         with self.settings(PLAUSIBLE_SCRIPT_URL=''):
-            self.client.get(f'/surveys/{self.survey.uuid}/section1/')
             response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-            self.assertNotContains(response, "plausible('survey_start'")
-            self.assertNotContains(response, "plausible('survey_section_complete'")
+            self.assertNotContains(response, 'plausible.io/js/')
 
     def test_plausible_on_editor_page(self):
         """
@@ -11487,3 +11487,305 @@ class ValidationSettingsTest(TestCase):
         data = json.loads(resp.content)
         self.assertEqual(data['fast_threshold_seconds'], 60)
         self.assertEqual(data['duplicate_window_hours'], 2)
+
+
+class BasemapTest(TestCase):
+    """Tests for satellite/topographic basemap options."""
+
+    def setUp(self):
+        self.org = _make_org('BasemapOrg')
+        self.user = User.objects.create_user(username='bmuser', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='basemap_test', organization=self.org, created_by=self.user,
+            status='published', basemaps=['satellite', 'topo'],
+        )
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section',
+            code='S1', is_head=True,
+        )
+        Question.objects.create(
+            survey_section=self.section, code='Q1', order_number=1,
+            name='Mark a point', input_type='point',
+        )
+
+    def test_basemaps_field_defaults_to_all_three(self):
+        """
+        GIVEN a new SurveyHeader with no basemaps specified
+        WHEN the survey is created
+        THEN basemaps defaults to all three layers
+        """
+        survey = SurveyHeader.objects.create(
+            name='default_bm', organization=self.org, created_by=self.user,
+        )
+        self.assertEqual(survey.basemaps, ['streets', 'satellite', 'topo'])
+
+    def test_respondent_page_renders_satellite_tile_url(self):
+        """
+        GIVEN a survey with basemaps=["satellite", "topo"]
+        WHEN the respondent loads the section page
+        THEN the HTML contains the Esri satellite tile URL
+        """
+        resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.assertContains(resp, 'server.arcgisonline.com')
+
+    def test_respondent_page_renders_topo_tile_url(self):
+        """
+        GIVEN a survey with basemaps=["satellite", "topo"]
+        WHEN the respondent loads the section page
+        THEN the HTML contains the OpenTopoMap tile URL
+        """
+        resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.assertContains(resp, 'tile.opentopomap.org')
+
+    def test_empty_basemaps_falls_back_to_streets_in_js(self):
+        """
+        GIVEN a survey with basemaps=[]
+        WHEN the respondent loads the section page
+        THEN the JS fallback renders streets
+        """
+        self.survey.basemaps = []
+        self.survey.save()
+        resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.assertContains(resp, "['streets']")
+
+    def test_serialization_includes_basemaps(self):
+        """
+        GIVEN a survey with basemaps=["satellite", "topo"]
+        WHEN serialize_survey_to_dict is called
+        THEN the result includes basemaps key with the list
+        """
+        result = serialize_survey_to_dict(self.survey)
+        self.assertEqual(result['basemaps'], ['satellite', 'topo'])
+
+    def test_import_preserves_basemaps(self):
+        """
+        GIVEN an exported survey with basemaps=["satellite"]
+        WHEN imported via import_survey_from_zip
+        THEN the new SurveyHeader has basemaps=["satellite"]
+        """
+        self.survey.basemaps = ['satellite']
+        self.survey.save()
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf)
+        buf.seek(0)
+        imported, warnings = import_survey_from_zip(buf, organization=self.org, created_by=self.user)
+        self.assertEqual(imported.basemaps, ['satellite'])
+
+    def test_clone_copies_basemaps(self):
+        """
+        GIVEN a published survey with basemaps=["satellite", "topo"]
+        WHEN clone_survey_for_draft is called
+        THEN the draft has the same basemaps
+        """
+        from .versioning import clone_survey_for_draft
+        draft = clone_survey_for_draft(self.survey)
+        self.assertEqual(draft.basemaps, ['satellite', 'topo'])
+
+    def test_editor_settings_saves_basemaps(self):
+        """
+        GIVEN a logged-in survey owner
+        WHEN basemaps are submitted via the settings form
+        THEN the survey's basemaps field is updated
+        """
+        self.client.login(username='bmuser', password='pass')
+        url = f'/editor/surveys/{self.survey.uuid}/settings/'
+        resp = self.client.post(url, {
+            'name': self.survey.name,
+            'redirect_url': '#',
+            'available_languages': '[]',
+            'visibility': 'private',
+            'thanks_html': '{}',
+            'basemaps': '["streets", "satellite"]',
+        })
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.basemaps, ['streets', 'satellite'])
+
+    def test_default_basemap_auto_fixed_when_unset(self):
+        """
+        GIVEN a survey settings POST that omits default_basemap entirely
+        WHEN the form is validated
+        THEN default_basemap is auto-set to the first enabled basemap
+        instead of being saved as NULL.
+        """
+        self.client.login(username='bmuser', password='pass')
+        self.survey.default_basemap = None
+        self.survey.save(update_fields=['default_basemap'])
+
+        url = f'/editor/surveys/{self.survey.uuid}/settings/'
+        self.client.post(url, {
+            'name': self.survey.name,
+            'redirect_url': '#',
+            'available_languages': '[]',
+            'visibility': 'private',
+            'thanks_html': '{}',
+            'basemaps': '["satellite", "topo"]',
+        })
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.default_basemap, 'satellite')
+
+    def test_default_basemap_reassigned_when_removed_from_basemaps(self):
+        """
+        GIVEN a survey whose default_basemap is "satellite"
+        WHEN the owner removes "satellite" from basemaps but submits the
+            stale default_basemap value with the form
+        THEN default_basemap is reassigned to the first remaining basemap.
+        """
+        self.client.login(username='bmuser', password='pass')
+        self.survey.basemaps = ['satellite', 'topo']
+        self.survey.default_basemap = 'satellite'
+        self.survey.save(update_fields=['basemaps', 'default_basemap'])
+
+        url = f'/editor/surveys/{self.survey.uuid}/settings/'
+        self.client.post(url, {
+            'name': self.survey.name,
+            'redirect_url': '#',
+            'available_languages': '[]',
+            'visibility': 'private',
+            'thanks_html': '{}',
+            'basemaps': '["streets", "topo"]',
+            'default_basemap': 'satellite',
+        })
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.default_basemap, 'streets')
+        self.assertEqual(self.survey.basemaps, ['streets', 'topo'])
+
+    def test_default_basemap_select_drops_empty_option(self):
+        """
+        GIVEN a logged-in survey owner viewing the settings page
+        WHEN the default_basemap select is rendered
+        THEN there is no empty/blank option in the dropdown.
+        """
+        self.client.login(username='bmuser', password='pass')
+        resp = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings/')
+        self.assertNotIn('<option value="" selected>---------</option>', resp.content.decode())
+        self.assertNotIn('<option value="">---------</option>', resp.content.decode())
+
+
+class HTMXNavigationTest(TestCase):
+    """Tests for HTMX-based section navigation with persistent map."""
+
+    def setUp(self):
+        self.org = _make_org('HTMXOrg')
+        self.user = User.objects.create_user(username='htmxuser', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='htmx_test', organization=self.org, created_by=self.user,
+            status='published',
+        )
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.section1 = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section 1',
+            code='S1', is_head=True,
+        )
+        self.section2 = SurveySection.objects.create(
+            survey_header=self.survey, name='sec2', title='Section 2',
+            code='S2',
+        )
+        self.section1.next_section = self.section2
+        self.section1.save()
+        self.section2.prev_section = self.section1
+        self.section2.save()
+        Question.objects.create(
+            survey_section=self.section1, code='Q1', order_number=1,
+            name='Fav color', input_type='text',
+        )
+        Question.objects.create(
+            survey_section=self.section2, code='Q2', order_number=1,
+            name='Fav city', input_type='text',
+        )
+
+    def test_htmx_get_returns_partial(self):
+        """
+        GIVEN a published survey with sections
+        WHEN a section is loaded with HX-Request header
+        THEN the response contains section-data div but NOT <head> tag
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        resp = self.client.get(
+            f'/surveys/{self.survey.uuid}/sec1/',
+            HTTP_HX_REQUEST='true',
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'id="section-data"')
+        self.assertNotContains(resp, '<head>')
+
+    def test_regular_get_returns_full_page(self):
+        """
+        GIVEN a published survey
+        WHEN a section is loaded without HX-Request header
+        THEN the response contains the full page with <head> and map init
+        """
+        resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, '<head>')
+        self.assertContains(resp, '_initialMapState')
+        self.assertContains(resp, 'id="section-data"')
+
+    def test_htmx_post_returns_next_section_partial(self):
+        """
+        GIVEN a respondent on section 1
+        WHEN the form is submitted via HTMX POST
+        THEN the response contains section 2's partial (not a redirect)
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        resp = self.client.post(
+            f'/surveys/{self.survey.uuid}/sec1/',
+            {'Q1': 'Blue'},
+            HTTP_HX_REQUEST='true',
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Section 2')
+        self.assertContains(resp, 'data-section-current="2"')
+
+    def test_htmx_post_last_section_returns_hx_redirect(self):
+        """
+        GIVEN a respondent on the last section
+        WHEN the form is submitted via HTMX POST
+        THEN the response has HX-Redirect header to thanks page
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.client.post(
+            f'/surveys/{self.survey.uuid}/sec1/',
+            {'Q1': 'Blue'},
+            HTTP_HX_REQUEST='true',
+        )
+        resp = self.client.post(
+            f'/surveys/{self.survey.uuid}/sec2/',
+            {'Q2': 'Berlin'},
+            HTTP_HX_REQUEST='true',
+        )
+        self.assertIn('HX-Redirect', resp)
+        self.assertIn('thanks', resp['HX-Redirect'])
+
+    def test_non_htmx_post_returns_redirect(self):
+        """
+        GIVEN a respondent on section 1
+        WHEN the form is submitted without HTMX
+        THEN the response is a regular redirect to section 2
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        resp = self.client.post(
+            f'/surveys/{self.survey.uuid}/sec1/',
+            {'Q1': 'Blue'},
+        )
+        self.assertEqual(resp.status_code, 302)
+
+    def test_htmx_back_navigation_returns_partial(self):
+        """
+        GIVEN a respondent who navigated to section 2
+        WHEN section 1 is loaded via HTMX GET (back button)
+        THEN the response contains section 1's partial with existing answers
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.client.post(
+            f'/surveys/{self.survey.uuid}/sec1/',
+            {'Q1': 'Blue'},
+        )
+        resp = self.client.get(
+            f'/surveys/{self.survey.uuid}/sec1/',
+            HTTP_HX_REQUEST='true',
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'id="section-data"')
+        self.assertContains(resp, 'data-section-current="1"')

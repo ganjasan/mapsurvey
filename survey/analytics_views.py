@@ -1,5 +1,6 @@
 import json
 
+from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
@@ -102,6 +103,7 @@ def analytics_dashboard(request, survey_uuid):
         'funnel': funnel,
         'funnel_json': json.dumps(funnel),
         'referrer_breakdown': perf_service.get_referrer_breakdown(),
+        'language_breakdown': perf_service.get_language_breakdown(),
         'device_breakdown': perf_service.get_device_breakdown(),
         'completion_by_referrer': perf_service.get_completion_by_referrer(),
         'page_load_stats': perf_service.get_page_load_stats(),
@@ -492,7 +494,7 @@ def analytics_track_event(request):
     # Rate limit keyed on survey_session_id
     rl_key = f"evt_rl_{client_session_id}"
     count = cache.get(rl_key, 0)
-    if count >= 20:
+    if count >= settings.TRACK_EVENT_RATE_LIMIT:
         return JsonResponse({}, status=429)
     cache.set(rl_key, count + 1, 3600)
 

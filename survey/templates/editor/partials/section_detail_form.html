@@ -3,10 +3,13 @@
     <div style="display:flex;align-items:center;justify-content:space-between;">
         <h6><i class="fas fa-layer-group"></i> Section: {{ section.title|default:section.name }}</h6>
         <button class="btn btn-sm btn-outline-secondary"
+                title="{% if is_read_only %}Create a draft to edit{% endif %}"
+                {% if not is_read_only %}
                 hx-get="{% url 'editor_section_map_picker' survey.uuid section.id %}"
                 hx-target="#mapPickerModalBody"
                 hx-swap="innerHTML"
-                data-toggle="modal" data-target="#mapPickerModal">
+                data-toggle="modal" data-target="#mapPickerModal"
+                {% else %}disabled{% endif %}>
             <i class="fas fa-map-marker-alt"></i> Map Position
         </button>
     </div>
@@ -65,14 +68,28 @@
     </ul>
 
     <button class="add-question-btn"
+            title="{% if is_read_only %}Create a draft to edit{% endif %}"
+            {% if not is_read_only %}
             hx-get="{% url 'editor_question_create' survey.uuid section.id %}"
             hx-target="#questionModalBody"
             hx-swap="innerHTML"
-            data-toggle="modal" data-target="#questionModal">
+            data-toggle="modal" data-target="#questionModal"
+            {% else %}disabled{% endif %}>
         <i class="fas fa-plus"></i> New Question
     </button>
 </div>
 
+{% if is_read_only %}
+<script>
+(function() {
+    var form = document.getElementById('section-form');
+    if (!form) return;
+    form.querySelectorAll('input, textarea, select').forEach(function(el) {
+        el.disabled = true;
+    });
+})();
+</script>
+{% else %}
 <script>
 (function() {
     var form = document.getElementById('section-form');
@@ -95,3 +112,4 @@
     });
 })();
 </script>
+{% endif %}
