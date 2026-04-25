@@ -4158,11 +4158,9 @@ class LandingPageViewTest(TestCase):
         response = self.client.get('/')
         content = response.content.decode()
         self.assertIn('id="hero"', content)
-        self.assertIn('id="problem-solution"', content)
-        self.assertIn('id="features"', content)
         self.assertIn('id="use-cases"', content)
-        self.assertIn('id="tech-stack"', content)
-        self.assertIn('id="social-proof"', content)
+        self.assertIn('id="demo"', content)
+        self.assertIn('id="features"', content)
 
     def test_github_link_present(self):
         """
