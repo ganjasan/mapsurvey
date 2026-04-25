@@ -18,6 +18,7 @@
 | 14 | feature | [Export filter: completed surveys only](feature-export-completed-only-filter.md) | high | backend | — | 2026-03-30 |
 | 15 | idea | [AI agent that creates surveys from chat description](idea-ai-survey-creator-chat-agent.md) | high | frontend | — | 2026-04-25 |
 | 16 | feature | [Funnel monitoring: source → registration → survey → responses](feature-funnel-monitoring.md) | high | backend | — | 2026-04-25 |
+| ~~62~~ | ~~bug~~ | ~~[Default map in survey settings cannot be None](bug-default-map-cannot-be-none.md)~~ | ~~medium~~ | ~~frontend~~ | ~~—~~ | ~~2026-04-25~~ |
 | 17 | feature | [Budget/token allocation question type](feature-budget-token-allocation.md) | medium | frontend | community-engagement | 2026-04-02 |
 | 18 | feature | [Search in survey list](feature-search-in-survey-list.md) | medium | frontend | — | 2026-04-25 |
 | 19 | feature | [Map tagging with categorized pins](feature-map-tagging-pins.md) | medium | frontend | community-engagement | 2026-04-02 |

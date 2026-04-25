@@ -11602,6 +11602,66 @@ class BasemapTest(TestCase):
         self.survey.refresh_from_db()
         self.assertEqual(self.survey.basemaps, ['streets', 'satellite'])
 
+    def test_default_basemap_auto_fixed_when_unset(self):
+        """
+        GIVEN a survey settings POST that omits default_basemap entirely
+        WHEN the form is validated
+        THEN default_basemap is auto-set to the first enabled basemap
+        instead of being saved as NULL.
+        """
+        self.client.login(username='bmuser', password='pass')
+        self.survey.default_basemap = None
+        self.survey.save(update_fields=['default_basemap'])
+
+        url = f'/editor/surveys/{self.survey.uuid}/settings/'
+        self.client.post(url, {
+            'name': self.survey.name,
+            'redirect_url': '#',
+            'available_languages': '[]',
+            'visibility': 'private',
+            'thanks_html': '{}',
+            'basemaps': '["satellite", "topo"]',
+        })
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.default_basemap, 'satellite')
+
+    def test_default_basemap_reassigned_when_removed_from_basemaps(self):
+        """
+        GIVEN a survey whose default_basemap is "satellite"
+        WHEN the owner removes "satellite" from basemaps but submits the
+            stale default_basemap value with the form
+        THEN default_basemap is reassigned to the first remaining basemap.
+        """
+        self.client.login(username='bmuser', password='pass')
+        self.survey.basemaps = ['satellite', 'topo']
+        self.survey.default_basemap = 'satellite'
+        self.survey.save(update_fields=['basemaps', 'default_basemap'])
+
+        url = f'/editor/surveys/{self.survey.uuid}/settings/'
+        self.client.post(url, {
+            'name': self.survey.name,
+            'redirect_url': '#',
+            'available_languages': '[]',
+            'visibility': 'private',
+            'thanks_html': '{}',
+            'basemaps': '["streets", "topo"]',
+            'default_basemap': 'satellite',
+        })
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.default_basemap, 'streets')
+        self.assertEqual(self.survey.basemaps, ['streets', 'topo'])
+
+    def test_default_basemap_select_drops_empty_option(self):
+        """
+        GIVEN a logged-in survey owner viewing the settings page
+        WHEN the default_basemap select is rendered
+        THEN there is no empty/blank option in the dropdown.
+        """
+        self.client.login(username='bmuser', password='pass')
+        resp = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings/')
+        self.assertNotIn('<option value="" selected>---------</option>', resp.content.decode())
+        self.assertNotIn('<option value="">---------</option>', resp.content.decode())
+
 
 class HTMXNavigationTest(TestCase):
     """Tests for HTMX-based section navigation with persistent map."""
