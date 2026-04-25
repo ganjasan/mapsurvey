@@ -332,6 +332,42 @@ class SurveyAnalyticsService:
             stat.update(self._stats_other(question))
         return stat
 
+    def _stats_language(self):
+        """Build a choices-style stat for the session language (multilingual surveys only)."""
+        langs = list(
+            SurveySession.objects.filter(survey=self.survey, is_deleted=False)
+            .values_list('language', flat=True)
+        )
+        counts = {}
+        for lang in langs:
+            lang = lang or '—'
+            counts[lang] = counts.get(lang, 0) + 1
+
+        labels = sorted(counts.keys())
+        codes = labels  # use lang code as "choice code"
+
+        # Build a lightweight duck-typed object for template compatibility
+        class _LangQuestion:
+            id = '_language'
+            name = 'Language'
+            input_type = 'choice'
+        class _LangSection:
+            title = 'Survey'
+            name = 'survey'
+
+        return {
+            'question': _LangQuestion(),
+            'section': _LangSection(),
+            'type': 'choices',
+            'choice_labels': labels,
+            'choice_counts': [counts[l] for l in labels],
+            'choice_codes': codes,
+            'choice_labels_json': json.dumps(labels, ensure_ascii=False),
+            'choice_counts_json': json.dumps([counts[l] for l in labels]),
+            'choice_codes_json': json.dumps(codes),
+            'total_answers': len(langs),
+        }
+
     def get_all_question_stats(self):
         """Return ordered list of stat dicts for all top-level questions."""
         ordered_sections = _get_ordered_sections(self.survey)
@@ -356,10 +392,16 @@ class SurveyAnalyticsService:
             q.order_number,
         ))
 
-        return [
+        stats = [
             self.get_question_stats(q) for q in questions
             if q.input_type not in ('point', 'line', 'polygon')
         ]
+
+        # Add language chart for multilingual surveys
+        if self.survey.is_multilingual():
+            stats.insert(0, self._stats_language())
+
+        return stats
 
     def get_text_answers(self, question, page=1, page_size=20, session_ids=None):
         """Return paginated text answers for a question."""
@@ -1248,6 +1290,18 @@ class PerformanceAnalyticsService:
             'os': _sorted_list(os_counts),
             'browsers': _sorted_list(browser_counts),
         }
+
+    def get_language_breakdown(self):
+        """Return list of {language, count} sorted descending."""
+        from .models import SurveySession
+        counts = {}
+        for lang in SurveySession.objects.filter(survey=self.survey).values_list('language', flat=True):
+            lang = lang or '—'
+            counts[lang] = counts.get(lang, 0) + 1
+        return sorted(
+            [{'language': k, 'count': v} for k, v in counts.items()],
+            key=lambda x: -x['count'],
+        )
 
     def get_completion_by_referrer(self):
         """Return started/completed/rate per referrer_type."""

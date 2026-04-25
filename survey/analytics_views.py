@@ -103,6 +103,7 @@ def analytics_dashboard(request, survey_uuid):
         'funnel': funnel,
         'funnel_json': json.dumps(funnel),
         'referrer_breakdown': perf_service.get_referrer_breakdown(),
+        'language_breakdown': perf_service.get_language_breakdown(),
         'device_breakdown': perf_service.get_device_breakdown(),
         'completion_by_referrer': perf_service.get_completion_by_referrer(),
         'page_load_stats': perf_service.get_page_load_stats(),
