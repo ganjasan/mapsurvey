@@ -5,7 +5,15 @@ Pre-conditions before running:
 - PostGIS container is running on port 5434
 - The Django venv is active so the ORM can be imported
 
-Run with: ``pytest tests_e2e/``
+Run with:
+- ``pytest tests_e2e/`` — headless, fast (default)
+- ``./run_e2e.sh --visible`` — opens a real Chromium window
+- ``./run_e2e.sh --visible --slow`` — same, slowed to 500 ms/action
+- ``./run_e2e.sh --debug`` — opens Playwright Inspector for step-by-step debugging
+
+Any pytest-playwright flag works directly too:
+- ``pytest tests_e2e/ --headed --slowmo=500``
+- ``pytest tests_e2e/ -k satellite --headed``
 """
 import os
 import time
