@@ -160,6 +160,7 @@ def _build_survey(*, name: str, basemaps, owner, status="published",
             survey_header=survey,
             name=f"section_{i}",
             title=f"Section {i}",
+            code=f"S{i}",
             is_head=(i == 1),
         )
         sections.append(section)
