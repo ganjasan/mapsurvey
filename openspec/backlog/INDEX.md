@@ -4,14 +4,14 @@
 |---|------|-------|----------|------|------|---------|
 | 1 | feature | [GDPR / Security / Trust page](feature-gdpr-privacy-page.md) | **very high** | general | — | 2026-03-26 |
 | 2 | bug | [Image sub-question breaks point placement on geo question](bug-image-subquestion-breaks-geo-point.md) | high | frontend | — | 2026-04-25 |
-| 3 | bug | [Export vs Download confusion](bug-export-download-confusion.md) | high | frontend | — | 2026-03-26 |
-| 4 | bug | [GeoJSON export not importable in QGIS](bug-geojson-qgis-import.md) | high | backend | — | 2026-03-26 |
-| 5 | feature | [Range slider: from-to labels](feature-range-slider-labels.md) | high | frontend | — | 2026-03-26 |
+| ~~3~~ | ~~bug~~ | ~~[Export vs Download confusion](bug-export-download-confusion.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-03-26~~ |
+| ~~4~~ | ~~bug~~ | ~~[GeoJSON export not importable in QGIS](bug-geojson-qgis-import.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-03-26~~ |
+| ~~5~~ | ~~feature~~ | ~~[Range slider: from-to labels](feature-range-slider-labels.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-03-26~~ |
 | 6 | feature | [Link questions to geoinformation after creation](feature-link-questions-to-geo.md) | high | frontend | — | 2026-03-26 |
 | 7 | feature | [Translate UI buttons and instructions](feature-ui-i18n.md) | high | frontend | — | 2026-03-26 |
 | 8 | feature | [Shapefile and GeoPackage export](feature-shapefile-geopackage-export.md) | high | backend | — | 2026-03-26 |
-| 9 | bug | [Pinned point disappears in subsequent sections](bug-pinned-point-disappears.md) | high | frontend | — | 2026-03-26 |
-| 10 | feature | [Show response count in editor dashboard](feature-response-count-in-editor.md) | high | frontend | — | 2026-03-26 |
+| ~~9~~ | ~~bug~~ | ~~[Pinned point disappears in subsequent sections](bug-pinned-point-disappears.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-03-26~~ |
+| ~~10~~ | ~~feature~~ | ~~[Show response count in editor dashboard](feature-response-count-in-editor.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-03-26~~ |
 | 11 | improvement | [Migrate servers to Frankfurt, Germany](improvement-frankfurt-server-migration.md) | high | infra | — | 2026-03-26 |
 | 12 | feature | [Conditional question visibility](feature-conditional-question-visibility.md) | high | frontend | — | 2026-03-30 |
 | 13 | improvement | [Versioning: cross-version analytics and response counts](improvement-versioning-cross-version-analytics.md) | high | backend | — | 2026-04-16 |
@@ -27,7 +27,7 @@
 | 23 | bug | [Number field blank in CSV export](bug-number-field-blank-in-csv-export.md) | medium | backend | — | 2026-03-30 |
 | 24 | feature | [Copy answer options between questions](feature-copy-answer-options.md) | medium | frontend | — | 2026-03-26 |
 | 25 | feature | [WMS/WFS basemap support](feature-wms-wfs-basemap.md) | medium | frontend | — | 2026-03-26 |
-| 26 | feature | [Satellite and topographic basemap options](feature-satellite-basemap.md) | medium | frontend | — | 2026-03-26 |
+| ~~26~~ | ~~feature~~ | ~~[Satellite and topographic basemap options](feature-satellite-basemap.md)~~ | ~~medium~~ | ~~frontend~~ | ~~—~~ | ~~2026-03-26~~ |
 | 27 | feature | [Public results map](feature-public-results-map.md) | medium | frontend | survey-analytics | 2026-03-26 |
 | 28 | improvement | [Disable choices on number-type questions](improvement-disable-choices-on-number-questions.md) | medium | frontend | — | 2026-03-30 |
 | 29 | feature | [Limit geopoint count per question](feature-limit-geopoint-count.md) | medium | frontend | — | 2026-03-30 |
@@ -39,7 +39,7 @@
 | 35 | feature | [EU Data Hosting Option](feature-eu-data-hosting-option.md) | medium | infra | — | 2026-04-05 |
 | 36 | feature | [Feedback Widget](feature-feedback-widget.md) | medium | general | — | 2026-03-30 |
 | 37 | idea | [Digital Contour Maps — Geography Education](idea-digital-contour-maps-education.md) | medium | general | — | 2026-03-26 |
-| 38 | feature | [Geolocation Map Centering](feature-geolocation-map-centering.md) | medium | frontend | — | 2026-04-01 |
+| ~~38~~ | ~~feature~~ | ~~[Geolocation Map Centering](feature-geolocation-map-centering.md)~~ | ~~medium~~ | ~~frontend~~ | ~~—~~ | ~~2026-04-01~~ |
 | 39 | feature | [Progress bar for entire survey](feature-progress-bar.md) | low | frontend | — | 2026-03-26 |
 | 40 | feature | [Answer choice templates](feature-answer-choice-templates.md) | low | frontend | — | 2026-03-26 |
 | 41 | feature | [Audio upload question type](feature-audio-upload.md) | low | backend | — | 2026-03-26 |
@@ -62,3 +62,4 @@
 | 58 | feature | [Inline Editing: geo answers (redraw polygon/point/line)](feature-inline-editing-geo.md) | low | frontend | data-management | 2026-04-05 |
 | 59 | feature | [Audit Trail (edit history log)](feature-audit-trail.md) | low | backend | data-management | 2026-04-05 |
 | 60 | improvement | [Hide language picker when single language](improvement-hide-language-picker-single-lang.md) | medium | frontend | — | 2026-04-14 |
+| 61 | idea | [Sub-question Discoverability Testing](idea-subquestion-discoverability-testing.md) | medium | general | — | 2026-04-14 |
