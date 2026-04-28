@@ -16,10 +16,14 @@ def _compute_histogram(values, min_val, max_val, max_bins=15):
     """Compute histogram bins for a list of numeric values."""
     import math
     if not values:
-        return {'labels': [], 'counts': []}
+        return {'labels': [], 'counts': [], 'bins': []}
 
     if min_val == max_val:
-        return {'labels': [str(min_val)], 'counts': [len(values)]}
+        return {
+            'labels': [str(min_val)],
+            'counts': [len(values)],
+            'bins': [[min_val, min_val]],
+        }
 
     # Sturges' rule for bin count, capped
     n_bins = min(max_bins, max(5, int(math.ceil(math.log2(len(values)) + 1))))
@@ -668,6 +672,7 @@ class SurveyAnalyticsService:
             if ua:
                 ua_groups.setdefault(ua, []).append((sid, created_at))
         # Flag sessions where same UA appears within 1 hour
+        dup_window = (self.survey.validation_settings or {}).get('duplicate_window_hours', 1) * 3600
         for ua, entries in ua_groups.items():
             if len(entries) < 2:
                 continue
@@ -675,8 +680,7 @@ class SurveyAnalyticsService:
             for i in range(1, len(entries)):
                 prev_sid, prev_t = entries[i - 1]
                 cur_sid, cur_t = entries[i]
-                dup_window = (self.survey.validation_settings or {}).get('duplicate_window_hours', 1) * 3600
-            if (cur_t - prev_t).total_seconds() < dup_window:
+                if (cur_t - prev_t).total_seconds() < dup_window:
                     if 'duplicate' not in issues.get(cur_sid, []):
                         issues[cur_sid].append('duplicate')
                     if 'duplicate' not in issues.get(prev_sid, []):

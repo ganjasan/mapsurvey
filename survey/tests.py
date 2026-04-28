@@ -9041,6 +9041,28 @@ class AnalyticsServiceTest(TestCase):
         self.assertEqual(stat['min_val'], 5)
         self.assertEqual(stat['max_val'], 20)
 
+    def test_question_stats_number_all_values_equal(self):
+        """
+        GIVEN three numeric answers with the same value (min == max)
+        WHEN get_question_stats is called
+        THEN it returns a single-bucket histogram instead of raising KeyError
+        """
+        self._create_completed_session(number=5)
+        self._create_completed_session(number=5)
+        self._create_completed_session(number=5)
+
+        service = self.SurveyAnalyticsService(self.survey)
+        stat = service.get_question_stats(self.q_number)
+
+        self.assertEqual(stat['count'], 3)
+        self.assertEqual(stat['min_val'], 5)
+        self.assertEqual(stat['max_val'], 5)
+        self.assertIn('hist_labels_json', stat)
+        self.assertIn('hist_counts_json', stat)
+        self.assertIn('hist_bins_json', stat)
+        self.assertEqual(json.loads(stat['hist_counts_json']), [3])
+        self.assertEqual(json.loads(stat['hist_bins_json']), [[5, 5]])
+
     def test_text_answers_pagination(self):
         """
         GIVEN 25 text answers
@@ -11335,6 +11357,62 @@ class AutoValidationAdvancedTest(TestCase):
         SurveyEvent.objects.create(session=s2, event_type='session_start', created_at=now, metadata={'user_agent': 'UA-2'})
         svc = SurveyAnalyticsService(self.survey)
         issues = svc.compute_session_issues([s1.id, s2.id])
+        self.assertNotIn('duplicate', issues[s1.id])
+        self.assertNotIn('duplicate', issues[s2.id])
+
+    def test_duplicate_detected_for_each_close_pair_in_chain(self):
+        """
+        GIVEN three sessions A→B→C with the same user_agent
+              where (A,B) are within the 1h dup window
+              but (B,C) are 5 hours apart
+        WHEN compute_session_issues is called
+        THEN both A and B are flagged 'duplicate' (each pair checked, not only the last)
+             and C is NOT flagged
+        """
+        from django.utils import timezone as tz
+        from datetime import timedelta
+        ua = 'Mozilla/5.0 ChainBrowser'
+        now = tz.now()
+        sessions = []
+        for offset_minutes in (0, 10, 5 * 60 + 10):
+            s = SurveySession.objects.create(survey=self.survey)
+            Answer.objects.create(survey_session=s, question=self.q, text='x')
+            SurveyEvent.objects.create(
+                session=s, event_type='session_start',
+                created_at=now + timedelta(minutes=offset_minutes),
+                metadata={'user_agent': ua},
+            )
+            sessions.append(s)
+        s_a, s_b, s_c = sessions
+
+        svc = SurveyAnalyticsService(self.survey)
+        issues = svc.compute_session_issues([s_a.id, s_b.id, s_c.id])
+
+        self.assertIn('duplicate', issues[s_a.id])
+        self.assertIn('duplicate', issues[s_b.id])
+        self.assertNotIn('duplicate', issues[s_c.id])
+
+    def test_duplicate_pair_outside_window_not_flagged(self):
+        """
+        GIVEN two sessions with the same user_agent 5 hours apart
+              (well outside the 1h default dup window)
+        WHEN compute_session_issues is called
+        THEN neither has 'duplicate'
+        """
+        from django.utils import timezone as tz
+        from datetime import timedelta
+        ua = 'Mozilla/5.0 FarApart'
+        now = tz.now()
+        s1 = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=s1, question=self.q, text='a')
+        s2 = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=s2, question=self.q, text='b')
+        SurveyEvent.objects.create(session=s1, event_type='session_start', created_at=now, metadata={'user_agent': ua})
+        SurveyEvent.objects.create(session=s2, event_type='session_start', created_at=now + timedelta(hours=5), metadata={'user_agent': ua})
+
+        svc = SurveyAnalyticsService(self.survey)
+        issues = svc.compute_session_issues([s1.id, s2.id])
+
         self.assertNotIn('duplicate', issues[s1.id])
         self.assertNotIn('duplicate', issues[s2.id])
 
