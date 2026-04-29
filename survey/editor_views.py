@@ -406,9 +406,10 @@ def editor_question_edit(request, survey_uuid, question_id):
     if blocked:
         return blocked
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
+    is_subquestion = question.parent_question_id_id is not None
 
     if request.method == 'POST':
-        form = QuestionForm(request.POST, request.FILES, instance=question)
+        form = QuestionForm(request.POST, request.FILES, instance=question, is_subquestion=is_subquestion)
         if form.is_valid():
             q = form.save(commit=False)
             choices_json = request.POST.get('choices_json', '').strip()
@@ -451,7 +452,7 @@ def editor_question_edit(request, survey_uuid, question_id):
             'question': question,
         })
     else:
-        form = QuestionForm(instance=question)
+        form = QuestionForm(instance=question, is_subquestion=is_subquestion)
     return render(request, 'editor/partials/question_form_modal.html', {
         'form': form,
         'survey': survey,
@@ -559,7 +560,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
     parent = get_object_or_404(Question, id=parent_id, survey_section__survey_header=survey)
 
     if request.method == 'POST':
-        form = QuestionForm(request.POST, request.FILES)
+        form = QuestionForm(request.POST, request.FILES, is_subquestion=True)
         if form.is_valid():
             question = form.save(commit=False)
             question.survey_section = parent.survey_section
@@ -582,7 +583,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
             response['HX-Trigger'] = 'questionSaved'
             return response
     else:
-        form = QuestionForm()
+        form = QuestionForm(is_subquestion=True)
     return render(request, 'editor/partials/question_form_modal.html', {
         'form': form,
         'survey': survey,

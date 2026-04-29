@@ -5185,6 +5185,139 @@ class EditorSubquestionTest(TestCase):
         sub = Question.objects.get(name='Rate this place')
         self.assertEqual(sub.parent_question_id_id, self.geo_question.id)
 
+    def test_add_subquestion_button_visible_on_geo_question(self):
+        """
+        GIVEN a draft survey with a geo (point) question
+        WHEN the editor section detail is fetched
+        THEN the response renders an "Add Sub-question" button wired to editor_subquestion_create for that question
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Add Sub-question')
+        self.assertContains(
+            response,
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.geo_question.id}/subquestions/new/',
+        )
+        self.assertContains(response, 'add-question-btn--sub')
+
+    def test_add_subquestion_button_absent_on_non_geo_question(self):
+        """
+        GIVEN a draft survey with a non-geo (text) question alongside a geo question
+        WHEN the editor section detail is fetched
+        THEN no Add Sub-question entry point is rendered for the text question
+        """
+        text_question = Question.objects.create(
+            survey_section=self.section, name='Comment', input_type='text',
+        )
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(
+            response,
+            f'/editor/surveys/{self.survey.uuid}/questions/{text_question.id}/subquestions/new/',
+        )
+
+    def test_add_subquestion_button_disabled_in_readonly(self):
+        """
+        GIVEN a published survey with a geo question
+        WHEN the editor section detail is fetched
+        THEN the Add Sub-question button is rendered disabled with the read-only tooltip
+        """
+        self.survey.status = 'published'
+        self.survey.save(update_fields=['status'])
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Add Sub-question')
+        self.assertContains(response, 'Create a draft to edit')
+        # In read-only state the button must NOT carry the hx-get URL — the disabled
+        # branch of the template skips it entirely.
+        self.assertNotContains(
+            response,
+            f'hx-get="/editor/surveys/{self.survey.uuid}/questions/{self.geo_question.id}/subquestions/new/"',
+        )
+
+    def test_legacy_sitemap_icon_removed(self):
+        """
+        GIVEN a draft survey with a geo question
+        WHEN the editor section detail is fetched
+        THEN the legacy fa-sitemap icon button is no longer present
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'fa-sitemap')
+
+    def test_subquestion_create_form_excludes_geo_input_types(self):
+        """
+        GIVEN a geo question
+        WHEN the new sub-question modal is opened
+        THEN the input_type select offers no point/line/polygon options
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.geo_question.id}/subquestions/new/'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'value="point"')
+        self.assertNotContains(response, 'value="line"')
+        self.assertNotContains(response, 'value="polygon"')
+        self.assertContains(response, 'value="text"')
+        self.assertContains(response, 'value="choice"')
+
+    def test_subquestion_create_rejects_geo_input_types(self):
+        """
+        GIVEN a geo question
+        WHEN a POST attempts to create a sub-question with input_type="point"
+        THEN no Question is created and the form is re-rendered with errors
+        """
+        before = Question.objects.filter(parent_question_id=self.geo_question).count()
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.geo_question.id}/subquestions/new/',
+            {'name': 'Nested point', 'input_type': 'point', 'color': '#000000'},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Question.objects.filter(parent_question_id=self.geo_question).count(),
+            before,
+        )
+
+    def test_subquestion_edit_form_excludes_geo_input_types(self):
+        """
+        GIVEN an existing sub-question (non-geo)
+        WHEN its edit modal is opened
+        THEN the input_type select offers no point/line/polygon options
+        """
+        sub = Question.objects.create(
+            survey_section=self.section,
+            parent_question_id=self.geo_question,
+            name='Comment', input_type='text',
+        )
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{sub.id}/edit/'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'value="point"')
+        self.assertNotContains(response, 'value="polygon"')
+
+    def test_top_level_question_edit_form_keeps_geo_input_types(self):
+        """
+        GIVEN a top-level (non-sub) question
+        WHEN its edit modal is opened
+        THEN the input_type select still offers point/line/polygon options
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.geo_question.id}/edit/'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'value="point"')
+        self.assertContains(response, 'value="line"')
+        self.assertContains(response, 'value="polygon"')
+
 
 class UUIDSurveyIdentificationTest(TestCase):
     """Tests for UUID-based survey identification and dual-lookup behavior."""

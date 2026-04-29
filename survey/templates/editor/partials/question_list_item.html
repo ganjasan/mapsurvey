@@ -14,17 +14,6 @@
                     {% else %}disabled{% endif %}>
                 <i class="fas fa-pen"></i>
             </button>
-            {% if question.input_type == 'point' or question.input_type == 'line' or question.input_type == 'polygon' %}
-            <button title="{% if is_read_only %}Create a draft to edit{% else %}Add Sub-question{% endif %}"
-                    {% if not is_read_only %}
-                    hx-get="{% url 'editor_subquestion_create' survey.uuid question.id %}"
-                    hx-target="#questionModalBody"
-                    hx-swap="innerHTML"
-                    data-toggle="modal" data-target="#questionModal"
-                    {% else %}disabled{% endif %}>
-                <i class="fas fa-sitemap"></i>
-            </button>
-            {% endif %}
             <button title="{% if is_read_only %}Create a draft to edit{% else %}Delete{% endif %}" class="text-danger"
                     {% if not is_read_only %}
                     hx-post="{% url 'editor_question_delete' survey.uuid question.id %}"
@@ -46,4 +35,18 @@
     </ul>
     {% endif %}
     {% endwith %}
+    {% if question.input_type == 'point' or question.input_type == 'line' or question.input_type == 'polygon' %}
+    <div class="add-subquestion-wrap">
+        <button class="add-question-btn add-question-btn--sub"
+                title="{% if is_read_only %}Create a draft to edit{% else %}Add Sub-question{% endif %}"
+                {% if not is_read_only %}
+                hx-get="{% url 'editor_subquestion_create' survey.uuid question.id %}"
+                hx-target="#questionModalBody"
+                hx-swap="innerHTML"
+                data-toggle="modal" data-target="#questionModal"
+                {% else %}disabled{% endif %}>
+            <i class="fas fa-plus"></i> Add Sub-question
+        </button>
+    </div>
+    {% endif %}
 </li>
