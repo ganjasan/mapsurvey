@@ -19,6 +19,8 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+    <script src="{% static 'js/editor_dialog.js' %}"></script>
+    <script src="{% static 'js/editor_clipboard.js' %}"></script>
     <style>
         :root {
             --accent: #4f46e5;
@@ -113,6 +115,17 @@
         }
         .section-item:hover .section-delete { opacity: 0.6; }
         .section-item .section-delete:hover { opacity: 1; }
+        .section-item .section-action {
+            opacity: 0;
+            color: #9ca3af;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 2px 4px;
+        }
+        .section-item:hover .section-action { opacity: 0.6; }
+        .section-item .section-action:hover { opacity: 1; color: var(--accent); }
         .sidebar-footer { padding: 0.75rem 1rem; border-top: 1px solid var(--border-color); flex-shrink: 0; }
 
         /* Center panel */
@@ -200,9 +213,90 @@
         .question-item .q-actions button:disabled { opacity: 0.3; cursor: not-allowed; }
         .question-item .q-actions button:disabled:hover { background: none; color: #9ca3af; }
 
-        .add-subquestion-wrap { padding: 0.5rem 0.75rem 0.5rem 2.5rem; }
+        .add-subquestion-wrap { padding: 0.5rem 0.75rem 0.5rem 2.5rem; display: flex; gap: 0.5rem; }
+        .add-subquestion-wrap > * { flex: 1; }
         .question-item-row + .add-subquestion-wrap { border-top: 1px dashed var(--border-color); }
         .add-question-btn--sub { padding: 0.5rem 0.75rem; font-size: 0.8rem; border-width: 1px; }
+
+        /* Paste buttons (issue #16) — accent style, hidden by default until JS reveals them */
+        .paste-question-btn,
+        .paste-section-btn,
+        .paste-as-subquestion-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            padding: 0.55rem 0.75rem;
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            background: var(--accent-light);
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: background 0.15s;
+        }
+        .paste-question-btn { width: 100%; margin-top: 0.5rem; }
+        .paste-section-btn { width: 100%; margin-top: 0.4rem; }
+        .paste-as-subquestion-btn { font-size: 0.8rem; padding: 0.5rem 0.75rem; }
+        .paste-question-btn:hover,
+        .paste-section-btn:hover,
+        .paste-as-subquestion-btn:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+        .paste-question-btn:disabled,
+        .paste-section-btn:disabled,
+        .paste-as-subquestion-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Clipboard status pill — inline in editor navbar; populated/toggled by editor_clipboard.js */
+        #clipboardPill {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.45rem 0.25rem 0.7rem;
+            background: var(--accent-light);
+            border: 1px solid var(--accent-light);
+            border-radius: 999px;
+            font-size: 0.8rem;
+            color: #374151;
+            max-width: 320px;
+        }
+        #clipboardPill.is-visible { display: inline-flex; }
+        #clipboardPill > i.fa-clipboard { color: var(--accent); font-size: 0.95rem; }
+        #clipboardPill .clipboard-pill-label { color: #6b7280; }
+        #clipboardPill .clipboard-pill-name {
+            color: var(--accent);
+            font-weight: 600;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+        #clipboardPill .clipboard-pill-name:hover { text-decoration: underline; }
+        #clipboardPill .clipboard-pill-clear {
+            background: transparent;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            cursor: pointer;
+            color: #9ca3af;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, color 0.15s;
+        }
+        #clipboardPill .clipboard-pill-clear:hover { background: #fef2f2; color: #ef4444; }
+
+        /* Active card highlight (issue #16 — keyboard-shortcut focus model) */
+        .question-item[data-active="true"],
+        .section-item[data-active="true"] {
+            outline: 2px solid var(--accent);
+            outline-offset: -2px;
+        }
 
         /* Preview panel */
         .editor-preview {
@@ -557,6 +651,15 @@
         <a href="{% url 'editor' %}"><i class="fas fa-arrow-left"></i> Dashboard</a>
         {% block navbar_content %}{% endblock %}
         <span class="spacer"></span>
+        <!-- Clipboard status pill — populated by editor_clipboard.js -->
+        <div id="clipboardPill" role="status" aria-live="polite">
+            <i class="fas fa-clipboard"></i>
+            <span class="clipboard-pill-label">Copied: </span>
+            <a class="clipboard-pill-name" href="#"></a>
+            <button type="button" class="clipboard-pill-clear" title="Clear clipboard (Esc)" aria-label="Clear clipboard">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
         {% if user.is_authenticated %}
             <div class="dropdown d-inline">
                 <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" style="color:#6b7280;font-size:0.85rem;text-decoration:none;">
@@ -596,6 +699,25 @@
     {% endif %}
 
     {% block content %}{% endblock %}
+
+    <!-- Generic confirm/alert dialog — see survey/assets/js/editor_dialog.js -->
+    <div class="modal fade editor-modal" id="editorDialog" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editorDialogTitle">Confirm</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p id="editorDialogMessage" style="margin:0;"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="editorDialogCancel">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="editorDialogOk">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
     function initPasswordToggles(root) {

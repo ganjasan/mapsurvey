@@ -38,6 +38,11 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/questions/<int:question_id>/delete/', editor_views.editor_question_delete, name='editor_question_delete'),
     path('editor/surveys/<uuid:survey_uuid>/questions/reorder/', editor_views.editor_questions_reorder, name='editor_questions_reorder'),
     path('editor/surveys/<uuid:survey_uuid>/questions/<int:parent_id>/subquestions/new/', editor_views.editor_subquestion_create, name='editor_subquestion_create'),
+    # Duplicate / paste (issue #16)
+    path('editor/surveys/<uuid:survey_uuid>/questions/<int:question_id>/duplicate/', editor_views.editor_question_duplicate, name='editor_question_duplicate'),
+    path('editor/surveys/<uuid:survey_uuid>/sections/<int:section_id>/duplicate/', editor_views.editor_section_duplicate, name='editor_section_duplicate'),
+    path('editor/surveys/<uuid:survey_uuid>/sections/<int:section_id>/paste-question/', editor_views.editor_question_paste, name='editor_question_paste'),
+    path('editor/surveys/<uuid:survey_uuid>/paste-section/', editor_views.editor_section_paste, name='editor_section_paste'),
     path('editor/surveys/<uuid:survey_uuid>/sections/<int:section_id>/map/', editor_views.editor_section_map_picker, name='editor_section_map_picker'),
     path('editor/surveys/<uuid:survey_uuid>/preview/<str:section_name>/', editor_views.editor_section_preview, name='editor_section_preview'),
     path('editor/surveys/<uuid:survey_uuid>/transition/', editor_views.editor_survey_transition, name='editor_survey_transition'),

@@ -77,6 +77,16 @@
             {% else %}disabled{% endif %}>
         <i class="fas fa-plus"></i> New Question
     </button>
+    {% if not is_read_only %}
+    <button class="paste-question-btn"
+            hx-post="{% url 'editor_question_paste' survey.uuid section.id %}"
+            hx-vals='js:{"source_survey_uuid": (Clipboard.peek()||{}).source_survey_uuid, "source_question_id": (Clipboard.peek()||{}).source_id}'
+            hx-target="#questions-list"
+            hx-swap="beforeend"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        <i class="fas fa-paste"></i> Paste question here
+    </button>
+    {% endif %}
 </div>
 
 {% if is_read_only %}
