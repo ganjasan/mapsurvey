@@ -26,6 +26,7 @@
 - [ ] 3.2 Implement `editor_question_duplicate(request, survey_uuid, question_id)`: editor permission + structural-edit gate; clone with `regenerate_code=True`, `name_suffix=' (copy)'`; insert at `source.order_number + 1` with shift-down; return `question_list_item.html` partial + `HX-Trigger: questionSaved`
 - [ ] 3.3 Implement `editor_section_duplicate(request, survey_uuid, section_id)`: editor permission + structural-edit gate; `clone_section(insert_after=source, name_suffix=' (copy)')`; return `section_list_item.html` partial + `HX-Trigger: sectionSaved`
 - [ ] 3.4 Implement `editor_question_paste(request, survey_uuid, section_id)`: editor permission on target + structural-edit gate; read `source_survey_uuid`, `source_question_id`, `parent_question_id` (optional) from JSON body; verify viewer+ on source via `_can_read_survey`; apply Q7/Q8 promotion/demotion logic; clone with `regenerate_code=True`, `name_suffix=None`; return appropriate partial
+- [ ] 3.4a When `parent_question_id` is set (paste-as-sub-question), validate that `source_question.input_type` is NOT in `SUBQUESTION_DISALLOWED_INPUT_TYPES` (imported from `editor_forms.py`). If geo source, return HTTP 400 with `{"error": "Sub-question cannot be a geo-type question"}` and do not mutate the database. Per issue #17 rule.
 - [ ] 3.5 Implement `editor_section_paste(request, survey_uuid)`: editor permission on target + structural-edit gate; read `source_survey_uuid`, `source_section_id` from JSON body; verify viewer+ on source; clone with `name_suffix=None` and append at tail; return `section_list_item.html` partial
 - [ ] 3.6 Wrap all four views in `transaction.atomic()`
 
@@ -39,20 +40,20 @@
 ## 5. Frontend — `survey/assets/js/editor_clipboard.js`
 
 - [ ] 5.1 Create `survey/assets/js/editor_clipboard.js` with `Clipboard` IIFE module exposing `copy(kind, surveyUuid, id, label)`, `peek()`, `clear()`, `paste(targetSurveyUuid, targetSectionId, parentQuestionId)`
-- [ ] 5.2 `Clipboard.copy` writes `{kind, source_survey_uuid, source_id, label, copied_at}` to `localStorage.editor_clipboard`
+- [ ] 5.2 `Clipboard.copy` writes `{kind, source_survey_uuid, source_id, label, input_type, copied_at}` to `localStorage.editor_clipboard` (input_type cached to gate "Paste as sub-question" button)
 - [ ] 5.3 `Clipboard.paste` POSTs JSON to the appropriate paste endpoint with CSRF token; handles 404 by clearing clipboard and showing toast
 - [ ] 5.4 Implement `KeyboardShortcuts` IIFE: `bind(getSurveyUuid)` registers `keydown` listener for Ctrl/Cmd+D / C / V on `document`
 - [ ] 5.5 Implement active-card tracking: delegated `click` handler sets `data-active="true"` on `.question-item` / `.section-item`; removes from siblings; re-applies after `htmx:afterSettle`
 - [ ] 5.6 Implement Ctrl/Cmd+C suppression: only act when `getSelection().toString() === ''` and active card exists
 - [ ] 5.7 Implement Ctrl/Cmd+V: only act when active section card exists and clipboard has valid entry
 - [ ] 5.8 Implement Ctrl/Cmd+D: only act when active question or section card exists
-- [ ] 5.9 Implement paste-button visibility toggling: scan DOM for `.paste-question-btn`, `.paste-section-btn`, `.paste-as-subquestion-btn`; show/hide based on `Clipboard.peek()` kind
+- [ ] 5.9 Implement paste-button visibility toggling: scan DOM for `.paste-question-btn`, `.paste-section-btn`, `.paste-as-subquestion-btn`; show/hide based on `Clipboard.peek()` kind. Additionally, hide `.paste-as-subquestion-btn` when `Clipboard.peek().input_type` is `point`/`line`/`polygon` (issue #17 rule)
 - [ ] 5.10 Implement tooltip `copied X minutes ago` based on `copied_at` timestamp
 
 ## 6. Templates
 
 - [ ] 6.1 In `partials/question_list_item.html`: add Duplicate button (HTMX POST to `editor_question_duplicate`) and Copy button (`onclick="Clipboard.copy('question', ...)"`) to `.q-actions`; both gated by `{% if not is_read_only %}`
-- [ ] 6.2 In `partials/question_list_item.html`: for `point`/`line`/`polygon` cards, add "Paste as sub-question" button (initially `display:none`)
+- [ ] 6.2 In `partials/question_list_item.html`: for `point`/`line`/`polygon` cards, add "Paste as sub-question" button **inside the existing `<div class="add-subquestion-wrap">`** (introduced by #17), next to the "+ Add Sub-question" button. Initially `display:none` — JS reveals it only when clipboard kind=question AND clipboard input_type is non-geo.
 - [ ] 6.3 In `partials/section_list_item.html`: add Duplicate and Copy buttons next to delete
 - [ ] 6.4 In `partials/section_detail_form.html`: add "Paste question here" button next to "+ New Question" (initially `display:none`)
 - [ ] 6.5 In `survey_detail.html`: add "Paste section" button next to "+ New Section" in sidebar (initially `display:none`)
@@ -79,6 +80,8 @@
 - [ ] 7.15 `EditorQuestionPasteTest.test_paste_cross_survey_without_permission_returns_404`
 - [ ] 7.16 `EditorQuestionPasteTest.test_paste_subquestion_into_section_promotes_to_top_level`
 - [ ] 7.17 `EditorQuestionPasteTest.test_paste_regular_into_geo_parent_attaches_as_subquestion`
+- [ ] 7.17a `EditorQuestionPasteTest.test_paste_geo_question_as_subquestion_returns_400` — server rejects per issue #17 rule
+- [ ] 7.17b `EditorQuestionPasteTest.test_paste_geo_question_as_subquestion_does_not_mutate_db` — verify no Question created when validation fails
 - [ ] 7.18 `EditorSectionPasteTest.test_paste_section_cross_survey`
 - [ ] 7.19 `EditorSectionPasteTest.test_paste_section_blocked_on_published_target`
 - [ ] 7.20 `VersioningRegressionTest.test_clone_survey_for_draft_preserves_validation_settings` — regression test for the bug fix

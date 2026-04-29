@@ -7,6 +7,10 @@ The WYSIWYG editor at `/editor/surveys/<uuid>/` is HTMX + SortableJS, with all e
 - Section clone logic is INLINED inside `clone_survey_for_draft()` (lines 69–107). No standalone helper exists.
 - `survey/serialization.py` has independent import-side `_create_question` and `create_sections` primitives that work from JSON dicts. Not reusable here without parsing through JSON.
 
+**Constraint introduced by issue #17 (already merged):**
+- `editor_forms.py` defines `SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon')`. `QuestionForm(is_subquestion=True)` strips these from `input_type` choices. The product rule is: **a sub-question SHALL NOT be a geo-type question.** This rule is enforced at the form layer for create/edit and is reflected in the canonical `survey-editor` spec under "Sub-question management for geo questions". Any new code path that creates a sub-question (specifically: paste-as-sub-question for #16) MUST enforce the same rule server-side, otherwise paste would silently bypass a constraint the form upholds.
+- The "+ Add Sub-question" button now lives in `<div class="add-subquestion-wrap">` rendered below the sub-question `<ul>` inside every `point`/`line`/`polygon` question card. The "Paste as sub-question" button (introduced by this change) MUST sit in the same wrap div for visual coherence.
+
 **Permission model:**
 - `@survey_permission_required('viewer'|'editor')` decorator checks org membership + `SurveyCollaborator`.
 - `_check_structural_edit_allowed(survey)` blocks structural edits on `published`/`closed` surveys, returning a 403 response.
@@ -183,10 +187,18 @@ Loaded in `editor_base.html` via `<script src="{% static 'js/editor_clipboard.js
 **Decision**:
 - The "Paste question here" button appears in the section detail panel header next to "+ New Question". It is rendered always, but JS shows/hides it based on `Clipboard.peek()?.kind === 'question'`.
 - The "Paste section" button appears in the sidebar near "+ New Section". Same JS show/hide logic.
-- A "Paste as sub-question" button appears in each `point`/`line`/`polygon` question card (alongside the `+ Add Sub-question` button — see issue #17). Visible only when clipboard has `kind === 'question'`.
+- A "Paste as sub-question" button is rendered **inside** the existing `<div class="add-subquestion-wrap">` (introduced by issue #17) on every `point`/`line`/`polygon` question card. The button sits next to the existing "+ Add Sub-question" button. Visible only when clipboard has `kind === 'question'` AND the source's `input_type` is non-geo (per the rule from #17 — see Decision 11 below).
 - Tooltip on each paste button shows the clipboard label and `copied X minutes ago`.
 
 **Rationale**: Discoverability matters more than terseness for a non-obvious feature. The keyboard shortcuts (Q11) provide the power-user path; visible buttons provide discoverability.
+
+### 11. Sub-question type constraint on paste-as-sub-question
+
+**Decision**: `editor_question_paste`, when invoked with a `parent_question_id` (paste-as-sub-question target), MUST validate that the source question's `input_type` is NOT in `SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon')`. If the constraint is violated, the view returns HTTP 400 with a validation error and does not mutate the database. The frontend "Paste as sub-question" button MUST be hidden (or rendered disabled with an explanatory tooltip) when the clipboard's `kind === 'question'` but the source's input_type is geo — to avoid sending requests that will fail.
+
+**Rationale**: Issue #17 introduced the rule "a sub-question cannot be a geo question" and enforced it in `QuestionForm` for create/edit. The paste path bypasses the form, so the rule must be re-enforced explicitly in the view; otherwise paste would create database state that the editor's edit form refuses to round-trip. The rule applies symmetrically: paste as top-level (`parent_question_id=None`) does NOT enforce the constraint — geo questions can be top-level.
+
+**Implementation**: The clipboard payload (`localStorage.editor_clipboard`) includes the source's `input_type` as part of the cached `label` data. Frontend uses this to gate button visibility client-side; server-side check is the source-of-truth (defends against stale clipboards and crafted requests).
 
 ## Risks / Trade-offs
 

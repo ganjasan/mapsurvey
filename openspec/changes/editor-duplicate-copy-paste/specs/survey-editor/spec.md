@@ -52,6 +52,8 @@ The system SHALL provide a Copy action on every section card and question card t
 ### Requirement: Editor clipboard (paste — questions)
 The system SHALL provide a Paste action that fetches the source question fresh from the server and clones it into the target context. Paste SHALL be available in three target contexts: (a) at the top-level of the currently-open section ("Paste question here"), (b) as a sub-question of a `point`/`line`/`polygon` question card ("Paste as sub-question"). The user SHALL have at least viewer permission on the source survey AND editor permission on the target survey. The clone SHALL have a freshly generated `code`, NO `(copy)` suffix on the name, and `order_number = max(target_section_orders) + 1` when pasted as top-level (or `max(siblings.order_number) + 1` when pasted as sub-question). When the source is a sub-question and the target is a section (top-level paste), the clone SHALL have `parent_question_id=None` (promoted to top-level). When the source is a top-level question and the target is a sub-question slot (under a geo parent), the clone SHALL have `parent_question_id=<target_parent>` and the source's own sub-questions SHALL NOT be cloned.
 
+When the paste target is a sub-question slot, the system SHALL reject the request if the source question's `input_type` is in `('point', 'line', 'polygon')` — enforcing the rule that a sub-question cannot itself be a geo-type question (per "Sub-question management for geo questions" requirement). The "Paste as sub-question" button SHALL be hidden when the clipboard contains a geo-type source.
+
 #### Scenario: Paste question into same survey, different section
 - **WHEN** the user copies a question from section A and pastes into section B (same survey)
 - **THEN** a clone is created in section B at the tail of the question list with a fresh `code` and the original name (no suffix); the source question in section A is unchanged.
@@ -71,6 +73,14 @@ The system SHALL provide a Paste action that fetches the source question fresh f
 #### Scenario: Paste regular question as sub-question
 - **WHEN** the user pastes a regular `text`-type question (no `parent_question_id`) into a `polygon`-type question via "Paste as sub-question"
 - **THEN** the cloned question has `parent_question_id=<polygon_question.id>` and appears in the polygon's sub-question list. If the source had its own sub-questions, those are NOT cloned.
+
+#### Scenario: Paste geo question as sub-question rejected
+- **WHEN** the user attempts to paste a `point`/`line`/`polygon` question as a sub-question of another geo question
+- **THEN** the server returns HTTP 400 with a validation error; no Question is created. The frontend's "Paste as sub-question" button is hidden when the clipboard contains a geo source so the request would not normally be sent.
+
+#### Scenario: Paste-as-subquestion button hidden for geo clipboard
+- **WHEN** the clipboard contains a `point`-type question (`kind="question"`, `input_type="point"`)
+- **THEN** the "Paste as sub-question" button is hidden on every `point`/`line`/`polygon` question card; the "Paste question here" top-level button remains visible.
 
 #### Scenario: Paste blocked on published target
 - **WHEN** the target survey has status `published`
