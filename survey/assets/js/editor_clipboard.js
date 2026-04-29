@@ -63,6 +63,9 @@
         },
 
         _post: function (url, body, csrfToken) {
+            var notify = (window.Dialog && window.Dialog.alert)
+                ? window.Dialog.alert
+                : function (msg) { window.alert(msg); return Promise.resolve(); };
             return fetch(url, {
                 method: 'POST',
                 headers: {
@@ -73,14 +76,12 @@
             }).then(function (resp) {
                 if (resp.status === 404) {
                     Clipboard.clear();
-                    var msg = 'Source survey or item is no longer accessible — clipboard cleared.';
-                    if (window.alert) window.alert(msg);
+                    notify('Source survey or item is no longer accessible — clipboard cleared.', { title: 'Source unavailable' });
                     throw new Error('source_unavailable');
                 }
                 if (!resp.ok) {
                     return resp.text().then(function (text) {
-                        var msg = text || ('Paste failed (HTTP ' + resp.status + ')');
-                        if (window.alert) window.alert(msg);
+                        notify(text || ('Paste failed (HTTP ' + resp.status + ')'), { title: 'Paste failed' });
                         throw new Error('paste_failed');
                     });
                 }
@@ -95,9 +96,10 @@
             }
             if (parentQuestionId != null && entry.input_type
                 && SUBQUESTION_DISALLOWED.indexOf(entry.input_type) !== -1) {
-                if (window.alert) {
-                    window.alert('Sub-question cannot be a geo-type question.');
-                }
+                var notify = (window.Dialog && window.Dialog.alert)
+                    ? window.Dialog.alert
+                    : function (msg) { window.alert(msg); return Promise.resolve(); };
+                notify('Sub-question cannot be a geo-type question.', { title: 'Cannot paste' });
                 return Promise.reject(new Error('geo_subquestion_blocked'));
             }
             var url = '/editor/surveys/' + targetSurveyUuid + '/sections/' + targetSectionId + '/paste-question/';
@@ -134,18 +136,20 @@
                 && SUBQUESTION_DISALLOWED.indexOf(entry.input_type) !== -1);
 
             document.querySelectorAll('.paste-question-btn').forEach(function (btn) {
-                btn.style.display = hasQuestion ? '' : 'none';
+                btn.style.display = hasQuestion ? 'flex' : 'none';
                 if (hasQuestion) btn.title = _tooltip(entry);
             });
             document.querySelectorAll('.paste-section-btn').forEach(function (btn) {
-                btn.style.display = hasSection ? '' : 'none';
+                btn.style.display = hasSection ? 'flex' : 'none';
                 if (hasSection) btn.title = _tooltip(entry);
             });
             document.querySelectorAll('.paste-as-subquestion-btn').forEach(function (btn) {
                 var visible = hasQuestion && !sourceIsGeo;
-                btn.style.display = visible ? '' : 'none';
+                btn.style.display = visible ? 'flex' : 'none';
                 if (visible) btn.title = _tooltip(entry);
             });
+
+            _refreshPill(entry);
         },
     };
 
@@ -153,6 +157,42 @@
         var ago = _agoLabel(entry.copied_at);
         var label = entry.label || '(untitled)';
         return 'Clipboard: "' + label + '" — copied ' + ago;
+    }
+
+    // ─── Clipboard status pill (#clipboardPill in editor_base.html) ─────────
+    function _refreshPill(entry) {
+        var pill = document.getElementById('clipboardPill');
+        if (!pill) return;
+        if (!entry) {
+            pill.classList.remove('is-visible');
+            return;
+        }
+        var nameEl = pill.querySelector('.clipboard-pill-name');
+        var labelEl = pill.querySelector('.clipboard-pill-label');
+        if (nameEl) nameEl.textContent = '"' + (entry.label || '(untitled)') + '"';
+        if (labelEl) labelEl.textContent = entry.kind === 'section' ? 'Copied section: ' : 'Copied: ';
+        pill.title = _tooltip(entry);
+        pill.classList.add('is-visible');
+    }
+
+    function _bindPill() {
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('#clipboardPill .clipboard-pill-clear');
+            if (!btn) return;
+            e.preventDefault();
+            Clipboard.clear();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape' && e.key !== 'Esc') return;
+            // Don't fight modal/dropdown ESC; only act when nothing else holds focus.
+            if (document.querySelector('.modal.show')) return;
+            var t = e.target;
+            if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+            if (Clipboard.peek()) {
+                e.preventDefault();
+                Clipboard.clear();
+            }
+        });
     }
 
     function _agoLabel(iso) {
@@ -287,14 +327,20 @@
     function _triggerPasteQuestion(surveyUuid, sectionId, csrfToken) {
         Clipboard.pasteQuestion(surveyUuid, sectionId, null, csrfToken).then(function (result) {
             var list = document.getElementById('questions-list');
-            if (list) list.insertAdjacentHTML('beforeend', result.html);
+            if (!list) return;
+            list.insertAdjacentHTML('beforeend', result.html);
+            // insertAdjacentHTML bypasses HTMX — without process(), the new card's
+            // hx-get/hx-post on Edit/Duplicate/Delete remain unbound.
+            if (window.htmx) window.htmx.process(list);
         }).catch(function () { /* alerted in _post */ });
     }
 
     function _triggerPasteSection(surveyUuid, csrfToken) {
         Clipboard.pasteSection(surveyUuid, csrfToken).then(function (html) {
             var list = document.getElementById('sections-list');
-            if (list) list.insertAdjacentHTML('beforeend', html);
+            if (!list) return;
+            list.insertAdjacentHTML('beforeend', html);
+            if (window.htmx) window.htmx.process(list);
         }).catch(function () { /* alerted in _post */ });
     }
 
@@ -322,13 +368,16 @@
     });
 
     // Refresh after every HTMX swap (newly-rendered cards may have paste buttons).
+    // The htmx:afterSettle listener MUST be attached inside DOMContentLoaded —
+    // this script is loaded in <head>, so document.body is null at top-level.
     document.addEventListener('DOMContentLoaded', function () {
         Clipboard.refreshButtons();
         ActiveCard.bind();
         _bindCopyDelegation();
-    });
-    document.body && document.body.addEventListener('htmx:afterSettle', function () {
-        Clipboard.refreshButtons();
+        _bindPill();
+        document.body.addEventListener('htmx:afterSettle', function () {
+            Clipboard.refreshButtons();
+        });
     });
 
     window.Clipboard = Clipboard;

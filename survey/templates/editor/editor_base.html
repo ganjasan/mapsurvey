@@ -19,6 +19,7 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+    <script src="{% static 'js/editor_dialog.js' %}"></script>
     <script src="{% static 'js/editor_clipboard.js' %}"></script>
     <style>
         :root {
@@ -247,6 +248,51 @@
         .paste-question-btn:disabled,
         .paste-section-btn:disabled,
         .paste-as-subquestion-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Clipboard status pill — populated/toggled by editor_clipboard.js */
+        #clipboardPill {
+            display: none;
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 1040;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.55rem 0.6rem 0.55rem 0.9rem;
+            background: #fff;
+            border: 1px solid var(--accent-light);
+            border-radius: 999px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+            font-size: 0.85rem;
+            color: #374151;
+            max-width: 360px;
+        }
+        #clipboardPill.is-visible { display: inline-flex; }
+        #clipboardPill > i.fa-clipboard { color: var(--accent); font-size: 0.95rem; }
+        #clipboardPill .clipboard-pill-label { color: #6b7280; }
+        #clipboardPill .clipboard-pill-name {
+            color: var(--accent);
+            font-weight: 600;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #clipboardPill .clipboard-pill-clear {
+            background: transparent;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            cursor: pointer;
+            color: #9ca3af;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, color 0.15s;
+        }
+        #clipboardPill .clipboard-pill-clear:hover { background: #fef2f2; color: #ef4444; }
 
         /* Active card highlight (issue #16 — keyboard-shortcut focus model) */
         .question-item[data-active="true"],
@@ -647,6 +693,35 @@
     {% endif %}
 
     {% block content %}{% endblock %}
+
+    <!-- Clipboard status indicator — populated by editor_clipboard.js -->
+    <div id="clipboardPill" role="status" aria-live="polite">
+        <i class="fas fa-clipboard"></i>
+        <span class="clipboard-pill-label">Copied: </span>
+        <strong class="clipboard-pill-name"></strong>
+        <button type="button" class="clipboard-pill-clear" title="Clear clipboard (Esc)" aria-label="Clear clipboard">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Generic confirm/alert dialog — see survey/assets/js/editor_dialog.js -->
+    <div class="modal fade editor-modal" id="editorDialog" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editorDialogTitle">Confirm</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p id="editorDialogMessage" style="margin:0;"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="editorDialogCancel">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="editorDialogOk">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
     function initPasswordToggles(root) {
