@@ -888,6 +888,19 @@ def editor_section_preview(request, survey_uuid, section_name):
     section_title = section.get_translated_title(selected_language)
     section_subheading = section.get_translated_subheading(selected_language)
 
+    # Compute progress 1..N walking the linked list — same shape as
+    # views.survey_section so the preview iframe reflects real section count.
+    section_current = 1
+    walker = section
+    while walker.prev_section:
+        walker = walker.prev_section
+        section_current += 1
+    section_total = section_current
+    walker = section
+    while walker.next_section:
+        walker = walker.next_section
+        section_total += 1
+
     if selected_language:
         translation.activate(selected_language)
 
@@ -900,8 +913,8 @@ def editor_section_preview(request, survey_uuid, section_name):
         'section_subheading': section_subheading,
         'selected_language': selected_language,
         'existing_geo_answers': {},
-        'section_current': 1,
-        'section_total': 1,
+        'section_current': section_current,
+        'section_total': section_total,
         'preview': True,
         'initial_map_lat': section.start_map_postion.y if section.start_map_postion else (survey.start_map_postion.y if survey.start_map_postion else 52.52),
         'initial_map_lng': section.start_map_postion.x if section.start_map_postion else (survey.start_map_postion.x if survey.start_map_postion else 13.405),

@@ -52,26 +52,34 @@
     </div>
 
     <div id='navig_buttons' class="mt-auto">
-        {% if not preview %}
         <div class="container navig_buttons">
             <div class="row">
                 <div class="col align-self-start">
                     {% if section.prev_section %}
-                        <button type="submit" class="btn btn-outline-primary prev_button" style="width: 80%"
-                                form="section_question_form"
-                                name="nav_direction" value="back">{% trans "Back" %}</button>
+                        {% if preview %}
+                            <a class="btn btn-outline-primary prev_button" style="width: 80%"
+                               href="{% url 'editor_section_preview' survey.uuid section.prev_section.name %}{% if selected_language %}?lang={{ selected_language }}{% endif %}">{% trans "Back" %}</a>
+                        {% else %}
+                            <button type="submit" class="btn btn-outline-primary prev_button" style="width: 80%"
+                                    form="section_question_form"
+                                    name="nav_direction" value="back">{% trans "Back" %}</button>
+                        {% endif %}
                     {% endif %}
                 </div>
                 <div class="col align-self-end">
                     {% if section.next_section %}
-                        <input type="submit" class="btn btn-primary next_button" style="width: 80%" form="section_question_form" value="{% trans "Next" %}">
-                    {% else %}
+                        {% if preview %}
+                            <a class="btn btn-primary next_button" style="width: 80%"
+                               href="{% url 'editor_section_preview' survey.uuid section.next_section.name %}{% if selected_language %}?lang={{ selected_language }}{% endif %}">{% trans "Next" %}</a>
+                        {% else %}
+                            <input type="submit" class="btn btn-primary next_button" style="width: 80%" form="section_question_form" value="{% trans "Next" %}">
+                        {% endif %}
+                    {% elif not preview %}
                         <input type="submit" class="btn btn-primary next_button" style="width: 80%" form="section_question_form" value="{% trans "Finish" %}">
                     {% endif %}
                 </div>
             </div>
         </div>
-        {% endif %}
     </div>
 
     {{ subquestions_forms|json_script:"sq-forms-data" }}
