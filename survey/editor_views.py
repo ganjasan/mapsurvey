@@ -606,15 +606,14 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
 
 def _shift_order_numbers_down(survey_section, parent, after_order):
     """Increment order_number by 1 for all questions strictly after ``after_order``
-    in the given (section, parent) bucket. Used by sibling-insert duplicate/paste."""
+    in the given (section, parent) bucket — single bulk UPDATE, atomic at SQL level."""
+    from django.db.models import F
     qs = Question.objects.filter(survey_section=survey_section, order_number__gt=after_order)
     if parent is None:
         qs = qs.filter(parent_question_id__isnull=True)
     else:
         qs = qs.filter(parent_question_id=parent)
-    # Shift in descending order to avoid colliding with the existing UNIQUE-less ints.
-    for q in qs.order_by('-order_number'):
-        Question.objects.filter(pk=q.pk).update(order_number=q.order_number + 1)
+    qs.update(order_number=F('order_number') + 1)
 
 
 @survey_permission_required('editor')
@@ -768,18 +767,11 @@ def editor_question_paste(request, survey_uuid, section_id):
         new_question.order_number = (max_order or 0) + 1
         new_question.save(update_fields=['order_number'])
 
-    if target_parent is not None:
-        response = render(request, 'editor/partials/question_list_item.html', {
-            'question': target_parent,
-            'survey': target_survey,
-            'is_read_only': target_survey.status in ('published', 'closed'),
-        })
-    else:
-        response = render(request, 'editor/partials/question_list_item.html', {
-            'question': new_question,
-            'survey': target_survey,
-            'is_read_only': target_survey.status in ('published', 'closed'),
-        })
+    response = render(request, 'editor/partials/question_list_item.html', {
+        'question': target_parent if target_parent is not None else new_question,
+        'survey': target_survey,
+        'is_read_only': target_survey.status in ('published', 'closed'),
+    })
     response['HX-Trigger'] = 'questionSaved'
     return response
 

@@ -168,9 +168,16 @@
     var ActiveCard = {
         bind: function () {
             document.addEventListener('click', function (e) {
+                // Skip clicks on action regions — they have their own behaviour and
+                // shouldn't change the active card. Each named region is listed
+                // explicitly; a generic `button` catch-all would over-suppress.
                 if (e.target.closest('.q-actions') || e.target.closest('.section-delete')
-                    || e.target.closest('.add-question-btn') || e.target.closest('.add-subquestion-wrap')
-                    || e.target.closest('button')) {
+                    || e.target.closest('.section-action')
+                    || e.target.closest('.add-question-btn')
+                    || e.target.closest('.add-subquestion-wrap')
+                    || e.target.closest('.paste-question-btn')
+                    || e.target.closest('.paste-section-btn')
+                    || e.target.closest('.paste-as-subquestion-btn')) {
                     return;
                 }
                 var qItem = e.target.closest('.question-item');
@@ -253,9 +260,11 @@
             ? '/editor/surveys/' + surveyUuid + '/questions/' + active.id + '/duplicate/'
             : '/editor/surveys/' + surveyUuid + '/sections/' + active.id + '/duplicate/';
         if (window.htmx) {
+            // Insert clone immediately AFTER the active card — matches the
+            // duplicate button's hx-swap="afterend" behaviour.
             window.htmx.ajax('POST', url, {
-                target: active.kind === 'question' ? '#questions-list' : '#sections-list',
-                swap: 'beforeend',
+                target: active.node,
+                swap: 'afterend',
                 headers: { 'X-CSRFToken': csrfToken },
             });
         }

@@ -183,6 +183,10 @@ def _splice_into_linked_list(
 ) -> None:
     """Stitch ``new_section`` into ``target_survey``'s section linked list."""
     if insert_after is not None:
+        if insert_after.survey_header_id != target_survey.pk:
+            raise ValueError(
+                "insert_after section belongs to a different survey than target_survey"
+            )
         old_next = insert_after.next_section
         insert_after.next_section = new_section
         insert_after.save(update_fields=['next_section'])

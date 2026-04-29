@@ -68,7 +68,7 @@
         {% if not is_read_only %}
         <button class="paste-as-subquestion-btn"
                 hx-post="{% url 'editor_question_paste' survey.uuid question.survey_section_id %}"
-                hx-vals='js:{"source_survey_uuid": Clipboard.peek()?.source_survey_uuid, "source_question_id": Clipboard.peek()?.source_id, "parent_question_id": {{ question.id }}}'
+                hx-vals='js:{"source_survey_uuid": (Clipboard.peek()||{}).source_survey_uuid, "source_question_id": (Clipboard.peek()||{}).source_id, "parent_question_id": {{ question.id }}}'
                 hx-target="closest .question-item"
                 hx-swap="outerHTML"
                 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>

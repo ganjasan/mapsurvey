@@ -96,7 +96,7 @@
             {% if not is_read_only %}
             <button class="paste-section-btn"
                     hx-post="{% url 'editor_section_paste' survey.uuid %}"
-                    hx-vals='js:{"source_survey_uuid": Clipboard.peek()?.source_survey_uuid, "source_section_id": Clipboard.peek()?.source_id}'
+                    hx-vals='js:{"source_survey_uuid": (Clipboard.peek()||{}).source_survey_uuid, "source_section_id": (Clipboard.peek()||{}).source_id}'
                     hx-target="#sections-list"
                     hx-swap="beforeend"
                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
