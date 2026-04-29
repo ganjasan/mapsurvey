@@ -96,3 +96,46 @@
 - [ ] 8.6 Verify "(copy)" suffix appears on duplicate-in-place but NOT on cross-survey paste
 - [ ] 8.7 Verify validation_settings persist after duplicate of a number/text question with min/max set
 - [ ] 8.8 Verify image displays in cloned question (path shared, not broken)
+
+## 9. Post-review JS bug fixes (follow-up to bbe5378)
+
+Surfaced during manual smoke: clipboard JS had two latent bugs that made the feature feel broken in real use. Server tests passed throughout — the issues were purely client-side.
+
+- [x] 9.1 `editor_clipboard.js::Clipboard.refreshButtons` — `btn.style.display = ''` cleared the inline style but did not override the CSS rule `.paste-question-btn, .paste-section-btn, .paste-as-subquestion-btn { display: none; ... }` in `editor_base.html`, so paste buttons stayed hidden after Copy. Set inline `display: 'flex'` instead (matches the flex `align-items` / `justify-content` already in the rule).
+- [x] 9.2 `editor_clipboard.js::_triggerPasteQuestion` and `::_triggerPasteSection` — `list.insertAdjacentHTML('beforeend', html)` bypasses HTMX's `htmx:afterSettle` lifecycle, so the new card's Edit / Duplicate / Delete buttons (`hx-get` / `hx-post`) stayed unbound after a Ctrl/Cmd+V paste. Call `window.htmx.process(list)` immediately after insertion to register the new attributes. (HTMX-driven button paste already worked because htmx auto-processes its own swap target.)
+- [x] 9.3 `python manage.py collectstatic --noinput` — sync the patched module from `survey/assets/js/` to `staticfiles/js/`, otherwise the dev server keeps serving the buggy version.
+
+## 10. Replace native browser dialogs with Mapsurvey-styled modal
+
+The editor relies on `window.confirm()` (via `hx-confirm`) for destructive confirmations and on `window.alert()` for paste-error notifications. Both are Chrome's stock dialogs anchored to the URL bar with a `localhost:8000 says` header — visually disconnected from the rest of the editor and not centred on the survey workspace.
+
+- [x] 10.1 `survey/assets/js/editor_dialog.js` — new module exposing `Dialog.confirm(message, opts)` and `Dialog.alert(message, opts)` that drive a single Bootstrap modal. Resolves the promise on OK / on `hidden.bs.modal` (covers Cancel / backdrop / ESC). Falls back to native `window.confirm` / `window.alert` when jQuery or the modal element is missing, so call sites stay safe outside `editor_base.html`.
+- [x] 10.2 `editor_base.html` — add `#editorDialog` modal markup (Bootstrap `modal-dialog-centered`, `modal-sm`, `editor-modal` theme class to inherit the rounded-corners + border styling of `#questionModal` / `#mapPickerModal`). Load `editor_dialog.js` BEFORE `editor_clipboard.js`.
+- [x] 10.3 `editor_dialog.js::htmx:confirm` listener — auto-installed. Calls `evt.preventDefault()`, then `Dialog.confirm(question, {danger: true, okLabel: 'Delete'})`; on OK calls `evt.detail.issueRequest(true)` (the `true` flag tells htmx to skip its own confirm step and avoid a second prompt). Covers all three current `hx-confirm` sites (delete question, delete section, remove collaborator) — they're all destructive, so the danger-styled OK is appropriate.
+- [x] 10.4 `editor_clipboard.js::Clipboard._post` — replace `window.alert` calls (404 / non-OK error branches) with `window.Dialog.alert` (with appropriate titles "Source unavailable" / "Paste failed"). Keep a `window.alert` fallback in case `Dialog` failed to load.
+- [x] 10.5 `editor_clipboard.js::Clipboard.pasteQuestion` — same replacement for the geo-as-subquestion guard ("Sub-question cannot be a geo-type question.") with title "Cannot paste".
+- [x] 10.6 `python manage.py collectstatic --noinput` — sync `editor_dialog.js` and patched `editor_clipboard.js` to `staticfiles/`.
+
+### 10.7 Manual smoke (browser)
+
+- [ ] 10.7.1 Click the trash icon on a top-level question — confirm modal appears centred, white card with rounded corners, "Delete" red button, "Cancel" grey button. Backdrop click / ESC dismisses without deleting.
+- [ ] 10.7.2 Same for delete-section and remove-collaborator.
+- [ ] 10.7.3 Trigger a paste failure (clear clipboard's source survey, then paste) — alert modal appears centred with title "Source unavailable", single OK button.
+- [ ] 10.7.4 Verify no `localhost:8000 says` Chrome dialog remains anywhere in the editor flows.
+
+## 11. Clipboard status pill (cancel-copy + visible state)
+
+User feedback: after Copy there's no way to undo without copying something else, and no visible signal that the clipboard holds anything. Compounds the cross-section-paste confusion (which is itself a manifestation of section 9.1 — without the visibility fix and a hard reload, paste buttons stayed hidden).
+
+- [x] 11.1 `editor_base.html` — add `#clipboardPill` markup (clipboard icon + "Copied: <name>" + × button) below the dialog modal so it lives at body root and survives section navigation. CSS: fixed position bottom-right, accent border, white background, rounded pill, hidden by default; revealed via `.is-visible` class. Gets a `role="status"` + `aria-live="polite"` for screen readers.
+- [x] 11.2 `editor_clipboard.js::_refreshPill(entry)` — populate name/label and toggle `.is-visible` based on `Clipboard.peek()`. Wired into `Clipboard.refreshButtons()` so it updates on every Copy / paste / cross-tab storage event.
+- [x] 11.3 `editor_clipboard.js::_bindPill()` — delegated click on `.clipboard-pill-clear` calls `Clipboard.clear()`; ESC keydown calls `Clipboard.clear()` when no modal is open and focus is not in a text input.
+- [x] 11.4 `python manage.py collectstatic --noinput` to sync.
+
+### 11.5 Manual smoke (browser, after hard reload)
+
+- [ ] 11.5.1 Click Copy on any question — pill appears bottom-right with the question name; tooltip shows "copied just now".
+- [ ] 11.5.2 Click × on the pill — pill hides and all paste buttons (incl. paste-as-subquestion) hide simultaneously.
+- [ ] 11.5.3 Press ESC with focus on the page body — pill hides (clipboard cleared). Press ESC inside an input field — no effect.
+- [ ] 11.5.4 Copy in section A, click another section in the sidebar — pill stays visible across navigation; `.paste-question-btn` of the new section is visible (was section 9.1's bug; this verifies the combined fix).
+- [ ] 11.5.5 Copy a section — pill shows "Copied section: <title>".
