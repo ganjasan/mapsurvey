@@ -249,23 +249,18 @@
         .paste-section-btn:disabled,
         .paste-as-subquestion-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* Clipboard status pill — populated/toggled by editor_clipboard.js */
+        /* Clipboard status pill — inline in editor navbar; populated/toggled by editor_clipboard.js */
         #clipboardPill {
             display: none;
-            position: fixed;
-            bottom: 1.5rem;
-            right: 1.5rem;
-            z-index: 1040;
             align-items: center;
-            gap: 0.6rem;
-            padding: 0.55rem 0.6rem 0.55rem 0.9rem;
-            background: #fff;
+            gap: 0.5rem;
+            padding: 0.25rem 0.45rem 0.25rem 0.7rem;
+            background: var(--accent-light);
             border: 1px solid var(--accent-light);
             border-radius: 999px;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #374151;
-            max-width: 360px;
+            max-width: 320px;
         }
         #clipboardPill.is-visible { display: inline-flex; }
         #clipboardPill > i.fa-clipboard { color: var(--accent); font-size: 0.95rem; }
@@ -654,6 +649,15 @@
         <a href="{% url 'editor' %}"><i class="fas fa-arrow-left"></i> Dashboard</a>
         {% block navbar_content %}{% endblock %}
         <span class="spacer"></span>
+        <!-- Clipboard status pill — populated by editor_clipboard.js -->
+        <div id="clipboardPill" role="status" aria-live="polite">
+            <i class="fas fa-clipboard"></i>
+            <span class="clipboard-pill-label">Copied: </span>
+            <strong class="clipboard-pill-name"></strong>
+            <button type="button" class="clipboard-pill-clear" title="Clear clipboard (Esc)" aria-label="Clear clipboard">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
         {% if user.is_authenticated %}
             <div class="dropdown d-inline">
                 <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" style="color:#6b7280;font-size:0.85rem;text-decoration:none;">
@@ -693,16 +697,6 @@
     {% endif %}
 
     {% block content %}{% endblock %}
-
-    <!-- Clipboard status indicator — populated by editor_clipboard.js -->
-    <div id="clipboardPill" role="status" aria-live="polite">
-        <i class="fas fa-clipboard"></i>
-        <span class="clipboard-pill-label">Copied: </span>
-        <strong class="clipboard-pill-name"></strong>
-        <button type="button" class="clipboard-pill-clear" title="Clear clipboard (Esc)" aria-label="Clear clipboard">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
 
     <!-- Generic confirm/alert dialog — see survey/assets/js/editor_dialog.js -->
     <div class="modal fade editor-modal" id="editorDialog" tabindex="-1" aria-hidden="true">
