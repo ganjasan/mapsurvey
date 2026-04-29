@@ -272,7 +272,9 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            text-decoration: none;
         }
+        #clipboardPill .clipboard-pill-name:hover { text-decoration: underline; }
         #clipboardPill .clipboard-pill-clear {
             background: transparent;
             border: none;
@@ -653,7 +655,7 @@
         <div id="clipboardPill" role="status" aria-live="polite">
             <i class="fas fa-clipboard"></i>
             <span class="clipboard-pill-label">Copied: </span>
-            <strong class="clipboard-pill-name"></strong>
+            <a class="clipboard-pill-name" href="#"></a>
             <button type="button" class="clipboard-pill-clear" title="Clear clipboard (Esc)" aria-label="Clear clipboard">
                 <i class="fas fa-times"></i>
             </button>

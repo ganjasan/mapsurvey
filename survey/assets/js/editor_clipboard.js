@@ -3,12 +3,13 @@
  * Provides Clipboard (localStorage-backed) and KeyboardShortcuts modules
  * for the WYSIWYG survey editor. Public surface:
  *
- *   Clipboard.copy(kind, surveyUuid, id, label, inputType?)
- *   Clipboard.peek()                       -> {kind, source_survey_uuid, source_id, label, input_type, copied_at} | null
+ *   Clipboard.copy(kind, surveyUuid, id, label, inputType?, sourceSectionId?)
+ *   Clipboard.peek()                       -> {kind, source_survey_uuid, source_id, label, input_type, source_section_id, copied_at} | null
  *   Clipboard.clear()
  *   Clipboard.pasteQuestion(targetSurveyUuid, targetSectionId, parentQuestionId?, csrfToken)
  *   Clipboard.pasteSection(targetSurveyUuid, csrfToken)
  *   Clipboard.refreshButtons()             — show/hide all .paste-* buttons based on peek()
+ *   Clipboard.sourceUrl(entry?)            -> string  (link to source survey, with #section-N if known)
  *   ActiveCard.bind()                      — delegated click sets data-active="true"
  *   ActiveCard.getActive()                 -> {kind, id} | null
  *   KeyboardShortcuts.bind(getSurveyUuid, getCurrentSectionId, csrfToken, isReadOnly)
@@ -25,13 +26,14 @@
 
     // ─── Clipboard ──────────────────────────────────────────────────────────
     var Clipboard = {
-        copy: function (kind, surveyUuid, id, label, inputType) {
+        copy: function (kind, surveyUuid, id, label, inputType, sourceSectionId) {
             var entry = {
                 kind: kind,                          // 'question' | 'section'
                 source_survey_uuid: surveyUuid,
                 source_id: Number(id),
                 label: label || '',
                 input_type: inputType || null,       // only meaningful for kind=question
+                source_section_id: sourceSectionId != null ? Number(sourceSectionId) : null,
                 copied_at: new Date().toISOString(),
             };
             try {
@@ -128,6 +130,16 @@
             });
         },
 
+        sourceUrl: function (entry) {
+            entry = entry || Clipboard.peek();
+            if (!entry) return null;
+            var url = '/editor/surveys/' + entry.source_survey_uuid + '/';
+            // Section: jump to that section by id; Question: jump to its containing section.
+            var sectionId = entry.kind === 'section' ? entry.source_id : entry.source_section_id;
+            if (sectionId) url += '#section-' + sectionId;
+            return url;
+        },
+
         refreshButtons: function () {
             var entry = Clipboard.peek();
             var hasQuestion = !!(entry && entry.kind === 'question');
@@ -159,7 +171,7 @@
         return 'Clipboard: "' + label + '" — copied ' + ago;
     }
 
-    // ─── Clipboard status pill (#clipboardPill in editor_base.html) ─────────
+    // ─── Clipboard status pill (#clipboardPill in base layout) ──────────────
     function _refreshPill(entry) {
         var pill = document.getElementById('clipboardPill');
         if (!pill) return;
@@ -169,7 +181,13 @@
         }
         var nameEl = pill.querySelector('.clipboard-pill-name');
         var labelEl = pill.querySelector('.clipboard-pill-label');
-        if (nameEl) nameEl.textContent = '"' + (entry.label || '(untitled)') + '"';
+        if (nameEl) {
+            nameEl.textContent = '"' + (entry.label || '(untitled)') + '"';
+            // The name is an <a> — link it to the source survey/section.
+            if (nameEl.tagName === 'A') {
+                nameEl.href = Clipboard.sourceUrl(entry);
+            }
+        }
         if (labelEl) labelEl.textContent = entry.kind === 'section' ? 'Copied section: ' : 'Copied: ';
         pill.title = _tooltip(entry);
         pill.classList.add('is-visible');
@@ -358,7 +376,10 @@
                 ? (btn.dataset.questionName || '')
                 : (btn.dataset.sectionTitle || '');
             var inputType = kind === 'question' ? (btn.dataset.inputType || null) : null;
-            Clipboard.copy(kind, surveyUuid, id, label, inputType);
+            // For questions we also remember the source section so the pill
+            // link can jump straight to the right section in source survey.
+            var sourceSectionId = kind === 'question' ? (btn.dataset.sectionId || null) : null;
+            Clipboard.copy(kind, surveyUuid, id, label, inputType, sourceSectionId);
         });
     }
 

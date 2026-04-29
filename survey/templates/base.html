@@ -17,6 +17,10 @@
         <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+        {% if user.is_authenticated %}
+        <script src="{% static 'js/editor_dialog.js' %}"></script>
+        <script src="{% static 'js/editor_clipboard.js' %}"></script>
+        {% endif %}
         <style>
             html {
                 overflow-x: hidden;
@@ -223,6 +227,43 @@
                 border-radius: 0 6px 6px 0;
             }
             .pwd-toggle-btn:hover { color: #374151; }
+
+            /* Clipboard status pill — shared between dashboard and editor (issue #16) */
+            #clipboardPill {
+                display: none;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.25rem 0.45rem 0.25rem 0.7rem;
+                background: #e0e7ff;
+                border: 1px solid #e0e7ff;
+                border-radius: 999px;
+                font-size: 0.8rem;
+                color: #374151;
+                max-width: 320px;
+            }
+            #clipboardPill.is-visible { display: inline-flex; }
+            #clipboardPill > i.fa-clipboard { color: #4f46e5; font-size: 0.95rem; }
+            #clipboardPill .clipboard-pill-label { color: #6b7280; }
+            #clipboardPill .clipboard-pill-name {
+                color: #4f46e5;
+                font-weight: 600;
+                max-width: 220px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                text-decoration: none;
+            }
+            #clipboardPill .clipboard-pill-name:hover { text-decoration: underline; }
+            #clipboardPill .clipboard-pill-clear {
+                border: none;
+                background: transparent;
+                color: #6b7280;
+                cursor: pointer;
+                padding: 0 0.2rem;
+                line-height: 1;
+                font-size: 0.85rem;
+            }
+            #clipboardPill .clipboard-pill-clear:hover { color: #ef4444; }
         </style>
         {% block extra_head %}{% endblock %}
     </head>
@@ -232,6 +273,15 @@
                 <nav class="site-navbar">
                   <a class="navbar-brand" href="/">Mapsurvey</a>
                   {% if user.is_authenticated %}
+                      <!-- Clipboard status pill — populated by editor_clipboard.js -->
+                      <div id="clipboardPill" role="status" aria-live="polite">
+                          <i class="fas fa-clipboard"></i>
+                          <span class="clipboard-pill-label">Copied: </span>
+                          <a class="clipboard-pill-name" href="#"></a>
+                          <button type="button" class="clipboard-pill-clear" title="Clear clipboard (Esc)" aria-label="Clear clipboard">
+                              <i class="fas fa-times"></i>
+                          </button>
+                      </div>
                       <div class="dropdown d-inline">
                           <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" style="color:#6b7280;font-size:0.85rem;text-decoration:none;">
                               <i class="fas fa-building" style="margin-right:4px;"></i>{{ active_org.name|default:"No organization" }}

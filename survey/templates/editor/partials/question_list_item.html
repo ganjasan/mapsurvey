@@ -29,6 +29,7 @@
                     data-question-id="{{ question.id }}"
                     data-question-name="{{ question.name|default:'(unnamed)' }}"
                     data-input-type="{{ question.input_type }}"
+                    data-section-id="{{ question.survey_section_id }}"
                     {% if is_read_only %}disabled{% endif %}>
                 <i class="fas fa-clipboard"></i>
             </button>
