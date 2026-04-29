@@ -4,6 +4,19 @@
     <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
     <span class="section-title">{{ section.title|default:section.name }}</span>
     {% if section.is_head %}<span class="badge badge-info" style="font-size:0.65rem;">HEAD</span>{% endif %}
+    <button class="section-action" title="Duplicate"
+            hx-post="{% url 'editor_section_duplicate' survey.uuid section.id %}"
+            hx-target="closest .section-item"
+            hx-swap="afterend"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        <i class="fas fa-copy"></i>
+    </button>
+    <button class="section-action copy-section-btn" title="Copy"
+            data-survey-uuid="{{ survey.uuid }}"
+            data-section-id="{{ section.id }}"
+            data-section-title="{{ section.title|default:section.name }}">
+        <i class="fas fa-clipboard"></i>
+    </button>
     <button class="section-delete"
             hx-post="{% url 'editor_section_delete' survey.uuid section.id %}"
             hx-target="closest .section-item"

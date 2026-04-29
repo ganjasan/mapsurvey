@@ -14,7 +14,11 @@ from .models import (
     Question, QuestionTranslation, SurveyCollaborator,
     Membership, SURVEY_ROLE_CHOICES, BASEMAP_CHOICES,
 )
-from .editor_forms import SurveyHeaderForm, SurveySectionForm, QuestionForm
+from .cloning import clone_question, clone_section
+from .editor_forms import (
+    SurveyHeaderForm, SurveySectionForm, QuestionForm,
+    SUBQUESTION_DISALLOWED_INPUT_TYPES,
+)
 from .forms import SurveySectionAnswerForm
 from .permissions import (
     org_permission_required, survey_permission_required,
@@ -28,6 +32,11 @@ def _check_structural_edit_allowed(survey):
     if survey.status in ('published', 'closed'):
         return HttpResponse('Structural edits are not allowed on published or closed surveys', status=403)
     return None
+
+
+def _can_read_survey(user, survey):
+    """Return True if user has at least viewer role on the survey."""
+    return get_effective_survey_role(user, survey) is not None
 
 
 def _get_sections_ordered(survey):
@@ -590,6 +599,235 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
         'section': parent.survey_section,
         'parent': parent,
     })
+
+
+# ─── Duplicate / Copy-Paste (Issue #16) ──────────────────────────────────────
+
+
+def _shift_order_numbers_down(survey_section, parent, after_order):
+    """Increment order_number by 1 for all questions strictly after ``after_order``
+    in the given (section, parent) bucket. Used by sibling-insert duplicate/paste."""
+    qs = Question.objects.filter(survey_section=survey_section, order_number__gt=after_order)
+    if parent is None:
+        qs = qs.filter(parent_question_id__isnull=True)
+    else:
+        qs = qs.filter(parent_question_id=parent)
+    # Shift in descending order to avoid colliding with the existing UNIQUE-less ints.
+    for q in qs.order_by('-order_number'):
+        Question.objects.filter(pk=q.pk).update(order_number=q.order_number + 1)
+
+
+@survey_permission_required('editor')
+@require_POST
+def editor_question_duplicate(request, survey_uuid, question_id):
+    """Duplicate a question in place: clone with a new code and ' (copy)' suffix,
+    insert immediately after the source (sibling). Top-level or sub-question."""
+    survey = request.survey
+    blocked = _check_structural_edit_allowed(survey)
+    if blocked:
+        return blocked
+    source = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
+    parent = source.parent_question_id  # FK; None for top-level
+
+    with transaction.atomic():
+        _shift_order_numbers_down(source.survey_section, parent, source.order_number)
+        new_question = clone_question(
+            source,
+            target_section=source.survey_section,
+            parent=parent,
+            regenerate_code=True,
+            name_suffix=' (copy)',
+            copy_sub_questions=True,
+        )
+        new_question.order_number = source.order_number + 1
+        new_question.save(update_fields=['order_number'])
+
+    response = render(request, 'editor/partials/question_list_item.html', {
+        'question': new_question,
+        'survey': survey,
+        'is_read_only': survey.status in ('published', 'closed'),
+    })
+    response['HX-Trigger'] = 'questionSaved'
+    return response
+
+
+@survey_permission_required('editor')
+@require_POST
+def editor_section_duplicate(request, survey_uuid, section_id):
+    """Duplicate a section in place: clone all questions/translations, splice
+    immediately after the source in the linked list, append ' (copy)' to title."""
+    survey = request.survey
+    blocked = _check_structural_edit_allowed(survey)
+    if blocked:
+        return blocked
+    source = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
+
+    with transaction.atomic():
+        new_section = clone_section(
+            source,
+            target_survey=survey,
+            insert_after=source,
+            name_suffix=' (copy)',
+        )
+
+    response = render(request, 'editor/partials/section_list_item.html', {
+        'section': new_section,
+        'survey': survey,
+        'is_current': False,
+    })
+    response['HX-Trigger'] = 'sectionSaved'
+    return response
+
+
+def _paste_payload(request):
+    """Read paste-endpoint payload from JSON body OR form-encoded POST.
+
+    Accepts both because:
+    - Pure HTMX buttons send form-urlencoded (default).
+    - JS-driven calls (Clipboard.pasteQuestion) send JSON for stricter typing.
+    Returns a dict, never None — missing keys are checked by the caller.
+    """
+    if request.content_type == 'application/json':
+        try:
+            return json.loads(request.body or b'{}')
+        except (json.JSONDecodeError, ValueError):
+            return {}
+    return {k: v for k, v in request.POST.items()}
+
+
+@survey_permission_required('editor')
+@require_POST
+def editor_question_paste(request, survey_uuid, section_id):
+    """Paste a question from the clipboard into the given section.
+
+    Body JSON: {source_survey_uuid, source_question_id, parent_question_id?}.
+    - parent_question_id absent / null → paste as top-level. If the source is a
+      sub-question it is PROMOTED (parent_question_id=None on the clone).
+    - parent_question_id set → paste as sub-question of that geo parent. The
+      source's input_type must NOT be geo (per issue #17 rule); otherwise 400.
+      The source's own sub-questions are NOT cloned (Q8).
+    """
+    target_survey = request.survey
+    blocked = _check_structural_edit_allowed(target_survey)
+    if blocked:
+        return blocked
+    target_section = get_object_or_404(
+        SurveySection, id=section_id, survey_header=target_survey
+    )
+
+    payload = _paste_payload(request)
+    source_survey_uuid = payload.get('source_survey_uuid')
+    source_question_id = payload.get('source_question_id')
+    parent_question_id = payload.get('parent_question_id')
+    if not source_survey_uuid or not source_question_id:
+        return HttpResponse('Missing source_survey_uuid or source_question_id', status=400)
+    try:
+        source_question_id = int(source_question_id)
+    except (TypeError, ValueError):
+        return HttpResponse('Invalid source_question_id', status=400)
+    if parent_question_id in (None, '', 'null'):
+        parent_question_id = None
+    else:
+        try:
+            parent_question_id = int(parent_question_id)
+        except (TypeError, ValueError):
+            return HttpResponse('Invalid parent_question_id', status=400)
+
+    source_survey = get_object_or_404(SurveyHeader, uuid=source_survey_uuid)
+    if not _can_read_survey(request.user, source_survey):
+        return HttpResponse('Source survey not accessible', status=404)
+
+    source = get_object_or_404(
+        Question, id=source_question_id, survey_section__survey_header=source_survey
+    )
+
+    target_parent = None
+    if parent_question_id is not None:
+        target_parent = get_object_or_404(
+            Question, id=parent_question_id, survey_section=target_section
+        )
+        if source.input_type in SUBQUESTION_DISALLOWED_INPUT_TYPES:
+            return JsonResponse(
+                {'error': 'Sub-question cannot be a geo-type question'},
+                status=400,
+            )
+
+    with transaction.atomic():
+        max_order = Question.objects.filter(
+            survey_section=target_section,
+            parent_question_id=target_parent,
+        ).aggregate(Max('order_number'))['order_number__max']
+        new_question = clone_question(
+            source,
+            target_section=target_section,
+            parent=target_parent,
+            regenerate_code=True,
+            name_suffix=None,
+            copy_sub_questions=(target_parent is None),
+        )
+        new_question.order_number = (max_order or 0) + 1
+        new_question.save(update_fields=['order_number'])
+
+    if target_parent is not None:
+        response = render(request, 'editor/partials/question_list_item.html', {
+            'question': target_parent,
+            'survey': target_survey,
+            'is_read_only': target_survey.status in ('published', 'closed'),
+        })
+    else:
+        response = render(request, 'editor/partials/question_list_item.html', {
+            'question': new_question,
+            'survey': target_survey,
+            'is_read_only': target_survey.status in ('published', 'closed'),
+        })
+    response['HX-Trigger'] = 'questionSaved'
+    return response
+
+
+@survey_permission_required('editor')
+@require_POST
+def editor_section_paste(request, survey_uuid):
+    """Paste a section from the clipboard into the target survey at the tail.
+
+    Body JSON: {source_survey_uuid, source_section_id}.
+    """
+    target_survey = request.survey
+    blocked = _check_structural_edit_allowed(target_survey)
+    if blocked:
+        return blocked
+
+    payload = _paste_payload(request)
+    source_survey_uuid = payload.get('source_survey_uuid')
+    source_section_id = payload.get('source_section_id')
+    if not source_survey_uuid or not source_section_id:
+        return HttpResponse('Missing source_survey_uuid or source_section_id', status=400)
+    try:
+        source_section_id = int(source_section_id)
+    except (TypeError, ValueError):
+        return HttpResponse('Invalid source_section_id', status=400)
+
+    source_survey = get_object_or_404(SurveyHeader, uuid=source_survey_uuid)
+    if not _can_read_survey(request.user, source_survey):
+        return HttpResponse('Source survey not accessible', status=404)
+    source = get_object_or_404(
+        SurveySection, id=source_section_id, survey_header=source_survey
+    )
+
+    with transaction.atomic():
+        new_section = clone_section(
+            source,
+            target_survey=target_survey,
+            insert_after=None,
+            name_suffix=None,
+        )
+
+    response = render(request, 'editor/partials/section_list_item.html', {
+        'section': new_section,
+        'survey': target_survey,
+        'is_current': False,
+    })
+    response['HX-Trigger'] = 'sectionSaved'
+    return response
 
 
 # ─── Section map position picker ─────────────────────────────────────────────

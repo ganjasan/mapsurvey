@@ -1,4 +1,4 @@
-<li class="question-item" data-question-id="{{ question.id }}">
+<li class="question-item" data-question-id="{{ question.id }}" data-input-type="{{ question.input_type }}">
     <div class="question-item-row">
         <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
         <span class="q-name">{{ question.name|default:"(unnamed)" }}</span>
@@ -13,6 +13,24 @@
                     data-toggle="modal" data-target="#questionModal"
                     {% else %}disabled{% endif %}>
                 <i class="fas fa-pen"></i>
+            </button>
+            <button title="{% if is_read_only %}Create a draft to edit{% else %}Duplicate{% endif %}"
+                    {% if not is_read_only %}
+                    hx-post="{% url 'editor_question_duplicate' survey.uuid question.id %}"
+                    hx-target="closest .question-item"
+                    hx-swap="afterend"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                    {% else %}disabled{% endif %}>
+                <i class="fas fa-copy"></i>
+            </button>
+            <button title="{% if is_read_only %}Create a draft to edit{% else %}Copy{% endif %}"
+                    class="copy-question-btn"
+                    data-survey-uuid="{{ survey.uuid }}"
+                    data-question-id="{{ question.id }}"
+                    data-question-name="{{ question.name|default:'(unnamed)' }}"
+                    data-input-type="{{ question.input_type }}"
+                    {% if is_read_only %}disabled{% endif %}>
+                <i class="fas fa-clipboard"></i>
             </button>
             <button title="{% if is_read_only %}Create a draft to edit{% else %}Delete{% endif %}" class="text-danger"
                     {% if not is_read_only %}
@@ -47,6 +65,16 @@
                 {% else %}disabled{% endif %}>
             <i class="fas fa-plus"></i> Add Sub-question
         </button>
+        {% if not is_read_only %}
+        <button class="paste-as-subquestion-btn"
+                hx-post="{% url 'editor_question_paste' survey.uuid question.survey_section_id %}"
+                hx-vals='js:{"source_survey_uuid": Clipboard.peek()?.source_survey_uuid, "source_question_id": Clipboard.peek()?.source_id, "parent_question_id": {{ question.id }}}'
+                hx-target="closest .question-item"
+                hx-swap="outerHTML"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+            <i class="fas fa-paste"></i> Paste as sub-question
+        </button>
+        {% endif %}
     </div>
     {% endif %}
 </li>

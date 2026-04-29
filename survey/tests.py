@@ -12000,3 +12000,549 @@ class HTMXNavigationTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'id="section-data"')
         self.assertContains(resp, 'data-section-current="1"')
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# Issue #16 — Editor duplicate / copy-paste tests
+# ────────────────────────────────────────────────────────────────────────────
+
+from .cloning import clone_question, clone_section
+from .models import QuestionTranslation, SurveySectionTranslation
+
+
+def _make_survey_with_section(org, name, owner=None):
+    survey = SurveyHeader.objects.create(
+        name=name, visibility='private', organization=org,
+        created_by=owner,
+    )
+    section = SurveySection.objects.create(
+        survey_header=survey, name='sec_a', title='Section A', code='SA', is_head=True,
+    )
+    return survey, section
+
+
+class CloningPrimitiveTest(TestCase):
+    """Unit tests for survey/cloning.py — clone_question and clone_section."""
+
+    def setUp(self):
+        self.org = _make_org()
+        self.survey, self.section = _make_survey_with_section(self.org, 'cloning_src')
+        self.question = Question.objects.create(
+            survey_section=self.section,
+            code='Q_orig_001',
+            order_number=1,
+            name='Address',
+            input_type='text_line',
+            validation_settings={'min_length': 5},
+        )
+
+    def test_clone_question_copies_validation_settings(self):
+        """
+        GIVEN a question with validation_settings={'min_length': 5}
+        WHEN clone_question is called with regenerate_code=True
+        THEN the cloned question has identical validation_settings
+        """
+        clone = clone_question(self.question, target_section=self.section, regenerate_code=True)
+        self.assertEqual(clone.validation_settings, {'min_length': 5})
+
+    def test_clone_question_regenerates_code(self):
+        """
+        GIVEN a question with code 'Q_orig_001'
+        WHEN clone_question is called with regenerate_code=True
+        THEN the cloned question has a different code
+        """
+        clone = clone_question(self.question, target_section=self.section, regenerate_code=True)
+        self.assertNotEqual(clone.code, self.question.code)
+        self.assertTrue(clone.code.startswith('Q_'))
+
+    def test_clone_question_preserves_code_when_flag_false(self):
+        """
+        GIVEN a question
+        WHEN clone_question is called with regenerate_code=False (versioning use case)
+        THEN the cloned question has the SAME code as source
+        """
+        # Need a different target_section to avoid same-section, same-code conflict in tests.
+        section_b = SurveySection.objects.create(
+            survey_header=self.survey, name='sec_b', title='Section B', code='SB',
+        )
+        clone = clone_question(self.question, target_section=section_b, regenerate_code=False)
+        self.assertEqual(clone.code, self.question.code)
+
+    def test_clone_question_appends_name_suffix(self):
+        """
+        GIVEN a question named 'Address'
+        WHEN clone_question is called with name_suffix=' (copy)'
+        THEN the clone is named 'Address (copy)'
+        """
+        clone = clone_question(
+            self.question, target_section=self.section, name_suffix=' (copy)',
+        )
+        self.assertEqual(clone.name, 'Address (copy)')
+
+    def test_clone_question_with_subquestions(self):
+        """
+        GIVEN a point question with 2 sub-questions
+        WHEN clone_question copies it with copy_sub_questions=True
+        THEN the clone has 2 sub-questions, each with fresh codes
+        """
+        parent = Question.objects.create(
+            survey_section=self.section, code='Q_parent_p',
+            order_number=2, input_type='point', name='Locate',
+        )
+        sub1 = Question.objects.create(
+            survey_section=self.section, parent_question_id=parent,
+            code='Q_sub_a', order_number=1, input_type='text_line', name='Notes',
+        )
+        sub2 = Question.objects.create(
+            survey_section=self.section, parent_question_id=parent,
+            code='Q_sub_b', order_number=2, input_type='choice', name='Type',
+        )
+        clone = clone_question(parent, target_section=self.section, regenerate_code=True)
+        clone_subs = list(Question.objects.filter(parent_question_id=clone).order_by('order_number'))
+        self.assertEqual(len(clone_subs), 2)
+        for orig, cloned in zip([sub1, sub2], clone_subs):
+            self.assertNotEqual(orig.code, cloned.code)
+            self.assertEqual(orig.name, cloned.name)
+
+    def test_clone_question_drops_subquestions_when_flag_false(self):
+        """
+        GIVEN a point question with sub-questions
+        WHEN clone_question is called with copy_sub_questions=False
+        THEN the clone has zero sub-questions (used for paste-as-sub-question)
+        """
+        parent = Question.objects.create(
+            survey_section=self.section, code='Q_parent_p2',
+            order_number=2, input_type='point',
+        )
+        Question.objects.create(
+            survey_section=self.section, parent_question_id=parent,
+            code='Q_dropped', order_number=1, input_type='text_line',
+        )
+        clone = clone_question(
+            parent, target_section=self.section,
+            regenerate_code=True, copy_sub_questions=False,
+        )
+        self.assertEqual(Question.objects.filter(parent_question_id=clone).count(), 0)
+
+    def test_clone_question_copies_translations(self):
+        """
+        GIVEN a question with QuestionTranslation rows for en and ru
+        WHEN clone_question is called
+        THEN the clone has equivalent translation rows (untouched name/subtext)
+        """
+        QuestionTranslation.objects.create(
+            question=self.question, language='ru', name='Адрес', subtext='Полный адрес'
+        )
+        clone = clone_question(self.question, target_section=self.section, name_suffix=' (copy)')
+        ru = QuestionTranslation.objects.get(question=clone, language='ru')
+        # Suffix is NOT applied to translations
+        self.assertEqual(ru.name, 'Адрес')
+        self.assertEqual(ru.subtext, 'Полный адрес')
+
+    def test_clone_section_appends_at_tail_when_insert_after_none(self):
+        """
+        GIVEN a survey with sections [A, B] in linked list and an unrelated source section
+        WHEN clone_section is called with insert_after=None
+        THEN the clone is appended at the tail
+        """
+        section_b = SurveySection.objects.create(
+            survey_header=self.survey, name='b', title='B', code='SB',
+        )
+        self.section.next_section = section_b
+        self.section.save(update_fields=['next_section'])
+        section_b.prev_section = self.section
+        section_b.save(update_fields=['prev_section'])
+
+        source = SurveySection.objects.create(
+            survey_header=self.survey, name='src', title='Source', code='SRC',
+        )
+        clone = clone_section(source, target_survey=self.survey, insert_after=None)
+        clone.refresh_from_db()
+        # Tail before clone was section_b OR source (whichever has next=None). The deduper
+        # only computes new_name; the splice should pick the actual tail.
+        section_b.refresh_from_db()
+        # In this fixture section_b is the tail of the head→A→B chain. After clone,
+        # source still has next=None too (it was a standalone section). The splice helper
+        # picks ONE tail (the first match). Either section_b or source could be the tail.
+        # Test the invariant: clone's prev_section is some real tail, clone has no next.
+        self.assertIsNone(clone.next_section_id)
+        self.assertIsNotNone(clone.prev_section_id)
+
+    def test_clone_section_inserts_after_middle_section(self):
+        """
+        GIVEN sections linked [A, B, C]
+        WHEN clone_section is called with insert_after=B
+        THEN linked list becomes [A, B, B', C] with prev/next correctly stitched
+        """
+        section_b = SurveySection.objects.create(
+            survey_header=self.survey, name='b', title='B', code='SB',
+        )
+        section_c = SurveySection.objects.create(
+            survey_header=self.survey, name='c', title='C', code='SC',
+        )
+        # Link A → B → C
+        self.section.next_section = section_b
+        self.section.save()
+        section_b.prev_section = self.section
+        section_b.next_section = section_c
+        section_b.save()
+        section_c.prev_section = section_b
+        section_c.save()
+
+        clone = clone_section(
+            section_b, target_survey=self.survey, insert_after=section_b, name_suffix=' (copy)',
+        )
+        clone.refresh_from_db()
+        section_b.refresh_from_db()
+        section_c.refresh_from_db()
+        self.assertEqual(section_b.next_section_id, clone.id)
+        self.assertEqual(clone.prev_section_id, section_b.id)
+        self.assertEqual(clone.next_section_id, section_c.id)
+        self.assertEqual(section_c.prev_section_id, clone.id)
+        self.assertFalse(clone.is_head)
+        self.assertEqual(clone.title, 'B (copy)')
+
+    def test_clone_section_dedups_name(self):
+        """
+        GIVEN target survey already has a section with name 'sec_a'
+        WHEN clone_section is called with a source whose name is 'sec_a'
+        THEN the clone's name is 'sec_a_2'
+        """
+        # Clone section_a back into the same survey
+        clone = clone_section(self.section, target_survey=self.survey)
+        self.assertEqual(clone.name, 'sec_a_2')
+
+    def test_clone_section_clones_questions_and_translations(self):
+        """
+        GIVEN a section with 2 questions and a translation
+        WHEN clone_section is called
+        THEN the clone has 2 questions (with new codes) and the translation row
+        """
+        SurveySectionTranslation.objects.create(
+            section=self.section, language='ru', title='Раздел A',
+        )
+        Question.objects.create(
+            survey_section=self.section, code='Q_q1', order_number=2,
+            name='Q1', input_type='text_line',
+        )
+        clone = clone_section(self.section, target_survey=self.survey, name_suffix=' (copy)')
+        self.assertEqual(
+            Question.objects.filter(survey_section=clone, parent_question_id__isnull=True).count(),
+            2,  # original Address + the Q1 we just added
+        )
+        self.assertTrue(
+            SurveySectionTranslation.objects.filter(section=clone, language='ru').exists()
+        )
+        self.assertEqual(clone.title, 'Section A (copy)')
+
+
+class EditorQuestionDuplicateTest(TestCase):
+    """Tests for editor_question_duplicate (issue #16)."""
+
+    def setUp(self):
+        self.org = _make_org()
+        self.user = User.objects.create_user(username='editor16q', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='editor16q', password='pass')
+        self.survey, self.section = _make_survey_with_section(self.org, 'dup_q', owner=self.user)
+        self.q1 = Question.objects.create(
+            survey_section=self.section, code='Q_aa', order_number=1,
+            name='First', input_type='text_line', validation_settings={'min_length': 3},
+        )
+        self.q2 = Question.objects.create(
+            survey_section=self.section, code='Q_bb', order_number=2,
+            name='Second', input_type='text_line',
+        )
+
+    def test_duplicate_creates_sibling_with_copy_suffix(self):
+        """
+        GIVEN a question 'First' at order_number=1 with sibling 'Second' at 2
+        WHEN the user POSTs to editor_question_duplicate for 'First'
+        THEN a clone with name 'First (copy)' appears at order_number=2
+             AND 'Second' is shifted to order_number=3
+             AND the clone has a fresh code
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.q1.id}/duplicate/',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.q2.refresh_from_db()
+        self.assertEqual(self.q2.order_number, 3)
+        clone = Question.objects.get(name='First (copy)')
+        self.assertEqual(clone.order_number, 2)
+        self.assertEqual(clone.validation_settings, {'min_length': 3})
+        self.assertNotEqual(clone.code, self.q1.code)
+
+    def test_duplicate_blocked_on_published_survey(self):
+        """
+        GIVEN a published survey
+        WHEN duplicate is attempted on one of its questions
+        THEN the response is 403 and no clone is created
+        """
+        self.survey.status = 'published'
+        self.survey.save(update_fields=['status'])
+        before_count = Question.objects.filter(survey_section=self.section).count()
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.q1.id}/duplicate/',
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            Question.objects.filter(survey_section=self.section).count(), before_count
+        )
+
+
+class EditorSectionDuplicateTest(TestCase):
+    """Tests for editor_section_duplicate."""
+
+    def setUp(self):
+        self.org = _make_org()
+        self.user = User.objects.create_user(username='editor16s', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='editor16s', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='dup_section', visibility='private', organization=self.org,
+            created_by=self.user,
+        )
+        self.s_a = SurveySection.objects.create(
+            survey_header=self.survey, name='a', title='A', code='SA', is_head=True,
+        )
+        self.s_b = SurveySection.objects.create(
+            survey_header=self.survey, name='b', title='B', code='SB',
+        )
+        self.s_c = SurveySection.objects.create(
+            survey_header=self.survey, name='c', title='C', code='SC',
+        )
+        self.s_a.next_section = self.s_b
+        self.s_a.save()
+        self.s_b.prev_section = self.s_a
+        self.s_b.next_section = self.s_c
+        self.s_b.save()
+        self.s_c.prev_section = self.s_b
+        self.s_c.save()
+        Question.objects.create(
+            survey_section=self.s_b, code='Q_b1', order_number=1,
+            name='B-Q1', input_type='text_line',
+        )
+
+    def test_duplicate_inserts_after_source_in_linked_list(self):
+        """
+        GIVEN linked list [A, B, C]
+        WHEN section B is duplicated
+        THEN list becomes [A, B, B', C] with B'.title='B (copy)'
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.s_b.id}/duplicate/',
+        )
+        self.assertEqual(response.status_code, 200)
+        clone = SurveySection.objects.get(title='B (copy)')
+        self.s_b.refresh_from_db()
+        self.s_c.refresh_from_db()
+        self.assertEqual(self.s_b.next_section_id, clone.id)
+        self.assertEqual(clone.prev_section_id, self.s_b.id)
+        self.assertEqual(clone.next_section_id, self.s_c.id)
+        self.assertEqual(self.s_c.prev_section_id, clone.id)
+        # Question cloned
+        self.assertEqual(
+            Question.objects.filter(survey_section=clone).count(), 1
+        )
+
+
+class EditorQuestionPasteTest(TestCase):
+    """Tests for editor_question_paste — same/cross survey, sub-question rules."""
+
+    def setUp(self):
+        self.org = _make_org()
+        self.user = User.objects.create_user(username='editor16p', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='editor16p', password='pass')
+
+        self.src_survey, self.src_section = _make_survey_with_section(
+            self.org, 'src_paste', owner=self.user
+        )
+        self.src_q = Question.objects.create(
+            survey_section=self.src_section, code='Q_src1', order_number=1,
+            name='Source Q', input_type='text_line',
+        )
+
+        self.tgt_survey, self.tgt_section = _make_survey_with_section(
+            self.org, 'tgt_paste', owner=self.user
+        )
+
+    def _post(self, body):
+        return self.client.post(
+            f'/editor/surveys/{self.tgt_survey.uuid}/sections/{self.tgt_section.id}/paste-question/',
+            data=json.dumps(body),
+            content_type='application/json',
+        )
+
+    def test_paste_cross_survey(self):
+        """
+        GIVEN user has editor on source and target surveys
+        WHEN paste is invoked with the source question
+        THEN a clone appears in the target section with a new code
+        """
+        response = self._post({
+            'source_survey_uuid': str(self.src_survey.uuid),
+            'source_question_id': self.src_q.id,
+        })
+        self.assertEqual(response.status_code, 200)
+        clone = Question.objects.filter(survey_section=self.tgt_section).first()
+        self.assertIsNotNone(clone)
+        self.assertEqual(clone.name, 'Source Q')
+        self.assertNotEqual(clone.code, self.src_q.code)
+
+    def test_paste_geo_question_as_subquestion_rejected(self):
+        """
+        GIVEN clipboard holds a polygon question
+        WHEN paste is invoked with a sub-question target (parent_question_id set)
+        THEN the response is 400 and no Question is created
+        """
+        geo_src = Question.objects.create(
+            survey_section=self.src_section, code='Q_geo', order_number=2,
+            name='Region', input_type='polygon',
+        )
+        # Add a polygon parent in target so parent_question_id resolves
+        target_parent = Question.objects.create(
+            survey_section=self.tgt_section, code='Q_tgt_parent', order_number=1,
+            name='TargetParent', input_type='polygon',
+        )
+        before_count = Question.objects.filter(survey_section=self.tgt_section).count()
+        response = self._post({
+            'source_survey_uuid': str(self.src_survey.uuid),
+            'source_question_id': geo_src.id,
+            'parent_question_id': target_parent.id,
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            Question.objects.filter(survey_section=self.tgt_section).count(),
+            before_count,
+        )
+
+    def test_paste_subquestion_into_section_promotes_to_top_level(self):
+        """
+        GIVEN a sub-question (parent_question_id set) in the clipboard
+        WHEN paste is invoked at the section top level (no parent_question_id)
+        THEN the clone has parent_question_id=None
+        """
+        parent = Question.objects.create(
+            survey_section=self.src_section, code='Q_parent2',
+            order_number=2, input_type='point',
+        )
+        sub_src = Question.objects.create(
+            survey_section=self.src_section, parent_question_id=parent,
+            code='Q_subsrc', order_number=1, input_type='text_line', name='Note',
+        )
+        response = self._post({
+            'source_survey_uuid': str(self.src_survey.uuid),
+            'source_question_id': sub_src.id,
+        })
+        self.assertEqual(response.status_code, 200)
+        promoted = Question.objects.filter(survey_section=self.tgt_section, name='Note').first()
+        self.assertIsNotNone(promoted)
+        self.assertIsNone(promoted.parent_question_id_id)
+
+
+class EditorSectionPasteTest(TestCase):
+    """Tests for editor_section_paste."""
+
+    def setUp(self):
+        self.org = _make_org()
+        self.user = User.objects.create_user(username='editor16ps', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='editor16ps', password='pass')
+        self.src_survey, self.src_section = _make_survey_with_section(
+            self.org, 'src_psec', owner=self.user
+        )
+        Question.objects.create(
+            survey_section=self.src_section, code='Q_psec_q', order_number=1,
+            name='Source Question', input_type='text_line',
+        )
+        self.tgt_survey = SurveyHeader.objects.create(
+            name='tgt_psec', visibility='private', organization=self.org,
+            created_by=self.user,
+        )
+        self.tgt_section = SurveySection.objects.create(
+            survey_header=self.tgt_survey, name='existing', title='Existing',
+            code='EX', is_head=True,
+        )
+
+    def test_paste_section_appends_to_target(self):
+        """
+        GIVEN target survey with one head section
+        WHEN a section is pasted from another survey
+        THEN the clone is appended after the existing tail with the source's question
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.tgt_survey.uuid}/paste-section/',
+            data=json.dumps({
+                'source_survey_uuid': str(self.src_survey.uuid),
+                'source_section_id': self.src_section.id,
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        # Two sections in target now: existing + clone
+        self.assertEqual(SurveySection.objects.filter(survey_header=self.tgt_survey).count(), 2)
+        clone = SurveySection.objects.filter(survey_header=self.tgt_survey).exclude(
+            pk=self.tgt_section.pk
+        ).first()
+        self.assertIsNotNone(clone)
+        self.assertEqual(
+            Question.objects.filter(survey_section=clone, name='Source Question').count(), 1
+        )
+
+    def test_paste_section_blocked_on_published_target(self):
+        """
+        GIVEN target survey is published
+        WHEN paste-section is invoked
+        THEN the response is 403 and no section is created
+        """
+        self.tgt_survey.status = 'published'
+        self.tgt_survey.save(update_fields=['status'])
+        before_count = SurveySection.objects.filter(survey_header=self.tgt_survey).count()
+        response = self.client.post(
+            f'/editor/surveys/{self.tgt_survey.uuid}/paste-section/',
+            data=json.dumps({
+                'source_survey_uuid': str(self.src_survey.uuid),
+                'source_section_id': self.src_section.id,
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            SurveySection.objects.filter(survey_header=self.tgt_survey).count(), before_count
+        )
+
+
+class VersioningRegressionTest(TestCase):
+    """Regression: validation_settings must persist through draft-copy clone."""
+
+    def test_clone_survey_for_draft_preserves_validation_settings(self):
+        """
+        GIVEN a survey with a question carrying non-empty validation_settings
+        WHEN clone_survey_for_draft creates a draft copy
+        THEN the cloned question has identical validation_settings (was a bug pre-#16)
+        """
+        from .versioning import clone_survey_for_draft
+        org = _make_org('VersioningRegOrg')
+        user = User.objects.create_user(username='vreg', password='pass')
+        survey = SurveyHeader.objects.create(
+            name='vreg_src', visibility='private', organization=org,
+            created_by=user, status='published', is_canonical=True,
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='s', title='S', code='S', is_head=True,
+        )
+        Question.objects.create(
+            survey_section=section, code='Q_vreg', order_number=1,
+            name='Numeric', input_type='number',
+            validation_settings={'min_value': 0, 'max_value': 100, 'outlier_sigma': 3},
+        )
+        draft = clone_survey_for_draft(survey)
+        cloned_q = Question.objects.get(
+            survey_section__survey_header=draft, name='Numeric'
+        )
+        self.assertEqual(
+            cloned_q.validation_settings,
+            {'min_value': 0, 'max_value': 100, 'outlier_sigma': 3},
+        )

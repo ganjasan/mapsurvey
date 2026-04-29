@@ -93,6 +93,16 @@
                     {% else %}disabled{% endif %}>
                 <i class="fas fa-plus"></i> New Section
             </button>
+            {% if not is_read_only %}
+            <button class="paste-section-btn"
+                    hx-post="{% url 'editor_section_paste' survey.uuid %}"
+                    hx-vals='js:{"source_survey_uuid": Clipboard.peek()?.source_survey_uuid, "source_section_id": Clipboard.peek()?.source_id}'
+                    hx-target="#sections-list"
+                    hx-swap="beforeend"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                <i class="fas fa-paste"></i> Paste section
+            </button>
+            {% endif %}
         </div>
     </aside>
 
@@ -422,6 +432,24 @@ document.addEventListener('DOMContentLoaded', function() {
         initSortableOnList(document.getElementById('questions-list'));
         document.querySelectorAll('.subquestion-list').forEach(initSortableOnList);
     });
+
+    // ── Issue #16: keyboard shortcuts ──
+    {% if not is_read_only %}
+    var _surveyUuid = '{{ survey.uuid }}';
+    var _csrfToken = '{{ csrf_token }}';
+    function _currentSectionId() {
+        var active = document.querySelector('.section-item.active');
+        return active ? active.dataset.sectionId : null;
+    }
+    if (window.KeyboardShortcuts) {
+        KeyboardShortcuts.bind(
+            function() { return _surveyUuid; },
+            _currentSectionId,
+            _csrfToken,
+            false
+        );
+    }
+    {% endif %}
 
     // ── Panel resize & collapse ──
     var STORAGE_KEY = 'editor_panels_{{ survey.uuid }}';

@@ -9,6 +9,7 @@ Provides draft-copy workflow for published surveys:
 from django.db import transaction
 from django.db.models import Q
 
+from .cloning import clone_question
 from .models import (
     SurveyHeader, SurveySection, SurveySectionTranslation,
     Question, QuestionTranslation, Answer, SurveySession,
@@ -95,7 +96,14 @@ def clone_survey_for_draft(canonical):
         for question in Question.objects.filter(
             survey_section=section, parent_question_id__isnull=True
         ).order_by('order_number'):
-            _clone_question(question, new_section, parent=None)
+            clone_question(
+                question,
+                target_section=new_section,
+                parent=None,
+                regenerate_code=False,  # versioning preserves codes for compatibility checks
+                name_suffix=None,
+                copy_sub_questions=True,
+            )
 
     # Resolve section linked list
     for old_section in sections:
@@ -107,39 +115,6 @@ def clone_survey_for_draft(canonical):
         new_section.save()
 
     return draft
-
-
-def _clone_question(question, new_section, parent):
-    """Clone a question with same code, choices, translations, and sub-questions."""
-    new_question = Question.objects.create(
-        survey_section=new_section,
-        parent_question_id=parent,
-        code=question.code,
-        order_number=question.order_number,
-        name=question.name,
-        subtext=question.subtext,
-        input_type=question.input_type,
-        choices=question.choices,
-        required=question.required,
-        color=question.color,
-        icon_class=question.icon_class,
-        image=question.image,
-    )
-
-    # Clone translations
-    for trans in QuestionTranslation.objects.filter(question=question):
-        QuestionTranslation.objects.create(
-            question=new_question,
-            language=trans.language,
-            name=trans.name,
-            subtext=trans.subtext,
-        )
-
-    # Clone sub-questions recursively
-    for sub_q in Question.objects.filter(parent_question_id=question).order_by('order_number'):
-        _clone_question(sub_q, new_section, parent=new_question)
-
-    return new_question
 
 
 def check_draft_compatibility(draft, canonical):
