@@ -1,6 +1,8 @@
 from django import forms
 from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP_CHOICES
 
+SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon')
+
 
 class SurveyHeaderForm(forms.ModelForm):
     class Meta:
@@ -74,3 +76,12 @@ class QuestionForm(forms.ModelForm):
         help_texts = {
             'icon_class': '<a href="https://fontawesome.com/v5/search" target="_blank" rel="noopener">Font Awesome</a> class',
         }
+
+    def __init__(self, *args, is_subquestion=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if is_subquestion:
+            field = self.fields['input_type']
+            field.choices = [
+                (value, label) for value, label in field.choices
+                if value not in SUBQUESTION_DISALLOWED_INPUT_TYPES
+            ]
