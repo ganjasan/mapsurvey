@@ -642,3 +642,37 @@ class Story(models.Model):
     def get_story_type_display_label(self):
         return dict(STORY_TYPE_CHOICES).get(self.story_type, self.story_type)
 
+
+class AbuseEvent(models.Model):
+    """Audit log of triggered abuse defenses on the registration endpoint.
+
+    Each defense (captcha, ratelimit, honeypot) writes one row when it
+    blocks a request. The Phase 3 anomaly dashboard queries this table.
+    The 'email_domain' choice is reserved for the Phase 2 disposable-domain
+    blocklist defense; including it here avoids a future migration.
+
+    Intentionally does NOT persist email or attempted username — those have
+    GDPR retention concerns. They MAY appear in the operational log line for
+    short-lived diagnostic use but are never stored.
+    """
+
+    DEFENSE_CHOICES = (
+        ('captcha', 'Turnstile CAPTCHA'),
+        ('ratelimit', 'Rate Limit'),
+        ('honeypot', 'Honeypot'),
+        ('email_domain', 'Disposable Email Domain'),
+    )
+
+    defense = models.CharField(max_length=20, choices=DEFENSE_CHOICES, db_index=True)
+    ip = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    detail = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.defense} from {self.ip} at {self.created_at}"
+

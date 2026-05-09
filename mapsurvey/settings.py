@@ -62,6 +62,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'survey.middleware.CloudflareIPMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -265,3 +266,59 @@ NEWSLETTER_PHYSICAL_ADDRESS = os.environ.get(
     'NEWSLETTER_PHYSICAL_ADDRESS',
     'Kyrgyzstan, Bishkek, 11 mkr., d. 14, kv. 53, 720049'
 )
+
+# Redis cache (rate limiting). Reuses the existing mapsurvey-redis service
+# on Render (DB 1; Celery uses DB 0).
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/1')
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'IGNORE_EXCEPTIONS': True,
+        },
+    },
+}
+# When the cache backend is unreachable, allow registrations through rather
+# than locking everyone out. Honeypot + Turnstile remain in effect.
+DJANGO_REDIS_IGNORE_EXCEPTIONS = True
+RATELIMIT_FAIL_OPEN = True
+
+# Abuse prevention — Cloudflare Turnstile + per-IP rate limit + honeypot
+# on /accounts/register/. See openspec/changes/add-registration-abuse-defenses/.
+TURNSTILE_SITE_KEY = os.environ.get('TURNSTILE_SITE_KEY', '')
+TURNSTILE_SECRET_KEY = os.environ.get('TURNSTILE_SECRET_KEY', '')
+# When True, trust HTTP_CF_CONNECTING_IP for client IP (production behind
+# Cloudflare). Default False for local dev where the header is spoofable.
+CLOUDFLARE_TRUSTED = os.environ.get('CLOUDFLARE_TRUSTED', 'False').lower() in ('true', '1')
+REGISTRATION_RATE_LIMIT_HOUR = int(os.environ.get('REGISTRATION_RATE_LIMIT_HOUR', 3))
+REGISTRATION_RATE_LIMIT_DAY = int(os.environ.get('REGISTRATION_RATE_LIMIT_DAY', 10))
+
+LOGGING = {
+    # This LOGGING block configures only the `abuse.*` logger hierarchy used
+    # by survey/abuse.py. Django's own loggers (django.request, django.db,
+    # etc.) continue to use their default handlers — disable_existing_loggers
+    # is False precisely to preserve them. If broader app-wide log routing
+    # becomes desirable, add a root ('') logger entry.
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'abuse': {
+            'format': '%(asctime)s %(name)s %(levelname)s %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'abuse',
+        },
+    },
+    'loggers': {
+        'abuse': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+}

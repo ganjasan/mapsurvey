@@ -64,3 +64,10 @@
 | 59 | feature | [Audit Trail (edit history log)](feature-audit-trail.md) | low | backend | data-management | 2026-04-05 |
 | 60 | improvement | [Hide language picker when single language](improvement-hide-language-picker-single-lang.md) | medium | frontend | — | 2026-04-14 |
 | 61 | idea | [Sub-question Discoverability Testing](idea-subquestion-discoverability-testing.md) | medium | general | — | 2026-04-14 |
+| 66 | feature | [Registration CAPTCHA (Cloudflare Turnstile)](feature-registration-captcha.md) | **very high** | backend | abuse-prevention | 2026-05-08 |
+| 67 | feature | [Registration Rate Limiting](feature-registration-rate-limiting.md) | **very high** | backend | abuse-prevention | 2026-05-08 |
+| 68 | feature | [Registration Honeypot Field](feature-registration-honeypot.md) | high | backend | abuse-prevention | 2026-05-08 |
+| 69 | feature | [Email Verification Before Account Creation](feature-email-verification-before-account.md) | high | backend | abuse-prevention | 2026-05-08 |
+| 70 | feature | [Disposable-Email-Domain Blocklist](feature-disposable-email-blocklist.md) | medium | backend | abuse-prevention | 2026-05-08 |
+| 71 | feature | [Auto-Purge of Unconfirmed Signups](feature-unconfirmed-signup-purge.md) | medium | backend | abuse-prevention | 2026-05-08 |
+| 72 | improvement | [Signup Anomaly Dashboard](improvement-signup-anomaly-dashboard.md) | medium | backend | abuse-prevention | 2026-05-08 |

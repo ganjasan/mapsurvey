@@ -12,24 +12,56 @@
 
     <form method="post" action="">
         {% csrf_token %}
-        {% for field in form %}
-        <div class="form-group">
-            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
-            {% if field.help_text %}
-                <small class="helptext">{{ field.help_text }}</small>
-            {% endif %}
-            {% if field.errors %}
-                <ul class="errorlist">
-                {% for error in field.errors %}
-                    <li>{{ error }}</li>
-                {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
+        {% if form.non_field_errors %}
+        <ul class="errorlist">
+        {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
         {% endfor %}
+        </ul>
+        {% endif %}
+        {% for field in form %}
+            {% if field.name == "website" %}
+                {# Honeypot — hidden from humans, present in DOM for naive bots. #}
+                <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden" aria-hidden="true">
+                    <label for="{{ field.id_for_label }}">Website</label>
+                    {{ field }}
+                </div>
+            {% else %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <small class="helptext">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% if field.errors %}
+                        <ul class="errorlist">
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        {% if TURNSTILE_SITE_KEY %}
+        <div class="form-group">
+            <div class="cf-turnstile" data-sitekey="{{ TURNSTILE_SITE_KEY }}"></div>
+        </div>
+        {% endif %}
+
         <button type="submit" class="btn-auth" id="register-btn">{% trans "Register" %}</button>
+
+        {% if TURNSTILE_SITE_KEY %}
+        <p class="auth-privacy-notice" style="font-size:.8rem;color:#888;margin-top:1rem">
+            {% trans "This form is protected by Cloudflare Turnstile." %}
+            <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">{% trans "Privacy" %}</a>.
+        </p>
+        {% endif %}
     </form>
+    {% if TURNSTILE_SITE_KEY %}
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    {% endif %}
     <script>
     document.getElementById('register-btn').closest('form').addEventListener('submit', function() {
         var btn = document.getElementById('register-btn');

@@ -38,6 +38,16 @@ from .serialization import (
     ExportError,
     EXPORT_MODES,
 )
+from .abuse import (
+    HONEYPOT_FIELD_NAME,
+    RegistrationAbuseForm,
+    client_ip,
+    log_abuse_event,
+    verify_turnstile,
+)
+from django_ratelimit.core import is_ratelimited
+from django.conf import settings as conf_settings
+from django.http import HttpResponse
 
 
 class AsyncEmailRegistrationView(
@@ -73,6 +83,92 @@ class AsyncEmailRegistrationView(
             ),
             daemon=True,
         ).start()
+
+
+class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
+    """Registration view with three layered abuse defenses.
+
+    Defenses fire in this order on POST:
+      1. Honeypot — `website` field must be empty. Filled → silent
+         fake-success redirect, no User created, no email sent.
+      2. Rate limit — per-IP via django-ratelimit on dispatch().
+      3. Turnstile — siteverify token check before form save.
+
+    See `survey/abuse.py` for the helpers and openspec/changes/
+    add-registration-abuse-defenses/ for the design.
+    """
+
+    form_class = RegistrationAbuseForm
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["TURNSTILE_SITE_KEY"] = conf_settings.TURNSTILE_SITE_KEY
+        return ctx
+
+    def dispatch(self, request, *args, **kwargs):
+        # Rate limiting on POST only. Two stacked windows (hourly, daily) share
+        # the same key (client IP). We call is_ratelimited imperatively rather
+        # than using @ratelimit so we can log the AbuseEvent before responding
+        # with our own 429 instead of django-ratelimit's default exception.
+        #
+        # Fail-open: any exception from the cache backend (Redis outage etc.)
+        # is swallowed so legitimate signups continue working. Honeypot +
+        # Turnstile remain in effect to catch bots even when rate-limit is
+        # temporarily blind.
+        if request.method == "POST":
+            limits = (
+                # (group, rate, retry_after_seconds, detail)
+                ("registration_hour", f"{conf_settings.REGISTRATION_RATE_LIMIT_HOUR}/h", 3600, "hour"),
+                ("registration_day", f"{conf_settings.REGISTRATION_RATE_LIMIT_DAY}/d", 86400, "day"),
+            )
+            for group, rate, retry_after, detail in limits:
+                try:
+                    limited = is_ratelimited(
+                        request=request,
+                        group=group,
+                        fn=None,
+                        key="survey.abuse.ratelimit_key",
+                        rate=rate,
+                        method="POST",
+                        increment=True,
+                    )
+                except Exception:
+                    limited = False
+                if limited:
+                    log_abuse_event("ratelimit", request, detail)
+                    resp = HttpResponse(
+                        "Too many registration attempts. Please try again later.",
+                        status=429,
+                        content_type="text/plain",
+                    )
+                    resp["Retry-After"] = str(retry_after)
+                    return resp
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        from django.urls import reverse
+
+        # 1. Honeypot — checked from raw POST BEFORE form validation so a bot
+        # filling the honeypot AND submitting other invalid fields still gets
+        # the fake-success redirect (not a form-error 200 that fingerprints
+        # the defense).
+        if request.POST.get(HONEYPOT_FIELD_NAME, "").strip():
+            log_abuse_event("honeypot", request, "filled")
+            return redirect(reverse("django_registration_complete"))
+
+        form = self.get_form()
+        if not form.is_valid():
+            return self.form_invalid(form)
+
+        # 2. Turnstile — Cloudflare's JS widget posts as `cf-turnstile-response`.
+        token = request.POST.get("cf-turnstile-response", "")
+        if not verify_turnstile(token, client_ip(request)):
+            detail = "missing_token" if not token else "siteverify_rejected"
+            log_abuse_event("captcha", request, detail)
+            form.add_error(None, "CAPTCHA verification failed. Please try again.")
+            return self.form_invalid(form)
+
+        return self.form_valid(form)
 
 
 class DirectActivationView(

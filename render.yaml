@@ -79,6 +79,23 @@ services:
           type: redis
           name: mapsurvey-redis
           property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: mapsurvey-redis
+          property: connectionString
+      - key: TURNSTILE_SITE_KEY
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: TURNSTILE_SECRET_KEY
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: CLOUDFLARE_TRUSTED
+        value: "True"
+      - key: REGISTRATION_RATE_LIMIT_HOUR
+        value: "3"
+      - key: REGISTRATION_RATE_LIMIT_DAY
+        value: "10"
       - key: NEWSLETTER_SITE_URL
         value: "https://mapsurvey.org"
     disk:
