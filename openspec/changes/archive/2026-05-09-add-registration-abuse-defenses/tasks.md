@@ -76,11 +76,11 @@
 
 - [x] 9.1 Render env vars set on `mapsurvey` web service (TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY) via Render MCP. **Code deploy still pending** until commit + PR + merge to master
 - [x] 9.2 Real `TURNSTILE_SITE_KEY=0x4AAAAAADL7rIPe_GpiUH5A` and `TURNSTILE_SECRET_KEY` set on Render. `CLOUDFLARE_TRUSTED=True` will arrive via render.yaml on next blueprint sync
-- [ ] 9.3 Manual browser sign-up on production with real Turnstile challenge — **PENDING prod code deploy**
-- [ ] 9.4 Activation email arrival on prod — **PENDING prod code deploy**
-- [x] 9.5 Local curl test — `curl -X POST http://localhost:8000/accounts/register/ -d "...&website=trap..."` → 302 redirect, 0 users created, 1 AbuseEvent row of `defense='honeypot'`. Verified end-to-end
-- [x] 9.6 Local curl rate-limit test — 4 rapid POSTs from same IP, 4th returns HTTP 429 with `Retry-After: 3600`, AbuseEvent row written
-- [ ] 9.7 Tail Render logs for `abuse.honeypot`/`abuse.ratelimit` lines — **PENDING prod code deploy**. Local server logs verified working
+- [x] 9.3 Manual browser sign-up on production with real Turnstile challenge — verified by user (visual confirmation widget clears, registration completes)
+- [x] 9.4 Activation email arrival on prod — verified by user
+- [x] 9.5 Prod curl test (`https://mapsurvey.org/accounts/register/`) with `website=trap` → HTTP 302 to `/accounts/register/complete/`, no User created, AbuseEvent(defense='honeypot', ip=193.34.225.177) row written
+- [x] 9.6 Prod curl rate-limit test — POSTs from same IP exceed hourly limit → HTTP 429 with `Retry-After: 3600`, AbuseEvent(defense='ratelimit', detail='hour') rows written
+- [x] 9.7 Render log tail confirmed all 3 abuse loggers writing WARNING lines: `abuse.honeypot`, `abuse.captcha`, `abuse.ratelimit`. Bonus: real-world bot caught at 08:10:27 (ip=31.40.204.150, Chrome/41 on Win 7 UA, filled honeypot) within 4 minutes of deploy going live
 
 ## 10. Documentation and cleanup
 
