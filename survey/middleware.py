@@ -1,4 +1,32 @@
+from django.conf import settings
+
 from .models import Membership, Organization, Invitation
+
+
+class CloudflareIPMiddleware:
+    """Set request.cf_ip to the real client IP.
+
+    On Render the app runs behind Cloudflare; the real client IP arrives in
+    the CF-Connecting-IP header. REMOTE_ADDR reflects only the last hop.
+    Reading the header is only safe when we know we are actually behind
+    Cloudflare — otherwise an attacker can spoof it. The CLOUDFLARE_TRUSTED
+    setting (default False) gates the read.
+
+    Does NOT modify request.META["REMOTE_ADDR"] — Django internals trust
+    that attribute and silent rewrites are surprising. Consumers should
+    read request.cf_ip explicitly.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if getattr(settings, 'CLOUDFLARE_TRUSTED', False):
+            cf_ip = request.META.get('HTTP_CF_CONNECTING_IP', '').strip()
+            request.cf_ip = cf_ip or request.META.get('REMOTE_ADDR', '')
+        else:
+            request.cf_ip = request.META.get('REMOTE_ADDR', '')
+        return self.get_response(request)
 
 
 class ActiveOrgMiddleware:

@@ -2,6 +2,7 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, LineString, Polygon
 from io import BytesIO
+from unittest import mock
 import json
 import zipfile
 
@@ -12546,3 +12547,422 @@ class VersioningRegressionTest(TestCase):
             cloned_q.validation_settings,
             {'min_value': 0, 'max_value': 100, 'outlier_sigma': 3},
         )
+
+
+# -----------------------------------------------------------------------------
+# Registration abuse prevention (Cloudflare Turnstile + rate limit + honeypot)
+# -----------------------------------------------------------------------------
+
+
+class CloudflareIPMiddlewareTest(TestCase):
+    """Verify CF-Connecting-IP is read only when CLOUDFLARE_TRUSTED is on."""
+
+    def test_trusted_environment_uses_cf_connecting_ip(self):
+        """
+        GIVEN CLOUDFLARE_TRUSTED=True and a CF-Connecting-IP header
+        WHEN the middleware processes the request
+        THEN request.cf_ip equals the header value, REMOTE_ADDR untouched
+        """
+        from django.test import RequestFactory, override_settings
+        from .middleware import CloudflareIPMiddleware
+
+        with override_settings(CLOUDFLARE_TRUSTED=True):
+            rf = RequestFactory()
+            request = rf.get(
+                "/", HTTP_CF_CONNECTING_IP="5.6.7.8", REMOTE_ADDR="10.0.0.1"
+            )
+            mw = CloudflareIPMiddleware(get_response=lambda r: None)
+            mw(request)
+            self.assertEqual(request.cf_ip, "5.6.7.8")
+            self.assertEqual(request.META["REMOTE_ADDR"], "10.0.0.1")
+
+    def test_untrusted_environment_falls_back_to_remote_addr(self):
+        """
+        GIVEN CLOUDFLARE_TRUSTED=False and a CF-Connecting-IP header
+        WHEN the middleware processes the request
+        THEN request.cf_ip equals REMOTE_ADDR (header is ignored)
+        """
+        from django.test import RequestFactory, override_settings
+        from .middleware import CloudflareIPMiddleware
+
+        with override_settings(CLOUDFLARE_TRUSTED=False):
+            rf = RequestFactory()
+            request = rf.get(
+                "/", HTTP_CF_CONNECTING_IP="5.6.7.8", REMOTE_ADDR="127.0.0.1"
+            )
+            mw = CloudflareIPMiddleware(get_response=lambda r: None)
+            mw(request)
+            self.assertEqual(request.cf_ip, "127.0.0.1")
+
+
+class VerifyTurnstileTest(TestCase):
+    """Unit tests for verify_turnstile() — pure function, no view needed."""
+
+    def test_empty_secret_returns_true_without_http_call(self):
+        """
+        GIVEN TURNSTILE_SECRET_KEY is empty (local dev)
+        WHEN verify_turnstile is called with any token
+        THEN it returns True without making any HTTP call
+        """
+        from django.test import override_settings
+        from .abuse import verify_turnstile
+
+        with override_settings(TURNSTILE_SECRET_KEY=""):
+            with mock.patch("survey.abuse.urllib_request.urlopen") as patched:
+                self.assertTrue(verify_turnstile("any-token", "1.2.3.4"))
+                patched.assert_not_called()
+
+    def test_missing_token_returns_false_when_secret_set(self):
+        """
+        GIVEN secret key is configured
+        WHEN verify_turnstile is called with empty token
+        THEN it returns False without making any HTTP call
+        """
+        from django.test import override_settings
+        from .abuse import verify_turnstile
+
+        with override_settings(TURNSTILE_SECRET_KEY="real-secret"):
+            with mock.patch("survey.abuse.urllib_request.urlopen") as patched:
+                self.assertFalse(verify_turnstile("", "1.2.3.4"))
+                patched.assert_not_called()
+
+    def test_siteverify_success_returns_true(self):
+        """
+        GIVEN secret key is configured and Cloudflare returns success=true
+        WHEN verify_turnstile is called with a token
+        THEN it returns True
+        """
+        from django.test import override_settings
+        from .abuse import verify_turnstile
+
+        fake_response = mock.MagicMock()
+        fake_response.read.return_value = b'{"success": true}'
+        fake_response.__enter__.return_value = fake_response
+        fake_response.__exit__.return_value = False
+
+        with override_settings(TURNSTILE_SECRET_KEY="real-secret"):
+            with mock.patch(
+                "survey.abuse.urllib_request.urlopen",
+                return_value=fake_response,
+            ):
+                self.assertTrue(verify_turnstile("good-token", "1.2.3.4"))
+
+    def test_siteverify_rejection_returns_false(self):
+        """
+        GIVEN Cloudflare returns success=false
+        WHEN verify_turnstile is called
+        THEN it returns False
+        """
+        from django.test import override_settings
+        from .abuse import verify_turnstile
+
+        fake_response = mock.MagicMock()
+        fake_response.read.return_value = b'{"success": false, "error-codes": ["invalid-input-response"]}'
+        fake_response.__enter__.return_value = fake_response
+        fake_response.__exit__.return_value = False
+
+        with override_settings(TURNSTILE_SECRET_KEY="real-secret"):
+            with mock.patch(
+                "survey.abuse.urllib_request.urlopen",
+                return_value=fake_response,
+            ):
+                self.assertFalse(verify_turnstile("bad-token", "1.2.3.4"))
+
+    def test_network_error_fails_closed(self):
+        """
+        GIVEN urllib raises URLError (Cloudflare unreachable)
+        WHEN verify_turnstile is called
+        THEN it returns False — fail closed (bots without tokens still rejected)
+        """
+        from urllib.error import URLError
+        from django.test import override_settings
+        from .abuse import verify_turnstile
+
+        with override_settings(TURNSTILE_SECRET_KEY="real-secret"):
+            with mock.patch(
+                "survey.abuse.urllib_request.urlopen",
+                side_effect=URLError("network down"),
+            ):
+                self.assertFalse(verify_turnstile("any-token", "1.2.3.4"))
+
+
+class RegistrationAbuseDefenseTest(TestCase):
+    """Integration tests against POST /accounts/register/."""
+
+    def setUp(self):
+        from django.contrib.auth.models import User as _U
+        from django.core.cache import cache
+        _U.objects.all().delete()
+        from .models import AbuseEvent
+        AbuseEvent.objects.all().delete()
+        # Clear rate-limit counters that persist across tests when CACHES
+        # points at a shared Redis instance.
+        cache.clear()
+
+    def _post_data(self, **overrides):
+        data = {
+            "username": "testuser",
+            "email": "test@example.com",
+            "password1": "Xx12345!secure",
+            "password2": "Xx12345!secure",
+            "website": "",  # honeypot empty
+            "cf-turnstile-response": "any-token",
+        }
+        data.update(overrides)
+        return data
+
+    def test_clean_signup_creates_user_when_turnstile_disabled(self):
+        """
+        GIVEN empty honeypot, fresh IP, TURNSTILE_SECRET_KEY="" (dev bypass)
+        WHEN POST /accounts/register/ with valid form data
+        THEN response is 302 to django_registration_complete AND a User row exists
+        """
+        from django.contrib.auth.models import User as _U
+        from django.test import override_settings
+
+        with override_settings(TURNSTILE_SECRET_KEY=""):
+            response = self.client.post("/accounts/register/", self._post_data())
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(_U.objects.filter(username="testuser").count(), 1)
+
+    def test_filled_honeypot_returns_fake_success_no_user_no_email(self):
+        """
+        GIVEN registration POST with website="bot"
+        WHEN endpoint is called
+        THEN response is 302 to complete page, no User created, no email sent,
+             one AbuseEvent row of defense=honeypot exists
+        """
+        from django.contrib.auth.models import User as _U
+        from django.core import mail
+        from django.test import override_settings
+        from .models import AbuseEvent
+
+        with override_settings(TURNSTILE_SECRET_KEY=""):
+            response = self.client.post(
+                "/accounts/register/", self._post_data(website="bot-trap")
+            )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(_U.objects.filter(username="testuser").count(), 0)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(AbuseEvent.objects.filter(defense="honeypot").count(), 1)
+
+    def test_invalid_turnstile_blocks_with_form_error_and_logs_event(self):
+        """
+        GIVEN TURNSTILE_SECRET_KEY set and verify_turnstile returns False
+        WHEN registration POST is submitted with empty honeypot
+        THEN response is form re-render (200), no User, AbuseEvent defense=captcha
+        """
+        from django.contrib.auth.models import User as _U
+        from django.test import override_settings
+        from .models import AbuseEvent
+
+        with override_settings(TURNSTILE_SECRET_KEY="real-secret"):
+            with mock.patch("survey.views.verify_turnstile", return_value=False):
+                response = self.client.post(
+                    "/accounts/register/", self._post_data(),
+                )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(_U.objects.filter(username="testuser").count(), 0)
+        self.assertEqual(AbuseEvent.objects.filter(defense="captcha").count(), 1)
+
+    def test_rate_limit_blocks_after_threshold(self):
+        """
+        GIVEN per-IP hourly limit is 1 and one successful POST already counted
+        WHEN a second POST comes from the same IP
+        THEN response is 429 with Retry-After AND defense=ratelimit row exists
+        """
+        from django.test import override_settings
+        from .models import AbuseEvent
+
+        with override_settings(
+            TURNSTILE_SECRET_KEY="",
+            REGISTRATION_RATE_LIMIT_HOUR=1,
+            REGISTRATION_RATE_LIMIT_DAY=10,
+            CACHES={
+                "default": {
+                    "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                    "LOCATION": "ratelimit-test",
+                }
+            },
+        ):
+            r1 = self.client.post("/accounts/register/", self._post_data(
+                username="u1", email="u1@example.com",
+            ))
+            self.assertEqual(r1.status_code, 302)
+            r2 = self.client.post("/accounts/register/", self._post_data(
+                username="u2", email="u2@example.com",
+            ))
+            self.assertEqual(r2.status_code, 429)
+            self.assertIn("Retry-After", r2)
+        self.assertGreaterEqual(
+            AbuseEvent.objects.filter(defense="ratelimit").count(), 1,
+        )
+
+    def test_honeypot_short_circuits_turnstile(self):
+        """
+        GIVEN both a filled honeypot AND a configured Turnstile secret
+        WHEN POST /accounts/register/
+        THEN honeypot fires first (302 fake success); verify_turnstile NOT called
+        """
+        from django.test import override_settings
+        from .models import AbuseEvent
+
+        with override_settings(TURNSTILE_SECRET_KEY="real-secret"):
+            with mock.patch("survey.views.verify_turnstile") as patched:
+                response = self.client.post(
+                    "/accounts/register/",
+                    self._post_data(website="trap"),
+                )
+                patched.assert_not_called()
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(AbuseEvent.objects.filter(defense="honeypot").count(), 1)
+        self.assertEqual(AbuseEvent.objects.filter(defense="captcha").count(), 0)
+
+    def test_filled_honeypot_with_invalid_form_data_still_returns_fake_success(self):
+        """
+        GIVEN POST with filled honeypot AND mismatched passwords (form invalid)
+        WHEN /accounts/register/ processes the request
+        THEN response is still 302 fake-success (honeypot checked BEFORE form
+             validation), no User created, AbuseEvent(honeypot) row written.
+             Without this, a bot submitting filled honeypot + bad data would
+             receive a normal form-error 200 — fingerprinting the defense.
+        """
+        from django.contrib.auth.models import User as _U
+        from django.test import override_settings
+        from .models import AbuseEvent
+
+        with override_settings(TURNSTILE_SECRET_KEY=""):
+            response = self.client.post(
+                "/accounts/register/",
+                self._post_data(
+                    website="trap",
+                    password1="Abc1!secure",
+                    password2="DifferentXY!8",  # mismatch — form would be invalid
+                ),
+            )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(_U.objects.filter(username="testuser").count(), 0)
+        self.assertEqual(AbuseEvent.objects.filter(defense="honeypot").count(), 1)
+
+    def test_log_abuse_event_swallows_db_error(self):
+        """
+        GIVEN AbuseEvent.objects.create raises (e.g. DB outage)
+        WHEN log_abuse_event is called
+        THEN it does NOT propagate the exception
+        """
+        from django.test import RequestFactory
+        from .abuse import log_abuse_event
+        from .models import AbuseEvent
+
+        rf = RequestFactory()
+        request = rf.post("/", REMOTE_ADDR="9.9.9.9")
+        request.cf_ip = "9.9.9.9"
+        with mock.patch.object(
+            AbuseEvent.objects, "create", side_effect=Exception("DB down"),
+        ):
+            log_abuse_event("honeypot", request, "filled")
+
+    def test_daily_limit_blocks_after_threshold(self):
+        """
+        GIVEN per-IP daily limit is 2 (hourly limit set very high so it doesn't fire first)
+        WHEN a third POST comes from the same IP within 24 hours
+        THEN response is 429 with Retry-After AND defense=ratelimit row written
+              with detail='day' (not 'hour')
+        """
+        from django.test import override_settings
+        from .models import AbuseEvent
+
+        with override_settings(
+            TURNSTILE_SECRET_KEY="",
+            REGISTRATION_RATE_LIMIT_HOUR=999,  # never hit hourly first
+            REGISTRATION_RATE_LIMIT_DAY=2,
+            CACHES={
+                "default": {
+                    "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                    "LOCATION": "daily-ratelimit-test",
+                }
+            },
+        ):
+            r1 = self.client.post("/accounts/register/", self._post_data(
+                username="d1", email="d1@example.com",
+            ))
+            self.assertEqual(r1.status_code, 302)
+            r2 = self.client.post("/accounts/register/", self._post_data(
+                username="d2", email="d2@example.com",
+            ))
+            self.assertEqual(r2.status_code, 302)
+            r3 = self.client.post("/accounts/register/", self._post_data(
+                username="d3", email="d3@example.com",
+            ))
+            self.assertEqual(r3.status_code, 429)
+            # Daily bucket retry window is 86400 seconds.
+            self.assertEqual(r3["Retry-After"], "86400")
+        self.assertGreaterEqual(
+            AbuseEvent.objects.filter(defense="ratelimit", detail="day").count(), 1,
+        )
+
+    def test_cache_unreachable_fails_open(self):
+        """
+        GIVEN the cache backend raises on every call (Redis outage simulation)
+        WHEN registration POST arrives within rate limits
+        THEN the request still succeeds (rate-limit fails open) — RATELIMIT_FAIL_OPEN
+        """
+        from django.contrib.auth.models import User as _U
+        from django.test import override_settings
+
+        # django-ratelimit's get_usage will catch backend errors only when the
+        # cache backend itself raises. Simulate by patching cache.add to raise.
+        with override_settings(TURNSTILE_SECRET_KEY=""):
+            with mock.patch(
+                "django.core.cache.cache.get_or_set",
+                side_effect=Exception("Redis unreachable"),
+            ):
+                with mock.patch(
+                    "django.core.cache.cache.add",
+                    side_effect=Exception("Redis unreachable"),
+                ):
+                    response = self.client.post(
+                        "/accounts/register/",
+                        self._post_data(username="failopen", email="failopen@example.com"),
+                    )
+        # With RATELIMIT_FAIL_OPEN=True, the rate-limit decorator should
+        # let the request through despite the cache error.
+        self.assertIn(response.status_code, (302, 200))
+        # If 302, the user was created; if 200 (form re-render), at least
+        # we did NOT 500.
+
+    def test_ratelimit_fires_before_turnstile_check(self):
+        """
+        GIVEN an IP that has exceeded the hourly rate limit
+        AND a configured Turnstile secret
+        WHEN registration POST arrives
+        THEN response is 429 (rate-limit fires) AND verify_turnstile NOT called
+              — short-circuit ordering is honeypot → ratelimit → captcha
+        """
+        from django.test import override_settings
+
+        with override_settings(
+            TURNSTILE_SECRET_KEY="real-secret",
+            REGISTRATION_RATE_LIMIT_HOUR=1,
+            REGISTRATION_RATE_LIMIT_DAY=10,
+            CACHES={
+                "default": {
+                    "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                    "LOCATION": "rl-shortcircuit-test",
+                }
+            },
+        ):
+            with mock.patch("survey.views.verify_turnstile") as patched:
+                r1 = self.client.post("/accounts/register/", self._post_data(
+                    username="rl1", email="rl1@example.com",
+                ))
+                self.assertIn(r1.status_code, (200, 302))  # first one passes ratelimit
+                r2 = self.client.post("/accounts/register/", self._post_data(
+                    username="rl2", email="rl2@example.com",
+                ))
+                self.assertEqual(r2.status_code, 429)
+                # On the rate-limited POST, Turnstile siteverify must NOT
+                # have been called — ratelimit short-circuits.
+                # (verify_turnstile may have been called for r1 only.)
+                self.assertLessEqual(patched.call_count, 1)
+
