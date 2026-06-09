@@ -5,6 +5,7 @@ from . import editor_views
 from . import analytics_views
 from . import share_views
 from . import org_views
+from . import public_results_editor
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -70,6 +71,16 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/analytics/bulk/trash/', analytics_views.analytics_bulk_trash, name='analytics_bulk_trash'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/bulk/restore/', analytics_views.analytics_bulk_restore, name='analytics_bulk_restore'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/bulk/delete/', analytics_views.analytics_bulk_hard_delete, name='analytics_bulk_hard_delete'),
+
+    # Public results page configuration
+    path('editor/surveys/<uuid:survey_uuid>/public-results/', public_results_editor.public_results_config, name='editor_survey_public_results'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/settings/', public_results_editor.public_results_save_settings, name='editor_public_results_save'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/add/', public_results_editor.public_results_block_add, name='editor_public_results_block_add'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/<int:block_id>/edit/', public_results_editor.public_results_block_edit, name='editor_public_results_block_edit'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/<int:block_id>/delete/', public_results_editor.public_results_block_delete, name='editor_public_results_block_delete'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/reorder/', public_results_editor.public_results_blocks_reorder, name='editor_public_results_blocks_reorder'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/freeze/', public_results_editor.public_results_freeze, name='editor_public_results_freeze'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/unfreeze/', public_results_editor.public_results_unfreeze, name='editor_public_results_unfreeze'),
 
     # Share & tracking links
     path('editor/surveys/<uuid:survey_uuid>/share/', share_views.share_page, name='editor_survey_share'),

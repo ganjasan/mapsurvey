@@ -17795,3 +17795,151 @@ class PublicResultsViewTest(TestCase):
         Answer.objects.create(survey_session=s, question=self.choice_q, selected_choices=[1])
         r = self.client.get("/r/prv/")
         self.assertNotContains(r, "topsecretcomment")
+
+
+class PublicResultsEditorTest(TestCase):
+    """Tests for the editor configuration views of the public results page."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.client = Client()
+        self.org = _make_org("PRE Org")
+        self.user = User.objects.create_user(username="prowner", password="pw12345")
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="pre_survey", organization=self.org, status="published",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="sec", code="S1", is_head=True,
+        )
+        self.choice_q = Question.objects.create(
+            survey_section=self.section, code="Q_CH", name="Rate", input_type="choice",
+            choices=[{"code": 1, "name": "Yes"}],
+        )
+        self.text_q = Question.objects.create(
+            survey_section=self.section, code="Q_TX", name="Comment", input_type="text",
+        )
+        self.base = "/editor/surveys/{}/public-results/".format(self.survey.uuid)
+
+    def _login(self):
+        self.client.login(username="prowner", password="pw12345")
+
+    def test_config_lazily_creates_page(self):
+        """
+        GIVEN no results page yet
+        WHEN the editor opens the config tab
+        THEN a page is created and the tab renders
+        """
+        self._login()
+        r = self.client.get(self.base)
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(PublicResultsPage.objects.filter(survey=self.survey).exists())
+
+    def test_non_editor_blocked(self):
+        """
+        GIVEN a user without rights on the survey
+        WHEN they request the config tab
+        THEN access is denied and no page is created
+        """
+        User.objects.create_user(username="outsider", password="pw12345")
+        self.client.login(username="outsider", password="pw12345")
+        r = self.client.get(self.base)
+        self.assertIn(r.status_code, (302, 403, 404))
+        self.assertFalse(PublicResultsPage.objects.filter(survey=self.survey).exists())
+
+    def test_add_question_block(self):
+        """
+        GIVEN a choice question
+        WHEN it is added as a block
+        THEN a chart block is created
+        """
+        self._login()
+        self.client.post(self.base + "blocks/add/", {
+            "block_type": "question", "question_id": self.choice_q.id,
+        })
+        block = PublicResultsBlock.objects.get(page__survey=self.survey)
+        self.assertEqual(block.block_type, "chart")
+        self.assertEqual(block.question_id, self.choice_q.id)
+
+    def test_text_question_not_addable(self):
+        """
+        GIVEN a text question
+        WHEN an attempt is made to add it as a block
+        THEN the request is rejected and no block is created
+        """
+        self._login()
+        r = self.client.post(self.base + "blocks/add/", {
+            "block_type": "question", "question_id": self.text_q.id,
+        })
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(PublicResultsBlock.objects.exists())
+
+    def test_reorder_persists(self):
+        """
+        GIVEN three blocks
+        WHEN a new order is posted
+        THEN the stored order matches
+        """
+        self._login()
+        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        b1 = PublicResultsBlock.objects.create(page=page, block_type="counter", order=0)
+        b2 = PublicResultsBlock.objects.create(page=page, block_type="text", order=1)
+        b3 = PublicResultsBlock.objects.create(page=page, block_type="text", order=2)
+        self.client.post(
+            self.base + "blocks/reorder/",
+            data=json.dumps({"order": [b3.id, b1.id, b2.id]}),
+            content_type="application/json",
+        )
+        self.assertEqual(PublicResultsBlock.objects.get(id=b3.id).order, 0)
+        self.assertEqual(PublicResultsBlock.objects.get(id=b1.id).order, 1)
+        self.assertEqual(PublicResultsBlock.objects.get(id=b2.id).order, 2)
+
+    def test_freeze_and_unfreeze(self):
+        """
+        GIVEN a live page
+        WHEN freeze then unfreeze are posted
+        THEN the mode toggles accordingly
+        """
+        self._login()
+        self.client.get(self.base)
+        self.client.post(self.base + "freeze/")
+        self.assertEqual(PublicResultsPage.objects.get(survey=self.survey).mode, "frozen")
+        self.client.post(self.base + "unfreeze/")
+        self.assertEqual(PublicResultsPage.objects.get(survey=self.survey).mode, "live")
+
+    def test_draft_survey_cannot_publish(self):
+        """
+        GIVEN a draft survey
+        WHEN settings are saved with publish on
+        THEN the page stays unpublished
+        """
+        self.survey.status = "draft"
+        self.survey.save()
+        self._login()
+        self.client.get(self.base)
+        self.client.post(self.base + "settings/", {
+            "visibility": "public", "is_published": "on", "slug": "pre",
+            "k_anonymity_threshold": "3",
+        })
+        self.assertFalse(PublicResultsPage.objects.get(survey=self.survey).is_published)
+
+    def test_save_settings_persists(self):
+        """
+        GIVEN a published survey
+        WHEN settings are saved
+        THEN visibility, k-threshold, and intro persist
+        """
+        self._login()
+        self.client.get(self.base)
+        self.client.post(self.base + "settings/", {
+            "visibility": "unlisted", "is_published": "on", "slug": "pre-x",
+            "intro_title": "Hello", "intro_body": "World",
+            "show_response_count": "on", "k_anonymity_threshold": "5",
+        })
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        self.assertEqual(page.visibility, "unlisted")
+        self.assertTrue(page.is_published)
+        self.assertEqual(page.k_anonymity_threshold, 5)
+        self.assertEqual(page.intro["title"]["en"], "Hello")
+        self.assertEqual(page.slug, "pre-x")

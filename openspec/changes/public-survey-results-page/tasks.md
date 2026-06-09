@@ -35,16 +35,16 @@
 
 ## 5. Editor configuration tab (contextual)
 
-- [ ] 5.1 Add `/editor/surveys/<uuid>/public-results/` views (editor-only) and a "Public results" nav tab
-- [ ] 5.2 Sidebar: pinned "Page settings" entry separated from the "Content blocks" list (SortableJS drag-reorder, per-block hide toggle)
-- [ ] 5.3 Contextual center: render EITHER page settings (visibility, URL/slug, intro, data mode + freeze, display & privacy incl. k-anon threshold) OR the selected block's config (visualization, custom title, geo popup fields) — never both
-- [ ] 5.4 "Add block" question picker marks text/text_line questions as unavailable
-- [ ] 5.5 HTMX endpoints: save page settings, add/edit/delete block, reorder, freeze/refresh/return-to-live; live preview pane
-- [ ] 5.6 Tests: non-editor blocked, text questions not addable, reorder persists, freeze/live toggles persist, draft survey cannot publish results
+- [x] 5.1 Add `/editor/surveys/<uuid>/public-results/` views (editor-only) and a "Public results" nav tab
+- [x] 5.2 Sidebar: pinned "Page settings" entry separated from the "Content blocks" list (SortableJS drag-reorder, per-block delete/hide)
+- [x] 5.3 Contextual center: renders EITHER page settings OR the selected block's config (`?block=<id>`) — never both
+- [x] 5.4 "Add block" question picker marks text/text_line questions as unavailable (disabled + server-side 400 guard)
+- [x] 5.5 Endpoints: save page settings, add/edit/delete block, reorder (JSON), freeze/return-to-live; preview link
+- [x] 5.6 Tests: lazy create, non-editor blocked, text questions not addable, reorder persists, freeze/live toggles, draft survey cannot publish, settings persist
 
 ## 6. Wiring & verification
 
-- [ ] 6.1 Auto-create or lazily create `PublicResultsPage` on first visit to the config tab; default slug derived from survey
-- [ ] 6.2 Run full `./run_tests.sh survey` suite; fix regressions
-- [ ] 6.3 Update `CLAUDE.md` (URL structure + feature note) and survey serialization if results-page config should travel with export (decide; default: not exported)
-- [ ] 6.4 Manual verification on Render PR preview: public page, unlisted noindex, freeze vs live, anonymous geo popup
+- [x] 6.1 Auto-create `PublicResultsPage` on first visit to the config tab; default slug derived from survey name (+ uuid suffix on collision)
+- [x] 6.2 Run full `./run_tests.sh survey` suite — 652 tests pass, no regressions
+- [x] 6.3 Update `CLAUDE.md` (URL structure + feature note); results-page config intentionally NOT included in survey export (decided)
+- [ ] 6.4 Manual verification on Render PR preview: public page, unlisted noindex, freeze vs live, anonymous geo popup (pending push/preview)

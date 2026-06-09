@@ -89,6 +89,8 @@ Organization
 - GeoJSON files for each geo-question (point/line/polygon)
 - CSV file for non-geographic data
 
+**Public results page**: Creators expose aggregated results at `/r/<slug>/` via `PublicResultsPage` (1:1 with `SurveyHeader`) + ordered `PublicResultsBlock`s. Config tab at `/editor/surveys/<uuid>/public-results/`. Rendering logic in `survey/public_results.py` (`PublicResultsService`, `render_page_data`, `freeze_page`/`unfreeze_page`); editor views in `survey/public_results_editor.py`. Aggregates run over CLEAN sessions only (not deleted, excludes `not_approved`/`on_hold`) across the canonical survey + all versions. Privacy: k-anonymity masks buckets `<K` (default 3); geo popups expose only creator-selected `geo_label_fields`; individual free-text answers are never published. Hybrid `live` (60s cache) vs `frozen` (snapshot) mode. Visibility `public` (indexed, in sitemap) vs `unlisted` (noindex). The page config is intentionally NOT included in survey ZIP export/import.
+
 **Registration abuse prevention**: `/accounts/register/` is served by `AbuseProtectedRegistrationView` (subclass of `AsyncEmailRegistrationView`). Three layered defenses run in order: honeypot field `website` (silent fake-success redirect), per-IP rate limit (`django-ratelimit`, fail-open on Redis outage), Cloudflare Turnstile siteverify (fail-closed on network error, dev-bypass when `TURNSTILE_SECRET_KEY=""`). Helpers in `survey/abuse.py`. Audit log in `AbuseEvent` model. Real client IP via `survey.middleware.CloudflareIPMiddleware` reading `CF-Connecting-IP` only when `CLOUDFLARE_TRUSTED=True`.
 
 **Acquisition metrics (top of the funnel)**: the staff funnel dashboard at
@@ -120,6 +122,7 @@ customers' respondents to platform accounts).
 - `/surveys/<name>/` - Survey entry (redirects to first section)
 - `/surveys/<name>/<section>/` - Survey section form
 - `/surveys/<name>/download` - Export data as ZIP
+- `/r/<slug>/` - Public survey results page (aggregated, read-only)
 - `/admin/` - Django admin (surveys configured entirely here)
 
 ### Environment Variables

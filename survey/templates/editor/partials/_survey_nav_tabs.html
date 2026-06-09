@@ -18,6 +18,11 @@ Optional: effective_role (string), hide_status_badge (bool)
        title="Analytics">
         <i class="fas fa-chart-bar"></i> Analytics <span class="badge-beta">beta</span>
     </a>
+    <a href="{% url 'editor_survey_public_results' survey.uuid %}"
+       class="survey-nav-tab{% if active_tab == 'public_results' %} active{% endif %}"
+       title="Public results">
+        <i class="fas fa-globe"></i> Public results <span class="badge-beta">beta</span>
+    </a>
     <a href="{% url 'editor_survey_share' survey.uuid %}"
        class="survey-nav-tab{% if active_tab == 'share' %} active{% endif %}"
        title="Share">
