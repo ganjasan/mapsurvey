@@ -14,6 +14,13 @@
 
 set -e
 
+# Per-worktree port isolation (see .env.ports.example). Point the suite at this
+# worktree's dev server + DB so it doesn't hit another worktree's instance.
+[ -f .env.ports ] && source .env.ports
+PORT_OFFSET="${PORT_OFFSET:-0}"
+export HOST_DB_PORT=$((5434 + PORT_OFFSET))
+export HOST_WEB_PORT=$((8000 + PORT_OFFSET))
+
 VISIBLE=false
 SLOW=false
 DEBUG=false
@@ -54,7 +61,8 @@ fi
 
 # Live dev DB connection (matches run_dev.sh)
 export SQL_HOST=localhost
-export SQL_PORT=5434
+export SQL_PORT=$HOST_DB_PORT
+export E2E_BASE_URL="${E2E_BASE_URL:-http://localhost:$HOST_WEB_PORT}"
 export DJANGO_ALLOW_ASYNC_UNSAFE=true
 export DJANGO_SETTINGS_MODULE=mapsurvey.settings
 

@@ -1,5 +1,6 @@
 .env*
 !.env.example
+!.env.ports.example
 env/
 db.sqlite3
 user_surveys/

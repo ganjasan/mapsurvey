@@ -6,6 +6,16 @@
 
 set -e
 
+# Per-worktree port isolation: pick a PORT_OFFSET in .env.ports so multiple
+# projects/worktrees can run dev + test in parallel without colliding on host
+# ports. See .env.ports.example. Defaults to 0 (original ports) when unset.
+[ -f .env.ports ] && source .env.ports
+PORT_OFFSET="${PORT_OFFSET:-0}"
+export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-mapsurvey}"
+export HOST_DB_PORT=$((5434 + PORT_OFFSET))
+export HOST_REDIS_PORT=$((6379 + PORT_OFFSET))
+export HOST_WEB_PORT=$((8000 + PORT_OFFSET))
+
 CLEAN=false
 
 # Parse arguments
@@ -36,7 +46,7 @@ docker compose up -d db redis 2>/dev/null || docker-compose up -d db redis 2>/de
 
 # Wait for database to be ready (check from host via mapped port)
 echo "⏳ Waiting for database..."
-until pg_isready -h localhost -p 5434 -U mapsurvey 2>/dev/null; do
+until pg_isready -h localhost -p "$HOST_DB_PORT" -U mapsurvey 2>/dev/null; do
     sleep 1
 done
 echo "✓ Database ready"
@@ -57,8 +67,10 @@ while IFS='=' read -r key value; do
 done < .env
 
 export SQL_HOST=localhost
-export SQL_PORT=5434
-export CELERY_BROKER_URL=redis://localhost:6379/0
+export SQL_PORT=$HOST_DB_PORT
+export CELERY_BROKER_URL=redis://localhost:$HOST_REDIS_PORT/0
+export CELERY_RESULT_BACKEND=redis://localhost:$HOST_REDIS_PORT/0
+export REDIS_URL=redis://localhost:$HOST_REDIS_PORT/1
 
 # Run migrations
 echo "🔄 Running migrations..."
@@ -87,8 +99,8 @@ trap cleanup EXIT
 # Start development server with hot-reload
 echo ""
 echo "🚀 Starting development server..."
-echo "   http://localhost:8000"
+echo "   http://localhost:$HOST_WEB_PORT"
 echo "   Press Ctrl+C to stop"
 echo ""
 
-python manage.py runserver 0.0.0.0:8000
+python manage.py runserver 0.0.0.0:$HOST_WEB_PORT

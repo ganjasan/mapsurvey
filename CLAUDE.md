@@ -23,6 +23,15 @@ python manage.py collectstatic         # Collect static files
 ./run_tests.sh survey.tests.SmokeTest  # Run specific test class
 ```
 
+## Parallel worktrees (port isolation)
+
+`run_dev.sh`, `run_tests.sh`, and `run_e2e.sh` derive every host port from a single
+`PORT_OFFSET` so multiple worktrees can run dev + tests at the same time without
+colliding. To set up a worktree: `cp .env.ports.example .env.ports` and pick a unique
+offset (keep the registry in that file current). Ports = base + offset
+(PostGIS `5434`, Redis `6379`, web `8000`). `COMPOSE_PROJECT_NAME` isolates the docker
+stack per worktree. Offset `0` reproduces the original ports. `.env.ports` is gitignored.
+
 ## Testing
 
 Tests use Django's built-in test framework with PostGIS. Django automatically creates a separate `test_mapsurvey` database.
