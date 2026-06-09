@@ -17679,3 +17679,119 @@ class PublicResultsFreezeTest(TestCase):
         data = render_page_data(self.page)
         self.assertTrue(data["stale"])
         self.assertEqual(data["blocks"], [])
+
+
+class PublicResultsViewTest(TestCase):
+    """Tests for the public /r/<slug>/ view and SEO behavior."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.client = Client()
+        self.org = _make_org("PRV Org")
+        self.survey = SurveyHeader.objects.create(
+            name="prv_survey", organization=self.org, status="published",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="sec", code="S1", is_head=True,
+        )
+        self.choice_q = Question.objects.create(
+            survey_section=self.section, code="Q_CH", name="Rate", input_type="choice",
+            choices=[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}],
+        )
+        self.text_q = Question.objects.create(
+            survey_section=self.section, code="Q_TX", name="Comment", input_type="text",
+        )
+        self.page = PublicResultsPage.objects.create(
+            survey=self.survey, slug="prv", is_published=True, visibility="public",
+            intro={"title": {"en": "Park results"}, "body": {"en": "Thanks all"}},
+        )
+        PublicResultsBlock.objects.create(page=self.page, block_type="counter", order=0)
+        PublicResultsBlock.objects.create(
+            page=self.page, block_type="chart", question=self.choice_q, order=1,
+        )
+
+    def test_published_page_reachable(self):
+        """
+        GIVEN a published public results page
+        WHEN an anonymous visitor opens /r/<slug>/
+        THEN it returns 200 with the intro title and platform footer
+        """
+        r = self.client.get("/r/prv/")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Park results")
+        self.assertContains(r, "Made with")
+
+    def test_unpublished_page_404(self):
+        """
+        GIVEN an unpublished page
+        WHEN opened
+        THEN 404
+        """
+        self.page.is_published = False
+        self.page.save()
+        self.assertEqual(self.client.get("/r/prv/").status_code, 404)
+
+    def test_unknown_slug_404(self):
+        """
+        GIVEN no page with the slug
+        WHEN opened
+        THEN 404
+        """
+        self.assertEqual(self.client.get("/r/nope/").status_code, 404)
+
+    def test_public_is_indexable(self):
+        """
+        GIVEN a public page
+        WHEN rendered
+        THEN it allows indexing and appears in the sitemap
+        """
+        r = self.client.get("/r/prv/")
+        self.assertContains(r, "index, follow")
+        sitemap = self.client.get("/sitemap.xml")
+        self.assertContains(sitemap, "/r/prv/")
+
+    def test_unlisted_is_noindex_and_absent_from_sitemap(self):
+        """
+        GIVEN an unlisted page
+        WHEN rendered
+        THEN it emits noindex and is excluded from the sitemap
+        """
+        self.page.visibility = "unlisted"
+        self.page.save()
+        r = self.client.get("/r/prv/")
+        self.assertContains(r, "noindex")
+        sitemap = self.client.get("/sitemap.xml")
+        self.assertNotContains(sitemap, "/r/prv/")
+
+    def test_cta_visible_when_survey_open(self):
+        """
+        GIVEN an open survey with the CTA enabled
+        WHEN the page is rendered
+        THEN the "Take the survey" action is shown
+        """
+        r = self.client.get("/r/prv/")
+        self.assertContains(r, "Take the survey")
+
+    def test_cta_hidden_when_survey_closed(self):
+        """
+        GIVEN a closed survey
+        WHEN the page is rendered
+        THEN the CTA is not shown
+        """
+        self.survey.status = "closed"
+        self.survey.save()
+        r = self.client.get("/r/prv/")
+        self.assertNotContains(r, "Take the survey")
+
+    def test_no_raw_text_answers_on_page(self):
+        """
+        GIVEN a session with a free-text answer
+        WHEN the public page is rendered
+        THEN the individual text never appears in the response
+        """
+        s = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=s, question=self.text_q, text="topsecretcomment")
+        Answer.objects.create(survey_session=s, question=self.choice_q, selected_choices=[1])
+        r = self.client.get("/r/prv/")
+        self.assertNotContains(r, "topsecretcomment")

@@ -104,6 +104,7 @@ urlpatterns = [
     path('alternatives/maptionnaire/', views.maptionnaire_alternative, name='maptionnaire_alternative'),
     path('alternatives/social-pinpoint/', views.social_pinpoint_alternative, name='social_pinpoint_alternative'),
     path('alternatives/metroquest/', views.metroquest_alternative, name='metroquest_alternative'),
+    path('r/<slug:slug>/', views.public_results, name='public_results'),
     path('robots.txt', views.robots_txt, name='robots_txt'),
     path('sitemap.xml', views.sitemap_xml, name='sitemap_xml'),
 ]

@@ -1302,6 +1302,49 @@ def story_detail(request, slug):
 	return render(request, 'story_detail.html', context)
 
 
+def public_results(request, slug):
+	"""Public, read-only results page served at /r/<slug>/.
+
+	404 unless the page exists and is published. Renders live aggregates
+	or a frozen snapshot. Unlisted pages are reachable here but emit
+	noindex and are excluded from listings/sitemap.
+	"""
+	from .models import PublicResultsPage
+	from .public_results import render_page_data, _localize
+
+	page = get_object_or_404(
+		PublicResultsPage.objects.select_related('survey'),
+		slug=slug, is_published=True,
+	)
+	lang = request.GET.get('lang') or 'en'
+	data = render_page_data(page, lang=lang)
+
+	survey = page.survey
+	canonical = survey.canonical_survey or survey
+	intro = page.intro or {}
+	intro_title = _localize(intro.get('title'), lang) or survey.name
+	intro_body = _localize(intro.get('body'), lang)
+
+	context = {
+		'page': page,
+		'survey': survey,
+		'lang': lang,
+		'intro_title': intro_title,
+		'intro_body': intro_body,
+		'response_count': data['response_count'],
+		'blocks': data['blocks'],
+		'blocks_json': json.dumps(data['blocks'], ensure_ascii=False),
+		'frozen': data.get('frozen', False),
+		'frozen_at': data.get('frozen_at'),
+		'stale': data.get('stale', False),
+		'show_response_count': page.show_response_count,
+		'show_cta': page.show_participate_cta and canonical.can_accept_responses(),
+		'survey_url': reverse('survey', kwargs={'survey_slug': str(survey.uuid)}),
+		'noindex': page.visibility == 'unlisted',
+	}
+	return render(request, 'public_results.html', context)
+
+
 @survey_permission_required('owner')
 def delete_survey(request, survey_uuid):
 	"""Move a survey to trash (soft-delete); recoverable for 30 days."""
@@ -1570,6 +1613,7 @@ def robots_txt(request):
 		"Allow: /surveys/",
 		"Allow: /stories/",
 		"Allow: /services/",
+		"Allow: /r/",
 	]
 	# SEO landing pages — derived from the single-source registry
 	# (survey/seo_landings.py) so a new landing can't silently miss the allow-list.
@@ -1609,6 +1653,10 @@ def sitemap_xml(request):
 		urls.append(f"  <url><loc>{base}/stories/{story.slug}/</loc>{lastmod}</url>")
 	for survey in surveys:
 		urls.append(f"  <url><loc>{base}/surveys/{survey.uuid}/</loc></url>")
+	# Public (indexable) results pages; unlisted pages are excluded.
+	from .models import PublicResultsPage
+	for page in PublicResultsPage.objects.filter(is_published=True, visibility='public'):
+		urls.append(f"  <url><loc>{base}/r/{page.slug}/</loc></url>")
 	xml = (
 		'<?xml version="1.0" encoding="UTF-8"?>\n'
 		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'

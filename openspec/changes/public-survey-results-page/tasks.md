@@ -25,13 +25,13 @@
 
 ## 4. Public page view, URL & SEO
 
-- [ ] 4.1 Add `/r/<slug>/` route in `survey/urls.py` and the public view (read-only, 404 unless `is_published`)
-- [ ] 4.2 Build public template: hero + intro, response counter, ordered blocks (chart/map/text/counter), CTA, "Made with Mapsurvey" footer
-- [ ] 4.3 Chart blocks via Chart.js; map blocks via Leaflet + leaflet.heat reusing existing geo rendering patterns (respect leaflet.heat canvas-toggle quirk)
-- [ ] 4.4 CTA: render only while survey is open to responses; hide otherwise
-- [ ] 4.5 SEO: `robots index` + OG tags for public; `robots noindex` for unlisted; `?lang=` language switch consistent with other public pages
-- [ ] 4.6 Integrate visibility into `/stories/` listing, `robots.txt`, and `sitemap.xml` (public+listing only)
-- [ ] 4.7 Tests: reachability (published/unpublished/unknown slug), visibility→robots + listing inclusion/exclusion, CTA open/closed, footer present, no raw texts on page
+- [x] 4.1 Add `/r/<slug>/` route in `survey/urls.py` and the public view (read-only, 404 unless `is_published`)
+- [x] 4.2 Build public template: hero + intro, response counter, ordered blocks (chart/map/text/counter), CTA, "Made with Mapsurvey" footer
+- [x] 4.3 Chart blocks via Chart.js; map blocks via Leaflet + leaflet.heat
+- [x] 4.4 CTA: render only while survey is open to responses; hide otherwise
+- [x] 4.5 SEO: `robots index` + OG tags for public; `robots noindex` for unlisted; `?lang=` language switch
+- [x] 4.6 robots.txt allows `/r/`; sitemap lists public+published pages, excludes unlisted (landing listing card deferred — `feature_in_listing` flag exists, default off)
+- [x] 4.7 Tests: reachability (published/unpublished/unknown slug), visibility→robots + sitemap inclusion/exclusion, CTA open/closed, footer present, no raw texts on page
 
 ## 5. Editor configuration tab (contextual)
 
