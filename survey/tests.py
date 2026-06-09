@@ -10,6 +10,7 @@ from .models import (
     Organization, SurveyHeader, SurveySection, Question,
     SurveySession, Answer, ChoicesValidator, Story,
     Membership, SurveyCollaborator, Invitation,
+    PublicResultsPage, PublicResultsBlock,
 )
 from .serialization import (
     serialize_survey_to_dict, serialize_sections,
@@ -17343,3 +17344,338 @@ class AcquisitionDashboardRenderTest(TestCase):
 
         self.assertEqual(resp.status_code, 302)
         self.assertIn("/admin/login/", resp["Location"])
+
+
+class PublicResultsPageModelTest(TestCase):
+    """Tests for the PublicResultsPage / PublicResultsBlock models."""
+
+    def setUp(self):
+        self.org = _make_org("PR Org")
+        self.survey = SurveyHeader.objects.create(name="pr_survey", organization=self.org)
+
+    def test_defaults(self):
+        """
+        GIVEN a survey
+        WHEN a PublicResultsPage is created with only required fields
+        THEN it defaults to k=3, mode=live, unpublished, public visibility
+        """
+        page = PublicResultsPage.objects.create(survey=self.survey, slug="pr-survey")
+        self.assertEqual(page.k_anonymity_threshold, 3)
+        self.assertEqual(page.mode, "live")
+        self.assertFalse(page.is_published)
+        self.assertEqual(page.visibility, "public")
+        self.assertFalse(page.is_frozen())
+
+    def test_slug_unique(self):
+        """
+        GIVEN an existing page with a slug
+        WHEN creating another page with the same slug
+        THEN an integrity error is raised
+        """
+        from django.db import IntegrityError
+        PublicResultsPage.objects.create(survey=self.survey, slug="dup")
+        other = SurveyHeader.objects.create(name="pr_survey2", organization=self.org)
+        with self.assertRaises(IntegrityError):
+            PublicResultsPage.objects.create(survey=other, slug="dup")
+
+    def test_one_to_one_with_survey(self):
+        """
+        GIVEN a survey that already has a results page
+        WHEN creating a second page for the same survey
+        THEN an integrity error is raised (OneToOne)
+        """
+        from django.db import IntegrityError
+        PublicResultsPage.objects.create(survey=self.survey, slug="pr-a")
+        with self.assertRaises(IntegrityError):
+            PublicResultsPage.objects.create(survey=self.survey, slug="pr-b")
+
+    def test_blocks_cascade_on_page_delete(self):
+        """
+        GIVEN a page with blocks
+        WHEN the page is deleted
+        THEN its blocks are deleted too
+        """
+        page = PublicResultsPage.objects.create(survey=self.survey, slug="pr-cascade")
+        PublicResultsBlock.objects.create(page=page, block_type="counter", order=0)
+        PublicResultsBlock.objects.create(page=page, block_type="text", order=1)
+        self.assertEqual(PublicResultsBlock.objects.filter(page=page).count(), 2)
+        page.delete()
+        self.assertEqual(PublicResultsBlock.objects.count(), 0)
+
+    def test_block_ordering(self):
+        """
+        GIVEN blocks created out of order
+        WHEN querying the page's blocks
+        THEN they are returned ordered by the order field
+        """
+        page = PublicResultsPage.objects.create(survey=self.survey, slug="pr-order")
+        PublicResultsBlock.objects.create(page=page, block_type="text", order=2)
+        PublicResultsBlock.objects.create(page=page, block_type="counter", order=0)
+        PublicResultsBlock.objects.create(page=page, block_type="chart", order=1)
+        orders = list(page.blocks.values_list("order", flat=True))
+        self.assertEqual(orders, [0, 1, 2])
+
+
+class PublicResultsServiceTest(TestCase):
+    """Tests for PublicResultsService aggregation and privacy guards."""
+
+    def setUp(self):
+        self.org = _make_org("PRS Org")
+        self.survey = SurveyHeader.objects.create(
+            name="prs_survey", organization=self.org, status="published",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="sec", code="S1", is_head=True,
+        )
+        self.choice_q = Question.objects.create(
+            survey_section=self.section, code="Q_CH", name="Rate us",
+            input_type="choice",
+            choices=[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}],
+        )
+        self.point_q = Question.objects.create(
+            survey_section=self.section, code="Q_PT", name="Mark spot",
+            input_type="point",
+        )
+        self.text_q = Question.objects.create(
+            survey_section=self.section, code="Q_TX", name="Comment",
+            input_type="text",
+        )
+        self.page = PublicResultsPage.objects.create(
+            survey=self.survey, slug="prs", is_published=True,
+        )
+
+    def _session(self, survey=None, status="", deleted=False):
+        return SurveySession.objects.create(
+            survey=survey or self.survey, validation_status=status, is_deleted=deleted,
+        )
+
+    def _service(self):
+        from .public_results import PublicResultsService
+        return PublicResultsService(self.page)
+
+    def test_clean_excludes_deleted_and_not_approved(self):
+        """
+        GIVEN clean, deleted, and not_approved sessions
+        WHEN response_count is computed
+        THEN only the clean session is counted
+        """
+        self._session()                              # clean
+        self._session(deleted=True)                  # deleted
+        self._session(status="not_approved")         # junk
+        self._session(status="on_hold")              # disputed
+        self.assertEqual(self._service().response_count(), 1)
+
+    def test_canonical_span(self):
+        """
+        GIVEN a canonical survey with a version copy, each with a clean session
+        WHEN response_count is computed for the canonical page
+        THEN sessions from both surveys are counted
+        """
+        version = SurveyHeader.objects.create(
+            name="prs_v0", organization=self.org, is_canonical=False,
+            canonical_survey=self.survey, version_number=1,
+        )
+        self._session()                       # canonical
+        self._session(survey=version)         # version copy
+        self.assertEqual(self._service().response_count(), 2)
+
+    def test_k_anonymity_masks_small_bucket(self):
+        """
+        GIVEN a choice with a 2-vote option and a 4-vote option (K=3)
+        WHEN the chart block is built
+        THEN the small option shows "<3" with no value and the large is exact
+        """
+        for _ in range(2):
+            s = self._session()
+            Answer.objects.create(survey_session=s, question=self.choice_q, selected_choices=[1])
+        for _ in range(4):
+            s = self._session()
+            Answer.objects.create(survey_session=s, question=self.choice_q, selected_choices=[2])
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="chart", question=self.choice_q, order=0,
+        )
+        payload = self._service()._build_block(block)
+        by_code = {i["code"]: i for i in payload["items"]}
+        self.assertTrue(by_code[1]["masked"])
+        self.assertEqual(by_code[1]["display"], "<3")
+        self.assertIsNone(by_code[1]["value"])
+        self.assertFalse(by_code[2]["masked"])
+        self.assertEqual(by_code[2]["display"], "4")
+
+    def test_geo_has_no_record_identifiers(self):
+        """
+        GIVEN point answers and a map block with no popup fields selected
+        WHEN the map payload is built
+        THEN features carry empty properties and no session id is exposed
+        """
+        for _ in range(2):
+            s = self._session()
+            Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="map", question=self.point_q, order=0,
+        )
+        payload = self._service()._build_block(block)
+        self.assertEqual(payload["count"], 2)
+        for feat in payload["feature_collection"]["features"]:
+            self.assertEqual(feat["properties"], {})
+        self.assertNotIn("session_id", json.dumps(payload))
+
+    def test_geo_popup_only_selected_fields(self):
+        """
+        GIVEN a map block configured to show only the choice question in popups
+        WHEN the map payload is built
+        THEN the popup contains the choice label and nothing identifying
+        """
+        s = self._session()
+        Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
+        Answer.objects.create(survey_session=s, question=self.choice_q, selected_choices=[1])
+        Answer.objects.create(survey_session=s, question=self.text_q, text="secret")
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="map", question=self.point_q, order=0,
+            geo_label_fields=["Q_CH"],
+        )
+        payload = self._service()._build_block(block)
+        props = payload["feature_collection"]["features"][0]["properties"]
+        self.assertEqual(props, {"Rate us": "Yes"})
+        self.assertNotIn("secret", json.dumps(payload))
+
+    def test_deleted_question_block_omitted(self):
+        """
+        GIVEN a chart block whose question was deleted (FK set to null)
+        WHEN blocks are built
+        THEN that block is silently omitted
+        """
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="chart", question=self.choice_q, order=0,
+        )
+        block.question = None
+        block.save()
+        self.assertEqual(self._service().build_blocks(), [])
+
+    def test_text_question_not_chartable(self):
+        """
+        GIVEN a chart block defensively bound to a text question
+        WHEN the block is built
+        THEN it produces no payload
+        """
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="chart", question=self.text_q, order=0,
+        )
+        self.assertIsNone(self._service()._build_block(block))
+
+    def test_zero_responses_counter(self):
+        """
+        GIVEN a page with no clean responses
+        WHEN a counter block is built
+        THEN the count is zero
+        """
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="counter", order=0,
+        )
+        payload = self._service()._build_block(block)
+        self.assertEqual(payload["count"], 0)
+
+
+class PublicResultsFreezeTest(TestCase):
+    """Tests for freeze/live mechanics of the public results page."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.org = _make_org("PRF Org")
+        self.survey = SurveyHeader.objects.create(
+            name="prf_survey", organization=self.org, status="published",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="sec", code="S1", is_head=True,
+        )
+        self.page = PublicResultsPage.objects.create(
+            survey=self.survey, slug="prf", is_published=True,
+        )
+
+    def _add_session(self):
+        SurveySession.objects.create(survey=self.survey)
+
+    def test_freeze_captures_current_data(self):
+        """
+        GIVEN a page with 2 clean responses
+        WHEN it is frozen
+        THEN the snapshot records the count and the page switches to frozen
+        """
+        from .public_results import freeze_page
+        self._add_session(); self._add_session()
+        freeze_page(self.page)
+        self.assertEqual(self.page.mode, "frozen")
+        self.assertIsNotNone(self.page.frozen_at)
+        self.assertEqual(self.page.snapshot["response_count"], 2)
+
+    def test_frozen_does_not_change(self):
+        """
+        GIVEN a frozen page
+        WHEN a new response arrives
+        THEN the rendered count stays equal to the snapshot
+        """
+        from .public_results import freeze_page, render_page_data
+        self._add_session()
+        freeze_page(self.page)
+        self._add_session()
+        data = render_page_data(self.page)
+        self.assertTrue(data["frozen"])
+        self.assertEqual(data["response_count"], 1)
+
+    def test_live_reflects_new_response_after_cache_clear(self):
+        """
+        GIVEN a live page rendered once
+        WHEN a new response arrives and the cache window passes
+        THEN the rendered count increases
+        """
+        from django.core.cache import cache
+        from .public_results import render_page_data
+        self._add_session()
+        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+        self._add_session()
+        cache.clear()  # simulate TTL expiry
+        self.assertEqual(render_page_data(self.page)["response_count"], 2)
+
+    def test_live_is_cached_within_window(self):
+        """
+        GIVEN a live page rendered once
+        WHEN a new response arrives but the cache is still warm
+        THEN the rendered count is unchanged until the cache expires
+        """
+        from .public_results import render_page_data
+        self._add_session()
+        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+        self._add_session()
+        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+
+    def test_return_to_live_recomputes(self):
+        """
+        GIVEN a frozen page returned to live
+        WHEN a new response arrives
+        THEN the rendered count reflects current data
+        """
+        from django.core.cache import cache
+        from .public_results import freeze_page, unfreeze_page, render_page_data
+        self._add_session()
+        freeze_page(self.page)
+        unfreeze_page(self.page)
+        self._add_session()
+        cache.clear()
+        data = render_page_data(self.page)
+        self.assertFalse(data["frozen"])
+        self.assertEqual(data["response_count"], 2)
+
+    def test_stale_snapshot_version(self):
+        """
+        GIVEN a frozen page whose snapshot uses an incompatible version
+        WHEN it is rendered
+        THEN it is flagged stale rather than rendering wrong data
+        """
+        from .public_results import render_page_data
+        self.page.mode = "frozen"
+        self.page.snapshot = {"snapshot_version": 999, "response_count": 5, "blocks": []}
+        self.page.save()
+        data = render_page_data(self.page)
+        self.assertTrue(data["stale"])
+        self.assertEqual(data["blocks"], [])

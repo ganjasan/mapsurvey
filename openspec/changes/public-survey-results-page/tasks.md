@@ -1,27 +1,27 @@
 ## 1. Data model & migration
 
-- [ ] 1.1 Add `PublicResultsPage` model (OneToOne→`SurveyHeader`; fields: `slug` unique, `visibility`, `is_published`, `intro` JSON, `mode`, `snapshot` JSON null, `snapshot_version`, `frozen_at`, `show_response_count`, `show_participate_cta`, `feature_in_listing`, `k_anonymity_threshold` default 3, timestamps)
-- [ ] 1.2 Add `PublicResultsBlock` model (FK→`PublicResultsPage`; `question` FK null, `block_type`, `viz`, `custom_title` JSON, `geo_label_fields` JSON, `order`)
-- [ ] 1.3 Register both models in `survey/admin.py`
-- [ ] 1.4 Generate and apply migration; verify no changes to existing tables
-- [ ] 1.5 Add model-level tests: defaults (k=3, mode=live, is_published=False), slug uniqueness, cascade on page delete
+- [x] 1.1 Add `PublicResultsPage` model (OneToOne→`SurveyHeader`; fields: `slug` unique, `visibility`, `is_published`, `intro` JSON, `mode`, `snapshot` JSON null, `snapshot_version`, `frozen_at`, `show_response_count`, `show_participate_cta`, `feature_in_listing`, `k_anonymity_threshold` default 3, timestamps)
+- [x] 1.2 Add `PublicResultsBlock` model (FK→`PublicResultsPage`; `question` FK null, `block_type`, `viz`, `custom_title` JSON, `geo_label_fields` JSON, `is_hidden`, `order`)
+- [x] 1.3 Register both models in `survey/admin.py`
+- [x] 1.4 Generate and apply migration; verify no changes to existing tables
+- [x] 1.5 Add model-level tests: defaults (k=3, mode=live, is_published=False), slug uniqueness, cascade on page delete
 
 ## 2. Results rendering service
 
-- [ ] 2.1 Add a `PublicResultsService` (or thin wrapper) that, given a page, produces ordered per-block payloads from `SurveyAnalyticsService` for the canonical survey, using clean-session filtering
-- [ ] 2.2 Implement k-anonymity masking (count>0 and <K → "<K"; K=1 disables) applied to bucket payloads only, not inside `SurveyAnalyticsService`
-- [ ] 2.3 Implement anonymous geo payload builder: include only `geo_label_fields` in popups; strip session id / IP / UTM / per-record timestamps
-- [ ] 2.4 Exclude blocks whose referenced question is missing/deleted; produce empty-state payload when zero clean responses
-- [ ] 2.5 Ensure live and frozen render through one block-payload contract (same shape)
-- [ ] 2.6 Tests: clean-session exclusion, canonical-survey aggregation across versions, k-anon masking, no record identifiers in geo, deleted-question omission, zero-response empty state
+- [x] 2.1 Add a `PublicResultsService` (`survey/public_results.py`) that produces ordered per-block payloads over clean sessions, spanning the canonical survey + version copies (reuses `_compute_histogram`, `get_choice_name`)
+- [x] 2.2 Implement k-anonymity masking (count>0 and <K → "<K", value nulled; K=1 disables) applied to bucket payloads only, not inside `SurveyAnalyticsService`
+- [x] 2.3 Implement anonymous geo payload builder: include only `geo_label_fields` (by question code) in popups; never emit session id / IP / UTM / timestamps
+- [x] 2.4 Exclude blocks whose referenced question is missing/deleted; counter/empty payloads when zero clean responses
+- [x] 2.5 Ensure live and frozen render through one block-payload contract (`build_blocks` / `build_snapshot` share shape)
+- [x] 2.6 Tests: clean-session exclusion, canonical-survey aggregation across versions, k-anon masking, no record identifiers in geo, popup-only-selected-fields, deleted-question omission, text-not-chartable, zero-response
 
 ## 3. Freeze / live mechanics
 
-- [ ] 3.1 Implement freeze: serialize current per-block payloads + counts + `frozen_at` into `snapshot` with `snapshot_version`; set `mode=frozen`
-- [ ] 3.2 Implement refresh-snapshot and return-to-live transitions
-- [ ] 3.3 Live render: wrap service call in Django cache keyed by `slug`+`lang`+`mode`, 60s TTL; frozen render reads `snapshot` only (no DB/cache)
-- [ ] 3.4 Handle unknown `snapshot_version` on read with a "re-freeze needed" notice instead of crashing
-- [ ] 3.5 Tests: frozen unchanged on new response, live reflects new response after cache window, freeze captures current data, return-to-live recomputes
+- [x] 3.1 Implement freeze: serialize current per-block payloads + counts + `frozen_at` into `snapshot` with `snapshot_version`; set `mode=frozen`
+- [x] 3.2 Implement refresh-snapshot (re-`freeze_page`) and return-to-live (`unfreeze_page`) transitions
+- [x] 3.3 Live render: `render_page_data` wraps service in Django cache keyed by `slug`+`lang`+`mode`, 60s TTL; frozen render reads `snapshot` only (no DB/cache)
+- [x] 3.4 Handle unknown `snapshot_version` on read with a `stale` flag (re-freeze notice) instead of crashing
+- [x] 3.5 Tests: frozen unchanged on new response, live reflects after cache clear, cached within window, freeze captures data, return-to-live recomputes, stale snapshot version
 
 ## 4. Public page view, URL & SEO
 
