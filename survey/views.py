@@ -1310,39 +1310,14 @@ def public_results(request, slug):
 	noindex and are excluded from listings/sitemap.
 	"""
 	from .models import PublicResultsPage
-	from .public_results import render_page_data, _localize
+	from .public_results import build_page_context
 
 	page = get_object_or_404(
 		PublicResultsPage.objects.select_related('survey'),
 		slug=slug, is_published=True,
 	)
 	lang = request.GET.get('lang') or 'en'
-	data = render_page_data(page, lang=lang)
-
-	survey = page.survey
-	canonical = survey.canonical_survey or survey
-	intro = page.intro or {}
-	intro_title = _localize(intro.get('title'), lang) or survey.name
-	intro_body = _localize(intro.get('body'), lang)
-
-	context = {
-		'page': page,
-		'survey': survey,
-		'lang': lang,
-		'intro_title': intro_title,
-		'intro_body': intro_body,
-		'response_count': data['response_count'],
-		'blocks': data['blocks'],
-		'blocks_json': json.dumps(data['blocks'], ensure_ascii=False),
-		'frozen': data.get('frozen', False),
-		'frozen_at': data.get('frozen_at'),
-		'stale': data.get('stale', False),
-		'show_response_count': page.show_response_count,
-		'show_cta': page.show_participate_cta and canonical.can_accept_responses(),
-		'survey_url': reverse('survey', kwargs={'survey_slug': str(survey.uuid)}),
-		'noindex': page.visibility == 'unlisted',
-	}
-	return render(request, 'public_results.html', context)
+	return render(request, 'public_results.html', build_page_context(page, lang=lang))
 
 
 @survey_permission_required('owner')

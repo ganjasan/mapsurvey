@@ -12,6 +12,7 @@ from django.http import HttpResponse, JsonResponse, Http404
 from django.shortcuts import redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.utils.text import slugify
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
 from .models import (
@@ -96,6 +97,26 @@ def public_results_config(request, survey_uuid):
     }
     from django.shortcuts import render
     return render(request, 'editor/public_results.html', context)
+
+
+@survey_permission_required('editor')
+@xframe_options_sameorigin
+def public_results_preview(request, survey_uuid):
+    """Render the public page inside the editor preview pane (iframe).
+
+    Editor-only; renders regardless of publish state so the creator can see
+    changes before publishing. Always noindex.
+    """
+    from django.shortcuts import render
+    from .public_results import build_page_context
+
+    survey = request.survey
+    page = _get_or_create_page(survey)
+    lang = request.GET.get('lang') or 'en'
+    context = build_page_context(page, lang=lang)
+    context['noindex'] = True
+    context['preview'] = True
+    return render(request, 'public_results.html', context)
 
 
 @survey_permission_required('editor')

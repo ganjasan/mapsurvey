@@ -17943,3 +17943,44 @@ class PublicResultsEditorTest(TestCase):
         self.assertEqual(page.k_anonymity_threshold, 5)
         self.assertEqual(page.intro["title"]["en"], "Hello")
         self.assertEqual(page.slug, "pre-x")
+
+
+class PublicResultsPreviewTest(TestCase):
+    """Tests for the editor preview endpoint (iframe source)."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.client = Client()
+        self.org = _make_org("PRP Org")
+        self.user = User.objects.create_user(username="prpowner", password="pw12345")
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="prp_survey", organization=self.org, status="published",
+        )
+        SurveySection.objects.create(survey_header=self.survey, name="s", code="S1", is_head=True)
+        self.base = "/editor/surveys/{}/public-results/".format(self.survey.uuid)
+
+    def test_preview_renders_for_editor_even_if_unpublished(self):
+        """
+        GIVEN an unpublished results page
+        WHEN the editor opens the preview endpoint
+        THEN it renders the public template (200) with same-origin framing and noindex
+        """
+        self.client.login(username="prpowner", password="pw12345")
+        r = self.client.get(self.base + "preview/")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Made with")
+        self.assertContains(r, "noindex")
+        self.assertEqual(r.headers.get("X-Frame-Options"), "SAMEORIGIN")
+
+    def test_preview_requires_editor(self):
+        """
+        GIVEN a user without rights
+        WHEN they request the preview endpoint
+        THEN access is denied
+        """
+        User.objects.create_user(username="prpoutsider", password="pw12345")
+        self.client.login(username="prpoutsider", password="pw12345")
+        r = self.client.get(self.base + "preview/")
+        self.assertIn(r.status_code, (302, 403, 404))

@@ -298,6 +298,40 @@ class PublicResultsService:
         }
 
 
+def build_page_context(page, lang='en'):
+    """Build the template context for rendering a public results page.
+
+    Shared by the public view (/r/<slug>/) and the editor preview endpoint
+    so both render identically.
+    """
+    from django.urls import reverse
+
+    data = render_page_data(page, lang=lang)
+    survey = page.survey
+    canonical = survey.canonical_survey or survey
+    intro = page.intro or {}
+    intro_title = _localize(intro.get('title'), lang) or survey.name
+    intro_body = _localize(intro.get('body'), lang)
+
+    return {
+        'page': page,
+        'survey': survey,
+        'lang': lang,
+        'intro_title': intro_title,
+        'intro_body': intro_body,
+        'response_count': data['response_count'],
+        'blocks': data['blocks'],
+        'blocks_json': json.dumps(data['blocks'], ensure_ascii=False),
+        'frozen': data.get('frozen', False),
+        'frozen_at': data.get('frozen_at'),
+        'stale': data.get('stale', False),
+        'show_response_count': page.show_response_count,
+        'show_cta': page.show_participate_cta and canonical.can_accept_responses(),
+        'survey_url': reverse('survey', kwargs={'survey_slug': str(survey.uuid)}),
+        'noindex': page.visibility == 'unlisted',
+    }
+
+
 def _live_cache_key(page, lang):
     return 'pubresults:{}:{}:{}'.format(page.slug, lang, page.mode)
 

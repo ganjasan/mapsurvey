@@ -45,6 +45,12 @@
   .pr-switch:last-child { border-bottom:none; }
   .pr-url { font-family:monospace; font-size:.82rem; color:var(--accent); }
   .pr-banner { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; border-radius:8px; padding:.6rem .8rem; font-size:.82rem; margin-bottom:1rem; }
+
+  .pr-preview { width:420px; border-left:1px solid var(--border-color); display:flex; flex-direction:column; background:#fff; }
+  .pr-preview-head { padding:.6rem 1rem; border-bottom:1px solid var(--border-color); font-size:.8rem; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; display:flex; align-items:center; justify-content:space-between; }
+  .pr-preview-head button { border:none; background:none; cursor:pointer; color:#9ca3af; padding:2px 6px; border-radius:4px; }
+  .pr-preview-head button:hover { color:var(--accent); background:var(--accent-light); }
+  .pr-preview iframe { flex:1; border:none; width:100%; }
 </style>
 {% endblock %}
 
@@ -228,10 +234,24 @@
       </div>
     {% endif %}
   </div>
+
+  <!-- RIGHT: live preview -->
+  <div class="pr-preview">
+    <div class="pr-preview-head">
+      <span>Live preview</span>
+      <button type="button" id="prPreviewRefresh" title="Refresh preview"><i class="fas fa-sync-alt"></i></button>
+    </div>
+    <iframe id="prPreviewFrame" src="{% url 'editor_public_results_preview' survey.uuid %}"></iframe>
+  </div>
 </div>
 
 <script>
 (function(){
+  var refresh = document.getElementById('prPreviewRefresh');
+  var frame = document.getElementById('prPreviewFrame');
+  if (refresh && frame) {
+    refresh.addEventListener('click', function(){ frame.contentWindow.location.reload(); });
+  }
   var list = document.getElementById('prBlocks');
   if (list && window.Sortable) {
     new Sortable(list, {

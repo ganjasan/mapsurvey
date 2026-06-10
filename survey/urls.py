@@ -74,6 +74,7 @@ urlpatterns = [
 
     # Public results page configuration
     path('editor/surveys/<uuid:survey_uuid>/public-results/', public_results_editor.public_results_config, name='editor_survey_public_results'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/preview/', public_results_editor.public_results_preview, name='editor_public_results_preview'),
     path('editor/surveys/<uuid:survey_uuid>/public-results/settings/', public_results_editor.public_results_save_settings, name='editor_public_results_save'),
     path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/add/', public_results_editor.public_results_block_add, name='editor_public_results_block_add'),
     path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/<int:block_id>/edit/', public_results_editor.public_results_block_edit, name='editor_public_results_block_edit'),
