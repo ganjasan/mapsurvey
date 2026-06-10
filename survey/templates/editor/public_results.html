@@ -4,6 +4,7 @@
 {% block page_title %}Public results – {{ survey.name }}{% endblock %}
 
 {% block navbar_content %}
+<span class="survey-name">{{ survey.name }}</span>
 {% include "editor/partials/_survey_nav_tabs.html" with active_tab="public_results" %}
 {% endblock %}
 
