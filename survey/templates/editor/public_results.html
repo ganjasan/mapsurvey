@@ -11,7 +11,7 @@
 {% block extra_head %}
 <style>
   .pr-container { display: flex; height: calc(100vh - 49px); overflow: hidden; }
-  .pr-sidebar { width: 280px; background:#fff; border-right:1px solid var(--border-color); display:flex; flex-direction:column; }
+  .pr-sidebar { width: 280px; flex-shrink:0; background:#fff; border-right:1px solid var(--border-color); display:flex; flex-direction:column; min-width:0; }
   .pr-pinned { padding:.55rem .75rem; border-bottom:1px solid var(--border-color); }
   .pr-page-item { display:flex; align-items:center; gap:.6rem; padding:.6rem .7rem; border-radius:var(--radius); cursor:pointer; font-size:.9rem; color:#374151; text-decoration:none; }
   .pr-page-item.active { background:var(--accent-light); color:var(--accent); font-weight:500; }
@@ -30,7 +30,7 @@
   .pr-add { margin:.6rem; }
   .pr-note { padding:.5rem 1rem .8rem; font-size:.72rem; color:#9ca3af; border-top:1px solid var(--border-color); }
 
-  .pr-main { flex:1; overflow-y:auto; }
+  .pr-main { flex:1; min-width:0; overflow-y:auto; }
   .pr-ctxbar { position:sticky; top:0; background:#fff; border-bottom:1px solid var(--border-color); padding:.7rem 1.5rem; display:flex; align-items:center; gap:.6rem; z-index:5; }
   .pr-ctxbar .ico { width:30px; height:30px; border-radius:7px; background:var(--accent-light); color:var(--accent); display:flex; align-items:center; justify-content:center; }
   .pr-ctxbar .t { font-weight:600; }
@@ -46,7 +46,7 @@
   .pr-url { font-family:monospace; font-size:.82rem; color:var(--accent); }
   .pr-banner { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; border-radius:8px; padding:.6rem .8rem; font-size:.82rem; margin-bottom:1rem; }
 
-  .pr-preview { width:420px; border-left:1px solid var(--border-color); display:flex; flex-direction:column; background:#fff; }
+  .pr-preview { width:420px; flex-shrink:0; border-left:1px solid var(--border-color); display:flex; flex-direction:column; background:#fff; min-width:0; }
   .pr-preview-head { padding:.6rem 1rem; border-bottom:1px solid var(--border-color); font-size:.8rem; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; display:flex; align-items:center; justify-content:space-between; }
   .pr-preview-head button { border:none; background:none; cursor:pointer; color:#9ca3af; padding:2px 6px; border-radius:4px; }
   .pr-preview-head button:hover { color:var(--accent); background:var(--accent-light); }
@@ -102,6 +102,8 @@
     </form>
     <div class="pr-note"><i class="fas fa-info-circle"></i> Text questions are not available for publication — individual answers are never shown publicly.</div>
   </div>
+
+  <div class="resize-handle" id="prResizeSidebar"></div>
 
   <!-- CENTER: contextual -->
   <div class="pr-main">
@@ -235,6 +237,8 @@
     {% endif %}
   </div>
 
+  <div class="resize-handle" id="prResizePreview"></div>
+
   <!-- RIGHT: live preview -->
   <div class="pr-preview">
     <div class="pr-preview-head">
@@ -252,6 +256,51 @@
   if (refresh && frame) {
     refresh.addEventListener('click', function(){ frame.contentWindow.location.reload(); });
   }
+
+  // Drag-to-resize panels (mirrors the WYSIWYG editor behavior)
+  function initResize(handle, targetEl, direction) {
+    if (!handle || !targetEl) return;
+    handle.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      var startX = e.clientX;
+      var startWidth = targetEl.getBoundingClientRect().width;
+      handle.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      document.querySelectorAll('iframe').forEach(function(f){ f.style.pointerEvents = 'none'; });
+      function onMove(ev) {
+        var delta = ev.clientX - startX;
+        var w = direction === 'left' ? Math.max(180, startWidth + delta)
+                                     : Math.max(260, startWidth - delta);
+        targetEl.style.width = w + 'px';
+      }
+      function onUp() {
+        handle.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        document.querySelectorAll('iframe').forEach(function(f){ f.style.pointerEvents = ''; });
+        try {
+          localStorage.setItem('prPanelW', JSON.stringify({
+            sidebar: document.querySelector('.pr-sidebar').style.width,
+            preview: document.querySelector('.pr-preview').style.width
+          }));
+        } catch (e) {}
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+  initResize(document.getElementById('prResizeSidebar'), document.querySelector('.pr-sidebar'), 'left');
+  initResize(document.getElementById('prResizePreview'), document.querySelector('.pr-preview'), 'right');
+
+  // Restore saved panel widths
+  try {
+    var saved = JSON.parse(localStorage.getItem('prPanelW') || '{}');
+    if (saved.sidebar) document.querySelector('.pr-sidebar').style.width = saved.sidebar;
+    if (saved.preview) document.querySelector('.pr-preview').style.width = saved.preview;
+  } catch (e) {}
   var list = document.getElementById('prBlocks');
   if (list && window.Sortable) {
     new Sortable(list, {
