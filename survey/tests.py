@@ -17649,6 +17649,34 @@ class PublicResultsFreezeTest(TestCase):
         self._add_session()
         self.assertEqual(render_page_data(self.page)["response_count"], 1)
 
+    def test_block_deletion_bypasses_live_cache(self):
+        """
+        GIVEN a live page primed into the cache with two blocks
+        WHEN a block is deleted and the page version is bumped
+        THEN the next render reflects one block, without clearing the cache manually
+        """
+        from .public_results import render_page_data, bump_page_version
+        PublicResultsBlock.objects.create(page=self.page, block_type="counter", order=0)
+        b2 = PublicResultsBlock.objects.create(page=self.page, block_type="counter", order=1)
+        self.assertEqual(len(render_page_data(self.page)["blocks"]), 2)  # prime cache
+        b2.delete()
+        bump_page_version(self.page)
+        self.page.refresh_from_db()
+        self.assertEqual(len(render_page_data(self.page)["blocks"]), 1)
+
+    def test_new_response_still_cached_with_versioned_key(self):
+        """
+        GIVEN a live page primed into the cache
+        WHEN a new response arrives but no configuration change bumps the version
+        THEN the cached render is unchanged within the window
+              (config invalidation does not defeat data caching)
+        """
+        from .public_results import render_page_data
+        self._add_session()
+        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+        self._add_session()  # arrives within the TTL window, no version bump
+        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+
     def test_return_to_live_recomputes(self):
         """
         GIVEN a frozen page returned to live
@@ -17710,6 +17738,20 @@ class PublicResultsViewTest(TestCase):
         PublicResultsBlock.objects.create(
             page=self.page, block_type="chart", question=self.choice_q, order=1,
         )
+
+    def test_chart_block_viz_delivered_to_client(self):
+        """
+        GIVEN a chart block whose visualization is set to pie
+        WHEN the public page is rendered
+        THEN the block payload delivered to the client carries viz=pie
+              so the chart renderer can honor the selected visualization
+        """
+        block = PublicResultsBlock.objects.get(page=self.page, block_type="chart")
+        block.viz = "pie"
+        block.save()
+        r = self.client.get("/r/{}/".format(self.page.slug))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, '"viz": "pie"')
 
     def test_published_page_reachable(self):
         """
@@ -17894,6 +17936,21 @@ class PublicResultsEditorTest(TestCase):
         self.assertEqual(PublicResultsBlock.objects.get(id=b3.id).order, 0)
         self.assertEqual(PublicResultsBlock.objects.get(id=b1.id).order, 1)
         self.assertEqual(PublicResultsBlock.objects.get(id=b2.id).order, 2)
+
+    def test_delete_block_reflected_in_live_render_immediately(self):
+        """
+        GIVEN a live page whose cache is primed with one block
+        WHEN the editor deletes the block via the view
+        THEN the next public render shows zero blocks, without manual cache clearing
+        """
+        from .public_results import render_page_data
+        self._login()
+        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        block = PublicResultsBlock.objects.create(page=page, block_type="counter", order=0)
+        self.assertEqual(len(render_page_data(page)["blocks"]), 1)  # prime cache
+        self.client.post(self.base + "blocks/{}/delete/".format(block.id))
+        page.refresh_from_db()
+        self.assertEqual(len(render_page_data(page)["blocks"]), 0)
 
     def test_freeze_and_unfreeze(self):
         """

@@ -50,7 +50,7 @@ The page SHALL support two visibility modes: `public` and `unlisted`. Public pag
 - **THEN** the system returns 200 and renders the page
 
 ### Requirement: Curated content blocks
-The creator SHALL compose the page from an ordered list of blocks. Each block is one of: `text`, `counter`, `chart` (bound to a question), or `map` (bound to a geo question). Blocks SHALL render in the creator-defined order, and the order SHALL be editable via drag-and-drop. A block may be individually hidden without deletion.
+The creator SHALL compose the page from an ordered list of blocks. Each block is one of: `text`, `counter`, `chart` (bound to a question), or `map` (bound to a geo question). Blocks SHALL render in the creator-defined order, and the order SHALL be editable via drag-and-drop. A block may be individually hidden without deletion. A `chart` block SHALL render using the creator-selected visualization (`auto`/`bar` as a bar chart, `pie`, `donut`, or `table`); a `map` block SHALL render using its selected visualization (`auto` markers or `heatmap`).
 
 #### Scenario: Blocks render in configured order
 - **WHEN** a visitor loads a page with blocks ordered [intro text, chart, map]
@@ -63,6 +63,11 @@ The creator SHALL compose the page from an ordered list of blocks. Each block is
 #### Scenario: Reordering persists
 - **WHEN** the creator drags a block to a new position and saves
 - **THEN** the new order is persisted and reflected on the public page
+
+#### Scenario: Chart visualization is honored
+- **WHEN** the creator sets a chart block's visualization to `pie`, `donut`, or `table`
+- **THEN** the public page and the editor preview render that visualization, not a bar chart
+- **AND** `bar` and `auto` render as a bar chart (preserving the existing horizontal/vertical orientation per data type)
 
 ### Requirement: Text answers are never published
 The block-creation picker SHALL NOT allow adding `text` / `text_line` questions as result blocks, and the public page SHALL never display individual free-text answers.
@@ -93,6 +98,11 @@ The page SHALL support a `live` mode and a `frozen` mode. In live mode, blocks S
 #### Scenario: Return to live
 - **WHEN** the creator switches a frozen page back to live
 - **THEN** subsequent renders compute aggregates from current data again
+
+#### Scenario: Configuration change is reflected immediately
+- **WHEN** the page is in live mode and the creator adds, edits, deletes, or reorders a block
+- **THEN** the editor preview and the public page reflect the change on the next render, without waiting for the live-cache window to elapse
+- **AND** the 60-second cache window still applies to newly arriving responses (data), not to configuration changes
 
 ### Requirement: Clean-session data source on the canonical survey
 Aggregates and geo features SHALL be computed only from sessions that are not deleted and not marked invalid, aggregated against the canonical survey, reusing the existing analytics filtering.

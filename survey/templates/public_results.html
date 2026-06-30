@@ -47,6 +47,10 @@
     .block h2{font-size:1.15rem;font-weight:600;margin:0 0 18px;}
     .block.text-block p{color:var(--text-secondary);line-height:1.6;margin:0;}
     .chart-holder{position:relative;height:300px;}
+    .chart-holder.is-table{height:auto;}
+    .pr-table{width:100%;border-collapse:collapse;font-size:.9rem;}
+    .pr-table td{padding:8px 10px;border-bottom:1px solid var(--border);}
+    .pr-table td.val{text-align:right;font-variant-numeric:tabular-nums;color:var(--text-secondary);white-space:nowrap;}
     .map-holder{height:360px;border-radius:10px;overflow:hidden;}
     .kanon-note{margin-top:14px;font-size:.78rem;color:var(--text-tertiary);}
     .empty{text-align:center;color:var(--text-tertiary);padding:40px 0;}
@@ -114,6 +118,11 @@
   <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
   <script>
   (function(){
+    // Segment palette for pie/doughnut charts. Declared before the render loop
+    // runs — a `var` assignment is not hoisted, so defining it later would leave
+    // it undefined while the forEach below is already invoking the renderers.
+    var PALETTE = ['#4f46e5','#7c73f0','#22c55e','#f59e0b','#ef4444','#06b6d4','#ec4899','#8b5cf6','#10b981','#f97316'];
+
     var blocks = JSON.parse(document.getElementById('blocks-data').textContent || '[]');
     blocks.forEach(function(b){
       if (b.block_type === 'chart' && b.data_type === 'choices') { renderChoiceChart(b); }
@@ -121,33 +130,80 @@
       else if (b.block_type === 'map') { renderMap(b); }
     });
 
+    // Map a creator-selected viz to a Chart.js chart type. 'auto' and 'bar'
+    // both render as a bar chart; 'table' is handled separately (not Chart.js).
+    function chartType(viz){
+      if (viz === 'pie') return 'pie';
+      if (viz === 'donut') return 'doughnut';
+      return 'bar';
+    }
+
+    // Build a plain HTML table via safe DOM methods (textContent escapes the
+    // creator-supplied labels, so no HTML injection on the public page).
+    function renderTable(el, labels, displays){
+      var holder = el.parentNode;
+      holder.classList.add('is-table');
+      var table = document.createElement('table');
+      table.className = 'pr-table';
+      var tbody = document.createElement('tbody');
+      labels.forEach(function(lab, i){
+        var tr = document.createElement('tr');
+        var tdL = document.createElement('td'); tdL.className = 'lab'; tdL.textContent = lab;
+        var tdV = document.createElement('td'); tdV.className = 'val'; tdV.textContent = displays[i];
+        tr.appendChild(tdL); tr.appendChild(tdV);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      holder.replaceChildren(table);
+    }
+
+    function buildChart(el, type, labels, data, displays, opts){
+      opts = opts || {};
+      var isPie = (type === 'pie' || type === 'doughnut');
+      var colors = isPie ? labels.map(function(_, i){ return PALETTE[i % PALETTE.length]; })
+                         : (opts.color || '#4f46e5');
+      var cfg = {
+        type: type,
+        data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderRadius: isPie ? 0 : 6 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: isPie },
+            tooltip: { callbacks: { label: function(ctx){
+              return (displays && displays[ctx.dataIndex] != null)
+                ? (labels[ctx.dataIndex] + ': ' + displays[ctx.dataIndex])
+                : ctx.formattedValue;
+            } } }
+          }
+        }
+      };
+      if (!isPie) {
+        if (opts.horizontal) {
+          cfg.options.indexAxis = 'y';
+          cfg.options.scales = { x: { beginAtZero: true, ticks: { precision: 0 } } };
+        } else {
+          cfg.options.scales = { y: { beginAtZero: true, ticks: { precision: 0 } } };
+        }
+      }
+      new Chart(el, cfg);
+    }
+
     function renderChoiceChart(b){
       var el = document.getElementById('chart-' + b.id); if (!el) return;
       var labels = b.items.map(function(i){ return i.label; });
       // Masked buckets carry value=null; chart shows 0 height but the label
       // text already reads "<K", so the exact count is never revealed.
       var data = b.items.map(function(i){ return i.value == null ? 0 : i.value; });
-      new Chart(el, {
-        type: 'bar',
-        data: { labels: labels, datasets: [{ data: data, backgroundColor: '#4f46e5', borderRadius: 6 }] },
-        options: {
-          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: { callbacks: { label: function(ctx){ return b.items[ctx.dataIndex].display; } } }
-          },
-          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
-        }
-      });
+      var displays = b.items.map(function(i){ return i.display; });
+      if (b.viz === 'table') { return renderTable(el, labels, displays); }
+      buildChart(el, chartType(b.viz), labels, data, displays, { horizontal: true, color: '#4f46e5' });
     }
 
     function renderHistogram(b){
       var el = document.getElementById('chart-' + b.id); if (!el || !b.hist_labels) return;
-      new Chart(el, {
-        type: 'bar',
-        data: { labels: b.hist_labels, datasets: [{ data: b.hist_counts, backgroundColor: '#7c73f0', borderRadius: 6 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-      });
+      var displays = b.hist_counts.map(function(c){ return String(c); });
+      if (b.viz === 'table') { return renderTable(el, b.hist_labels, displays); }
+      buildChart(el, chartType(b.viz), b.hist_labels, b.hist_counts, displays, { horizontal: false, color: '#7c73f0' });
     }
 
     function renderMap(b){

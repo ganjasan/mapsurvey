@@ -22,6 +22,8 @@
 - [x] 3.3 Live render: `render_page_data` wraps service in Django cache keyed by `slug`+`lang`+`mode`, 60s TTL; frozen render reads `snapshot` only (no DB/cache)
 - [x] 3.4 Handle unknown `snapshot_version` on read with a `stale` flag (re-freeze notice) instead of crashing
 - [x] 3.5 Tests: frozen unchanged on new response, live reflects after cache clear, cached within window, freeze captures data, return-to-live recomputes, stale snapshot version
+- [x] 3.6 Invalidate the live cache on configuration changes: version the live cache key by `page.updated_at` and bump it on block add/edit/delete/reorder, so the editor preview and public page reflect edits on the next render (not after the 60s TTL); new responses still honour the TTL window
+- [x] 3.7 Tests: block deletion is reflected on next live render without manual cache clear; a new response within the window is still cached (config invalidation does not defeat data caching)
 
 ## 4. Public page view, URL & SEO
 
@@ -32,6 +34,7 @@
 - [x] 4.5 SEO: `robots index` + OG tags for public; `robots noindex` for unlisted; `?lang=` language switch
 - [x] 4.6 robots.txt allows `/r/`; sitemap lists public+published pages, excludes unlisted (landing listing card deferred — `feature_in_listing` flag exists, default off)
 - [x] 4.7 Tests: reachability (published/unpublished/unknown slug), visibility→robots + sitemap inclusion/exclusion, CTA open/closed, footer present, no raw texts on page
+- [x] 4.8 Honor the chart block's `viz` in the renderer: map `bar`/`auto`→bar (keep choices=horizontal, histogram=vertical), `pie`→pie, `donut`→doughnut, `table`→safe DOM table; previously every chart hard-coded `type: 'bar'`. Test: selected `viz` is delivered to the client payload
 
 ## 5. Editor configuration tab (contextual)
 
@@ -45,6 +48,6 @@
 ## 6. Wiring & verification
 
 - [x] 6.1 Auto-create `PublicResultsPage` on first visit to the config tab; default slug derived from survey name (+ uuid suffix on collision)
-- [x] 6.2 Run full `./run_tests.sh survey` suite — 652 tests pass, no regressions
+- [x] 6.2 Run full `./run_tests.sh survey` suite — 657 tests pass, no regressions (run with a live Redis, e.g. `REDIS_URL=redis://localhost:6389/14`; the cache-dependent tests fail-open to misses without one)
 - [x] 6.3 Update `CLAUDE.md` (URL structure + feature note); results-page config intentionally NOT included in survey export (decided)
 - [ ] 6.4 Manual verification on Render PR preview: public page, unlisted noindex, freeze vs live, anonymous geo popup (pending push/preview)

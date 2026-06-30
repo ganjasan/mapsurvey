@@ -20,7 +20,7 @@ from .models import (
     PUBLIC_RESULTS_BLOCK_TYPE_CHOICES,
 )
 from .permissions import survey_permission_required
-from .public_results import freeze_page, unfreeze_page
+from .public_results import freeze_page, unfreeze_page, bump_page_version
 
 # Map a question input type to the block type it renders as on the page.
 CHART_INPUT_TYPES = ('choice', 'multichoice', 'rating', 'number', 'range')
@@ -182,6 +182,7 @@ def public_results_block_add(request, survey_uuid):
     else:
         return HttpResponse('Unknown block type.', status=400)
 
+    bump_page_version(page)
     return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
 
 
@@ -202,6 +203,7 @@ def public_results_block_edit(request, survey_uuid, block_id):
     if block.block_type == 'map':
         block.geo_label_fields = request.POST.getlist('geo_label_fields')
     block.save()
+    bump_page_version(page)
     from django.urls import reverse
     url = reverse('editor_survey_public_results', kwargs={'survey_uuid': survey_uuid})
     return redirect('{}?block={}'.format(url, block.id))
@@ -214,6 +216,7 @@ def public_results_block_delete(request, survey_uuid, block_id):
     page = _get_or_create_page(survey)
     block = get_object_or_404(PublicResultsBlock, id=block_id, page=page)
     block.delete()
+    bump_page_version(page)
     if request.headers.get('HX-Request'):
         return HttpResponse('')
     return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
@@ -235,6 +238,7 @@ def public_results_blocks_reorder(request, survey_uuid):
         if block:
             block.order = index
             block.save(update_fields=['order'])
+    bump_page_version(page)
     return JsonResponse({'ok': True})
 
 

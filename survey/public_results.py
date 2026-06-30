@@ -333,7 +333,24 @@ def build_page_context(page, lang='en'):
 
 
 def _live_cache_key(page, lang):
-    return 'pubresults:{}:{}:{}'.format(page.slug, lang, page.mode)
+    # `updated_at` acts as a version stamp. Any change to the page or its blocks
+    # bumps it (see bump_page_version), which changes the key so the editor
+    # preview and the public page reflect edits on the next render. New
+    # *responses* do NOT touch updated_at, so live aggregates still honour the
+    # TTL window and don't hammer the DB under viral traffic.
+    version = page.updated_at.timestamp() if page.updated_at else 0
+    return 'pubresults:{}:{}:{}:{}'.format(page.slug, lang, page.mode, version)
+
+
+def bump_page_version(page):
+    """Bump the page's version stamp so live caches are bypassed on next read.
+
+    Call after any change to a page's block configuration (add/edit/delete/
+    reorder). Touching `updated_at` changes the live cache key, so the editor
+    preview and the public page reflect the change immediately instead of
+    after the live-cache TTL elapses.
+    """
+    page.save(update_fields=['updated_at'])
 
 
 def freeze_page(page, lang='en'):
