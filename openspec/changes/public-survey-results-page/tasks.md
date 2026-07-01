@@ -28,7 +28,7 @@
 ## 4. Public page view, URL & SEO
 
 - [x] 4.1 Add `/r/<slug>/` route in `survey/urls.py` and the public view (read-only, 404 unless `is_published`)
-- [x] 4.2 Build public template: hero + intro, response counter, ordered blocks (chart/map/text/counter), CTA, "Made with Mapsurvey" footer
+- [x] 4.2 Build public template: hero + intro, response counter, ordered blocks (chart/map/text), CTA, "Made with Mapsurvey" footer
 - [x] 4.3 Chart blocks via Chart.js; map blocks via Leaflet + leaflet.heat
 - [x] 4.4 CTA: render only while survey is open to responses; hide otherwise
 - [x] 4.5 SEO: `robots index` + OG tags for public; `robots noindex` for unlisted; `?lang=` language switch
@@ -44,6 +44,7 @@
 - [x] 5.4 "Add block" question picker marks text/text_line questions as unavailable (disabled + server-side 400 guard)
 - [x] 5.5 Endpoints: save page settings, add/edit/delete block, reorder (JSON), freeze/return-to-live; preview link
 - [x] 5.6 Tests: lazy create, non-editor blocked, text questions not addable, reorder persists, freeze/live toggles, draft survey cannot publish, settings persist
+- [x] 5.7 Autosave: remove the explicit Save buttons; page/block settings persist on change (selects/checkboxes immediately, text debounced), preview reloads after each save, status indicator replaces the button. Slug is excluded from autosave and applied via its own Apply control (reports `slug_taken`). Endpoints return JSON for XHR, redirect for plain submits; Save buttons kept under `<noscript>`. Tests: settings autosave returns JSON + preserves omitted slug, slug-apply reports taken, block edit autosave returns JSON
 
 ## 6. Wiring & verification
 

@@ -52,6 +52,10 @@
     .pr-table td{padding:8px 10px;border-bottom:1px solid var(--border);}
     .pr-table td.val{text-align:right;font-variant-numeric:tabular-nums;color:var(--text-secondary);white-space:nowrap;}
     .map-holder{height:360px;border-radius:10px;overflow:hidden;}
+    .block.image-block{padding:0;overflow:hidden;}
+    .block.image-block h2{padding:24px 26px 0;}
+    .block.image-block img{display:block;width:100%;height:auto;}
+    .block.image-block figcaption{padding:14px 26px;color:var(--text-secondary);font-size:.88rem;text-align:center;}
     .kanon-note{margin-top:14px;font-size:.78rem;color:var(--text-tertiary);}
     .empty{text-align:center;color:var(--text-tertiary);padding:40px 0;}
     .footer{margin-top:42px;text-align:center;}
@@ -90,12 +94,13 @@
     {% endif %}
 
     {% for block in blocks %}
-    <div class="block {% if block.block_type == 'text' %}text-block{% endif %}" data-block-id="{{ block.id }}">
-      {% if block.title and block.block_type != 'counter' %}<h2>{{ block.title }}</h2>{% endif %}
+    <div class="block {% if block.block_type == 'text' %}text-block{% elif block.block_type == 'image' %}image-block{% endif %}" data-block-id="{{ block.id }}">
+      {% if block.title %}<h2>{{ block.title }}</h2>{% endif %}
       {% if block.block_type == 'text' %}
         <p>{{ block.body }}</p>
-      {% elif block.block_type == 'counter' %}
-        <div class="counter"><span class="num">{{ block.count }}</span><span class="lbl">{% trans "responses" %}</span></div>
+      {% elif block.block_type == 'image' %}
+        <img src="{{ block.image_url }}" alt="{{ block.caption|default:block.title }}">
+        {% if block.caption %}<figcaption>{{ block.caption }}</figcaption>{% endif %}
       {% elif block.block_type == 'chart' %}
         <div class="chart-holder"><canvas id="chart-{{ block.id }}"></canvas></div>
         <div class="kanon-note">{% trans "Small groups are masked to protect privacy." %}</div>

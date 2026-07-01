@@ -1,32 +1,13 @@
-{% extends "editor/editor_base.html" %}
 {% load survey_filters %}
-
-{% block page_title %}Settings – {{ survey.name }}{% endblock %}
-
-{% block extra_head %}
-<style>
-    /* .settings-main/.settings-section live in editor_base.html; this page
-       adds its own padding since (unlike the pinned-panel version swapped
-       into .editor-main) nothing else on this standalone page provides it. */
-    .settings-main { padding: 1.5rem; }
-</style>
-{% endblock %}
-
-{% block navbar_content %}
-<span class="survey-name">{{ survey.name }}</span>
-{% include "editor/partials/_survey_nav_tabs.html" with active_tab="settings" hide_status_badge=False %}
-{% endblock %}
-
-{% block content %}
 <div class="settings-main">
 
-    <!-- Survey Settings -->
+    <!-- Survey Settings (autosaves — mirrors the Public Results settings form) -->
     <div class="settings-section">
         <h6><i class="fas fa-sliders-h mr-1"></i> General</h6>
-        <form method="post" action="{% url 'editor_survey_settings' survey.uuid %}" enctype="multipart/form-data">
+        <form method="post" id="surveySettingsGeneralForm" data-autosave
+              action="{% url 'editor_survey_settings_panel' survey.uuid %}" enctype="multipart/form-data">
             {% csrf_token %}
             {% for field in form %}
-            {% if field.name != 'default_rating_display_style' %}
             <div class="form-group">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {% if field.name == 'available_languages' %}
@@ -70,25 +51,9 @@
                 {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
                 {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
             </div>
-            {% endif %}
             {% endfor %}
-
-            <hr>
-            <h6><i class="fas fa-paint-brush mr-1"></i> Style</h6>
-            <div class="form-group">
-                <label>{{ form.default_rating_display_style.label }}</label>
-                <div>
-                    {% for radio in form.default_rating_display_style %}
-                    <div class="form-check form-check-inline">
-                        {{ radio.tag }}
-                        <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
-                    </div>
-                    {% endfor %}
-                </div>
-                <small class="form-text text-muted">Default look for rating questions. Individual questions can override this in the question editor.</small>
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-sm">Save Settings</button>
+            <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
+            <noscript><button type="submit" class="btn btn-primary btn-sm">Save Settings</button></noscript>
         </form>
     </div>
 
@@ -142,7 +107,6 @@
 
         var marker = hasPosition ? L.marker([lat, lng]).addTo(map) : null;
 
-        // Auto-geolocate when no position is set yet
         if (!hasPosition && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(pos) {
                 lat = pos.coords.latitude;
@@ -212,4 +176,49 @@
     </div>
 
 </div>
-{% endblock %}
+
+<script>
+(function(){
+    var form = document.getElementById('surveySettingsGeneralForm');
+    if (!form) return;
+
+    function debounce(fn, ms){ var t; return function(){ var a = arguments, c = this; clearTimeout(t); t = setTimeout(function(){ fn.apply(c, a); }, ms); }; }
+
+    function setStatus(state){
+        var el = form.querySelector('[data-autosave-status]'); if (!el) return;
+        var span = el.querySelector('span') || el;
+        el.classList.remove('is-error', 'is-saving');
+        if (state === 'saving') { span.textContent = 'Saving…'; el.classList.add('is-saving'); }
+        else if (state === 'saved') { span.textContent = 'Saved'; }
+        else if (state === 'error') { span.textContent = 'Not saved — retry'; el.classList.add('is-error'); }
+    }
+
+    function save(){
+        var fd = new FormData(form);
+        var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || fd.get('csrfmiddlewaretoken') || '';
+        setStatus('saving');
+        fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': token },
+            body: fd
+        }).then(function(r){
+            if (!r.ok) { return Promise.reject(r); }
+            return r.json();
+        }).then(function(){
+            setStatus('saved');
+            document.body.dispatchEvent(new Event('sectionSaved'));
+        }).catch(function(){ setStatus('error'); });
+    }
+    var dsave = debounce(save, 600);
+
+    form.querySelectorAll('input, select, textarea').forEach(function(field){
+        if (field.name === 'csrfmiddlewaretoken') return;
+        var tag = field.tagName, t = field.type;
+        if (tag === 'SELECT' || t === 'checkbox' || t === 'radio' || t === 'file') { field.addEventListener('change', save); }
+        else { field.addEventListener('input', dsave); field.addEventListener('change', save); }
+    });
+    // Basemap checkboxes aren't form fields themselves (they sync into the
+    // hidden `basemaps` input) — trigger autosave once that sync has run.
+    document.querySelectorAll('.basemap-cb').forEach(function(cb){ cb.addEventListener('change', save); });
+})();
+</script>

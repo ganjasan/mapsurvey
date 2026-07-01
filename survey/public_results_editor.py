@@ -16,7 +16,7 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
 from .models import (
-    PublicResultsPage, PublicResultsBlock, Question,
+    PublicResultsPage, PublicResultsBlock, Question, Answer,
     PUBLIC_RESULTS_BLOCK_TYPE_CHOICES,
 )
 from .permissions import survey_permission_required
@@ -34,6 +34,11 @@ def _block_type_for_question(question):
     if question.input_type in CHART_INPUT_TYPES:
         return 'chart'
     return None  # text/unknown — not publishable
+
+
+def _is_ajax(request):
+    """True for fetch/XHR autosave requests (vs a plain form submit)."""
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
 def _unique_slug(survey):
@@ -65,6 +70,8 @@ def _survey_questions(survey):
             'question': q,
             'block_type': _block_type_for_question(q),
             'publishable': q.input_type not in TEXT_INPUT_TYPES,
+            'input_type_display': q.get_input_type_display(),
+            'answer_count': Answer.objects.filter(question=q, survey_session__is_deleted=False).count(),
         })
     return rows
 
@@ -129,6 +136,8 @@ def public_results_save_settings(request, survey_uuid):
     # Draft surveys may configure but not publish their results page.
     wants_publish = request.POST.get('is_published') == 'on'
     if wants_publish and survey.status == 'draft':
+        if _is_ajax(request):
+            return JsonResponse({'ok': False, 'error': 'publish_survey_first'}, status=400)
         from django.contrib import messages
         messages.error(request, 'Publish the survey before publishing its results.')
         return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
@@ -147,26 +156,36 @@ def public_results_save_settings(request, survey_uuid):
     except (ValueError, TypeError):
         page.k_anonymity_threshold = 3
 
+    slug_taken = False
     new_slug = slugify(request.POST.get('slug', '') or page.slug)
     if new_slug and new_slug != page.slug:
         if not PublicResultsPage.objects.filter(slug=new_slug).exclude(id=page.id).exists():
             page.slug = new_slug
+        else:
+            slug_taken = True
     page.save()
+    if _is_ajax(request):
+        return JsonResponse({'ok': True, 'slug': page.slug, 'slug_taken': slug_taken})
     return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
 
 
 @survey_permission_required('editor')
 @require_POST
 def public_results_block_add(request, survey_uuid):
-    """Add a block. block_type counter/text are standalone; chart/map need a question."""
+    """Add a block. block_type text/image are standalone; chart/map need a question."""
     survey = request.survey
     page = _get_or_create_page(survey)
     block_type = request.POST.get('block_type')
 
     next_order = page.blocks.count()
 
-    if block_type in ('counter', 'text'):
+    if block_type == 'text':
         PublicResultsBlock.objects.create(page=page, block_type=block_type, order=next_order)
+    elif block_type == 'image':
+        image = request.FILES.get('image')
+        if not image:
+            return HttpResponse('An image file is required.', status=400)
+        PublicResultsBlock.objects.create(page=page, block_type=block_type, image=image, order=next_order)
     elif block_type == 'question':
         question = get_object_or_404(
             Question, id=request.POST.get('question_id'),
@@ -200,10 +219,16 @@ def public_results_block_edit(request, survey_uuid, block_id):
         block.custom_title = {'en': request.POST.get('custom_title', '')}
     if block.block_type == 'text':
         block.content = {'en': request.POST.get('content', '')}
+    if block.block_type == 'image':
+        block.content = {'en': request.POST.get('content', '')}
+        if request.FILES.get('image'):
+            block.image = request.FILES['image']
     if block.block_type == 'map':
         block.geo_label_fields = request.POST.getlist('geo_label_fields')
     block.save()
     bump_page_version(page)
+    if _is_ajax(request):
+        return JsonResponse({'ok': True, 'block_id': block.id})
     from django.urls import reverse
     url = reverse('editor_survey_public_results', kwargs={'survey_uuid': survey_uuid})
     return redirect('{}?block={}'.format(url, block.id))

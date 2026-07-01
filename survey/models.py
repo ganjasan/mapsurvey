@@ -1171,7 +1171,7 @@ PUBLIC_RESULTS_MODE_CHOICES = (
 
 PUBLIC_RESULTS_BLOCK_TYPE_CHOICES = (
     ("text", _("Text")),
-    ("counter", _("Response counter")),
+    ("image", _("Image")),
     ("chart", _("Chart")),
     ("map", _("Map")),
 )
@@ -1232,7 +1232,7 @@ class PublicResultsBlock(models.Model):
     """One ordered block on a PublicResultsPage.
 
     A block is either bound to a question (chart/map) or standalone
-    (text/counter). Data within the block is live or frozen per the page.
+    (text/image). Data within the block is live or frozen per the page.
     """
 
     page = models.ForeignKey(
@@ -1240,7 +1240,7 @@ class PublicResultsBlock(models.Model):
     )
     question = models.ForeignKey(
         "Question", on_delete=models.SET_NULL, null=True, blank=True,
-        help_text=_('Bound question for chart/map blocks; null for text/counter.')
+        help_text=_('Bound question for chart/map blocks; null for text/image.')
     )
     block_type = models.CharField(max_length=10, choices=PUBLIC_RESULTS_BLOCK_TYPE_CHOICES)
     viz = models.CharField(
@@ -1252,7 +1252,11 @@ class PublicResultsBlock(models.Model):
     )
     content = models.JSONField(
         default=dict, blank=True,
-        help_text=_('Multilingual body for standalone text blocks: {"en": "...", "ru": "..."}.')
+        help_text=_('Multilingual body for standalone text blocks, or caption for image blocks: {"en": "...", "ru": "..."}.')
+    )
+    image = models.ImageField(
+        upload_to='public_results_blocks/', null=True, blank=True,
+        help_text=_('Image for standalone image blocks.')
     )
     geo_label_fields = models.JSONField(
         default=list, blank=True,

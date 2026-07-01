@@ -20,11 +20,17 @@ The system SHALL provide a per-survey public results page, bound 1:1 to a `Surve
 - **THEN** the page is served at `/r/<that-slug>/` and the survey's own public URL is unaffected
 
 ### Requirement: Creator-only configuration
-The system SHALL expose configuration of the public results page only to users with editor rights on the survey, under `/editor/surveys/<uuid>/public-results/`. The public page view itself SHALL be read-only and require no authentication.
+The system SHALL expose configuration of the public results page only to users with editor rights on the survey, under `/editor/surveys/<uuid>/public-results/`. The public page view itself SHALL be read-only and require no authentication. Configuration changes SHALL save automatically on edit, without an explicit Save action; the slug (which is the public address) is the sole exception and SHALL be applied via an explicit control.
 
 #### Scenario: Editor can configure
 - **WHEN** a user with editor rights opens the public-results configuration tab
 - **THEN** the system renders the configuration UI for that survey's results page
+
+#### Scenario: Configuration autosaves
+- **WHEN** an editor changes any page or block setting other than the slug
+- **THEN** the change is persisted automatically (no Save button) and the editor preview reflects it
+- **AND** the slug is applied only via its explicit Apply control, so the public URL never changes from a half-typed value
+- **AND** without JavaScript, the explicit Save buttons remain available (graceful degradation)
 
 #### Scenario: Non-editor cannot configure
 - **WHEN** a user without editor rights requests the public-results configuration endpoint
@@ -50,7 +56,7 @@ The page SHALL support two visibility modes: `public` and `unlisted`. Public pag
 - **THEN** the system returns 200 and renders the page
 
 ### Requirement: Curated content blocks
-The creator SHALL compose the page from an ordered list of blocks. Each block is one of: `text`, `counter`, `chart` (bound to a question), or `map` (bound to a geo question). Blocks SHALL render in the creator-defined order, and the order SHALL be editable via drag-and-drop. A block may be individually hidden without deletion. A `chart` block SHALL render using the creator-selected visualization (`auto`/`bar` as a bar chart, `pie`, `donut`, or `table`); a `map` block SHALL render using its selected visualization (`auto` markers or `heatmap`).
+The creator SHALL compose the page from an ordered list of blocks. Each block is one of: `text`, `image`, `chart` (bound to a question), or `map` (bound to a geo question) — there is no standalone counter block, since the response count is already available as a page-level affordance (see "Engagement affordances and platform footer"). Blocks SHALL render in the creator-defined order, and the order SHALL be editable via drag-and-drop. A block may be individually hidden without deletion. A `chart` block SHALL render using the creator-selected visualization (`auto`/`bar` as a bar chart, `pie`, `donut`, or `table`); a `map` block SHALL render using its selected visualization (`auto` markers or `heatmap`). An `image` block holds one creator-uploaded image with an optional multilingual caption; a block with no image attached (defensive) is omitted from rendering, mirroring a chart/map block whose question was deleted.
 
 #### Scenario: Blocks render in configured order
 - **WHEN** a visitor loads a page with blocks ordered [intro text, chart, map]
@@ -68,6 +74,14 @@ The creator SHALL compose the page from an ordered list of blocks. Each block is
 - **WHEN** the creator sets a chart block's visualization to `pie`, `donut`, or `table`
 - **THEN** the public page and the editor preview render that visualization, not a bar chart
 - **AND** `bar` and `auto` render as a bar chart (preserving the existing horizontal/vertical orientation per data type)
+
+#### Scenario: Image block renders with caption
+- **WHEN** the creator adds an image block with an uploaded file and a caption
+- **THEN** the public page renders the image and the caption text
+
+#### Scenario: Image block without a file is omitted
+- **WHEN** an image block somehow has no file attached
+- **THEN** it produces no payload and is not rendered
 
 ### Requirement: Text answers are never published
 The block-creation picker SHALL NOT allow adding `text` / `text_line` questions as result blocks, and the public page SHALL never display individual free-text answers.

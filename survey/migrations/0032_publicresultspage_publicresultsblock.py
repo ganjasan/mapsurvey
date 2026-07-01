@@ -36,14 +36,14 @@ class Migration(migrations.Migration):
             name='PublicResultsBlock',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('block_type', models.CharField(choices=[('text', 'Text'), ('counter', 'Response counter'), ('chart', 'Chart'), ('map', 'Map')], max_length=10)),
+                ('block_type', models.CharField(choices=[('text', 'Text'), ('chart', 'Chart'), ('map', 'Map')], max_length=10)),
                 ('viz', models.CharField(default='auto', help_text='Visualization override: auto, bar, pie, donut, table, heatmap, ...', max_length=20)),
                 ('custom_title', models.JSONField(blank=True, default=dict, help_text='Optional multilingual title override.')),
                 ('geo_label_fields', models.JSONField(blank=True, default=list, help_text='Question codes whose values appear in geo popups. Empty = anonymous geometry only.')),
                 ('is_hidden', models.BooleanField(default=False)),
                 ('order', models.PositiveIntegerField(default=0)),
                 ('page', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='blocks', to='survey.publicresultspage')),
-                ('question', models.ForeignKey(blank=True, help_text='Bound question for chart/map blocks; null for text/counter.', null=True, on_delete=django.db.models.deletion.SET_NULL, to='survey.question')),
+                ('question', models.ForeignKey(blank=True, help_text='Bound question for chart/map blocks; null for text.', null=True, on_delete=django.db.models.deletion.SET_NULL, to='survey.question')),
             ],
             options={
                 'ordering': ['order', 'id'],

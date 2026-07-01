@@ -71,6 +71,15 @@
 
     <!-- Left Sidebar: Sections -->
     <aside class="editor-sidebar" id="editor-sidebar">
+        {% if is_owner %}
+        <div class="sidebar-pinned">
+            <a class="sidebar-pinned-item{% if settings_panel_active %} active{% endif %}"
+               id="settingsPinnedItem"
+               href="{% url 'editor_survey_detail' survey.uuid %}?panel=settings">
+                <i class="fas fa-sliders-h"></i> <span>Survey settings</span> <i class="fas fa-chevron-right chev"></i>
+            </a>
+        </div>
+        {% endif %}
         <div class="sidebar-header">
             <span>Sections</span>
             <button class="panel-toggle" id="sidebar-collapse" title="Hide sidebar">
@@ -111,7 +120,14 @@
 
     <!-- Center Panel: Section Detail + Questions -->
     <main class="editor-main" id="editor-main">
-        {% if current_section %}
+        {% if settings_panel_active %}
+        <div id="section-content"
+             hx-get="{% url 'editor_survey_settings_panel' survey.uuid %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <div style="text-align:center;padding:2rem;color:#9ca3af;">Loading...</div>
+        </div>
+        {% elif current_section %}
         <div id="section-content"
              hx-get="{% url 'editor_section_detail' survey.uuid current_section.id %}"
              hx-trigger="load"
@@ -331,6 +347,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Highlight active
         document.querySelectorAll('.section-item').forEach(function(el) { el.classList.remove('active'); });
         item.classList.add('active');
+        var settingsPinned = document.getElementById('settingsPinnedItem');
+        if (settingsPinned) settingsPinned.classList.remove('active');
         // Load section detail via HTMX
         htmx.ajax('GET', '/editor/surveys/{{ survey.uuid }}/sections/' + sectionId + '/', {
             target: '#section-content',
@@ -342,6 +360,22 @@ document.addEventListener('DOMContentLoaded', function() {
             iframe.src = buildPreviewUrl(sectionName);
         }
     });
+
+    // Pinned "Survey settings" entry → swap the center panel without a full
+    // reload (same UX as clicking a section); the href stays a real deep
+    // link (?panel=settings) for no-JS/bookmark use.
+    var settingsPinnedItem = document.getElementById('settingsPinnedItem');
+    if (settingsPinnedItem) {
+        settingsPinnedItem.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('.section-item').forEach(function(el) { el.classList.remove('active'); });
+            settingsPinnedItem.classList.add('active');
+            htmx.ajax('GET', '{% url "editor_survey_settings_panel" survey.uuid %}', {
+                target: '#section-content',
+                swap: 'innerHTML'
+            });
+        });
+    }
 
     // Preview language
     var langSelect = document.getElementById('preview-lang');

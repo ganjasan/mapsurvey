@@ -107,10 +107,10 @@ class PublicResultsService:
         return payloads
 
     def _build_block(self, block):
-        if block.block_type == 'counter':
-            return self._counter_payload(block)
         if block.block_type == 'text':
             return self._text_payload(block)
+        if block.block_type == 'image':
+            return self._image_payload(block)
         if block.block_type in ('chart', 'map'):
             # A chart/map block must reference an existing question. A deleted
             # question (SET_NULL) silently drops the block.
@@ -132,14 +132,17 @@ class PublicResultsService:
             'title': title,
         }
 
-    def _counter_payload(self, block):
-        payload = self._base(block)
-        payload['count'] = self.response_count()
-        return payload
-
     def _text_payload(self, block):
         payload = self._base(block)
         payload['body'] = _localize(block.content, self.lang)
+        return payload
+
+    def _image_payload(self, block):
+        if not block.image:
+            return None
+        payload = self._base(block)
+        payload['image_url'] = block.image.url
+        payload['caption'] = _localize(block.content, self.lang)
         return payload
 
     def _chart_payload(self, block):

@@ -40,6 +40,11 @@ def _can_read_survey(user, survey):
     return get_effective_survey_role(user, survey) is not None
 
 
+def _is_ajax(request):
+    """True for fetch/XHR autosave requests (vs a plain form submit)."""
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+
 def _get_sections_ordered(survey):
     """Return sections in linked-list order."""
     sections = list(SurveySection.objects.filter(survey_header=survey))
@@ -119,14 +124,20 @@ def editor_survey_detail(request, survey_uuid):
     survey = request.survey
     sections = _get_sections_ordered(survey)
 
-    current_section_id = request.GET.get('section')
+    settings_panel_active = (
+        request.GET.get('panel') == 'settings'
+        and request.effective_survey_role == 'owner'
+    )
+
     current_section = None
-    if current_section_id:
-        current_section = SurveySection.objects.filter(
-            id=current_section_id, survey_header=survey
-        ).first()
-    if not current_section and sections:
-        current_section = sections[0]
+    if not settings_panel_active:
+        current_section_id = request.GET.get('section')
+        if current_section_id:
+            current_section = SurveySection.objects.filter(
+                id=current_section_id, survey_header=survey
+            ).first()
+        if not current_section and sections:
+            current_section = sections[0]
 
     questions = []
     if current_section:
@@ -152,6 +163,7 @@ def editor_survey_detail(request, survey_uuid):
         'survey': survey,
         'sections': sections,
         'current_section': current_section,
+        'settings_panel_active': settings_panel_active,
         'questions': questions,
         'effective_role': request.effective_survey_role,
         'can_edit': can_edit and not is_read_only,
@@ -176,6 +188,34 @@ def editor_survey_settings(request, survey_uuid):
     else:
         form = SurveyHeaderForm(instance=survey)
     return render(request, 'editor/survey_settings.html', {
+        'survey': survey,
+        'form': form,
+        'effective_role': request.effective_survey_role,
+        'basemap_choices': BASEMAP_CHOICES,
+    })
+
+
+@survey_permission_required('owner')
+def editor_survey_settings_panel(request, survey_uuid):
+    """Same settings as editor_survey_settings, rendered as an HTMX-swappable
+    partial for the pinned "Survey settings" entry in the editor sidebar. The
+    general fields autosave (mirrors public_results_editor.py's pattern); Map
+    Position / Collaborators / Password keep their own dedicated controls.
+    """
+    survey = request.survey
+    if request.method == 'POST':
+        form = SurveyHeaderForm(request.POST, request.FILES, instance=survey)
+        if form.is_valid():
+            form.save()
+            if _is_ajax(request):
+                return JsonResponse({'ok': True})
+            from django.urls import reverse
+            return redirect('{}?panel=settings'.format(reverse('editor_survey_detail', args=[survey.uuid])))
+        elif _is_ajax(request):
+            return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
+    else:
+        form = SurveyHeaderForm(instance=survey)
+    return render(request, 'editor/partials/survey_settings_panel.html', {
         'survey': survey,
         'form': form,
         'effective_role': request.effective_survey_role,

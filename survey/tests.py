@@ -6502,6 +6502,87 @@ class EditorPermissionTest(TestCase):
         response = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings/')
         self.assertEqual(response.status_code, 200)
 
+    def test_editor_cannot_access_settings_panel(self):
+        """
+        GIVEN an org editor with 'editor' collaborator role
+        WHEN they try to access the pinned settings panel partial
+        THEN they get 403 (same 'owner' requirement as the standalone page)
+        """
+        self.client.login(username='ep_editor', password='pass')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings-panel/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_owner_can_access_settings_panel(self):
+        """
+        GIVEN an org owner
+        WHEN they GET the settings panel partial
+        THEN they get 200 with the General settings form and no full page chrome
+        """
+        self.client.login(username='ep_owner', password='pass')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings-panel/')
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('surveySettingsGeneralForm', content)
+        self.assertNotIn('<html', content)
+
+    def test_settings_panel_autosave_ajax_returns_json(self):
+        """
+        GIVEN the settings panel form is submitted via XHR (autosave)
+        WHEN the request carries X-Requested-With
+        THEN a JSON ok response is returned (no redirect) and the field persists
+        """
+        self.client.login(username='ep_owner', password='pass')
+        url = f'/editor/surveys/{self.survey.uuid}/settings-panel/'
+        response = self.client.post(
+            url,
+            {
+                'name': self.survey.name,
+                'redirect_url': '#',
+                'available_languages': '[]',
+                'visibility': 'public',
+                'thanks_html': '{}',
+                'basemaps': '["streets"]',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['ok'])
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.visibility, 'public')
+
+    def test_settings_panel_plain_post_redirects(self):
+        """
+        GIVEN the settings panel form is submitted as a plain (non-XHR) POST
+        WHEN the form is valid
+        THEN the response redirects back into the editor with the panel selected
+        """
+        self.client.login(username='ep_owner', password='pass')
+        url = f'/editor/surveys/{self.survey.uuid}/settings-panel/'
+        response = self.client.post(url, {
+            'name': self.survey.name,
+            'redirect_url': '#',
+            'available_languages': '[]',
+            'visibility': 'private',
+            'thanks_html': '{}',
+            'basemaps': '["streets"]',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('panel=settings', response.url)
+
+    def test_survey_detail_with_panel_settings_query_param(self):
+        """
+        GIVEN the owner loads the editor with ?panel=settings
+        WHEN the page renders
+        THEN the settings panel is the initial center-panel content and the
+             pinned entry is marked active (no section is current)
+        """
+        self.client.login(username='ep_owner', password='pass')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/?panel=settings')
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('settings-panel/', content)
+        self.assertIn('sidebar-pinned-item active', content)
+
 
 # ─── Task 8.4: Export/Import/Delete Permission Tests ────────────────────────
 
@@ -17396,7 +17477,7 @@ class PublicResultsPageModelTest(TestCase):
         THEN its blocks are deleted too
         """
         page = PublicResultsPage.objects.create(survey=self.survey, slug="pr-cascade")
-        PublicResultsBlock.objects.create(page=page, block_type="counter", order=0)
+        PublicResultsBlock.objects.create(page=page, block_type="text", order=0)
         PublicResultsBlock.objects.create(page=page, block_type="text", order=1)
         self.assertEqual(PublicResultsBlock.objects.filter(page=page).count(), 2)
         page.delete()
@@ -17410,7 +17491,7 @@ class PublicResultsPageModelTest(TestCase):
         """
         page = PublicResultsPage.objects.create(survey=self.survey, slug="pr-order")
         PublicResultsBlock.objects.create(page=page, block_type="text", order=2)
-        PublicResultsBlock.objects.create(page=page, block_type="counter", order=0)
+        PublicResultsBlock.objects.create(page=page, block_type="text", order=0)
         PublicResultsBlock.objects.create(page=page, block_type="chart", order=1)
         orders = list(page.blocks.values_list("order", flat=True))
         self.assertEqual(orders, [0, 1, 2])
@@ -17563,17 +17644,44 @@ class PublicResultsServiceTest(TestCase):
         )
         self.assertIsNone(self._service()._build_block(block))
 
-    def test_zero_responses_counter(self):
+    def test_zero_responses_count(self):
         """
         GIVEN a page with no clean responses
-        WHEN a counter block is built
-        THEN the count is zero
+        WHEN the response count is computed
+        THEN it is zero
+        """
+        self.assertEqual(self._service().response_count(), 0)
+
+    def test_image_block_without_file_produces_no_payload(self):
+        """
+        GIVEN an image block with no file attached
+        WHEN the block is built
+        THEN it produces no payload (defensive, mirrors deleted-question blocks)
         """
         block = PublicResultsBlock.objects.create(
-            page=self.page, block_type="counter", order=0,
+            page=self.page, block_type="image", order=0,
+        )
+        self.assertIsNone(self._service()._build_block(block))
+
+    def test_image_block_payload_includes_url_and_caption(self):
+        """
+        GIVEN an image block with a file and a caption
+        WHEN the block is built
+        THEN the payload carries the image URL and localized caption
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        gif_bytes = (
+            b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04'
+            b'\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
+        )
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="image", order=0,
+            image=SimpleUploadedFile("pic.gif", gif_bytes, content_type="image/gif"),
+            content={"en": "A lovely spot"},
         )
         payload = self._service()._build_block(block)
-        self.assertEqual(payload["count"], 0)
+        self.assertIn("pic", payload["image_url"])
+        self.assertEqual(payload["caption"], "A lovely spot")
 
 
 class PublicResultsFreezeTest(TestCase):
@@ -17656,8 +17764,8 @@ class PublicResultsFreezeTest(TestCase):
         THEN the next render reflects one block, without clearing the cache manually
         """
         from .public_results import render_page_data, bump_page_version
-        PublicResultsBlock.objects.create(page=self.page, block_type="counter", order=0)
-        b2 = PublicResultsBlock.objects.create(page=self.page, block_type="counter", order=1)
+        PublicResultsBlock.objects.create(page=self.page, block_type="text", order=0)
+        b2 = PublicResultsBlock.objects.create(page=self.page, block_type="text", order=1)
         self.assertEqual(len(render_page_data(self.page)["blocks"]), 2)  # prime cache
         b2.delete()
         bump_page_version(self.page)
@@ -17734,7 +17842,7 @@ class PublicResultsViewTest(TestCase):
             survey=self.survey, slug="prv", is_published=True, visibility="public",
             intro={"title": {"en": "Park results"}, "body": {"en": "Thanks all"}},
         )
-        PublicResultsBlock.objects.create(page=self.page, block_type="counter", order=0)
+        PublicResultsBlock.objects.create(page=self.page, block_type="text", order=0)
         PublicResultsBlock.objects.create(
             page=self.page, block_type="chart", question=self.choice_q, order=1,
         )
@@ -17752,6 +17860,27 @@ class PublicResultsViewTest(TestCase):
         r = self.client.get("/r/{}/".format(self.page.slug))
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, '"viz": "pie"')
+
+    def test_image_block_renders_on_public_page(self):
+        """
+        GIVEN an image block with a caption
+        WHEN the public page is rendered
+        THEN the image tag and caption appear
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        gif_bytes = (
+            b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04'
+            b'\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
+        )
+        PublicResultsBlock.objects.create(
+            page=self.page, block_type="image", order=2,
+            image=SimpleUploadedFile("pic.gif", gif_bytes, content_type="image/gif"),
+            content={"en": "A lovely spot"},
+        )
+        r = self.client.get("/r/{}/".format(self.page.slug))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "<img src=")
+        self.assertContains(r, "A lovely spot")
 
     def test_published_page_reachable(self):
         """
@@ -17917,6 +18046,70 @@ class PublicResultsEditorTest(TestCase):
         self.assertEqual(r.status_code, 400)
         self.assertFalse(PublicResultsBlock.objects.exists())
 
+    def _gif_upload(self, name="pic.gif"):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        gif_bytes = (
+            b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04'
+            b'\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
+        )
+        return SimpleUploadedFile(name, gif_bytes, content_type="image/gif")
+
+    def test_add_image_block(self):
+        """
+        GIVEN an uploaded image file
+        WHEN it is added as an image block
+        THEN an image block is created with the file attached
+        """
+        self._login()
+        self.client.post(self.base + "blocks/add/", {
+            "block_type": "image", "image": self._gif_upload(),
+        })
+        block = PublicResultsBlock.objects.get(page__survey=self.survey)
+        self.assertEqual(block.block_type, "image")
+        self.assertTrue(block.image)
+
+    def test_add_image_block_without_file_rejected(self):
+        """
+        GIVEN no file attached
+        WHEN an attempt is made to add an image block
+        THEN the request is rejected and no block is created
+        """
+        self._login()
+        r = self.client.post(self.base + "blocks/add/", {"block_type": "image"})
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(PublicResultsBlock.objects.exists())
+
+    def test_edit_image_block_caption_and_replace(self):
+        """
+        GIVEN an existing image block
+        WHEN its caption is updated and the file is replaced
+        THEN both changes persist
+        """
+        self._login()
+        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        block = PublicResultsBlock.objects.create(
+            page=page, block_type="image", image=self._gif_upload("old.gif"), order=0,
+        )
+        old_name = block.image.name
+        self.client.post(self.base + "blocks/{}/edit/".format(block.id), {
+            "content": "Updated caption", "image": self._gif_upload("new.gif"),
+        })
+        block.refresh_from_db()
+        self.assertEqual(block.content["en"], "Updated caption")
+        self.assertNotEqual(block.image.name, old_name)
+
+    def test_counter_block_type_rejected(self):
+        """
+        GIVEN the retired 'counter' block type (duplicated the page-level
+              response counter shown in the hero)
+        WHEN an attempt is made to add one
+        THEN the request is rejected and no block is created
+        """
+        self._login()
+        r = self.client.post(self.base + "blocks/add/", {"block_type": "counter"})
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(PublicResultsBlock.objects.exists())
+
     def test_reorder_persists(self):
         """
         GIVEN three blocks
@@ -17925,7 +18118,7 @@ class PublicResultsEditorTest(TestCase):
         """
         self._login()
         page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
-        b1 = PublicResultsBlock.objects.create(page=page, block_type="counter", order=0)
+        b1 = PublicResultsBlock.objects.create(page=page, block_type="text", order=0)
         b2 = PublicResultsBlock.objects.create(page=page, block_type="text", order=1)
         b3 = PublicResultsBlock.objects.create(page=page, block_type="text", order=2)
         self.client.post(
@@ -17946,7 +18139,7 @@ class PublicResultsEditorTest(TestCase):
         from .public_results import render_page_data
         self._login()
         page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
-        block = PublicResultsBlock.objects.create(page=page, block_type="counter", order=0)
+        block = PublicResultsBlock.objects.create(page=page, block_type="text", order=0)
         self.assertEqual(len(render_page_data(page)["blocks"]), 1)  # prime cache
         self.client.post(self.base + "blocks/{}/delete/".format(block.id))
         page.refresh_from_db()
@@ -18000,6 +18193,74 @@ class PublicResultsEditorTest(TestCase):
         self.assertEqual(page.k_anonymity_threshold, 5)
         self.assertEqual(page.intro["title"]["en"], "Hello")
         self.assertEqual(page.slug, "pre-x")
+
+    def test_settings_autosave_ajax_returns_json(self):
+        """
+        GIVEN the page settings form is submitted via XHR (autosave)
+        WHEN the request carries X-Requested-With and omits the slug
+        THEN a JSON ok response is returned (no redirect), values persist,
+              and the existing slug is preserved
+        """
+        self._login()
+        self.client.get(self.base)
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        original_slug = page.slug
+        r = self.client.post(
+            self.base + "settings/",
+            {"visibility": "unlisted", "k_anonymity_threshold": "4", "intro_title": "Hi"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()["ok"])
+        page.refresh_from_db()
+        self.assertEqual(page.visibility, "unlisted")
+        self.assertEqual(page.k_anonymity_threshold, 4)
+        self.assertEqual(page.slug, original_slug)
+
+    def test_slug_apply_reports_taken(self):
+        """
+        GIVEN another page already owns a slug
+        WHEN the creator applies that slug via XHR
+        THEN the response flags slug_taken and the slug is unchanged
+        """
+        self._login()
+        self.client.get(self.base)
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        original_slug = page.slug
+        other = SurveyHeader.objects.create(
+            name="other_pre", organization=self.org, status="published",
+        )
+        PublicResultsPage.objects.create(survey=other, slug="taken-slug", is_published=True)
+        r = self.client.post(
+            self.base + "settings/",
+            {"visibility": page.visibility, "k_anonymity_threshold": "3", "slug": "taken-slug"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()["slug_taken"])
+        page.refresh_from_db()
+        self.assertEqual(page.slug, original_slug)
+
+    def test_block_edit_autosave_ajax_returns_json(self):
+        """
+        GIVEN a chart block
+        WHEN its visualization is changed via XHR (autosave)
+        THEN a JSON ok response is returned and the new viz persists
+        """
+        self._login()
+        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        block = PublicResultsBlock.objects.create(
+            page=page, block_type="chart", question=self.choice_q, order=0,
+        )
+        r = self.client.post(
+            self.base + "blocks/{}/edit/".format(block.id),
+            {"viz": "pie"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()["ok"])
+        block.refresh_from_db()
+        self.assertEqual(block.viz, "pie")
 
 
 class PublicResultsPreviewTest(TestCase):

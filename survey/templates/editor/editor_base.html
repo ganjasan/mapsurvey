@@ -103,7 +103,7 @@
             user-select: none;
         }
         .section-item .drag-handle:active { cursor: grabbing; }
-        .section-item .section-title { flex: 1; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .section-item .section-title { flex: 1; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: inherit; text-decoration: none; }
         .section-item .section-delete {
             opacity: 0;
             color: #ef4444;
@@ -128,6 +128,29 @@
         .section-item .section-action:hover { opacity: 1; color: var(--accent); }
         .sidebar-footer { padding: 0.75rem 1rem; border-top: 1px solid var(--border-color); flex-shrink: 0; }
 
+        /* Pinned sidebar entry (e.g. "Survey settings" / "Page settings") — shared
+           between the Survey Editor sidebar and the Public Results sidebar so the
+           two read as one component instead of two hand-tuned near-duplicates. */
+        .sidebar-pinned { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+        .sidebar-pinned-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.6rem 0.7rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #374151;
+            text-decoration: none;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+        .sidebar-pinned-item:hover { background: var(--bg-muted); text-decoration: none; }
+        .sidebar-pinned-item.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+        .sidebar-pinned-item .chev { margin-left: auto; color: #c4c7cf; font-size: 0.7rem; }
+
         /* Center panel */
         .editor-main {
             flex: 1;
@@ -142,6 +165,29 @@
             margin-bottom: 1.25rem;
         }
         .section-form-card h6 { margin-bottom: 1rem; font-weight: 600; }
+
+        /* Settings form (used by both the standalone settings page and the
+           pinned-panel version swapped into the editor's center column, which
+           already gets padding from .editor-main — see survey_settings.html
+           for the standalone page's own extra padding override) */
+        .settings-main { max-width: 800px; margin: 0 auto; }
+        .settings-section {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .settings-section h6 {
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        /* Autosave status indicator (Public Results settings + Survey settings panel) */
+        .autosave-status { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #16a34a; margin-top: 0.4rem; transition: color 0.15s; }
+        .autosave-status.is-error { color: #dc2626; }
+        .autosave-status.is-saving { color: #9ca3af; }
         .section-form-card .form-group { margin-bottom: 0.75rem; }
         .section-form-card label { font-size: 0.85rem; font-weight: 500; color: #374151; }
 
@@ -636,6 +682,18 @@
             text-transform: uppercase;
             letter-spacing: 0.04em;
             background: #f59e0b;
+            color: #fff;
+            padding: 1px 5px;
+            border-radius: 3px;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+        .badge-moved {
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            background: #9ca3af;
             color: #fff;
             padding: 1px 5px;
             border-radius: 3px;

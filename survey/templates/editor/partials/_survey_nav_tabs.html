@@ -29,10 +29,10 @@ Optional: effective_role (string), hide_status_badge (bool)
         <i class="fas fa-share-alt"></i> Share
     </a>
     {% if effective_role == 'owner' %}
-    <a href="{% url 'editor_survey_settings' survey.uuid %}"
+    <a href="{% url 'editor_survey_detail' survey.uuid %}?panel=settings"
        class="survey-nav-tab{% if active_tab == 'settings' %} active{% endif %}"
-       title="Settings">
-        <i class="fas fa-cog"></i> Settings
+       title="Moved into the Editor sidebar — click to jump to Survey settings">
+        <i class="fas fa-cog"></i> Settings <span class="badge-moved">moved</span>
     </a>
     {% endif %}
 </div>
