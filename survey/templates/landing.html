@@ -249,8 +249,6 @@
         <div class="final-cta__buttons reveal">
             {% if user.is_authenticated %}
             <a href="{% url 'editor' %}" class="btn-primary-landing">{% trans "Go to Dashboard" %}</a>
-            {% else %}
-            <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">{% trans "Create Your Mapsurvey" %}</a>
             {% endif %}
             {% if DISCORD_INVITE_URL %}
             <a href="{{ DISCORD_INVITE_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">
