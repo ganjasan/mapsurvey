@@ -38,3 +38,8 @@ sidebar would delete that capability, a regression. So F5 was scoped down:
 - [x] 6.1 `./run_tests.sh survey` — zero regressions (URLs/view names unchanged, so existing tests should pass; fix any that assert on old tab labels).
 - [x] 6.2 Browser pass on :8010: three spaces switch; Share▾/Preview▾ work; publishing widget toggles status + visibility + shows results link; Results sidebar; dashboard cards.
 - [x] 6.3 Add/adjust tests: `editor_survey_visibility` toggles field + owner-gated; publishing widget renders on all three spaces; nav shows Build/Results/Publish (no Editor/Settings tab).
+
+## 7. Follow-on (user feedback): prominent draft actions in Build
+
+- [x] 7.1 A canonical draft survey (status=draft) shows prominent navbar Publish (draft→published) + Discard (delete draft, confirm modal) in Build, mirroring the draft-copy's Publish Version/Discard. Full transitions stay in the publishing widget.
+- [x] 7.2 Publish-space Page-settings bar buttons don't wrap (`white-space:nowrap`) — "Live page" no longer breaks to two lines.

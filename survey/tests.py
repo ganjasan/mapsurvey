@@ -6611,6 +6611,23 @@ class EditorPermissionTest(TestCase):
             content = self.client.get(f'/editor/surveys/{self.survey.uuid}/{path}').content.decode()
             self.assertIn('publishing-widget', content, msg=f'missing on /{path}')
 
+    def test_draft_survey_shows_prominent_publish_and_discard(self):
+        """
+        GIVEN a canonical draft survey
+        WHEN the owner opens Build
+        THEN prominent Publish (draft→published) and Discard (delete draft)
+             actions are present; a published survey shows neither
+        """
+        self.client.login(username='ep_owner', password='pass')
+        content = self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
+        self.assertIn("doTransition('published')", content)
+        self.assertIn('discardDraftSurveyModal', content)
+        # Once published, the prominent draft actions disappear
+        self.survey.status = 'published'
+        self.survey.save()
+        content = self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
+        self.assertNotIn('discardDraftSurveyModal', content)
+
     def test_visibility_toggle_owner(self):
         """
         GIVEN an owner

@@ -21,6 +21,13 @@
 <button class="btn btn-sm btn-outline-danger ml-1" data-toggle="modal" data-target="#discardDraftModal">
     <i class="fas fa-trash"></i> Discard
 </button>
+{% elif is_owner and survey.status == 'draft' and not survey.is_draft_copy %}
+<button class="btn btn-sm btn-success ml-2" onclick="doTransition('published')">
+    <i class="fas fa-globe"></i> Publish
+</button>
+<button class="btn btn-sm btn-outline-danger ml-1" data-toggle="modal" data-target="#discardDraftSurveyModal">
+    <i class="fas fa-trash"></i> Discard
+</button>
 {% endif %}
 {% endblock %}
 
@@ -173,6 +180,21 @@
         </div>
     </div>
 </div>
+
+{% if is_owner and survey.status == 'draft' and not survey.is_draft_copy %}
+<!-- Discard (delete) this draft survey -->
+<div class="modal fade editor-modal" id="discardDraftSurveyModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Discard draft</h5><button type="button" class="close" data-dismiss="modal"><span>&times;</span></button></div>
+        <div class="modal-body"><p>Delete this draft survey and everything in it? This can't be undone.</p></div>
+        <div class="modal-footer d-flex align-items-center">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <form method="post" action="{% url 'delete_survey' survey.uuid %}" class="d-inline mb-0">{% csrf_token %}
+                <button type="submit" class="btn btn-danger">Discard draft</button></form>
+        </div>
+    </div></div>
+</div>
+{% endif %}
 
 {% include "editor/partials/_lifecycle_scripts.html" %}
 
