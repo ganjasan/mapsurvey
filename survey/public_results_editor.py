@@ -11,6 +11,7 @@ import uuid as uuid_module
 from django.http import HttpResponse, JsonResponse, Http404
 from django.shortcuts import redirect, get_object_or_404
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.text import slugify
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
@@ -99,8 +100,11 @@ def public_results_config(request, survey_uuid):
         'can_publish': survey.status != 'draft',
         'public_url': request.build_absolute_uri('/r/{}/'.format(page.slug)),
         'visibility_choices': PublicResultsPage._meta.get_field('visibility').choices,
-        'chart_viz_options': ['auto', 'bar', 'pie', 'donut', 'table'],
-        'map_viz_options': ['auto', 'heatmap'],
+        'chart_viz_options': [
+            ('auto', 'Auto (bar chart)'), ('bar', 'Bar chart'), ('pie', 'Pie'),
+            ('donut', 'Donut'), ('table', 'Table'),
+        ],
+        'map_viz_options': [('auto', 'Markers'), ('heatmap', 'Heatmap')],
         'basemap_choices': BASEMAP_CHOICES,
     }
     from django.shortcuts import render
@@ -181,12 +185,12 @@ def public_results_block_add(request, survey_uuid):
     next_order = page.blocks.count()
 
     if block_type == 'text':
-        PublicResultsBlock.objects.create(page=page, block_type=block_type, order=next_order)
+        block = PublicResultsBlock.objects.create(page=page, block_type=block_type, order=next_order)
     elif block_type == 'image':
         image = request.FILES.get('image')
         if not image:
             return HttpResponse('An image file is required.', status=400)
-        PublicResultsBlock.objects.create(page=page, block_type=block_type, image=image, order=next_order)
+        block = PublicResultsBlock.objects.create(page=page, block_type=block_type, image=image, order=next_order)
     elif block_type == 'question':
         question = get_object_or_404(
             Question, id=request.POST.get('question_id'),
@@ -196,14 +200,16 @@ def public_results_block_add(request, survey_uuid):
         if resolved is None:
             # Text questions are never publishable.
             return HttpResponse('Question type is not available for publication.', status=400)
-        PublicResultsBlock.objects.create(
+        block = PublicResultsBlock.objects.create(
             page=page, block_type=resolved, question=question, order=next_order,
         )
     else:
         return HttpResponse('Unknown block type.', status=400)
 
     bump_page_version(page)
-    return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
+    # Land the editor in the new block's config — the live preview scrolls to it.
+    url = reverse('editor_survey_public_results', kwargs={'survey_uuid': survey_uuid})
+    return redirect('{}?block={}'.format(url, block.id))
 
 
 @survey_permission_required('editor')
@@ -234,7 +240,6 @@ def public_results_block_edit(request, survey_uuid, block_id):
     bump_page_version(page)
     if _is_ajax(request):
         return JsonResponse({'ok': True, 'block_id': block.id})
-    from django.urls import reverse
     url = reverse('editor_survey_public_results', kwargs={'survey_uuid': survey_uuid})
     return redirect('{}?block={}'.format(url, block.id))
 

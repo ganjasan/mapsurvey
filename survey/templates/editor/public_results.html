@@ -1,7 +1,7 @@
 {% extends "editor/editor_base.html" %}
 {% load survey_filters %}
 
-{% block page_title %}Public results – {{ survey.name }}{% endblock %}
+{% block page_title %}Publish – {{ survey.name }}{% endblock %}
 
 {% block navbar_content %}
 <span class="survey-name">{{ survey.name }}</span>
@@ -27,8 +27,9 @@
   .pr-field { margin-bottom:.85rem; }
   .pr-field label { display:block; font-size:.82rem; font-weight:500; color:#374151; margin-bottom:.35rem; }
   .pr-help { font-size:.76rem; color:#9ca3af; margin-top:.3rem; }
-  .pr-switch { display:flex; align-items:center; justify-content:space-between; padding:.5rem 0; border-bottom:1px solid #f3f4f6; }
+  .pr-switch { display:flex; align-items:center; justify-content:space-between; padding:.5rem 0; border-bottom:1px solid #f3f4f6; margin:0; width:100%; cursor:pointer; font-weight:400; }
   .pr-switch:last-child { border-bottom:none; }
+  .pr-switch input { cursor:pointer; }
   .pr-url { font-family:monospace; font-size:.82rem; color:var(--accent); }
   .pr-banner { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; border-radius:8px; padding:.6rem .8rem; font-size:.82rem; margin-bottom:1rem; }
 
@@ -91,8 +92,8 @@
             <div class="pr-field">
               <label>Visualization</label>
               <select class="form-control" name="viz">
-                {% for v in chart_viz_options %}
-                <option value="{{ v }}" {% if selected_block.viz == v %}selected{% endif %}>{{ v }}</option>
+                {% for val, label in chart_viz_options %}
+                <option value="{{ val }}" {% if selected_block.viz == val %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
             </div>
@@ -100,8 +101,8 @@
             <div class="pr-field">
               <label>Visualization</label>
               <select class="form-control" name="viz">
-                {% for v in map_viz_options %}
-                <option value="{{ v }}" {% if selected_block.viz == v %}selected{% endif %}>{{ v }}</option>
+                {% for val, label in map_viz_options %}
+                <option value="{{ val }}" {% if selected_block.viz == val %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
             </div>
@@ -143,8 +144,8 @@
               <textarea class="form-control" name="content" rows="2">{{ selected_block.content.en|default:'' }}</textarea>
             </div>
             {% endif %}
-            <div class="pr-switch"><span>Hidden <small class="pr-help">keep but don't show publicly</small></span>
-              <input type="checkbox" name="is_hidden" {% if selected_block.is_hidden %}checked{% endif %}></div>
+            <label class="pr-switch"><span>Hidden <small class="pr-help">keep but don't show publicly</small></span>
+              <input type="checkbox" name="is_hidden" {% if selected_block.is_hidden %}checked{% endif %}></label>
             <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
             <noscript><button class="btn btn-primary mt-2" type="submit"><i class="fas fa-check"></i> Save block</button></noscript>
           </div>
@@ -176,15 +177,15 @@
               <div class="pr-help">Public is indexable and listable. Unlisted is reachable by direct link only and not indexed.</div>
             </div>
             <div class="pr-field">
-              <label>Slug <small class="pr-help">changes the public URL — applied explicitly</small></label>
+              <label>Page address <small class="pr-help">changes the public URL — applied explicitly</small></label>
               <div style="display:flex;gap:.4rem;align-items:center;">
                 <input class="form-control" name="slug" data-no-autosave value="{{ page.slug }}">
                 <button type="button" class="btn btn-sm btn-outline-primary" id="prSlugApply" style="white-space:nowrap;">Apply</button>
               </div>
               <div class="pr-help">Public URL: <span class="pr-url">/r/{{ page.slug }}/</span> <span class="pr-slug-msg"></span></div>
             </div>
-            <div class="pr-switch"><span>Published <small class="pr-help">make the page live</small></span>
-              <input type="checkbox" name="is_published" {% if page.is_published %}checked{% endif %} {% if not can_publish %}disabled{% endif %}></div>
+            <label class="pr-switch"><span>Page is live <small class="pr-help">public at /r/{{ page.slug }}/</small></span>
+              <input type="checkbox" name="is_published" {% if page.is_published %}checked{% endif %} {% if not can_publish %}disabled{% endif %}></label>
           </div>
 
           <div class="pr-card">
@@ -197,12 +198,12 @@
 
           <div class="pr-card">
             <h6>Display &amp; privacy</h6>
-            <div class="pr-switch"><span>Show response counter</span>
-              <input type="checkbox" name="show_response_count" {% if page.show_response_count %}checked{% endif %}></div>
-            <div class="pr-switch"><span>Show “Take the survey” CTA <small class="pr-help">only while the survey is open</small></span>
-              <input type="checkbox" name="show_participate_cta" {% if page.show_participate_cta %}checked{% endif %}></div>
-            <div class="pr-switch"><span>Feature in public stories listing</span>
-              <input type="checkbox" name="feature_in_listing" {% if page.feature_in_listing %}checked{% endif %}></div>
+            <label class="pr-switch"><span>Show response counter</span>
+              <input type="checkbox" name="show_response_count" {% if page.show_response_count %}checked{% endif %}></label>
+            <label class="pr-switch"><span>Show “Take the survey” CTA <small class="pr-help">only while the survey is open</small></span>
+              <input type="checkbox" name="show_participate_cta" {% if page.show_participate_cta %}checked{% endif %}></label>
+            <label class="pr-switch"><span>Feature in public stories listing</span>
+              <input type="checkbox" name="feature_in_listing" {% if page.feature_in_listing %}checked{% endif %}></label>
             <div class="pr-field" style="margin-top:.6rem;"><label>k-anonymity threshold</label>
               <input class="form-control" style="max-width:120px;" type="number" min="1" name="k_anonymity_threshold" value="{{ page.k_anonymity_threshold }}">
               <div class="pr-help">Mask buckets smaller than K as “&lt;K”. Set to 1 to disable.</div></div>
@@ -388,7 +389,7 @@
       var msg = document.querySelector('.pr-slug-msg');
       postForm(form, { excludeSlug: false }).then(function(data){
         if (!data) return;
-        if (data.slug_taken) { if (msg) msg.textContent = 'Slug already taken'; return; }
+        if (data.slug_taken) { if (msg) msg.textContent = 'Address already taken'; return; }
         if (msg) msg.textContent = '';
         if (data.slug) {
           var url = document.querySelector('.pr-url'); if (url) url.textContent = '/r/' + data.slug + '/';

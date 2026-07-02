@@ -107,7 +107,9 @@
         {% if block.caption %}<figcaption>{{ block.caption }}</figcaption>{% endif %}
       {% elif block.block_type == 'chart' %}
         <div class="chart-holder"><canvas id="chart-{{ block.id }}"></canvas></div>
+        {% if page.k_anonymity_threshold > 1 %}
         <div class="kanon-note">{% trans "Small groups are masked to protect privacy." %}</div>
+        {% endif %}
       {% elif block.block_type == 'map' %}
         <div class="map-holder" id="map-{{ block.id }}"></div>
       {% endif %}

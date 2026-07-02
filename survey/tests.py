@@ -17943,6 +17943,21 @@ class PublicResultsViewTest(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, '"viz": "pie"')
 
+    def test_kanon_note_conditional_on_threshold(self):
+        """
+        GIVEN a page with masking enabled (k=3) and one with it disabled (k=1)
+        WHEN the public page renders a chart block
+        THEN the masking note shows only while masking is enabled
+        """
+        r = self.client.get("/r/{}/".format(self.page.slug))
+        self.assertContains(r, "Small groups are masked")
+        self.page.k_anonymity_threshold = 1
+        self.page.save()
+        from .public_results import bump_page_version
+        bump_page_version(self.page)
+        r = self.client.get("/r/{}/".format(self.page.slug))
+        self.assertNotContains(r, "Small groups are masked")
+
     def test_image_block_renders_on_public_page(self):
         """
         GIVEN an image block with a caption
@@ -18108,15 +18123,18 @@ class PublicResultsEditorTest(TestCase):
         """
         GIVEN a choice question
         WHEN it is added as a block
-        THEN a chart block is created
+        THEN a chart block is created and the editor lands in its config
         """
         self._login()
-        self.client.post(self.base + "blocks/add/", {
+        r = self.client.post(self.base + "blocks/add/", {
             "block_type": "question", "question_id": self.choice_q.id,
         })
         block = PublicResultsBlock.objects.get(page__survey=self.survey)
         self.assertEqual(block.block_type, "chart")
         self.assertEqual(block.question_id, self.choice_q.id)
+        # P3: redirect selects the freshly created block
+        self.assertEqual(r.status_code, 302)
+        self.assertIn(f"?block={block.id}", r.url)
 
     def test_text_question_not_addable(self):
         """
