@@ -13,7 +13,15 @@ The Public Results configuration sidebar SHALL reuse the Survey Editor's shared 
 
 #### Scenario: Question picker shows type and response count
 - **WHEN** the editor opens the question picker after choosing "Question results…"
-- **THEN** each option's label includes that question's type and current response count (e.g. "Rate us — Choices · 12 responses")
+- **THEN** each option shows the question name and, on a visually distinct second line, its type and current response count (e.g. name "Rate us" with a muted "Choices · 12 responses" beneath it)
+
+#### Scenario: Question picker is searchable by name and type
+- **WHEN** the editor types into the picker's search box
+- **THEN** the option list filters to questions whose name OR type contains the query (case-insensitive), and shows an empty-state message when nothing matches
+
+#### Scenario: Long question text wraps instead of overflowing
+- **WHEN** the question picker is opened and an option's label is too long to fit on one line
+- **THEN** the label wraps onto multiple lines within the picker's width instead of being clipped or overflowing the modal (a native `<select>` popup cannot wrap option text, so the picker is a custom listbox backed by a hidden `<select>` for form submission)
 
 ## MODIFIED Requirements
 
