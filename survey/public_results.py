@@ -211,6 +211,7 @@ class PublicResultsService:
     def _map_payload(self, block):
         question = block.question
         payload = self._base(block)
+        payload['basemap'] = block.basemap or 'streets'
         label_codes = set(block.geo_label_fields or [])
 
         # Build a per-question lookup so popup labels can resolve sibling

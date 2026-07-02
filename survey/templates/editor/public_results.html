@@ -105,6 +105,14 @@
               </select>
             </div>
             <div class="pr-field">
+              <label>Basemap</label>
+              <select class="form-control" name="basemap">
+                {% for val, label in basemap_choices %}
+                <option value="{{ val }}" {% if selected_block.basemap == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="pr-field">
               <label>Geo popup fields</label>
               <div class="pr-help" style="margin-top:0;margin-bottom:.4rem;">Empty = anonymous geometry only. Text questions cannot be selected.</div>
               {% for row in question_rows %}{% if row.publishable %}

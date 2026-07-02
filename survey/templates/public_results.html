@@ -132,6 +132,14 @@
     // it undefined while the forEach below is already invoking the renderers.
     var PALETTE = ['#4f46e5','#7c73f0','#22c55e','#f59e0b','#ef4444','#06b6d4','#ec4899','#8b5cf6','#10b981','#f97316'];
 
+    // Self-contained tile providers (no Mapbox token needed on the public page).
+    // Declared before the render loop for the same hoisting reason as PALETTE.
+    var BASEMAPS = {
+      streets:   { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', opts: { attribution: '© OpenStreetMap', maxZoom: 19 } },
+      satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts: { attribution: '© Esri', maxZoom: 19 } },
+      topo:      { url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', opts: { attribution: '© OpenTopoMap', maxZoom: 17 } }
+    };
+
     var blocks = JSON.parse(document.getElementById('blocks-data').textContent || '[]');
     blocks.forEach(function(b){
       if (b.block_type === 'chart' && b.data_type === 'choices') { renderChoiceChart(b); }
@@ -218,25 +226,47 @@
     function renderMap(b){
       var el = document.getElementById('map-' + b.id); if (!el) return;
       var map = L.map(el, { scrollWheelZoom: false });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(map);
+      var base = BASEMAPS[b.basemap] || BASEMAPS.streets;
+      L.tileLayer(base.url, base.opts).addTo(map);
+
       var fc = b.feature_collection || { features: [] };
+      var isHeat = (b.viz === 'heatmap' || b.viz === 'heat');
       var pts = [];
+
+      // In heatmap mode, point features become heat intensity only — drawing the
+      // individual markers on top (markerPane z-index 600) would completely hide
+      // the heat canvas (overlayPane z-index 400). Non-point geometries still
+      // render as shapes. In marker mode, everything renders as geoJSON features.
       var layer = L.geoJSON(fc, {
+        filter: function(feat){
+          if (isHeat && feat.geometry && feat.geometry.type === 'Point') return false;
+          return true;
+        },
         onEachFeature: function(feat, lyr){
           var props = feat.properties || {};
           var keys = Object.keys(props);
           if (keys.length) {
             lyr.bindPopup(keys.map(function(k){ return '<b>' + k + ':</b> ' + props[k]; }).join('<br>'));
           }
-          if (feat.geometry && feat.geometry.type === 'Point') {
-            pts.push([feat.geometry.coordinates[1], feat.geometry.coordinates[0]]);
-          }
         }
       }).addTo(map);
-      if (pts.length && (b.viz === 'heatmap' || b.viz === 'heat')) { L.heatLayer(pts, { radius: 25, blur: 18 }).addTo(map); }
+
+      // Collect point coordinates for the heat layer and for bounds.
+      (fc.features || []).forEach(function(feat){
+        if (feat.geometry && feat.geometry.type === 'Point') {
+          pts.push([feat.geometry.coordinates[1], feat.geometry.coordinates[0]]);
+        }
+      });
+
+      if (isHeat && pts.length) {
+        L.heatLayer(pts, { radius: 25, blur: 18, minOpacity: 0.35 }).addTo(map);
+      }
+
       try {
         var bounds = layer.getBounds();
-        if (bounds.isValid()) { map.fitBounds(bounds.pad(0.2)); } else { map.setView([52.52, 13.405], 11); }
+        if (!bounds.isValid() && pts.length) { bounds = L.latLngBounds(pts); }
+        if (bounds && bounds.isValid()) { map.fitBounds(bounds.pad(0.2)); }
+        else { map.setView([52.52, 13.405], 11); }
       } catch (e) { map.setView([52.52, 13.405], 11); }
     }
   })();

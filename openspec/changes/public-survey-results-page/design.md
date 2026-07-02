@@ -36,7 +36,7 @@ Constraints: GeoDjango/PostGIS; multilingual content stored as `{"en": ..., "ru"
 Chosen over fields-on-`SurveyHeader` (no room for snapshot/curated block order, model bloat) and over extending `Story` (generic CMS; live config muddies its responsibility).
 
 - `PublicResultsPage`: `survey` (OneToOne), `slug` (unique), `visibility` (`public`|`unlisted`), `is_published`, `intro` (JSON multilingual), `mode` (`live`|`frozen`), `snapshot` (JSON, null), `frozen_at`, `show_response_count`, `show_participate_cta`, `k_anonymity_threshold` (int, default 3), timestamps.
-- `PublicResultsBlock`: `page` (FK), `question` (FK, null for text/image blocks), `block_type` (`chart`|`map`|`text`|`image`), `viz` (`auto`|`bar`|`pie`|`heatmap`|…), `custom_title` (JSON, optional), `content` (JSON: text body or image caption), `image` (ImageField, `image` blocks only), `geo_label_fields` (JSON list), `order` (int).
+- `PublicResultsBlock`: `page` (FK), `question` (FK, null for text/image blocks), `block_type` (`chart`|`map`|`text`|`image`), `viz` (`auto`|`bar`|`pie`|`heatmap`|…), `custom_title` (JSON, optional), `content` (JSON: text body or image caption), `image` (ImageField, `image` blocks only), `geo_label_fields` (JSON list), `basemap` (`streets`|`satellite`|`topo`, map blocks), `order` (int).
 
 Rationale: clean separation, directly supports the hybrid + freeze + curation requirements; keeps `SurveyHeader` lean.
 

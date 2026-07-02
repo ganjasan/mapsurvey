@@ -17,7 +17,7 @@ from django.views.decorators.http import require_POST
 
 from .models import (
     PublicResultsPage, PublicResultsBlock, Question, Answer,
-    PUBLIC_RESULTS_BLOCK_TYPE_CHOICES,
+    PUBLIC_RESULTS_BLOCK_TYPE_CHOICES, BASEMAP_CHOICES,
 )
 from .permissions import survey_permission_required
 from .public_results import freeze_page, unfreeze_page, bump_page_version
@@ -101,6 +101,7 @@ def public_results_config(request, survey_uuid):
         'visibility_choices': PublicResultsPage._meta.get_field('visibility').choices,
         'chart_viz_options': ['auto', 'bar', 'pie', 'donut', 'table'],
         'map_viz_options': ['auto', 'heatmap'],
+        'basemap_choices': BASEMAP_CHOICES,
     }
     from django.shortcuts import render
     return render(request, 'editor/public_results.html', context)
@@ -225,6 +226,10 @@ def public_results_block_edit(request, survey_uuid, block_id):
             block.image = request.FILES['image']
     if block.block_type == 'map':
         block.geo_label_fields = request.POST.getlist('geo_label_fields')
+        valid_basemaps = {slug for slug, _ in BASEMAP_CHOICES}
+        posted_basemap = request.POST.get('basemap')
+        if posted_basemap in valid_basemaps:
+            block.basemap = posted_basemap
     block.save()
     bump_page_version(page)
     if _is_ajax(request):

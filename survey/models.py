@@ -1262,6 +1262,10 @@ class PublicResultsBlock(models.Model):
         default=list, blank=True,
         help_text=_('Question codes whose values appear in geo popups. Empty = anonymous geometry only.')
     )
+    basemap = models.CharField(
+        max_length=20, default='streets', choices=BASEMAP_CHOICES,
+        help_text=_('Tile basemap for map blocks (streets/satellite/topo).')
+    )
     is_hidden = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
 

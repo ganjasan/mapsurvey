@@ -17620,6 +17620,33 @@ class PublicResultsServiceTest(TestCase):
         self.assertEqual(props, {"Rate us": "Yes"})
         self.assertNotIn("secret", json.dumps(payload))
 
+    def test_map_payload_includes_basemap(self):
+        """
+        GIVEN a map block with a chosen basemap
+        WHEN the map payload is built
+        THEN the payload carries that basemap so the client picks the tile layer
+        """
+        s = self._session()
+        Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="map", question=self.point_q, order=0, basemap="satellite",
+        )
+        payload = self._service()._build_block(block)
+        self.assertEqual(payload["basemap"], "satellite")
+
+    def test_map_block_defaults_to_streets_basemap(self):
+        """
+        GIVEN a map block created without specifying a basemap
+        WHEN the payload is built
+        THEN it defaults to the streets basemap
+        """
+        s = self._session()
+        Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="map", question=self.point_q, order=0,
+        )
+        self.assertEqual(self._service()._build_block(block)["basemap"], "streets")
+
     def test_deleted_question_block_omitted(self):
         """
         GIVEN a chart block whose question was deleted (FK set to null)
@@ -17991,6 +18018,9 @@ class PublicResultsEditorTest(TestCase):
         self.text_q = Question.objects.create(
             survey_section=self.section, code="Q_TX", name="Comment", input_type="text",
         )
+        self.point_q = Question.objects.create(
+            survey_section=self.section, code="Q_PT", name="Mark spot", input_type="point",
+        )
         self.base = "/editor/surveys/{}/public-results/".format(self.survey.uuid)
 
     def _login(self):
@@ -18261,6 +18291,25 @@ class PublicResultsEditorTest(TestCase):
         self.assertTrue(r.json()["ok"])
         block.refresh_from_db()
         self.assertEqual(block.viz, "pie")
+
+    def test_map_block_basemap_saved(self):
+        """
+        GIVEN a map block
+        WHEN a valid basemap is submitted
+        THEN it persists; an invalid value is ignored (keeps the previous one)
+        """
+        self._login()
+        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        block = PublicResultsBlock.objects.create(
+            page=page, block_type="map", question=self.point_q, order=0,
+        )
+        self.client.post(self.base + "blocks/{}/edit/".format(block.id), {"viz": "heatmap", "basemap": "topo"})
+        block.refresh_from_db()
+        self.assertEqual(block.basemap, "topo")
+        # An invalid basemap must not overwrite the stored value.
+        self.client.post(self.base + "blocks/{}/edit/".format(block.id), {"viz": "heatmap", "basemap": "bogus"})
+        block.refresh_from_db()
+        self.assertEqual(block.basemap, "topo")
 
 
 class PublicResultsPreviewTest(TestCase):
