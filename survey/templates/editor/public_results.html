@@ -163,8 +163,14 @@
         <a class="btn btn-sm btn-outline-primary" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank"><i class="fas fa-external-link-alt"></i> Preview</a>
         {% if page.is_published %}
         <a class="btn btn-sm btn-outline-secondary" href="{{ public_url }}" target="_blank" title="The page as visitors see it"><i class="fas fa-globe"></i> Live page</a>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="prSetPublished(false)"><i class="fas fa-eye-slash"></i> Unpublish</button>
+        {% else %}
+        <button type="button" class="btn btn-sm btn-success" onclick="prSetPublished(true)" {% if not can_publish %}disabled title="Publish the survey first"{% endif %}><i class="fas fa-globe"></i> Publish page</button>
         {% endif %}
       </div>
+      {% if page.is_published %}
+      <div class="pr-scroll" style="padding-bottom:0;"><div class="pr-banner" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46;"><i class="fas fa-circle" style="font-size:8px;"></i> This results page is <strong>live</strong> at <span class="pr-url" style="color:inherit;">/r/{{ page.slug }}/</span></div></div>
+      {% endif %}
       <div class="pr-scroll">
         {% if not can_publish %}
         <div class="pr-banner"><i class="fas fa-exclamation-triangle"></i> This survey is a draft. Publish the survey before publishing its results page.</div>
@@ -190,8 +196,7 @@
               </div>
               <div class="pr-help">Public URL: <span class="pr-url">/r/{{ page.slug }}/</span> <span class="pr-slug-msg"></span></div>
             </div>
-            <label class="pr-switch"><span>Page is live <small class="pr-help">public at /r/{{ page.slug }}/</small></span>
-              <input type="checkbox" name="is_published" {% if page.is_published %}checked{% endif %} {% if not can_publish %}disabled{% endif %}></label>
+            <div class="pr-help" style="margin-top:.2rem;"><i class="fas fa-info-circle"></i> Use the <strong>Publish page</strong> button above to make this page live.</div>
           </div>
 
           <div class="pr-card">
@@ -248,6 +253,17 @@
 </div>
 
 <script>
+// Explicit publish / unpublish action (reloads so the widget, ribbon and
+// context bar all reflect the new state).
+function prSetPublished(publish){
+  var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+  var fd = new FormData(); fd.append('publish', publish ? '1' : '0');
+  fetch('{% url "editor_public_results_set_published" survey.uuid %}', {
+    method: 'POST', headers: { 'X-CSRFToken': token, 'X-Requested-With': 'XMLHttpRequest' }, body: fd
+  }).then(function(r){ return r.ok ? r.json() : Promise.reject(r); })
+    .then(function(){ window.location.reload(); })
+    .catch(function(){ alert('Could not change the page’s published state. Make sure the survey itself is published first.'); });
+}
 (function(){
   var refresh = document.getElementById('prPreviewRefresh');
   var frame = document.getElementById('prPreviewFrame');

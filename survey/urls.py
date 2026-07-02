@@ -82,6 +82,7 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/<int:block_id>/edit/', public_results_editor.public_results_block_edit, name='editor_public_results_block_edit'),
     path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/<int:block_id>/delete/', public_results_editor.public_results_block_delete, name='editor_public_results_block_delete'),
     path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/reorder/', public_results_editor.public_results_blocks_reorder, name='editor_public_results_blocks_reorder'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/set-published/', public_results_editor.public_results_set_published, name='editor_public_results_set_published'),
     path('editor/surveys/<uuid:survey_uuid>/public-results/freeze/', public_results_editor.public_results_freeze, name='editor_public_results_freeze'),
     path('editor/surveys/<uuid:survey_uuid>/public-results/unfreeze/', public_results_editor.public_results_unfreeze, name='editor_public_results_unfreeze'),
 

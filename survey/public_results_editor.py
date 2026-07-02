@@ -150,17 +150,20 @@ def public_results_save_settings(request, survey_uuid):
     survey = request.survey
     page = _get_or_create_page(survey)
 
-    # Draft surveys may configure but not publish their results page.
-    wants_publish = request.POST.get('is_published') == 'on'
-    if wants_publish and survey.status == 'draft':
-        if _is_ajax(request):
-            return JsonResponse({'ok': False, 'error': 'publish_survey_first'}, status=400)
-        from django.contrib import messages
-        messages.error(request, 'Publish the survey before publishing its results.')
-        return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
+    # Publish state is owned by the explicit Publish/Unpublish action
+    # (public_results_set_published). The settings form only touches it when the
+    # field is present, so autosaving other fields never flips it off.
+    if 'is_published' in request.POST:
+        wants_publish = request.POST.get('is_published') == 'on'
+        if wants_publish and survey.status == 'draft':
+            if _is_ajax(request):
+                return JsonResponse({'ok': False, 'error': 'publish_survey_first'}, status=400)
+            from django.contrib import messages
+            messages.error(request, 'Publish the survey before publishing its results.')
+            return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
+        page.is_published = wants_publish
 
     page.visibility = request.POST.get('visibility', page.visibility)
-    page.is_published = wants_publish
     page.intro = {
         'title': {'en': request.POST.get('intro_title', '')},
         'body': {'en': request.POST.get('intro_body', '')},
@@ -287,6 +290,30 @@ def public_results_blocks_reorder(request, survey_uuid):
             block.save(update_fields=['order'])
     bump_page_version(page)
     return JsonResponse({'ok': True})
+
+
+@survey_permission_required('editor')
+@require_POST
+def public_results_set_published(request, survey_uuid):
+    """Explicit publish / unpublish action for the results page.
+
+    `publish=1` makes the page live at /r/<slug>/; `publish=0` takes it down.
+    A draft survey cannot publish its results page.
+    """
+    survey = request.survey
+    page = _get_or_create_page(survey)
+    publish = request.POST.get('publish') in ('1', 'true', 'on')
+    if publish and survey.status == 'draft':
+        if _is_ajax(request):
+            return JsonResponse({'ok': False, 'error': 'publish_survey_first'}, status=400)
+        from django.contrib import messages
+        messages.error(request, 'Publish the survey before publishing its results.')
+        return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
+    page.is_published = publish
+    page.save(update_fields=['is_published'])
+    if _is_ajax(request):
+        return JsonResponse({'ok': True, 'is_published': page.is_published})
+    return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
 
 
 @survey_permission_required('editor')

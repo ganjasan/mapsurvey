@@ -7,8 +7,20 @@ After adding a block, the editor SHALL be redirected to that block's configurati
 - **WHEN** the editor submits the Add block form
 - **THEN** the response redirects to the Publish space with the new block selected
 
-### Requirement: Live vocabulary and honest state labels
-The page's publication state SHALL be described with one term — **live**: the settings toggle reads "Page is live"; the publishing widget shows "Live — /r/<slug>/" when published and "Draft — not live yet" when a page exists but is unpublished, reserving "Set up a results page…" for surveys with no page at all. The address field SHALL be labeled "Page address" (storage and Apply mechanics unchanged).
+### Requirement: Explicit publish / unpublish action
+Making the results page live SHALL be an explicit, prominent action in the Publish space's Page-settings bar — a "Publish page" button when unpublished (disabled, with a hint, while the survey itself is a draft) and an "Unpublish" button plus a "live at /r/<slug>/" banner when published. Publish state SHALL be owned by a dedicated endpoint; autosaving other page settings SHALL never change it (there is no publish checkbox in the settings form). The address field SHALL be labeled "Page address" (storage and Apply mechanics unchanged).
+
+#### Scenario: Publish then unpublish
+- **WHEN** the editor clicks "Publish page"
+- **THEN** the page becomes live at `/r/<slug>/` and the bar shows "Unpublish" + a live banner; clicking "Unpublish" takes it down (the public URL 404s)
+
+#### Scenario: Autosave never changes publish state
+- **WHEN** a live page's other settings are autosaved (the form has no publish field)
+- **THEN** the page stays live
+
+#### Scenario: Draft survey cannot publish its results page
+- **WHEN** the survey is a draft and the publish action is invoked
+- **THEN** it is refused and the page stays unpublished
 
 #### Scenario: Widget distinguishes draft page from no page
 - **WHEN** a results page exists with `is_published=False`

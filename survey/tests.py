@@ -18318,6 +18318,53 @@ class PublicResultsEditorTest(TestCase):
         self.client.post(self.base + "unfreeze/")
         self.assertEqual(PublicResultsPage.objects.get(survey=self.survey).mode, "live")
 
+    def test_publish_action_toggles_live_state(self):
+        """
+        GIVEN a page and the explicit publish endpoint
+        WHEN publish=1 then publish=0 are posted
+        THEN is_published flips accordingly
+        """
+        self._login()
+        self.client.get(self.base)
+        r = self.client.post(self.base + "set-published/", {"publish": "1"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()["is_published"])
+        self.assertTrue(PublicResultsPage.objects.get(survey=self.survey).is_published)
+        self.client.post(self.base + "set-published/", {"publish": "0"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        self.assertFalse(PublicResultsPage.objects.get(survey=self.survey).is_published)
+
+    def test_publish_action_blocked_on_draft_survey(self):
+        """
+        GIVEN a draft survey
+        WHEN the results page publish action is invoked
+        THEN it is refused and the page stays unpublished
+        """
+        self.survey.status = "draft"
+        self.survey.save()
+        self._login()
+        self.client.get(self.base)
+        r = self.client.post(self.base + "set-published/", {"publish": "1"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(PublicResultsPage.objects.get(survey=self.survey).is_published)
+
+    def test_settings_autosave_does_not_unpublish(self):
+        """
+        GIVEN a live results page
+        WHEN a settings autosave omits is_published (the checkbox is gone)
+        THEN the page stays live
+        """
+        self._login()
+        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        page.is_published = True
+        page.save()
+        self.client.post(
+            self.base + "settings/",
+            {"visibility": "public", "k_anonymity_threshold": "3", "intro_title": "Hi"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        page.refresh_from_db()
+        self.assertTrue(page.is_published)
+
     def test_draft_survey_cannot_publish(self):
         """
         GIVEN a draft survey
