@@ -18136,6 +18136,25 @@ class PublicResultsEditorTest(TestCase):
         self.assertEqual(r.status_code, 302)
         self.assertIn(f"?block={block.id}", r.url)
 
+    def test_settings_preview_button_works_before_page_is_live(self):
+        """
+        GIVEN a results page that is not yet published
+        WHEN the config tab renders
+        THEN the Preview button targets the always-available editor preview
+             endpoint (the public /r/ URL would 404), and the "Live page"
+             link appears only once the page is published
+        """
+        self._login()
+        r = self.client.get(self.base)
+        content = r.content.decode()
+        self.assertIn(f"{self.base}preview/", content)
+        self.assertNotIn("Live page", content)
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        page.is_published = True
+        page.save()
+        content = self.client.get(self.base).content.decode()
+        self.assertIn("Live page", content)
+
     def test_text_question_not_addable(self):
         """
         GIVEN a text question
