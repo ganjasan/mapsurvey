@@ -115,15 +115,17 @@
               </select>
             </div>
             <div class="pr-field">
-              <label>Geo popup fields</label>
-              <div class="pr-help" style="margin-top:0;margin-bottom:.4rem;">Empty = anonymous geometry only. Text questions cannot be selected.</div>
-              {% for row in question_rows %}{% if row.publishable %}
+              <label>Point popup fields</label>
+              <div class="pr-help" style="margin-top:0;margin-bottom:.4rem;">Attributes shown when a point is clicked — the sub-questions this respondent answered <em>for that point</em>. Empty = anonymous geometry only. Free-text answers can't be shown.</div>
+              {% for sq in geo_subquestions %}
               <label style="font-weight:400;display:flex;gap:.5rem;align-items:center;">
-                <input type="checkbox" name="geo_label_fields" value="{{ row.question.code }}"
-                  {% if row.question.code in selected_block.geo_label_fields %}checked{% endif %}>
-                {{ row.question.name }}
+                <input type="checkbox" name="geo_label_fields" value="{{ sq.code }}"
+                  {% if sq.code in selected_block.geo_label_fields %}checked{% endif %}>
+                {{ sq.name }}
               </label>
-              {% endif %}{% endfor %}
+              {% empty %}
+              <div class="pr-help" style="margin-top:0;"><i class="fas fa-info-circle"></i> This map question has no sub-questions, so points are shown as anonymous geometry.</div>
+              {% endfor %}
             </div>
             {% elif selected_block.block_type == 'text' %}
             <div class="pr-field">

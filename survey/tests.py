@@ -17656,24 +17656,62 @@ class PublicResultsServiceTest(TestCase):
             self.assertEqual(feat["properties"], {})
         self.assertNotIn("session_id", json.dumps(payload))
 
-    def test_geo_popup_only_selected_fields(self):
+    def test_geo_popup_uses_point_subanswers(self):
         """
-        GIVEN a map block configured to show only the choice question in popups
+        GIVEN a map block whose geo question has a choice sub-question selected
         WHEN the map payload is built
-        THEN the popup contains the choice label and nothing identifying
+        THEN each point's popup shows that point's own sub-answer, and free-text
+             sub-answers never appear
         """
+        # Sub-questions of the point question (attributes of each point)
+        sub_choice = Question.objects.create(
+            survey_section=self.section, code="SQ_ACT", name="Activity",
+            input_type="choice", parent_question_id=self.point_q,
+            choices=[{"code": 1, "name": "Walking"}, {"code": 2, "name": "Cycling"}],
+        )
+        sub_text = Question.objects.create(
+            survey_section=self.section, code="SQ_TX", name="Note",
+            input_type="text", parent_question_id=self.point_q,
+        )
         s = self._session()
-        Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
-        Answer.objects.create(survey_session=s, question=self.choice_q, selected_choices=[1])
-        Answer.objects.create(survey_session=s, question=self.text_q, text="secret")
+        pt = Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
+        Answer.objects.create(survey_session=s, question=sub_choice, selected_choices=[1], parent_answer_id=pt)
+        Answer.objects.create(survey_session=s, question=sub_text, text="secret", parent_answer_id=pt)
         block = PublicResultsBlock.objects.create(
             page=self.page, block_type="map", question=self.point_q, order=0,
-            geo_label_fields=["Q_CH"],
+            geo_label_fields=["SQ_ACT"],
         )
         payload = self._service()._build_block(block)
         props = payload["feature_collection"]["features"][0]["properties"]
-        self.assertEqual(props, {"Rate us": "Yes"})
+        self.assertEqual(props, {"Activity": "Walking"})
         self.assertNotIn("secret", json.dumps(payload))
+
+    def test_geo_popup_is_per_point_not_per_session(self):
+        """
+        GIVEN one respondent who marks two points with different sub-answers
+        WHEN the map payload is built
+        THEN each point's popup shows its own value (proves per-point join)
+        """
+        sub_choice = Question.objects.create(
+            survey_section=self.section, code="SQ_ACT", name="Activity",
+            input_type="choice", parent_question_id=self.point_q,
+            choices=[{"code": 1, "name": "Walking"}, {"code": 2, "name": "Cycling"}],
+        )
+        s = self._session()
+        p1 = Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
+        p2 = Answer.objects.create(survey_session=s, question=self.point_q, point=Point(31.0, 60.0))
+        Answer.objects.create(survey_session=s, question=sub_choice, selected_choices=[1], parent_answer_id=p1)
+        Answer.objects.create(survey_session=s, question=sub_choice, selected_choices=[2], parent_answer_id=p2)
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="map", question=self.point_q, order=0,
+            geo_label_fields=["SQ_ACT"],
+        )
+        payload = self._service()._build_block(block)
+        values = sorted(
+            f["properties"].get("Activity")
+            for f in payload["feature_collection"]["features"]
+        )
+        self.assertEqual(values, ["Cycling", "Walking"])
 
     def test_map_payload_includes_basemap(self):
         """

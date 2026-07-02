@@ -214,8 +214,6 @@ class PublicResultsService:
         payload['basemap'] = block.basemap or 'streets'
         label_codes = set(block.geo_label_fields or [])
 
-        # Build a per-question lookup so popup labels can resolve sibling
-        # answers from the SAME session without exposing the session id.
         features = []
         geo_field = question.input_type if question.input_type in GEO_INPUT_TYPES else None
         if geo_field is None:
@@ -223,28 +221,26 @@ class PublicResultsService:
             payload['feature_collection'] = {'type': 'FeatureCollection', 'features': []}
             return payload
 
-        geo_answers = (
+        geo_answers = list(
             self._answers(question)
             .exclude(**{'{}__isnull'.format(geo_field): True})
             .select_related('question')
         )
 
-        # Resolve selected popup label values per session, if any requested.
-        label_values_by_session = {}
+        # Popup attributes are the point's OWN sub-answers (parent_answer),
+        # so different points from the same respondent show their own values.
+        labels_by_point = {}
         if label_codes:
-            label_values_by_session = self._collect_label_values(question, label_codes)
+            labels_by_point = self._collect_point_labels(geo_answers, label_codes)
 
         for a in geo_answers:
             geom = a.point or a.line or a.polygon
             if geom is None:
                 continue
-            properties = {}
-            if label_codes:
-                properties = label_values_by_session.get(a.survey_session_id, {})
             features.append({
                 'type': 'Feature',
                 'geometry': json.loads(geom.geojson),
-                'properties': properties,
+                'properties': labels_by_point.get(a.id, {}),
             })
 
         payload['data_type'] = 'geo'
@@ -252,30 +248,34 @@ class PublicResultsService:
         payload['count'] = len(features)
         return payload
 
-    def _collect_label_values(self, question, label_codes):
-        """Map session_id -> {label: value} for the requested popup fields.
+    def _collect_point_labels(self, geo_answers, label_codes):
+        """Map geo_answer_id -> {label: value} from each point's own sub-answers.
 
-        Only sibling answers within the same survey as the geo question are
-        considered, restricted to clean sessions. No identifiers are emitted —
-        the session id is used solely as an in-memory join key and never
-        placed into feature properties.
+        Only sub-answers of the given geo answers (via parent_answer), for the
+        creator-selected sub-question codes, within clean sessions. Free text
+        self-excludes (see _answer_display_value). No identifiers are emitted.
         """
-        survey = question.survey_section.survey_header
-        sibling_answers = (
+        parent_ids = [a.id for a in geo_answers]
+        if not parent_ids:
+            return {}
+        sub_answers = (
             Answer.objects
             .filter(
-                question__survey_section__survey_header=survey,
+                parent_answer_id__in=parent_ids,
                 question__code__in=label_codes,
                 survey_session_id__in=self._clean_ids,
             )
             .select_related('question')
         )
         result = {}
-        for a in sibling_answers:
+        for a in sub_answers:
             value = self._answer_display_value(a)
             if value in (None, ''):
                 continue
-            result.setdefault(a.survey_session_id, {})[a.question.name] = value
+            # The FK field is literally named `parent_answer_id`, so the raw id
+            # is `parent_answer_id_id` (accessing `.parent_answer_id` returns the
+            # related Answer object, not its pk).
+            result.setdefault(a.parent_answer_id_id, {})[a.question.name] = value
         return result
 
     def _answer_display_value(self, answer):

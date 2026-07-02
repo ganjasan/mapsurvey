@@ -88,12 +88,24 @@ def public_results_config(request, survey_uuid):
     if block_id:
         selected_block = PublicResultsBlock.objects.filter(page=page, id=block_id).first()
 
+    # Geo popups expose the point's OWN attributes — i.e. the geo question's
+    # (non-text) sub-questions — not unrelated top-level form questions.
+    geo_subquestions = []
+    if selected_block and selected_block.block_type == 'map' and selected_block.question_id:
+        geo_subquestions = list(
+            Question.objects
+            .filter(parent_question_id=selected_block.question_id)
+            .exclude(input_type__in=TEXT_INPUT_TYPES)
+            .order_by('order_number')
+        )
+
     canonical = survey.canonical_survey or survey
     context = {
         'survey': survey,
         'page': page,
         'blocks': page.blocks.all(),
         'question_rows': _survey_questions(survey),
+        'geo_subquestions': geo_subquestions,
         'selected_block': selected_block,
         'effective_role': request.effective_survey_role,
         'active_tab': 'public_results',
