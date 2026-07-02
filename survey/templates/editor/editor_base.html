@@ -688,18 +688,62 @@
             vertical-align: middle;
             margin-left: 2px;
         }
-        .badge-moved {
-            font-size: 0.6rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            background: #9ca3af;
-            color: #fff;
-            padding: 1px 5px;
-            border-radius: 3px;
-            vertical-align: middle;
-            margin-left: 2px;
+        /* ── Workspace navbar: action dropdowns (Share / Preview) + gear ── */
+        .nav-action { position: relative; display: inline-block; }
+        .nav-action > button {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            border: 1px solid var(--border-color); background: #fff; border-radius: 6px;
+            padding: 0.28rem 0.6rem; font-size: 0.8rem; font-weight: 500; color: #374151;
+            cursor: pointer; font-family: inherit; white-space: nowrap; line-height: 1.4;
         }
+        .nav-action > button:hover { border-color: var(--accent); color: var(--accent); }
+        .nav-action > button.icon-only { padding: 0.28rem 0.45rem; }
+        .nav-action > button .caret { font-size: 0.6rem; color: #9ca3af; }
+        .nav-menu {
+            display: none; position: absolute; right: 0; top: calc(100% + 5px); min-width: 244px;
+            background: #fff; border: 1px solid var(--border-color); border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12); padding: 5px; z-index: 200;
+        }
+        .nav-menu.left { right: auto; left: 0; }
+        .nav-menu.open { display: block; }
+        .nav-menu .nm-head {
+            font-size: 0.62rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+            color: #9ca3af; padding: 7px 10px 3px;
+        }
+        .nav-menu .nm-item {
+            display: flex; align-items: center; gap: 9px; width: 100%; border: none; background: none;
+            text-align: left; padding: 8px 10px; border-radius: 6px; font-size: 0.83rem; color: #374151;
+            cursor: pointer; font-family: inherit; text-decoration: none;
+        }
+        .nav-menu .nm-item:hover { background: var(--accent-light); color: var(--accent); text-decoration: none; }
+        .nav-menu .nm-item i.lead { width: 15px; text-align: center; color: #9ca3af; }
+        .nav-menu .nm-item:hover i.lead { color: var(--accent); }
+        .nav-menu .nm-item small { margin-left: auto; color: #9ca3af; }
+        .nav-menu .nm-sep { height: 1px; background: var(--border-color); margin: 5px 4px; }
+        .nav-menu .nm-row { display: flex; align-items: center; gap: 9px; padding: 8px 10px; font-size: 0.83rem; }
+        .nav-menu .nm-row .lab { flex: 1; }
+        .nav-menu .nm-row .sub { display: block; font-size: 0.7rem; color: #9ca3af; margin-top: 1px; }
+        .nav-menu .nm-static { padding: 6px 10px; font-size: 0.8rem; color: #6b7280; }
+
+        /* toggle switch inside the publishing widget */
+        .pub-toggle {
+            width: 34px; height: 19px; border-radius: 999px; background: var(--accent);
+            position: relative; flex-shrink: 0; border: none; cursor: pointer; padding: 0;
+        }
+        .pub-toggle.off { background: #d1d5db; }
+        .pub-toggle::after {
+            content: ''; position: absolute; top: 2px; left: 17px; width: 15px; height: 15px;
+            border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: left 0.12s;
+        }
+        .pub-toggle.off::after { left: 2px; }
+
+        /* the status chip that opens the publishing widget */
+        .pub-chip {
+            display: inline-flex; align-items: center; gap: 0.4rem; border: none; cursor: pointer;
+            border-radius: 999px; padding: 0.25rem 0.7rem; font-size: 0.78rem; font-weight: 600;
+            font-family: inherit;
+        }
+        .pub-chip .caret { font-size: 0.6rem; opacity: 0.7; }
     </style>
     {% block extra_head %}{% endblock %}
 </head>

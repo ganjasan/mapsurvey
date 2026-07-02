@@ -1,0 +1,132 @@
+{% comment %}
+Shared lifecycle modals + JS for the publishing widget, used by all three
+workspace spaces (Build / Results / Publish). Requires `survey` in context.
+Draft-publish modals render only when `show_draft_actions` is set (Build view).
+{% endcomment %}
+{% if effective_role == 'owner' %}
+<!-- Publish Confirmation Modal (testing → published) -->
+<div class="modal fade editor-modal" id="publishConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Publish Survey</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p>You are about to publish this survey and make it available to respondents.</p>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="clearTestData" checked>
+                    <label class="form-check-label" for="clearTestData">Delete all test responses (recommended)</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="doPublishFromTesting()">Publish</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if show_draft_actions %}
+<div class="modal fade editor-modal" id="publishDraftModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Publish Version</h5><button type="button" class="close" data-dismiss="modal"><span>&times;</span></button></div>
+        <div class="modal-body" id="publishDraftModalBody">
+            <p>Publish this draft as v{{ survey.published_version.version_number|add:1 }}?</p>
+            <p class="text-muted">Active respondents will continue on the current version.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-success" onclick="doPublishDraft(false)">Publish</button>
+        </div>
+    </div></div>
+</div>
+<div class="modal fade editor-modal" id="publishDraftIssuesModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title text-warning">Compatibility Issues Found</h5><button type="button" class="close" data-dismiss="modal"><span>&times;</span></button></div>
+        <div class="modal-body"><p>The following breaking changes were detected:</p><ul id="compatibilityIssuesList"></ul>
+            <p class="text-muted">Force-publishing will preserve old answers in the archived version.</p></div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-warning" onclick="doPublishDraft(true)">Force Publish</button>
+        </div>
+    </div></div>
+</div>
+<div class="modal fade editor-modal" id="discardDraftModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Discard Draft</h5><button type="button" class="close" data-dismiss="modal"><span>&times;</span></button></div>
+        <div class="modal-body"><p>Discard this draft? All changes will be lost.</p></div>
+        <div class="modal-footer d-flex align-items-center">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <form method="post" action="{% url 'editor_discard_draft' survey.uuid %}" class="d-inline mb-0">{% csrf_token %}
+                <button type="submit" class="btn btn-danger">Discard</button></form>
+        </div>
+    </div></div>
+</div>
+{% endif %}
+
+<script>
+// Generic navbar-dropdown open/close (Share / Preview / publishing widget).
+function navMenuToggle(btn, e){
+    if (e) e.stopPropagation();
+    var menu = btn.parentNode.querySelector('.nav-menu');
+    var wasOpen = menu.classList.contains('open');
+    document.querySelectorAll('.nav-menu.open').forEach(function(m){ m.classList.remove('open'); });
+    if (!wasOpen) menu.classList.add('open');
+}
+document.addEventListener('click', function(e){
+    if (!e.target.closest('.nav-action')) {
+        document.querySelectorAll('.nav-menu.open').forEach(function(m){ m.classList.remove('open'); });
+    }
+});
+document.body.addEventListener('statusChanged', function(){ window.location.reload(); });
+
+function doTransition(status){
+    var form = new FormData(); form.append('status', status);
+    fetch('{% url "editor_survey_transition" survey.uuid %}', {
+        method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}, body:form
+    }).then(function(r){ if(r.ok){ window.location.reload(); } else { r.text().then(function(m){ alert(m); }); } });
+}
+function showPublishConfirm(){ $('#publishConfirmModal').modal('show'); }
+function doPublishFromTesting(){
+    var form = new FormData(); form.append('status','published');
+    if (document.getElementById('clearTestData').checked) form.append('clear_test_data','true');
+    fetch('{% url "editor_survey_transition" survey.uuid %}', {
+        method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}, body:form
+    }).then(function(r){ if(r.ok){ window.location.reload(); } else { r.text().then(function(m){ alert(m); }); } });
+}
+function toggleVisibility(btn){
+    var makePublic = btn.classList.contains('off'); // off = currently private
+    var form = new FormData(); form.append('visibility', makePublic ? 'public' : 'private');
+    fetch('{% url "editor_survey_visibility" survey.uuid %}', {
+        method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}','X-Requested-With':'XMLHttpRequest'}, body:form
+    }).then(function(r){ return r.ok ? r.json() : Promise.reject(r); })
+      .then(function(d){ btn.classList.toggle('off', d.visibility === 'private'); })
+      .catch(function(){ alert('Could not change visibility.'); });
+}
+{% if show_draft_actions %}
+function checkAndPublishDraft(){
+    fetch('{% url "editor_check_compatibility" survey.uuid %}', {headers:{'X-CSRFToken':'{{ csrf_token }}'}})
+      .then(function(r){ return r.json(); }).then(function(data){
+        if (data.issues && data.issues.length > 0) {
+            var list = document.getElementById('compatibilityIssuesList');
+            while (list.firstChild) { list.removeChild(list.firstChild); }
+            data.issues.forEach(function(issue){
+                var li = document.createElement('li');
+                if (issue.type === 'deleted_question') { li.textContent = 'Deleted question "'+(issue.question_name||issue.question_code)+'" has '+issue.answer_count+' answer(s)'; }
+                else if (issue.type === 'changed_input_type') { li.textContent = 'Question "'+(issue.question_name||issue.question_code)+'" type changed from '+issue.old_type+' to '+issue.new_type+' ('+issue.answer_count+' answers)'; }
+                else if (issue.type === 'removed_choice_codes') { li.textContent = 'Question "'+(issue.question_name||issue.question_code)+'" has removed choice codes affecting '+issue.answer_count+' answer(s)'; }
+                list.appendChild(li);
+            });
+            $('#publishDraftIssuesModal').modal('show');
+        } else { $('#publishDraftModal').modal('show'); }
+      });
+}
+function doPublishDraft(force){
+    var form = new FormData(); if (force) form.append('force','true');
+    fetch('{% url "editor_publish_draft" survey.uuid %}', {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}, body:form})
+      .then(function(r){ if(r.redirected){ window.location.href=r.url; } else if(r.ok){ window.location.reload(); } else { r.text().then(function(m){ alert(m); }); } });
+}
+{% endif %}
+</script>

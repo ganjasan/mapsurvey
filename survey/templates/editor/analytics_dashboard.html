@@ -350,13 +350,13 @@
 
 {% block navbar_content %}
 <span class="survey-name">{{ survey.name }}</span>
-{% include "editor/partials/_survey_nav_tabs.html" with active_tab="analytics" %}
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="results" %}
 {% endblock %}
 
 {% block content %}
-<!-- Primary tab bar -->
+<!-- Primary tab bar (sub-navigation within the Results space) -->
 <div style="padding:0.75rem 1.5rem 0;">
-    <div style="display:flex;gap:0;border-bottom:2px solid var(--border-color);margin-bottom:0;">
+    <div style="display:flex;gap:0;align-items:center;border-bottom:2px solid var(--border-color);margin-bottom:0;">
         <button class="analytics-tab active" data-tab="data"
                 onclick="switchAnalyticsTab('data')"
                 style="padding:0.5rem 1.25rem;border:none;background:none;border-bottom:3px solid var(--accent);margin-bottom:-2px;font-weight:600;cursor:pointer;color:var(--accent);font-size:0.9rem;">
@@ -367,6 +367,10 @@
                 style="padding:0.5rem 1.25rem;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;color:#6b7280;font-size:0.9rem;">
             Performance
         </button>
+        <a href="/surveys/{{ survey.uuid }}/download" class="btn btn-sm btn-outline-secondary"
+           style="margin-left:auto;margin-bottom:0.25rem;font-size:0.8rem;" title="Download clean responses (CSV + GeoJSON)">
+            <i class="fas fa-download"></i> Download data
+        </a>
     </div>
 </div>
 
@@ -507,6 +511,8 @@
         </div>
     </div>
 </div>
+
+{% include "editor/partials/_lifecycle_scripts.html" %}
 
 <script>
 /* ── SelectionManager ─────────────────────────────────────────── */

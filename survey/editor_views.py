@@ -1112,6 +1112,25 @@ def editor_survey_transition(request, survey_uuid):
 
 @survey_permission_required('owner')
 @require_POST
+def editor_survey_visibility(request, survey_uuid):
+    """Toggle public-gallery visibility from the publishing widget.
+
+    Presentation-only helper: writes the single `visibility` field
+    (public ↔ private). `demo` is left untouched if posted.
+    """
+    survey = request.survey
+    value = request.POST.get('visibility')
+    if value not in ('public', 'private', 'demo'):
+        return HttpResponse('Invalid visibility', status=400)
+    survey.visibility = value
+    survey.save(update_fields=['visibility'])
+    if _is_ajax(request):
+        return JsonResponse({'ok': True, 'visibility': survey.visibility})
+    return redirect('editor_survey_detail', survey_uuid=survey.uuid)
+
+
+@survey_permission_required('owner')
+@require_POST
 def editor_survey_password(request, survey_uuid):
     """Manage survey password and test token."""
     survey = request.survey

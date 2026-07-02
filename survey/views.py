@@ -503,6 +503,8 @@ def editor(request):
 	survey_list = survey_list.annotate(
 		session_count=Count('surveysession', distinct=True),
 	)
+	# Reverse OneToOne used by the "Results live" card chip — avoid N+1
+	survey_list = survey_list.select_related('public_results_page')
 
 	# Compute completion KPIs per survey
 	from .analytics import SurveyAnalyticsService

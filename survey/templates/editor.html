@@ -236,6 +236,7 @@
                             {% if survey.version_number > 1 %}<span style="font-size:0.65rem;color:#9ca3af;font-weight:400;"> v{{ survey.version_number }}</span>{% endif %}
                         </span>
                         <span class="status-pill badge badge-{{ survey.status|status_badge_class }}">{{ survey.get_status_display }}</span>
+                        {% if survey.public_results_page.is_published %}<span class="status-pill badge badge-primary" title="Results page is live">Results live</span>{% endif %}
                     </div>
                     <div class="card-kpi">
                         <span><span class="kpi-value">{{ survey.session_count }}</span> started</span>
@@ -251,10 +252,10 @@
                 </div>
             </a>
             <div class="card-actions">
-                <a href="{% url 'editor_survey_detail' survey.uuid %}"><i class="fas fa-pen"></i> Editor</a>
-                <a href="{% url 'editor_survey_analytics' survey.uuid %}"><i class="fas fa-chart-bar"></i> Analytics <span class="badge-beta">beta</span></a>
+                <a href="{% url 'editor_survey_detail' survey.uuid %}"><i class="fas fa-hammer"></i> Build</a>
+                <a href="{% url 'editor_survey_analytics' survey.uuid %}"><i class="fas fa-chart-bar"></i> Results</a>
+                <a href="{% url 'editor_survey_public_results' survey.uuid %}"><i class="fas fa-globe"></i> Publish</a>
                 <a href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-share-alt"></i> Share</a>
-                <a href="{% url 'editor_survey_settings' survey.uuid %}"><i class="fas fa-cog"></i> Settings</a>
                 <span class="spacer"></span>
                 {% include "editor/_survey_more_menu.html" %}
             </div>
@@ -293,10 +294,10 @@
                 </div>
             </a>
             <div class="row-actions">
-                <a href="{% url 'editor_survey_detail' survey.uuid %}" title="Editor"><i class="fas fa-pen"></i></a>
-                <a href="{% url 'editor_survey_analytics' survey.uuid %}" title="Analytics (Beta)"><i class="fas fa-chart-bar"></i></a>
+                <a href="{% url 'editor_survey_detail' survey.uuid %}" title="Build"><i class="fas fa-hammer"></i></a>
+                <a href="{% url 'editor_survey_analytics' survey.uuid %}" title="Results"><i class="fas fa-chart-bar"></i></a>
+                <a href="{% url 'editor_survey_public_results' survey.uuid %}" title="Publish"><i class="fas fa-globe"></i></a>
                 <a href="{% url 'editor_survey_share' survey.uuid %}" title="Share"><i class="fas fa-share-alt"></i></a>
-                <a href="{% url 'editor_survey_settings' survey.uuid %}" title="Settings"><i class="fas fa-cog"></i></a>
                 <a href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Preview" class="preview-btn"><i class="fas fa-external-link-alt"></i> Preview</a>
                 {% include "editor/_survey_more_menu.html" %}
             </div>

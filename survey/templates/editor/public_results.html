@@ -5,7 +5,7 @@
 
 {% block navbar_content %}
 <span class="survey-name">{{ survey.name }}</span>
-{% include "editor/partials/_survey_nav_tabs.html" with active_tab="public_results" %}
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="publish" %}
 {% endblock %}
 
 {% block extra_head %}
@@ -66,6 +66,7 @@
   </div>
 
   {% include "editor/partials/pr_add_block_modal.html" %}
+  {% include "editor/partials/_lifecycle_scripts.html" %}
 
   <div class="resize-handle" id="prResizeSidebar"></div>
 

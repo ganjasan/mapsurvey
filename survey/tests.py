@@ -6583,6 +6583,61 @@ class EditorPermissionTest(TestCase):
         self.assertIn('settings-panel/', content)
         self.assertIn('sidebar-pinned-item active', content)
 
+    # ── Lifecycle-IA navigation (Build / Results / Publish) ──
+
+    def test_nav_shows_three_lifecycle_spaces(self):
+        """
+        GIVEN the survey editor
+        WHEN it renders for an owner
+        THEN the navbar shows Build/Results/Publish tabs and no Editor/Settings tab
+        """
+        self.client.login(username='ep_owner', password='pass')
+        content = self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
+        self.assertIn('fa-hammer"></i> Build', content)
+        self.assertIn('fa-chart-bar"></i> Results', content)
+        self.assertIn('fa-globe"></i> Publish', content)
+        # The old Editor label and the deprecated Settings tab are gone
+        self.assertNotIn('title="Editor"', content)
+        self.assertNotIn('badge-moved', content)
+
+    def test_publishing_widget_renders_on_all_spaces(self):
+        """
+        GIVEN an owner
+        WHEN they open Build, Results, and Publish
+        THEN the publishing widget (status chip) renders on each
+        """
+        self.client.login(username='ep_owner', password='pass')
+        for path in ('', 'analytics/', 'public-results/'):
+            content = self.client.get(f'/editor/surveys/{self.survey.uuid}/{path}').content.decode()
+            self.assertIn('publishing-widget', content, msg=f'missing on /{path}')
+
+    def test_visibility_toggle_owner(self):
+        """
+        GIVEN an owner
+        WHEN they POST a new visibility via the widget endpoint
+        THEN only the visibility field changes and JSON is returned for XHR
+        """
+        self.client.login(username='ep_owner', password='pass')
+        url = f'/editor/surveys/{self.survey.uuid}/visibility/'
+        r = self.client.post(url, {'visibility': 'public'}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()['visibility'], 'public')
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.visibility, 'public')
+        # invalid value rejected
+        r = self.client.post(url, {'visibility': 'bogus'}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(r.status_code, 400)
+
+    def test_visibility_toggle_non_owner_blocked(self):
+        """
+        GIVEN an org editor (not owner)
+        WHEN they try to toggle visibility
+        THEN they get 403
+        """
+        self.client.login(username='ep_editor', password='pass')
+        r = self.client.post(f'/editor/surveys/{self.survey.uuid}/visibility/', {'visibility': 'public'})
+        self.assertEqual(r.status_code, 403)
+
 
 # ─── Task 8.4: Export/Import/Delete Permission Tests ────────────────────────
 
