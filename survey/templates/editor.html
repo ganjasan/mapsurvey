@@ -85,6 +85,12 @@
         text-decoration: none; color: #6b7280; background: none; border: none; cursor: pointer;
         transition: background 0.12s, color 0.12s;
     }
+    /* Stack the icon over its label and centre both horizontally */
+    .card-actions > a {
+        display: flex; flex-direction: column; align-items: center; gap: 3px;
+        text-align: center; min-width: 46px;
+    }
+    .card-actions > a i { font-size: 0.9rem; }
     .card-actions a:hover, .card-actions button:hover { background: var(--accent-light); color: var(--accent); }
     .card-actions .spacer { flex: 1; }
 
@@ -252,10 +258,10 @@
                 </div>
             </a>
             <div class="card-actions">
-                <a href="{% url 'editor_survey_detail' survey.uuid %}"><i class="fas fa-hammer"></i> Build</a>
-                <a href="{% url 'editor_survey_analytics' survey.uuid %}"><i class="fas fa-chart-bar"></i> Results</a>
-                <a href="{% url 'editor_survey_public_results' survey.uuid %}"><i class="fas fa-globe"></i> Publish</a>
-                <a href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-share-alt"></i> Share</a>
+                <a href="{% url 'editor_survey_detail' survey.uuid %}"><i class="fas fa-hammer"></i><span>Build</span></a>
+                <a href="{% url 'editor_survey_analytics' survey.uuid %}"><i class="fas fa-chart-bar"></i><span>Results</span></a>
+                <a href="{% url 'editor_survey_public_results' survey.uuid %}"><i class="fas fa-globe"></i><span>Publish <span class="badge-beta">beta</span></span></a>
+                <a href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-share-alt"></i><span>Share</span></a>
                 <span class="spacer"></span>
                 {% include "editor/_survey_more_menu.html" %}
             </div>
