@@ -157,8 +157,7 @@
         <span class="ico"><i class="fas fa-sliders-h"></i></span>
         <div><div class="t">Page settings</div><div class="s">Applies to the whole public results page</div></div>
         <span style="flex:1;"></span>
-        {# Preview must work before the page is live — use the editor preview
-           endpoint, not the public /r/ URL (which 404s until published). #}
+        {% comment %}Preview must work before the page is live — use the editor preview endpoint, not the public /r/ URL (which 404s until published).{% endcomment %}
         <a class="btn btn-sm btn-outline-primary" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank"><i class="fas fa-external-link-alt"></i> Preview</a>
         {% if page.is_published %}
         <a class="btn btn-sm btn-outline-secondary" href="{{ public_url }}" target="_blank" title="The page as visitors see it"><i class="fas fa-globe"></i> Live page</a>
