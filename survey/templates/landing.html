@@ -1,83 +1,120 @@
 {% extends "base_landing.html" %}
-{% load i18n %}
+{% load static i18n %}
 
 {% block content %}
 
 {# ===== Hero ===== #}
 <section class="hero" id="hero">
-    <div class="hero__grid">
-        <div class="hero__content">
-            <h1 class="hero__headline">{% trans "Collect spatial feedback from your community" %}</h1>
-            <p class="hero__description">
-                {% trans "Create map-based surveys where people mark places, draw routes, and outline areas. Free to start. No coding required." %}
-            </p>
-            <div class="hero__cta-group">
-                {% if user.is_authenticated %}
-                <a href="{% url 'editor' %}" class="btn-primary-landing">{% trans "Go to Dashboard" %}</a>
-                {% else %}
-                <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">{% trans "Create Your Mapsurvey" %}</a>
-                {% endif %}
-                {% if DEMO_SURVEY_URL %}
-                <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    {% trans "Try Demo Survey" %}
-                </a>
-                {% endif %}
+    <div class="hero__content">
+        <h1 class="hero__headline">{% trans "The easiest way to collect geographic data" %}</h1>
+        <p class="hero__description">
+            {% trans "Think Google Forms — but people answer by drawing points, lines, and areas on a map. Free to start, no coding required." %}
+        </p>
+        <div class="hero__cta-group">
+            {% if user.is_authenticated %}
+            <a href="{% url 'editor' %}" class="btn-primary-landing">{% trans "Go to Dashboard" %}</a>
+            {% else %}
+            <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">{% trans "Create Your Mapsurvey" %}</a>
+            {% endif %}
+            {% if DISCORD_INVITE_URL %}
+            <a href="{{ DISCORD_INVITE_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9459 2.4189-2.1568 2.4189Z"/></svg>
+                {% trans "Join our Discord" %}
+            </a>
+            {% endif %}
+            {% if DEMO_SURVEY_URL %}
+            <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                {% trans "Try Demo Survey" %}
+            </a>
+            {% endif %}
+        </div>
+        <div class="hero__badges">
+            <span class="hero__badge">{% trans "Open Source" %}</span>
+            <span class="hero__badge">{% trans "Free to Start" %}</span>
+            <span class="hero__badge">{% trans "No Coding Required" %}</span>
+            <span class="hero__badge">{% trans "GDPR-Friendly" %}</span>
+        </div>
+    </div>
+</section>
+
+{# ===== Product showcase ===== #}
+<section class="showcase" id="showcase">
+    <div class="landing-inner">
+        <p class="section-eyebrow reveal">{% trans "See it in action" %}</p>
+        <h2 class="section-heading reveal">{% trans "From a blank map to shareable insight" %}</h2>
+
+        <div class="showcase-row reveal">
+            <div class="showcase-row__media">
+                <button type="button" class="shot" data-shot="{% static 'img/landing/build-full.webp' %}" aria-label="{% trans 'Enlarge screenshot' %}">
+                    <span class="shot__chrome"><i></i><i></i><i></i></span>
+                    <img src="{% static 'img/landing/build.webp' %}" alt="{% trans 'Mapsurvey visual survey editor' %}" loading="lazy">
+                    <span class="shot__zoom" aria-hidden="true">⤢</span>
+                </button>
             </div>
-            <div class="hero__badges">
-                <span class="hero__badge">{% trans "Open Source" %}</span>
-                <span class="hero__badge">{% trans "Free to Start" %}</span>
-                <span class="hero__badge">{% trans "No Coding Required" %}</span>
-                <span class="hero__badge">{% trans "GDPR-Friendly" %}</span>
+            <div class="showcase-row__text">
+                <div class="showcase-step">01 &middot; {% trans "BUILD" %}</div>
+                <h3>{% trans "Build visually" %}</h3>
+                <p>{% trans "Drag-and-drop editor with a live preview. 13 question types — text, choice, rating, and three map types. No code." %}</p>
             </div>
         </div>
-        <div class="hero__visual">
-            <div class="hero__map-viewport">
-                <div class="hero__map-chrome">
-                    <span class="hero__map-dot"></span>
-                    <span class="hero__map-dot"></span>
-                    <span class="hero__map-dot"></span>
-                </div>
-                <div class="hero__map-canvas">
-                    <svg class="hero__map-svg" viewBox="0 0 480 320" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <pattern id="heroGrid" width="40" height="40" patternUnits="userSpaceOnUse">
-                                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--color-grid)" stroke-width="0.5"/>
-                            </pattern>
-                        </defs>
-                        <rect width="480" height="320" fill="var(--color-map-bg)"/>
-                        <rect width="480" height="320" fill="url(#heroGrid)"/>
-                        <path d="M0 180 Q120 160 200 200 T400 170 T480 190" stroke="var(--color-map-road)" stroke-width="3" fill="none"/>
-                        <path d="M100 0 Q110 80 130 160 T160 320" stroke="var(--color-map-road)" stroke-width="2" fill="none"/>
-                        <path d="M300 0 Q290 100 320 200 T350 320" stroke="var(--color-map-road)" stroke-width="2" fill="none"/>
-                        <polygon points="180,80 260,60 300,120 280,180 200,170 160,130" fill="var(--color-accent)" fill-opacity="0.15" stroke="var(--color-accent)" stroke-width="2" stroke-dasharray="6 3"/>
-                        <polyline points="60,260 120,230 200,250 280,220 360,240" fill="none" stroke="var(--color-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="120" cy="230" r="6" fill="var(--color-accent)" stroke="white" stroke-width="2"/>
-                        <circle cx="280" cy="220" r="6" fill="var(--color-accent)" stroke="white" stroke-width="2"/>
-                        <circle cx="380" cy="100" r="6" fill="var(--color-teal)" stroke="white" stroke-width="2"/>
-                        <g transform="translate(220, 90)">
-                            <path d="M0-24C-8-24-14-18-14-10C-14-2 0 12 0 12S14-2 14-10C14-18 8-24 0-24Z" fill="var(--color-accent)"/>
-                            <circle cx="0" cy="-10" r="5" fill="white"/>
-                        </g>
-                        <text x="10" y="16" fill="var(--color-map-label)" font-family="var(--font-mono)" font-size="9" opacity="0.5">59.93°N</text>
-                        <text x="410" y="310" fill="var(--color-map-label)" font-family="var(--font-mono)" font-size="9" opacity="0.5">30.32°E</text>
-                    </svg>
-                    <div class="hero__map-toolbar">
-                        <span class="hero__tool hero__tool--active" title="{% trans "Point" %}">
-                            <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="6" r="4" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 10V14" stroke="currentColor" stroke-width="1.5"/></svg>
-                        </span>
-                        <span class="hero__tool" title="{% trans "Line" %}">
-                            <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 13L8 5L13 3" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </span>
-                        <span class="hero__tool" title="{% trans "Polygon" %}">
-                            <svg width="16" height="16" viewBox="0 0 16 16"><polygon points="8,2 14,6 12,13 4,13 2,6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
-                        </span>
-                    </div>
-                </div>
+
+        <div class="showcase-row showcase-row--reverse reveal">
+            <div class="showcase-row__media">
+                <button type="button" class="shot" data-shot="{% static 'img/landing/collect-full.webp' %}" aria-label="{% trans 'Enlarge screenshot' %}">
+                    <span class="shot__chrome"><i></i><i></i><i></i></span>
+                    <img src="{% static 'img/landing/collect.webp' %}" alt="{% trans 'Respondents answer on an interactive map' %}" loading="lazy">
+                    <span class="shot__zoom" aria-hidden="true">⤢</span>
+                </button>
+            </div>
+            <div class="showcase-row__text">
+                <div class="showcase-step">02 &middot; {% trans "COLLECT" %}</div>
+                <h3>{% trans "Collect on a map" %}</h3>
+                <p>{% trans "Respondents mark places, draw routes, and outline areas directly on the map — mobile-friendly and multilingual." %}</p>
+            </div>
+        </div>
+
+        <div class="showcase-row reveal">
+            <div class="showcase-row__media">
+                <button type="button" class="shot" data-shot="{% static 'img/landing/analyze-full.webp' %}" aria-label="{% trans 'Enlarge screenshot' %}">
+                    <span class="shot__chrome"><i></i><i></i><i></i></span>
+                    <img src="{% static 'img/landing/analyze.webp' %}" alt="{% trans 'Mapsurvey analytics dashboard' %}" loading="lazy">
+                    <span class="shot__zoom" aria-hidden="true">⤢</span>
+                </button>
+            </div>
+            <div class="showcase-row__text">
+                <div class="showcase-step">03 &middot; {% trans "ANALYZE" %}</div>
+                <h3>{% trans "Analyze &amp; share" %}</h3>
+                <p>{% trans "Response maps, charts, and a completion funnel in one dashboard. Publish a public results page or export GeoJSON + CSV." %}</p>
             </div>
         </div>
     </div>
 </section>
+
+<div class="shot-lightbox" id="shotLightbox" hidden>
+    <button type="button" class="shot-lightbox__close" aria-label="{% trans 'Close' %}">&times;</button>
+    <img src="" alt="">
+</div>
+
+<script>
+(function(){
+    var lb = document.getElementById('shotLightbox');
+    if (!lb) return;
+    var lbImg = lb.querySelector('img');
+    document.querySelectorAll('.shot[data-shot]').forEach(function(btn){
+        btn.addEventListener('click', function(){
+            lbImg.src = btn.getAttribute('data-shot');
+            lb.hidden = false;
+            document.body.style.overflow = 'hidden';
+        });
+    });
+    function closeLb(){ lb.hidden = true; lbImg.removeAttribute('src'); document.body.style.overflow = ''; }
+    lb.addEventListener('click', function(e){
+        if (e.target === lb || e.target.classList.contains('shot-lightbox__close')) closeLb();
+    });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !lb.hidden) closeLb(); });
+})();
+</script>
 
 {# ===== Use Cases ===== #}
 <section class="use-cases" id="use-cases">
@@ -214,6 +251,12 @@
             <a href="{% url 'editor' %}" class="btn-primary-landing">{% trans "Go to Dashboard" %}</a>
             {% else %}
             <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">{% trans "Create Your Mapsurvey" %}</a>
+            {% endif %}
+            {% if DISCORD_INVITE_URL %}
+            <a href="{{ DISCORD_INVITE_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9459 2.4189-2.1568 2.4189Z"/></svg>
+                {% trans "Join our Discord" %}
+            </a>
             {% endif %}
             {% if GITHUB_REPO_URL %}
             <a href="{{ GITHUB_REPO_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">

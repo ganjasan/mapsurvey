@@ -139,6 +139,9 @@
                     {% if CONTACT_TELEGRAM %}
                     <li><a href="https://t.me/{{ CONTACT_TELEGRAM }}" target="_blank" rel="noopener">Telegram</a></li>
                     {% endif %}
+                    {% if DISCORD_INVITE_URL %}
+                    <li><a href="{{ DISCORD_INVITE_URL }}" target="_blank" rel="noopener">Discord</a></li>
+                    {% endif %}
                     {% if GITHUB_REPO_URL %}
                     <li><a href="{{ GITHUB_REPO_URL }}" target="_blank" rel="noopener">GitHub</a></li>
                     {% endif %}
