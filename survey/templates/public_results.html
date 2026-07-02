@@ -43,7 +43,11 @@
     .cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;font-size:.95rem;padding:12px 22px;border-radius:999px;box-shadow:var(--shadow);transition:.15s;}
     .cta:hover{background:var(--accent-hover);}
     .frozen-badge{display:inline-flex;align-items:center;gap:6px;color:var(--text-tertiary);font-size:.82rem;margin-top:14px;}
-    .block{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 26px;margin-top:22px;}
+    .block{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 26px;margin-top:22px;scroll-margin-top:16px;}
+    /* Applied by the editor preview pane (never on the real public page) to flash
+       the block that was just selected in the config sidebar. */
+    .block.pr-preview-highlight{animation:pr-preview-flash 1.6s ease;}
+    @keyframes pr-preview-flash{0%,25%{outline:2px solid var(--accent);outline-offset:3px;}100%{outline:2px solid transparent;outline-offset:3px;}}
     .block h2{font-size:1.15rem;font-weight:600;margin:0 0 18px;}
     .block.text-block p{color:var(--text-secondary);line-height:1.6;margin:0;}
     .chart-holder{position:relative;height:300px;}

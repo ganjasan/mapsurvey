@@ -239,6 +239,28 @@
     refresh.addEventListener('click', function(){ frame.contentWindow.location.reload(); });
   }
 
+  // Scroll the live-preview iframe to the block selected in the sidebar and
+  // flash it. The preview is same-origin (xframe_options_sameorigin), so we can
+  // reach into its DOM. Runs on every iframe load (incl. autosave reloads).
+  var selectedBlockId = {{ selected_block.id|default:"null" }};
+  function scrollPreviewToSelected() {
+    if (!selectedBlockId || !frame) return;
+    try {
+      var doc = frame.contentDocument || frame.contentWindow.document;
+      var el = doc.querySelector('[data-block-id="' + selectedBlockId + '"]');
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      el.classList.remove('pr-preview-highlight');
+      void el.offsetWidth; // restart the CSS animation
+      el.classList.add('pr-preview-highlight');
+    } catch (e) {}
+  }
+  if (frame) {
+    frame.addEventListener('load', scrollPreviewToSelected);
+    // In case the iframe already finished loading before this listener attached.
+    scrollPreviewToSelected();
+  }
+
   // Drag-to-resize panels (mirrors the WYSIWYG editor behavior)
   function initResize(handle, targetEl, direction) {
     if (!handle || !targetEl) return;

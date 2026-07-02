@@ -23,6 +23,10 @@ The Public Results configuration sidebar SHALL reuse the Survey Editor's shared 
 - **WHEN** the question picker is opened and an option's label is too long to fit on one line
 - **THEN** the label wraps onto multiple lines within the picker's width instead of being clipped or overflowing the modal (a native `<select>` popup cannot wrap option text, so the picker is a custom listbox backed by a hidden `<select>` for form submission)
 
+#### Scenario: Selecting a block scrolls the live preview to it
+- **WHEN** the editor selects a content block in the sidebar
+- **THEN** the live-preview pane scrolls that block into view and briefly highlights it
+
 ## MODIFIED Requirements
 
 ### Requirement: Creator-only configuration
