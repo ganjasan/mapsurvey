@@ -184,6 +184,31 @@
             font-weight: 600;
         }
 
+        /* Shared page-settings vocabulary — one look for the Publish page
+           settings and the Build "Survey settings" panel (context bar, cards,
+           fields, help hints, switches). Publish-layout-only .pr-* classes stay
+           in public_results.html. */
+        .pr-ctxbar { position: sticky; top: 0; background: #fff; border-bottom: 1px solid var(--border-color); padding: .7rem 1.5rem; display: flex; align-items: center; gap: .6rem; z-index: 5; }
+        .pr-ctxbar .btn { white-space: nowrap; }
+        .pr-ctxbar .ico { width: 30px; height: 30px; border-radius: 7px; background: var(--accent-light); color: var(--accent); display: flex; align-items: center; justify-content: center; }
+        .pr-ctxbar .t { font-weight: 600; }
+        .pr-ctxbar .s { font-size: .76rem; color: #9ca3af; }
+        .pr-scroll { padding: 1.25rem 1.5rem; max-width: 720px; }
+        .pr-card { background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin-bottom: 1.1rem; }
+        .pr-card h6 { font-weight: 600; font-size: .95rem; margin: 0 0 .9rem; }
+        .pr-field { margin-bottom: .85rem; }
+        .pr-field label { display: block; font-size: .82rem; font-weight: 500; color: #374151; margin-bottom: .35rem; }
+        .pr-help { font-size: .76rem; color: #9ca3af; margin-top: .3rem; }
+        .pr-switch { display: flex; align-items: center; justify-content: space-between; padding: .5rem 0; border-bottom: 1px solid #f3f4f6; margin: 0; width: 100%; cursor: pointer; font-weight: 400; }
+        .pr-switch:last-child { border-bottom: none; }
+        .pr-switch input { cursor: pointer; }
+        .pr-url { font-family: monospace; font-size: .82rem; color: var(--accent); }
+        .pr-banner { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; border-radius: 8px; padding: .6rem .8rem; font-size: .82rem; margin-bottom: 1rem; }
+        /* The Build "Survey settings" panel is swapped into #section-content
+           inside the padded .editor-main. Cancel that padding so the sticky
+           .pr-ctxbar spans the full column, exactly like the Publish page. */
+        .pr-panel-flush { margin: -1.5rem; }
+
         /* Autosave status indicator (Public Results settings + Survey settings panel) */
         .autosave-status { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #16a34a; margin-top: 0.4rem; transition: color 0.15s; }
         .autosave-status.is-error { color: #dc2626; }

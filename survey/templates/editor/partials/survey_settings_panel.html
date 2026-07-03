@@ -1,94 +1,96 @@
 {% load survey_filters %}
-<div class="settings-main">
+<div class="pr-panel-flush">
 
-    <!-- Survey Settings (autosaves — mirrors the Public Results settings form) -->
-    <div class="settings-section">
-        <h6><i class="fas fa-sliders-h mr-1"></i> General</h6>
-        <form method="post" id="surveySettingsGeneralForm" data-autosave
-              action="{% url 'editor_survey_settings_panel' survey.uuid %}" enctype="multipart/form-data">
-            {% csrf_token %}
-            {% for field in form %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {% if field.name == 'available_languages' %}
-                    {{ field }}
-                    {% include "editor/partials/language_picker.html" %}
-                {% elif field.name == 'basemaps' %}
-                    {{ field }}
-                    <div style="margin-top:0.4rem;">
-                        {% for slug, label in basemap_choices %}
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input basemap-cb" type="checkbox"
-                                   id="bm_{{ slug }}" value="{{ slug }}"
-                                   {% if slug in survey.basemaps %}checked{% endif %}>
-                            <label class="form-check-label" for="bm_{{ slug }}">{{ label }}</label>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <script>
-                    (function(){
-                        var inp = document.getElementById('id_basemaps');
-                        var cbs = document.querySelectorAll('.basemap-cb');
-                        function sync(){
-                            var v = [];
-                            cbs.forEach(function(c){ if (c.checked) v.push(c.value); });
-                            inp.value = JSON.stringify(v.length ? v : ['streets']);
-                        }
-                        sync();
-                        cbs.forEach(function(c){ c.addEventListener('change', sync); });
-                    })();
-                    </script>
-                {% elif field.name == 'cover_image' %}
-                    {% if survey.cover_image %}
-                    <div class="mb-2">
-                        <img src="{{ survey.cover_image.url }}" style="max-width:200px;max-height:120px;border-radius:6px;border:1px solid var(--border-color);">
-                    </div>
-                    {% endif %}
-                    {{ field }}
-                {% else %}
-                    {{ field }}
-                {% endif %}
-                {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
-                {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
-            </div>
-            {% endfor %}
-            <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
-            <noscript><button type="submit" class="btn btn-primary btn-sm">Save Settings</button></noscript>
-        </form>
-    </div>
+  <!-- Context bar — mirrors the Publish space's Page settings header -->
+  <div class="pr-ctxbar">
+    <span class="ico"><i class="fas fa-cog"></i></span>
+    <div><div class="t">Survey settings</div><div class="s">Applies to the whole survey</div></div>
+  </div>
+
+  <div class="pr-scroll">
+
+    <!-- General (autosaves — mirrors the Public Results settings form) -->
+    <form method="post" id="surveySettingsGeneralForm" data-autosave
+          action="{% url 'editor_survey_settings_panel' survey.uuid %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="pr-card">
+        <h6>General</h6>
+        {% for field in form %}
+        <div class="pr-field">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {% if field.name == 'available_languages' %}
+              {{ field }}
+              {% include "editor/partials/language_picker.html" %}
+          {% elif field.name == 'basemaps' %}
+              {{ field }}
+              <div style="display:flex;flex-wrap:wrap;gap:.4rem 1rem;margin-top:.25rem;">
+                  {% for slug, label in basemap_choices %}
+                  <label style="font-weight:400;display:flex;gap:.4rem;align-items:center;margin:0;cursor:pointer;">
+                      <input class="basemap-cb" type="checkbox"
+                             id="bm_{{ slug }}" value="{{ slug }}"
+                             {% if slug in survey.basemaps %}checked{% endif %}>
+                      {{ label }}
+                  </label>
+                  {% endfor %}
+              </div>
+              <script>
+              (function(){
+                  var inp = document.getElementById('id_basemaps');
+                  var cbs = document.querySelectorAll('.basemap-cb');
+                  function sync(){
+                      var v = [];
+                      cbs.forEach(function(c){ if (c.checked) v.push(c.value); });
+                      inp.value = JSON.stringify(v.length ? v : ['streets']);
+                  }
+                  sync();
+                  cbs.forEach(function(c){ c.addEventListener('change', sync); });
+              })();
+              </script>
+          {% elif field.name == 'cover_image' %}
+              {% if survey.cover_image %}
+              <div class="mb-2">
+                  <img src="{{ survey.cover_image.url }}" style="max-width:200px;max-height:120px;border-radius:6px;border:1px solid var(--border-color);">
+              </div>
+              {% endif %}
+              {{ field }}
+          {% else %}
+              {{ field }}
+          {% endif %}
+          {% if field.help_text %}<div class="pr-help">{{ field.help_text }}</div>{% endif %}
+          {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+        {% endfor %}
+        <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
+        <noscript><button type="submit" class="btn btn-primary btn-sm">Save Settings</button></noscript>
+      </div>
+    </form>
 
     <!-- Default Map Position -->
-    <div class="settings-section">
-        <h6><i class="fas fa-map-marker-alt mr-1"></i> Default Map Position</h6>
-        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
-            Set the default starting position and zoom for the survey map. Sections can override this individually.
-        </p>
-        <div id="survey-map-picker" style="height:300px;width:100%;border-radius:var(--radius);border:1px solid var(--border-color);margin-bottom:0.75rem;"></div>
-        <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
-            <span id="survey-map-coords">
-                {% if survey.start_map_postion %}
-                    Lat: {{ survey.start_map_postion.y|floatformat:5 }},
-                    Lng: {{ survey.start_map_postion.x|floatformat:5 }},
-                    Zoom: {{ survey.start_map_zoom|default:"12" }}
-                {% else %}
-                    Click the map to set position
-                {% endif %}
-            </span>
-        </div>
-        <div class="form-check mb-2">
-            <input type="checkbox" class="form-check-input" id="survey-use-geolocation"
-                   {% if survey.use_geolocation %}checked{% endif %}>
-            <label class="form-check-label" for="survey-use-geolocation"
-                   style="font-size:0.85rem;cursor:pointer;"
-                   title="Auto-center the map on the respondent's browser location when they first enter the survey.">
-                Auto-center on respondent's location
-                <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
-            </label>
-        </div>
-        <button type="button" class="btn btn-primary btn-sm" id="save-survey-map-position">
-            <i class="fas fa-save mr-1"></i> Save Map Position
-        </button>
-        <span id="survey-map-saved" style="display:none;color:#10b981;font-size:0.85rem;margin-left:0.5rem;">Saved!</span>
+    <div class="pr-card">
+      <h6>Default map position</h6>
+      <div class="pr-help" style="margin-top:0;margin-bottom:.75rem;">
+        Set the default starting position and zoom for the survey map. Sections can override this individually.
+      </div>
+      <div id="survey-map-picker" style="height:300px;width:100%;border-radius:var(--radius);border:1px solid var(--border-color);margin-bottom:0.75rem;"></div>
+      <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">
+        <span id="survey-map-coords">
+          {% if survey.start_map_postion %}
+              Lat: {{ survey.start_map_postion.y|floatformat:5 }},
+              Lng: {{ survey.start_map_postion.x|floatformat:5 }},
+              Zoom: {{ survey.start_map_zoom|default:"12" }}
+          {% else %}
+              Click the map to set position
+          {% endif %}
+        </span>
+      </div>
+      <label class="pr-switch" title="Auto-center the map on the respondent's browser location when they first enter the survey.">
+        <span>Auto-center on respondent's location <small class="pr-help">uses the visitor's browser geolocation on entry</small></span>
+        <input type="checkbox" id="survey-use-geolocation" {% if survey.use_geolocation %}checked{% endif %}>
+      </label>
+      <button type="button" class="btn btn-primary btn-sm" id="save-survey-map-position" style="margin-top:.75rem;">
+        <i class="fas fa-save mr-1"></i> Save map position
+      </button>
+      <span id="survey-map-saved" style="display:none;color:#10b981;font-size:0.85rem;margin-left:0.5rem;">Saved!</span>
     </div>
 
     <script>
@@ -159,22 +161,23 @@
     </script>
 
     <!-- Collaborators -->
-    <div class="settings-section">
-        <h6><i class="fas fa-users mr-1"></i> Collaborators</h6>
-        <div hx-get="{% url 'editor_survey_collaborators' survey.uuid %}"
-             hx-trigger="load"
-             hx-swap="innerHTML">
-        </div>
+    <div class="pr-card">
+      <h6>Collaborators</h6>
+      <div hx-get="{% url 'editor_survey_collaborators' survey.uuid %}"
+           hx-trigger="load"
+           hx-swap="innerHTML">
+      </div>
     </div>
 
     <!-- Password & Test Access -->
-    <div class="settings-section">
-        <h6><i class="fas fa-lock mr-1"></i> Password & Test Access</h6>
-        <div class="password-container">
-            {% include "editor/partials/survey_password_modal.html" %}
-        </div>
+    <div class="pr-card">
+      <h6>Password &amp; test access</h6>
+      <div class="password-container">
+        {% include "editor/partials/survey_password_modal.html" %}
+      </div>
     </div>
 
+  </div>
 </div>
 
 <script>
