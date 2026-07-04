@@ -1,0 +1,109 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Mapsurvey for Urban Planners — Free Map-Based Community Engagement" %}{% endblock %}
+{% block meta_description %}{% trans "Gather public input on a map: residents pin problems, draw the routes they walk, and outline areas for change. A free, open-source community-engagement and public-consultation tool for planners — export to QGIS." %}{% endblock %}
+{% block meta_keywords %}{% trans "community engagement mapping, public consultation map survey, participatory planning tool, map-based public input, PPGIS planning, urban planning survey, Maptionnaire alternative" %}{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/for-planners/{% endblock %}
+{% block og_url %}https://mapsurvey.org/for-planners/{% endblock %}
+{% block og_title %}{% trans "Mapsurvey for Urban Planners — map-based public input, free" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .aud-lead { max-width: 720px; margin: 0 auto; }
+  .aud-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-top: 26px; }
+  .aud-card { background: #fff; border: 1px solid #e6eaef; border-radius: 12px; padding: 20px 22px; text-align: left; }
+  .aud-card h3 { font-size: 17px; margin: 0 0 6px; }
+  .aud-card p { font-size: 14px; color: #556; margin: 0; line-height: 1.5; }
+  .aud-case { background: #f4f8fb; border: 1px solid #dbe7f1; border-radius: 14px; padding: 28px 30px; max-width: 820px; margin: 26px auto 0; text-align: left; }
+  .aud-case .stat-row { display: flex; flex-wrap: wrap; gap: 26px; margin-top: 16px; }
+  .aud-case .stat b { font-size: 26px; display: block; color: #2f6fb0; line-height: 1.1; }
+  .aud-case .stat span { font-size: 12px; color: #667; text-transform: uppercase; letter-spacing: .04em; }
+  .aud-ideas { list-style: none; padding: 0; margin: 22px auto 0; max-width: 720px; text-align: left; }
+  .aud-ideas li { padding: 9px 0 9px 30px; border-bottom: 1px solid #eef1f4; position: relative; font-size: 15px; }
+  .aud-ideas li::before { content: "◆"; color: #2f6fb0; position: absolute; left: 6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero" id="hero">
+  <div class="hero__content aud-lead">
+    <h1 class="hero__headline">{% trans "Mapsurvey for urban planners" %}</h1>
+    <p class="hero__description">
+      {% trans "Collect public input where it actually lives — on the map. Residents pin the problem intersections, draw the routes they walk, and outline the areas they want changed, alongside normal survey questions. It's map-based community engagement without the enterprise price tag: free, open-source, EU-hosted, and it exports straight to QGIS." %}
+    </p>
+    <div class="hero__cta-group">
+      <a href="{% url 'django_registration_register' %}?utm_source=planners&amp;utm_medium=for_planners" class="btn-primary-landing">{% trans "Start free — build a consultation" %}</a>
+      {% if DEMO_SURVEY_URL %}
+      <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">{% trans "Try a live demo survey" %}</a>
+      {% endif %}
+    </div>
+    <div class="hero__badges">
+      <span class="hero__badge">{% trans "Free & open source" %}</span>
+      <span class="hero__badge">{% trans "EU-hosted / GDPR" %}</span>
+      <span class="hero__badge">{% trans "Exports to QGIS" %}</span>
+      <span class="hero__badge">{% trans "No per-survey fees" %}</span>
+    </div>
+  </div>
+</section>
+
+<section class="showcase">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Why planners use it" %}</p>
+    <h2 class="section-heading">{% trans "See not just how a city is drawn, but how it's lived" %}</h2>
+    <div class="aud-grid">
+      <div class="aud-card">
+        <h3>{% trans "Spatial input, not vague text" %}</h3>
+        <p>{% trans "\"The crossing near the school feels unsafe\" becomes an exact pin, a drawn route, and an outlined area — actionable geodata, not anecdote." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Reach beyond the town hall" %}</h3>
+        <p>{% trans "Residents answer in any browser on their phone — wider, more diverse reach than a meeting or a paper form." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Straight into your GIS" %}</h3>
+        <p>{% trans "Export points, lines, and polygons as GeoJSON + CSV — open in QGIS or ArcGIS with no conversion." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Budget-friendly" %}</h3>
+        <p>{% trans "Free to run, open source (AGPLv3), self-hostable — no per-survey licensing that stretches a small municipality's budget." %}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="showcase">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "In the field" %}</p>
+    <h2 class="section-heading">{% trans "Built for real consultations, at real scale" %}</h2>
+    <div class="aud-case">
+      <p>
+        {% trans "A transit-accessibility consultation run on Mapsurvey drew hundreds of residents mapping the stops, routes, and barriers they experience — the kind of spatial evidence that a text survey simply can't capture. Planning teams have used it for mobility, walkability, and neighbourhood-change consultations across several European cities." %}
+      </p>
+      <div class="stat-row">
+        <div class="stat"><b>600+</b><span>{% trans "responses in one survey" %}</span></div>
+        <div class="stat"><b>0€</b><span>{% trans "in licensing" %}</span></div>
+        <div class="stat"><b>GeoJSON</b><span>{% trans "ready for QGIS" %}</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="showcase">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Consultation ideas" %}</p>
+    <h2 class="section-heading">{% trans "What planners map with it" %}</h2>
+    <ul class="aud-ideas">
+      <li>{% trans "Mobility & transit — where people travel, and the barriers on the way." %}</li>
+      <li>{% trans "Walkability & pedestrian safety — unsafe crossings, missing sidewalks." %}</li>
+      <li>{% trans "Neighbourhood planning — what residents value and what should change." %}</li>
+      <li>{% trans "Green space & public realm — how spaces are used, and gaps to fill." %}</li>
+      <li>{% trans "Participatory input for a plan — location-specific comments on proposals." %}</li>
+    </ul>
+    <div class="hero__cta-group" style="margin-top:30px;justify-content:center;">
+      <a href="{% url 'django_registration_register' %}?utm_source=planners&amp;utm_medium=for_planners" class="btn-primary-landing">{% trans "Create your first consultation — free" %}</a>
+      <a href="{% url 'maptionnaire_alternative' %}" class="btn-secondary-landing">{% trans "Compare with Maptionnaire" %}</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

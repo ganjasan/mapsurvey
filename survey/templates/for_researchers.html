@@ -1,0 +1,90 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Mapsurvey for Researchers — Participatory Mapping & Citizen-Science Surveys" %}{% endblock %}
+{% block meta_description %}{% trans "Run PPGIS and participatory-mapping studies without enterprise costs. Participants pin locations, draw routes, and outline areas; export GeoJSON/CSV for QGIS, R, or Python. Free, open-source, reproducible." %}{% endblock %}
+{% block meta_keywords %}{% trans "participatory mapping research, PPGIS research tool, spatial survey for research, citizen science mapping platform, VGI, open source survey tool, geospatial research, field study app" %}{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/for-researchers/{% endblock %}
+{% block og_url %}https://mapsurvey.org/for-researchers/{% endblock %}
+{% block og_title %}{% trans "Mapsurvey for Researchers — participatory mapping & citizen science" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .aud-lead { max-width: 720px; margin: 0 auto; }
+  .aud-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-top: 26px; }
+  .aud-card { background: #fff; border: 1px solid #e6eaef; border-radius: 12px; padding: 20px 22px; text-align: left; }
+  .aud-card h3 { font-size: 17px; margin: 0 0 6px; }
+  .aud-card p { font-size: 14px; color: #556; margin: 0; line-height: 1.5; }
+  .aud-ideas { list-style: none; padding: 0; margin: 22px auto 0; max-width: 720px; text-align: left; }
+  .aud-ideas li { padding: 9px 0 9px 30px; border-bottom: 1px solid #eef1f4; position: relative; font-size: 15px; }
+  .aud-ideas li::before { content: "◆"; color: #2f6fb0; position: absolute; left: 6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero" id="hero">
+  <div class="hero__content aud-lead">
+    <h1 class="hero__headline">{% trans "Mapsurvey for researchers" %}</h1>
+    <p class="hero__description">
+      {% trans "Run participatory-mapping (PPGIS) and citizen-science studies without enterprise costs. Participants pin locations, draw routes, and outline areas alongside structured questions; you get clean GeoJSON + CSV for QGIS, R, or Python. It's open source, so your instrument and pipeline are transparent and reproducible — and free, so a grant isn't a prerequisite." %}
+    </p>
+    <div class="hero__cta-group">
+      <a href="{% url 'django_registration_register' %}?utm_source=researchers&amp;utm_medium=for_researchers" class="btn-primary-landing">{% trans "Start free — build a study" %}</a>
+      {% if DEMO_SURVEY_URL %}
+      <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">{% trans "Try a live demo survey" %}</a>
+      {% endif %}
+    </div>
+    <div class="hero__badges">
+      <span class="hero__badge">{% trans "Open source (AGPLv3)" %}</span>
+      <span class="hero__badge">{% trans "GeoJSON / CSV → QGIS, R" %}</span>
+      <span class="hero__badge">{% trans "Free, no grant needed" %}</span>
+      <span class="hero__badge">{% trans "EU-hosted / self-host" %}</span>
+    </div>
+  </div>
+</section>
+
+<section class="showcase">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Why researchers use it" %}</p>
+    <h2 class="section-heading">{% trans "Rigorous spatial data collection, openly" %}</h2>
+    <div class="aud-grid">
+      <div class="aud-card">
+        <h3>{% trans "Transparent & reproducible" %}</h3>
+        <p>{% trans "Open-source code (AGPLv3) means the instrument and processing are auditable — good for methods sections, ethics review, and replication." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Analysis-ready output" %}</h3>
+        <p>{% trans "Points, lines, and polygons export as GeoJSON + CSV — straight into QGIS, R (sf), or Python (geopandas), no conversion." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "No budget barrier" %}</h3>
+        <p>{% trans "Free to use and self-hostable — a fit for student projects, unfunded pilots, and NGOs in the Global South priced out of commercial PPGIS." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Data sovereignty" %}</h3>
+        <p>{% trans "Host it yourself with Docker, or use the EU-hosted version — keep sensitive fieldwork data where your IRB/DPA requires." %}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="showcase">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Study types" %}</p>
+    <h2 class="section-heading">{% trans "From PPGIS to citizen science" %}</h2>
+    <ul class="aud-ideas">
+      <li>{% trans "PPGIS / participatory mapping — residents' place-based knowledge and values." %}</li>
+      <li>{% trans "Citizen science — species sightings, phenology, environmental observations with a location." %}</li>
+      <li>{% trans "Walkability, accessibility & perceived-safety studies." %}</li>
+      <li>{% trans "Community-based & field research — structured spatial data from participants." %}</li>
+      <li>{% trans "Volunteered geographic information (VGI) collection." %}</li>
+    </ul>
+    <div class="hero__cta-group" style="margin-top:30px;justify-content:center;">
+      <a href="{% url 'django_registration_register' %}?utm_source=researchers&amp;utm_medium=for_researchers" class="btn-primary-landing">{% trans "Create your first study — free" %}</a>
+      {% if GITHUB_REPO_URL %}
+      <a href="{{ GITHUB_REPO_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">{% trans "Read the source on GitHub" %}</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

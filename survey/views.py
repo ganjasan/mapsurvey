@@ -1193,12 +1193,34 @@ def maptionnaire_alternative(request):
 	return render(request, 'maptionnaire_alternative.html')
 
 
+def for_planners(request):
+	"""Public "Mapsurvey for urban planners & community engagement" landing page.
+
+	The core participatory-planning market (Maptionnaire's turf). First-touch
+	source capture; CTAs carry utm_source=planners.
+	"""
+	capture_signup_source(request)
+	return render(request, 'for_planners.html')
+
+
+def for_researchers(request):
+	"""Public "Mapsurvey for participatory & spatial research" landing page.
+
+	PPGIS / participatory research + citizen science. First-touch source capture;
+	CTAs carry utm_source=researchers.
+	"""
+	capture_signup_source(request)
+	return render(request, 'for_researchers.html')
+
+
 def robots_txt(request):
 	lines = [
 		"User-agent: *",
 		"Allow: /surveys/",
 		"Allow: /stories/",
 		"Allow: /for-educators/",
+		"Allow: /for-planners/",
+		"Allow: /for-researchers/",
 		"Allow: /alternatives/",
 		"Disallow: /admin/",
 		"Disallow: /editor/",
@@ -1216,6 +1238,8 @@ def sitemap_xml(request):
 	)
 	urls = [f"  <url><loc>{base}/</loc></url>"]
 	urls.append(f"  <url><loc>{base}/for-educators/</loc></url>")
+	urls.append(f"  <url><loc>{base}/for-planners/</loc></url>")
+	urls.append(f"  <url><loc>{base}/for-researchers/</loc></url>")
 	urls.append(f"  <url><loc>{base}/alternatives/maptionnaire/</loc></url>")
 	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
 	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
