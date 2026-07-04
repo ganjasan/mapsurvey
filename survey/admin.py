@@ -4,8 +4,9 @@ from .models import (
     Organization, SurveyHeader, SurveySection, Question, Answer,
     SurveySession,
     SurveySectionTranslation, QuestionTranslation,
-    Story,
+    Story, FunnelReport, SignupAttribution,
 )
+from .funnel import dashboard_context
 from leaflet.admin import LeafletGeoAdmin
 
 
@@ -62,3 +63,61 @@ class StoryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Story, StoryAdmin)
+
+
+@admin.register(SignupAttribution)
+class SignupAttributionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'utm_source', 'source_bucket', 'utm_campaign', 'created_at')
+    list_filter = ('source_bucket', 'utm_source')
+    search_fields = ('user__username', 'utm_source', 'utm_campaign', 'raw_referrer')
+    readonly_fields = ('created_at',)
+
+
+@admin.register(FunnelReport)
+class FunnelDashboardAdmin(admin.ModelAdmin):
+    """Staff-only creator acquisition->activation funnel dashboard.
+
+    Renders CreatorFunnelService aggregates via a custom changelist template. The
+    proxy model carries no data; the queryset is emptied so the ChangeList stays cheap.
+    See openspec/changes/funnel-monitoring/design.md (D1).
+    """
+
+    change_list_template = "admin/funnel_dashboard.html"
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_module_permission(self, request):
+        return request.user.is_staff
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_staff
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_staff
+
+    def get_queryset(self, request):
+        # No rows needed -- the whole view is aggregate data injected below.
+        return super().get_queryset(request).none()
+
+    def changelist_view(self, request, extra_context=None):
+        # Period selector for the weekly charts: ?weeks=12|26 (default 26; "all" = None).
+        raw = request.GET.get("weeks", "26")
+        try:
+            weeks = None if raw == "all" else max(1, int(raw))
+        except (TypeError, ValueError):
+            weeks, raw = 26, "26"
+        # Strip our custom param so the admin ChangeList doesn't treat it as an
+        # unknown filter lookup (which would redirect to ?e=1).
+        if "weeks" in request.GET:
+            mutable = request.GET.copy()
+            del mutable["weeks"]
+            request.GET = mutable
+        extra_context = extra_context or {}
+        extra_context["title"] = "Growth funnel"
+        extra_context["weeks_sel"] = raw
+        extra_context.update(dashboard_context(weeks=weeks))
+        return super().changelist_view(request, extra_context=extra_context)

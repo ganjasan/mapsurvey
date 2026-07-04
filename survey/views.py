@@ -18,7 +18,10 @@ from datetime import datetime
 from django import forms
 from django.views.generic import UpdateView
 from .forms import SurveySectionAnswerForm
-from .events import emit_event, build_session_start_metadata, store_utm_in_session
+from .events import (
+    emit_event, build_session_start_metadata, store_utm_in_session,
+    capture_signup_source, persist_signup_attribution,
+)
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
 from django.core.serializers import serialize
@@ -106,6 +109,10 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
         return ctx
 
     def dispatch(self, request, *args, **kwargs):
+        # Capture acquisition source when the register page is loaded directly
+        # (e.g. an outreach link straight to /register/?utm_source=edu).
+        if request.method == "GET":
+            capture_signup_source(request)
         # Rate limiting on POST only. Two stacked windows (hourly, daily) share
         # the same key (client IP). We call is_ratelimited imperatively rather
         # than using @ratelimit so we can log the AbuseEvent before responding
@@ -170,6 +177,13 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
 
         return self.form_valid(form)
 
+    def register(self, form):
+        # django-registration creates the (inactive) user here; attach the
+        # captured acquisition source. Fail-open — never blocks the signup.
+        user = super().register(form)
+        persist_signup_attribution(user, self.request)
+        return user
+
 
 class DirectActivationView(
     __import__('django_registration.backends.activation.views', fromlist=['ActivationView']).ActivationView
@@ -227,6 +241,7 @@ def resolve_survey(survey_slug):
 
 @lang_override('en')
 def index(request):
+	capture_signup_source(request)  # first-touch acquisition source for creator signups
 	surveys = (
 		SurveyHeader.objects
 		.filter(visibility__in=['demo', 'public'], is_canonical=True, published_version__isnull=True)

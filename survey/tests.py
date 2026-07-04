@@ -12966,3 +12966,490 @@ class RegistrationAbuseDefenseTest(TestCase):
                 # (verify_turnstile may have been called for r1 only.)
                 self.assertLessEqual(patched.call_count, 1)
 
+
+
+from django.urls import reverse
+from django.utils import timezone
+from .funnel import CreatorFunnelService
+
+
+def _user_at(username, when, **kwargs):
+    """Create a user whose date_joined is pinned to `when` (tz consistent)."""
+    u = User.objects.create_user(username=username, password="x", **kwargs)
+    u.date_joined = when
+    u.save(update_fields=["date_joined"])
+    return u
+
+
+class CreatorFunnelServiceTest(TestCase):
+    """Tests for the platform creator acquisition->activation funnel service."""
+
+    def setUp(self):
+        self.org = _make_org("FunnelOrg")
+        now = timezone.now()
+        self.march = now.replace(year=2026, month=3, day=10, hour=12, minute=0, second=0, microsecond=0)
+        self.april = now.replace(year=2026, month=4, day=15, hour=12, minute=0, second=0, microsecond=0)
+
+        # Excluded populations.
+        _user_at("staff_user", self.march, is_staff=True)
+        _user_at("super_user", self.march, is_superuser=True)
+
+        # March cohort.
+        self.a = _user_at("creator_a", self.march)   # created + question + published + 5 resp
+        self.b = _user_at("creator_b", self.march)   # created draft, no question, 0 resp
+
+        # April cohort.
+        self.c = _user_at("creator_c", self.april)   # created + question + testing + 1 resp (+1 deleted)
+        _user_at("creator_d", self.april)            # registered, never created
+
+        # Survey A: published, has a question, 5 non-deleted sessions.
+        sa = SurveyHeader.objects.create(name="a_survey", organization=self.org,
+                                         created_by=self.a, status="published")
+        sec_a = SurveySection.objects.create(name="a_sec", survey_header=sa, is_head=True)
+        Question.objects.create(name="a_q", survey_section=sec_a, input_type="text", order_number=1)
+        for _ in range(5):
+            SurveySession.objects.create(survey=sa)
+
+        # Survey B: draft, no question, no sessions.
+        SurveyHeader.objects.create(name="b_survey", organization=self.org,
+                                    created_by=self.b, status="draft")
+
+        # Survey C: testing (NOT published), has a question, 1 live + 1 deleted session.
+        sc = SurveyHeader.objects.create(name="c_survey", organization=self.org,
+                                         created_by=self.c, status="testing")
+        sec_c = SurveySection.objects.create(name="c_sec", survey_header=sc, is_head=True)
+        Question.objects.create(name="c_q", survey_section=sec_c, input_type="text", order_number=1)
+        SurveySession.objects.create(survey=sc)
+        SurveySession.objects.create(survey=sc, is_deleted=True)
+
+    def _cohort(self, rows, key):
+        return next(r for r in rows if r["cohort"] == key)
+
+    def test_cohort_counts_and_stage_membership(self):
+        """
+        GIVEN two cohorts of real creators at different activation stages
+        WHEN cohort_funnel() aggregates them
+        THEN each cohort reports correct registration and per-stage counts
+        """
+        rows = CreatorFunnelService().cohort_funnel()
+        mar = self._cohort(rows, "2026-03")
+        apr = self._cohort(rows, "2026-04")
+
+        self.assertEqual(mar["regs"], 2)
+        self.assertEqual(mar["created"], 2)
+        self.assertEqual(mar["added_question"], 1)   # only A has a question
+        self.assertEqual(mar["published"], 1)        # only A is published
+        self.assertEqual(mar["got_1"], 1)
+        self.assertEqual(mar["got_5"], 1)
+        self.assertEqual(mar["got_10"], 0)
+
+        self.assertEqual(apr["regs"], 2)
+        self.assertEqual(apr["created"], 1)          # only C created
+        self.assertEqual(apr["added_question"], 1)
+        self.assertEqual(apr["published"], 0)        # C is 'testing', not published
+
+    def test_staff_and_superusers_excluded(self):
+        """
+        GIVEN staff and superuser accounts exist
+        WHEN the funnel aggregates registrations
+        THEN neither appears in any cohort count
+        """
+        rows = CreatorFunnelService().cohort_funnel()
+        total_regs = sum(r["regs"] for r in rows)
+        self.assertEqual(total_regs, 4)  # a, b, c, d only
+
+    def test_deleted_sessions_not_counted(self):
+        """
+        GIVEN survey C has one live and one deleted session
+        WHEN response thresholds are computed
+        THEN only the live session counts (got_1 == 1, got_5 == 0)
+        """
+        apr = self._cohort(CreatorFunnelService().cohort_funnel(), "2026-04")
+        self.assertEqual(apr["got_1"], 1)
+        self.assertEqual(apr["got_5"], 0)
+
+    def test_alltime_totals_match_cohort_sums(self):
+        """
+        GIVEN the per-cohort funnel
+        WHEN alltime_totals() sums the stages
+        THEN totals equal the sum across cohorts
+        """
+        svc = CreatorFunnelService()
+        totals = svc.alltime_totals()
+        self.assertEqual(totals["regs"], 4)
+        self.assertEqual(totals["created"], 3)
+        self.assertEqual(totals["added_question"], 2)
+        self.assertEqual(totals["published"], 1)
+        self.assertEqual(totals["got_1"], 2)
+        self.assertEqual(totals["got_5"], 1)
+        self.assertEqual(totals["got_10"], 0)
+
+    def test_weekly_signups_sum(self):
+        """
+        GIVEN four real registrations
+        WHEN weekly_signups() groups by week
+        THEN the weekly counts sum to four and rows carry ISO week + count
+        """
+        weekly = CreatorFunnelService().weekly_signups()
+        self.assertEqual(sum(w["signups"] for w in weekly), 4)
+        self.assertTrue(all("week" in w and "signups" in w for w in weekly))
+
+
+class FunnelDashboardAdminAccessTest(TestCase):
+    """Access control for the staff-only funnel dashboard admin page."""
+
+    def setUp(self):
+        self.url = reverse("admin:survey_funnelreport_changelist")
+
+    def test_staff_sees_dashboard(self):
+        """
+        GIVEN a staff user
+        WHEN they open the funnel dashboard admin page
+        THEN it renders with the funnel content
+        """
+        User.objects.create_superuser("boss", "boss@example.com", "x")
+        c = Client()
+        c.login(username="boss", password="x")
+        resp = c.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Cohort funnel")
+        self.assertContains(resp, "Living users")
+
+    def test_non_staff_denied(self):
+        """
+        GIVEN an authenticated non-staff user
+        WHEN they request the funnel dashboard admin page
+        THEN they are redirected to the admin login (no funnel data)
+        """
+        User.objects.create_user("plain", password="x")
+        c = Client()
+        c.login(username="plain", password="x")
+        resp = c.get(self.url)
+        self.assertEqual(resp.status_code, 302)
+
+    def test_anonymous_denied(self):
+        """
+        GIVEN an unauthenticated request
+        WHEN it hits the funnel dashboard admin page
+        THEN it is redirected to the admin login
+        """
+        resp = Client().get(self.url)
+        self.assertEqual(resp.status_code, 302)
+
+
+from datetime import timedelta as _timedelta
+from survey.funnel import bar_chart_geometry
+
+
+class ActiveUserMetricsTest(TestCase):
+    """Tests for the "living users" (active/returned/dormant) metrics."""
+
+    def setUp(self):
+        self.org = _make_org("ActiveOrg")
+        self.now = timezone.now()
+
+        def user(name, days_ago_joined):
+            u = User.objects.create_user(username=name, password="x")
+            u.date_joined = self.now - _timedelta(days=days_ago_joined)
+            u.save(update_fields=["date_joined"])
+            return u
+
+        # A: session 3 days ago -> active in all windows, returned
+        self.a = user("act_a", 100)
+        sa = SurveyHeader.objects.create(name="a_s", organization=self.org, created_by=self.a)
+        SurveySession.objects.create(survey=sa, start_datetime=self.now - _timedelta(days=3))
+
+        # B: last_login 20 days ago -> active 30/90, returned
+        self.b = user("act_b", 100)
+        self.b.last_login = self.now - _timedelta(days=20)
+        self.b.save(update_fields=["last_login"])
+
+        # C: survey edited 60 days ago -> active 90 only, returned
+        self.c = user("act_c", 200)
+        sc = SurveyHeader.objects.create(name="c_s", organization=self.org, created_by=self.c)
+        SurveyHeader.objects.filter(pk=sc.pk).update(updated_at=self.now - _timedelta(days=60))
+
+        # D: no activity at all -> dormant
+        user("act_d", 200)
+
+    def test_active_windows_returned_and_dormant(self):
+        """
+        GIVEN creators with activity at 3 / 20 / 60 days ago and one with none
+        WHEN active_user_metrics() classifies them
+        THEN window counts, returned, and dormant match the constructed scenario
+        """
+        m = CreatorFunnelService().active_user_metrics(now=self.now)
+        self.assertEqual(m["total"], 4)
+        self.assertEqual(m["active_7"]["count"], 1)    # A
+        self.assertEqual(m["active_30"]["count"], 2)   # A, B
+        self.assertEqual(m["active_90"]["count"], 3)   # A, B, C
+        self.assertEqual(m["returned"]["count"], 3)    # A, B, C came back
+        self.assertEqual(m["dormant"]["count"], 1)     # D
+        self.assertEqual(m["active_30"]["pct"], 50)    # 2 of 4
+
+    def test_weekly_activity_sums_sessions(self):
+        """
+        GIVEN two non-deleted sessions exist
+        WHEN weekly_activity() groups by week
+        THEN the response counts sum to the number of live sessions
+        """
+        rows = CreatorFunnelService().weekly_activity()
+        self.assertEqual(sum(r["responses"] for r in rows), 1 + 0)  # only A's live session
+
+
+class BarChartGeometryTest(TestCase):
+    """Tests for the inline-SVG bar geometry helper."""
+
+    def test_geometry_shape_and_scaling(self):
+        """
+        GIVEN a weekly series with a known maximum
+        WHEN bar_chart_geometry builds SVG geometry
+        THEN it yields one bar per point, the tallest bar reaches the plot height,
+             and bars sit within the drawing area
+        """
+        series = [{"week": "2026-01-05", "signups": 2},
+                  {"week": "2026-01-12", "signups": 4},
+                  {"week": "2026-01-19", "signups": 0}]
+        g = bar_chart_geometry(series, "signups", width=200, height=100, pad=10)
+        self.assertEqual(g["count"], 3)
+        self.assertEqual(len(g["bars"]), 3)
+        self.assertEqual(g["max"], 4)
+        self.assertEqual(g["bars"][2]["h"], 0.0)             # zero value -> zero height
+        self.assertAlmostEqual(g["bars"][1]["h"], 80.0, 1)   # max value -> full plot height
+        self.assertTrue(all(b["y"] >= g["max_y"] for b in g["bars"]))
+
+    def test_empty_series_does_not_crash(self):
+        """
+        GIVEN an empty series
+        WHEN bar_chart_geometry runs
+        THEN it returns zero bars and a zero max without dividing by zero
+        """
+        g = bar_chart_geometry([], "signups")
+        self.assertEqual(g["count"], 0)
+        self.assertEqual(g["bars"], [])
+        self.assertEqual(g["max"], 0)
+
+
+from survey.funnel import dashboard_context as _dashboard_context
+
+
+def _u(username, joined, email="x@gmail.com"):
+    u = User.objects.create_user(username=username, password="x", email=email)
+    u.date_joined = joined
+    u.save(update_fields=["date_joined"])
+    return u
+
+
+class CohortWindowMetricsTest(TestCase):
+    """Time-boxed cohort columns: pub_14d and got5_30d."""
+
+    def setUp(self):
+        self.org = _make_org("WinOrg")
+        self.now = timezone.now()
+        self.d = self.now.replace(year=2026, month=3, day=5, hour=9, minute=0, second=0, microsecond=0)
+
+    def _survey(self, user, created_offset_days, status="published"):
+        s = SurveyHeader.objects.create(name=f"{user.username}_s", organization=self.org,
+                                        created_by=user, status=status)
+        SurveyHeader.objects.filter(pk=s.pk).update(created_at=self.d + _timedelta(days=created_offset_days))
+        return s
+
+    def test_windowed_columns_respect_time_boxes(self):
+        """
+        GIVEN one creator who publishes within 14d and collects 5 responses within 30d,
+              and another who does both but too late
+        WHEN cohort_funnel computes the windowed columns
+        THEN only the in-window creator is counted in pub_14d and got5_30d
+        """
+        x = _u("win_x", self.d)
+        sx = self._survey(x, created_offset_days=5)                 # published within 14d
+        for k in range(6):
+            SurveySession.objects.create(survey=sx, start_datetime=self.d + _timedelta(days=2 + k))  # 5th <= 30d
+
+        y = _u("win_y", self.d)
+        sy = self._survey(y, created_offset_days=20)                # published after 14d
+        for k in range(6):
+            SurveySession.objects.create(survey=sy, start_datetime=self.d + _timedelta(days=40 + k))  # 5th > 30d
+
+        row = next(r for r in CreatorFunnelService().cohort_funnel() if r["cohort"] == "2026-03")
+        self.assertEqual(row["regs"], 2)
+        self.assertEqual(row["published"], 2)     # both published (all-time)
+        self.assertEqual(row["got_5"], 2)         # both collected 5 (all-time)
+        self.assertEqual(row["pub_14d"], 1)       # only X published in-window
+        self.assertEqual(row["got5_30d"], 1)      # only X hit 5 responses in-window
+
+
+class ClusterRadarTest(TestCase):
+    """Cluster radar: temporal burst + same-domain grouping."""
+
+    def test_burst_and_domain_cluster_detected(self):
+        """
+        GIVEN 5 institutional-domain signups within a 24h window a few days ago
+        WHEN cluster_radar runs
+        THEN it reports a signup burst (>=5 in 48h) and a domain cluster for that domain
+        """
+        base = timezone.now() - _timedelta(days=4)
+        for i in range(5):
+            _u(f"cl_{i}", base + _timedelta(hours=i * 5), email=f"cl_{i}@tudelft.nl")
+        # noise: two freemail users, not clustered
+        _u("noise_a", base, email="a@gmail.com")
+        _u("noise_b", base, email="b@gmail.com")
+
+        alerts = CreatorFunnelService().cluster_radar()
+        kinds = {a["kind"] for a in alerts}
+        self.assertIn("burst", kinds)
+        self.assertIn("domain", kinds)
+        domain_alert = next(a for a in alerts if a["kind"] == "domain")
+        self.assertEqual(domain_alert["domain"], "tudelft.nl")
+        self.assertGreaterEqual(domain_alert["count"], 5)
+
+
+class ActionListsTest(TestCase):
+    """Dormant-valuable and collecting-but-unpublished action lists."""
+
+    def setUp(self):
+        self.org = _make_org("ActOrg")
+        self.now = timezone.now()
+
+    def test_dormant_valuable_is_institutional_no_survey(self):
+        """
+        GIVEN an institutional user with no survey, an institutional user WITH a survey,
+              and a freemail user with no survey
+        WHEN dormant_valuable runs
+        THEN only the institutional-no-survey user is listed
+        """
+        inst = _u("inst_none", self.now - _timedelta(days=30), email="p@cnr.it")
+        inst2 = _u("inst_has", self.now - _timedelta(days=30), email="q@columbia.edu")
+        SurveyHeader.objects.create(name="s", organization=self.org, created_by=inst2, status="draft")
+        _u("free_none", self.now - _timedelta(days=30), email="r@gmail.com")
+
+        names = {r["username"] for r in CreatorFunnelService().dormant_valuable()}
+        self.assertIn("inst_none", names)
+        self.assertNotIn("inst_has", names)
+        self.assertNotIn("free_none", names)
+
+    def test_collecting_unpublished_lists_draft_with_responses(self):
+        """
+        GIVEN a draft survey with responses and a published survey with responses
+        WHEN collecting_unpublished runs
+        THEN only the draft survey appears
+        """
+        d = _u("draft_u", self.now - _timedelta(days=10))
+        sd = SurveyHeader.objects.create(name="draft_s", organization=self.org, created_by=d, status="draft")
+        for _ in range(3):
+            SurveySession.objects.create(survey=sd, start_datetime=self.now - _timedelta(days=1))
+        p = _u("pub_u", self.now - _timedelta(days=10))
+        sp = SurveyHeader.objects.create(name="pub_s", organization=self.org, created_by=p, status="published")
+        SurveySession.objects.create(survey=sp, start_datetime=self.now - _timedelta(days=1))
+
+        surveys = {r["survey"] for r in CreatorFunnelService().collecting_unpublished()}
+        self.assertIn("draft_s", surveys)
+        self.assertNotIn("pub_s", surveys)
+
+
+class DashboardContextSmokeTest(TestCase):
+    """dashboard_context assembles all sections without error."""
+
+    def test_context_has_all_sections(self):
+        """
+        GIVEN an empty database
+        WHEN dashboard_context is built
+        THEN it returns every section key and does not raise
+        """
+        ctx = _dashboard_context()
+        for key in ("goals", "sources", "clusters", "abuse", "cohorts", "totals",
+                    "active", "ttv", "dormant_valuable", "collecting_unpublished",
+                    "signups_chart", "activity_chart"):
+            self.assertIn(key, ctx)
+        self.assertEqual(len(ctx["goals"]), 4)
+        self.assertFalse(ctx["sources"]["available"])   # Phase 1 not shipped
+
+
+from django.test import RequestFactory
+from survey.models import SignupAttribution
+from survey.events import capture_signup_source, persist_signup_attribution
+
+
+class SignupAttributionCaptureTest(TestCase):
+    """Phase 1: capture + persist a creator's acquisition source at registration."""
+
+    def setUp(self):
+        self.rf = RequestFactory()
+
+    def test_capture_then_persist_records_referrer_and_utm(self):
+        """
+        GIVEN a visitor arriving from reddit with UTM params
+        WHEN capture runs on the page load and persist runs at registration
+        THEN a SignupAttribution stores the classified bucket and the UTM triple
+        """
+        req = self.rf.get("/register/?utm_source=edu&utm_medium=email&utm_campaign=fall",
+                          HTTP_REFERER="https://www.reddit.com/r/urbanplanning")
+        req.session = {}
+        capture_signup_source(req)
+        user = User.objects.create_user("cap_u", password="x")
+        persist_signup_attribution(user, req)
+
+        a = SignupAttribution.objects.get(user=user)
+        self.assertEqual(a.source_bucket, "social")       # reddit -> social bucket
+        self.assertEqual(a.utm_source, "edu")
+        self.assertEqual(a.utm_medium, "email")
+        self.assertEqual(a.utm_campaign, "fall")
+        self.assertIn("reddit", a.raw_referrer)
+
+    def test_direct_visit_records_direct(self):
+        """
+        GIVEN a visitor with no referrer and no UTM
+        WHEN capture + persist run
+        THEN attribution is recorded as direct with empty UTM (absence, not error)
+        """
+        req = self.rf.get("/register/")
+        req.session = {}
+        capture_signup_source(req)
+        user = User.objects.create_user("direct_u", password="x")
+        persist_signup_attribution(user, req)
+
+        a = SignupAttribution.objects.get(user=user)
+        self.assertEqual(a.source_bucket, "direct")
+        self.assertEqual(a.utm_source, "")
+
+    def test_persist_is_idempotent(self):
+        """
+        GIVEN a user who already has an attribution row
+        WHEN persist runs again
+        THEN it neither duplicates nor raises (fail-open)
+        """
+        req = self.rf.get("/register/")
+        req.session = {}
+        user = User.objects.create_user("idem_u", password="x")
+        persist_signup_attribution(user, req)
+        persist_signup_attribution(user, req)
+        self.assertEqual(SignupAttribution.objects.filter(user=user).count(), 1)
+
+
+class SignupsBySourceTest(TestCase):
+    """Dashboard source breakdown from SignupAttribution."""
+
+    def test_available_false_before_any_attribution(self):
+        """
+        GIVEN no attribution rows
+        WHEN signups_by_source runs
+        THEN available is False (panel shows the pre-Phase-1 placeholder)
+        """
+        self.assertFalse(CreatorFunnelService().signups_by_source()["available"])
+
+    def test_groups_recent_signups_and_unknown_bucket(self):
+        """
+        GIVEN recent users: two attributed to 'edu', one with no attribution
+        WHEN signups_by_source runs
+        THEN it groups by source and puts the unattributed user under 'unknown'
+        """
+        for i in range(2):
+            u = User.objects.create_user(f"edu_{i}", password="x")
+            SignupAttribution.objects.create(user=u, utm_source="edu", source_bucket="other")
+        User.objects.create_user("noattr", password="x")   # recent, no attribution
+
+        res = CreatorFunnelService().signups_by_source()
+        self.assertTrue(res["available"])
+        by = {r["source"]: r["regs"] for r in res["rows"]}
+        self.assertEqual(by.get("edu"), 2)
+        self.assertEqual(by.get("unknown"), 1)

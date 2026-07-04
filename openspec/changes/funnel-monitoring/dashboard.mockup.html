@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Funnel dashboard — mockup</title>
+<style>
+  :root{
+    --acq:#4a78b8;      /* blue  = acquisition */
+    --act:#3f9d5a;      /* green = activity     */
+    --warn:#c98a1b;     /* amber = warnings     */
+    --bad:#c0392b;
+    --ink:#2b2b2b; --muted:#8a8a8a; --hair:#e4e4e4; --bg:#f6f7f9; --card:#fff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  /* fake admin chrome */
+  .admin-bar{background:#417690;color:#fff;padding:10px 20px;font-weight:600;letter-spacing:.02em}
+  .admin-bar small{opacity:.7;font-weight:400}
+  .wrap{max-width:1080px;margin:0 auto;padding:18px 20px 60px}
+  .mocknote{background:#fff8e6;border:1px solid #f0dfae;color:#8a6d1f;border-radius:6px;padding:8px 12px;font-size:12.5px;margin:14px 0}
+  h1{font-size:22px;margin:14px 0 2px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:6px 0 4px}
+  .nav a{color:var(--acq);text-decoration:none;font-size:13px;margin-right:14px}
+  .nav a:hover{text-decoration:underline}
+  .seg{display:inline-flex;border:1px solid var(--hair);border-radius:6px;overflow:hidden}
+  .seg button{border:0;background:#fff;padding:5px 11px;font-size:12.5px;cursor:pointer;color:var(--muted)}
+  .seg button.on{background:var(--acq);color:#fff}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:30px 0 10px;border-bottom:1px solid var(--hair);padding-bottom:6px}
+  h2 .step{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border-radius:50%;background:var(--acq);color:#fff;font-size:11px;margin-right:8px;vertical-align:middle}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  .card{background:var(--card);border:1px solid var(--hair);border-radius:8px;padding:13px 15px}
+  .card .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .card .num{font-size:26px;font-weight:700;line-height:1.05;margin-top:2px}
+  .card .goal{font-size:12px;color:var(--muted);margin-top:1px}
+  .card .delta{font-size:12px;margin-top:6px}
+  .up{color:var(--act)} .down{color:var(--bad)} .flat{color:var(--muted)}
+  .prog{height:7px;border-radius:4px;background:#eee;margin-top:9px;overflow:hidden}
+  .prog>i{display:block;height:100%}
+  .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:10px;font-weight:600}
+  .tag.acq{background:#e8f0fa;color:var(--acq)} .tag.act{background:#e7f5ec;color:var(--act)}
+  .tag.warn{background:#fbf1dc;color:var(--warn)} .tag.bad{background:#fbe6e3;color:var(--bad)}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--hair);border-radius:8px;overflow:hidden}
+  th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--hair);font-variant-numeric:tabular-nums;font-size:13px}
+  th:first-child,td:first-child{text-align:left}
+  th{background:#fafafa;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+  tr:last-child td{border-bottom:0}
+  .sub{color:var(--muted);font-size:11px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .panel{background:#fff;border:1px solid var(--hair);border-radius:8px;padding:12px 14px}
+  .panel h3{margin:0 0 8px;font-size:13px}
+  .alert{background:#fbf1dc;border:1px solid #ecd9a8;border-radius:8px;padding:11px 13px}
+  .alert.acq{background:#eef4fb;border-color:#cfe0f2}
+  .win{background:#eef4fb}     /* windowed columns highlighted */
+  a.rowlink{color:var(--acq);text-decoration:none}
+  a.rowlink:hover{text-decoration:underline}
+  .legend{font-size:12px;color:var(--muted);margin-top:8px}
+  .legend b{font-weight:600}
+  @media(max-width:820px){.grid3,.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="admin-bar">Django administration &nbsp; <small>/ Growth funnel</small></div>
+<div class="wrap">
+
+  <div class="mocknote">🎨 <b>Mockup</b> — illustrative numbers, static. Layout proposal for the funnel dashboard.
+    Section order = the Monday review ritual (grows? → what happened? → is activation working? → context → what to do).</div>
+
+  <div class="toolbar">
+    <h1>Growth funnel</h1>
+    <div class="seg" title="Period selector (charts + weekly)">
+      <button>12 weeks</button><button class="on">26 weeks</button><button>All</button>
+    </div>
+  </div>
+  <div class="nav">
+    <a href="#goals">① Goals</a><a href="#week">② This week</a><a href="#cohorts">③ Cohorts</a>
+    <a href="#living">④ Living users</a><a href="#actions">⑤ Actions</a>
+  </div>
+
+  <!-- ① GOALS -->
+  <h2 id="goals"><span class="step">1</span>This month vs plan targets <span class="sub" style="text-transform:none;letter-spacing:0"> — North Star: activated creators</span></h2>
+  <div class="cards">
+    <div class="card">
+      <div class="lbl">Activated creators / mo</div>
+      <div class="num">3</div>
+      <div class="goal">Oct target <b>25</b> · <span class="tag warn">12%</span></div>
+      <div class="prog"><i style="width:12%;background:var(--warn)"></i></div>
+      <div class="delta flat">— vs May (3)</div>
+    </div>
+    <div class="card">
+      <div class="lbl">Registrations / mo</div>
+      <div class="num">25</div>
+      <div class="goal">Oct target <b>100</b> · <span class="tag warn">25%</span></div>
+      <div class="prog"><i style="width:25%;background:var(--warn)"></i></div>
+      <div class="delta down">↓ 78% vs May (112, class spike)</div>
+    </div>
+    <div class="card">
+      <div class="lbl">Publish rate</div>
+      <div class="num">46%</div>
+      <div class="goal">Oct target <b>80%</b> · <span class="tag acq">58%</span></div>
+      <div class="prog"><i style="width:58%;background:var(--acq)"></i></div>
+      <div class="delta up">↑ 4pp vs prior</div>
+    </div>
+    <div class="card">
+      <div class="lbl">Attribution coverage</div>
+      <div class="num">0%</div>
+      <div class="goal">Target <b>90%</b> · <span class="tag bad">ships Phase 1</span></div>
+      <div class="prog"><i style="width:2%;background:var(--bad)"></i></div>
+      <div class="delta flat">SignupAttribution not live yet</div>
+    </div>
+  </div>
+
+  <!-- ② THIS WEEK -->
+  <h2 id="week"><span class="step">2</span>This week</h2>
+  <div class="grid3">
+    <div class="panel">
+      <h3>Registrations by source <span class="sub">(7d)</span></h3>
+      <table>
+        <tr><th>Source</th><th>Regs</th></tr>
+        <tr><td><span class="tag acq">edu outreach</span></td><td>0</td></tr>
+        <tr><td>Reddit</td><td>1</td></tr>
+        <tr><td>viral_loop</td><td>1</td></tr>
+        <tr><td>Direct / unknown</td><td>2</td></tr>
+      </table>
+      <div class="sub" style="margin-top:6px">Needs Phase 1 (referrer/UTM) — placeholder</div>
+    </div>
+    <div class="panel">
+      <h3>Cluster radar</h3>
+      <div class="alert">⚠ <b>Possible class cluster</b><br>
+        <span class="sub">6 signups · <b>itb.ac.id</b> · last 48h</span>
+        <div style="margin-top:6px"><a class="rowlink" href="#">view 6 accounts →</a></div>
+      </div>
+      <div class="sub" style="margin-top:8px">Trigger: ≥5 regs / 48h <b>or</b> ≥3 same email-domain.
+        Catch the next FTSPK on day one.</div>
+    </div>
+    <div class="panel">
+      <h3>Abuse <span class="sub">(7d)</span></h3>
+      <div class="card" style="border:0;padding:0">
+        <div class="num" style="color:var(--act)">34</div>
+        <div class="lbl">bots blocked</div>
+      </div>
+      <table style="margin-top:8px">
+        <tr><th>Top IP</th><th>Attempts</th></tr>
+        <tr><td>185.­x.­x.­12</td><td>19</td></tr>
+        <tr><td>91.­x.­x.­3</td><td>7</td></tr>
+      </table>
+      <div class="sub" style="margin-top:6px">From AbuseEvent — protects the metrics above.</div>
+    </div>
+  </div>
+
+  <!-- ③ COHORTS -->
+  <h2 id="cohorts"><span class="step">3</span>Cohort funnel <span class="sub" style="text-transform:none;letter-spacing:0"> — windowed columns make young &amp; old cohorts comparable</span></h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Cohort</th><th>Regs</th><th>Created</th><th>+Q</th><th>Published</th>
+        <th class="win">Pub&nbsp;≤14d</th><th>≥1</th><th>≥5</th><th class="win">≥5&nbsp;≤30d</th>
+        <th style="width:110px">Weekly regs</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>2026-02</td><td>14</td><td>8 <span class="sub">57%</span></td><td>6</td><td>5</td>
+        <td class="win">4 <span class="sub">29%</span></td><td>4</td><td>2</td><td class="win">2 <span class="sub">14%</span></td>
+        <td><svg width="100" height="20" viewBox="0 0 100 20"><rect x="2" y="8" width="10" height="12" fill="#9db8d8"/><rect x="16" y="2" width="10" height="18" fill="#9db8d8"/><rect x="30" y="11" width="10" height="9" fill="#9db8d8"/><rect x="44" y="14" width="10" height="6" fill="#9db8d8"/></svg></td></tr>
+      <tr><td>2026-03</td><td>47</td><td>33 <span class="sub">70%</span></td><td>27</td><td>12</td>
+        <td class="win">10 <span class="sub">21%</span></td><td>16</td><td>11</td><td class="win">9 <span class="sub">19%</span></td>
+        <td><svg width="100" height="20" viewBox="0 0 100 20"><rect x="2" y="6" width="10" height="14" fill="#9db8d8"/><rect x="16" y="4" width="10" height="16" fill="#9db8d8"/><rect x="30" y="0" width="10" height="20" fill="#9db8d8"/><rect x="44" y="9" width="10" height="11" fill="#9db8d8"/><rect x="58" y="12" width="10" height="8" fill="#9db8d8"/></svg></td></tr>
+      <tr><td>2026-04</td><td>42</td><td>22 <span class="sub">52%</span></td><td>18</td><td>7</td>
+        <td class="win">6 <span class="sub">14%</span></td><td>16</td><td>4</td><td class="win">4 <span class="sub">10%</span></td>
+        <td><svg width="100" height="20" viewBox="0 0 100 20"><rect x="2" y="7" width="10" height="13" fill="#9db8d8"/><rect x="16" y="12" width="10" height="8" fill="#9db8d8"/><rect x="30" y="6" width="10" height="14" fill="#9db8d8"/><rect x="44" y="13" width="10" height="7" fill="#9db8d8"/></svg></td></tr>
+      <tr style="background:#fcfcf7"><td>2026-05 <span class="tag warn">class</span></td><td>112</td><td>52 <span class="sub">46%</span></td><td>48</td><td>20</td>
+        <td class="win">18 <span class="sub">16%</span></td><td>41</td><td>32</td><td class="win">30 <span class="sub">27%</span></td>
+        <td><svg width="100" height="20" viewBox="0 0 100 20"><rect x="2" y="14" width="10" height="6" fill="#9db8d8"/><rect x="16" y="0" width="10" height="20" fill="#d9a441"/><rect x="30" y="15" width="10" height="5" fill="#9db8d8"/><rect x="44" y="17" width="10" height="3" fill="#9db8d8"/></svg></td></tr>
+      <tr><td>2026-06</td><td>25</td><td>10 <span class="sub">40%</span></td><td>9</td><td>4</td>
+        <td class="win">4 <span class="sub">16%</span></td><td>6</td><td>3</td><td class="win">3 <span class="sub">12%</span></td>
+        <td><svg width="100" height="20" viewBox="0 0 100 20"><rect x="2" y="10" width="10" height="10" fill="#9db8d8"/><rect x="16" y="11" width="10" height="9" fill="#9db8d8"/><rect x="30" y="13" width="10" height="7" fill="#9db8d8"/><rect x="44" y="16" width="10" height="4" fill="#9db8d8"/></svg></td></tr>
+      <tr><td>2026-07 <span class="sub">(partial)</span></td><td>6</td><td>3</td><td>2</td><td>1</td>
+        <td class="win">1</td><td>2</td><td>0</td><td class="win">0</td>
+        <td><svg width="100" height="20" viewBox="0 0 100 20"><rect x="2" y="6" width="10" height="14" fill="#9db8d8"/></svg></td></tr>
+    </tbody>
+  </table>
+  <div class="sub" style="margin-top:6px">Highlighted columns are time-boxed (publish within 14 days of signup, ≥5 responses within 30 days) — that's how H2 (templates/onboarding) is judged cohort-over-cohort without the “older cohort had more time” bias.</div>
+
+  <!-- ④ LIVING USERS -->
+  <h2 id="living"><span class="step">4</span>Living users &amp; trends</h2>
+  <div class="cards">
+    <div class="card"><div class="lbl">Active · 7d</div><div class="num">11</div><div class="goal">of 123</div></div>
+    <div class="card"><div class="lbl">Active · 30d</div><div class="num">35</div><div class="goal">28%</div></div>
+    <div class="card"><div class="lbl">Active · 90d</div><div class="num">65</div><div class="goal">53%</div></div>
+    <div class="card"><div class="lbl">Returned</div><div class="num" style="color:var(--act)">29</div><div class="goal">came back after signup</div></div>
+    <div class="card"><div class="lbl">Dormant</div><div class="num" style="color:var(--muted)">94</div><div class="goal">77%</div></div>
+  </div>
+
+  <div class="cards" style="margin-top:12px">
+    <div class="card"><div class="lbl">median · reg → first survey</div><div class="num">0d</div></div>
+    <div class="card"><div class="lbl">median · reg → publish</div><div class="num">3d</div></div>
+    <div class="card"><div class="lbl">median · reg → first response</div><div class="num">5d</div></div>
+  </div>
+
+  <div class="grid2" style="margin-top:12px">
+    <div class="panel">
+      <h3>Weekly registrations <span class="tag acq">acquisition</span></h3>
+      <svg width="100%" height="130" viewBox="0 0 460 130" preserveAspectRatio="none">
+        <line x1="20" y1="110" x2="450" y2="110" stroke="#ddd"/>
+        <text x="20" y="14" font-size="10" fill="#aaa">max 30</text>
+        <g fill="#79aec8">
+          <rect x="24" y="98" width="14" height="12"/><rect x="42" y="86" width="14" height="24"/>
+          <rect x="60" y="92" width="14" height="18"/><rect x="78" y="102" width="14" height="8"/>
+          <rect x="96" y="70" width="14" height="40"/><rect x="114" y="72" width="14" height="38"/>
+          <rect x="132" y="58" width="14" height="52"/><rect x="150" y="86" width="14" height="24"/>
+          <rect x="168" y="92" width="14" height="18"/><rect x="186" y="80" width="14" height="30"/>
+          <rect x="204" y="94" width="14" height="16"/><rect x="222" y="16" width="14" height="94" fill="#d9a441"/>
+          <rect x="240" y="104" width="14" height="6"/><rect x="258" y="106" width="14" height="4"/>
+          <rect x="276" y="92" width="14" height="18"/><rect x="294" y="94" width="14" height="16"/>
+          <rect x="312" y="98" width="14" height="12"/><rect x="330" y="106" width="14" height="4"/>
+          <rect x="348" y="88" width="14" height="22"/>
+        </g>
+        <text x="222" y="126" font-size="9" fill="#c98a1b" text-anchor="middle">05-11 class</text>
+      </svg>
+    </div>
+    <div class="panel">
+      <h3>Weekly activity — responses <span class="tag act">usage</span></h3>
+      <svg width="100%" height="130" viewBox="0 0 460 130" preserveAspectRatio="none">
+        <line x1="20" y1="110" x2="450" y2="110" stroke="#ddd"/>
+        <text x="20" y="14" font-size="10" fill="#aaa">max 210</text>
+        <g fill="#70bf7a">
+          <rect x="24" y="60" width="14" height="50"/><rect x="42" y="74" width="14" height="36"/>
+          <rect x="60" y="50" width="14" height="60"/><rect x="78" y="40" width="14" height="70"/>
+          <rect x="96" y="20" width="14" height="90"/><rect x="114" y="66" width="14" height="44"/>
+          <rect x="132" y="72" width="14" height="38"/><rect x="150" y="80" width="14" height="30"/>
+          <rect x="168" y="70" width="14" height="40"/><rect x="186" y="48" width="14" height="62"/>
+          <rect x="204" y="86" width="14" height="24"/><rect x="222" y="56" width="14" height="54"/>
+          <rect x="240" y="82" width="14" height="28"/><rect x="258" y="64" width="14" height="46"/>
+          <rect x="276" y="78" width="14" height="32"/><rect x="294" y="84" width="14" height="26"/>
+          <rect x="312" y="74" width="14" height="36"/><rect x="330" y="80" width="14" height="30"/>
+          <rect x="348" y="70" width="14" height="40"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ⑤ ACTIONS -->
+  <h2 id="actions"><span class="step">5</span>Action lists <span class="sub" style="text-transform:none;letter-spacing:0"> — the dashboard as a campaign tool, not a display</span></h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3>Dormant valuable <span class="sub">— institutional domain, 0 surveys → outreach</span></h3>
+      <table>
+        <tr><th>User</th><th>Domain</th><th>Joined</th><th></th></tr>
+        <tr><td>k.martins</td><td>columbia.edu</td><td>Mar 12</td><td><a class="rowlink" href="#">open →</a></td></tr>
+        <tr><td>g.rossi</td><td>cnr.it</td><td>Apr 03</td><td><a class="rowlink" href="#">open →</a></td></tr>
+        <tr><td>s.tan</td><td>rmit.edu.au</td><td>Apr 21</td><td><a class="rowlink" href="#">open →</a></td></tr>
+        <tr><td>m.abadi</td><td>york.ac.uk</td><td>May 08</td><td><a class="rowlink" href="#">open →</a></td></tr>
+      </table>
+    </div>
+    <div class="panel">
+      <h3>Collecting but unpublished <span class="sub">— responses on a draft → nudge to publish (H5)</span></h3>
+      <table>
+        <tr><th>User</th><th>Survey</th><th>Resp.</th><th></th></tr>
+        <tr><td>demo_05_03</td><td>Sidewalk audit</td><td>7</td><td><a class="rowlink" href="#">open →</a></td></tr>
+        <tr><td>demo_03_11</td><td>Bike routes</td><td>12</td><td><a class="rowlink" href="#">open →</a></td></tr>
+        <tr><td>demo_04_02</td><td>Park access</td><td>5</td><td><a class="rowlink" href="#">open →</a></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="legend">
+    <b>Colour semantics:</b>
+    <span class="tag acq">acquisition</span>
+    <span class="tag act">activity / usage</span>
+    <span class="tag warn">warning / cluster</span>
+    &nbsp;·&nbsp; Everything above is derivable from existing tables + <b>SignupAttribution</b> (Phase 1). No PostHog, no per-country/DAU noise.
+  </div>
+
+</div>
+</body>
+</html>

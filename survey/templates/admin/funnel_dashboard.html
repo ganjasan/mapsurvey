@@ -1,0 +1,208 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+  &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+  :root{--acq:#4a78b8;--act:#3f9d5a;--warn:#c98a1b;--bad:#c0392b;}
+  .fn h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--body-quiet-color,#888);margin:30px 0 10px;border-bottom:1px solid var(--hairline-color,#e4e4e4);padding-bottom:6px}
+  .fn h2 .step{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border-radius:50%;background:var(--acq);color:#fff;font-size:11px;margin-right:8px}
+  .fn h2 .sub{text-transform:none;letter-spacing:0;font-weight:400}
+  .fn .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px}
+  .fn .card{background:var(--darkened-bg,#f8f8f8);border:1px solid var(--hairline-color,#e4e4e4);border-radius:8px;padding:12px 14px}
+  .fn .card .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.04em;opacity:.7}
+  .fn .card .num{font-size:25px;font-weight:700;line-height:1.05;margin-top:2px}
+  .fn .card .goal{font-size:12px;opacity:.65;margin-top:1px}
+  .fn .prog{height:7px;border-radius:4px;background:rgba(128,128,128,.2);margin-top:9px;overflow:hidden}
+  .fn .prog>i{display:block;height:100%}
+  .fn .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:10px;font-weight:600}
+  .fn .tag.acq{background:#e8f0fa;color:var(--acq)} .fn .tag.act{background:#e7f5ec;color:var(--act)}
+  .fn .tag.warn{background:#fbf1dc;color:var(--warn)} .fn .tag.bad{background:#fbe6e3;color:var(--bad)}
+  .fn table.funnel{width:100%;border-collapse:collapse;margin-bottom:8px;background:var(--body-bg,#fff);border:1px solid var(--hairline-color,#e4e4e4);border-radius:8px;overflow:hidden}
+  .fn table.funnel th,.fn table.funnel td{padding:6px 9px;text-align:right;border-bottom:1px solid var(--hairline-color,#eee);font-variant-numeric:tabular-nums;font-size:13px}
+  .fn table.funnel th:first-child,.fn table.funnel td:first-child{text-align:left}
+  .fn table.funnel th{background:var(--darkened-bg,#fafafa);font-size:11px;text-transform:uppercase;letter-spacing:.04em;opacity:.75}
+  .fn .win{background:rgba(74,120,184,.08)}
+  .fn .subtle{opacity:.6;font-size:11px}
+  .fn .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .fn .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .fn .panel{background:var(--darkened-bg,#f8f8f8);border:1px solid var(--hairline-color,#e4e4e4);border-radius:8px;padding:12px 14px}
+  .fn .panel h3{margin:0 0 8px;font-size:13px}
+  .fn .alert{background:#fbf1dc;border:1px solid #ecd9a8;border-radius:8px;padding:10px 12px;color:#7a5e12;margin-bottom:8px}
+  .fn a.rowlink{color:var(--acq);text-decoration:none} .fn a.rowlink:hover{text-decoration:underline}
+  .fn .nav a{color:var(--acq);text-decoration:none;font-size:13px;margin-right:14px}
+  .fn .seg{display:inline-flex;border:1px solid var(--hairline-color,#ddd);border-radius:6px;overflow:hidden}
+  .fn .seg a{padding:5px 11px;font-size:12.5px;color:var(--body-quiet-color,#888);text-decoration:none}
+  .fn .seg a.on{background:var(--acq);color:#fff}
+  .fn .toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+  @media(max-width:820px){.fn .grid3,.fn .grid2{grid-template-columns:1fr}}
+</style>
+
+<div class="fn">
+  <div class="toolbar">
+    <div class="nav">
+      <a href="#goals">① Goals</a><a href="#week">② This week</a><a href="#cohorts">③ Cohorts</a>
+      <a href="#living">④ Living users</a><a href="#actions">⑤ Actions</a>
+    </div>
+    <div class="seg" title="Chart period">
+      <a href="?weeks=12" {% if weeks_sel == "12" %}class="on"{% endif %}>12 weeks</a>
+      <a href="?weeks=26" {% if weeks_sel == "26" %}class="on"{% endif %}>26 weeks</a>
+      <a href="?weeks=all" {% if weeks_sel == "all" %}class="on"{% endif %}>All</a>
+    </div>
+  </div>
+
+  <p class="subtle" style="margin:8px 0 0">
+    Real registrations only (staff/superusers excluded). Stages derived live from existing data —
+    retro-active, no event log. Duplicate accounts of one person are not de-duplicated.
+  </p>
+
+  {# ① GOALS #}
+  <h2 id="goals"><span class="step">1</span>This month vs plan targets <span class="sub">— North Star: activated creators</span></h2>
+  <div class="cards">
+    {% for g in goals %}
+    <div class="card">
+      <div class="lbl">{{ g.label }}</div>
+      <div class="num">{{ g.value }}</div>
+      <div class="goal">target <b>{{ g.target }}</b> · <span class="tag {{ g.tone }}">{{ g.pct }}%</span></div>
+      <div class="prog"><i style="width:{{ g.pct }}%;background:var(--{{ g.tone }});"></i></div>
+      <div class="goal">{{ g.note }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ② THIS WEEK #}
+  <h2 id="week"><span class="step">2</span>This week</h2>
+  <div class="grid3">
+    <div class="panel">
+      <h3>Registrations by source <span class="subtle">(7d)</span></h3>
+      <table class="funnel">
+        <tr><th>Source</th><th>Regs</th></tr>
+        {% for r in sources.rows %}<tr><td>{{ r.source }}</td><td>{{ r.regs }}</td></tr>{% endfor %}
+      </table>
+      {% if not sources.available %}<div class="subtle" style="margin-top:6px">Needs Phase 1 (referrer/UTM) — placeholder.</div>{% endif %}
+    </div>
+    <div class="panel">
+      <h3>Cluster radar</h3>
+      {% for c in clusters %}
+      <div class="alert">⚠ <b>{% if c.kind == 'burst' %}Signup burst{% else %}Domain cluster{% endif %}</b><br>
+        <span class="subtle">{{ c.detail }}{% if c.domain and c.kind == 'burst' %} · {{ c.domain }}{% endif %} · since {{ c.since }}</span>
+        <div style="margin-top:5px"><a class="rowlink" href="{% url 'admin:auth_user_changelist' %}">view {{ c.count }} accounts →</a></div>
+      </div>
+      {% empty %}
+      <div class="subtle">No new clusters (≥5 signups / 48h or ≥3 same institutional domain).</div>
+      {% endfor %}
+    </div>
+    <div class="panel">
+      <h3>Abuse <span class="subtle">(7d)</span></h3>
+      <div class="num" style="font-size:25px;font-weight:700;color:var(--act)">{{ abuse.blocked_7d }}</div>
+      <div class="lbl" style="text-transform:uppercase;font-size:11px;opacity:.7">bots blocked</div>
+      {% if abuse.top_ips %}
+      <table class="funnel" style="margin-top:8px">
+        <tr><th>Top IP</th><th>Attempts</th></tr>
+        {% for ip in abuse.top_ips %}<tr><td>{{ ip.ip }}</td><td>{{ ip.n }}</td></tr>{% endfor %}
+      </table>
+      {% endif %}
+      <div class="subtle" style="margin-top:6px">From AbuseEvent — protects the metrics above.</div>
+    </div>
+  </div>
+
+  {# ③ COHORTS #}
+  <h2 id="cohorts"><span class="step">3</span>Cohort funnel <span class="sub">— time-boxed columns make young &amp; old cohorts comparable</span></h2>
+  <table class="funnel">
+    <thead>
+      <tr>
+        <th>Cohort</th><th>Regs</th><th>Created</th><th>+Q</th><th>Published</th>
+        <th class="win">Pub&nbsp;≤14d</th><th>≥1</th><th>≥5</th><th class="win">≥5&nbsp;≤30d</th>
+        <th style="width:120px">Weekly regs</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in cohorts %}
+      <tr>
+        <td>{{ c.cohort }}</td>
+        <td>{{ c.regs }}</td>
+        <td>{{ c.created }} <span class="subtle">{% widthratio c.created c.regs 100 %}%</span></td>
+        <td>{{ c.added_question }}</td>
+        <td>{{ c.published }} <span class="subtle">{% widthratio c.published c.regs 100 %}%</span></td>
+        <td class="win">{{ c.pub_14d }} <span class="subtle">{% widthratio c.pub_14d c.regs 100 %}%</span></td>
+        <td>{{ c.got_1 }}</td>
+        <td>{{ c.got_5 }}</td>
+        <td class="win">{{ c.got5_30d }} <span class="subtle">{% widthratio c.got5_30d c.regs 100 %}%</span></td>
+        <td>
+          <svg width="{{ c.spark.width }}" height="{{ c.spark.height }}" viewBox="0 0 {{ c.spark.width }} {{ c.spark.height }}">
+            {% for b in c.spark.bars %}<rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" fill="#9db8d8"/>{% endfor %}
+          </svg>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="10" class="subtle">No registrations yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="subtle">Highlighted columns are time-boxed (published within {{ 14 }} days of signup — approx: created-and-now-published; 5th response within 30 days). This is how H2 (templates/onboarding) is judged cohort-over-cohort without the “older cohort had more time” bias.</div>
+
+  {# ④ LIVING USERS #}
+  <h2 id="living"><span class="step">4</span>Living users &amp; trends
+    <span class="sub">— active = logged in / edited / collected a response in the window; returned = creator action after signup</span></h2>
+  <div class="cards">
+    {% with a=active %}
+    <div class="card"><div class="lbl">Active · 7d</div><div class="num">{{ a.active_7.count }}</div><div class="goal">of {{ a.total }}</div></div>
+    <div class="card"><div class="lbl">Active · 30d</div><div class="num">{{ a.active_30.count }}</div><div class="goal">{{ a.active_30.pct }}%</div></div>
+    <div class="card"><div class="lbl">Active · 90d</div><div class="num">{{ a.active_90.count }}</div><div class="goal">{{ a.active_90.pct }}%</div></div>
+    <div class="card"><div class="lbl">Returned</div><div class="num" style="color:var(--act)">{{ a.returned.count }}</div><div class="goal">{{ a.returned.pct }}%</div></div>
+    <div class="card"><div class="lbl">Dormant</div><div class="num" style="opacity:.65">{{ a.dormant.count }}</div><div class="goal">{{ a.dormant.pct }}%</div></div>
+    {% endwith %}
+  </div>
+  <div class="cards" style="margin-top:12px">
+    <div class="card"><div class="lbl">median · reg → first survey</div><div class="num">{{ ttv.to_survey|default:"—" }}{% if ttv.to_survey != None %}d{% endif %}</div></div>
+    <div class="card"><div class="lbl">median · reg → publish</div><div class="num">{{ ttv.to_publish|default:"—" }}{% if ttv.to_publish != None %}d{% endif %}</div></div>
+    <div class="card"><div class="lbl">median · reg → first response</div><div class="num">{{ ttv.to_response|default:"—" }}{% if ttv.to_response != None %}d{% endif %}</div></div>
+  </div>
+  <div class="grid2" style="margin-top:12px">
+    <div class="panel">
+      <h3>Weekly registrations <span class="tag acq">acquisition</span></h3>
+      {% include "admin/_funnel_barchart.html" with chart=signups_chart color="#79aec8" empty_label="No signups yet." %}
+    </div>
+    <div class="panel">
+      <h3>Weekly activity — responses <span class="tag act">usage</span></h3>
+      {% include "admin/_funnel_barchart.html" with chart=activity_chart color="#70bf7a" empty_label="No responses yet." %}
+    </div>
+  </div>
+
+  {# ⑤ ACTIONS #}
+  <h2 id="actions"><span class="step">5</span>Action lists <span class="sub">— the dashboard as a campaign tool, not a display</span></h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3>Dormant valuable <span class="subtle">— institutional domain, 0 surveys → outreach</span></h3>
+      <table class="funnel">
+        <tr><th>User</th><th>Domain</th><th>Joined</th><th></th></tr>
+        {% for r in dormant_valuable %}
+        <tr><td>{{ r.username }}</td><td>{{ r.domain }}</td><td class="subtle">{{ r.joined }}</td>
+          <td><a class="rowlink" href="{% url 'admin:auth_user_change' r.uid %}">open →</a></td></tr>
+        {% empty %}<tr><td colspan="4" class="subtle">None — no dormant institutional accounts.</td></tr>{% endfor %}
+      </table>
+    </div>
+    <div class="panel">
+      <h3>Collecting but unpublished <span class="subtle">— responses on a draft → nudge to publish (H5)</span></h3>
+      <table class="funnel">
+        <tr><th>User</th><th>Survey</th><th>Resp.</th><th></th></tr>
+        {% for r in collecting_unpublished %}
+        <tr><td>{{ r.username }}</td><td>{{ r.survey }}</td><td>{{ r.responses }}</td>
+          <td><a class="rowlink" href="{% url 'admin:survey_surveyheader_change' r.survey_id %}">open →</a></td></tr>
+        {% empty %}<tr><td colspan="4" class="subtle">None — every collecting survey is published.</td></tr>{% endfor %}
+      </table>
+    </div>
+  </div>
+
+  <p class="subtle" style="margin-top:18px">
+    Colour: <span class="tag acq">acquisition</span> <span class="tag act">activity</span>
+    <span class="tag warn">warning</span> · all from existing tables + SignupAttribution (Phase 1). No PostHog, no DAU/country noise.
+  </p>
+</div>
+{% endblock %}
