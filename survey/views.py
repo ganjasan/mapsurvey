@@ -1213,6 +1213,14 @@ def for_researchers(request):
 	return render(request, 'for_researchers.html')
 
 
+def for_government(request):
+	"""Public landing page: the open-source community engagement platform for
+	local government. Audience page (councils / public agencies) that also owns
+	the "community engagement platform" positioning. utm_source=government."""
+	capture_signup_source(request)
+	return render(request, 'for_government.html')
+
+
 def robots_txt(request):
 	lines = [
 		"User-agent: *",
@@ -1221,6 +1229,7 @@ def robots_txt(request):
 		"Allow: /for-educators/",
 		"Allow: /for-planners/",
 		"Allow: /for-researchers/",
+		"Allow: /for-government/",
 		"Allow: /alternatives/",
 		"Disallow: /admin/",
 		"Disallow: /editor/",
@@ -1240,6 +1249,7 @@ def sitemap_xml(request):
 	urls.append(f"  <url><loc>{base}/for-educators/</loc></url>")
 	urls.append(f"  <url><loc>{base}/for-planners/</loc></url>")
 	urls.append(f"  <url><loc>{base}/for-researchers/</loc></url>")
+	urls.append(f"  <url><loc>{base}/for-government/</loc></url>")
 	urls.append(f"  <url><loc>{base}/alternatives/maptionnaire/</loc></url>")
 	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
 	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
