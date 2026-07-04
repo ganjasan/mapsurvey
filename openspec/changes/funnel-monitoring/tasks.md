@@ -32,6 +32,13 @@ Phase 1 (groups 4–5) adds attribution and can follow in a second PR.
 - [x] 3b.4 Template: "Living users" cards, inline-SVG weekly registrations chart + weekly activity chart (partial `admin/_funnel_barchart.html`); removed the old CSS-bar weekly table
 - [x] 3b.5 Tests: `ActiveUserMetricsTest` (windows/returned/dormant + respondent-answer-does-not-count), `BarChartGeometryTest` (scaling + empty series)
 
+## 3c. Dashboard on admin Home (Phase 0.2)
+
+- [x] 3c.1 Extract dashboard body into shared partial `admin/_funnel_content.html`; `dashboard_context()` in funnel.py shared by changelist view and template tag
+- [x] 3c.2 Inclusion tag `funnel_dashboard_content` (survey/templatetags/funnel_tags.py)
+- [x] 3c.3 `admin/funnel_index.html` extends stock `admin/index.html` (funnel above app list); wired via `admin.site.index_template`
+- [x] 3c.4 Test: admin index renders funnel content AND the stock app list
+
 ## 4. SignupAttribution model + capture (Phase 1)
 
 - [ ] 4.1 Add `SignupAttribution` model (OneToOne→`User`, `raw_referrer`, `source_bucket`, `utm_source/medium/campaign` nullable, `created_at`) in `survey/models.py`

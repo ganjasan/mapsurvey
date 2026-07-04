@@ -227,6 +227,28 @@ class CreatorFunnelService:
         }
 
 
+def dashboard_context():
+    """Full template context for the funnel dashboard (shared by the admin
+    changelist page and the admin-index embed). Recomputed per request --
+    cheap at current scale; cache here first if it ever slows.
+    """
+    service = CreatorFunnelService()
+    cohorts = service.cohort_funnel()
+    weekly = service.weekly_signups()
+    activity = service.weekly_activity()
+    return {
+        "cohorts": cohorts,
+        "weekly": weekly,
+        "totals": service.alltime_totals(),
+        "active": service.active_user_metrics(),
+        # Inline-SVG chart geometry (no chart library / CDN).
+        "signups_chart": bar_chart_geometry(weekly, "signups"),
+        "activity_chart": bar_chart_geometry(activity, "responses"),
+        # Max cohort regs for the funnel-table bar scaling (avoid div-by-zero).
+        "max_regs": max((c["regs"] for c in cohorts), default=1) or 1,
+    }
+
+
 def bar_chart_geometry(series, value_key, width=760, height=170, pad=26):
     """Turn a weekly series into inline-SVG bar geometry (no chart library).
 

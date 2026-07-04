@@ -6,7 +6,7 @@ from .models import (
     SurveySectionTranslation, QuestionTranslation,
     Story, FunnelReport,
 )
-from .funnel import CreatorFunnelService, bar_chart_geometry
+from .funnel import dashboard_context
 from leaflet.admin import LeafletGeoAdmin
 
 
@@ -96,21 +96,12 @@ class FunnelDashboardAdmin(admin.ModelAdmin):
         return super().get_queryset(request).none()
 
     def changelist_view(self, request, extra_context=None):
-        service = CreatorFunnelService()
-        cohorts = service.cohort_funnel()
-        weekly = service.weekly_signups()
-        activity = service.weekly_activity()
         extra_context = extra_context or {}
-        extra_context.update({
-            "title": "Funnel dashboard",
-            "cohorts": cohorts,
-            "weekly": weekly,
-            "totals": service.alltime_totals(),
-            "active": service.active_user_metrics(),
-            # Inline-SVG chart geometry (no chart library / CDN).
-            "signups_chart": bar_chart_geometry(weekly, "signups"),
-            "activity_chart": bar_chart_geometry(activity, "responses"),
-            # Max cohort regs for the funnel-table bar scaling (avoid div-by-zero).
-            "max_regs": max((c["regs"] for c in cohorts), default=1) or 1,
-        })
+        extra_context["title"] = "Funnel dashboard"
+        extra_context.update(dashboard_context())
         return super().changelist_view(request, extra_context=extra_context)
+
+
+# Admin home shows the funnel dashboard above the app list
+# (survey/templates/admin/funnel_index.html extends the stock admin/index.html).
+admin.site.index_template = "admin/funnel_index.html"

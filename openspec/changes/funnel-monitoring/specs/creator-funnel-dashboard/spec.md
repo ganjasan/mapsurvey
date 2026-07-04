@@ -40,6 +40,19 @@ SHALL exclude staff and superuser accounts.
 - **WHEN** response-count stages (≥1/≥5/≥10) are computed
 - **THEN** `SurveySession` rows with `is_deleted=True` are excluded from the counts
 
+### Requirement: Dashboard embedded on the admin home page
+The admin index (Home) SHALL render the funnel dashboard content above the standard app list,
+so the growth picture is the first thing a staff user sees. The standalone dashboard page SHALL
+remain available as a deep link.
+
+#### Scenario: Admin home shows the funnel
+- **WHEN** a staff user opens the admin index
+- **THEN** the funnel dashboard content renders above the app list, and the app list is still present
+
+#### Scenario: Standalone page still works
+- **WHEN** a staff user opens the funnel dashboard changelist URL directly
+- **THEN** the dashboard page renders as before
+
 ### Requirement: Weekly signups chart
 The dashboard SHALL show a weekly time series of real registration counts as an inline chart
 (no external chart library or CDN) so the summer trough and campaign spikes are visible over time.
