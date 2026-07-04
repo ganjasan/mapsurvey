@@ -1173,11 +1173,22 @@ def trust_page(request):
 	return render(request, 'trust.html')
 
 
+def for_educators(request):
+	"""Public "Mapsurvey for classrooms" landing page (SEO + coursework acquisition, H1).
+
+	First-touch source capture so a search/referral -> educators -> register flow is
+	attributed (Phase-1). The page's CTAs also carry utm_source=edu.
+	"""
+	capture_signup_source(request)
+	return render(request, 'for_educators.html')
+
+
 def robots_txt(request):
 	lines = [
 		"User-agent: *",
 		"Allow: /surveys/",
 		"Allow: /stories/",
+		"Allow: /for-educators/",
 		"Disallow: /admin/",
 		"Disallow: /editor/",
 		"Disallow: /accounts/",
@@ -1193,6 +1204,7 @@ def sitemap_xml(request):
 		visibility__in=['public', 'demo'],
 	)
 	urls = [f"  <url><loc>{base}/</loc></url>"]
+	urls.append(f"  <url><loc>{base}/for-educators/</loc></url>")
 	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
 	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
 	for survey in surveys:

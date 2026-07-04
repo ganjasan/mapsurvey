@@ -236,6 +236,52 @@ a:hover { color: var(--color-accent-hover); }
 
 .landing-nav__links a:hover { color: var(--color-text); }
 
+/* Solutions dropdown — holds the growing family of "for …" audience pages */
+.landing-nav__dd { position: relative; }
+
+.landing-nav__dd-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    transition: color var(--transition-fast);
+}
+.landing-nav__dd-btn:hover { color: var(--color-text); }
+.landing-nav__dd-btn svg { transition: transform var(--transition-fast); }
+.landing-nav__dd:hover .landing-nav__dd-btn svg,
+.landing-nav__dd.is-open .landing-nav__dd-btn svg { transform: rotate(180deg); }
+
+.landing-nav__dd-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: -0.75rem;
+    min-width: 180px;
+    margin: 0;
+    padding: 0.5rem 0;
+    list-style: none;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-light);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+.landing-nav__dd:hover .landing-nav__dd-menu,
+.landing-nav__dd:focus-within .landing-nav__dd-menu,
+.landing-nav__dd.is-open .landing-nav__dd-menu { display: block; }
+
+.landing-nav__dd-menu a {
+    display: block;
+    padding: 0.45rem 1rem;
+    white-space: nowrap;
+}
+
 .landing-nav__github {
     display: flex;
     align-items: center;
@@ -1126,6 +1172,20 @@ a:hover { color: var(--color-accent-hover); }
     .landing-nav__links.is-open { display: flex; }
     .landing-nav__toggle { display: block; }
     .nav-sep { display: none; }
+
+    /* Dropdown flattens to an inline sub-list inside the mobile menu */
+    .landing-nav__dd-btn { pointer-events: none; }
+    .landing-nav__dd-btn svg { display: none; }
+    .landing-nav__dd-menu {
+        display: block;
+        position: static;
+        min-width: 0;
+        padding: 0.25rem 0 0 0.9rem;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+    }
+    .landing-nav__dd-menu a { padding: 0.3rem 0; }
 
     /* Hero */
     .hero {
