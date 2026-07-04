@@ -93,6 +93,19 @@ first response.
 - **WHEN** the dashboard loads
 - **THEN** it shows three median-days figures (or a dash when a stage has no data)
 
+### Requirement: Top active surveys
+The dashboard SHALL list the top surveys by response volume in the last 30 days (the currently
+active ones), showing survey name, owner, status, and recent response count, with a deep link to
+the survey in the admin.
+
+#### Scenario: Ranked by recent responses
+- **WHEN** several surveys have collected responses in the last 30 days
+- **THEN** they are listed most-active first, and a survey with only older responses is excluded
+
+#### Scenario: Bounded list
+- **WHEN** more than ten surveys are active
+- **THEN** at most ten are shown
+
 ### Requirement: Action lists
 The dashboard SHALL show two actionable lists with deep links into the admin: institutional-domain
 registrants who never created a survey (outreach candidates), and surveys collecting responses
