@@ -13358,7 +13358,7 @@ class DashboardContextSmokeTest(TestCase):
         """
         ctx = _dashboard_context()
         for key in ("goals", "sources", "clusters", "abuse", "cohorts", "totals",
-                    "active", "ttv", "dormant_valuable", "collecting_unpublished",
+                    "active", "top_surveys", "ttv", "dormant_valuable", "collecting_unpublished",
                     "signups_chart", "activity_chart"):
             self.assertIn(key, ctx)
         self.assertEqual(len(ctx["goals"]), 4)
@@ -13453,3 +13453,67 @@ class SignupsBySourceTest(TestCase):
         by = {r["source"]: r["regs"] for r in res["rows"]}
         self.assertEqual(by.get("edu"), 2)
         self.assertEqual(by.get("unknown"), 1)
+
+
+class TopActiveSurveysTest(TestCase):
+    """Top active surveys ranked by recent response volume."""
+
+    def setUp(self):
+        self.org = _make_org("TopOrg")
+        self.now = timezone.now()
+        self.owner = _u("top_owner", self.now)
+
+    def _survey_with_sessions(self, name, recent, old=0):
+        s = SurveyHeader.objects.create(name=name, organization=self.org,
+                                        created_by=self.owner, status="published")
+        for _ in range(recent):
+            SurveySession.objects.create(survey=s, start_datetime=self.now - _timedelta(days=2))
+        for _ in range(old):
+            SurveySession.objects.create(survey=s, start_datetime=self.now - _timedelta(days=60))
+        return s
+
+    def test_ranked_by_recent_responses_and_excludes_old(self):
+        """
+        GIVEN surveys with different recent response counts (and one with only old ones)
+        WHEN top_active_surveys runs
+        THEN it ranks by last-30d responses, descending, excluding out-of-window sessions
+        """
+        self._survey_with_sessions("busy", recent=8)
+        self._survey_with_sessions("medium", recent=3)
+        self._survey_with_sessions("stale", recent=0, old=20)   # only old -> not active
+
+        rows = CreatorFunnelService().top_active_surveys()
+        names = [r["name"] for r in rows]
+        self.assertEqual(names[:2], ["busy", "medium"])
+        self.assertNotIn("stale", names)
+        self.assertEqual(rows[0]["responses"], 8)
+
+    def test_limit_respected(self):
+        """
+        GIVEN more surveys than the limit
+        WHEN top_active_surveys runs with limit=2
+        THEN at most 2 rows are returned
+        """
+        for i in range(4):
+            self._survey_with_sessions(f"s{i}", recent=i + 1)
+        self.assertEqual(len(CreatorFunnelService().top_active_surveys(limit=2)), 2)
+
+
+class AttributionCoverageGoalTest(TestCase):
+    """The attribution-coverage goal card computes real coverage (not hardcoded)."""
+
+    def test_coverage_reflects_attributed_recent_signups(self):
+        """
+        GIVEN four recent signups, two of which have a SignupAttribution row
+        WHEN goals() computes the attribution-coverage card
+        THEN it reports 50% (not a hardcoded 0%)
+        """
+        for i in range(2):
+            u = User.objects.create_user(f"att_{i}", password="x")
+            SignupAttribution.objects.create(user=u, utm_source="edu")
+        for i in range(2):
+            User.objects.create_user(f"noatt_{i}", password="x")
+
+        cards = {c["label"]: c for c in CreatorFunnelService().goals()}
+        cov = cards["Attribution coverage"]
+        self.assertEqual(cov["value"], "50%")

@@ -60,6 +60,13 @@ Phase 1 (groups 4–5) adds attribution and can follow in a second PR.
 - [x] 5.2 Idempotency test: persist twice → one row, no error (fail-open posture)
 - [x] 5.3 Dashboard test: `signups_by_source` groups by source; `available` False before any attribution; unattributed users fall under `unknown`
 
+## 3e. Follow-up: top active surveys + post-Phase-1 label fixes
+
+- [x] 3e.1 `top_active_surveys()` — top 10 surveys by responses in the last 30 days (name/owner/status/count + admin link); rendered in section ④
+- [x] 3e.2 Attribution-coverage goal card now computes real coverage (attributed recent signups / recent signups) instead of a hardcoded 0% / "ships Phase 1"
+- [x] 3e.3 Source-panel placeholder note reworded — Phase 1 is shipped; "no attributed signups yet, capture runs from deploy (no backfill)"
+- [x] 3e.4 Tests: `TopActiveSurveysTest`, `AttributionCoverageGoalTest` (25 funnel tests green)
+
 ## 6. Wrap-up
 
 - [ ] 6.1 Run `./run_tests.sh survey` green (PostGIS container up)

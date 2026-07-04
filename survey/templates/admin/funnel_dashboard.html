@@ -85,7 +85,7 @@
         <tr><th>Source</th><th>Regs</th></tr>
         {% for r in sources.rows %}<tr><td>{{ r.source }}</td><td>{{ r.regs }}</td></tr>{% endfor %}
       </table>
-      {% if not sources.available %}<div class="subtle" style="margin-top:6px">Needs Phase 1 (referrer/UTM) — placeholder.</div>{% endif %}
+      {% if not sources.available %}<div class="subtle" style="margin-top:6px">No attributed signups yet — capture runs from deploy onward (no backfill), so pre-deploy signups show as “unknown”.</div>{% endif %}
     </div>
     <div class="panel">
       <h3>Cluster radar</h3>
@@ -174,6 +174,25 @@
       {% include "admin/_funnel_barchart.html" with chart=activity_chart color="#70bf7a" empty_label="No responses yet." %}
     </div>
   </div>
+
+  <h3 style="margin:20px 0 8px;font-size:13px">Top active surveys <span class="subtle">— most responses in the last 30 days</span></h3>
+  <table class="funnel">
+    <thead><tr><th>#</th><th>Survey</th><th>Owner</th><th>Status</th><th>Responses&nbsp;30d</th><th></th></tr></thead>
+    <tbody>
+      {% for s in top_surveys %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ s.name }}</td>
+        <td class="subtle">{{ s.owner }}</td>
+        <td><span class="tag {% if s.status == 'published' %}act{% elif s.status == 'closed' or s.status == 'archived' %}warn{% else %}acq{% endif %}">{{ s.status }}</span></td>
+        <td>{{ s.responses }}</td>
+        <td><a class="rowlink" href="{% url 'admin:survey_surveyheader_change' s.survey_id %}">open →</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="subtle">No responses collected in the last 30 days.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
   {# ⑤ ACTIONS #}
   <h2 id="actions"><span class="step">5</span>Action lists <span class="sub">— the dashboard as a campaign tool, not a display</span></h2>

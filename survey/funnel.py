@@ -238,6 +238,26 @@ class CreatorFunnelService:
             for r in rows
         ]
 
+    def top_active_surveys(self, limit=10, days=30, now=None):
+        """The surveys collecting the most responses recently (the live ones).
+
+        Ranked by non-deleted sessions in the last `days`. Returns survey name,
+        owner, status, and the recent response count -- with an admin deep link
+        built in the template.
+        """
+        now = now or timezone.now()
+        rows = (SurveySession.objects
+                .filter(is_deleted=False, start_datetime__gte=now - timedelta(days=days))
+                .values("survey_id", "survey__name", "survey__status",
+                        "survey__created_by__username")
+                .annotate(n=Count("id"))
+                .order_by("-n")[:limit])
+        return [{"survey_id": r["survey_id"],
+                 "name": r["survey__name"] or "—",
+                 "status": r["survey__status"],
+                 "owner": r["survey__created_by__username"] or "—",
+                 "responses": r["n"]} for r in rows]
+
     def active_user_metrics(self, now=None):
         """"Living" creators: registered users who keep using the platform.
 
@@ -317,6 +337,13 @@ class CreatorFunnelService:
         has_resp = {uid for uid, n in resp.items() if n >= 1}
         pub_rate = round(100 * len(has_resp & published) / len(has_resp)) if has_resp else 0
 
+        # Real attribution coverage: share of recent signups with a known source.
+        # Rises from deploy onward (no backfill), so pre-deploy signups don't count.
+        from .models import SignupAttribution
+        attributed_30 = (SignupAttribution.objects.filter(user_id__in=recent_ids)
+                         .values("user_id").distinct().count())
+        coverage = round(100 * attributed_30 / regs_30) if regs_30 else 0
+
         def card(label, value_display, pct_to_target, target_display, note):
             pct = min(100, max(0, pct_to_target))
             return {"label": label, "value": value_display, "target": target_display,
@@ -333,8 +360,9 @@ class CreatorFunnelService:
             card("Publish rate", f"{pub_rate}%",
                  round(100 * pub_rate / t["publish_rate"]), f"{t['publish_rate']}%",
                  "of users with responses (H5)"),
-            card("Attribution coverage", "0%",
-                 0, f"{t['attribution']}%", "ships Phase 1 (SignupAttribution)"),
+            card("Attribution coverage", f"{coverage}%",
+                 round(100 * coverage / t["attribution"]), f"{t['attribution']}%",
+                 "new signups with a known source"),
         ]
 
     def cluster_radar(self, now=None):
@@ -535,6 +563,7 @@ def dashboard_context(weeks=None):
         "cohorts": s.cohort_funnel(),
         "totals": s.alltime_totals(),
         "active": s.active_user_metrics(),
+        "top_surveys": s.top_active_surveys(),
         "ttv": s.time_to_value(),
         "dormant_valuable": s.dormant_valuable(),
         "collecting_unpublished": s.collecting_unpublished(),
