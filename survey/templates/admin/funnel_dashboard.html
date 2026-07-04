@@ -43,6 +43,28 @@
   {% endwith %}
 </div>
 
+<h2 class="funnel-h">Living users</h2>
+<p class="subtle">
+  A creator counts as <em>active</em> if they logged in, edited a survey, or collected a
+  response within the window. <em>Returned</em> = active on a day after they registered
+  (came back at least once); <em>dormant</em> = never came back.
+</p>
+<div class="funnel-cards">
+  {% with a=active %}
+  <div class="funnel-card"><div class="num">{{ a.active_7.count }}</div><div class="lbl">Active · 7 days</div><div class="pct">{{ a.active_7.pct }}% of {{ a.total }}</div></div>
+  <div class="funnel-card"><div class="num">{{ a.active_30.count }}</div><div class="lbl">Active · 30 days</div><div class="pct">{{ a.active_30.pct }}%</div></div>
+  <div class="funnel-card"><div class="num">{{ a.active_90.count }}</div><div class="lbl">Active · 90 days</div><div class="pct">{{ a.active_90.pct }}%</div></div>
+  <div class="funnel-card"><div class="num">{{ a.returned.count }}</div><div class="lbl">Returned</div><div class="pct">{{ a.returned.pct }}%</div></div>
+  <div class="funnel-card"><div class="num">{{ a.dormant.count }}</div><div class="lbl">Dormant</div><div class="pct">{{ a.dormant.pct }}%</div></div>
+  {% endwith %}
+</div>
+
+<h2 class="funnel-h">Weekly registrations</h2>
+{% include "admin/_funnel_barchart.html" with chart=signups_chart color="#79aec8" empty_label="No signups yet." %}
+
+<h2 class="funnel-h">Weekly activity <span class="subtle">— responses collected (ongoing usage)</span></h2>
+{% include "admin/_funnel_barchart.html" with chart=activity_chart color="#70bf7a" empty_label="No responses yet." %}
+
 <h2 class="funnel-h">Monthly cohorts</h2>
 <table class="funnel">
   <thead>
@@ -68,22 +90,6 @@
     </tr>
     {% empty %}
     <tr><td colspan="9" class="subtle">No registrations yet.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<h2 class="funnel-h">Weekly signups</h2>
-<table class="funnel">
-  <thead><tr><th>Week</th><th>Signups</th><th style="width:280px;">&nbsp;</th></tr></thead>
-  <tbody>
-    {% for w in weekly %}
-    <tr>
-      <td>{{ w.week }}</td>
-      <td>{{ w.signups }}</td>
-      <td><div class="bar-wrap"><div class="bar" style="width: {% widthratio w.signups max_weekly 100 %}%;"></div></div></td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="3" class="subtle">No signups yet.</td></tr>
     {% endfor %}
   </tbody>
 </table>

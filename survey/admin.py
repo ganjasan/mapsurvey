@@ -6,7 +6,7 @@ from .models import (
     SurveySectionTranslation, QuestionTranslation,
     Story, FunnelReport,
 )
-from .funnel import CreatorFunnelService
+from .funnel import CreatorFunnelService, bar_chart_geometry
 from leaflet.admin import LeafletGeoAdmin
 
 
@@ -99,14 +99,18 @@ class FunnelDashboardAdmin(admin.ModelAdmin):
         service = CreatorFunnelService()
         cohorts = service.cohort_funnel()
         weekly = service.weekly_signups()
+        activity = service.weekly_activity()
         extra_context = extra_context or {}
         extra_context.update({
             "title": "Funnel dashboard",
             "cohorts": cohorts,
             "weekly": weekly,
             "totals": service.alltime_totals(),
-            # Max values for bar-width scaling in the template (avoid div-by-zero).
+            "active": service.active_user_metrics(),
+            # Inline-SVG chart geometry (no chart library / CDN).
+            "signups_chart": bar_chart_geometry(weekly, "signups"),
+            "activity_chart": bar_chart_geometry(activity, "responses"),
+            # Max cohort regs for the funnel-table bar scaling (avoid div-by-zero).
             "max_regs": max((c["regs"] for c in cohorts), default=1) or 1,
-            "max_weekly": max((w["signups"] for w in weekly), default=1) or 1,
         })
         return super().changelist_view(request, extra_context=extra_context)

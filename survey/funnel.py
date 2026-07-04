@@ -10,9 +10,12 @@ openspec/changes/funnel-monitoring/design.md (D2). Every method returns plain
 dicts/lists so no ORM objects leak into templates.
 """
 
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
-from django.db.models import Count
+from django.db.models import Count, Max
 from django.db.models.functions import TruncMonth, TruncWeek
+from django.utils import timezone
 
 from .models import SurveyHeader, Question, SurveySession
 
@@ -23,6 +26,9 @@ PUBLISHED_STATUSES = ("published", "closed", "archived")
 
 # Response thresholds surfaced as activation stages.
 RESPONSE_THRESHOLDS = (1, 5, 10)
+
+# Rolling windows (days) for the "active creators" metrics.
+ACTIVE_WINDOWS = (7, 30, 90)
 
 
 class CreatorFunnelService:
@@ -130,9 +136,130 @@ class CreatorFunnelService:
             for r in rows
         ]
 
+    def weekly_activity(self):
+        """Ongoing usage over time: non-deleted respondent sessions per ISO week.
+
+        A liveliness signal complementing weekly_signups -- it shows whether
+        surveys keep collecting responses week over week: [{week, responses}].
+        """
+        rows = (
+            SurveySession.objects
+            .filter(is_deleted=False)
+            .annotate(week=TruncWeek("start_datetime"))
+            .values("week")
+            .annotate(responses=Count("id"))
+            .order_by("week")
+        )
+        return [
+            {"week": r["week"].date().isoformat() if r["week"] else None,
+             "responses": r["responses"]}
+            for r in rows
+        ]
+
+    def active_user_metrics(self, now=None):
+        """"Living" creators: registered users who keep using the platform.
+
+        A user's `activity_at` is the most recent of: their last login, the last
+        edit to any survey they own, and the latest non-deleted response on any of
+        their surveys. From that we derive:
+          - active_7 / active_30 / active_90: any activity within the rolling window
+          - returned: a *creator action* (login or survey edit -- NOT a respondent's
+            answer) on a day after they registered; i.e. they genuinely came back
+          - dormant: registered but never came back (the complement of returned)
+        Returns a dict of {count, pct} blocks plus `total`.
+        """
+        now = now or timezone.now()
+
+        survey_edit = {
+            r["created_by_id"]: r["m"]
+            for r in (SurveyHeader.objects
+                      .filter(created_by__isnull=False)
+                      .values("created_by_id")
+                      .annotate(m=Max("updated_at")))
+        }
+        last_response = {
+            r["survey__created_by_id"]: r["m"]
+            for r in (SurveySession.objects
+                      .filter(is_deleted=False, survey__created_by__isnull=False)
+                      .values("survey__created_by_id")
+                      .annotate(m=Max("start_datetime")))
+        }
+
+        windows = {w: 0 for w in ACTIVE_WINDOWS}
+        returned = dormant = total = 0
+        cutoffs = {w: now - timedelta(days=w) for w in ACTIVE_WINDOWS}
+
+        for uid, joined, last_login in self._real_users().values_list(
+                "id", "date_joined", "last_login"):
+            total += 1
+            # Creator's own actions (drives "returned"): login + survey edits only.
+            creator_acts = [t for t in (last_login, survey_edit.get(uid)) if t is not None]
+            creator_action = max(creator_acts) if creator_acts else None
+            # Any liveliness (drives active windows): also counts collected responses.
+            live = creator_acts + ([last_response[uid]] if uid in last_response else [])
+            activity_at = max(live) if live else None
+
+            if creator_action and creator_action.date() > joined.date():
+                returned += 1
+            else:
+                dormant += 1
+
+            if activity_at:
+                for w in ACTIVE_WINDOWS:
+                    if activity_at >= cutoffs[w]:
+                        windows[w] += 1
+
+        def block(count):
+            return {"count": count, "pct": round(100 * count / total) if total else 0}
+
+        result = {"total": total,
+                  "returned": block(returned),
+                  "dormant": block(dormant)}
+        for w in ACTIVE_WINDOWS:
+            result[f"active_{w}"] = block(windows[w])
+        return result
+
     @staticmethod
     def _blank_row(label):
         return {
             "cohort": label, "regs": 0, "created": 0, "added_question": 0,
             "published": 0, "got_1": 0, "got_5": 0, "got_10": 0,
         }
+
+
+def bar_chart_geometry(series, value_key, width=760, height=170, pad=26):
+    """Turn a weekly series into inline-SVG bar geometry (no chart library).
+
+    `series` is a list of dicts each with a "week" label and a numeric `value_key`.
+    Returns a dict the template can render directly with <rect>/<text>, including
+    sparse x-axis labels so the axis stays readable for long series.
+    """
+    n = len(series)
+    vmax = max((row[value_key] for row in series), default=0)
+    baseline = height - pad
+    plot_w = width - 2 * pad
+    plot_h = height - 2 * pad
+    step = plot_w / n if n else plot_w
+    bar_w = max(1.0, step * 0.68)
+    label_every = max(1, (n + 7) // 8)  # ~8 labels max
+
+    bars = []
+    for i, row in enumerate(series):
+        v = row[value_key]
+        h = (v / vmax * plot_h) if vmax else 0
+        x = pad + i * step + (step - bar_w) / 2
+        bars.append({
+            "x": round(x, 1),
+            "y": round(baseline - h, 1),
+            "w": round(bar_w, 1),
+            "h": round(h, 1),
+            "cx": round(x + bar_w / 2, 1),
+            "value": v,
+            "label": row.get("week"),
+            "show_label": (i % label_every == 0) or (i == n - 1),
+        })
+    return {
+        "width": width, "height": height, "pad": pad,
+        "baseline": baseline, "max": vmax, "count": n, "bars": bars,
+        "x0": pad, "x1": width - pad, "label_y": height - 8, "max_y": pad - 8,
+    }

@@ -40,13 +40,53 @@ SHALL exclude staff and superuser accounts.
 - **WHEN** response-count stages (≥1/≥5/≥10) are computed
 - **THEN** `SurveySession` rows with `is_deleted=True` are excluded from the counts
 
-### Requirement: Weekly signups series
-The dashboard SHALL show a weekly time series of real registration counts so the summer trough
-and campaign spikes are visible over time.
+### Requirement: Weekly signups chart
+The dashboard SHALL show a weekly time series of real registration counts as an inline chart
+(no external chart library or CDN) so the summer trough and campaign spikes are visible over time.
 
-#### Scenario: Weekly counts render
+#### Scenario: Weekly chart renders
 - **WHEN** the dashboard loads
-- **THEN** it shows registrations grouped by `date_trunc('week', date_joined)`, most-recent weeks included
+- **THEN** it shows registrations grouped by `date_trunc('week', date_joined)` as an inline-SVG
+  bar chart, most-recent weeks included, with sparse x-axis week labels
+
+#### Scenario: Empty series is handled
+- **WHEN** there are no registrations
+- **THEN** the chart area shows an empty-state message and does not error
+
+### Requirement: Weekly activity chart
+The dashboard SHALL show a weekly time series of collected responses (non-deleted sessions) as an
+inline chart, as an ongoing-usage signal complementing registrations.
+
+#### Scenario: Activity chart renders
+- **WHEN** the dashboard loads
+- **THEN** it shows response counts grouped by `date_trunc('week', start_datetime)` over non-deleted
+  sessions as an inline-SVG bar chart
+
+### Requirement: Living-users (active creator) metrics
+The dashboard SHALL show how many registered creators are still using the platform. A creator's
+activity time is the most recent of: last login, last edit to any survey they own, and the latest
+non-deleted response on any of their surveys. The dashboard SHALL report counts (and % of total)
+for: active within 7 / 30 / 90 days; `returned`; and `dormant`. `returned` SHALL be based only on
+the creator's own actions (login or survey edit) occurring on a day after registration — a
+respondent's answer SHALL NOT by itself mark a creator as returned. `dormant` is the complement of
+`returned`.
+
+#### Scenario: Active windows counted
+- **WHEN** a creator's most recent activity falls within a rolling window (7/30/90 days)
+- **THEN** they are counted in that window's active total
+
+#### Scenario: Returned requires a creator action after signup
+- **WHEN** the only post-registration activity on a creator's surveys is a respondent's answer
+  (no later login and no survey edit)
+- **THEN** the creator is NOT counted as returned (they are counted as dormant)
+
+#### Scenario: Returned via later login or edit
+- **WHEN** a creator logs in or edits a survey on a day after they registered
+- **THEN** they are counted as returned
+
+#### Scenario: Percentages are of the real-registration total
+- **WHEN** the metrics render
+- **THEN** each block shows a count and its percentage of the total real registrations
 
 ### Requirement: No new data table for the funnel dashboard
 The funnel dashboard SHALL compute all stages live from existing tables (`auth_user`,

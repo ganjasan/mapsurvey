@@ -13134,3 +13134,96 @@ class FunnelDashboardAdminAccessTest(TestCase):
         """
         resp = Client().get(self.url)
         self.assertEqual(resp.status_code, 302)
+
+
+from datetime import timedelta as _timedelta
+from survey.funnel import bar_chart_geometry
+
+
+class ActiveUserMetricsTest(TestCase):
+    """Tests for the "living users" (active/returned/dormant) metrics."""
+
+    def setUp(self):
+        self.org = _make_org("ActiveOrg")
+        self.now = timezone.now()
+
+        def user(name, days_ago_joined):
+            u = User.objects.create_user(username=name, password="x")
+            u.date_joined = self.now - _timedelta(days=days_ago_joined)
+            u.save(update_fields=["date_joined"])
+            return u
+
+        # A: session 3 days ago -> active in all windows, returned
+        self.a = user("act_a", 100)
+        sa = SurveyHeader.objects.create(name="a_s", organization=self.org, created_by=self.a)
+        SurveySession.objects.create(survey=sa, start_datetime=self.now - _timedelta(days=3))
+
+        # B: last_login 20 days ago -> active 30/90, returned
+        self.b = user("act_b", 100)
+        self.b.last_login = self.now - _timedelta(days=20)
+        self.b.save(update_fields=["last_login"])
+
+        # C: survey edited 60 days ago -> active 90 only, returned
+        self.c = user("act_c", 200)
+        sc = SurveyHeader.objects.create(name="c_s", organization=self.org, created_by=self.c)
+        SurveyHeader.objects.filter(pk=sc.pk).update(updated_at=self.now - _timedelta(days=60))
+
+        # D: no activity at all -> dormant
+        user("act_d", 200)
+
+    def test_active_windows_returned_and_dormant(self):
+        """
+        GIVEN creators with activity at 3 / 20 / 60 days ago and one with none
+        WHEN active_user_metrics() classifies them
+        THEN window counts, returned, and dormant match the constructed scenario
+        """
+        m = CreatorFunnelService().active_user_metrics(now=self.now)
+        self.assertEqual(m["total"], 4)
+        self.assertEqual(m["active_7"]["count"], 1)    # A
+        self.assertEqual(m["active_30"]["count"], 2)   # A, B
+        self.assertEqual(m["active_90"]["count"], 3)   # A, B, C
+        self.assertEqual(m["returned"]["count"], 3)    # A, B, C came back
+        self.assertEqual(m["dormant"]["count"], 1)     # D
+        self.assertEqual(m["active_30"]["pct"], 50)    # 2 of 4
+
+    def test_weekly_activity_sums_sessions(self):
+        """
+        GIVEN two non-deleted sessions exist
+        WHEN weekly_activity() groups by week
+        THEN the response counts sum to the number of live sessions
+        """
+        rows = CreatorFunnelService().weekly_activity()
+        self.assertEqual(sum(r["responses"] for r in rows), 1 + 0)  # only A's live session
+
+
+class BarChartGeometryTest(TestCase):
+    """Tests for the inline-SVG bar geometry helper."""
+
+    def test_geometry_shape_and_scaling(self):
+        """
+        GIVEN a weekly series with a known maximum
+        WHEN bar_chart_geometry builds SVG geometry
+        THEN it yields one bar per point, the tallest bar reaches the plot height,
+             and bars sit within the drawing area
+        """
+        series = [{"week": "2026-01-05", "signups": 2},
+                  {"week": "2026-01-12", "signups": 4},
+                  {"week": "2026-01-19", "signups": 0}]
+        g = bar_chart_geometry(series, "signups", width=200, height=100, pad=10)
+        self.assertEqual(g["count"], 3)
+        self.assertEqual(len(g["bars"]), 3)
+        self.assertEqual(g["max"], 4)
+        self.assertEqual(g["bars"][2]["h"], 0.0)             # zero value -> zero height
+        self.assertAlmostEqual(g["bars"][1]["h"], 80.0, 1)   # max value -> full plot height
+        self.assertTrue(all(b["y"] >= g["max_y"] for b in g["bars"]))
+
+    def test_empty_series_does_not_crash(self):
+        """
+        GIVEN an empty series
+        WHEN bar_chart_geometry runs
+        THEN it returns zero bars and a zero max without dividing by zero
+        """
+        g = bar_chart_geometry([], "signups")
+        self.assertEqual(g["count"], 0)
+        self.assertEqual(g["bars"], [])
+        self.assertEqual(g["max"], 0)

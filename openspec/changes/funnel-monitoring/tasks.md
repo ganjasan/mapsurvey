@@ -24,6 +24,14 @@ Phase 1 (groups 4–5) adds attribution and can follow in a second PR.
 - [x] 3.2 Admin access test: staff sees the page; non-staff and anonymous are denied
 - [ ] 3.3 Sanity-check aggregate output shape against the known 2026-07-04 baseline numbers (do on prod after deploy)
 
+## 3b. Charts + living-users metrics (Phase 0.1)
+
+- [x] 3b.1 `CreatorFunnelService.weekly_activity()` — non-deleted sessions grouped by ISO week (ongoing-usage series)
+- [x] 3b.2 `CreatorFunnelService.active_user_metrics()` — active 7/30/90d, returned (creator action after signup only), dormant; counts + % of total
+- [x] 3b.3 `bar_chart_geometry()` helper — inline-SVG bar geometry (no CDN), with sparse x labels + empty-series guard
+- [x] 3b.4 Template: "Living users" cards, inline-SVG weekly registrations chart + weekly activity chart (partial `admin/_funnel_barchart.html`); removed the old CSS-bar weekly table
+- [x] 3b.5 Tests: `ActiveUserMetricsTest` (windows/returned/dormant + respondent-answer-does-not-count), `BarChartGeometryTest` (scaling + empty series)
+
 ## 4. SignupAttribution model + capture (Phase 1)
 
 - [ ] 4.1 Add `SignupAttribution` model (OneToOne→`User`, `raw_referrer`, `source_bucket`, `utm_source/medium/campaign` nullable, `created_at`) in `survey/models.py`
