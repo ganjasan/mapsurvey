@@ -7,7 +7,7 @@ SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon')
 class SurveyHeaderForm(forms.ModelForm):
     class Meta:
         model = SurveyHeader
-        fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'thanks_html', 'cover_image', 'basemaps', 'default_basemap']
+        fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'thanks_html', 'cover_image', 'basemaps', 'default_basemap', 'show_branding']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'survey_name'}),
             'redirect_url': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '#'}),

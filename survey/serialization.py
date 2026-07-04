@@ -63,6 +63,7 @@ def serialize_survey_to_dict(survey: SurveyHeader) -> Dict[str, Any]:
         "start_map_position": survey.start_map_postion.wkt if survey.start_map_postion else None,
         "start_map_zoom": survey.start_map_zoom,
         "use_geolocation": survey.use_geolocation,
+        "show_branding": survey.show_branding,
         "sections": serialize_sections(survey),
     }
 
@@ -472,6 +473,7 @@ def create_survey_header(
         start_map_postion=GEOSGeometry(survey_data["start_map_position"]) if survey_data.get("start_map_position") else None,
         start_map_zoom=survey_data.get("start_map_zoom"),
         use_geolocation=survey_data.get("use_geolocation", False),
+        show_branding=survey_data.get("show_branding", True),
         is_canonical=True,
     )
 
