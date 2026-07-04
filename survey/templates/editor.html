@@ -22,6 +22,23 @@
     }
     .dashboard-title { font-size: 1.25rem; font-weight: 700; margin: 0; }
     .dashboard-header .spacer { flex: 1; }
+    /* Search box */
+    .dashboard-search {
+        position: relative; display: inline-flex; align-items: center;
+        min-width: 200px;
+    }
+    .dashboard-search i {
+        position: absolute; left: 0.6rem; color: #9ca3af; font-size: 0.8rem; pointer-events: none;
+    }
+    .dashboard-search input {
+        width: 100%; padding: 0.35rem 0.6rem 0.35rem 1.9rem;
+        border: 1px solid var(--border-color); border-radius: 6px;
+        font-size: 0.85rem; background: #fff; color: #111827;
+    }
+    .dashboard-search input:focus {
+        outline: none; border-color: var(--accent);
+        box-shadow: 0 0 0 2px var(--accent-light);
+    }
     .view-toggle {
         display: inline-flex; background: #f3f4f6; border-radius: 6px; padding: 2px; gap: 2px;
     }
@@ -193,6 +210,11 @@
     <!-- Header -->
     <div class="dashboard-header">
         <h1 class="dashboard-title">My Surveys</h1>
+        <div class="dashboard-search">
+            <i class="fas fa-search"></i>
+            <input type="search" id="surveySearch" placeholder="Search surveys…"
+                   autocomplete="off" aria-label="Search surveys by name">
+        </div>
         <span class="spacer"></span>
 
         {% if show_archived %}
@@ -226,7 +248,7 @@
     <!-- Cards View -->
     <div class="dashboard-grid" id="view-grid">
         {% for survey in survey_headers %}
-        <div class="survey-card">
+        <div class="survey-card" data-search="{{ survey.name|lower }} {{ survey.get_status_display|lower }}">
             <a href="{% url 'editor_survey_detail' survey.uuid %}" class="card-link">
                 {% if survey.cover_image %}
                 <div class="card-cover" style="background-image:url('{{ survey.cover_image.url }}');"></div>
@@ -277,7 +299,7 @@
     <!-- List View -->
     <div class="dashboard-list hidden" id="view-list">
         {% for survey in survey_headers %}
-        <div class="survey-row">
+        <div class="survey-row" data-search="{{ survey.name|lower }} {{ survey.get_status_display|lower }}">
             <a href="{% url 'editor_survey_detail' survey.uuid %}" class="row-link">
                 {% if survey.cover_image %}
                 <div class="row-cover" style="background-image:url('{{ survey.cover_image.url }}');"></div>
@@ -314,6 +336,12 @@
             No surveys yet. Create your first one!
         </div>
         {% endfor %}
+    </div>
+
+    <!-- No search matches -->
+    <div id="search-empty" class="hidden" style="text-align:center;padding:2.5rem;color:#9ca3af;">
+        <i class="fas fa-search" style="font-size:1.75rem;margin-bottom:0.5rem;display:block;"></i>
+        No surveys match “<span id="search-empty-q"></span>”.
     </div>
 
     {% if trashed_surveys %}
@@ -445,6 +473,39 @@ function setView(mode) {
         if (saved === 'list') setView('list');
         else setView('grid');
     } catch(e) { setView('grid'); }
+})();
+
+// Instant client-side search over both card and list views (by name + status)
+(function() {
+    var input = document.getElementById('surveySearch');
+    if (!input) return;
+    var cards = Array.prototype.slice.call(document.querySelectorAll('#view-grid .survey-card'));
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#view-list .survey-row'));
+    var emptyBox = document.getElementById('search-empty');
+    var emptyQ = document.getElementById('search-empty-q');
+
+    function filterNodes(nodes, q) {
+        var matches = 0;
+        nodes.forEach(function(n) {
+            var hay = n.getAttribute('data-search') || '';
+            var show = !q || hay.indexOf(q) !== -1;
+            n.classList.toggle('hidden', !show);
+            if (show) matches++;
+        });
+        return matches;
+    }
+
+    function apply() {
+        var q = input.value.trim().toLowerCase();
+        var m = filterNodes(cards, q) + filterNodes(rows, q);
+        // cards+rows count the same surveys twice; >0 means at least one matched
+        var noMatch = q && m === 0;
+        if (emptyBox) emptyBox.classList.toggle('hidden', !noMatch);
+        if (noMatch && emptyQ) emptyQ.textContent = input.value.trim();
+    }
+
+    input.addEventListener('input', apply);
+    input.addEventListener('search', apply); // clear (×) button on type=search
 })();
 
 // Delete modal
