@@ -418,7 +418,8 @@ class SurveyHeader(models.Model):
         return self.__acache
 
     def is_multilingual(self):
-        return bool(self.available_languages and len(self.available_languages) > 0)
+        # Only >1 language warrants asking the respondent to choose one.
+        return bool(self.available_languages and len(self.available_languages) > 1)
 
     # Trash (soft-delete) helpers
     TRASH_RETENTION_DAYS = 30

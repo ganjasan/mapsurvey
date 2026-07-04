@@ -754,8 +754,12 @@ def survey_section(request, survey_slug, section_name):
 	if survey.is_multilingual() and not request.session.get('survey_language'):
 		return redirect('survey_language_select', survey_slug=str(survey.uuid))
 
-	# Get selected language (None for single-language surveys)
+	# Get selected language. A single-language survey never shows the language
+	# picker, so default to its one language (otherwise content would fall back).
 	selected_language = request.session.get('survey_language')
+	if not selected_language and survey.available_languages:
+		selected_language = survey.available_languages[0]
+		request.session['survey_language'] = selected_language
 
 	# Activate Django i18n so {% trans %} renders in the selected language
 	if selected_language:

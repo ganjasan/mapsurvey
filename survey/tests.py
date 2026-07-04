@@ -2781,6 +2781,19 @@ class TranslationModelsTest(TestCase):
         survey = SurveyHeader.objects.create(name="default_survey", organization=self.org)
         self.assertFalse(survey.is_multilingual())
 
+    def test_survey_is_multilingual_false_single_language(self):
+        """
+        GIVEN a survey with exactly one available language
+        WHEN is_multilingual() is called
+        THEN it returns False (no point asking a respondent to pick one)
+        """
+        survey = SurveyHeader.objects.create(
+            name="one_lang_survey",
+            organization=self.org,
+            available_languages=["de"],
+        )
+        self.assertFalse(survey.is_multilingual())
+
     def test_section_translation_creation(self):
         """
         GIVEN a survey section
@@ -3147,6 +3160,52 @@ class LanguageSelectionTest(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertIn(str(self.single_lang_survey.uuid), response.url)
+
+    def test_one_language_survey_entry_skips_picker(self):
+        """
+        GIVEN a survey with exactly one language
+        WHEN a respondent enters the survey
+        THEN they go straight to the first section, not the language picker
+        """
+        survey = SurveyHeader.objects.create(
+            name="one_lang_entry", organization=self.org,
+            available_languages=["de"], status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=survey, name="s1", title="S", code="S1", is_head=True,
+        )
+        response = self.client.get('/surveys/one_lang_entry/')
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn('language', response.url)
+        self.assertIn('s1', response.url)
+
+    def test_one_language_section_records_that_language_on_session(self):
+        """
+        GIVEN a survey with exactly one language and no chosen language
+        WHEN a respondent opens its first section
+        THEN it renders and the created SurveySession stores that language
+        """
+        survey = SurveyHeader.objects.create(
+            name="one_lang_section", organization=self.org,
+            available_languages=["de"], status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=survey, name="s1", title="S", code="S1", is_head=True,
+        )
+        response = self.client.get(f'/surveys/{survey.uuid}/s1/')
+        self.assertEqual(response.status_code, 200)
+        session = SurveySession.objects.filter(survey=survey).latest('id')
+        self.assertEqual(session.language, 'de')
+
+    def test_two_language_survey_entry_redirects_to_picker(self):
+        """
+        GIVEN a survey with two or more languages
+        WHEN a respondent enters the survey
+        THEN they are redirected to the language selection screen
+        """
+        response = self.client.get('/surveys/multilang_test/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('language', response.url)
 
     def test_language_selection_creates_session_with_language(self):
         """
