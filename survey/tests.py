@@ -13517,3 +13517,43 @@ class AttributionCoverageGoalTest(TestCase):
         cards = {c["label"]: c for c in CreatorFunnelService().goals()}
         cov = cards["Attribution coverage"]
         self.assertEqual(cov["value"], "50%")
+
+
+class SectionViewHtmxTrackingTest(TestCase):
+    """Regression: section_view must fire for HTMX-navigated sections, not only the head."""
+
+    def setUp(self):
+        self.org = _make_org("SecTrackOrg")
+        self.survey = SurveyHeader.objects.create(name="sec_track", organization=self.org,
+                                                  status="published")
+        self.s1 = SurveySection.objects.create(name="s1", survey_header=self.survey, is_head=True)
+        self.s2 = SurveySection.objects.create(name="s2", survey_header=self.survey)
+        self.s1.next_section = self.s2
+        self.s1.save()
+        self.s2.prev_section = self.s1
+        self.s2.save()
+        Question.objects.create(name="q1", survey_section=self.s1, input_type="text_line",
+                                order_number=1, required=False)
+        Question.objects.create(name="q2", survey_section=self.s2, input_type="text_line",
+                                order_number=1, required=False)
+
+    def test_htmx_forward_emits_section_view_for_next_section(self):
+        """
+        GIVEN a two-section survey
+        WHEN the head section is viewed then submitted via HTMX (forward)
+        THEN section_view is recorded for BOTH the head and the next section
+             (before the fix, the next section stayed at 0 views)
+        """
+        c = Client()
+        c.get(f"/surveys/{self.survey.name}/{self.s1.name}/")            # head via GET
+        resp = c.post(f"/surveys/{self.survey.name}/{self.s1.name}/",
+                      data={}, HTTP_HX_REQUEST="true")                    # submit head via HTMX
+        self.assertEqual(resp.status_code, 200)
+
+        viewed = set(SurveyEvent.objects.filter(event_type="section_view")
+                     .values_list("metadata__section_name", flat=True))
+        submitted = set(SurveyEvent.objects.filter(event_type="section_submit")
+                        .values_list("metadata__section_name", flat=True))
+        self.assertIn("s1", viewed)
+        self.assertIn("s2", viewed)          # the fix: next section now records a view
+        self.assertIn("s1", submitted)
