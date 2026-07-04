@@ -32,6 +32,20 @@ Phase 1 (groups 4–5) adds attribution and can follow in a second PR.
 - [x] 3b.4 Template: "Living users" cards, inline-SVG weekly registrations chart + weekly activity chart (partial `admin/_funnel_barchart.html`); removed the old CSS-bar weekly table
 - [x] 3b.5 Tests: `ActiveUserMetricsTest` (windows/returned/dormant + respondent-answer-does-not-count), `BarChartGeometryTest` (scaling + empty series)
 
+## 3d. Full dashboard layout per mockup (Phase 0.3)
+
+- [x] 3d.1 Mockup `dashboard.mockup.html` in the change folder (5-section layout, colour semantics)
+- [x] 3d.2 `goals()` — North-Star cards vs GTM targets (activated 30d, regs 30d, publish rate, attribution) with tone + %
+- [x] 3d.3 `cluster_radar()` — temporal burst (≥5 / 48h) + non-freemail domain cluster (≥3 / 30d)
+- [x] 3d.4 `abuse_summary()` — bots blocked 7d + top IPs from `AbuseEvent`
+- [x] 3d.5 Time-boxed cohort columns `pub_14d` + `got5_30d`; per-cohort weekly sparkline
+- [x] 3d.6 `time_to_value()` — median days reg→survey / →publish / →response
+- [x] 3d.7 Action lists: `dormant_valuable()` (institutional, 0 surveys) + `collecting_unpublished()` (draft/testing with responses), admin deep links
+- [x] 3d.8 `signups_by_source()` placeholder (unknown bucket) until Phase 1
+- [x] 3d.9 `dashboard_context(weeks)` assembles all sections; period selector `?weeks=12|26|all` (param stripped before ChangeList)
+- [x] 3d.10 Rebuild `funnel_dashboard.html` to the 5-section layout with anchor nav + colour semantics
+- [x] 3d.11 Tests: cohort windows, cluster radar, action lists, dashboard_context smoke (17 funnel tests green)
+
 ## 4. SignupAttribution model + capture (Phase 1)
 
 - [ ] 4.1 Add `SignupAttribution` model (OneToOne→`User`, `raw_referrer`, `source_bucket`, `utm_source/medium/campaign` nullable, `created_at`) in `survey/models.py`

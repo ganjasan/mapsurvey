@@ -13112,7 +13112,8 @@ class FunnelDashboardAdminAccessTest(TestCase):
         c.login(username="boss", password="x")
         resp = c.get(self.url)
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "All-time funnel")
+        self.assertContains(resp, "Cohort funnel")
+        self.assertContains(resp, "Living users")
 
     def test_non_staff_denied(self):
         """
@@ -13227,3 +13228,138 @@ class BarChartGeometryTest(TestCase):
         self.assertEqual(g["count"], 0)
         self.assertEqual(g["bars"], [])
         self.assertEqual(g["max"], 0)
+
+
+from survey.funnel import dashboard_context as _dashboard_context
+
+
+def _u(username, joined, email="x@gmail.com"):
+    u = User.objects.create_user(username=username, password="x", email=email)
+    u.date_joined = joined
+    u.save(update_fields=["date_joined"])
+    return u
+
+
+class CohortWindowMetricsTest(TestCase):
+    """Time-boxed cohort columns: pub_14d and got5_30d."""
+
+    def setUp(self):
+        self.org = _make_org("WinOrg")
+        self.now = timezone.now()
+        self.d = self.now.replace(year=2026, month=3, day=5, hour=9, minute=0, second=0, microsecond=0)
+
+    def _survey(self, user, created_offset_days, status="published"):
+        s = SurveyHeader.objects.create(name=f"{user.username}_s", organization=self.org,
+                                        created_by=user, status=status)
+        SurveyHeader.objects.filter(pk=s.pk).update(created_at=self.d + _timedelta(days=created_offset_days))
+        return s
+
+    def test_windowed_columns_respect_time_boxes(self):
+        """
+        GIVEN one creator who publishes within 14d and collects 5 responses within 30d,
+              and another who does both but too late
+        WHEN cohort_funnel computes the windowed columns
+        THEN only the in-window creator is counted in pub_14d and got5_30d
+        """
+        x = _u("win_x", self.d)
+        sx = self._survey(x, created_offset_days=5)                 # published within 14d
+        for k in range(6):
+            SurveySession.objects.create(survey=sx, start_datetime=self.d + _timedelta(days=2 + k))  # 5th <= 30d
+
+        y = _u("win_y", self.d)
+        sy = self._survey(y, created_offset_days=20)                # published after 14d
+        for k in range(6):
+            SurveySession.objects.create(survey=sy, start_datetime=self.d + _timedelta(days=40 + k))  # 5th > 30d
+
+        row = next(r for r in CreatorFunnelService().cohort_funnel() if r["cohort"] == "2026-03")
+        self.assertEqual(row["regs"], 2)
+        self.assertEqual(row["published"], 2)     # both published (all-time)
+        self.assertEqual(row["got_5"], 2)         # both collected 5 (all-time)
+        self.assertEqual(row["pub_14d"], 1)       # only X published in-window
+        self.assertEqual(row["got5_30d"], 1)      # only X hit 5 responses in-window
+
+
+class ClusterRadarTest(TestCase):
+    """Cluster radar: temporal burst + same-domain grouping."""
+
+    def test_burst_and_domain_cluster_detected(self):
+        """
+        GIVEN 5 institutional-domain signups within a 24h window a few days ago
+        WHEN cluster_radar runs
+        THEN it reports a signup burst (>=5 in 48h) and a domain cluster for that domain
+        """
+        base = timezone.now() - _timedelta(days=4)
+        for i in range(5):
+            _u(f"cl_{i}", base + _timedelta(hours=i * 5), email=f"cl_{i}@tudelft.nl")
+        # noise: two freemail users, not clustered
+        _u("noise_a", base, email="a@gmail.com")
+        _u("noise_b", base, email="b@gmail.com")
+
+        alerts = CreatorFunnelService().cluster_radar()
+        kinds = {a["kind"] for a in alerts}
+        self.assertIn("burst", kinds)
+        self.assertIn("domain", kinds)
+        domain_alert = next(a for a in alerts if a["kind"] == "domain")
+        self.assertEqual(domain_alert["domain"], "tudelft.nl")
+        self.assertGreaterEqual(domain_alert["count"], 5)
+
+
+class ActionListsTest(TestCase):
+    """Dormant-valuable and collecting-but-unpublished action lists."""
+
+    def setUp(self):
+        self.org = _make_org("ActOrg")
+        self.now = timezone.now()
+
+    def test_dormant_valuable_is_institutional_no_survey(self):
+        """
+        GIVEN an institutional user with no survey, an institutional user WITH a survey,
+              and a freemail user with no survey
+        WHEN dormant_valuable runs
+        THEN only the institutional-no-survey user is listed
+        """
+        inst = _u("inst_none", self.now - _timedelta(days=30), email="p@cnr.it")
+        inst2 = _u("inst_has", self.now - _timedelta(days=30), email="q@columbia.edu")
+        SurveyHeader.objects.create(name="s", organization=self.org, created_by=inst2, status="draft")
+        _u("free_none", self.now - _timedelta(days=30), email="r@gmail.com")
+
+        names = {r["username"] for r in CreatorFunnelService().dormant_valuable()}
+        self.assertIn("inst_none", names)
+        self.assertNotIn("inst_has", names)
+        self.assertNotIn("free_none", names)
+
+    def test_collecting_unpublished_lists_draft_with_responses(self):
+        """
+        GIVEN a draft survey with responses and a published survey with responses
+        WHEN collecting_unpublished runs
+        THEN only the draft survey appears
+        """
+        d = _u("draft_u", self.now - _timedelta(days=10))
+        sd = SurveyHeader.objects.create(name="draft_s", organization=self.org, created_by=d, status="draft")
+        for _ in range(3):
+            SurveySession.objects.create(survey=sd, start_datetime=self.now - _timedelta(days=1))
+        p = _u("pub_u", self.now - _timedelta(days=10))
+        sp = SurveyHeader.objects.create(name="pub_s", organization=self.org, created_by=p, status="published")
+        SurveySession.objects.create(survey=sp, start_datetime=self.now - _timedelta(days=1))
+
+        surveys = {r["survey"] for r in CreatorFunnelService().collecting_unpublished()}
+        self.assertIn("draft_s", surveys)
+        self.assertNotIn("pub_s", surveys)
+
+
+class DashboardContextSmokeTest(TestCase):
+    """dashboard_context assembles all sections without error."""
+
+    def test_context_has_all_sections(self):
+        """
+        GIVEN an empty database
+        WHEN dashboard_context is built
+        THEN it returns every section key and does not raise
+        """
+        ctx = _dashboard_context()
+        for key in ("goals", "sources", "clusters", "abuse", "cohorts", "totals",
+                    "active", "ttv", "dormant_valuable", "collecting_unpublished",
+                    "signups_chart", "activity_chart"):
+            self.assertIn(key, ctx)
+        self.assertEqual(len(ctx["goals"]), 4)
+        self.assertFalse(ctx["sources"]["available"])   # Phase 1 not shipped

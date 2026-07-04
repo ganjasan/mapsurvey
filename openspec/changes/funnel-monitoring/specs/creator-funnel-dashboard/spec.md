@@ -40,6 +40,89 @@ SHALL exclude staff and superuser accounts.
 - **WHEN** response-count stages (≥1/≥5/≥10) are computed
 - **THEN** `SurveySession` rows with `is_deleted=True` are excluded from the counts
 
+### Requirement: Goals vs plan targets
+The dashboard SHALL show the current values of the North-Star and supporting metrics against
+their GTM-plan targets, each as a card with a progress bar and a colour tone (green on-track,
+amber behind, red off-track). Metrics: activated creators (published + ≥5 responses) in the last
+30 days, registrations in the last 30 days, all-time publish rate, and attribution coverage.
+
+#### Scenario: Goal cards render with progress toward target
+- **WHEN** the dashboard loads
+- **THEN** four goal cards render, each showing current value, target, a percent-to-target, and a
+  coloured progress bar
+
+### Requirement: Cluster radar
+The dashboard SHALL surface likely classroom/team clusters early: a temporal signup burst
+(≥5 registrations within any 48-hour window in the recent past) and a same-institutional-domain
+group (≥3 registrations on one non-freemail email domain within 30 days). Each detected cluster
+SHALL be shown as an alert with a link to the accounts; when none are detected an empty state is shown.
+
+#### Scenario: Burst detected
+- **WHEN** at least 5 real registrations occur within a 48-hour window in the recent period
+- **THEN** the radar shows a burst alert with the count
+
+#### Scenario: Domain cluster detected
+- **WHEN** at least 3 recent real registrations share one non-freemail email domain
+- **THEN** the radar shows a domain-cluster alert naming that domain
+
+#### Scenario: All quiet
+- **WHEN** no burst and no domain cluster is present
+- **THEN** the radar shows an empty state, not an error
+
+### Requirement: Abuse summary
+The dashboard SHALL show the number of bot registrations blocked in the last 7 days and the top
+offending IPs, sourced from `AbuseEvent`.
+
+#### Scenario: Abuse widget renders
+- **WHEN** the dashboard loads
+- **THEN** it shows the 7-day blocked count and up to five top IPs by attempt count
+
+### Requirement: Time-boxed cohort columns
+The cohort funnel SHALL include time-boxed columns so young and old cohorts are comparable:
+published within 14 days of signup, and reached ≥5 responses within 30 days of signup.
+
+#### Scenario: In-window creators only
+- **WHEN** a creator publishes or reaches 5 responses only after the respective window
+- **THEN** they are NOT counted in the time-boxed column, even though they count in the all-time stage
+
+### Requirement: Time-to-value medians
+The dashboard SHALL show median days from registration to first survey, to first publish, and to
+first response.
+
+#### Scenario: Medians render
+- **WHEN** the dashboard loads
+- **THEN** it shows three median-days figures (or a dash when a stage has no data)
+
+### Requirement: Action lists
+The dashboard SHALL show two actionable lists with deep links into the admin: institutional-domain
+registrants who never created a survey (outreach candidates), and surveys collecting responses
+while still draft/testing (publish-nudge candidates).
+
+#### Scenario: Dormant valuable list
+- **WHEN** a registrant has a non-freemail email domain and owns no survey
+- **THEN** they appear in the dormant-valuable list with a link to their admin page
+
+#### Scenario: Collecting-but-unpublished list
+- **WHEN** a draft or testing survey has at least one non-deleted response
+- **THEN** it appears in the collecting-but-unpublished list with a link to the survey
+
+### Requirement: Chart period selector
+The dashboard SHALL let a staff user trim the two weekly charts to the most recent 12 or 26 weeks,
+or show all weeks, via a `weeks` query parameter, without triggering an admin changelist error.
+
+#### Scenario: Period selection trims the charts
+- **WHEN** the dashboard is opened with `?weeks=12`
+- **THEN** the weekly charts show only the most recent 12 weeks and the page returns HTTP 200
+
+### Requirement: Registrations-by-source (placeholder until attribution)
+The dashboard SHALL show a registrations-by-source panel. Until signup attribution ships
+(Phase 1), it SHALL clearly indicate that source data is not yet available rather than fabricate sources.
+
+#### Scenario: Placeholder before Phase 1
+- **WHEN** signup attribution is not yet live
+- **THEN** the source panel shows recent registrations under a single unknown/direct bucket with a
+  note that it needs Phase 1
+
 ### Requirement: Weekly signups chart
 The dashboard SHALL show a weekly time series of real registration counts as an inline chart
 (no external chart library or CDN) so the summer trough and campaign spikes are visible over time.

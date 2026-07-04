@@ -6,7 +6,7 @@ from .models import (
     SurveySectionTranslation, QuestionTranslation,
     Story, FunnelReport,
 )
-from .funnel import CreatorFunnelService, bar_chart_geometry
+from .funnel import dashboard_context
 from leaflet.admin import LeafletGeoAdmin
 
 
@@ -96,21 +96,20 @@ class FunnelDashboardAdmin(admin.ModelAdmin):
         return super().get_queryset(request).none()
 
     def changelist_view(self, request, extra_context=None):
-        service = CreatorFunnelService()
-        cohorts = service.cohort_funnel()
-        weekly = service.weekly_signups()
-        activity = service.weekly_activity()
+        # Period selector for the weekly charts: ?weeks=12|26 (default 26; "all" = None).
+        raw = request.GET.get("weeks", "26")
+        try:
+            weeks = None if raw == "all" else max(1, int(raw))
+        except (TypeError, ValueError):
+            weeks, raw = 26, "26"
+        # Strip our custom param so the admin ChangeList doesn't treat it as an
+        # unknown filter lookup (which would redirect to ?e=1).
+        if "weeks" in request.GET:
+            mutable = request.GET.copy()
+            del mutable["weeks"]
+            request.GET = mutable
         extra_context = extra_context or {}
-        extra_context.update({
-            "title": "Funnel dashboard",
-            "cohorts": cohorts,
-            "weekly": weekly,
-            "totals": service.alltime_totals(),
-            "active": service.active_user_metrics(),
-            # Inline-SVG chart geometry (no chart library / CDN).
-            "signups_chart": bar_chart_geometry(weekly, "signups"),
-            "activity_chart": bar_chart_geometry(activity, "responses"),
-            # Max cohort regs for the funnel-table bar scaling (avoid div-by-zero).
-            "max_regs": max((c["regs"] for c in cohorts), default=1) or 1,
-        })
+        extra_context["title"] = "Growth funnel"
+        extra_context["weeks_sel"] = raw
+        extra_context.update(dashboard_context(weeks=weeks))
         return super().changelist_view(request, extra_context=extra_context)
