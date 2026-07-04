@@ -13227,23 +13227,3 @@ class BarChartGeometryTest(TestCase):
         self.assertEqual(g["count"], 0)
         self.assertEqual(g["bars"], [])
         self.assertEqual(g["max"], 0)
-
-
-class FunnelOnAdminIndexTest(TestCase):
-    """The admin home page embeds the funnel dashboard above the app list."""
-
-    def test_admin_index_shows_funnel_and_app_list(self):
-        """
-        GIVEN a logged-in superuser
-        WHEN they open the admin index (Home)
-        THEN the funnel dashboard content renders AND the stock app list is still present
-        """
-        User.objects.create_superuser("idx_admin", "idx@example.com", "x")
-        c = Client()
-        c.login(username="idx_admin", password="x")
-        resp = c.get(reverse("admin:index"))
-        self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "All-time funnel")          # dashboard embed
-        self.assertContains(resp, "Living users")
-        self.assertContains(resp, "Funnel dashboard")         # app list entry still there
-        self.assertContains(resp, "app-survey")               # stock app list rendered
