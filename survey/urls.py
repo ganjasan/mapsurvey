@@ -88,6 +88,7 @@ urlpatterns = [
     path('surveys/<str:survey_slug>/download', views.download_data, name='download_data'),
     path('stories/<slug:slug>/', views.story_detail, name='story_detail'),
     path('for-educators/', views.for_educators, name='for_educators'),
+    path('alternatives/maptionnaire/', views.maptionnaire_alternative, name='maptionnaire_alternative'),
     path('robots.txt', views.robots_txt, name='robots_txt'),
     path('sitemap.xml', views.sitemap_xml, name='sitemap_xml'),
 ]

@@ -1,0 +1,136 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Free, Open-Source Maptionnaire Alternative — Mapsurvey" %}{% endblock %}
+{% block meta_description %}{% trans "Mapsurvey is a free, open-source alternative to Maptionnaire for map-based surveys — point, line, and polygon input, GeoJSON/CSV export, EU-hosted or self-hostable. No per-survey fees, no free-tier gate." %}{% endblock %}
+{% block meta_keywords %}{% trans "Maptionnaire alternative, open source Maptionnaire, free Maptionnaire alternative, Maptionnaire vs Mapsurvey, participatory mapping software, PPGIS tool" %}{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/alternatives/maptionnaire/{% endblock %}
+{% block og_url %}https://mapsurvey.org/alternatives/maptionnaire/{% endblock %}
+{% block og_title %}{% trans "A free, open-source Maptionnaire alternative — Mapsurvey" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cmp-lead { max-width: 720px; margin: 0 auto; }
+  .cmp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-top: 26px; }
+  .cmp-card { background: #fff; border: 1px solid #e6eaef; border-radius: 12px; padding: 20px 22px; text-align: left; }
+  .cmp-card h3 { font-size: 17px; margin: 0 0 6px; }
+  .cmp-card p { font-size: 14px; color: #556; margin: 0; line-height: 1.5; }
+  .cmp-table-wrap { max-width: 820px; margin: 26px auto 0; overflow-x: auto; }
+  table.cmp { width: 100%; border-collapse: collapse; font-size: 14.5px; background: #fff; border: 1px solid #e6eaef; border-radius: 12px; overflow: hidden; }
+  table.cmp th, table.cmp td { padding: 11px 16px; text-align: left; border-bottom: 1px solid #eef1f4; vertical-align: top; }
+  table.cmp thead th { background: #f4f8fb; font-size: 13px; }
+  table.cmp th:first-child { color: #667; font-weight: 500; }
+  table.cmp .ms { color: #1f7a4d; font-weight: 600; }
+  table.cmp .mt { color: #667; }
+  table.cmp tr:last-child td { border-bottom: 0; }
+  .cmp-note { max-width: 820px; margin: 14px auto 0; font-size: 13px; color: #889; text-align: left; }
+  .cmp-fair { background: #f7f8fa; border: 1px solid #e6eaef; border-radius: 14px; padding: 24px 28px; max-width: 820px; margin: 26px auto 0; text-align: left; }
+  .cmp-fair h3 { margin: 0 0 10px; font-size: 17px; }
+  .cmp-fair ul { margin: 0; padding-left: 20px; color: #556; line-height: 1.6; font-size: 14.5px; }
+  .cmp-maker { max-width: 820px; margin: 26px auto 0; padding: 24px 28px; text-align: center;
+               background: linear-gradient(180deg,#f2f8f5,#eef4fb); border: 1px solid #d8e6df; border-radius: 14px; }
+  .cmp-maker h3 { margin: 0 0 8px; font-size: 18px; }
+  .cmp-maker p { margin: 0 auto 16px; max-width: 560px; color: #556; font-size: 14.5px; line-height: 1.55; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero" id="hero">
+  <div class="hero__content cmp-lead">
+    <h1 class="hero__headline">{% trans "A free, open-source Maptionnaire alternative" %}</h1>
+    <p class="hero__description">
+      {% trans "Mapsurvey does the same core job as Maptionnaire — map-based surveys where people mark places, draw routes, and outline areas — with different economics: free to use, open source (AGPLv3), EU-hosted, and self-hostable. No per-survey fees, no free-tier gate on your first real project." %}
+    </p>
+    <div class="hero__cta-group">
+      <a href="{% url 'django_registration_register' %}?utm_source=comparison&amp;utm_medium=maptionnaire_alt" class="btn-primary-landing">{% trans "Create your Mapsurvey — free" %}</a>
+      {% if DEMO_SURVEY_URL %}
+      <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">{% trans "Try a live demo survey" %}</a>
+      {% endif %}
+    </div>
+    <div class="hero__badges">
+      <span class="hero__badge">{% trans "Free" %}</span>
+      <span class="hero__badge">{% trans "Open source (AGPLv3)" %}</span>
+      <span class="hero__badge">{% trans "Self-hostable" %}</span>
+      <span class="hero__badge">{% trans "EU-hosted" %}</span>
+    </div>
+  </div>
+</section>
+
+<section class="showcase">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Why teams switch" %}</p>
+    <h2 class="section-heading">{% trans "Same participatory-mapping job, without the licensing" %}</h2>
+    <div class="cmp-grid">
+      <div class="cmp-card">
+        <h3>{% trans "Free to start" %}</h3>
+        <p>{% trans "No per-survey fees, no seat licensing, no tier that gates your first real project. Run one survey or many at the same cost: zero." %}</p>
+      </div>
+      <div class="cmp-card">
+        <h3>{% trans "Open source (AGPLv3)" %}</h3>
+        <p>{% trans "Read the code, fork it, or run it yourself. No proprietary lock-in — useful for audits and academic publication." %}</p>
+      </div>
+      <div class="cmp-card">
+        <h3>{% trans "Self-host or EU cloud" %}</h3>
+        <p>{% trans "Use the hosted version (EU, Frankfurt) or self-host with Docker on your own infrastructure for full data sovereignty." %}</p>
+      </div>
+      <div class="cmp-card">
+        <h3>{% trans "Standard data out" %}</h3>
+        <p>{% trans "GeoJSON + CSV export built in — open in QGIS, ArcGIS, R, or Python with no conversion." %}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="showcase">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Side by side" %}</p>
+    <h2 class="section-heading">{% trans "Mapsurvey vs Maptionnaire" %}</h2>
+    <div class="cmp-table-wrap">
+      <table class="cmp">
+        <thead>
+          <tr><th>&nbsp;</th><th>Mapsurvey</th><th>Maptionnaire</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>{% trans "Free tier for real projects" %}</th><td class="ms">{% trans "Yes — unlimited, free" %}</td><td class="mt">{% trans "No free tier" %}</td></tr>
+          <tr><th>{% trans "Pricing model" %}</th><td class="ms">{% trans "Free hosted; free self-hosted" %}</td><td class="mt">{% trans "Subscription — Collect tier listed at €150/mo, 12-month minimum" %}</td></tr>
+          <tr><th>{% trans "Open source" %}</th><td class="ms">{% trans "Yes — AGPLv3, code on GitHub" %}</td><td class="mt">{% trans "No — proprietary" %}</td></tr>
+          <tr><th>{% trans "Self-hosting" %}</th><td class="ms">{% trans "Yes — Docker, your infrastructure" %}</td><td class="mt">{% trans "No — SaaS only" %}</td></tr>
+          <tr><th>{% trans "Map input (point / line / polygon)" %}</th><td class="ms">{% trans "Yes" %}</td><td class="mt">{% trans "Yes" %}</td></tr>
+          <tr><th>{% trans "Multilingual surveys" %}</th><td class="ms">{% trans "Yes — per-question translations" %}</td><td class="mt">{% trans "Yes" %}</td></tr>
+          <tr><th>{% trans "Data export" %}</th><td class="ms">{% trans "GeoJSON + CSV, built in" %}</td><td class="mt">{% trans "Yes" %}</td></tr>
+          <tr><th>{% trans "EU data residency" %}</th><td class="ms">{% trans "Frankfurt, or self-host anywhere" %}</td><td class="mt">{% trans "Finland" %}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cmp-note">{% trans "Maptionnaire details reflect their published product and pricing pages as of July 2026; verify current specifics on maptionnaire.com. Both platforms are GDPR-oriented and support point, line, and polygon input." %}</p>
+  </div>
+</section>
+
+<section class="showcase">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Being fair" %}</p>
+    <h2 class="section-heading">{% trans "When Maptionnaire may be the better fit" %}</h2>
+    <div class="cmp-fair">
+      <ul>
+        <li>{% trans "You want a mature commercial vendor with a long track record in participatory planning and formal EU procurement." %}</li>
+        <li>{% trans "You need a feature that's on Mapsurvey's roadmap today (e.g. custom WMS/WFS basemaps, Shapefile export)." %}</li>
+        <li>{% trans "You're already running on Maptionnaire and the switching cost outweighs the savings." %}</li>
+      </ul>
+    </div>
+    <p class="cmp-note">{% trans "We keep this honest on purpose. If Mapsurvey isn't the right fit, we'd rather you know now — and the fastest way to tell is to build a survey and see." %}</p>
+
+    <div class="cmp-maker">
+      <h3>{% trans "Comparing tools? Talk to the person who builds it" %}</h3>
+      <p>{% trans "Mapsurvey is independent and founder-led — no sales team, no funnel. Email me directly with a migration, self-hosting, DPA, or \"does it do X?\" question, and I'll answer personally." %}</p>
+      <a href="mailto:konuchovartem@mapsurvey.org?subject=Mapsurvey%20question%20(from%20the%20Maptionnaire%20comparison)" class="btn-primary-landing">{% trans "Email me — I answer personally" %}</a>
+    </div>
+
+    <div class="hero__cta-group" style="margin-top:26px;justify-content:center;">
+      <a href="{% url 'django_registration_register' %}?utm_source=comparison&amp;utm_medium=maptionnaire_alt" class="btn-primary-landing">{% trans "Create your Mapsurvey — free" %}</a>
+      {% if DEMO_SURVEY_URL %}
+      <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">{% trans "Try a live demo survey" %}</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}
