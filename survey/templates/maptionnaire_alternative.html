@@ -27,6 +27,10 @@
   .cmp-fair { background: #f7f8fa; border: 1px solid #e6eaef; border-radius: 14px; padding: 24px 28px; max-width: 820px; margin: 26px auto 0; text-align: left; }
   .cmp-fair h3 { margin: 0 0 10px; font-size: 17px; }
   .cmp-fair ul { margin: 0; padding-left: 20px; color: #556; line-height: 1.6; font-size: 14.5px; }
+  .cmp-maker { max-width: 820px; margin: 26px auto 0; padding: 24px 28px; text-align: center;
+               background: linear-gradient(180deg,#f2f8f5,#eef4fb); border: 1px solid #d8e6df; border-radius: 14px; }
+  .cmp-maker h3 { margin: 0 0 8px; font-size: 18px; }
+  .cmp-maker p { margin: 0 auto 16px; max-width: 560px; color: #556; font-size: 14.5px; line-height: 1.55; }
 </style>
 {% endblock %}
 
@@ -114,6 +118,13 @@
       </ul>
     </div>
     <p class="cmp-note">{% trans "We keep this honest on purpose. If Mapsurvey isn't the right fit, we'd rather you know now — and the fastest way to tell is to build a survey and see." %}</p>
+
+    <div class="cmp-maker">
+      <h3>{% trans "Comparing tools? Talk to the person who builds it" %}</h3>
+      <p>{% trans "Mapsurvey is independent and founder-led — no sales team, no funnel. Email me directly with a migration, self-hosting, DPA, or \"does it do X?\" question, and I'll answer personally." %}</p>
+      <a href="mailto:konuchovartem@mapsurvey.org?subject=Mapsurvey%20question%20(from%20the%20Maptionnaire%20comparison)" class="btn-primary-landing">{% trans "Email me — I answer personally" %}</a>
+    </div>
+
     <div class="hero__cta-group" style="margin-top:26px;justify-content:center;">
       <a href="{% url 'django_registration_register' %}?utm_source=comparison&amp;utm_medium=maptionnaire_alt" class="btn-primary-landing">{% trans "Create your Mapsurvey — free" %}</a>
       {% if DEMO_SURVEY_URL %}
