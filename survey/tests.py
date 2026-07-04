@@ -12966,3 +12966,171 @@ class RegistrationAbuseDefenseTest(TestCase):
                 # (verify_turnstile may have been called for r1 only.)
                 self.assertLessEqual(patched.call_count, 1)
 
+
+
+from django.urls import reverse
+from django.utils import timezone
+from .funnel import CreatorFunnelService
+
+
+def _user_at(username, when, **kwargs):
+    """Create a user whose date_joined is pinned to `when` (tz consistent)."""
+    u = User.objects.create_user(username=username, password="x", **kwargs)
+    u.date_joined = when
+    u.save(update_fields=["date_joined"])
+    return u
+
+
+class CreatorFunnelServiceTest(TestCase):
+    """Tests for the platform creator acquisition->activation funnel service."""
+
+    def setUp(self):
+        self.org = _make_org("FunnelOrg")
+        now = timezone.now()
+        self.march = now.replace(year=2026, month=3, day=10, hour=12, minute=0, second=0, microsecond=0)
+        self.april = now.replace(year=2026, month=4, day=15, hour=12, minute=0, second=0, microsecond=0)
+
+        # Excluded populations.
+        _user_at("staff_user", self.march, is_staff=True)
+        _user_at("super_user", self.march, is_superuser=True)
+
+        # March cohort.
+        self.a = _user_at("creator_a", self.march)   # created + question + published + 5 resp
+        self.b = _user_at("creator_b", self.march)   # created draft, no question, 0 resp
+
+        # April cohort.
+        self.c = _user_at("creator_c", self.april)   # created + question + testing + 1 resp (+1 deleted)
+        _user_at("creator_d", self.april)            # registered, never created
+
+        # Survey A: published, has a question, 5 non-deleted sessions.
+        sa = SurveyHeader.objects.create(name="a_survey", organization=self.org,
+                                         created_by=self.a, status="published")
+        sec_a = SurveySection.objects.create(name="a_sec", survey_header=sa, is_head=True)
+        Question.objects.create(name="a_q", survey_section=sec_a, input_type="text", order_number=1)
+        for _ in range(5):
+            SurveySession.objects.create(survey=sa)
+
+        # Survey B: draft, no question, no sessions.
+        SurveyHeader.objects.create(name="b_survey", organization=self.org,
+                                    created_by=self.b, status="draft")
+
+        # Survey C: testing (NOT published), has a question, 1 live + 1 deleted session.
+        sc = SurveyHeader.objects.create(name="c_survey", organization=self.org,
+                                         created_by=self.c, status="testing")
+        sec_c = SurveySection.objects.create(name="c_sec", survey_header=sc, is_head=True)
+        Question.objects.create(name="c_q", survey_section=sec_c, input_type="text", order_number=1)
+        SurveySession.objects.create(survey=sc)
+        SurveySession.objects.create(survey=sc, is_deleted=True)
+
+    def _cohort(self, rows, key):
+        return next(r for r in rows if r["cohort"] == key)
+
+    def test_cohort_counts_and_stage_membership(self):
+        """
+        GIVEN two cohorts of real creators at different activation stages
+        WHEN cohort_funnel() aggregates them
+        THEN each cohort reports correct registration and per-stage counts
+        """
+        rows = CreatorFunnelService().cohort_funnel()
+        mar = self._cohort(rows, "2026-03")
+        apr = self._cohort(rows, "2026-04")
+
+        self.assertEqual(mar["regs"], 2)
+        self.assertEqual(mar["created"], 2)
+        self.assertEqual(mar["added_question"], 1)   # only A has a question
+        self.assertEqual(mar["published"], 1)        # only A is published
+        self.assertEqual(mar["got_1"], 1)
+        self.assertEqual(mar["got_5"], 1)
+        self.assertEqual(mar["got_10"], 0)
+
+        self.assertEqual(apr["regs"], 2)
+        self.assertEqual(apr["created"], 1)          # only C created
+        self.assertEqual(apr["added_question"], 1)
+        self.assertEqual(apr["published"], 0)        # C is 'testing', not published
+
+    def test_staff_and_superusers_excluded(self):
+        """
+        GIVEN staff and superuser accounts exist
+        WHEN the funnel aggregates registrations
+        THEN neither appears in any cohort count
+        """
+        rows = CreatorFunnelService().cohort_funnel()
+        total_regs = sum(r["regs"] for r in rows)
+        self.assertEqual(total_regs, 4)  # a, b, c, d only
+
+    def test_deleted_sessions_not_counted(self):
+        """
+        GIVEN survey C has one live and one deleted session
+        WHEN response thresholds are computed
+        THEN only the live session counts (got_1 == 1, got_5 == 0)
+        """
+        apr = self._cohort(CreatorFunnelService().cohort_funnel(), "2026-04")
+        self.assertEqual(apr["got_1"], 1)
+        self.assertEqual(apr["got_5"], 0)
+
+    def test_alltime_totals_match_cohort_sums(self):
+        """
+        GIVEN the per-cohort funnel
+        WHEN alltime_totals() sums the stages
+        THEN totals equal the sum across cohorts
+        """
+        svc = CreatorFunnelService()
+        totals = svc.alltime_totals()
+        self.assertEqual(totals["regs"], 4)
+        self.assertEqual(totals["created"], 3)
+        self.assertEqual(totals["added_question"], 2)
+        self.assertEqual(totals["published"], 1)
+        self.assertEqual(totals["got_1"], 2)
+        self.assertEqual(totals["got_5"], 1)
+        self.assertEqual(totals["got_10"], 0)
+
+    def test_weekly_signups_sum(self):
+        """
+        GIVEN four real registrations
+        WHEN weekly_signups() groups by week
+        THEN the weekly counts sum to four and rows carry ISO week + count
+        """
+        weekly = CreatorFunnelService().weekly_signups()
+        self.assertEqual(sum(w["signups"] for w in weekly), 4)
+        self.assertTrue(all("week" in w and "signups" in w for w in weekly))
+
+
+class FunnelDashboardAdminAccessTest(TestCase):
+    """Access control for the staff-only funnel dashboard admin page."""
+
+    def setUp(self):
+        self.url = reverse("admin:survey_funnelreport_changelist")
+
+    def test_staff_sees_dashboard(self):
+        """
+        GIVEN a staff user
+        WHEN they open the funnel dashboard admin page
+        THEN it renders with the funnel content
+        """
+        User.objects.create_superuser("boss", "boss@example.com", "x")
+        c = Client()
+        c.login(username="boss", password="x")
+        resp = c.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "All-time funnel")
+
+    def test_non_staff_denied(self):
+        """
+        GIVEN an authenticated non-staff user
+        WHEN they request the funnel dashboard admin page
+        THEN they are redirected to the admin login (no funnel data)
+        """
+        User.objects.create_user("plain", password="x")
+        c = Client()
+        c.login(username="plain", password="x")
+        resp = c.get(self.url)
+        self.assertEqual(resp.status_code, 302)
+
+    def test_anonymous_denied(self):
+        """
+        GIVEN an unauthenticated request
+        WHEN it hits the funnel dashboard admin page
+        THEN it is redirected to the admin login
+        """
+        resp = Client().get(self.url)
+        self.assertEqual(resp.status_code, 302)

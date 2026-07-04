@@ -4,8 +4,9 @@ from .models import (
     Organization, SurveyHeader, SurveySection, Question, Answer,
     SurveySession,
     SurveySectionTranslation, QuestionTranslation,
-    Story,
+    Story, FunnelReport,
 )
+from .funnel import CreatorFunnelService
 from leaflet.admin import LeafletGeoAdmin
 
 
@@ -62,3 +63,50 @@ class StoryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Story, StoryAdmin)
+
+
+@admin.register(FunnelReport)
+class FunnelDashboardAdmin(admin.ModelAdmin):
+    """Staff-only creator acquisition->activation funnel dashboard.
+
+    Renders CreatorFunnelService aggregates via a custom changelist template. The
+    proxy model carries no data; the queryset is emptied so the ChangeList stays cheap.
+    See openspec/changes/funnel-monitoring/design.md (D1).
+    """
+
+    change_list_template = "admin/funnel_dashboard.html"
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_module_permission(self, request):
+        return request.user.is_staff
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_staff
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_staff
+
+    def get_queryset(self, request):
+        # No rows needed -- the whole view is aggregate data injected below.
+        return super().get_queryset(request).none()
+
+    def changelist_view(self, request, extra_context=None):
+        service = CreatorFunnelService()
+        cohorts = service.cohort_funnel()
+        weekly = service.weekly_signups()
+        extra_context = extra_context or {}
+        extra_context.update({
+            "title": "Funnel dashboard",
+            "cohorts": cohorts,
+            "weekly": weekly,
+            "totals": service.alltime_totals(),
+            # Max values for bar-width scaling in the template (avoid div-by-zero).
+            "max_regs": max((c["regs"] for c in cohorts), default=1) or 1,
+            "max_weekly": max((w["signups"] for w in weekly), default=1) or 1,
+        })
+        return super().changelist_view(request, extra_context=extra_context)

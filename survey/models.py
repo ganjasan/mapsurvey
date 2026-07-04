@@ -676,3 +676,18 @@ class AbuseEvent(models.Model):
     def __str__(self):
         return f"{self.defense} from {self.ip} at {self.created_at}"
 
+
+class FunnelReport(SurveyHeader):
+    """Display-only proxy hosting the staff creator-funnel admin dashboard.
+
+    Has no table of its own; the admin changelist view is fully overridden to render
+    aggregates from CreatorFunnelService. See
+    openspec/changes/funnel-monitoring/design.md (D1).
+    """
+
+    class Meta:
+        proxy = True
+        app_label = 'survey'
+        verbose_name = 'Funnel dashboard'
+        verbose_name_plural = 'Funnel dashboard'
+
