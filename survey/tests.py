@@ -13695,3 +13695,45 @@ class GoogleSiteVerificationTest(TestCase):
         with self.settings(GOOGLE_SITE_VERIFICATION="tok123abc"):
             resp = Client().get("/")
             self.assertContains(resp, '<meta name="google-site-verification" content="tok123abc">')
+
+
+class AudienceLandingPagesTest(TestCase):
+    """Audience "for …" pages: planners and researchers (SEO + UTM + discoverability)."""
+
+    def test_planners_page(self):
+        """
+        GIVEN the urban-planners page
+        WHEN requested
+        THEN it renders with planner SEO and a planners-UTM CTA
+        """
+        resp = Client().get("/for-planners/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Mapsurvey for urban planners")
+        self.assertContains(resp, "for-planners/")
+        self.assertContains(resp, "utm_source=planners")
+
+    def test_researchers_page(self):
+        """
+        GIVEN the researchers page
+        WHEN requested
+        THEN it renders with researcher SEO and a researchers-UTM CTA
+        """
+        resp = Client().get("/for-researchers/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Mapsurvey for researchers")
+        self.assertContains(resp, "for-researchers/")
+        self.assertContains(resp, "utm_source=researchers")
+
+    def test_both_in_sitemap_and_robots(self):
+        """
+        GIVEN the pages should be indexable
+        WHEN sitemap.xml and robots.txt are fetched
+        THEN both audience pages are listed / allowed
+        """
+        c = Client()
+        sm = c.get("/sitemap.xml")
+        self.assertContains(sm, "/for-planners/")
+        self.assertContains(sm, "/for-researchers/")
+        rb = c.get("/robots.txt")
+        self.assertContains(rb, "/for-planners/")
+        self.assertContains(rb, "/for-researchers/")
