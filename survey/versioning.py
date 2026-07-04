@@ -51,6 +51,7 @@ def clone_survey_for_draft(canonical):
         start_map_postion=canonical.start_map_postion,
         start_map_zoom=canonical.start_map_zoom,
         use_geolocation=canonical.use_geolocation,
+        show_branding=canonical.show_branding,
         status="draft",
         published_version=canonical,
     )
@@ -239,6 +240,7 @@ def publish_draft(draft, force=False):
             available_languages=canonical.available_languages,
             visibility=canonical.visibility,
             thanks_html=canonical.thanks_html,
+            show_branding=canonical.show_branding,
             status='closed',
             is_canonical=False,
             canonical_survey=canonical,
@@ -270,6 +272,7 @@ def publish_draft(draft, force=False):
         canonical.start_map_postion = draft.start_map_postion
         canonical.start_map_zoom = draft.start_map_zoom
         canonical.use_geolocation = draft.use_geolocation
+        canonical.show_branding = draft.show_branding
 
         # 6. Increment version
         canonical.version_number += 1

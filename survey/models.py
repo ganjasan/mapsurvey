@@ -295,6 +295,7 @@ class SurveyHeader(models.Model):
     start_map_postion = geomodels.PointField(null=True, blank=True, help_text=_('Default map position for the survey. Sections inherit this if not overridden.'))
     start_map_zoom = models.IntegerField(null=True, blank=True, help_text=_('Default map zoom for the survey. Sections inherit this if not overridden.'))
     use_geolocation = models.BooleanField(default=False, help_text=_('Auto-center map on respondent location when entering the survey.'))
+    show_branding = models.BooleanField(default=True, help_text=_('Show a "Made with Mapsurvey" link on the public survey and thanks pages (a free-tier acquisition loop). Turn off for a clean, unbranded look.'))
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 
