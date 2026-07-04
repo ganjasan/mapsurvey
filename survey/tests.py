@@ -13737,3 +13737,24 @@ class AudienceLandingPagesTest(TestCase):
         rb = c.get("/robots.txt")
         self.assertContains(rb, "/for-planners/")
         self.assertContains(rb, "/for-researchers/")
+
+
+class ForGovernmentLandingTest(TestCase):
+    """Local-government page positioned as the open-source community engagement platform."""
+
+    def test_page_renders_with_engagement_positioning_and_utm(self):
+        """
+        GIVEN the for-government page
+        WHEN requested
+        THEN it renders with the community-engagement-platform positioning and a government-UTM CTA
+        """
+        resp = Client().get("/for-government/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "community engagement platform")
+        self.assertContains(resp, "for-government/")
+        self.assertContains(resp, "utm_source=government")
+
+    def test_in_sitemap_and_robots(self):
+        c = Client()
+        self.assertContains(c.get("/sitemap.xml"), "/for-government/")
+        self.assertContains(c.get("/robots.txt"), "/for-government/")

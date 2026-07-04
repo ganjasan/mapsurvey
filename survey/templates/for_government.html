@@ -1,0 +1,93 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Open-Source Community Engagement Platform for Local Government | Mapsurvey" %}{% endblock %}
+{% block meta_description %}{% trans "A free, open-source community engagement platform for councils and public agencies. Run map-based public consultation — residents pin, draw, and outline their input — and keep full ownership of the data (self-hostable, GDPR)." %}{% endblock %}
+{% block meta_keywords %}{% trans "community engagement platform, public engagement software, public consultation software, citizen engagement platform, participatory planning, open source engagement platform, local government, GDPR" %}{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/for-government/{% endblock %}
+{% block og_url %}https://mapsurvey.org/for-government/{% endblock %}
+{% block og_title %}{% trans "The open-source community engagement platform for local government" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .aud-lead { max-width: 720px; margin: 0 auto; }
+  .aud-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-top: 26px; }
+  .aud-card { background: #fff; border: 1px solid #e6eaef; border-radius: 12px; padding: 20px 22px; text-align: left; }
+  .aud-card h3 { font-size: 17px; margin: 0 0 6px; }
+  .aud-card p { font-size: 14px; color: #556; margin: 0; line-height: 1.5; }
+  .aud-ideas { list-style: none; padding: 0; margin: 22px auto 0; max-width: 720px; text-align: left; }
+  .aud-ideas li { padding: 9px 0 9px 30px; border-bottom: 1px solid #eef1f4; position: relative; font-size: 15px; }
+  .aud-ideas li::before { content: "◆"; color: #2f6fb0; position: absolute; left: 6px; }
+  .aud-fair { background: #f7f8fa; border: 1px solid #e6eaef; border-radius: 14px; padding: 22px 26px; max-width: 820px; margin: 24px auto 0; text-align: left; font-size: 14.5px; color: #556; line-height: 1.6; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero" id="hero">
+  <div class="hero__content aud-lead">
+    <h1 class="hero__headline">{% trans "The open-source community engagement platform" %}</h1>
+    <p class="hero__description">
+      {% trans "Built for councils and public agencies that want map-based public consultation without enterprise lock-in. Residents pin the places, draw the routes, and outline the areas that matter to them — you get GIS-ready results and full ownership of the data. Free, open source, GDPR-friendly, and self-hostable on your own infrastructure." %}
+    </p>
+    <div class="hero__cta-group">
+      <a href="{% url 'django_registration_register' %}?utm_source=government&amp;utm_medium=for_government" class="btn-primary-landing">{% trans "Start free — run a consultation" %}</a>
+      {% if DEMO_SURVEY_URL %}
+      <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">{% trans "Try a live demo survey" %}</a>
+      {% endif %}
+    </div>
+    <div class="hero__badges">
+      <span class="hero__badge">{% trans "Free & open source" %}</span>
+      <span class="hero__badge">{% trans "GDPR / EU-hosted" %}</span>
+      <span class="hero__badge">{% trans "Self-host on your infra" %}</span>
+      <span class="hero__badge">{% trans "No per-project fees" %}</span>
+    </div>
+  </div>
+</section>
+
+<section class="showcase">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Why councils choose it" %}</p>
+    <h2 class="section-heading">{% trans "Public engagement on a map, without the lock-in" %}</h2>
+    <div class="aud-grid">
+      <div class="aud-card">
+        <h3>{% trans "Map-based public consultation" %}</h3>
+        <p>{% trans "Residents give location-specific input — exactly where the issue is — instead of vague text. Wider, more diverse reach than a meeting." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "You own the data" %}</h3>
+        <p>{% trans "Self-host on your own infrastructure, or use the EU-hosted version. GDPR-friendly, with your data where your policies require." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "No vendor lock-in" %}</h3>
+        <p>{% trans "Open source (AGPLv3) — auditable, adaptable, and procurement-friendly. Export everything as GeoJSON + CSV, anytime." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Fits a public budget" %}</h3>
+        <p>{% trans "Free to run — no per-project or per-response licensing that stretches a small council's engagement budget." %}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="showcase">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Engagement use cases" %}</p>
+    <h2 class="section-heading">{% trans "What agencies run on it" %}</h2>
+    <ul class="aud-ideas">
+      <li>{% trans "Statutory planning & local-plan consultation — comments pinned to the map." %}</li>
+      <li>{% trans "Participatory budgeting — where residents want investment." %}</li>
+      <li>{% trans "Mobility & active-travel plans — routes, barriers, and desire lines." %}</li>
+      <li>{% trans "Ward / neighbourhood engagement — what to keep, fix, or change." %}</li>
+      <li>{% trans "\"Report an issue\" mapping — a lightweight public feedback channel." %}</li>
+    </ul>
+    <div class="aud-fair">
+      {% trans "Comparing engagement platforms? Mapsurvey trades a big vendor's bundled services for open-source transparency, self-hosting, and no per-project fees. If you need a fully managed enterprise suite, a commercial platform may fit better — we keep that honest." %}
+      <a href="{% url 'maptionnaire_alternative' %}">{% trans "See how we compare to Maptionnaire →" %}</a>
+    </div>
+    <div class="hero__cta-group" style="margin-top:28px;justify-content:center;">
+      <a href="{% url 'django_registration_register' %}?utm_source=government&amp;utm_medium=for_government" class="btn-primary-landing">{% trans "Create your first consultation — free" %}</a>
+      <a href="mailto:konuchovartem@mapsurvey.org?subject=Mapsurvey%20for%20our%20council" class="btn-secondary-landing">{% trans "Talk to us about your council" %}</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

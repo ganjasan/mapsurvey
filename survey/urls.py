@@ -90,6 +90,7 @@ urlpatterns = [
     path('for-educators/', views.for_educators, name='for_educators'),
     path('for-planners/', views.for_planners, name='for_planners'),
     path('for-researchers/', views.for_researchers, name='for_researchers'),
+    path('for-government/', views.for_government, name='for_government'),
     path('alternatives/maptionnaire/', views.maptionnaire_alternative, name='maptionnaire_alternative'),
     path('robots.txt', views.robots_txt, name='robots_txt'),
     path('sitemap.xml', views.sitemap_xml, name='sitemap_xml'),
