@@ -124,6 +124,56 @@ def _consume_utm_from_session(request):
     return request.session.pop('utm_params', {})
 
 
+def capture_signup_source(request):
+    """First-touch acquisition capture for *creator* signups (landing / register GET).
+
+    Session-only and fail-open — never breaks page rendering. Stores UTM params
+    (reusing store_utm_in_session) and the first *external* referrer seen, so an
+    internal hop (landing -> /register/) does not overwrite the real source.
+    """
+    try:
+        store_utm_in_session(request)
+        raw = request.META.get('HTTP_REFERER', '')
+        if raw and 'signup_referrer' not in request.session:
+            host, bucket = _classify_referrer(raw)
+            our = request.get_host().split(':')[0].lower()
+            if host and host != our and not host.endswith('.' + our):
+                request.session['signup_referrer'] = {
+                    'raw': raw[:512], 'host': host, 'bucket': bucket,
+                }
+    except Exception:
+        logger.debug("capture_signup_source failed", exc_info=True)
+
+
+def persist_signup_attribution(user, request):
+    """Create the SignupAttribution row for a newly registered creator.
+
+    Fail-open: any error is swallowed so registration always completes (mirrors
+    emit_event). Consumes the session values captured on landing/register.
+    """
+    try:
+        from .models import SignupAttribution
+        if SignupAttribution.objects.filter(user=user).exists():
+            return
+        src = request.session.get('signup_referrer') or {}
+        raw = src.get('raw') or request.META.get('HTTP_REFERER', '')[:512]
+        bucket = src.get('bucket')
+        if not bucket:
+            _, bucket = _classify_referrer(raw)
+        utm = _consume_utm_from_session(request)
+        SignupAttribution.objects.create(
+            user=user,
+            raw_referrer=raw or '',
+            source_bucket=bucket or 'direct',
+            utm_source=utm.get('utm_source', ''),
+            utm_medium=utm.get('utm_medium', ''),
+            utm_campaign=utm.get('utm_campaign', ''),
+        )
+        request.session.pop('signup_referrer', None)
+    except Exception:
+        logger.exception("persist_signup_attribution failed for user %s", getattr(user, 'id', '?'))
+
+
 def build_session_start_metadata(request):
     """
     Extract user agent, referrer, device info, and UTM params for session_start event.

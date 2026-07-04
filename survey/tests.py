@@ -13363,3 +13363,93 @@ class DashboardContextSmokeTest(TestCase):
             self.assertIn(key, ctx)
         self.assertEqual(len(ctx["goals"]), 4)
         self.assertFalse(ctx["sources"]["available"])   # Phase 1 not shipped
+
+
+from django.test import RequestFactory
+from survey.models import SignupAttribution
+from survey.events import capture_signup_source, persist_signup_attribution
+
+
+class SignupAttributionCaptureTest(TestCase):
+    """Phase 1: capture + persist a creator's acquisition source at registration."""
+
+    def setUp(self):
+        self.rf = RequestFactory()
+
+    def test_capture_then_persist_records_referrer_and_utm(self):
+        """
+        GIVEN a visitor arriving from reddit with UTM params
+        WHEN capture runs on the page load and persist runs at registration
+        THEN a SignupAttribution stores the classified bucket and the UTM triple
+        """
+        req = self.rf.get("/register/?utm_source=edu&utm_medium=email&utm_campaign=fall",
+                          HTTP_REFERER="https://www.reddit.com/r/urbanplanning")
+        req.session = {}
+        capture_signup_source(req)
+        user = User.objects.create_user("cap_u", password="x")
+        persist_signup_attribution(user, req)
+
+        a = SignupAttribution.objects.get(user=user)
+        self.assertEqual(a.source_bucket, "social")       # reddit -> social bucket
+        self.assertEqual(a.utm_source, "edu")
+        self.assertEqual(a.utm_medium, "email")
+        self.assertEqual(a.utm_campaign, "fall")
+        self.assertIn("reddit", a.raw_referrer)
+
+    def test_direct_visit_records_direct(self):
+        """
+        GIVEN a visitor with no referrer and no UTM
+        WHEN capture + persist run
+        THEN attribution is recorded as direct with empty UTM (absence, not error)
+        """
+        req = self.rf.get("/register/")
+        req.session = {}
+        capture_signup_source(req)
+        user = User.objects.create_user("direct_u", password="x")
+        persist_signup_attribution(user, req)
+
+        a = SignupAttribution.objects.get(user=user)
+        self.assertEqual(a.source_bucket, "direct")
+        self.assertEqual(a.utm_source, "")
+
+    def test_persist_is_idempotent(self):
+        """
+        GIVEN a user who already has an attribution row
+        WHEN persist runs again
+        THEN it neither duplicates nor raises (fail-open)
+        """
+        req = self.rf.get("/register/")
+        req.session = {}
+        user = User.objects.create_user("idem_u", password="x")
+        persist_signup_attribution(user, req)
+        persist_signup_attribution(user, req)
+        self.assertEqual(SignupAttribution.objects.filter(user=user).count(), 1)
+
+
+class SignupsBySourceTest(TestCase):
+    """Dashboard source breakdown from SignupAttribution."""
+
+    def test_available_false_before_any_attribution(self):
+        """
+        GIVEN no attribution rows
+        WHEN signups_by_source runs
+        THEN available is False (panel shows the pre-Phase-1 placeholder)
+        """
+        self.assertFalse(CreatorFunnelService().signups_by_source()["available"])
+
+    def test_groups_recent_signups_and_unknown_bucket(self):
+        """
+        GIVEN recent users: two attributed to 'edu', one with no attribution
+        WHEN signups_by_source runs
+        THEN it groups by source and puts the unattributed user under 'unknown'
+        """
+        for i in range(2):
+            u = User.objects.create_user(f"edu_{i}", password="x")
+            SignupAttribution.objects.create(user=u, utm_source="edu", source_bucket="other")
+        User.objects.create_user("noattr", password="x")   # recent, no attribution
+
+        res = CreatorFunnelService().signups_by_source()
+        self.assertTrue(res["available"])
+        by = {r["source"]: r["regs"] for r in res["rows"]}
+        self.assertEqual(by.get("edu"), 2)
+        self.assertEqual(by.get("unknown"), 1)

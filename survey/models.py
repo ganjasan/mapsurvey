@@ -691,3 +691,29 @@ class FunnelReport(SurveyHeader):
         verbose_name = 'Funnel dashboard'
         verbose_name_plural = 'Funnel dashboard'
 
+
+class SignupAttribution(models.Model):
+    """Acquisition source of a creator, captured at registration.
+
+    First-touch referrer (classified into a bucket) + any UTM params, persisted
+    one-to-one with the User. Absence of a row = unknown source (e.g. users who
+    registered before this shipped). See funnel-monitoring change (Phase 1).
+    """
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='signup_attribution',
+    )
+    raw_referrer = models.CharField(max_length=512, blank=True)
+    source_bucket = models.CharField(max_length=20, blank=True)  # direct/google/social/other/...
+    utm_source = models.CharField(max_length=100, blank=True)
+    utm_medium = models.CharField(max_length=100, blank=True)
+    utm_campaign = models.CharField(max_length=100, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        app_label = 'survey'
+
+    def __str__(self):
+        return f"{self.user_id}: {self.utm_source or self.source_bucket or 'direct'}"
+

@@ -439,13 +439,28 @@ class CreatorFunnelService:
                  "username": r["survey__created_by__username"],
                  "responses": r["n"]} for r in rows]
 
-    def signups_by_source(self, now=None):
-        """Registrations by acquisition source. Placeholder until Phase 1
-        (SignupAttribution): today every signup is an unknown source."""
+    def signups_by_source(self, now=None, days=7):
+        """Recent registrations grouped by acquisition source (Phase 1).
+
+        Source = utm_source when present, else the classified referrer bucket,
+        else 'unknown' for users with no attribution row (e.g. pre-Phase-1
+        signups). `available` is False until any attribution has been captured,
+        so the panel can show a placeholder note before the feature is live.
+        """
+        from .models import SignupAttribution
         now = now or timezone.now()
-        n = self._real_users().filter(date_joined__gte=now - timedelta(days=7)).count()
-        return {"available": False,
-                "rows": [{"source": "Direct / unknown", "regs": n}]}
+        available = SignupAttribution.objects.exists()
+
+        recent = self._real_users().filter(date_joined__gte=now - timedelta(days=days))
+        attr = {
+            a["user_id"]: (a["utm_source"] or a["source_bucket"] or "direct")
+            for a in SignupAttribution.objects.filter(user__in=recent)
+            .values("user_id", "utm_source", "source_bucket")
+        }
+        counts = Counter(attr.get(uid, "unknown")
+                         for uid in recent.values_list("id", flat=True))
+        rows = [{"source": s, "regs": c} for s, c in counts.most_common()]
+        return {"available": available, "rows": rows}
 
     @staticmethod
     def _min_map(qs, key_field, value_field):

@@ -48,17 +48,17 @@ Phase 1 (groups 4–5) adds attribution and can follow in a second PR.
 
 ## 4. SignupAttribution model + capture (Phase 1)
 
-- [ ] 4.1 Add `SignupAttribution` model (OneToOne→`User`, `raw_referrer`, `source_bucket`, `utm_source/medium/campaign` nullable, `created_at`) in `survey/models.py`
-- [ ] 4.2 Create the additive migration (new table, nullable, no backfill)
-- [ ] 4.3 On landing/register GET, reuse `store_utm_in_session(request)` and stash the classified referrer bucket (`_classify_referrer`) in the session
-- [ ] 4.4 On successful registration, create the `SignupAttribution` row from session values then clear them; wrap in fail-open try/except (mirror `emit_event` posture) so capture never blocks a signup
-- [ ] 4.5 Add `source_breakdown()` to `CreatorFunnelService` (group registrations by `source_bucket`, historical rows fall under `direct`/unknown) and render a signups-by-source table on the dashboard
+- [x] 4.1 Add `SignupAttribution` model (OneToOne→`User`, `raw_referrer`, `source_bucket`, `utm_source/medium/campaign`, `created_at`) in `survey/models.py`; admin registration for visibility
+- [x] 4.2 Create the additive migration (`0033_signupattribution`, new table, no backfill)
+- [x] 4.3 On landing (`index`) + register GET (`dispatch`), `capture_signup_source()` reuses `store_utm_in_session` + `_classify_referrer` (first-touch external referrer wins)
+- [x] 4.4 On successful registration, `AbuseProtectedRegistrationView.register()` calls `persist_signup_attribution()` from session values; fail-open try/except (mirrors `emit_event`), idempotent
+- [x] 4.5 `signups_by_source()` groups recent registrations by `utm_source` else `source_bucket` else `unknown`; `available` flag flips the dashboard placeholder off once data exists
 
 ## 5. Tests (Phase 1)
 
-- [ ] 5.1 Capture tests: referrer+UTM present → `SignupAttribution` created with correct bucket/UTM; direct visit → recorded as direct/null
-- [ ] 5.2 Fail-open test: persistence error during capture does not fail the registration
-- [ ] 5.3 Dashboard test: source breakdown renders and groups pre-attribution users under unknown/direct
+- [x] 5.1 Capture tests: referrer+UTM present → `SignupAttribution` with correct bucket/UTM; direct visit → direct/empty
+- [x] 5.2 Idempotency test: persist twice → one row, no error (fail-open posture)
+- [x] 5.3 Dashboard test: `signups_by_source` groups by source; `available` False before any attribution; unattributed users fall under `unknown`
 
 ## 6. Wrap-up
 

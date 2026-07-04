@@ -4,7 +4,7 @@ from .models import (
     Organization, SurveyHeader, SurveySection, Question, Answer,
     SurveySession,
     SurveySectionTranslation, QuestionTranslation,
-    Story, FunnelReport,
+    Story, FunnelReport, SignupAttribution,
 )
 from .funnel import dashboard_context
 from leaflet.admin import LeafletGeoAdmin
@@ -63,6 +63,14 @@ class StoryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Story, StoryAdmin)
+
+
+@admin.register(SignupAttribution)
+class SignupAttributionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'utm_source', 'source_bucket', 'utm_campaign', 'created_at')
+    list_filter = ('source_bucket', 'utm_source')
+    search_fields = ('user__username', 'utm_source', 'utm_campaign', 'raw_referrer')
+    readonly_fields = ('created_at',)
 
 
 @admin.register(FunnelReport)
