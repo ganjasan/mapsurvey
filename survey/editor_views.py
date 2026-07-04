@@ -93,6 +93,11 @@ def editor_survey_create(request):
             if map_zoom:
                 survey.start_map_zoom = int(map_zoom)
             survey.use_geolocation = request.POST.get('use_geolocation') == '1'
+            # Default base map (all basemaps stay enabled via the model default)
+            valid_basemaps = {slug for slug, _ in BASEMAP_CHOICES}
+            chosen_basemap = request.POST.get('default_basemap')
+            if chosen_basemap in valid_basemaps:
+                survey.default_basemap = chosen_basemap
             survey.save()
             # Create SurveyCollaborator owner entry
             SurveyCollaborator.objects.create(

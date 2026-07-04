@@ -5,17 +5,19 @@ SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon')
 
 
 class SurveyCreateForm(forms.ModelForm):
-    """Minimal creation form — name only.
+    """Minimal creation form — name, languages, and (via the view) map area.
 
-    Everything else (redirect URL, languages, visibility, thanks page, cover
-    image, basemaps) gets model defaults and is edited later in the Survey
-    settings panel, which uses the full ``SurveyHeaderForm``.
+    The rest (redirect URL, visibility, thanks page, cover image, basemaps)
+    gets model defaults and is edited later in the Survey settings panel, which
+    uses the full ``SurveyHeaderForm``. Languages are asked up front because
+    they shape every later step (question text, translations).
     """
     class Meta:
         model = SurveyHeader
-        fields = ['name']
+        fields = ['name', 'available_languages']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Park improvements'}),
+            'available_languages': forms.HiddenInput(attrs={'id': 'id_available_languages'}),
         }
 
 

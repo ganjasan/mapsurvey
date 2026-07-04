@@ -5329,16 +5329,60 @@ class EditorSurveyCreateTest(TestCase):
         """
         GIVEN an authenticated user
         WHEN they GET the creation page
-        THEN deferred settings fields (thanks html, visibility, basemaps,
-             cover) are absent and the page points to Survey settings
+        THEN the truly deferred fields (thanks html, visibility, cover) are
+             absent and the page points to Survey settings, while the
+             foundational fields (languages, default base map) are present
         """
         response = self.client.get('/editor/surveys/new/')
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'id_thanks_html')
         self.assertNotContains(response, 'id_visibility')
-        self.assertNotContains(response, 'id_basemaps')
         self.assertNotContains(response, 'id_cover_image')
         self.assertContains(response, 'Survey settings')
+        self.assertContains(response, 'id_available_languages')
+        self.assertContains(response, 'name="default_basemap"')
+
+    def test_create_survey_saves_languages(self):
+        """
+        GIVEN an authenticated user
+        WHEN they submit the creation form with chosen languages
+        THEN the survey stores exactly those available_languages
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'multilang_survey',
+            'available_languages': '["en", "ru"]',
+        })
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='multilang_survey')
+        self.assertEqual(survey.available_languages, ['en', 'ru'])
+
+    def test_create_survey_saves_default_basemap(self):
+        """
+        GIVEN an authenticated user
+        WHEN they pick a base map on the creation form
+        THEN the survey stores it as default_basemap and keeps all basemaps
+             available (model default)
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'sat_survey', 'default_basemap': 'satellite',
+        })
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='sat_survey')
+        self.assertEqual(survey.default_basemap, 'satellite')
+        self.assertEqual(survey.basemaps, ['streets', 'satellite', 'topo'])
+
+    def test_create_survey_ignores_invalid_basemap(self):
+        """
+        GIVEN an authenticated user
+        WHEN they post an unknown default_basemap value
+        THEN it is ignored (not persisted)
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'bad_basemap_survey', 'default_basemap': 'bogus',
+        })
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='bad_basemap_survey')
+        self.assertNotEqual(survey.default_basemap, 'bogus')
 
 
 class EditorSectionCRUDTest(TestCase):
