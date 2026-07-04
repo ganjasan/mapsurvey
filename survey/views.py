@@ -1183,12 +1183,23 @@ def for_educators(request):
 	return render(request, 'for_educators.html')
 
 
+def maptionnaire_alternative(request):
+	"""Public "free, open-source Maptionnaire alternative" comparison page.
+
+	Targets the validated "Maptionnaire alternative" search intent (how Jaakko
+	found us). First-touch source capture; CTAs carry utm_source=comparison.
+	"""
+	capture_signup_source(request)
+	return render(request, 'maptionnaire_alternative.html')
+
+
 def robots_txt(request):
 	lines = [
 		"User-agent: *",
 		"Allow: /surveys/",
 		"Allow: /stories/",
 		"Allow: /for-educators/",
+		"Allow: /alternatives/",
 		"Disallow: /admin/",
 		"Disallow: /editor/",
 		"Disallow: /accounts/",
@@ -1205,6 +1216,7 @@ def sitemap_xml(request):
 	)
 	urls = [f"  <url><loc>{base}/</loc></url>"]
 	urls.append(f"  <url><loc>{base}/for-educators/</loc></url>")
+	urls.append(f"  <url><loc>{base}/alternatives/maptionnaire/</loc></url>")
 	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
 	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
 	for survey in surveys:
