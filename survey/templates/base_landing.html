@@ -67,6 +67,7 @@
         <ul class="landing-nav__links" id="nav-links">
             <li><a href="/#features">{% trans "Features" %}</a></li>
             <li><a href="/#demo">{% trans "Demo" %}</a></li>
+            <li><a href="{% url 'for_educators' %}">{% trans "For Educators" %}</a></li>
             <li><a href="{% url 'trust_page' %}">{% trans "Trust" %}</a></li>
             {% if GITHUB_REPO_URL %}
             <li><a href="{{ GITHUB_REPO_URL }}" target="_blank" rel="noopener" class="landing-nav__github">
@@ -114,6 +115,7 @@
                 <ul class="landing-footer__links">
                     <li><a href="/#features">{% trans "Features" %}</a></li>
                     <li><a href="/#demo">{% trans "Demo" %}</a></li>
+                    <li><a href="{% url 'for_educators' %}">{% trans "For Educators" %}</a></li>
                 </ul>
             </div>
             {% if GITHUB_REPO_URL %}
