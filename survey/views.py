@@ -688,6 +688,11 @@ def survey_section(request, survey_slug, section_name):
 			if nav_direction == 'back' and section.prev_section:
 				prev_sec = section.prev_section
 				prev_current = section_current - 1
+				# HTMX swaps the partial without a GET, so emit the view here —
+				# otherwise only the head section (initial GET) ever records a view.
+				emit_event(survey_session, 'section_view', {
+					'section_name': prev_sec.name, 'section_index': prev_current,
+				})
 				prev_ctx = _build_section_context(request, survey, session_survey, prev_sec, selected_language, prev_current, section_total)
 				return render(request, 'partials/survey_section_partial.html', prev_ctx)
 
@@ -695,6 +700,11 @@ def survey_section(request, survey_slug, section_name):
 				next_sec = section.next_section
 				# Recompute progress for next section
 				next_current = section_current + 1
+				# HTMX swaps the partial without a GET — emit the view for the
+				# section actually shown, so downstream sections aren't stuck at 0 views.
+				emit_event(survey_session, 'section_view', {
+					'section_name': next_sec.name, 'section_index': next_current,
+				})
 				next_ctx = _build_section_context(request, survey, session_survey, next_sec, selected_language, next_current, section_total)
 				return render(request, 'partials/survey_section_partial.html', next_ctx)
 			else:
