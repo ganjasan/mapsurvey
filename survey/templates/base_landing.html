@@ -12,6 +12,7 @@
     <link rel="manifest" href="{% static 'manifest.json' %}">
 
     {# SEO Meta #}
+    {% if GOOGLE_SITE_VERIFICATION %}<meta name="google-site-verification" content="{{ GOOGLE_SITE_VERIFICATION }}">{% endif %}
     <meta name="theme-color" content="#0FA58E">
     <meta name="description" content="{% block meta_description %}{% trans "Create map-based surveys where people mark places, draw routes, and outline areas. Free to start, open source, self-hostable. The open-source alternative to Maptionnaire." %}{% endblock %}">
     <meta name="keywords" content="{% block meta_keywords %}PPGIS, participatory mapping, open source GIS, map survey, spatial data collection, urban planning tool, community engagement, Maptionnaire alternative{% endblock %}">

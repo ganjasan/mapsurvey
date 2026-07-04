@@ -248,6 +248,8 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@mapsurvey.org
 
 # Plausible Analytics
 PLAUSIBLE_SCRIPT_URL = os.environ.get('PLAUSIBLE_SCRIPT_URL', '')
+# Google Search Console verification token (meta-tag method); empty = tag not rendered.
+GOOGLE_SITE_VERIFICATION = os.environ.get('GOOGLE_SITE_VERIFICATION', '')
 
 # Landing page
 CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'konuchovartem@mapsurvey.org')
