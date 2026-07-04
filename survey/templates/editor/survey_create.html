@@ -8,68 +8,41 @@
 
 {% block content %}
 <div style="max-width: 600px; margin: 2rem auto; padding: 0 1rem;">
-    <div class="section-form-card">
-        <h5 style="margin-bottom: 1.5rem; font-weight: 700;">Create New Survey</h5>
+    <div class="pr-card">
+        <h6 style="font-size:1.05rem;">Create New Survey</h6>
         <form method="post">
             {% csrf_token %}
-            {% for field in form %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {% if field.name == 'available_languages' %}
-                    {{ field }}
-                    {% include "editor/partials/language_picker.html" %}
-                {% elif field.name == 'basemaps' %}
-                    {{ field }}
-                    <div style="margin-top:0.4rem;">
-                        {% for slug, label in basemap_choices %}
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input basemap-cb" type="checkbox"
-                                   id="bm_{{ slug }}" value="{{ slug }}" checked>
-                            <label class="form-check-label" for="bm_{{ slug }}">{{ label }}</label>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <script>
-                    (function(){
-                        var inp = document.getElementById('id_basemaps');
-                        var cbs = document.querySelectorAll('.basemap-cb');
-                        function sync(){
-                            var v = [];
-                            cbs.forEach(function(c){ if (c.checked) v.push(c.value); });
-                            inp.value = JSON.stringify(v.length ? v : ['streets']);
-                        }
-                        sync();
-                        cbs.forEach(function(c){ c.addEventListener('change', sync); });
-                    })();
-                    </script>
-                {% else %}
-                    {{ field }}
-                {% endif %}
-                {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
-                {% for error in field.errors %}<div class="text-danger" style="font-size:0.85rem;">{{ error }}</div>{% endfor %}
+
+            <div class="pr-field">
+                <label for="{{ form.name.id_for_label }}">Survey name</label>
+                {{ form.name }}
+                {% for error in form.name.errors %}<div class="text-danger" style="font-size:0.85rem;">{{ error }}</div>{% endfor %}
             </div>
-            {% endfor %}
+
             <!-- Map Position -->
-            <div class="form-group">
-                <label>Default Map Position</label>
-                <div id="create-map-picker" style="height:250px;width:100%;border-radius:6px;border:1px solid #dee2e6;margin-bottom:0.5rem;"></div>
-                <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.5rem;">
-                    <span id="create-map-coords">Click map to set position</span>
+            <div class="pr-field">
+                <label>Where is your survey area?</label>
+                <div id="create-map-picker" style="height:250px;width:100%;border-radius:var(--radius);border:1px solid var(--border-color);margin-bottom:0.5rem;"></div>
+                <div class="pr-help" style="margin-top:0;">
+                    <span id="create-map-coords">Click the map to set the starting position — or leave it, you can change this later.</span>
                 </div>
                 <input type="hidden" name="map_lat" id="create-map-lat" value="">
                 <input type="hidden" name="map_lng" id="create-map-lng" value="">
                 <input type="hidden" name="map_zoom" id="create-map-zoom" value="">
-                <div class="form-check mb-1">
-                    <input type="checkbox" class="form-check-input" id="create-use-geolocation" name="use_geolocation" value="1">
-                    <label class="form-check-label" for="create-use-geolocation" style="font-size:0.85rem;cursor:pointer;">
-                        Auto-center on respondent's location
-                    </label>
-                </div>
             </div>
+            <label class="pr-switch" title="Auto-center the map on the respondent's browser location when they first enter the survey.">
+                <span>Auto-center on respondent's location <small class="pr-help">uses the visitor's browser geolocation on entry</small></span>
+                <input type="checkbox" id="create-use-geolocation" name="use_geolocation" value="1">
+            </label>
 
-            <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+            <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem;">
                 <button type="submit" class="btn btn-primary">Create Survey</button>
                 <a href="{% url 'editor' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+
+            <div class="pr-help" style="margin-top:1rem;">
+                <i class="fas fa-info-circle"></i>
+                Languages, thanks page, visibility, and other options — later in <strong>Survey settings</strong>.
             </div>
         </form>
 

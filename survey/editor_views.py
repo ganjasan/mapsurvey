@@ -16,7 +16,7 @@ from .models import (
 )
 from .cloning import clone_question, clone_section
 from .editor_forms import (
-    SurveyHeaderForm, SurveySectionForm, QuestionForm,
+    SurveyHeaderForm, SurveyCreateForm, SurveySectionForm, QuestionForm,
     SUBQUESTION_DISALLOWED_INPUT_TYPES,
 )
 from .forms import SurveySectionAnswerForm
@@ -79,7 +79,7 @@ def _get_sections_ordered(survey):
 @org_permission_required('editor')
 def editor_survey_create(request):
     if request.method == 'POST':
-        form = SurveyHeaderForm(request.POST)
+        form = SurveyCreateForm(request.POST)
         if form.is_valid():
             survey = form.save(commit=False)
             survey.organization = request.active_org
@@ -110,10 +110,9 @@ def editor_survey_create(request):
             )
             return redirect('editor_survey_detail', survey_uuid=survey.uuid)
     else:
-        form = SurveyHeaderForm()
+        form = SurveyCreateForm()
     return render(request, 'editor/survey_create.html', {
         'form': form,
-        'basemap_choices': BASEMAP_CHOICES,
     })
 
 

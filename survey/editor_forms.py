@@ -4,6 +4,21 @@ from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP
 SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon')
 
 
+class SurveyCreateForm(forms.ModelForm):
+    """Minimal creation form — name only.
+
+    Everything else (redirect URL, languages, visibility, thanks page, cover
+    image, basemaps) gets model defaults and is edited later in the Survey
+    settings panel, which uses the full ``SurveyHeaderForm``.
+    """
+    class Meta:
+        model = SurveyHeader
+        fields = ['name']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Park improvements'}),
+        }
+
+
 class SurveyHeaderForm(forms.ModelForm):
     default_rating_display_style = forms.ChoiceField(
         choices=(('scale_strip', 'Compact scale'), ('list_pips', 'Labeled list')),

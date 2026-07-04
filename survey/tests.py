@@ -5290,6 +5290,56 @@ class EditorSurveyCreateTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Create New Survey')
 
+    def test_create_survey_minimal_form_gets_model_defaults(self):
+        """
+        GIVEN an authenticated user
+        WHEN they submit the creation form with only a name
+        THEN the survey is created with model defaults for every deferred
+             setting (visibility, redirect, basemaps, thanks, languages)
+        """
+        response = self.client.post('/editor/surveys/new/', {'name': 'minimal_survey'})
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='minimal_survey')
+        self.assertEqual(survey.visibility, 'private')
+        self.assertEqual(survey.redirect_url, '#')
+        self.assertEqual(survey.basemaps, ['streets', 'satellite', 'topo'])
+        self.assertEqual(survey.thanks_html, {})
+        self.assertEqual(survey.available_languages, [])
+        self.assertFalse(survey.cover_image)
+
+    def test_create_survey_saves_map_position(self):
+        """
+        GIVEN an authenticated user
+        WHEN they submit the creation form with a name and map fields
+        THEN the survey stores the start position, zoom, and geolocation flag
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'placed_survey',
+            'map_lat': '42.8746', 'map_lng': '74.5698', 'map_zoom': '13',
+            'use_geolocation': '1',
+        })
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='placed_survey')
+        self.assertAlmostEqual(survey.start_map_postion.y, 42.8746, places=4)
+        self.assertAlmostEqual(survey.start_map_postion.x, 74.5698, places=4)
+        self.assertEqual(survey.start_map_zoom, 13)
+        self.assertTrue(survey.use_geolocation)
+
+    def test_create_page_defers_settings_to_settings_panel(self):
+        """
+        GIVEN an authenticated user
+        WHEN they GET the creation page
+        THEN deferred settings fields (thanks html, visibility, basemaps,
+             cover) are absent and the page points to Survey settings
+        """
+        response = self.client.get('/editor/surveys/new/')
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'id_thanks_html')
+        self.assertNotContains(response, 'id_visibility')
+        self.assertNotContains(response, 'id_basemaps')
+        self.assertNotContains(response, 'id_cover_image')
+        self.assertContains(response, 'Survey settings')
+
 
 class EditorSectionCRUDTest(TestCase):
     """Tests for section CRUD in the editor."""
