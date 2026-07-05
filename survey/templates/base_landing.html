@@ -47,6 +47,24 @@
         "codeRepository": "{{ GITHUB_REPO_URL }}"
     }
     </script>
+    {# Organization entity — brand disambiguation (there are unrelated firms named
+       "MapSurvey"); sameAs ties mapsurvey.org to our canonical profiles so search
+       engines resolve us as a distinct entity. #}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Mapsurvey",
+        "alternateName": "Mapsurvey.org",
+        "url": "https://mapsurvey.org/",
+        "logo": "https://mapsurvey.org{% static 'favicon-512x512.png' %}",
+        "description": "Open-source participatory-mapping platform: map-based surveys where participants mark places, draw routes, and outline areas.",
+        "sameAs": [
+            "{{ GITHUB_REPO_URL }}",
+            "https://participedia.net/method/mapsurvey-1"
+        ]
+    }
+    </script>
 
     {# Fonts #}
     <link rel="preconnect" href="https://fonts.googleapis.com">
