@@ -241,6 +241,7 @@ def editor_survey_thanks_panel(request, survey_uuid):
     from .views import sanitize_thanks_html
     survey = request.survey
     langs = list(survey.available_languages) or ['en']
+    results_page = getattr(survey, 'public_results_page', None)
 
     if request.method == 'POST':
         thanks = {}
@@ -250,6 +251,12 @@ def editor_survey_thanks_panel(request, survey_uuid):
                 thanks[lang] = cleaned
         survey.thanks_html = thanks
         survey.save(update_fields=['thanks_html'])
+        # The "See the results" toggle lives on the results page; save it here too.
+        # A hidden marker tells us the checkbox was actually in the submitted form
+        # (an unchecked box sends nothing), so a stale form can't clobber it.
+        if results_page is not None and request.POST.get('has_results_toggle') == '1':
+            results_page.show_on_thanks = request.POST.get('show_on_thanks') == 'on'
+            results_page.save(update_fields=['show_on_thanks'])
         if _is_ajax(request):
             return JsonResponse({'ok': True})
         from django.urls import reverse
@@ -263,6 +270,7 @@ def editor_survey_thanks_panel(request, survey_uuid):
         'survey': survey,
         'langs': langs,
         'thanks_by_lang': thanks_by_lang,
+        'results_page': results_page,
         'effective_role': request.effective_survey_role,
     })
 
@@ -283,6 +291,29 @@ def editor_survey_thanks_preview(request, survey_uuid):
         'thanks_html': resolve_thanks_html(survey.thanks_html, lang),
         'lang': lang,
     })
+
+
+@survey_permission_required('editor')
+@require_POST
+def editor_survey_thanks_image(request, survey_uuid):
+    """Upload an image for the thanks-page editor; returns its URL as JSON.
+
+    Stored via the default storage (local media or S3) so the thanks HTML holds
+    a plain URL instead of a bloated base64 data URI.
+    """
+    import os
+    import uuid as _uuid
+    from django.core.files.storage import default_storage
+    f = request.FILES.get('image')
+    if not f:
+        return JsonResponse({'error': 'No file'}, status=400)
+    if f.content_type not in ('image/png', 'image/jpeg', 'image/gif', 'image/webp'):
+        return JsonResponse({'error': 'Unsupported image type'}, status=400)
+    if f.size > 5 * 1024 * 1024:
+        return JsonResponse({'error': 'Image too large (max 5 MB)'}, status=400)
+    ext = (os.path.splitext(f.name)[1] or '.png')[:8]
+    name = default_storage.save('thanks_images/{}{}'.format(_uuid.uuid4().hex, ext), f)
+    return JsonResponse({'url': default_storage.url(name)})
 
 
 # ─── Survey map position ─────────────────────────────────────────────────────

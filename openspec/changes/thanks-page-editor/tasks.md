@@ -58,3 +58,24 @@
 - [x] 4.4 Full `./run_tests.sh survey` green
 - [x] 4.5 Manual: edit thanks content (bold/heading/link/list), switch language,
       confirm autosave + public thanks page matches the preview incl. branding
+
+## 5. Follow-up polish (share, results link, media, default)
+
+- [x] 5.1 Fix the thanks-page Share button spacing (Bootstrap-4 `mr-2`/`ml-2`, the
+      `me-2`/`ms-2` BS5 classes were no-ops)
+- [x] 5.2 "See the results" link on the thanks page when the survey has a
+      published results page: new `PublicResultsPage.show_on_thanks` (default on,
+      migration 0037); a `<a>` to `/r/<slug>/` in `survey_thanks.html`; toggle in
+      both the Publish → Display & privacy card and the thanks editor (a hidden
+      `has_results_toggle` marker distinguishes an unchecked box from a stale form)
+- [x] 5.3 Rich media in the editor: `align`, `image`, `video` toolbar buttons;
+      register Quill's inline-style align attributor so `text-align` survives on
+      the public page; image uploads via `editor_survey_thanks_image` (media URL,
+      no base64); sanitizer extended (img, iframe restricted to trusted video
+      hosts via `attribute_filter`, style limited to `text-align` via
+      `filter_style_properties`, `url_relative='pass_through'`); responsive
+      img/video CSS on the public thanks page
+- [x] 5.4 Show the default "Thank you!" content formatted in the editor (not a
+      placeholder); it is only persisted once the creator actually edits it
+      (per-language `dirty` tracking)
+- [x] 5.5 Tests for the above; full suite green (751)

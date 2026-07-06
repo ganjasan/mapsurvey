@@ -14466,6 +14466,92 @@ class ThanksPageEditorTest(TestCase):
         self.assertNotIn("<script>", out)
         self.assertNotIn("onclick", out)
 
+    def test_sanitize_keeps_media_strips_untrusted(self):
+        """
+        GIVEN thanks HTML with alignment, an image, and video iframes
+        WHEN sanitized
+        THEN centre alignment, image, and a trusted-host video survive while a
+             non-align style and an untrusted iframe src are stripped
+        """
+        from survey.views import sanitize_thanks_html
+        out = sanitize_thanks_html(
+            '<p style="text-align:center;color:red">c</p>'
+            '<img src="/mediafiles/a.png" alt="x" onerror="e">'
+            '<iframe src="https://www.youtube.com/embed/ID"></iframe>'
+            '<iframe src="https://evil.example/x"></iframe>'
+        )
+        self.assertIn("text-align:center", out)
+        self.assertNotIn("color", out)
+        self.assertIn("/mediafiles/a.png", out)
+        self.assertNotIn("onerror", out)
+        self.assertIn("youtube.com/embed/ID", out)
+        self.assertNotIn("evil.example", out)
+
+    def test_thanks_image_upload(self):
+        """
+        GIVEN an owner
+        WHEN they upload a PNG to the thanks-image endpoint
+        THEN it returns a URL; a non-image is rejected with 400
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        png = (b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01'
+               b'\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00'
+               b'\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82')
+        r = self.client.post(
+            f"/editor/surveys/{self.survey.uuid}/thanks-image/",
+            {"image": SimpleUploadedFile("a.png", png, content_type="image/png")},
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("url", r.json())
+        bad = self.client.post(
+            f"/editor/surveys/{self.survey.uuid}/thanks-image/",
+            {"image": SimpleUploadedFile("a.txt", b"hi", content_type="text/plain")},
+        )
+        self.assertEqual(bad.status_code, 400)
+
+    def test_results_button_on_thanks_preview_toggle(self):
+        """
+        GIVEN a published results page
+        WHEN show_on_thanks is on
+        THEN the thanks page shows a "See the results" button linking to it;
+             turning it off hides the button
+        """
+        from survey.models import PublicResultsPage
+        p = PublicResultsPage.objects.create(
+            survey=self.survey, slug="thx-res", is_published=True, show_on_thanks=True,
+        )
+        r = self.client.get(f"/editor/surveys/{self.survey.uuid}/thanks-preview/")
+        self.assertContains(r, "See the results")
+        self.assertContains(r, "/r/thx-res/")
+        p.show_on_thanks = False
+        p.save()
+        r2 = self.client.get(f"/editor/surveys/{self.survey.uuid}/thanks-preview/")
+        self.assertNotContains(r2, "See the results")
+
+    def test_thanks_panel_saves_results_toggle(self):
+        """
+        GIVEN a results page and the thanks editor's results toggle
+        WHEN the thanks form is saved with the toggle marker
+        THEN show_on_thanks follows the checkbox; without the marker (stale form)
+             it is left unchanged
+        """
+        from survey.models import PublicResultsPage
+        p = PublicResultsPage.objects.create(
+            survey=self.survey, slug="thx-res2", is_published=True, show_on_thanks=True,
+        )
+        url = f"/editor/surveys/{self.survey.uuid}/thanks-panel/"
+        # marker present, checkbox unchecked (absent) -> off
+        self.client.post(url, {"thanks_en": "<p>x</p>", "has_results_toggle": "1"},
+                         HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        p.refresh_from_db(); self.assertFalse(p.show_on_thanks)
+        # marker present, checkbox on -> on
+        self.client.post(url, {"thanks_en": "<p>x</p>", "has_results_toggle": "1", "show_on_thanks": "on"},
+                         HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        p.refresh_from_db(); self.assertTrue(p.show_on_thanks)
+        # no marker (stale form) -> unchanged
+        self.client.post(url, {"thanks_en": "<p>x</p>"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        p.refresh_from_db(); self.assertTrue(p.show_on_thanks)
+
 
 class SectionViewHtmxTrackingTest(TestCase):
     """Regression: section_view must fire for HTMX-navigated sections, not only the head."""

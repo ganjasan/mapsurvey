@@ -1210,6 +1210,9 @@ class PublicResultsPage(models.Model):
     frozen_at = models.DateTimeField(null=True, blank=True)
     show_response_count = models.BooleanField(default=True)
     show_participate_cta = models.BooleanField(default=True)
+    show_on_thanks = models.BooleanField(
+        default=True, help_text=_('Show a "See the results" button on the survey\'s thanks page (only while published).')
+    )
     feature_in_listing = models.BooleanField(
         default=False, help_text=_('Show a card in the public stories listing (public visibility only).')
     )

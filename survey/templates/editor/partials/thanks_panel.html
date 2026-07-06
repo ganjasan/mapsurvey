@@ -29,6 +29,18 @@
         <div class="autosave-status" data-autosave-status style="margin-top:.6rem;"><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
         <noscript><button type="submit" class="btn btn-primary btn-sm mt-2">Save</button></noscript>
       </div>
+
+      {% if results_page %}
+      <div class="pr-card">
+        <h6>Results link</h6>
+        <input type="hidden" name="has_results_toggle" value="1">
+        <label class="pr-switch" style="border-bottom:none;">
+          <span>Show a “See the results” button
+            <small class="pr-help">{% if results_page.is_published %}links respondents to your public results page{% else %}appears once your results page is published (Publish tab){% endif %}</small></span>
+          <input type="checkbox" name="show_on_thanks" id="thanks-show-results" {% if results_page.show_on_thanks %}checked{% endif %}>
+        </label>
+      </div>
+      {% endif %}
     </form>
 
     <div class="pr-card">
@@ -51,18 +63,62 @@
       var data = JSON.parse(document.getElementById('thanks-data').textContent);
       var current = langs[0];
 
+      // Emit alignment as inline `text-align` styles so it survives on the public
+      // thanks page (which has no Quill CSS).
+      Quill.register(Quill.import('attributors/style/align'), true);
+
+      // Image button uploads to the server and inserts the returned URL (no
+      // base64 bloat in thanks_html).
+      function imageHandler() {
+          var input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/png,image/jpeg,image/gif,image/webp';
+          input.style.display = 'none';
+          document.body.appendChild(input);   // some browsers need it in the DOM to open
+          function cleanup() { if (input.parentNode) input.parentNode.removeChild(input); }
+          input.onchange = function() {
+              var file = input.files && input.files[0];
+              if (!file) { cleanup(); return; }
+              var fd = new FormData(); fd.append('image', file);
+              var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+              fetch('{% url "editor_survey_thanks_image" survey.uuid %}', { method: 'POST', headers: { 'X-CSRFToken': token }, body: fd })
+                  .then(function(r) { return r.json(); })
+                  .then(function(d) {
+                      if (d && d.url) {
+                          var range = quill.getSelection(true);
+                          quill.insertEmbed(range.index, 'image', d.url, 'user');
+                          quill.setSelection(range.index + 1, 'silent');
+                          dirty[current] = true; syncCurrent(); dsave();
+                      }
+                  })
+                  .catch(function() {})
+                  .then(cleanup);
+          };
+          input.click();
+      }
+
       var quill = new Quill('#thanks-quill', {
           theme: 'snow',
           placeholder: 'Thank you! Your responses have been recorded…',
-          modules: { toolbar: [
-              [{ header: [1, 2, 3, false] }],
-              ['bold', 'italic', 'underline'],
-              ['link'],
-              [{ list: 'ordered' }, { list: 'bullet' }],
-              ['blockquote'],
-              ['clean']
-          ] }
+          modules: { toolbar: {
+              container: [
+                  [{ header: [1, 2, 3, false] }],
+                  ['bold', 'italic', 'underline'],
+                  [{ align: [] }],
+                  ['link', 'image', 'video'],
+                  [{ list: 'ordered' }, { list: 'bullet' }],
+                  ['blockquote'],
+                  ['clean']
+              ],
+              handlers: { image: imageHandler }
+          } }
       });
+
+      // Shown (and editable) when a language has no saved content yet — the same
+      // default respondents get, but formatted in the editor instead of a
+      // placeholder. It is only persisted once the creator actually edits it.
+      var DEFAULT_HTML = '<h2 style="text-align: center;">Thank you!</h2><p style="text-align: center;">Your responses have been recorded.</p>';
+      var dirty = {};
 
       function currentHtml() {
           var h = quill.root.innerHTML;           // read-only
@@ -73,13 +129,14 @@
           quill.setContents(quill.clipboard.convert({ html: html || '' }), 'silent');
       }
       function syncCurrent() {
+          if (!dirty[current]) return;   // never persist the untouched default seed
           data[current] = currentHtml();
           var inp = document.getElementById('thanks-input-' + current);
           if (inp) inp.value = data[current];
       }
       function loadLang(lang) {
           current = lang;
-          setHtml(data[lang]);
+          setHtml(data[lang] || DEFAULT_HTML);
       }
 
       // seed hidden inputs from stored data, then load the first language
@@ -109,7 +166,11 @@
       }
       var dsave = debounce(save, 700);
 
-      quill.on('text-change', function(delta, old, source) { if (source === 'user') { syncCurrent(); dsave(); } });
+      quill.on('text-change', function(delta, old, source) { if (source === 'user') { dirty[current] = true; syncCurrent(); dsave(); } });
+
+      // "See the results" toggle (saved onto the results page) — save + refresh preview
+      var showResults = document.getElementById('thanks-show-results');
+      if (showResults) showResults.addEventListener('change', function() { save(); });
 
       document.querySelectorAll('.thanks-lang-tab').forEach(function(tab) {
           tab.addEventListener('click', function() {

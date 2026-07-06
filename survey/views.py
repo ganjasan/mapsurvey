@@ -1455,16 +1455,44 @@ def survey_thanks(request, survey_slug):
 # page renders this |safe to public respondents, so it is sanitized on save.
 THANKS_HTML_ALLOWED_TAGS = {
 	'h1', 'h2', 'h3', 'h4', 'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's',
-	'a', 'ul', 'ol', 'li', 'blockquote', 'span', 'div',
+	'a', 'ul', 'ol', 'li', 'blockquote', 'span', 'div', 'img', 'iframe',
 }
-THANKS_HTML_ALLOWED_ATTRS = {'a': {'href', 'title', 'target'}}  # rel is managed by link_rel
+_STYLE_TAGS = {'p', 'h1', 'h2', 'h3', 'h4', 'div', 'blockquote', 'li', 'span'}
+THANKS_HTML_ALLOWED_ATTRS = {
+	'a': {'href', 'title', 'target'},  # rel is managed by link_rel
+	'img': {'src', 'alt', 'width', 'height'},
+	'iframe': {'src', 'width', 'height', 'frameborder', 'allowfullscreen', 'allow'},
+}
+# Allow a `style` attribute (restricted to text-align via filter_style_properties)
+# on text/block tags so alignment survives on the public page.
+for _t in _STYLE_TAGS:
+	THANKS_HTML_ALLOWED_ATTRS[_t] = {'style'}
+# Only these hosts may be embedded as <iframe> video (Quill video button).
+THANKS_VIDEO_HOSTS = {
+	'www.youtube.com', 'youtube.com', 'www.youtube-nocookie.com',
+	'youtube-nocookie.com', 'player.vimeo.com', 'vimeo.com',
+}
+
+
+def _thanks_attr_filter(tag, attr, value):
+	"""nh3 per-attribute filter: restrict <iframe> src to trusted video hosts.
+	Return None to drop the attribute."""
+	if tag == 'iframe' and attr == 'src':
+		from urllib.parse import urlparse
+		try:
+			host = (urlparse(value).hostname or '').lower()
+		except ValueError:
+			return None
+		return value if host in THANKS_VIDEO_HOSTS else None
+	return value
 
 
 def sanitize_thanks_html(html):
 	"""Sanitize creator WYSIWYG HTML against the thanks-page allow-list.
 
-	Strips scripts, event handlers, and unknown tags/attributes; forces safe
-	rel on links. Returns '' for falsy input.
+	Strips scripts, event handlers, and unknown tags/attributes; keeps basic
+	formatting, alignment (inline text-align only), images, and trusted-host
+	video iframes; forces safe rel on links. Returns '' for falsy input.
 	"""
 	if not html:
 		return ''
@@ -1473,6 +1501,9 @@ def sanitize_thanks_html(html):
 		str(html),
 		tags=THANKS_HTML_ALLOWED_TAGS,
 		attributes=THANKS_HTML_ALLOWED_ATTRS,
+		attribute_filter=_thanks_attr_filter,
+		filter_style_properties={'text-align'},
+		url_relative='pass_through',
 		link_rel='noopener noreferrer',
 	)
 

@@ -170,6 +170,7 @@ def public_results_save_settings(request, survey_uuid):
     }
     page.show_response_count = request.POST.get('show_response_count') == 'on'
     page.show_participate_cta = request.POST.get('show_participate_cta') == 'on'
+    page.show_on_thanks = request.POST.get('show_on_thanks') == 'on'
     page.feature_in_listing = request.POST.get('feature_in_listing') == 'on'
     try:
         page.k_anonymity_threshold = max(1, int(request.POST.get('k_anonymity_threshold', 3)))
