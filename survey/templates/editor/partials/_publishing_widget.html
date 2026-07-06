@@ -21,9 +21,9 @@ show_draft_actions, draft_copy, show_edit_published.
     <div class="nm-head">Collection</div>
     {% if survey.status == 'draft' %}
     <button class="nm-item" onclick="doTransition('testing')"><i class="fas fa-vial lead"></i> Move to Testing</button>
-    <button class="nm-item" onclick="doTransition('published')"><i class="fas fa-paper-plane lead"></i> Publish — open for responses</button>
+    <button class="nm-item" onclick="doTransition('published')"><i class="fas fa-globe lead"></i> Publish — open for responses</button>
     {% elif survey.status == 'testing' %}
-    <button class="nm-item" onclick="showPublishConfirm()"><i class="fas fa-paper-plane lead"></i> Publish — open for responses</button>
+    <button class="nm-item" onclick="showPublishConfirm()"><i class="fas fa-globe lead"></i> Publish — open for responses</button>
     <button class="nm-item" onclick="doTransition('draft')"><i class="fas fa-undo lead"></i> Back to Draft</button>
     {% elif survey.status == 'published' %}
     <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:#16a34a;font-size:8px;"></i> Accepting responses<span class="sub">respondents can submit the survey</span></span>
