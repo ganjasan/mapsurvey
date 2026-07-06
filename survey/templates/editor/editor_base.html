@@ -206,8 +206,12 @@
         .pr-banner { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; border-radius: 8px; padding: .6rem .8rem; font-size: .82rem; margin-bottom: 1rem; }
         /* The Build "Survey settings" panel is swapped into #section-content
            inside the padded .editor-main. Cancel that padding so the sticky
-           .pr-ctxbar spans the full column, exactly like the Publish page. */
-        .pr-panel-flush { margin: -1.5rem; }
+           .pr-ctxbar sits flush and spans the full column, exactly like the
+           Publish page. The top negative margin would collapse through the
+           #section-content wrapper (leaving a gap), so instead drop the
+           column's top padding whenever the flush panel is present. */
+        .editor-main:has(.pr-panel-flush) { padding-top: 0; }
+        .pr-panel-flush { margin: 0 -1.5rem -1.5rem; }
 
         /* Autosave status indicator (Public Results settings + Survey settings panel) */
         .autosave-status { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #16a34a; margin-top: 0.4rem; transition: color 0.15s; }
