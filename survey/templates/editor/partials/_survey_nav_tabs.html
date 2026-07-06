@@ -31,8 +31,7 @@ Optional: effective_role, hide_status_badge (kept for back-compat; ignored).
     <button onclick="navMenuToggle(this,event)"><i class="fas fa-share-alt"></i> Share <i class="fas fa-angle-down caret"></i></button>
     <div class="nav-menu">
         <div class="nm-head">Survey</div>
-        <button class="nm-item" onclick="prNavCopy('{{ request.scheme }}://{{ request.get_host }}/surveys/{{ survey.uuid }}/', this)"><i class="fas fa-link lead"></i> Copy survey link</button>
-        <a class="nm-item" href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-qrcode lead"></i> QR code &amp; tracking links…</a>
+        <a class="nm-item" href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-link lead"></i> Share link &amp; tracking…</a>
         {% if page and page.is_published %}
         <div class="nm-sep"></div>
         <div class="nm-head">Results page</div>

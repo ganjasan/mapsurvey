@@ -39,6 +39,27 @@
         font-size: 0.75rem; color: #6b7280; margin-top: 1rem;
         word-break: break-all;
     }
+    .share-intro h5 { font-weight: 700; margin-bottom: 0.3rem; }
+    .share-intro p { color: #6b7280; font-size: 0.9rem; margin: 0; }
+    .share-gate {
+        display: flex; gap: 1rem;
+        background: #fdf7ea; border: 1px solid #efe1bb;
+        border-radius: var(--radius); padding: 1.25rem 1.5rem;
+    }
+    .share-gate-icon { color: #b7791f; font-size: 1.4rem; margin-top: 0.15rem; }
+    .share-gate-body h5 { font-weight: 700; margin-bottom: 0.35rem; }
+    .share-gate-body p { color: #6b7280; font-size: 0.9rem; margin: 0 0 0.85rem; }
+    .share-gate-body p:last-child { margin-bottom: 0; }
+    .share-gate-hint { color: #6b7280; font-size: 0.85rem; }
+    .share-gate-hint i { color: var(--accent); }
+    .share-monitor {
+        display: flex; align-items: flex-start; gap: 0.6rem;
+        margin-top: 1rem; padding: 0.75rem 0.9rem;
+        background: var(--accent-light); border: 1px solid var(--border-color);
+        border-radius: var(--radius); font-size: 0.85rem;
+    }
+    .share-monitor i { color: var(--accent); margin-top: 0.15rem; }
+    .share-monitor a { font-weight: 600; }
 </style>
 {% endblock %}
 
@@ -50,12 +71,73 @@
 {% block content %}
 <div class="share-main">
 
+    {% if not is_shareable %}
+    <!-- Publish gate: the public link 404s until the survey is published -->
+    <div class="share-gate">
+        <div class="share-gate-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="share-gate-body">
+            {% if survey.status == 'draft' %}
+            <h5>This survey is still a Draft</h5>
+            <p>Only you can open it, in Preview. Anyone else who opens the link will get a
+               <strong>404</strong> page. Publish it before you share the link.</p>
+            {% elif survey.status == 'testing' %}
+            <h5>This survey is in Testing</h5>
+            <p>The public link isn't live yet — it only works through your private test link.
+               Publish to open the survey for responses.</p>
+            {% elif survey.status == 'closed' %}
+            <h5>This survey is Closed</h5>
+            <p>It's no longer accepting responses, so a shared link won't collect anything.</p>
+            {% else %}
+            <h5>This survey isn't published</h5>
+            <p>The public link won't work until the survey is published.</p>
+            {% endif %}
+
+            {% if effective_role == 'owner' and can_publish %}
+            <button type="button" class="btn btn-success" onclick="publishFromShare(this)">
+                <i class="fas fa-globe mr-1"></i> Publish — open for responses
+            </button>
+            {% elif effective_role == 'owner' and survey.status == 'draft' %}
+            <p class="share-gate-hint"><i class="fas fa-info-circle"></i>
+                {{ publish_blocked_reason }} — finish it in
+                <a href="{% url 'editor_survey_detail' survey.uuid %}">Build</a> before you can publish.</p>
+            {% elif effective_role != 'owner' %}
+            <p class="share-gate-hint"><i class="fas fa-info-circle"></i> Ask the survey owner to publish it.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+
+    <!-- Intro -->
+    <div class="share-intro" style="margin-bottom:1.25rem;">
+        <h5>Share your survey</h5>
+        <p>Grab the direct link below, or create tracking links to see which channels bring the most responses.</p>
+    </div>
+
+    <!-- Direct link (the shareable link) -->
+    <div class="share-section">
+        <h6>Survey link</h6>
+        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+            Anyone with this link can open your survey. Copy it, or show it as a QR code.
+        </p>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+            <input type="text" readonly class="form-control" style="font-family:monospace;font-size:0.85rem;"
+                   id="direct-link" value="{{ request.scheme }}://{{ request.get_host }}/surveys/{{ survey.uuid }}/">
+            <button class="btn btn-sm btn-outline-secondary" title="Copy link" onclick="copyLink(this, document.getElementById('direct-link').value)">
+                <i class="fas fa-copy"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" title="QR code" onclick="showQr(document.getElementById('direct-link').value)">
+                <i class="fas fa-qrcode"></i>
+            </button>
+        </div>
+    </div>
+
     <!-- Create Tracking Link -->
     <div class="share-section">
-        <h6>Create Tracking Link</h6>
+        <h6>Track where responses come from</h6>
         <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem;">
-            Add UTM parameters to track where your survey responses come from.
-            Share the generated link via email, social media, or print it as a QR code.
+            Make a separate link per channel — newsletter, Instagram, a printed poster.
+            Every response that arrives through it is tagged with its source, so you can compare
+            channels in <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">Results&nbsp;→&nbsp;Traffic&nbsp;Sources</a>.
         </p>
         <form method="post">
             {% csrf_token %}
@@ -130,27 +212,19 @@
                 {% endfor %}
             </tbody>
         </table>
+        <div class="share-monitor">
+            <i class="fas fa-chart-line"></i>
+            <div>See how each link performs — started, completed and completion rate per source —
+            in <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">Results&nbsp;→&nbsp;Traffic&nbsp;Sources</a>.</div>
+        </div>
         {% else %}
         <p style="color:#9ca3af;font-size:0.9rem;text-align:center;padding:2rem 0;">
-            No tracking links yet. Create one above to start tracking campaign performance.
+            No tracking links yet. Create one above, then watch each source's performance in
+            <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">Results&nbsp;→&nbsp;Traffic&nbsp;Sources</a>.
         </p>
         {% endif %}
     </div>
-
-    <!-- Plain survey link -->
-    <div class="share-section">
-        <h6>Direct Link</h6>
-        <div style="display:flex;align-items:center;gap:0.5rem;">
-            <input type="text" readonly class="form-control" style="font-family:monospace;font-size:0.85rem;"
-                   id="direct-link" value="{{ request.scheme }}://{{ request.get_host }}/surveys/{{ survey.uuid }}/">
-            <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(this, document.getElementById('direct-link').value)">
-                <i class="fas fa-copy"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="showQr(document.getElementById('direct-link').value)">
-                <i class="fas fa-qrcode"></i>
-            </button>
-        </div>
-    </div>
+    {% endif %}
 </div>
 
 <!-- QR Modal -->
@@ -163,6 +237,23 @@
 </div>
 
 <script>
+function publishFromShare(btn) {
+    if (btn) { btn.disabled = true; btn.textContent = 'Publishing…'; }
+    var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+    var fd = new FormData();
+    fd.append('status', 'published');
+    fetch('{% url "editor_survey_transition" survey.uuid %}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': token, 'HX-Request': 'true' },
+        body: fd
+    }).then(function(r) {
+        if (r.ok) { location.reload(); return; }
+        if (btn) { btn.disabled = false; btn.textContent = 'Publish — try again'; }
+    }).catch(function() {
+        if (btn) { btn.disabled = false; btn.textContent = 'Publish — try again'; }
+    });
+}
+
 function copyLink(btn, url) {
     navigator.clipboard.writeText(url).then(function() {
         var icon = btn.querySelector('i');

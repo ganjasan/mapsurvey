@@ -18889,3 +18889,187 @@ class PublicResultsPreviewTest(TestCase):
         self.client.login(username="prpoutsider", password="pw12345")
         r = self.client.get(self.base + "preview/")
         self.assertIn(r.status_code, (302, 403, 404))
+
+
+class RequiredValidationRenderTest(TestCase):
+    """The survey-answering form renders the client-side required-validation scaffolding."""
+
+    def setUp(self):
+        self.client = Client()
+        self.org = _make_org()
+        self.survey = SurveyHeader.objects.create(
+            name="reqval_survey",
+            organization=self.org,
+            redirect_url="/thanks/",
+            status="published",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="Only Section", code="S1", is_head=True,
+        )
+        self.required_q = Question.objects.create(
+            survey_section=self.section, name="Agree?", input_type="choice",
+            choices=[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}],
+            required=True, order_number=1,
+        )
+        self.optional_q = Question.objects.create(
+            survey_section=self.section, name="Comment", input_type="text",
+            required=False, order_number=2,
+        )
+
+    def test_form_has_novalidate_and_summary(self):
+        """
+        GIVEN a published survey section
+        WHEN a respondent opens it
+        THEN the form is novalidate and the required-summary banner exists
+        """
+        response = self.client.get("/surveys/reqval_survey/s1/")
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("novalidate", html)
+        self.assertIn('id="required-summary"', html)
+        # translated inline-message string is exposed to the JS on the form
+        self.assertIn("data-msg-required", html)
+
+    def test_only_required_question_card_is_marked(self):
+        """
+        GIVEN a section with one required and one optional question
+        WHEN it renders
+        THEN exactly one question card carries data-required="true"
+        """
+        import re
+        html = self.client.get("/surveys/reqval_survey/s1/").content.decode()
+        card_tags = re.findall(r'<div class="question-card[^>]*>', html)
+        self.assertEqual(len(card_tags), 2)  # one required + one optional
+        marked = [t for t in card_tags if 'data-required="true"' in t]
+        self.assertEqual(len(marked), 1)
+
+
+class EditorPreviewFinishButtonTest(TestCase):
+    """The editor section preview shows navigation that makes sense without a live session."""
+
+    def setUp(self):
+        self.org = _make_org()
+        self.user = User.objects.create_user(username="prevu", password="pass")
+        Membership.objects.create(user=self.user, organization=self.org, role="owner")
+        self.client.login(username="prevu", password="pass")
+        self.survey = SurveyHeader.objects.create(
+            name="prev_survey", visibility="private", organization=self.org,
+        )
+        self.only_section = SurveySection.objects.create(
+            survey_header=self.survey, name="only", title="Only", code="O1", is_head=True,
+        )
+
+    def test_last_section_preview_shows_disabled_finish(self):
+        """
+        GIVEN a single-section survey previewed in the editor
+        WHEN the last section renders in preview mode
+        THEN a disabled Finish button is shown (not a live submit)
+        """
+        response = self.client.get(f"/editor/surveys/{self.survey.uuid}/preview/only/")
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("disabled", html)
+        self.assertIn("Finish", html)
+        # preview must not offer a real submit button for the last section
+        self.assertNotIn('type="submit" class="btn btn-primary next_button"', html)
+
+    def test_non_last_section_preview_links_to_next(self):
+        """
+        GIVEN a two-section survey previewed in the editor
+        WHEN the first section renders in preview mode
+        THEN Next is a link to the next section's preview, not a submit
+        """
+        second = SurveySection.objects.create(
+            survey_header=self.survey, name="two", title="Two", code="O2",
+        )
+        self.only_section.next_section = second
+        self.only_section.save(update_fields=["next_section"])
+        second.prev_section = self.only_section
+        second.save(update_fields=["prev_section"])
+
+        html = self.client.get(f"/editor/surveys/{self.survey.uuid}/preview/only/").content.decode()
+        self.assertIn("preview/two/", html)
+
+
+class SharePublishGateTest(TestCase):
+    """The Share page gates public links behind publish state (backlog task 85)."""
+
+    def setUp(self):
+        self.client = Client()
+        self.org = _make_org('GateOrg')
+        self.owner = User.objects.create_user('gate_owner', password='pw')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='gatesurvey', organization=self.org, created_by=self.owner, status='draft',
+        )
+        # publishable structure: a head section with a question
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='S1', code='S1', is_head=True,
+        )
+        Question.objects.create(
+            survey_section=self.section, name='Q1', input_type='text', order_number=1,
+        )
+
+    def _login(self, user):
+        self.client.force_login(user)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+    def _share_html(self, survey=None):
+        survey = survey or self.survey
+        return self.client.get(f'/editor/surveys/{survey.uuid}/share/').content.decode()
+
+    def test_draft_hides_links_and_shows_publish(self):
+        """
+        GIVEN a draft survey with publishable structure
+        WHEN its owner opens Share
+        THEN the copyable links are hidden and an inline Publish control is shown
+        """
+        self._login(self.owner)
+        html = self._share_html()
+        self.assertIn('still a Draft', html)
+        self.assertIn('publishFromShare(this)', html)   # inline gate button (not the header widget)
+        self.assertNotIn('id="direct-link"', html)
+
+    def test_published_shows_links_no_banner(self):
+        """
+        GIVEN a published survey
+        WHEN its owner opens Share
+        THEN the shareable links render and no publish banner is shown
+        """
+        self.survey.status = 'published'
+        self.survey.save(update_fields=['status'])
+        self._login(self.owner)
+        html = self._share_html()
+        self.assertIn('id="direct-link"', html)
+        self.assertNotIn('still a Draft', html)
+
+    def test_non_owner_editor_sees_no_publish(self):
+        """
+        GIVEN a draft survey and a non-owner editor collaborator
+        WHEN the editor opens Share
+        THEN no inline Publish control is shown, only a hint to ask the owner
+        """
+        editor = User.objects.create_user('gate_editor', password='pw')
+        Membership.objects.create(user=editor, organization=self.org, role='editor')
+        SurveyCollaborator.objects.create(user=editor, survey=self.survey, role='editor')
+        self._login(editor)
+        html = self._share_html()
+        self.assertNotIn('publishFromShare(this)', html)
+        self.assertIn('Ask the survey owner to publish', html)
+
+    def test_empty_draft_shows_blocked_reason(self):
+        """
+        GIVEN a draft survey with no questions
+        WHEN its owner opens Share
+        THEN the banner explains publishing is blocked, with no Publish button
+        """
+        empty = SurveyHeader.objects.create(
+            name='emptydraft', organization=self.org, created_by=self.owner, status='draft',
+        )
+        self._login(self.owner)
+        html = self._share_html(empty)
+        self.assertIn('still a Draft', html)
+        self.assertNotIn('publishFromShare(this)', html)
+        self.assertIn('at least one section with questions', html)

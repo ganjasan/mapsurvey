@@ -902,6 +902,23 @@ function switchAnalyticsTab(tab) {
     }
 }
 
+/* ── Deep-link into a Performance section (e.g. #traffic-sources from Share) ── */
+var _PERF_ANCHORS = ['traffic-sources'];
+function _openPerformanceHash() {
+    var id = (location.hash || '').replace('#', '');
+    if (!id || _PERF_ANCHORS.indexOf(id) === -1) return;
+    switchAnalyticsTab('performance');
+    // Recompute after the pane's charts settle; offset for the sticky header.
+    setTimeout(function() {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var y = el.getBoundingClientRect().top + window.pageYOffset - 70;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+    }, 150);
+}
+document.addEventListener('DOMContentLoaded', _openPerformanceHash);
+window.addEventListener('hashchange', _openPerformanceHash);
+
 /* ── Save/restore layout ───────────────────────────────────────── */
 var _dataLayoutKey = 'dataLayout_{{ survey.uuid }}';
 
