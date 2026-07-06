@@ -25,23 +25,26 @@ when the published survey is read-only the bar goes amber and carries the
 "edit a draft" action.{% endcomment %}
 {% if is_read_only and not survey.is_draft_copy %}
 <div class="pr-ctxbar build-ctxbar" style="flex-shrink:0;">
-    <span class="ico"><i class="fas fa-lock"></i></span>
-    <div>
+    <div style="flex:1;display:flex;align-items:center;gap:.6rem;min-width:0;">
+        <span class="ico"><i class="fas fa-lock"></i></span>
         <div class="t">Build <span class="ro-pill">read-only</span></div>
-        <div class="s">This published survey can't be edited — work on a draft copy.</div>
     </div>
-    <span style="flex:1;"></span>
-    {% if draft_copy %}
-    <a class="btn btn-sm btn-outline-dark" href="{% url 'editor_survey_detail' draft_copy.uuid %}">Go to draft &rarr;</a>
-    {% elif show_edit_published %}
-    <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" class="d-inline">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-sm btn-primary">Create a draft copy</button>
-    </form>
-    {% endif %}
-    <a class="btn btn-sm btn-outline-secondary" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
-        <i class="fas fa-external-link-alt"></i> Preview
-    </a>
+    <div style="display:flex;align-items:center;gap:.6rem;flex-shrink:0;">
+        <span class="s">This published survey can't be edited.</span>
+        {% if draft_copy %}
+        <a class="btn btn-sm btn-primary" href="{% url 'editor_survey_detail' draft_copy.uuid %}">Go to draft &rarr;</a>
+        {% elif show_edit_published %}
+        <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-primary">Draft new version</button>
+        </form>
+        {% endif %}
+    </div>
+    <div style="flex:1;display:flex;justify-content:flex-end;">
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
+            <i class="fas fa-external-link-alt"></i> Preview
+        </a>
+    </div>
 </div>
 {% else %}
 <div class="pr-ctxbar build-ctxbar" style="flex-shrink:0;">
