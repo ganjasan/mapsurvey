@@ -18,10 +18,11 @@ from django.core.cache import cache
 from django.utils import timezone
 
 from .models import (
-    SurveyHeader, SurveySession, Answer,
+    SurveySession, Answer,
     PUBLIC_RESULTS_SNAPSHOT_VERSION,
 )
 from .analytics import _compute_histogram
+from .versioning import canonical_of, family_ids
 
 # Live aggregates are cached briefly so viral traffic does not hammer the DB.
 LIVE_CACHE_TTL = 60
@@ -37,7 +38,7 @@ GEO_INPUT_TYPES = ('point', 'line', 'polygon')
 
 def canonical_survey(survey):
     """Return the canonical survey for any version (or the survey itself)."""
-    return survey.canonical_survey or survey
+    return canonical_of(survey)
 
 
 def _localize(value, lang):
@@ -63,13 +64,7 @@ class PublicResultsService:
     # ---- clean session resolution -------------------------------------
 
     def _collect_survey_ids(self):
-        ids = {self.canonical.id}
-        ids.update(
-            SurveyHeader.objects
-            .filter(canonical_survey=self.canonical)
-            .values_list('id', flat=True)
-        )
-        return ids
+        return family_ids(self.canonical)
 
     def _collect_clean_session_ids(self):
         return set(
@@ -161,8 +156,17 @@ class PublicResultsService:
         return payload
 
     def _answers(self, question):
+        """Answers for the question's whole lineage across the version family.
+
+        The block's question FK may point at a current OR an archived question
+        object (publish_draft moves old questions to the archived header and
+        clones new ones), so a single-object filter silently loses one side.
+        Lineage = same code + input_type within the family.
+        """
         return Answer.objects.filter(
-            question=question,
+            question__code=question.code,
+            question__input_type=question.input_type,
+            question__survey_section__survey_header_id__in=self._survey_ids,
             survey_session_id__in=self._clean_ids,
         )
 

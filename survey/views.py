@@ -499,17 +499,31 @@ def editor(request):
 	if not show_archived:
 		survey_list = survey_list.exclude(status='archived')
 
-	# Annotate with session count
-	survey_list = survey_list.annotate(
-		session_count=Count('surveysession', distinct=True),
-	)
 	# Reverse OneToOne used by the "Results live" card chip — avoid N+1
 	survey_list = survey_list.select_related('public_results_page')
 
-	# Compute completion KPIs per survey
+	# Session counts span the whole version family: publish_draft() moves
+	# sessions onto archived headers, so a per-header Count would collapse to
+	# ~0 right after publishing. One grouped query over all families.
+	survey_list = list(survey_list)
+	from django.db.models.functions import Coalesce
+	family_counts = dict(
+		SurveySession.objects
+		.filter(
+			Q(survey__in=[s.id for s in survey_list])
+			| Q(survey__canonical_survey_id__in=[s.id for s in survey_list])
+		)
+		.annotate(fam=Coalesce('survey__canonical_survey_id', 'survey_id'))
+		.values('fam')
+		.annotate(n=Count('id'))
+		.values_list('fam', 'n')
+	)
+
+	# Compute completion KPIs per survey (family-wide via the service scope)
 	from .analytics import SurveyAnalyticsService
 	surveys_with_kpi = []
 	for survey in survey_list:
+		survey.session_count = family_counts.get(survey.id, 0)
 		overview = SurveyAnalyticsService(survey).get_overview()
 		survey.completed_count = overview['completed_count']
 		survey.completion_rate = overview['completion_rate']

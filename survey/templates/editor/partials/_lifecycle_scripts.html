@@ -35,6 +35,7 @@ Draft-publish modals render only when `show_draft_actions` is set (Build view).
         <div class="modal-body" id="publishDraftModalBody">
             <p>Publish this draft as v{{ survey.published_version.version_number|add:1 }}?</p>
             <p class="text-muted">Active respondents will continue on the current version.</p>
+            <p class="text-muted"><i class="fas fa-chart-bar mr-1"></i>Nothing disappears: all existing responses stay visible in Results and on the public results page under <strong>All versions</strong>.</p>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -46,7 +47,7 @@ Draft-publish modals render only when `show_draft_actions` is set (Build view).
     <div class="modal-dialog"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title text-warning">Compatibility Issues Found</h5><button type="button" class="close" data-dismiss="modal"><span>&times;</span></button></div>
         <div class="modal-body"><p>The following breaking changes were detected:</p><ul id="compatibilityIssuesList"></ul>
-            <p class="text-muted">Force-publishing will preserve old answers in the archived version.</p></div>
+            <p class="text-muted">Force-publishing keeps every old answer: changed or removed questions move to the <strong>Archived questions</strong> group in Results → All versions, so nothing is lost — the old and new answers just report separately.</p></div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
             <button type="button" class="btn btn-warning" onclick="doPublishDraft(true)">Force Publish</button>

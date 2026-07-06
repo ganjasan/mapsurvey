@@ -11,7 +11,7 @@ from django.views.decorators.http import require_POST
 
 from .models import (
     SurveyHeader, SurveySession, SurveySection, SurveySectionTranslation,
-    Question, QuestionTranslation, SurveyCollaborator,
+    Question, QuestionTranslation, SurveyCollaborator, Answer,
     Membership, SURVEY_ROLE_CHOICES, BASEMAP_CHOICES,
 )
 from .cloning import clone_question, clone_section
@@ -24,8 +24,60 @@ from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role,
 )
-from .versioning import clone_survey_for_draft, check_draft_compatibility, publish_draft, IncompatibleDraftError
+from .versioning import (
+    clone_survey_for_draft, check_draft_compatibility, publish_draft,
+    IncompatibleDraftError, family_ids,
+)
 from .audit import audit
+
+
+def _guard_choice_codes(question, new_choices):
+    """Prevent silently rebinding a historically answered choice code.
+
+    Cross-version analytics merges choice answers by code, so a code that
+    family answers used but that is absent from the question's current set
+    must never be handed to a NEW choice — the old and new meanings would
+    silently merge. Offending new entries get a fresh code above everything
+    ever used in the lineage. Existing codes stay untouched (renaming an
+    existing choice is a normal compatible edit).
+    """
+    if not isinstance(new_choices, list) or not question.code:
+        return new_choices
+
+    old_codes = {c.get('code') for c in (question.choices or []) if isinstance(c, dict)}
+
+    answered = set()
+    lineage_selected = (
+        Answer.objects
+        .filter(
+            question__code=question.code,
+            question__input_type=question.input_type,
+            question__survey_section__survey_header_id__in=family_ids(
+                question.survey_section.survey_header
+            ),
+        )
+        .exclude(selected_choices__isnull=True)
+        .values_list('selected_choices', flat=True)
+    )
+    for selected in lineage_selected:
+        answered.update(selected or [])
+    if not answered:
+        return new_choices
+
+    all_known = answered | old_codes | {
+        c.get('code') for c in new_choices if isinstance(c, dict)
+    }
+    numeric = [c for c in all_known if isinstance(c, int)]
+    next_code = (max(numeric) + 1) if numeric else 1
+
+    for choice in new_choices:
+        if not isinstance(choice, dict):
+            continue
+        code = choice.get('code')
+        if code in answered and code not in old_codes:
+            choice['code'] = next_code
+            next_code += 1
+    return new_choices
 
 
 def _check_structural_edit_allowed(survey):
@@ -517,7 +569,7 @@ def editor_question_create(request, survey_uuid, section_id):
             # Handle choices
             choices_json = request.POST.get('choices_json', '').strip()
             if choices_json:
-                question.choices = json.loads(choices_json)
+                question.choices = _guard_choice_codes(question, json.loads(choices_json))
             question.save()
             _save_question_translations(request, question, survey)
             response = render(request, 'editor/partials/question_list_item.html', {
@@ -557,7 +609,7 @@ def editor_question_edit(request, survey_uuid, question_id):
             q = form.save(commit=False)
             choices_json = request.POST.get('choices_json', '').strip()
             if choices_json:
-                q.choices = json.loads(choices_json)
+                q.choices = _guard_choice_codes(question, json.loads(choices_json))
             elif q.input_type not in ('choice', 'multichoice', 'range', 'rating'):
                 q.choices = None
             # Validation settings per question type
@@ -725,7 +777,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
             question.order_number = (max_order or 0) + 1
             choices_json = request.POST.get('choices_json', '').strip()
             if choices_json:
-                question.choices = json.loads(choices_json)
+                question.choices = _guard_choice_codes(question, json.loads(choices_json))
             question.save()
             _save_question_translations(request, question, survey)
             # Return the parent question item (includes sub-questions)
