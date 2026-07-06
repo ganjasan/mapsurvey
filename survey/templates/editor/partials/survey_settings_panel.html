@@ -123,16 +123,6 @@
         </div>
       </div>
 
-      <div class="pr-card">
-        <h6>Thanks page</h6>
-        <div class="pr-field">
-          <label for="{{ form.thanks_html.id_for_label }}">{{ form.thanks_html.label }}</label>
-          {{ form.thanks_html }}
-          {% if form.thanks_html.help_text %}<div class="pr-help">{{ form.thanks_html.help_text }}</div>{% endif %}
-          {% for error in form.thanks_html.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
-        </div>
-      </div>
-
       <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
       <noscript><button type="submit" class="btn btn-primary btn-sm">Save Settings</button></noscript>
     </form>

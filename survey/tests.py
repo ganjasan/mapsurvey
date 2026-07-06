@@ -14339,16 +14339,16 @@ class ViralLoopBrandingTest(TestCase):
         self.assertContains(resp, "Made with")
         self.assertContains(resp, "utm_medium=survey")
 
-    def test_badge_hidden_when_disabled(self):
+    def test_badge_mandatory_even_when_flag_off(self):
         """
-        GIVEN a survey with branding turned off (e.g. gov/B2B clean look)
+        GIVEN a survey with show_branding turned off (a future paid-tier flag)
         WHEN the thanks page is rendered
-        THEN no CTA is shown
+        THEN the CTA is STILL shown — branding is mandatory for the free tier
         """
         self.survey.show_branding = False
         self.survey.save(update_fields=["show_branding"])
         resp = Client().get(f"/surveys/{self.survey.name}/thanks/")
-        self.assertNotContains(resp, "Made with")
+        self.assertContains(resp, "Made with")
 
     def test_serialization_includes_show_branding(self):
         """
@@ -14360,6 +14360,96 @@ class ViralLoopBrandingTest(TestCase):
         self.survey.show_branding = False
         self.survey.save(update_fields=["show_branding"])
         self.assertEqual(serialize_survey_to_dict(self.survey)["show_branding"], False)
+
+
+class ThanksPageEditorTest(TestCase):
+    """WYSIWYG thanks-page editor panel: rendering, per-language sanitized save."""
+
+    def setUp(self):
+        self.org = _make_org("ThanksOrg")
+        self.user = User.objects.create_user(username="thx_owner", password="pass")
+        Membership.objects.create(user=self.user, organization=self.org, role="owner")
+        self.survey = SurveyHeader.objects.create(
+            name="thx_survey", organization=self.org, status="published",
+            available_languages=["en", "de"],
+        )
+        SurveySection.objects.create(name="s1", survey_header=self.survey, is_head=True)
+        self.client.login(username="thx_owner", password="pass")
+
+    def test_thanks_panel_renders_editor(self):
+        """
+        GIVEN an owner
+        WHEN they GET the thanks panel
+        THEN the WYSIWYG editor and the mandatory branding preview render
+        """
+        r = self.client.get(f"/editor/surveys/{self.survey.uuid}/thanks-panel/")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "thanks-quill")
+        self.assertContains(r, "Thanks page")
+        self.assertContains(r, "Made with")
+
+    def test_panel_thanks_loads_editor(self):
+        """
+        GIVEN an owner
+        WHEN they open the survey with ?panel=thanks
+        THEN the pinned Thanks entry is active and the thanks panel is wired to load
+        """
+        r = self.client.get(f"/editor/surveys/{self.survey.uuid}/?panel=thanks")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "thanksPinnedItem")
+        self.assertContains(r, "thanks-panel")
+
+    def test_save_stores_per_language_and_sanitizes(self):
+        """
+        GIVEN an owner editing a two-language survey
+        WHEN they save thanks content with disallowed markup
+        THEN each language's HTML is stored sanitized (scripts/handlers stripped)
+        """
+        r = self.client.post(
+            f"/editor/surveys/{self.survey.uuid}/thanks-panel/",
+            {"thanks_en": "<h2>Thanks</h2><script>bad()</script>",
+             "thanks_de": '<p>Danke <a href="/x" onclick="y()">Link</a></p>'},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertJSONEqual(r.content, {"ok": True})
+        self.survey.refresh_from_db()
+        th = self.survey.thanks_html
+        self.assertEqual(th["en"], "<h2>Thanks</h2>")
+        self.assertNotIn("onclick", th["de"])
+        self.assertIn('rel="noopener noreferrer"', th["de"])
+
+    def test_plain_post_redirects(self):
+        """
+        GIVEN a non-XHR submit
+        WHEN thanks content is saved
+        THEN the response redirects back to the thanks panel
+        """
+        r = self.client.post(f"/editor/surveys/{self.survey.uuid}/thanks-panel/", {"thanks_en": "<p>Ty</p>"})
+        self.assertEqual(r.status_code, 302)
+        self.assertIn("panel=thanks", r.url)
+
+    def test_settings_panel_has_no_thanks_field(self):
+        """
+        GIVEN the thanks page moved to its own editor
+        WHEN the Survey settings panel is rendered
+        THEN it no longer contains the raw thanks_html field
+        """
+        r = self.client.get(f"/editor/surveys/{self.survey.uuid}/?panel=settings")
+        self.assertEqual(r.status_code, 200)
+        self.assertNotContains(r, "id_thanks_html")
+
+    def test_sanitize_helper(self):
+        """
+        GIVEN raw WYSIWYG HTML
+        WHEN sanitize_thanks_html runs
+        THEN allow-listed tags stay and scripts/event-handlers are stripped
+        """
+        from survey.views import sanitize_thanks_html
+        out = sanitize_thanks_html('<h1>H</h1><script>x</script><a href="/a" onclick="e">L</a>')
+        self.assertIn("<h1>H</h1>", out)
+        self.assertNotIn("<script>", out)
+        self.assertNotIn("onclick", out)
 
 
 class SectionViewHtmxTrackingTest(TestCase):

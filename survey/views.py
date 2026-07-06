@@ -1451,6 +1451,32 @@ def survey_thanks(request, survey_slug):
 	})
 
 
+# Allow-list for creator-authored thanks-page HTML (WYSIWYG output). The thanks
+# page renders this |safe to public respondents, so it is sanitized on save.
+THANKS_HTML_ALLOWED_TAGS = {
+	'h1', 'h2', 'h3', 'h4', 'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's',
+	'a', 'ul', 'ol', 'li', 'blockquote', 'span', 'div',
+}
+THANKS_HTML_ALLOWED_ATTRS = {'a': {'href', 'title', 'target'}}  # rel is managed by link_rel
+
+
+def sanitize_thanks_html(html):
+	"""Sanitize creator WYSIWYG HTML against the thanks-page allow-list.
+
+	Strips scripts, event handlers, and unknown tags/attributes; forces safe
+	rel on links. Returns '' for falsy input.
+	"""
+	if not html:
+		return ''
+	import nh3
+	return nh3.clean(
+		str(html),
+		tags=THANKS_HTML_ALLOWED_TAGS,
+		attributes=THANKS_HTML_ALLOWED_ATTRS,
+		link_rel='noopener noreferrer',
+	)
+
+
 def resolve_thanks_html(thanks_html, lang):
 	"""Resolve thanks_html content by language.
 

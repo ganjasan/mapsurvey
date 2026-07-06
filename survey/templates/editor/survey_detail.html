@@ -125,6 +125,15 @@ when the published survey is read-only the bar goes amber and carries the
             </button>
             {% endif %}
         </div>
+        {% if effective_role == 'owner' or effective_role == 'editor' %}
+        <div class="sidebar-pinned" style="border-top:1px solid var(--border-color);border-bottom:none;margin-top:auto;">
+            <a class="sidebar-pinned-item{% if thanks_panel_active %} active{% endif %}"
+               id="thanksPinnedItem"
+               href="{% url 'editor_survey_detail' survey.uuid %}?panel=thanks">
+                <i class="fas fa-heart"></i> <span>Thanks page</span> <i class="fas fa-chevron-right chev"></i>
+            </a>
+        </div>
+        {% endif %}
     </aside>
 
     <!-- Resize handle: sidebar ↔ main -->
@@ -135,6 +144,13 @@ when the published survey is read-only the bar goes amber and carries the
         {% if settings_panel_active %}
         <div id="section-content"
              hx-get="{% url 'editor_survey_settings_panel' survey.uuid %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <div style="text-align:center;padding:2rem;color:#9ca3af;">Loading...</div>
+        </div>
+        {% elif thanks_panel_active %}
+        <div id="section-content"
+             hx-get="{% url 'editor_survey_thanks_panel' survey.uuid %}"
              hx-trigger="load"
              hx-swap="innerHTML">
             <div style="text-align:center;padding:2rem;color:#9ca3af;">Loading...</div>
@@ -286,6 +302,8 @@ document.addEventListener('DOMContentLoaded', function() {
         item.classList.add('active');
         var settingsPinned = document.getElementById('settingsPinnedItem');
         if (settingsPinned) settingsPinned.classList.remove('active');
+        var thanksPinned = document.getElementById('thanksPinnedItem');
+        if (thanksPinned) thanksPinned.classList.remove('active');
         // Load section detail via HTMX
         htmx.ajax('GET', '/editor/surveys/{{ survey.uuid }}/sections/' + sectionId + '/', {
             target: '#section-content',
@@ -302,15 +320,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // reload (same UX as clicking a section); the href stays a real deep
     // link (?panel=settings) for no-JS/bookmark use.
     var settingsPinnedItem = document.getElementById('settingsPinnedItem');
+    var thanksPinnedItem = document.getElementById('thanksPinnedItem');
+    function activatePinned(item, url) {
+        document.querySelectorAll('.section-item').forEach(function(el) { el.classList.remove('active'); });
+        if (settingsPinnedItem) settingsPinnedItem.classList.remove('active');
+        if (thanksPinnedItem) thanksPinnedItem.classList.remove('active');
+        item.classList.add('active');
+        htmx.ajax('GET', url, { target: '#section-content', swap: 'innerHTML' });
+    }
     if (settingsPinnedItem) {
         settingsPinnedItem.addEventListener('click', function(e) {
             e.preventDefault();
-            document.querySelectorAll('.section-item').forEach(function(el) { el.classList.remove('active'); });
-            settingsPinnedItem.classList.add('active');
-            htmx.ajax('GET', '{% url "editor_survey_settings_panel" survey.uuid %}', {
-                target: '#section-content',
-                swap: 'innerHTML'
-            });
+            activatePinned(settingsPinnedItem, '{% url "editor_survey_settings_panel" survey.uuid %}');
+        });
+    }
+    if (thanksPinnedItem) {
+        thanksPinnedItem.addEventListener('click', function(e) {
+            e.preventDefault();
+            activatePinned(thanksPinnedItem, '{% url "editor_survey_thanks_panel" survey.uuid %}');
         });
     }
 

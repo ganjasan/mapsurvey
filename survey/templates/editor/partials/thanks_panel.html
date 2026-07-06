@@ -1,0 +1,124 @@
+{% load i18n %}
+<div class="pr-panel-flush">
+
+  <div class="pr-ctxbar">
+    <span class="ico"><i class="fas fa-heart"></i></span>
+    <div><div class="t">Thanks page</div><div class="s">The last screen respondents see after they submit</div></div>
+    <span style="flex:1;"></span>
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'survey_thanks' survey.uuid %}" target="_blank"><i class="fas fa-external-link-alt"></i> Preview</a>
+  </div>
+
+  <div class="pr-scroll">
+
+    <form id="thanksForm" method="post" action="{% url 'editor_survey_thanks_panel' survey.uuid %}">
+      {% csrf_token %}
+      <div class="pr-card">
+        <h6>Message</h6>
+        <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">Written just how respondents will see it — no HTML needed.</div>
+        {% if langs|length > 1 %}
+        <div class="thanks-lang-tabs" style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.6rem;">
+          {% for lang in langs %}
+          <button type="button" class="thanks-lang-tab{% if forloop.first %} active{% endif %}" data-lang="{{ lang }}">{{ lang|upper }}</button>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <div id="thanks-quill"></div>
+        {% for lang in langs %}
+        <input type="hidden" name="thanks_{{ lang }}" id="thanks-input-{{ lang }}">
+        {% endfor %}
+        <div class="autosave-status" data-autosave-status style="margin-top:.6rem;"><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
+        <noscript><button type="submit" class="btn btn-primary btn-sm mt-2">Save</button></noscript>
+      </div>
+    </form>
+
+    <div class="pr-card">
+      <h6>Always shown below your message</h6>
+      <div class="pr-help" style="margin-top:0;margin-bottom:.8rem;">Every thanks page ends with a share action and the "Made with Mapsurvey" link — these are fixed and can't be removed.</div>
+      <div style="text-align:center;opacity:.7;">
+        <span class="btn btn-outline-primary btn-sm" style="pointer-events:none;"><i class="fas fa-share-alt mr-1"></i> Share this survey</span>
+      </div>
+      {% include "partials/_made_with_mapsurvey.html" with medium="thanks" %}
+    </div>
+
+  </div>
+
+  {{ thanks_by_lang|json_script:"thanks-data" }}
+  {{ langs|json_script:"thanks-langs" }}
+  <script>
+  (function() {
+      if (typeof Quill === 'undefined') return;
+      var langs = JSON.parse(document.getElementById('thanks-langs').textContent);
+      var data = JSON.parse(document.getElementById('thanks-data').textContent);
+      var current = langs[0];
+
+      var quill = new Quill('#thanks-quill', {
+          theme: 'snow',
+          placeholder: 'Thank you! Your responses have been recorded…',
+          modules: { toolbar: [
+              [{ header: [1, 2, 3, false] }],
+              ['bold', 'italic', 'underline'],
+              ['link'],
+              [{ list: 'ordered' }, { list: 'bullet' }],
+              ['blockquote'],
+              ['clean']
+          ] }
+      });
+
+      function currentHtml() {
+          var h = quill.root.innerHTML;           // read-only
+          return (h === '<p><br></p>') ? '' : h;
+      }
+      function setHtml(html) {
+          // Load via Quill's own parser instead of touching innerHTML directly.
+          quill.setContents(quill.clipboard.convert({ html: html || '' }), 'silent');
+      }
+      function syncCurrent() {
+          data[current] = currentHtml();
+          var inp = document.getElementById('thanks-input-' + current);
+          if (inp) inp.value = data[current];
+      }
+      function loadLang(lang) {
+          current = lang;
+          setHtml(data[lang]);
+      }
+
+      // seed hidden inputs from stored data, then load the first language
+      langs.forEach(function(l) { var i = document.getElementById('thanks-input-' + l); if (i) i.value = data[l] || ''; });
+      loadLang(current);
+
+      // ── autosave (posts the form; server sanitizes) ──
+      var form = document.getElementById('thanksForm');
+      function debounce(fn, ms) { var t; return function() { clearTimeout(t); t = setTimeout(fn, ms); }; }
+      function setStatus(state) {
+          var el = form.querySelector('[data-autosave-status]'); if (!el) return;
+          var span = el.querySelector('span') || el;
+          el.classList.remove('is-error', 'is-saving');
+          if (state === 'saving') { span.textContent = 'Saving…'; el.classList.add('is-saving'); }
+          else if (state === 'saved') { span.textContent = 'Saved'; }
+          else if (state === 'error') { span.textContent = 'Not saved — retry'; el.classList.add('is-error'); }
+      }
+      function save() {
+          syncCurrent();
+          var fd = new FormData(form);
+          var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || fd.get('csrfmiddlewaretoken') || '';
+          setStatus('saving');
+          fetch(form.action, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': token }, body: fd })
+              .then(function(r) { if (!r.ok) return Promise.reject(r); return r.json(); })
+              .then(function() { setStatus('saved'); })
+              .catch(function() { setStatus('error'); });
+      }
+      var dsave = debounce(save, 700);
+
+      quill.on('text-change', function(delta, old, source) { if (source === 'user') { syncCurrent(); dsave(); } });
+
+      document.querySelectorAll('.thanks-lang-tab').forEach(function(tab) {
+          tab.addEventListener('click', function() {
+              syncCurrent();
+              document.querySelectorAll('.thanks-lang-tab').forEach(function(t) { t.classList.remove('active'); });
+              tab.classList.add('active');
+              loadLang(tab.getAttribute('data-lang'));
+          });
+      });
+  })();
+  </script>
+</div>

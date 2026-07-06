@@ -132,9 +132,13 @@ def editor_survey_detail(request, survey_uuid):
         request.GET.get('panel') == 'settings'
         and request.effective_survey_role == 'owner'
     )
+    thanks_panel_active = (
+        request.GET.get('panel') == 'thanks'
+        and request.effective_survey_role in ('editor', 'owner')
+    )
 
     current_section = None
-    if not settings_panel_active:
+    if not settings_panel_active and not thanks_panel_active:
         current_section_id = request.GET.get('section')
         if current_section_id:
             current_section = SurveySection.objects.filter(
@@ -168,6 +172,7 @@ def editor_survey_detail(request, survey_uuid):
         'sections': sections,
         'current_section': current_section,
         'settings_panel_active': settings_panel_active,
+        'thanks_panel_active': thanks_panel_active,
         'questions': questions,
         'effective_role': request.effective_survey_role,
         'can_edit': can_edit and not is_read_only,
@@ -224,6 +229,41 @@ def editor_survey_settings_panel(request, survey_uuid):
         'form': form,
         'effective_role': request.effective_survey_role,
         'basemap_choices': BASEMAP_CHOICES,
+    })
+
+
+@survey_permission_required('editor')
+def editor_survey_thanks_panel(request, survey_uuid):
+    """WYSIWYG editor for the survey's thanks page, as an HTMX-swappable partial
+    for the pinned "Thanks page" entry (the last Build step). Per-language HTML
+    is sanitized on save and stored in SurveyHeader.thanks_html; autosaves.
+    """
+    from .views import sanitize_thanks_html
+    survey = request.survey
+    langs = list(survey.available_languages) or ['en']
+
+    if request.method == 'POST':
+        thanks = {}
+        for lang in langs:
+            cleaned = sanitize_thanks_html(request.POST.get('thanks_{}'.format(lang), ''))
+            if cleaned:
+                thanks[lang] = cleaned
+        survey.thanks_html = thanks
+        survey.save(update_fields=['thanks_html'])
+        if _is_ajax(request):
+            return JsonResponse({'ok': True})
+        from django.urls import reverse
+        return redirect('{}?panel=thanks'.format(reverse('editor_survey_detail', args=[survey.uuid])))
+
+    existing = survey.thanks_html or {}
+    if isinstance(existing, str):
+        existing = {langs[0]: existing}
+    thanks_by_lang = {lang: existing.get(lang, '') for lang in langs}
+    return render(request, 'editor/partials/thanks_panel.html', {
+        'survey': survey,
+        'langs': langs,
+        'thanks_by_lang': thanks_by_lang,
+        'effective_role': request.effective_survey_role,
     })
 
 
