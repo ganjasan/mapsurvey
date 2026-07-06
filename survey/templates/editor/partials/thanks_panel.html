@@ -104,7 +104,7 @@
           setStatus('saving');
           fetch(form.action, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': token }, body: fd })
               .then(function(r) { if (!r.ok) return Promise.reject(r); return r.json(); })
-              .then(function() { setStatus('saved'); })
+              .then(function() { setStatus('saved'); if (window.refreshBuildPreview) window.refreshBuildPreview(); })
               .catch(function() { setStatus('error'); });
       }
       var dsave = debounce(save, 700);

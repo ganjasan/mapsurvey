@@ -33,6 +33,7 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/settings/', editor_views.editor_survey_settings, name='editor_survey_settings'),
     path('editor/surveys/<uuid:survey_uuid>/settings-panel/', editor_views.editor_survey_settings_panel, name='editor_survey_settings_panel'),
     path('editor/surveys/<uuid:survey_uuid>/thanks-panel/', editor_views.editor_survey_thanks_panel, name='editor_survey_thanks_panel'),
+    path('editor/surveys/<uuid:survey_uuid>/thanks-preview/', editor_views.editor_survey_thanks_preview, name='editor_survey_thanks_preview'),
     path('editor/surveys/<uuid:survey_uuid>/settings/map-position/', editor_views.editor_survey_map_position, name='editor_survey_map_position'),
     path('editor/surveys/<uuid:survey_uuid>/sections/new/', editor_views.editor_section_create, name='editor_section_create'),
     path('editor/surveys/<uuid:survey_uuid>/sections/<int:section_id>/', editor_views.editor_section_detail, name='editor_section_detail'),

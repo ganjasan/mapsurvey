@@ -267,6 +267,24 @@ def editor_survey_thanks_panel(request, survey_uuid):
     })
 
 
+@survey_permission_required('viewer')
+def editor_survey_thanks_preview(request, survey_uuid):
+    """Editor-only render of the thanks page for the live-preview iframe.
+
+    Renders the same public thanks template in the requested language, but
+    gated on editor access (so draft/private surveys preview too) and with no
+    session side effects (unlike the public survey_thanks view).
+    """
+    from .views import resolve_thanks_html
+    survey = request.survey
+    lang = request.GET.get('lang') or (survey.available_languages[0] if survey.available_languages else 'en')
+    return render(request, 'survey_thanks.html', {
+        'survey': survey,
+        'thanks_html': resolve_thanks_html(survey.thanks_html, lang),
+        'lang': lang,
+    })
+
+
 # ─── Survey map position ─────────────────────────────────────────────────────
 
 @survey_permission_required('owner')

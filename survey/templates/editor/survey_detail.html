@@ -193,15 +193,9 @@ when the published survey is read-only the bar goes amber and carries the
                 <i class="fas fa-chevron-right"></i>
             </button>
         </div>
-        {% if current_section %}
         <iframe class="preview-frame" id="preview-frame"
-                src="{% url 'editor_section_preview' survey.uuid current_section.name %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}">
+                src="{% if thanks_panel_active %}{% url 'editor_survey_thanks_preview' survey.uuid %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}{% elif current_section %}{% url 'editor_section_preview' survey.uuid current_section.name %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}{% else %}about:blank{% endif %}">
         </iframe>
-        {% else %}
-        <div style="padding:2rem;text-align:center;color:#9ca3af;font-size:0.85rem;">
-            Preview will appear here when you add a section.
-        </div>
-        {% endif %}
     </aside>
 </div>
 </div><!-- /editor-content-wrapper -->
@@ -321,23 +315,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // link (?panel=settings) for no-JS/bookmark use.
     var settingsPinnedItem = document.getElementById('settingsPinnedItem');
     var thanksPinnedItem = document.getElementById('thanksPinnedItem');
-    function activatePinned(item, url) {
+    function activatePinned(item, url, previewUrl) {
         document.querySelectorAll('.section-item').forEach(function(el) { el.classList.remove('active'); });
         if (settingsPinnedItem) settingsPinnedItem.classList.remove('active');
         if (thanksPinnedItem) thanksPinnedItem.classList.remove('active');
         item.classList.add('active');
         htmx.ajax('GET', url, { target: '#section-content', swap: 'innerHTML' });
+        var iframe = document.getElementById('preview-frame');
+        if (iframe) iframe.src = previewUrl || 'about:blank';
     }
     if (settingsPinnedItem) {
         settingsPinnedItem.addEventListener('click', function(e) {
             e.preventDefault();
-            activatePinned(settingsPinnedItem, '{% url "editor_survey_settings_panel" survey.uuid %}');
+            activatePinned(settingsPinnedItem, '{% url "editor_survey_settings_panel" survey.uuid %}', 'about:blank');
         });
     }
     if (thanksPinnedItem) {
         thanksPinnedItem.addEventListener('click', function(e) {
             e.preventDefault();
-            activatePinned(thanksPinnedItem, '{% url "editor_survey_thanks_panel" survey.uuid %}');
+            activatePinned(thanksPinnedItem, '{% url "editor_survey_thanks_panel" survey.uuid %}', buildThanksPreviewUrl());
         });
     }
 
@@ -352,6 +348,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (lang) url += '?lang=' + lang;
         return url;
     }
+    function buildThanksPreviewUrl() {
+        var url = '/editor/surveys/{{ survey.uuid }}/thanks-preview/';
+        var lang = getPreviewLang();
+        if (lang) url += '?lang=' + lang;
+        return url;
+    }
+    // Let the thanks editor (loaded into #section-content) refresh the preview
+    // iframe after it autosaves.
+    window.refreshBuildPreview = function() { refreshPreview(); };
 
     // Refresh preview (debounced)
     var previewTimeout;

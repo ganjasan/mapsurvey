@@ -37,6 +37,14 @@
       it into `#section-content` and manages active state (mirror settings panel)
 - [x] 3.3 Remove the "Thanks page" card from `survey_settings_panel.html`
 - [x] 3.4 Load Quill CSS/JS (CDN) where the thanks panel needs it
+- [x] 3.5 Show the thanks page in the Build live-preview pane: editor-only
+      `editor_survey_thanks_preview` view + `thanks-preview/` URL (renders
+      `survey_thanks.html` in the requested lang, no session side effects, gated
+      on editor access so drafts/private preview too — the public `survey_thanks`
+      view is left untouched); the preview iframe always renders and points at the
+      thanks preview when the thanks panel is active; opening the thanks pinned
+      entry repoints the iframe, and the panel's autosave refreshes it via
+      `window.refreshBuildPreview`
 
 ## 4. Verification
 

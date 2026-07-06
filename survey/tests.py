@@ -14398,6 +14398,21 @@ class ThanksPageEditorTest(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "thanksPinnedItem")
         self.assertContains(r, "thanks-panel")
+        # the live-preview iframe points at the thanks preview
+        self.assertContains(r, "thanks-preview")
+
+    def test_thanks_preview_renders_saved_content(self):
+        """
+        GIVEN saved thanks content
+        WHEN the editor thanks-preview is rendered
+        THEN it shows the content in the requested language plus the branding
+        """
+        self.survey.thanks_html = {"en": "<h2>Cheers</h2>", "de": "<h2>Danke</h2>"}
+        self.survey.save(update_fields=["thanks_html"])
+        r = self.client.get(f"/editor/surveys/{self.survey.uuid}/thanks-preview/?lang=de")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Danke")
+        self.assertContains(r, "Made with")
 
     def test_save_stores_per_language_and_sanitizes(self):
         """

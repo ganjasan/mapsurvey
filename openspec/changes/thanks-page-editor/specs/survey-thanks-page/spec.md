@@ -57,6 +57,10 @@ Mapsurvey branding footer.
 - **WHEN** the survey has more than one available language
 - **THEN** the thanks editor offers a language switch that binds the editor to that language's `thanks_html[lang]`
 
+#### Scenario: Thanks page shown in the Build live-preview pane
+- **WHEN** the thanks editor is opened
+- **THEN** the Build right-hand live-preview pane renders the actual thanks page (in the selected preview language, via an editor-only preview endpoint), and it refreshes after an autosave to reflect the edited content
+
 ### Requirement: Thanks page always carries mandatory Mapsurvey branding
 The public thanks page SHALL always render the "Made with Mapsurvey" branding
 link, regardless of any creator setting, and the thanks editor's preview SHALL
