@@ -71,3 +71,4 @@
 | 70 | feature | [Disposable-Email-Domain Blocklist](feature-disposable-email-blocklist.md) | medium | backend | abuse-prevention | 2026-05-08 |
 | 71 | feature | [Auto-Purge of Unconfirmed Signups](feature-unconfirmed-signup-purge.md) | medium | backend | abuse-prevention | 2026-05-08 |
 | 72 | improvement | [Signup Anomaly Dashboard](improvement-signup-anomaly-dashboard.md) | medium | backend | abuse-prevention | 2026-05-08 |
+| 85 | improvement | [Publish prompt when sharing a Draft survey](improvement-publish-prompt-on-share-draft.md) | high | frontend | growth | 2026-07-06 |
