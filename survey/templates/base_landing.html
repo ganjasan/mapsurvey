@@ -47,9 +47,11 @@
         "codeRepository": "{{ GITHUB_REPO_URL }}"
     }
     </script>
-    {# Organization entity — brand disambiguation (there are unrelated firms named
+    {% comment %}
+       Organization entity — brand disambiguation (there are unrelated firms named
        "MapSurvey"); sameAs ties mapsurvey.org to our canonical profiles so search
-       engines resolve us as a distinct entity. #}
+       engines resolve us as a distinct entity.
+    {% endcomment %}
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
