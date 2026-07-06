@@ -30,7 +30,7 @@ when the published survey is read-only the bar goes amber and carries the
         <div class="t">Build <span class="ro-pill">read-only</span></div>
     </div>
     <div style="display:flex;align-items:center;gap:.6rem;flex-shrink:0;">
-        <span class="s">This published survey can't be edited.</span>
+        <span class="build-ro-msg"><i class="fas fa-lock"></i> Published surveys can't be edited</span>
         {% if draft_copy %}
         <a class="btn btn-sm btn-primary" href="{% url 'editor_survey_detail' draft_copy.uuid %}">Go to draft &rarr;</a>
         {% elif show_edit_published %}
