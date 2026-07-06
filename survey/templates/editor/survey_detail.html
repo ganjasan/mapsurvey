@@ -13,39 +13,65 @@
 </span>
 
 {% include "editor/partials/_survey_nav_tabs.html" with active_tab="build" %}
-
-{% if show_draft_actions %}
-<button class="btn btn-sm btn-success ml-2" onclick="checkAndPublishDraft()">
-    <i class="fas fa-upload"></i> Publish Version
-</button>
-<button class="btn btn-sm btn-outline-danger ml-1" data-toggle="modal" data-target="#discardDraftModal">
-    <i class="fas fa-trash"></i> Discard
-</button>
-{% elif is_owner and survey.status == 'draft' and not survey.is_draft_copy %}
-<button class="btn btn-sm btn-success ml-2" onclick="doTransition('published')">
-    <i class="fas fa-globe"></i> Publish
-</button>
-<button class="btn btn-sm btn-outline-danger ml-1" data-toggle="modal" data-target="#discardDraftSurveyModal">
-    <i class="fas fa-trash"></i> Discard
-</button>
-{% endif %}
 {% endblock %}
 
 {% block content %}
 <div style="display:flex;flex-direction:column;height:calc(100vh - 49px);">
+
+{% comment %}Persistent Build toolbar — survey-level status + Preview +
+lifecycle actions, always visible across section editing and the settings
+panel (moved out of the top navbar). The read-only banner is folded in:
+when the published survey is read-only the bar goes amber and carries the
+"edit a draft" action.{% endcomment %}
 {% if is_read_only and not survey.is_draft_copy %}
-<div class="alert alert-warning mb-0 rounded-0 text-center flex-shrink-0" style="font-size:0.85rem;">
-    <i class="fas fa-lock"></i> This survey is <strong>read-only</strong>.
+<div class="pr-ctxbar build-ctxbar" style="flex-shrink:0;">
+    <span class="ico"><i class="fas fa-lock"></i></span>
+    <div>
+        <div class="t">Build <span class="ro-pill">read-only</span></div>
+        <div class="s">This published survey can't be edited — work on a draft copy.</div>
+    </div>
+    <span style="flex:1;"></span>
     {% if draft_copy %}
-    <a href="{% url 'editor_survey_detail' draft_copy.uuid %}" class="ml-2 btn btn-sm btn-outline-dark">Go to draft &rarr;</a>
+    <a class="btn btn-sm btn-outline-dark" href="{% url 'editor_survey_detail' draft_copy.uuid %}">Go to draft &rarr;</a>
     {% elif show_edit_published %}
-    <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" class="d-inline ml-2">
+    <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" class="d-inline">
         {% csrf_token %}
         <button type="submit" class="btn btn-sm btn-primary">Create a draft copy</button>
     </form>
     {% endif %}
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
+        <i class="fas fa-external-link-alt"></i> Preview
+    </a>
+</div>
+{% else %}
+<div class="pr-ctxbar build-ctxbar" style="flex-shrink:0;">
+    <span class="ico"><i class="fas fa-hammer"></i></span>
+    <div>
+        <div class="t">Build</div>
+        <div class="s">Sections, questions &amp; survey settings</div>
+    </div>
+    <span style="flex:1;"></span>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
+        <i class="fas fa-external-link-alt"></i> Preview
+    </a>
+    {% if show_draft_actions %}
+    <button class="btn btn-sm btn-success" onclick="checkAndPublishDraft()">
+        <i class="fas fa-upload"></i> Publish Version
+    </button>
+    <button class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#discardDraftModal">
+        <i class="fas fa-trash"></i> Discard
+    </button>
+    {% elif is_owner and survey.status == 'draft' and not survey.is_draft_copy %}
+    <button class="btn btn-sm btn-success" onclick="doTransition('published')">
+        <i class="fas fa-globe"></i> Publish
+    </button>
+    <button class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#discardDraftSurveyModal">
+        <i class="fas fa-trash"></i> Discard
+    </button>
+    {% endif %}
 </div>
 {% endif %}
+
 <div class="editor-container" style="flex:1;min-height:0;">
     <!-- Sidebar expand tab (visible when collapsed) -->
     <div class="panel-expand-tab" id="sidebar-expand" title="Show sections">

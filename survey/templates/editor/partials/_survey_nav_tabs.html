@@ -41,7 +41,9 @@ Optional: effective_role, hide_status_badge (kept for back-compat; ignored).
     </div>
 </div>
 
-<!-- Preview ▾ — over both objects -->
+<!-- Preview ▾ — over both objects. In Build it lives in the Build toolbar
+     instead of the header, so hide it here for that space. -->
+{% if active_tab != 'build' %}
 <div class="nav-action">
     <button onclick="navMenuToggle(this,event)"><i class="fas fa-external-link-alt"></i> Preview <i class="fas fa-angle-down caret"></i></button>
     <div class="nav-menu">
@@ -49,6 +51,7 @@ Optional: effective_role, hide_status_badge (kept for back-compat; ignored).
         <a class="nm-item" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank"><i class="fas fa-globe lead"></i> Results page</a>
     </div>
 </div>
+{% endif %}
 {% endwith %}
 
 {% if effective_role == 'owner' %}
