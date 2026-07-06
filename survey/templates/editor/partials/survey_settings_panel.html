@@ -9,89 +9,133 @@
 
   <div class="pr-scroll">
 
-    <!-- General (autosaves — mirrors the Public Results settings form) -->
+    {% comment %}Survey settings — grouped into semantic cards (mirrors the
+    Publish space's Page settings). All fields stay inside one autosaving form.{% endcomment %}
     <form method="post" id="surveySettingsGeneralForm" data-autosave
           action="{% url 'editor_survey_settings_panel' survey.uuid %}" enctype="multipart/form-data">
       {% csrf_token %}
-      <div class="pr-card">
-        <h6>General</h6>
-        {% for field in form %}
-        <div class="pr-field">
-          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-          {% if field.name == 'available_languages' %}
-              {{ field }}
-              {% include "editor/partials/language_picker.html" %}
-          {% elif field.name == 'basemaps' %}
-              {{ field }}
-              <div style="display:flex;flex-wrap:wrap;gap:.4rem 1rem;margin-top:.25rem;">
-                  {% for slug, label in basemap_choices %}
-                  <label style="font-weight:400;display:flex;gap:.4rem;align-items:center;margin:0;cursor:pointer;">
-                      <input class="basemap-cb" type="checkbox"
-                             id="bm_{{ slug }}" value="{{ slug }}"
-                             {% if slug in survey.basemaps %}checked{% endif %}>
-                      {{ label }}
-                  </label>
-                  {% endfor %}
-              </div>
-              <script>
-              (function(){
-                  var inp = document.getElementById('id_basemaps');
-                  var cbs = document.querySelectorAll('.basemap-cb');
-                  function sync(){
-                      var v = [];
-                      cbs.forEach(function(c){ if (c.checked) v.push(c.value); });
-                      inp.value = JSON.stringify(v.length ? v : ['streets']);
-                  }
-                  sync();
-                  cbs.forEach(function(c){ c.addEventListener('change', sync); });
-              })();
-              </script>
-          {% elif field.name == 'cover_image' %}
-              {% if survey.cover_image %}
-              <div class="mb-2">
-                  <img src="{{ survey.cover_image.url }}" style="max-width:200px;max-height:120px;border-radius:6px;border:1px solid var(--border-color);">
-              </div>
-              {% endif %}
-              {{ field }}
-          {% else %}
-              {{ field }}
-          {% endif %}
-          {% if field.help_text %}<div class="pr-help">{{ field.help_text }}</div>{% endif %}
-          {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
-        </div>
-        {% endfor %}
-        <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
-        <noscript><button type="submit" class="btn btn-primary btn-sm">Save Settings</button></noscript>
-      </div>
-    </form>
 
-    <!-- Default Map Position -->
-    <div class="pr-card">
-      <h6>Default map position</h6>
-      <div class="pr-help" style="margin-top:0;margin-bottom:.75rem;">
-        Set the default starting position and zoom for the survey map. Sections can override this individually.
+      <div class="pr-card">
+        <h6>Basics</h6>
+        <div class="pr-field">
+          <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% if form.name.help_text %}<div class="pr-help">{{ form.name.help_text }}</div>{% endif %}
+          {% for error in form.name.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="pr-field">
+          <label for="{{ form.visibility.id_for_label }}">{{ form.visibility.label }}</label>
+          {{ form.visibility }}
+          {% if form.visibility.help_text %}<div class="pr-help">{{ form.visibility.help_text }}</div>{% endif %}
+          {% for error in form.visibility.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="pr-field">
+          <label for="{{ form.redirect_url.id_for_label }}">{{ form.redirect_url.label }}</label>
+          {{ form.redirect_url }}
+          {% if form.redirect_url.help_text %}<div class="pr-help">{{ form.redirect_url.help_text }}</div>{% endif %}
+          {% for error in form.redirect_url.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
       </div>
-      <div id="survey-map-picker" style="height:300px;width:100%;border-radius:var(--radius);border:1px solid var(--border-color);margin-bottom:0.75rem;"></div>
-      <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">
-        <span id="survey-map-coords">
-          {% if survey.start_map_postion %}
-              Lat: {{ survey.start_map_postion.y|floatformat:5 }},
-              Lng: {{ survey.start_map_postion.x|floatformat:5 }},
-              Zoom: {{ survey.start_map_zoom|default:"12" }}
-          {% else %}
-              Click the map to set position
+
+      <div class="pr-card">
+        <h6>Languages</h6>
+        <div class="pr-field">
+          <label for="{{ form.available_languages.id_for_label }}">{{ form.available_languages.label }}</label>
+          {{ form.available_languages }}
+          {% include "editor/partials/language_picker.html" %}
+          {% if form.available_languages.help_text %}<div class="pr-help">{{ form.available_languages.help_text }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="pr-card">
+        <h6>Respondent map</h6>
+        <div class="pr-help" style="margin-top:0;margin-bottom:.75rem;">The base map, starting position, and zoom respondents open on. Sections can override the position individually.</div>
+        <div class="pr-field">
+          <label for="{{ form.basemaps.id_for_label }}">{{ form.basemaps.label }}</label>
+          {{ form.basemaps }}
+          <div style="display:flex;flex-wrap:wrap;gap:.4rem 1rem;margin-top:.25rem;">
+            {% for slug, label in basemap_choices %}
+            <label style="font-weight:400;display:flex;gap:.4rem;align-items:center;margin:0;cursor:pointer;">
+              <input class="basemap-cb" type="checkbox"
+                     id="bm_{{ slug }}" value="{{ slug }}"
+                     {% if slug in survey.basemaps %}checked{% endif %}>
+              {{ label }}
+            </label>
+            {% endfor %}
+          </div>
+          {% if form.basemaps.help_text %}<div class="pr-help">{{ form.basemaps.help_text }}</div>{% endif %}
+          <script>
+          (function(){
+              var inp = document.getElementById('id_basemaps');
+              var cbs = document.querySelectorAll('.basemap-cb');
+              function sync(){
+                  var v = [];
+                  cbs.forEach(function(c){ if (c.checked) v.push(c.value); });
+                  inp.value = JSON.stringify(v.length ? v : ['streets']);
+              }
+              sync();
+              cbs.forEach(function(c){ c.addEventListener('change', sync); });
+          })();
+          </script>
+        </div>
+        <div class="pr-field">
+          <label for="{{ form.default_basemap.id_for_label }}">{{ form.default_basemap.label }}</label>
+          {{ form.default_basemap }}
+          {% if form.default_basemap.help_text %}<div class="pr-help">{{ form.default_basemap.help_text }}</div>{% endif %}
+        </div>
+
+        <div class="pr-field" style="margin-bottom:.5rem;">
+          <label>Default position</label>
+          <div id="survey-map-picker" style="height:300px;width:100%;border-radius:var(--radius);border:1px solid var(--border-color);margin-bottom:0.5rem;"></div>
+          <div class="pr-help" style="margin-top:0;">
+            <span id="survey-map-coords">
+              {% if survey.start_map_postion %}
+                  Lat: {{ survey.start_map_postion.y|floatformat:5 }},
+                  Lng: {{ survey.start_map_postion.x|floatformat:5 }},
+                  Zoom: {{ survey.start_map_zoom|default:"12" }}
+              {% else %}
+                  Click the map to set position
+              {% endif %}
+            </span>
+          </div>
+        </div>
+        <label class="pr-switch" title="Auto-center the map on the respondent's browser location when they first enter the survey.">
+          <span>Auto-center on respondent's location <small class="pr-help">uses the visitor's browser geolocation on entry</small></span>
+          <input type="checkbox" id="survey-use-geolocation" {% if survey.use_geolocation %}checked{% endif %}>
+        </label>
+        <button type="button" class="btn btn-primary btn-sm" id="save-survey-map-position" style="margin-top:.75rem;">
+          <i class="fas fa-save mr-1"></i> Save map position
+        </button>
+        <span id="survey-map-saved" style="display:none;color:#10b981;font-size:0.85rem;margin-left:0.5rem;">Saved!</span>
+      </div>
+
+      <div class="pr-card">
+        <h6>Cover image</h6>
+        <div class="pr-field">
+          <label for="{{ form.cover_image.id_for_label }}">{{ form.cover_image.label }}</label>
+          {% if survey.cover_image %}
+          <div class="mb-2">
+            <img src="{{ survey.cover_image.url }}" style="max-width:200px;max-height:120px;border-radius:6px;border:1px solid var(--border-color);">
+          </div>
           {% endif %}
-        </span>
+          {{ form.cover_image }}
+          {% if form.cover_image.help_text %}<div class="pr-help">{{ form.cover_image.help_text }}</div>{% endif %}
+        </div>
       </div>
-      <label class="pr-switch" title="Auto-center the map on the respondent's browser location when they first enter the survey.">
-        <span>Auto-center on respondent's location <small class="pr-help">uses the visitor's browser geolocation on entry</small></span>
-        <input type="checkbox" id="survey-use-geolocation" {% if survey.use_geolocation %}checked{% endif %}>
-      </label>
-      <button type="button" class="btn btn-primary btn-sm" id="save-survey-map-position" style="margin-top:.75rem;">
-        <i class="fas fa-save mr-1"></i> Save map position
-      </button>
-      <span id="survey-map-saved" style="display:none;color:#10b981;font-size:0.85rem;margin-left:0.5rem;">Saved!</span>
-    </div>
+
+      <div class="pr-card">
+        <h6>Thanks page</h6>
+        <div class="pr-field">
+          <label for="{{ form.thanks_html.id_for_label }}">{{ form.thanks_html.label }}</label>
+          {{ form.thanks_html }}
+          {% if form.thanks_html.help_text %}<div class="pr-help">{{ form.thanks_html.help_text }}</div>{% endif %}
+          {% for error in form.thanks_html.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
+      <noscript><button type="submit" class="btn btn-primary btn-sm">Save Settings</button></noscript>
+    </form>
 
     <script>
     (function() {
