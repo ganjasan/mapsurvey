@@ -62,6 +62,26 @@ show_draft_actions, draft_copy, show_edit_published.
       <button type="submit" class="nm-item"><i class="fas fa-code-branch lead"></i> Create a draft to edit</button>
     </form>
     {% endif %}
+    {% with archived_versions=survey.get_version_history %}
+    {% if archived_versions %}
+      {% if survey.status == 'published' and not survey.has_draft_copy %}
+      {% for archived in archived_versions %}
+      <div class="nm-row"><span class="lab">v{{ archived.version_number }} · Closed<span class="sub">responses stay visible under All versions</span></span>
+        <form method="post" action="{% url 'editor_restore_version' survey.uuid %}" style="margin:0;"
+              onsubmit="return confirm('Restore v{{ archived.version_number }} as a new draft? Publishing it will create v{{ survey.version_number|add:1 }} with the old questionnaire — nothing is deleted.');">
+          {% csrf_token %}
+          <input type="hidden" name="version" value="v{{ archived.version_number }}">
+          <button type="submit" class="nm-item" style="width:auto;padding:4px 9px;border:1px solid var(--border-color);border-radius:6px;" title="Create a draft with this version's questionnaire"><i class="fas fa-history"></i> Restore…</button>
+        </form>
+      </div>
+      {% endfor %}
+      {% else %}
+      {% for archived in archived_versions %}
+      <div class="nm-static">v{{ archived.version_number }} · Closed</div>
+      {% endfor %}
+      {% endif %}
+    {% endif %}
+    {% endwith %}
   </div>
 </div>
 {% else %}

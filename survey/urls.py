@@ -57,6 +57,7 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/visibility/', editor_views.editor_survey_visibility, name='editor_survey_visibility'),
     path('editor/surveys/<uuid:survey_uuid>/password/', editor_views.editor_survey_password, name='editor_survey_password'),
     path('editor/surveys/<uuid:survey_uuid>/create-draft/', editor_views.editor_create_draft, name='editor_create_draft'),
+    path('editor/surveys/<uuid:survey_uuid>/restore-version/', editor_views.editor_restore_version, name='editor_restore_version'),
     path('editor/surveys/<uuid:survey_uuid>/publish-draft/', editor_views.editor_publish_draft, name='editor_publish_draft'),
     path('editor/surveys/<uuid:survey_uuid>/discard-draft/', editor_views.editor_discard_draft, name='editor_discard_draft'),
     path('editor/surveys/<uuid:survey_uuid>/check-compatibility/', editor_views.editor_check_compatibility, name='editor_check_compatibility'),

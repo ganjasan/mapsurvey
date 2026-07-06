@@ -113,7 +113,7 @@ def lineage_map(survey):
     return {**current, **archived}
 
 
-def clone_survey_for_draft(canonical):
+def clone_survey_for_draft(canonical, structure_source=None):
     """
     Create a draft copy of a published survey.
 
@@ -121,8 +121,17 @@ def clone_survey_for_draft(canonical):
     sub-questions, and collaborators. The draft is linked to the canonical
     via published_version FK.
 
+    structure_source: SurveyHeader whose section/question tree to clone —
+    defaults to the canonical itself. Pass an archived version to restore an
+    old questionnaire as a new draft ("git revert": publishing it creates a
+    NEW version with the old structure; history is never rewritten). Header
+    settings and collaborators always come from the canonical — archived
+    headers never carried map/basemap settings, so cloning those from the
+    source would resurrect model defaults.
+
     Returns the draft SurveyHeader.
     """
+    structure_source = structure_source or canonical
     # Build draft name: "[draft] " prefix, truncated to 45 chars
     draft_name = f"[draft] {canonical.name}"[:45]
 
@@ -155,7 +164,7 @@ def clone_survey_for_draft(canonical):
         )
 
     # Clone sections and build old->new mapping for linked list resolution
-    sections = SurveySection.objects.filter(survey_header=canonical)
+    sections = SurveySection.objects.filter(survey_header=structure_source)
     old_to_new_section = {}
 
     for section in sections:

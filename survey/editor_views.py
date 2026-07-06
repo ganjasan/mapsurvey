@@ -1329,6 +1329,39 @@ def editor_create_draft(request, survey_uuid):
 
 @survey_permission_required('owner')
 @require_POST
+def editor_restore_version(request, survey_uuid):
+    """Restore an archived version's questionnaire as a new draft copy.
+
+    Append-only rollback: the draft clones the archived structure; publishing
+    it creates a NEW version — no history is rewritten, no session moves.
+    """
+    survey = request.survey
+
+    if survey.status != 'published':
+        return HttpResponse('Only published surveys can restore a version', status=400)
+
+    if survey.has_draft_copy():
+        return HttpResponse('A draft already exists for this survey', status=409)
+
+    version_param = request.POST.get('version', '')
+    try:
+        version_num = int(str(version_param).lstrip('v'))
+    except (TypeError, ValueError):
+        return HttpResponse('Invalid version', status=400)
+
+    archived = get_object_or_404(
+        SurveyHeader,
+        canonical_survey=survey,
+        is_canonical=False,
+        version_number=version_num,
+    )
+
+    draft = clone_survey_for_draft(survey, structure_source=archived)
+    return redirect('editor_survey_detail', survey_uuid=draft.uuid)
+
+
+@survey_permission_required('owner')
+@require_POST
 def editor_publish_draft(request, survey_uuid):
     """Publish a draft copy as a new version of the canonical survey."""
     survey = request.survey
