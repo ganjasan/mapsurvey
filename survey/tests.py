@@ -13758,3 +13758,58 @@ class ForGovernmentLandingTest(TestCase):
         c = Client()
         self.assertContains(c.get("/sitemap.xml"), "/for-government/")
         self.assertContains(c.get("/robots.txt"), "/for-government/")
+
+
+class SeoProductLandingPagesTest(TestCase):
+    """Bottom-funnel product pages: community engagement platform & public consultation software."""
+
+    def test_community_engagement_platform_page(self):
+        """
+        GIVEN the community-engagement-platform product page
+        WHEN requested
+        THEN it renders with the head-term H1, a self-canonical, a platform-UTM CTA,
+             and cross-links to audience pages
+        """
+        resp = Client().get("/community-engagement-platform/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Community Engagement Platform")
+        self.assertContains(resp, "https://mapsurvey.org/community-engagement-platform/")
+        self.assertContains(resp, "utm_source=engagement_platform")
+        self.assertContains(resp, "/for-government/")  # cross-link to an audience segment
+
+    def test_public_consultation_software_page(self):
+        """
+        GIVEN the public-consultation-software product page
+        WHEN requested
+        THEN it renders with the term H1, a self-canonical, and a consultation-UTM CTA
+        """
+        resp = Client().get("/public-consultation-software/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Public Consultation Software")
+        self.assertContains(resp, "https://mapsurvey.org/public-consultation-software/")
+        self.assertContains(resp, "utm_source=consultation_software")
+
+    def test_both_in_sitemap_and_robots(self):
+        """
+        GIVEN the product pages should be indexable
+        WHEN sitemap.xml and robots.txt are fetched
+        THEN both are listed / allowed
+        """
+        c = Client()
+        sm = c.get("/sitemap.xml")
+        self.assertContains(sm, "/community-engagement-platform/")
+        self.assertContains(sm, "/public-consultation-software/")
+        rb = c.get("/robots.txt")
+        self.assertContains(rb, "/community-engagement-platform/")
+        self.assertContains(rb, "/public-consultation-software/")
+
+    def test_shared_footer_links_to_both(self):
+        """
+        GIVEN the shared landing footer provides site-wide internal links
+        WHEN any landing page is rendered
+        THEN its footer links to both product pages
+        """
+        resp = Client().get("/for-planners/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'href="/community-engagement-platform/"')
+        self.assertContains(resp, 'href="/public-consultation-software/"')

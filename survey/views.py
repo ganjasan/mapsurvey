@@ -1221,6 +1221,27 @@ def for_government(request):
 	return render(request, 'for_government.html')
 
 
+def community_engagement_platform(request):
+	"""Public product landing page owning the "community engagement platform" head term.
+
+	Product/category framing (cross-audience: councils, NGOs, consultancies, universities,
+	transport agencies) — distinct from the audience page /for-government/, which scopes the
+	same term to local government. First-touch source capture; CTAs carry
+	utm_source=engagement_platform."""
+	capture_signup_source(request)
+	return render(request, 'community_engagement_platform.html')
+
+
+def public_consultation_software(request):
+	"""Public product landing page owning the "public consultation software" term.
+
+	Consultation-workflow framing (statutory consultation, planning applications,
+	infrastructure) — audience wider than government. First-touch source capture; CTAs carry
+	utm_source=consultation_software."""
+	capture_signup_source(request)
+	return render(request, 'public_consultation_software.html')
+
+
 def robots_txt(request):
 	lines = [
 		"User-agent: *",
@@ -1230,6 +1251,8 @@ def robots_txt(request):
 		"Allow: /for-planners/",
 		"Allow: /for-researchers/",
 		"Allow: /for-government/",
+		"Allow: /community-engagement-platform/",
+		"Allow: /public-consultation-software/",
 		"Allow: /alternatives/",
 		"Disallow: /admin/",
 		"Disallow: /editor/",
@@ -1250,6 +1273,8 @@ def sitemap_xml(request):
 	urls.append(f"  <url><loc>{base}/for-planners/</loc></url>")
 	urls.append(f"  <url><loc>{base}/for-researchers/</loc></url>")
 	urls.append(f"  <url><loc>{base}/for-government/</loc></url>")
+	urls.append(f"  <url><loc>{base}/community-engagement-platform/</loc></url>")
+	urls.append(f"  <url><loc>{base}/public-consultation-software/</loc></url>")
 	urls.append(f"  <url><loc>{base}/alternatives/maptionnaire/</loc></url>")
 	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
 	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
