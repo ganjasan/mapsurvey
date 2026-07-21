@@ -167,6 +167,15 @@ a:hover { color: var(--color-accent-hover); }
     max-width: 640px;
 }
 
+/* Centered section headers — audience / product / comparison landing pages
+   (the root landing keeps left-aligned headings inside .showcase-row). */
+.showcase--center .section-eyebrow,
+.showcase--center .section-heading {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 /* ============================
    NAVBAR
    ============================ */

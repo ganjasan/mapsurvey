@@ -1,0 +1,98 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Civic Engagement on a Map — Methods, Tools & Platform | Mapsurvey" %}{% endblock %}
+{% block meta_description %}{% trans "Make civic engagement spatial: residents pin places, draw routes, and outline areas instead of writing vague comments. Open-source civic engagement tools for consultations, participatory budgeting, and neighbourhood planning — GIS-ready results you own." %}{% endblock %}
+{% block meta_keywords %}{% trans "civic engagement, civic involvement, civic participation, civic engagement platform, civic engagement tools, citizen participation, community involvement, map-based engagement" %}{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/civic-engagement/{% endblock %}
+{% block og_url %}https://mapsurvey.org/civic-engagement/{% endblock %}
+{% block og_title %}{% trans "Civic engagement on a map — open-source tools" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .aud-lead { max-width: 720px; margin: 0 auto; }
+  .aud-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-top: 26px; }
+  .aud-card { background: #fff; border: 1px solid #e6eaef; border-radius: 12px; padding: 20px 22px; text-align: left; }
+  .aud-card h3 { font-size: 17px; margin: 0 0 6px; }
+  .aud-card p { font-size: 14px; color: #556; margin: 0; line-height: 1.5; }
+  .aud-ideas { list-style: none; padding: 0; margin: 22px auto 0; max-width: 720px; text-align: left; }
+  .aud-ideas li { padding: 9px 0 9px 30px; border-bottom: 1px solid #eef1f4; position: relative; font-size: 15px; }
+  .aud-ideas li::before { content: "\25C6"; color: #2f6fb0; position: absolute; left: 6px; }
+  .aud-seg { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 24px; max-width: 820px; margin-left: auto; margin-right: auto; }
+  .aud-seg a { display: block; background: #f7f8fa; border: 1px solid #e6eaef; border-radius: 12px; padding: 16px 18px; text-align: left; text-decoration: none; color: inherit; }
+  .aud-seg a:hover { border-color: #2f6fb0; }
+  .aud-seg strong { display: block; font-size: 15px; color: #1b2a3a; }
+  .aud-seg span { font-size: 13px; color: #667; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero" id="hero">
+  <div class="hero__content aud-lead">
+    <h1 class="hero__headline">{% trans "Civic engagement that happens on the map" %}</h1>
+    <p class="hero__description">
+      {% trans "Civic engagement works when residents can say precisely where something matters — not just that it does. Mapsurvey turns civic participation into spatial input: people pin places, draw routes, and outline areas, and your team gets GIS-ready evidence instead of a pile of free-text comments. Open source, free to start, and self-hostable." %}
+    </p>
+    <div class="hero__cta-group">
+      <a href="{% url 'django_registration_register' %}?utm_source=civic_engagement&amp;utm_medium=civic_engagement" class="btn-primary-landing">{% trans "Start free" %}</a>
+      {% if DEMO_SURVEY_URL %}
+      <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">{% trans "Try a live demo" %}</a>
+      {% endif %}
+    </div>
+    <div class="hero__badges">
+      <span class="hero__badge">{% trans "Free & open source" %}</span>
+      <span class="hero__badge">{% trans "Point / line / polygon input" %}</span>
+      <span class="hero__badge">{% trans "GeoJSON + CSV export" %}</span>
+      <span class="hero__badge">{% trans "GDPR / self-hostable" %}</span>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Why spatial" %}</p>
+    <h2 class="section-heading">{% trans "Civic participation is about places" %}</h2>
+    <div class="aud-grid">
+      <div class="aud-card">
+        <h3>{% trans "Precise, not vague" %}</h3>
+        <p>{% trans "\"The crossing by the school is dangerous\" beats \"traffic is bad\". Spatial input makes civic involvement actionable for planners and engineers." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Wider reach than meetings" %}</h3>
+        <p>{% trans "An online map reaches residents who never attend a town hall — parents, shift workers, young people. A link is all they need." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Evidence you can defend" %}</h3>
+        <p>{% trans "Every contribution is a data point with coordinates. Aggregate, filter, and map the input — then show your community you actually used it." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Owned, not rented" %}</h3>
+        <p>{% trans "Open source (AGPLv3) with GeoJSON + CSV export. Your community's input stays yours — self-host it if your policies require." %}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Methods" %}</p>
+    <h2 class="section-heading">{% trans "Civic engagement methods that work on a map" %}</h2>
+    <ul class="aud-ideas">
+      <li>{% trans "Public consultation — comments and objections pinned to the exact site or route." %}</li>
+      <li>{% trans "Participatory budgeting — residents mark where investment is needed most." %}</li>
+      <li>{% trans "Neighbourhood & local plans — what to keep, fix, or change, street by street." %}</li>
+      <li>{% trans "Mobility & safety audits — dangerous crossings, missing links, desire lines." %}</li>
+      <li>{% trans "Youth and school engagement — civic participation projects in the classroom." %}</li>
+    </ul>
+    <div class="aud-seg">
+      <a href="{% url 'community_engagement_platform' %}"><strong>{% trans "Community Engagement Platform" %}</strong><span>{% trans "The product behind it — features, hosting, and data ownership." %}</span></a>
+      <a href="{% url 'public_consultation_software' %}"><strong>{% trans "Public Consultation Software" %}</strong><span>{% trans "Running statutory and planning consultations on the map." %}</span></a>
+      <a href="{% url 'participatory_budgeting' %}"><strong>{% trans "Participatory Budgeting" %}</strong><span>{% trans "Map-based input for PB programmes." %}</span></a>
+    </div>
+    <div class="hero__cta-group" style="margin-top:28px;justify-content:center;">
+      <a href="{% url 'django_registration_register' %}?utm_source=civic_engagement&amp;utm_medium=civic_engagement" class="btn-primary-landing">{% trans "Run your first engagement — free" %}</a>
+      <a href="mailto:konuchovartem@mapsurvey.org?subject=Civic%20engagement%20with%20Mapsurvey" class="btn-secondary-landing">{% trans "Talk to us about your project" %}</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
