@@ -22,7 +22,7 @@ Phase 1 (groups 4–5) adds attribution and can follow in a second PR.
 
 - [x] 3.1 `CreatorFunnelService` unit tests (GIVEN/WHEN/THEN): cohort counts, staff/superuser exclusion, published-status gating, deleted-session exclusion, ≥1/≥5/≥10 thresholds
 - [x] 3.2 Admin access test: staff sees the page; non-staff and anonymous are denied
-- [ ] 3.3 Sanity-check aggregate output shape against the known 2026-07-04 baseline numbers (do on prod after deploy)
+- [ ] 3.3 Sanity-check aggregate output shape against the known 2026-07-04 baseline numbers — **manual prod step**: dashboard is live at `/admin/survey/funnelreport/`; open it and compare the cohort/all-time cards against §1 of `docs/gtm/gtm-plan-2026-h2.md`
 
 ## 3b. Charts + living-users metrics (Phase 0.1)
 
@@ -69,6 +69,6 @@ Phase 1 (groups 4–5) adds attribution and can follow in a second PR.
 
 ## 6. Wrap-up
 
-- [ ] 6.1 Run `./run_tests.sh survey` green (PostGIS container up)
-- [ ] 6.2 Update `docs/gtm/gtm-plan-2026-h2.md` §5 to link the shipped dashboard; note Phase 1 attribution start date
-- [ ] 6.3 (Optional / follow-up) note the Discord weekly-digest cron as a thin consumer of `CreatorFunnelService`
+- [x] 6.1 Run `./run_tests.sh survey` green (PostGIS container up) — 20 funnel tests green (2026-07-21)
+- [x] 6.2 Update `docs/gtm/gtm-plan-2026-h2.md` §5 to link the shipped dashboard; note Phase 1 attribution start date (2026-07-04, migration 0033, no backfill)
+- [x] 6.3 (Optional / follow-up) note the Discord weekly-digest cron as a thin consumer of `CreatorFunnelService` — documented in §5 "Still open"
