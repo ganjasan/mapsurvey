@@ -22,7 +22,10 @@ from .events import (
     emit_event, build_session_start_metadata, store_utm_in_session,
     capture_signup_source, persist_signup_attribution,
 )
-from .seo_landings import SEO_LANDINGS, render_seo_landing
+from .seo_landings import (
+    SEO_LANDINGS, render_seo_landing, Crumb, HOME,
+    build_breadcrumb_jsonld, build_story_collection_jsonld,
+)
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
 from django.core.serializers import serialize
@@ -1068,12 +1071,37 @@ def import_survey(request):
 	return redirect('editor')
 
 
+STORIES_CRUMB = Crumb("Stories", "/stories/")
+
+
+def stories_index(request):
+	"""Public stories hub at /stories/ — card grid of published stories, newest first."""
+	stories = list(Story.objects.filter(is_published=True).order_by('-published_date'))
+	breadcrumbs = (HOME, STORIES_CRUMB)
+	context = {
+		'stories': stories,
+		'breadcrumb_jsonld': build_breadcrumb_jsonld(breadcrumbs),
+		'collection_jsonld': build_story_collection_jsonld(request, stories) if stories else "",
+	}
+	return render(request, 'stories_index.html', context)
+
+
 def story_detail(request, slug):
+	from django.utils.html import strip_tags
 	try:
 		story = Story.objects.select_related('survey').get(slug=slug, is_published=True)
 	except Story.DoesNotExist:
 		raise Http404
-	return render(request, 'story_detail.html', {'story': story})
+	excerpt = " ".join(strip_tags(story.body or "").split())
+	meta_description = (excerpt[:155].rstrip() + "…") if len(excerpt) > 155 else (excerpt or story.title)
+	breadcrumbs = (HOME, STORIES_CRUMB, Crumb(story.title, f"/stories/{story.slug}/"))
+	context = {
+		'story': story,
+		'canonical': f"https://mapsurvey.org/stories/{story.slug}/",
+		'meta_description': meta_description,
+		'breadcrumb_jsonld': build_breadcrumb_jsonld(breadcrumbs),
+	}
+	return render(request, 'story_detail.html', context)
 
 
 @survey_permission_required('owner')
@@ -1313,6 +1341,11 @@ def sitemap_xml(request):
 		)
 	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
 	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
+	# Stories hub + published stories
+	urls.append(f"  <url><loc>{base}/stories/</loc></url>")
+	for story in Story.objects.filter(is_published=True).order_by('-published_date'):
+		lastmod = f"<lastmod>{story.published_date.date().isoformat()}</lastmod>" if story.published_date else ""
+		urls.append(f"  <url><loc>{base}/stories/{story.slug}/</loc>{lastmod}</url>")
 	for survey in surveys:
 		urls.append(f"  <url><loc>{base}/surveys/{survey.uuid}/</loc></url>")
 	xml = (

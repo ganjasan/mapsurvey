@@ -1,0 +1,17 @@
+{# One story card for the stories index. Expects `story` in context. #}
+<a class="story-card" href="/stories/{{ story.slug }}/">
+  <div class="story-card__media story-card__media--{{ story.story_type }}">
+    {% if story.cover_image %}
+    <img src="{{ story.cover_image.url }}" alt="{{ story.title }}" loading="lazy">
+    {% else %}
+    <span class="story-card__placeholder">{{ story.get_story_type_display }}</span>
+    {% endif %}
+  </div>
+  <div class="story-card__body">
+    <span class="story-card__badge">{{ story.get_story_type_display }}</span>
+    <h3 class="story-card__title">{{ story.title }}</h3>
+    {% if story.published_date %}
+    <time class="story-card__date" datetime="{{ story.published_date|date:'Y-m-d' }}">{{ story.published_date|date:"j M Y" }}</time>
+    {% endif %}
+  </div>
+</a>

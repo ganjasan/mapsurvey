@@ -14070,3 +14070,96 @@ class SeoLandingRegistryTest(TestCase):
         from survey.seo_landings import SEO_LANDINGS
         for landing in SEO_LANDINGS:
             self.assertEqual(reverse(landing.url_name), landing.path)
+
+
+class StoriesIndexViewTest(TestCase):
+    """The public stories hub at /stories/: listing, empty state, SEO metadata."""
+
+    import re as _re
+    _LD_RE = _re.compile(r'<script type="application/ld\+json">(.*?)</script>', _re.S)
+
+    def _ld(self, html):
+        return [json.loads(b) for b in self._LD_RE.findall(html)]
+
+    def _story(self, title, slug, published=True):
+        from django.utils import timezone
+        return Story.objects.create(
+            title=title, slug=slug, story_type="results", body="<p>Body text about the project.</p>",
+            is_published=published, published_date=timezone.now() if published else None,
+        )
+
+    def test_index_lists_published_not_draft(self):
+        """
+        GIVEN a published and a draft story
+        WHEN /stories/ is requested
+        THEN it returns 200, lists the published story with a detail link, and hides the draft
+        """
+        self._story("Riverside Engagement", "riverside")
+        self._story("Secret Draft", "secret-draft", published=False)
+        resp = Client().get("/stories/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Riverside Engagement")
+        self.assertContains(resp, 'href="/stories/riverside/"')
+        self.assertNotContains(resp, "Secret Draft")
+
+    def test_empty_state_returns_200(self):
+        """
+        GIVEN no published stories
+        WHEN /stories/ is requested
+        THEN it returns 200 with an empty-state message (not a 404)
+        """
+        resp = Client().get("/stories/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "No stories published yet")
+
+    def test_index_structured_data(self):
+        """
+        GIVEN published stories
+        WHEN /stories/ is requested
+        THEN it emits a valid BreadcrumbList (Home > Stories) and a CollectionPage
+             whose ItemList has one entry per published story
+        """
+        self._story("Story A", "story-a")
+        self._story("Story B", "story-b")
+        blocks = self._ld(Client().get("/stories/").content.decode())
+        bc = next(b for b in blocks if b.get("@type") == "BreadcrumbList")
+        self.assertEqual([i["name"] for i in bc["itemListElement"]], ["Home", "Stories"])
+        coll = next(b for b in blocks if b.get("@type") == "CollectionPage")
+        self.assertEqual(len(coll["mainEntity"]["itemListElement"]), 2)
+
+    def test_detail_seo_metadata(self):
+        """
+        GIVEN a published story
+        WHEN its detail page is requested
+        THEN it has a self-canonical, a non-empty meta description, and a
+             3-item Home > Stories > <title> breadcrumb
+        """
+        self._story("Coastal Paths", "coastal-paths")
+        resp = Client().get("/stories/coastal-paths/")
+        html = resp.content.decode()
+        self.assertIn('<link rel="canonical" href="https://mapsurvey.org/stories/coastal-paths/">', html)
+        self.assertRegex(html, r'<meta name="description" content="[^"]+">')
+        bc = next(b for b in self._ld(html) if b.get("@type") == "BreadcrumbList")
+        self.assertEqual([i["name"] for i in bc["itemListElement"]], ["Home", "Stories", "Coastal Paths"])
+
+    def test_sitemap_includes_hub_and_published_excludes_draft(self):
+        """
+        GIVEN a published and a draft story
+        WHEN sitemap.xml is requested
+        THEN it lists /stories/ and the published story URL but not the draft's
+        """
+        self._story("Published Story", "pub-story")
+        self._story("Draft Story", "draft-story", published=False)
+        body = Client().get("/sitemap.xml").content.decode()
+        self.assertIn("/stories/</loc>", body)
+        self.assertIn("/stories/pub-story/</loc>", body)
+        self.assertNotIn("/stories/draft-story/", body)
+
+    def test_landing_footer_links_to_stories(self):
+        """
+        GIVEN the shared landing footer
+        WHEN a landing page is rendered
+        THEN the footer links to the stories hub
+        """
+        resp = Client().get("/for-planners/")
+        self.assertContains(resp, 'href="/stories/"')

@@ -333,6 +333,33 @@ def build_breadcrumb_jsonld(crumbs) -> str:
     return json.dumps(data, ensure_ascii=False)
 
 
+def build_story_collection_jsonld(request, stories) -> str:
+    """Return a ``CollectionPage`` JSON-LD for the stories index.
+
+    ``stories`` is an iterable of Story instances; each becomes an ``ItemList``
+    entry with an absolute detail URL. Built with ``json.dumps`` for safe escaping.
+    """
+    data = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "Mapsurvey Stories",
+        "url": _abs("/stories/"),
+        "mainEntity": {
+            "@type": "ItemList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": i + 1,
+                    "url": _abs(f"/stories/{story.slug}/"),
+                    "name": story.title,
+                }
+                for i, story in enumerate(stories)
+            ],
+        },
+    }
+    return json.dumps(data, ensure_ascii=False)
+
+
 def render_seo_landing(request, key: str):
     """Render an SEO landing, injecting its FAQ + structured data from the registry."""
     from .events import capture_signup_source  # local import: events is import-light
