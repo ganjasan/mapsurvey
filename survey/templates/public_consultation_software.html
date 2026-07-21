@@ -3,7 +3,7 @@
 
 {% block title %}{% trans "Public Consultation Software — Map-Based & Open Source | Mapsurvey" %}{% endblock %}
 {% block meta_description %}{% trans "Run map-based public consultation with Mapsurvey — open-source software for statutory consultation, planning applications, and infrastructure schemes. Stakeholders comment on the map; you export GIS-ready evidence. Self-hostable, GDPR-friendly." %}{% endblock %}
-{% block meta_keywords %}{% trans "public consultation software, online consultation software, statutory consultation tool, planning consultation software, map-based consultation, community consultation platform, open source consultation" %}{% endblock %}
+{% block meta_keywords %}{% trans "public consultation software, online consultation software, online consultation, statutory consultation tool, planning consultation software, map-based consultation, community consultation platform, open source consultation" %}{% endblock %}
 {% block canonical_url %}https://mapsurvey.org/public-consultation-software/{% endblock %}
 {% block og_url %}https://mapsurvey.org/public-consultation-software/{% endblock %}
 {% block og_title %}{% trans "Open-source, map-based public consultation software" %}{% endblock %}
@@ -44,7 +44,7 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Why teams choose it" %}</p>
     <h2 class="section-heading">{% trans "Consultation that produces evidence, not just comments" %}</h2>
@@ -69,7 +69,7 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "How a consultation runs" %}</p>
     <h2 class="section-heading">{% trans "From proposal to evidence in four steps" %}</h2>
@@ -85,7 +85,7 @@
     </div>
     <div class="hero__cta-group" style="margin-top:28px;justify-content:center;">
       <a href="{% url 'django_registration_register' %}?utm_source=consultation_software&amp;utm_medium=public_consultation_software" class="btn-primary-landing">{% trans "Run your first consultation — free" %}</a>
-      <a href="{% url 'for_government' %}" class="btn-secondary-landing">{% trans "For local government" %}</a>
+      <a href="mailto:konuchovartem@mapsurvey.org?subject=Public%20consultation%20with%20Mapsurvey" class="btn-secondary-landing">{% trans "Talk to us about your consultation" %}</a>
     </div>
   </div>
 </section>

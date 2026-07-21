@@ -93,7 +93,12 @@ urlpatterns = [
     path('for-government/', views.for_government, name='for_government'),
     path('community-engagement-platform/', views.community_engagement_platform, name='community_engagement_platform'),
     path('public-consultation-software/', views.public_consultation_software, name='public_consultation_software'),
+    path('civic-engagement/', views.civic_engagement, name='civic_engagement'),
+    path('participatory-budgeting/', views.participatory_budgeting, name='participatory_budgeting'),
+    path('for-consultants/', views.for_consultants, name='for_consultants'),
     path('alternatives/maptionnaire/', views.maptionnaire_alternative, name='maptionnaire_alternative'),
+    path('alternatives/social-pinpoint/', views.social_pinpoint_alternative, name='social_pinpoint_alternative'),
+    path('alternatives/metroquest/', views.metroquest_alternative, name='metroquest_alternative'),
     path('robots.txt', views.robots_txt, name='robots_txt'),
     path('sitemap.xml', views.sitemap_xml, name='sitemap_xml'),
 ]

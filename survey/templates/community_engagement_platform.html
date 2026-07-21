@@ -3,7 +3,7 @@
 
 {% block title %}{% trans "Community Engagement Platform — Open Source & Map-Based | Mapsurvey" %}{% endblock %}
 {% block meta_description %}{% trans "Mapsurvey is a free, open-source community engagement platform. Residents pin places, draw routes, and outline areas on a map — you get GIS-ready results and full data ownership. Self-hostable, GDPR-friendly, no per-project fees." %}{% endblock %}
-{% block meta_keywords %}{% trans "community engagement platform, citizen engagement platform, public engagement software, participatory mapping platform, open source engagement platform, map-based engagement, civic engagement tool" %}{% endblock %}
+{% block meta_keywords %}{% trans "community engagement platform, citizen engagement platform, citizen engagement software, public engagement software, participatory mapping platform, open source engagement platform, map-based engagement, civic engagement tool" %}{% endblock %}
 {% block canonical_url %}https://mapsurvey.org/community-engagement-platform/{% endblock %}
 {% block og_url %}https://mapsurvey.org/community-engagement-platform/{% endblock %}
 {% block og_title %}{% trans "The open-source, map-based community engagement platform" %}{% endblock %}
@@ -48,7 +48,7 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Why teams choose it" %}</p>
     <h2 class="section-heading">{% trans "An engagement platform that speaks in places, not just text" %}</h2>
@@ -73,11 +73,11 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Who runs engagement on it" %}</p>
     <h2 class="section-heading">{% trans "One platform, every audience" %}</h2>
-    <p class="aud-lead" style="color:#556;">{% trans "Community engagement means something different to each team. Mapsurvey adapts to the workflow — and we keep a dedicated page for the segments we serve most:" %}</p>
+    <p class="aud-lead" style="color:#556;text-align:center;">{% trans "Community engagement means something different to each team. Mapsurvey adapts to the workflow — and we keep a dedicated page for the segments we serve most:" %}</p>
     <div class="aud-seg">
       <a href="{% url 'for_government' %}"><strong>{% trans "Local government" %}</strong><span>{% trans "Statutory consultation, participatory budgeting, ward engagement." %}</span></a>
       <a href="{% url 'for_planners' %}"><strong>{% trans "Urban planners" %}</strong><span>{% trans "Participatory planning and place-based public input." %}</span></a>

@@ -1242,6 +1242,52 @@ def public_consultation_software(request):
 	return render(request, 'public_consultation_software.html')
 
 
+def civic_engagement(request):
+	"""Public category page owning the "civic engagement" cluster (civic engagement /
+	civic involvement / civic participation — the largest measured keyword gap).
+
+	Middle-funnel semantic anchor: explains map-based civic engagement and funnels down
+	to the product pages. CTAs carry utm_source=civic_engagement."""
+	capture_signup_source(request)
+	return render(request, 'civic_engagement.html')
+
+
+def participatory_budgeting(request):
+	"""Public use-case page for map-based participatory budgeting.
+
+	Honest scope: location input for PB programmes (where residents want investment),
+	explicitly not a budget-allocation module. CTAs carry utm_source=participatory_budgeting."""
+	capture_signup_source(request)
+	return render(request, 'participatory_budgeting.html')
+
+
+def for_consultants(request):
+	"""Public audience page for engagement & planning consultancies.
+
+	Leads with per-project economics (no per-project fees), GeoJSON deliverables, and
+	open-source self-hosting. CTAs carry utm_source=consultants."""
+	capture_signup_source(request)
+	return render(request, 'for_consultants.html')
+
+
+def social_pinpoint_alternative(request):
+	"""Public "open-source Social Pinpoint alternative" comparison page.
+
+	Claims restricted to the verified dossier (docs/marketing/competitors/openpoint.md).
+	CTAs carry utm_source=comparison / utm_medium=social_pinpoint_alt."""
+	capture_signup_source(request)
+	return render(request, 'social_pinpoint_alternative.html')
+
+
+def metroquest_alternative(request):
+	"""Public "MetroQuest alternative" page for customers of the sunset MetroQuest product.
+
+	Migration framing: metroquest.com now redirects into Open Point. CTAs carry
+	utm_source=comparison / utm_medium=metroquest_alt."""
+	capture_signup_source(request)
+	return render(request, 'metroquest_alternative.html')
+
+
 def robots_txt(request):
 	lines = [
 		"User-agent: *",
@@ -1253,6 +1299,9 @@ def robots_txt(request):
 		"Allow: /for-government/",
 		"Allow: /community-engagement-platform/",
 		"Allow: /public-consultation-software/",
+		"Allow: /civic-engagement/",
+		"Allow: /participatory-budgeting/",
+		"Allow: /for-consultants/",
 		"Allow: /alternatives/",
 		"Disallow: /admin/",
 		"Disallow: /editor/",
@@ -1275,7 +1324,12 @@ def sitemap_xml(request):
 	urls.append(f"  <url><loc>{base}/for-government/</loc></url>")
 	urls.append(f"  <url><loc>{base}/community-engagement-platform/</loc></url>")
 	urls.append(f"  <url><loc>{base}/public-consultation-software/</loc></url>")
+	urls.append(f"  <url><loc>{base}/civic-engagement/</loc></url>")
+	urls.append(f"  <url><loc>{base}/participatory-budgeting/</loc></url>")
+	urls.append(f"  <url><loc>{base}/for-consultants/</loc></url>")
 	urls.append(f"  <url><loc>{base}/alternatives/maptionnaire/</loc></url>")
+	urls.append(f"  <url><loc>{base}/alternatives/social-pinpoint/</loc></url>")
+	urls.append(f"  <url><loc>{base}/alternatives/metroquest/</loc></url>")
 	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
 	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
 	for survey in surveys:
