@@ -7,6 +7,7 @@
 {% block canonical_url %}https://mapsurvey.org/participatory-budgeting/{% endblock %}
 {% block og_url %}https://mapsurvey.org/participatory-budgeting/{% endblock %}
 {% block og_title %}{% trans "Participatory budgeting on a map — open source" %}{% endblock %}
+{% block structured_data %}{% include "partials/_landing_structured_data.html" %}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -82,4 +83,7 @@
     </div>
   </div>
 </section>
+
+{% include "partials/_faq_section.html" %}
+
 {% endblock %}

@@ -1497,3 +1497,51 @@ a:hover { color: var(--color-accent-hover); }
     .showcase-row--reverse .showcase-row__media { order: 0; }
     .showcase-row__text p { max-width: none; }
 }
+
+/* ── FAQ section (SEO landings) ─────────────────────────────────────────── */
+.faq-list {
+    max-width: 780px;
+    margin: 2rem auto 0;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.faq-item {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+    padding: 0 1.25rem;
+    transition: border-color var(--transition-fast);
+}
+.faq-item[open] { border-color: var(--color-accent); }
+.faq-item__q {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.02rem;
+    color: var(--color-text);
+    cursor: pointer;
+    list-style: none;
+    padding: 1.1rem 2rem 1.1rem 0;
+    position: relative;
+}
+.faq-item__q::-webkit-details-marker { display: none; }
+.faq-item__q::after {
+    content: "+";
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--color-accent);
+    transition: transform var(--transition-fast);
+}
+.faq-item[open] .faq-item__q::after { content: "\2013"; }
+.faq-item__a {
+    color: var(--color-text-secondary);
+    font-size: 0.97rem;
+    line-height: 1.6;
+    padding: 0 0 1.2rem;
+    max-width: 68ch;
+}
