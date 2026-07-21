@@ -7,6 +7,7 @@
 {% block canonical_url %}https://mapsurvey.org/alternatives/metroquest/{% endblock %}
 {% block og_url %}https://mapsurvey.org/alternatives/metroquest/{% endblock %}
 {% block og_title %}{% trans "Looking for a MetroQuest alternative? — Mapsurvey" %}{% endblock %}
+{% block structured_data %}{% include "partials/_landing_structured_data.html" %}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -131,4 +132,7 @@
     </div>
   </div>
 </section>
+
+{% include "partials/_faq_section.html" %}
+
 {% endblock %}

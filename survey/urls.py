@@ -86,6 +86,7 @@ urlpatterns = [
     path('surveys/<str:survey_slug>/thanks/', views.survey_thanks, name='survey_thanks'),
     path('surveys/<str:survey_slug>/<str:section_name>/', views.survey_section, name='section'),
     path('surveys/<str:survey_slug>/download', views.download_data, name='download_data'),
+    path('stories/', views.stories_index, name='stories_index'),
     path('stories/<slug:slug>/', views.story_detail, name='story_detail'),
     path('for-educators/', views.for_educators, name='for_educators'),
     path('for-planners/', views.for_planners, name='for_planners'),

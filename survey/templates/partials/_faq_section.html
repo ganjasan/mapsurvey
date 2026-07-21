@@ -1,0 +1,20 @@
+{% load i18n %}
+{# Visible FAQ section for SEO landing pages. Renders nothing when no FAQ is
+   supplied. Questions/answers come from the seo_landings registry (context var
+   `faq_items`), the same source as the FAQPage JSON-LD, so they can't drift. #}
+{% if faq_items %}
+<section class="showcase showcase--center faq-section" id="faq">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "FAQ" %}</p>
+    <h2 class="section-heading">{% trans "Frequently asked questions" %}</h2>
+    <div class="faq-list">
+      {% for item in faq_items %}
+      <details class="faq-item"{% if forloop.first %} open{% endif %}>
+        <summary class="faq-item__q">{{ item.q }}</summary>
+        <div class="faq-item__a">{{ item.a }}</div>
+      </details>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}

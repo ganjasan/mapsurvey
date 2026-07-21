@@ -22,6 +22,10 @@ from .events import (
     emit_event, build_session_start_metadata, store_utm_in_session,
     capture_signup_source, persist_signup_attribution,
 )
+from .seo_landings import (
+    SEO_LANDINGS, render_seo_landing, Crumb, HOME,
+    build_breadcrumb_jsonld, build_story_collection_jsonld,
+)
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
 from django.core.serializers import serialize
@@ -1067,12 +1071,37 @@ def import_survey(request):
 	return redirect('editor')
 
 
+STORIES_CRUMB = Crumb("Stories", "/stories/")
+
+
+def stories_index(request):
+	"""Public stories hub at /stories/ — card grid of published stories, newest first."""
+	stories = list(Story.objects.filter(is_published=True).order_by('-published_date'))
+	breadcrumbs = (HOME, STORIES_CRUMB)
+	context = {
+		'stories': stories,
+		'breadcrumb_jsonld': build_breadcrumb_jsonld(breadcrumbs),
+		'collection_jsonld': build_story_collection_jsonld(request, stories) if stories else "",
+	}
+	return render(request, 'stories_index.html', context)
+
+
 def story_detail(request, slug):
+	from django.utils.html import strip_tags
 	try:
 		story = Story.objects.select_related('survey').get(slug=slug, is_published=True)
 	except Story.DoesNotExist:
 		raise Http404
-	return render(request, 'story_detail.html', {'story': story})
+	excerpt = " ".join(strip_tags(story.body or "").split())
+	meta_description = (excerpt[:155].rstrip() + "…") if len(excerpt) > 155 else (excerpt or story.title)
+	breadcrumbs = (HOME, STORIES_CRUMB, Crumb(story.title, f"/stories/{story.slug}/"))
+	context = {
+		'story': story,
+		'canonical': f"https://mapsurvey.org/stories/{story.slug}/",
+		'meta_description': meta_description,
+		'breadcrumb_jsonld': build_breadcrumb_jsonld(breadcrumbs),
+	}
+	return render(request, 'story_detail.html', context)
 
 
 @survey_permission_required('owner')
@@ -1179,8 +1208,7 @@ def for_educators(request):
 	First-touch source capture so a search/referral -> educators -> register flow is
 	attributed (Phase-1). The page's CTAs also carry utm_source=edu.
 	"""
-	capture_signup_source(request)
-	return render(request, 'for_educators.html')
+	return render_seo_landing(request, 'for_educators')
 
 
 def maptionnaire_alternative(request):
@@ -1189,8 +1217,7 @@ def maptionnaire_alternative(request):
 	Targets the validated "Maptionnaire alternative" search intent (how Jaakko
 	found us). First-touch source capture; CTAs carry utm_source=comparison.
 	"""
-	capture_signup_source(request)
-	return render(request, 'maptionnaire_alternative.html')
+	return render_seo_landing(request, 'maptionnaire_alternative')
 
 
 def for_planners(request):
@@ -1199,8 +1226,7 @@ def for_planners(request):
 	The core participatory-planning market (Maptionnaire's turf). First-touch
 	source capture; CTAs carry utm_source=planners.
 	"""
-	capture_signup_source(request)
-	return render(request, 'for_planners.html')
+	return render_seo_landing(request, 'for_planners')
 
 
 def for_researchers(request):
@@ -1209,16 +1235,14 @@ def for_researchers(request):
 	PPGIS / participatory research + citizen science. First-touch source capture;
 	CTAs carry utm_source=researchers.
 	"""
-	capture_signup_source(request)
-	return render(request, 'for_researchers.html')
+	return render_seo_landing(request, 'for_researchers')
 
 
 def for_government(request):
 	"""Public landing page: the open-source community engagement platform for
 	local government. Audience page (councils / public agencies) that also owns
 	the "community engagement platform" positioning. utm_source=government."""
-	capture_signup_source(request)
-	return render(request, 'for_government.html')
+	return render_seo_landing(request, 'for_government')
 
 
 def community_engagement_platform(request):
@@ -1228,8 +1252,7 @@ def community_engagement_platform(request):
 	transport agencies) — distinct from the audience page /for-government/, which scopes the
 	same term to local government. First-touch source capture; CTAs carry
 	utm_source=engagement_platform."""
-	capture_signup_source(request)
-	return render(request, 'community_engagement_platform.html')
+	return render_seo_landing(request, 'community_engagement_platform')
 
 
 def public_consultation_software(request):
@@ -1238,8 +1261,7 @@ def public_consultation_software(request):
 	Consultation-workflow framing (statutory consultation, planning applications,
 	infrastructure) — audience wider than government. First-touch source capture; CTAs carry
 	utm_source=consultation_software."""
-	capture_signup_source(request)
-	return render(request, 'public_consultation_software.html')
+	return render_seo_landing(request, 'public_consultation_software')
 
 
 def civic_engagement(request):
@@ -1248,8 +1270,7 @@ def civic_engagement(request):
 
 	Middle-funnel semantic anchor: explains map-based civic engagement and funnels down
 	to the product pages. CTAs carry utm_source=civic_engagement."""
-	capture_signup_source(request)
-	return render(request, 'civic_engagement.html')
+	return render_seo_landing(request, 'civic_engagement')
 
 
 def participatory_budgeting(request):
@@ -1257,8 +1278,7 @@ def participatory_budgeting(request):
 
 	Honest scope: location input for PB programmes (where residents want investment),
 	explicitly not a budget-allocation module. CTAs carry utm_source=participatory_budgeting."""
-	capture_signup_source(request)
-	return render(request, 'participatory_budgeting.html')
+	return render_seo_landing(request, 'participatory_budgeting')
 
 
 def for_consultants(request):
@@ -1266,8 +1286,7 @@ def for_consultants(request):
 
 	Leads with per-project economics (no per-project fees), GeoJSON deliverables, and
 	open-source self-hosting. CTAs carry utm_source=consultants."""
-	capture_signup_source(request)
-	return render(request, 'for_consultants.html')
+	return render_seo_landing(request, 'for_consultants')
 
 
 def social_pinpoint_alternative(request):
@@ -1275,8 +1294,7 @@ def social_pinpoint_alternative(request):
 
 	Claims restricted to the verified dossier (docs/marketing/competitors/openpoint.md).
 	CTAs carry utm_source=comparison / utm_medium=social_pinpoint_alt."""
-	capture_signup_source(request)
-	return render(request, 'social_pinpoint_alternative.html')
+	return render_seo_landing(request, 'social_pinpoint_alternative')
 
 
 def metroquest_alternative(request):
@@ -1284,8 +1302,7 @@ def metroquest_alternative(request):
 
 	Migration framing: metroquest.com now redirects into Open Point. CTAs carry
 	utm_source=comparison / utm_medium=metroquest_alt."""
-	capture_signup_source(request)
-	return render(request, 'metroquest_alternative.html')
+	return render_seo_landing(request, 'metroquest_alternative')
 
 
 def robots_txt(request):
@@ -1293,16 +1310,12 @@ def robots_txt(request):
 		"User-agent: *",
 		"Allow: /surveys/",
 		"Allow: /stories/",
-		"Allow: /for-educators/",
-		"Allow: /for-planners/",
-		"Allow: /for-researchers/",
-		"Allow: /for-government/",
-		"Allow: /community-engagement-platform/",
-		"Allow: /public-consultation-software/",
-		"Allow: /civic-engagement/",
-		"Allow: /participatory-budgeting/",
-		"Allow: /for-consultants/",
-		"Allow: /alternatives/",
+	]
+	# SEO landing pages — derived from the single-source registry
+	# (survey/seo_landings.py) so a new landing can't silently miss the allow-list.
+	for landing in SEO_LANDINGS:
+		lines.append(f"Allow: {landing.path}")
+	lines += [
 		"Disallow: /admin/",
 		"Disallow: /editor/",
 		"Disallow: /accounts/",
@@ -1318,20 +1331,21 @@ def sitemap_xml(request):
 		visibility__in=['public', 'demo'],
 	)
 	urls = [f"  <url><loc>{base}/</loc></url>"]
-	urls.append(f"  <url><loc>{base}/for-educators/</loc></url>")
-	urls.append(f"  <url><loc>{base}/for-planners/</loc></url>")
-	urls.append(f"  <url><loc>{base}/for-researchers/</loc></url>")
-	urls.append(f"  <url><loc>{base}/for-government/</loc></url>")
-	urls.append(f"  <url><loc>{base}/community-engagement-platform/</loc></url>")
-	urls.append(f"  <url><loc>{base}/public-consultation-software/</loc></url>")
-	urls.append(f"  <url><loc>{base}/civic-engagement/</loc></url>")
-	urls.append(f"  <url><loc>{base}/participatory-budgeting/</loc></url>")
-	urls.append(f"  <url><loc>{base}/for-consultants/</loc></url>")
-	urls.append(f"  <url><loc>{base}/alternatives/maptionnaire/</loc></url>")
-	urls.append(f"  <url><loc>{base}/alternatives/social-pinpoint/</loc></url>")
-	urls.append(f"  <url><loc>{base}/alternatives/metroquest/</loc></url>")
+	# SEO landing pages with crawl hints — from the single-source registry.
+	for landing in SEO_LANDINGS:
+		urls.append(
+			f"  <url><loc>{base}{landing.path}</loc>"
+			f"<lastmod>{landing.lastmod}</lastmod>"
+			f"<changefreq>{landing.changefreq}</changefreq>"
+			f"<priority>{landing.priority}</priority></url>"
+		)
 	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
 	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
+	# Stories hub + published stories
+	urls.append(f"  <url><loc>{base}/stories/</loc></url>")
+	for story in Story.objects.filter(is_published=True).order_by('-published_date'):
+		lastmod = f"<lastmod>{story.published_date.date().isoformat()}</lastmod>" if story.published_date else ""
+		urls.append(f"  <url><loc>{base}/stories/{story.slug}/</loc>{lastmod}</url>")
 	for survey in surveys:
 		urls.append(f"  <url><loc>{base}/surveys/{survey.uuid}/</loc></url>")
 	xml = (
