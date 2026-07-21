@@ -13911,3 +13911,29 @@ class SeoWave2LandingPagesTest(TestCase):
                      'href="/for-consultants/"', 'href="/alternatives/social-pinpoint/"',
                      'href="/alternatives/metroquest/"'):
             self.assertContains(resp, href)
+
+
+class OrganizationSchemaTest(TestCase):
+    """Brand-entity Organization JSON-LD with sameAs on the landing pages."""
+
+    def test_homepage_has_organization_schema_with_sameas(self):
+        """
+        GIVEN the landing page
+        WHEN rendered
+        THEN it includes an Organization JSON-LD block with sameAs linking our profiles
+        """
+        import json, re
+        html = Client().get("/").content.decode()
+        blocks = re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S)
+        types = []
+        org = None
+        for b in blocks:
+            d = json.loads(b)   # must be valid JSON
+            types.append(d.get("@type"))
+            if d.get("@type") == "Organization":
+                org = d
+        self.assertIn("Organization", types)
+        self.assertIn("SoftwareApplication", types)
+        self.assertEqual(org["name"], "Mapsurvey")
+        self.assertTrue(any("github.com" in s for s in org["sameAs"]))
+        self.assertTrue(any("participedia.net" in s for s in org["sameAs"]))
