@@ -4,7 +4,7 @@ from .models import (
     Organization, SurveyHeader, SurveySection, Question, Answer,
     SurveySession,
     SurveySectionTranslation, QuestionTranslation,
-    Story, FunnelReport, SignupAttribution,
+    Story, FunnelReport, SignupAttribution, AuditLog,
 )
 from .funnel import dashboard_context
 from leaflet.admin import LeafletGeoAdmin
@@ -71,6 +71,25 @@ class SignupAttributionAdmin(admin.ModelAdmin):
     list_filter = ('source_bucket', 'utm_source')
     search_fields = ('user__username', 'utm_source', 'utm_campaign', 'raw_referrer')
     readonly_fields = ('created_at',)
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    """Read-only viewer for the append-only audit trail (design D4)."""
+
+    list_display = ('created_at', 'action', 'survey_name', 'actor', 'ip')
+    list_filter = ('action',)
+    search_fields = ('survey_name', 'survey_uuid', 'actor__username', 'ip')
+    date_hierarchy = 'created_at'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(FunnelReport)

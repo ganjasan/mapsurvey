@@ -2267,13 +2267,15 @@ class DeleteSurveyTest(TestCase):
         """
         GIVEN an authenticated user and existing survey
         WHEN POST request to delete endpoint
-        THEN survey is deleted and user redirected with success message
+        THEN survey is moved to trash (deleted_at set) and user redirected
         """
         self.client.login(username='deleteuser', password='testpass123')
         response = self.client.post(f'/editor/delete/{self.survey.uuid}/')
 
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(SurveyHeader.objects.filter(name="delete_test_survey").exists())
+        self.survey.refresh_from_db()
+        self.assertIsNotNone(self.survey.deleted_at)
+        self.assertTrue(self.survey.is_trashed)
 
     def test_delete_survey_unauthenticated_redirect(self):
         """
@@ -2300,22 +2302,33 @@ class DeleteSurveyTest(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_delete_survey_cascade_deletes_related_data(self):
+    def test_trash_preserves_related_data(self):
         """
         GIVEN a survey with sessions, answers, sections, and questions
-        WHEN survey is deleted
-        THEN all related data is also deleted
+        WHEN survey is moved to trash
+        THEN all related data is preserved in the database
         """
-        # Verify data exists before deletion
-        self.assertTrue(SurveySession.objects.filter(survey=self.survey).exists())
-        self.assertTrue(Answer.objects.filter(survey_session=self.session).exists())
-        self.assertTrue(SurveySection.objects.filter(survey_header=self.survey).exists())
-        self.assertTrue(Question.objects.filter(survey_section=self.section).exists())
-
         self.client.login(username='deleteuser', password='testpass123')
         self.client.post(f'/editor/delete/{self.survey.uuid}/')
 
-        # All related data should be deleted
+        # Trash preserves everything; cascade happens only at purge
+        self.assertTrue(SurveySession.objects.filter(pk=self.session.pk).exists())
+        self.assertTrue(Answer.objects.filter(pk=self.answer.pk).exists())
+        self.assertTrue(SurveySection.objects.filter(pk=self.section.pk).exists())
+        self.assertTrue(Question.objects.filter(pk=self.question.pk).exists())
+
+    def test_purge_cascade_deletes_related_data(self):
+        """
+        GIVEN a trashed survey with sessions, answers, sections, and questions
+        WHEN survey is purged via Delete forever
+        THEN all related data is deleted
+        """
+        self.client.login(username='deleteuser', password='testpass123')
+        self.client.post(f'/editor/delete/{self.survey.uuid}/')
+        response = self.client.post(f'/editor/purge/{self.survey.uuid}/')
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(SurveyHeader.objects.filter(pk=self.survey.pk).exists())
         self.assertFalse(SurveySession.objects.filter(pk=self.session.pk).exists())
         self.assertFalse(Answer.objects.filter(pk=self.answer.pk).exists())
         self.assertFalse(SurveySection.objects.filter(pk=self.section.pk).exists())
@@ -2333,6 +2346,293 @@ class DeleteSurveyTest(TestCase):
         self.assertEqual(response.status_code, 302)
         # Survey should still exist
         self.assertTrue(SurveyHeader.objects.filter(name="delete_test_survey").exists())
+
+
+class SurveyTrashTest(TestCase):
+    """Tests for the trash lifecycle: hide, restore, purge."""
+
+    def setUp(self):
+        """Set up an owner with a published survey that has a session."""
+        self.client = Client()
+        self.org = _make_org('TrashOrg')
+        self.user = User.objects.create_user(username='trashuser', password='testpass123')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="trash_test_survey", organization=self.org, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="trash_section", code="TS", is_head=True,
+        )
+        self.session = SurveySession.objects.create(survey=self.survey)
+        self.client.login(username='trashuser', password='testpass123')
+
+    def _trash(self):
+        self.client.post(f'/editor/delete/{self.survey.uuid}/')
+        self.survey.refresh_from_db()
+
+    def test_trashed_hidden_from_dashboard(self):
+        """
+        GIVEN a trashed survey
+        WHEN the owner opens the dashboard
+        THEN the survey is not in the survey list but appears in the Trash section
+        """
+        self._trash()
+        response = self.client.get('/editor/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(self.survey, response.context['survey_headers'])
+        self.assertIn(self.survey, response.context['trashed_surveys'])
+
+    def test_trashed_public_url_404(self):
+        """
+        GIVEN a published survey that was trashed
+        WHEN a respondent opens its public URL
+        THEN the response is 404
+        """
+        self._trash()
+        response = self.client.get(f'/surveys/{self.survey.uuid}/')
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_trashed_editor_endpoint_404(self):
+        """
+        GIVEN a trashed survey
+        WHEN the owner opens a regular editor endpoint for it
+        THEN the response is 404 (only trash endpoints may touch it)
+        """
+        self._trash()
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_restore_returns_survey(self):
+        """
+        GIVEN a trashed published survey
+        WHEN the owner restores it
+        THEN it reappears on the dashboard with its original status and public URL works
+        """
+        self._trash()
+        response = self.client.post(f'/editor/restore/{self.survey.uuid}/')
+
+        self.assertEqual(response.status_code, 302)
+        self.survey.refresh_from_db()
+        self.assertIsNone(self.survey.deleted_at)
+        self.assertEqual(self.survey.status, 'published')
+        dashboard = self.client.get('/editor/')
+        self.assertIn(self.survey, dashboard.context['survey_headers'])
+        public = self.client.get(f'/surveys/{self.survey.uuid}/')
+        self.assertIn(public.status_code, (200, 302))  # entry redirects to first section
+
+    def test_purge_rejects_non_trashed(self):
+        """
+        GIVEN a survey that is not in trash
+        WHEN the owner posts to the purge endpoint
+        THEN nothing is deleted
+        """
+        response = self.client.post(f'/editor/purge/{self.survey.uuid}/')
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(SurveyHeader.objects.filter(pk=self.survey.pk).exists())
+
+    def test_purge_removes_media_files(self):
+        """
+        GIVEN a trashed survey with a cover image and a question image
+        WHEN the survey is purged
+        THEN both files are removed from storage
+        """
+        from django.core.files.base import ContentFile
+        gif = b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
+        self.survey.cover_image.save('trash_test_cover.gif', ContentFile(gif), save=True)
+        question = Question.objects.create(
+            survey_section=self.section, code="Q_IMG", name="img", input_type="text",
+        )
+        question.image.save('trash_test_qimg.gif', ContentFile(gif), save=True)
+        cover_name, image_name = self.survey.cover_image.name, question.image.name
+        storage = self.survey.cover_image.storage
+        self.assertTrue(storage.exists(cover_name))
+        self.assertTrue(storage.exists(image_name))
+
+        self._trash()
+        self.client.post(f'/editor/purge/{self.survey.uuid}/')
+
+        self.assertFalse(storage.exists(cover_name))
+        self.assertFalse(storage.exists(image_name))
+
+    def test_purge_deletes_archived_versions(self):
+        """
+        GIVEN a trashed survey with an archived version carrying a session
+        WHEN the survey is purged
+        THEN the archived version and its session are deleted too
+        """
+        archived = SurveyHeader.objects.create(
+            name="trash_test_survey_v1", organization=self.org,
+            canonical_survey=self.survey, is_canonical=False, version_number=1,
+        )
+        archived_session = SurveySession.objects.create(survey=archived)
+
+        self._trash()
+        self.client.post(f'/editor/purge/{self.survey.uuid}/')
+
+        self.assertFalse(SurveyHeader.objects.filter(pk=archived.pk).exists())
+        self.assertFalse(SurveySession.objects.filter(pk=archived_session.pk).exists())
+
+
+class AutoPurgeCommandTest(TestCase):
+    """Tests for the purge_trashed_surveys management command."""
+
+    def setUp(self):
+        """Set up one expired and one recent trashed survey."""
+        from datetime import timedelta
+        from django.utils import timezone
+        self.org = _make_org('PurgeOrg')
+        self.expired = SurveyHeader.objects.create(
+            name="expired_survey", organization=self.org,
+            deleted_at=timezone.now() - timedelta(days=31),
+        )
+        self.recent = SurveyHeader.objects.create(
+            name="recent_survey", organization=self.org,
+            deleted_at=timezone.now() - timedelta(days=5),
+        )
+
+    def test_purges_expired_keeps_recent(self):
+        """
+        GIVEN surveys trashed 31 and 5 days ago
+        WHEN the purge command runs with the default 30-day window
+        THEN the expired one is deleted with an auto-purge audit row and the recent one survives
+        """
+        from django.core.management import call_command
+        from .models import AuditLog
+
+        call_command('purge_trashed_surveys')
+
+        self.assertFalse(SurveyHeader.objects.filter(pk=self.expired.pk).exists())
+        self.assertTrue(SurveyHeader.objects.filter(pk=self.recent.pk).exists())
+        entry = AuditLog.objects.get(action='survey_auto_purge', survey_uuid=self.expired.uuid)
+        self.assertIsNone(entry.actor)
+        self.assertEqual(entry.survey_name, 'expired_survey')
+
+    def test_dry_run_touches_nothing(self):
+        """
+        GIVEN an expired trashed survey
+        WHEN the purge command runs with --dry-run
+        THEN nothing is deleted and no audit rows are written
+        """
+        from django.core.management import call_command
+        from .models import AuditLog
+
+        call_command('purge_trashed_surveys', '--dry-run')
+
+        self.assertTrue(SurveyHeader.objects.filter(pk=self.expired.pk).exists())
+        self.assertFalse(AuditLog.objects.filter(action='survey_auto_purge').exists())
+
+
+class AuditLogTest(TestCase):
+    """Tests for the append-only audit trail of editor operations."""
+
+    def setUp(self):
+        """Set up an owner with a survey."""
+        self.client = Client()
+        self.org = _make_org('AuditOrg')
+        self.user = User.objects.create_user(username='audituser', password='testpass123')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="audit_test_survey", organization=self.org, status='published',
+        )
+        self.client.login(username='audituser', password='testpass123')
+
+    def test_trash_restore_purge_write_audit(self):
+        """
+        GIVEN a survey
+        WHEN it is trashed, restored, trashed again, and purged
+        THEN each operation writes an audit row with the actor, and rows survive the purge
+        """
+        from .models import AuditLog
+
+        self.client.post(f'/editor/delete/{self.survey.uuid}/')
+        self.client.post(f'/editor/restore/{self.survey.uuid}/')
+        self.client.post(f'/editor/delete/{self.survey.uuid}/')
+        self.client.post(f'/editor/purge/{self.survey.uuid}/')
+
+        actions = list(
+            AuditLog.objects.filter(survey_uuid=self.survey.uuid)
+            .order_by('created_at').values_list('action', flat=True)
+        )
+        self.assertEqual(actions, ['survey_trash', 'survey_restore', 'survey_trash', 'survey_purge'])
+        # Rows reference the purged survey by value and keep the actor
+        self.assertFalse(SurveyHeader.objects.filter(pk=self.survey.pk).exists())
+        for entry in AuditLog.objects.filter(survey_uuid=self.survey.uuid):
+            self.assertEqual(entry.actor, self.user)
+            self.assertEqual(entry.survey_name, 'audit_test_survey')
+
+    def test_status_transition_audited(self):
+        """
+        GIVEN a published survey
+        WHEN the owner transitions it to closed
+        THEN an audit row records the old and new status
+        """
+        from .models import AuditLog
+
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/', {'status': 'closed'},
+        )
+
+        self.assertIn(response.status_code, (204, 302))
+        entry = AuditLog.objects.get(action='status_transition', survey_uuid=self.survey.uuid)
+        self.assertEqual(entry.metadata, {'old_status': 'published', 'new_status': 'closed'})
+
+    def test_clear_test_data_audited(self):
+        """
+        GIVEN a testing survey with sessions
+        WHEN the owner publishes with clear_test_data
+        THEN sessions are deleted and an audit row records the count
+        """
+        from .models import AuditLog
+
+        self.survey.status = 'testing'
+        self.survey.save(update_fields=['status'])
+        SurveySession.objects.create(survey=self.survey)
+        SurveySession.objects.create(survey=self.survey)
+
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/',
+            {'status': 'published', 'clear_test_data': 'true'},
+        )
+
+        self.assertFalse(SurveySession.objects.filter(survey=self.survey).exists())
+        entry = AuditLog.objects.get(action='clear_test_data', survey_uuid=self.survey.uuid)
+        self.assertEqual(entry.metadata['deleted_sessions'], 2)
+
+    def test_password_operations_audited(self):
+        """
+        GIVEN a survey
+        WHEN the owner sets and then removes a password
+        THEN both operations write audit rows
+        """
+        from .models import AuditLog
+
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/password/',
+            {'action': 'set', 'password': 'secret1'},
+        )
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/password/', {'action': 'remove'},
+        )
+
+        self.assertTrue(AuditLog.objects.filter(action='password_set', survey_uuid=self.survey.uuid).exists())
+        self.assertTrue(AuditLog.objects.filter(action='password_remove', survey_uuid=self.survey.uuid).exists())
+
+    def test_audit_helper_swallows_exceptions(self):
+        """
+        GIVEN a broken request object
+        WHEN audit() is called with it
+        THEN no exception propagates and no row is written
+        """
+        from .audit import audit as audit_fn
+        from .models import AuditLog
+
+        audit_fn(object(), 'survey_trash', self.survey)  # no .user attribute
+
+        self.assertFalse(AuditLog.objects.filter(action='survey_trash').exists())
 
 
 class TranslationModelsTest(TestCase):
@@ -6224,12 +6524,13 @@ class ExportImportDeletePermissionTest(TestCase):
         """
         GIVEN an org owner
         WHEN they delete a survey
-        THEN it is deleted
+        THEN it is moved to trash
         """
         self.client.login(username='eid_owner', password='pass')
         response = self.client.post(f'/editor/delete/{self.survey.uuid}/')
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(SurveyHeader.objects.filter(pk=self.survey.pk).exists())
+        self.survey.refresh_from_db()
+        self.assertIsNotNone(self.survey.deleted_at)
 
     def test_export_survey_in_different_org_returns_404(self):
         """

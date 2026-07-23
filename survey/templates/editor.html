@@ -308,6 +308,57 @@
         </div>
         {% endfor %}
     </div>
+
+    {% if trashed_surveys %}
+    <!-- Trash -->
+    <div class="trash-section" style="margin-top:2.5rem;">
+        <h2 style="font-size:0.95rem;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:1.25rem;">
+            <i class="fas fa-trash-alt mr-1"></i>Trash
+        </h2>
+        <p style="font-size:0.78rem;color:#9ca3af;">Surveys here are hidden from respondents and will be deleted forever after {{ trashed_surveys.0.TRASH_RETENTION_DAYS }} days.</p>
+        {% for survey in trashed_surveys %}
+        <div class="trash-row d-flex align-items-center" style="padding:0.5rem 0.75rem;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:0.4rem;background:#fafafa;">
+            <div style="flex:1;min-width:0;">
+                <span style="font-weight:600;font-size:0.85rem;color:#4b5563;">{{ survey.name }}</span>
+                <div style="font-size:0.72rem;color:#9ca3af;">
+                    Trashed {{ survey.deleted_at|timesince }} ago &middot; purges in {{ survey.purge_after|timeuntil }}
+                </div>
+            </div>
+            <form method="post" action="{% url 'restore_survey' survey.uuid %}" class="mb-0 mr-2">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="fas fa-trash-restore mr-1"></i>Restore</button>
+            </form>
+            <button type="button" class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#purgeModal"
+                    data-survey-name="{{ survey.name }}" data-survey-uuid="{{ survey.uuid }}">
+                Delete forever
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Purge Confirmation Modal -->
+<div class="modal fade" id="purgeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Forever</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="purgeForm" method="post" action="">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Permanently delete survey '<strong id="purgeSurveyName"></strong>'?</p>
+                    <p class="text-danger"><small>This action cannot be undone. All survey data including sessions and answers will be permanently deleted.</small></p>
+                </div>
+                <div class="modal-footer d-flex align-items-center">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete forever</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
@@ -315,14 +366,14 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Delete Survey</h5>
+                <h5 class="modal-title">Move to Trash</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form id="deleteForm" method="post" action="">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <p>Are you sure you want to delete survey '<strong id="deleteSurveyName"></strong>'?</p>
-                    <p class="text-danger"><small>This action cannot be undone. All survey data including sessions and answers will be permanently deleted.</small></p>
+                    <p>Move survey '<strong id="deleteSurveyName"></strong>' to Trash?</p>
+                    <p class="text-muted"><small>The survey will be hidden from respondents. You can restore it from Trash within 30 days; after that it is deleted forever.</small></p>
                 </div>
                 <div class="modal-footer d-flex align-items-center">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -395,6 +446,14 @@ $('#deleteModal').on('show.bs.modal', function(event) {
     var modal = $(this);
     modal.find('#deleteSurveyName').text(button.data('survey-name'));
     modal.find('#deleteForm').attr('action', '/editor/delete/' + button.data('survey-uuid') + '/');
+});
+
+// Purge modal
+$('#purgeModal').on('show.bs.modal', function(event) {
+    var button = $(event.relatedTarget);
+    var modal = $(this);
+    modal.find('#purgeSurveyName').text(button.data('survey-name'));
+    modal.find('#purgeForm').attr('action', '/editor/purge/' + button.data('survey-uuid') + '/');
 });
 
 </script>
