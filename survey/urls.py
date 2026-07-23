@@ -94,6 +94,7 @@ urlpatterns = [
     path('for-planners/', views.for_planners, name='for_planners'),
     path('for-researchers/', views.for_researchers, name='for_researchers'),
     path('for-government/', views.for_government, name='for_government'),
+    path('services/', views.services, name='services'),
     path('community-engagement-platform/', views.community_engagement_platform, name='community_engagement_platform'),
     path('public-consultation-software/', views.public_consultation_software, name='public_consultation_software'),
     path('civic-engagement/', views.civic_engagement, name='civic_engagement'),

@@ -1350,11 +1350,21 @@ def metroquest_alternative(request):
 	return render_seo_landing(request, 'metroquest_alternative')
 
 
+def services(request):
+	"""Public "Expert help" service page: optional paid help with survey design
+	and getting real responses, on top of the free self-serve platform. Targets
+	the verified gap where teams build+publish but collect ~0 responses.
+	utm_source=services."""
+	capture_signup_source(request)
+	return render(request, 'services.html')
+
+
 def robots_txt(request):
 	lines = [
 		"User-agent: *",
 		"Allow: /surveys/",
 		"Allow: /stories/",
+		"Allow: /services/",
 	]
 	# SEO landing pages — derived from the single-source registry
 	# (survey/seo_landings.py) so a new landing can't silently miss the allow-list.
@@ -1376,6 +1386,7 @@ def sitemap_xml(request):
 		visibility__in=['public', 'demo'],
 	)
 	urls = [f"  <url><loc>{base}/</loc></url>"]
+	urls.append(f"  <url><loc>{base}/services/</loc></url>")
 	# SEO landing pages with crawl hints — from the single-source registry.
 	for landing in SEO_LANDINGS:
 		urls.append(

@@ -1,0 +1,85 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Expert help with your map survey | Mapsurvey" %}{% endblock %}
+{% block meta_description %}{% trans "Optional paid help on top of the free Mapsurvey platform: we help you design your map survey and actually get real responses. Fixed scope, quoted per project. The platform stays free and open source." %}{% endblock %}
+{% block meta_keywords %}{% trans "map survey help, participatory mapping service, community engagement service, survey design help, get survey responses, done-with-you engagement" %}{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/services/{% endblock %}
+{% block og_url %}https://mapsurvey.org/services/{% endblock %}
+{% block og_title %}{% trans "Expert help getting real responses on your map survey" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .aud-lead { max-width: 720px; margin: 0 auto; }
+  .aud-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-top: 26px; }
+  .svc-tier { background: #fff; border: 1px solid #e6eaef; border-radius: 12px; padding: 22px 24px; text-align: left; }
+  .svc-tier h3 { font-size: 18px; margin: 0 0 4px; }
+  .svc-tier .svc-for { font-size: 13px; color: #2f6fb0; margin: 0 0 10px; font-weight: 600; }
+  .svc-tier p { font-size: 14.5px; color: #556; margin: 0; line-height: 1.55; }
+  .aud-steps { list-style: none; padding: 0; margin: 22px auto 0; max-width: 720px; text-align: left; counter-reset: step; }
+  .aud-steps li { padding: 10px 0 10px 38px; border-bottom: 1px solid #eef1f4; position: relative; font-size: 15px; }
+  .aud-steps li::before { counter-increment: step; content: counter(step); position: absolute; left: 4px; top: 8px; width: 22px; height: 22px; border-radius: 50%; background: #2f6fb0; color: #fff; font-size: 13px; font-weight: 600; text-align: center; line-height: 22px; }
+  .aud-fair { background: #f7f8fa; border: 1px solid #e6eaef; border-radius: 14px; padding: 22px 26px; max-width: 820px; margin: 24px auto 0; text-align: left; font-size: 14.5px; color: #556; line-height: 1.6; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero" id="hero">
+  <div class="hero__content aud-lead">
+    <h1 class="hero__headline">{% trans "Expert help getting real responses" %}</h1>
+    <p class="hero__description">
+      {% trans "Mapsurvey is free and open source, and it stays that way. When you want a hand, we help you design your map survey and actually get responses — as an optional paid service. Most teams can build a survey; the hard part is getting enough of the right people to answer. That is what we help with." %}
+    </p>
+    <div class="hero__cta-group">
+      <a href="mailto:konuchovartem@mapsurvey.org?subject=Help%20with%20our%20map%20survey" class="btn-primary-landing">{% trans "Book a short call" %}</a>
+      <a href="{% url 'django_registration_register' %}?utm_source=services&amp;utm_medium=services" class="btn-secondary-landing">{% trans "Or start free on your own" %}</a>
+    </div>
+    <div class="hero__badges">
+      <span class="hero__badge">{% trans "Platform stays free" %}</span>
+      <span class="hero__badge">{% trans "You own the data" %}</span>
+      <span class="hero__badge">{% trans "Fixed scope, quoted per project" %}</span>
+    </div>
+  </div>
+</section>
+
+<section class="showcase">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "How we help" %}</p>
+    <h2 class="section-heading">{% trans "Two ways to work together" %}</h2>
+    <div class="aud-grid">
+      <div class="svc-tier">
+        <h3>{% trans "Launch help" %}</h3>
+        <p class="svc-for">{% trans "For teams who can run their own outreach" %}</p>
+        <p>{% trans "We help you design the survey properly — the right map question types, sensible sections, geolocation, and multilingual setup — then get it live with shareable and QR links so you can put it in front of people. You leave with a survey that is built to be answered." %}</p>
+      </div>
+      <div class="svc-tier">
+        <h3>{% trans "Done-with-you engagement" %}</h3>
+        <p class="svc-for">{% trans "For a real project where responses matter" %}</p>
+        <p>{% trans "Everything in Launch help, plus we help you plan and drive distribution toward a response target, watch where people drop off, and hand you clean GeoJSON and a summary at the end. A partner accountable to the outcome, not just the setup." %}</p>
+      </div>
+    </div>
+    <div class="aud-fair">
+      {% trans "Run engagement for your own clients? We work as your production partner behind the scenes — we make the tool sing and help you hit response targets, and you keep the client relationship. We do not do outreach in your name or compete for your work." %}
+    </div>
+  </div>
+</section>
+
+<section class="showcase">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "How it works" %}</p>
+    <h2 class="section-heading">{% trans "Simple, fixed-scope, no lock-in" %}</h2>
+    <ol class="aud-steps">
+      <li>{% trans "Book a short call so we understand your project, audience, and timeline." %}</li>
+      <li>{% trans "We scope the work and send a fixed quote — no surprises, no retainer." %}</li>
+      <li>{% trans "We do the work; you keep full ownership of the survey and every response." %}</li>
+    </ol>
+    <div class="aud-fair">
+      {% trans "The platform stays free and open source either way. This is optional help for teams that want a hand — not a paywall on Mapsurvey." %}
+    </div>
+    <div class="hero__cta-group" style="margin-top:28px;justify-content:center;">
+      <a href="mailto:konuchovartem@mapsurvey.org?subject=Help%20with%20our%20map%20survey" class="btn-primary-landing">{% trans "Book a short call" %}</a>
+      <a href="{% url 'for_government' %}" class="btn-secondary-landing">{% trans "See the platform for engagement" %}</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
