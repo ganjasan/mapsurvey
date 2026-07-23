@@ -69,11 +69,16 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'survey.middleware.LastActivityMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'survey.middleware.ActiveOrgMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
+
+# LastActivityMiddleware writes UserActivity at most once per user per this many
+# seconds (cache-gated) so activity tracking never becomes a write-per-request.
+LAST_ACTIVITY_THROTTLE_SECONDS = int(os.environ.get('LAST_ACTIVITY_THROTTLE_SECONDS', 300))
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 

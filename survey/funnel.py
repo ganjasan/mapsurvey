@@ -19,7 +19,7 @@ from django.db.models import Count, Max, Min
 from django.db.models.functions import TruncMonth, TruncWeek
 from django.utils import timezone
 
-from .models import SurveyHeader, Question, SurveySession
+from .models import SurveyHeader, Question, SurveySession, UserActivity
 
 User = get_user_model()
 
@@ -262,12 +262,18 @@ class CreatorFunnelService:
         """"Living" creators: registered users who keep using the platform.
 
         A user's `activity_at` is the most recent of: their last login, the last
-        edit to any survey they own, and the latest non-deleted response on any of
-        their surveys. From that we derive:
+        edit to any survey they own, their last authenticated request
+        (`UserActivity.last_activity`), and the latest non-deleted response on any
+        of their surveys. From that we derive:
           - active_7 / active_30 / active_90: any activity within the rolling window
-          - returned: a *creator action* (login or survey edit -- NOT a respondent's
-            answer) on a day after they registered; i.e. they genuinely came back
+          - returned: a *creator action* (login, survey edit, or an authenticated
+            request -- NOT a respondent's answer) on a day after they registered;
+            i.e. they genuinely came back
           - dormant: registered but never came back (the complement of returned)
+
+        `last_activity` is forward-only (populated from deploy, no backfill); users
+        without a row fall back to `last_login` + `updated_at` and are never
+        reclassified downward.
         Returns a dict of {count, pct} blocks plus `total`.
         """
         now = now or timezone.now()
@@ -279,6 +285,9 @@ class CreatorFunnelService:
                       .values("created_by_id")
                       .annotate(m=Max("updated_at")))
         }
+        last_activity = dict(
+            UserActivity.objects.values_list("user_id", "last_activity")
+        )
         last_response = {
             r["survey__created_by_id"]: r["m"]
             for r in (SurveySession.objects
@@ -294,8 +303,9 @@ class CreatorFunnelService:
         for uid, joined, last_login in self._real_users().values_list(
                 "id", "date_joined", "last_login"):
             total += 1
-            # Creator's own actions (drives "returned"): login + survey edits only.
-            creator_acts = [t for t in (last_login, survey_edit.get(uid)) if t is not None]
+            # Creator's own actions (drives "returned"): login, survey edits, and
+            # any authenticated request (last_activity) -- NOT respondent answers.
+            creator_acts = [t for t in (last_login, survey_edit.get(uid), last_activity.get(uid)) if t is not None]
             creator_action = max(creator_acts) if creator_acts else None
             # Any liveliness (drives active windows): also counts collected responses.
             live = creator_acts + ([last_response[uid]] if uid in last_response else [])
