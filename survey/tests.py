@@ -2267,13 +2267,15 @@ class DeleteSurveyTest(TestCase):
         """
         GIVEN an authenticated user and existing survey
         WHEN POST request to delete endpoint
-        THEN survey is deleted and user redirected with success message
+        THEN survey is moved to trash (deleted_at set) and user redirected
         """
         self.client.login(username='deleteuser', password='testpass123')
         response = self.client.post(f'/editor/delete/{self.survey.uuid}/')
 
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(SurveyHeader.objects.filter(name="delete_test_survey").exists())
+        self.survey.refresh_from_db()
+        self.assertIsNotNone(self.survey.deleted_at)
+        self.assertTrue(self.survey.is_trashed)
 
     def test_delete_survey_unauthenticated_redirect(self):
         """
@@ -2300,22 +2302,33 @@ class DeleteSurveyTest(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_delete_survey_cascade_deletes_related_data(self):
+    def test_trash_preserves_related_data(self):
         """
         GIVEN a survey with sessions, answers, sections, and questions
-        WHEN survey is deleted
-        THEN all related data is also deleted
+        WHEN survey is moved to trash
+        THEN all related data is preserved in the database
         """
-        # Verify data exists before deletion
-        self.assertTrue(SurveySession.objects.filter(survey=self.survey).exists())
-        self.assertTrue(Answer.objects.filter(survey_session=self.session).exists())
-        self.assertTrue(SurveySection.objects.filter(survey_header=self.survey).exists())
-        self.assertTrue(Question.objects.filter(survey_section=self.section).exists())
-
         self.client.login(username='deleteuser', password='testpass123')
         self.client.post(f'/editor/delete/{self.survey.uuid}/')
 
-        # All related data should be deleted
+        # Trash preserves everything; cascade happens only at purge
+        self.assertTrue(SurveySession.objects.filter(pk=self.session.pk).exists())
+        self.assertTrue(Answer.objects.filter(pk=self.answer.pk).exists())
+        self.assertTrue(SurveySection.objects.filter(pk=self.section.pk).exists())
+        self.assertTrue(Question.objects.filter(pk=self.question.pk).exists())
+
+    def test_purge_cascade_deletes_related_data(self):
+        """
+        GIVEN a trashed survey with sessions, answers, sections, and questions
+        WHEN survey is purged via Delete forever
+        THEN all related data is deleted
+        """
+        self.client.login(username='deleteuser', password='testpass123')
+        self.client.post(f'/editor/delete/{self.survey.uuid}/')
+        response = self.client.post(f'/editor/purge/{self.survey.uuid}/')
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(SurveyHeader.objects.filter(pk=self.survey.pk).exists())
         self.assertFalse(SurveySession.objects.filter(pk=self.session.pk).exists())
         self.assertFalse(Answer.objects.filter(pk=self.answer.pk).exists())
         self.assertFalse(SurveySection.objects.filter(pk=self.section.pk).exists())
@@ -2333,6 +2346,293 @@ class DeleteSurveyTest(TestCase):
         self.assertEqual(response.status_code, 302)
         # Survey should still exist
         self.assertTrue(SurveyHeader.objects.filter(name="delete_test_survey").exists())
+
+
+class SurveyTrashTest(TestCase):
+    """Tests for the trash lifecycle: hide, restore, purge."""
+
+    def setUp(self):
+        """Set up an owner with a published survey that has a session."""
+        self.client = Client()
+        self.org = _make_org('TrashOrg')
+        self.user = User.objects.create_user(username='trashuser', password='testpass123')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="trash_test_survey", organization=self.org, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="trash_section", code="TS", is_head=True,
+        )
+        self.session = SurveySession.objects.create(survey=self.survey)
+        self.client.login(username='trashuser', password='testpass123')
+
+    def _trash(self):
+        self.client.post(f'/editor/delete/{self.survey.uuid}/')
+        self.survey.refresh_from_db()
+
+    def test_trashed_hidden_from_dashboard(self):
+        """
+        GIVEN a trashed survey
+        WHEN the owner opens the dashboard
+        THEN the survey is not in the survey list but appears in the Trash section
+        """
+        self._trash()
+        response = self.client.get('/editor/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(self.survey, response.context['survey_headers'])
+        self.assertIn(self.survey, response.context['trashed_surveys'])
+
+    def test_trashed_public_url_404(self):
+        """
+        GIVEN a published survey that was trashed
+        WHEN a respondent opens its public URL
+        THEN the response is 404
+        """
+        self._trash()
+        response = self.client.get(f'/surveys/{self.survey.uuid}/')
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_trashed_editor_endpoint_404(self):
+        """
+        GIVEN a trashed survey
+        WHEN the owner opens a regular editor endpoint for it
+        THEN the response is 404 (only trash endpoints may touch it)
+        """
+        self._trash()
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_restore_returns_survey(self):
+        """
+        GIVEN a trashed published survey
+        WHEN the owner restores it
+        THEN it reappears on the dashboard with its original status and public URL works
+        """
+        self._trash()
+        response = self.client.post(f'/editor/restore/{self.survey.uuid}/')
+
+        self.assertEqual(response.status_code, 302)
+        self.survey.refresh_from_db()
+        self.assertIsNone(self.survey.deleted_at)
+        self.assertEqual(self.survey.status, 'published')
+        dashboard = self.client.get('/editor/')
+        self.assertIn(self.survey, dashboard.context['survey_headers'])
+        public = self.client.get(f'/surveys/{self.survey.uuid}/')
+        self.assertIn(public.status_code, (200, 302))  # entry redirects to first section
+
+    def test_purge_rejects_non_trashed(self):
+        """
+        GIVEN a survey that is not in trash
+        WHEN the owner posts to the purge endpoint
+        THEN nothing is deleted
+        """
+        response = self.client.post(f'/editor/purge/{self.survey.uuid}/')
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(SurveyHeader.objects.filter(pk=self.survey.pk).exists())
+
+    def test_purge_removes_media_files(self):
+        """
+        GIVEN a trashed survey with a cover image and a question image
+        WHEN the survey is purged
+        THEN both files are removed from storage
+        """
+        from django.core.files.base import ContentFile
+        gif = b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
+        self.survey.cover_image.save('trash_test_cover.gif', ContentFile(gif), save=True)
+        question = Question.objects.create(
+            survey_section=self.section, code="Q_IMG", name="img", input_type="text",
+        )
+        question.image.save('trash_test_qimg.gif', ContentFile(gif), save=True)
+        cover_name, image_name = self.survey.cover_image.name, question.image.name
+        storage = self.survey.cover_image.storage
+        self.assertTrue(storage.exists(cover_name))
+        self.assertTrue(storage.exists(image_name))
+
+        self._trash()
+        self.client.post(f'/editor/purge/{self.survey.uuid}/')
+
+        self.assertFalse(storage.exists(cover_name))
+        self.assertFalse(storage.exists(image_name))
+
+    def test_purge_deletes_archived_versions(self):
+        """
+        GIVEN a trashed survey with an archived version carrying a session
+        WHEN the survey is purged
+        THEN the archived version and its session are deleted too
+        """
+        archived = SurveyHeader.objects.create(
+            name="trash_test_survey_v1", organization=self.org,
+            canonical_survey=self.survey, is_canonical=False, version_number=1,
+        )
+        archived_session = SurveySession.objects.create(survey=archived)
+
+        self._trash()
+        self.client.post(f'/editor/purge/{self.survey.uuid}/')
+
+        self.assertFalse(SurveyHeader.objects.filter(pk=archived.pk).exists())
+        self.assertFalse(SurveySession.objects.filter(pk=archived_session.pk).exists())
+
+
+class AutoPurgeCommandTest(TestCase):
+    """Tests for the purge_trashed_surveys management command."""
+
+    def setUp(self):
+        """Set up one expired and one recent trashed survey."""
+        from datetime import timedelta
+        from django.utils import timezone
+        self.org = _make_org('PurgeOrg')
+        self.expired = SurveyHeader.objects.create(
+            name="expired_survey", organization=self.org,
+            deleted_at=timezone.now() - timedelta(days=31),
+        )
+        self.recent = SurveyHeader.objects.create(
+            name="recent_survey", organization=self.org,
+            deleted_at=timezone.now() - timedelta(days=5),
+        )
+
+    def test_purges_expired_keeps_recent(self):
+        """
+        GIVEN surveys trashed 31 and 5 days ago
+        WHEN the purge command runs with the default 30-day window
+        THEN the expired one is deleted with an auto-purge audit row and the recent one survives
+        """
+        from django.core.management import call_command
+        from .models import AuditLog
+
+        call_command('purge_trashed_surveys')
+
+        self.assertFalse(SurveyHeader.objects.filter(pk=self.expired.pk).exists())
+        self.assertTrue(SurveyHeader.objects.filter(pk=self.recent.pk).exists())
+        entry = AuditLog.objects.get(action='survey_auto_purge', survey_uuid=self.expired.uuid)
+        self.assertIsNone(entry.actor)
+        self.assertEqual(entry.survey_name, 'expired_survey')
+
+    def test_dry_run_touches_nothing(self):
+        """
+        GIVEN an expired trashed survey
+        WHEN the purge command runs with --dry-run
+        THEN nothing is deleted and no audit rows are written
+        """
+        from django.core.management import call_command
+        from .models import AuditLog
+
+        call_command('purge_trashed_surveys', '--dry-run')
+
+        self.assertTrue(SurveyHeader.objects.filter(pk=self.expired.pk).exists())
+        self.assertFalse(AuditLog.objects.filter(action='survey_auto_purge').exists())
+
+
+class AuditLogTest(TestCase):
+    """Tests for the append-only audit trail of editor operations."""
+
+    def setUp(self):
+        """Set up an owner with a survey."""
+        self.client = Client()
+        self.org = _make_org('AuditOrg')
+        self.user = User.objects.create_user(username='audituser', password='testpass123')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="audit_test_survey", organization=self.org, status='published',
+        )
+        self.client.login(username='audituser', password='testpass123')
+
+    def test_trash_restore_purge_write_audit(self):
+        """
+        GIVEN a survey
+        WHEN it is trashed, restored, trashed again, and purged
+        THEN each operation writes an audit row with the actor, and rows survive the purge
+        """
+        from .models import AuditLog
+
+        self.client.post(f'/editor/delete/{self.survey.uuid}/')
+        self.client.post(f'/editor/restore/{self.survey.uuid}/')
+        self.client.post(f'/editor/delete/{self.survey.uuid}/')
+        self.client.post(f'/editor/purge/{self.survey.uuid}/')
+
+        actions = list(
+            AuditLog.objects.filter(survey_uuid=self.survey.uuid)
+            .order_by('created_at').values_list('action', flat=True)
+        )
+        self.assertEqual(actions, ['survey_trash', 'survey_restore', 'survey_trash', 'survey_purge'])
+        # Rows reference the purged survey by value and keep the actor
+        self.assertFalse(SurveyHeader.objects.filter(pk=self.survey.pk).exists())
+        for entry in AuditLog.objects.filter(survey_uuid=self.survey.uuid):
+            self.assertEqual(entry.actor, self.user)
+            self.assertEqual(entry.survey_name, 'audit_test_survey')
+
+    def test_status_transition_audited(self):
+        """
+        GIVEN a published survey
+        WHEN the owner transitions it to closed
+        THEN an audit row records the old and new status
+        """
+        from .models import AuditLog
+
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/', {'status': 'closed'},
+        )
+
+        self.assertIn(response.status_code, (204, 302))
+        entry = AuditLog.objects.get(action='status_transition', survey_uuid=self.survey.uuid)
+        self.assertEqual(entry.metadata, {'old_status': 'published', 'new_status': 'closed'})
+
+    def test_clear_test_data_audited(self):
+        """
+        GIVEN a testing survey with sessions
+        WHEN the owner publishes with clear_test_data
+        THEN sessions are deleted and an audit row records the count
+        """
+        from .models import AuditLog
+
+        self.survey.status = 'testing'
+        self.survey.save(update_fields=['status'])
+        SurveySession.objects.create(survey=self.survey)
+        SurveySession.objects.create(survey=self.survey)
+
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/',
+            {'status': 'published', 'clear_test_data': 'true'},
+        )
+
+        self.assertFalse(SurveySession.objects.filter(survey=self.survey).exists())
+        entry = AuditLog.objects.get(action='clear_test_data', survey_uuid=self.survey.uuid)
+        self.assertEqual(entry.metadata['deleted_sessions'], 2)
+
+    def test_password_operations_audited(self):
+        """
+        GIVEN a survey
+        WHEN the owner sets and then removes a password
+        THEN both operations write audit rows
+        """
+        from .models import AuditLog
+
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/password/',
+            {'action': 'set', 'password': 'secret1'},
+        )
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/password/', {'action': 'remove'},
+        )
+
+        self.assertTrue(AuditLog.objects.filter(action='password_set', survey_uuid=self.survey.uuid).exists())
+        self.assertTrue(AuditLog.objects.filter(action='password_remove', survey_uuid=self.survey.uuid).exists())
+
+    def test_audit_helper_swallows_exceptions(self):
+        """
+        GIVEN a broken request object
+        WHEN audit() is called with it
+        THEN no exception propagates and no row is written
+        """
+        from .audit import audit as audit_fn
+        from .models import AuditLog
+
+        audit_fn(object(), 'survey_trash', self.survey)  # no .user attribute
+
+        self.assertFalse(AuditLog.objects.filter(action='survey_trash').exists())
 
 
 class TranslationModelsTest(TestCase):
@@ -6224,12 +6524,13 @@ class ExportImportDeletePermissionTest(TestCase):
         """
         GIVEN an org owner
         WHEN they delete a survey
-        THEN it is deleted
+        THEN it is moved to trash
         """
         self.client.login(username='eid_owner', password='pass')
         response = self.client.post(f'/editor/delete/{self.survey.uuid}/')
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(SurveyHeader.objects.filter(pk=self.survey.pk).exists())
+        self.survey.refresh_from_db()
+        self.assertIsNotNone(self.survey.deleted_at)
 
     def test_export_survey_in_different_org_returns_404(self):
         """
@@ -13187,6 +13488,27 @@ class ActiveUserMetricsTest(TestCase):
         self.assertEqual(m["dormant"]["count"], 1)     # D
         self.assertEqual(m["active_30"]["pct"], 50)    # 2 of 4
 
+    def test_last_activity_counts_as_returned(self):
+        """
+        GIVEN a creator whose last_login is unchanged since registration and who
+              never saved a parent survey, but who made an authenticated request
+              yesterday (recorded in UserActivity)
+        WHEN active_user_metrics() classifies them
+        THEN they are counted as returned and active via last_activity, while a
+             user with no UserActivity row keeps its prior classification
+        """
+        from survey.models import UserActivity
+        e = User.objects.create_user(username="act_e", password="x")
+        e.date_joined = self.now - _timedelta(days=100)
+        e.save(update_fields=["date_joined"])
+        UserActivity.objects.create(user=e, last_activity=self.now - _timedelta(days=1))
+
+        m = CreatorFunnelService().active_user_metrics(now=self.now)
+        self.assertEqual(m["total"], 5)
+        self.assertEqual(m["active_7"]["count"], 2)    # A (edit) + E (last_activity)
+        self.assertEqual(m["returned"]["count"], 4)    # A, B, C, E
+        self.assertEqual(m["dormant"]["count"], 1)     # D unchanged (no row)
+
     def test_weekly_activity_sums_sessions(self):
         """
         GIVEN two non-deleted sessions exist
@@ -13195,6 +13517,81 @@ class ActiveUserMetricsTest(TestCase):
         """
         rows = CreatorFunnelService().weekly_activity()
         self.assertEqual(sum(r["responses"] for r in rows), 1 + 0)  # only A's live session
+
+
+class LastActivityMiddlewareTest(TestCase):
+    """Tests for LastActivityMiddleware recording UserActivity."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.user = User.objects.create_user(username="mw_user", password="x")
+
+    def test_authenticated_request_records_activity(self):
+        """
+        GIVEN a logged-in user
+        WHEN they make an authenticated request
+        THEN a UserActivity row is created with a recent last_activity
+        """
+        from survey.models import UserActivity
+        c = Client()
+        c.login(username="mw_user", password="x")
+        c.get("/")
+        ua = UserActivity.objects.get(user=self.user)
+        self.assertAlmostEqual(
+            ua.last_activity, timezone.now(), delta=_timedelta(minutes=1),
+        )
+
+    def test_anonymous_request_records_nothing(self):
+        """
+        GIVEN no authenticated user
+        WHEN an anonymous request is made
+        THEN no UserActivity row is created
+        """
+        from survey.models import UserActivity
+        Client().get("/")
+        self.assertEqual(UserActivity.objects.count(), 0)
+
+    def test_throttle_skips_write_within_window(self):
+        """
+        GIVEN a user who already recorded activity within the throttle window
+        WHEN they make another request before the window elapses
+        THEN last_activity is not rewritten; clearing the gate lets the next
+             request write again
+        """
+        from django.core.cache import cache
+        from survey.models import UserActivity
+        c = Client()
+        c.login(username="mw_user", password="x")
+        c.get("/")
+        ua = UserActivity.objects.get(user=self.user)
+        old = timezone.now() - _timedelta(days=1)
+        UserActivity.objects.filter(pk=ua.pk).update(last_activity=old)
+
+        c.get("/")  # throttled: cache gate still set, no write
+        ua.refresh_from_db()
+        self.assertEqual(ua.last_activity, old)
+
+        cache.clear()  # gate cleared -> next request writes again
+        c.get("/")
+        ua.refresh_from_db()
+        self.assertGreater(ua.last_activity, old)
+
+    def test_write_failure_does_not_break_request(self):
+        """
+        GIVEN the activity write raises
+        WHEN an authenticated request is handled
+        THEN the request is still served (the error is swallowed)
+        """
+        from unittest.mock import patch
+        c = Client()
+        c.login(username="mw_user", password="x")
+        with patch(
+            "survey.middleware.UserActivity.objects.update_or_create",
+            side_effect=Exception("boom"),
+        ):
+            resp = c.get("/")
+        self.assertLess(resp.status_code, 500)
 
 
 class BarChartGeometryTest(TestCase):
@@ -13786,3 +14183,408 @@ class ServicesPageTest(TestCase):
         c = Client()
         self.assertContains(c.get("/sitemap.xml"), "/services/")
         self.assertContains(c.get("/robots.txt"), "/services/")
+
+
+class SeoProductLandingPagesTest(TestCase):
+    """Bottom-funnel product pages: community engagement platform & public consultation software."""
+
+    def test_community_engagement_platform_page(self):
+        """
+        GIVEN the community-engagement-platform product page
+        WHEN requested
+        THEN it renders with the head-term H1, a self-canonical, a platform-UTM CTA,
+             and cross-links to audience pages
+        """
+        resp = Client().get("/community-engagement-platform/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Community Engagement Platform")
+        self.assertContains(resp, "https://mapsurvey.org/community-engagement-platform/")
+        self.assertContains(resp, "utm_source=engagement_platform")
+        self.assertContains(resp, "/for-government/")  # cross-link to an audience segment
+
+    def test_public_consultation_software_page(self):
+        """
+        GIVEN the public-consultation-software product page
+        WHEN requested
+        THEN it renders with the term H1, a self-canonical, and a consultation-UTM CTA
+        """
+        resp = Client().get("/public-consultation-software/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Public Consultation Software")
+        self.assertContains(resp, "https://mapsurvey.org/public-consultation-software/")
+        self.assertContains(resp, "utm_source=consultation_software")
+
+    def test_both_in_sitemap_and_robots(self):
+        """
+        GIVEN the product pages should be indexable
+        WHEN sitemap.xml and robots.txt are fetched
+        THEN both are listed / allowed
+        """
+        c = Client()
+        sm = c.get("/sitemap.xml")
+        self.assertContains(sm, "/community-engagement-platform/")
+        self.assertContains(sm, "/public-consultation-software/")
+        rb = c.get("/robots.txt")
+        self.assertContains(rb, "/community-engagement-platform/")
+        self.assertContains(rb, "/public-consultation-software/")
+
+    def test_shared_footer_links_to_both(self):
+        """
+        GIVEN the shared landing footer provides site-wide internal links
+        WHEN any landing page is rendered
+        THEN its footer links to both product pages
+        """
+        resp = Client().get("/for-planners/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'href="/community-engagement-platform/"')
+        self.assertContains(resp, 'href="/public-consultation-software/"')
+
+
+class SeoWave2LandingPagesTest(TestCase):
+    """Wave-2 SEO pages: civic-engagement category, PB use-case, consultants audience,
+    and the Social Pinpoint / MetroQuest comparison pages."""
+
+    def test_civic_engagement_page(self):
+        """
+        GIVEN the civic-engagement category page
+        WHEN requested
+        THEN it renders with the head term, a self-canonical, its UTM CTA,
+             and funnel links to a product page
+        """
+        resp = Client().get("/civic-engagement/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Civic engagement")
+        self.assertContains(resp, "https://mapsurvey.org/civic-engagement/")
+        self.assertContains(resp, "utm_source=civic_engagement")
+        self.assertContains(resp, "/community-engagement-platform/")  # funnel link down
+
+    def test_participatory_budgeting_page(self):
+        """
+        GIVEN the participatory-budgeting use-case page
+        WHEN requested
+        THEN it renders with the term, a self-canonical, and its UTM CTA
+        """
+        resp = Client().get("/participatory-budgeting/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Participatory budgeting")
+        self.assertContains(resp, "https://mapsurvey.org/participatory-budgeting/")
+        self.assertContains(resp, "utm_source=participatory_budgeting")
+
+    def test_for_consultants_page(self):
+        """
+        GIVEN the consultants audience page
+        WHEN requested
+        THEN it renders with consultant positioning, a self-canonical, and its UTM CTA
+        """
+        resp = Client().get("/for-consultants/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "consultants")
+        self.assertContains(resp, "https://mapsurvey.org/for-consultants/")
+        self.assertContains(resp, "utm_source=consultants")
+
+    def test_social_pinpoint_alternative_page(self):
+        """
+        GIVEN the Social Pinpoint comparison page
+        WHEN requested
+        THEN it renders with comparison positioning, a self-canonical, a fair section,
+             and the comparison UTM
+        """
+        resp = Client().get("/alternatives/social-pinpoint/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Social Pinpoint alternative")
+        self.assertContains(resp, "https://mapsurvey.org/alternatives/social-pinpoint/")
+        self.assertContains(resp, "utm_medium=social_pinpoint_alt")
+        self.assertContains(resp, "may be the better fit")  # "being fair" section
+
+    def test_metroquest_alternative_page(self):
+        """
+        GIVEN the MetroQuest comparison page
+        WHEN requested
+        THEN it renders with migration positioning, a self-canonical, and the comparison UTM
+        """
+        resp = Client().get("/alternatives/metroquest/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "MetroQuest alternative")
+        self.assertContains(resp, "https://mapsurvey.org/alternatives/metroquest/")
+        self.assertContains(resp, "utm_medium=metroquest_alt")
+
+    def test_all_in_sitemap_and_robots(self):
+        """
+        GIVEN the wave-2 pages should be indexable
+        WHEN sitemap.xml and robots.txt are fetched
+        THEN all five are listed in the sitemap and allowed by robots
+        """
+        c = Client()
+        sm = c.get("/sitemap.xml")
+        for path in ("/civic-engagement/", "/participatory-budgeting/", "/for-consultants/",
+                     "/alternatives/social-pinpoint/", "/alternatives/metroquest/"):
+            self.assertContains(sm, path)
+        rb = c.get("/robots.txt")
+        for path in ("/civic-engagement/", "/participatory-budgeting/", "/for-consultants/",
+                     "/alternatives/"):
+            self.assertContains(rb, path)
+
+    def test_footer_and_nav_link_wave2_pages(self):
+        """
+        GIVEN the shared landing chrome provides site-wide internal links
+        WHEN any landing page is rendered
+        THEN the footer links all wave-2 pages and the Solutions dropdown links consultants
+        """
+        resp = Client().get("/for-planners/")
+        self.assertEqual(resp.status_code, 200)
+        for href in ('href="/civic-engagement/"', 'href="/participatory-budgeting/"',
+                     'href="/for-consultants/"', 'href="/alternatives/social-pinpoint/"',
+                     'href="/alternatives/metroquest/"'):
+            self.assertContains(resp, href)
+
+
+class OrganizationSchemaTest(TestCase):
+    """Brand-entity Organization JSON-LD with sameAs on the landing pages."""
+
+    def test_homepage_has_organization_schema_with_sameas(self):
+        """
+        GIVEN the landing page
+        WHEN rendered
+        THEN it includes an Organization JSON-LD block with sameAs linking our profiles
+        """
+        import json, re
+        html = Client().get("/").content.decode()
+        blocks = re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S)
+        types = []
+        org = None
+        for b in blocks:
+            d = json.loads(b)   # must be valid JSON
+            types.append(d.get("@type"))
+            if d.get("@type") == "Organization":
+                org = d
+        self.assertIn("Organization", types)
+        self.assertIn("SoftwareApplication", types)
+        self.assertEqual(org["name"], "Mapsurvey")
+        self.assertTrue(any("github.com" in s for s in org["sameAs"]))
+        self.assertTrue(any("participedia.net" in s for s in org["sameAs"]))
+
+
+class LandingStructuredDataTest(TestCase):
+    """Per-page structured data on the SEO landings: FAQ section + FAQPage /
+    BreadcrumbList JSON-LD driven by the seo_landings registry."""
+
+    import re as _re
+    _LD_RE = _re.compile(r'<script type="application/ld\+json">(.*?)</script>', _re.S)
+
+    def _ld_blocks(self, html):
+        """GIVEN rendered HTML WHEN scanning ld+json THEN return parsed JSON objects."""
+        return [json.loads(b) for b in self._LD_RE.findall(html)]
+
+    def test_every_landing_has_valid_faqpage_matching_visible_faq(self):
+        """
+        GIVEN each SEO landing page
+        WHEN rendered
+        THEN it emits a valid FAQPage JSON-LD whose question names each appear
+             in the visible FAQ section
+        """
+        from survey.seo_landings import SEO_LANDINGS
+        c = Client()
+        for landing in SEO_LANDINGS:
+            resp = c.get(landing.path)
+            self.assertEqual(resp.status_code, 200, landing.path)
+            html = resp.content.decode()
+            blocks = self._ld_blocks(html)  # all parse as valid JSON
+            faqpages = [b for b in blocks if b.get("@type") == "FAQPage"]
+            self.assertEqual(len(faqpages), 1, f"{landing.path}: expected one FAQPage")
+            names = {q["name"] for q in faqpages[0]["mainEntity"]}
+            self.assertEqual(names, {qa.q for qa in landing.faq}, landing.path)
+            # each question is also visible on the page
+            for qa in landing.faq:
+                self.assertIn(qa.q, html, f"{landing.path}: visible FAQ missing {qa.q!r}")
+
+    def test_breadcrumb_single_and_two_level(self):
+        """
+        GIVEN a single-level landing and a two-level alternatives landing
+        WHEN rendered
+        THEN BreadcrumbList JSON-LD has 2 vs 3 ordered items with absolute URLs
+        """
+        c = Client()
+        one = self._ld_blocks(c.get("/for-planners/").content.decode())
+        bc1 = next(b for b in one if b.get("@type") == "BreadcrumbList")
+        items1 = bc1["itemListElement"]
+        self.assertEqual([i["position"] for i in items1], [1, 2])
+        self.assertEqual(items1[0]["name"], "Home")
+        self.assertTrue(items1[-1]["item"].startswith("https://mapsurvey.org/for-planners/"))
+
+        two = self._ld_blocks(c.get("/alternatives/maptionnaire/").content.decode())
+        bc2 = next(b for b in two if b.get("@type") == "BreadcrumbList")
+        items2 = bc2["itemListElement"]
+        self.assertEqual([i["position"] for i in items2], [1, 2, 3])
+        self.assertEqual([i["name"] for i in items2], ["Home", "Alternatives", "Maptionnaire Alternative"])
+
+    def test_sitewide_schema_preserved_on_landing(self):
+        """
+        GIVEN a landing page with per-page structured data
+        WHEN rendered
+        THEN the site-wide SoftwareApplication + Organization JSON-LD are still present
+        """
+        blocks = self._ld_blocks(Client().get("/civic-engagement/").content.decode())
+        types = {b.get("@type") for b in blocks}
+        self.assertIn("SoftwareApplication", types)
+        self.assertIn("Organization", types)
+        self.assertIn("FAQPage", types)
+        self.assertIn("BreadcrumbList", types)
+
+    def test_faq_questions_are_page_specific(self):
+        """
+        GIVEN two different landing pages
+        WHEN their FAQ question sets are compared
+        THEN they are not identical (guards against thin duplicated FAQ markup)
+        """
+        from survey.seo_landings import get_landing
+        a = {qa.q for qa in get_landing("participatory_budgeting").faq}
+        b = {qa.q for qa in get_landing("maptionnaire_alternative").faq}
+        self.assertNotEqual(a, b)
+
+    def test_answer_with_apostrophe_is_json_safe(self):
+        """
+        GIVEN an FAQ answer containing an apostrophe
+        WHEN the FAQPage JSON-LD is built
+        THEN it still parses as valid JSON with the answer intact
+        """
+        from survey.seo_landings import build_faqpage_jsonld, QA
+        raw = build_faqpage_jsonld((QA("Q?", "You don't need an account — it's free."),))
+        data = json.loads(raw)  # must not raise
+        self.assertEqual(
+            data["mainEntity"][0]["acceptedAnswer"]["text"],
+            "You don't need an account — it's free.",
+        )
+
+
+class SeoLandingRegistryTest(TestCase):
+    """The seo_landings registry is the single source of truth for sitemap/robots."""
+
+    def test_sitemap_lists_every_landing_with_crawl_hints(self):
+        """
+        GIVEN the SEO landing registry
+        WHEN sitemap.xml is fetched
+        THEN every registry path is present with lastmod/changefreq/priority
+        """
+        from survey.seo_landings import SEO_LANDINGS
+        sm = Client().get("/sitemap.xml")
+        body = sm.content.decode()
+        for landing in SEO_LANDINGS:
+            self.assertIn(f"<loc>http://testserver{landing.path}</loc>", body)
+            self.assertIn(f"<lastmod>{landing.lastmod}</lastmod>", body)
+        self.assertIn("<changefreq>", body)
+        self.assertIn("<priority>", body)
+
+    def test_robots_allows_every_landing(self):
+        """
+        GIVEN the SEO landing registry
+        WHEN robots.txt is fetched
+        THEN every registry path has an Allow rule
+        """
+        from survey.seo_landings import SEO_LANDINGS
+        rb = Client().get("/robots.txt").content.decode()
+        for landing in SEO_LANDINGS:
+            self.assertIn(f"Allow: {landing.path}", rb)
+
+    def test_registry_url_names_resolve_and_match_paths(self):
+        """
+        GIVEN the SEO landing registry
+        WHEN each url_name is reversed
+        THEN it resolves to the registry path (registry and routes stay in sync)
+        """
+        from django.urls import reverse
+        from survey.seo_landings import SEO_LANDINGS
+        for landing in SEO_LANDINGS:
+            self.assertEqual(reverse(landing.url_name), landing.path)
+
+
+class StoriesIndexViewTest(TestCase):
+    """The public stories hub at /stories/: listing, empty state, SEO metadata."""
+
+    import re as _re
+    _LD_RE = _re.compile(r'<script type="application/ld\+json">(.*?)</script>', _re.S)
+
+    def _ld(self, html):
+        return [json.loads(b) for b in self._LD_RE.findall(html)]
+
+    def _story(self, title, slug, published=True):
+        from django.utils import timezone
+        return Story.objects.create(
+            title=title, slug=slug, story_type="results", body="<p>Body text about the project.</p>",
+            is_published=published, published_date=timezone.now() if published else None,
+        )
+
+    def test_index_lists_published_not_draft(self):
+        """
+        GIVEN a published and a draft story
+        WHEN /stories/ is requested
+        THEN it returns 200, lists the published story with a detail link, and hides the draft
+        """
+        self._story("Riverside Engagement", "riverside")
+        self._story("Secret Draft", "secret-draft", published=False)
+        resp = Client().get("/stories/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Riverside Engagement")
+        self.assertContains(resp, 'href="/stories/riverside/"')
+        self.assertNotContains(resp, "Secret Draft")
+
+    def test_empty_state_returns_200(self):
+        """
+        GIVEN no published stories
+        WHEN /stories/ is requested
+        THEN it returns 200 with an empty-state message (not a 404)
+        """
+        resp = Client().get("/stories/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "No stories published yet")
+
+    def test_index_structured_data(self):
+        """
+        GIVEN published stories
+        WHEN /stories/ is requested
+        THEN it emits a valid BreadcrumbList (Home > Stories) and a CollectionPage
+             whose ItemList has one entry per published story
+        """
+        self._story("Story A", "story-a")
+        self._story("Story B", "story-b")
+        blocks = self._ld(Client().get("/stories/").content.decode())
+        bc = next(b for b in blocks if b.get("@type") == "BreadcrumbList")
+        self.assertEqual([i["name"] for i in bc["itemListElement"]], ["Home", "Stories"])
+        coll = next(b for b in blocks if b.get("@type") == "CollectionPage")
+        self.assertEqual(len(coll["mainEntity"]["itemListElement"]), 2)
+
+    def test_detail_seo_metadata(self):
+        """
+        GIVEN a published story
+        WHEN its detail page is requested
+        THEN it has a self-canonical, a non-empty meta description, and a
+             3-item Home > Stories > <title> breadcrumb
+        """
+        self._story("Coastal Paths", "coastal-paths")
+        resp = Client().get("/stories/coastal-paths/")
+        html = resp.content.decode()
+        self.assertIn('<link rel="canonical" href="https://mapsurvey.org/stories/coastal-paths/">', html)
+        self.assertRegex(html, r'<meta name="description" content="[^"]+">')
+        bc = next(b for b in self._ld(html) if b.get("@type") == "BreadcrumbList")
+        self.assertEqual([i["name"] for i in bc["itemListElement"]], ["Home", "Stories", "Coastal Paths"])
+
+    def test_sitemap_includes_hub_and_published_excludes_draft(self):
+        """
+        GIVEN a published and a draft story
+        WHEN sitemap.xml is requested
+        THEN it lists /stories/ and the published story URL but not the draft's
+        """
+        self._story("Published Story", "pub-story")
+        self._story("Draft Story", "draft-story", published=False)
+        body = Client().get("/sitemap.xml").content.decode()
+        self.assertIn("/stories/</loc>", body)
+        self.assertIn("/stories/pub-story/</loc>", body)
+        self.assertNotIn("/stories/draft-story/", body)
+
+    def test_landing_footer_links_to_stories(self):
+        """
+        GIVEN the shared landing footer
+        WHEN a landing page is rendered
+        THEN the footer links to the stories hub
+        """
+        resp = Client().get("/for-planners/")
+        self.assertContains(resp, 'href="/stories/"')

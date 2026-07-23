@@ -167,6 +167,15 @@ a:hover { color: var(--color-accent-hover); }
     max-width: 640px;
 }
 
+/* Centered section headers — audience / product / comparison landing pages
+   (the root landing keeps left-aligned headings inside .showcase-row). */
+.showcase--center .section-eyebrow,
+.showcase--center .section-heading {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 /* ============================
    NAVBAR
    ============================ */
@@ -1487,4 +1496,120 @@ a:hover { color: var(--color-accent-hover); }
     .showcase-row { grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 3rem; }
     .showcase-row--reverse .showcase-row__media { order: 0; }
     .showcase-row__text p { max-width: none; }
+}
+
+/* ── FAQ section (SEO landings) ─────────────────────────────────────────── */
+.faq-list {
+    max-width: 780px;
+    margin: 2rem auto 0;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.faq-item {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+    padding: 0 1.25rem;
+    transition: border-color var(--transition-fast);
+}
+.faq-item[open] { border-color: var(--color-accent); }
+.faq-item__q {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.02rem;
+    color: var(--color-text);
+    cursor: pointer;
+    list-style: none;
+    padding: 1.1rem 2rem 1.1rem 0;
+    position: relative;
+}
+.faq-item__q::-webkit-details-marker { display: none; }
+.faq-item__q::after {
+    content: "+";
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--color-accent);
+    transition: transform var(--transition-fast);
+}
+.faq-item[open] .faq-item__q::after { content: "\2013"; }
+.faq-item__a {
+    color: var(--color-text-secondary);
+    font-size: 0.97rem;
+    line-height: 1.6;
+    padding: 0 0 1.2rem;
+    max-width: 68ch;
+}
+
+/* ── Stories index (public showcase) ───────────────────────────────────── */
+.hero--compact { padding-bottom: 1.5rem; }
+.story-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+.story-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+.story-card:hover { border-color: var(--color-accent); transform: translateY(-2px); }
+.story-card__media {
+    aspect-ratio: 16 / 9;
+    background: var(--color-bg-warm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.story-card__media img { width: 100%; height: 100%; object-fit: cover; }
+.story-card__media--map { background: var(--color-map-bg); }
+.story-card__media--results { background: var(--color-accent-light); }
+.story-card__placeholder {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+}
+.story-card__body { padding: 1.1rem 1.25rem 1.35rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.story-card__badge {
+    align-self: flex-start;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    background: var(--color-accent-light);
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm);
+}
+.story-card__title {
+    font-family: var(--font-display);
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+    line-height: 1.35;
+}
+.story-card__date { font-size: 0.82rem; color: var(--color-text-tertiary); }
+.story-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--color-text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
 }

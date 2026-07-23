@@ -7,6 +7,7 @@
 {% block canonical_url %}https://mapsurvey.org/alternatives/maptionnaire/{% endblock %}
 {% block og_url %}https://mapsurvey.org/alternatives/maptionnaire/{% endblock %}
 {% block og_title %}{% trans "A free, open-source Maptionnaire alternative — Mapsurvey" %}{% endblock %}
+{% block structured_data %}{% include "partials/_landing_structured_data.html" %}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -56,7 +57,7 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Why teams switch" %}</p>
     <h2 class="section-heading">{% trans "Same participatory-mapping job, without the licensing" %}</h2>
@@ -81,7 +82,7 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Side by side" %}</p>
     <h2 class="section-heading">{% trans "Mapsurvey vs Maptionnaire" %}</h2>
@@ -106,7 +107,7 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Being fair" %}</p>
     <h2 class="section-heading">{% trans "When Maptionnaire may be the better fit" %}</h2>
@@ -133,4 +134,7 @@
     </div>
   </div>
 </section>
+
+{% include "partials/_faq_section.html" %}
+
 {% endblock %}

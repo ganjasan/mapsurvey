@@ -7,6 +7,7 @@
 {% block canonical_url %}https://mapsurvey.org/for-researchers/{% endblock %}
 {% block og_url %}https://mapsurvey.org/for-researchers/{% endblock %}
 {% block og_title %}{% trans "Mapsurvey for Researchers — participatory mapping & citizen science" %}{% endblock %}
+{% block structured_data %}{% include "partials/_landing_structured_data.html" %}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -43,7 +44,7 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Why researchers use it" %}</p>
     <h2 class="section-heading">{% trans "Rigorous spatial data collection, openly" %}</h2>
@@ -68,7 +69,7 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Study types" %}</p>
     <h2 class="section-heading">{% trans "From PPGIS to citizen science" %}</h2>
@@ -87,4 +88,7 @@
     </div>
   </div>
 </section>
+
+{% include "partials/_faq_section.html" %}
+
 {% endblock %}

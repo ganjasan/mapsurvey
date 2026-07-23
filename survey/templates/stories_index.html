@@ -1,0 +1,41 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Stories — participatory-mapping projects & results | Mapsurvey" %}{% endblock %}
+{% block meta_description %}{% trans "Real participatory-mapping projects built with Mapsurvey: community engagement, public consultation, and open-data stories with maps and results." %}{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/stories/{% endblock %}
+{% block og_url %}https://mapsurvey.org/stories/{% endblock %}
+{% block og_title %}{% trans "Mapsurvey Stories" %}{% endblock %}
+
+{% block structured_data %}
+{% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
+{% if collection_jsonld %}<script type="application/ld+json">{{ collection_jsonld|safe }}</script>{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="hero hero--compact" id="hero">
+  <div class="hero__content">
+    <h1 class="hero__headline">{% trans "Stories" %}</h1>
+    <p class="hero__description">
+      {% trans "Participatory-mapping projects built with Mapsurvey — community engagement, public consultation, and the open data behind them." %}
+    </p>
+  </div>
+</section>
+
+<section class="showcase" id="stories">
+  <div class="landing-inner">
+    {% if stories %}
+    <div class="story-grid">
+      {% for story in stories %}
+      {% include "partials/_story_card.html" %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="story-empty">
+      <p>{% trans "No stories published yet — check back soon." %}</p>
+      <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">{% trans "Start your own map survey" %}</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

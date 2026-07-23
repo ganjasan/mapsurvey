@@ -1,0 +1,138 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Open-Source Social Pinpoint Alternative — Mapsurvey" %}{% endblock %}
+{% block meta_description %}{% trans "Mapsurvey is a free, open-source alternative to Social Pinpoint (now Social Point / Open Point) for map-based engagement — respondents draw points, lines, and polygons; you export GeoJSON + CSV. No quote-gated pricing, self-hostable, GDPR-friendly." %}{% endblock %}
+{% block meta_keywords %}{% trans "Social Pinpoint alternative, Social Point alternative, Open Point alternative, open source engagement platform, map-based engagement, Social Pinpoint vs Mapsurvey, participatory mapping software" %}{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/alternatives/social-pinpoint/{% endblock %}
+{% block og_url %}https://mapsurvey.org/alternatives/social-pinpoint/{% endblock %}
+{% block og_title %}{% trans "A free, open-source Social Pinpoint alternative — Mapsurvey" %}{% endblock %}
+{% block structured_data %}{% include "partials/_landing_structured_data.html" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cmp-lead { max-width: 720px; margin: 0 auto; }
+  .cmp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-top: 26px; }
+  .cmp-card { background: #fff; border: 1px solid #e6eaef; border-radius: 12px; padding: 20px 22px; text-align: left; }
+  .cmp-card h3 { font-size: 17px; margin: 0 0 6px; }
+  .cmp-card p { font-size: 14px; color: #556; margin: 0; line-height: 1.5; }
+  .cmp-table-wrap { max-width: 820px; margin: 26px auto 0; overflow-x: auto; }
+  table.cmp { width: 100%; border-collapse: collapse; font-size: 14.5px; background: #fff; border: 1px solid #e6eaef; border-radius: 12px; overflow: hidden; }
+  table.cmp th, table.cmp td { padding: 11px 16px; text-align: left; border-bottom: 1px solid #eef1f4; vertical-align: top; }
+  table.cmp thead th { background: #f4f8fb; font-size: 13px; }
+  table.cmp th:first-child { color: #667; font-weight: 500; }
+  table.cmp .ms { color: #1f7a4d; font-weight: 600; }
+  table.cmp .mt { color: #667; }
+  table.cmp tr:last-child td { border-bottom: 0; }
+  .cmp-note { max-width: 820px; margin: 14px auto 0; font-size: 13px; color: #889; text-align: left; }
+  .cmp-fair { background: #f7f8fa; border: 1px solid #e6eaef; border-radius: 14px; padding: 24px 28px; max-width: 820px; margin: 26px auto 0; text-align: left; }
+  .cmp-fair h3 { margin: 0 0 10px; font-size: 17px; }
+  .cmp-fair ul { margin: 0; padding-left: 20px; color: #556; line-height: 1.6; font-size: 14.5px; }
+  .cmp-maker { max-width: 820px; margin: 26px auto 0; padding: 24px 28px; text-align: center;
+               background: linear-gradient(180deg,#f2f8f5,#eef4fb); border: 1px solid #d8e6df; border-radius: 14px; }
+  .cmp-maker h3 { margin: 0 0 8px; font-size: 18px; }
+  .cmp-maker p { margin: 0 auto 16px; max-width: 560px; color: #556; font-size: 14.5px; line-height: 1.55; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero" id="hero">
+  <div class="hero__content cmp-lead">
+    <h1 class="hero__headline">{% trans "A free, open-source Social Pinpoint alternative" %}</h1>
+    <p class="hero__description">
+      {% trans "Social Pinpoint (now Social Point, under the Open Point umbrella) is a full engagement hub. If what you actually need is the map — residents marking places, drawing routes, outlining areas, and your team exporting GIS-ready data — Mapsurvey does that job with different economics: free, open source (AGPLv3), and self-hostable, with no quote-gated pricing." %}
+    </p>
+    <div class="hero__cta-group">
+      <a href="{% url 'django_registration_register' %}?utm_source=comparison&amp;utm_medium=social_pinpoint_alt" class="btn-primary-landing">{% trans "Create your Mapsurvey — free" %}</a>
+      {% if DEMO_SURVEY_URL %}
+      <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">{% trans "Try a live demo survey" %}</a>
+      {% endif %}
+    </div>
+    <div class="hero__badges">
+      <span class="hero__badge">{% trans "Free" %}</span>
+      <span class="hero__badge">{% trans "Open source (AGPLv3)" %}</span>
+      <span class="hero__badge">{% trans "Lines & polygons, not just pins" %}</span>
+      <span class="hero__badge">{% trans "GeoJSON export" %}</span>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Why teams look for an alternative" %}</p>
+    <h2 class="section-heading">{% trans "The map is the point — so it should be a full map" %}</h2>
+    <div class="cmp-grid">
+      <div class="cmp-card">
+        <h3>{% trans "Draw, don't just drop pins" %}</h3>
+        <p>{% trans "The current-generation Social Map limits respondents to point markers. In Mapsurvey, people also draw routes and outline areas — essential for mobility, greenways, and land-use input." %}</p>
+      </div>
+      <div class="cmp-card">
+        <h3>{% trans "GeoJSON out of the box" %}</h3>
+        <p>{% trans "Open Point's current platform exports XLSX/CSV/PDF; there's no GeoJSON export. Mapsurvey exports GeoJSON + CSV that opens directly in QGIS or ArcGIS." %}</p>
+      </div>
+      <div class="cmp-card">
+        <h3>{% trans "Public pricing: zero" %}</h3>
+        <p>{% trans "No quotes, no tiers gating the geo tools. Reported enterprise budgets for engagement hubs run $15–40K/yr — Mapsurvey is free hosted or self-hosted." %}</p>
+      </div>
+      <div class="cmp-card">
+        <h3>{% trans "75 languages, included" %}</h3>
+        <p>{% trans "Multilingual engagement is a paid add-on there (up to 15 languages). Mapsurvey ships survey-content translation for 75 languages, free." %}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Side by side" %}</p>
+    <h2 class="section-heading">{% trans "Mapsurvey vs Social Pinpoint (Social Point)" %}</h2>
+    <div class="cmp-table-wrap">
+      <table class="cmp">
+        <thead>
+          <tr><th>&nbsp;</th><th>Mapsurvey</th><th>Social Pinpoint / Social Point</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>{% trans "Respondent map input" %}</th><td class="ms">{% trans "Points, lines, polygons" %}</td><td class="mt">{% trans "Point markers on the current-gen Social Map (drawing was a legacy-Classic feature)" %}</td></tr>
+          <tr><th>{% trans "Geo data export" %}</th><td class="ms">{% trans "GeoJSON + CSV, built in" %}</td><td class="mt">{% trans "XLSX / CSV / PDF; no GeoJSON (shapefile in legacy Classic only)" %}</td></tr>
+          <tr><th>{% trans "Pricing" %}</th><td class="ms">{% trans "Free hosted; free self-hosted" %}</td><td class="mt">{% trans "Quote-gated; buyer budgets reported at US$15–40K/yr" %}</td></tr>
+          <tr><th>{% trans "Open source" %}</th><td class="ms">{% trans "Yes — AGPLv3, code on GitHub" %}</td><td class="mt">{% trans "No — proprietary" %}</td></tr>
+          <tr><th>{% trans "Self-hosting" %}</th><td class="ms">{% trans "Yes — Docker, your infrastructure" %}</td><td class="mt">{% trans "No — SaaS only" %}</td></tr>
+          <tr><th>{% trans "Multilingual" %}</th><td class="ms">{% trans "75 languages, included" %}</td><td class="mt">{% trans "Paid add-on, up to 15 languages" %}</td></tr>
+          <tr><th>{% trans "Engagement-hub extras (forums, voting, budgeting)" %}</th><td class="ms">{% trans "No — focused on map surveys" %}</td><td class="mt">{% trans "Yes — 40+ tools incl. Fund It, Gather, Q&A" %}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cmp-note">{% trans "Social Pinpoint / Open Point details reflect their public documentation and live-platform behaviour as of July 2026 and may change; verify current specifics with the vendor. \"Social Pinpoint\" was rebranded to \"Social Point\" under Open Point in March 2026." %}</p>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Being fair" %}</p>
+    <h2 class="section-heading">{% trans "When Social Pinpoint may be the better fit" %}</h2>
+    <div class="cmp-fair">
+      <ul>
+        <li>{% trans "You need a full engagement hub — forums, Q&A, idea walls, newsletters — not just map surveys." %}</li>
+        <li>{% trans "Voting and reactions on other residents' pins matter to your process (they offer five modes; we don't have this yet)." %}</li>
+        <li>{% trans "You want their Fund It participatory-budgeting allocation module or bundled AI text analysis." %}</li>
+        <li>{% trans "Formal accessibility procurement: their new surveys target WCAG 2.2 / Section 508 compliance." %}</li>
+      </ul>
+    </div>
+    <p class="cmp-note">{% trans "We keep this honest on purpose. If you need the full hub, buy the hub — if you need the map, try the map." %}</p>
+
+    <div class="cmp-maker">
+      <h3>{% trans "Comparing tools? Talk to the person who builds it" %}</h3>
+      <p>{% trans "Mapsurvey is independent and founder-led — no sales team, no funnel. Email me directly with a migration, self-hosting, DPA, or \"does it do X?\" question, and I'll answer personally." %}</p>
+      <a href="mailto:konuchovartem@mapsurvey.org?subject=Mapsurvey%20question%20(from%20the%20Social%20Pinpoint%20comparison)" class="btn-primary-landing">{% trans "Email me — I answer personally" %}</a>
+    </div>
+
+    <div class="hero__cta-group" style="margin-top:26px;justify-content:center;">
+      <a href="{% url 'django_registration_register' %}?utm_source=comparison&amp;utm_medium=social_pinpoint_alt" class="btn-primary-landing">{% trans "Create your Mapsurvey — free" %}</a>
+      <a href="{% url 'metroquest_alternative' %}" class="btn-secondary-landing">{% trans "Coming from MetroQuest?" %}</a>
+    </div>
+  </div>
+</section>
+
+{% include "partials/_faq_section.html" %}
+
+{% endblock %}

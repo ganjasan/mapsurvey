@@ -7,6 +7,7 @@
 {% block canonical_url %}https://mapsurvey.org/for-planners/{% endblock %}
 {% block og_url %}https://mapsurvey.org/for-planners/{% endblock %}
 {% block og_title %}{% trans "Mapsurvey for Urban Planners — map-based public input, free" %}{% endblock %}
+{% block structured_data %}{% include "partials/_landing_structured_data.html" %}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -47,7 +48,7 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Why planners use it" %}</p>
     <h2 class="section-heading">{% trans "See not just how a city is drawn, but how it's lived" %}</h2>
@@ -72,7 +73,7 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "In the field" %}</p>
     <h2 class="section-heading">{% trans "Built for real consultations, at real scale" %}</h2>
@@ -89,7 +90,7 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Consultation ideas" %}</p>
     <h2 class="section-heading">{% trans "What planners map with it" %}</h2>
@@ -106,4 +107,7 @@
     </div>
   </div>
 </section>
+
+{% include "partials/_faq_section.html" %}
+
 {% endblock %}

@@ -47,6 +47,29 @@
         "codeRepository": "{{ GITHUB_REPO_URL }}"
     }
     </script>
+    {% comment %}
+       Organization entity — brand disambiguation (there are unrelated firms named
+       "MapSurvey"); sameAs ties mapsurvey.org to our canonical profiles so search
+       engines resolve us as a distinct entity.
+    {% endcomment %}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Mapsurvey",
+        "alternateName": "Mapsurvey.org",
+        "url": "https://mapsurvey.org/",
+        "logo": "https://mapsurvey.org{% static 'favicon-512x512.png' %}",
+        "description": "Open-source participatory-mapping platform: map-based surveys where participants mark places, draw routes, and outline areas.",
+        "sameAs": [
+            "{{ GITHUB_REPO_URL }}",
+            "https://participedia.net/method/mapsurvey-1"
+        ]
+    }
+    </script>
+
+    {# Per-page structured data (FAQPage, BreadcrumbList) — opt-in via landing templates #}
+    {% block structured_data %}{% endblock %}
 
     {# Fonts #}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -80,6 +103,7 @@
                     <li><a href="{% url 'for_government' %}">{% trans "For Local Government" %}</a></li>
                     <li><a href="{% url 'for_researchers' %}">{% trans "For Researchers" %}</a></li>
                     <li><a href="{% url 'for_educators' %}">{% trans "For Educators" %}</a></li>
+                    <li><a href="{% url 'for_consultants' %}">{% trans "For Consultants" %}</a></li>
                 </ul>
             </li>
             <li><a href="{% url 'trust_page' %}">{% trans "Trust" %}</a></li>
@@ -129,11 +153,19 @@
                 <ul class="landing-footer__links">
                     <li><a href="/#features">{% trans "Features" %}</a></li>
                     <li><a href="/#demo">{% trans "Demo" %}</a></li>
+                    <li><a href="{% url 'stories_index' %}">{% trans "Stories" %}</a></li>
                     <li><a href="{% url 'for_planners' %}">{% trans "For Urban Planners" %}</a></li>
                     <li><a href="{% url 'for_government' %}">{% trans "For Local Government" %}</a></li>
                     <li><a href="{% url 'for_researchers' %}">{% trans "For Researchers" %}</a></li>
                     <li><a href="{% url 'for_educators' %}">{% trans "For Educators" %}</a></li>
+                    <li><a href="{% url 'for_consultants' %}">{% trans "For Consultants" %}</a></li>
+                    <li><a href="{% url 'community_engagement_platform' %}">{% trans "Community Engagement Platform" %}</a></li>
+                    <li><a href="{% url 'public_consultation_software' %}">{% trans "Public Consultation Software" %}</a></li>
+                    <li><a href="{% url 'civic_engagement' %}">{% trans "Civic Engagement" %}</a></li>
+                    <li><a href="{% url 'participatory_budgeting' %}">{% trans "Participatory Budgeting" %}</a></li>
                     <li><a href="{% url 'maptionnaire_alternative' %}">{% trans "Maptionnaire alternative" %}</a></li>
+                    <li><a href="{% url 'social_pinpoint_alternative' %}">{% trans "Social Pinpoint alternative" %}</a></li>
+                    <li><a href="{% url 'metroquest_alternative' %}">{% trans "MetroQuest alternative" %}</a></li>
                 </ul>
             </div>
             {% if GITHUB_REPO_URL %}

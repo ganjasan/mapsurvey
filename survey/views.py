@@ -22,6 +22,10 @@ from .events import (
     emit_event, build_session_start_metadata, store_utm_in_session,
     capture_signup_source, persist_signup_attribution,
 )
+from .seo_landings import (
+    SEO_LANDINGS, render_seo_landing, Crumb, HOME,
+    build_breadcrumb_jsonld, build_story_collection_jsonld,
+)
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
 from django.core.serializers import serialize
@@ -34,6 +38,8 @@ from zipfile import ZipFile
 import pandas as pd
 
 from .access_control import check_survey_access
+from .audit import audit
+from .trash import trash_survey, restore_survey, purge_survey
 from .serialization import (
     export_survey_to_zip,
     import_survey_from_zip,
@@ -223,15 +229,18 @@ def resolve_survey(survey_slug):
     """
     try:
         parsed_uuid = uuid_mod.UUID(str(survey_slug))
-        survey = get_object_or_404(SurveyHeader, uuid=parsed_uuid)
+        survey = get_object_or_404(SurveyHeader, uuid=parsed_uuid, deleted_at__isnull=True)
         # If this is an archived version, return the canonical instead
         if not survey.is_canonical and survey.canonical_survey_id:
-            return survey.canonical_survey
+            canonical = survey.canonical_survey
+            if canonical.is_trashed:
+                raise Http404
+            return canonical
         return survey
     except (ValueError, AttributeError):
         pass
 
-    surveys = SurveyHeader.objects.filter(name=survey_slug, is_canonical=True)
+    surveys = SurveyHeader.objects.filter(name=survey_slug, is_canonical=True, deleted_at__isnull=True)
     count = surveys.count()
     if count == 1:
         return surveys.first()
@@ -244,7 +253,7 @@ def index(request):
 	capture_signup_source(request)  # first-touch acquisition source for creator signups
 	surveys = (
 		SurveyHeader.objects
-		.filter(visibility__in=['demo', 'public'], is_canonical=True, published_version__isnull=True)
+		.filter(visibility__in=['demo', 'public'], is_canonical=True, published_version__isnull=True, deleted_at__isnull=True)
 		.exclude(status='draft')
 		.select_related('organization')
 		.annotate(session_count=Count('surveysession'))
@@ -289,6 +298,12 @@ def editor(request):
 	# Exclude draft copies and archived versions from dashboard
 	survey_list = survey_list.filter(is_canonical=True, published_version__isnull=True)
 
+	# Trash section: same scope, trashed only; dashboard itself hides trashed below
+	trashed_surveys = list(
+		survey_list.filter(deleted_at__isnull=False).order_by('-deleted_at')
+	)
+	survey_list = survey_list.filter(deleted_at__isnull=True)
+
 	# Prefetch archived versions for version-aware download dropdown
 	archived_versions_prefetch = Prefetch(
 		'versions',
@@ -319,11 +334,12 @@ def editor(request):
 		"survey_headers": surveys_with_kpi,
 		"org_role": org_role,
 		"show_archived": show_archived,
+		"trashed_surveys": trashed_surveys,
 	}
 	return render(request, "editor.html", context)
 
 def survey_list(request):
-	survey_list = SurveyHeader.objects.all()
+	survey_list = SurveyHeader.objects.filter(deleted_at__isnull=True)
 	context = {'survey_list': survey_list}
 	return render(request, 'survey_list.html', context)
 
@@ -1067,31 +1083,89 @@ def import_survey(request):
 	return redirect('editor')
 
 
+STORIES_CRUMB = Crumb("Stories", "/stories/")
+
+
+def stories_index(request):
+	"""Public stories hub at /stories/ — card grid of published stories, newest first."""
+	stories = list(Story.objects.filter(is_published=True).order_by('-published_date'))
+	breadcrumbs = (HOME, STORIES_CRUMB)
+	context = {
+		'stories': stories,
+		'breadcrumb_jsonld': build_breadcrumb_jsonld(breadcrumbs),
+		'collection_jsonld': build_story_collection_jsonld(request, stories) if stories else "",
+	}
+	return render(request, 'stories_index.html', context)
+
+
 def story_detail(request, slug):
+	from django.utils.html import strip_tags
 	try:
 		story = Story.objects.select_related('survey').get(slug=slug, is_published=True)
 	except Story.DoesNotExist:
 		raise Http404
-	return render(request, 'story_detail.html', {'story': story})
+	excerpt = " ".join(strip_tags(story.body or "").split())
+	meta_description = (excerpt[:155].rstrip() + "…") if len(excerpt) > 155 else (excerpt or story.title)
+	breadcrumbs = (HOME, STORIES_CRUMB, Crumb(story.title, f"/stories/{story.slug}/"))
+	context = {
+		'story': story,
+		'canonical': f"https://mapsurvey.org/stories/{story.slug}/",
+		'meta_description': meta_description,
+		'breadcrumb_jsonld': build_breadcrumb_jsonld(breadcrumbs),
+	}
+	return render(request, 'story_detail.html', context)
 
 
 @survey_permission_required('owner')
 def delete_survey(request, survey_uuid):
-	"""Delete a survey and all related data."""
+	"""Move a survey to trash (soft-delete); recoverable for 30 days."""
 	if request.method != 'POST':
 		messages.error(request, "Invalid request method")
 		return redirect('editor')
 
 	survey = request.survey
+	trash_survey(survey)
+	audit(request, 'survey_trash', survey)
+	messages.success(request, f"Survey '{survey.name}' moved to Trash. You can restore it within {SurveyHeader.TRASH_RETENTION_DAYS} days.")
+
+	return redirect('editor')
+
+
+@survey_permission_required('owner', allow_trashed=True)
+def restore_survey_view(request, survey_uuid):
+	"""Restore a survey from trash to its exact pre-trash state."""
+	if request.method != 'POST':
+		messages.error(request, "Invalid request method")
+		return redirect('editor')
+
+	survey = request.survey
+	if not survey.is_trashed:
+		messages.error(request, "Survey is not in Trash")
+		return redirect('editor')
+
+	restore_survey(survey)
+	audit(request, 'survey_restore', survey)
+	messages.success(request, f"Survey '{survey.name}' restored")
+
+	return redirect('editor')
+
+
+@survey_permission_required('owner', allow_trashed=True)
+def purge_survey_view(request, survey_uuid):
+	"""Permanently delete a trashed survey, its data and media files."""
+	if request.method != 'POST':
+		messages.error(request, "Invalid request method")
+		return redirect('editor')
+
+	survey = request.survey
+	if not survey.is_trashed:
+		messages.error(request, "Only surveys in Trash can be deleted forever")
+		return redirect('editor')
+
 	name = survey.name
-	# Delete sessions first (PROTECT FK prevents cascade deletion)
-	SurveySession.objects.filter(survey=survey).delete()
-	# Also delete sessions on archived versions
-	for archived in SurveyHeader.objects.filter(canonical_survey=survey, is_canonical=False):
-		SurveySession.objects.filter(survey=archived).delete()
-		archived.delete()
-	survey.delete()
-	messages.success(request, f"Survey '{name}' deleted successfully")
+	audit(request, 'survey_purge', survey)
+	purge_survey(survey)
+	messages.success(request, f"Survey '{name}' deleted forever")
 
 	return redirect('editor')
 
@@ -1179,8 +1253,7 @@ def for_educators(request):
 	First-touch source capture so a search/referral -> educators -> register flow is
 	attributed (Phase-1). The page's CTAs also carry utm_source=edu.
 	"""
-	capture_signup_source(request)
-	return render(request, 'for_educators.html')
+	return render_seo_landing(request, 'for_educators')
 
 
 def maptionnaire_alternative(request):
@@ -1189,8 +1262,7 @@ def maptionnaire_alternative(request):
 	Targets the validated "Maptionnaire alternative" search intent (how Jaakko
 	found us). First-touch source capture; CTAs carry utm_source=comparison.
 	"""
-	capture_signup_source(request)
-	return render(request, 'maptionnaire_alternative.html')
+	return render_seo_landing(request, 'maptionnaire_alternative')
 
 
 def for_planners(request):
@@ -1199,8 +1271,7 @@ def for_planners(request):
 	The core participatory-planning market (Maptionnaire's turf). First-touch
 	source capture; CTAs carry utm_source=planners.
 	"""
-	capture_signup_source(request)
-	return render(request, 'for_planners.html')
+	return render_seo_landing(request, 'for_planners')
 
 
 def for_researchers(request):
@@ -1209,16 +1280,74 @@ def for_researchers(request):
 	PPGIS / participatory research + citizen science. First-touch source capture;
 	CTAs carry utm_source=researchers.
 	"""
-	capture_signup_source(request)
-	return render(request, 'for_researchers.html')
+	return render_seo_landing(request, 'for_researchers')
 
 
 def for_government(request):
 	"""Public landing page: the open-source community engagement platform for
 	local government. Audience page (councils / public agencies) that also owns
 	the "community engagement platform" positioning. utm_source=government."""
-	capture_signup_source(request)
-	return render(request, 'for_government.html')
+	return render_seo_landing(request, 'for_government')
+
+
+def community_engagement_platform(request):
+	"""Public product landing page owning the "community engagement platform" head term.
+
+	Product/category framing (cross-audience: councils, NGOs, consultancies, universities,
+	transport agencies) — distinct from the audience page /for-government/, which scopes the
+	same term to local government. First-touch source capture; CTAs carry
+	utm_source=engagement_platform."""
+	return render_seo_landing(request, 'community_engagement_platform')
+
+
+def public_consultation_software(request):
+	"""Public product landing page owning the "public consultation software" term.
+
+	Consultation-workflow framing (statutory consultation, planning applications,
+	infrastructure) — audience wider than government. First-touch source capture; CTAs carry
+	utm_source=consultation_software."""
+	return render_seo_landing(request, 'public_consultation_software')
+
+
+def civic_engagement(request):
+	"""Public category page owning the "civic engagement" cluster (civic engagement /
+	civic involvement / civic participation — the largest measured keyword gap).
+
+	Middle-funnel semantic anchor: explains map-based civic engagement and funnels down
+	to the product pages. CTAs carry utm_source=civic_engagement."""
+	return render_seo_landing(request, 'civic_engagement')
+
+
+def participatory_budgeting(request):
+	"""Public use-case page for map-based participatory budgeting.
+
+	Honest scope: location input for PB programmes (where residents want investment),
+	explicitly not a budget-allocation module. CTAs carry utm_source=participatory_budgeting."""
+	return render_seo_landing(request, 'participatory_budgeting')
+
+
+def for_consultants(request):
+	"""Public audience page for engagement & planning consultancies.
+
+	Leads with per-project economics (no per-project fees), GeoJSON deliverables, and
+	open-source self-hosting. CTAs carry utm_source=consultants."""
+	return render_seo_landing(request, 'for_consultants')
+
+
+def social_pinpoint_alternative(request):
+	"""Public "open-source Social Pinpoint alternative" comparison page.
+
+	Claims restricted to the verified dossier (docs/marketing/competitors/openpoint.md).
+	CTAs carry utm_source=comparison / utm_medium=social_pinpoint_alt."""
+	return render_seo_landing(request, 'social_pinpoint_alternative')
+
+
+def metroquest_alternative(request):
+	"""Public "MetroQuest alternative" page for customers of the sunset MetroQuest product.
+
+	Migration framing: metroquest.com now redirects into Open Point. CTAs carry
+	utm_source=comparison / utm_medium=metroquest_alt."""
+	return render_seo_landing(request, 'metroquest_alternative')
 
 
 def services(request):
@@ -1235,12 +1364,13 @@ def robots_txt(request):
 		"User-agent: *",
 		"Allow: /surveys/",
 		"Allow: /stories/",
-		"Allow: /for-educators/",
-		"Allow: /for-planners/",
-		"Allow: /for-researchers/",
-		"Allow: /for-government/",
 		"Allow: /services/",
-		"Allow: /alternatives/",
+	]
+	# SEO landing pages — derived from the single-source registry
+	# (survey/seo_landings.py) so a new landing can't silently miss the allow-list.
+	for landing in SEO_LANDINGS:
+		lines.append(f"Allow: {landing.path}")
+	lines += [
 		"Disallow: /admin/",
 		"Disallow: /editor/",
 		"Disallow: /accounts/",
@@ -1256,14 +1386,22 @@ def sitemap_xml(request):
 		visibility__in=['public', 'demo'],
 	)
 	urls = [f"  <url><loc>{base}/</loc></url>"]
-	urls.append(f"  <url><loc>{base}/for-educators/</loc></url>")
-	urls.append(f"  <url><loc>{base}/for-planners/</loc></url>")
-	urls.append(f"  <url><loc>{base}/for-researchers/</loc></url>")
-	urls.append(f"  <url><loc>{base}/for-government/</loc></url>")
 	urls.append(f"  <url><loc>{base}/services/</loc></url>")
-	urls.append(f"  <url><loc>{base}/alternatives/maptionnaire/</loc></url>")
+	# SEO landing pages with crawl hints — from the single-source registry.
+	for landing in SEO_LANDINGS:
+		urls.append(
+			f"  <url><loc>{base}{landing.path}</loc>"
+			f"<lastmod>{landing.lastmod}</lastmod>"
+			f"<changefreq>{landing.changefreq}</changefreq>"
+			f"<priority>{landing.priority}</priority></url>"
+		)
 	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
 	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
+	# Stories hub + published stories
+	urls.append(f"  <url><loc>{base}/stories/</loc></url>")
+	for story in Story.objects.filter(is_published=True).order_by('-published_date'):
+		lastmod = f"<lastmod>{story.published_date.date().isoformat()}</lastmod>" if story.published_date else ""
+		urls.append(f"  <url><loc>{base}/stories/{story.slug}/</loc>{lastmod}</url>")
 	for survey in surveys:
 		urls.append(f"  <url><loc>{base}/surveys/{survey.uuid}/</loc></url>")
 	xml = (

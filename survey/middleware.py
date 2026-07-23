@@ -1,6 +1,8 @@
 from django.conf import settings
+from django.core.cache import cache
+from django.utils import timezone
 
-from .models import Membership, Organization, Invitation
+from .models import Membership, Organization, Invitation, UserActivity
 
 
 class CloudflareIPMiddleware:
@@ -27,6 +29,50 @@ class CloudflareIPMiddleware:
         else:
             request.cf_ip = request.META.get('REMOTE_ADDR', '')
         return self.get_response(request)
+
+
+class LastActivityMiddleware:
+    """Record the last time an authenticated user touched the app.
+
+    `auth_user.last_login` only moves on explicit authentication and
+    `SurveyHeader.updated_at` only on parent-survey saves, so neither reflects a
+    creator quietly working under a live session. This refreshes
+    `UserActivity.last_activity` on any authenticated request, throttled via the
+    cache to at most one write per user per LAST_ACTIVITY_THROTTLE_SECONDS so we
+    never write on every request. The write is best-effort: a failure must never
+    break the request.
+
+    Registered after AuthenticationMiddleware so request.user is populated.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.throttle = getattr(settings, 'LAST_ACTIVITY_THROTTLE_SECONDS', 300)
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        user = getattr(request, 'user', None)
+        if user is not None and user.is_authenticated:
+            self._touch(user.id)
+        return response
+
+    def _touch(self, user_id):
+        cache_key = f'last_activity_seen:{user_id}'
+        try:
+            # Cache-gate: if we wrote within the throttle window, skip the DB.
+            # cache.add returns False when the key already exists.
+            if not cache.add(cache_key, 1, self.throttle):
+                return
+        except Exception:
+            # Cache unavailable — fall through and write (fail toward correctness).
+            pass
+        try:
+            UserActivity.objects.update_or_create(
+                user_id=user_id, defaults={'last_activity': timezone.now()},
+            )
+        except Exception:
+            # Best-effort: never break the request over an activity write.
+            pass
 
 
 class ActiveOrgMiddleware:

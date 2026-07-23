@@ -7,6 +7,7 @@
 {% block canonical_url %}https://mapsurvey.org/for-educators/{% endblock %}
 {% block og_url %}https://mapsurvey.org/for-educators/{% endblock %}
 {% block og_title %}{% trans "Mapsurvey for Classrooms — Free Map Surveys for Student Fieldwork" %}{% endblock %}
+{% block structured_data %}{% include "partials/_landing_structured_data.html" %}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -53,7 +54,7 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Why it fits a course" %}</p>
     <h2 class="section-heading">{% trans "Built for a class of fieldworkers, not a GIS lab" %}</h2>
@@ -78,7 +79,7 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "In the classroom" %}</p>
     <h2 class="section-heading">{% trans "A planning department ran a whole field study on it" %}</h2>
@@ -95,7 +96,7 @@
   </div>
 </section>
 
-<section class="showcase">
+<section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Assignment ideas" %}</p>
     <h2 class="section-heading">{% trans "Ready-made prompts for geography, planning &amp; environmental courses" %}</h2>
@@ -112,4 +113,7 @@
     </div>
   </div>
 </section>
+
+{% include "partials/_faq_section.html" %}
+
 {% endblock %}
