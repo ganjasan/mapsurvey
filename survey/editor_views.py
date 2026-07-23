@@ -25,6 +25,7 @@ from .permissions import (
     get_effective_survey_role,
 )
 from .versioning import clone_survey_for_draft, check_draft_compatibility, publish_draft, IncompatibleDraftError
+from .audit import audit
 
 
 def _check_structural_edit_allowed(survey):
@@ -1041,8 +1042,10 @@ def editor_survey_transition(request, survey_uuid):
     # Test data cleanup on testing → published
     if survey.status == 'testing' and new_status == 'published':
         if request.POST.get('clear_test_data') == 'true':
-            SurveySession.objects.filter(survey=survey).delete()
+            deleted_count, _ignored = SurveySession.objects.filter(survey=survey).delete()
+            audit(request, 'clear_test_data', survey, deleted_sessions=deleted_count)
 
+    audit(request, 'status_transition', survey, old_status=survey.status, new_status=new_status)
     survey.status = new_status
 
     # Sync is_archived flag
@@ -1069,14 +1072,17 @@ def editor_survey_password(request, survey_uuid):
             return HttpResponse('Password must be at least 4 characters', status=400)
         survey.set_password(password)
         survey.save(update_fields=['password_hash'])
+        audit(request, 'password_set', survey)
 
     elif action == 'remove':
         survey.clear_password()
         survey.save(update_fields=['password_hash'])
+        audit(request, 'password_remove', survey)
 
     elif action == 'regenerate_token':
         survey.regenerate_test_token()
         survey.save(update_fields=['test_token'])
+        audit(request, 'token_regenerate', survey)
 
     else:
         return HttpResponse('Invalid action', status=400)
@@ -1122,6 +1128,7 @@ def editor_publish_draft(request, survey_uuid):
     except IncompatibleDraftError as e:
         return JsonResponse({'issues': e.issues}, status=409)
 
+    audit(request, 'draft_publish', canonical, draft_uuid=str(survey.uuid), version=canonical.version_number)
     return redirect('editor_survey_detail', survey_uuid=canonical.uuid)
 
 
@@ -1135,6 +1142,7 @@ def editor_discard_draft(request, survey_uuid):
         return HttpResponse('This survey is not a draft copy', status=400)
 
     canonical = survey.published_version
+    audit(request, 'draft_discard', canonical, draft_uuid=str(survey.uuid))
     survey.delete()
     return redirect('editor_survey_detail', survey_uuid=canonical.uuid)
 

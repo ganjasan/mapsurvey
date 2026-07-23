@@ -105,12 +105,13 @@ def org_permission_required(min_role='viewer'):
     return decorator
 
 
-def survey_permission_required(min_role='viewer', survey_kwarg='survey_uuid'):
+def survey_permission_required(min_role='viewer', survey_kwarg='survey_uuid', allow_trashed=False):
     """
     Decorator for views that operate on a specific survey.
     Looks up the survey by UUID from the URL kwargs.
     Returns 404 if survey not in active org.
     Returns 403 if effective role insufficient.
+    Trashed surveys 404 unless allow_trashed=True (trash endpoints only).
     """
     def decorator(view_func):
         @wraps(view_func)
@@ -119,8 +120,11 @@ def survey_permission_required(min_role='viewer', survey_kwarg='survey_uuid'):
                 return redirect('login')
 
             survey_uuid = kwargs.get(survey_kwarg)
+            qs = SurveyHeader.objects.all()
+            if not allow_trashed:
+                qs = qs.filter(deleted_at__isnull=True)
             try:
-                survey = SurveyHeader.objects.get(uuid=survey_uuid)
+                survey = qs.get(uuid=survey_uuid)
             except SurveyHeader.DoesNotExist:
                 raise Http404
 

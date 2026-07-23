@@ -38,6 +38,8 @@ from zipfile import ZipFile
 import pandas as pd
 
 from .access_control import check_survey_access
+from .audit import audit
+from .trash import trash_survey, restore_survey, purge_survey
 from .serialization import (
     export_survey_to_zip,
     import_survey_from_zip,
@@ -227,15 +229,18 @@ def resolve_survey(survey_slug):
     """
     try:
         parsed_uuid = uuid_mod.UUID(str(survey_slug))
-        survey = get_object_or_404(SurveyHeader, uuid=parsed_uuid)
+        survey = get_object_or_404(SurveyHeader, uuid=parsed_uuid, deleted_at__isnull=True)
         # If this is an archived version, return the canonical instead
         if not survey.is_canonical and survey.canonical_survey_id:
-            return survey.canonical_survey
+            canonical = survey.canonical_survey
+            if canonical.is_trashed:
+                raise Http404
+            return canonical
         return survey
     except (ValueError, AttributeError):
         pass
 
-    surveys = SurveyHeader.objects.filter(name=survey_slug, is_canonical=True)
+    surveys = SurveyHeader.objects.filter(name=survey_slug, is_canonical=True, deleted_at__isnull=True)
     count = surveys.count()
     if count == 1:
         return surveys.first()
@@ -248,7 +253,7 @@ def index(request):
 	capture_signup_source(request)  # first-touch acquisition source for creator signups
 	surveys = (
 		SurveyHeader.objects
-		.filter(visibility__in=['demo', 'public'], is_canonical=True, published_version__isnull=True)
+		.filter(visibility__in=['demo', 'public'], is_canonical=True, published_version__isnull=True, deleted_at__isnull=True)
 		.exclude(status='draft')
 		.select_related('organization')
 		.annotate(session_count=Count('surveysession'))
@@ -293,6 +298,12 @@ def editor(request):
 	# Exclude draft copies and archived versions from dashboard
 	survey_list = survey_list.filter(is_canonical=True, published_version__isnull=True)
 
+	# Trash section: same scope, trashed only; dashboard itself hides trashed below
+	trashed_surveys = list(
+		survey_list.filter(deleted_at__isnull=False).order_by('-deleted_at')
+	)
+	survey_list = survey_list.filter(deleted_at__isnull=True)
+
 	# Prefetch archived versions for version-aware download dropdown
 	archived_versions_prefetch = Prefetch(
 		'versions',
@@ -323,11 +334,12 @@ def editor(request):
 		"survey_headers": surveys_with_kpi,
 		"org_role": org_role,
 		"show_archived": show_archived,
+		"trashed_surveys": trashed_surveys,
 	}
 	return render(request, "editor.html", context)
 
 def survey_list(request):
-	survey_list = SurveyHeader.objects.all()
+	survey_list = SurveyHeader.objects.filter(deleted_at__isnull=True)
 	context = {'survey_list': survey_list}
 	return render(request, 'survey_list.html', context)
 
@@ -1106,21 +1118,54 @@ def story_detail(request, slug):
 
 @survey_permission_required('owner')
 def delete_survey(request, survey_uuid):
-	"""Delete a survey and all related data."""
+	"""Move a survey to trash (soft-delete); recoverable for 30 days."""
 	if request.method != 'POST':
 		messages.error(request, "Invalid request method")
 		return redirect('editor')
 
 	survey = request.survey
+	trash_survey(survey)
+	audit(request, 'survey_trash', survey)
+	messages.success(request, f"Survey '{survey.name}' moved to Trash. You can restore it within {SurveyHeader.TRASH_RETENTION_DAYS} days.")
+
+	return redirect('editor')
+
+
+@survey_permission_required('owner', allow_trashed=True)
+def restore_survey_view(request, survey_uuid):
+	"""Restore a survey from trash to its exact pre-trash state."""
+	if request.method != 'POST':
+		messages.error(request, "Invalid request method")
+		return redirect('editor')
+
+	survey = request.survey
+	if not survey.is_trashed:
+		messages.error(request, "Survey is not in Trash")
+		return redirect('editor')
+
+	restore_survey(survey)
+	audit(request, 'survey_restore', survey)
+	messages.success(request, f"Survey '{survey.name}' restored")
+
+	return redirect('editor')
+
+
+@survey_permission_required('owner', allow_trashed=True)
+def purge_survey_view(request, survey_uuid):
+	"""Permanently delete a trashed survey, its data and media files."""
+	if request.method != 'POST':
+		messages.error(request, "Invalid request method")
+		return redirect('editor')
+
+	survey = request.survey
+	if not survey.is_trashed:
+		messages.error(request, "Only surveys in Trash can be deleted forever")
+		return redirect('editor')
+
 	name = survey.name
-	# Delete sessions first (PROTECT FK prevents cascade deletion)
-	SurveySession.objects.filter(survey=survey).delete()
-	# Also delete sessions on archived versions
-	for archived in SurveyHeader.objects.filter(canonical_survey=survey, is_canonical=False):
-		SurveySession.objects.filter(survey=archived).delete()
-		archived.delete()
-	survey.delete()
-	messages.success(request, f"Survey '{name}' deleted successfully")
+	audit(request, 'survey_purge', survey)
+	purge_survey(survey)
+	messages.success(request, f"Survey '{name}' deleted forever")
 
 	return redirect('editor')
 

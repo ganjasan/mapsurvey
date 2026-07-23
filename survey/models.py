@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import models
 from django.contrib.gis.db import models as geomodels
 from django.contrib.gis.geos import Point
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
@@ -298,6 +298,7 @@ class SurveyHeader(models.Model):
     show_branding = models.BooleanField(default=True, help_text=_('Show a "Made with Mapsurvey" link on the public survey and thanks pages (a free-tier acquisition loop). Turn off for a clean, unbranded look.'))
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True, db_index=True, help_text=_('Set when the survey is moved to trash; purged permanently after the retention window.'))
 
     # Versioning fields
     canonical_survey = models.ForeignKey(
@@ -407,6 +408,19 @@ class SurveyHeader(models.Model):
 
     def is_multilingual(self):
         return bool(self.available_languages and len(self.available_languages) > 0)
+
+    # Trash (soft-delete) helpers
+    TRASH_RETENTION_DAYS = 30
+
+    @property
+    def is_trashed(self):
+        return self.deleted_at is not None
+
+    @property
+    def purge_after(self):
+        if self.deleted_at is None:
+            return None
+        return self.deleted_at + timedelta(days=self.TRASH_RETENTION_DAYS)
 
     # Versioning methods
     def has_draft_copy(self):
@@ -676,6 +690,46 @@ class AbuseEvent(models.Model):
 
     def __str__(self):
         return f"{self.defense} from {self.ip} at {self.created_at}"
+
+
+class AuditLog(models.Model):
+    """Append-only audit log of destructive/lifecycle editor operations.
+
+    References the target survey by stored uuid+name (no FK) so records
+    survive a permanent purge; the actor FK uses SET_NULL so records survive
+    account deletion. Rows are written via survey.audit.audit() which never
+    raises, and are read-only in the admin. See
+    openspec/changes/survey-deletion-safety/design.md (D4, D5).
+    """
+
+    ACTION_CHOICES = (
+        ('survey_trash', 'Survey moved to trash'),
+        ('survey_restore', 'Survey restored from trash'),
+        ('survey_purge', 'Survey permanently deleted'),
+        ('survey_auto_purge', 'Survey auto-purged after retention'),
+        ('status_transition', 'Lifecycle status transition'),
+        ('clear_test_data', 'Test sessions cleared'),
+        ('draft_publish', 'Draft published as new version'),
+        ('draft_discard', 'Draft discarded'),
+        ('password_set', 'Survey password set'),
+        ('password_remove', 'Survey password removed'),
+        ('token_regenerate', 'Test token regenerated'),
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='audit_entries')
+    action = models.CharField(max_length=30, choices=ACTION_CHOICES, db_index=True)
+    survey_uuid = models.UUIDField(null=True, blank=True, db_index=True)
+    survey_name = models.CharField(max_length=45, blank=True, default='')
+    ip = models.GenericIPAddressField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.action} on '{self.survey_name}' by {self.actor} at {self.created_at}"
 
 
 class FunnelReport(SurveyHeader):
