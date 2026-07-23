@@ -1221,6 +1221,15 @@ def for_government(request):
 	return render(request, 'for_government.html')
 
 
+def services(request):
+	"""Public "Expert help" service page: optional paid help with survey design
+	and getting real responses, on top of the free self-serve platform. Targets
+	the verified gap where teams build+publish but collect ~0 responses.
+	utm_source=services."""
+	capture_signup_source(request)
+	return render(request, 'services.html')
+
+
 def robots_txt(request):
 	lines = [
 		"User-agent: *",
@@ -1230,6 +1239,7 @@ def robots_txt(request):
 		"Allow: /for-planners/",
 		"Allow: /for-researchers/",
 		"Allow: /for-government/",
+		"Allow: /services/",
 		"Allow: /alternatives/",
 		"Disallow: /admin/",
 		"Disallow: /editor/",
@@ -1250,6 +1260,7 @@ def sitemap_xml(request):
 	urls.append(f"  <url><loc>{base}/for-planners/</loc></url>")
 	urls.append(f"  <url><loc>{base}/for-researchers/</loc></url>")
 	urls.append(f"  <url><loc>{base}/for-government/</loc></url>")
+	urls.append(f"  <url><loc>{base}/services/</loc></url>")
 	urls.append(f"  <url><loc>{base}/alternatives/maptionnaire/</loc></url>")
 	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
 	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
