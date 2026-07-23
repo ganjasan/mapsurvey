@@ -42,6 +42,10 @@ CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in ALLOWED_HOSTS if host and 
 # Analytics: max client-side tracking events per survey session per hour
 TRACK_EVENT_RATE_LIMIT = int(os.environ.get("TRACK_EVENT_RATE_LIMIT", 120))
 
+# Shared secret for the /internal/purge-trash/ endpoint (curl-based cron).
+# Empty string disables the endpoint entirely.
+PURGE_TASK_TOKEN = os.environ.get("PURGE_TASK_TOKEN", "")
+
 # Application definition
 
 INSTALLED_APPS = [

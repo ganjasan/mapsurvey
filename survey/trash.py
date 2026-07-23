@@ -6,6 +6,8 @@ hard-delete cascade plus media cleanup and also covers satellites the old
 code missed (live draft copies). See
 openspec/changes/survey-deletion-safety/design.md (D3, D7).
 """
+from datetime import timedelta
+
 from django.utils import timezone
 
 from .models import SurveyHeader, SurveySession, Question
@@ -49,3 +51,35 @@ def purge_survey(survey):
         SurveySession.objects.filter(survey=header).delete()
     for header in reversed(headers):
         header.delete()
+
+
+def purge_expired_surveys(days=None, dry_run=False, log=lambda msg: None):
+    """Purge all surveys whose trash retention window has expired.
+
+    Shared core behind the purge_trashed_surveys management command and the
+    /internal/purge-trash/ endpoint. Writes a survey_auto_purge audit row
+    per survey (no actor). Returns the number of surveys purged (or that
+    would be purged, when dry_run).
+    """
+    from .models import AuditLog
+
+    if days is None:
+        days = SurveyHeader.TRASH_RETENTION_DAYS
+    cutoff = timezone.now() - timedelta(days=days)
+    expired = list(SurveyHeader.objects.filter(deleted_at__lt=cutoff))
+
+    for survey in expired:
+        if dry_run:
+            log(f"Would purge '{survey.name}' ({survey.uuid}), trashed {survey.deleted_at:%Y-%m-%d}")
+            continue
+        AuditLog.objects.create(
+            actor=None,
+            action='survey_auto_purge',
+            survey_uuid=survey.uuid,
+            survey_name=survey.name,
+            metadata={'trashed_at': survey.deleted_at.isoformat(), 'retention_days': days},
+        )
+        purge_survey(survey)
+        log(f"Purged '{survey.name}' ({survey.uuid})")
+
+    return len(expired)

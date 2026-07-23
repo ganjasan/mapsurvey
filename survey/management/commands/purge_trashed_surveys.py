@@ -1,16 +1,13 @@
 """Permanently purge surveys whose trash retention window has expired.
 
-Intended to run daily (Render Cron Job). Uses the same purge routine as the
-manual Delete-forever action and writes a survey_auto_purge audit record per
-survey with no actor. See openspec/changes/survey-deletion-safety/design.md (D6).
+Thin wrapper around survey.trash.purge_expired_surveys — the same core
+drives the /internal/purge-trash/ endpoint used by the curl-based Render
+cron. See openspec/changes/survey-deletion-safety/design.md (D6).
 """
-from datetime import timedelta
-
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 
-from survey.models import AuditLog, SurveyHeader
-from survey.trash import purge_survey
+from survey.models import SurveyHeader
+from survey.trash import purge_expired_surveys
 
 
 class Command(BaseCommand):
@@ -27,24 +24,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        cutoff = timezone.now() - timedelta(days=options['days'])
-        expired = SurveyHeader.objects.filter(deleted_at__lt=cutoff)
-
-        if not expired.exists():
+        count = purge_expired_surveys(
+            days=options['days'], dry_run=options['dry_run'], log=self.stdout.write,
+        )
+        if count == 0:
             self.stdout.write("Nothing to purge")
-            return
-
-        for survey in expired:
-            if options['dry_run']:
-                self.stdout.write(f"Would purge '{survey.name}' ({survey.uuid}), trashed {survey.deleted_at:%Y-%m-%d}")
-                continue
-
-            AuditLog.objects.create(
-                actor=None,
-                action='survey_auto_purge',
-                survey_uuid=survey.uuid,
-                survey_name=survey.name,
-                metadata={'trashed_at': survey.deleted_at.isoformat(), 'retention_days': options['days']},
-            )
-            purge_survey(survey)
-            self.stdout.write(f"Purged '{survey.name}' ({survey.uuid})")

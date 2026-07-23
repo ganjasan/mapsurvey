@@ -27,6 +27,9 @@
 ## 5. Auto-purge job
 
 - [x] 5.1 Management command `purge_trashed_surveys --days 30 --dry-run`: purge routine + `survey_auto_purge` audit entries (actor=None)
+- [x] 5.2 Extract shared `purge_expired_surveys()` core into trash.py; command becomes a thin wrapper
+- [x] 5.3 Internal endpoint `POST /internal/purge-trash/` gated by `PURGE_TASK_TOKEN` env (constant-time compare, 403 when unset), returns purge count JSON; tests for token auth + purge + disabled state
+- [ ] 5.4 Render Cron Job (native runtime, curl) hitting the endpoint daily; `PURGE_TASK_TOKEN` env var on the web service
 
 ## 6. Tests (GIVEN/WHEN/THEN docstrings)
 

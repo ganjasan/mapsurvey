@@ -39,7 +39,11 @@ import pandas as pd
 
 from .access_control import check_survey_access
 from .audit import audit
-from .trash import trash_survey, restore_survey, purge_survey
+from .trash import trash_survey, restore_survey, purge_survey, purge_expired_surveys
+import hmac
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from .serialization import (
     export_survey_to_zip,
     import_survey_from_zip,
@@ -1148,6 +1152,25 @@ def restore_survey_view(request, survey_uuid):
 	messages.success(request, f"Survey '{survey.name}' restored")
 
 	return redirect('editor')
+
+
+@csrf_exempt
+@require_POST
+def internal_purge_trash(request):
+	"""Run auto-purge of expired trashed surveys; driven by an external cron.
+
+	Authenticated with the PURGE_TASK_TOKEN shared secret (empty token
+	disables the endpoint). See survey-deletion-safety spec, survey-trash.
+	"""
+	token = conf_settings.PURGE_TASK_TOKEN
+	provided = request.headers.get('Authorization', '')
+	if provided.startswith('Bearer '):
+		provided = provided[len('Bearer '):]
+	if not token or not hmac.compare_digest(provided, token):
+		return HttpResponseForbidden()
+
+	purged = purge_expired_surveys()
+	return JsonResponse({'purged': purged})
 
 
 @survey_permission_required('owner', allow_trashed=True)
