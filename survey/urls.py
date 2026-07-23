@@ -14,6 +14,7 @@ urlpatterns = [
     path('editor/delete/<uuid:survey_uuid>/', views.delete_survey, name='delete_survey'),
     path('editor/restore/<uuid:survey_uuid>/', views.restore_survey_view, name='restore_survey'),
     path('editor/purge/<uuid:survey_uuid>/', views.purge_survey_view, name='purge_survey'),
+    path('internal/purge-trash/', views.internal_purge_trash, name='internal_purge_trash'),
 
     # Organization management
     path('org/new/', org_views.org_create, name='org_create'),

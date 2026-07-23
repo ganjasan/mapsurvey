@@ -2526,6 +2526,82 @@ class AutoPurgeCommandTest(TestCase):
         self.assertFalse(AuditLog.objects.filter(action='survey_auto_purge').exists())
 
 
+class InternalPurgeEndpointTest(TestCase):
+    """Tests for the token-gated /internal/purge-trash/ endpoint."""
+
+    def setUp(self):
+        """Set up an expired trashed survey."""
+        from datetime import timedelta
+        from django.utils import timezone
+        self.org = _make_org('PurgeApiOrg')
+        self.expired = SurveyHeader.objects.create(
+            name="api_expired_survey", organization=self.org,
+            deleted_at=timezone.now() - timedelta(days=31),
+        )
+
+    def test_valid_token_triggers_purge(self):
+        """
+        GIVEN PURGE_TASK_TOKEN is configured and a survey expired in trash
+        WHEN POST arrives with the correct bearer token
+        THEN the survey is purged and the count is returned
+        """
+        from django.test import override_settings
+        from .models import AuditLog
+
+        with override_settings(PURGE_TASK_TOKEN='testtoken123'):
+            response = self.client.post(
+                '/internal/purge-trash/', HTTP_AUTHORIZATION='Bearer testtoken123',
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'purged': 1})
+        self.assertFalse(SurveyHeader.objects.filter(pk=self.expired.pk).exists())
+        self.assertTrue(AuditLog.objects.filter(action='survey_auto_purge', survey_uuid=self.expired.uuid).exists())
+
+    def test_wrong_or_missing_token_rejected(self):
+        """
+        GIVEN PURGE_TASK_TOKEN is configured
+        WHEN POST arrives with a wrong token or none at all
+        THEN 403 is returned and nothing is purged
+        """
+        from django.test import override_settings
+
+        with override_settings(PURGE_TASK_TOKEN='testtoken123'):
+            wrong = self.client.post('/internal/purge-trash/', HTTP_AUTHORIZATION='Bearer nope')
+            missing = self.client.post('/internal/purge-trash/')
+
+        self.assertEqual(wrong.status_code, 403)
+        self.assertEqual(missing.status_code, 403)
+        self.assertTrue(SurveyHeader.objects.filter(pk=self.expired.pk).exists())
+
+    def test_endpoint_disabled_without_token_setting(self):
+        """
+        GIVEN PURGE_TASK_TOKEN is empty
+        WHEN any POST arrives (even with an empty bearer)
+        THEN 403 is returned
+        """
+        from django.test import override_settings
+
+        with override_settings(PURGE_TASK_TOKEN=''):
+            response = self.client.post('/internal/purge-trash/', HTTP_AUTHORIZATION='Bearer ')
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(SurveyHeader.objects.filter(pk=self.expired.pk).exists())
+
+    def test_get_rejected(self):
+        """
+        GIVEN a configured token
+        WHEN a GET request arrives
+        THEN 405 is returned
+        """
+        from django.test import override_settings
+
+        with override_settings(PURGE_TASK_TOKEN='testtoken123'):
+            response = self.client.get('/internal/purge-trash/', HTTP_AUTHORIZATION='Bearer testtoken123')
+
+        self.assertEqual(response.status_code, 405)
+
+
 class AuditLogTest(TestCase):
     """Tests for the append-only audit trail of editor operations."""
 

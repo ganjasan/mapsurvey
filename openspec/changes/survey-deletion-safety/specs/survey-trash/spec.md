@@ -45,6 +45,21 @@ Manual Delete-forever and auto-purge SHALL permanently delete the survey, its ar
 - **WHEN** a Delete-forever request targets a survey that is not trashed
 - **THEN** the system SHALL reject the request without deleting anything
 
+### Requirement: Auto-purge is triggerable via an internal HTTP endpoint
+The system SHALL expose `POST /internal/purge-trash/` that runs the auto-purge routine, authenticated by a shared secret token from the `PURGE_TASK_TOKEN` environment variable. Requests without a valid token MUST be rejected with 403. When the token is unset, the endpoint MUST be disabled (403 for all requests). The endpoint exists so a lightweight external scheduler (curl-based cron) can drive purging without a Django runtime.
+
+#### Scenario: Valid token triggers purge
+- **WHEN** a POST with the correct bearer token arrives and a survey was trashed 31 days ago
+- **THEN** that survey SHALL be purged and the response SHALL report the purge count
+
+#### Scenario: Missing or wrong token rejected
+- **WHEN** a POST arrives without a token or with an incorrect token
+- **THEN** the system SHALL respond 403 and purge nothing
+
+#### Scenario: Endpoint disabled without configured token
+- **WHEN** `PURGE_TASK_TOKEN` is empty and any request arrives
+- **THEN** the system SHALL respond 403
+
 ### Requirement: Trashed surveys are auto-purged after 30 days
 A scheduled job SHALL permanently purge surveys whose `deleted_at` is older than 30 days, using the same purge routine as manual Delete-forever, and SHALL write a `survey_auto_purge` audit record per survey.
 
