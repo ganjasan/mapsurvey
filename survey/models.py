@@ -718,3 +718,27 @@ class SignupAttribution(models.Model):
     def __str__(self):
         return f"{self.user_id}: {self.utm_source or self.source_bucket or 'direct'}"
 
+
+class UserActivity(models.Model):
+    """Last time a user made an authenticated request.
+
+    Unlike `auth_user.last_login` (updated only on explicit authentication) and
+    `SurveyHeader.updated_at` (moves only when the parent survey is saved), this
+    captures genuine system entry: it is refreshed by `LastActivityMiddleware` on
+    any authenticated request, throttled to at most one write per user per
+    `LAST_ACTIVITY_THROTTLE_SECONDS`. Absence of a row = no authenticated request
+    since this shipped (no backfill). Consumed by the funnel dashboard.
+    """
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='activity',
+    )
+    last_activity = models.DateTimeField(db_index=True)
+
+    class Meta:
+        app_label = 'survey'
+
+    def __str__(self):
+        return f"{self.user_id}: {self.last_activity:%Y-%m-%d %H:%M}"
+
