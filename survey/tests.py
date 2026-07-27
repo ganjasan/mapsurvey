@@ -14714,7 +14714,7 @@ class _InlineThread:
 
 
 class ActivationAutoLoginTest(TestCase):
-    """GET /accounts/activate/ — activation, auto-login, and replay handling."""
+    """/accounts/activate/ — confirm page on GET, activation + login on POST."""
 
     def setUp(self):
         from django.core.cache import cache
@@ -14726,13 +14726,51 @@ class ActivationAutoLoginTest(TestCase):
         self.user.is_active = False
         self.user.save(update_fields=["is_active"])
 
-    def _activate(self, key):
+    def _get(self, key):
         return self.client.get("/accounts/activate/", {"activation_key": key})
+
+    def _confirm(self, key):
+        return self.client.post("/accounts/activate/", {"activation_key": key})
+
+    def _activate(self, key):
+        """Full human flow: open the emailed link, then press the button."""
+        self._get(key)
+        return self._confirm(key)
+
+    def test_get_shows_confirm_page_without_activating(self):
+        """
+        GIVEN an inactive account and a valid activation key
+        WHEN the activation URL is merely opened (GET)
+        THEN a confirmation page with the confirm form renders, the account
+             stays inactive, and no session is created
+        """
+        resp = self._get(_activation_key("newbie"))
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Confirm my email")
+        self.assertContains(resp, 'name="activation_key"')
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_active)
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_scanner_get_and_head_do_not_activate(self):
+        """
+        GIVEN a mail-security scanner that pre-fetches emailed links
+        WHEN it issues GET and HEAD requests against a valid activation URL
+        THEN the account remains inactive — the human's later click still
+             gets the full activation + auto-login
+        """
+        key = _activation_key("newbie")
+        self.client.get("/accounts/activate/", {"activation_key": key})
+        self.client.head(f"/accounts/activate/?activation_key={key}")
+
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_active)
 
     def test_valid_key_activates_and_signs_user_in(self):
         """
         GIVEN an inactive account and a valid, unexpired activation key
-        WHEN the activation URL is opened
+        WHEN the user opens the link and submits the confirmation form
         THEN the account becomes active, the session is authenticated as that
              user, and the response redirects to LOGIN_REDIRECT_URL
         """
@@ -14761,18 +14799,33 @@ class ActivationAutoLoginTest(TestCase):
         """
         GIVEN an activation key older than ACCOUNT_ACTIVATION_DAYS
         WHEN the activation URL is opened
-        THEN the failure page renders and offers the resend flow instead of
-             suggesting re-registration
+        THEN the failure page renders directly (no confirm button) and offers
+             the resend flow instead of suggesting re-registration
         """
         key = _activation_key("newbie")
         with override_settings(ACCOUNT_ACTIVATION_DAYS=0):
-            resp = self._activate(key)
+            resp = self._get(key)
 
         self.assertEqual(resp.status_code, 200)
         self.user.refresh_from_db()
         self.assertFalse(self.user.is_active)
         self.assertContains(resp, "/accounts/activate/resend/")
+        self.assertNotContains(resp, "Confirm my email")
         self.assertNotContains(resp, "Try registering again")
+
+    def test_expired_key_post_does_not_activate(self):
+        """
+        GIVEN an expired activation key submitted straight to the POST handler
+        WHEN the confirmation form is posted
+        THEN the failure page renders and the account stays inactive
+        """
+        key = _activation_key("newbie")
+        with override_settings(ACCOUNT_ACTIVATION_DAYS=0):
+            resp = self._confirm(key)
+
+        self.assertEqual(resp.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_active)
 
     def test_missing_key_shows_failure_page(self):
         """
@@ -14786,24 +14839,24 @@ class ActivationAutoLoginTest(TestCase):
 
     def test_replayed_key_on_active_account_redirects_to_login(self):
         """
-        GIVEN a valid key whose account is already active (mail scanner
-              pre-fetched the link before the human clicked it)
+        GIVEN a valid key whose account was already activated earlier
         WHEN the activation URL is opened again by an anonymous visitor
-        THEN they are redirected to the login page, not the failure page
+        THEN they are redirected to the login page — no failure page, and no
+             confirm button that could only dead-end
         """
         key = _activation_key("newbie")
-        self._activate(key)          # scanner consumes it
+        self._activate(key)
         self.client.logout()
 
-        resp = self._activate(key)   # human clicks the same link
+        resp = self._get(key)        # re-opened link
 
         self.assertEqual(resp.status_code, 302)
         self.assertIn(settings.LOGIN_URL, resp["Location"])
 
-    def test_replayed_key_does_not_sign_anyone_in(self):
+    def test_replayed_confirmation_does_not_sign_anyone_in(self):
         """
         GIVEN a valid key for an already-active account
-        WHEN an anonymous visitor opens the activation URL
+        WHEN the confirmation form is posted again by an anonymous visitor
         THEN no session is created — the key must not work as a reusable
              login credential for the rest of its validity window
         """
@@ -14811,8 +14864,10 @@ class ActivationAutoLoginTest(TestCase):
         self._activate(key)
         self.client.logout()
 
-        self._activate(key)
+        resp = self._confirm(key)
 
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(settings.LOGIN_URL, resp["Location"])
         self.assertNotIn("_auth_user_id", self.client.session)
 
     def test_replayed_key_while_signed_in_goes_to_editor(self):
@@ -14824,7 +14879,7 @@ class ActivationAutoLoginTest(TestCase):
         key = _activation_key("newbie")
         self._activate(key)          # activates and signs in
 
-        resp = self._activate(key)
+        resp = self._get(key)
 
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp["Location"], settings.LOGIN_REDIRECT_URL)
@@ -14835,7 +14890,7 @@ class ActivationAutoLoginTest(TestCase):
         WHEN the activation URL is opened
         THEN the failure page renders and nobody is signed in
         """
-        resp = self._activate(_activation_key("ghost"))
+        resp = self._get(_activation_key("ghost"))
 
         self.assertEqual(resp.status_code, 200)
         self.assertNotIn("_auth_user_id", self.client.session)
@@ -14902,7 +14957,7 @@ class ResendActivationTest(TestCase):
         self.assertEqual(len(mail.outbox), 1)
 
         key = _activation_key("dormant")
-        self.client.get("/accounts/activate/", {"activation_key": key})
+        self.client.post("/accounts/activate/", {"activation_key": key})
         self.inactive.refresh_from_db()
         self.assertTrue(self.inactive.is_active)
 
