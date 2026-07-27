@@ -117,7 +117,7 @@
   <table class="funnel">
     <thead>
       <tr>
-        <th>Cohort</th><th>Regs</th><th>Created</th><th>+Q</th><th>Published</th>
+        <th>Cohort</th><th>Regs</th><th>Activated</th><th>Logged&nbsp;in</th><th>Created</th><th>+Q</th><th>Published</th>
         <th class="win">Pub&nbsp;≤14d</th><th>≥1</th><th>≥5</th><th class="win">≥5&nbsp;≤30d</th>
         <th style="width:120px">Weekly regs</th>
       </tr>
@@ -127,6 +127,8 @@
       <tr>
         <td>{{ c.cohort }}</td>
         <td>{{ c.regs }}</td>
+        <td>{{ c.activated }} <span class="subtle">{% widthratio c.activated c.regs 100 %}%</span></td>
+        <td>{{ c.logged_in }} <span class="subtle">{% widthratio c.logged_in c.regs 100 %}%</span></td>
         <td>{{ c.created }} <span class="subtle">{% widthratio c.created c.regs 100 %}%</span></td>
         <td>{{ c.added_question }}</td>
         <td>{{ c.published }} <span class="subtle">{% widthratio c.published c.regs 100 %}%</span></td>
@@ -141,11 +143,12 @@
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="10" class="subtle">No registrations yet.</td></tr>
+      <tr><td colspan="12" class="subtle">No registrations yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>
   <div class="subtle">Highlighted columns are time-boxed (published within {{ 14 }} days of signup — approx: created-and-now-published; 5th response within 30 days). This is how H2 (templates/onboarding) is judged cohort-over-cohort without the “older cohort had more time” bias.</div>
+  <div class="subtle">Activated = clicked the emailed activation link. Logged in = signed in at least once afterwards. Regs→Activated measures email deliverability; Activated→Logged&nbsp;in was a pure UX leak until auto-login-on-activation shipped, so expect that gap to close from that cohort onward. Both are point-in-time, not as-of-cohort-age.</div>
 
   {# ④ LIVING USERS #}
   <h2 id="living"><span class="step">4</span>Living users &amp; trends

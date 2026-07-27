@@ -164,11 +164,20 @@ class CreatorFunnelService:
 
         cohorts = {}
         dates = {}
-        for uid, joined in self._real_users().values_list("id", "date_joined"):
+        for uid, joined, is_active, last_login in self._real_users().values_list(
+            "id", "date_joined", "is_active", "last_login"
+        ):
             key = joined.strftime("%Y-%m")
             row = cohorts.setdefault(key, self._blank_row(key))
             dates.setdefault(key, []).append(joined)
             row["regs"] += 1
+            # Two pre-product stages straight off auth_user. Both are
+            # point-in-time (an account activated today counts in its signup
+            # cohort immediately), like every other stage in this table.
+            if is_active:
+                row["activated"] += 1
+            if last_login is not None:
+                row["logged_in"] += 1
             if uid in created:
                 row["created"] += 1
             if uid in with_q:
@@ -196,7 +205,8 @@ class CreatorFunnelService:
     def alltime_totals(self):
         """Single funnel row across all real registrations (for header cards)."""
         total = self._blank_row("all-time")
-        keys = ("regs", "created", "added_question", "published", "pub_14d",
+        keys = ("regs", "activated", "logged_in", "created", "added_question",
+                "published", "pub_14d",
                 "got_1", "got_5", "got_10", "got5_30d")
         for r in self.cohort_funnel():
             for k in keys:
@@ -508,7 +518,9 @@ class CreatorFunnelService:
     @staticmethod
     def _blank_row(label):
         return {
-            "cohort": label, "regs": 0, "created": 0, "added_question": 0,
+            "cohort": label, "regs": 0,
+            "activated": 0, "logged_in": 0,
+            "created": 0, "added_question": 0,
             "published": 0, "pub_14d": 0,
             "got_1": 0, "got_5": 0, "got_10": 0, "got5_30d": 0,
         }

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Resend Activation Email" %} — Mapsurvey{% endblock %}
+
+{% block content_wrapper_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h2>{% trans "Resend Activation Email" %}</h2>
+    <p class="auth-subtitle">{% trans "Enter the email address you signed up with and we'll send a fresh activation link." %}</p>
+
+    <form method="post" action="">
+        {% csrf_token %}
+        {% for field in form %}
+            {% if field.name == "website" %}
+                {# Honeypot — hidden from humans, present in DOM for naive bots. #}
+                <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden" aria-hidden="true">
+                    <label for="{{ field.id_for_label }}">Website</label>
+                    {{ field }}
+                </div>
+            {% else %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <button type="submit" class="btn-auth">{% trans "Send activation link" %}</button>
+    </form>
+
+    <div class="auth-links">
+        <a href="{% url 'login' %}">{% trans "Back to sign in" %}</a>
+    </div>
+</div>
+{% endblock %}

@@ -59,6 +59,21 @@ def ratelimit_key(group, request):
     return client_ip(request)
 
 
+def ratelimit_email_key(group, request):
+    """Rate-limit key over the submitted email, for the resend endpoint.
+
+    The per-IP limit alone does not protect a *victim*: an attacker rotating
+    IPs could still hammer one inbox. Keying a second limit on the normalized
+    target address caps how many activation emails any single address can
+    receive per day, regardless of origin.
+
+    Falls back to the IP when no email was submitted, so a malformed POST
+    still consumes a bucket instead of bypassing the limit entirely.
+    """
+    email = (request.POST.get("email") or "").strip().lower()
+    return email or client_ip(request)
+
+
 def verify_turnstile(token, remote_ip=""):
     """Return True if `token` is accepted by Cloudflare's siteverify endpoint.
 
@@ -137,6 +152,33 @@ class RegistrationAbuseForm(RegistrationForm):
     Turnstile validation is also handled in the view — it needs `request`
     to read `cf-turnstile-response` (with dash, not Python-friendly).
     """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields[HONEYPOT_FIELD_NAME] = forms.CharField(
+            required=False,
+            widget=forms.TextInput(attrs={
+                "tabindex": "-1",
+                "autocomplete": "off",
+                "aria-hidden": "true",
+            }),
+            label="",
+        )
+
+
+class ResendActivationForm(forms.Form):
+    """Single email field plus the same hidden honeypot as registration.
+
+    As with RegistrationAbuseForm, the honeypot check itself lives in the
+    view (read from request.POST before validation) so a bot that fills the
+    honeypot AND submits a malformed email still gets the neutral response
+    rather than a form-error page that would fingerprint the defense.
+    """
+
+    email = forms.EmailField(
+        label="Email address",
+        widget=forms.EmailInput(attrs={"autocomplete": "email", "autofocus": True}),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

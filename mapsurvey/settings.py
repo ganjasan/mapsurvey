@@ -234,7 +234,7 @@ INTERNAL_IPS = ('127.0.0.1',)
 
 LOGIN_REDIRECT_URL = '/editor/'
 
-ACCOUNT_ACTIVATION_DAYS = 1
+ACCOUNT_ACTIVATION_DAYS = int(os.environ.get('ACCOUNT_ACTIVATION_DAYS', 7))
 
 # Mapbox
 MAPBOX_URL = os.environ.get('MAPBOX_URL', 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}')
@@ -306,6 +306,11 @@ TURNSTILE_SECRET_KEY = os.environ.get('TURNSTILE_SECRET_KEY', '')
 CLOUDFLARE_TRUSTED = os.environ.get('CLOUDFLARE_TRUSTED', 'False').lower() in ('true', '1')
 REGISTRATION_RATE_LIMIT_HOUR = int(os.environ.get('REGISTRATION_RATE_LIMIT_HOUR', 3))
 REGISTRATION_RATE_LIMIT_DAY = int(os.environ.get('REGISTRATION_RATE_LIMIT_DAY', 10))
+# Resend-activation endpoint. Tighter than registration: it emails an address
+# the sender does not have to control, so it is the more attractive bombing
+# vector of the two. Per-IP hourly + per-email daily.
+RESEND_ACTIVATION_RATE_LIMIT_HOUR = int(os.environ.get('RESEND_ACTIVATION_RATE_LIMIT_HOUR', 3))
+RESEND_ACTIVATION_RATE_LIMIT_DAY = int(os.environ.get('RESEND_ACTIVATION_RATE_LIMIT_DAY', 3))
 
 LOGGING = {
     # This LOGGING block configures only the `abuse.*` logger hierarchy used

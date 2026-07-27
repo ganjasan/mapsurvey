@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Check Your Inbox" %} — Mapsurvey{% endblock %}
+
+{% block content_wrapper_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-card auth-message">
+    <span class="auth-icon">&#9993;</span>
+    <h2>{% trans "Check Your Inbox" %}</h2>
+    {# Deliberately non-committal: this same page is shown whether or not an
+       email was actually sent, so the flow never reveals which addresses have
+       accounts. Do not add a "we sent it to X" line here. #}
+    <p>{% trans "If that address belongs to an account that hasn't been activated yet, an activation link is on its way. It's valid for 7 days." %}</p>
+    <p style="font-size:.9rem;color:#888">{% trans "Nothing arrived? Check your spam folder, and make sure you used the address you signed up with." %}</p>
+    <div class="auth-links" style="margin-top:1.25rem;">
+        <a href="{% url 'login' %}">{% trans "Back to sign in" %}</a>
+    </div>
+</div>
+{% endblock %}

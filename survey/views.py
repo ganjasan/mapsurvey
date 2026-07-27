@@ -54,6 +54,7 @@ from .serialization import (
 from .abuse import (
     HONEYPOT_FIELD_NAME,
     RegistrationAbuseForm,
+    ResendActivationForm,
     client_ip,
     log_abuse_event,
     verify_turnstile,
@@ -198,26 +199,156 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
 class DirectActivationView(
     __import__('django_registration.backends.activation.views', fromlist=['ActivationView']).ActivationView
 ):
-    """Activate account directly on GET without showing a form."""
+    """Activate account directly on GET without showing a form.
+
+    On success the user is logged in and sent straight to the editor. Making
+    them re-enter credentials they typed two minutes earlier was the measured
+    drop-off point: 24 accounts were active but had never logged in. See
+    openspec/changes/activation-funnel-autologin/design.md (D1).
+    """
+
+    AUTH_BACKEND = "survey.backends.EmailOrUsernameBackend"
 
     def get(self, request, *args, **kwargs):
+        from django_registration.backends.activation.forms import ActivationForm
+        from django_registration.exceptions import ActivationError
+
         activation_key = request.GET.get("activation_key")
         if not activation_key:
-            from django_registration.exceptions import ActivationError
             return self.activation_failure(ActivationError("Missing activation key."))
         try:
-            from django_registration.backends.activation.forms import ActivationForm
             form = ActivationForm(data={"activation_key": activation_key})
-            if form.is_valid():
+            if not form.is_valid():
+                # Expired or tampered signature.
+                return render(
+                    request, "django_registration/activation_failed.html", {"form": form}
+                )
+            try:
                 activated_user = self.activate(form)
-                return redirect("django_registration_activation_complete")
-            else:
-                return render(request, "django_registration/activation_failed.html", {"form": form})
+            except ActivationError as error:
+                return self._activation_error_response(request, form, error)
+            # Sign in only on the genuine inactive -> active transition. That
+            # makes the key single-use as a credential: replaying it lands in
+            # the already_activated branch below, which does NOT sign anyone in.
+            return self._signed_in_redirect(request, activated_user)
         except Exception:
             return render(request, "django_registration/activation_failed.html", {})
 
+    def _activation_error_response(self, request, form, error):
+        """Handle ActivationError from activate().
+
+        `already_activated` with a still-valid key is not a real failure: mail
+        scanners routinely pre-fetch links, so activation may already have
+        happened before the human clicked. Route them onward rather than
+        dead-ending on the failure page.
+
+        We deliberately do NOT sign them in here. Auto-login on a replayable
+        key would turn the activation link into a bearer token good for the
+        whole ACCOUNT_ACTIVATION_DAYS window: anyone who later obtained the
+        email (forward, shared inbox, history sync) could sign in as the user.
+        Activation itself is safe to auto-login because it can only ever
+        succeed once. See design.md Risks.
+        """
+        if getattr(error, "code", None) == "already_activated":
+            if request.user.is_authenticated:
+                return redirect(conf_settings.LOGIN_REDIRECT_URL)
+            return redirect(f"{conf_settings.LOGIN_URL}?activated=1")
+        return render(
+            request,
+            "django_registration/activation_failed.html",
+            {"form": form, "activation_error": {
+                "message": getattr(error, "message", ""),
+                "code": getattr(error, "code", ""),
+            }},
+        )
+
+    def _signed_in_redirect(self, request, user):
+        """Log the freshly activated `user` in and redirect to the editor."""
+        from django.contrib.auth import login as auth_login
+
+        if user is None or not user.is_active:
+            return render(request, "django_registration/activation_failed.html", {})
+        # Explicit backend: login() normally reads user.backend, set by
+        # authenticate() — which never runs on this path.
+        auth_login(request, user, backend=self.AUTH_BACKEND)
+        return redirect(conf_settings.LOGIN_REDIRECT_URL)
+
     def activation_failure(self, error):
         return render(self.request, "django_registration/activation_failed.html", {})
+
+
+class ResendActivationView(AsyncEmailRegistrationView):
+    """Re-send an activation email for an account that never activated.
+
+    Subclasses the registration view purely to reuse its activation-key
+    generation and threaded HTML mail sending — it never registers anyone.
+
+    Every POST ends at the same neutral confirmation page, whatever happened:
+    email sent, address unknown, account already active, honeypot filled, or
+    rate limit hit. That uniformity is the anti-enumeration property, so keep
+    it if you touch this. Mail goes out only for an existing INACTIVE account,
+    at most RESEND_ACTIVATION_RATE_LIMIT_DAY times per address per day.
+
+    See openspec/changes/activation-funnel-autologin/design.md (D3).
+    """
+
+    form_class = ResendActivationForm
+    template_name = "django_registration/resend_activation_form.html"
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, {"form": ResendActivationForm()})
+
+    def post(self, request, *args, **kwargs):
+        from django.contrib.auth import get_user_model
+
+        # 1. Honeypot — read raw, before validation (same rationale as
+        # AbuseProtectedRegistrationView.post).
+        if request.POST.get(HONEYPOT_FIELD_NAME, "").strip():
+            log_abuse_event("honeypot", request, "resend_filled")
+            return self._neutral_response(request)
+
+        # 2. Rate limits. Per-IP hourly caps a single attacker; per-email daily
+        # caps how much mail any one inbox can be made to receive even from
+        # rotating IPs. Fail-open on cache errors, as with registration.
+        limits = (
+            ("resend_activation_hour",
+             f"{conf_settings.RESEND_ACTIVATION_RATE_LIMIT_HOUR}/h",
+             "survey.abuse.ratelimit_key", "resend_hour"),
+            ("resend_activation_day",
+             f"{conf_settings.RESEND_ACTIVATION_RATE_LIMIT_DAY}/d",
+             "survey.abuse.ratelimit_email_key", "resend_day"),
+        )
+        for group, rate, key, detail in limits:
+            try:
+                limited = is_ratelimited(
+                    request=request, group=group, fn=None,
+                    key=key, rate=rate, method="POST", increment=True,
+                )
+            except Exception:
+                limited = False
+            if limited:
+                log_abuse_event("ratelimit", request, detail)
+                # Neutral, not 429: a 429 here would confirm to an attacker
+                # that they found a real throttle worth routing around, and
+                # would differ from the response an ordinary user gets.
+                return self._neutral_response(request)
+
+        form = ResendActivationForm(data=request.POST)
+        if not form.is_valid():
+            return self._neutral_response(request)
+
+        email = form.cleaned_data["email"]
+        User = get_user_model()
+        user = User.objects.filter(email__iexact=email, is_active=False).first()
+        if user is not None:
+            # Keys are stateless signed values, so "re-issuing" is just signing
+            # the username again — no DB write, and any older key for the same
+            # account stays valid until its own expiry.
+            self.send_activation_email(user)
+        return self._neutral_response(request)
+
+    def _neutral_response(self, request):
+        return redirect("django_registration_resend_activation_done")
 
 
 def resolve_survey(survey_slug):
