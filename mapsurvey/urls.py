@@ -17,7 +17,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 
-from survey.views import AbuseProtectedRegistrationView, DirectActivationView
+from django.views.generic import TemplateView
+
+from survey.views import (
+    AbuseProtectedRegistrationView,
+    DirectActivationView,
+    ResendActivationView,
+)
 
 
 urlpatterns = [
@@ -25,6 +31,20 @@ urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
     path('admin/', admin.site.urls),
     path('accounts/register/', AbuseProtectedRegistrationView.as_view(), name='django_registration_register'),
+    # Resend routes must precede the activation include below, which owns the
+    # rest of /accounts/activate/.
+    path(
+        'accounts/activate/resend/',
+        ResendActivationView.as_view(),
+        name='django_registration_resend_activation',
+    ),
+    path(
+        'accounts/activate/resend/done/',
+        TemplateView.as_view(
+            template_name='django_registration/resend_activation_done.html'
+        ),
+        name='django_registration_resend_activation_done',
+    ),
     path('accounts/activate/', DirectActivationView.as_view(), name='django_registration_activate'),
     path('accounts/', include('django_registration.backends.activation.urls')),
     path('accounts/', include('django.contrib.auth.urls')),

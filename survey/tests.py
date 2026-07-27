@@ -14664,3 +14664,437 @@ class StoriesIndexViewTest(TestCase):
         """
         resp = Client().get("/for-planners/")
         self.assertContains(resp, 'href="/stories/"')
+
+
+# ---------------------------------------------------------------------------
+# activation-funnel-autologin
+# ---------------------------------------------------------------------------
+
+from django.conf import settings
+from django.core import mail
+from django.test import override_settings
+
+
+def _activation_key(username):
+    """Sign an activation key exactly as django-registration does."""
+    from django.core import signing
+    from django_registration.backends.activation import REGISTRATION_SALT
+
+    return signing.dumps(obj=username, salt=REGISTRATION_SALT)
+
+
+# Rate limiting is counted in the cache. The configured backend is Redis with
+# IGNORE_EXCEPTIONS, so when Redis is absent every counter silently no-ops and
+# limits never fire. Pin an in-process cache for limit tests instead.
+_LOCMEM_CACHE = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "activation-funnel-test",
+    }
+}
+
+
+class _InlineThread:
+    """Stand-in for threading.Thread that runs its target synchronously.
+
+    Activation mail is dispatched from a background thread so the response
+    time is the same whether or not mail was sent — that uniformity is what
+    stops the resend endpoint leaking account existence through timing. The
+    side effect is that mail.outbox assertions race the thread. Running the
+    target inline makes them deterministic without altering the code path
+    under test.
+    """
+
+    def __init__(self, target=None, kwargs=None, daemon=None, **_ignored):
+        self._target = target
+        self._kwargs = kwargs or {}
+
+    def start(self):
+        self._target(**self._kwargs)
+
+
+class ActivationAutoLoginTest(TestCase):
+    """GET /accounts/activate/ — activation, auto-login, and replay handling."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        User.objects.all().delete()
+        cache.clear()
+        self.user = User.objects.create_user(
+            username="newbie", email="newbie@example.com", password="x"
+        )
+        self.user.is_active = False
+        self.user.save(update_fields=["is_active"])
+
+    def _activate(self, key):
+        return self.client.get("/accounts/activate/", {"activation_key": key})
+
+    def test_valid_key_activates_and_signs_user_in(self):
+        """
+        GIVEN an inactive account and a valid, unexpired activation key
+        WHEN the activation URL is opened
+        THEN the account becomes active, the session is authenticated as that
+             user, and the response redirects to LOGIN_REDIRECT_URL
+        """
+        resp = self._activate(_activation_key("newbie"))
+
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_active)
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp["Location"], settings.LOGIN_REDIRECT_URL)
+        self.assertEqual(int(self.client.session["_auth_user_id"]), self.user.pk)
+
+    def test_activation_records_last_login(self):
+        """
+        GIVEN an inactive account with last_login unset
+        WHEN it is activated through the activation URL
+        THEN last_login is populated, as it would be by any interactive login
+        """
+        self.assertIsNone(self.user.last_login)
+
+        self._activate(_activation_key("newbie"))
+
+        self.user.refresh_from_db()
+        self.assertIsNotNone(self.user.last_login)
+
+    def test_expired_key_shows_failure_page_with_resend_link(self):
+        """
+        GIVEN an activation key older than ACCOUNT_ACTIVATION_DAYS
+        WHEN the activation URL is opened
+        THEN the failure page renders and offers the resend flow instead of
+             suggesting re-registration
+        """
+        key = _activation_key("newbie")
+        with override_settings(ACCOUNT_ACTIVATION_DAYS=0):
+            resp = self._activate(key)
+
+        self.assertEqual(resp.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_active)
+        self.assertContains(resp, "/accounts/activate/resend/")
+        self.assertNotContains(resp, "Try registering again")
+
+    def test_missing_key_shows_failure_page(self):
+        """
+        GIVEN no activation_key querystring parameter
+        WHEN the activation URL is opened
+        THEN the failure page renders rather than raising
+        """
+        resp = self.client.get("/accounts/activate/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Activation Failed")
+
+    def test_replayed_key_on_active_account_redirects_to_login(self):
+        """
+        GIVEN a valid key whose account is already active (mail scanner
+              pre-fetched the link before the human clicked it)
+        WHEN the activation URL is opened again by an anonymous visitor
+        THEN they are redirected to the login page, not the failure page
+        """
+        key = _activation_key("newbie")
+        self._activate(key)          # scanner consumes it
+        self.client.logout()
+
+        resp = self._activate(key)   # human clicks the same link
+
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(settings.LOGIN_URL, resp["Location"])
+
+    def test_replayed_key_does_not_sign_anyone_in(self):
+        """
+        GIVEN a valid key for an already-active account
+        WHEN an anonymous visitor opens the activation URL
+        THEN no session is created — the key must not work as a reusable
+             login credential for the rest of its validity window
+        """
+        key = _activation_key("newbie")
+        self._activate(key)
+        self.client.logout()
+
+        self._activate(key)
+
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_replayed_key_while_signed_in_goes_to_editor(self):
+        """
+        GIVEN an already-active account whose owner is signed in
+        WHEN they re-open the activation link (e.g. from history)
+        THEN they land on the editor rather than a failure page
+        """
+        key = _activation_key("newbie")
+        self._activate(key)          # activates and signs in
+
+        resp = self._activate(key)
+
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp["Location"], settings.LOGIN_REDIRECT_URL)
+
+    def test_key_for_unknown_username_shows_failure_page(self):
+        """
+        GIVEN a correctly signed key naming an account that does not exist
+        WHEN the activation URL is opened
+        THEN the failure page renders and nobody is signed in
+        """
+        resp = self._activate(_activation_key("ghost"))
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_activation_window_default_is_seven_days(self):
+        """
+        GIVEN no ACCOUNT_ACTIVATION_DAYS override in the environment
+        WHEN settings are loaded
+        THEN the activation window is 7 days, not the previous 1
+        """
+        self.assertEqual(settings.ACCOUNT_ACTIVATION_DAYS, 7)
+
+
+class ResendActivationTest(TestCase):
+    """POST /accounts/activate/resend/ — re-issue an activation email."""
+
+    URL = "/accounts/activate/resend/"
+
+    def setUp(self):
+        from django.core.cache import cache
+        from .models import AbuseEvent
+        User.objects.all().delete()
+        AbuseEvent.objects.all().delete()
+        cache.clear()
+        mail.outbox = []
+        self.inactive = User.objects.create_user(
+            username="dormant", email="dormant@example.com", password="x"
+        )
+        self.inactive.is_active = False
+        self.inactive.save(update_fields=["is_active"])
+        User.objects.create_user(
+            username="live", email="live@example.com", password="x"
+        )
+
+    def _post(self, email, **overrides):
+        data = {"email": email, "website": ""}
+        data.update(overrides)
+        with mock.patch("threading.Thread", _InlineThread):
+            return self.client.post(self.URL, data)
+
+    def _assert_neutral(self, resp):
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp["Location"], "/accounts/activate/resend/done/")
+
+    def test_form_renders(self):
+        """
+        GIVEN an anonymous visitor
+        WHEN they open the resend form
+        THEN it renders with an email field
+        """
+        resp = self.client.get(self.URL)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'name="email"')
+
+    def test_inactive_account_receives_working_activation_link(self):
+        """
+        GIVEN an account that never activated
+        WHEN its email is submitted to the resend form
+        THEN one activation email is sent and its key activates the account
+        """
+        resp = self._post("dormant@example.com")
+
+        self._assert_neutral(resp)
+        self.assertEqual(len(mail.outbox), 1)
+
+        key = _activation_key("dormant")
+        self.client.get("/accounts/activate/", {"activation_key": key})
+        self.inactive.refresh_from_db()
+        self.assertTrue(self.inactive.is_active)
+
+    def test_email_match_is_case_insensitive(self):
+        """
+        GIVEN a registered address stored in lowercase
+        WHEN the resend form is submitted with different casing
+        THEN the activation email is still sent
+        """
+        self._post("DORMANT@Example.COM")
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_unknown_email_sends_nothing_but_looks_identical(self):
+        """
+        GIVEN an email address matching no account
+        WHEN it is submitted to the resend form
+        THEN no mail is sent and the response is the same neutral redirect
+        """
+        resp = self._post("nobody@example.com")
+
+        self._assert_neutral(resp)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_already_active_account_sends_nothing_but_looks_identical(self):
+        """
+        GIVEN an already-activated account
+        WHEN its email is submitted to the resend form
+        THEN no activation mail is sent and the response is the same neutral
+             redirect, so the flow cannot be used to probe account state
+        """
+        resp = self._post("live@example.com")
+
+        self._assert_neutral(resp)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_malformed_email_looks_identical(self):
+        """
+        GIVEN an unparseable email address
+        WHEN it is submitted to the resend form
+        THEN the response is the same neutral redirect, not a form-error page
+        """
+        resp = self._post("not-an-email")
+
+        self._assert_neutral(resp)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_filled_honeypot_sends_nothing_and_logs_event(self):
+        """
+        GIVEN a bot that fills the hidden honeypot field
+        WHEN it submits a real inactive address
+        THEN no mail is sent and one honeypot AbuseEvent is recorded
+        """
+        from .models import AbuseEvent
+
+        resp = self._post("dormant@example.com", website="bot-trap")
+
+        self._assert_neutral(resp)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(
+            AbuseEvent.objects.filter(defense="honeypot", detail="resend_filled").count(), 1
+        )
+
+    def test_per_ip_rate_limit_stops_mail_and_logs_event(self):
+        """
+        GIVEN the per-IP hourly resend limit set to 1
+        WHEN a second request arrives from the same IP
+        THEN no further mail is sent, the response stays neutral, and a
+             ratelimit AbuseEvent is recorded
+        """
+        from .models import AbuseEvent
+
+        with override_settings(RESEND_ACTIVATION_RATE_LIMIT_HOUR=1,
+                               CACHES=_LOCMEM_CACHE):
+            self._post("dormant@example.com")
+            self.assertEqual(len(mail.outbox), 1)
+            resp = self._post("dormant@example.com")
+
+        self._assert_neutral(resp)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            AbuseEvent.objects.filter(defense="ratelimit", detail="resend_hour").count(), 1
+        )
+
+    def test_per_email_rate_limit_caps_one_inbox(self):
+        """
+        GIVEN the per-email daily limit set to 1
+        WHEN a second request targets the same address from a different IP
+        THEN no second mail is sent — an attacker rotating IPs still cannot
+             bomb one inbox
+        """
+        from .models import AbuseEvent
+
+        with override_settings(RESEND_ACTIVATION_RATE_LIMIT_DAY=1,
+                               CACHES=_LOCMEM_CACHE), \
+                mock.patch("threading.Thread", _InlineThread):
+            self.client.post(
+                self.URL, {"email": "dormant@example.com", "website": ""},
+                REMOTE_ADDR="10.0.0.1",
+            )
+            self.assertEqual(len(mail.outbox), 1)
+            self.client.post(
+                self.URL, {"email": "dormant@example.com", "website": ""},
+                REMOTE_ADDR="10.0.0.2",
+            )
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            AbuseEvent.objects.filter(defense="ratelimit", detail="resend_day").count(), 1
+        )
+
+    def test_rate_limit_fails_open_when_cache_is_down(self):
+        """
+        GIVEN a cache backend that raises on every call
+        WHEN the resend form is submitted
+        THEN the request is still processed and the mail goes out (fail-open,
+             matching the registration endpoint's accepted trade-off)
+        """
+        with mock.patch(
+            "survey.views.is_ratelimited", side_effect=Exception("redis down")
+        ):
+            resp = self._post("dormant@example.com")
+
+        self._assert_neutral(resp)
+        self.assertEqual(len(mail.outbox), 1)
+
+
+class FunnelActivationStagesTest(TestCase):
+    """Activated / logged-in stages on the creator funnel."""
+
+    def setUp(self):
+        User.objects.all().delete()
+        now = timezone.now()
+        self.month = now.replace(year=2026, month=3, day=10, hour=12,
+                                 minute=0, second=0, microsecond=0)
+        self.key = self.month.strftime("%Y-%m")
+
+        # Never activated.
+        u = _user_at("never_activated", self.month)
+        u.is_active = False
+        u.save(update_fields=["is_active"])
+
+        # Activated but never logged in — the leak this change targets.
+        _user_at("activated_only", self.month)
+
+        # Activated and logged in.
+        signed_in = _user_at("signed_in", self.month)
+        signed_in.last_login = self.month
+        signed_in.save(update_fields=["last_login"])
+
+    def _row(self):
+        from .funnel import CreatorFunnelService
+        rows = CreatorFunnelService().cohort_funnel()
+        return next(r for r in rows if r["cohort"] == self.key)
+
+    def test_activated_counts_only_active_accounts(self):
+        """
+        GIVEN one inactive and two active registrations in a cohort
+        WHEN the cohort funnel is computed
+        THEN the activated stage counts the two active accounts
+        """
+        row = self._row()
+        self.assertEqual(row["regs"], 3)
+        self.assertEqual(row["activated"], 2)
+
+    def test_logged_in_counts_only_users_who_signed_in(self):
+        """
+        GIVEN an active account that never logged in and one that did
+        WHEN the cohort funnel is computed
+        THEN only the latter counts in the logged-in stage
+        """
+        self.assertEqual(self._row()["logged_in"], 1)
+
+    def test_alltime_totals_include_the_new_stages(self):
+        """
+        GIVEN cohorts carrying activated and logged-in counts
+        WHEN all-time totals are computed
+        THEN the totals row sums both new stages
+        """
+        from .funnel import CreatorFunnelService
+        totals = CreatorFunnelService().alltime_totals()
+        self.assertEqual(totals["activated"], 2)
+        self.assertEqual(totals["logged_in"], 1)
+
+    def test_dashboard_renders_the_new_columns(self):
+        """
+        GIVEN a staff user
+        WHEN they open the funnel dashboard
+        THEN the cohort table shows Activated and Logged in columns
+        """
+        User.objects.create_superuser("boss2", "boss2@example.com", "x")
+        c = Client()
+        c.login(username="boss2", password="x")
+        resp = c.get(reverse("admin:survey_funnelreport_changelist"))
+        self.assertContains(resp, "Activated")
+        self.assertContains(resp, "Logged")

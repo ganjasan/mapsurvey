@@ -9,9 +9,12 @@
 <div class="auth-card auth-message">
     <span class="auth-icon" style="color: #dc3545;">&#10007;</span>
     <h2>{% trans "Activation Failed" %}</h2>
-    <p>{{ activation_error.message }}</p>
+    {% if activation_error.message %}<p>{{ activation_error.message }}</p>{% endif %}
+    <p>{% trans "This activation link may have expired or been used already. You can request a new one." %}</p>
+    {# Deliberately NOT "try registering again": the inactive account still
+       holds this username and email, so re-registering can only fail. #}
     <div class="auth-links" style="margin-top:1.25rem;">
-        <a href="{% url 'django_registration_register' %}">{% trans "Try registering again" %}</a>
+        <a href="{% url 'django_registration_resend_activation' %}">{% trans "Send me a new activation link" %}</a>
     </div>
 </div>
 {% endblock %}
