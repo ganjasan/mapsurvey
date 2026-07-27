@@ -199,17 +199,27 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
 class DirectActivationView(
     __import__('django_registration.backends.activation.views', fromlist=['ActivationView']).ActivationView
 ):
-    """Activate account directly on GET without showing a form.
+    """Activation endpoint: GET shows a confirmation page, POST activates.
 
-    On success the user is logged in and sent straight to the editor. Making
-    them re-enter credentials they typed two minutes earlier was the measured
-    drop-off point: 24 accounts were active but had never logged in. See
-    openspec/changes/activation-funnel-autologin/design.md (D1).
+    GET must stay side-effect-free. Mail-security scanners (Microsoft
+    Defender Safe Links — observed in prod on 2026-07-27 with a full Chrome
+    UA from Azure IPs) follow emailed links with GET minutes before the
+    human clicks. When activation happened on GET, the scanner consumed the
+    one inactive->active transition and the human landed on a failure page;
+    two users re-registered duplicate accounts that same day. Scanners do
+    not submit forms, so the POST carries the activation.
+
+    On successful POST the user is logged in and sent straight to the
+    editor. Making them re-enter credentials they typed minutes earlier was
+    the measured drop-off point: 24 accounts were active but had never
+    logged in. See openspec/changes/activation-confirm-post/design.md.
     """
 
     AUTH_BACKEND = "survey.backends.EmailOrUsernameBackend"
 
     def get(self, request, *args, **kwargs):
+        """Validate the key and show the confirm button. Never writes."""
+        from django.contrib.auth import get_user_model
         from django_registration.backends.activation.forms import ActivationForm
         from django_registration.exceptions import ActivationError
 
@@ -219,7 +229,40 @@ class DirectActivationView(
         try:
             form = ActivationForm(data={"activation_key": activation_key})
             if not form.is_valid():
-                # Expired or tampered signature.
+                # Expired or tampered signature — no point rendering a
+                # confirm button for a dead key.
+                return render(
+                    request, "django_registration/activation_failed.html", {"form": form}
+                )
+            # Valid key. cleaned_data holds the decoded username (upstream
+            # ActivationForm swaps it in after signature verification).
+            User = get_user_model()
+            try:
+                user = User.objects.get(
+                    **{User.USERNAME_FIELD: form.cleaned_data["activation_key"]}
+                )
+            except User.DoesNotExist:
+                return render(request, "django_registration/activation_failed.html", {})
+            if user.is_active:
+                return self._already_active_redirect(request)
+            return render(
+                request,
+                "django_registration/activation_confirm.html",
+                {"activation_key": activation_key},
+            )
+        except Exception:
+            return render(request, "django_registration/activation_failed.html", {})
+
+    def post(self, request, *args, **kwargs):
+        """Perform the activation the confirm form asked for, then sign in."""
+        from django_registration.backends.activation.forms import ActivationForm
+        from django_registration.exceptions import ActivationError
+
+        try:
+            form = ActivationForm(data={
+                "activation_key": request.POST.get("activation_key", "")
+            })
+            if not form.is_valid():
                 return render(
                     request, "django_registration/activation_failed.html", {"form": form}
                 )
@@ -229,10 +272,16 @@ class DirectActivationView(
                 return self._activation_error_response(request, form, error)
             # Sign in only on the genuine inactive -> active transition. That
             # makes the key single-use as a credential: replaying it lands in
-            # the already_activated branch below, which does NOT sign anyone in.
+            # the already_activated branch, which does NOT sign anyone in.
             return self._signed_in_redirect(request, activated_user)
         except Exception:
             return render(request, "django_registration/activation_failed.html", {})
+
+    def _already_active_redirect(self, request):
+        """Route a benign repeat (scanner-style pre-visit, re-opened link) onward."""
+        if request.user.is_authenticated:
+            return redirect(conf_settings.LOGIN_REDIRECT_URL)
+        return redirect(f"{conf_settings.LOGIN_URL}?activated=1")
 
     def _activation_error_response(self, request, form, error):
         """Handle ActivationError from activate().
@@ -250,9 +299,7 @@ class DirectActivationView(
         succeed once. See design.md Risks.
         """
         if getattr(error, "code", None) == "already_activated":
-            if request.user.is_authenticated:
-                return redirect(conf_settings.LOGIN_REDIRECT_URL)
-            return redirect(f"{conf_settings.LOGIN_URL}?activated=1")
+            return self._already_active_redirect(request)
         return render(
             request,
             "django_registration/activation_failed.html",
