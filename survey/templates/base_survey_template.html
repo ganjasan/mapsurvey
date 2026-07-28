@@ -341,6 +341,17 @@
             + '</div></form>';
     }
 
+    // Sub-question forms can hold many fields, so Leaflet's 300px default is far
+    // too narrow. Size to the viewport (not the document): a comfortable column on
+    // desktop, nearly full width on a phone.
+    function _subquestionPopupOptions() {
+        return {
+            maxWidth: Math.min(520, Math.round($(window).width() * 0.9)),
+            minWidth: Math.min(300, Math.round($(window).width() * 0.9)),
+            maxHeight: Math.round($(window).height() * 0.7)
+        };
+    }
+
     function _getDrawButtonAttrs(questionCode) {
         var btn = $('button.drawbutton[name="' + questionCode + '"]');
         return {
@@ -380,9 +391,7 @@
 
         var sqHtml = window._subquestionsForms[currentQ] || '';
 
-        layer.bindPopup(_buildPopupHtml(formId, sqHtml), {
-            maxHeight: $(document).height()*0.8,
-        });
+        layer.bindPopup(_buildPopupHtml(formId, sqHtml), _subquestionPopupOptions());
 
         layer.on("popupopen", onPopupOpen);
         layer.on("popupclose", onPopupClose);
@@ -510,9 +519,7 @@
                     layer._formId = formId;
                     var sqHtml = window._subquestionsForms[questionCode] || '';
 
-                    layer.bindPopup(_buildPopupHtml(formId, sqHtml), {
-                        maxHeight: $(document).height()*0.8,
-                    });
+                    layer.bindPopup(_buildPopupHtml(formId, sqHtml), _subquestionPopupOptions());
 
                     layer.on("popupopen", onPopupOpen);
                     layer.on("popupclose", onPopupClose);
