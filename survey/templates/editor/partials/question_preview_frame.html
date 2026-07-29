@@ -15,8 +15,17 @@
 <body>
     <div class="questions">
         {% for field in form.visible_fields %}
-            {% if field|is_card_question %}
-                <div class="question-card{% if field|question_type == 'rating' %} question-card--rating{% endif %}">
+            {% if field|question_type == 'rating' %}
+                <div class="question-card question-card--rating">
+                    {% if field.label %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
+                    {% if field|rating_display_style == 'list_pips' %}
+                        {% include "partials/rating_list_pips.html" %}
+                    {% else %}
+                        {% include "partials/rating_scale_strip.html" %}
+                    {% endif %}
+                </div>
+            {% elif field|is_card_question %}
+                <div class="question-card">
                     {% if field.label %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
                     {{ field }}
                 </div>

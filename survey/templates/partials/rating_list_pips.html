@@ -1,0 +1,12 @@
+{% load question_utils %}
+{% with total=field.field.choices|length %}
+<div class="rating-list-pips">
+    {% for radio in field %}
+    <label class="rating-list-pips__row">
+        {{ radio.tag }}
+        <span class="rating-list-pips__label">{{ radio.choice_label }}</span>
+        <span class="rating-list-pips__pips">{% for i in total|get_range %}<i{% if i < forloop.parentloop.counter %} class="on"{% endif %}></i>{% endfor %}</span>
+    </label>
+    {% endfor %}
+</div>
+{% endwith %}

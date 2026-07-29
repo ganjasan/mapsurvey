@@ -313,60 +313,14 @@ ul {
 }
 
 /* ============================================
-   Rating (inline horizontal radio)
+   Rating question — two display styles
+   (scale_strip / list_pips, per Question.display_style)
    ============================================ */
-.question-card--rating > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.question-card--rating > div > div {
-  /* Content-driven basis: options never shrink below their label, so worded
-     scales ("very unsure" ... "very confident") wrap instead of being clipped.
-     flex-grow still shares any leftover space evenly. */
-  flex: 1 1 auto;
-  min-width: min-content;
-}
-
-.question-card--rating label:has(input[type="radio"]) {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-  padding: 8px 8px;
-  margin: 0;
-  width: 100%;
-  overflow-wrap: anywhere;
-  hyphens: auto;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--input-border);
-  background: var(--input-bg);
-  text-align: center;
-  font-size: 0.9em;
-  font-weight: 500;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all var(--transition);
-}
-
-.question-card--rating label:has(input[type="radio"]):hover {
-  border-color: var(--accent);
-  background: var(--accent-light);
-}
-
-.question-card--rating label:has(input[type="radio"]:checked) {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
-}
-
-.question-card--rating label:has(input[type="radio"]:checked):hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+.question-card--rating label > input[type="radio"] {
+  opacity: 0;
+  position: absolute;
+  width: 0;
+  height: 0;
 }
 
 .question-card--rating label:has(input[type="radio"])::before,
@@ -374,11 +328,149 @@ ul {
   display: none;
 }
 
-.question-card--rating label > input[type="radio"] {
+/* ---- scale_strip: one row of numbered cells ---- */
+.rating-scale-strip__cells {
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.question-card--rating .rating-scale-strip__cell:has(input[type="radio"]) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  margin: 0;
+  padding: 0;
+  width: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  font-size: 0.95em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.question-card--rating .rating-scale-strip__cell:has(input[type="radio"]):hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.question-card--rating .rating-scale-strip__cell:has(input[type="radio"]:checked) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+}
+
+.question-card--rating .rating-scale-strip__cell:has(input[type="radio"]:checked):hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.rating-scale-strip__anchors {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 0.8em;
+  color: var(--text-tertiary);
+}
+
+.rating-scale-strip__chip {
+  min-height: 28px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rating-scale-strip__chip span {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-radius: 999px;
+  padding: 4px 14px;
   opacity: 0;
-  position: absolute;
-  width: 0;
-  height: 0;
+  transform: translateY(2px);
+  transition: all var(--transition);
+}
+
+.rating-scale-strip__chip span.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- list_pips: labeled rows with intensity dots ---- */
+.rating-list-pips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.question-card--rating .rating-list-pips__row:has(input[type="radio"]) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 14px;
+  width: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  font-size: 0.92em;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.question-card--rating .rating-list-pips__row:has(input[type="radio"]):hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.rating-list-pips__label {
+  overflow-wrap: anywhere;
+}
+
+.rating-list-pips__pips {
+  display: flex;
+  gap: 4px;
+  flex: none;
+}
+
+.rating-list-pips__pips i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #d8dbe1;
+  transition: background var(--transition);
+}
+
+.rating-list-pips__pips i.on {
+  background: #b4b9c4;
+}
+
+.question-card--rating .rating-list-pips__row:has(input[type="radio"]:checked) {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.question-card--rating .rating-list-pips__row:has(input[type="radio"]:checked) .rating-list-pips__pips i {
+  background: #c7cdf7;
+}
+
+.question-card--rating .rating-list-pips__row:has(input[type="radio"]:checked) .rating-list-pips__pips i.on {
+  background: var(--accent);
 }
 
 /* ============================================

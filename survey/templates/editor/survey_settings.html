@@ -35,6 +35,7 @@
         <form method="post" action="{% url 'editor_survey_settings' survey.uuid %}" enctype="multipart/form-data">
             {% csrf_token %}
             {% for field in form %}
+            {% if field.name != 'default_rating_display_style' %}
             <div class="form-group">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {% if field.name == 'available_languages' %}
@@ -78,7 +79,24 @@
                 {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
                 {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
             </div>
+            {% endif %}
             {% endfor %}
+
+            <hr>
+            <h6><i class="fas fa-paint-brush mr-1"></i> Style</h6>
+            <div class="form-group">
+                <label>{{ form.default_rating_display_style.label }}</label>
+                <div>
+                    {% for radio in form.default_rating_display_style %}
+                    <div class="form-check form-check-inline">
+                        {{ radio.tag }}
+                        <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <small class="form-text text-muted">Default look for rating questions. Individual questions can override this in the question editor.</small>
+            </div>
+
             <button type="submit" class="btn btn-primary btn-sm">Save Settings</button>
         </form>
     </div>

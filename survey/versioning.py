@@ -52,6 +52,7 @@ def clone_survey_for_draft(canonical):
         start_map_zoom=canonical.start_map_zoom,
         use_geolocation=canonical.use_geolocation,
         show_branding=canonical.show_branding,
+        style_settings=canonical.style_settings,
         status="draft",
         published_version=canonical,
     )
@@ -241,6 +242,7 @@ def publish_draft(draft, force=False):
             visibility=canonical.visibility,
             thanks_html=canonical.thanks_html,
             show_branding=canonical.show_branding,
+            style_settings=canonical.style_settings,
             status='closed',
             is_canonical=False,
             canonical_survey=canonical,
