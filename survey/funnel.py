@@ -440,6 +440,61 @@ class CreatorFunnelService:
         return {"blocked_7d": qs.count(),
                 "top_ips": [{"ip": r["ip"], "n": r["n"]} for r in top]}
 
+    def cohort_breakdown(self):
+        """The funnel sliced by every cohort dimension.
+
+        Returns one block per dimension, each holding one row per cohort plus an
+        explicit "unclassified" row, so the rows always partition the real
+        registrations. Costs one extra query (the assignment map) on top of the
+        stage-membership sets the funnel already computes -- see the user-cohorts
+        change (D5).
+        """
+        from .cohorts import dimensions_with_cohorts, user_cohort_map
+
+        uids = set(self._real_users().values_list("id", flat=True))
+        created = self._created_uids() & uids
+        published = self._published_uids() & uids
+        responses = {u: n for u, n in self._response_counts().items() if u in uids}
+        assignments = user_cohort_map()
+
+        def row(label, slug, color, members):
+            n = len(members)
+            got = [u for u in members if responses.get(u)]
+            return {
+                "label": label, "slug": slug, "color": color,
+                "users": n,
+                "users_pct": round(100 * n / len(uids)) if uids else 0,
+                "created": len(members & created),
+                "published": len(members & published),
+                "collecting": len(got),
+                "responses": sum(responses.get(u, 0) for u in got),
+                "publish_pct": round(100 * len(members & published) / n) if n else 0,
+                "collect_pct": round(100 * len(got) / n) if n else 0,
+            }
+
+        blocks = []
+        for dimension in dimensions_with_cohorts():
+            assigned = set()
+            rows = []
+            for cohort in dimension.cohorts.all():
+                members = {
+                    uid for uid in uids
+                    if assignments.get(uid, {}).get(dimension.slug) == cohort.slug
+                }
+                assigned |= members
+                rows.append(row(cohort.name, cohort.slug, cohort.color, members))
+            rows.append(row("Unclassified", "", "", uids - assigned))
+            blocks.append({
+                "slug": dimension.slug,
+                "name": dimension.name,
+                "description": dimension.description,
+                "total": len(uids),
+                "classified": len(assigned),
+                "classified_pct": round(100 * len(assigned) / len(uids)) if uids else 0,
+                "rows": rows,
+            })
+        return blocks
+
     def time_to_value(self):
         """Median days from registration to first survey / publish / first response."""
         users = dict(self._real_users().values_list("id", "date_joined"))
@@ -580,6 +635,7 @@ def dashboard_context(weeks=None):
         "weeks": weeks,
         "goals": s.goals(),
         "sources": s.signups_by_source(),
+        "cohort_blocks": s.cohort_breakdown(),
         "clusters": s.cluster_radar(),
         "abuse": s.abuse_summary(),
         "cohorts": s.cohort_funnel(),

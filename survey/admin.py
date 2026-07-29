@@ -1,10 +1,16 @@
+from django import forms
 from django.contrib.gis import admin as gisadmin
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.contrib.admin import helpers as admin_helpers
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.shortcuts import render
 from .models import (
     Organization, SurveyHeader, SurveySection, Question, Answer,
     SurveySession,
     SurveySectionTranslation, QuestionTranslation,
     Story, FunnelReport, SignupAttribution, AuditLog,
+    Cohort, CohortDimension, UserCohort,
 )
 from .funnel import dashboard_context
 from leaflet.admin import LeafletGeoAdmin
@@ -90,6 +96,116 @@ class AuditLogAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+class CohortInline(admin.TabularInline):
+    model = Cohort
+    extra = 1
+    fields = ('name', 'slug', 'order', 'color', 'description')
+    prepopulated_fields = {'slug': ('name',)}
+
+
+@admin.register(CohortDimension)
+class CohortDimensionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug', 'order', 'cohort_count')
+    prepopulated_fields = {'slug': ('name',)}
+    inlines = [CohortInline]
+
+    @admin.display(description='Cohorts')
+    def cohort_count(self, obj):
+        return obj.cohorts.count()
+
+
+@admin.register(Cohort)
+class CohortAdmin(admin.ModelAdmin):
+    list_display = ('name', 'dimension', 'slug', 'order', 'assigned_users')
+    list_filter = ('dimension',)
+    prepopulated_fields = {'slug': ('name',)}
+
+    @admin.display(description='Users')
+    def assigned_users(self, obj):
+        return obj.assignments.count()
+
+
+@admin.register(UserCohort)
+class UserCohortAdmin(admin.ModelAdmin):
+    list_display = ('user', 'dimension', 'cohort', 'source', 'assigned_at')
+    list_filter = ('dimension', 'cohort', 'source')
+    search_fields = ('user__username', 'user__email', 'note')
+    readonly_fields = ('dimension', 'assigned_at')
+    autocomplete_fields = ('user',)
+
+
+class AssignCohortForm(forms.Form):
+    """Cohort picker for the bulk action on the user changelist."""
+
+    cohort = forms.ModelChoiceField(
+        queryset=Cohort.objects.select_related('dimension').order_by(
+            'dimension__order', 'order', 'name',
+        ),
+        label='Assign cohort',
+        help_text='Replaces any existing assignment in the same dimension. '
+                  'Analytical label only — it grants no access.',
+    )
+    note = forms.CharField(required=False, max_length=255)
+
+
+class CohortMembershipInline(admin.TabularInline):
+    model = UserCohort
+    extra = 0
+    fk_name = 'user'
+    fields = ('cohort', 'source', 'note', 'assigned_at')
+    readonly_fields = ('assigned_at',)
+    verbose_name_plural = 'Cohorts (analytical labels only)'
+
+
+class UserAdmin(DjangoUserAdmin):
+    """Django's user admin plus cohort membership and a bulk assign action."""
+
+    inlines = [CohortMembershipInline]
+    list_display = DjangoUserAdmin.list_display + ('cohort_labels',)
+    actions = ['assign_cohort_action']
+
+    @admin.display(description='Cohorts')
+    def cohort_labels(self, obj):
+        return ', '.join(
+            a.cohort.name for a in obj.cohorts.all().select_related('cohort')
+        ) or '—'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related('cohorts__cohort')
+
+    @admin.action(description='Assign a cohort to selected users')
+    def assign_cohort_action(self, request, queryset):
+        from .cohorts import assign_cohort
+
+        if 'apply' in request.POST:
+            form = AssignCohortForm(request.POST)
+            if form.is_valid():
+                cohort = form.cleaned_data['cohort']
+                note = form.cleaned_data['note']
+                for user in queryset:
+                    assign_cohort(user, cohort, source='manual', note=note)
+                self.message_user(
+                    request,
+                    f'Assigned "{cohort}" to {queryset.count()} user(s).',
+                    messages.SUCCESS,
+                )
+                return None
+        else:
+            form = AssignCohortForm()
+
+        return render(request, 'admin/assign_cohort.html', {
+            'title': 'Assign a cohort',
+            'users': queryset,
+            'form': form,
+            'action_checkbox_name': admin_helpers.ACTION_CHECKBOX_NAME,
+        })
+
+
+User = get_user_model()
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
 
 
 @admin.register(FunnelReport)

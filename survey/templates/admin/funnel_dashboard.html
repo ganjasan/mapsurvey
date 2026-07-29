@@ -47,8 +47,8 @@
 <div class="fn">
   <div class="toolbar">
     <div class="nav">
-      <a href="#goals">① Goals</a><a href="#week">② This week</a><a href="#cohorts">③ Cohorts</a>
-      <a href="#living">④ Living users</a><a href="#actions">⑤ Actions</a>
+      <a href="#goals">① Goals</a><a href="#week">② This week</a><a href="#audience">③ Audience</a>
+      <a href="#cohorts">④ Monthly cohorts</a><a href="#living">⑤ Living users</a><a href="#actions">⑥ Actions</a>
     </div>
     <div class="seg" title="Chart period">
       <a href="?weeks=12" {% if weeks_sel == "12" %}class="on"{% endif %}>12 weeks</a>
@@ -112,8 +112,47 @@
     </div>
   </div>
 
-  {# ③ COHORTS #}
-  <h2 id="cohorts"><span class="step">3</span>Cohort funnel <span class="sub">— time-boxed columns make young &amp; old cohorts comparable</span></h2>
+  {# ③ AUDIENCE #}
+  <h2 id="audience"><span class="step">3</span>Audience mix
+    <span class="sub">— who the creators are, sliced by every cohort dimension</span></h2>
+  {% for block in cohort_blocks %}
+  <table class="funnel">
+    <thead>
+      <tr>
+        <th style="width:26%">{{ block.name }}
+          <span class="subtle">— {{ block.classified }}/{{ block.total }} labelled ({{ block.classified_pct }}%)</span>
+        </th>
+        <th>Users</th><th>Share</th><th>Created</th><th>Published</th><th>Collecting</th><th>Responses</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in block.rows %}
+      <tr{% if not r.slug %} style="opacity:.6"{% endif %}>
+        <td>
+          {% if r.color %}<span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:{{ r.color }};margin-right:7px"></span>{% endif %}
+          {{ r.label }}
+        </td>
+        <td>{{ r.users }}</td>
+        <td>{{ r.users_pct }}%</td>
+        <td>{{ r.created }}</td>
+        <td>{{ r.published }} <span class="subtle">{{ r.publish_pct }}%</span></td>
+        <td>{{ r.collecting }} <span class="subtle">{{ r.collect_pct }}%</span></td>
+        <td>{{ r.responses }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% empty %}
+  <div class="subtle">No cohort dimensions defined yet — add them in
+    <a href="{% url 'admin:survey_cohortdimension_changelist' %}">Cohort dimensions</a>.</div>
+  {% endfor %}
+  <div class="subtle">Cohorts are analytical labels only — they grant no access and reflect no billing state.
+    Rules classify institutional email domains automatically; freemail users (the majority) must be labelled by hand
+    via the bulk action on the <a href="{% url 'admin:auth_user_changelist' %}">user list</a>. “Unclassified” is
+    therefore a metric in its own right: the share of the base we cannot yet name.</div>
+
+  {# ④ MONTHLY COHORTS #}
+  <h2 id="cohorts"><span class="step">4</span>Monthly cohort funnel <span class="sub">— time-boxed columns make young &amp; old cohorts comparable</span></h2>
   <table class="funnel">
     <thead>
       <tr>
@@ -150,8 +189,8 @@
   <div class="subtle">Highlighted columns are time-boxed (published within {{ 14 }} days of signup — approx: created-and-now-published; 5th response within 30 days). This is how H2 (templates/onboarding) is judged cohort-over-cohort without the “older cohort had more time” bias.</div>
   <div class="subtle">Activated = clicked the emailed activation link. Logged in = signed in at least once afterwards. Regs→Activated measures email deliverability; Activated→Logged&nbsp;in was a pure UX leak until auto-login-on-activation shipped, so expect that gap to close from that cohort onward. Both are point-in-time, not as-of-cohort-age.</div>
 
-  {# ④ LIVING USERS #}
-  <h2 id="living"><span class="step">4</span>Living users &amp; trends
+  {# ⑤ LIVING USERS #}
+  <h2 id="living"><span class="step">5</span>Living users &amp; trends
     <span class="sub">— active = logged in / edited / collected a response in the window; returned = creator action after signup</span></h2>
   <div class="cards">
     {% with a=active %}
@@ -197,8 +236,8 @@
     </tbody>
   </table>
 
-  {# ⑤ ACTIONS #}
-  <h2 id="actions"><span class="step">5</span>Action lists <span class="sub">— the dashboard as a campaign tool, not a display</span></h2>
+  {# ⑥ ACTIONS #}
+  <h2 id="actions"><span class="step">6</span>Action lists <span class="sub">— the dashboard as a campaign tool, not a display</span></h2>
   <div class="grid2">
     <div class="panel">
       <h3>Dormant valuable <span class="subtle">— institutional domain, 0 surveys → outreach</span></h3>

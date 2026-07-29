@@ -1,0 +1,38 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:auth_user_changelist' %}">{% trans 'Users' %}</a>
+  &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<form method="post">{% csrf_token %}
+  <p>Assigning a cohort to <b>{{ users|length }}</b> user{{ users|length|pluralize }}.
+    Any existing assignment in the same dimension is replaced, and the assignment is
+    recorded as a manual decision that automatic classification will not overwrite.</p>
+
+  <ul style="max-height:220px;overflow:auto;margin:12px 0 18px">
+    {% for user in users %}
+    <li>{{ user.username }} <span style="opacity:.6">&lt;{{ user.email }}&gt;</span>
+      {% for a in user.cohorts.all %}<span style="opacity:.6"> · {{ a.cohort }} ({{ a.source }})</span>{% endfor %}
+    </li>
+    {% endfor %}
+  </ul>
+
+  {{ form.as_p }}
+
+  {% for user in users %}
+  <input type="hidden" name="{{ action_checkbox_name }}" value="{{ user.pk }}">
+  {% endfor %}
+  <input type="hidden" name="action" value="assign_cohort_action">
+
+  <div class="submit-row">
+    <input type="submit" name="apply" value="{% trans 'Assign cohort' %}" class="default">
+    <a href="{% url 'admin:auth_user_changelist' %}" class="button cancel-link">{% trans 'Cancel' %}</a>
+  </div>
+</form>
+{% endblock %}

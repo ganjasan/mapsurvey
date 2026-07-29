@@ -808,3 +808,100 @@ class UserActivity(models.Model):
     def __str__(self):
         return f"{self.user_id}: {self.last_activity:%Y-%m-%d %H:%M}"
 
+
+COHORT_SOURCE_CHOICES = (
+    ("auto", _("Automatic rule")),
+    ("manual", _("Staff assignment")),
+)
+
+
+class CohortDimension(models.Model):
+    """An axis along which users are classified, e.g. "Plan" or "Segment".
+
+    Vocabulary, not code: staff add a dimension or a cohort in the admin without a
+    migration. A user holds at most one cohort per dimension, so a dimension's
+    cohort counts partition the user base -- see the user-cohorts change (D1).
+    Analytical labels only: membership grants nothing.
+    """
+
+    slug = models.SlugField(max_length=50, unique=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('order', 'name')
+
+    def __str__(self):
+        return self.name
+
+
+class Cohort(models.Model):
+    """One value within a dimension, e.g. "Pro" in Plan or "Universities" in Segment."""
+
+    dimension = models.ForeignKey(
+        CohortDimension, on_delete=models.CASCADE, related_name='cohorts',
+    )
+    slug = models.SlugField(max_length=50)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    color = models.CharField(
+        max_length=7, blank=True,
+        help_text=_('Hex colour used on the funnel dashboard, e.g. #3b82f6.'),
+    )
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('dimension__order', 'order', 'name')
+        constraints = [
+            models.UniqueConstraint(
+                fields=('dimension', 'slug'), name='unique_cohort_slug_per_dimension',
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.dimension.name}: {self.name}"
+
+
+class UserCohort(models.Model):
+    """Assignment of one cohort to one user, at most one per dimension.
+
+    `dimension` is denormalised from `cohort.dimension` so the one-per-dimension
+    rule is expressible as a database constraint; `save()` keeps the two in sync
+    rather than trusting callers. `source` records who decided: automatic
+    classification never touches a `manual` row (user-cohorts change, D2).
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cohorts',
+    )
+    dimension = models.ForeignKey(
+        CohortDimension, on_delete=models.CASCADE, related_name='assignments',
+    )
+    cohort = models.ForeignKey(
+        Cohort, on_delete=models.CASCADE, related_name='assignments',
+    )
+    source = models.CharField(max_length=10, choices=COHORT_SOURCE_CHOICES, default='manual')
+    note = models.CharField(max_length=255, blank=True)
+    assigned_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'survey'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'dimension'), name='unique_user_cohort_per_dimension',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        self.dimension = self.cohort.dimension
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None and 'cohort' in update_fields:
+            kwargs['update_fields'] = list(update_fields) + ['dimension']
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user_id}: {self.cohort}"
+
