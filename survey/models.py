@@ -905,3 +905,83 @@ class UserCohort(models.Model):
     def __str__(self):
         return f"{self.user_id}: {self.cohort}"
 
+
+NOTE_KIND_CHOICES = (
+    ("research", _("Research")),
+    ("email", _("Email")),
+    ("call", _("Call")),
+    ("signal", _("Signal")),
+)
+
+
+class CreatorProfile(models.Model):
+    """What we know about a registered creator, beyond what the product records.
+
+    Staff-only. Deliberately shaped like the Contact/Company columns of a CRM so
+    the eventual migration is a file handover -- see the creator-dossiers change
+    (D1). Every field is optional; an absent profile means "nothing recorded
+    yet", never an error.
+
+    These are personal notes about identifiable people: a GDPR subject access
+    request obliges us to hand them over verbatim (`export_creators --username`).
+    """
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='creator_profile',
+    )
+    organization = models.CharField(max_length=200, blank=True)
+    role = models.CharField(max_length=200, blank=True)
+    country = models.CharField(max_length=100, blank=True)
+    linkedin_url = models.URLField(max_length=300, blank=True)
+    website = models.URLField(max_length=300, blank=True)
+    how_found_us = models.CharField(max_length=255, blank=True)
+    summary = models.TextField(
+        blank=True, help_text=_('Short markdown summary: who this is, in a few lines.'),
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'survey'
+
+    def __str__(self):
+        return f"{self.user_id}: {self.organization or '—'}"
+
+
+class CreatorNote(models.Model):
+    """One dated entry in a creator's timeline: research, an email, a call.
+
+    Append-only by convention: tooling only ever creates notes, so the history of
+    a relationship stays a record of what was known when (design D2). Staff may
+    still fix a typo by hand. `source_path` records where an imported note came
+    from and is what makes re-running the importer safe (D4).
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='creator_notes',
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='authored_creator_notes',
+    )
+    kind = models.CharField(max_length=10, choices=NOTE_KIND_CHOICES, default='research')
+    happened_on = models.DateField()
+    body = models.TextField()
+    source_path = models.CharField(
+        max_length=500, blank=True, db_index=True,
+        help_text=_('Repo-relative path this note was imported from, if any.'),
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('-happened_on', '-id')
+        indexes = [
+            models.Index(fields=('user', 'happened_on')),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id} {self.happened_on:%Y-%m-%d} {self.kind}"
+
