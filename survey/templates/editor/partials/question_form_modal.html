@@ -27,6 +27,7 @@
     <div class="modal-body" style="{% if question %}display:flex;gap:1rem;{% endif %}">
         <div style="{% if question %}flex:1;min-width:0;{% endif %}">
         {% for field in form %}
+        {% if field.name != 'display_style' %}
         <div class="form-group">
             {% if field.name == 'required' %}
                 <div class="form-check">
@@ -40,7 +41,38 @@
             {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text|safe }}</small>{% endif %}
             {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
         </div>
+        {% endif %}
         {% endfor %}
+
+        <!-- Display style (rating only) -->
+        <div id="display-style-fields" style="display:none;" class="mb-3">
+            <label style="font-weight:600;">Display as</label>
+            <div style="display:flex;gap:8px;">
+                {% for radio in form.display_style %}
+                <label class="ds-option" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;">
+                    {{ radio.tag }}
+                    {% if radio.data.value == 'default' %}
+                    <span class="ds-thumb" style="display:flex;align-items:center;justify-content:center;width:74px;height:22px;border:1px dashed #9aa0a6;border-radius:4px;color:#9aa0a6;">
+                        <i class="fas fa-sliders-h"></i>
+                    </span>
+                    {% elif radio.data.value == 'scale_strip' %}
+                    <span class="ds-thumb" style="display:flex;gap:3px;">
+                        <i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border-radius:3px;background:#4f46e5;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i>
+                    </span>
+                    {% else %}
+                    <span class="ds-thumb" style="display:flex;flex-direction:column;gap:3px;">
+                        <i style="width:74px;height:8px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:74px;height:8px;border-radius:3px;background:#4f46e5;"></i><i style="width:74px;height:8px;border:1px solid #d1d5db;border-radius:3px;"></i>
+                    </span>
+                    {% endif %}
+                    <span>{{ radio.choice_label }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        <style>
+            #display-style-fields .ds-option input[type="radio"] { position:absolute; opacity:0; width:0; height:0; }
+            #display-style-fields .ds-option:has(input:checked) { border-color:#4f46e5; background:#eef2ff; }
+        </style>
 
         <!-- Choices editor -->
         <div class="choices-editor" id="choices-editor" style="display:none;">
@@ -178,19 +210,17 @@
         if (polyEl) polyEl.style.display = (t === 'polygon') ? 'block' : 'none';
     }
 
-    if (inputTypeSelect) {
-        inputTypeSelect.addEventListener('change', function() { toggleChoicesEditor(); toggleValidationFields(); });
-        toggleChoicesEditor();
-        toggleValidationFields();
+    function toggleDisplayStyleFields() {
+        var el = document.getElementById('display-style-fields');
+        if (el) el.style.display = (inputTypeSelect && inputTypeSelect.value === 'rating') ? 'block' : 'none';
     }
 
-    // Populate existing choices when editing
-    {% if question and question.choices %}
-    var existingChoices = {{ question.choices|safe }};
-    existingChoices.forEach(function(choice) {
-        addChoiceRow(choice.code, choice.name);
-    });
-    {% endif %}
+    if (inputTypeSelect) {
+        inputTypeSelect.addEventListener('change', function() { toggleChoicesEditor(); toggleValidationFields(); toggleDisplayStyleFields(); });
+        toggleChoicesEditor();
+        toggleValidationFields();
+        toggleDisplayStyleFields();
+    }
 
     window.addChoiceRow = function(code, name) {
         var tbody = document.getElementById('choices-rows');
@@ -412,6 +442,27 @@
             btn.innerHTML = '<i class="fas fa-eye"></i> Apply';
         });
     };
+    {% endif %}
+
+    // Live-update the preview iframe when the display style picker changes
+    document.querySelectorAll('#display-style-fields input[name="display_style"]').forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            var iframe = document.getElementById('question-preview-frame');
+            if (!iframe) return;
+            var url = new URL(iframe.src, window.location.origin);
+            url.searchParams.set('display_style', this.value);
+            iframe.src = url.toString();
+        });
+    });
+
+    // Populate existing choices when editing.
+    // Runs LAST: addChoiceRow/serializeChoices must already be assigned to window,
+    // otherwise this block throws and kills the whole script (broke Apply).
+    {% if question and question.choices %}
+    var existingChoices = {{ question.choices|safe }};
+    existingChoices.forEach(function(choice) {
+        addChoiceRow(choice.code, choice.name);
+    });
     {% endif %}
 })();
 </script>

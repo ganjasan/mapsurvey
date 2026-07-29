@@ -65,6 +65,7 @@ def clone_question(
         color=question.color,
         icon_class=question.icon_class,
         image=question.image,
+        display_style=question.display_style,
     )
 
     for trans in QuestionTranslation.objects.filter(question=question):

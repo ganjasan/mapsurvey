@@ -698,6 +698,25 @@
     });
 
     // =====================================================================
+    // Rating scale-strip: selected-option label chip
+    // =====================================================================
+    function syncRatingChips() {
+        document.querySelectorAll('[data-rating-strip]').forEach(function(strip) {
+            var chip = strip.querySelector('.rating-scale-strip__chip span');
+            if (!chip) return;
+            var checked = strip.querySelector('input[type="radio"]:checked');
+            chip.textContent = checked ? (checked.closest('label').dataset.label || '') : '';
+            chip.classList.toggle('visible', !!checked);
+        });
+    }
+
+    document.body.addEventListener('change', function(evt) {
+        if (evt.target.matches('input[type="radio"]') && evt.target.closest('[data-rating-strip]')) {
+            syncRatingChips();
+        }
+    });
+
+    // =====================================================================
     // initSection() — called after each HTMX swap and on initial page load
     // =====================================================================
     function initSection() {
@@ -741,6 +760,9 @@
         var geoEl = document.getElementById('geo-answers-data');
         var existingGeoAnswers = geoEl ? JSON.parse(geoEl.textContent) : {};
         restoreGeoAnswers(existingGeoAnswers);
+
+        // 6b. Rating scale-strip: show chip for pre-checked radios (back navigation)
+        syncRatingChips();
 
         // 7. Event tracking
         var sessionId = parseInt(dataEl.dataset.sessionId, 10) || null;

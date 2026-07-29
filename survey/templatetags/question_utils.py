@@ -14,3 +14,13 @@ def is_card_question(field):
 @register.filter
 def question_type(field):
     return getattr(field.field.widget, 'question_type', '')
+
+
+@register.filter
+def rating_display_style(field):
+    return getattr(field.field.widget, 'display_style', 'scale_strip')
+
+
+@register.filter
+def get_range(count):
+    return range(int(count))

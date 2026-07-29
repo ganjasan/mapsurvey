@@ -64,6 +64,7 @@ def serialize_survey_to_dict(survey: SurveyHeader) -> Dict[str, Any]:
         "start_map_zoom": survey.start_map_zoom,
         "use_geolocation": survey.use_geolocation,
         "show_branding": survey.show_branding,
+        "style_settings": survey.style_settings or {},
         "sections": serialize_sections(survey),
     }
 
@@ -108,6 +109,7 @@ def _serialize_question(question: Question) -> Dict[str, Any]:
         "required": question.required,
         "color": question.color,
         "icon_class": question.icon_class,
+        "display_style": question.display_style,
         "image": question.image.name if question.image else None,
         "translations": [
             {"language": t.language, "name": t.name, "subtext": t.subtext}
@@ -474,8 +476,19 @@ def create_survey_header(
         start_map_zoom=survey_data.get("start_map_zoom"),
         use_geolocation=survey_data.get("use_geolocation", False),
         show_branding=survey_data.get("show_branding", True),
+        style_settings=_clean_style_settings(survey_data.get("style_settings")),
         is_canonical=True,
     )
+
+
+def _clean_style_settings(value):
+    """Keep only known style keys with valid values; anything else is dropped."""
+    if not isinstance(value, dict):
+        return {}
+    cleaned = {}
+    if value.get("rating_display_style") in ("scale_strip", "list_pips"):
+        cleaned["rating_display_style"] = value["rating_display_style"]
+    return cleaned
 
 
 def create_sections(
@@ -578,6 +591,10 @@ def _create_question(
             f"Question '{original_code}': input_type '{input_type}' requires choices"
         )
 
+    display_style = question_data.get("display_style")
+    if display_style not in ("default", "scale_strip", "list_pips"):
+        display_style = "default"
+
     question = Question.objects.create(
         survey_section=section,
         parent_question_id=parent,
@@ -590,6 +607,7 @@ def _create_question(
         required=question_data.get("required", False),
         color=question_data.get("color", "#000000")[:7],
         icon_class=question_data.get("icon_class", "")[:80] if question_data.get("icon_class") else None,
+        display_style=display_style,
         # image is handled separately during extraction
     )
 

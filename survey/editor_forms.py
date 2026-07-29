@@ -5,6 +5,13 @@ SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon')
 
 
 class SurveyHeaderForm(forms.ModelForm):
+    default_rating_display_style = forms.ChoiceField(
+        choices=(('scale_strip', 'Compact scale'), ('list_pips', 'Labeled list')),
+        required=False,
+        widget=forms.RadioSelect(),
+        label='Rating questions',
+    )
+
     class Meta:
         model = SurveyHeader
         fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'thanks_html', 'cover_image', 'basemaps', 'default_basemap', 'show_branding']
@@ -29,6 +36,10 @@ class SurveyHeaderForm(forms.ModelForm):
         self.fields['default_basemap'].required = False
         self.fields['default_basemap'].empty_label = None
         self.fields['default_basemap'].choices = list(BASEMAP_CHOICES)
+        if self.instance and self.instance.pk:
+            self.fields['default_rating_display_style'].initial = self.instance.get_default_rating_display_style()
+        else:
+            self.fields['default_rating_display_style'].initial = 'scale_strip'
 
     def clean_basemaps(self):
         VALID = {slug for slug, _ in BASEMAP_CHOICES}
@@ -49,6 +60,17 @@ class SurveyHeaderForm(forms.ModelForm):
             cleaned['default_basemap'] = basemaps[0]
         return cleaned
 
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        style = self.cleaned_data.get('default_rating_display_style') or 'scale_strip'
+        settings = dict(obj.style_settings or {})
+        settings['rating_display_style'] = style
+        obj.style_settings = settings
+        if commit:
+            obj.save()
+            self.save_m2m()
+        return obj
+
 
 class SurveySectionForm(forms.ModelForm):
     class Meta:
@@ -64,7 +86,7 @@ class SurveySectionForm(forms.ModelForm):
 class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
-        fields = ['name', 'subtext', 'input_type', 'required', 'color', 'icon_class', 'image']
+        fields = ['name', 'subtext', 'input_type', 'required', 'color', 'icon_class', 'image', 'display_style']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'subtext': forms.TextInput(attrs={'class': 'form-control'}),
@@ -72,6 +94,7 @@ class QuestionForm(forms.ModelForm):
             'required': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'color': forms.TextInput(attrs={'class': 'form-control', 'type': 'color'}),
             'icon_class': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'fas fa-map-marker-alt'}),
+            'display_style': forms.RadioSelect(),
         }
         help_texts = {
             'icon_class': '<a href="https://fontawesome.com/v5/search" target="_blank" rel="noopener">Font Awesome</a> class',
@@ -79,9 +102,13 @@ class QuestionForm(forms.ModelForm):
 
     def __init__(self, *args, is_subquestion=False, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['display_style'].required = False
         if is_subquestion:
             field = self.fields['input_type']
             field.choices = [
                 (value, label) for value, label in field.choices
                 if value not in SUBQUESTION_DISALLOWED_INPUT_TYPES
             ]
+
+    def clean_display_style(self):
+        return self.cleaned_data.get('display_style') or 'default'

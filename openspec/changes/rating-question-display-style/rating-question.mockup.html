@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapsurvey — редизайн rating-вопроса</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+
+  :root {
+    --panel-bg: #ffffff;
+    --panel-border: rgba(0, 0, 0, 0.06);
+    --card-bg: #f7f8fa;
+    --card-border: rgba(0, 0, 0, 0.06);
+    --text-primary: #1a1d21;
+    --text-secondary: #5f6368;
+    --text-tertiary: #9aa0a6;
+    --accent: #4f46e5;
+    --accent-light: #eef2ff;
+    --accent-hover: #4338ca;
+    --input-border: #d1d5db;
+    --input-bg: #ffffff;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+    --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 15px;
+    color: var(--text-primary);
+    background: #e8eaef;
+    margin: 0;
+    padding: 32px 24px 64px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page-header { max-width: 1400px; margin: 0 auto 8px; }
+  .page-header h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+  .page-header p { color: var(--text-secondary); margin: 0; font-size: 14px; }
+
+  .variants {
+    max-width: 1400px;
+    margin: 24px auto 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  .variant { width: 420px; }
+
+  .variant-caption { padding: 0 4px 10px; }
+  .variant-caption .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  .variant-caption .tag.bad { background: #ef4444; }
+  .variant-caption .tag.reco { background: #16a34a; }
+  .variant-caption h2 { font-size: 15px; font-weight: 600; margin: 0 0 3px; }
+  .variant-caption p { font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.45; }
+
+  /* -- имитация сайдбара приложения -- */
+  .panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    padding: 20px;
+  }
+
+  .question-card {
+    background: var(--card-bg);
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--card-border);
+  }
+  .question-card > .q-label {
+    display: block;
+    font-weight: 500;
+    font-size: 0.92em;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.45;
+  }
+
+  /* ============ СЕЙЧАС: flex-wrap пилюли ============ */
+  .now-options { display: flex; flex-wrap: wrap; gap: 6px; }
+  .now-options .opt {
+    flex: 1 1 auto;
+    min-width: min-content;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .now-options .opt:hover { border-color: var(--accent); background: var(--accent-light); }
+  .now-options .opt.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ============ A: вертикальный список ============ */
+  .list-options { display: flex; flex-direction: column; gap: 6px; }
+  .radio-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    font-size: 0.92em;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .radio-row:hover { border-color: var(--accent); background: var(--accent-light); }
+  .radio-row .dot {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--input-border);
+    background: #fff;
+    transition: all var(--transition);
+  }
+  .radio-row.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .radio-row.selected .dot { border-color: var(--accent); border-width: 5px; }
+
+  /* ============ B: числовая шкала с якорями ============ */
+  .scale-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .scale-strip.pts7 { grid-template-columns: repeat(7, 1fr); }
+  .scale-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 46px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    font-size: 0.95em;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .scale-cell:hover { border-color: var(--accent); background: var(--accent-light); }
+  .scale-cell.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+  }
+  .scale-anchors {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 0.8em;
+    color: var(--text-tertiary);
+  }
+  .scale-selected-label {
+    margin-top: 10px;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .scale-selected-label span {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-light);
+    border-radius: 999px;
+    padding: 4px 14px;
+    opacity: 0;
+    transform: translateY(2px);
+    transition: all var(--transition);
+  }
+  .scale-selected-label span.visible { opacity: 1; transform: none; }
+
+  /* ============ C: список с индикатором интенсивности ============ */
+  .intensity-options { display: flex; flex-direction: column; gap: 6px; }
+  .int-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 44px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    font-size: 0.92em;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .int-row:hover { border-color: var(--accent); background: var(--accent-light); }
+  .int-row .pips { display: flex; gap: 4px; flex: none; }
+  .int-row .pips i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #d8dbe1;
+    transition: background var(--transition);
+  }
+  .int-row .pips i.on { background: #b4b9c4; }
+  .int-row.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .int-row.selected .pips i { background: #c7cdf7; }
+  .int-row.selected .pips i.on { background: var(--accent); }
+
+  .stress-note {
+    max-width: 1400px;
+    margin: 40px auto 0;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+  }
+  .stress-note h2 { font-size: 17px; font-weight: 600; margin: 12px 0 4px; }
+  .stress-note p { color: var(--text-secondary); font-size: 14px; margin: 0 0 16px; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Rating-вопрос: варианты редизайна</h1>
+  <p>Все блоки кликабельны. Токены — из боевого <code>main.css</code>: DM Sans, акцент #4f46e5, карточка #f7f8fa, ширина панели 420px.</p>
+</div>
+
+<div class="variants">
+
+  <!-- СЕЙЧАС -->
+  <div class="variant">
+    <div class="variant-caption">
+      <span class="tag bad">Сейчас</span>
+      <h2>Flex-wrap кнопки</h2>
+      <p>Пять словесных вариантов разной ширины ломаются в неровную сетку 2-2-1. Порядок шкалы читается зигзагом, «very confident» выглядит главной кнопкой.</p>
+    </div>
+    <div class="panel">
+      <div class="question-card">
+        <span class="q-label">How confident do you feel about how you will be heating in 10 years?</span>
+        <div class="now-options" data-group>
+          <div class="opt">very unsure</div>
+          <div class="opt">rather unsure</div>
+          <div class="opt">undecided</div>
+          <div class="opt selected">rather confident</div>
+          <div class="opt">very confident</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- A -->
+  <div class="variant">
+    <div class="variant-caption">
+      <span class="tag">Вариант A</span>
+      <h2>Вертикальный список</h2>
+      <p>Один вариант — одна строка, порядок шкалы сверху вниз. Никогда не ломается, любой язык и длина. Минус: не отличим от обычного choice-вопроса.</p>
+    </div>
+    <div class="panel">
+      <div class="question-card">
+        <span class="q-label">How confident do you feel about how you will be heating in 10 years?</span>
+        <div class="list-options" data-group>
+          <div class="radio-row"><span class="dot"></span>very unsure</div>
+          <div class="radio-row"><span class="dot"></span>rather unsure</div>
+          <div class="radio-row"><span class="dot"></span>undecided</div>
+          <div class="radio-row selected"><span class="dot"></span>rather confident</div>
+          <div class="radio-row"><span class="dot"></span>very confident</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B -->
+  <div class="variant">
+    <div class="variant-caption">
+      <span class="tag">Вариант B</span>
+      <h2>Числовая шкала с якорями</h2>
+      <p>Компактно, явно читается как шкала. Выбранное слово всплывает под шкалой. Минус: слова средних пунктов видны только после клика.</p>
+    </div>
+    <div class="panel">
+      <div class="question-card">
+        <span class="q-label">How confident do you feel about how you will be heating in 10 years?</span>
+        <div data-scale>
+          <div class="scale-strip">
+            <div class="scale-cell" data-label="very unsure">1</div>
+            <div class="scale-cell" data-label="rather unsure">2</div>
+            <div class="scale-cell" data-label="undecided">3</div>
+            <div class="scale-cell selected" data-label="rather confident">4</div>
+            <div class="scale-cell" data-label="very confident">5</div>
+          </div>
+          <div class="scale-anchors"><span>very unsure</span><span>very confident</span></div>
+          <div class="scale-selected-label"><span class="visible">rather confident</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C -->
+  <div class="variant">
+    <div class="variant-caption">
+      <span class="tag reco">Вариант C — рекомендую</span>
+      <h2>Список + индикатор интенсивности</h2>
+      <p>Слова всегда видны (лучше для качества данных), а точки справа возвращают ощущение шкалы и отличают rating от choice. Так же неубиваем, как A.</p>
+    </div>
+    <div class="panel">
+      <div class="question-card">
+        <span class="q-label">How confident do you feel about how you will be heating in 10 years?</span>
+        <div class="intensity-options" data-group>
+          <div class="int-row">very unsure<span class="pips"><i class="on"></i><i></i><i></i><i></i><i></i></span></div>
+          <div class="int-row">rather unsure<span class="pips"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></div>
+          <div class="int-row">undecided<span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></div>
+          <div class="int-row selected">rather confident<span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+          <div class="int-row">very confident<span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="stress-note">
+  <h2>Стресс-тесты</h2>
+  <p>Длинные немецкие формулировки (реальный кейс Кведлинбурга) и 7-балльная шкала.</p>
+</div>
+
+<div class="variants" style="margin-top:0">
+
+  <div class="variant">
+    <div class="variant-caption">
+      <span class="tag">C, немецкий</span>
+      <h2>Длинные слова — без поломок</h2>
+      <p>«sehr zuversichtlich» не влезло бы в пилюлю, в списке — без проблем.</p>
+    </div>
+    <div class="panel">
+      <div class="question-card">
+        <span class="q-label">Wie sicher fühlen Sie sich in Bezug darauf, wie Sie in 10 Jahren heizen werden?</span>
+        <div class="intensity-options" data-group>
+          <div class="int-row">sehr unsicher<span class="pips"><i class="on"></i><i></i><i></i><i></i><i></i></span></div>
+          <div class="int-row">eher unsicher<span class="pips"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></div>
+          <div class="int-row selected">unentschieden<span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></div>
+          <div class="int-row">eher zuversichtlich<span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+          <div class="int-row">sehr zuversichtlich<span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant-caption">
+      <span class="tag">B, 7 баллов</span>
+      <h2>Шкала масштабируется</h2>
+      <p>При 7+ пунктах вариант B становится единственным компактным: список из 7 строк уже громоздкий.</p>
+    </div>
+    <div class="panel">
+      <div class="question-card">
+        <span class="q-label">How satisfied are you with the heating options in your area?</span>
+        <div data-scale>
+          <div class="scale-strip pts7">
+            <div class="scale-cell" data-label="not at all satisfied">1</div>
+            <div class="scale-cell" data-label="">2</div>
+            <div class="scale-cell" data-label="">3</div>
+            <div class="scale-cell" data-label="neutral">4</div>
+            <div class="scale-cell selected" data-label="">5</div>
+            <div class="scale-cell" data-label="">6</div>
+            <div class="scale-cell" data-label="fully satisfied">7</div>
+          </div>
+          <div class="scale-anchors"><span>not at all</span><span>fully satisfied</span></div>
+          <div class="scale-selected-label"><span class="visible">5 / 7</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.querySelectorAll('[data-group]').forEach(group => {
+    group.addEventListener('click', e => {
+      const opt = e.target.closest('.opt, .radio-row, .int-row');
+      if (!opt) return;
+      group.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+      opt.classList.add('selected');
+    });
+  });
+
+  document.querySelectorAll('[data-scale]').forEach(scale => {
+    const labelSpan = scale.querySelector('.scale-selected-label span');
+    scale.querySelector('.scale-strip').addEventListener('click', e => {
+      const cell = e.target.closest('.scale-cell');
+      if (!cell) return;
+      scale.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+      cell.classList.add('selected');
+      const cells = [...scale.querySelectorAll('.scale-cell')];
+      const text = cell.dataset.label || `${cells.indexOf(cell) + 1} / ${cells.length}`;
+      labelSpan.textContent = text;
+      labelSpan.classList.add('visible');
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -234,6 +234,8 @@ class SurveySectionAnswerForm(forms.Form):
         else:
             questions = question.subQuestions()
 
+        survey_rating_style = section.survey_header.get_default_rating_display_style()
+
         for question in questions:
 
             #add question to field
@@ -246,6 +248,11 @@ class SurveySectionAnswerForm(forms.Form):
 
             self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question, field_label, field_sublabel, field_color, field_icon_class, image_source, language)
             self.fields[field_name].widget.question_type = question.input_type
+            self.fields[field_name].widget.display_style = (
+                question.display_style
+                if question.display_style in ('scale_strip', 'list_pips')
+                else survey_rating_style
+            )
 
 
     def save(self):

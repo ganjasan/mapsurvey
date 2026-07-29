@@ -492,6 +492,17 @@ def editor_question_preview(request, survey_uuid, question_id):
         if key != question.code:
             del form.fields[key]
 
+    # Unsaved picker state from the question modal ("Display as" live preview)
+    style_override = request.GET.get('display_style')
+    if style_override in ('default', 'scale_strip', 'list_pips'):
+        field = form.fields.get(question.code)
+        if field is not None:
+            field.widget.display_style = (
+                style_override
+                if style_override in ('scale_strip', 'list_pips')
+                else survey.get_default_rating_display_style()
+            )
+
     if lang:
         translation.activate(lang)
 

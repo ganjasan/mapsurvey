@@ -1,0 +1,16 @@
+<div class="rating-scale-strip" data-rating-strip>
+    <div class="rating-scale-strip__cells" style="grid-template-columns: repeat({{ field.field.choices|length }}, 1fr);">
+        {% for radio in field %}
+        <label class="rating-scale-strip__cell" data-label="{{ radio.choice_label }}">
+            {{ radio.tag }}<span>{{ forloop.counter }}</span>
+        </label>
+        {% endfor %}
+    </div>
+    {% with first=field.field.choices|first last=field.field.choices|last %}
+    <div class="rating-scale-strip__anchors">
+        <span>{{ first.1 }}</span>
+        <span>{{ last.1 }}</span>
+    </div>
+    {% endwith %}
+    <div class="rating-scale-strip__chip"><span></span></div>
+</div>

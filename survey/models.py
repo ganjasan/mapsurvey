@@ -110,6 +110,12 @@ INPUT_TYPE_CHOICES = (
     ("html", _("HTML")),
 )
 
+DISPLAY_STYLE_CHOICES = (
+    ("default", _("Survey default")),
+    ("scale_strip", _("Compact scale")),
+    ("list_pips", _("Labeled list")),
+)
+
 VALIDATION_STATUS_CHOICES = (
     ('', 'No status'),
     ('approved', 'Approved'),
@@ -296,6 +302,7 @@ class SurveyHeader(models.Model):
     start_map_zoom = models.IntegerField(null=True, blank=True, help_text=_('Default map zoom for the survey. Sections inherit this if not overridden.'))
     use_geolocation = models.BooleanField(default=False, help_text=_('Auto-center map on respondent location when entering the survey.'))
     show_branding = models.BooleanField(default=True, help_text=_('Show a "Made with Mapsurvey" link on the public survey and thanks pages (a free-tier acquisition loop). Turn off for a clean, unbranded look.'))
+    style_settings = models.JSONField(default=dict, blank=True, help_text=_('Survey-wide style defaults: {rating_display_style}'))
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True, db_index=True, help_text=_('Set when the survey is moved to trash; purged permanently after the retention window.'))
@@ -344,6 +351,10 @@ class SurveyHeader(models.Model):
         from django.urls import reverse
         base_url = reverse('survey_header', kwargs={'survey_slug': str(self.uuid)})
         return request.build_absolute_uri(f'{base_url}?token={self.test_token}')
+
+    def get_default_rating_display_style(self):
+        value = (self.style_settings or {}).get('rating_display_style')
+        return value if value in ('scale_strip', 'list_pips') else 'scale_strip'
 
     def can_accept_responses(self):
         return self.status in ("testing", "published")
@@ -536,6 +547,7 @@ class Question(models.Model):
     color = models.CharField(verbose_name=_(u'Color'), max_length=7, help_text=_(u'HEX color, as #RRGGBB'), default="#000000")
     icon_class = models.CharField(default="", max_length=80, help_text=_(u'Must be Font-Awesome class'), blank=True, null=True)
     image = models.ImageField(upload_to ='images/', null=True, blank=True)
+    display_style = models.CharField(max_length=20, choices=DISPLAY_STYLE_CHOICES, default="default", help_text=_('Rendering style, only used by rating questions; "default" inherits the survey-wide style'))
 
     class Meta:
         app_label = 'survey'
