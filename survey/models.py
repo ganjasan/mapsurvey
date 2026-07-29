@@ -906,6 +906,37 @@ class UserCohort(models.Model):
         return f"{self.user_id}: {self.cohort}"
 
 
+class DomainSegmentRule(models.Model):
+    """Maps one organisation's email domain to a segment cohort.
+
+    Lives in the database rather than in code because this repository is public
+    and the list of domains is, in effect, our customer roster. Generic rules
+    (freemail, `.edu`, `.gov.uk`) stay in `survey/cohorts.py` -- they name nobody.
+    See openspec/changes/domain-rules-to-db/design.md (D1).
+
+    Loaded from a gitignored file via `assign_cohorts --rules-csv`, so the
+    production rule set is reproducible without being committed.
+    """
+
+    domain = models.CharField(max_length=200, unique=True)
+    cohort = models.ForeignKey(
+        'Cohort', on_delete=models.CASCADE, related_name='domain_rules',
+    )
+    note = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('domain',)
+
+    def save(self, *args, **kwargs):
+        self.domain = self.domain.strip().lower()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.domain} -> {self.cohort_id}"
+
+
 NOTE_KIND_CHOICES = (
     ("research", _("Research")),
     ("email", _("Email")),

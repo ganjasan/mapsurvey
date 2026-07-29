@@ -15676,7 +15676,7 @@ from django.db.utils import IntegrityError
 
 from survey.cohorts import assign_cohort, classify_segment, get_cohort
 from survey.funnel import CreatorFunnelService
-from survey.models import Cohort, CohortDimension, UserCohort
+from survey.models import Cohort, CohortDimension, DomainSegmentRule, UserCohort
 
 
 class CohortVocabularyTest(TestCase):
@@ -15817,7 +15817,7 @@ class SegmentClassificationTest(TestCase):
         WHEN they are classified
         THEN the university segment is proposed.
         """
-        for email in ("a@sdsu.edu", "b@cardiff.ac.uk", "c@tlu.ee", "d@uni-weimar.de"):
+        for email in ("a@example.edu", "b@example.ac.uk", "c@uni-example.de"):
             with self.subTest(email=email):
                 self.assertEqual(classify_segment(email), "university")
 
@@ -15827,7 +15827,7 @@ class SegmentClassificationTest(TestCase):
         WHEN they are classified
         THEN the municipality segment is proposed.
         """
-        for email in ("a@brent.gov.uk", "b@senmvku.berlin.de", "c@decyp.tas.gov.au"):
+        for email in ("a@example.gov.uk", "b@example.gov", "c@example.gov.au"):
             with self.subTest(email=email):
                 self.assertEqual(classify_segment(email), "municipality")
 
@@ -15837,16 +15837,41 @@ class SegmentClassificationTest(TestCase):
         WHEN it is classified
         THEN the student-cohort segment is proposed, not university.
         """
-        self.assertEqual(classify_segment("a@student.polsl.pl"), "student-cohort")
+        self.assertEqual(classify_segment("a@student.example.edu"), "student-cohort")
 
-    def test_curated_domain_overrides_suffix_rule(self):
+    def test_database_rule_overrides_suffix_rule(self):
         """
-        GIVEN a curated consultancy domain that also ends in a generic suffix
-        WHEN it is classified
-        THEN the curated cohort wins.
+        GIVEN a database rule mapping an .org domain to municipality
+        WHEN an address at that domain is classified
+        THEN the rule wins over the .org suffix rule.
         """
-        self.assertEqual(classify_segment("x@rivco.org"), "municipality")
-        self.assertEqual(classify_segment("x@decisio.nl"), "consultancy")
+        DomainSegmentRule.objects.create(
+            domain="county.example.org", cohort=get_cohort("segment", "municipality"),
+        )
+
+        self.assertEqual(classify_segment("x@county.example.org"), "municipality")
+
+    def test_suffix_rules_apply_without_any_database_rule(self):
+        """
+        GIVEN no domain rules at all
+        WHEN an .ac.uk address is classified
+        THEN the university cohort is proposed.
+        """
+        self.assertEqual(DomainSegmentRule.objects.count(), 0)
+
+        self.assertEqual(classify_segment("x@example.ac.uk"), "university")
+
+    def test_preloaded_map_is_used_instead_of_querying(self):
+        """
+        GIVEN a preloaded domain map naming a domain with no database rule
+        WHEN an address at that domain is classified with that map
+        THEN the mapped cohort is proposed.
+        """
+        result = classify_segment(
+            "x@firm.example.net", domain_map={"firm.example.net": "consultancy"},
+        )
+
+        self.assertEqual(result, "consultancy")
 
     def test_freemail_yields_no_proposal(self):
         """
@@ -15872,8 +15897,8 @@ class AssignCohortsCommandTest(TestCase):
 
     def setUp(self):
         User.objects.all().delete()
-        User.objects.create_user(username="prof", email="p@sdsu.edu", password="x")
-        User.objects.create_user(username="civic", email="c@brent.gov.uk", password="x")
+        User.objects.create_user(username="prof", email="p@example.edu", password="x")
+        User.objects.create_user(username="civic", email="c@example.gov.uk", password="x")
         User.objects.create_user(username="anon", email="a@gmail.com", password="x")
 
     def test_dry_run_writes_nothing(self):
@@ -16077,7 +16102,7 @@ class AssignCohortsFromCsvTest(TestCase):
         WHEN the domain rules are applied afterwards
         THEN the curated label is untouched.
         """
-        self.user.email = "c@sdsu.edu"
+        self.user.email = "c@example.edu"
         self.user.save(update_fields=["email"])
         self._write("curated,ngo\n")
         call_command("assign_cohorts", "--from-csv", self.path, "--apply",
@@ -16601,3 +16626,101 @@ class DossierUserMatchingTest(TestCase):
 
         self.assertIn("ftspk_class", out.getvalue())
         self.assertEqual(CreatorNote.objects.count(), 0)
+
+
+class DomainRuleLoadingTest(TestCase):
+    """Domain rules come from a local file, never from source or a migration."""
+
+    def setUp(self):
+        DomainSegmentRule.objects.all().delete()
+        self.path = os.path.join(tempfile.mkdtemp(), "rules.csv")
+
+    def _write(self, body):
+        with open(self.path, "w", encoding="utf-8") as handle:
+            handle.write(body)
+
+    def test_dry_run_writes_no_rules(self):
+        """
+        GIVEN a rules file
+        WHEN it is loaded without --apply
+        THEN no rule is created.
+        """
+        self._write("firm.example.net,consultancy,A firm\n")
+
+        call_command("assign_cohorts", "--rules-csv", self.path, stdout=StringIO())
+
+        self.assertEqual(DomainSegmentRule.objects.count(), 0)
+
+    def test_rules_are_created_then_updated(self):
+        """
+        GIVEN a rules file applied once
+        WHEN it is applied again with a different cohort for the same domain
+        THEN one rule remains, pointing at the newer cohort.
+        """
+        self._write("firm.example.net,consultancy\n")
+        call_command("assign_cohorts", "--rules-csv", self.path, "--apply", stdout=StringIO())
+
+        self._write("firm.example.net,business\n")
+        call_command("assign_cohorts", "--rules-csv", self.path, "--apply", stdout=StringIO())
+
+        rules = DomainSegmentRule.objects.all()
+        self.assertEqual(rules.count(), 1)
+        self.assertEqual(rules.first().cohort.slug, "business")
+
+    def test_unknown_cohort_row_is_skipped(self):
+        """
+        GIVEN a rules file naming a cohort that does not exist
+        WHEN it is applied
+        THEN no rule is created for that row.
+        """
+        self._write("firm.example.net,not-a-cohort\n")
+
+        call_command("assign_cohorts", "--rules-csv", self.path, "--apply",
+                     stdout=StringIO(), stderr=StringIO())
+
+        self.assertEqual(DomainSegmentRule.objects.count(), 0)
+
+    def test_domain_is_stored_lowercased(self):
+        """
+        GIVEN a rule saved with a mixed-case domain
+        WHEN it is read back
+        THEN the domain is lowercase.
+        """
+        rule = DomainSegmentRule.objects.create(
+            domain="  Firm.Example.NET ", cohort=get_cohort("segment", "consultancy"),
+        )
+
+        rule.refresh_from_db()
+        self.assertEqual(rule.domain, "firm.example.net")
+
+    def test_one_rule_per_domain(self):
+        """
+        GIVEN a rule for a domain
+        WHEN a second rule is created for the same domain
+        THEN the write fails.
+        """
+        DomainSegmentRule.objects.create(
+            domain="firm.example.net", cohort=get_cohort("segment", "consultancy"),
+        )
+
+        with self.assertRaises(IntegrityError):
+            DomainSegmentRule.objects.create(
+                domain="firm.example.net", cohort=get_cohort("segment", "business"),
+            )
+
+    def test_classification_uses_loaded_rules(self):
+        """
+        GIVEN rules loaded from a file
+        WHEN users at those domains are classified
+        THEN they receive the cohorts the rules name.
+        """
+        User.objects.all().delete()
+        User.objects.create_user(username="a", email="x@firm.example.net", password="x")
+        self._write("firm.example.net,consultancy\n")
+        call_command("assign_cohorts", "--rules-csv", self.path, "--apply", stdout=StringIO())
+
+        call_command("assign_cohorts", "--apply", stdout=StringIO())
+
+        self.assertEqual(
+            UserCohort.objects.get(user__username="a").cohort.slug, "consultancy",
+        )

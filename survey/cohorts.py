@@ -3,13 +3,19 @@
 Cohorts are analytical labels only -- they grant no access and carry no billing
 meaning. See openspec/changes/user-cohorts/design.md.
 
-The split of responsibility is deliberate: cohort *vocabulary* lives in the
-database (staff-editable, no migration), while classification *rules* live here
-(logic, reviewed in PRs). The curated domain map below is the seam between them.
+Two kinds of classification rule, split by a rule this repository has to honour
+because it is **public**: anything here must name no customer.
+
+- Generic rules live in this file: freemail providers, student-subdomain markers,
+  TLD suffixes. `.gov.uk -> municipality` identifies nobody.
+- Rules that map one organisation's domain to a segment live in the database
+  (`DomainSegmentRule`), loaded from a gitignored file. Committed here, they
+  would publish our customer roster -- see
+  openspec/changes/domain-rules-to-db/design.md (D1).
 """
 
 from .funnel import FREEMAIL_DOMAINS, _domain
-from .models import Cohort, CohortDimension, UserCohort
+from .models import Cohort, CohortDimension, DomainSegmentRule, UserCohort
 
 # Dimension slugs seeded by migration.
 DIM_PLAN = 'plan'
@@ -24,85 +30,63 @@ SEG_NGO = 'ngo'
 SEG_BUSINESS = 'business'
 SEG_INDIVIDUAL = 'individual'
 
-# Exact domains we have actually investigated (dossiers under
-# docs/marketing/user-outreach/). Checked before the suffix rules, so a
-# consultancy on an .edu-looking domain still lands correctly.
-CURATED_DOMAIN_SEGMENTS = {
-    # planning / mobility / engineering consultancies
-    'decisio.nl': SEG_CONSULTANCY,
-    'migcom.com': SEG_CONSULTANCY,
-    'mbakerintl.com': SEG_CONSULTANCY,
-    'stantec.com': SEG_CONSULTANCY,
-    'agnewbeck.com': SEG_CONSULTANCY,
-    'giffelswebster.com': SEG_CONSULTANCY,
-    'futuriaconsulting.fi': SEG_CONSULTANCY,
-    'think-jena.de': SEG_CONSULTANCY,
-    'statwerk.de': SEG_CONSULTANCY,
-    'mapsstudio.pl': SEG_CONSULTANCY,
-    'carpe.studio': SEG_CONSULTANCY,
-    'arkilab.dk': SEG_CONSULTANCY,
-    'rpi-h.co.jp': SEG_CONSULTANCY,
-    'towardlabs.com': SEG_CONSULTANCY,
-    'line-grade.com': SEG_CONSULTANCY,
-    # public sector that no suffix rule would catch
-    'senmvku.berlin.de': SEG_MUNICIPALITY,
-    'sodankyla.fi': SEG_MUNICIPALITY,
-    'rivco.org': SEG_MUNICIPALITY,
-    # non-consultancy commercial
-    'lichtblick.de': SEG_BUSINESS,
-    'spen.com.pl': SEG_BUSINESS,
-    'agriprotech.fr': SEG_BUSINESS,
-    'flagship-housing.co.uk': SEG_BUSINESS,
-    'ellbit.com': SEG_BUSINESS,
-    'bitoini.com': SEG_BUSINESS,
-    # NGO / civic
-    'awana.digital': SEG_NGO,
-    'trco.or.tz': SEG_NGO,
-    # research institutes (public research, not a teaching university)
-    'cnr.it': SEG_UNIVERSITY,
-}
-
 # Domain fragments that mark a student rather than faculty. Checked before the
-# generic academic rules: `student.polsl.pl` is a student, `polsl.pl` is staff.
-STUDENT_MARKERS = ('student.', 'students.', 'stud.', 'alumnos.', 'alumni.', 'mail.uc.edu')
+# generic academic rules: `student.<university>` is a student, the bare domain is
+# staff. Naming conventions, not institutions.
+STUDENT_MARKERS = ('student.', 'students.', 'stud.', 'alumnos.', 'alumni.')
 
 # Ordered suffix rules, first match wins. Each entry is (suffixes, cohort slug).
 SEGMENT_SUFFIX_RULES = (
     (('.gov', '.gov.uk', '.gov.au', '.go.jp', '.gc.ca', '.gouv.fr', '.gov.pl'),
      SEG_MUNICIPALITY),
     (('.edu', '.edu.eg', '.edu.au', '.edu.pl', '.edu.co', '.ac.uk', '.ac.jp',
-      '.ac.id', '.ac.nz', '.ac.il', '.ac.th', '.uni-potsdam.de', '.uc.edu'),
+      '.ac.id', '.ac.nz', '.ac.il', '.ac.th'),
      SEG_UNIVERSITY),
     (('.org', '.org.uk', '.ngo'), SEG_NGO),
 )
 
-# Whole domains (not suffixes) that are academic but end in a country TLD with no
-# academic marker -- the long tail of European universities.
+# Academic naming conventions in country TLDs that carry no .edu/.ac marker.
+# Patterns, not named institutions.
 ACADEMIC_DOMAIN_PREFIXES = ('uni-', 'tu-', 'uni.', 'univ-', 'hs-', 'fh-')
 ACADEMIC_DOMAIN_KEYWORDS = ('universit', 'hochschule', 'polytech')
 
-# Country-coded academic domains that carry no .edu/.ac marker at all. Kept as an
-# explicit set so a random .ee or .it domain is not silently called a university.
-ACADEMIC_EXACT_DOMAINS = frozenset({
-    'tlu.ee', 'ufu.br', 'unimi.it', 'ulaval.ca', 'uekat.pl', 'tuc.gr',
-    'hesge.ch', 'hr.nl', 'uni-weimar.de', 'uni-potsdam.de', 'tu-dortmund.de',
-    'feps.edu.eg', 'plymouth.ac.uk', 'cardiff.ac.uk', 'york.ac.uk',
-})
+
+def load_domain_map():
+    """`{domain: cohort_slug}` from the database rules -- one query.
+
+    Pass the result to `classify_segment` when classifying many users, so a bulk
+    run does not query per address (design D3).
+    """
+    return dict(
+        DomainSegmentRule.objects
+        .filter(cohort__dimension__slug=DIM_SEGMENT)
+        .values_list('domain', 'cohort__slug')
+    )
 
 
-def classify_segment(email):
+def classify_segment(email, domain_map=None):
     """Propose a segment cohort slug for an email address, or None.
 
-    Freemail and unparseable addresses yield None on purpose: an absent signal is
-    not evidence of a segment, and leaving the user unassigned keeps the
-    dashboard's "unclassified" figure honest (design D3).
+    Order: database domain rule, student marker, suffix rule, academic naming
+    convention. Freemail and unparseable addresses yield None on purpose -- an
+    absent signal is not evidence of a segment, and leaving the user unassigned
+    keeps the dashboard's "unclassified" figure honest.
+
+    `domain_map` short-circuits the database lookup; see `load_domain_map`.
     """
     domain = _domain(email)
     if not domain or domain in FREEMAIL_DOMAINS:
         return None
 
-    if domain in CURATED_DOMAIN_SEGMENTS:
-        return CURATED_DOMAIN_SEGMENTS[domain]
+    if domain_map is None:
+        rule = (DomainSegmentRule.objects
+                .filter(domain=domain, cohort__dimension__slug=DIM_SEGMENT)
+                .values_list('cohort__slug', flat=True)
+                .first())
+        if rule:
+            return rule
+    elif domain in domain_map:
+        return domain_map[domain]
 
     if any(marker in domain for marker in STUDENT_MARKERS):
         return SEG_STUDENT_COHORT
@@ -111,8 +95,6 @@ def classify_segment(email):
         if any(domain == s.lstrip('.') or domain.endswith(s) for s in suffixes):
             return slug
 
-    if domain in ACADEMIC_EXACT_DOMAINS:
-        return SEG_UNIVERSITY
     if domain.startswith(ACADEMIC_DOMAIN_PREFIXES):
         return SEG_UNIVERSITY
     if any(kw in domain for kw in ACADEMIC_DOMAIN_KEYWORDS):
@@ -133,7 +115,7 @@ def assign_cohort(user, cohort, source='manual', note=''):
 
     Returns the `UserCohort` row, or None when an automatic rule declined to
     touch a manual assignment. Automatic classification must never overwrite a
-    human decision (design D2).
+    human decision (user-cohorts design, D2).
     """
     existing = UserCohort.objects.filter(
         user=user, dimension=cohort.dimension,

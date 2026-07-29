@@ -10,7 +10,7 @@ from .models import (
     SurveySession,
     SurveySectionTranslation, QuestionTranslation,
     Story, FunnelReport, SignupAttribution, AuditLog,
-    Cohort, CohortDimension, UserCohort,
+    Cohort, CohortDimension, UserCohort, DomainSegmentRule,
     CreatorNote, CreatorProfile,
 )
 from .funnel import dashboard_context
@@ -121,11 +121,22 @@ class CohortDimensionAdmin(admin.ModelAdmin):
 class CohortAdmin(admin.ModelAdmin):
     list_display = ('name', 'dimension', 'slug', 'order', 'assigned_users')
     list_filter = ('dimension',)
+    search_fields = ('name', 'slug')
     prepopulated_fields = {'slug': ('name',)}
 
     @admin.display(description='Users')
     def assigned_users(self, obj):
         return obj.assignments.count()
+
+
+@admin.register(DomainSegmentRule)
+class DomainSegmentRuleAdmin(admin.ModelAdmin):
+    """Domain -> segment rules. Deliberately not in source: the repo is public."""
+
+    list_display = ('domain', 'cohort', 'note')
+    list_filter = ('cohort',)
+    search_fields = ('domain', 'note')
+    autocomplete_fields = ('cohort',)
 
 
 @admin.register(UserCohort)
