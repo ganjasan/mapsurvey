@@ -10,7 +10,8 @@ from .models import (
     SurveySession,
     SurveySectionTranslation, QuestionTranslation,
     Story, FunnelReport, SignupAttribution, AuditLog,
-    Cohort, CohortDimension, UserCohort,
+    Cohort, CohortDimension, UserCohort, DomainSegmentRule,
+    CreatorNote, CreatorProfile,
 )
 from .funnel import dashboard_context
 from leaflet.admin import LeafletGeoAdmin
@@ -120,11 +121,22 @@ class CohortDimensionAdmin(admin.ModelAdmin):
 class CohortAdmin(admin.ModelAdmin):
     list_display = ('name', 'dimension', 'slug', 'order', 'assigned_users')
     list_filter = ('dimension',)
+    search_fields = ('name', 'slug')
     prepopulated_fields = {'slug': ('name',)}
 
     @admin.display(description='Users')
     def assigned_users(self, obj):
         return obj.assignments.count()
+
+
+@admin.register(DomainSegmentRule)
+class DomainSegmentRuleAdmin(admin.ModelAdmin):
+    """Domain -> segment rules. Deliberately not in source: the repo is public."""
+
+    list_display = ('domain', 'cohort', 'note')
+    list_filter = ('cohort',)
+    search_fields = ('domain', 'note')
+    autocomplete_fields = ('cohort',)
 
 
 @admin.register(UserCohort)
@@ -159,11 +171,32 @@ class CohortMembershipInline(admin.TabularInline):
     verbose_name_plural = 'Cohorts (analytical labels only)'
 
 
-class UserAdmin(DjangoUserAdmin):
-    """Django's user admin plus cohort membership and a bulk assign action."""
+class CreatorProfileInline(admin.StackedInline):
+    model = CreatorProfile
+    extra = 0
+    can_delete = True
+    fields = (
+        ('organization', 'role'), ('country', 'how_found_us'),
+        ('linkedin_url', 'website'), 'summary',
+    )
+    verbose_name_plural = 'Creator profile (staff-only, never shown to the user)'
 
-    inlines = [CohortMembershipInline]
-    list_display = DjangoUserAdmin.list_display + ('cohort_labels',)
+
+class CreatorNoteInline(admin.TabularInline):
+    model = CreatorNote
+    fk_name = 'user'
+    extra = 0
+    fields = ('happened_on', 'kind', 'body', 'author', 'source_path')
+    readonly_fields = ('source_path',)
+    ordering = ('-happened_on', '-id')
+    verbose_name_plural = 'Notes (append-only: add new ones, do not rewrite history)'
+
+
+class UserAdmin(DjangoUserAdmin):
+    """Django's user admin plus cohorts, the creator dossier and a bulk assign action."""
+
+    inlines = [CreatorProfileInline, CohortMembershipInline, CreatorNoteInline]
+    list_display = DjangoUserAdmin.list_display + ('organization', 'cohort_labels')
     actions = ['assign_cohort_action']
 
     @admin.display(description='Cohorts')
@@ -172,8 +205,15 @@ class UserAdmin(DjangoUserAdmin):
             a.cohort.name for a in obj.cohorts.all().select_related('cohort')
         ) or '—'
 
+    @admin.display(description='Organisation')
+    def organization(self, obj):
+        profile = getattr(obj, 'creator_profile', None)
+        return (profile.organization if profile else '') or '—'
+
     def get_queryset(self, request):
-        return super().get_queryset(request).prefetch_related('cohorts__cohort')
+        return (super().get_queryset(request)
+                .select_related('creator_profile')
+                .prefetch_related('cohorts__cohort'))
 
     @admin.action(description='Assign a cohort to selected users')
     def assign_cohort_action(self, request, queryset):
@@ -201,6 +241,30 @@ class UserAdmin(DjangoUserAdmin):
             'form': form,
             'action_checkbox_name': admin_helpers.ACTION_CHECKBOX_NAME,
         })
+
+
+@admin.register(CreatorNote)
+class CreatorNoteAdmin(admin.ModelAdmin):
+    """Cross-user reading of the timeline: what did we learn, and when."""
+
+    list_display = ('happened_on', 'user', 'kind', 'author', 'excerpt')
+    list_filter = ('kind', 'happened_on')
+    search_fields = ('user__username', 'user__email', 'body', 'source_path')
+    date_hierarchy = 'happened_on'
+    autocomplete_fields = ('user', 'author')
+
+    @admin.display(description='Note')
+    def excerpt(self, obj):
+        text = ' '.join(obj.body.split())
+        return text[:110] + ('…' if len(text) > 110 else '')
+
+
+@admin.register(CreatorProfile)
+class CreatorProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'organization', 'role', 'country', 'updated_at')
+    list_filter = ('country',)
+    search_fields = ('user__username', 'user__email', 'organization', 'role', 'summary')
+    autocomplete_fields = ('user',)
 
 
 User = get_user_model()

@@ -62,6 +62,11 @@
 
 ## 7. Production classification pass
 
-- [ ] Run `assign_cohorts` dry-run against prod, review, then `--apply`.
-- [ ] Manual pass over freemail-with-dossier users from
-      `docs/marketing/user-outreach/` via the admin bulk action.
+- [x] Domain rules applied to prod 2026-07-29: 77 of 276 accounts classified.
+- [x] Manual pass over freemail users from `docs/marketing/user-outreach/`
+      dossiers plus targeted web research: 82 manual labels, incl. the 33-account
+      ITS Surabaya / FTSPK course cluster.
+- [x] `docs/marketing/cohorts/segment-manual-2026-07-29.csv` regenerated from the
+      production `source='manual'` rows, so re-applying it reproduces the state.
+- [x] 117 accounts left unclassified on purpose (only 28 of them have any
+      activity); no label was guessed where research came up empty.

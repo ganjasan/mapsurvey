@@ -11,9 +11,9 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
 from survey.cohorts import (
-    DIM_SEGMENT, assign_cohort, classify_segment, get_cohort,
+    DIM_SEGMENT, assign_cohort, classify_segment, get_cohort, load_domain_map,
 )
-from survey.models import UserCohort
+from survey.models import DomainSegmentRule, UserCohort
 
 User = get_user_model()
 
@@ -31,6 +31,12 @@ class Command(BaseCommand):
             help='Also classify staff and superuser accounts (skipped by default).',
         )
         parser.add_argument(
+            '--rules-csv', dest='rules_csv', metavar='PATH',
+            help='Upsert domain -> cohort rules from a "domain,cohort[,note]" file. '
+                 'The real rule set is gitignored (the repository is public and the '
+                 'domains are our customer roster), so this is how it is reproduced.',
+        )
+        parser.add_argument(
             '--from-csv', dest='from_csv', metavar='PATH',
             help='Apply a curated list instead of the domain rules. CSV columns: '
                  'username, cohort slug, [note]. Rows are written as manual '
@@ -39,6 +45,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         apply_changes = options['apply']
+        if options['rules_csv']:
+            return self._handle_rules_csv(options['rules_csv'], apply_changes)
         if options['from_csv']:
             return self._handle_csv(options['from_csv'], apply_changes)
         users = User.objects.all().order_by('id')
@@ -56,6 +64,7 @@ class Command(BaseCommand):
             .values_list('user_id', 'cohort__slug')
         )
 
+        domain_map = load_domain_map()
         cohort_cache = {}
         proposed = Counter()
         changes = []
@@ -63,7 +72,7 @@ class Command(BaseCommand):
         unclassified = 0
 
         for user in users:
-            slug = classify_segment(user.email)
+            slug = classify_segment(user.email, domain_map=domain_map)
             if slug is None:
                 unclassified += 1
                 continue
@@ -102,6 +111,57 @@ class Command(BaseCommand):
         for slug, count in proposed.most_common():
             self.stdout.write(f'    {slug:18} {count}')
 
+        self._finish(apply_changes)
+
+    def _handle_rules_csv(self, path, apply_changes):
+        """Upsert domain -> cohort rules from a local file.
+
+        Kept out of a data migration on purpose: a migration carrying these
+        domains would put the customer list straight back into the repository,
+        which is the thing being fixed (design D4).
+        """
+        cohort_cache = {}
+        created = updated = skipped = 0
+
+        with open(path, newline='', encoding='utf-8') as handle:
+            for lineno, row in enumerate(csv.reader(handle), start=1):
+                row = [c.strip() for c in row if c.strip() != '']
+                if not row or row[0].startswith('#'):
+                    continue
+                if len(row) < 2:
+                    self.stderr.write(self.style.WARNING(
+                        f'line {lineno}: expected "domain,cohort[,note]" -- skipped'
+                    ))
+                    continue
+                domain, cohort_slug = row[0].lower(), row[1]
+                note = row[2] if len(row) > 2 else ''
+
+                if cohort_slug not in cohort_cache:
+                    cohort_cache[cohort_slug] = get_cohort(DIM_SEGMENT, cohort_slug)
+                cohort = cohort_cache[cohort_slug]
+                if cohort is None:
+                    skipped += 1
+                    self.stderr.write(self.style.WARNING(
+                        f'line {lineno}: no cohort "{DIM_SEGMENT}/{cohort_slug}" -- skipped'
+                    ))
+                    continue
+
+                existing = DomainSegmentRule.objects.filter(domain=domain).first()
+                if existing is None:
+                    created += 1
+                elif existing.cohort_id != cohort.id:
+                    updated += 1
+                else:
+                    continue
+
+                if apply_changes:
+                    DomainSegmentRule.objects.update_or_create(
+                        domain=domain, defaults={'cohort': cohort, 'note': note},
+                    )
+
+        self.stdout.write(f'Rules to create:  {created}')
+        self.stdout.write(f'Rules to update:  {updated}')
+        self.stdout.write(f'Rows skipped:     {skipped}')
         self._finish(apply_changes)
 
     def _handle_csv(self, path, apply_changes):
