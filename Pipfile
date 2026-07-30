@@ -23,6 +23,9 @@ pillow = "*"
 celery = {extras = ["redis"], version = "*"}
 django-ratelimit = "*"
 django-redis = "*"
+requests = "*"
+google-api-python-client = "*"
+google-auth = "*"
 
 [requires]
 python_version = "3.9"

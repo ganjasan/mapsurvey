@@ -260,6 +260,32 @@ PLAUSIBLE_SCRIPT_URL = os.environ.get('PLAUSIBLE_SCRIPT_URL', '')
 # Google Search Console verification token (meta-tag method); empty = tag not rendered.
 GOOGLE_SITE_VERIFICATION = os.environ.get('GOOGLE_SITE_VERIFICATION', '')
 
+# Acquisition metrics sync (top of the creator funnel).
+# Every credential below defaults to empty: unset means "not configured", which the
+# funnel dashboard renders as such instead of as a zero.
+GSC_SITE = os.environ.get('GSC_SITE', 'sc-domain:mapsurvey.org')
+# Service-account key as JSON in the environment (production; Render has no secret files).
+GSC_SERVICE_ACCOUNT_JSON = os.environ.get('GSC_SERVICE_ACCOUNT_JSON', '')
+# Local-development fallback: the same key as a file on disk. No default path -- this
+# repository is public, and a hardcoded path would publish the GCP project and key
+# filename for no benefit. Set GSC_KEY in your (gitignored) .env instead.
+GSC_KEY_PATH = os.path.expanduser(os.environ.get('GSC_KEY', ''))
+PLAUSIBLE_API_KEY = os.environ.get('PLAUSIBLE_API_KEY', '')
+PLAUSIBLE_SITE_ID = os.environ.get('PLAUSIBLE_SITE_ID', 'mapsurvey.org')
+
+# What the "marketing pages" GSC segment excludes. Defined by exclusion because the
+# set of app prefixes is stable while marketing landings keep being added -- an
+# allow-list would silently drop each new SEO landing out of the funnel.
+# Survey pages matter most: their impressions are our customers' respondents finding
+# their own survey, traffic that can never convert into a registration.
+ACQUISITION_NON_MARKETING_PREFIXES = (
+    '/surveys/', '/accounts/', '/admin/', '/editor/', '/org/', '/invitations/',
+    '/internal/', '/nl/', '/i18n/', '/media/', '/static/', '/staticfiles/',
+    '/__debug__/',
+)
+# A configured source that has not synced successfully within this many hours is stale.
+ACQUISITION_STALE_HOURS = int(os.environ.get('ACQUISITION_STALE_HOURS', 48))
+
 # Landing page
 CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'konuchovartem@mapsurvey.org')
 CONTACT_TELEGRAM = os.environ.get('CONTACT_TELEGRAM', 'Konuchovartem')

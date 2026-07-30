@@ -1016,3 +1016,145 @@ class CreatorNote(models.Model):
     def __str__(self):
         return f"{self.user_id} {self.happened_on:%Y-%m-%d} {self.kind}"
 
+
+# -- acquisition metrics (top of the creator funnel) ---------------------------
+
+ACQUISITION_SOURCES = (
+    ('gsc', 'Google Search Console'),
+    ('plausible', 'Plausible'),
+)
+
+# Sync state, derived rather than stored: see AcquisitionSyncState.state.
+SYNC_NOT_CONFIGURED = 'not_configured'
+SYNC_OK = 'ok'
+SYNC_FAILING = 'failing'
+SYNC_NEVER_RUN = 'never_run'
+
+
+class AcquisitionDaily(models.Model):
+    """One day of metrics from one external analytics provider.
+
+    The funnel dashboard reads these rows instead of calling GSC/Plausible during a
+    request (design D1). Metrics that a source does not report stay NULL, so a
+    missing metric is distinguishable from a measured zero (D2).
+
+    `segment` slices the day within a source and its meaning is per-source (D3):
+
+    - `gsc`: `''` = the whole property, `marketing` = marketing pages only
+      (survey pages excluded -- those are our customers' respondents, not people
+      discovering Mapsurvey).
+    - `plausible`: `''` = whole site, `landing` = the landing page,
+      `src:<channel>` = visitors attributed to that referrer channel.
+    """
+
+    SEGMENT_ALL = ''
+    SEGMENT_MARKETING = 'marketing'
+    SEGMENT_LANDING = 'landing'
+    CHANNEL_PREFIX = 'src:'
+
+    source = models.CharField(max_length=20, choices=ACQUISITION_SOURCES)
+    date = models.DateField()
+    segment = models.CharField(
+        max_length=60, blank=True, default='',
+        help_text=_('Slice within the source; meaning depends on the source.'),
+    )
+
+    # Search Console metrics.
+    impressions = models.IntegerField(null=True, blank=True)
+    clicks = models.IntegerField(null=True, blank=True)
+    ctr = models.FloatField(null=True, blank=True)
+    position = models.FloatField(null=True, blank=True)
+
+    # Plausible metrics.
+    visitors = models.IntegerField(null=True, blank=True)
+    pageviews = models.IntegerField(null=True, blank=True)
+
+    synced_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'survey'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('source', 'date', 'segment'),
+                name='unique_acquisition_daily',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=('source', 'date')),
+        ]
+        ordering = ('-date', 'source', 'segment')
+
+    def __str__(self):
+        return f"{self.source} {self.date} {self.segment or 'all'}"
+
+    @property
+    def channel(self):
+        """Referrer channel for `src:<channel>` rows, else ''."""
+        if self.segment.startswith(self.CHANNEL_PREFIX):
+            return self.segment[len(self.CHANNEL_PREFIX):]
+        return ''
+
+
+class AcquisitionSyncState(models.Model):
+    """Per-source outcome of the last synchronisation attempt.
+
+    Read by the dashboard so a silently stalled cron job is visible next to the
+    numbers it feeds (design D6). A source that was never configured, one that is
+    configured and succeeding, and one that is configured but failing are three
+    different states and must not render alike.
+    """
+
+    source = models.CharField(max_length=20, choices=ACQUISITION_SOURCES, unique=True)
+    is_configured = models.BooleanField(default=False)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
+    last_success_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.TextField(blank=True, default='')
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('source',)
+
+    def __str__(self):
+        return f"{self.source}: {self.state}"
+
+    @property
+    def state(self):
+        if not self.is_configured:
+            return SYNC_NOT_CONFIGURED
+        if self.last_error:
+            return SYNC_FAILING
+        if self.last_success_at is None:
+            return SYNC_NEVER_RUN
+        return SYNC_OK
+
+
+class DemoOpen(models.Model):
+    """A respondent session started on the demo survey.
+
+    Written only for the survey behind `DEMO_SURVEY_URL`, which is ours -- its
+    respondents are prospects evaluating Mapsurvey. The user FK lives here rather
+    than on `SurveySession` so that recording it never starts linking our
+    customers' respondents to platform accounts (design D4).
+
+    Forward-only from deploy: the full-history *total* of demo opens is derived
+    from sessions, only the anonymous/signed-in split comes from these rows.
+    """
+
+    session = models.OneToOneField(
+        'SurveySession', on_delete=models.CASCADE, related_name='demo_open',
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='demo_opens',
+        help_text=_('Set when the demo was opened by a signed-in user; NULL = anonymous.'),
+    )
+    created_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('-created_at',)
+
+    def __str__(self):
+        who = self.user_id or 'anonymous'
+        return f"demo open {self.created_at:%Y-%m-%d} by {who}"
+

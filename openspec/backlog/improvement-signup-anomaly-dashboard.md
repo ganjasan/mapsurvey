@@ -8,7 +8,7 @@
 
 ## Description
 
-Admin-only view that surfaces registration anomalies in the last 24h / 7d. The 2026-05-07/08 bot incident was caught by happenstance — looking at the `/user-outreach` report and noticing 41 unfamiliar usernames. With a dashboard, the same pattern would have been visible in minutes.
+Admin-only view that surfaces registration anomalies in the last 24h / 7d. The 2026-05-07/08 bot incident was caught by happenstance — looking at the report from the daily GTM command (then `/user-outreach`, now `/gtm-daily`) and noticing 41 unfamiliar usernames. With a dashboard, the same pattern would have been visible in minutes.
 
 ## Goals
 
