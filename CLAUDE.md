@@ -79,6 +79,27 @@ Organization
 
 **Registration abuse prevention**: `/accounts/register/` is served by `AbuseProtectedRegistrationView` (subclass of `AsyncEmailRegistrationView`). Three layered defenses run in order: honeypot field `website` (silent fake-success redirect), per-IP rate limit (`django-ratelimit`, fail-open on Redis outage), Cloudflare Turnstile siteverify (fail-closed on network error, dev-bypass when `TURNSTILE_SECRET_KEY=""`). Helpers in `survey/abuse.py`. Audit log in `AbuseEvent` model. Real client IP via `survey.middleware.CloudflareIPMiddleware` reading `CF-Connecting-IP` only when `CLOUDFLARE_TRUSTED=True`.
 
+**Acquisition metrics (top of the funnel)**: the staff funnel dashboard at
+`/admin/survey/funnelreport/` shows Google impressions → landing visits → registrations → demo
+opens above the registration-onward stages. External numbers are never fetched during a request:
+`python manage.py sync_acquisition_metrics [--days N] [--source gsc|plausible]` pulls Search Console
+and Plausible into `AcquisitionDaily` (keyed by source/date/segment, re-runnable — a rerun overwrites
+the window, which is how GSC's retroactive revisions land). Run daily by the
+`mapsurvey-acquisition-sync` cron service; the provider keys live only on that service. Clients in
+`survey/acquisition.py`, dashboard aggregation in `survey/funnel.py` (`AcquisitionService`).
+Per-source state in `AcquisitionSyncState` surfaces "not configured" / "failing" / stale on the
+dashboard itself, so a stalled sync is visible where the numbers are read. GSC's "marketing pages"
+segment is defined by *excluding* `ACQUISITION_NON_MARKETING_PREFIXES` (`/surveys/` above all — those
+impressions are customers' respondents finding their own survey). **GSC aggregation gotcha**: Search
+Console counts impressions property-level when no page filter is present and page-level when one is,
+and the totals differ (1329 vs 1717 over the same 14 days). Both segments therefore query *with* a
+page filter — the whole-property one uses a match-everything expression solely to stay in page-level
+mode. Never drop that filter: mixing modes makes the marketing segment exceed the whole property. Our
+stored whole-property number reads higher than the GSC UI's total for the same window, by design. Demo opens: total from
+`SurveySession` on the `DEMO_SURVEY_URL` survey (retroactive), anonymous/signed-in split from
+`DemoOpen` (forward-only; the user FK lives there and never on `SurveySession`, which must not link
+customers' respondents to platform accounts).
+
 ### URL Structure
 
 - `/` - Redirects to login or editor
@@ -95,6 +116,10 @@ Required in `.env`:
 - `SECRET_KEY`, `DEBUG`, `DJANGO_ALLOWED_HOSTS`
 - Database: `SQL_ENGINE`, `SQL_DATABASE`, `SQL_USER`, `SQL_PASSWORD`, `SQL_HOST`, `SQL_PORT`
 - Optional S3: `USE_S3=TRUE`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_STORAGE_BUCKET_NAME`
+- Acquisition metrics (optional; unset = "not configured" on the dashboard, never a zero):
+  `GSC_SITE`, `GSC_SERVICE_ACCOUNT_JSON` (key contents; production) or `GSC_KEY` (key file path;
+  local dev), `PLAUSIBLE_API_KEY`, `PLAUSIBLE_SITE_ID`. See `.env.example`. **This repo is public**
+  — no key path is defaulted in `settings.py`; keep the path in your gitignored `.env`
 
 ### GeoDjango Notes
 

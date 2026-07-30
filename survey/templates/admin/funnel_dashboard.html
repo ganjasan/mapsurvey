@@ -30,6 +30,7 @@
   .fn table.funnel th{background:var(--darkened-bg,#fafafa);font-size:11px;text-transform:uppercase;letter-spacing:.04em;opacity:.75}
   .fn .win{background:rgba(74,120,184,.08)}
   .fn .subtle{opacity:.6;font-size:11px}
+  .fn .na{opacity:.45;font-weight:400}
   .fn .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
   .fn .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .fn .panel{background:var(--darkened-bg,#f8f8f8);border:1px solid var(--hairline-color,#e4e4e4);border-radius:8px;padding:12px 14px}
@@ -47,8 +48,9 @@
 <div class="fn">
   <div class="toolbar">
     <div class="nav">
-      <a href="#goals">① Goals</a><a href="#week">② This week</a><a href="#audience">③ Audience</a>
-      <a href="#cohorts">④ Monthly cohorts</a><a href="#living">⑤ Living users</a><a href="#actions">⑥ Actions</a>
+      <a href="#goals">① Goals</a><a href="#acquisition">② Acquisition</a><a href="#week">③ This week</a>
+      <a href="#audience">④ Audience</a><a href="#cohorts">⑤ Monthly cohorts</a>
+      <a href="#living">⑥ Living users</a><a href="#actions">⑦ Actions</a>
     </div>
     <div class="seg" title="Chart period">
       <a href="?weeks=12" {% if weeks_sel == "12" %}class="on"{% endif %}>12 weeks</a>
@@ -76,8 +78,98 @@
     {% endfor %}
   </div>
 
-  {# ② THIS WEEK #}
-  <h2 id="week"><span class="step">2</span>This week</h2>
+  {# ② ACQUISITION — top of the funnel, before registration #}
+  <h2 id="acquisition"><span class="step">2</span>Acquisition
+    <span class="sub">— {{ acq.start }} → {{ acq.end }} ({{ acq.days }}d, ends {{ acq.lag_days }}d back: Search Console lags)</span></h2>
+
+  <div class="cards">
+    {% for st in acq.stages %}
+    <div class="card">
+      <div class="lbl">{{ st.label }}</div>
+      {% if st.known %}
+      <div class="num">{{ st.value }}</div>
+      <div class="goal">{{ st.source }}</div>
+      <div class="goal subtle">{{ st.note }}</div>
+      {% else %}
+      <div class="num na">—</div>
+      <div class="goal">{{ st.source }}</div>
+      <div class="goal subtle">{{ st.unavailable }}</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="grid3" style="margin-top:12px">
+    <div class="panel">
+      <h3>Step conversion</h3>
+      <table class="funnel">
+        <tr><th>Step</th><th>Rate</th></tr>
+        {% for c in acq.conversions %}
+        <tr><td>{{ c.label }}</td>
+          <td>{% if c.known %}{{ c.pct }}%{% else %}<span class="na">—</span>{% endif %}</td></tr>
+        {% endfor %}
+      </table>
+      <div class="subtle" style="margin-top:6px">
+        Ratios across four separate measurement systems, not one cohort tracked down a
+        funnel: Search Console impressions, Plausible visitors (ad-blocked traffic
+        missing), and our own database. Read the trend, not the absolute drop-off.
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Landing visits by channel</h3>
+      {% if acq.channels.available %}
+      <table class="funnel">
+        <tr><th>Channel</th><th>Visitors</th></tr>
+        {% for r in acq.channels.rows %}<tr><td>{{ r.channel }}</td><td>{{ r.visitors }}</td></tr>{% endfor %}
+      </table>
+      {% else %}
+      <div class="subtle">{{ acq.channels.unavailable }}</div>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <h3>Demo opens</h3>
+      {% if acq.demo.stage.known %}
+      <div class="num" style="font-size:25px;font-weight:700">{{ acq.demo.stage.value }}</div>
+      <div class="lbl" style="text-transform:uppercase;font-size:11px;opacity:.7">sessions in window</div>
+      {% if acq.demo.split_known %}
+      <table class="funnel" style="margin-top:8px">
+        <tr><th>Opened by</th><th>Count</th></tr>
+        <tr><td>Anonymous (pre-signup)</td><td>{{ acq.demo.anonymous }}</td></tr>
+        <tr><td>Signed-in (onboarding)</td><td>{{ acq.demo.signed_in }}</td></tr>
+      </table>
+      <div class="subtle" style="margin-top:6px">
+        Split recorded since {{ acq.demo.split_since }}; the total above covers all
+        sessions, including ones from before that date.
+      </div>
+      {% else %}
+      <div class="subtle" style="margin-top:6px">
+        Anonymous/signed-in split not recorded yet — it starts from deploy, with no backfill.
+      </div>
+      {% endif %}
+      <div class="subtle" style="margin-top:6px">Survey: <b>{{ acq.demo.survey_name }}</b></div>
+      {% else %}
+      <div class="subtle">{{ acq.demo.stage.unavailable }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <p class="subtle" style="margin:8px 0 0">
+    {% if acq.clicks.known %}Google clicks in window: <b>{{ acq.clicks.value }}</b> · {% endif %}
+    Sync:
+    {% for f in acq.freshness %}
+      <b>{{ f.source }}</b>
+      {% if f.state == 'not_configured' %}not configured{% if f.error %} ({{ f.error }}){% endif %}
+      {% elif f.state == 'never_run' %}configured, never synced
+      {% elif f.state == 'failing' %}<span class="tag bad">failing</span> {{ f.error }}
+      {% else %}last success {{ f.age_hours }}h ago{% if f.stale %} <span class="tag warn">stale</span>{% endif %}
+      {% endif %}{% if not forloop.last %} · {% endif %}
+    {% endfor %}
+  </p>
+
+  {# ③ THIS WEEK #}
+  <h2 id="week"><span class="step">3</span>This week</h2>
   <div class="grid3">
     <div class="panel">
       <h3>Registrations by source <span class="subtle">(7d)</span></h3>
@@ -112,8 +204,8 @@
     </div>
   </div>
 
-  {# ③ AUDIENCE #}
-  <h2 id="audience"><span class="step">3</span>Audience mix
+  {# ④ AUDIENCE #}
+  <h2 id="audience"><span class="step">4</span>Audience mix
     <span class="sub">— who the creators are, sliced by every cohort dimension</span></h2>
   {% for block in cohort_blocks %}
   <table class="funnel">
@@ -151,8 +243,8 @@
     via the bulk action on the <a href="{% url 'admin:auth_user_changelist' %}">user list</a>. “Unclassified” is
     therefore a metric in its own right: the share of the base we cannot yet name.</div>
 
-  {# ④ MONTHLY COHORTS #}
-  <h2 id="cohorts"><span class="step">4</span>Monthly cohort funnel <span class="sub">— time-boxed columns make young &amp; old cohorts comparable</span></h2>
+  {# ⑤ MONTHLY COHORTS #}
+  <h2 id="cohorts"><span class="step">5</span>Monthly cohort funnel <span class="sub">— time-boxed columns make young &amp; old cohorts comparable</span></h2>
   <table class="funnel">
     <thead>
       <tr>
@@ -189,8 +281,8 @@
   <div class="subtle">Highlighted columns are time-boxed (published within {{ 14 }} days of signup — approx: created-and-now-published; 5th response within 30 days). This is how H2 (templates/onboarding) is judged cohort-over-cohort without the “older cohort had more time” bias.</div>
   <div class="subtle">Activated = clicked the emailed activation link. Logged in = signed in at least once afterwards. Regs→Activated measures email deliverability; Activated→Logged&nbsp;in was a pure UX leak until auto-login-on-activation shipped, so expect that gap to close from that cohort onward. Both are point-in-time, not as-of-cohort-age.</div>
 
-  {# ⑤ LIVING USERS #}
-  <h2 id="living"><span class="step">5</span>Living users &amp; trends
+  {# ⑥ LIVING USERS #}
+  <h2 id="living"><span class="step">6</span>Living users &amp; trends
     <span class="sub">— active = logged in / edited / collected a response in the window; returned = creator action after signup</span></h2>
   <div class="cards">
     {% with a=active %}
@@ -236,8 +328,8 @@
     </tbody>
   </table>
 
-  {# ⑥ ACTIONS #}
-  <h2 id="actions"><span class="step">6</span>Action lists <span class="sub">— the dashboard as a campaign tool, not a display</span></h2>
+  {# ⑦ ACTIONS #}
+  <h2 id="actions"><span class="step">7</span>Action lists <span class="sub">— the dashboard as a campaign tool, not a display</span></h2>
   <div class="grid2">
     <div class="panel">
       <h3>Dormant valuable <span class="subtle">— institutional domain, 0 surveys → outreach</span></h3>

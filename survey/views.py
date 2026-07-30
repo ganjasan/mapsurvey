@@ -22,6 +22,7 @@ from .events import (
     emit_event, build_session_start_metadata, store_utm_in_session,
     capture_signup_source, persist_signup_attribution,
 )
+from .acquisition import record_demo_open
 from .seo_landings import (
     SEO_LANDINGS, render_seo_landing, Crumb, HOME,
     build_breadcrumb_jsonld, build_story_collection_jsonld,
@@ -595,6 +596,7 @@ def survey_language_select(request, survey_slug):
 			request.session['survey_session_id'] = survey_session.id
 			request.session['survey_language'] = selected_language
 			emit_event(survey_session, 'session_start', build_session_start_metadata(request))
+			record_demo_open(survey_session, request)
 
 			# Redirect to first section
 			start_section = survey.start_section()
@@ -763,6 +765,7 @@ def survey_section(request, survey_slug, section_name):
 		survey_session.save()
 		request.session['survey_session_id'] = survey_session.id
 		emit_event(survey_session, 'session_start', build_session_start_metadata(request))
+		record_demo_open(survey_session, request)
 
 	# Version routing: use the session's survey for section lookup
 	# (may be an archived version if respondent started before a new version was published)
@@ -777,6 +780,7 @@ def survey_section(request, survey_slug, section_name):
 			survey_session.save()
 			request.session['survey_session_id'] = survey_session.id
 			emit_event(survey_session, 'session_start', build_session_start_metadata(request))
+			record_demo_open(survey_session, request)
 
 	section = SurveySection.objects.get(Q(survey_header=session_survey) & Q(name=section_name))
 

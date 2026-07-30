@@ -14,12 +14,17 @@ import statistics
 from collections import Counter, deque
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Max, Min
+from django.db.models import Count, Max, Min, Sum
 from django.db.models.functions import TruncMonth, TruncWeek
 from django.utils import timezone
 
-from .models import SurveyHeader, Question, SurveySession, UserActivity
+from .models import (
+    AcquisitionDaily, AcquisitionSyncState, DemoOpen, SurveyHeader, Question,
+    SurveySession, UserActivity,
+    SYNC_FAILING, SYNC_NEVER_RUN, SYNC_NOT_CONFIGURED, SYNC_OK,
+)
 
 User = get_user_model()
 
@@ -581,6 +586,237 @@ class CreatorFunnelService:
         }
 
 
+# -- top of the funnel: acquisition ------------------------------------------
+
+# GSC revises recent days, so the window ends before them (mirrors acquisition.GSC_LAG_DAYS).
+ACQUISITION_LAG_DAYS = 2
+
+# Default window for the acquisition block, in days.
+ACQUISITION_WINDOW_DAYS = 30
+
+
+def _stage(label, value, source, note='', unavailable=''):
+    """One acquisition stage.
+
+    `value is None` together with a filled `unavailable` is the "we do not know" state.
+    It must never be rendered as 0: a broken sync and a genuinely quiet week look
+    identical as a zero, and the two lead to opposite decisions (design D6).
+    """
+    return {
+        'label': label,
+        'value': value,
+        'source': source,
+        'note': note,
+        'unavailable': unavailable,
+        'known': value is not None,
+    }
+
+
+def _conversion(label, upper, lower):
+    """Rate between two stages, unknown when either side is unknown.
+
+    A rate against a missing numerator or denominator is not a smaller number, it is
+    no number at all -- so unavailability propagates instead of collapsing to 0%.
+    """
+    if not upper['known'] or not lower['known'] or not upper['value']:
+        return {'label': label, 'pct': None, 'known': False}
+    return {'label': label, 'pct': round(100 * lower['value'] / upper['value'], 1),
+            'known': True}
+
+
+class AcquisitionService:
+    """The pre-registration funnel, read entirely from locally stored metrics.
+
+    Impressions and landing visits come from `AcquisitionDaily` (synced out of band),
+    registrations and demo opens from our own tables. Nothing here calls an external
+    API -- see design D1.
+    """
+
+    def __init__(self, days=ACQUISITION_WINDOW_DAYS, today=None):
+        self.days = max(1, days)
+        today = today or timezone.localdate()
+        self.end = today - timedelta(days=ACQUISITION_LAG_DAYS)
+        self.start = self.end - timedelta(days=self.days - 1)
+        self._states = None
+
+    # -- source state ---------------------------------------------------------
+
+    def states(self):
+        """source -> AcquisitionSyncState, with a placeholder for sources never run."""
+        if self._states is None:
+            found = {s.source: s for s in AcquisitionSyncState.objects.all()}
+            for source in ('gsc', 'plausible'):
+                found.setdefault(source, AcquisitionSyncState(source=source))
+            self._states = found
+        return self._states
+
+    def _unavailable_reason(self, source, has_rows):
+        """Why a source's numbers cannot be shown, or '' when they can."""
+        state = self.states()[source]
+        if state.state == SYNC_NOT_CONFIGURED:
+            return state.last_error or 'not configured'
+        if state.state == SYNC_NEVER_RUN and not has_rows:
+            return 'configured but never synced'
+        if not has_rows and not state.last_success_at:
+            return 'no data synced yet'
+        return ''
+
+    def freshness(self):
+        """Per-source sync state for display: age of the last success and staleness."""
+        now = timezone.now()
+        stale_after = timedelta(hours=getattr(settings, 'ACQUISITION_STALE_HOURS', 48))
+        out = []
+        for source in ('gsc', 'plausible'):
+            state = self.states()[source]
+            age = (now - state.last_success_at) if state.last_success_at else None
+            out.append({
+                'source': source,
+                'state': state.state,
+                'configured': state.is_configured,
+                'last_success': state.last_success_at,
+                'age_hours': round(age.total_seconds() / 3600, 1) if age else None,
+                'stale': bool(state.is_configured and (age is None or age > stale_after)),
+                'error': state.last_error,
+            })
+        return out
+
+    # -- stages ---------------------------------------------------------------
+
+    def _sum(self, source, segment, field):
+        """Summed metric over the window, plus whether any row existed at all."""
+        qs = AcquisitionDaily.objects.filter(
+            source=source, segment=segment, date__gte=self.start, date__lte=self.end,
+        )
+        total = qs.aggregate(n=Sum(field))['n']
+        # "Any row for this source" (not just this window) separates a never-synced
+        # source from one that synced fine over a period with nothing to report.
+        any_row = AcquisitionDaily.objects.filter(source=source).exists()
+        return total, any_row
+
+    def impressions(self):
+        total, any_row = self._sum('gsc', AcquisitionDaily.SEGMENT_MARKETING, 'impressions')
+        reason = self._unavailable_reason('gsc', any_row)
+        if reason:
+            return _stage('Google impressions', None, 'Search Console', unavailable=reason)
+        return _stage('Google impressions', total or 0, 'Search Console',
+                      note='marketing pages, survey pages excluded')
+
+    def google_clicks(self):
+        total, any_row = self._sum('gsc', AcquisitionDaily.SEGMENT_MARKETING, 'clicks')
+        reason = self._unavailable_reason('gsc', any_row)
+        if reason:
+            return _stage('Google clicks', None, 'Search Console', unavailable=reason)
+        return _stage('Google clicks', total or 0, 'Search Console',
+                      note='organic clicks from search')
+
+    def landing_visits(self):
+        total, any_row = self._sum('plausible', AcquisitionDaily.SEGMENT_LANDING, 'visitors')
+        reason = self._unavailable_reason('plausible', any_row)
+        if reason:
+            return _stage('Landing visits', None, 'Plausible', unavailable=reason)
+        return _stage('Landing visits', total or 0, 'Plausible',
+                      note='unique visitors on the landing page, all channels')
+
+    def registrations(self):
+        """Real signups in the window -- same population the cohort funnel counts."""
+        n = (get_user_model().objects
+             .filter(is_staff=False, is_superuser=False,
+                     date_joined__date__gte=self.start, date_joined__date__lte=self.end)
+             .count())
+        return _stage('Registrations', n, 'our database',
+                      note='staff and superusers excluded')
+
+    # -- demo -----------------------------------------------------------------
+
+    def demo(self):
+        """Demo opens: window total from sessions, plus the anonymous/signed-in split.
+
+        The total is retroactive across all history because it derives from sessions.
+        The split derives from `DemoOpen`, which only exists from deploy onward, so it
+        carries the date recording began rather than pretending earlier sessions were
+        anonymous (design D4).
+        """
+        from .acquisition import demo_survey
+
+        survey = demo_survey()
+        if survey is None:
+            return {
+                'stage': _stage('Demo opens', None, 'our database',
+                                unavailable='DEMO_SURVEY_URL unset or the survey no longer exists'),
+                'survey_name': '', 'split_known': False,
+            }
+
+        total = (SurveySession.objects
+                 .filter(survey=survey, is_deleted=False,
+                         start_datetime__date__gte=self.start,
+                         start_datetime__date__lte=self.end)
+                 .count())
+
+        opens = DemoOpen.objects.filter(
+            created_at__date__gte=self.start, created_at__date__lte=self.end,
+        )
+        anonymous = opens.filter(user__isnull=True).count()
+        signed_in = opens.filter(user__isnull=False).count()
+        since = DemoOpen.objects.aggregate(m=Min('created_at'))['m']
+
+        return {
+            'stage': _stage('Demo opens', total, 'our database',
+                            note='sessions started on the demo survey'),
+            'survey_name': survey.name or str(survey.uuid),
+            'split_known': since is not None,
+            'anonymous': anonymous,
+            'signed_in': signed_in,
+            'split_since': since.date() if since else None,
+        }
+
+    # -- channels -------------------------------------------------------------
+
+    def channels(self, limit=8):
+        """Landing traffic by referrer channel over the window, largest first."""
+        rows = (AcquisitionDaily.objects
+                .filter(source='plausible',
+                        segment__startswith=AcquisitionDaily.CHANNEL_PREFIX,
+                        date__gte=self.start, date__lte=self.end)
+                .values('segment')
+                .annotate(visitors=Sum('visitors'))
+                .order_by('-visitors')[:limit])
+        prefix = len(AcquisitionDaily.CHANNEL_PREFIX)
+        out = [{'channel': r['segment'][prefix:] or 'Direct / None',
+                'visitors': r['visitors'] or 0} for r in rows]
+        if out:
+            return {'available': True, 'rows': out, 'unavailable': ''}
+        reason = self._unavailable_reason(
+            'plausible', AcquisitionDaily.objects.filter(source='plausible').exists()
+        )
+        return {'available': False, 'rows': [],
+                'unavailable': reason or 'no channel data in this window'}
+
+    # -- assembled block ------------------------------------------------------
+
+    def block(self):
+        impressions = self.impressions()
+        visits = self.landing_visits()
+        regs = self.registrations()
+        demo = self.demo()
+
+        return {
+            'start': self.start,
+            'end': self.end,
+            'days': self.days,
+            'lag_days': ACQUISITION_LAG_DAYS,
+            'stages': [impressions, visits, regs, demo['stage']],
+            'clicks': self.google_clicks(),
+            'conversions': [
+                _conversion('impressions → visits', impressions, visits),
+                _conversion('visits → registrations', visits, regs),
+                _conversion('registrations → demo', regs, demo['stage']),
+            ],
+            'demo': demo,
+            'channels': self.channels(),
+            'freshness': self.freshness(),
+        }
+
+
 def bar_chart_geometry(series, value_key, width=760, height=170, pad=26):
     """Turn a weekly series into inline-SVG bar geometry (no chart library).
 
@@ -631,8 +867,14 @@ def dashboard_context(weeks=None):
     if weeks:
         weekly = weekly[-weeks:]
         activity = activity[-weeks:]
+    # The acquisition window follows the period selector so the top of the funnel and
+    # the charts below describe the same stretch of time. "All" has no useful meaning
+    # for it (GSC history only starts at property verification), so it falls back to
+    # the default window.
+    acq_days = weeks * 7 if weeks else ACQUISITION_WINDOW_DAYS
     return {
         "weeks": weeks,
+        "acq": AcquisitionService(days=acq_days).block(),
         "goals": s.goals(),
         "sources": s.signups_by_source(),
         "cohort_blocks": s.cohort_breakdown(),

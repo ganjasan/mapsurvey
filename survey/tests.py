@@ -16724,3 +16724,622 @@ class DomainRuleLoadingTest(TestCase):
         self.assertEqual(
             UserCohort.objects.get(user__username="a").cohort.slug, "consultancy",
         )
+
+
+# =============================================================================
+# Acquisition funnel: the stages before registration
+# =============================================================================
+
+import datetime as _dt
+from unittest.mock import patch
+
+from django.contrib.auth.models import AnonymousUser
+from django.core.cache import cache as _cache
+
+from survey.acquisition import (
+    NotConfigured, ProviderError, demo_survey_uuid, exclusion_regex, record_demo_open,
+)
+from survey.funnel import ACQUISITION_LAG_DAYS, AcquisitionService
+from survey.models import AcquisitionDaily, AcquisitionSyncState, DemoOpen
+
+
+def _acq_window(days=30, today=None):
+    """The same window AcquisitionService derives, for placing test rows inside it."""
+    today = today or timezone.localdate()
+    end = today - _dt.timedelta(days=ACQUISITION_LAG_DAYS)
+    return end - _dt.timedelta(days=days - 1), end
+
+
+def _gsc_row(date, segment, impressions=0, clicks=0):
+    return AcquisitionDaily.objects.create(
+        source="gsc", date=date, segment=segment,
+        impressions=impressions, clicks=clicks, ctr=0.01, position=5.0,
+    )
+
+
+def _plausible_row(date, segment, visitors=0, pageviews=0):
+    return AcquisitionDaily.objects.create(
+        source="plausible", date=date, segment=segment,
+        visitors=visitors, pageviews=pageviews,
+    )
+
+
+def _synced(source, error="", configured=True, when=None):
+    return AcquisitionSyncState.objects.create(
+        source=source, is_configured=configured, last_error=error,
+        last_attempt_at=timezone.now(),
+        last_success_at=(when or timezone.now()) if not error else None,
+    )
+
+
+class AcquisitionSyncCommandTest(TestCase):
+    """The sync command: idempotency, revisions, isolation, exit status."""
+
+    def setUp(self):
+        self.start, self.end = _acq_window()
+
+    def _run(self, gsc_rows=None, plausible_rows=None, gsc_exc=None, plausible_exc=None,
+             **kwargs):
+        """Run the command with both providers patched."""
+        def fetcher(rows, exc):
+            def _f(days, today=None):
+                if exc is not None:
+                    raise exc
+                return rows or []
+            return _f
+
+        out, err = StringIO(), StringIO()
+        with patch.dict(
+            "survey.management.commands.sync_acquisition_metrics.FETCHERS",
+            {"gsc": fetcher(gsc_rows, gsc_exc),
+             "plausible": fetcher(plausible_rows, plausible_exc)},
+        ):
+            call_command("sync_acquisition_metrics", stdout=out, stderr=err, **kwargs)
+        return out.getvalue(), err.getvalue()
+
+    def _gsc_payload(self, impressions):
+        return [{"source": "gsc", "date": self.end, "segment": "marketing",
+                 "impressions": impressions, "clicks": 3, "ctr": 0.02, "position": 4.5}]
+
+    def test_rerunning_overwrites_instead_of_duplicating(self):
+        """
+        GIVEN a window already synced once
+        WHEN the command runs again over the same window
+        THEN the row count is unchanged and the values come from the second run
+        """
+        self._run(gsc_rows=self._gsc_payload(100))
+        self.assertEqual(AcquisitionDaily.objects.count(), 1)
+
+        self._run(gsc_rows=self._gsc_payload(100))
+
+        self.assertEqual(AcquisitionDaily.objects.count(), 1)
+
+    def test_provider_revision_replaces_stored_value(self):
+        """
+        GIVEN a day already stored with one value
+        WHEN the provider returns a revised value for that day
+        THEN the stored row reflects the new value
+        """
+        self._run(gsc_rows=self._gsc_payload(100))
+
+        self._run(gsc_rows=self._gsc_payload(175))
+
+        self.assertEqual(AcquisitionDaily.objects.get().impressions, 175)
+
+    def test_one_source_failing_leaves_the_other_intact(self):
+        """
+        GIVEN one provider erroring and the other succeeding
+        WHEN the sync runs
+        THEN the healthy source's rows are written and only the failing one records an error
+        """
+        self._run(gsc_rows=self._gsc_payload(100), plausible_exc=ProviderError("boom"))
+
+        self.assertEqual(AcquisitionDaily.objects.filter(source="gsc").count(), 1)
+        self.assertEqual(
+            AcquisitionSyncState.objects.get(source="plausible").last_error, "boom",
+        )
+        self.assertEqual(AcquisitionSyncState.objects.get(source="gsc").last_error, "")
+
+    def test_failure_does_not_delete_previously_stored_rows(self):
+        """
+        GIVEN a source with rows already stored
+        WHEN a later run of that source fails
+        THEN the previously stored rows survive
+        """
+        self._run(gsc_rows=self._gsc_payload(100))
+
+        self._run(gsc_exc=ProviderError("outage"))
+
+        self.assertEqual(AcquisitionDaily.objects.filter(source="gsc").count(), 1)
+
+    def test_all_sources_failing_exits_non_zero(self):
+        """
+        GIVEN every requested source failing
+        WHEN the command runs
+        THEN it exits non-zero so the cron run is visibly failed
+        """
+        with self.assertRaises(SystemExit):
+            self._run(gsc_exc=ProviderError("a"), plausible_exc=ProviderError("b"))
+
+    def test_not_configured_is_not_a_failure(self):
+        """
+        GIVEN neither provider configured
+        WHEN the command runs
+        THEN it completes, writes nothing, and both sources report not-configured
+        """
+        out, _ = self._run(
+            gsc_exc=NotConfigured("no key"), plausible_exc=NotConfigured("no token"),
+        )
+
+        self.assertEqual(AcquisitionDaily.objects.count(), 0)
+        for source in ("gsc", "plausible"):
+            state = AcquisitionSyncState.objects.get(source=source)
+            self.assertFalse(state.is_configured)
+            self.assertEqual(state.state, "not_configured")
+        self.assertIn("not configured", out)
+
+    def test_single_source_leaves_the_other_untouched(self):
+        """
+        GIVEN both sources have rows
+        WHEN the command runs restricted to one source
+        THEN the other source keeps its rows and its state is not attempted
+        """
+        _plausible_row(self.end, "landing", visitors=9)
+
+        self._run(gsc_rows=self._gsc_payload(50), source="gsc")
+
+        self.assertEqual(AcquisitionDaily.objects.get(source="plausible").visitors, 9)
+        self.assertFalse(AcquisitionSyncState.objects.filter(source="plausible").exists())
+
+    def test_successful_sync_clears_a_previous_error(self):
+        """
+        GIVEN a source whose last run failed
+        WHEN it next succeeds
+        THEN its state reports success and no outstanding error
+        """
+        self._run(gsc_exc=ProviderError("transient"))
+
+        self._run(gsc_rows=self._gsc_payload(10))
+
+        state = AcquisitionSyncState.objects.get(source="gsc")
+        self.assertEqual(state.last_error, "")
+        self.assertEqual(state.state, "ok")
+
+
+class MarketingPageGroupTest(TestCase):
+    """The GSC page-group exclusion that keeps customer survey traffic out."""
+
+    def test_survey_pages_are_excluded_and_landings_are_not(self):
+        """
+        GIVEN the configured non-marketing prefixes
+        WHEN URLs are matched against the exclusion regex
+        THEN app and survey pages are excluded while marketing landings are kept
+        """
+        import re
+        rx = re.compile(exclusion_regex(settings.ACQUISITION_NON_MARKETING_PREFIXES))
+
+        for url in ("https://mapsurvey.org/surveys/7a4688ca-660b-4e40-931d-abc",
+                    "https://mapsurvey.org/accounts/register/",
+                    "https://mapsurvey.org/editor/surveys/x/",
+                    "https://mapsurvey.org/admin/"):
+            self.assertIsNotNone(rx.search(url), url)
+
+        for url in ("https://mapsurvey.org/",
+                    "https://mapsurvey.org/#demo",
+                    "https://mapsurvey.org/for-educators/",
+                    "https://mapsurvey.org/alternatives/maptionnaire/",
+                    "https://mapsurvey.org/civic-engagement/",
+                    "https://mapsurvey.org/trust/"):
+            self.assertIsNone(rx.search(url), url)
+
+
+class GscAggregationModeTest(TestCase):
+    """Both GSC segments must be fetched under one aggregation mode.
+
+    GSC aggregates by property when no page filter is present and by page when one is;
+    the totals differ (1329 vs 1717 over the same 14 live days). Mixing the modes made
+    the marketing segment exceed the whole property, which is impossible and silently
+    corrupts every conversion below it. See design.md D3a.
+    """
+
+    def test_whole_property_query_also_carries_a_page_filter(self):
+        """
+        GIVEN a fetch of both the whole-property and the marketing segment
+        WHEN the requests are built
+        THEN both carry a page filter, keeping the provider in page-level aggregation
+        """
+        from survey import acquisition
+
+        bodies = []
+
+        class _FakeQuery:
+            def __init__(self, body):
+                bodies.append(body)
+
+            def execute(self):
+                return {"rows": [{"keys": ["2026-07-28"], "impressions": 10, "clicks": 1,
+                                  "ctr": 0.1, "position": 3.0}]}
+
+        class _FakeSearchAnalytics:
+            def query(self, siteUrl=None, body=None):
+                return _FakeQuery(body)
+
+        class _FakeService:
+            def searchanalytics(self):
+                return _FakeSearchAnalytics()
+
+        with patch.object(acquisition, "gsc_service",
+                          return_value=(_FakeService(), "sc-domain:example.org")):
+            acquisition.fetch_gsc(7)
+
+        self.assertEqual(len(bodies), 2)
+        for body in bodies:
+            filters = body["dimensionFilterGroups"][0]["filters"]
+            self.assertEqual(filters[0]["dimension"], "page")
+            self.assertTrue(filters[0]["expression"])
+
+    def test_marketing_never_exceeds_whole_property(self):
+        """
+        GIVEN stored GSC rows for both segments
+        WHEN their impressions are compared
+        THEN the marketing segment is not larger than the whole property
+        """
+        start, end = _acq_window()
+        _gsc_row(end, AcquisitionDaily.SEGMENT_ALL, impressions=1717)
+        _gsc_row(end, AcquisitionDaily.SEGMENT_MARKETING, impressions=1579)
+
+        whole = AcquisitionDaily.objects.get(
+            source="gsc", segment=AcquisitionDaily.SEGMENT_ALL).impressions
+        marketing = AcquisitionDaily.objects.get(
+            source="gsc", segment=AcquisitionDaily.SEGMENT_MARKETING).impressions
+
+        self.assertLessEqual(marketing, whole)
+
+
+class DemoOpenRecordingTest(TestCase):
+    """Recording demo opens without putting identity on the shared session table."""
+
+    def setUp(self):
+        _cache.clear()
+        self.org = _make_org("DemoOrg")
+        self.demo = SurveyHeader.objects.create(
+            name="demo_survey", organization=self.org, status="published",
+        )
+        self.other = SurveyHeader.objects.create(
+            name="other_survey", organization=self.org, status="published",
+        )
+        self.demo_url = f"https://mapsurvey.org/surveys/{self.demo.uuid}"
+
+    def tearDown(self):
+        _cache.clear()
+
+    def _request(self, user=None):
+        req = RequestFactory().get("/")
+        req.user = user or AnonymousUser()
+        return req
+
+    def test_anonymous_demo_session_is_recorded_without_a_user(self):
+        """
+        GIVEN an unauthenticated visitor
+        WHEN they start a session on the demo survey
+        THEN a demo-open entry is recorded with no user attached
+        """
+        session = SurveySession.objects.create(survey=self.demo)
+
+        with self.settings(DEMO_SURVEY_URL=self.demo_url):
+            record_demo_open(session, self._request())
+
+        entry = DemoOpen.objects.get()
+        self.assertEqual(entry.session_id, session.id)
+        self.assertIsNone(entry.user_id)
+
+    def test_signed_in_demo_session_records_the_user(self):
+        """
+        GIVEN an authenticated user
+        WHEN they start a session on the demo survey
+        THEN the demo-open entry references that user
+        """
+        user = User.objects.create_user(username="demo_visitor", password="x")
+        session = SurveySession.objects.create(survey=self.demo)
+
+        with self.settings(DEMO_SURVEY_URL=self.demo_url):
+            record_demo_open(session, self._request(user))
+
+        self.assertEqual(DemoOpen.objects.get().user_id, user.id)
+
+    def test_other_surveys_are_not_recorded(self):
+        """
+        GIVEN a session on a survey that is not the demo
+        WHEN recording runs
+        THEN no demo-open entry exists and the session carries no identity
+        """
+        session = SurveySession.objects.create(survey=self.other)
+
+        with self.settings(DEMO_SURVEY_URL=self.demo_url):
+            record_demo_open(session, self._request())
+
+        self.assertEqual(DemoOpen.objects.count(), 0)
+        self.assertFalse(hasattr(session, "user_id"))
+
+    def test_unresolvable_demo_url_records_nothing_and_does_not_raise(self):
+        """
+        GIVEN a demo URL that is unset, malformed, or points at a missing survey
+        WHEN a session is started
+        THEN recording is a no-op and no error reaches the respondent
+        """
+        session = SurveySession.objects.create(survey=self.demo)
+
+        for url in ("", "https://mapsurvey.org/surveys/not-a-uuid",
+                    "https://mapsurvey.org/surveys/49f57261-3709-478e-8a8a-7b61cebeac92"):
+            _cache.clear()
+            with self.settings(DEMO_SURVEY_URL=url):
+                self.assertIsNone(record_demo_open(session, self._request()))
+
+        self.assertEqual(DemoOpen.objects.count(), 0)
+
+    def test_uuid_extraction(self):
+        """
+        GIVEN demo URLs in the shapes the setting takes
+        WHEN the UUID is extracted
+        THEN a well-formed URL yields the UUID and anything else yields None
+        """
+        with self.settings(DEMO_SURVEY_URL="http://localhost:8000/surveys/"
+                                           "49f57261-3709-478e-8a8a-7b61cebeac92"):
+            self.assertEqual(str(demo_survey_uuid()),
+                             "49f57261-3709-478e-8a8a-7b61cebeac92")
+        with self.settings(DEMO_SURVEY_URL="http://localhost:8000/surveys/nope"):
+            self.assertIsNone(demo_survey_uuid())
+        with self.settings(DEMO_SURVEY_URL=""):
+            self.assertIsNone(demo_survey_uuid())
+
+
+class AcquisitionServiceTest(TestCase):
+    """The dashboard's acquisition block: values, unavailability, conversions."""
+
+    def setUp(self):
+        _cache.clear()
+        self.start, self.end = _acq_window()
+        self.org = _make_org("AcqOrg")
+
+    def tearDown(self):
+        _cache.clear()
+
+    def test_stages_and_conversions_with_all_sources_synced(self):
+        """
+        GIVEN synced GSC and Plausible rows plus registrations in the window
+        WHEN the block is built
+        THEN each stage carries its value and each conversion its rate
+        """
+        _synced("gsc")
+        _synced("plausible")
+        _gsc_row(self.end, AcquisitionDaily.SEGMENT_MARKETING, impressions=1000, clicks=40)
+        _plausible_row(self.end, AcquisitionDaily.SEGMENT_LANDING, visitors=100)
+        _user_at("acq_reg", timezone.now() - _dt.timedelta(days=ACQUISITION_LAG_DAYS + 1))
+
+        block = AcquisitionService(days=30).block()
+
+        impressions, visits, regs, demo = block["stages"]
+        self.assertEqual(impressions["value"], 1000)
+        self.assertEqual(visits["value"], 100)
+        self.assertEqual(regs["value"], 1)
+        self.assertEqual(block["conversions"][0]["pct"], 10.0)   # 100/1000
+        self.assertEqual(block["conversions"][1]["pct"], 1.0)    # 1/100
+        self.assertEqual(block["clicks"]["value"], 40)
+
+    def test_not_configured_source_renders_unavailable_not_zero(self):
+        """
+        GIVEN a source with no credentials configured
+        WHEN the block is built
+        THEN its stage is unavailable with a reason rather than a zero
+        """
+        AcquisitionSyncState.objects.create(
+            source="plausible", is_configured=False, last_error="no token",
+        )
+        _synced("gsc")
+        _gsc_row(self.end, AcquisitionDaily.SEGMENT_MARKETING, impressions=10)
+
+        block = AcquisitionService(days=30).block()
+
+        visits = block["stages"][1]
+        self.assertFalse(visits["known"])
+        self.assertIsNone(visits["value"])
+        self.assertIn("no token", visits["unavailable"])
+
+    def test_missing_stage_does_not_fabricate_a_conversion(self):
+        """
+        GIVEN landing visits unavailable
+        WHEN conversions are computed
+        THEN the rates that depend on visits are unknown rather than 0%
+        """
+        _synced("gsc")
+        _gsc_row(self.end, AcquisitionDaily.SEGMENT_MARKETING, impressions=500)
+
+        block = AcquisitionService(days=30).block()
+
+        self.assertFalse(block["conversions"][0]["known"])
+        self.assertIsNone(block["conversions"][0]["pct"])
+        self.assertFalse(block["conversions"][1]["known"])
+
+    def test_healthy_but_empty_window_shows_zero(self):
+        """
+        GIVEN a source that synced successfully but recorded nothing in the window
+        WHEN the block is built
+        THEN the stage shows zero, distinct from unavailable
+        """
+        _synced("gsc")
+        # A row outside the window proves the source has synced at some point.
+        _gsc_row(self.start - _dt.timedelta(days=10),
+                 AcquisitionDaily.SEGMENT_MARKETING, impressions=99)
+
+        impressions = AcquisitionService(days=30).block()["stages"][0]
+
+        self.assertTrue(impressions["known"])
+        self.assertEqual(impressions["value"], 0)
+
+    def test_registrations_match_the_cohort_funnel_population(self):
+        """
+        GIVEN staff, superusers and real users registered in the window
+        WHEN the registrations stage is computed
+        THEN it counts only the real registrations
+        """
+        inside = timezone.now() - _dt.timedelta(days=ACQUISITION_LAG_DAYS + 2)
+        _user_at("real_one", inside)
+        _user_at("real_two", inside)
+        _user_at("staff_one", inside, is_staff=True)
+        _user_at("super_one", inside, is_superuser=True)
+
+        regs = AcquisitionService(days=30).block()["stages"][2]
+
+        self.assertEqual(regs["value"], 2)
+
+    def test_demo_total_and_split(self):
+        """
+        GIVEN demo sessions with and without recorded identity
+        WHEN the demo block is computed
+        THEN the total counts sessions and the split counts recorded entries with its start date
+        """
+        demo = SurveyHeader.objects.create(
+            name="demo_s", organization=self.org, status="published",
+        )
+        inside = timezone.now() - _dt.timedelta(days=ACQUISITION_LAG_DAYS + 1)
+        user = User.objects.create_user(username="demo_user", password="x")
+        for _ in range(3):
+            s = SurveySession.objects.create(survey=demo, start_datetime=inside)
+            DemoOpen.objects.create(session=s, created_at=inside)
+        s = SurveySession.objects.create(survey=demo, start_datetime=inside)
+        DemoOpen.objects.create(session=s, user=user, created_at=inside)
+        # A session predating the split: counted in the total, absent from the split.
+        SurveySession.objects.create(survey=demo, start_datetime=inside)
+
+        with self.settings(DEMO_SURVEY_URL=f"https://mapsurvey.org/surveys/{demo.uuid}"):
+            demo_block = AcquisitionService(days=30).block()["demo"]
+
+        self.assertEqual(demo_block["stage"]["value"], 5)
+        self.assertEqual(demo_block["anonymous"], 3)
+        self.assertEqual(demo_block["signed_in"], 1)
+        self.assertTrue(demo_block["split_known"])
+        self.assertEqual(demo_block["survey_name"], "demo_s")
+
+    def test_demo_unavailable_when_survey_cannot_be_resolved(self):
+        """
+        GIVEN a demo URL pointing at no existing survey
+        WHEN the demo block is computed
+        THEN the stage is unavailable and the block still renders
+        """
+        with self.settings(DEMO_SURVEY_URL=""):
+            block = AcquisitionService(days=30).block()
+
+        self.assertFalse(block["demo"]["stage"]["known"])
+        self.assertIn("DEMO_SURVEY_URL", block["demo"]["stage"]["unavailable"])
+
+    def test_channels_ordered_by_volume(self):
+        """
+        GIVEN visitors from several referrer channels
+        WHEN the channel breakdown is computed
+        THEN channels are listed largest first
+        """
+        _synced("plausible")
+        _plausible_row(self.end, "src:Google", visitors=40)
+        _plausible_row(self.end, "src:Reddit", visitors=70)
+        _plausible_row(self.end, "src:LinkedIn", visitors=5)
+
+        channels = AcquisitionService(days=30).block()["channels"]
+
+        self.assertTrue(channels["available"])
+        self.assertEqual([r["channel"] for r in channels["rows"]],
+                         ["Reddit", "Google", "LinkedIn"])
+
+    def test_channels_unavailable_without_data(self):
+        """
+        GIVEN no channel rows and an unconfigured source
+        WHEN the breakdown is computed
+        THEN it is unavailable with a reason
+        """
+        channels = AcquisitionService(days=30).block()["channels"]
+
+        self.assertFalse(channels["available"])
+        self.assertTrue(channels["unavailable"])
+
+    def test_freshness_flags_stale_sources(self):
+        """
+        GIVEN a configured source whose last success is older than the stale threshold
+        WHEN freshness is computed
+        THEN that source is marked stale
+        """
+        _synced("gsc", when=timezone.now() - _dt.timedelta(hours=200))
+
+        by_source = {f["source"]: f for f in AcquisitionService().freshness()}
+
+        self.assertTrue(by_source["gsc"]["stale"])
+        self.assertEqual(by_source["plausible"]["state"], "not_configured")
+
+
+class AcquisitionDashboardRenderTest(TestCase):
+    """The dashboard page itself, including the empty-install case."""
+
+    def setUp(self):
+        _cache.clear()
+        self.url = reverse("admin:survey_funnelreport_changelist")
+        self.staff = User.objects.create_user(
+            username="acq_staff", password="x", is_staff=True, is_superuser=True,
+        )
+
+    def tearDown(self):
+        _cache.clear()
+
+    def test_renders_with_no_acquisition_data_at_all(self):
+        """
+        GIVEN a fresh install with no synced metrics and no demo survey
+        WHEN a staff user opens the dashboard
+        THEN the page renders with the acquisition section in its unavailable state
+        """
+        self.client.force_login(self.staff)
+
+        with self.settings(DEMO_SURVEY_URL=""):
+            resp = self.client.get(self.url)
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Acquisition")
+        self.assertContains(resp, "not configured")
+        self.assertContains(resp, "Monthly cohort funnel")   # the rest still renders
+
+    def test_renders_values_when_synced(self):
+        """
+        GIVEN synced metrics
+        WHEN a staff user opens the dashboard
+        THEN the acquisition numbers appear on the page
+        """
+        start, end = _acq_window(days=26 * 7)
+        _synced("gsc")
+        _gsc_row(end, AcquisitionDaily.SEGMENT_MARKETING, impressions=2129, clicks=77)
+        self.client.force_login(self.staff)
+
+        resp = self.client.get(self.url)
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "2129")
+
+    def test_non_staff_is_still_denied(self):
+        """
+        GIVEN a non-staff authenticated user
+        WHEN they request the dashboard
+        THEN access is denied and no acquisition data is shown
+        """
+        User.objects.create_user(username="acq_plain", password="x")
+        self.client.login(username="acq_plain", password="x")
+
+        resp = self.client.get(self.url)
+
+        self.assertNotEqual(resp.status_code, 200)
+        self.assertNotContains(resp, "Google impressions", status_code=302)
+
+    def test_anonymous_is_still_denied(self):
+        """
+        GIVEN an unauthenticated request
+        WHEN it hits the dashboard
+        THEN it is redirected to the admin login
+        """
+        resp = self.client.get(self.url)
+
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("/admin/login/", resp["Location"])
