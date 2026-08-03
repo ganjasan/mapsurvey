@@ -17,8 +17,13 @@ import { Counter, Rate, Trend } from 'k6/metrics';
 
 const BASE_URL = (__ENV.BASE_URL || '').replace(/\/$/, '');
 const SURVEY = __ENV.SURVEY || '';
-const STUDENTS = Number(__ENV.STUDENTS || 50);
-const RAMP = __ENV.RAMP || '10s';
+// 25 concurrent, arriving over 30 s. k6 sends everything from ONE source IP,
+// which real students never do — push much past this and Render's edge
+// anti-abuse starts serving instant 502s (17 ms, fixed ~218 KB body) that the
+// app never sees, and the run measures Render's DDoS protection instead of
+// gunicorn. Watch for that signature before trusting any run.
+const STUDENTS = Number(__ENV.STUDENTS || 25);
+const RAMP = __ENV.RAMP || '30s';
 
 if (!BASE_URL || !SURVEY) {
   throw new Error('BASE_URL and SURVEY are required: k6 run -e BASE_URL=... -e SURVEY=... lecture-burst.js');
@@ -27,6 +32,7 @@ if (!BASE_URL || !SURVEY) {
 const SECTION_URL = `${BASE_URL}/surveys/${SURVEY}/section_1/`;
 
 const serverErrors = new Counter('server_errors');
+const edgeThrottled = new Counter('edge_throttled');
 const pageLoad = new Trend('page_load_ms', true);
 const submitOk = new Rate('submit_success');
 const assetsPerPage = new Trend('assets_per_page');
@@ -47,6 +53,9 @@ export const options = {
   thresholds: {
     // The whole point of the exercise: nobody should see an error page.
     server_errors: ['count==0'],
+    // Non-zero means the single-IP test tripped Render's edge protection and
+    // the run is invalid — rerun with lower STUDENTS, don't read the numbers.
+    edge_throttled: ['count==0'],
     page_load_ms: ['p(95)<3000'],
     submit_success: ['rate>0.99'],
   },
@@ -54,7 +63,15 @@ export const options = {
 
 function track(res, label) {
   if (res.status >= 500 || res.status === 0) {
-    serverErrors.add(1, { label, status: String(res.status) });
+    // Render's per-IP anti-abuse answers instantly with a fixed ~218 KB error
+    // page. Those 502s never reached the app — count them separately: if this
+    // metric is non-zero the run measured Render's edge, not our gunicorn, and
+    // must be redone at lower concurrency.
+    if (res.status === 502 && res.body && res.body.length > 100000) {
+      edgeThrottled.add(1, { label });
+    } else {
+      serverErrors.add(1, { label, status: String(res.status) });
+    }
   }
   return res;
 }
@@ -112,10 +129,12 @@ export default function () {
   });
 
   group('page assets', () => {
-    if (assets.length === 0) return;
-    const batch = assets.map((path) => ['GET', `${BASE_URL}${path}`, null, { tags: { label: 'asset' } }]);
-    http.batch(batch).forEach((res) => {
-      track(res, 'asset');
+    // Sequential, not http.batch: a browser opens ~6 parallel connections, but
+    // 25 VUs x 6 from a single IP trips Render's edge anti-abuse (see STUDENTS
+    // comment). Sequential keeps concurrency at one connection per VU — the
+    // trade-off is that per-student page time is understated slightly.
+    assets.forEach((path) => {
+      const res = track(http.get(`${BASE_URL}${path}`, { tags: { label: 'asset' } }), 'asset');
       check(res, { 'asset served': (r) => r.status === 200 || r.status === 304 });
     });
   });
@@ -157,6 +176,7 @@ export default function () {
 export function handleSummary(data) {
   const m = data.metrics;
   const errs = m.server_errors ? m.server_errors.values.count : 0;
+  const throttled = m.edge_throttled ? m.edge_throttled.values.count : 0;
   const p95 = m.page_load_ms ? Math.round(m.page_load_ms.values['p(95)']) : 0;
   const submit = m.submit_success ? (m.submit_success.values.rate * 100).toFixed(1) : 'n/a';
   const reqs = m.http_reqs ? m.http_reqs.values.count : 0;
@@ -169,6 +189,11 @@ export function handleSummary(data) {
     `  submits accepted:     ${submit}%`,
     '',
   ];
+  if (throttled > 0) {
+    lines.push(`  !! RUN INVALID: ${throttled} responses came from Render's per-IP edge`);
+    lines.push('     protection, not the app. Rerun with lower -e STUDENTS.');
+    lines.push('');
+  }
   return {
     stdout: lines.join('\n'),
     'summary.json': JSON.stringify(data, null, 2),

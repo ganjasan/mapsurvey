@@ -114,6 +114,13 @@ WSGI_APPLICATION = 'mapsurvey.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
+# Persistent DB connections: without CONN_MAX_AGE every request forks a fresh
+# Postgres backend, and on the 0.1-vCPU basic-256mb instance that fork churn is
+# the dominant DB cost once gunicorn serves requests concurrently (load test
+# pegged DB CPU at its cap while the web instance idled). Each gunicorn thread
+# holds one connection: 2 workers x 4 threads = 8.
+DB_CONN_MAX_AGE = int(os.environ.get("DB_CONN_MAX_AGE", "300"))
+
 DATABASES = {
     "default": {
         "ENGINE": os.environ.get("SQL_ENGINE", "django.db.backends.sqlite3"),
@@ -122,6 +129,8 @@ DATABASES = {
         "PASSWORD": os.environ.get("SQL_PASSWORD", "password"),
         "HOST": os.environ.get("SQL_HOST", "localhost"),
         "PORT": os.environ.get("SQL_PORT", "5432"),
+        "CONN_MAX_AGE": DB_CONN_MAX_AGE,
+        "CONN_HEALTH_CHECKS": True,
     }
 }
 
@@ -135,6 +144,8 @@ if os.environ.get("DATABASE_URL"):
         "PASSWORD": db_url.password,
         "HOST": db_url.hostname,
         "PORT": db_url.port or 5432,
+        "CONN_MAX_AGE": DB_CONN_MAX_AGE,
+        "CONN_HEALTH_CHECKS": True,
     }
 
 

@@ -76,7 +76,18 @@ Versions: Django 4.2.30, whitenoise 6.11.0, gunicorn 23.0.0, Python 3.9-slim ima
   pre-existing dead references; implementation must run `collectstatic` locally first
   and fix what it finds.
 
-### 3. Root console logger at WARNING
+### 3. Persistent DB connections (`CONN_MAX_AGE`)
+
+Load testing on preview hardware exposed the next bottleneck behind the worker
+queue: with no `CONN_MAX_AGE`, every request forks a fresh Postgres backend, and
+on the 0.1-vCPU basic-256mb database that fork churn saturates DB CPU while web
+CPU idles — the concurrent build showed *worse* p95 than the single worker,
+because eight slots multiplied the connection storms the single worker used to
+serialize. `CONN_MAX_AGE=300` + `CONN_HEALTH_CHECKS` (env-tunable via
+`DB_CONN_MAX_AGE`) pins one connection per gunicorn thread (8 total). Concurrency
+work owns this: it is what turned connection cost into the dominant term.
+
+### 4. Root console logger at WARNING
 
 Add a root (`''`) logger with the existing console handler at WARNING, keeping the
 `abuse` logger config untouched (`disable_existing_loggers: False` already preserves
