@@ -42,6 +42,18 @@ Tests use Django's built-in test framework with PostGIS. Django automatically cr
 
 **Writing tests**: Use `django.test.TestCase` and GIVEN/WHEN/THEN pattern for docstrings.
 
+**Redis**: a few tests (`LastActivityMiddlewareTest`) exercise cache-gated code and need
+Redis on `localhost:6379`. `run_tests.sh` does not start it; without it those tests fail
+with `UserActivity.DoesNotExist`.
+
+## Load testing
+
+`loadtest/lecture-burst.js` (k6) reproduces a lecture-hall burst — N students opening the
+same map survey at once. It does **not** reproduce locally (a dev machine is far faster
+than a 0.5 CPU Render Starter instance), so run it against a Render PR preview, never
+production. Seed the preview's empty database first with
+`python manage.py seed_loadtest_survey`. See `loadtest/README.md`.
+
 ## Architecture Overview
 
 This is a Django-based geospatial survey platform using PostGIS for storing geographic data (points, lines, polygons).
