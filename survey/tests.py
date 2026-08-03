@@ -19397,17 +19397,34 @@ class CrossVersionAnalyticsTest(TestCase):
         # existing codes untouched
         self.assertEqual([guarded[0]['code'], guarded[1]['code']], [1, 2])
 
-    def test_delete_survey_removes_whole_family(self):
+    def test_delete_survey_trashes_without_touching_family_data(self):
         """
         GIVEN a canonical survey with an archived version holding sessions
         WHEN the owner deletes the survey
-        THEN sessions and headers of every family member are gone
+        THEN it lands in Trash and every family member's data is still intact
         """
         self.client.force_login(self.user)
         session = self.client.session
         session['active_org_id'] = self.org.id
         session.save()
         self.client.post(f'/editor/delete/{self.canonical.uuid}/')
+        self.canonical.refresh_from_db()
+        self.assertTrue(self.canonical.is_trashed)
+        self.assertEqual(
+            SurveySession.objects.filter(
+                id__in=[self.v1_sess1.id, self.v1_sess2.id, self.v2_sess.id],
+            ).count(),
+            3,
+        )
+
+    def test_purge_removes_whole_family(self):
+        """
+        GIVEN a trashed canonical survey with an archived version holding sessions
+        WHEN the trash purge runs
+        THEN sessions and headers of every family member are gone
+        """
+        from .trash import purge_survey
+        purge_survey(self.canonical)
         self.assertFalse(SurveyHeader.objects.filter(id__in=[self.canonical.id, self.archived.id]).exists())
         self.assertFalse(SurveySession.objects.filter(
             id__in=[self.v1_sess1.id, self.v1_sess2.id, self.v2_sess.id],
