@@ -26,6 +26,10 @@ production tracebacks are invisible.
   gunicorn.
 - `LOGGING` gains a `django.request` (and root fallback) console handler so 500
   tracebacks appear in Render logs.
+- Persistent DB connections (`CONN_MAX_AGE=300` + health checks): load testing showed
+  that concurrency without them *regresses* latency — eight slots multiply
+  per-request Postgres connection forks, saturating the 0.1-vCPU database while web
+  CPU idles.
 
 Out of scope (noted during diagnosis, separate follow-ups): naive
 `datetime.now` default on `SurveySession.start_datetime`; `debug_toolbar` not gated by

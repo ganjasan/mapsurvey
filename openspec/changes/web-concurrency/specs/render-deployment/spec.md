@@ -50,6 +50,28 @@ Web Service SHALL быть настроен для запуска Django при�
 - **THEN** collectstatic завершается ошибкой на этапе деплоя (entrypoint), а не отдаёт
   битую ссылку в рантайме
 
+### Requirement: Database connection
+Приложение SHALL подключаться к Render PostgreSQL с PostGIS расширением, используя
+персистентные соединения (`CONN_MAX_AGE` > 0 c `CONN_HEALTH_CHECKS`): соединение
+переживает HTTP-запрос и переиспользуется тредом gunicorn. Время жизни настраивается
+переменной окружения `DB_CONN_MAX_AGE` (дефолт 300 секунд).
+
+#### Scenario: Database URL parsing
+- **WHEN** задана переменная DATABASE_URL
+- **THEN** Django парсит её и подключается к PostgreSQL
+
+#### Scenario: PostGIS extension available
+- **WHEN** приложение выполняет геозапросы
+- **THEN** PostGIS функции доступны в базе данных
+
+#### Scenario: Connections survive across requests
+- **WHEN** два HTTP-запроса подряд обрабатываются одним тредом gunicorn
+- **THEN** используется одно и то же соединение к Postgres — новый backend-процесс не форкается на каждый запрос
+
+#### Scenario: Stale connections recovered
+- **WHEN** персистентное соединение разорвано (рестарт БД, обрыв сети)
+- **THEN** health check обнаруживает это перед использованием и соединение открывается заново, запрос не падает
+
 ## ADDED Requirements
 
 ### Requirement: Production error logging

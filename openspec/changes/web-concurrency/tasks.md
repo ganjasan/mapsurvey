@@ -13,6 +13,10 @@
 - [x] 2.3 Verify a hashed asset gets far-future immutable caching (local gunicorn, `curl -sI`) — `max-age=315360000, public, immutable` on `css/main.<hash>.css`; non-hashed entrypoints keep `max-age=60` as intended
 - [x] 2.4 Verify every `{% static %}` literal in templates resolves in the manifest (manifest storage raises at render time on a miss, and collectstatic does not check templates) — 203/203 resolve
 
+## 2b. Persistent DB connections (added after load testing)
+
+- [x] 2b.1 `CONN_MAX_AGE=300` + `CONN_HEALTH_CHECKS` in both DATABASES branches, env-tunable via `DB_CONN_MAX_AGE` — without it the concurrency fix measurably regressed p95 (see 5.6)
+
 ## 3. Production error logging
 
 - [x] 3.1 Add root (`''`) logger with console handler at WARNING to `LOGGING` in `mapsurvey/settings.py`, preserving the `abuse` logger block
@@ -28,10 +32,10 @@
 - [x] 5.1 Add `survey/management/commands/seed_loadtest_survey.py` — idempotent published single-`point` survey, so a Render preview's empty DB has identical content for both runs
 - [x] 5.2 Add `loadtest/lecture-burst.js` — ramping VUs model students arriving off a lecture slide; each loads the section page, batches the 8 same-origin assets (Leaflet/Bootstrap/jQuery/htmx are CDN-hosted and never hit us), pauses, then submits a point. Thresholds: zero 5xx, page p95 < 3 s, >99 % submits accepted
 - [x] 5.3 Add `loadtest/README.md` + `CLAUDE.md` section — including why this cannot be validated on localhost and the never-against-production rule
-- [ ] 5.4 Open the PR so Render generates a preview; seed it via SSH (`seed_loadtest_survey`)
-- [ ] 5.5 Baseline run against a `master` preview (1 sync worker) — expect 5xx > 0, reproducing the 2026-07-13 failure
-- [ ] 5.6 Fixed run against the branch preview — must hit all thresholds; record both summaries in the PR description
-- [ ] 5.7 Confirm preview instance memory stays under ~350 MB during the fixed run (Render dashboard)
+- [x] 5.4 PR #47 preview + `loadtest-baseline` (PR #48) preview seeded via one-off Render API jobs (SSH keys not registered in the Render account)
+- [x] 5.5 Baseline run: p95 7 435 ms, 1 239 requests — fails the 3 s threshold. At single-IP scale the failure mode is latency, not 5xx (Render's proxy queues patiently); the 502 storm needs a real crowd
+- [x] 5.6 Fixed run: p95 502 ms, 2 401 requests, 0 5xx, 100 % submits — all thresholds pass. Required a second fix discovered by the harness: workers alone regressed p95 to 12 107 ms (per-request Postgres connection forks pegged the 0.1-vCPU DB) until `CONN_MAX_AGE` landed
+- [x] 5.7 Memory 214–230 MB of 512 during the heaviest (invalid 50-VU) run — comfortable headroom
 
 ## 6. Follow-ups to file separately (out of scope here)
 

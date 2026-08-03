@@ -51,18 +51,40 @@ they arrive — 10 s models a link appearing on a lecture slide).
 
 ## Baseline vs fix
 
-The number that matters is not throughput, it is whether anyone sees an error page. To
-show the fix addresses *this* failure, run the identical scenario against two previews —
-one from `master` (single sync worker) and one from the branch — and compare:
+Run the identical scenario against two previews — one from the `loadtest-baseline`
+branch (master's app: single sync worker, no persistent DB connections) and one from
+the fix branch — and compare. Measured 2026-08-03, 25 students over 30 s:
 
-| | master (1 sync worker) | branch (2 × 4 gthread) |
-|---|---|---|
-| 5xx responses | expected > 0 | **must be 0** |
-| page load p95 | expected multi-second | < 3 s |
-| submits accepted | expected < 100 % | > 99 % |
+| | baseline (1 sync worker) | fix, workers only | fix + `CONN_MAX_AGE` |
+|---|---|---|---|
+| 5xx responses | 0 | 0 | **0** |
+| page load p95 | 7 435 ms | 12 107 ms (!) | **502 ms** |
+| requests served | 1 239 | 1 111 | **2 401** |
+| submits accepted | 100 % | 100 % | **100 %** |
+
+Two lessons baked into the scenario:
+
+1. At this scale the baseline fails on **latency**, not errors — Render's proxy queues
+   patiently, so `page_load_ms` is the discriminating threshold. The 502 storm of the
+   real incident needs a bigger crowd than a single-IP test can generate (see below).
+2. The middle column is why this harness exists: adding workers **without** persistent
+   DB connections made p95 *worse* than the single worker — eight concurrent slots
+   multiplied per-request Postgres connection forks and pegged the 0.1-vCPU database
+   while web CPU idled. A deploy that "obviously fixes it" measurably regressed it.
 
 Thresholds in the script fail the run automatically if the branch does not meet the
 right-hand column.
+
+## Single-IP limits (why STUDENTS defaults to 25)
+
+k6 sends all traffic from one machine. Past roughly this concurrency Render's edge
+anti-abuse starts answering 502 instantly (≈17 ms, fixed ~218 KB body) without the app
+ever seeing the request. The script counts those separately (`edge_throttled`) and
+declares the run invalid if any occur — those numbers describe Render's DDoS
+protection, not our gunicorn. A real lecture hall behind one campus NAT is far below
+this threshold (each student loads the page once — with Cloudflare caching static,
+that's ~2 origin requests per student spread over minutes, vs. k6's continuous
+looping), but it is not zero risk; see the PR discussion.
 
 ## Reading the results
 
