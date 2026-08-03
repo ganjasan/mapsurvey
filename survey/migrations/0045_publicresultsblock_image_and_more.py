@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('survey', '0033_publicresultsblock_content'),
+        ('survey', '0044_publicresultsblock_content'),
     ]
 
     operations = [

@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('survey', '0031_abuseevent'),
+        ('survey', '0042_acquisition_metrics'),
     ]
 
     operations = [
