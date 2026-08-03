@@ -98,6 +98,15 @@ services:
         value: "10"
       - key: NEWSLETTER_SITE_URL
         value: "https://mapsurvey.org"
+      # Gunicorn concurrency — tunable from the dashboard without an image rebuild.
+      # Slots = WEB_CONCURRENCY × GUNICORN_THREADS (gthread); sized for the 512 MB
+      # Starter instance (~110 MB per worker, measured 143 MB steady with one).
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: GUNICORN_THREADS
+        value: "4"
+      - key: GUNICORN_TIMEOUT
+        value: "60"
     disk:
       name: media-storage
       mountPath: /home/app/web/mediafiles

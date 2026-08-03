@@ -221,7 +221,12 @@ if USE_S3:
 else:
     STATIC_URL = '/staticfiles/'
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+    # Manifest storage fingerprints filenames with a content hash, so WhiteNoise
+    # serves hashed assets with far-future immutable Cache-Control and Cloudflare's
+    # edge can cache them for a year. Deploys bust caches by hash. Side effect:
+    # collectstatic fails on dangling static references (surfaces at deploy, not
+    # at runtime).
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
     MEDIA_URL = '/mediafiles/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
 
@@ -339,11 +344,11 @@ RESEND_ACTIVATION_RATE_LIMIT_HOUR = int(os.environ.get('RESEND_ACTIVATION_RATE_L
 RESEND_ACTIVATION_RATE_LIMIT_DAY = int(os.environ.get('RESEND_ACTIVATION_RATE_LIMIT_DAY', 3))
 
 LOGGING = {
-    # This LOGGING block configures only the `abuse.*` logger hierarchy used
-    # by survey/abuse.py. Django's own loggers (django.request, django.db,
-    # etc.) continue to use their default handlers — disable_existing_loggers
-    # is False precisely to preserve them. If broader app-wide log routing
-    # becomes desirable, add a root ('') logger entry.
+    # The `abuse` logger keeps its dedicated routing (survey/abuse.py). The root
+    # ('') logger sends everything else at WARNING+ to stdout so it reaches
+    # Render logs — most importantly django.request's 500 tracebacks, which
+    # Django's default config only emails to ADMINS (unset here), leaving
+    # production errors invisible.
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
@@ -356,6 +361,10 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'abuse',
         },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
     },
     'loggers': {
         'abuse': {
