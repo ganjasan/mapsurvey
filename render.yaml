@@ -14,6 +14,10 @@ services:
   - type: redis
     name: mapsurvey-redis
     plan: free
+    # Render allows one free Key Value instance per workspace and production
+    # holds it, so previews must use a paid plan (prorated for the hours the
+    # preview lives) or their whole sync fails on this resource.
+    previewPlan: starter
     ipAllowList: []
 
   - type: web
@@ -117,6 +121,10 @@ services:
     name: mapsurvey-celery
     runtime: docker
     plan: starter
+    # Previews exist to exercise the web service (PR review, load tests); the
+    # async email worker and the metrics cron only add per-hour instance cost.
+    previews:
+      generation: off
     dockerfilePath: ./Dockerfile
     dockerContext: .
     dockerCommand: celery -A mapsurvey worker -l info --concurrency 2
@@ -171,6 +179,8 @@ services:
     name: mapsurvey-acquisition-sync
     runtime: docker
     plan: starter
+    previews:
+      generation: off
     schedule: "0 5 * * *"
     dockerfilePath: ./Dockerfile
     dockerContext: .
