@@ -12,7 +12,7 @@ A presentation mode for the analytics dashboard designed for projecting live-upd
 ## Notes
 
 - See [UC-04: Live Results Projection at Event](../docs/use-cases/uc04-live-results-projection.md)
-- WebSocket or short-polling for near-real-time updates
+- WebSocket or short-polling for near-real-time updates — delivery mechanism is specified in [Real-time updates for public results (live delivery layer)](feature-realtime-public-results.md) (#83); this item is its *presentation* consumer
 - Snapshot export (PDF/PNG) for meeting minutes
 - Dark and light themes for different projection environments
 - Must show only aggregates, never individual responses

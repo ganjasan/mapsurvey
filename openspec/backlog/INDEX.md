@@ -2,7 +2,18 @@
 
 | # | Type | Title | Priority | Area | Epic | Created |
 |---|------|-------|----------|------|------|---------|
-| 1 | feature | [GDPR / Security / Trust page](feature-gdpr-privacy-page.md) | **very high** | general | — | 2026-03-26 |
+| 87 | feature | [Workspace plans & entitlements (Free / Pro)](feature-workspace-plans-entitlements.md) | **very high** | backend | pro-tier | 2026-07-29 |
+| 88 | feature | [DPA / AVV compliance pack](feature-dpa-compliance-pack.md) | **very high** | general | pro-tier | 2026-07-29 |
+| 93 | feature | [Billing & invoicing for Pro (project-based)](feature-billing-invoicing.md) | **very high** | backend | pro-tier | 2026-07-29 |
+| 35 | feature | [Hosting geo-zone selection (EU / US)](feature-eu-data-hosting-option.md) | **very high** | infra | pro-tier | 2026-04-05 |
+| 84 | feature | [Migrate transactional email to a dedicated ESP (deliverability)](feature-transactional-email-deliverability.md) | **very high** | infra | — | 2026-07-05 |
+| 89 | feature | [Custom domain for surveys and results pages](feature-custom-domain.md) | high | infra | pro-tier | 2026-07-29 |
+| 90 | feature | [White-label branding](feature-white-label-branding.md) | high | frontend | pro-tier | 2026-07-29 |
+| 91 | feature | [Workspace roles & permissions (read-only client access)](feature-workspace-roles-permissions.md) | high | backend | pro-tier | 2026-07-29 |
+| 95 | feature | [AI-assisted response triage (relevance, spam, duplicates)](feature-ai-response-triage.md) | high | backend | pro-tier | 2026-07-31 |
+| 92 | feature | [AI analytics over survey responses](feature-ai-analytics.md) | medium | backend | pro-tier | 2026-07-29 |
+| 94 | feature | [Grant reporting pack (Verwendungsnachweis support)](feature-grant-reporting-pack.md) | medium | backend | pro-tier | 2026-07-29 |
+| ~~1~~ | ~~feature~~ | ~~[GDPR / Security / Trust page](feature-gdpr-privacy-page.md)~~ | ~~**very high**~~ | ~~general~~ | ~~—~~ | ~~2026-03-26~~ |
 | 2 | bug | [Image sub-question breaks point placement on geo question](bug-image-subquestion-breaks-geo-point.md) | high | frontend | — | 2026-04-25 |
 | ~~3~~ | ~~bug~~ | ~~[Export vs Download confusion](bug-export-download-confusion.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-03-26~~ |
 | ~~4~~ | ~~bug~~ | ~~[GeoJSON export not importable in QGIS](bug-geojson-qgis-import.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-03-26~~ |
@@ -16,8 +27,10 @@
 | 12 | feature | [Conditional question visibility](feature-conditional-question-visibility.md) | high | frontend | — | 2026-03-30 |
 | 13 | improvement | [Versioning: cross-version analytics and response counts](improvement-versioning-cross-version-analytics.md) | high | backend | — | 2026-04-16 |
 | 14 | feature | [Export filter: completed surveys only](feature-export-completed-only-filter.md) | high | backend | — | 2026-03-30 |
-| 15 | idea | [AI agent that creates surveys from chat description](idea-ai-survey-creator-chat-agent.md) | high | frontend | — | 2026-04-25 |
-| 16 | feature | [Funnel monitoring: source → registration → survey → responses](feature-funnel-monitoring.md) | high | backend | — | 2026-04-25 |
+| 15 | idea | [AI agent that creates surveys from chat description](idea-ai-survey-creator-chat-agent.md) | high | frontend | growth | 2026-04-25 |
+| ~~16~~ | ~~feature~~ | ~~[Funnel monitoring: source → registration → survey → responses](feature-funnel-monitoring.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-04-25~~ |
+| ~~85~~ | ~~bug~~ | ~~[Rating question clips text labels](bug-rating-text-labels-clipped.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-07-28~~ |
+| 86 | bug | [Sub-question popup is too narrow (Leaflet default width)](bug-subquestion-popup-too-narrow.md) | high | frontend | — | 2026-07-28 |
 | ~~62~~ | ~~bug~~ | ~~[Default map in survey settings cannot be None](bug-default-map-cannot-be-none.md)~~ | ~~medium~~ | ~~frontend~~ | ~~—~~ | ~~2026-04-25~~ |
 | 17 | feature | [Budget/token allocation question type](feature-budget-token-allocation.md) | medium | frontend | community-engagement | 2026-04-02 |
 | 18 | feature | [Search in survey list](feature-search-in-survey-list.md) | medium | frontend | — | 2026-04-25 |
@@ -28,8 +41,9 @@
 | 23 | bug | [Number field blank in CSV export](bug-number-field-blank-in-csv-export.md) | medium | backend | — | 2026-03-30 |
 | 24 | feature | [Copy answer options between questions](feature-copy-answer-options.md) | medium | frontend | — | 2026-03-26 |
 | 25 | feature | [WMS/WFS basemap support](feature-wms-wfs-basemap.md) | medium | frontend | — | 2026-03-26 |
+| 82 | feature | [Custom image basemap (non-geographic maps via CRS.Simple)](feature-custom-image-basemap.md) | medium | frontend | — | 2026-06-30 |
 | ~~26~~ | ~~feature~~ | ~~[Satellite and topographic basemap options](feature-satellite-basemap.md)~~ | ~~medium~~ | ~~frontend~~ | ~~—~~ | ~~2026-03-26~~ |
-| 27 | feature | [Public results map](feature-public-results-map.md) | medium | frontend | survey-analytics | 2026-03-26 |
+| 27 | feature | [Public results map](feature-public-results-map.md) | high | frontend | pro-tier | 2026-03-26 |
 | 28 | improvement | [Disable choices on number-type questions](improvement-disable-choices-on-number-questions.md) | medium | frontend | — | 2026-03-30 |
 | 29 | feature | [Limit geopoint count per question](feature-limit-geopoint-count.md) | medium | frontend | — | 2026-03-30 |
 | 30 | feature | [Number field min/max validation](feature-number-field-min-max-validation.md) | medium | frontend | — | 2026-04-02 |
@@ -37,37 +51,53 @@
 | 32 | feature | [Analytics: hide/show and reorder questions](feature-analytics-question-visibility-order.md) | medium | frontend | survey-analytics | 2026-04-03 |
 | 33 | feature | [Multi-color selection sets for analytics comparison](feature-analytics-multi-select-comparison.md) | medium | frontend | survey-analytics | 2026-04-02 |
 | 34 | improvement | [Finish Drawing Buttons for Polygon and Line](improvement-finish-drawing-buttons.md) | medium | frontend | — | 2026-04-05 |
-| 35 | feature | [EU Data Hosting Option](feature-eu-data-hosting-option.md) | medium | infra | — | 2026-04-05 |
-| 36 | feature | [Feedback Widget](feature-feedback-widget.md) | medium | general | — | 2026-03-30 |
+| ~~36~~ | ~~feature~~ | ~~[Feedback Widget](feature-feedback-widget.md)~~ | ~~medium~~ | ~~general~~ | ~~—~~ | ~~2026-03-30~~ |
 | 37 | idea | [Digital Contour Maps — Geography Education](idea-digital-contour-maps-education.md) | medium | general | — | 2026-03-26 |
 | ~~38~~ | ~~feature~~ | ~~[Geolocation Map Centering](feature-geolocation-map-centering.md)~~ | ~~medium~~ | ~~frontend~~ | ~~—~~ | ~~2026-04-01~~ |
 | 39 | feature | [Progress bar for entire survey](feature-progress-bar.md) | low | frontend | — | 2026-03-26 |
 | 40 | feature | [Answer choice templates](feature-answer-choice-templates.md) | low | frontend | — | 2026-03-26 |
-| 41 | feature | [Audio upload question type](feature-audio-upload.md) | low | backend | — | 2026-03-26 |
-| 42 | improvement | [Survey visual customization (fonts, colors)](improvement-survey-visual-customization.md) | low | frontend | — | 2026-03-26 |
+| 41 | feature | [Media upload question type (image, audio, video)](feature-audio-upload.md) | medium | backend | — | 2026-03-26 |
+| 42 | improvement | [Survey visual customization (fonts, colors)](improvement-survey-visual-customization.md) | medium | frontend | pro-tier | 2026-03-26 |
 | 43 | feature | [Narrative mapping (story + map point)](feature-narrative-mapping.md) | low | frontend | community-engagement | 2026-04-02 |
 | 44 | feature | [Repeatable question groups](feature-repeatable-question-groups.md) | low | backend | community-engagement | 2026-04-02 |
-| 45 | feature | [Attribute Table in Analytics](feature-attribute-table.md) | high | frontend | data-management | 2026-04-05 |
-| 46 | feature | [Session Validation Status (4 statuses + trash)](feature-session-validation-status.md) | high | backend | data-management | 2026-04-05 |
-| 47 | feature | [Clean Export (respects validation status)](feature-clean-export.md) | high | backend | data-management | 2026-04-05 |
-| 48 | feature | [Bulk Operations toolbar](feature-bulk-operations.md) | high | frontend | data-management | 2026-04-05 |
-| 49 | feature | [Auto-Validation: basic rules (empty, incomplete, missing required)](feature-auto-validation-basic.md) | high | backend | data-management | 2026-04-05 |
-| 50 | feature | [Answer-level Linting: errors (geo bbox, self-intersection, required)](feature-answer-linting-errors.md) | high | backend | data-management | 2026-04-05 |
-| 51 | feature | [Anomalies Panel with checkboxes](feature-anomalies-panel.md) | medium | frontend | data-management | 2026-04-05 |
-| 52 | feature | [IDE-style Panel Layout (Map, Table, Charts, Anomalies)](feature-ide-panel-layout.md) | medium | frontend | data-management | 2026-04-05 |
-| 53 | feature | [Inline Editing: text, choice, number answers](feature-inline-editing-basic.md) | medium | frontend | data-management | 2026-04-05 |
-| 54 | feature | [Session Tags & Notes](feature-session-tags-notes.md) | medium | backend | data-management | 2026-04-05 |
-| 55 | feature | [Auto-Validation: advanced rules (fast, geo outliers, duplicates, area)](feature-auto-validation-advanced.md) | medium | backend | data-management | 2026-04-05 |
-| 56 | feature | [Answer-level Linting: warnings (statistical outliers, suspicious text)](feature-answer-linting-warnings.md) | medium | backend | data-management | 2026-04-05 |
-| 57 | feature | [Validation Settings (configurable thresholds per survey/question)](feature-validation-settings.md) | medium | frontend | data-management | 2026-04-05 |
+| ~~45~~ | ~~feature~~ | ~~[Attribute Table in Analytics](feature-attribute-table.md)~~ | ~~high~~ | ~~frontend~~ | ~~data-management~~ | ~~2026-04-05~~ |
+| ~~46~~ | ~~feature~~ | ~~[Session Validation Status (4 statuses + trash)](feature-session-validation-status.md)~~ | ~~high~~ | ~~backend~~ | ~~data-management~~ | ~~2026-04-05~~ |
+| ~~47~~ | ~~feature~~ | ~~[Clean Export (respects validation status)](feature-clean-export.md)~~ | ~~high~~ | ~~backend~~ | ~~data-management~~ | ~~2026-04-05~~ |
+| ~~48~~ | ~~feature~~ | ~~[Bulk Operations toolbar](feature-bulk-operations.md)~~ | ~~high~~ | ~~frontend~~ | ~~data-management~~ | ~~2026-04-05~~ |
+| ~~49~~ | ~~feature~~ | ~~[Auto-Validation: basic rules (empty, incomplete, missing required)](feature-auto-validation-basic.md)~~ | ~~high~~ | ~~backend~~ | ~~data-management~~ | ~~2026-04-05~~ |
+| ~~50~~ | ~~feature~~ | ~~[Answer-level Linting: errors (geo bbox, self-intersection, required)](feature-answer-linting-errors.md)~~ | ~~high~~ | ~~backend~~ | ~~data-management~~ | ~~2026-04-05~~ |
+| ~~51~~ | ~~feature~~ | ~~[Anomalies Panel with checkboxes](feature-anomalies-panel.md)~~ | ~~medium~~ | ~~frontend~~ | ~~data-management~~ | ~~2026-04-05~~ |
+| ~~52~~ | ~~feature~~ | ~~[IDE-style Panel Layout (Map, Table, Charts, Anomalies)](feature-ide-panel-layout.md)~~ | ~~medium~~ | ~~frontend~~ | ~~data-management~~ | ~~2026-04-05~~ |
+| ~~53~~ | ~~feature~~ | ~~[Inline Editing: text, choice, number answers](feature-inline-editing-basic.md)~~ | ~~medium~~ | ~~frontend~~ | ~~data-management~~ | ~~2026-04-05~~ |
+| ~~54~~ | ~~feature~~ | ~~[Session Tags & Notes](feature-session-tags-notes.md)~~ | ~~medium~~ | ~~backend~~ | ~~data-management~~ | ~~2026-04-05~~ |
+| ~~55~~ | ~~feature~~ | ~~[Auto-Validation: advanced rules (fast, geo outliers, duplicates, area)](feature-auto-validation-advanced.md)~~ | ~~medium~~ | ~~backend~~ | ~~data-management~~ | ~~2026-04-05~~ |
+| ~~56~~ | ~~feature~~ | ~~[Answer-level Linting: warnings (statistical outliers, suspicious text)](feature-answer-linting-warnings.md)~~ | ~~medium~~ | ~~backend~~ | ~~data-management~~ | ~~2026-04-05~~ |
+| ~~57~~ | ~~feature~~ | ~~[Validation Settings (configurable thresholds per survey/question)](feature-validation-settings.md)~~ | ~~medium~~ | ~~frontend~~ | ~~data-management~~ | ~~2026-04-05~~ |
 | 58 | feature | [Inline Editing: geo answers (redraw polygon/point/line)](feature-inline-editing-geo.md) | low | frontend | data-management | 2026-04-05 |
 | 59 | feature | [Audit Trail (edit history log)](feature-audit-trail.md) | low | backend | data-management | 2026-04-05 |
 | 60 | improvement | [Hide language picker when single language](improvement-hide-language-picker-single-lang.md) | medium | frontend | — | 2026-04-14 |
 | 61 | idea | [Sub-question Discoverability Testing](idea-subquestion-discoverability-testing.md) | medium | general | — | 2026-04-14 |
-| 66 | feature | [Registration CAPTCHA (Cloudflare Turnstile)](feature-registration-captcha.md) | **very high** | backend | abuse-prevention | 2026-05-08 |
-| 67 | feature | [Registration Rate Limiting](feature-registration-rate-limiting.md) | **very high** | backend | abuse-prevention | 2026-05-08 |
-| 68 | feature | [Registration Honeypot Field](feature-registration-honeypot.md) | high | backend | abuse-prevention | 2026-05-08 |
+| ~~66~~ | ~~feature~~ | ~~[Registration CAPTCHA (Cloudflare Turnstile)](feature-registration-captcha.md)~~ | ~~**very high**~~ | ~~backend~~ | ~~abuse-prevention~~ | ~~2026-05-08~~ |
+| ~~67~~ | ~~feature~~ | ~~[Registration Rate Limiting](feature-registration-rate-limiting.md)~~ | ~~**very high**~~ | ~~backend~~ | ~~abuse-prevention~~ | ~~2026-05-08~~ |
+| ~~68~~ | ~~feature~~ | ~~[Registration Honeypot Field](feature-registration-honeypot.md)~~ | ~~high~~ | ~~backend~~ | ~~abuse-prevention~~ | ~~2026-05-08~~ |
 | 69 | feature | [Email Verification Before Account Creation](feature-email-verification-before-account.md) | high | backend | abuse-prevention | 2026-05-08 |
 | 70 | feature | [Disposable-Email-Domain Blocklist](feature-disposable-email-blocklist.md) | medium | backend | abuse-prevention | 2026-05-08 |
 | 71 | feature | [Auto-Purge of Unconfirmed Signups](feature-unconfirmed-signup-purge.md) | medium | backend | abuse-prevention | 2026-05-08 |
 | 72 | improvement | [Signup Anomaly Dashboard](improvement-signup-anomaly-dashboard.md) | medium | backend | abuse-prevention | 2026-05-08 |
+| 73 | feature | [IP / ASN Blocklist](feature-ip-asn-blocklist.md) | medium | backend | abuse-prevention | 2026-05-10 |
+| 74 | idea | [Coursework / education channel — "Mapsurvey for classrooms"](idea-coursework-education-channel.md) | high | general | growth | 2026-06-10 |
+| 75 | feature | ["Made with Mapsurvey" viral loop on public pages](feature-made-with-mapsurvey-viral-loop.md) | high | frontend | growth | 2026-06-10 |
+| 76 | feature | [Survey template gallery (onboarding / activation)](feature-survey-template-gallery.md) | medium | frontend | growth | 2026-06-10 |
+| 77 | idea | [Public results showcase gallery + SEO](idea-public-results-showcase-seo.md) | medium | general | growth | 2026-06-10 |
+| 78 | idea | [Localized growth in markets with existing traction](idea-localized-growth-markets.md) | low | general | growth | 2026-06-10 |
+| 79 | improvement | [Reduce geo-input friction (most-skipped question type)](improvement-reduce-geo-input-friction.md) | high | frontend | — | 2026-06-10 |
+| 80 | improvement | [Reduce duplicate accounts / signup-login UX friction](improvement-account-dedup-signup-ux.md) | medium | backend | — | 2026-06-10 |
+| 81 | idea | [Interactive onboarding (guided first-survey wizard)](idea-interactive-onboarding.md) | high | frontend | growth | 2026-06-10 |
+| 83 | feature | [Real-time updates for public results (live delivery layer)](feature-realtime-public-results.md) | medium | backend | growth | 2026-07-04 |
+| 96 | bug | [GeoJSON export: sub-question property inherits previous value](bug-geojson-subquestion-property-bleed.md) | **very high** | backend | — | 2026-08-04 |
+| 97 | bug | [datetime answers never appear in the CSV export](bug-datetime-missing-from-csv-export.md) | high | backend | — | 2026-08-04 |
+| 98 | bug | [Deleting a question silently destroys all answers](bug-editing-question-destroys-answers.md) | high | backend | — | 2026-08-04 |
+| 99 | bug | [Range slider: endpoint labels not aligned to the track](bug-range-slider-label-alignment.md) | high | frontend | — | 2026-08-04 |
+| 100 | improvement | [Closed survey is a dead end — no way back to editing](improvement-closed-survey-edit-dead-end.md) | high | frontend | — | 2026-08-04 |
+| 101 | feature | [Clear all responses / reset survey data](feature-clear-all-responses.md) | medium | backend | — | 2026-08-04 |
+| 102 | feature | [Additional scale and ranking question types](feature-additional-scale-question-types.md) | medium | frontend | — | 2026-08-04 |

@@ -56,11 +56,12 @@ These three together block ~99% of automated subscription-bombing scripts and ca
 4. Email verification before account creation (move user creation to post-confirmation step).
 5. Disposable-email-domain blocklist.
 6. Auto-purge of unconfirmed signups after N days.
+7. IP / CIDR blocklist (app-layer; complements but does not replace edge WAF).
 
 ### Phase 3: Operational hardening
 
-7. Admin dashboard view: "registrations in the last 24h grouped by IP / email domain" — so the next incident is detected in minutes, not days.
-8. Documented incident-response runbook (FK chain, cleanup query, deliverability check).
+8. Admin dashboard view: "registrations in the last 24h grouped by IP / email domain" — so the next incident is detected in minutes, not days.
+9. Documented incident-response runbook (FK chain, cleanup query, deliverability check).
 
 ## Real-World Driver
 
@@ -78,7 +79,8 @@ The cost of inaction = lost deliverability = the carefully-built outreach campai
 - feature-email-verification-before-account.md — Phase 2 item 4
 - feature-disposable-email-blocklist.md — Phase 2 item 5
 - feature-unconfirmed-signup-purge.md — Phase 2 item 6
-- improvement-signup-anomaly-dashboard.md — Phase 3 item 7
+- feature-ip-asn-blocklist.md — Phase 2 item 7
+- improvement-signup-anomaly-dashboard.md — Phase 3 item 8
 
 ## Blocks / Blocked By
 

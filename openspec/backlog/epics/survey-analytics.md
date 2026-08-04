@@ -2,6 +2,21 @@
 
 **Created**: 2026-04-02
 
+## Tier split (2026-07-29)
+
+Analytics is **split, not moved wholesale** — see [pro-tier.md](pro-tier.md).
+
+- **Free**: look at your own data. Response counts, daily chart, points on a map,
+  per-question distributions.
+- **Pro**: analyse it and show it to others. Cross-filtering, heatmaps, interactive
+  analytics map, multi-color comparison sets, A/B testing, funnel monitoring, UTM/referrer
+  attribution, public results pages.
+
+Reason for the split rather than a clean paywall: cross-filtering and heatmaps are the
+strongest demo argument we have against "Google Forms with a map". A free user who never
+sees them will never recommend us — but a free user who cannot *see their own responses at
+all* will not stay long enough to become a buyer either.
+
 ## Vision
 
 Give survey creators a GTM-like analytics experience: see the funnel, understand where respondents drop off, know where traffic comes from, and run A/B tests to optimize response quality.
