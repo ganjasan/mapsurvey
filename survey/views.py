@@ -35,6 +35,7 @@ from django.contrib.gis.geos import GEOSGeometry
 import sys
 from io import BytesIO
 import json
+import logging
 from zipfile import ZipFile
 import pandas as pd
 
@@ -63,6 +64,8 @@ from .abuse import (
 from django_ratelimit.core import is_ratelimited
 from django.conf import settings as conf_settings
 from django.http import HttpResponse
+
+logger = logging.getLogger(__name__)
 
 
 class AsyncEmailRegistrationView(
@@ -1050,6 +1053,92 @@ def _sanitize_filename(name):
 	return re.sub(r'[<>:"/\\|?*]', '_', name)
 
 
+# Every input type is classified for export. A type in none of these sets is a
+# bug — it means INPUT_TYPE_CHOICES gained a member and nobody decided how it
+# leaves the platform — so _answer_cell warns rather than dropping it silently,
+# which is how datetime went missing from the download unnoticed.
+
+# Carry respondent input; exported as a CSV column or a GeoJSON property.
+EXPORT_VALUE_TYPES = frozenset({
+	'text', 'text_line', 'number', 'range',
+	'choice', 'rating', 'multichoice', 'datetime',
+})
+
+# Exported as GeoJSON layers in their own right, never as a cell.
+EXPORT_GEOMETRY_TYPES = frozenset({'point', 'line', 'polygon'})
+
+# Presentational; they collect nothing, so there is nothing to export.
+EXPORT_DISPLAY_ONLY_TYPES = frozenset({'image', 'html'})
+
+# Returned by _answer_cell for questions that must not produce a column at all,
+# which is distinct from a question that produces an empty one.
+EXPORT_NO_COLUMN = object()
+
+
+def _format_datetime_cell(raw):
+	"""Serialise a stored datetime answer as ISO 8601.
+
+	Values that do not parse are passed through unchanged: a raw string the
+	creator can still interpret beats a blank cell.
+	"""
+	if not raw:
+		return ""
+	try:
+		return datetime.fromisoformat(raw).isoformat()
+	except (TypeError, ValueError):
+		return raw
+
+
+def _answer_cell(question, answers):
+	"""Format one question's answer for export.
+
+	`answers` holds the rows belonging to this question and nothing else, which
+	is what keeps a blank question from inheriting its neighbour's value: the
+	result is computed per call rather than accumulated across a loop.
+
+	Returns EXPORT_NO_COLUMN for questions that should not appear as a cell.
+	"""
+	input_type = question.input_type
+
+	if input_type in EXPORT_GEOMETRY_TYPES or input_type in EXPORT_DISPLAY_ONLY_TYPES:
+		return EXPORT_NO_COLUMN
+
+	if input_type not in EXPORT_VALUE_TYPES:
+		logger.warning(
+			"Export: question %s has unclassified input_type %r; exporting an "
+			"empty column. Classify it in survey/views.py.",
+			question.code, input_type,
+		)
+		return ""
+
+	if not answers:
+		return ""
+
+	answer = answers[0]
+
+	if input_type in ('text', 'text_line'):
+		return answer.text if answer.text is not None else ""
+
+	if input_type == 'datetime':
+		return _format_datetime_cell(answer.text)
+
+	if input_type in ('number', 'range'):
+		if answer.numeric is not None:
+			return answer.numeric
+		if answer.selected_choices:
+			return answer.selected_choices[0]
+		return ""
+
+	if input_type in ('choice', 'rating'):
+		names = answer.get_selected_choice_names()
+		return names[0] if names else ""
+
+	if input_type == 'multichoice':
+		return "; ".join(answer.get_selected_choice_names())
+
+	return ""
+
+
 def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 	"""Export a single survey's data into the zip with optional filename prefix.
 
@@ -1074,58 +1163,37 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 		#получить ответы
 		features = []
 		answers = question.answers()
-		for answer in answers:
+		for geo_answer in answers:
 			# Skip excluded sessions
-			if answer.survey_session_id in excluded_session_ids:
+			if geo_answer.survey_session_id in excluded_session_ids:
 				continue
 
 			#получить геометрию
 			geo_type = question.input_type
 			if geo_type == "polygon":
-				coordinates =  [[[i[0],i[1]] for i in answer.polygon.coords[0]]]
+				coordinates =  [[[i[0],i[1]] for i in geo_answer.polygon.coords[0]]]
 				geometry_type = "Polygon"
 			elif geo_type == "line":
-				coordinates =  [[i[0],i[1]] for i in answer.line.coords]
+				coordinates =  [[i[0],i[1]] for i in geo_answer.line.coords]
 				geometry_type = "LineString"
 			elif geo_type == "point":
-				coordinates =  [answer.point.coords[0], answer.point.coords[1]]
+				coordinates =  [geo_answer.point.coords[0], geo_answer.point.coords[1]]
 				geometry_type = "Point"
 
 			#получить properties из subquestions
-			subquestions = question.subQuestions()
 			properties = {}
-			subanswers = answer.subAnswers()
-			result = ""
-			for key in subanswers:
-				input_type = key.input_type
-				if (input_type == "text" or input_type == "text_line"):
-					if subanswers[key]:
-						answer = subanswers[key][0]
-						result = answer.text
-				elif input_type == "number" or input_type == "range":
-					if subanswers[key]:
-						answer = subanswers[key][0]
-						if answer.numeric is not None:
-							result = answer.numeric
-						elif answer.selected_choices:
-							result = answer.selected_choices[0]
-						else:
-							result = ""
-				elif input_type == "choice" or input_type == "rating":
-					if subanswers[key]:
-						answer = subanswers[key][0]
-						names = answer.get_selected_choice_names()
-						result = names[0] if names else ""
-				elif input_type == "multichoice":
-					if subanswers[key]:
-						result = "; ".join(subanswers[key][0].get_selected_choice_names())
+			subanswers = geo_answer.subAnswers()
+			for subquestion, rows in subanswers.items():
+				cell = _answer_cell(subquestion, rows)
+				# Unlike the CSV, every sub-question keeps a property even when
+				# it holds nothing: a feature collection whose attribute set
+				# varies per feature is awkward to read in QGIS.
+				properties[subquestion.name] = "" if cell is EXPORT_NO_COLUMN else cell
 
-				properties[key.name] = result
-
-			properties["session"] = str(answer.survey_session)
-			properties["session_id"] = answer.survey_session_id
-			properties["language"] = answer.survey_session.language or ''
-			properties["validation_status"] = answer.survey_session.validation_status or ''
+			properties["session"] = str(geo_answer.survey_session)
+			properties["session_id"] = geo_answer.survey_session_id
+			properties["language"] = geo_answer.survey_session.language or ''
+			properties["validation_status"] = geo_answer.survey_session.validation_status or ''
 
 			feature = {
 				"type": "Feature",
@@ -1162,30 +1230,17 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 
 		properties = {}
 		answers = session.answers()
-		result = ""
 		for answer in answers:
 			if not answer.question:
 				continue
-			input_type = answer.question.input_type
 
-			if (input_type == "text" or input_type == "text_line"):
-				result = answer.text
-			elif input_type == "number" or input_type == "range":
-				if answer.numeric is not None:
-					result = answer.numeric
-				elif answer.selected_choices:
-					result = answer.selected_choices[0]
-				else:
-					result = ""
-			elif input_type == "choice" or input_type == "rating":
-				names = answer.get_selected_choice_names()
-				result = names[0] if names else ""
-			elif input_type == "multichoice":
-				result = "; ".join(answer.get_selected_choice_names())
-			else:
+			cell = _answer_cell(answer.question, [answer])
+			# Geometry questions are exported as their own GeoJSON layers and
+			# display-only questions collect nothing, so neither gets a column.
+			if cell is EXPORT_NO_COLUMN:
 				continue
 
-			properties[answer.question.name] = result
+			properties[answer.question.name] = cell
 
 		properties["session"] = str(session)
 		properties["session_id"] = session.id
