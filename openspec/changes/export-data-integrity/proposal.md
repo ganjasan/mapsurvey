@@ -39,6 +39,12 @@ blank-number report (#23) as a separate investigation. #23 is expected to be res
 accumulator fix — the reporter's number lived in a sub-question of a geo question — and the change
 should confirm or refute that with a test rather than assume it.
 
+> **Refuted during implementation (2026-08-04).** The expectation above was wrong. Tests written
+> against the unfixed code showed that both a number sub-question and a top-level number question
+> already exported correctly, so #23 has a different cause and stays open, now pointing at the
+> write path. Kept here rather than rewritten, so the record shows what was assumed going in. See
+> tasks 2.4 and 5.2.
+
 **Output changes, not breaking API:** CSVs gain a column for every `datetime` question, which is
 additive. GeoJSON property *values* change for partially-filled sub-questions — that is the fix,
 but anyone who has already analysed a previous export will get different numbers from a re-export,
