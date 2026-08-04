@@ -42,9 +42,17 @@ attributes of a mapped object.
   `subAnswers()` is evaluated before the rebind and the session is the same object, but it makes
   `properties["session"]` at `views.py:1125` read from the wrong row and will bite on the next
   edit to this function. Fix both together.
-- Fix: initialise `result = ""` at the top of each sub-question iteration, and rename the inner
-  variable. Add a regression test covering a geo answer whose sub-questions are partially filled.
-- Related: [Number field blank in CSV export](bug-number-field-blank-in-csv-export.md) (#23) and
-  [datetime answers missing from CSV export](bug-datetime-missing-from-csv-export.md) — all three
-  live in the same untested export path, which argues for one change that covers the whole
-  function rather than three point fixes.
+- Related: [datetime answers missing from CSV export](bug-datetime-missing-from-csv-export.md) —
+  same function, same cause shape, fixed together.
+- **2026-08-04 — FIXED** in change `export-data-integrity`, branch `fix/export-data-integrity`.
+  Both duplicated `elif` chains were replaced by a single `_answer_cell(question, answers)`, so the
+  accumulator that leaked no longer exists; the `answer` rebinding went with it. Covered by
+  `ExportValueCorrectnessTest` in `survey/tests.py`.
+- Mechanism, confirmed while fixing: sub-answers are written only for keys present in the submitted
+  feature's `properties` (`views.py:841`), so a sub-question the respondent skipped has **no
+  `Answer` row at all**. That is the ordinary path, not an edge case — the bug fires whenever a
+  respondent leaves an attribute blank.
+- Correction to an earlier note in this file: `download_data` was described as untested. It was
+  not — it had tests for row counts, the version filter and metadata columns. The gap was
+  value-level: nothing asserted that an answer reached the right column, and nothing exercised
+  sub-questions. That gap is now closed.

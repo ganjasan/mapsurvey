@@ -20,10 +20,14 @@ with no such column — with no error to explain the gap.
 ## Notes
 
 - Found 2026-08-04 while investigating Manuel Frost's export complaint.
-- Fix: handle `datetime` in the export chain, reading `answer.text`. Decide the serialised format
-  explicitly (ISO 8601 is the safe default for a file that gets opened in Excel and QGIS).
-- While in this function, audit the `else: continue` branch for every value in `INPUT_TYPE_CHOICES`
-  — the same silent-drop shape applies to any type added later. Consider failing loudly (or
-  emitting an empty column) for unhandled types instead of skipping.
-- Related: [GeoJSON sub-question property bleed](bug-geojson-subquestion-property-bleed.md),
-  [Number field blank in CSV export](bug-number-field-blank-in-csv-export.md) (#23).
+- **2026-08-04 — FIXED** in change `export-data-integrity`, branch `fix/export-data-integrity`.
+  `datetime` is exported as ISO 8601; values that do not parse pass through unchanged rather than
+  being dropped.
+- The `else: continue` that hid this is gone. Input types are now classified explicitly into
+  value / geometry / display-only sets, and a type in none of them gets an empty column plus a
+  logged warning. Raising was considered and rejected: one unrecognised question would deny every
+  respondent's data.
+- Related: [GeoJSON sub-question property bleed](bug-geojson-subquestion-property-bleed.md), fixed
+  in the same change.
+- Correction to an earlier note in this file's siblings: `download_data` was described as having no
+  test coverage. It had count-level and metadata-level tests; the gap was value-level.
