@@ -11157,6 +11157,207 @@ class CleanExportTest(TestCase):
         self.assertEqual(props['session_id'], s.id)
 
 
+class ExportValueCorrectnessTest(TestCase):
+    """Value-level tests for the respondent-data download.
+
+    The existing export tests assert how many rows come back and that the
+    metadata columns are present. None of them assert that a given answer
+    reaches a given column, and none exercise sub-question properties at all —
+    which is why the defects in change `export-data-integrity` survived.
+
+    Tests here are characterisation tests: they pin the behaviour that is
+    already correct, so the refactor that fixes the defects cannot quietly
+    change anything else.
+    """
+
+    CHOICES = [
+        {"code": 1, "name": {"en": "Ruhig"}},
+        {"code": 2, "name": {"en": "Laut"}},
+    ]
+
+    def setUp(self):
+        self.org = _make_org('ValueExportOrg')
+        self.user = User.objects.create_user('valueexportuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+
+        self.survey = SurveyHeader.objects.create(
+            name='value_export_test', organization=self.org,
+            created_by=self.user, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', code='S1', is_head=True,
+        )
+
+        def q(name, code, input_type, order, choices=None, parent=None):
+            return Question.objects.create(
+                survey_section=self.section, name=name, code=code,
+                input_type=input_type, order_number=order,
+                choices=choices, parent_question_id=parent,
+            )
+
+        self.q_text = q('Comment', 'q_text', 'text', 1)
+        self.q_text_line = q('Title', 'q_line', 'text_line', 2)
+        self.q_number = q('District', 'q_num', 'number', 3)
+        self.q_range = q('Loudness', 'q_range', 'range', 4, self.CHOICES)
+        self.q_choice = q('Character', 'q_choice', 'choice', 5, self.CHOICES)
+        self.q_rating = q('Quality', 'q_rating', 'rating', 6, self.CHOICES)
+        self.q_multi = q('Sources', 'q_multi', 'multichoice', 7, self.CHOICES)
+        self.q_html = q('Intro', 'q_html', 'html', 8)
+
+        self.q_point = q('Location', 'q_point', 'point', 9)
+        self.sub_text = q('SubComment', 'sq_text', 'text', 1, parent=self.q_point)
+        self.sub_number = q('SubCount', 'sq_num', 'number', 2, parent=self.q_point)
+        self.sub_choice = q('SubCharacter', 'sq_choice', 'choice', 3,
+                            self.CHOICES, parent=self.q_point)
+
+        self.client.login(username='valueexportuser', password='pass')
+
+    def _session(self, **kwargs):
+        return SurveySession.objects.create(survey=self.survey, **kwargs)
+
+    def _answer(self, session, question, parent=None, **fields):
+        return Answer.objects.create(
+            survey_session=session, question=question,
+            parent_answer_id=parent, **fields,
+        )
+
+    def _download(self):
+        return self.client.get(f'/surveys/{self.survey.uuid}/download')
+
+    def _csv_rows(self, response):
+        import csv
+        import io
+        with zipfile.ZipFile(BytesIO(response.content), 'r') as zf:
+            name = [n for n in zf.namelist() if n.endswith('.csv')][0]
+            text = zf.read(name).decode('utf-8')
+        return list(csv.DictReader(io.StringIO(text)))
+
+    def _geojson(self, response, question_name='Location'):
+        with zipfile.ZipFile(BytesIO(response.content), 'r') as zf:
+            name = [n for n in zf.namelist()
+                    if n.endswith('.geojson') and question_name in n][0]
+            return json.loads(zf.read(name))
+
+    def _answer_all_flat(self, session):
+        """Answer every non-geo question of the survey."""
+        self._answer(session, self.q_text, text='Ein Kommentar')
+        self._answer(session, self.q_text_line, text='Ein Titel')
+        self._answer(session, self.q_number, numeric=7)
+        self._answer(session, self.q_range, numeric=5)
+        self._answer(session, self.q_choice, selected_choices=[2])
+        self._answer(session, self.q_rating, selected_choices=[1])
+        self._answer(session, self.q_multi, selected_choices=[1, 2])
+
+    # ── 1.1 CSV: every value-bearing type lands in its own column ──────────
+
+    def test_csv_exports_each_value_type_in_its_own_column(self):
+        """
+        GIVEN one session answering every non-geo question type
+        WHEN the data is downloaded
+        THEN each answer appears in the column named after its own question
+        """
+        self._answer_all_flat(self._session())
+
+        rows = self._csv_rows(self._download())
+
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
+        self.assertEqual(row['Comment'], 'Ein Kommentar')
+        self.assertEqual(row['Title'], 'Ein Titel')
+        self.assertEqual(row['District'], '7.0')
+        self.assertEqual(row['Loudness'], '5.0')
+        self.assertEqual(row['Character'], 'Laut')
+        self.assertEqual(row['Quality'], 'Ruhig')
+        self.assertEqual(row['Sources'], 'Ruhig; Laut')
+
+    def test_csv_keeps_values_on_their_own_row(self):
+        """
+        GIVEN two sessions answering the same question differently
+        WHEN the data is downloaded
+        THEN each row carries its own session's answer
+        """
+        first = self._session()
+        self._answer(first, self.q_text, text='erste')
+        second = self._session()
+        self._answer(second, self.q_text, text='zweite')
+
+        rows = self._csv_rows(self._download())
+
+        self.assertEqual(len(rows), 2)
+        by_session = {int(r['session_id']): r['Comment'] for r in rows}
+        self.assertEqual(by_session[first.id], 'erste')
+        self.assertEqual(by_session[second.id], 'zweite')
+
+    # ── 1.2 GeoJSON: sub-question properties ───────────────────────────────
+
+    def test_geojson_exports_each_subquestion_property(self):
+        """
+        GIVEN a geo answer whose sub-questions are all answered
+        WHEN the data is downloaded
+        THEN each property holds its own sub-question's value
+        """
+        session = self._session()
+        geo = self._answer(session, self.q_point, point=Point(13.4, 52.5))
+        self._answer(session, self.sub_text, parent=geo, text='Lärm')
+        self._answer(session, self.sub_number, parent=geo, numeric=7)
+        self._answer(session, self.sub_choice, parent=geo, selected_choices=[2])
+
+        geojson = self._geojson(self._download())
+
+        self.assertEqual(len(geojson['features']), 1)
+        props = geojson['features'][0]['properties']
+        self.assertEqual(props['SubComment'], 'Lärm')
+        self.assertEqual(props['SubCount'], 7)
+        self.assertEqual(props['SubCharacter'], 'Laut')
+
+    def test_geojson_geometry_matches_the_answer(self):
+        """
+        GIVEN a geo answer at a known coordinate
+        WHEN the data is downloaded
+        THEN the feature geometry carries that coordinate
+        """
+        session = self._session()
+        self._answer(session, self.q_point, point=Point(13.4, 52.5))
+
+        geojson = self._geojson(self._download())
+
+        geometry = geojson['features'][0]['geometry']
+        self.assertEqual(geometry['type'], 'Point')
+        self.assertAlmostEqual(geometry['coordinates'][0], 13.4)
+        self.assertAlmostEqual(geometry['coordinates'][1], 52.5)
+
+    # ── 1.3 Which questions produce a CSV column at all ────────────────────
+
+    def test_geo_question_produces_a_layer_and_no_csv_column(self):
+        """
+        GIVEN a survey with a geo question that has been answered
+        WHEN the data is downloaded
+        THEN the geometry is exported as a GeoJSON layer, not a CSV column
+        """
+        session = self._session()
+        self._answer_all_flat(session)
+        self._answer(session, self.q_point, point=Point(13.4, 52.5))
+
+        response = self._download()
+
+        with zipfile.ZipFile(BytesIO(response.content), 'r') as zf:
+            names = zf.namelist()
+        self.assertTrue(any(n.endswith('.geojson') and 'Location' in n for n in names))
+        self.assertNotIn('Location', self._csv_rows(response)[0])
+
+    def test_display_only_question_produces_no_csv_column(self):
+        """
+        GIVEN a survey containing an html question, which collects nothing
+        WHEN the data is downloaded
+        THEN no column is named after it
+        """
+        self._answer_all_flat(self._session())
+
+        rows = self._csv_rows(self._download())
+
+        self.assertNotIn('Intro', rows[0])
+
+
 class BulkOperationsTest(TestCase):
     """Tests for bulk operations on survey sessions."""
 

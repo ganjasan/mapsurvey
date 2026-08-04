@@ -1,14 +1,20 @@
 ## 1. Characterisation tests (must pass before any production code changes)
 
-- [ ] 1.1 Add an export test case with a survey covering every value-bearing type — `text`,
+- [x] 1.1 Add an export test case with a survey covering every value-bearing type — `text`,
       `text_line`, `number`, `range`, `choice`, `rating`, `multichoice` — one answered session, and
       assert the exact CSV cell for each. This pins today's correct behaviour before the refactor.
-- [ ] 1.2 Add the GeoJSON counterpart: a geo question whose sub-questions cover the same types, all
+- [x] 1.2 Add the GeoJSON counterpart: a geo question whose sub-questions cover the same types, all
       answered, asserting each property value. Pins the sub-question path.
-- [ ] 1.3 Assert that geometry questions produce a `.geojson` entry and no CSV column, and that an
+- [x] 1.3 Assert that geometry questions produce a `.geojson` entry and no CSV column, and that an
       `html` question produces neither.
-- [ ] 1.4 Run the suite and confirm 1.1–1.3 pass against unmodified code. If any fails, stop — the
+- [x] 1.4 Run the suite and confirm 1.1–1.3 pass against unmodified code. If any fails, stop — the
       chain is not equivalent to what the design assumes, and the design needs revising first.
+
+  Done in `ExportValueCorrectnessTest` (`survey/tests.py`), 6 tests, all green against unmodified
+  code — the two chains behave as the design's equivalence table claims, so the refactor may
+  proceed. Recorded while writing them: `numeric` is a `FloatField`, so integers reach the CSV as
+  `"7.0"`, not `"7"`. Any later change to that formatting is a visible behaviour change and now has
+  a test holding it.
 
 ## 2. Failing tests for the three defects
 
