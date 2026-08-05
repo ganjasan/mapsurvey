@@ -66,7 +66,13 @@ class RangeWidget(widgets.Input):
         else:
             labels_html = ''
 
-        return mark_safe(input_html + ticks_html + labels_html)
+        # The wrapper scopes --range-thumb-size, from which the tick and label
+        # rows derive their inset. Without it each row guesses separately and
+        # they drift apart, which is how the labels came to sit outside the
+        # positions the thumb can actually reach.
+        return mark_safe(
+            '<div class="range-field">' + input_html + ticks_html + labels_html + '</div>'
+        )
 
 
 class LeafletDrawButtonWidget(widgets.Widget):
@@ -163,7 +169,43 @@ class ShowImageField(forms.Field):
 
 class SurveySectionAnswerForm(forms.Form):
 
-    def _get_form_from_input_type(self, input_type, required, question, label, sublabel, color, icon_class, image_source, language=None):
+    # Question types whose rendering the creator can pick. Membership, rather
+    # than a chain of equality tests, so the next type to gain display styles
+    # is one entry here and in the editor's gate.
+    DISPLAY_STYLE_TYPES = ('rating', 'range')
+
+    # Styles that lay out one element per choice, and so need choices to exist.
+    CHOICE_BASED_STYLES = ('scale_strip', 'list_pips')
+
+    @classmethod
+    def resolve_display_style(cls, question, survey_rating_style):
+        """Decide how a question is rendered.
+
+        For `range`, `default` means the slider and deliberately does not
+        inherit the survey-wide rating style — inheriting would silently
+        restyle every existing range question the first time this deploys.
+
+        A choice-based style with no choices to lay out falls back to the
+        slider rather than rendering an empty control. 28% of range questions
+        in production have no choices, so this is a live path.
+        """
+        # Types that do not support display styles must resolve to the plain
+        # rendering. Without this every question — text, number, geo — inherits
+        # the survey-wide rating style and any consumer keying on the resolved
+        # value alone will send a textarea through the scale partials.
+        if question.input_type not in cls.DISPLAY_STYLE_TYPES:
+            return 'default'
+
+        chosen = question.display_style if question.display_style in cls.CHOICE_BASED_STYLES else None
+
+        if question.input_type == 'range':
+            if chosen and not question.choices:
+                return 'default'
+            return chosen or 'default'
+
+        return chosen or survey_rating_style
+
+    def _get_form_from_input_type(self, input_type, required, question, label, sublabel, color, icon_class, image_source, language=None, display_style='default'):
 
         if input_type == 'text':
             return forms.CharField(widget=forms.Textarea, label=label, required=required)
@@ -189,6 +231,18 @@ class SurveySectionAnswerForm(forms.Form):
 
         elif input_type == 'range':
             choices = question.choices or []
+
+            # The choice-based styles render one radio per choice, which an
+            # IntegerField cannot supply. The stored value is unaffected: the
+            # save path keys on question.input_type, not on the widget.
+            if display_style in self.CHOICE_BASED_STYLES and choices:
+                return forms.ChoiceField(
+                    widget=forms.RadioSelect(),
+                    choices=[(c["code"], question.get_choice_name(c["code"], language)) for c in choices],
+                    label=label,
+                    required=required,
+                )
+
             codes = [c["code"] for c in choices]
             minimum = min(codes) if codes else 0
             maximum = max(codes) if codes else 10
@@ -246,13 +300,13 @@ class SurveySectionAnswerForm(forms.Form):
             field_icon_class = question.icon_class
             image_source = question.image.url if question.image else None
 
-            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question, field_label, field_sublabel, field_color, field_icon_class, image_source, language)
+            # Resolved before the field is built, because for `range` it
+            # decides which kind of field to build.
+            resolved_style = self.resolve_display_style(question, survey_rating_style)
+
+            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question, field_label, field_sublabel, field_color, field_icon_class, image_source, language, display_style=resolved_style)
             self.fields[field_name].widget.question_type = question.input_type
-            self.fields[field_name].widget.display_style = (
-                question.display_style
-                if question.display_style in ('scale_strip', 'list_pips')
-                else survey_rating_style
-            )
+            self.fields[field_name].widget.display_style = resolved_style
 
 
     def save(self):

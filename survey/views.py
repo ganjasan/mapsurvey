@@ -718,7 +718,16 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 					initial[question.code] = [str(c) for c in answer.selected_choices]
 			elif question.input_type == 'range':
 				if answer.numeric is not None:
-					initial[question.code] = int(answer.numeric)
+					# The slider takes an int; the choice-based styles are radios
+					# and need the string form to match one of their choices.
+					# Same stored value either way — only the shape differs.
+					resolved_style = SurveySectionAnswerForm.resolve_display_style(
+						question, section.survey_header.get_default_rating_display_style()
+					)
+					if resolved_style in SurveySectionAnswerForm.CHOICE_BASED_STYLES:
+						initial[question.code] = str(int(answer.numeric))
+					else:
+						initial[question.code] = int(answer.numeric)
 
 	form = SurveySectionAnswerForm(initial=initial, section=section, question=None, survey_session_id=request.session['survey_session_id'], language=selected_language)
 

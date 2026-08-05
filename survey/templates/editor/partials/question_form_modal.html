@@ -44,7 +44,7 @@
         {% endif %}
         {% endfor %}
 
-        <!-- Display style (rating only) -->
+        <!-- Display style (see DISPLAY_STYLE_TYPES below) -->
         <div id="display-style-fields" style="display:none;" class="mb-3">
             <label style="font-weight:600;">Display as</label>
             <div style="display:flex;gap:8px;">
@@ -210,9 +210,13 @@
         if (polyEl) polyEl.style.display = (t === 'polygon') ? 'block' : 'none';
     }
 
+    // Types whose rendering the creator can pick. Mirrors
+    // SurveySectionAnswerForm.DISPLAY_STYLE_TYPES — keep the two in step.
+    var DISPLAY_STYLE_TYPES = ['rating', 'range'];
+
     function toggleDisplayStyleFields() {
         var el = document.getElementById('display-style-fields');
-        if (el) el.style.display = (inputTypeSelect && inputTypeSelect.value === 'rating') ? 'block' : 'none';
+        if (el) el.style.display = (inputTypeSelect && DISPLAY_STYLE_TYPES.indexOf(inputTypeSelect.value) !== -1) ? 'block' : 'none';
     }
 
     if (inputTypeSelect) {
