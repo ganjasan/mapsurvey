@@ -80,11 +80,15 @@ BASEMAP_CHOICES = [
     ('topo', _('Topo')),
 ]
 
+# `published`/`closed` -> `draft` is permitted only while the survey has never
+# collected anything; the condition lives in can_transition_to. It is an undo for
+# publishing by accident, not a way to edit a survey that has responses — that is
+# what draft copies and versioning are for.
 VALID_TRANSITIONS = {
     "draft": ["testing", "published"],
     "testing": ["draft", "published"],
-    "published": ["closed"],
-    "closed": ["published", "archived"],
+    "published": ["closed", "draft"],
+    "closed": ["published", "archived", "draft"],
     "archived": [],
 }
 
@@ -378,6 +382,14 @@ class SurveyHeader(models.Model):
             if not self._has_head_section():
                 return False, "Survey must have a head section"
 
+        if new_status == "draft" and self.status in ("published", "closed"):
+            if not self.has_never_collected():
+                return False, (
+                    "This survey has already collected responses. "
+                    "Create a draft copy to edit it instead — that keeps the "
+                    "responses collected so far as an archived version."
+                )
+
         return True, ""
 
     def _has_survey_structure(self):
@@ -434,6 +446,20 @@ class SurveyHeader(models.Model):
         return self.deleted_at + timedelta(days=self.TRASH_RETENTION_DAYS)
 
     # Versioning methods
+    def has_never_collected(self):
+        """True when nothing has ever been recorded against this survey.
+
+        Both halves are needed. Publishing a new version moves the previous
+        sessions onto an archived header, so a canonical survey can show zero
+        sessions of its own while the survey has collected plenty — checking
+        only the session count would read that as untouched.
+        """
+        if SurveySession.objects.filter(survey=self).exists():
+            return False
+        return not SurveyHeader.objects.filter(
+            canonical_survey=self, is_canonical=False,
+        ).exists()
+
     def has_draft_copy(self):
         return self.draft_copies.exists()
 

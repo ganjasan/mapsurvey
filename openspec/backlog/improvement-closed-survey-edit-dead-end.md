@@ -35,3 +35,15 @@ Publish to see what happens, then closes the survey to undo that, lands in this 
   what happens" case directly and needs no draft copy at all.
 - Also review the wording of the read-only banner: it states the lock without naming the next
   action, which is what left him stuck.
+- **2026-08-05 — FIXED** in change `closed-survey-edit-path`, branch `fix/closed-survey-edit-path`.
+  All three notes above were taken: the draft-copy route accepts `closed`, `published → draft` and
+  `closed → draft` are permitted while nothing has been collected, and the banner now always ends in
+  an action.
+- **5 of the 7 closed surveys in production were in the dead end** when this was written — no draft
+  copy, no offered route. 3 published surveys had zero sessions, the case the undo covers.
+- One refinement to the note above: the condition for returning to draft is not just "no sessions".
+  Publishing a new version moves the previous sessions onto an archived header, so a canonical survey
+  can show zero sessions while the survey has collected plenty. It also requires no archived
+  versions.
+- Publishing a draft of a closed survey deliberately leaves it closed. Editing a survey and reopening
+  it to respondents are two decisions, and "publish version" must not quietly mean the second.

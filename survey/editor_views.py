@@ -184,9 +184,15 @@ def editor_survey_detail(request, survey_uuid):
     # Versioning context
     draft_copy = survey.get_draft_copy() if not survey.is_draft_copy else None
     show_edit_published = (
-        is_owner and survey.status == 'published' and not survey.has_draft_copy()
+        is_owner and survey.status in ('published', 'closed') and not survey.has_draft_copy()
     )
     show_draft_actions = is_owner and survey.is_draft_copy
+    # An accidental publish is undoable while nothing has been collected. Offered
+    # alongside the draft-copy route so the read-only notice always ends in an
+    # action the author can take.
+    show_back_to_draft = (
+        is_owner and is_read_only and not survey.is_draft_copy and survey.has_never_collected()
+    )
 
     return render(request, 'editor/survey_detail.html', {
         'survey': survey,
@@ -200,6 +206,7 @@ def editor_survey_detail(request, survey_uuid):
         'draft_copy': draft_copy,
         'show_edit_published': show_edit_published,
         'show_draft_actions': show_draft_actions,
+        'show_back_to_draft': show_back_to_draft,
     })
 
 
@@ -1163,8 +1170,13 @@ def editor_create_draft(request, survey_uuid):
     """Create a draft copy of a published survey for editing."""
     survey = request.survey
 
-    if survey.status != 'published':
-        return HttpResponse('Only published surveys can have draft copies', status=400)
+    # Closed as well as published: a closed survey is read-only for the same
+    # reason and needs the same way out. Nothing downstream reads the canonical's
+    # status — clone_survey_for_draft copies structure, and publish_draft archives
+    # the previous version and leaves the status alone, so a closed survey stays
+    # closed after its draft is published.
+    if survey.status not in ('published', 'closed'):
+        return HttpResponse('Only published or closed surveys can have draft copies', status=400)
 
     if survey.has_draft_copy():
         return HttpResponse('A draft already exists for this survey', status=409)
