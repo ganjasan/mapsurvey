@@ -2,6 +2,12 @@
 
 **Slug**: data-management
 **Created**: 2026-04-05
+**Tier (2026-07-29)**: **Free** — the whole suite stays free. Cleaning and validating your
+own data is table stakes; gating it would break the "your data is yours" promise that is
+our wedge against Maptionnaire / Citizen Space / Open Point. The single exception is
+[Audit Trail](../feature-audit-trail.md) (#59), which is **Pro** because it exists to prove
+integrity to a third party rather than to help you fix your own dataset. See
+[pro-tier.md](pro-tier.md).
 
 ## Description
 
