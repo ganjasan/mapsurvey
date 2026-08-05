@@ -492,6 +492,15 @@ class SurveySection(models.Model):
             self.__qcache = Question.objects.filter(survey_section=self).filter(parent_question_id__isnull=True).order_by('order_number')
         return self.__qcache
 
+    def answer_count(self):
+        """Answers that deleting this section would destroy.
+
+        Sub-questions carry the same `survey_section` as their parent — that is
+        why `questions()` above has to filter them out — so this one filter
+        already covers them, at any nesting depth.
+        """
+        return Answer.objects.filter(question__survey_section=self).count()
+
     def get_translated_title(self, lang):
         if not lang:
             return self.title
@@ -564,6 +573,31 @@ class Question(models.Model):
         if not hasattr(self, "__acache"):
             self.__acache = Answer.objects.filter(question=self)
         return self.__acache
+
+    def descendant_question_ids(self):
+        """This question's id plus every sub-question beneath it.
+
+        The editor only offers one level of sub-question today, but the model
+        allows deeper nesting, so this walks rather than assuming a depth — an
+        undercount here would understate what a delete destroys, which is the
+        one number this must not get wrong.
+        """
+        ids = [self.id]
+        frontier = [self.id]
+        while frontier:
+            children = list(
+                Question.objects.filter(parent_question_id__in=frontier)
+                .values_list('id', flat=True)
+            )
+            if not children:
+                break
+            ids.extend(children)
+            frontier = children
+        return ids
+
+    def answer_count(self):
+        """Answers that deleting this question would destroy, sub-questions included."""
+        return Answer.objects.filter(question_id__in=self.descendant_question_ids()).count()
 
     def get_translated_name(self, lang):
         if not lang:

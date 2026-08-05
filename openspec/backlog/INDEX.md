@@ -96,10 +96,11 @@
 | 83 | feature | [Real-time updates for public results (live delivery layer)](feature-realtime-public-results.md) | medium | backend | growth | 2026-07-04 |
 | ~~96~~ | ~~bug~~ | ~~[GeoJSON export: sub-question property inherits previous value](bug-geojson-subquestion-property-bleed.md)~~ | ~~**very high**~~ | ~~backend~~ | ~~—~~ | ~~2026-08-04~~ |
 | ~~97~~ | ~~bug~~ | ~~[datetime answers never appear in the CSV export](bug-datetime-missing-from-csv-export.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-08-04~~ |
-| 98 | bug | [Deleting a question silently destroys all answers](bug-editing-question-destroys-answers.md) | high | backend | — | 2026-08-04 |
+| ~~98~~ | ~~bug~~ | ~~[Deleting a question silently destroys all answers](bug-editing-question-destroys-answers.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-08-04~~ |
 | ~~99~~ | ~~bug~~ | ~~[Range slider: endpoint labels not aligned to the track](bug-range-slider-label-alignment.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-08-04~~ |
 | 100 | improvement | [Closed survey is a dead end — no way back to editing](improvement-closed-survey-edit-dead-end.md) | high | frontend | — | 2026-08-04 |
 | 101 | feature | [Clear all responses / reset survey data](feature-clear-all-responses.md) | medium | backend | — | 2026-08-04 |
 | 102 | feature | [Additional scale and ranking question types](feature-additional-scale-question-types.md) | medium | frontend | — | 2026-08-04 |
 | 106 | improvement | [Survey page always renders the map, squeezing non-geo surveys](improvement-map-panel-always-rendered.md) | high | frontend | — | 2026-08-05 |
 | 107 | bug | [Survey answers are never validated server-side](bug-answers-never-validated-server-side.md) | high | backend | — | 2026-08-05 |
+| 108 | bug | [Editing a question's type or choices invalidates stored answers](bug-question-edits-invalidate-stored-answers.md) | medium | backend | — | 2026-08-05 |

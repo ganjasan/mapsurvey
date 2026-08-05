@@ -61,6 +61,8 @@ is no existing requirement to amend.
   controls and their confirmation.
 - `survey/models.py` — a helper for counting answers under a question or section, including
   sub-questions. No field change, no migration.
-- Backlog #98 closed, and its description corrected: it currently says editing a survey destroys
-  the answers already given, which overstates the case by leaving out that versioning protects
-  published surveys.
+- Backlog #98 closed, with the measured exposure recorded on it.
+
+  (An earlier draft of this proposal said #98's description overstated the case by omitting that
+  versioning protects published surveys. Re-reading it, that was wrong — the item already says so
+  explicitly. The overstatement was in how it had been summarised verbally, not in the file.)
