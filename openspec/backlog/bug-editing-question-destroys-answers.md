@@ -22,6 +22,18 @@ iterate while collecting first responses — has no protection at all.
 
 ## Notes
 
+- **2026-08-05 — FIXED** in change `warn-before-destroying-answers`, branch
+  `fix/question-delete-destroys-answers`. The cascade is unchanged; what changed is that a delete
+  which would destroy answers is refused until the author acknowledges the count, and the
+  confirmation explains what versioning would have preserved. Soft-delete was considered and
+  rejected: it needs new state on `Question`, a migration, and export and analytics changes, which
+  is disproportionate for data belonging to surveys nobody has published.
+- Exposure, measured on production 2026-08-05 and worth keeping because it sized the fix:
+  **50 surveys in `draft` holding 842 answers, 12 in `testing` holding 1471.** Published and closed
+  surveys are protected twice over — by the read-only lock on structural edits, and by versioning
+  moving the previous structure and sessions onto an archived header rather than deleting them
+  (`versioning.py:236-260`). That is not theory: 61 archived headers currently hold 1060 questions
+  and 3466 answers.
 - Reported by: Manuel Frost (manu04, Berlin Senate) 2026-08-04 — "I entered some test data into my
   test project, but upon export, only the last answer contains data; the rest are empty. I think
   you have changed some things and my data are older." His own reading was right; the trigger was

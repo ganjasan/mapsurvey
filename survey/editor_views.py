@@ -35,6 +35,46 @@ def _check_structural_edit_allowed(survey):
     return None
 
 
+# Sent by the editor once the author has seen how many answers a delete costs.
+DELETE_ACKNOWLEDGEMENT = 'confirm_delete_answers'
+
+
+def _survey_is_unversioned(survey):
+    """True when this survey has no archived versions to fall back on.
+
+    Publishing moves the previous structure and its sessions onto an archived
+    header rather than deleting them, so a survey that has been published keeps
+    its earlier answers. One that never has does not — there is nowhere for them
+    to go.
+    """
+    if survey.is_draft_copy:
+        return False
+    return survey.version_number == 1 and not SurveyHeader.objects.filter(
+        canonical_survey=survey, is_canonical=False,
+    ).exists()
+
+
+def _refuse_if_answers_at_risk(request, survey, answer_count):
+    """Return a 409 unless the author has acknowledged losing `answer_count` answers.
+
+    The count is computed in the same request that would perform the delete.
+    Rendering it into the page earlier would let it go stale on a survey that is
+    still collecting, and a warning that is sometimes wrong about the number
+    teaches the author to disbelieve it.
+    """
+    if not answer_count:
+        return None
+    if request.POST.get(DELETE_ACKNOWLEDGEMENT) == 'true':
+        return None
+    return JsonResponse(
+        {
+            'answers_at_risk': answer_count,
+            'explain_versioning': _survey_is_unversioned(survey),
+        },
+        status=409,
+    )
+
+
 def _can_read_survey(user, survey):
     """Return True if user has at least viewer role on the survey."""
     return get_effective_survey_role(user, survey) is not None
@@ -306,6 +346,11 @@ def editor_section_delete(request, survey_uuid, section_id):
         return blocked
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
+    # Before the re-linking below, which must not run on a refused delete.
+    refusal = _refuse_if_answers_at_risk(request, survey, section.answer_count())
+    if refusal:
+        return refusal
+
     prev_sec = section.prev_section
     next_sec = section.next_section
 
@@ -525,6 +570,11 @@ def editor_question_delete(request, survey_uuid, question_id):
     if blocked:
         return blocked
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
+
+    refusal = _refuse_if_answers_at_risk(request, survey, question.answer_count())
+    if refusal:
+        return refusal
+
     question.delete()
     return HttpResponse('')
 
