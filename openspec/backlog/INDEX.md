@@ -94,8 +94,8 @@
 | 80 | improvement | [Reduce duplicate accounts / signup-login UX friction](improvement-account-dedup-signup-ux.md) | medium | backend | — | 2026-06-10 |
 | 81 | idea | [Interactive onboarding (guided first-survey wizard)](idea-interactive-onboarding.md) | high | frontend | growth | 2026-06-10 |
 | 83 | feature | [Real-time updates for public results (live delivery layer)](feature-realtime-public-results.md) | medium | backend | growth | 2026-07-04 |
-| 96 | bug | [GeoJSON export: sub-question property inherits previous value](bug-geojson-subquestion-property-bleed.md) | **very high** | backend | — | 2026-08-04 |
-| 97 | bug | [datetime answers never appear in the CSV export](bug-datetime-missing-from-csv-export.md) | high | backend | — | 2026-08-04 |
+| ~~96~~ | ~~bug~~ | ~~[GeoJSON export: sub-question property inherits previous value](bug-geojson-subquestion-property-bleed.md)~~ | ~~**very high**~~ | ~~backend~~ | ~~—~~ | ~~2026-08-04~~ |
+| ~~97~~ | ~~bug~~ | ~~[datetime answers never appear in the CSV export](bug-datetime-missing-from-csv-export.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-08-04~~ |
 | 98 | bug | [Deleting a question silently destroys all answers](bug-editing-question-destroys-answers.md) | high | backend | — | 2026-08-04 |
 | 99 | bug | [Range slider: endpoint labels not aligned to the track](bug-range-slider-label-alignment.md) | high | frontend | — | 2026-08-04 |
 | 100 | improvement | [Closed survey is a dead end — no way back to editing](improvement-closed-survey-edit-dead-end.md) | high | frontend | — | 2026-08-04 |
