@@ -1,13 +1,40 @@
 ## 1. Reproduce before changing anything
 
-- [ ] 1.1 Build a survey with a 9-point named range question mirroring the reporter's ("(positive)
+- [x] 1.1 Build a survey with a 9-point named range question mirroring the reporter's ("(positive)
       Geräusche" → "(negativer) Lärm") and capture the slider as rendered, at desktop width and at
       320px. This is the before-picture the fix is judged against.
-- [ ] 1.2 Answer the open question from the design: is "the slider is too short" about the slider or
+
+  Reproduced locally. Measured geometry: the slider spans x=41→378 (337px), the thumb is 22px so
+  the extreme thumb *centres* sit at 52 and 367. The tick row (`padding: 0 10px`) puts its outer
+  ticks at 51.5 and 367.5 — near enough. The label row (`padding: 0`) starts at 41 and ends at 378,
+  so **each endpoint label is 11px outside the position it claims to mark**. The error is a
+  constant, independent of width, so it grows as a proportion on a narrower panel.
+  Desktop capture: `screenshot-1785912570031-0.jpg`. The 320px capture was not taken — the window
+  would not resize below its current size — but the constant-offset finding makes the fix
+  width-independent, so it does not gate the work.
+
+- [x] 1.2 Answer the open question from the design: is "the slider is too short" about the slider or
       about the width of the question card containing it? Measure both; do not change anything until
       it is known which.
-- [ ] 1.3 Check production for `range` questions with no `choices` defined. Their existence decides
+
+  **Neither — it is the page layout, and it is not a range problem at all.** At a 1854px viewport
+  the question panel is 371px, because `base_survey_template.html:74` renders `<div id="map">`
+  unconditionally and it claims the rest of the width. The reproduction survey has no geo question
+  whatsoever and still gives ~80% of the screen to an empty map. Every question type in a non-geo
+  survey is squeezed the same way; the slider is just where it shows most, being the one control
+  that wants horizontal room.
+  Filed separately rather than fixed here — see 7.3. §2.3 below is therefore a no-op beyond
+  recording this.
+
+- [x] 1.3 Check production for `range` questions with no `choices` defined. Their existence decides
       whether the fallback in §4 is a real path or a defensive one.
+
+  **A real path: 34 of 122 range questions in production have no choices** (28%). They currently
+  render on the slider's 0–10 fallback (`forms.py:191-195`). Under a choice-based style they would
+  have nothing to lay out, so §4.1 is load-bearing and needs a test, not a comment.
+  Also confirmed: `display_style` is `default` on every range question in production (0 non-default),
+  which is expected since the control has never been offered for them — so no existing question
+  changes appearance when the styles are ungated.
 
 ## 2. Slider alignment
 
@@ -71,3 +98,8 @@
 - [ ] 7.2 Note that this is the second attempt at the same reporter's request — #5 shipped labels
       that did not align — so the after-picture is worth putting in front of him rather than
       announcing it as done.
+- [ ] 7.3 File a new backlog item for the finding in 1.2: the survey page always renders the map
+      panel, so a survey with no geo questions gives ~80% of the viewport to an empty map and
+      squeezes every question into a ~370px column. This is the actual cause of "the slider is too
+      short", it affects every question type rather than just `range`, and it is plausibly a bigger
+      readability problem than anything in this change. Deliberately out of scope here.
