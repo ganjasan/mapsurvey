@@ -11,7 +11,7 @@ docker-compose up db                   # Start only PostgreSQL/PostGIS
 
 # Local development (venv in ./env)
 source env/bin/activate                # Activate virtual environment
-pip install -r requirements.txt        # Install dependencies (or use pipenv)
+pipenv install                         # Install dependencies (Pipfile — there is no requirements.txt)
 python manage.py migrate               # Apply database migrations
 python manage.py runserver             # Start development server (port 8000)
 python manage.py createsuperuser       # Create admin user
@@ -36,7 +36,11 @@ stack per worktree. Offset `0` reproduces the original ports. `.env.ports` is gi
 
 Tests use Django's built-in test framework with PostGIS. Django automatically creates a separate `test_mapsurvey` database.
 
-**Prerequisites**: PostGIS container must be running (`docker compose up -d db`)
+**Prerequisites**: none — `run_tests.sh` starts the PostGIS and Redis containers itself and waits
+for both. Redis is not optional: `settings.py` falls back to `redis://localhost:6379/1` when
+`REDIS_URL` is unset, so on a machine running several projects the suite would otherwise connect to
+whichever project owns that port and write into its database. `CACHES` sets `IGNORE_EXCEPTIONS`, so
+that goes wrong silently rather than failing loudly.
 
 **Test location**: `survey/tests.py`
 
