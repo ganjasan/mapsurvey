@@ -28,6 +28,16 @@ Researchers used to standard survey tools expect more:
   [range slider label alignment](bug-range-slider-label-alignment.md). Continuous and vertical
   scales are new widgets over existing storage. Ranking needs a new answer shape, export handling
   and analytics — treat it as its own change.
+- **2026-08-05 — the "different styles" slice is done**, in change `range-scale-display`: `range`
+  questions now offer the same per-question "Display as" choice `rating` has, so a creator can pick
+  the slider, a compact scale strip, or a labelled list showing every step's name. Storage is
+  unchanged in all three.
+  Still open here: **continuous** (non-stepped) scale, **vertical** scale, and **ranking**. The
+  first two are new widgets over the existing numeric storage; ranking needs a new answer shape and
+  is the only one of the three that touches export and analytics.
+- The display-style machinery now dispatches on `SurveySectionAnswerForm.DISPLAY_STYLE_TYPES`, so
+  adding a style is an entry there, a partial, and a thumbnail in the editor's picker — not a new
+  branch in the template.
 - Every new type has to be carried through the export path and the analytics aggregation, not just
   the form. The export function currently drops unhandled types silently — see
   [datetime missing from CSV export](bug-datetime-missing-from-csv-export.md).

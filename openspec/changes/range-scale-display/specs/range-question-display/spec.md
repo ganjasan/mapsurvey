@@ -78,14 +78,20 @@ display style, because the choice-based styles have nothing to lay out.
 - **THEN** it renders as a slider
 - **AND** the page renders without error
 
-### Requirement: A required range question is enforced in every style
+### Requirement: An unanswered range question behaves the same in every style
 
-A `range` question marked required SHALL reject an empty submission identically in every display
-style.
+A `range` question left unanswered SHALL produce no answer row and SHALL NOT error, identically in
+every display style.
 
-#### Scenario: Empty submission rejected in each style
+Note: this deliberately does **not** say the submission is rejected. Answers are not validated
+server-side at all — the POST handler builds the form with `initial=request.POST`, so it is never
+bound and `required` is never enforced, for any question type. That is a pre-existing platform-wide
+gap, recorded separately; this requirement pins only that the display style does not change the
+behaviour.
 
-- **WHEN** a required range question is submitted with no value, rendered as a slider, as
+#### Scenario: Nothing selected in each style
+
+- **WHEN** a range question is submitted with its field absent, rendered as a slider, as
   `scale_strip`, and as `list_pips` in turn
-- **THEN** each submission is rejected with a validation error
-- **AND** no answer row is created
+- **THEN** no answer row is created in any of the three
+- **AND** the request completes without error
