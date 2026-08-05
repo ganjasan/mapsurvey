@@ -44,7 +44,7 @@
         {% endif %}
         {% endfor %}
 
-        <!-- Display style (rating only) -->
+        <!-- Display style (see DISPLAY_STYLE_TYPES below) -->
         <div id="display-style-fields" style="display:none;" class="mb-3">
             <label style="font-weight:600;">Display as</label>
             <div style="display:flex;gap:8px;">
@@ -68,6 +68,12 @@
                 </label>
                 {% endfor %}
             </div>
+            <small id="scale-strip-width-hint" class="form-text text-muted" style="display:none;">
+                <i class="fas fa-info-circle"></i>
+                With this many options the strip gets cramped on a phone — measured at roughly 20px
+                per option on a 320px screen, which is hard to tap. The labelled list stays readable
+                at any length.
+            </small>
         </div>
         <style>
             #display-style-fields .ds-option input[type="radio"] { position:absolute; opacity:0; width:0; height:0; }
@@ -210,9 +216,28 @@
         if (polyEl) polyEl.style.display = (t === 'polygon') ? 'block' : 'none';
     }
 
+    // Types whose rendering the creator can pick. Mirrors
+    // SurveySectionAnswerForm.DISPLAY_STYLE_TYPES — keep the two in step.
+    var DISPLAY_STYLE_TYPES = ['rating', 'range'];
+
+    // Beyond this many options the scale strip is under ~25px per cell on a
+    // 320px screen. Measured, not guessed: nine options give 20.5px.
+    var STRIP_CRAMPED_ABOVE = 7;
+
+    function toggleStripWidthHint() {
+        var hint = document.getElementById('scale-strip-width-hint');
+        if (!hint) return;
+        var tbody = document.getElementById('choices-rows');
+        var count = tbody ? tbody.querySelectorAll('.choice-code').length : 0;
+        var stripSelected = document.querySelector('#display-style-fields input[value="scale_strip"]:checked');
+        hint.style.display = (stripSelected && count > STRIP_CRAMPED_ABOVE) ? 'block' : 'none';
+    }
+    window.toggleStripWidthHint = toggleStripWidthHint;
+
     function toggleDisplayStyleFields() {
         var el = document.getElementById('display-style-fields');
-        if (el) el.style.display = (inputTypeSelect && inputTypeSelect.value === 'rating') ? 'block' : 'none';
+        if (el) el.style.display = (inputTypeSelect && DISPLAY_STYLE_TYPES.indexOf(inputTypeSelect.value) !== -1) ? 'block' : 'none';
+        toggleStripWidthHint();
     }
 
     if (inputTypeSelect) {
@@ -221,6 +246,10 @@
         toggleValidationFields();
         toggleDisplayStyleFields();
     }
+
+    document.querySelectorAll('#display-style-fields input[name="display_style"]').forEach(function(radio) {
+        radio.addEventListener('change', toggleStripWidthHint);
+    });
 
     window.addChoiceRow = function(code, name) {
         var tbody = document.getElementById('choices-rows');
@@ -464,5 +493,8 @@
         addChoiceRow(choice.code, choice.name);
     });
     {% endif %}
+
+    // After the rows exist, so the count is right on first open.
+    toggleStripWidthHint();
 })();
 </script>

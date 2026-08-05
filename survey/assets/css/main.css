@@ -257,7 +257,15 @@ ul {
   min-height: 80px;
 }
 
-/* Range slider */
+/* Range slider
+   The thumb is round and wide, so the leftmost and rightmost positions it can
+   occupy are inset from the track's own edges by half its width. Ticks and
+   labels must use that same inset or they mark positions the respondent
+   cannot select. Both derive it from one declared value. */
+.range-field {
+  --range-thumb-size: 22px;
+  --range-track-inset: calc(var(--range-thumb-size) / 2);
+}
 .question-card input[type="range"] {
   width: 100%;
   -webkit-appearance: none;
@@ -268,10 +276,11 @@ ul {
   outline: none;
   margin: 16px 0 4px;
 }
-.range-ticks {
+.range-ticks,
+.range-labels {
   display: flex;
   justify-content: space-between;
-  padding: 0 10px;
+  padding: 0 var(--range-track-inset);
 }
 .range-ticks span {
   width: 1px;
@@ -279,18 +288,26 @@ ul {
   background: #ccc;
 }
 .range-labels {
-  display: flex;
-  justify-content: space-between;
   font-size: 0.75rem;
   color: #888;
   margin-top: 2px;
+  gap: 12px;
+}
+/* The end labels read as anchors for the ends of the scale, so they hug the
+   extremes rather than centring on them — a centred first label would start
+   outside the card. */
+.range-labels span:first-child {
+  text-align: left;
+}
+.range-labels span:last-child {
+  text-align: right;
 }
 
 .question-card input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 22px;
-  height: 22px;
+  width: var(--range-thumb-size);
+  height: var(--range-thumb-size);
   border-radius: 50%;
   background: var(--accent);
   cursor: pointer;
@@ -304,8 +321,8 @@ ul {
 }
 
 .question-card input[type="range"]::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
+  width: var(--range-thumb-size);
+  height: var(--range-thumb-size);
   border: none;
   border-radius: 50%;
   background: var(--accent);
@@ -316,15 +333,15 @@ ul {
    Rating question — two display styles
    (scale_strip / list_pips, per Question.display_style)
    ============================================ */
-.question-card--rating label > input[type="radio"] {
+.question-card--scale label > input[type="radio"] {
   opacity: 0;
   position: absolute;
   width: 0;
   height: 0;
 }
 
-.question-card--rating label:has(input[type="radio"])::before,
-.question-card--rating label:has(input[type="radio"])::after {
+.question-card--scale label:has(input[type="radio"])::before,
+.question-card--scale label:has(input[type="radio"])::after {
   display: none;
 }
 
@@ -335,7 +352,7 @@ ul {
   margin-top: 4px;
 }
 
-.question-card--rating .rating-scale-strip__cell:has(input[type="radio"]) {
+.question-card--scale .rating-scale-strip__cell:has(input[type="radio"]) {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -353,19 +370,19 @@ ul {
   transition: all var(--transition);
 }
 
-.question-card--rating .rating-scale-strip__cell:has(input[type="radio"]):hover {
+.question-card--scale .rating-scale-strip__cell:has(input[type="radio"]):hover {
   border-color: var(--accent);
   background: var(--accent-light);
 }
 
-.question-card--rating .rating-scale-strip__cell:has(input[type="radio"]:checked) {
+.question-card--scale .rating-scale-strip__cell:has(input[type="radio"]:checked) {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
   box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
 }
 
-.question-card--rating .rating-scale-strip__cell:has(input[type="radio"]:checked):hover {
+.question-card--scale .rating-scale-strip__cell:has(input[type="radio"]:checked):hover {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
 }
@@ -412,7 +429,7 @@ ul {
   margin-top: 4px;
 }
 
-.question-card--rating .rating-list-pips__row:has(input[type="radio"]) {
+.question-card--scale .rating-list-pips__row:has(input[type="radio"]) {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -431,7 +448,7 @@ ul {
   transition: all var(--transition);
 }
 
-.question-card--rating .rating-list-pips__row:has(input[type="radio"]):hover {
+.question-card--scale .rating-list-pips__row:has(input[type="radio"]):hover {
   border-color: var(--accent);
   background: var(--accent-light);
 }
@@ -458,18 +475,18 @@ ul {
   background: #b4b9c4;
 }
 
-.question-card--rating .rating-list-pips__row:has(input[type="radio"]:checked) {
+.question-card--scale .rating-list-pips__row:has(input[type="radio"]:checked) {
   border-color: var(--accent);
   background: var(--accent-light);
   color: var(--accent);
   font-weight: 600;
 }
 
-.question-card--rating .rating-list-pips__row:has(input[type="radio"]:checked) .rating-list-pips__pips i {
+.question-card--scale .rating-list-pips__row:has(input[type="radio"]:checked) .rating-list-pips__pips i {
   background: #c7cdf7;
 }
 
-.question-card--rating .rating-list-pips__row:has(input[type="radio"]:checked) .rating-list-pips__pips i.on {
+.question-card--scale .rating-list-pips__row:has(input[type="radio"]:checked) .rating-list-pips__pips i.on {
   background: var(--accent);
 }
 

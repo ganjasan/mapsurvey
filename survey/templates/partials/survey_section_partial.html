@@ -36,8 +36,8 @@
                 {% csrf_token %}
                 {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
                 {% for field in form.visible_fields %}
-                    {% if field|question_type == 'rating' %}
-                        <div class="question-card question-card--rating">
+                    {% if field|uses_scale_style %}
+                        <div class="question-card question-card--scale">
                             {% if field.label %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
                             {{ field.errors }}
                             {% if field|rating_display_style == 'list_pips' %}
