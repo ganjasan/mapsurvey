@@ -80,11 +80,15 @@ BASEMAP_CHOICES = [
     ('topo', _('Topo')),
 ]
 
+# `published`/`closed` -> `draft` is permitted only while the survey has never
+# collected anything; the condition lives in can_transition_to. It is an undo for
+# publishing by accident, not a way to edit a survey that has responses — that is
+# what draft copies and versioning are for.
 VALID_TRANSITIONS = {
     "draft": ["testing", "published"],
     "testing": ["draft", "published"],
-    "published": ["closed"],
-    "closed": ["published", "archived"],
+    "published": ["closed", "draft"],
+    "closed": ["published", "archived", "draft"],
     "archived": [],
 }
 
@@ -378,6 +382,14 @@ class SurveyHeader(models.Model):
             if not self._has_head_section():
                 return False, "Survey must have a head section"
 
+        if new_status == "draft" and self.status in ("published", "closed"):
+            if not self.has_never_collected():
+                return False, (
+                    "This survey has already collected responses. "
+                    "Create a draft copy to edit it instead — that keeps the "
+                    "responses collected so far as an archived version."
+                )
+
         return True, ""
 
     def _has_survey_structure(self):
@@ -435,6 +447,20 @@ class SurveyHeader(models.Model):
         return self.deleted_at + timedelta(days=self.TRASH_RETENTION_DAYS)
 
     # Versioning methods
+    def has_never_collected(self):
+        """True when nothing has ever been recorded against this survey.
+
+        Both halves are needed. Publishing a new version moves the previous
+        sessions onto an archived header, so a canonical survey can show zero
+        sessions of its own while the survey has collected plenty — checking
+        only the session count would read that as untouched.
+        """
+        if SurveySession.objects.filter(survey=self).exists():
+            return False
+        return not SurveyHeader.objects.filter(
+            canonical_survey=self, is_canonical=False,
+        ).exists()
+
     def has_draft_copy(self):
         return self.draft_copies.exists()
 
@@ -492,6 +518,15 @@ class SurveySection(models.Model):
         if not hasattr(self, "__qcache"):
             self.__qcache = Question.objects.filter(survey_section=self).filter(parent_question_id__isnull=True).order_by('order_number')
         return self.__qcache
+
+    def answer_count(self):
+        """Answers that deleting this section would destroy.
+
+        Sub-questions carry the same `survey_section` as their parent — that is
+        why `questions()` above has to filter them out — so this one filter
+        already covers them, at any nesting depth.
+        """
+        return Answer.objects.filter(question__survey_section=self).count()
 
     def get_translated_title(self, lang):
         if not lang:
@@ -565,6 +600,31 @@ class Question(models.Model):
         if not hasattr(self, "__acache"):
             self.__acache = Answer.objects.filter(question=self)
         return self.__acache
+
+    def descendant_question_ids(self):
+        """This question's id plus every sub-question beneath it.
+
+        The editor only offers one level of sub-question today, but the model
+        allows deeper nesting, so this walks rather than assuming a depth — an
+        undercount here would understate what a delete destroys, which is the
+        one number this must not get wrong.
+        """
+        ids = [self.id]
+        frontier = [self.id]
+        while frontier:
+            children = list(
+                Question.objects.filter(parent_question_id__in=frontier)
+                .values_list('id', flat=True)
+            )
+            if not children:
+                break
+            ids.extend(children)
+            frontier = children
+        return ids
+
+    def answer_count(self):
+        """Answers that deleting this question would destroy, sub-questions included."""
+        return Answer.objects.filter(question_id__in=self.descendant_question_ids()).count()
 
     def get_translated_name(self, lang):
         if not lang:

@@ -87,6 +87,46 @@ def _check_structural_edit_allowed(survey):
     return None
 
 
+# Sent by the editor once the author has seen how many answers a delete costs.
+DELETE_ACKNOWLEDGEMENT = 'confirm_delete_answers'
+
+
+def _survey_is_unversioned(survey):
+    """True when this survey has no archived versions to fall back on.
+
+    Publishing moves the previous structure and its sessions onto an archived
+    header rather than deleting them, so a survey that has been published keeps
+    its earlier answers. One that never has does not — there is nowhere for them
+    to go.
+    """
+    if survey.is_draft_copy:
+        return False
+    return survey.version_number == 1 and not SurveyHeader.objects.filter(
+        canonical_survey=survey, is_canonical=False,
+    ).exists()
+
+
+def _refuse_if_answers_at_risk(request, survey, answer_count):
+    """Return a 409 unless the author has acknowledged losing `answer_count` answers.
+
+    The count is computed in the same request that would perform the delete.
+    Rendering it into the page earlier would let it go stale on a survey that is
+    still collecting, and a warning that is sometimes wrong about the number
+    teaches the author to disbelieve it.
+    """
+    if not answer_count:
+        return None
+    if request.POST.get(DELETE_ACKNOWLEDGEMENT) == 'true':
+        return None
+    return JsonResponse(
+        {
+            'answers_at_risk': answer_count,
+            'explain_versioning': _survey_is_unversioned(survey),
+        },
+        status=409,
+    )
+
+
 def _can_read_survey(user, survey):
     """Return True if user has at least viewer role on the survey."""
     return get_effective_survey_role(user, survey) is not None
@@ -215,9 +255,15 @@ def editor_survey_detail(request, survey_uuid):
     # Versioning context
     draft_copy = survey.get_draft_copy() if not survey.is_draft_copy else None
     show_edit_published = (
-        is_owner and survey.status == 'published' and not survey.has_draft_copy()
+        is_owner and survey.status in ('published', 'closed') and not survey.has_draft_copy()
     )
     show_draft_actions = is_owner and survey.is_draft_copy
+    # An accidental publish is undoable while nothing has been collected. Offered
+    # alongside the draft-copy route so the read-only notice always ends in an
+    # action the author can take.
+    show_back_to_draft = (
+        is_owner and is_read_only and not survey.is_draft_copy and survey.has_never_collected()
+    )
 
     return render(request, 'editor/survey_detail.html', {
         'survey': survey,
@@ -233,6 +279,7 @@ def editor_survey_detail(request, survey_uuid):
         'draft_copy': draft_copy,
         'show_edit_published': show_edit_published,
         'show_draft_actions': show_draft_actions,
+        'show_back_to_draft': show_back_to_draft,
     })
 
 
@@ -491,6 +538,11 @@ def editor_section_delete(request, survey_uuid, section_id):
         return blocked
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
+    # Before the re-linking below, which must not run on a refused delete.
+    refusal = _refuse_if_answers_at_risk(request, survey, section.answer_count())
+    if refusal:
+        return refusal
+
     prev_sec = section.prev_section
     next_sec = section.next_section
 
@@ -710,6 +762,11 @@ def editor_question_delete(request, survey_uuid, question_id):
     if blocked:
         return blocked
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
+
+    refusal = _refuse_if_answers_at_risk(request, survey, question.answer_count())
+    if refusal:
+        return refusal
+
     question.delete()
     return HttpResponse('')
 
@@ -1317,8 +1374,13 @@ def editor_create_draft(request, survey_uuid):
     """Create a draft copy of a published survey for editing."""
     survey = request.survey
 
-    if survey.status != 'published':
-        return HttpResponse('Only published surveys can have draft copies', status=400)
+    # Closed as well as published: a closed survey is read-only for the same
+    # reason and needs the same way out. Nothing downstream reads the canonical's
+    # status — clone_survey_for_draft copies structure, and publish_draft archives
+    # the previous version and leaves the status alone, so a closed survey stays
+    # closed after its draft is published.
+    if survey.status not in ('published', 'closed'):
+        return HttpResponse('Only published or closed surveys can have draft copies', status=400)
 
     if survey.has_draft_copy():
         return HttpResponse('A draft already exists for this survey', status=409)

@@ -30,8 +30,11 @@ when the published survey is read-only the bar goes amber and carries the
         <div class="t">Build <span class="ro-pill">read-only</span></div>
     </div>
     <div style="display:flex;align-items:center;gap:.6rem;flex-shrink:0;">
-        <span class="build-ro-msg"><i class="fas fa-lock"></i> Published surveys can't be edited</span>
-        {% if draft_copy %}
+        <span class="build-ro-msg"><i class="fas fa-lock"></i>
+          {% if show_back_to_draft %}Nothing has been collected yet, so this can go back to editing{% else %}Published and closed surveys can't be edited{% endif %}</span>
+        {% if show_back_to_draft %}
+        <button class="btn btn-sm btn-primary" onclick="doTransition('draft')">Back to editing</button>
+        {% elif draft_copy %}
         <a class="btn btn-sm btn-primary" href="{% url 'editor_survey_detail' draft_copy.uuid %}">Go to draft &rarr;</a>
         {% elif show_edit_published %}
         <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" style="margin:0;">
@@ -383,6 +386,63 @@ document.addEventListener('DOMContentLoaded', function() {
         if (evt.detail.target.id === 'questionModalBody' ||
             evt.detail.target.id === 'mapPickerModalBody') return;
         refreshPreview();
+    });
+
+    // ── Deletes that would destroy collected answers ──────────────────────
+    // The server refuses with 409 and reports the count rather than trusting a
+    // number baked into the page, which would go stale on a survey that is
+    // still collecting. On confirmation the same request is re-sent with an
+    // acknowledgement. Reuses Dialog (editor_dialog.js), which already backs
+    // every hx-confirm in the editor, so this is one more prompt in the same
+    // voice rather than a second modal system.
+    function resolveHxTarget(elt) {
+        var attr = elt.getAttribute('hx-target') || '';
+        var closest = attr.match(/^closest\s+(.+)$/);
+        if (closest) return elt.closest(closest[1]);
+        return attr ? document.querySelector(attr) : elt;
+    }
+
+    function answerLossMessage(data, isSection) {
+        var noun = data.answers_at_risk === 1 ? 'answer' : 'answers';
+        var what = isSection ? 'this section' : 'this question';
+        var message = data.answers_at_risk + ' ' + noun +
+            ' will be permanently deleted along with ' + what + '. This cannot be undone.';
+        if (data.explain_versioning) {
+            message += ' This survey has not been published, so earlier answers are not kept ' +
+                'anywhere. Once a survey is published, edits are made in a draft copy and the ' +
+                'answers collected before each new version stay available as an archived version.';
+        }
+        return message;
+    }
+
+    document.body.addEventListener('htmx:responseError', function(evt) {
+        var xhr = evt.detail.xhr;
+        if (!xhr || xhr.status !== 409) return;
+
+        var data;
+        try { data = JSON.parse(xhr.responseText); } catch (e) { return; }
+        if (typeof data.answers_at_risk !== 'number') return;
+
+        var elt = evt.detail.elt;
+        var request = {
+            url: elt.getAttribute('hx-post'),
+            target: resolveHxTarget(elt),
+            swap: elt.getAttribute('hx-swap') || 'outerHTML'
+        };
+
+        Dialog.confirm(answerLossMessage(data, elt.classList.contains('section-delete')), {
+            title: 'This will delete collected answers',
+            okLabel: 'Delete anyway',
+            danger: true
+        }).then(function(ok) {
+            if (!ok) return;
+            htmx.ajax('POST', request.url, {
+                target: request.target,
+                swap: request.swap,
+                values: { confirm_delete_answers: 'true' },
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            });
+        });
     });
 
     // After section delete, update HEAD badge and load first remaining section

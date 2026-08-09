@@ -11464,6 +11464,422 @@ class CleanExportTest(TestCase):
         self.assertEqual(props['session_id'], s.id)
 
 
+class ExportValueCorrectnessTest(TestCase):
+    """Value-level tests for the respondent-data download.
+
+    The existing export tests assert how many rows come back and that the
+    metadata columns are present. None of them assert that a given answer
+    reaches a given column, and none exercise sub-question properties at all —
+    which is why the defects in change `export-data-integrity` survived.
+
+    Tests here are characterisation tests: they pin the behaviour that is
+    already correct, so the refactor that fixes the defects cannot quietly
+    change anything else.
+    """
+
+    CHOICES = [
+        {"code": 1, "name": {"en": "Ruhig"}},
+        {"code": 2, "name": {"en": "Laut"}},
+    ]
+
+    def setUp(self):
+        self.org = _make_org('ValueExportOrg')
+        self.user = User.objects.create_user('valueexportuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+
+        self.survey = SurveyHeader.objects.create(
+            name='value_export_test', organization=self.org,
+            created_by=self.user, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', code='S1', is_head=True,
+        )
+
+        def q(name, code, input_type, order, choices=None, parent=None):
+            return Question.objects.create(
+                survey_section=self.section, name=name, code=code,
+                input_type=input_type, order_number=order,
+                choices=choices, parent_question_id=parent,
+            )
+
+        self.q_text = q('Comment', 'q_text', 'text', 1)
+        self.q_text_line = q('Title', 'q_line', 'text_line', 2)
+        self.q_number = q('District', 'q_num', 'number', 3)
+        self.q_range = q('Loudness', 'q_range', 'range', 4, self.CHOICES)
+        self.q_choice = q('Character', 'q_choice', 'choice', 5, self.CHOICES)
+        self.q_rating = q('Quality', 'q_rating', 'rating', 6, self.CHOICES)
+        self.q_multi = q('Sources', 'q_multi', 'multichoice', 7, self.CHOICES)
+        self.q_html = q('Intro', 'q_html', 'html', 8)
+
+        self.q_point = q('Location', 'q_point', 'point', 9)
+        self.sub_text = q('SubComment', 'sq_text', 'text', 1, parent=self.q_point)
+        self.sub_number = q('SubCount', 'sq_num', 'number', 2, parent=self.q_point)
+        self.sub_choice = q('SubCharacter', 'sq_choice', 'choice', 3,
+                            self.CHOICES, parent=self.q_point)
+
+        self.client.login(username='valueexportuser', password='pass')
+
+    def _session(self, **kwargs):
+        return SurveySession.objects.create(survey=self.survey, **kwargs)
+
+    def _answer(self, session, question, parent=None, **fields):
+        return Answer.objects.create(
+            survey_session=session, question=question,
+            parent_answer_id=parent, **fields,
+        )
+
+    def _download(self):
+        return self.client.get(f'/surveys/{self.survey.uuid}/download')
+
+    def _csv_rows(self, response):
+        import csv
+        import io
+        with zipfile.ZipFile(BytesIO(response.content), 'r') as zf:
+            name = [n for n in zf.namelist() if n.endswith('.csv')][0]
+            text = zf.read(name).decode('utf-8')
+        return list(csv.DictReader(io.StringIO(text)))
+
+    def _geojson(self, response, question_name='Location'):
+        with zipfile.ZipFile(BytesIO(response.content), 'r') as zf:
+            name = [n for n in zf.namelist()
+                    if n.endswith('.geojson') and question_name in n][0]
+            return json.loads(zf.read(name))
+
+    def _answer_all_flat(self, session):
+        """Answer every non-geo question of the survey."""
+        self._answer(session, self.q_text, text='Ein Kommentar')
+        self._answer(session, self.q_text_line, text='Ein Titel')
+        self._answer(session, self.q_number, numeric=7)
+        self._answer(session, self.q_range, numeric=5)
+        self._answer(session, self.q_choice, selected_choices=[2])
+        self._answer(session, self.q_rating, selected_choices=[1])
+        self._answer(session, self.q_multi, selected_choices=[1, 2])
+
+    # ── 1.1 CSV: every value-bearing type lands in its own column ──────────
+
+    def test_csv_exports_each_value_type_in_its_own_column(self):
+        """
+        GIVEN one session answering every non-geo question type
+        WHEN the data is downloaded
+        THEN each answer appears in the column named after its own question
+        """
+        self._answer_all_flat(self._session())
+
+        rows = self._csv_rows(self._download())
+
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
+        self.assertEqual(row['Comment'], 'Ein Kommentar')
+        self.assertEqual(row['Title'], 'Ein Titel')
+        self.assertEqual(row['District'], '7.0')
+        self.assertEqual(row['Loudness'], '5.0')
+        self.assertEqual(row['Character'], 'Laut')
+        self.assertEqual(row['Quality'], 'Ruhig')
+        self.assertEqual(row['Sources'], 'Ruhig; Laut')
+
+    def test_csv_keeps_values_on_their_own_row(self):
+        """
+        GIVEN two sessions answering the same question differently
+        WHEN the data is downloaded
+        THEN each row carries its own session's answer
+        """
+        first = self._session()
+        self._answer(first, self.q_text, text='erste')
+        second = self._session()
+        self._answer(second, self.q_text, text='zweite')
+
+        rows = self._csv_rows(self._download())
+
+        self.assertEqual(len(rows), 2)
+        by_session = {int(r['session_id']): r['Comment'] for r in rows}
+        self.assertEqual(by_session[first.id], 'erste')
+        self.assertEqual(by_session[second.id], 'zweite')
+
+    # ── 1.2 GeoJSON: sub-question properties ───────────────────────────────
+
+    def test_geojson_exports_each_subquestion_property(self):
+        """
+        GIVEN a geo answer whose sub-questions are all answered
+        WHEN the data is downloaded
+        THEN each property holds its own sub-question's value
+        """
+        session = self._session()
+        geo = self._answer(session, self.q_point, point=Point(13.4, 52.5))
+        self._answer(session, self.sub_text, parent=geo, text='Lärm')
+        self._answer(session, self.sub_number, parent=geo, numeric=7)
+        self._answer(session, self.sub_choice, parent=geo, selected_choices=[2])
+
+        geojson = self._geojson(self._download())
+
+        self.assertEqual(len(geojson['features']), 1)
+        props = geojson['features'][0]['properties']
+        self.assertEqual(props['SubComment'], 'Lärm')
+        self.assertEqual(props['SubCount'], 7)
+        self.assertEqual(props['SubCharacter'], 'Laut')
+
+    def test_geojson_geometry_matches_the_answer(self):
+        """
+        GIVEN a geo answer at a known coordinate
+        WHEN the data is downloaded
+        THEN the feature geometry carries that coordinate
+        """
+        session = self._session()
+        self._answer(session, self.q_point, point=Point(13.4, 52.5))
+
+        geojson = self._geojson(self._download())
+
+        geometry = geojson['features'][0]['geometry']
+        self.assertEqual(geometry['type'], 'Point')
+        self.assertAlmostEqual(geometry['coordinates'][0], 13.4)
+        self.assertAlmostEqual(geometry['coordinates'][1], 52.5)
+
+    # ── 1.3 Which questions produce a CSV column at all ────────────────────
+
+    def test_geo_question_produces_a_layer_and_no_csv_column(self):
+        """
+        GIVEN a survey with a geo question that has been answered
+        WHEN the data is downloaded
+        THEN the geometry is exported as a GeoJSON layer, not a CSV column
+        """
+        session = self._session()
+        self._answer_all_flat(session)
+        self._answer(session, self.q_point, point=Point(13.4, 52.5))
+
+        response = self._download()
+
+        with zipfile.ZipFile(BytesIO(response.content), 'r') as zf:
+            names = zf.namelist()
+        self.assertTrue(any(n.endswith('.geojson') and 'Location' in n for n in names))
+        self.assertNotIn('Location', self._csv_rows(response)[0])
+
+    def test_display_only_question_produces_no_csv_column(self):
+        """
+        GIVEN a survey containing an html question, which collects nothing
+        WHEN the data is downloaded
+        THEN no column is named after it
+        """
+        self._answer_all_flat(self._session())
+
+        rows = self._csv_rows(self._download())
+
+        self.assertNotIn('Intro', rows[0])
+
+    # ── 2.1-2.2 A blank sub-question must not inherit its neighbour ────────
+
+    def test_blank_subquestion_exports_empty_not_the_neighbours_value(self):
+        """
+        GIVEN a geo answer whose first sub-question is answered and whose
+              second has no Answer row at all
+        WHEN the data is downloaded
+        THEN the second sub-question's property is empty
+        """
+        session = self._session()
+        geo = self._answer(session, self.q_point, point=Point(13.4, 52.5))
+        self._answer(session, self.sub_text, parent=geo, text='Lärm')
+
+        props = self._geojson(self._download())['features'][0]['properties']
+
+        self.assertEqual(props['SubComment'], 'Lärm')
+        self.assertEqual(props['SubCount'], '')
+
+    def test_consecutive_blank_subquestions_all_export_empty(self):
+        """
+        GIVEN a geo answer with one answered sub-question followed by three
+              with no Answer rows
+        WHEN the data is downloaded
+        THEN none of the three carries the answered sub-question's value
+        """
+        extra = Question.objects.create(
+            survey_section=self.section, name='SubExtra', code='sq_extra',
+            input_type='text_line', order_number=4, parent_question_id=self.q_point,
+        )
+        session = self._session()
+        geo = self._answer(session, self.q_point, point=Point(13.4, 52.5))
+        self._answer(session, self.sub_text, parent=geo, text='Lärm')
+
+        props = self._geojson(self._download())['features'][0]['properties']
+
+        self.assertEqual(props['SubCount'], '')
+        self.assertEqual(props['SubCharacter'], '')
+        self.assertEqual(props[extra.name], '')
+
+    def test_display_only_subquestion_does_not_absorb_a_value(self):
+        """
+        GIVEN a geo answer with an answered text sub-question followed by an
+              html sub-question, which can never hold input
+        WHEN the data is downloaded
+        THEN the html sub-question's property is empty
+        """
+        html_sub = Question.objects.create(
+            survey_section=self.section, name='SubIntro', code='sq_html',
+            input_type='html', order_number=4, parent_question_id=self.q_point,
+        )
+        session = self._session()
+        geo = self._answer(session, self.q_point, point=Point(13.4, 52.5))
+        self._answer(session, self.sub_text, parent=geo, text='Lärm')
+
+        props = self._geojson(self._download())['features'][0]['properties']
+
+        self.assertEqual(props[html_sub.name], '')
+
+    # ── 2.3 datetime answers must reach the CSV ────────────────────────────
+
+    def test_datetime_answer_appears_in_csv_as_iso_8601(self):
+        """
+        GIVEN a session answering a datetime question
+        WHEN the data is downloaded
+        THEN the CSV holds the answered moment as ISO 8601
+        """
+        Question.objects.create(
+            survey_section=self.section, name='Observed', code='q_dt',
+            input_type='datetime', order_number=10,
+        )
+        session = self._session()
+        self._answer(session, Question.objects.get(code='q_dt'),
+                     text='2026-08-04T19:21')
+
+        rows = self._csv_rows(self._download())
+
+        self.assertEqual(rows[0]['Observed'], '2026-08-04T19:21:00')
+
+    def test_unparseable_datetime_passes_through_unchanged(self):
+        """
+        GIVEN a datetime answer holding a string that is not a datetime
+        WHEN the data is downloaded
+        THEN the raw string is exported rather than dropped
+        """
+        Question.objects.create(
+            survey_section=self.section, name='Observed', code='q_dt',
+            input_type='datetime', order_number=10,
+        )
+        session = self._session()
+        self._answer(session, Question.objects.get(code='q_dt'), text='sometime')
+
+        rows = self._csv_rows(self._download())
+
+        self.assertEqual(rows[0]['Observed'], 'sometime')
+
+    # ── 2.4 Backlog #23: number sub-question of a geo question ─────────────
+
+    def test_number_subquestion_reaches_the_export(self):
+        """
+        GIVEN a number sub-question of a geo question, answered — the shape
+              reported in backlog #23 as exporting blank
+        WHEN the data is downloaded
+        THEN the value appears in the feature's properties
+        """
+        session = self._session()
+        geo = self._answer(session, self.q_point, point=Point(13.4, 52.5))
+        self._answer(session, self.sub_number, parent=geo, numeric=12)
+
+        props = self._geojson(self._download())['features'][0]['properties']
+
+        self.assertEqual(props['SubCount'], 12)
+
+    def test_top_level_number_question_reaches_the_csv(self):
+        """
+        GIVEN a top-level number question, answered
+        WHEN the data is downloaded
+        THEN the value appears in the CSV column named after it
+        """
+        session = self._session()
+        self._answer(session, self.q_number, numeric=12)
+
+        rows = self._csv_rows(self._download())
+
+        self.assertEqual(rows[0]['District'], '12.0')
+
+    # ── 2.5 Session metadata comes from the feature's own session ──────────
+
+    def test_each_feature_reports_its_own_session(self):
+        """
+        GIVEN two sessions that each place a point with an answered
+              sub-question
+        WHEN the data is downloaded
+        THEN each feature's session metadata is its own session's
+        """
+        first = self._session(validation_status='approved', language='de')
+        geo_first = self._answer(first, self.q_point, point=Point(13.4, 52.5))
+        self._answer(first, self.sub_text, parent=geo_first, text='erste')
+
+        second = self._session(validation_status='not_checked', language='en')
+        geo_second = self._answer(second, self.q_point, point=Point(13.5, 52.6))
+        self._answer(second, self.sub_text, parent=geo_second, text='zweite')
+
+        features = self._geojson(self._download())['features']
+
+        by_session = {f['properties']['session_id']: f['properties'] for f in features}
+        self.assertEqual(by_session[first.id]['SubComment'], 'erste')
+        self.assertEqual(by_session[first.id]['validation_status'], 'approved')
+        self.assertEqual(by_session[first.id]['language'], 'de')
+        self.assertEqual(by_session[second.id]['SubComment'], 'zweite')
+        self.assertEqual(by_session[second.id]['validation_status'], 'not_checked')
+        self.assertEqual(by_session[second.id]['language'], 'en')
+
+    # ── The layer has to be readable as a layer, not just as JSON ──────────
+
+    def test_every_feature_carries_the_same_attribute_set(self):
+        """
+        GIVEN two geo answers, one with all sub-questions answered and one
+              with none of them answered
+        WHEN the data is downloaded
+        THEN both features expose the same property keys
+
+        A feature collection whose attribute set varies per feature loads in
+        QGIS with columns missing for some rows, which is why blank
+        sub-questions keep an empty property rather than being omitted.
+        """
+        complete = self._session()
+        geo_complete = self._answer(complete, self.q_point, point=Point(13.4, 52.5))
+        self._answer(complete, self.sub_text, parent=geo_complete, text='Lärm')
+        self._answer(complete, self.sub_number, parent=geo_complete, numeric=7)
+        self._answer(complete, self.sub_choice, parent=geo_complete, selected_choices=[2])
+
+        empty = self._session()
+        self._answer(empty, self.q_point, point=Point(13.5, 52.6))
+
+        features = self._geojson(self._download())['features']
+
+        self.assertEqual(len(features), 2)
+        key_sets = [set(f['properties']) for f in features]
+        self.assertEqual(key_sets[0], key_sets[1])
+        self.assertIn('SubComment', key_sets[0])
+
+    def test_exported_geometries_parse_as_geometries(self):
+        """
+        GIVEN answers of every geometry type
+        WHEN the data is downloaded
+        THEN each exported geometry is readable by a GIS reader
+        """
+        from django.contrib.gis.geos import GEOSGeometry
+
+        q_line = Question.objects.create(
+            survey_section=self.section, name='Route', code='q_line_geo',
+            input_type='line', order_number=11,
+        )
+        q_polygon = Question.objects.create(
+            survey_section=self.section, name='Area', code='q_poly_geo',
+            input_type='polygon', order_number=12,
+        )
+        session = self._session()
+        self._answer(session, self.q_point, point=Point(13.4, 52.5))
+        self._answer(session, q_line, line=LineString((13.4, 52.5), (13.5, 52.6)))
+        self._answer(session, q_polygon, polygon=Polygon(
+            ((13.4, 52.5), (13.5, 52.5), (13.5, 52.6), (13.4, 52.5)),
+        ))
+
+        response = self._download()
+
+        for name, expected in (('Location', 'Point'),
+                               ('Route', 'LineString'),
+                               ('Area', 'Polygon')):
+            collection = self._geojson(response, question_name=name)
+            geometry = collection['features'][0]['geometry']
+            self.assertEqual(geometry['type'], expected)
+            parsed = GEOSGeometry(json.dumps(geometry))
+            self.assertTrue(parsed.valid, f'{name} exported an invalid geometry')
+
+
 class BulkOperationsTest(TestCase):
     """Tests for bulk operations on survey sessions."""
 
@@ -19556,3 +19972,876 @@ class RestoreVersionTest(TestCase):
         clone_survey_for_draft(self.canonical)
         html = self.client.get(f'/editor/surveys/{self.canonical.uuid}/').content.decode()
         self.assertNotIn('restore-version', html)
+
+
+class RangeDisplayStyleTest(TestCase):
+    """Display styles for range questions.
+
+    The change rests on one claim — that the display style is presentation
+    only and never touches what is stored — so that is asserted first and
+    most directly.
+    """
+
+    LABELS = [
+        '(positive) Geräusche', 'sehr angenehm', 'angenehm', 'eher angenehm',
+        'neutral', 'eher störend', 'störend', 'sehr störend', '(negativer) Lärm',
+    ]
+
+    def setUp(self):
+        self.org = _make_org('RangeStyleOrg')
+        self.user = User.objects.create_user('rangeuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.choices = [{"code": i + 1, "name": {"en": name}}
+                        for i, name in enumerate(self.LABELS)]
+
+    def _survey(self, display_style='default', choices='use-default', required=False,
+                rating_default='scale_strip'):
+        survey = SurveyHeader.objects.create(
+            name=f'range_{display_style}_{id(self)}', organization=self.org,
+            created_by=self.user, status='published',
+            style_settings={'rating_display_style': rating_default},
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='s1', code='S1', is_head=True,
+        )
+        question = Question.objects.create(
+            survey_section=section, name='Loudness', code='q_range',
+            input_type='range', order_number=1, required=required,
+            choices=self.choices if choices == 'use-default' else choices,
+            display_style=display_style,
+        )
+        # A fresh client per survey: request.session['survey_session_id'] binds
+        # to the first survey a client visits, and every fixture here names its
+        # section s1, so a reused client would write answers into the previous
+        # survey's section. Per survey, not per request — the session has to
+        # survive between submitting and navigating back.
+        self.client = Client()
+        return survey, section, question
+
+    def _get(self, survey):
+        return self.client.get(f'/surveys/{survey.uuid}/s1/')
+
+    def _submit(self, survey, data):
+        return self.client.post(f'/surveys/{survey.uuid}/s1/', data)
+
+    # ── The claim the whole change rests on ────────────────────────────────
+
+    def test_every_style_stores_the_same_value(self):
+        """
+        GIVEN the same range question rendered as a slider, a scale strip and
+              a labelled list
+        WHEN a respondent answers 5 in each
+        THEN all three are stored as numeric 5
+        """
+        stored = {}
+        for style in ('default', 'scale_strip', 'list_pips'):
+            survey, _section, question = self._survey(display_style=style)
+            self._get(survey)
+            self._submit(survey, {'q_range': '5'})
+            answer = Answer.objects.get(question=question)
+            stored[style] = (answer.numeric, answer.selected_choices)
+
+        self.assertEqual(stored['default'][0], 5)
+        self.assertEqual(stored['scale_strip'], stored['default'])
+        self.assertEqual(stored['list_pips'], stored['default'])
+
+    def test_changing_style_leaves_existing_answers_untouched(self):
+        """
+        GIVEN a range question with an answer already collected
+        WHEN the creator switches its display style
+        THEN the stored answer is unchanged and still exports in its column
+        """
+        survey, _section, question = self._survey(display_style='default')
+        self._get(survey)
+        self._submit(survey, {'q_range': '7'})
+        before = Answer.objects.get(question=question)
+
+        question.display_style = 'list_pips'
+        question.save()
+
+        after = Answer.objects.get(pk=before.pk)
+        self.assertEqual(after.numeric, before.numeric)
+        self.assertEqual(after.selected_choices, before.selected_choices)
+
+        self.client.login(username='rangeuser', password='pass')
+        response = self.client.get(f'/surveys/{survey.uuid}/download')
+        with zipfile.ZipFile(BytesIO(response.content), 'r') as zf:
+            csv_name = [n for n in zf.namelist() if n.endswith('.csv')][0]
+            csv_text = zf.read(csv_name).decode('utf-8')
+        self.assertIn('Loudness', csv_text)
+        self.assertIn('7.0', csv_text)
+
+    # ── What each style renders ────────────────────────────────────────────
+
+    def test_list_pips_shows_every_choice_name(self):
+        """
+        GIVEN a nine-point range question displayed as a labelled list
+        WHEN a respondent opens the section
+        THEN all nine names are present, not just the endpoints
+        """
+        survey, _section, _q = self._survey(display_style='list_pips')
+
+        response = self._get(survey)
+
+        for name in self.LABELS:
+            self.assertContains(response, name)
+
+    def test_scale_strip_renders_one_cell_per_choice_with_anchors(self):
+        """
+        GIVEN a nine-point range question displayed as a scale strip
+        WHEN a respondent opens the section
+        THEN there is one cell per choice and the endpoint names anchor it
+        """
+        survey, _section, _q = self._survey(display_style='scale_strip')
+
+        response = self._get(survey)
+        content = response.content.decode()
+
+        # The trailing quote matters: the container is __cells, which contains
+        # __cell as a prefix and would inflate the count to ten.
+        self.assertEqual(content.count('rating-scale-strip__cell"'), 9)
+        self.assertIn('(positive) Geräusche', content)
+        self.assertIn('(negativer) Lärm', content)
+
+    def test_default_renders_a_slider_regardless_of_the_rating_default(self):
+        """
+        GIVEN a range question with no display style chosen, in a survey whose
+              rating default is list_pips
+        WHEN a respondent opens the section
+        THEN it renders as a slider, not as the rating default
+        """
+        survey, _section, _q = self._survey(
+            display_style='default', rating_default='list_pips',
+        )
+
+        content = self._get(survey).content.decode()
+
+        self.assertIn('type="range"', content)
+        self.assertNotIn('rating-list-pips', content)
+
+    def test_choice_based_style_falls_back_when_there_are_no_choices(self):
+        """
+        GIVEN a range question with no choices but a choice-based style
+        WHEN a respondent opens the section
+        THEN it renders as a slider without error
+
+        28% of range questions in production have no choices, so this is a
+        live path rather than a defensive one.
+        """
+        survey, _section, _q = self._survey(display_style='scale_strip', choices=None)
+
+        response = self._get(survey)
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('type="range"', content)
+        # Not the bare block name: base_survey_template.html carries inline JS
+        # referencing .rating-scale-strip__chip on every page.
+        self.assertNotIn('rating-scale-strip__cell', content)
+
+    # ── Behaviour that must not differ between styles ──────────────────────
+
+    def test_unanswered_question_behaves_the_same_in_every_style(self):
+        """
+        GIVEN a required range question
+        WHEN the section is submitted with the field absent, in each style
+        THEN no answer is stored and the request does not error
+
+        This asserts sameness across styles, not rejection: answers are never
+        validated server-side, because the POST handler passes request.POST as
+        `initial` so the form is never bound. Pre-existing and platform-wide.
+        """
+        for style in ('default', 'scale_strip', 'list_pips'):
+            with self.subTest(style=style):
+                survey, _section, question = self._survey(
+                    display_style=style, required=True,
+                )
+                self._get(survey)
+
+                response = self._submit(survey, {})
+
+                self.assertIn(response.status_code, (200, 302))
+                self.assertFalse(Answer.objects.filter(question=question).exists())
+
+    def test_previous_answer_is_prepopulated_in_every_style(self):
+        """
+        GIVEN a range question already answered
+        WHEN the respondent navigates back to the section in each style
+        THEN the previous value is preselected
+        """
+        for style in ('default', 'scale_strip', 'list_pips'):
+            with self.subTest(style=style):
+                survey, _section, _q = self._survey(display_style=style)
+                self._get(survey)
+                self._submit(survey, {'q_range': '4'})
+
+                content = self._get(survey).content.decode()
+
+                if style == 'default':
+                    self.assertIn('value="4"', content)
+                else:
+                    # id sits between value and checked, so match the input as
+                    # a whole rather than assuming attribute adjacency.
+                    self.assertRegex(
+                        content,
+                        r'<input[^>]*name="q_range"[^>]*value="4"[^>]*checked',
+                    )
+
+    # ── Style resolution in isolation ──────────────────────────────────────
+
+    def test_rating_still_inherits_the_survey_default(self):
+        """
+        GIVEN a rating question with no style of its own
+        WHEN the style is resolved
+        THEN it inherits the survey-wide rating default, as before this change
+        """
+        _survey, _section, question = self._survey()
+        question.input_type = 'rating'
+
+        resolved = SurveySectionAnswerForm.resolve_display_style(question, 'list_pips')
+
+        self.assertEqual(resolved, 'list_pips')
+
+    def test_range_does_not_inherit_the_survey_default(self):
+        """
+        GIVEN a range question with no style of its own
+        WHEN the style is resolved
+        THEN it is the slider, whatever the survey-wide rating default is
+        """
+        _survey, _section, question = self._survey()
+
+        resolved = SurveySectionAnswerForm.resolve_display_style(question, 'list_pips')
+
+        self.assertEqual(resolved, 'default')
+
+
+class AnswerCountHelpersTest(TestCase):
+    """Counting what a delete would destroy.
+
+    Tested directly rather than only through the views: an undercount here
+    understates the damage in a warning whose whole purpose is to state that
+    number truthfully.
+    """
+
+    def setUp(self):
+        self.org = _make_org('CountOrg')
+        self.user = User.objects.create_user('countuser', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='count_survey', organization=self.org, created_by=self.user,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.session = SurveySession.objects.create(survey=self.survey)
+
+    def _question(self, code, parent=None, section=None):
+        return Question.objects.create(
+            survey_section=section or self.section, code=code, name=code,
+            input_type='text', order_number=1, parent_question_id=parent,
+        )
+
+    def _answers(self, question, how_many, parent=None):
+        for _ in range(how_many):
+            Answer.objects.create(
+                survey_session=self.session, question=question,
+                parent_answer_id=parent, text='x',
+            )
+
+    def test_question_with_no_answers_counts_zero(self):
+        """
+        GIVEN a question nobody has answered
+        WHEN its answers are counted
+        THEN the count is zero
+        """
+        question = self._question('q1')
+
+        self.assertEqual(question.answer_count(), 0)
+
+    def test_question_counts_its_own_answers(self):
+        """
+        GIVEN a question with three answers
+        WHEN its answers are counted
+        THEN the count is three
+        """
+        question = self._question('q1')
+        self._answers(question, 3)
+
+        self.assertEqual(question.answer_count(), 3)
+
+    def test_question_count_includes_subquestion_answers(self):
+        """
+        GIVEN a question with 2 answers whose sub-question has 5
+        WHEN its answers are counted
+        THEN the count is 7 — the sub-question's answers die with the parent
+        """
+        parent = self._question('q_parent')
+        child = self._question('q_child', parent=parent)
+        self._answers(parent, 2)
+        self._answers(child, 5)
+
+        self.assertEqual(parent.answer_count(), 7)
+
+    def test_question_count_reaches_deeper_nesting(self):
+        """
+        GIVEN a sub-question that itself has a sub-question with answers
+        WHEN the top question's answers are counted
+        THEN answers at every depth are included
+        """
+        top = self._question('q_top')
+        middle = self._question('q_middle', parent=top)
+        bottom = self._question('q_bottom', parent=middle)
+        self._answers(top, 1)
+        self._answers(middle, 2)
+        self._answers(bottom, 4)
+
+        self.assertEqual(top.answer_count(), 7)
+
+    def test_subquestion_counts_only_itself(self):
+        """
+        GIVEN a sub-question with answers alongside its parent's
+        WHEN the sub-question's answers are counted
+        THEN the parent's answers are not included
+        """
+        parent = self._question('q_parent')
+        child = self._question('q_child', parent=parent)
+        self._answers(parent, 2)
+        self._answers(child, 5)
+
+        self.assertEqual(child.answer_count(), 5)
+
+    def test_section_count_spans_questions_and_subquestions(self):
+        """
+        GIVEN a section with two questions holding 4 and 6 answers, one of them
+              with a sub-question holding 3
+        WHEN the section's answers are counted
+        THEN the count is 13
+        """
+        first = self._question('q1')
+        second = self._question('q2')
+        child = self._question('q2_child', parent=second)
+        self._answers(first, 4)
+        self._answers(second, 6)
+        self._answers(child, 3)
+
+        self.assertEqual(self.section.answer_count(), 13)
+
+    def test_section_count_ignores_other_sections(self):
+        """
+        GIVEN answers in a neighbouring section
+        WHEN this section's answers are counted
+        THEN the neighbour's answers are not included
+        """
+        other_section = SurveySection.objects.create(
+            survey_header=self.survey, name='s2', code='S2',
+        )
+        self._answers(self._question('q1'), 2)
+        self._answers(self._question('q_other', section=other_section), 9)
+
+        self.assertEqual(self.section.answer_count(), 2)
+
+    def test_section_with_no_answers_counts_zero(self):
+        """
+        GIVEN a section whose questions have no answers
+        WHEN its answers are counted
+        THEN the count is zero
+        """
+        self._question('q1')
+
+        self.assertEqual(self.section.answer_count(), 0)
+
+
+class DeleteAnswerGuardTest(TestCase):
+    """The editor must not destroy collected answers without saying so."""
+
+    def setUp(self):
+        self.org = _make_org('GuardOrg')
+        self.user = User.objects.create_user('guarduser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='guard_survey', organization=self.org, created_by=self.user,
+            status='draft',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, name='Comment', code='q1',
+            input_type='text', order_number=1,
+        )
+        self.session = SurveySession.objects.create(survey=self.survey)
+        self.client.login(username='guarduser', password='pass')
+
+    def _answer(self, question, how_many=1):
+        for _ in range(how_many):
+            Answer.objects.create(
+                survey_session=self.session, question=question, text='x',
+            )
+
+    def _delete_question(self, question=None, acknowledge=False):
+        question = question or self.question
+        url = f'/editor/surveys/{self.survey.uuid}/questions/{question.id}/delete/'
+        data = {'confirm_delete_answers': 'true'} if acknowledge else {}
+        return self.client.post(url, data)
+
+    def _delete_section(self, section=None, acknowledge=False):
+        section = section or self.section
+        url = f'/editor/surveys/{self.survey.uuid}/sections/{section.id}/delete/'
+        data = {'confirm_delete_answers': 'true'} if acknowledge else {}
+        return self.client.post(url, data)
+
+    # ── Refusal and acknowledgement ───────────────────────────────────────
+
+    def test_delete_without_acknowledgement_is_refused(self):
+        """
+        GIVEN a question with three answers
+        WHEN deletion is requested without acknowledgement
+        THEN the request is refused, reports the count, and destroys nothing
+        """
+        self._answer(self.question, 3)
+
+        response = self._delete_question()
+
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json()['answers_at_risk'], 3)
+        self.assertTrue(Question.objects.filter(pk=self.question.pk).exists())
+        self.assertEqual(Answer.objects.filter(question=self.question).count(), 3)
+
+    def test_delete_with_acknowledgement_proceeds(self):
+        """
+        GIVEN a question with answers
+        WHEN deletion is requested with acknowledgement
+        THEN the question and its answers are deleted
+        """
+        self._answer(self.question, 3)
+
+        response = self._delete_question(acknowledge=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Question.objects.filter(pk=self.question.pk).exists())
+        self.assertEqual(Answer.objects.count(), 0)
+
+    def test_question_without_answers_deletes_in_one_step(self):
+        """
+        GIVEN a question nobody has answered
+        WHEN deletion is requested without acknowledgement
+        THEN it is deleted without a refusal
+        """
+        response = self._delete_question()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Question.objects.filter(pk=self.question.pk).exists())
+
+    def test_reported_count_includes_subquestion_answers(self):
+        """
+        GIVEN a question with 2 answers whose sub-question has 5
+        WHEN deletion is requested without acknowledgement
+        THEN the reported count is 7
+        """
+        sub = Question.objects.create(
+            survey_section=self.section, name='Sub', code='q1s',
+            input_type='text', order_number=1, parent_question_id=self.question,
+        )
+        self._answer(self.question, 2)
+        self._answer(sub, 5)
+
+        response = self._delete_question()
+
+        self.assertEqual(response.json()['answers_at_risk'], 7)
+
+    # ── Sections ──────────────────────────────────────────────────────────
+
+    def test_section_count_spans_questions_and_subquestions(self):
+        """
+        GIVEN a section holding two questions with 4 and 6 answers, one with a
+              sub-question holding 3
+        WHEN deletion is requested without acknowledgement
+        THEN the reported count is 13
+        """
+        second = Question.objects.create(
+            survey_section=self.section, name='Second', code='q2',
+            input_type='text', order_number=2,
+        )
+        sub = Question.objects.create(
+            survey_section=self.section, name='Sub', code='q2s',
+            input_type='text', order_number=1, parent_question_id=second,
+        )
+        self._answer(self.question, 4)
+        self._answer(second, 6)
+        self._answer(sub, 3)
+
+        response = self._delete_section()
+
+        self.assertEqual(response.json()['answers_at_risk'], 13)
+
+    def test_refused_section_delete_leaves_ordering_intact(self):
+        """
+        GIVEN a section with answers sitting between two others
+        WHEN deletion is refused
+        THEN the section still exists and its neighbours still link to it
+
+        The re-linking runs before the delete in the view, so a guard placed
+        after it would rewrite the chain around a section that survives.
+        """
+        first = self.section
+        middle = SurveySection.objects.create(
+            survey_header=self.survey, name='s2', code='S2',
+        )
+        last = SurveySection.objects.create(
+            survey_header=self.survey, name='s3', code='S3',
+        )
+        first.next_section = middle
+        first.save()
+        middle.prev_section = first
+        middle.next_section = last
+        middle.save()
+        last.prev_section = middle
+        last.save()
+        middle_question = Question.objects.create(
+            survey_section=middle, name='Q', code='q_mid',
+            input_type='text', order_number=1,
+        )
+        self._answer(middle_question, 2)
+
+        response = self._delete_section(middle)
+
+        self.assertEqual(response.status_code, 409)
+        self.assertTrue(SurveySection.objects.filter(pk=middle.pk).exists())
+        first.refresh_from_db()
+        last.refresh_from_db()
+        self.assertEqual(first.next_section_id, middle.pk)
+        self.assertEqual(last.prev_section_id, middle.pk)
+
+    def test_section_without_answers_deletes_in_one_step(self):
+        """
+        GIVEN a section whose questions have no answers
+        WHEN deletion is requested without acknowledgement
+        THEN it is deleted without a refusal
+        """
+        response = self._delete_section()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(SurveySection.objects.filter(pk=self.section.pk).exists())
+
+    # ── The versioning explanation ────────────────────────────────────────
+
+    def test_never_published_survey_gets_the_versioning_explanation(self):
+        """
+        GIVEN a survey that has never been published
+        WHEN a delete is refused
+        THEN the response says the versioning explanation applies
+        """
+        self._answer(self.question, 1)
+
+        response = self._delete_question()
+
+        self.assertTrue(response.json()['explain_versioning'])
+
+    def test_draft_copy_of_published_survey_does_not(self):
+        """
+        GIVEN a draft copy of a published survey
+        WHEN a delete is refused
+        THEN the versioning explanation does not apply — that author already
+             has version protection, so the sentence would be false
+        """
+        published = SurveyHeader.objects.create(
+            name='published_one', organization=self.org, created_by=self.user,
+            status='published',
+        )
+        draft = SurveyHeader.objects.create(
+            name='published_one_draft', organization=self.org, created_by=self.user,
+            status='draft', published_version=published, is_canonical=False,
+        )
+        section = SurveySection.objects.create(
+            survey_header=draft, name='s1', code='S1', is_head=True,
+        )
+        question = Question.objects.create(
+            survey_section=section, name='Q', code='q1',
+            input_type='text', order_number=1,
+        )
+        Answer.objects.create(
+            survey_session=SurveySession.objects.create(survey=draft),
+            question=question, text='x',
+        )
+
+        response = self.client.post(
+            f'/editor/surveys/{draft.uuid}/questions/{question.id}/delete/'
+        )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertFalse(response.json()['explain_versioning'])
+
+    # ── The read-only lock still wins ─────────────────────────────────────
+
+    def test_published_survey_refuses_with_403_not_409(self):
+        """
+        GIVEN a published survey
+        WHEN deletion is requested, even with acknowledgement
+        THEN the structural lock refuses it and nothing is deleted
+        """
+        self._answer(self.question, 1)
+        self.survey.status = 'published'
+        self.survey.save()
+
+        response = self._delete_question(acknowledge=True)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(Question.objects.filter(pk=self.question.pk).exists())
+
+
+class ClosedSurveyEditPathTest(TestCase):
+    """Getting back to editing from a read-only survey."""
+
+    def setUp(self):
+        self.org = _make_org('RecoveryOrg')
+        self.user = User.objects.create_user('recoveryuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='recoveryuser', password='pass')
+
+    def _survey(self, status='published', name=None):
+        survey = SurveyHeader.objects.create(
+            name=name or f'recovery_{status}_{id(self)}', organization=self.org,
+            created_by=self.user, status=status,
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='s1', code='S1', is_head=True,
+        )
+        Question.objects.create(
+            survey_section=section, name='Comment', code='q1',
+            input_type='text', order_number=1,
+        )
+        return survey
+
+    def _transition(self, survey, status):
+        return self.client.post(
+            f'/editor/surveys/{survey.uuid}/transition/', {'status': status},
+        )
+
+    def _create_draft(self, survey):
+        return self.client.post(f'/editor/surveys/{survey.uuid}/create-draft/')
+
+    # ── Draft copies from closed surveys ──────────────────────────────────
+
+    def test_draft_copy_can_be_created_from_a_closed_survey(self):
+        """
+        GIVEN a closed survey with no draft copy
+        WHEN the owner creates one
+        THEN the draft exists and the closed survey is untouched
+        """
+        survey = self._survey(status='closed')
+
+        response = self._create_draft(survey)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(survey.has_draft_copy())
+        survey.refresh_from_db()
+        self.assertEqual(survey.status, 'closed')
+
+    def test_closed_survey_banner_offers_the_route(self):
+        """
+        GIVEN a closed survey with responses and no draft copy
+        WHEN the owner opens the editor
+        THEN the read-only notice offers to create a draft copy
+        """
+        survey = self._survey(status='closed')
+        SurveySession.objects.create(survey=survey)
+
+        response = self.client.get(f'/editor/surveys/{survey.uuid}/')
+
+        self.assertTrue(response.context['show_edit_published'])
+        # Assert the route is offered, not the wording on the button. The label
+        # has already differed between the read-only bar and the publishing
+        # widget ("Draft new version" / "Create a draft to edit"), and pinning
+        # copy here fails the test for a rewording that changes no behaviour.
+        self.assertContains(
+            response, reverse('editor_create_draft', args=[survey.uuid]),
+        )
+
+    def test_second_draft_copy_is_still_refused(self):
+        """
+        GIVEN a closed survey that already has a draft copy
+        WHEN another is requested
+        THEN it is refused
+        """
+        survey = self._survey(status='closed')
+        self._create_draft(survey)
+
+        response = self._create_draft(survey)
+
+        self.assertEqual(response.status_code, 409)
+
+    def test_publishing_a_draft_leaves_the_survey_closed(self):
+        """
+        GIVEN a closed survey whose draft copy has been edited
+        WHEN the draft is published
+        THEN the changes land, the version increases, and the survey stays
+             closed — publishing must not silently reopen it to respondents
+        """
+        survey = self._survey(status='closed')
+        session = SurveySession.objects.create(survey=survey)
+        self._create_draft(survey)
+        draft = survey.get_draft_copy()
+
+        publish_draft(draft)
+
+        survey.refresh_from_db()
+        self.assertEqual(survey.status, 'closed')
+        self.assertEqual(survey.version_number, 2)
+        archived = SurveyHeader.objects.get(canonical_survey=survey, is_canonical=False)
+        session.refresh_from_db()
+        self.assertEqual(session.survey_id, archived.id)
+
+    # ── Undoing a publish that collected nothing ──────────────────────────
+
+    def test_published_survey_with_nothing_collected_returns_to_draft(self):
+        """
+        GIVEN a published survey nobody has answered
+        WHEN the owner returns it to draft
+        THEN it becomes editable again
+        """
+        survey = self._survey(status='published')
+
+        response = self._transition(survey, 'draft')
+
+        self.assertIn(response.status_code, (200, 302))
+        survey.refresh_from_db()
+        self.assertEqual(survey.status, 'draft')
+
+    def test_closed_survey_with_nothing_collected_returns_to_draft(self):
+        """
+        GIVEN a closed survey nobody has answered
+        WHEN the owner returns it to draft
+        THEN it becomes editable again
+        """
+        survey = self._survey(status='closed')
+
+        self._transition(survey, 'draft')
+
+        survey.refresh_from_db()
+        self.assertEqual(survey.status, 'draft')
+
+    def test_survey_with_responses_cannot_return_to_draft(self):
+        """
+        GIVEN a published survey that has collected a response
+        WHEN the owner attempts to return it to draft
+        THEN it is refused and the status is unchanged
+        """
+        survey = self._survey(status='published')
+        SurveySession.objects.create(survey=survey)
+
+        response = self._transition(survey, 'draft')
+
+        self.assertEqual(response.status_code, 400)
+        survey.refresh_from_db()
+        self.assertEqual(survey.status, 'published')
+
+    def test_survey_whose_sessions_moved_to_an_archive_cannot_return_to_draft(self):
+        """
+        GIVEN a survey whose responses moved onto an archived version when a new
+              version was published, leaving it with no sessions of its own
+        WHEN the owner attempts to return it to draft
+        THEN it is refused
+
+        A plain session count would read this survey as untouched.
+        """
+        survey = self._survey(status='published')
+        SurveySession.objects.create(survey=survey)
+        self._create_draft(survey)
+        publish_draft(survey.get_draft_copy())
+        survey.refresh_from_db()
+        self.assertEqual(SurveySession.objects.filter(survey=survey).count(), 0)
+
+        response = self._transition(survey, 'draft')
+
+        self.assertEqual(response.status_code, 400)
+        survey.refresh_from_db()
+        self.assertEqual(survey.status, 'published')
+
+    def test_back_to_draft_is_not_offered_once_a_response_exists(self):
+        """
+        GIVEN a published survey with a response
+        WHEN the owner opens the editor
+        THEN the undo is not offered
+        """
+        survey = self._survey(status='published')
+        SurveySession.objects.create(survey=survey)
+
+        response = self.client.get(f'/editor/surveys/{survey.uuid}/')
+
+        self.assertFalse(response.context['show_back_to_draft'])
+
+    def test_back_to_draft_is_offered_when_nothing_collected(self):
+        """
+        GIVEN a published survey nobody has answered
+        WHEN the owner opens the editor
+        THEN the undo is offered
+        """
+        survey = self._survey(status='published')
+
+        response = self.client.get(f'/editor/surveys/{survey.uuid}/')
+
+        self.assertTrue(response.context['show_back_to_draft'])
+
+    # ── The lock itself is unchanged ──────────────────────────────────────
+
+    def test_structural_edits_are_still_blocked_on_a_closed_survey(self):
+        """
+        GIVEN a closed survey
+        WHEN a question deletion is attempted directly
+        THEN it is still refused by the read-only lock
+        """
+        survey = self._survey(status='closed')
+        question = Question.objects.filter(survey_section__survey_header=survey).first()
+
+        response = self.client.post(
+            f'/editor/surveys/{survey.uuid}/questions/{question.id}/delete/'
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(Question.objects.filter(pk=question.pk).exists())
+
+
+class HasNeverCollectedTest(TestCase):
+    """The condition both new transitions depend on."""
+
+    def setUp(self):
+        self.org = _make_org('CollectedOrg')
+        self.user = User.objects.create_user('collecteduser', password='pass')
+
+    def _survey(self, name, status='published'):
+        return SurveyHeader.objects.create(
+            name=name, organization=self.org, created_by=self.user, status=status,
+        )
+
+    def test_fresh_survey_has_never_collected(self):
+        """
+        GIVEN a survey with no sessions and no versions
+        WHEN the condition is evaluated
+        THEN it is true
+        """
+        self.assertTrue(self._survey('fresh').has_never_collected())
+
+    def test_survey_with_a_session_has_collected(self):
+        """
+        GIVEN a survey with one session
+        WHEN the condition is evaluated
+        THEN it is false
+        """
+        survey = self._survey('with_session')
+        SurveySession.objects.create(survey=survey)
+
+        self.assertFalse(survey.has_never_collected())
+
+    def test_survey_with_an_archived_version_has_collected(self):
+        """
+        GIVEN a survey with no sessions of its own but an archived version
+        WHEN the condition is evaluated
+        THEN it is false — the sessions moved there when the version was published
+        """
+        survey = self._survey('with_history')
+        SurveyHeader.objects.create(
+            name='with_history_v1', organization=self.org, created_by=self.user,
+            status='closed', is_canonical=False, canonical_survey=survey,
+            version_number=1,
+        )
+
+        self.assertFalse(survey.has_never_collected())

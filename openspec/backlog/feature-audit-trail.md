@@ -4,7 +4,9 @@
 **Priority**: low
 **Area**: backend
 **Epic**: data-management
+**Tier**: **Pro**
 **Created**: 2026-04-05
+**Updated**: 2026-07-29 — assigned to the Pro tier
 
 > Note: this file was created retroactively on 2026-07-23 — INDEX #59 referenced it as a
 > dangling link. The **operations-audit slice** (destructive/lifecycle actions: delete,
@@ -40,3 +42,9 @@ content diffs.
 - Operations audit + trash/restore: shipped in `openspec/changes/survey-deletion-safety`.
 - Survey versioning already snapshots published versions — edit history covers the
   gaps *between* versions, not the versions themselves.
+- **Tier note (2026-07-29)**: the rest of the data-management epic stays **Free** — cleaning
+  your own data is table stakes. Audit trail is **Pro** because its purpose is different:
+  proving to a *third party* (client, funder, auditor) that the dataset was not tampered
+  with. It only becomes valuable once multiple roles touch the same survey, so it pairs
+  with [roles & permissions](feature-workspace-roles-permissions.md) (#91) and feeds the
+  [grant reporting pack](feature-grant-reporting-pack.md) (#94).
