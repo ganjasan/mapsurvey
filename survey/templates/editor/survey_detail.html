@@ -26,8 +26,14 @@
         <button class="dropdown-item" onclick="doTransition('draft')">Back to Draft</button>
         {% elif survey.status == 'published' %}
         <button class="dropdown-item" onclick="doTransition('closed')">Close Survey</button>
+        {% if show_back_to_draft %}
+        <button class="dropdown-item" onclick="doTransition('draft')">Back to Draft</button>
+        {% endif %}
         {% elif survey.status == 'closed' %}
         <button class="dropdown-item" onclick="doTransition('published')">Reopen</button>
+        {% if show_back_to_draft %}
+        <button class="dropdown-item" onclick="doTransition('draft')">Back to Draft</button>
+        {% endif %}
         <button class="dropdown-item" onclick="doTransition('archived')">Archive</button>
         {% endif %}
     </div>
@@ -53,9 +59,19 @@
 {% if is_read_only and not survey.is_draft_copy %}
 <div class="alert alert-warning mb-0 rounded-0 text-center flex-shrink-0" style="font-size:0.85rem;">
     <i class="fas fa-lock"></i> This survey is <strong>read-only</strong>.
-    {% if draft_copy %}
+    {% if show_back_to_draft %}
+    {% comment %}
+    Nothing has been collected, so publishing can simply be undone — no draft
+    copy, no new version. Offered first because it is what someone who published
+    by accident actually wants. Note {# #} is single-line only in Django; a
+    multi-line one renders into the page.
+    {% endcomment %}
+    Nothing has been collected yet, so you can take it back into editing.
+    <button class="btn btn-sm btn-primary ml-2" onclick="doTransition('draft')">Back to editing</button>
+    {% elif draft_copy %}
     <a href="{% url 'editor_survey_detail' draft_copy.uuid %}" class="ml-2 btn btn-sm btn-outline-dark">Go to draft &rarr;</a>
     {% elif show_edit_published %}
+    Edit it in a draft copy — the responses collected so far stay as an archived version.
     <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" class="d-inline ml-2">
         {% csrf_token %}
         <button type="submit" class="btn btn-sm btn-primary">Create a draft copy</button>
