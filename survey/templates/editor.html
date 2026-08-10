@@ -22,6 +22,23 @@
     }
     .dashboard-title { font-size: 1.25rem; font-weight: 700; margin: 0; }
     .dashboard-header .spacer { flex: 1; }
+    /* Search box */
+    .dashboard-search {
+        position: relative; display: inline-flex; align-items: center;
+        min-width: 200px;
+    }
+    .dashboard-search i {
+        position: absolute; left: 0.6rem; color: #9ca3af; font-size: 0.8rem; pointer-events: none;
+    }
+    .dashboard-search input {
+        width: 100%; padding: 0.35rem 0.6rem 0.35rem 1.9rem;
+        border: 1px solid var(--border-color); border-radius: 6px;
+        font-size: 0.85rem; background: #fff; color: #111827;
+    }
+    .dashboard-search input:focus {
+        outline: none; border-color: var(--accent);
+        box-shadow: 0 0 0 2px var(--accent-light);
+    }
     .view-toggle {
         display: inline-flex; background: #f3f4f6; border-radius: 6px; padding: 2px; gap: 2px;
     }
@@ -85,6 +102,12 @@
         text-decoration: none; color: #6b7280; background: none; border: none; cursor: pointer;
         transition: background 0.12s, color 0.12s;
     }
+    /* Stack the icon over its label and centre both horizontally */
+    .card-actions > a {
+        display: flex; flex-direction: column; align-items: center; gap: 3px;
+        text-align: center; min-width: 46px;
+    }
+    .card-actions > a i { font-size: 0.9rem; }
     .card-actions a:hover, .card-actions button:hover { background: var(--accent-light); color: var(--accent); }
     .card-actions .spacer { flex: 1; }
 
@@ -187,6 +210,11 @@
     <!-- Header -->
     <div class="dashboard-header">
         <h1 class="dashboard-title">My Surveys</h1>
+        <div class="dashboard-search">
+            <i class="fas fa-search"></i>
+            <input type="search" id="surveySearch" placeholder="Search surveys…"
+                   autocomplete="off" aria-label="Search surveys by name">
+        </div>
         <span class="spacer"></span>
 
         {% if show_archived %}
@@ -220,7 +248,7 @@
     <!-- Cards View -->
     <div class="dashboard-grid" id="view-grid">
         {% for survey in survey_headers %}
-        <div class="survey-card">
+        <div class="survey-card" data-search="{{ survey.name|lower }} {{ survey.get_status_display|lower }}">
             <a href="{% url 'editor_survey_detail' survey.uuid %}" class="card-link">
                 {% if survey.cover_image %}
                 <div class="card-cover" style="background-image:url('{{ survey.cover_image.url }}');"></div>
@@ -236,6 +264,7 @@
                             {% if survey.version_number > 1 %}<span style="font-size:0.65rem;color:#9ca3af;font-weight:400;"> v{{ survey.version_number }}</span>{% endif %}
                         </span>
                         <span class="status-pill badge badge-{{ survey.status|status_badge_class }}">{{ survey.get_status_display }}</span>
+                        {% if survey.public_results_page.is_published %}<span class="status-pill badge badge-primary" title="Results page is live">Results live</span>{% endif %}
                     </div>
                     <div class="card-kpi">
                         <span><span class="kpi-value">{{ survey.session_count }}</span> started</span>
@@ -251,10 +280,10 @@
                 </div>
             </a>
             <div class="card-actions">
-                <a href="{% url 'editor_survey_detail' survey.uuid %}"><i class="fas fa-pen"></i> Editor</a>
-                <a href="{% url 'editor_survey_analytics' survey.uuid %}"><i class="fas fa-chart-bar"></i> Analytics <span class="badge-beta">beta</span></a>
-                <a href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-share-alt"></i> Share</a>
-                <a href="{% url 'editor_survey_settings' survey.uuid %}"><i class="fas fa-cog"></i> Settings</a>
+                <a href="{% url 'editor_survey_detail' survey.uuid %}"><i class="fas fa-hammer"></i><span>Build</span></a>
+                <a href="{% url 'editor_survey_analytics' survey.uuid %}"><i class="fas fa-chart-bar"></i><span>Results</span></a>
+                <a href="{% url 'editor_survey_public_results' survey.uuid %}"><i class="fas fa-globe"></i><span>Publish <span class="badge-beta">beta</span></span></a>
+                <a href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-share-alt"></i><span>Share</span></a>
                 <span class="spacer"></span>
                 {% include "editor/_survey_more_menu.html" %}
             </div>
@@ -270,7 +299,7 @@
     <!-- List View -->
     <div class="dashboard-list hidden" id="view-list">
         {% for survey in survey_headers %}
-        <div class="survey-row">
+        <div class="survey-row" data-search="{{ survey.name|lower }} {{ survey.get_status_display|lower }}">
             <a href="{% url 'editor_survey_detail' survey.uuid %}" class="row-link">
                 {% if survey.cover_image %}
                 <div class="row-cover" style="background-image:url('{{ survey.cover_image.url }}');"></div>
@@ -293,10 +322,10 @@
                 </div>
             </a>
             <div class="row-actions">
-                <a href="{% url 'editor_survey_detail' survey.uuid %}" title="Editor"><i class="fas fa-pen"></i></a>
-                <a href="{% url 'editor_survey_analytics' survey.uuid %}" title="Analytics (Beta)"><i class="fas fa-chart-bar"></i></a>
+                <a href="{% url 'editor_survey_detail' survey.uuid %}" title="Build"><i class="fas fa-hammer"></i></a>
+                <a href="{% url 'editor_survey_analytics' survey.uuid %}" title="Results"><i class="fas fa-chart-bar"></i></a>
+                <a href="{% url 'editor_survey_public_results' survey.uuid %}" title="Publish"><i class="fas fa-globe"></i></a>
                 <a href="{% url 'editor_survey_share' survey.uuid %}" title="Share"><i class="fas fa-share-alt"></i></a>
-                <a href="{% url 'editor_survey_settings' survey.uuid %}" title="Settings"><i class="fas fa-cog"></i></a>
                 <a href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Preview" class="preview-btn"><i class="fas fa-external-link-alt"></i> Preview</a>
                 {% include "editor/_survey_more_menu.html" %}
             </div>
@@ -307,6 +336,12 @@
             No surveys yet. Create your first one!
         </div>
         {% endfor %}
+    </div>
+
+    <!-- No search matches -->
+    <div id="search-empty" class="hidden" style="text-align:center;padding:2.5rem;color:#9ca3af;">
+        <i class="fas fa-search" style="font-size:1.75rem;margin-bottom:0.5rem;display:block;"></i>
+        No surveys match “<span id="search-empty-q"></span>”.
     </div>
 
     {% if trashed_surveys %}
@@ -438,6 +473,39 @@ function setView(mode) {
         if (saved === 'list') setView('list');
         else setView('grid');
     } catch(e) { setView('grid'); }
+})();
+
+// Instant client-side search over both card and list views (by name + status)
+(function() {
+    var input = document.getElementById('surveySearch');
+    if (!input) return;
+    var cards = Array.prototype.slice.call(document.querySelectorAll('#view-grid .survey-card'));
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#view-list .survey-row'));
+    var emptyBox = document.getElementById('search-empty');
+    var emptyQ = document.getElementById('search-empty-q');
+
+    function filterNodes(nodes, q) {
+        var matches = 0;
+        nodes.forEach(function(n) {
+            var hay = n.getAttribute('data-search') || '';
+            var show = !q || hay.indexOf(q) !== -1;
+            n.classList.toggle('hidden', !show);
+            if (show) matches++;
+        });
+        return matches;
+    }
+
+    function apply() {
+        var q = input.value.trim().toLowerCase();
+        var m = filterNodes(cards, q) + filterNodes(rows, q);
+        // cards+rows count the same surveys twice; >0 means at least one matched
+        var noMatch = q && m === 0;
+        if (emptyBox) emptyBox.classList.toggle('hidden', !noMatch);
+        if (noMatch && emptyQ) emptyQ.textContent = input.value.trim();
+    }
+
+    input.addEventListener('input', apply);
+    input.addEventListener('search', apply); // clear (×) button on type=search
 })();
 
 // Delete modal

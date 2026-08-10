@@ -1,0 +1,277 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="{{ lang|default:'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ intro_title }} — {% trans "Survey results" %}</title>
+  {% if noindex %}
+  <meta name="robots" content="noindex, nofollow">
+  {% else %}
+  <meta name="robots" content="index, follow">
+  {% endif %}
+  <meta name="description" content="{{ intro_title }}">
+  {# Open Graph #}
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ intro_title }}">
+  {% if intro_body %}<meta property="og:description" content="{{ intro_body }}">{% endif %}
+  {% if survey.cover_image %}<meta property="og:image" content="{{ survey.cover_image.url }}">{% endif %}
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="{% static 'favicon-32x32.png' %}" type="image/png" sizes="32x32">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --accent:#4f46e5;--accent-light:#eef2ff;--accent-hover:#4338ca;
+      --text-primary:#1a1d21;--text-secondary:#5f6368;--text-tertiary:#9aa0a6;
+      --card-bg:#fff;--border:rgba(0,0,0,.08);--bg:#f4f5f8;
+      --radius:14px;--shadow:0 4px 16px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);
+    }
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text-primary);font-size:15px;-webkit-font-smoothing:antialiased;}
+    .wrap{max-width:880px;margin:0 auto;padding:0 20px 60px;}
+    .ribbon{background:#fff7ed;border-bottom:1px solid #fed7aa;color:#9a3412;font-size:.8rem;text-align:center;padding:7px 12px;}
+    .hero{padding:48px 0 8px;text-align:center;}
+    .hero .eyebrow{display:inline-flex;align-items:center;gap:6px;background:var(--accent-light);color:var(--accent);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;padding:5px 12px;border-radius:999px;margin-bottom:18px;}
+    .hero h1{font-size:1.6rem;font-weight:700;margin:0 0 12px;line-height:1.25;}
+    .hero p.intro{font-size:1.05rem;color:var(--text-secondary);max-width:620px;margin:0 auto;line-height:1.55;}
+    .toprow{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:26px;}
+    .counter{display:flex;align-items:baseline;gap:8px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:10px 20px;box-shadow:var(--shadow);}
+    .counter .num{font-size:1.5rem;font-weight:700;color:var(--accent);}
+    .counter .lbl{color:var(--text-secondary);font-size:.9rem;}
+    .cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;font-size:.95rem;padding:12px 22px;border-radius:999px;box-shadow:var(--shadow);transition:.15s;}
+    .cta:hover{background:var(--accent-hover);}
+    .frozen-badge{display:inline-flex;align-items:center;gap:6px;color:var(--text-tertiary);font-size:.82rem;margin-top:14px;}
+    .block{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 26px;margin-top:22px;scroll-margin-top:16px;}
+    /* Applied by the editor preview pane (never on the real public page) to flash
+       the block that was just selected in the config sidebar. */
+    .block.pr-preview-highlight{animation:pr-preview-flash 1.6s ease;}
+    @keyframes pr-preview-flash{0%,25%{outline:2px solid var(--accent);outline-offset:3px;}100%{outline:2px solid transparent;outline-offset:3px;}}
+    .block h2{font-size:1.15rem;font-weight:600;margin:0 0 18px;}
+    .block.text-block p{color:var(--text-secondary);line-height:1.6;margin:0;}
+    .chart-holder{position:relative;height:300px;}
+    .chart-holder.is-table{height:auto;}
+    .pr-table{width:100%;border-collapse:collapse;font-size:.9rem;}
+    .pr-table td{padding:8px 10px;border-bottom:1px solid var(--border);}
+    .pr-table td.val{text-align:right;font-variant-numeric:tabular-nums;color:var(--text-secondary);white-space:nowrap;}
+    .map-holder{height:360px;border-radius:10px;overflow:hidden;}
+    .block.image-block{padding:0;overflow:hidden;}
+    .block.image-block h2{padding:24px 26px 0;}
+    .block.image-block img{display:block;width:100%;height:auto;}
+    .block.image-block figcaption{padding:14px 26px;color:var(--text-secondary);font-size:.88rem;text-align:center;}
+    .kanon-note{margin-top:14px;font-size:.78rem;color:var(--text-tertiary);}
+    .empty{text-align:center;color:var(--text-tertiary);padding:40px 0;}
+    .footer{margin-top:42px;text-align:center;}
+    .footer .made{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:8px 16px;box-shadow:var(--shadow);text-decoration:none;color:var(--text-secondary);font-size:.85rem;}
+    .footer .made strong{color:var(--accent);}
+  </style>
+</head>
+<body>
+  {% if noindex %}
+  <div class="ribbon">{% trans "Unlisted — viewable by direct link only, not indexed." %}</div>
+  {% endif %}
+
+  <div class="wrap">
+    <div class="hero">
+      <span class="eyebrow">{% trans "Survey results" %}</span>
+      <h1>{{ intro_title }}</h1>
+      {% if intro_body %}<p class="intro">{{ intro_body }}</p>{% endif %}
+
+      <div class="toprow">
+        {% if show_response_count %}
+        <div class="counter"><span class="num">{{ response_count }}</span><span class="lbl">{% trans "responses" %}</span></div>
+        {% endif %}
+        {% if show_cta %}
+        <a class="cta" href="{{ survey_url }}">{% trans "Take the survey" %}</a>
+        {% endif %}
+      </div>
+      {% if frozen and not stale %}
+      <div class="frozen-badge">{% trans "Data as of" %} {{ frozen_at|date:"j M Y" }}</div>
+      {% endif %}
+    </div>
+
+    {% if stale %}
+    <div class="block"><p class="empty">{% trans "This snapshot needs to be refreshed by the survey owner." %}</p></div>
+    {% elif not blocks %}
+    <div class="block"><p class="empty">{% trans "No results to show yet." %}</p></div>
+    {% endif %}
+
+    {% for block in blocks %}
+    <div class="block {% if block.block_type == 'text' %}text-block{% elif block.block_type == 'image' %}image-block{% endif %}" data-block-id="{{ block.id }}">
+      {% if block.title %}<h2>{{ block.title }}</h2>{% endif %}
+      {% if block.block_type == 'text' %}
+        <p>{{ block.body }}</p>
+      {% elif block.block_type == 'image' %}
+        <img src="{{ block.image_url }}" alt="{{ block.caption|default:block.title }}">
+        {% if block.caption %}<figcaption>{{ block.caption }}</figcaption>{% endif %}
+      {% elif block.block_type == 'chart' %}
+        <div class="chart-holder"><canvas id="chart-{{ block.id }}"></canvas></div>
+        {% if page.k_anonymity_threshold > 1 %}
+        <div class="kanon-note">{% trans "Small groups are masked to protect privacy." %}</div>
+        {% endif %}
+      {% elif block.block_type == 'map' %}
+        <div class="map-holder" id="map-{{ block.id }}"></div>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    <div class="footer">
+      <a class="made" href="https://mapsurvey.org/" target="_blank" rel="noopener">
+        {% trans "Made with" %} <strong>Mapsurvey</strong>
+      </a>
+    </div>
+  </div>
+
+  <script id="blocks-data" type="application/json">{{ blocks_json|safe }}</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script>
+  (function(){
+    // Segment palette for pie/doughnut charts. Declared before the render loop
+    // runs — a `var` assignment is not hoisted, so defining it later would leave
+    // it undefined while the forEach below is already invoking the renderers.
+    var PALETTE = ['#4f46e5','#7c73f0','#22c55e','#f59e0b','#ef4444','#06b6d4','#ec4899','#8b5cf6','#10b981','#f97316'];
+
+    // Self-contained tile providers (no Mapbox token needed on the public page).
+    // Declared before the render loop for the same hoisting reason as PALETTE.
+    var BASEMAPS = {
+      streets:   { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', opts: { attribution: '© OpenStreetMap', maxZoom: 19 } },
+      satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts: { attribution: '© Esri', maxZoom: 19 } },
+      topo:      { url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', opts: { attribution: '© OpenTopoMap', maxZoom: 17 } }
+    };
+
+    var blocks = JSON.parse(document.getElementById('blocks-data').textContent || '[]');
+    blocks.forEach(function(b){
+      if (b.block_type === 'chart' && b.data_type === 'choices') { renderChoiceChart(b); }
+      else if (b.block_type === 'chart' && b.data_type === 'number') { renderHistogram(b); }
+      else if (b.block_type === 'map') { renderMap(b); }
+    });
+
+    // Map a creator-selected viz to a Chart.js chart type. 'auto' and 'bar'
+    // both render as a bar chart; 'table' is handled separately (not Chart.js).
+    function chartType(viz){
+      if (viz === 'pie') return 'pie';
+      if (viz === 'donut') return 'doughnut';
+      return 'bar';
+    }
+
+    // Build a plain HTML table via safe DOM methods (textContent escapes the
+    // creator-supplied labels, so no HTML injection on the public page).
+    function renderTable(el, labels, displays){
+      var holder = el.parentNode;
+      holder.classList.add('is-table');
+      var table = document.createElement('table');
+      table.className = 'pr-table';
+      var tbody = document.createElement('tbody');
+      labels.forEach(function(lab, i){
+        var tr = document.createElement('tr');
+        var tdL = document.createElement('td'); tdL.className = 'lab'; tdL.textContent = lab;
+        var tdV = document.createElement('td'); tdV.className = 'val'; tdV.textContent = displays[i];
+        tr.appendChild(tdL); tr.appendChild(tdV);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      holder.replaceChildren(table);
+    }
+
+    function buildChart(el, type, labels, data, displays, opts){
+      opts = opts || {};
+      var isPie = (type === 'pie' || type === 'doughnut');
+      var colors = isPie ? labels.map(function(_, i){ return PALETTE[i % PALETTE.length]; })
+                         : (opts.color || '#4f46e5');
+      var cfg = {
+        type: type,
+        data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderRadius: isPie ? 0 : 6 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: isPie },
+            tooltip: { callbacks: { label: function(ctx){
+              return (displays && displays[ctx.dataIndex] != null)
+                ? (labels[ctx.dataIndex] + ': ' + displays[ctx.dataIndex])
+                : ctx.formattedValue;
+            } } }
+          }
+        }
+      };
+      if (!isPie) {
+        if (opts.horizontal) {
+          cfg.options.indexAxis = 'y';
+          cfg.options.scales = { x: { beginAtZero: true, ticks: { precision: 0 } } };
+        } else {
+          cfg.options.scales = { y: { beginAtZero: true, ticks: { precision: 0 } } };
+        }
+      }
+      new Chart(el, cfg);
+    }
+
+    function renderChoiceChart(b){
+      var el = document.getElementById('chart-' + b.id); if (!el) return;
+      var labels = b.items.map(function(i){ return i.label; });
+      // Masked buckets carry value=null; chart shows 0 height but the label
+      // text already reads "<K", so the exact count is never revealed.
+      var data = b.items.map(function(i){ return i.value == null ? 0 : i.value; });
+      var displays = b.items.map(function(i){ return i.display; });
+      if (b.viz === 'table') { return renderTable(el, labels, displays); }
+      buildChart(el, chartType(b.viz), labels, data, displays, { horizontal: true, color: '#4f46e5' });
+    }
+
+    function renderHistogram(b){
+      var el = document.getElementById('chart-' + b.id); if (!el || !b.hist_labels) return;
+      var displays = b.hist_counts.map(function(c){ return String(c); });
+      if (b.viz === 'table') { return renderTable(el, b.hist_labels, displays); }
+      buildChart(el, chartType(b.viz), b.hist_labels, b.hist_counts, displays, { horizontal: false, color: '#7c73f0' });
+    }
+
+    function renderMap(b){
+      var el = document.getElementById('map-' + b.id); if (!el) return;
+      var map = L.map(el, { scrollWheelZoom: false });
+      var base = BASEMAPS[b.basemap] || BASEMAPS.streets;
+      L.tileLayer(base.url, base.opts).addTo(map);
+
+      var fc = b.feature_collection || { features: [] };
+      var isHeat = (b.viz === 'heatmap' || b.viz === 'heat');
+      var pts = [];
+
+      // In heatmap mode, point features become heat intensity only — drawing the
+      // individual markers on top (markerPane z-index 600) would completely hide
+      // the heat canvas (overlayPane z-index 400). Non-point geometries still
+      // render as shapes. In marker mode, everything renders as geoJSON features.
+      var layer = L.geoJSON(fc, {
+        filter: function(feat){
+          if (isHeat && feat.geometry && feat.geometry.type === 'Point') return false;
+          return true;
+        },
+        onEachFeature: function(feat, lyr){
+          var props = feat.properties || {};
+          var keys = Object.keys(props);
+          if (keys.length) {
+            lyr.bindPopup(keys.map(function(k){ return '<b>' + k + ':</b> ' + props[k]; }).join('<br>'));
+          }
+        }
+      }).addTo(map);
+
+      // Collect point coordinates for the heat layer and for bounds.
+      (fc.features || []).forEach(function(feat){
+        if (feat.geometry && feat.geometry.type === 'Point') {
+          pts.push([feat.geometry.coordinates[1], feat.geometry.coordinates[0]]);
+        }
+      });
+
+      if (isHeat && pts.length) {
+        L.heatLayer(pts, { radius: 25, blur: 18, minOpacity: 0.35 }).addTo(map);
+      }
+
+      try {
+        var bounds = layer.getBounds();
+        if (!bounds.isValid() && pts.length) { bounds = L.latLngBounds(pts); }
+        if (bounds && bounds.isValid()) { map.fitBounds(bounds.pad(0.2)); }
+        else { map.setView([52.52, 13.405], 11); }
+      } catch (e) { map.setView([52.52, 13.405], 11); }
+    }
+  })();
+  </script>
+</body>
+</html>

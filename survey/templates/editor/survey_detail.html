@@ -12,73 +12,72 @@
     {% endif %}
 </span>
 
-{% if effective_role == 'owner' and survey.status != 'archived' and not survey.is_draft_copy %}
-<div class="status-dropdown dropdown d-inline">
-    <button class="btn btn-sm btn-{{ survey.status|status_badge_class }} dropdown-toggle status-badge-btn" data-toggle="dropdown">
-        {{ survey.get_status_display }} &middot; v{{ survey.version_number }}
-    </button>
-    <div class="dropdown-menu">
-        {% if survey.status == 'draft' %}
-        <button class="dropdown-item" onclick="doTransition('testing')">Move to Testing</button>
-        <button class="dropdown-item" onclick="doTransition('published')">Publish</button>
-        {% elif survey.status == 'testing' %}
-        <button class="dropdown-item" onclick="showPublishConfirm()">Publish</button>
-        <button class="dropdown-item" onclick="doTransition('draft')">Back to Draft</button>
-        {% elif survey.status == 'published' %}
-        <button class="dropdown-item" onclick="doTransition('closed')">Close Survey</button>
-        {% if show_back_to_draft %}
-        <button class="dropdown-item" onclick="doTransition('draft')">Back to Draft</button>
-        {% endif %}
-        {% elif survey.status == 'closed' %}
-        <button class="dropdown-item" onclick="doTransition('published')">Reopen</button>
-        {% if show_back_to_draft %}
-        <button class="dropdown-item" onclick="doTransition('draft')">Back to Draft</button>
-        {% endif %}
-        <button class="dropdown-item" onclick="doTransition('archived')">Archive</button>
-        {% endif %}
-    </div>
-</div>
-{% else %}
-<span class="badge badge-{{ survey.status|status_badge_class }} ml-2 status-badge-static">{{ survey.get_status_display }} &middot; v{{ survey.version_number }}</span>
-{% endif %}
-
-{% include "editor/partials/_survey_nav_tabs.html" with active_tab="editor" hide_status_badge=True %}
-
-{% if show_draft_actions %}
-<button class="btn btn-sm btn-success ml-2" onclick="checkAndPublishDraft()">
-    <i class="fas fa-upload"></i> Publish Version
-</button>
-<button class="btn btn-sm btn-outline-danger ml-1" data-toggle="modal" data-target="#discardDraftModal">
-    <i class="fas fa-trash"></i> Discard
-</button>
-{% endif %}
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="build" %}
 {% endblock %}
 
 {% block content %}
 <div style="display:flex;flex-direction:column;height:calc(100vh - 49px);">
+
+{% comment %}Persistent Build toolbar — survey-level status + Preview +
+lifecycle actions, always visible across section editing and the settings
+panel (moved out of the top navbar). The read-only banner is folded in:
+when the published survey is read-only the bar goes amber and carries the
+"edit a draft" action.{% endcomment %}
 {% if is_read_only and not survey.is_draft_copy %}
-<div class="alert alert-warning mb-0 rounded-0 text-center flex-shrink-0" style="font-size:0.85rem;">
-    <i class="fas fa-lock"></i> This survey is <strong>read-only</strong>.
-    {% if show_back_to_draft %}
-    {% comment %}
-    Nothing has been collected, so publishing can simply be undone — no draft
-    copy, no new version. Offered first because it is what someone who published
-    by accident actually wants. Note {# #} is single-line only in Django; a
-    multi-line one renders into the page.
-    {% endcomment %}
-    Nothing has been collected yet, so you can take it back into editing.
-    <button class="btn btn-sm btn-primary ml-2" onclick="doTransition('draft')">Back to editing</button>
-    {% elif draft_copy %}
-    <a href="{% url 'editor_survey_detail' draft_copy.uuid %}" class="ml-2 btn btn-sm btn-outline-dark">Go to draft &rarr;</a>
-    {% elif show_edit_published %}
-    Edit it in a draft copy — the responses collected so far stay as an archived version.
-    <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" class="d-inline ml-2">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-sm btn-primary">Create a draft copy</button>
-    </form>
+<div class="pr-ctxbar build-ctxbar" style="flex-shrink:0;">
+    <div style="flex:1;display:flex;align-items:center;gap:.6rem;min-width:0;">
+        <span class="ico"><i class="fas fa-lock"></i></span>
+        <div class="t">Build <span class="ro-pill">read-only</span></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:.6rem;flex-shrink:0;">
+        <span class="build-ro-msg"><i class="fas fa-lock"></i>
+          {% if show_back_to_draft %}Nothing has been collected yet, so this can go back to editing{% else %}Published and closed surveys can't be edited{% endif %}</span>
+        {% if show_back_to_draft %}
+        <button class="btn btn-sm btn-primary" onclick="doTransition('draft')">Back to editing</button>
+        {% elif draft_copy %}
+        <a class="btn btn-sm btn-primary" href="{% url 'editor_survey_detail' draft_copy.uuid %}">Go to draft &rarr;</a>
+        {% elif show_edit_published %}
+        <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-primary">Draft new version</button>
+        </form>
+        {% endif %}
+    </div>
+    <div style="flex:1;display:flex;justify-content:flex-end;">
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
+            <i class="fas fa-external-link-alt"></i> Preview
+        </a>
+    </div>
+</div>
+{% else %}
+<div class="pr-ctxbar build-ctxbar" style="flex-shrink:0;">
+    <span class="ico"><i class="fas fa-hammer"></i></span>
+    <div>
+        <div class="t">Build</div>
+        <div class="s">Sections, questions &amp; survey settings</div>
+    </div>
+    <span style="flex:1;"></span>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
+        <i class="fas fa-external-link-alt"></i> Preview
+    </a>
+    {% if show_draft_actions %}
+    <button class="btn btn-sm btn-success" onclick="checkAndPublishDraft()">
+        <i class="fas fa-upload"></i> Publish Version
+    </button>
+    <button class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#discardDraftModal">
+        <i class="fas fa-trash"></i> Discard
+    </button>
+    {% elif is_owner and survey.status == 'draft' and not survey.is_draft_copy %}
+    <button class="btn btn-sm btn-success" onclick="doTransition('published')">
+        <i class="fas fa-globe"></i> Publish
+    </button>
+    <button class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#discardDraftSurveyModal">
+        <i class="fas fa-trash"></i> Discard
+    </button>
     {% endif %}
 </div>
 {% endif %}
+
 <div class="editor-container" style="flex:1;min-height:0;">
     <!-- Sidebar expand tab (visible when collapsed) -->
     <div class="panel-expand-tab" id="sidebar-expand" title="Show sections">
@@ -87,6 +86,15 @@
 
     <!-- Left Sidebar: Sections -->
     <aside class="editor-sidebar" id="editor-sidebar">
+        {% if is_owner %}
+        <div class="sidebar-pinned">
+            <a class="sidebar-pinned-item{% if settings_panel_active %} active{% endif %}"
+               id="settingsPinnedItem"
+               href="{% url 'editor_survey_detail' survey.uuid %}?panel=settings">
+                <i class="fas fa-sliders-h"></i> <span>Survey settings</span> <i class="fas fa-chevron-right chev"></i>
+            </a>
+        </div>
+        {% endif %}
         <div class="sidebar-header">
             <span>Sections</span>
             <button class="panel-toggle" id="sidebar-collapse" title="Hide sidebar">
@@ -120,6 +128,15 @@
             </button>
             {% endif %}
         </div>
+        {% if effective_role == 'owner' or effective_role == 'editor' %}
+        <div class="sidebar-pinned" style="border-top:1px solid var(--border-color);border-bottom:none;margin-top:auto;">
+            <a class="sidebar-pinned-item{% if thanks_panel_active %} active{% endif %}"
+               id="thanksPinnedItem"
+               href="{% url 'editor_survey_detail' survey.uuid %}?panel=thanks">
+                <i class="fas fa-heart"></i> <span>Thanks page</span> <i class="fas fa-chevron-right chev"></i>
+            </a>
+        </div>
+        {% endif %}
     </aside>
 
     <!-- Resize handle: sidebar ↔ main -->
@@ -127,7 +144,21 @@
 
     <!-- Center Panel: Section Detail + Questions -->
     <main class="editor-main" id="editor-main">
-        {% if current_section %}
+        {% if settings_panel_active %}
+        <div id="section-content"
+             hx-get="{% url 'editor_survey_settings_panel' survey.uuid %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <div style="text-align:center;padding:2rem;color:#9ca3af;">Loading...</div>
+        </div>
+        {% elif thanks_panel_active %}
+        <div id="section-content"
+             hx-get="{% url 'editor_survey_thanks_panel' survey.uuid %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <div style="text-align:center;padding:2rem;color:#9ca3af;">Loading...</div>
+        </div>
+        {% elif current_section %}
         <div id="section-content"
              hx-get="{% url 'editor_section_detail' survey.uuid current_section.id %}"
              hx-trigger="load"
@@ -165,15 +196,9 @@
                 <i class="fas fa-chevron-right"></i>
             </button>
         </div>
-        {% if current_section %}
         <iframe class="preview-frame" id="preview-frame"
-                src="{% url 'editor_section_preview' survey.uuid current_section.name %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}">
+                src="{% if thanks_panel_active %}{% url 'editor_survey_thanks_preview' survey.uuid %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}{% elif current_section %}{% url 'editor_section_preview' survey.uuid current_section.name %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}{% else %}about:blank{% endif %}">
         </iframe>
-        {% else %}
-        <div style="padding:2rem;text-align:center;color:#9ca3af;font-size:0.85rem;">
-            Preview will appear here when you add a section.
-        </div>
-        {% endif %}
     </aside>
 </div>
 </div><!-- /editor-content-wrapper -->
@@ -198,97 +223,22 @@
     </div>
 </div>
 
-{% if show_draft_actions %}
-<!-- Publish Version Modal -->
-<div class="modal fade editor-modal" id="publishDraftModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Publish Version</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-            </div>
-            <div class="modal-body" id="publishDraftModalBody">
-                <p>Publish this draft as v{{ survey.published_version.version_number|add:1 }}?</p>
-                <p class="text-muted">Active respondents will continue on the current version.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" onclick="doPublishDraft(false)">Publish</button>
-            </div>
+{% if is_owner and survey.status == 'draft' and not survey.is_draft_copy %}
+<!-- Discard (delete) this draft survey -->
+<div class="modal fade editor-modal" id="discardDraftSurveyModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Discard draft</h5><button type="button" class="close" data-dismiss="modal"><span>&times;</span></button></div>
+        <div class="modal-body"><p>Delete this draft survey and everything in it? This can't be undone.</p></div>
+        <div class="modal-footer d-flex align-items-center">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <form method="post" action="{% url 'delete_survey' survey.uuid %}" class="d-inline mb-0">{% csrf_token %}
+                <button type="submit" class="btn btn-danger">Discard draft</button></form>
         </div>
-    </div>
-</div>
-
-<!-- Publish with Issues Modal -->
-<div class="modal fade editor-modal" id="publishDraftIssuesModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-warning">Compatibility Issues Found</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-            </div>
-            <div class="modal-body">
-                <p>The following breaking changes were detected:</p>
-                <ul id="compatibilityIssuesList"></ul>
-                <p class="text-muted">Force-publishing will preserve old answers in the archived version.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-warning" onclick="doPublishDraft(true)">Force Publish</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Discard Draft Modal -->
-<div class="modal fade editor-modal" id="discardDraftModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Discard Draft</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-            </div>
-            <div class="modal-body">
-                <p>Discard this draft? All changes will be lost.</p>
-            </div>
-            <div class="modal-footer d-flex align-items-center">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <form method="post" action="{% url 'editor_discard_draft' survey.uuid %}" class="d-inline mb-0">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Discard</button>
-                </form>
-            </div>
-        </div>
-    </div>
+    </div></div>
 </div>
 {% endif %}
 
-{% if effective_role == 'owner' %}
-<!-- Publish Confirmation Modal (testing → published) -->
-<div class="modal fade editor-modal" id="publishConfirmModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Publish Survey</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-            </div>
-            <div class="modal-body">
-                <p>You are about to publish this survey and make it available to respondents.</p>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="clearTestData" checked>
-                    <label class="form-check-label" for="clearTestData">
-                        Delete all test responses (recommended)
-                    </label>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" onclick="doPublishFromTesting()">Publish</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
+{% include "editor/partials/_lifecycle_scripts.html" %}
 
 {% endblock %}
 
@@ -347,6 +297,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Highlight active
         document.querySelectorAll('.section-item').forEach(function(el) { el.classList.remove('active'); });
         item.classList.add('active');
+        var settingsPinned = document.getElementById('settingsPinnedItem');
+        if (settingsPinned) settingsPinned.classList.remove('active');
+        var thanksPinned = document.getElementById('thanksPinnedItem');
+        if (thanksPinned) thanksPinned.classList.remove('active');
         // Load section detail via HTMX
         htmx.ajax('GET', '/editor/surveys/{{ survey.uuid }}/sections/' + sectionId + '/', {
             target: '#section-content',
@@ -359,6 +313,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Pinned "Survey settings" entry → swap the center panel without a full
+    // reload (same UX as clicking a section); the href stays a real deep
+    // link (?panel=settings) for no-JS/bookmark use.
+    var settingsPinnedItem = document.getElementById('settingsPinnedItem');
+    var thanksPinnedItem = document.getElementById('thanksPinnedItem');
+    function activatePinned(item, url, previewUrl) {
+        document.querySelectorAll('.section-item').forEach(function(el) { el.classList.remove('active'); });
+        if (settingsPinnedItem) settingsPinnedItem.classList.remove('active');
+        if (thanksPinnedItem) thanksPinnedItem.classList.remove('active');
+        item.classList.add('active');
+        htmx.ajax('GET', url, { target: '#section-content', swap: 'innerHTML' });
+        var iframe = document.getElementById('preview-frame');
+        if (iframe) iframe.src = previewUrl || 'about:blank';
+    }
+    if (settingsPinnedItem) {
+        settingsPinnedItem.addEventListener('click', function(e) {
+            e.preventDefault();
+            activatePinned(settingsPinnedItem, '{% url "editor_survey_settings_panel" survey.uuid %}', 'about:blank');
+        });
+    }
+    if (thanksPinnedItem) {
+        thanksPinnedItem.addEventListener('click', function(e) {
+            e.preventDefault();
+            activatePinned(thanksPinnedItem, '{% url "editor_survey_thanks_panel" survey.uuid %}', buildThanksPreviewUrl());
+        });
+    }
+
     // Preview language
     var langSelect = document.getElementById('preview-lang');
     function getPreviewLang() {
@@ -370,6 +351,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (lang) url += '?lang=' + lang;
         return url;
     }
+    function buildThanksPreviewUrl() {
+        var url = '/editor/surveys/{{ survey.uuid }}/thanks-preview/';
+        var lang = getPreviewLang();
+        if (lang) url += '?lang=' + lang;
+        return url;
+    }
+    // Let the thanks editor (loaded into #section-content) refresh the preview
+    // iframe after it autosaves.
+    window.refreshBuildPreview = function() { refreshPreview(); };
 
     // Refresh preview (debounced)
     var previewTimeout;
@@ -630,94 +620,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     restorePanelState();
 
-    // ── Lifecycle transitions ──
-    document.body.addEventListener('statusChanged', function() {
-        window.location.reload();
-    });
+    // Lifecycle transition helpers (doTransition, checkAndPublishDraft, …) and
+    // the statusChanged reload live in editor/partials/_lifecycle_scripts.html,
+    // shared across the Build / Results / Publish spaces.
 });
-
-function doTransition(status) {
-    var form = new FormData();
-    form.append('status', status);
-    fetch('{% url "editor_survey_transition" survey.uuid %}', {
-        method: 'POST',
-        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-        body: form,
-    }).then(function(resp) {
-        if (resp.ok) {
-            window.location.reload();
-        } else {
-            resp.text().then(function(msg) { alert(msg); });
-        }
-    });
-}
-
-function showPublishConfirm() {
-    $('#publishConfirmModal').modal('show');
-}
-
-function checkAndPublishDraft() {
-    fetch('{% url "editor_check_compatibility" survey.uuid %}', {
-        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-    }).then(function(resp) {
-        return resp.json();
-    }).then(function(data) {
-        if (data.issues && data.issues.length > 0) {
-            var list = document.getElementById('compatibilityIssuesList');
-            list.innerHTML = '';
-            data.issues.forEach(function(issue) {
-                var li = document.createElement('li');
-                if (issue.type === 'deleted_question') {
-                    li.textContent = 'Deleted question "' + (issue.question_name || issue.question_code) + '" has ' + issue.answer_count + ' answer(s)';
-                } else if (issue.type === 'changed_input_type') {
-                    li.textContent = 'Question "' + (issue.question_name || issue.question_code) + '" type changed from ' + issue.old_type + ' to ' + issue.new_type + ' (' + issue.answer_count + ' answers)';
-                } else if (issue.type === 'removed_choice_codes') {
-                    li.textContent = 'Question "' + (issue.question_name || issue.question_code) + '" has removed choice codes affecting ' + issue.answer_count + ' answer(s)';
-                }
-                list.appendChild(li);
-            });
-            $('#publishDraftIssuesModal').modal('show');
-        } else {
-            $('#publishDraftModal').modal('show');
-        }
-    });
-}
-
-function doPublishDraft(force) {
-    var form = new FormData();
-    if (force) form.append('force', 'true');
-    fetch('{% url "editor_publish_draft" survey.uuid %}', {
-        method: 'POST',
-        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-        body: form,
-    }).then(function(resp) {
-        if (resp.redirected) {
-            window.location.href = resp.url;
-        } else if (resp.ok) {
-            window.location.reload();
-        } else {
-            resp.text().then(function(msg) { alert(msg); });
-        }
-    });
-}
-
-function doPublishFromTesting() {
-    var form = new FormData();
-    form.append('status', 'published');
-    if (document.getElementById('clearTestData').checked) {
-        form.append('clear_test_data', 'true');
-    }
-    fetch('{% url "editor_survey_transition" survey.uuid %}', {
-        method: 'POST',
-        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-        body: form,
-    }).then(function(resp) {
-        if (resp.ok) {
-            window.location.reload();
-        } else {
-            resp.text().then(function(msg) { alert(msg); });
-        }
-    });
-}
 </script>
 {% endblock %}

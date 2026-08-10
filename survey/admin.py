@@ -12,6 +12,7 @@ from .models import (
     Story, FunnelReport, SignupAttribution, AuditLog,
     Cohort, CohortDimension, UserCohort, DomainSegmentRule,
     CreatorNote, CreatorProfile,
+    PublicResultsPage, PublicResultsBlock,
 )
 from .funnel import dashboard_context
 from leaflet.admin import LeafletGeoAdmin
@@ -320,3 +321,18 @@ class FunnelDashboardAdmin(admin.ModelAdmin):
         extra_context["weeks_sel"] = raw
         extra_context.update(dashboard_context(weeks=weeks))
         return super().changelist_view(request, extra_context=extra_context)
+
+
+class PublicResultsBlockInline(admin.TabularInline):
+    model = PublicResultsBlock
+    extra = 0
+    fields = ('order', 'block_type', 'question', 'viz', 'is_hidden')
+
+
+class PublicResultsPageAdmin(admin.ModelAdmin):
+    list_display = ('slug', 'survey', 'visibility', 'is_published', 'mode', 'frozen_at')
+    list_filter = ('visibility', 'is_published', 'mode')
+    inlines = [PublicResultsBlockInline]
+
+
+admin.site.register(PublicResultsPage, PublicResultsPageAdmin)

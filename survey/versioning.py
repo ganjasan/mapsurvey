@@ -24,7 +24,96 @@ class IncompatibleDraftError(Exception):
         super().__init__(f"{len(issues)} breaking compatibility issue(s) found")
 
 
-def clone_survey_for_draft(canonical):
+# ─── Version-family scope ────────────────────────────────────────────────────
+#
+# publish_draft() moves the old sections *and all sessions* onto a new archived
+# header, so any read that filters by a single SurveyHeader goes blind after a
+# publish. Every creator-facing count/aggregate must go through these helpers.
+
+def canonical_of(survey):
+    """Return the canonical survey for any version copy (or the survey itself)."""
+    return survey.canonical_survey or survey
+
+
+def family_ids(survey):
+    """Return the set of SurveyHeader ids in the survey's version family.
+
+    The family is the canonical survey plus its archived version copies
+    (linked via the canonical_survey FK). Draft copies are linked through
+    published_version instead, so they are naturally excluded — they never
+    own real sessions (test sessions die with the draft at publish time).
+    """
+    canonical = canonical_of(survey)
+    ids = {canonical.id}
+    ids.update(
+        SurveyHeader.objects
+        .filter(canonical_survey=canonical)
+        .values_list('id', flat=True)
+    )
+    return ids
+
+
+def family_sessions(survey, include_deleted=False):
+    """Sessions across the whole version family (each counted exactly once —
+    a session FK-points at exactly one version header)."""
+    qs = SurveySession.objects.filter(survey_id__in=family_ids(survey))
+    if not include_deleted:
+        qs = qs.filter(is_deleted=False)
+    return qs
+
+
+def lineage_map(survey):
+    """Build the question-lineage map for a survey's version family.
+
+    A lineage groups the questions that share (code, input_type) across the
+    family's versions — the same logical question carried through publishes
+    (clones keep codes; an input_type change intentionally breaks the lineage
+    so incompatible answer shapes are never merged).
+
+    Returns an ordered dict {(code, input_type): {
+        'questions':    [Question, ...]   # newest version first
+        'question_ids': [int, ...],
+        'current':      Question | None,  # the canonical version's object
+        'versions':     'v2' or 'v1–v3',  # display range label
+    }} with current-structure lineages first (in canonical order), then
+    archived-only lineages (newest first).
+    """
+    canonical = canonical_of(survey)
+    ids = family_ids(canonical)
+
+    questions = (
+        Question.objects
+        .filter(survey_section__survey_header_id__in=ids)
+        .select_related('survey_section__survey_header')
+        .order_by('-survey_section__survey_header__version_number', 'order_number')
+    )
+
+    lineages = {}
+    for q in questions:
+        key = (q.code, q.input_type)
+        header = q.survey_section.survey_header
+        entry = lineages.setdefault(key, {
+            'questions': [], 'question_ids': [], 'current': None, '_vers': [],
+        })
+        entry['questions'].append(q)
+        entry['question_ids'].append(q.id)
+        entry['_vers'].append(header.version_number)
+        if header.id == canonical.id:
+            entry['current'] = q
+
+    for entry in lineages.values():
+        lo, hi = min(entry['_vers']), max(entry['_vers'])
+        entry['versions'] = f'v{lo}' if lo == hi else f'v{lo}–v{hi}'
+        del entry['_vers']
+
+    # Current lineages first (canonical question order), archived after.
+    current = {k: v for k, v in lineages.items() if v['current'] is not None}
+    current = dict(sorted(current.items(), key=lambda kv: kv[1]['current'].order_number))
+    archived = {k: v for k, v in lineages.items() if v['current'] is None}
+    return {**current, **archived}
+
+
+def clone_survey_for_draft(canonical, structure_source=None):
     """
     Create a draft copy of a published survey.
 
@@ -32,8 +121,17 @@ def clone_survey_for_draft(canonical):
     sub-questions, and collaborators. The draft is linked to the canonical
     via published_version FK.
 
+    structure_source: SurveyHeader whose section/question tree to clone —
+    defaults to the canonical itself. Pass an archived version to restore an
+    old questionnaire as a new draft ("git revert": publishing it creates a
+    NEW version with the old structure; history is never rewritten). Header
+    settings and collaborators always come from the canonical — archived
+    headers never carried map/basemap settings, so cloning those from the
+    source would resurrect model defaults.
+
     Returns the draft SurveyHeader.
     """
+    structure_source = structure_source or canonical
     # Build draft name: "[draft] " prefix, truncated to 45 chars
     draft_name = f"[draft] {canonical.name}"[:45]
 
@@ -66,7 +164,7 @@ def clone_survey_for_draft(canonical):
         )
 
     # Clone sections and build old->new mapping for linked list resolution
-    sections = SurveySection.objects.filter(survey_header=canonical)
+    sections = SurveySection.objects.filter(survey_header=structure_source)
     old_to_new_section = {}
 
     for section in sections:

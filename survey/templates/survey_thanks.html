@@ -2,6 +2,14 @@
 {% load i18n %}
 
 {% block extra_head %}
+<style>
+    /* Creator thanks content: keep images/videos responsive without Quill CSS. */
+    .thanks-content img { max-width: 100%; height: auto; }
+    .thanks-content .ql-video, .thanks-content iframe {
+        display: block; width: 100%; max-width: 640px; aspect-ratio: 16 / 9;
+        height: auto; margin: 1rem auto; border: 0;
+    }
+</style>
 {% if PLAUSIBLE_SCRIPT_URL %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -15,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 {% block content %}
 {% if thanks_html %}
-    {{ thanks_html|safe }}
+    <div class="thanks-content">{{ thanks_html|safe }}</div>
 {% else %}
 <div class="text-center mt-5">
     <h2>{% trans "Thank you!" %}</h2>
@@ -24,10 +32,17 @@ document.addEventListener('DOMContentLoaded', function() {
 {% endif %}
 
 <div class="text-center mt-4">
+    {% with page=survey.public_results_page %}
+    {% if page.is_published and page.show_on_thanks %}
+    <a class="btn btn-primary" href="{% url 'public_results' page.slug %}">
+        <i class="fas fa-chart-bar mr-2"></i>{% trans "See the results" %}
+    </a>
+    {% endif %}
+    {% endwith %}
     <button id="share-btn" class="btn btn-outline-primary">
-        <i class="fas fa-share-alt me-2"></i><span id="share-text"></span>
+        <i class="fas fa-share-alt mr-2"></i><span id="share-text"></span>
     </button>
-    <span id="share-copied" class="text-success ms-2" style="display:none;"></span>
+    <span id="share-copied" class="text-success ml-2" style="display:none;"></span>
 </div>
 
 {% include "partials/_made_with_mapsurvey.html" with medium="thanks" %}

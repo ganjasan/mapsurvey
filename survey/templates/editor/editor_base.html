@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
@@ -19,6 +20,7 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
     <script src="{% static 'js/editor_dialog.js' %}"></script>
     <script src="{% static 'js/editor_clipboard.js' %}"></script>
     <style>
@@ -103,7 +105,7 @@
             user-select: none;
         }
         .section-item .drag-handle:active { cursor: grabbing; }
-        .section-item .section-title { flex: 1; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .section-item .section-title { flex: 1; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: inherit; text-decoration: none; }
         .section-item .section-delete {
             opacity: 0;
             color: #ef4444;
@@ -128,6 +130,29 @@
         .section-item .section-action:hover { opacity: 1; color: var(--accent); }
         .sidebar-footer { padding: 0.75rem 1rem; border-top: 1px solid var(--border-color); flex-shrink: 0; }
 
+        /* Pinned sidebar entry (e.g. "Survey settings" / "Page settings") — shared
+           between the Survey Editor sidebar and the Public Results sidebar so the
+           two read as one component instead of two hand-tuned near-duplicates. */
+        .sidebar-pinned { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+        .sidebar-pinned-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.6rem 0.7rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #374151;
+            text-decoration: none;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+        .sidebar-pinned-item:hover { background: var(--bg-muted); text-decoration: none; }
+        .sidebar-pinned-item.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+        .sidebar-pinned-item .chev { margin-left: auto; color: #c4c7cf; font-size: 0.7rem; }
+
         /* Center panel */
         .editor-main {
             flex: 1;
@@ -142,6 +167,67 @@
             margin-bottom: 1.25rem;
         }
         .section-form-card h6 { margin-bottom: 1rem; font-weight: 600; }
+
+        /* Settings form (used by both the standalone settings page and the
+           pinned-panel version swapped into the editor's center column, which
+           already gets padding from .editor-main — see survey_settings.html
+           for the standalone page's own extra padding override) */
+        .settings-main { max-width: 800px; margin: 0 auto; }
+        .settings-section {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .settings-section h6 {
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        /* Shared page-settings vocabulary — one look for the Publish page
+           settings and the Build "Survey settings" panel (context bar, cards,
+           fields, help hints, switches). Publish-layout-only .pr-* classes stay
+           in public_results.html. */
+        .pr-ctxbar { position: sticky; top: 0; background: #fff; border-bottom: 1px solid var(--border-color); padding: .7rem 1.5rem; display: flex; align-items: center; gap: .6rem; z-index: 5; }
+        .pr-ctxbar .btn { white-space: nowrap; }
+        .pr-ctxbar .ico { width: 30px; height: 30px; border-radius: 7px; background: var(--accent-light); color: var(--accent); display: flex; align-items: center; justify-content: center; }
+        .pr-ctxbar .t { font-weight: 600; }
+        .pr-ctxbar .s { font-size: .76rem; color: #9ca3af; }
+        /* Muted "Read-only" pill in the Build toolbar (no amber banner). */
+        .ro-pill { font-size: .62rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 4px; padding: 1px 5px; vertical-align: middle; margin-left: 4px; }
+        /* Read-only message — important, so brighter than the muted subtitle. */
+        .build-ro-msg { font-size: .84rem; font-weight: 600; color: #b45309; display: inline-flex; align-items: center; gap: .35rem; }
+        /* Thanks-page editor (Quill) */
+        #thanks-quill { background: #fff; border-radius: 0 0 var(--radius) var(--radius); }
+        #thanks-quill .ql-editor { min-height: 180px; font-size: .95rem; }
+        .thanks-lang-tab { border: 1px solid var(--border-color); background: #fff; color: #6b7280; border-radius: 6px; padding: .2rem .6rem; font-size: .8rem; cursor: pointer; }
+        .thanks-lang-tab.active { border-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 500; }
+        .pr-scroll { padding: 1.25rem 1.5rem; max-width: 720px; }
+        .pr-card { background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin-bottom: 1.1rem; }
+        .pr-card h6 { font-weight: 600; font-size: .95rem; margin: 0 0 .9rem; }
+        .pr-field { margin-bottom: .85rem; }
+        .pr-field label { display: block; font-size: .82rem; font-weight: 500; color: #374151; margin-bottom: .35rem; }
+        .pr-help { font-size: .76rem; color: #9ca3af; margin-top: .3rem; }
+        .pr-switch { display: flex; align-items: center; justify-content: space-between; padding: .5rem 0; border-bottom: 1px solid #f3f4f6; margin: 0; width: 100%; cursor: pointer; font-weight: 400; }
+        .pr-switch:last-child { border-bottom: none; }
+        .pr-switch input { cursor: pointer; }
+        .pr-url { font-family: monospace; font-size: .82rem; color: var(--accent); }
+        .pr-banner { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; border-radius: 8px; padding: .6rem .8rem; font-size: .82rem; margin-bottom: 1rem; }
+        /* The Build "Survey settings" panel is swapped into #section-content
+           inside the padded .editor-main. Cancel that padding so the sticky
+           .pr-ctxbar sits flush and spans the full column, exactly like the
+           Publish page. The top negative margin would collapse through the
+           #section-content wrapper (leaving a gap), so instead drop the
+           column's top padding whenever the flush panel is present. */
+        .editor-main:has(.pr-panel-flush) { padding-top: 0; }
+        .pr-panel-flush { margin: 0 -1.5rem -1.5rem; }
+
+        /* Autosave status indicator (Public Results settings + Survey settings panel) */
+        .autosave-status { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #16a34a; margin-top: 0.4rem; transition: color 0.15s; }
+        .autosave-status.is-error { color: #dc2626; }
+        .autosave-status.is-saving { color: #9ca3af; }
         .section-form-card .form-group { margin-bottom: 0.75rem; }
         .section-form-card label { font-size: 0.85rem; font-weight: 500; color: #374151; }
 
@@ -642,6 +728,62 @@
             vertical-align: middle;
             margin-left: 2px;
         }
+        /* ── Workspace navbar: action dropdowns (Share / Preview) + gear ── */
+        .nav-action { position: relative; display: inline-block; }
+        .nav-action > button {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            border: 1px solid var(--border-color); background: #fff; border-radius: 6px;
+            padding: 0.28rem 0.6rem; font-size: 0.8rem; font-weight: 500; color: #374151;
+            cursor: pointer; font-family: inherit; white-space: nowrap; line-height: 1.4;
+        }
+        .nav-action > button:hover { border-color: var(--accent); color: var(--accent); }
+        .nav-action > button.icon-only { padding: 0.28rem 0.45rem; }
+        .nav-action > button .caret { font-size: 0.6rem; color: #9ca3af; }
+        .nav-menu {
+            display: none; position: absolute; right: 0; top: calc(100% + 5px); min-width: 244px;
+            background: #fff; border: 1px solid var(--border-color); border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12); padding: 5px; z-index: 200;
+        }
+        .nav-menu.left { right: auto; left: 0; }
+        .nav-menu.open { display: block; }
+        .nav-menu .nm-head {
+            font-size: 0.62rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+            color: #9ca3af; padding: 7px 10px 3px;
+        }
+        .nav-menu .nm-item {
+            display: flex; align-items: center; gap: 9px; width: 100%; border: none; background: none;
+            text-align: left; padding: 8px 10px; border-radius: 6px; font-size: 0.83rem; color: #374151;
+            cursor: pointer; font-family: inherit; text-decoration: none;
+        }
+        .nav-menu .nm-item:hover { background: var(--accent-light); color: var(--accent); text-decoration: none; }
+        .nav-menu .nm-item i.lead { width: 15px; text-align: center; color: #9ca3af; }
+        .nav-menu .nm-item:hover i.lead { color: var(--accent); }
+        .nav-menu .nm-item small { margin-left: auto; color: #9ca3af; }
+        .nav-menu .nm-sep { height: 1px; background: var(--border-color); margin: 5px 4px; }
+        .nav-menu .nm-row { display: flex; align-items: center; gap: 9px; padding: 8px 10px; font-size: 0.83rem; }
+        .nav-menu .nm-row .lab { flex: 1; }
+        .nav-menu .nm-row .sub { display: block; font-size: 0.7rem; color: #9ca3af; margin-top: 1px; }
+        .nav-menu .nm-static { padding: 6px 10px; font-size: 0.8rem; color: #6b7280; }
+
+        /* toggle switch inside the publishing widget */
+        .pub-toggle {
+            width: 34px; height: 19px; border-radius: 999px; background: var(--accent);
+            position: relative; flex-shrink: 0; border: none; cursor: pointer; padding: 0;
+        }
+        .pub-toggle.off { background: #d1d5db; }
+        .pub-toggle::after {
+            content: ''; position: absolute; top: 2px; left: 17px; width: 15px; height: 15px;
+            border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: left 0.12s;
+        }
+        .pub-toggle.off::after { left: 2px; }
+
+        /* the status chip that opens the publishing widget */
+        .pub-chip {
+            display: inline-flex; align-items: center; gap: 0.4rem; border: none; cursor: pointer;
+            border-radius: 999px; padding: 0.25rem 0.7rem; font-size: 0.78rem; font-weight: 600;
+            font-family: inherit;
+        }
+        .pub-chip .caret { font-size: 0.6rem; opacity: 0.7; }
     </style>
     {% block extra_head %}{% endblock %}
 </head>

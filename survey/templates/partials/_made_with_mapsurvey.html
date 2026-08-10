@@ -1,11 +1,11 @@
 {% load i18n %}
 {% comment %}
-"Made with Mapsurvey" acquisition loop. Shown on public survey + thanks pages
-when survey.show_branding is on. Links to registration UTM-tagged so Phase-1
-attribution records source=viral_loop and which page it came from.
-Caller passes `medium` (survey|thanks|results).
+"Made with Mapsurvey" acquisition loop — MANDATORY on public survey + thanks +
+results pages for the free tier (always rendered). survey.show_branding is kept
+on the model as a future paid-tier preference but is NOT honored here yet.
+Links to registration UTM-tagged so Phase-1 attribution records source=viral_loop
+and which page it came from. Caller passes `medium` (survey|thanks|results).
 {% endcomment %}
-{% if survey.show_branding %}
 <div class="made-with-mapsurvey-wrap" style="text-align:center;margin:12px auto;">
   <a class="made-with-mapsurvey"
      href="{% url 'django_registration_register' %}?utm_source=viral_loop&amp;utm_medium={{ medium|default:'survey' }}"
@@ -17,4 +17,3 @@ Caller passes `medium` (survey|thanks|results).
     <span style="opacity:.75;">— {% trans "create your own free map survey" %} →</span>
   </a>
 </div>
-{% endif %}

@@ -7,9 +7,53 @@ from django.db.models.functions import TruncHour
 from django.utils import timezone
 
 from .models import (
-    SurveySession, SurveySection, Answer, Question, SurveyEvent,
+    SurveyHeader, SurveySession, SurveySection, Answer, Question, SurveyEvent,
     VALIDATION_STATUS_CHOICES,
 )
+from .versioning import canonical_of, family_ids, lineage_map
+
+
+def resolve_version_scope(survey, version):
+    """Resolve a version filter value to a set of SurveyHeader ids.
+
+    version: 'all' (default) → the whole family; 'vN' / 'N' → that single
+    version's header. Unknown values fall back to 'all'.
+    """
+    canonical = canonical_of(survey)
+    if version and version != 'all':
+        try:
+            num = int(str(version).lstrip('v'))
+        except (TypeError, ValueError):
+            num = None
+        if num is not None:
+            if num == canonical.version_number:
+                return {canonical.id}
+            match = SurveyHeader.objects.filter(
+                canonical_survey=canonical, version_number=num,
+            ).values_list('id', flat=True).first()
+            if match is not None:
+                return {match}
+    return family_ids(canonical)
+
+
+def version_choices(survey):
+    """Return [{'value': 'all'|'vN', 'label': ...}] for the version filter UI.
+
+    Returns an empty list for single-version surveys (no filter to show).
+    """
+    canonical = canonical_of(survey)
+    versions = list(
+        SurveyHeader.objects
+        .filter(canonical_survey=canonical)
+        .order_by('-version_number')
+        .values_list('version_number', flat=True)
+    )
+    if not versions:
+        return []
+    choices = [{'value': 'all', 'label': 'All versions'}]
+    for num in [canonical.version_number] + versions:
+        choices.append({'value': f'v{num}', 'label': f'v{num}'})
+    return choices
 
 
 def _compute_histogram(values, min_val, max_val, max_bins=15):
@@ -79,27 +123,96 @@ def _get_last_section(survey):
 
 
 class SurveyAnalyticsService:
-    """Read-only analytics queries for a survey. No request/view knowledge."""
+    """Read-only analytics queries for a survey. No request/view knowledge.
 
-    def __init__(self, survey, include_deleted=False):
+    Version scope: publish_draft() moves old sessions (and their question
+    objects) onto an archived header, so all reads run over a *scope* of
+    version headers — the whole family by default, or a single version when
+    the creator filters. Questions aggregate by lineage (code, input_type).
+    """
+
+    def __init__(self, survey, include_deleted=False, version='all'):
         self.survey = survey
+        self.version = version
+        self.scope_ids = resolve_version_scope(survey, version)
         if include_deleted:
-            self.base_qs = SurveySession.objects.filter(survey=survey)
+            self.base_qs = SurveySession.objects.filter(survey_id__in=self.scope_ids)
         else:
-            self.base_qs = SurveySession.objects.active().filter(survey=survey)
+            self.base_qs = SurveySession.objects.active().filter(survey_id__in=self.scope_ids)
+
+    # ── Version-scope helpers ──────────────────────────────────────
+
+    @property
+    def _scope_surveys(self):
+        """SurveyHeaders in scope (canonical first)."""
+        if not hasattr(self, '_scope_surveys_cache'):
+            headers = list(SurveyHeader.objects.filter(id__in=self.scope_ids))
+            headers.sort(key=lambda h: (not h.is_canonical, -h.version_number))
+            self._scope_surveys_cache = headers
+        return self._scope_surveys_cache
+
+    @property
+    def _lineages(self):
+        """Family lineage map (built once per instance)."""
+        if not hasattr(self, '_lineages_cache'):
+            self._lineages_cache = lineage_map(self.survey)
+        return self._lineages_cache
+
+    def _lineage_ids(self, question):
+        """All question ids aggregating with `question`, limited to scope.
+
+        Falls back to [question.id] for questions outside any lineage
+        (defensive — e.g. sub-questions passed directly).
+        """
+        entry = self._lineages.get((question.code, question.input_type))
+        if not entry:
+            return [question.id]
+        # Scope-limited: an archived lineage under a single-version filter
+        # may legitimately resolve to no questions (→ zero answers).
+        return [
+            q.id for q in entry['questions']
+            if q.survey_section.survey_header_id in self.scope_ids
+        ]
+
+    def _rep_question_by_qid(self):
+        """Map every scoped question id → its lineage representative Question.
+
+        The representative is the canonical version's question when the
+        lineage is current, else the newest archived question — the object
+        the stats/table/charts/layers key on.
+        """
+        if not hasattr(self, '_rep_by_qid_cache'):
+            mapping = {}
+            for entry in self._lineages.values():
+                rep = entry['current'] or entry['questions'][0]
+                for q in entry['questions']:
+                    if q.survey_section.survey_header_id in self.scope_ids:
+                        mapping[q.id] = rep
+            self._rep_by_qid_cache = mapping
+        return self._rep_by_qid_cache
+
+    def _last_section_ids(self):
+        """Ids of every scoped version's last section (completion targets)."""
+        ids = set()
+        for header in self._scope_surveys:
+            last = _get_last_section(header)
+            if last:
+                ids.add(last.id)
+        return ids
+
+    def _completed_filter_qs(self, qs):
+        """Sessions from qs that answered their version's last section."""
+        last_ids = self._last_section_ids()
+        if not last_ids:
+            return qs.none()
+        return qs.filter(answer__question__survey_section_id__in=last_ids).distinct()
 
     def get_overview(self):
         """Return overview stats: total sessions, completed, completion rate."""
         total = self.base_qs.count()
 
-        last_section = _get_last_section(self.survey)
-        if last_section and total > 0:
-            completed = (
-                self.base_qs
-                .filter(answer__question__survey_section=last_section)
-                .distinct()
-                .count()
-            )
+        if total > 0:
+            completed = self._completed_filter_qs(self.base_qs).count()
         else:
             completed = 0
 
@@ -133,22 +246,15 @@ class SurveyAnalyticsService:
 
     def get_session_hours(self):
         """Return compact list of [sid, hour_iso, completed] for timeline filtering."""
-        last_section = _get_last_section(self.survey)
-
         sessions = (
             self.base_qs
             .values_list('id', 'start_datetime')
             .order_by('start_datetime')
         )
 
-        completed_ids = set()
-        if last_section:
-            completed_ids = set(
-                self.base_qs
-                .filter(answer__question__survey_section=last_section)
-                .distinct()
-                .values_list('id', flat=True)
-            )
+        completed_ids = set(
+            self._completed_filter_qs(self.base_qs).values_list('id', flat=True)
+        )
 
         result = []
         for sid, dt in sessions:
@@ -158,8 +264,6 @@ class SurveyAnalyticsService:
 
     def get_hourly_sessions(self):
         """Return list of {h, t, c} dicts — hour bucket, total, completed."""
-        last_section = _get_last_section(self.survey)
-
         hourly = (
             self.base_qs
             .annotate(hour=TruncHour('start_datetime'))
@@ -169,10 +273,11 @@ class SurveyAnalyticsService:
         )
 
         completed_by_hour = {}
-        if last_section:
+        last_ids = self._last_section_ids()
+        if last_ids:
             completed_hourly = (
                 self.base_qs
-                .filter(answer__question__survey_section=last_section)
+                .filter(answer__question__survey_section_id__in=last_ids)
                 .annotate(hour=TruncHour('start_datetime'))
                 .values('hour')
                 .annotate(completed=Count('id', distinct=True))
@@ -193,28 +298,33 @@ class SurveyAnalyticsService:
         return result
 
     def get_geo_feature_collection(self):
-        """Return GeoJSON FeatureCollection with all geo answers."""
+        """Return GeoJSON FeatureCollection with all geo answers in scope."""
         geo_answers = (
             Answer.objects
             .filter(
-                question__survey_section__survey_header=self.survey,
+                question__survey_section__survey_header_id__in=self.scope_ids,
                 question__input_type__in=['point', 'line', 'polygon'],
                 survey_session__is_deleted=False,
             )
             .select_related('question')
         )
 
+        # Key features on the lineage representative so one logical question
+        # renders as one layer even when its objects differ across versions.
+        rep_by_qid = self._rep_question_by_qid()
+
         features = []
         for a in geo_answers:
             geom = a.point or a.line or a.polygon
             if geom is None:
                 continue
+            rep = rep_by_qid.get(a.question_id, a.question)
             features.append({
                 'type': 'Feature',
                 'geometry': json.loads(geom.geojson),
                 'properties': {
-                    'question': a.question.name,
-                    'type': a.question.input_type,
+                    'question': rep.name,
+                    'type': rep.input_type,
                     'session_id': a.survey_session_id,
                 },
             })
@@ -224,10 +334,25 @@ class SurveyAnalyticsService:
             'features': features,
         }
 
+    def _historic_choice_name(self, question, code):
+        """Resolve a removed code's label from older lineage questions."""
+        entry = self._lineages.get((question.code, question.input_type))
+        for q in (entry['questions'] if entry else []):
+            for c in (q.choices or []):
+                if c['code'] == code:
+                    return q.get_choice_name(code)
+        return str(code)
+
     def _stats_choices(self, question):
-        """Compute stats for choice/multichoice/rating questions."""
+        """Compute stats for choice/multichoice/rating questions.
+
+        Aggregates over the whole lineage. Codes answered historically but
+        absent from the current choice set are appended as flagged
+        "no longer offered" buckets — never silently merged or dropped.
+        """
         answers = Answer.objects.filter(
-            question=question, survey_session__is_deleted=False,
+            question_id__in=self._lineage_ids(question),
+            survey_session__is_deleted=False,
         ).exclude(selected_choices__isnull=True)
 
         counts = {}
@@ -238,9 +363,20 @@ class SurveyAnalyticsService:
                 counts[code] = counts.get(code, 0) + 1
 
         choices = question.choices or []
+        current_codes = [c['code'] for c in choices]
         choice_labels = [question.get_choice_name(c['code']) for c in choices]
         choice_counts = [counts.get(c['code'], 0) for c in choices]
-        choice_codes = [c['code'] for c in choices]
+        choice_codes = list(current_codes)
+
+        # Historically answered codes no longer offered in the current version
+        removed = sorted(set(counts) - set(current_codes), key=str)
+        for code in removed:
+            choice_labels.append(
+                f'{self._historic_choice_name(question, code)} (no longer offered)'
+            )
+            choice_counts.append(counts[code])
+            choice_codes.append(code)
+
         return {
             'type': 'choices',
             'choice_labels': choice_labels,
@@ -253,8 +389,11 @@ class SurveyAnalyticsService:
         }
 
     def _stats_number(self, question):
-        """Compute stats for number/range questions."""
-        qs = Answer.objects.filter(question=question, numeric__isnull=False, survey_session__is_deleted=False)
+        """Compute stats for number/range questions (lineage-wide)."""
+        qs = Answer.objects.filter(
+            question_id__in=self._lineage_ids(question),
+            numeric__isnull=False, survey_session__is_deleted=False,
+        )
         agg = qs.aggregate(
             avg=Avg('numeric'),
             min_val=Min('numeric'),
@@ -279,35 +418,40 @@ class SurveyAnalyticsService:
         return result
 
     def _stats_text(self, question):
-        """Compute stats for text/text_line questions."""
+        """Compute stats for text/text_line questions (lineage-wide)."""
         return {
             'type': 'text',
             'total_answers': (
                 Answer.objects
-                .filter(question=question, text__isnull=False, survey_session__is_deleted=False)
+                .filter(question_id__in=self._lineage_ids(question),
+                        text__isnull=False, survey_session__is_deleted=False)
                 .exclude(text='')
                 .count()
             ),
         }
 
     def _stats_geo(self, question):
-        """Compute stats for point/line/polygon questions."""
+        """Compute stats for point/line/polygon questions (lineage-wide)."""
         geo_field = question.input_type
         return {
             'type': 'geo',
             'total_answers': (
                 Answer.objects
-                .filter(question=question, survey_session__is_deleted=False)
+                .filter(question_id__in=self._lineage_ids(question),
+                        survey_session__is_deleted=False)
                 .exclude(**{f'{geo_field}__isnull': True})
                 .count()
             ),
         }
 
     def _stats_other(self, question):
-        """Compute stats for unknown question types."""
+        """Compute stats for unknown question types (lineage-wide)."""
         return {
             'type': 'other',
-            'total_answers': Answer.objects.filter(question=question, survey_session__is_deleted=False).count(),
+            'total_answers': Answer.objects.filter(
+                question_id__in=self._lineage_ids(question),
+                survey_session__is_deleted=False,
+            ).count(),
         }
 
     _STAT_DISPATCH = {
@@ -326,9 +470,12 @@ class SurveyAnalyticsService:
     def get_question_stats(self, question):
         """Return stat dict for a single question, dispatched by input_type."""
         handler = self._STAT_DISPATCH.get(question.input_type)
+        entry = self._lineages.get((question.code, question.input_type))
         stat = {
             'question': question,
             'section': question.survey_section,
+            'archived': bool(entry) and entry['current'] is None,
+            'versions': entry['versions'] if entry else '',
         }
         if handler is not None:
             stat.update(handler(self, question))
@@ -339,7 +486,7 @@ class SurveyAnalyticsService:
     def _stats_language(self):
         """Build a choices-style stat for the session language (multilingual surveys only)."""
         langs = list(
-            SurveySession.objects.filter(survey=self.survey, is_deleted=False)
+            SurveySession.objects.filter(survey_id__in=self.scope_ids, is_deleted=False)
             .values_list('language', flat=True)
         )
         counts = {}
@@ -373,7 +520,12 @@ class SurveyAnalyticsService:
         }
 
     def get_all_question_stats(self):
-        """Return ordered list of stat dicts for all top-level questions."""
+        """Return ordered list of stat dicts for all top-level lineages.
+
+        Current-structure questions first (canonical section order), then
+        archived lineages (questions with answers that no longer exist in
+        the canonical version) so history is visible, never hidden.
+        """
         ordered_sections = _get_ordered_sections(self.survey)
         if not ordered_sections:
             return []
@@ -401,6 +553,21 @@ class SurveyAnalyticsService:
             if q.input_type not in ('point', 'line', 'polygon')
         ]
 
+        # Archived lineages: represented by their newest question object.
+        # Only shown when they actually have answers in scope (_lineage_ids
+        # is scope-limited, so an out-of-scope lineage yields 0 answers).
+        for entry in self._lineages.values():
+            if entry['current'] is not None:
+                continue
+            rep = entry['questions'][0]
+            if rep.parent_question_id is not None:
+                continue
+            if rep.input_type in ('point', 'line', 'polygon', 'html', 'image'):
+                continue
+            stat = self.get_question_stats(rep)
+            if stat.get('total_answers'):
+                stats.append(stat)
+
         # Add language chart for multilingual surveys
         if self.survey.is_multilingual():
             stats.insert(0, self._stats_language())
@@ -413,7 +580,8 @@ class SurveyAnalyticsService:
 
         qs = (
             Answer.objects
-            .filter(question=question, text__isnull=False, survey_session__is_deleted=False)
+            .filter(question_id__in=self._lineage_ids(question),
+                    text__isnull=False, survey_session__is_deleted=False)
             .exclude(text='')
             .select_related('survey_session')
             .order_by('-survey_session__start_datetime')
@@ -435,12 +603,22 @@ class SurveyAnalyticsService:
         }
 
     def get_answer_matrix(self):
-        """Return compact per-session choice + numeric data for client-side cross-filtering."""
+        """Return compact per-session choice + numeric data for client-side cross-filtering.
+
+        Question keys are lineage-representative ids so charts (which key on
+        the representative) cross-filter across versions transparently.
+        """
+        rep_by_qid = self._rep_question_by_qid()
+
+        def rep_key(qid):
+            rep = rep_by_qid.get(qid)
+            return str(rep.id if rep else qid)
+
         # Choice answers
         choice_rows = (
             Answer.objects
             .filter(
-                question__survey_section__survey_header=self.survey,
+                question__survey_section__survey_header_id__in=self.scope_ids,
                 question__input_type__in=['choice', 'multichoice', 'rating'],
                 survey_session__is_deleted=False,
             )
@@ -464,13 +642,13 @@ class SurveyAnalyticsService:
         sessions = {}
         for row in choice_rows:
             entry = ensure_session(row['survey_session_id'], row['survey_session__start_datetime'])
-            entry['a'][str(row['question_id'])] = row['selected_choices'] or []
+            entry['a'][rep_key(row['question_id'])] = row['selected_choices'] or []
 
         # Numeric answers
         numeric_rows = (
             Answer.objects
             .filter(
-                question__survey_section__survey_header=self.survey,
+                question__survey_section__survey_header_id__in=self.scope_ids,
                 question__input_type__in=['number', 'range'],
                 numeric__isnull=False,
                 survey_session__is_deleted=False,
@@ -486,7 +664,7 @@ class SurveyAnalyticsService:
 
         for row in numeric_rows:
             entry = ensure_session(row['survey_session_id'], row['survey_session__start_datetime'])
-            entry['n'][str(row['question_id'])] = row['numeric']
+            entry['n'][rep_key(row['question_id'])] = row['numeric']
 
         return list(sessions.values())
 
@@ -565,15 +743,15 @@ class SurveyAnalyticsService:
         for sid in empty_sids:
             issues[sid].append('empty')
 
-        # Rule 2: Incomplete sessions (no answer in last section)
-        last_section = _get_last_section(self.survey)
-        if last_section:
+        # Rule 2: Incomplete sessions (no answer in their version's last section)
+        last_ids = self._last_section_ids()
+        if last_ids:
             completed_sids = set(
                 Answer.objects
                 .filter(
                     survey_session_id__in=session_pks,
                     parent_answer_id__isnull=True,
-                    question__survey_section=last_section,
+                    question__survey_section_id__in=last_ids,
                 )
                 .values_list('survey_session_id', flat=True)
                 .distinct()
@@ -582,11 +760,14 @@ class SurveyAnalyticsService:
                 if sid not in completed_sids and sid not in empty_sids:
                     issues[sid].append('incomplete')
 
-        # Rule 3: Missing required questions in visited sections
+        # Rule 3: Missing required questions in visited sections.
+        # Spanning the scope keeps this version-correct automatically:
+        # sections are version-specific objects, so a v2 session's visited
+        # sections only ever match v2's required sets.
         required_questions = list(
             Question.objects
             .filter(
-                survey_section__survey_header=self.survey,
+                survey_section__survey_header_id__in=self.scope_ids,
                 required=True,
                 parent_question_id__isnull=True,
             )
@@ -604,7 +785,7 @@ class SurveyAnalyticsService:
                 .filter(
                     survey_session_id__in=session_pks,
                     parent_answer_id__isnull=True,
-                    question__survey_section__survey_header=self.survey,
+                    question__survey_section__survey_header_id__in=self.scope_ids,
                 )
                 .values_list('survey_session_id', 'question_id')
             )
@@ -618,7 +799,7 @@ class SurveyAnalyticsService:
             # Determine visited sections from answered questions
             question_to_section = {qid: sec_id for qid, sec_id in
                 Question.objects
-                .filter(survey_section__survey_header=self.survey, parent_question_id__isnull=True)
+                .filter(survey_section__survey_header_id__in=self.scope_ids, parent_question_id__isnull=True)
                 .values_list('id', 'survey_section_id')
             }
             for sid, qid in answered_pairs:
@@ -738,7 +919,7 @@ class SurveyAnalyticsService:
                 .filter(
                     survey_session_id__in=session_pks,
                     parent_answer_id__isnull=True,
-                    question__survey_section__survey_header=self.survey,
+                    question__survey_section__survey_header_id__in=self.scope_ids,
                 )
                 .values_list('survey_session_id', 'question_id')
             )
@@ -824,7 +1005,12 @@ class SurveyAnalyticsService:
     # ── Attribute table ─────────────────────────────────────────────
 
     def _get_ordered_questions(self):
-        """Return flat list of top-level questions in section-linked-list order."""
+        """Return flat list of top-level lineage representatives.
+
+        Canonical questions in section-linked-list order first, then archived
+        lineage representatives (questions removed from the current version
+        but answered historically) so their columns stay visible.
+        """
         ordered_sections = _get_ordered_sections(self.survey)
         section_order = {s.id: i for i, s in enumerate(ordered_sections)}
 
@@ -842,6 +1028,17 @@ class SurveyAnalyticsService:
             section_order.get(q.survey_section_id, 999),
             q.order_number,
         ))
+
+        for entry in self._lineages.values():
+            if entry['current'] is not None:
+                continue
+            rep = entry['questions'][0]
+            if rep.parent_question_id is not None:
+                continue
+            if rep.input_type in ('html', 'image'):
+                continue
+            if self._lineage_ids(rep):  # has questions in scope
+                questions.append(rep)
 
         return questions
 
@@ -895,7 +1092,16 @@ class SurveyAnalyticsService:
             sort_col = 'start_datetime'
 
         questions = self._get_ordered_questions()
-        question_ids = [q.id for q in questions]
+        # Fetch answers for every lineage member in scope, not just the reps
+        rep_by_qid = self._rep_question_by_qid()
+        question_ids = sorted({
+            qid for q in questions for qid in self._lineage_ids(q)
+        })
+
+        multi_version = len(self.scope_ids) > 1 or self.version == 'all'
+        version_label_by_survey = {
+            h.id: f'v{h.version_number}' for h in self._scope_surveys
+        }
 
         # Build columns list
         system_cols = [
@@ -906,9 +1112,18 @@ class SurveyAnalyticsService:
             {'key': 'start_datetime', 'label': 'Start time', 'input_type': None},
             {'key': 'language', 'label': 'Language', 'input_type': None},
         ]
+        if multi_version:
+            system_cols.append({'key': 'version', 'label': 'Version', 'input_type': None})
+
+        def _col_label(q):
+            entry = self._lineages.get((q.code, q.input_type))
+            if entry and entry['current'] is None:
+                return f"{q.name or ''} ({entry['versions']})"
+            return q.name or ''
+
         question_cols = [
             {
-                'key': str(q.id), 'label': q.name or '', 'input_type': q.input_type,
+                'key': str(q.id), 'label': _col_label(q), 'input_type': q.input_type,
                 'choices_json': json.dumps(q.choices or [], ensure_ascii=False) if q.input_type in ('choice', 'multichoice', 'rating') else '',
             }
             for q in questions
@@ -917,7 +1132,7 @@ class SurveyAnalyticsService:
 
         # Base session queryset
         if show_trash:
-            qs = SurveySession.objects.deleted().filter(survey=self.survey)
+            qs = SurveySession.objects.deleted().filter(survey_id__in=self.scope_ids)
         else:
             qs = self.base_qs
         if session_ids is not None:
@@ -941,16 +1156,41 @@ class SurveyAnalyticsService:
         # Materialize answers for pivot + lint
         all_answers = list(answer_qs)
 
-        # Pivot: {session_id: {question_id: formatted_value}}
+        def rep_key(qid):
+            rep = rep_by_qid.get(qid)
+            return str(rep.id if rep else qid)
+
+        # Pivot: {session_id: {rep_question_key: formatted_value}} — cells key
+        # on the lineage representative so one column spans all versions.
         cell_map = {}
         for a in all_answers:
             if a.survey_session_id not in cell_map:
                 cell_map[a.survey_session_id] = {}
-            cell_map[a.survey_session_id][str(a.question_id)] = self._format_cell(a)
+            cell_map[a.survey_session_id][rep_key(a.question_id)] = self._format_cell(a)
 
-        # Compute session issues and answer lints
+        # Compute session issues and answer lints. Lints run against the full
+        # per-version question set (required/validation rules are evaluated
+        # against each session's own version), then remap to rep keys so
+        # badges attach to the merged columns.
         session_issues = self.compute_session_issues(session_pks) if session_pks else {}
-        lint_map = self.compute_answer_lints(session_pks, all_answers, questions) if session_pks else {}
+        lint_map = {}
+        if session_pks:
+            lint_questions = list(
+                Question.objects
+                .filter(
+                    survey_section__survey_header_id__in=self.scope_ids,
+                    parent_question_id__isnull=True,
+                )
+                .exclude(input_type__in=('html', 'image'))
+                .select_related('survey_section')
+            )
+            raw_lints = self.compute_answer_lints(session_pks, all_answers, lint_questions)
+            for sid, per_q in raw_lints.items():
+                remapped = {}
+                for qid_str, lints in per_q.items():
+                    key = rep_key(int(qid_str))
+                    remapped.setdefault(key, []).extend(lints)
+                lint_map[sid] = remapped
 
         # Build rows
         rows = []
@@ -968,6 +1208,7 @@ class SurveyAnalyticsService:
                 'notes': s.notes or '',
                 'start_datetime': s.start_datetime,
                 'language': s.language or '—',
+                'version': version_label_by_survey.get(s.survey_id, ''),
                 'cells': cells,
             }
             rows.append(row)
@@ -1012,7 +1253,7 @@ class SurveyAnalyticsService:
             def matches_search(row):
                 for col_key, search_str in col_search.items():
                     search_lower = search_str.lower()
-                    if col_key in ('id', 'validation_status', 'issues', 'tags', 'start_datetime', 'language'):
+                    if col_key in ('id', 'validation_status', 'issues', 'tags', 'start_datetime', 'language', 'version'):
                         val = str(row.get(col_key, ''))
                     else:
                         val = row['cells'].get(col_key, '—')
@@ -1029,7 +1270,7 @@ class SurveyAnalyticsService:
 
         # Compute unique values per column BEFORE col_filters (for dropdowns)
         unique_values = {}
-        _VALUE_SYSTEM_COLS = {'validation_status', 'language', 'issues', 'tags'}
+        _VALUE_SYSTEM_COLS = {'validation_status', 'language', 'issues', 'tags', 'version'}
         for col in system_cols:
             if col['key'] not in _VALUE_SYSTEM_COLS:
                 continue
@@ -1054,7 +1295,7 @@ class SurveyAnalyticsService:
         col_filters = col_filters or {}
         if col_filters:
             def _get_cell_val(row, col_key):
-                if col_key in ('id', 'validation_status', 'issues', 'tags', 'start_datetime', 'language'):
+                if col_key in ('id', 'validation_status', 'issues', 'tags', 'start_datetime', 'language', 'version'):
                     return row.get(col_key, '')
                 return row['cells'].get(col_key, '—')
 
@@ -1109,7 +1350,7 @@ class SurveyAnalyticsService:
             rows.sort(key=lambda r: len(r.get('issues', [])), reverse=reverse)
         elif sort_col == 'tags':
             rows.sort(key=lambda r: len(r.get('tags', [])), reverse=reverse)
-        elif sort_col in ('id', 'validation_status', 'start_datetime', 'language'):
+        elif sort_col in ('id', 'validation_status', 'start_datetime', 'language', 'version'):
             rows.sort(key=lambda r: (r.get(sort_col) is None, r.get(sort_col, '')), reverse=reverse)
         else:
             # Sort by question column value
@@ -1172,11 +1413,12 @@ class SessionValidationService:
 class PerformanceAnalyticsService:
     """Read-only performance/funnel analytics from SurveyEvent data."""
 
-    def __init__(self, survey):
+    def __init__(self, survey, version='all'):
         self.survey = survey
+        self.scope_ids = resolve_version_scope(survey, version)
 
     def _events_qs(self):
-        return SurveyEvent.objects.filter(session__survey=self.survey)
+        return SurveyEvent.objects.filter(session__survey_id__in=self.scope_ids)
 
     def get_event_summary(self):
         """Return top-level counts: session_starts, completions, median_load_ms."""
@@ -1299,7 +1541,7 @@ class PerformanceAnalyticsService:
         """Return list of {language, count} sorted descending."""
         from .models import SurveySession
         counts = {}
-        for lang in SurveySession.objects.filter(survey=self.survey).values_list('language', flat=True):
+        for lang in SurveySession.objects.filter(survey_id__in=self.scope_ids).values_list('language', flat=True):
             lang = lang or '—'
             counts[lang] = counts.get(lang, 0) + 1
         return sorted(

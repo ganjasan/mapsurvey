@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Public Results — /r/&lt;slug&gt;/ mockup</title>
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#4f46e5; --accent-light:#eef2ff; --accent-hover:#4338ca;
+    --text-primary:#1a1d21; --text-secondary:#5f6368; --text-tertiary:#9aa0a6;
+    --card-bg:#ffffff; --border:rgba(0,0,0,.08); --bg:#f4f5f8;
+    --radius:14px; --shadow:0 4px 16px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);
+    --success:#22c55e; --warn:#f59e0b;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text-primary);font-size:15px;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px 60px;}
+
+  /* top status bar (unlisted/frozen indicator — shown to creator preview) */
+  .ribbon{background:#fff7ed;border-bottom:1px solid #fed7aa;color:#9a3412;font-size:.8rem;text-align:center;padding:7px 12px;}
+  .ribbon i{margin-right:6px;}
+
+  /* hero */
+  .hero{padding:48px 0 28px;text-align:center;}
+  .hero .eyebrow{display:inline-flex;align-items:center;gap:6px;background:var(--accent-light);color:var(--accent);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;padding:5px 12px;border-radius:999px;margin-bottom:18px;}
+  .hero h1{font-size:2.1rem;font-weight:700;margin:0 0 12px;line-height:1.2;}
+  .hero p.intro{font-size:1.05rem;color:var(--text-secondary);max-width:620px;margin:0 auto;line-height:1.55;}
+
+  /* counter + cta row */
+  .toprow{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:26px;}
+  .counter{display:flex;align-items:baseline;gap:8px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:10px 20px;box-shadow:var(--shadow);}
+  .counter .num{font-size:1.5rem;font-weight:700;color:var(--accent);}
+  .counter .lbl{color:var(--text-secondary);font-size:.9rem;}
+  .cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;font-size:.95rem;padding:12px 22px;border-radius:999px;box-shadow:var(--shadow);transition:.15s;}
+  .cta:hover{background:var(--accent-hover);}
+
+  /* blocks */
+  .block{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 26px;margin-top:22px;}
+  .block h2{font-size:1.15rem;font-weight:600;margin:0 0 4px;}
+  .block .qmeta{color:var(--text-tertiary);font-size:.8rem;margin-bottom:18px;}
+  .block .qmeta .tag{background:#f3f4f6;border-radius:5px;padding:2px 7px;margin-right:6px;}
+
+  /* bar chart */
+  .bars{display:flex;flex-direction:column;gap:12px;}
+  .bar-row{display:grid;grid-template-columns:160px 1fr 56px;align-items:center;gap:12px;font-size:.9rem;}
+  .bar-row .blabel{color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bar-track{background:#f1f2f5;border-radius:7px;height:26px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--accent),#7c73f0);}
+  .bar-val{text-align:right;font-weight:600;color:var(--text-secondary);font-variant-numeric:tabular-nums;}
+  .masked{color:var(--text-tertiary);font-style:italic;}
+  .masked .bar-fill{background:repeating-linear-gradient(45deg,#d8dae0,#d8dae0 6px,#e8e9ee 6px,#e8e9ee 12px);}
+
+  .kanon-note{margin-top:14px;font-size:.78rem;color:var(--text-tertiary);display:flex;align-items:center;gap:6px;}
+  .kanon-note i{color:var(--text-tertiary);}
+
+  /* donut (rating) */
+  .rating-wrap{display:flex;align-items:center;gap:28px;flex-wrap:wrap;}
+  .donut{width:150px;height:150px;border-radius:50%;background:conic-gradient(var(--accent) 0 64%,#a5b4fc 64% 86%,#e0e7ff 86% 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .donut .hole{width:96px;height:96px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .donut .hole .big{font-size:1.6rem;font-weight:700;}
+  .donut .hole .sub{font-size:.72rem;color:var(--text-tertiary);}
+  .legend{display:flex;flex-direction:column;gap:9px;font-size:.88rem;}
+  .legend .li{display:flex;align-items:center;gap:9px;}
+  .legend .dot{width:11px;height:11px;border-radius:3px;}
+
+  /* map block */
+  .map-block{padding:0;overflow:hidden;}
+  .map-head{padding:20px 26px 14px;}
+  .map{position:relative;height:340px;background:
+      linear-gradient(rgba(79,70,229,.04),rgba(79,70,229,.04)),
+      repeating-linear-gradient(0deg,#e9ebf0,#e9ebf0 1px,transparent 1px,transparent 40px),
+      repeating-linear-gradient(90deg,#e9ebf0,#e9ebf0 1px,transparent 1px,transparent 40px),
+      #eef1f6;border-top:1px solid var(--border);}
+  .heat{position:absolute;border-radius:50%;filter:blur(8px);}
+  .pt{position:absolute;width:13px;height:13px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);transform:translate(-50%,-50%);}
+  .popup{position:absolute;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.16);padding:10px 12px;font-size:.8rem;width:190px;}
+  .popup .pk{color:var(--text-tertiary);font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;}
+  .popup .pv{font-weight:600;margin-bottom:6px;}
+  .popup:after{content:'';position:absolute;bottom:-7px;left:24px;width:12px;height:12px;background:#fff;border-right:1px solid var(--border);border-bottom:1px solid var(--border);transform:rotate(45deg);}
+  .map-legend{position:absolute;right:14px;bottom:14px;background:rgba(255,255,255,.94);border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:.76rem;color:var(--text-secondary);}
+  .map-legend .row{display:flex;align-items:center;gap:7px;margin:3px 0;}
+  .grad{width:46px;height:9px;border-radius:3px;background:linear-gradient(90deg,#60a5fa,#a78bfa,#f97316,#ef4444);}
+
+  /* footer */
+  .footer{margin-top:42px;text-align:center;color:var(--text-tertiary);font-size:.85rem;}
+  .footer a{color:var(--accent);text-decoration:none;font-weight:600;}
+  .footer .made{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:8px 16px;box-shadow:var(--shadow);}
+  .footer .made .logo{width:18px;height:18px;border-radius:5px;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;}
+</style>
+</head>
+<body>
+
+  <div class="ribbon"><i class="fas fa-eye-slash"></i> Unlisted preview · viewable by direct link only · not indexed by search engines</div>
+
+  <div class="wrap">
+
+    <div class="hero">
+      <span class="eyebrow"><i class="fas fa-chart-pie"></i> Survey results</span>
+      <h1>Riverside Park — what should change?</h1>
+      <p class="intro">Thank you to everyone who took part. Here is what the community told us about safety, accessibility, and the spots that matter most. Your input is already shaping the redesign.</p>
+
+      <div class="toprow">
+        <div class="counter"><span class="num">342</span><span class="lbl">responses collected</span></div>
+        <a class="cta" href="#"><i class="fas fa-map-marker-alt"></i> Take the survey</a>
+      </div>
+    </div>
+
+    <!-- BAR CHART BLOCK (choice question) with k-anon mask -->
+    <div class="block">
+      <h2>Which improvements matter most to you?</h2>
+      <div class="qmeta"><span class="tag">Single choice</span> 342 of 342 answered</div>
+      <div class="bars">
+        <div class="bar-row"><span class="blabel">Better lighting</span><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div><span class="bar-val">154</span></div>
+        <div class="bar-row"><span class="blabel">More benches</span><div class="bar-track"><div class="bar-fill" style="width:61%"></div></div><span class="bar-val">107</span></div>
+        <div class="bar-row"><span class="blabel">Safer crossings</span><div class="bar-track"><div class="bar-fill" style="width:38%"></div></div><span class="bar-val">66</span></div>
+        <div class="bar-row"><span class="blabel">Playground</span><div class="bar-track"><div class="bar-fill" style="width:7%"></div></div><span class="bar-val">13</span></div>
+        <div class="bar-row masked"><span class="blabel">Dog area</span><div class="bar-track"><div class="bar-fill" style="width:5%"></div></div><span class="bar-val">&lt;3</span></div>
+      </div>
+      <div class="kanon-note"><i class="fas fa-user-shield"></i> Buckets with fewer than 3 responses are masked as “&lt;3” to protect respondent privacy (k-anonymity, K=3).</div>
+    </div>
+
+    <!-- RATING DONUT BLOCK -->
+    <div class="block">
+      <h2>How safe do you feel in the park after dark?</h2>
+      <div class="qmeta"><span class="tag">Rating 1–5</span> 338 answered</div>
+      <div class="rating-wrap">
+        <div class="donut"><div class="hole"><span class="big">2.4</span><span class="sub">avg / 5</span></div></div>
+        <div class="legend">
+          <div class="li"><span class="dot" style="background:var(--accent)"></span> Unsafe (1–2) · 64%</div>
+          <div class="li"><span class="dot" style="background:#a5b4fc"></span> Neutral (3) · 22%</div>
+          <div class="li"><span class="dot" style="background:#e0e7ff"></span> Safe (4–5) · 14%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAP BLOCK (anonymous geo + heatmap) -->
+    <div class="block map-block">
+      <div class="map-head">
+        <h2>Where do you feel unsafe?</h2>
+        <div class="qmeta"><span class="tag">Map · point</span> 287 markers · anonymous</div>
+      </div>
+      <div class="map">
+        <div class="heat" style="left:30%;top:40%;width:130px;height:130px;background:radial-gradient(rgba(239,68,68,.55),rgba(239,68,68,0) 70%);"></div>
+        <div class="heat" style="left:58%;top:55%;width:160px;height:160px;background:radial-gradient(rgba(249,115,22,.5),rgba(249,115,22,0) 70%);"></div>
+        <div class="heat" style="left:46%;top:32%;width:90px;height:90px;background:radial-gradient(rgba(167,139,250,.45),rgba(167,139,250,0) 70%);"></div>
+        <div class="pt" style="left:31%;top:40%"></div>
+        <div class="pt" style="left:36%;top:46%"></div>
+        <div class="pt" style="left:27%;top:36%"></div>
+        <div class="pt" style="left:60%;top:55%"></div>
+        <div class="pt" style="left:55%;top:60%"></div>
+        <div class="pt" style="left:46%;top:33%"></div>
+        <div class="pt" style="left:64%;top:50%"></div>
+        <div class="popup" style="left:33%;top:8%">
+          <div class="pk">Issue type</div><div class="pv">Poor lighting</div>
+          <div class="pk">Comment shown</div><div class="pv" style="margin-bottom:0;font-weight:500;">— (hidden by creator)</div>
+        </div>
+        <div class="map-legend">
+          <div class="row"><span class="grad"></span> response density</div>
+          <div class="row"><span class="pt" style="position:static;transform:none;"></span> individual marker (anonymous)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div style="margin-bottom:18px;">Results last updated just now · live</div>
+      <a class="made" href="#"><span class="logo"><i class="fas fa-map-marked-alt"></i></span> Made with <strong style="color:var(--accent);">Mapsurvey</strong> — create your own geo-survey</a>
+    </div>
+
+  </div>
+</body>
+</html>

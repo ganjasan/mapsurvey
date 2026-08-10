@@ -10,6 +10,7 @@ from .models import (
     Organization, SurveyHeader, SurveySection, Question,
     SurveySession, Answer, ChoicesValidator, Story,
     Membership, SurveyCollaborator, Invitation,
+    PublicResultsPage, PublicResultsBlock,
 )
 from .serialization import (
     serialize_survey_to_dict, serialize_sections,
@@ -2780,6 +2781,19 @@ class TranslationModelsTest(TestCase):
         survey = SurveyHeader.objects.create(name="default_survey", organization=self.org)
         self.assertFalse(survey.is_multilingual())
 
+    def test_survey_is_multilingual_false_single_language(self):
+        """
+        GIVEN a survey with exactly one available language
+        WHEN is_multilingual() is called
+        THEN it returns False (no point asking a respondent to pick one)
+        """
+        survey = SurveyHeader.objects.create(
+            name="one_lang_survey",
+            organization=self.org,
+            available_languages=["de"],
+        )
+        self.assertFalse(survey.is_multilingual())
+
     def test_section_translation_creation(self):
         """
         GIVEN a survey section
@@ -3146,6 +3160,52 @@ class LanguageSelectionTest(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertIn(str(self.single_lang_survey.uuid), response.url)
+
+    def test_one_language_survey_entry_skips_picker(self):
+        """
+        GIVEN a survey with exactly one language
+        WHEN a respondent enters the survey
+        THEN they go straight to the first section, not the language picker
+        """
+        survey = SurveyHeader.objects.create(
+            name="one_lang_entry", organization=self.org,
+            available_languages=["de"], status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=survey, name="s1", title="S", code="S1", is_head=True,
+        )
+        response = self.client.get('/surveys/one_lang_entry/')
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn('language', response.url)
+        self.assertIn('s1', response.url)
+
+    def test_one_language_section_records_that_language_on_session(self):
+        """
+        GIVEN a survey with exactly one language and no chosen language
+        WHEN a respondent opens its first section
+        THEN it renders and the created SurveySession stores that language
+        """
+        survey = SurveyHeader.objects.create(
+            name="one_lang_section", organization=self.org,
+            available_languages=["de"], status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=survey, name="s1", title="S", code="S1", is_head=True,
+        )
+        response = self.client.get(f'/surveys/{survey.uuid}/s1/')
+        self.assertEqual(response.status_code, 200)
+        session = SurveySession.objects.filter(survey=survey).latest('id')
+        self.assertEqual(session.language, 'de')
+
+    def test_two_language_survey_entry_redirects_to_picker(self):
+        """
+        GIVEN a survey with two or more languages
+        WHEN a respondent enters the survey
+        THEN they are redirected to the language selection screen
+        """
+        response = self.client.get('/surveys/multilang_test/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('language', response.url)
 
     def test_language_selection_creates_session_with_language(self):
         """
@@ -5289,6 +5349,100 @@ class EditorSurveyCreateTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Create New Survey')
 
+    def test_create_survey_minimal_form_gets_model_defaults(self):
+        """
+        GIVEN an authenticated user
+        WHEN they submit the creation form with only a name
+        THEN the survey is created with model defaults for every deferred
+             setting (visibility, redirect, basemaps, thanks, languages)
+        """
+        response = self.client.post('/editor/surveys/new/', {'name': 'minimal_survey'})
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='minimal_survey')
+        self.assertEqual(survey.visibility, 'private')
+        self.assertEqual(survey.redirect_url, '#')
+        self.assertEqual(survey.basemaps, ['streets', 'satellite', 'topo'])
+        self.assertEqual(survey.thanks_html, {})
+        self.assertEqual(survey.available_languages, [])
+        self.assertFalse(survey.cover_image)
+
+    def test_create_survey_saves_map_position(self):
+        """
+        GIVEN an authenticated user
+        WHEN they submit the creation form with a name and map fields
+        THEN the survey stores the start position, zoom, and geolocation flag
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'placed_survey',
+            'map_lat': '42.8746', 'map_lng': '74.5698', 'map_zoom': '13',
+            'use_geolocation': '1',
+        })
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='placed_survey')
+        self.assertAlmostEqual(survey.start_map_postion.y, 42.8746, places=4)
+        self.assertAlmostEqual(survey.start_map_postion.x, 74.5698, places=4)
+        self.assertEqual(survey.start_map_zoom, 13)
+        self.assertTrue(survey.use_geolocation)
+
+    def test_create_page_defers_settings_to_settings_panel(self):
+        """
+        GIVEN an authenticated user
+        WHEN they GET the creation page
+        THEN the truly deferred fields (thanks html, visibility, cover) are
+             absent and the page points to Survey settings, while the
+             foundational fields (languages, default base map) are present
+        """
+        response = self.client.get('/editor/surveys/new/')
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'id_thanks_html')
+        self.assertNotContains(response, 'id_visibility')
+        self.assertNotContains(response, 'id_cover_image')
+        self.assertContains(response, 'Survey settings')
+        self.assertContains(response, 'id_available_languages')
+        self.assertContains(response, 'name="default_basemap"')
+
+    def test_create_survey_saves_languages(self):
+        """
+        GIVEN an authenticated user
+        WHEN they submit the creation form with chosen languages
+        THEN the survey stores exactly those available_languages
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'multilang_survey',
+            'available_languages': '["en", "ru"]',
+        })
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='multilang_survey')
+        self.assertEqual(survey.available_languages, ['en', 'ru'])
+
+    def test_create_survey_saves_default_basemap(self):
+        """
+        GIVEN an authenticated user
+        WHEN they pick a base map on the creation form
+        THEN the survey stores it as default_basemap and keeps all basemaps
+             available (model default)
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'sat_survey', 'default_basemap': 'satellite',
+        })
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='sat_survey')
+        self.assertEqual(survey.default_basemap, 'satellite')
+        self.assertEqual(survey.basemaps, ['streets', 'satellite', 'topo'])
+
+    def test_create_survey_ignores_invalid_basemap(self):
+        """
+        GIVEN an authenticated user
+        WHEN they post an unknown default_basemap value
+        THEN it is ignored (not persisted)
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'bad_basemap_survey', 'default_basemap': 'bogus',
+        })
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='bad_basemap_survey')
+        self.assertNotEqual(survey.default_basemap, 'bogus')
+
 
 class EditorSectionCRUDTest(TestCase):
     """Tests for section CRUD in the editor."""
@@ -6500,6 +6654,159 @@ class EditorPermissionTest(TestCase):
         self.client.login(username='ep_owner', password='pass')
         response = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings/')
         self.assertEqual(response.status_code, 200)
+
+    def test_editor_cannot_access_settings_panel(self):
+        """
+        GIVEN an org editor with 'editor' collaborator role
+        WHEN they try to access the pinned settings panel partial
+        THEN they get 403 (same 'owner' requirement as the standalone page)
+        """
+        self.client.login(username='ep_editor', password='pass')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings-panel/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_owner_can_access_settings_panel(self):
+        """
+        GIVEN an org owner
+        WHEN they GET the settings panel partial
+        THEN they get 200 with the General settings form and no full page chrome
+        """
+        self.client.login(username='ep_owner', password='pass')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings-panel/')
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('surveySettingsGeneralForm', content)
+        self.assertNotIn('<html', content)
+
+    def test_settings_panel_autosave_ajax_returns_json(self):
+        """
+        GIVEN the settings panel form is submitted via XHR (autosave)
+        WHEN the request carries X-Requested-With
+        THEN a JSON ok response is returned (no redirect) and the field persists
+        """
+        self.client.login(username='ep_owner', password='pass')
+        url = f'/editor/surveys/{self.survey.uuid}/settings-panel/'
+        response = self.client.post(
+            url,
+            {
+                'name': self.survey.name,
+                'redirect_url': '#',
+                'available_languages': '[]',
+                'visibility': 'public',
+                'thanks_html': '{}',
+                'basemaps': '["streets"]',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['ok'])
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.visibility, 'public')
+
+    def test_settings_panel_plain_post_redirects(self):
+        """
+        GIVEN the settings panel form is submitted as a plain (non-XHR) POST
+        WHEN the form is valid
+        THEN the response redirects back into the editor with the panel selected
+        """
+        self.client.login(username='ep_owner', password='pass')
+        url = f'/editor/surveys/{self.survey.uuid}/settings-panel/'
+        response = self.client.post(url, {
+            'name': self.survey.name,
+            'redirect_url': '#',
+            'available_languages': '[]',
+            'visibility': 'private',
+            'thanks_html': '{}',
+            'basemaps': '["streets"]',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('panel=settings', response.url)
+
+    def test_survey_detail_with_panel_settings_query_param(self):
+        """
+        GIVEN the owner loads the editor with ?panel=settings
+        WHEN the page renders
+        THEN the settings panel is the initial center-panel content and the
+             pinned entry is marked active (no section is current)
+        """
+        self.client.login(username='ep_owner', password='pass')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/?panel=settings')
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('settings-panel/', content)
+        self.assertIn('sidebar-pinned-item active', content)
+
+    # ── Lifecycle-IA navigation (Build / Results / Publish) ──
+
+    def test_nav_shows_three_lifecycle_spaces(self):
+        """
+        GIVEN the survey editor
+        WHEN it renders for an owner
+        THEN the navbar shows Build/Results/Publish tabs and no Editor/Settings tab
+        """
+        self.client.login(username='ep_owner', password='pass')
+        content = self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
+        self.assertIn('fa-hammer"></i> Build', content)
+        self.assertIn('fa-chart-bar"></i> Results', content)
+        self.assertIn('fa-globe"></i> Publish', content)
+        # The old Editor label and the deprecated Settings tab are gone
+        self.assertNotIn('title="Editor"', content)
+        self.assertNotIn('badge-moved', content)
+
+    def test_publishing_widget_renders_on_all_spaces(self):
+        """
+        GIVEN an owner
+        WHEN they open Build, Results, and Publish
+        THEN the publishing widget (status chip) renders on each
+        """
+        self.client.login(username='ep_owner', password='pass')
+        for path in ('', 'analytics/', 'public-results/'):
+            content = self.client.get(f'/editor/surveys/{self.survey.uuid}/{path}').content.decode()
+            self.assertIn('publishing-widget', content, msg=f'missing on /{path}')
+
+    def test_draft_survey_shows_prominent_publish_and_discard(self):
+        """
+        GIVEN a canonical draft survey
+        WHEN the owner opens Build
+        THEN prominent Publish (draft→published) and Discard (delete draft)
+             actions are present; a published survey shows neither
+        """
+        self.client.login(username='ep_owner', password='pass')
+        content = self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
+        self.assertIn("doTransition('published')", content)
+        self.assertIn('discardDraftSurveyModal', content)
+        # Once published, the prominent draft actions disappear
+        self.survey.status = 'published'
+        self.survey.save()
+        content = self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
+        self.assertNotIn('discardDraftSurveyModal', content)
+
+    def test_visibility_toggle_owner(self):
+        """
+        GIVEN an owner
+        WHEN they POST a new visibility via the widget endpoint
+        THEN only the visibility field changes and JSON is returned for XHR
+        """
+        self.client.login(username='ep_owner', password='pass')
+        url = f'/editor/surveys/{self.survey.uuid}/visibility/'
+        r = self.client.post(url, {'visibility': 'public'}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()['visibility'], 'public')
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.visibility, 'public')
+        # invalid value rejected
+        r = self.client.post(url, {'visibility': 'bogus'}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(r.status_code, 400)
+
+    def test_visibility_toggle_non_owner_blocked(self):
+        """
+        GIVEN an org editor (not owner)
+        WHEN they try to toggle visibility
+        THEN they get 403
+        """
+        self.client.login(username='ep_editor', password='pass')
+        r = self.client.post(f'/editor/surveys/{self.survey.uuid}/visibility/', {'visibility': 'public'})
+        self.assertEqual(r.status_code, 403)
 
 
 # ─── Task 8.4: Export/Import/Delete Permission Tests ────────────────────────
@@ -14448,16 +14755,16 @@ class ViralLoopBrandingTest(TestCase):
         self.assertContains(resp, "Made with")
         self.assertContains(resp, "utm_medium=survey")
 
-    def test_badge_hidden_when_disabled(self):
+    def test_badge_mandatory_even_when_flag_off(self):
         """
-        GIVEN a survey with branding turned off (e.g. gov/B2B clean look)
+        GIVEN a survey with show_branding turned off (a future paid-tier flag)
         WHEN the thanks page is rendered
-        THEN no CTA is shown
+        THEN the CTA is STILL shown — branding is mandatory for the free tier
         """
         self.survey.show_branding = False
         self.survey.save(update_fields=["show_branding"])
         resp = Client().get(f"/surveys/{self.survey.name}/thanks/")
-        self.assertNotContains(resp, "Made with")
+        self.assertContains(resp, "Made with")
 
     def test_serialization_includes_show_branding(self):
         """
@@ -14469,6 +14776,197 @@ class ViralLoopBrandingTest(TestCase):
         self.survey.show_branding = False
         self.survey.save(update_fields=["show_branding"])
         self.assertEqual(serialize_survey_to_dict(self.survey)["show_branding"], False)
+
+
+class ThanksPageEditorTest(TestCase):
+    """WYSIWYG thanks-page editor panel: rendering, per-language sanitized save."""
+
+    def setUp(self):
+        self.org = _make_org("ThanksOrg")
+        self.user = User.objects.create_user(username="thx_owner", password="pass")
+        Membership.objects.create(user=self.user, organization=self.org, role="owner")
+        self.survey = SurveyHeader.objects.create(
+            name="thx_survey", organization=self.org, status="published",
+            available_languages=["en", "de"],
+        )
+        SurveySection.objects.create(name="s1", survey_header=self.survey, is_head=True)
+        self.client.login(username="thx_owner", password="pass")
+
+    def test_thanks_panel_renders_editor(self):
+        """
+        GIVEN an owner
+        WHEN they GET the thanks panel
+        THEN the WYSIWYG editor and the mandatory branding preview render
+        """
+        r = self.client.get(f"/editor/surveys/{self.survey.uuid}/thanks-panel/")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "thanks-quill")
+        self.assertContains(r, "Thanks page")
+        self.assertContains(r, "Made with")
+
+    def test_panel_thanks_loads_editor(self):
+        """
+        GIVEN an owner
+        WHEN they open the survey with ?panel=thanks
+        THEN the pinned Thanks entry is active and the thanks panel is wired to load
+        """
+        r = self.client.get(f"/editor/surveys/{self.survey.uuid}/?panel=thanks")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "thanksPinnedItem")
+        self.assertContains(r, "thanks-panel")
+        # the live-preview iframe points at the thanks preview
+        self.assertContains(r, "thanks-preview")
+
+    def test_thanks_preview_renders_saved_content(self):
+        """
+        GIVEN saved thanks content
+        WHEN the editor thanks-preview is rendered
+        THEN it shows the content in the requested language plus the branding
+        """
+        self.survey.thanks_html = {"en": "<h2>Cheers</h2>", "de": "<h2>Danke</h2>"}
+        self.survey.save(update_fields=["thanks_html"])
+        r = self.client.get(f"/editor/surveys/{self.survey.uuid}/thanks-preview/?lang=de")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Danke")
+        self.assertContains(r, "Made with")
+
+    def test_save_stores_per_language_and_sanitizes(self):
+        """
+        GIVEN an owner editing a two-language survey
+        WHEN they save thanks content with disallowed markup
+        THEN each language's HTML is stored sanitized (scripts/handlers stripped)
+        """
+        r = self.client.post(
+            f"/editor/surveys/{self.survey.uuid}/thanks-panel/",
+            {"thanks_en": "<h2>Thanks</h2><script>bad()</script>",
+             "thanks_de": '<p>Danke <a href="/x" onclick="y()">Link</a></p>'},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertJSONEqual(r.content, {"ok": True})
+        self.survey.refresh_from_db()
+        th = self.survey.thanks_html
+        self.assertEqual(th["en"], "<h2>Thanks</h2>")
+        self.assertNotIn("onclick", th["de"])
+        self.assertIn('rel="noopener noreferrer"', th["de"])
+
+    def test_plain_post_redirects(self):
+        """
+        GIVEN a non-XHR submit
+        WHEN thanks content is saved
+        THEN the response redirects back to the thanks panel
+        """
+        r = self.client.post(f"/editor/surveys/{self.survey.uuid}/thanks-panel/", {"thanks_en": "<p>Ty</p>"})
+        self.assertEqual(r.status_code, 302)
+        self.assertIn("panel=thanks", r.url)
+
+    def test_settings_panel_has_no_thanks_field(self):
+        """
+        GIVEN the thanks page moved to its own editor
+        WHEN the Survey settings panel is rendered
+        THEN it no longer contains the raw thanks_html field
+        """
+        r = self.client.get(f"/editor/surveys/{self.survey.uuid}/?panel=settings")
+        self.assertEqual(r.status_code, 200)
+        self.assertNotContains(r, "id_thanks_html")
+
+    def test_sanitize_helper(self):
+        """
+        GIVEN raw WYSIWYG HTML
+        WHEN sanitize_thanks_html runs
+        THEN allow-listed tags stay and scripts/event-handlers are stripped
+        """
+        from survey.views import sanitize_thanks_html
+        out = sanitize_thanks_html('<h1>H</h1><script>x</script><a href="/a" onclick="e">L</a>')
+        self.assertIn("<h1>H</h1>", out)
+        self.assertNotIn("<script>", out)
+        self.assertNotIn("onclick", out)
+
+    def test_sanitize_keeps_media_strips_untrusted(self):
+        """
+        GIVEN thanks HTML with alignment, an image, and video iframes
+        WHEN sanitized
+        THEN centre alignment, image, and a trusted-host video survive while a
+             non-align style and an untrusted iframe src are stripped
+        """
+        from survey.views import sanitize_thanks_html
+        out = sanitize_thanks_html(
+            '<p style="text-align:center;color:red">c</p>'
+            '<img src="/mediafiles/a.png" alt="x" onerror="e">'
+            '<iframe src="https://www.youtube.com/embed/ID"></iframe>'
+            '<iframe src="https://evil.example/x"></iframe>'
+        )
+        self.assertIn("text-align:center", out)
+        self.assertNotIn("color", out)
+        self.assertIn("/mediafiles/a.png", out)
+        self.assertNotIn("onerror", out)
+        self.assertIn("youtube.com/embed/ID", out)
+        self.assertNotIn("evil.example", out)
+
+    def test_thanks_image_upload(self):
+        """
+        GIVEN an owner
+        WHEN they upload a PNG to the thanks-image endpoint
+        THEN it returns a URL; a non-image is rejected with 400
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        png = (b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01'
+               b'\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00'
+               b'\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82')
+        r = self.client.post(
+            f"/editor/surveys/{self.survey.uuid}/thanks-image/",
+            {"image": SimpleUploadedFile("a.png", png, content_type="image/png")},
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("url", r.json())
+        bad = self.client.post(
+            f"/editor/surveys/{self.survey.uuid}/thanks-image/",
+            {"image": SimpleUploadedFile("a.txt", b"hi", content_type="text/plain")},
+        )
+        self.assertEqual(bad.status_code, 400)
+
+    def test_results_button_on_thanks_preview_toggle(self):
+        """
+        GIVEN a published results page
+        WHEN show_on_thanks is on
+        THEN the thanks page shows a "See the results" button linking to it;
+             turning it off hides the button
+        """
+        from survey.models import PublicResultsPage
+        p = PublicResultsPage.objects.create(
+            survey=self.survey, slug="thx-res", is_published=True, show_on_thanks=True,
+        )
+        r = self.client.get(f"/editor/surveys/{self.survey.uuid}/thanks-preview/")
+        self.assertContains(r, "See the results")
+        self.assertContains(r, "/r/thx-res/")
+        p.show_on_thanks = False
+        p.save()
+        r2 = self.client.get(f"/editor/surveys/{self.survey.uuid}/thanks-preview/")
+        self.assertNotContains(r2, "See the results")
+
+    def test_thanks_panel_saves_results_toggle(self):
+        """
+        GIVEN a results page and the thanks editor's results toggle
+        WHEN the thanks form is saved with the toggle marker
+        THEN show_on_thanks follows the checkbox; without the marker (stale form)
+             it is left unchanged
+        """
+        from survey.models import PublicResultsPage
+        p = PublicResultsPage.objects.create(
+            survey=self.survey, slug="thx-res2", is_published=True, show_on_thanks=True,
+        )
+        url = f"/editor/surveys/{self.survey.uuid}/thanks-panel/"
+        # marker present, checkbox unchecked (absent) -> off
+        self.client.post(url, {"thanks_en": "<p>x</p>", "has_results_toggle": "1"},
+                         HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        p.refresh_from_db(); self.assertFalse(p.show_on_thanks)
+        # marker present, checkbox on -> on
+        self.client.post(url, {"thanks_en": "<p>x</p>", "has_results_toggle": "1", "show_on_thanks": "on"},
+                         HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        p.refresh_from_db(); self.assertTrue(p.show_on_thanks)
+        # no marker (stale form) -> unchanged
+        self.client.post(url, {"thanks_en": "<p>x</p>"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        p.refresh_from_db(); self.assertTrue(p.show_on_thanks)
 
 
 class SectionViewHtmxTrackingTest(TestCase):
@@ -17761,6 +18259,1721 @@ class AcquisitionDashboardRenderTest(TestCase):
         self.assertIn("/admin/login/", resp["Location"])
 
 
+class PublicResultsPageModelTest(TestCase):
+    """Tests for the PublicResultsPage / PublicResultsBlock models."""
+
+    def setUp(self):
+        self.org = _make_org("PR Org")
+        self.survey = SurveyHeader.objects.create(name="pr_survey", organization=self.org)
+
+    def test_defaults(self):
+        """
+        GIVEN a survey
+        WHEN a PublicResultsPage is created with only required fields
+        THEN it defaults to k=3, mode=live, unpublished, public visibility
+        """
+        page = PublicResultsPage.objects.create(survey=self.survey, slug="pr-survey")
+        self.assertEqual(page.k_anonymity_threshold, 3)
+        self.assertEqual(page.mode, "live")
+        self.assertFalse(page.is_published)
+        self.assertEqual(page.visibility, "public")
+        self.assertFalse(page.is_frozen())
+
+    def test_slug_unique(self):
+        """
+        GIVEN an existing page with a slug
+        WHEN creating another page with the same slug
+        THEN an integrity error is raised
+        """
+        from django.db import IntegrityError
+        PublicResultsPage.objects.create(survey=self.survey, slug="dup")
+        other = SurveyHeader.objects.create(name="pr_survey2", organization=self.org)
+        with self.assertRaises(IntegrityError):
+            PublicResultsPage.objects.create(survey=other, slug="dup")
+
+    def test_one_to_one_with_survey(self):
+        """
+        GIVEN a survey that already has a results page
+        WHEN creating a second page for the same survey
+        THEN an integrity error is raised (OneToOne)
+        """
+        from django.db import IntegrityError
+        PublicResultsPage.objects.create(survey=self.survey, slug="pr-a")
+        with self.assertRaises(IntegrityError):
+            PublicResultsPage.objects.create(survey=self.survey, slug="pr-b")
+
+    def test_blocks_cascade_on_page_delete(self):
+        """
+        GIVEN a page with blocks
+        WHEN the page is deleted
+        THEN its blocks are deleted too
+        """
+        page = PublicResultsPage.objects.create(survey=self.survey, slug="pr-cascade")
+        PublicResultsBlock.objects.create(page=page, block_type="text", order=0)
+        PublicResultsBlock.objects.create(page=page, block_type="text", order=1)
+        self.assertEqual(PublicResultsBlock.objects.filter(page=page).count(), 2)
+        page.delete()
+        self.assertEqual(PublicResultsBlock.objects.count(), 0)
+
+    def test_block_ordering(self):
+        """
+        GIVEN blocks created out of order
+        WHEN querying the page's blocks
+        THEN they are returned ordered by the order field
+        """
+        page = PublicResultsPage.objects.create(survey=self.survey, slug="pr-order")
+        PublicResultsBlock.objects.create(page=page, block_type="text", order=2)
+        PublicResultsBlock.objects.create(page=page, block_type="text", order=0)
+        PublicResultsBlock.objects.create(page=page, block_type="chart", order=1)
+        orders = list(page.blocks.values_list("order", flat=True))
+        self.assertEqual(orders, [0, 1, 2])
+
+
+class PublicResultsServiceTest(TestCase):
+    """Tests for PublicResultsService aggregation and privacy guards."""
+
+    def setUp(self):
+        self.org = _make_org("PRS Org")
+        self.survey = SurveyHeader.objects.create(
+            name="prs_survey", organization=self.org, status="published",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="sec", code="S1", is_head=True,
+        )
+        self.choice_q = Question.objects.create(
+            survey_section=self.section, code="Q_CH", name="Rate us",
+            input_type="choice",
+            choices=[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}],
+        )
+        self.point_q = Question.objects.create(
+            survey_section=self.section, code="Q_PT", name="Mark spot",
+            input_type="point",
+        )
+        self.text_q = Question.objects.create(
+            survey_section=self.section, code="Q_TX", name="Comment",
+            input_type="text",
+        )
+        self.page = PublicResultsPage.objects.create(
+            survey=self.survey, slug="prs", is_published=True,
+        )
+
+    def _session(self, survey=None, status="", deleted=False):
+        return SurveySession.objects.create(
+            survey=survey or self.survey, validation_status=status, is_deleted=deleted,
+        )
+
+    def _service(self):
+        from .public_results import PublicResultsService
+        return PublicResultsService(self.page)
+
+    def test_clean_excludes_deleted_and_not_approved(self):
+        """
+        GIVEN clean, deleted, and not_approved sessions
+        WHEN response_count is computed
+        THEN only the clean session is counted
+        """
+        self._session()                              # clean
+        self._session(deleted=True)                  # deleted
+        self._session(status="not_approved")         # junk
+        self._session(status="on_hold")              # disputed
+        self.assertEqual(self._service().response_count(), 1)
+
+    def test_canonical_span(self):
+        """
+        GIVEN a canonical survey with a version copy, each with a clean session
+        WHEN response_count is computed for the canonical page
+        THEN sessions from both surveys are counted
+        """
+        version = SurveyHeader.objects.create(
+            name="prs_v0", organization=self.org, is_canonical=False,
+            canonical_survey=self.survey, version_number=1,
+        )
+        self._session()                       # canonical
+        self._session(survey=version)         # version copy
+        self.assertEqual(self._service().response_count(), 2)
+
+    def test_k_anonymity_masks_small_bucket(self):
+        """
+        GIVEN a choice with a 2-vote option and a 4-vote option (K=3)
+        WHEN the chart block is built
+        THEN the small option shows "<3" with no value and the large is exact
+        """
+        for _ in range(2):
+            s = self._session()
+            Answer.objects.create(survey_session=s, question=self.choice_q, selected_choices=[1])
+        for _ in range(4):
+            s = self._session()
+            Answer.objects.create(survey_session=s, question=self.choice_q, selected_choices=[2])
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="chart", question=self.choice_q, order=0,
+        )
+        payload = self._service()._build_block(block)
+        by_code = {i["code"]: i for i in payload["items"]}
+        self.assertTrue(by_code[1]["masked"])
+        self.assertEqual(by_code[1]["display"], "<3")
+        self.assertIsNone(by_code[1]["value"])
+        self.assertFalse(by_code[2]["masked"])
+        self.assertEqual(by_code[2]["display"], "4")
+
+    def test_geo_has_no_record_identifiers(self):
+        """
+        GIVEN point answers and a map block with no popup fields selected
+        WHEN the map payload is built
+        THEN features carry empty properties and no session id is exposed
+        """
+        for _ in range(2):
+            s = self._session()
+            Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="map", question=self.point_q, order=0,
+        )
+        payload = self._service()._build_block(block)
+        self.assertEqual(payload["count"], 2)
+        for feat in payload["feature_collection"]["features"]:
+            self.assertEqual(feat["properties"], {})
+        self.assertNotIn("session_id", json.dumps(payload))
+
+    def test_geo_popup_uses_point_subanswers(self):
+        """
+        GIVEN a map block whose geo question has a choice sub-question selected
+        WHEN the map payload is built
+        THEN each point's popup shows that point's own sub-answer, and free-text
+             sub-answers never appear
+        """
+        # Sub-questions of the point question (attributes of each point)
+        sub_choice = Question.objects.create(
+            survey_section=self.section, code="SQ_ACT", name="Activity",
+            input_type="choice", parent_question_id=self.point_q,
+            choices=[{"code": 1, "name": "Walking"}, {"code": 2, "name": "Cycling"}],
+        )
+        sub_text = Question.objects.create(
+            survey_section=self.section, code="SQ_TX", name="Note",
+            input_type="text", parent_question_id=self.point_q,
+        )
+        s = self._session()
+        pt = Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
+        Answer.objects.create(survey_session=s, question=sub_choice, selected_choices=[1], parent_answer_id=pt)
+        Answer.objects.create(survey_session=s, question=sub_text, text="secret", parent_answer_id=pt)
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="map", question=self.point_q, order=0,
+            geo_label_fields=["SQ_ACT"],
+        )
+        payload = self._service()._build_block(block)
+        props = payload["feature_collection"]["features"][0]["properties"]
+        self.assertEqual(props, {"Activity": "Walking"})
+        self.assertNotIn("secret", json.dumps(payload))
+
+    def test_geo_popup_is_per_point_not_per_session(self):
+        """
+        GIVEN one respondent who marks two points with different sub-answers
+        WHEN the map payload is built
+        THEN each point's popup shows its own value (proves per-point join)
+        """
+        sub_choice = Question.objects.create(
+            survey_section=self.section, code="SQ_ACT", name="Activity",
+            input_type="choice", parent_question_id=self.point_q,
+            choices=[{"code": 1, "name": "Walking"}, {"code": 2, "name": "Cycling"}],
+        )
+        s = self._session()
+        p1 = Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
+        p2 = Answer.objects.create(survey_session=s, question=self.point_q, point=Point(31.0, 60.0))
+        Answer.objects.create(survey_session=s, question=sub_choice, selected_choices=[1], parent_answer_id=p1)
+        Answer.objects.create(survey_session=s, question=sub_choice, selected_choices=[2], parent_answer_id=p2)
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="map", question=self.point_q, order=0,
+            geo_label_fields=["SQ_ACT"],
+        )
+        payload = self._service()._build_block(block)
+        values = sorted(
+            f["properties"].get("Activity")
+            for f in payload["feature_collection"]["features"]
+        )
+        self.assertEqual(values, ["Cycling", "Walking"])
+
+    def test_map_payload_includes_basemap(self):
+        """
+        GIVEN a map block with a chosen basemap
+        WHEN the map payload is built
+        THEN the payload carries that basemap so the client picks the tile layer
+        """
+        s = self._session()
+        Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="map", question=self.point_q, order=0, basemap="satellite",
+        )
+        payload = self._service()._build_block(block)
+        self.assertEqual(payload["basemap"], "satellite")
+
+    def test_map_block_defaults_to_streets_basemap(self):
+        """
+        GIVEN a map block created without specifying a basemap
+        WHEN the payload is built
+        THEN it defaults to the streets basemap
+        """
+        s = self._session()
+        Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="map", question=self.point_q, order=0,
+        )
+        self.assertEqual(self._service()._build_block(block)["basemap"], "streets")
+
+    def test_deleted_question_block_omitted(self):
+        """
+        GIVEN a chart block whose question was deleted (FK set to null)
+        WHEN blocks are built
+        THEN that block is silently omitted
+        """
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="chart", question=self.choice_q, order=0,
+        )
+        block.question = None
+        block.save()
+        self.assertEqual(self._service().build_blocks(), [])
+
+    def test_text_question_not_chartable(self):
+        """
+        GIVEN a chart block defensively bound to a text question
+        WHEN the block is built
+        THEN it produces no payload
+        """
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="chart", question=self.text_q, order=0,
+        )
+        self.assertIsNone(self._service()._build_block(block))
+
+    def test_zero_responses_count(self):
+        """
+        GIVEN a page with no clean responses
+        WHEN the response count is computed
+        THEN it is zero
+        """
+        self.assertEqual(self._service().response_count(), 0)
+
+    def test_image_block_without_file_produces_no_payload(self):
+        """
+        GIVEN an image block with no file attached
+        WHEN the block is built
+        THEN it produces no payload (defensive, mirrors deleted-question blocks)
+        """
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="image", order=0,
+        )
+        self.assertIsNone(self._service()._build_block(block))
+
+    def test_image_block_payload_includes_url_and_caption(self):
+        """
+        GIVEN an image block with a file and a caption
+        WHEN the block is built
+        THEN the payload carries the image URL and localized caption
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        gif_bytes = (
+            b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04'
+            b'\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
+        )
+        block = PublicResultsBlock.objects.create(
+            page=self.page, block_type="image", order=0,
+            image=SimpleUploadedFile("pic.gif", gif_bytes, content_type="image/gif"),
+            content={"en": "A lovely spot"},
+        )
+        payload = self._service()._build_block(block)
+        self.assertIn("pic", payload["image_url"])
+        self.assertEqual(payload["caption"], "A lovely spot")
+
+
+class PublicResultsFreezeTest(TestCase):
+    """Tests for freeze/live mechanics of the public results page."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.org = _make_org("PRF Org")
+        self.survey = SurveyHeader.objects.create(
+            name="prf_survey", organization=self.org, status="published",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="sec", code="S1", is_head=True,
+        )
+        self.page = PublicResultsPage.objects.create(
+            survey=self.survey, slug="prf", is_published=True,
+        )
+
+    def _add_session(self):
+        SurveySession.objects.create(survey=self.survey)
+
+    def test_freeze_captures_current_data(self):
+        """
+        GIVEN a page with 2 clean responses
+        WHEN it is frozen
+        THEN the snapshot records the count and the page switches to frozen
+        """
+        from .public_results import freeze_page
+        self._add_session(); self._add_session()
+        freeze_page(self.page)
+        self.assertEqual(self.page.mode, "frozen")
+        self.assertIsNotNone(self.page.frozen_at)
+        self.assertEqual(self.page.snapshot["response_count"], 2)
+
+    def test_frozen_does_not_change(self):
+        """
+        GIVEN a frozen page
+        WHEN a new response arrives
+        THEN the rendered count stays equal to the snapshot
+        """
+        from .public_results import freeze_page, render_page_data
+        self._add_session()
+        freeze_page(self.page)
+        self._add_session()
+        data = render_page_data(self.page)
+        self.assertTrue(data["frozen"])
+        self.assertEqual(data["response_count"], 1)
+
+    def test_live_reflects_new_response_after_cache_clear(self):
+        """
+        GIVEN a live page rendered once
+        WHEN a new response arrives and the cache window passes
+        THEN the rendered count increases
+        """
+        from django.core.cache import cache
+        from .public_results import render_page_data
+        self._add_session()
+        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+        self._add_session()
+        cache.clear()  # simulate TTL expiry
+        self.assertEqual(render_page_data(self.page)["response_count"], 2)
+
+    def test_live_is_cached_within_window(self):
+        """
+        GIVEN a live page rendered once
+        WHEN a new response arrives but the cache is still warm
+        THEN the rendered count is unchanged until the cache expires
+        """
+        from .public_results import render_page_data
+        self._add_session()
+        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+        self._add_session()
+        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+
+    def test_block_deletion_bypasses_live_cache(self):
+        """
+        GIVEN a live page primed into the cache with two blocks
+        WHEN a block is deleted and the page version is bumped
+        THEN the next render reflects one block, without clearing the cache manually
+        """
+        from .public_results import render_page_data, bump_page_version
+        PublicResultsBlock.objects.create(page=self.page, block_type="text", order=0)
+        b2 = PublicResultsBlock.objects.create(page=self.page, block_type="text", order=1)
+        self.assertEqual(len(render_page_data(self.page)["blocks"]), 2)  # prime cache
+        b2.delete()
+        bump_page_version(self.page)
+        self.page.refresh_from_db()
+        self.assertEqual(len(render_page_data(self.page)["blocks"]), 1)
+
+    def test_new_response_still_cached_with_versioned_key(self):
+        """
+        GIVEN a live page primed into the cache
+        WHEN a new response arrives but no configuration change bumps the version
+        THEN the cached render is unchanged within the window
+              (config invalidation does not defeat data caching)
+        """
+        from .public_results import render_page_data
+        self._add_session()
+        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+        self._add_session()  # arrives within the TTL window, no version bump
+        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+
+    def test_return_to_live_recomputes(self):
+        """
+        GIVEN a frozen page returned to live
+        WHEN a new response arrives
+        THEN the rendered count reflects current data
+        """
+        from django.core.cache import cache
+        from .public_results import freeze_page, unfreeze_page, render_page_data
+        self._add_session()
+        freeze_page(self.page)
+        unfreeze_page(self.page)
+        self._add_session()
+        cache.clear()
+        data = render_page_data(self.page)
+        self.assertFalse(data["frozen"])
+        self.assertEqual(data["response_count"], 2)
+
+    def test_stale_snapshot_version(self):
+        """
+        GIVEN a frozen page whose snapshot uses an incompatible version
+        WHEN it is rendered
+        THEN it is flagged stale rather than rendering wrong data
+        """
+        from .public_results import render_page_data
+        self.page.mode = "frozen"
+        self.page.snapshot = {"snapshot_version": 999, "response_count": 5, "blocks": []}
+        self.page.save()
+        data = render_page_data(self.page)
+        self.assertTrue(data["stale"])
+        self.assertEqual(data["blocks"], [])
+
+
+class PublicResultsViewTest(TestCase):
+    """Tests for the public /r/<slug>/ view and SEO behavior."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.client = Client()
+        self.org = _make_org("PRV Org")
+        self.survey = SurveyHeader.objects.create(
+            name="prv_survey", organization=self.org, status="published",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="sec", code="S1", is_head=True,
+        )
+        self.choice_q = Question.objects.create(
+            survey_section=self.section, code="Q_CH", name="Rate", input_type="choice",
+            choices=[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}],
+        )
+        self.text_q = Question.objects.create(
+            survey_section=self.section, code="Q_TX", name="Comment", input_type="text",
+        )
+        self.page = PublicResultsPage.objects.create(
+            survey=self.survey, slug="prv", is_published=True, visibility="public",
+            intro={"title": {"en": "Park results"}, "body": {"en": "Thanks all"}},
+        )
+        PublicResultsBlock.objects.create(page=self.page, block_type="text", order=0)
+        PublicResultsBlock.objects.create(
+            page=self.page, block_type="chart", question=self.choice_q, order=1,
+        )
+
+    def test_chart_block_viz_delivered_to_client(self):
+        """
+        GIVEN a chart block whose visualization is set to pie
+        WHEN the public page is rendered
+        THEN the block payload delivered to the client carries viz=pie
+              so the chart renderer can honor the selected visualization
+        """
+        block = PublicResultsBlock.objects.get(page=self.page, block_type="chart")
+        block.viz = "pie"
+        block.save()
+        r = self.client.get("/r/{}/".format(self.page.slug))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, '"viz": "pie"')
+
+    def test_kanon_note_conditional_on_threshold(self):
+        """
+        GIVEN a page with masking enabled (k=3) and one with it disabled (k=1)
+        WHEN the public page renders a chart block
+        THEN the masking note shows only while masking is enabled
+        """
+        r = self.client.get("/r/{}/".format(self.page.slug))
+        self.assertContains(r, "Small groups are masked")
+        self.page.k_anonymity_threshold = 1
+        self.page.save()
+        from .public_results import bump_page_version
+        bump_page_version(self.page)
+        r = self.client.get("/r/{}/".format(self.page.slug))
+        self.assertNotContains(r, "Small groups are masked")
+
+    def test_image_block_renders_on_public_page(self):
+        """
+        GIVEN an image block with a caption
+        WHEN the public page is rendered
+        THEN the image tag and caption appear
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        gif_bytes = (
+            b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04'
+            b'\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
+        )
+        PublicResultsBlock.objects.create(
+            page=self.page, block_type="image", order=2,
+            image=SimpleUploadedFile("pic.gif", gif_bytes, content_type="image/gif"),
+            content={"en": "A lovely spot"},
+        )
+        r = self.client.get("/r/{}/".format(self.page.slug))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "<img src=")
+        self.assertContains(r, "A lovely spot")
+
+    def test_published_page_reachable(self):
+        """
+        GIVEN a published public results page
+        WHEN an anonymous visitor opens /r/<slug>/
+        THEN it returns 200 with the intro title and platform footer
+        """
+        r = self.client.get("/r/prv/")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Park results")
+        self.assertContains(r, "Made with")
+
+    def test_unpublished_page_404(self):
+        """
+        GIVEN an unpublished page
+        WHEN opened
+        THEN 404
+        """
+        self.page.is_published = False
+        self.page.save()
+        self.assertEqual(self.client.get("/r/prv/").status_code, 404)
+
+    def test_unknown_slug_404(self):
+        """
+        GIVEN no page with the slug
+        WHEN opened
+        THEN 404
+        """
+        self.assertEqual(self.client.get("/r/nope/").status_code, 404)
+
+    def test_public_is_indexable(self):
+        """
+        GIVEN a public page
+        WHEN rendered
+        THEN it allows indexing and appears in the sitemap
+        """
+        r = self.client.get("/r/prv/")
+        self.assertContains(r, "index, follow")
+        sitemap = self.client.get("/sitemap.xml")
+        self.assertContains(sitemap, "/r/prv/")
+
+    def test_unlisted_is_noindex_and_absent_from_sitemap(self):
+        """
+        GIVEN an unlisted page
+        WHEN rendered
+        THEN it emits noindex and is excluded from the sitemap
+        """
+        self.page.visibility = "unlisted"
+        self.page.save()
+        r = self.client.get("/r/prv/")
+        self.assertContains(r, "noindex")
+        sitemap = self.client.get("/sitemap.xml")
+        self.assertNotContains(sitemap, "/r/prv/")
+
+    def test_cta_visible_when_survey_open(self):
+        """
+        GIVEN an open survey with the CTA enabled
+        WHEN the page is rendered
+        THEN the "Take the survey" action is shown
+        """
+        r = self.client.get("/r/prv/")
+        self.assertContains(r, "Take the survey")
+
+    def test_cta_hidden_when_survey_closed(self):
+        """
+        GIVEN a closed survey
+        WHEN the page is rendered
+        THEN the CTA is not shown
+        """
+        self.survey.status = "closed"
+        self.survey.save()
+        r = self.client.get("/r/prv/")
+        self.assertNotContains(r, "Take the survey")
+
+    def test_no_raw_text_answers_on_page(self):
+        """
+        GIVEN a session with a free-text answer
+        WHEN the public page is rendered
+        THEN the individual text never appears in the response
+        """
+        s = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=s, question=self.text_q, text="topsecretcomment")
+        Answer.objects.create(survey_session=s, question=self.choice_q, selected_choices=[1])
+        r = self.client.get("/r/prv/")
+        self.assertNotContains(r, "topsecretcomment")
+
+
+class PublicResultsEditorTest(TestCase):
+    """Tests for the editor configuration views of the public results page."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.client = Client()
+        self.org = _make_org("PRE Org")
+        self.user = User.objects.create_user(username="prowner", password="pw12345")
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="pre_survey", organization=self.org, status="published",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="sec", code="S1", is_head=True,
+        )
+        self.choice_q = Question.objects.create(
+            survey_section=self.section, code="Q_CH", name="Rate", input_type="choice",
+            choices=[{"code": 1, "name": "Yes"}],
+        )
+        self.text_q = Question.objects.create(
+            survey_section=self.section, code="Q_TX", name="Comment", input_type="text",
+        )
+        self.point_q = Question.objects.create(
+            survey_section=self.section, code="Q_PT", name="Mark spot", input_type="point",
+        )
+        self.base = "/editor/surveys/{}/public-results/".format(self.survey.uuid)
+
+    def _login(self):
+        self.client.login(username="prowner", password="pw12345")
+
+    def test_config_lazily_creates_page(self):
+        """
+        GIVEN no results page yet
+        WHEN the editor opens the config tab
+        THEN a page is created and the tab renders
+        """
+        self._login()
+        r = self.client.get(self.base)
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(PublicResultsPage.objects.filter(survey=self.survey).exists())
+
+    def test_non_editor_blocked(self):
+        """
+        GIVEN a user without rights on the survey
+        WHEN they request the config tab
+        THEN access is denied and no page is created
+        """
+        User.objects.create_user(username="outsider", password="pw12345")
+        self.client.login(username="outsider", password="pw12345")
+        r = self.client.get(self.base)
+        self.assertIn(r.status_code, (302, 403, 404))
+        self.assertFalse(PublicResultsPage.objects.filter(survey=self.survey).exists())
+
+    def test_add_question_block(self):
+        """
+        GIVEN a choice question
+        WHEN it is added as a block
+        THEN a chart block is created and the editor lands in its config
+        """
+        self._login()
+        r = self.client.post(self.base + "blocks/add/", {
+            "block_type": "question", "question_id": self.choice_q.id,
+        })
+        block = PublicResultsBlock.objects.get(page__survey=self.survey)
+        self.assertEqual(block.block_type, "chart")
+        self.assertEqual(block.question_id, self.choice_q.id)
+        # P3: redirect selects the freshly created block
+        self.assertEqual(r.status_code, 302)
+        self.assertIn(f"?block={block.id}", r.url)
+
+    def test_settings_preview_button_works_before_page_is_live(self):
+        """
+        GIVEN a results page that is not yet published
+        WHEN the config tab renders
+        THEN the Preview button targets the always-available editor preview
+             endpoint (the public /r/ URL would 404), and the "Live page"
+             link appears only once the page is published
+        """
+        self._login()
+        r = self.client.get(self.base)
+        content = r.content.decode()
+        self.assertIn(f"{self.base}preview/", content)
+        self.assertNotIn("Live page", content)
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        page.is_published = True
+        page.save()
+        content = self.client.get(self.base).content.decode()
+        self.assertIn("Live page", content)
+
+    def test_text_question_not_addable(self):
+        """
+        GIVEN a text question
+        WHEN an attempt is made to add it as a block
+        THEN the request is rejected and no block is created
+        """
+        self._login()
+        r = self.client.post(self.base + "blocks/add/", {
+            "block_type": "question", "question_id": self.text_q.id,
+        })
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(PublicResultsBlock.objects.exists())
+
+    def _gif_upload(self, name="pic.gif"):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        gif_bytes = (
+            b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04'
+            b'\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
+        )
+        return SimpleUploadedFile(name, gif_bytes, content_type="image/gif")
+
+    def test_add_image_block(self):
+        """
+        GIVEN an uploaded image file
+        WHEN it is added as an image block
+        THEN an image block is created with the file attached
+        """
+        self._login()
+        self.client.post(self.base + "blocks/add/", {
+            "block_type": "image", "image": self._gif_upload(),
+        })
+        block = PublicResultsBlock.objects.get(page__survey=self.survey)
+        self.assertEqual(block.block_type, "image")
+        self.assertTrue(block.image)
+
+    def test_add_image_block_without_file_rejected(self):
+        """
+        GIVEN no file attached
+        WHEN an attempt is made to add an image block
+        THEN the request is rejected and no block is created
+        """
+        self._login()
+        r = self.client.post(self.base + "blocks/add/", {"block_type": "image"})
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(PublicResultsBlock.objects.exists())
+
+    def test_edit_image_block_caption_and_replace(self):
+        """
+        GIVEN an existing image block
+        WHEN its caption is updated and the file is replaced
+        THEN both changes persist
+        """
+        self._login()
+        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        block = PublicResultsBlock.objects.create(
+            page=page, block_type="image", image=self._gif_upload("old.gif"), order=0,
+        )
+        old_name = block.image.name
+        self.client.post(self.base + "blocks/{}/edit/".format(block.id), {
+            "content": "Updated caption", "image": self._gif_upload("new.gif"),
+        })
+        block.refresh_from_db()
+        self.assertEqual(block.content["en"], "Updated caption")
+        self.assertNotEqual(block.image.name, old_name)
+
+    def test_counter_block_type_rejected(self):
+        """
+        GIVEN the retired 'counter' block type (duplicated the page-level
+              response counter shown in the hero)
+        WHEN an attempt is made to add one
+        THEN the request is rejected and no block is created
+        """
+        self._login()
+        r = self.client.post(self.base + "blocks/add/", {"block_type": "counter"})
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(PublicResultsBlock.objects.exists())
+
+    def test_reorder_persists(self):
+        """
+        GIVEN three blocks
+        WHEN a new order is posted
+        THEN the stored order matches
+        """
+        self._login()
+        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        b1 = PublicResultsBlock.objects.create(page=page, block_type="text", order=0)
+        b2 = PublicResultsBlock.objects.create(page=page, block_type="text", order=1)
+        b3 = PublicResultsBlock.objects.create(page=page, block_type="text", order=2)
+        self.client.post(
+            self.base + "blocks/reorder/",
+            data=json.dumps({"order": [b3.id, b1.id, b2.id]}),
+            content_type="application/json",
+        )
+        self.assertEqual(PublicResultsBlock.objects.get(id=b3.id).order, 0)
+        self.assertEqual(PublicResultsBlock.objects.get(id=b1.id).order, 1)
+        self.assertEqual(PublicResultsBlock.objects.get(id=b2.id).order, 2)
+
+    def test_delete_block_reflected_in_live_render_immediately(self):
+        """
+        GIVEN a live page whose cache is primed with one block
+        WHEN the editor deletes the block via the view
+        THEN the next public render shows zero blocks, without manual cache clearing
+        """
+        from .public_results import render_page_data
+        self._login()
+        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        block = PublicResultsBlock.objects.create(page=page, block_type="text", order=0)
+        self.assertEqual(len(render_page_data(page)["blocks"]), 1)  # prime cache
+        self.client.post(self.base + "blocks/{}/delete/".format(block.id))
+        page.refresh_from_db()
+        self.assertEqual(len(render_page_data(page)["blocks"]), 0)
+
+    def test_freeze_and_unfreeze(self):
+        """
+        GIVEN a live page
+        WHEN freeze then unfreeze are posted
+        THEN the mode toggles accordingly
+        """
+        self._login()
+        self.client.get(self.base)
+        self.client.post(self.base + "freeze/")
+        self.assertEqual(PublicResultsPage.objects.get(survey=self.survey).mode, "frozen")
+        self.client.post(self.base + "unfreeze/")
+        self.assertEqual(PublicResultsPage.objects.get(survey=self.survey).mode, "live")
+
+    def test_publish_action_toggles_live_state(self):
+        """
+        GIVEN a page and the explicit publish endpoint
+        WHEN publish=1 then publish=0 are posted
+        THEN is_published flips accordingly
+        """
+        self._login()
+        self.client.get(self.base)
+        r = self.client.post(self.base + "set-published/", {"publish": "1"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()["is_published"])
+        self.assertTrue(PublicResultsPage.objects.get(survey=self.survey).is_published)
+        self.client.post(self.base + "set-published/", {"publish": "0"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        self.assertFalse(PublicResultsPage.objects.get(survey=self.survey).is_published)
+
+    def test_publish_action_blocked_on_draft_survey(self):
+        """
+        GIVEN a draft survey
+        WHEN the results page publish action is invoked
+        THEN it is refused and the page stays unpublished
+        """
+        self.survey.status = "draft"
+        self.survey.save()
+        self._login()
+        self.client.get(self.base)
+        r = self.client.post(self.base + "set-published/", {"publish": "1"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(PublicResultsPage.objects.get(survey=self.survey).is_published)
+
+    def test_settings_autosave_does_not_unpublish(self):
+        """
+        GIVEN a live results page
+        WHEN a settings autosave omits is_published (the checkbox is gone)
+        THEN the page stays live
+        """
+        self._login()
+        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        page.is_published = True
+        page.save()
+        self.client.post(
+            self.base + "settings/",
+            {"visibility": "public", "k_anonymity_threshold": "3", "intro_title": "Hi"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        page.refresh_from_db()
+        self.assertTrue(page.is_published)
+
+    def test_draft_survey_cannot_publish(self):
+        """
+        GIVEN a draft survey
+        WHEN settings are saved with publish on
+        THEN the page stays unpublished
+        """
+        self.survey.status = "draft"
+        self.survey.save()
+        self._login()
+        self.client.get(self.base)
+        self.client.post(self.base + "settings/", {
+            "visibility": "public", "is_published": "on", "slug": "pre",
+            "k_anonymity_threshold": "3",
+        })
+        self.assertFalse(PublicResultsPage.objects.get(survey=self.survey).is_published)
+
+    def test_save_settings_persists(self):
+        """
+        GIVEN a published survey
+        WHEN settings are saved
+        THEN visibility, k-threshold, and intro persist
+        """
+        self._login()
+        self.client.get(self.base)
+        self.client.post(self.base + "settings/", {
+            "visibility": "unlisted", "is_published": "on", "slug": "pre-x",
+            "intro_title": "Hello", "intro_body": "World",
+            "show_response_count": "on", "k_anonymity_threshold": "5",
+        })
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        self.assertEqual(page.visibility, "unlisted")
+        self.assertTrue(page.is_published)
+        self.assertEqual(page.k_anonymity_threshold, 5)
+        self.assertEqual(page.intro["title"]["en"], "Hello")
+        self.assertEqual(page.slug, "pre-x")
+
+    def test_settings_autosave_ajax_returns_json(self):
+        """
+        GIVEN the page settings form is submitted via XHR (autosave)
+        WHEN the request carries X-Requested-With and omits the slug
+        THEN a JSON ok response is returned (no redirect), values persist,
+              and the existing slug is preserved
+        """
+        self._login()
+        self.client.get(self.base)
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        original_slug = page.slug
+        r = self.client.post(
+            self.base + "settings/",
+            {"visibility": "unlisted", "k_anonymity_threshold": "4", "intro_title": "Hi"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()["ok"])
+        page.refresh_from_db()
+        self.assertEqual(page.visibility, "unlisted")
+        self.assertEqual(page.k_anonymity_threshold, 4)
+        self.assertEqual(page.slug, original_slug)
+
+    def test_slug_apply_reports_taken(self):
+        """
+        GIVEN another page already owns a slug
+        WHEN the creator applies that slug via XHR
+        THEN the response flags slug_taken and the slug is unchanged
+        """
+        self._login()
+        self.client.get(self.base)
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        original_slug = page.slug
+        other = SurveyHeader.objects.create(
+            name="other_pre", organization=self.org, status="published",
+        )
+        PublicResultsPage.objects.create(survey=other, slug="taken-slug", is_published=True)
+        r = self.client.post(
+            self.base + "settings/",
+            {"visibility": page.visibility, "k_anonymity_threshold": "3", "slug": "taken-slug"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()["slug_taken"])
+        page.refresh_from_db()
+        self.assertEqual(page.slug, original_slug)
+
+    def test_block_edit_autosave_ajax_returns_json(self):
+        """
+        GIVEN a chart block
+        WHEN its visualization is changed via XHR (autosave)
+        THEN a JSON ok response is returned and the new viz persists
+        """
+        self._login()
+        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        block = PublicResultsBlock.objects.create(
+            page=page, block_type="chart", question=self.choice_q, order=0,
+        )
+        r = self.client.post(
+            self.base + "blocks/{}/edit/".format(block.id),
+            {"viz": "pie"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()["ok"])
+        block.refresh_from_db()
+        self.assertEqual(block.viz, "pie")
+
+    def test_map_block_basemap_saved(self):
+        """
+        GIVEN a map block
+        WHEN a valid basemap is submitted
+        THEN it persists; an invalid value is ignored (keeps the previous one)
+        """
+        self._login()
+        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        block = PublicResultsBlock.objects.create(
+            page=page, block_type="map", question=self.point_q, order=0,
+        )
+        self.client.post(self.base + "blocks/{}/edit/".format(block.id), {"viz": "heatmap", "basemap": "topo"})
+        block.refresh_from_db()
+        self.assertEqual(block.basemap, "topo")
+        # An invalid basemap must not overwrite the stored value.
+        self.client.post(self.base + "blocks/{}/edit/".format(block.id), {"viz": "heatmap", "basemap": "bogus"})
+        block.refresh_from_db()
+        self.assertEqual(block.basemap, "topo")
+
+
+class PublicResultsPreviewTest(TestCase):
+    """Tests for the editor preview endpoint (iframe source)."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.client = Client()
+        self.org = _make_org("PRP Org")
+        self.user = User.objects.create_user(username="prpowner", password="pw12345")
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="prp_survey", organization=self.org, status="published",
+        )
+        SurveySection.objects.create(survey_header=self.survey, name="s", code="S1", is_head=True)
+        self.base = "/editor/surveys/{}/public-results/".format(self.survey.uuid)
+
+    def test_preview_renders_for_editor_even_if_unpublished(self):
+        """
+        GIVEN an unpublished results page
+        WHEN the editor opens the preview endpoint
+        THEN it renders the public template (200) with same-origin framing and noindex
+        """
+        self.client.login(username="prpowner", password="pw12345")
+        r = self.client.get(self.base + "preview/")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Made with")
+        self.assertContains(r, "noindex")
+        self.assertEqual(r.headers.get("X-Frame-Options"), "SAMEORIGIN")
+
+    def test_preview_requires_editor(self):
+        """
+        GIVEN a user without rights
+        WHEN they request the preview endpoint
+        THEN access is denied
+        """
+        User.objects.create_user(username="prpoutsider", password="pw12345")
+        self.client.login(username="prpoutsider", password="pw12345")
+        r = self.client.get(self.base + "preview/")
+        self.assertIn(r.status_code, (302, 403, 404))
+
+
+class RequiredValidationRenderTest(TestCase):
+    """The survey-answering form renders the client-side required-validation scaffolding."""
+
+    def setUp(self):
+        self.client = Client()
+        self.org = _make_org()
+        self.survey = SurveyHeader.objects.create(
+            name="reqval_survey",
+            organization=self.org,
+            redirect_url="/thanks/",
+            status="published",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="Only Section", code="S1", is_head=True,
+        )
+        self.required_q = Question.objects.create(
+            survey_section=self.section, name="Agree?", input_type="choice",
+            choices=[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}],
+            required=True, order_number=1,
+        )
+        self.optional_q = Question.objects.create(
+            survey_section=self.section, name="Comment", input_type="text",
+            required=False, order_number=2,
+        )
+
+    def test_form_has_novalidate_and_summary(self):
+        """
+        GIVEN a published survey section
+        WHEN a respondent opens it
+        THEN the form is novalidate and the required-summary banner exists
+        """
+        response = self.client.get("/surveys/reqval_survey/s1/")
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("novalidate", html)
+        self.assertIn('id="required-summary"', html)
+        # translated inline-message string is exposed to the JS on the form
+        self.assertIn("data-msg-required", html)
+
+    def test_only_required_question_card_is_marked(self):
+        """
+        GIVEN a section with one required and one optional question
+        WHEN it renders
+        THEN exactly one question card carries data-required="true"
+        """
+        import re
+        html = self.client.get("/surveys/reqval_survey/s1/").content.decode()
+        card_tags = re.findall(r'<div class="question-card[^>]*>', html)
+        self.assertEqual(len(card_tags), 2)  # one required + one optional
+        marked = [t for t in card_tags if 'data-required="true"' in t]
+        self.assertEqual(len(marked), 1)
+
+
+class EditorPreviewFinishButtonTest(TestCase):
+    """The editor section preview shows navigation that makes sense without a live session."""
+
+    def setUp(self):
+        self.org = _make_org()
+        self.user = User.objects.create_user(username="prevu", password="pass")
+        Membership.objects.create(user=self.user, organization=self.org, role="owner")
+        self.client.login(username="prevu", password="pass")
+        self.survey = SurveyHeader.objects.create(
+            name="prev_survey", visibility="private", organization=self.org,
+        )
+        self.only_section = SurveySection.objects.create(
+            survey_header=self.survey, name="only", title="Only", code="O1", is_head=True,
+        )
+
+    def test_last_section_preview_shows_disabled_finish(self):
+        """
+        GIVEN a single-section survey previewed in the editor
+        WHEN the last section renders in preview mode
+        THEN a disabled Finish button is shown (not a live submit)
+        """
+        response = self.client.get(f"/editor/surveys/{self.survey.uuid}/preview/only/")
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("disabled", html)
+        self.assertIn("Finish", html)
+        # preview must not offer a real submit button for the last section
+        self.assertNotIn('type="submit" class="btn btn-primary next_button"', html)
+
+    def test_non_last_section_preview_links_to_next(self):
+        """
+        GIVEN a two-section survey previewed in the editor
+        WHEN the first section renders in preview mode
+        THEN Next is a link to the next section's preview, not a submit
+        """
+        second = SurveySection.objects.create(
+            survey_header=self.survey, name="two", title="Two", code="O2",
+        )
+        self.only_section.next_section = second
+        self.only_section.save(update_fields=["next_section"])
+        second.prev_section = self.only_section
+        second.save(update_fields=["prev_section"])
+
+        html = self.client.get(f"/editor/surveys/{self.survey.uuid}/preview/only/").content.decode()
+        self.assertIn("preview/two/", html)
+
+
+class SharePublishGateTest(TestCase):
+    """The Share page gates public links behind publish state (backlog task 85)."""
+
+    def setUp(self):
+        self.client = Client()
+        self.org = _make_org('GateOrg')
+        self.owner = User.objects.create_user('gate_owner', password='pw')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='gatesurvey', organization=self.org, created_by=self.owner, status='draft',
+        )
+        # publishable structure: a head section with a question
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='S1', code='S1', is_head=True,
+        )
+        Question.objects.create(
+            survey_section=self.section, name='Q1', input_type='text', order_number=1,
+        )
+
+    def _login(self, user):
+        self.client.force_login(user)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+    def _share_html(self, survey=None):
+        survey = survey or self.survey
+        return self.client.get(f'/editor/surveys/{survey.uuid}/share/').content.decode()
+
+    def test_draft_hides_links_and_shows_publish(self):
+        """
+        GIVEN a draft survey with publishable structure
+        WHEN its owner opens Share
+        THEN the copyable links are hidden and an inline Publish control is shown
+        """
+        self._login(self.owner)
+        html = self._share_html()
+        self.assertIn('still a Draft', html)
+        self.assertIn('publishFromShare(this)', html)   # inline gate button (not the header widget)
+        self.assertNotIn('id="direct-link"', html)
+
+    def test_published_shows_links_no_banner(self):
+        """
+        GIVEN a published survey
+        WHEN its owner opens Share
+        THEN the shareable links render and no publish banner is shown
+        """
+        self.survey.status = 'published'
+        self.survey.save(update_fields=['status'])
+        self._login(self.owner)
+        html = self._share_html()
+        self.assertIn('id="direct-link"', html)
+        self.assertNotIn('still a Draft', html)
+
+    def test_non_owner_editor_sees_no_publish(self):
+        """
+        GIVEN a draft survey and a non-owner editor collaborator
+        WHEN the editor opens Share
+        THEN no inline Publish control is shown, only a hint to ask the owner
+        """
+        editor = User.objects.create_user('gate_editor', password='pw')
+        Membership.objects.create(user=editor, organization=self.org, role='editor')
+        SurveyCollaborator.objects.create(user=editor, survey=self.survey, role='editor')
+        self._login(editor)
+        html = self._share_html()
+        self.assertNotIn('publishFromShare(this)', html)
+        self.assertIn('Ask the survey owner to publish', html)
+
+    def test_empty_draft_shows_blocked_reason(self):
+        """
+        GIVEN a draft survey with no questions
+        WHEN its owner opens Share
+        THEN the banner explains publishing is blocked, with no Publish button
+        """
+        empty = SurveyHeader.objects.create(
+            name='emptydraft', organization=self.org, created_by=self.owner, status='draft',
+        )
+        self._login(self.owner)
+        html = self._share_html(empty)
+        self.assertIn('still a Draft', html)
+        self.assertNotIn('publishFromShare(this)', html)
+        self.assertIn('at least one section with questions', html)
+
+
+class VersionFamilyHelpersTest(TestCase):
+    """Tests for family_ids / family_sessions / lineage_map (cross-version scope)."""
+
+    def setUp(self):
+        from .versioning import clone_survey_for_draft, publish_draft
+        self.org = _make_org('FamOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='fam_survey', organization=self.org, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='S1', code='S1', is_head=True,
+        )
+        self.q_keep = Question.objects.create(
+            survey_section=self.section, name='Keep me', input_type='choice',
+            code='QKEEP', order_number=1,
+            choices=[{'code': 1, 'name': 'Yes'}, {'code': 2, 'name': 'No'}],
+        )
+        self.q_drop = Question.objects.create(
+            survey_section=self.section, name='Drop me', input_type='text',
+            code='QDROP', order_number=2,
+        )
+        self.q_retype = Question.objects.create(
+            survey_section=self.section, name='Retype me', input_type='text',
+            code='QTYPE', order_number=3,
+        )
+        # two v1 sessions with answers (one soft-deleted)
+        self.sess1 = SurveySession.objects.create(survey=self.survey)
+        self.sess2 = SurveySession.objects.create(survey=self.survey, is_deleted=True)
+        Answer.objects.create(survey_session=self.sess1, question=self.q_keep,
+                              selected_choices=[1])
+        Answer.objects.create(survey_session=self.sess1, question=self.q_drop,
+                              text='historical')
+
+        # v2: drop QDROP, retype QTYPE (text -> number), keep QKEEP
+        draft = clone_survey_for_draft(self.survey)
+        Question.objects.filter(survey_section__survey_header=draft, code='QDROP').delete()
+        Question.objects.filter(
+            survey_section__survey_header=draft, code='QTYPE'
+        ).update(input_type='number')
+        self.canonical = publish_draft(draft, force=True)
+        self.archived = SurveyHeader.objects.get(
+            canonical_survey=self.canonical, version_number=1,
+        )
+
+    def test_family_ids_spans_versions_excludes_drafts(self):
+        """
+        GIVEN a canonical survey with an archived v1 and a live draft copy
+        WHEN family_ids is called (from either family member)
+        THEN it returns canonical + archived, never the draft copy
+        """
+        from .versioning import clone_survey_for_draft, family_ids
+        draft2 = clone_survey_for_draft(self.canonical)
+        expected = {self.canonical.id, self.archived.id}
+        self.assertEqual(family_ids(self.canonical), expected)
+        self.assertEqual(family_ids(self.archived), expected)  # resolves canonical first
+        self.assertNotIn(draft2.id, family_ids(self.canonical))
+
+    def test_family_sessions_counts_each_session_once(self):
+        """
+        GIVEN sessions that were moved to the archived version at publish
+        WHEN family_sessions is called on the canonical
+        THEN old sessions are included exactly once; deleted ones only on request
+        """
+        from .versioning import family_sessions
+        new_sess = SurveySession.objects.create(survey=self.canonical)
+        ids = list(family_sessions(self.canonical).values_list('id', flat=True))
+        self.assertEqual(sorted(ids), sorted([self.sess1.id, new_sess.id]))
+        self.assertEqual(family_sessions(self.canonical, include_deleted=True).count(), 3)
+
+    def test_lineage_merges_compatible_question(self):
+        """
+        GIVEN QKEEP present in v1 (original) and v2 (clone with a new id)
+        WHEN lineage_map is built
+        THEN both question objects share one lineage keyed (QKEEP, choice)
+        """
+        from .versioning import lineage_map
+        lm = lineage_map(self.canonical)
+        entry = lm[('QKEEP', 'choice')]
+        self.assertEqual(len(entry['question_ids']), 2)
+        self.assertIn(self.q_keep.id, entry['question_ids'])
+        self.assertIsNotNone(entry['current'])
+        self.assertNotEqual(entry['current'].id, self.q_keep.id)  # clone, new id
+        self.assertEqual(entry['versions'], 'v1–v2')
+
+    def test_lineage_breaks_on_input_type_change(self):
+        """
+        GIVEN QTYPE changed from text (v1) to number (v2)
+        WHEN lineage_map is built
+        THEN two separate lineages exist: archived text and current number
+        """
+        from .versioning import lineage_map
+        lm = lineage_map(self.canonical)
+        old = lm[('QTYPE', 'text')]
+        new = lm[('QTYPE', 'number')]
+        self.assertIsNone(old['current'])
+        self.assertEqual(old['versions'], 'v1')
+        self.assertIsNotNone(new['current'])
+        self.assertEqual(new['versions'], 'v2')
+
+    def test_deleted_question_is_archived_lineage_after_current(self):
+        """
+        GIVEN QDROP deleted in v2 but answered in v1
+        WHEN lineage_map is built
+        THEN QDROP is an archived-only lineage, ordered after current lineages
+        """
+        from .versioning import lineage_map
+        lm = lineage_map(self.canonical)
+        entry = lm[('QDROP', 'text')]
+        self.assertIsNone(entry['current'])
+        self.assertEqual(entry['versions'], 'v1')
+        keys = list(lm.keys())
+        first_archived = min(i for i, k in enumerate(keys) if lm[k]['current'] is None)
+        last_current = max(i for i, k in enumerate(keys) if lm[k]['current'] is not None)
+        self.assertGreater(first_archived, last_current)
+
+    def test_public_results_service_uses_family_scope(self):
+        """
+        GIVEN a published results page on the canonical survey
+        WHEN the service collects survey ids
+        THEN it matches family_ids (refactored onto the shared helper)
+        """
+        from .public_results import PublicResultsService
+        from .versioning import family_ids
+        from .models import PublicResultsPage
+        page = PublicResultsPage.objects.create(
+            survey=self.canonical, slug='fam-page', is_published=True,
+        )
+        svc = PublicResultsService(page)
+        self.assertEqual(svc._survey_ids, family_ids(self.canonical))
+        self.assertEqual(svc.response_count(), 1)  # sess1 only (sess2 deleted)
+
+
+class CrossVersionAnalyticsTest(TestCase):
+    """Analytics, dashboard and public-results aggregation across versions."""
+
+    def setUp(self):
+        from .versioning import clone_survey_for_draft, publish_draft
+        self.org = _make_org('XVerOrg')
+        self.user = User.objects.create_user('xver_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='xver_survey', organization=self.org, created_by=self.user,
+            status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='S1', code='S1', is_head=True,
+        )
+        self.q_keep = Question.objects.create(
+            survey_section=self.section, name='Keep', input_type='choice',
+            code='QKEEP', order_number=1,
+            choices=[{'code': 1, 'name': 'Yes'}, {'code': 2, 'name': 'No'}],
+        )
+        self.q_dropchoice = Question.objects.create(
+            survey_section=self.section, name='Transport', input_type='choice',
+            code='QCH', order_number=2,
+            choices=[{'code': 1, 'name': 'Car'}, {'code': 2, 'name': 'Bike'},
+                     {'code': 3, 'name': 'Bus'}],
+        )
+        self.q_drop = Question.objects.create(
+            survey_section=self.section, name='Legacy note', input_type='text',
+            code='QDROP', order_number=3,
+        )
+
+        # two completed v1 sessions (single section → any answer completes)
+        self.v1_sess1 = SurveySession.objects.create(survey=self.survey)
+        self.v1_sess2 = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=self.v1_sess1, question=self.q_keep,
+                              selected_choices=[1])
+        Answer.objects.create(survey_session=self.v1_sess1, question=self.q_dropchoice,
+                              selected_choices=[3])
+        Answer.objects.create(survey_session=self.v1_sess1, question=self.q_drop,
+                              text='old words')
+        Answer.objects.create(survey_session=self.v1_sess2, question=self.q_keep,
+                              selected_choices=[2])
+
+        # v2: remove QDROP, remove choice code 3 from QCH
+        from .versioning import clone_survey_for_draft as _clone, publish_draft as _publish
+        draft = _clone(self.survey)
+        Question.objects.filter(survey_section__survey_header=draft, code='QDROP').delete()
+        Question.objects.filter(survey_section__survey_header=draft, code='QCH').update(
+            choices=[{'code': 1, 'name': 'Car'}, {'code': 2, 'name': 'Bike'}],
+        )
+        self.canonical = _publish(draft, force=True)
+        self.archived = SurveyHeader.objects.get(canonical_survey=self.canonical)
+
+        # one completed v2 session on the cloned questions
+        self.v2_keep = Question.objects.get(
+            survey_section__survey_header=self.canonical, code='QKEEP',
+        )
+        self.v2_sess = SurveySession.objects.create(survey=self.canonical)
+        Answer.objects.create(survey_session=self.v2_sess, question=self.v2_keep,
+                              selected_choices=[1])
+
+    def _service(self, **kw):
+        from .analytics import SurveyAnalyticsService
+        return SurveyAnalyticsService(self.canonical, **kw)
+
+    def test_overview_spans_family_and_counts_completion_per_version(self):
+        """
+        GIVEN 2 completed v1 sessions (moved to the archive at publish) + 1 on v2
+        WHEN get_overview runs with the default (all) scope
+        THEN totals and completions span both versions
+        """
+        overview = self._service().get_overview()
+        self.assertEqual(overview['total_sessions'], 3)
+        self.assertEqual(overview['completed_count'], 3)
+
+    def test_version_filter_isolates_single_version(self):
+        """
+        GIVEN sessions on v1 and v2
+        WHEN the service is scoped to a single version
+        THEN only that version's sessions are counted
+        """
+        self.assertEqual(self._service(version='v1').get_overview()['total_sessions'], 2)
+        self.assertEqual(self._service(version='v2').get_overview()['total_sessions'], 1)
+
+    def test_choice_stats_merge_lineage_and_flag_removed_code(self):
+        """
+        GIVEN QKEEP answered in v1 (codes 1,2) and v2 (code 1), and QCH code 3
+              answered in v1 but removed from the v2 choice set
+        WHEN question stats are built
+        THEN QKEEP counts merge across versions and code 3 appears flagged
+        """
+        stats = {s['question'].code: s for s in self._service().get_all_question_stats()}
+        keep = stats['QKEEP']
+        self.assertEqual(keep['total_answers'], 3)
+        self.assertEqual(keep['choice_counts'][keep['choice_codes'].index(1)], 2)
+
+        ch = stats['QCH']
+        self.assertIn(3, ch['choice_codes'])
+        idx = ch['choice_codes'].index(3)
+        self.assertIn('no longer offered', ch['choice_labels'][idx])
+        self.assertIn('Bus', ch['choice_labels'][idx])
+        self.assertEqual(ch['choice_counts'][idx], 1)
+
+    def test_deleted_question_shows_as_archived_stat(self):
+        """
+        GIVEN QDROP removed in v2 but answered in v1
+        WHEN question stats are built
+        THEN it appears as an archived lineage with its historical answers
+        """
+        stats = {s['question'].code: s for s in self._service().get_all_question_stats()}
+        drop = stats['QDROP']
+        self.assertTrue(drop['archived'])
+        self.assertEqual(drop['total_answers'], 1)
+        self.assertEqual(drop['versions'], 'v1')
+
+    def test_table_merges_columns_and_labels_archived(self):
+        """
+        GIVEN the family table
+        WHEN a page is built
+        THEN v1 and v2 answers share one QKEEP column, QDROP column is
+             version-labeled, and rows carry a version chip
+        """
+        result = self._service().get_table_page()
+        cols = {c['key']: c for c in result['columns']}
+        self.assertIn('version', cols)
+        labels = [c['label'] for c in result['columns']]
+        self.assertTrue(any('Legacy note (v1)' == l for l in labels))
+
+        rows = {r['session_id']: r for r in result['rows']}
+        rep_key = str(self.v2_keep.id)  # current question is the representative
+        self.assertEqual(rows[self.v1_sess1.id]['cells'][rep_key], 'Yes')
+        self.assertEqual(rows[self.v2_sess.id]['cells'][rep_key], 'Yes')
+        self.assertEqual(rows[self.v1_sess1.id]['version'], 'v1')
+        self.assertEqual(rows[self.v2_sess.id]['version'], 'v2')
+
+    def test_dashboard_card_counts_survive_publish(self):
+        """
+        GIVEN a survey republished as v2
+        WHEN the dashboard renders
+        THEN the card still counts every family session
+        """
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        response = self.client.get('/editor/')
+        card = [s for s in response.context['survey_headers'] if s.id == self.canonical.id][0]
+        self.assertEqual(card.session_count, 3)
+        self.assertEqual(card.completed_count, 3)
+
+    def test_public_results_answers_resolve_lineage_both_directions(self):
+        """
+        GIVEN a results page whose block question FK may point at either the
+              archived v1 object or the current v2 clone
+        WHEN answers are collected
+        THEN both resolve to the same lineage-wide set
+        """
+        from .public_results import PublicResultsService
+        from .models import PublicResultsPage
+        page = PublicResultsPage.objects.create(
+            survey=self.canonical, slug='xver-page', is_published=True,
+            k_anonymity_threshold=1,
+        )
+        svc = PublicResultsService(page)
+        self.assertEqual(svc._answers(self.q_keep).count(), 3)     # archived FK
+        self.assertEqual(svc._answers(self.v2_keep).count(), 3)    # current FK
+        data = svc._choice_data(self.v2_keep)
+        yes = [i for i in data['items'] if i['code'] == 1][0]
+        self.assertEqual(yes['value'], 2)
+
+    def test_choice_code_guard_reallocates_reused_code(self):
+        """
+        GIVEN QCH whose code 3 was answered historically and then removed
+        WHEN a new choice arrives claiming code 3
+        THEN it is reallocated above every code ever used
+        """
+        from .editor_views import _guard_choice_codes
+        current = Question.objects.get(
+            survey_section__survey_header=self.canonical, code='QCH',
+        )
+        new_choices = [
+            {'code': 1, 'name': 'Car'}, {'code': 2, 'name': 'Bike'},
+            {'code': 3, 'name': 'Train'},   # reuse of the answered code 3
+        ]
+        guarded = _guard_choice_codes(current, new_choices)
+        self.assertEqual(guarded[2]['name'], 'Train')
+        self.assertEqual(guarded[2]['code'], 4)  # max(1,2,3)+1
+        # existing codes untouched
+        self.assertEqual([guarded[0]['code'], guarded[1]['code']], [1, 2])
+
+    def test_delete_survey_trashes_without_touching_family_data(self):
+        """
+        GIVEN a canonical survey with an archived version holding sessions
+        WHEN the owner deletes the survey
+        THEN it lands in Trash and every family member's data is still intact
+        """
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.client.post(f'/editor/delete/{self.canonical.uuid}/')
+        self.canonical.refresh_from_db()
+        self.assertTrue(self.canonical.is_trashed)
+        self.assertEqual(
+            SurveySession.objects.filter(
+                id__in=[self.v1_sess1.id, self.v1_sess2.id, self.v2_sess.id],
+            ).count(),
+            3,
+        )
+
+    def test_purge_removes_whole_family(self):
+        """
+        GIVEN a trashed canonical survey with an archived version holding sessions
+        WHEN the trash purge runs
+        THEN sessions and headers of every family member are gone
+        """
+        from .trash import purge_survey
+        purge_survey(self.canonical)
+        self.assertFalse(SurveyHeader.objects.filter(id__in=[self.canonical.id, self.archived.id]).exists())
+        self.assertFalse(SurveySession.objects.filter(
+            id__in=[self.v1_sess1.id, self.v1_sess2.id, self.v2_sess.id],
+        ).exists())
+
+
+class RestoreVersionTest(TestCase):
+    """Restore an archived version's questionnaire as a new draft (rollback)."""
+
+    def setUp(self):
+        from .versioning import clone_survey_for_draft, publish_draft
+        self.org = _make_org('RestoreOrg')
+        self.owner = User.objects.create_user('restore_owner', password='pw')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='restore_survey', organization=self.org, created_by=self.owner,
+            status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='S1', code='S1', is_head=True,
+        )
+        Question.objects.create(
+            survey_section=self.section, name='Keep', input_type='choice',
+            code='QKEEP', order_number=1,
+            choices=[{'code': 1, 'name': 'Yes'}],
+        )
+        self.q_drop = Question.objects.create(
+            survey_section=self.section, name='Drop', input_type='text',
+            code='QDROP', order_number=2,
+        )
+        self.v1_sess = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=self.v1_sess, question=self.q_drop,
+                              text='precious history')
+
+        # v2 drops QDROP
+        draft = clone_survey_for_draft(self.survey)
+        Question.objects.filter(survey_section__survey_header=draft, code='QDROP').delete()
+        self.canonical = publish_draft(draft, force=True)
+
+    def _login(self, user):
+        self.client.force_login(user)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+    def _restore(self, version='v1'):
+        return self.client.post(
+            f'/editor/surveys/{self.canonical.uuid}/restore-version/',
+            {'version': version},
+        )
+
+    def test_restore_creates_draft_with_old_structure(self):
+        """
+        GIVEN v1 (has QDROP) archived and v2 (no QDROP) current
+        WHEN the owner restores v1
+        THEN a draft linked to the canonical carries QDROP with its original code
+        """
+        self._login(self.owner)
+        response = self._restore()
+        self.assertEqual(response.status_code, 302)
+        draft = self.canonical.get_draft_copy()
+        self.assertIsNotNone(draft)
+        codes = set(Question.objects.filter(
+            survey_section__survey_header=draft,
+        ).values_list('code', flat=True))
+        self.assertEqual(codes, {'QKEEP', 'QDROP'})
+
+    def test_restore_guards(self):
+        """
+        GIVEN various invalid preconditions
+        WHEN restore is attempted
+        THEN it is rejected and no draft appears
+        """
+        from .versioning import clone_survey_for_draft
+        self._login(self.owner)
+        # unknown version
+        self.assertEqual(self._restore('v9').status_code, 404)
+        # invalid version string
+        self.assertEqual(self._restore('nonsense').status_code, 400)
+        # draft already exists
+        clone_survey_for_draft(self.canonical)
+        self.assertEqual(self._restore('v1').status_code, 409)
+
+    def test_restore_denied_for_non_owner_editor(self):
+        """
+        GIVEN a non-owner editor collaborator
+        WHEN they attempt a restore
+        THEN it is denied and no draft is created
+        """
+        editor = User.objects.create_user('restore_editor', password='pw')
+        Membership.objects.create(user=editor, organization=self.org, role='editor')
+        SurveyCollaborator.objects.create(user=editor, survey=self.canonical, role='editor')
+        self._login(editor)
+        response = self._restore()
+        self.assertIn(response.status_code, (403, 404))
+        self.assertFalse(self.canonical.has_draft_copy())
+
+    def test_publish_of_restored_draft_revives_lineage(self):
+        """
+        GIVEN QDROP archived with a v1 answer while v2 is current
+        WHEN the owner restores v1 and publishes the draft
+        THEN v3 is current, QDROP's lineage is current again and its
+             historical answer reports without the archived badge
+        """
+        from .versioning import publish_draft
+        from .analytics import SurveyAnalyticsService
+        self._login(self.owner)
+        self._restore()
+        draft = self.canonical.get_draft_copy()
+        canonical = publish_draft(draft, force=True)
+        self.assertEqual(canonical.version_number, 3)
+
+        stats = {s['question'].code: s
+                 for s in SurveyAnalyticsService(canonical).get_all_question_stats()}
+        drop = stats['QDROP']
+        self.assertFalse(drop['archived'])
+        self.assertEqual(drop['total_answers'], 1)   # the v1 answer is back
+
+    def test_widget_shows_restore_only_when_available(self):
+        """
+        GIVEN a published survey with an archived v1
+        WHEN the owner opens Build (widget rendered)
+        THEN a Restore action is present — and disappears once a draft exists
+        """
+        from .versioning import clone_survey_for_draft
+        self._login(self.owner)
+        html = self.client.get(f'/editor/surveys/{self.canonical.uuid}/').content.decode()
+        self.assertIn('restore-version', html)
+        clone_survey_for_draft(self.canonical)
+        html = self.client.get(f'/editor/surveys/{self.canonical.uuid}/').content.decode()
+        self.assertNotIn('restore-version', html)
+
+
 class RangeDisplayStyleTest(TestCase):
     """Display styles for range questions.
 
@@ -18435,7 +20648,13 @@ class ClosedSurveyEditPathTest(TestCase):
         response = self.client.get(f'/editor/surveys/{survey.uuid}/')
 
         self.assertTrue(response.context['show_edit_published'])
-        self.assertContains(response, 'Create a draft copy')
+        # Assert the route is offered, not the wording on the button. The label
+        # has already differed between the read-only bar and the publishing
+        # widget ("Draft new version" / "Create a draft to edit"), and pinning
+        # copy here fails the test for a rewording that changes no behaviour.
+        self.assertContains(
+            response, reverse('editor_create_draft', args=[survey.uuid]),
+        )
 
     def test_second_draft_copy_is_still_refused(self):
         """

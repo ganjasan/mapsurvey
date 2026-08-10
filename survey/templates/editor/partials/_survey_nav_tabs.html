@@ -1,39 +1,71 @@
 {% comment %}
-Shared navigation tabs for survey management pages.
-Requires: survey (SurveyHeader), active_tab (string: "editor"|"analytics"|"share")
-Optional: effective_role (string), hide_status_badge (bool)
+Workspace navigation for survey-management pages (Variant A "lifecycle").
+Three spaces (Build / Results / Publish) + action dropdowns (Share / Preview)
++ a gear that opens the in-Build settings panel. Routes/view names unchanged.
+
+Requires: survey, active_tab ("build"|"results"|"publish").
+Optional: effective_role, hide_status_badge (kept for back-compat; ignored).
 {% endcomment %}
 {% load survey_filters %}
-{% if not hide_status_badge %}
-<span class="badge badge-{{ survey.status|status_badge_class }} ml-2 status-badge-static">{{ survey.get_status_display }} &middot; v{{ survey.version_number }}</span>
-{% endif %}
+
+{% include "editor/partials/_publishing_widget.html" %}
+
 <div class="survey-nav-tabs">
     <a href="{% url 'editor_survey_detail' survey.uuid %}"
-       class="survey-nav-tab{% if active_tab == 'editor' %} active{% endif %}"
-       title="Editor">
-        <i class="fas fa-pen"></i> Editor
+       class="survey-nav-tab{% if active_tab == 'build' %} active{% endif %}" title="Build the survey">
+        <i class="fas fa-hammer"></i> Build
     </a>
     <a href="{% url 'editor_survey_analytics' survey.uuid %}"
-       class="survey-nav-tab{% if active_tab == 'analytics' %} active{% endif %}"
-       title="Analytics">
-        <i class="fas fa-chart-bar"></i> Analytics <span class="badge-beta">beta</span>
+       class="survey-nav-tab{% if active_tab == 'results' %} active{% endif %}" title="Responses & analysis">
+        <i class="fas fa-chart-bar"></i> Results
     </a>
-    <a href="{% url 'editor_survey_share' survey.uuid %}"
-       class="survey-nav-tab{% if active_tab == 'share' %} active{% endif %}"
-       title="Share">
-        <i class="fas fa-share-alt"></i> Share
+    <a href="{% url 'editor_survey_public_results' survey.uuid %}"
+       class="survey-nav-tab{% if active_tab == 'publish' %} active{% endif %}" title="Public results page">
+        <i class="fas fa-globe"></i> Publish <span class="badge-beta">beta</span>
     </a>
-    {% if effective_role == 'owner' %}
-    <a href="{% url 'editor_survey_settings' survey.uuid %}"
-       class="survey-nav-tab{% if active_tab == 'settings' %} active{% endif %}"
-       title="Settings">
-        <i class="fas fa-cog"></i> Settings
-    </a>
-    {% endif %}
 </div>
-<a href="{% url 'survey' survey_slug=survey.uuid %}"
-   class="btn btn-sm btn-outline-primary ml-2"
-   target="_blank"
-   title="Open survey in a new tab">
-    <i class="fas fa-external-link-alt"></i> Preview
+
+{% with page=survey.public_results_page %}
+<!-- Share ▾ — action over both shareable objects -->
+<div class="nav-action ml-2">
+    <button onclick="navMenuToggle(this,event)"><i class="fas fa-share-alt"></i> Share <i class="fas fa-angle-down caret"></i></button>
+    <div class="nav-menu">
+        <div class="nm-head">Survey</div>
+        <a class="nm-item" href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-link lead"></i> Share link &amp; tracking…</a>
+        {% if page and page.is_published %}
+        <div class="nm-sep"></div>
+        <div class="nm-head">Results page</div>
+        <button class="nm-item" onclick="prNavCopy('{{ request.scheme }}://{{ request.get_host }}/r/{{ page.slug }}/', this)"><i class="fas fa-link lead"></i> Copy results link <small>live</small></button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Preview ▾ — over both objects. In Build it lives in the Build toolbar
+     instead of the header, so hide it here for that space. -->
+{% if active_tab != 'build' %}
+<div class="nav-action">
+    <button onclick="navMenuToggle(this,event)"><i class="fas fa-external-link-alt"></i> Preview <i class="fas fa-angle-down caret"></i></button>
+    <div class="nav-menu">
+        <a class="nm-item" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank"><i class="fas fa-user lead"></i> Survey — as respondent</a>
+        <a class="nm-item" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank"><i class="fas fa-globe lead"></i> Results page</a>
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+
+{% if effective_role == 'owner' %}
+<a href="{% url 'editor_survey_detail' survey.uuid %}?panel=settings"
+   class="nav-action ml-1" title="Survey settings"
+   style="border:1px solid var(--border-color);border-radius:6px;padding:0.28rem 0.5rem;color:#374151;text-decoration:none;">
+    <i class="fas fa-cog"></i>
 </a>
+{% endif %}
+
+<script>
+// Copy-to-clipboard for Share menu items (brief "Copied" feedback).
+function prNavCopy(url, btn){
+    if (navigator.clipboard) { navigator.clipboard.writeText(url); }
+    var lead = btn.querySelector('i.lead');
+    if (lead) { var old = lead.className; lead.className = 'fas fa-check lead'; setTimeout(function(){ lead.className = old; }, 1200); }
+}
+</script>

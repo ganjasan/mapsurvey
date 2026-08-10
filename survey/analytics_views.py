@@ -10,8 +10,12 @@ from django.views.decorators.http import require_POST
 
 from .models import Question, Answer, SurveySession, VALIDATION_STATUS_CHOICES
 from .permissions import survey_permission_required
-from .analytics import SurveyAnalyticsService, PerformanceAnalyticsService, SessionValidationService
+from .analytics import (
+    SurveyAnalyticsService, PerformanceAnalyticsService, SessionValidationService,
+    version_choices,
+)
 from .events import emit_event
+from .versioning import family_ids
 
 
 def _parse_filter_param(filters_str):
@@ -34,8 +38,13 @@ def _parse_filter_param(filters_str):
     return result
 
 
-def _resolve_filtered_session_ids(survey, filter_map):
-    """Return set of session PKs matching ALL filters (AND across questions, OR within)."""
+def _resolve_filtered_session_ids(survey, filter_map, service=None):
+    """Return set of session PKs matching ALL filters (AND across questions, OR within).
+
+    Chart filters carry lineage-representative question ids; when a service
+    is given, each filter expands to the whole lineage so cross-version
+    sessions match too.
+    """
     if not filter_map:
         return None
 
@@ -44,15 +53,24 @@ def _resolve_filtered_session_ids(survey, filter_map):
         q_obj = Q()
         for code in codes:
             q_obj |= Q(selected_choices__contains=[code])
-        matching = set(
-            Answer.objects
-            .filter(
+
+        if service is not None:
+            question = Question.objects.filter(id=question_id).first()
+            qid_list = service._lineage_ids(question) if question else [question_id]
+            base = Answer.objects.filter(
+                question_id__in=qid_list,
+                question__survey_section__survey_header_id__in=service.scope_ids,
+                survey_session__is_deleted=False,
+            )
+        else:
+            base = Answer.objects.filter(
                 question_id=question_id,
                 question__survey_section__survey_header=survey,
                 survey_session__is_deleted=False,
             )
-            .filter(q_obj)
-            .values_list('survey_session_id', flat=True)
+
+        matching = set(
+            base.filter(q_obj).values_list('survey_session_id', flat=True)
         )
         if session_sets is None:
             session_sets = matching
@@ -66,7 +84,8 @@ def _resolve_filtered_session_ids(survey, filter_map):
 def analytics_dashboard(request, survey_uuid):
     """Full analytics dashboard page for a survey."""
     survey = request.survey
-    service = SurveyAnalyticsService(survey)
+    version = request.GET.get('version', 'all')
+    service = SurveyAnalyticsService(survey, version=version)
 
     overview = service.get_overview()
     hourly_sessions = service.get_hourly_sessions()
@@ -81,12 +100,14 @@ def analytics_dashboard(request, survey_uuid):
     ]
 
     # Performance tab data
-    perf_service = PerformanceAnalyticsService(survey)
+    perf_service = PerformanceAnalyticsService(survey, version=version)
     funnel = perf_service.get_funnel()
 
     return render(request, 'editor/analytics_dashboard.html', {
         'survey': survey,
         'effective_role': request.effective_survey_role,
+        'version_choices': version_choices(survey),
+        'current_version': version,
         'total_sessions': overview['total_sessions'],
         'completed_count': overview['completed_count'],
         'completion_rate': overview['completion_rate'],
@@ -116,13 +137,15 @@ def analytics_dashboard(request, survey_uuid):
 def analytics_text_answers(request, survey_uuid, question_id):
     """HTMX partial: paginated text answers for a single question."""
     survey = request.survey
+    # Family-wide lookup: the question may be an archived-lineage representative
     question = get_object_or_404(
         Question,
         id=question_id,
-        survey_section__survey_header=survey,
+        survey_section__survey_header_id__in=family_ids(survey),
     )
 
-    service = SurveyAnalyticsService(survey)
+    version = request.GET.get('version', 'all')
+    service = SurveyAnalyticsService(survey, version=version)
     try:
         page = int(request.GET.get('page', 1))
     except (ValueError, TypeError):
@@ -134,7 +157,7 @@ def analytics_text_answers(request, survey_uuid, question_id):
 
     filters_str = request.GET.get('filters', '')
     filter_map = _parse_filter_param(filters_str)
-    session_ids = _resolve_filtered_session_ids(survey, filter_map)
+    session_ids = _resolve_filtered_session_ids(survey, filter_map, service=service)
 
     result = service.get_text_answers(
         question, page=page, page_size=page_size, session_ids=session_ids,
@@ -151,7 +174,7 @@ def analytics_text_answers(request, survey_uuid, question_id):
 def analytics_session_detail(request, survey_uuid, session_id):
     """HTMX partial: all answers for one session, with mini-map geo data."""
     survey = request.survey
-    session = get_object_or_404(SurveySession, id=session_id, survey=survey)
+    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids(survey))
 
     service = SurveyAnalyticsService(survey)
     answer_rows, geo_features = service.format_session_answers(session)
@@ -170,11 +193,12 @@ def analytics_table(request, survey_uuid):
     """HTMX partial: paginated attribute table of all sessions."""
     survey = request.survey
     show_trash = request.GET.get('trash') == '1'
-    service = SurveyAnalyticsService(survey, include_deleted=show_trash)
+    version = request.GET.get('version', 'all')
+    service = SurveyAnalyticsService(survey, include_deleted=show_trash, version=version)
 
     # Reuse existing filter parsing (ignored in trash mode)
     filter_map = _parse_filter_param(request.GET.get('filters', ''))
-    session_ids = _resolve_filtered_session_ids(survey, filter_map) if not show_trash else None
+    session_ids = _resolve_filtered_session_ids(survey, filter_map, service=service) if not show_trash else None
 
     try:
         page = int(request.GET.get('page', 1))
@@ -268,7 +292,7 @@ def analytics_validation_settings(request, survey_uuid):
 @require_POST
 def analytics_answer_edit(request, survey_uuid, session_id, question_id):
     """Edit or create an answer value for a session+question pair."""
-    session = get_object_or_404(SurveySession, id=session_id, survey=request.survey)
+    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids(request.survey))
     question = get_object_or_404(
         Question, id=question_id,
         survey_section__survey_header=request.survey,
@@ -321,7 +345,7 @@ def analytics_answer_edit(request, survey_uuid, session_id, question_id):
 @require_POST
 def analytics_session_update_tags(request, survey_uuid, session_id):
     """Update tags and notes on a session."""
-    session = get_object_or_404(SurveySession, id=session_id, survey=request.survey)
+    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids(request.survey))
     try:
         body = json.loads(request.body)
     except (json.JSONDecodeError, AttributeError):
@@ -341,7 +365,7 @@ def analytics_session_update_tags(request, survey_uuid, session_id):
 @require_POST
 def analytics_session_set_status(request, survey_uuid, session_id):
     """Set validation_status on a session."""
-    session = get_object_or_404(SurveySession, id=session_id, survey=request.survey, is_deleted=False)
+    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids(request.survey), is_deleted=False)
     status = request.POST.get('validation_status', '')
     svc = SessionValidationService()
     try:
@@ -355,7 +379,7 @@ def analytics_session_set_status(request, survey_uuid, session_id):
 @require_POST
 def analytics_session_trash(request, survey_uuid, session_id):
     """Soft-delete a session (move to trash)."""
-    session = get_object_or_404(SurveySession, id=session_id, survey=request.survey, is_deleted=False)
+    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids(request.survey), is_deleted=False)
     svc = SessionValidationService()
     svc.trash(session)
     return HttpResponse(status=204, headers={'HX-Trigger': 'sessionTrashed'})
@@ -365,7 +389,7 @@ def analytics_session_trash(request, survey_uuid, session_id):
 @require_POST
 def analytics_session_restore(request, survey_uuid, session_id):
     """Restore a trashed session."""
-    session = get_object_or_404(SurveySession, id=session_id, survey=request.survey, is_deleted=True)
+    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids(request.survey), is_deleted=True)
     svc = SessionValidationService()
     svc.restore(session)
     return HttpResponse(status=204, headers={'HX-Trigger': 'sessionRestored'})
@@ -375,7 +399,7 @@ def analytics_session_restore(request, survey_uuid, session_id):
 @require_POST
 def analytics_session_hard_delete(request, survey_uuid, session_id):
     """Permanently delete a trashed session and all its answers."""
-    session = get_object_or_404(SurveySession, id=session_id, survey=request.survey, is_deleted=True)
+    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids(request.survey), is_deleted=True)
     svc = SessionValidationService()
     svc.hard_delete(session)
     return HttpResponse(status=204, headers={'HX-Trigger': 'sessionDeleted'})
@@ -390,7 +414,7 @@ def _parse_bulk_session_ids(request, survey):
         return []
     if not isinstance(ids, list):
         return []
-    return list(SurveySession.objects.filter(id__in=ids, survey=survey))
+    return list(SurveySession.objects.filter(id__in=ids, survey_id__in=family_ids(survey)))
 
 
 @survey_permission_required('editor')

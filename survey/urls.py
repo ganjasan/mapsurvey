@@ -5,6 +5,7 @@ from . import editor_views
 from . import analytics_views
 from . import share_views
 from . import org_views
+from . import public_results_editor
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -30,6 +31,10 @@ urlpatterns = [
     path('editor/surveys/new/', editor_views.editor_survey_create, name='editor_survey_create'),
     path('editor/surveys/<uuid:survey_uuid>/', editor_views.editor_survey_detail, name='editor_survey_detail'),
     path('editor/surveys/<uuid:survey_uuid>/settings/', editor_views.editor_survey_settings, name='editor_survey_settings'),
+    path('editor/surveys/<uuid:survey_uuid>/settings-panel/', editor_views.editor_survey_settings_panel, name='editor_survey_settings_panel'),
+    path('editor/surveys/<uuid:survey_uuid>/thanks-panel/', editor_views.editor_survey_thanks_panel, name='editor_survey_thanks_panel'),
+    path('editor/surveys/<uuid:survey_uuid>/thanks-preview/', editor_views.editor_survey_thanks_preview, name='editor_survey_thanks_preview'),
+    path('editor/surveys/<uuid:survey_uuid>/thanks-image/', editor_views.editor_survey_thanks_image, name='editor_survey_thanks_image'),
     path('editor/surveys/<uuid:survey_uuid>/settings/map-position/', editor_views.editor_survey_map_position, name='editor_survey_map_position'),
     path('editor/surveys/<uuid:survey_uuid>/sections/new/', editor_views.editor_section_create, name='editor_section_create'),
     path('editor/surveys/<uuid:survey_uuid>/sections/<int:section_id>/', editor_views.editor_section_detail, name='editor_section_detail'),
@@ -49,8 +54,10 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/sections/<int:section_id>/map/', editor_views.editor_section_map_picker, name='editor_section_map_picker'),
     path('editor/surveys/<uuid:survey_uuid>/preview/<str:section_name>/', editor_views.editor_section_preview, name='editor_section_preview'),
     path('editor/surveys/<uuid:survey_uuid>/transition/', editor_views.editor_survey_transition, name='editor_survey_transition'),
+    path('editor/surveys/<uuid:survey_uuid>/visibility/', editor_views.editor_survey_visibility, name='editor_survey_visibility'),
     path('editor/surveys/<uuid:survey_uuid>/password/', editor_views.editor_survey_password, name='editor_survey_password'),
     path('editor/surveys/<uuid:survey_uuid>/create-draft/', editor_views.editor_create_draft, name='editor_create_draft'),
+    path('editor/surveys/<uuid:survey_uuid>/restore-version/', editor_views.editor_restore_version, name='editor_restore_version'),
     path('editor/surveys/<uuid:survey_uuid>/publish-draft/', editor_views.editor_publish_draft, name='editor_publish_draft'),
     path('editor/surveys/<uuid:survey_uuid>/discard-draft/', editor_views.editor_discard_draft, name='editor_discard_draft'),
     path('editor/surveys/<uuid:survey_uuid>/check-compatibility/', editor_views.editor_check_compatibility, name='editor_check_compatibility'),
@@ -70,6 +77,18 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/analytics/bulk/trash/', analytics_views.analytics_bulk_trash, name='analytics_bulk_trash'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/bulk/restore/', analytics_views.analytics_bulk_restore, name='analytics_bulk_restore'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/bulk/delete/', analytics_views.analytics_bulk_hard_delete, name='analytics_bulk_hard_delete'),
+
+    # Public results page configuration
+    path('editor/surveys/<uuid:survey_uuid>/public-results/', public_results_editor.public_results_config, name='editor_survey_public_results'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/preview/', public_results_editor.public_results_preview, name='editor_public_results_preview'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/settings/', public_results_editor.public_results_save_settings, name='editor_public_results_save'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/add/', public_results_editor.public_results_block_add, name='editor_public_results_block_add'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/<int:block_id>/edit/', public_results_editor.public_results_block_edit, name='editor_public_results_block_edit'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/<int:block_id>/delete/', public_results_editor.public_results_block_delete, name='editor_public_results_block_delete'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/reorder/', public_results_editor.public_results_blocks_reorder, name='editor_public_results_blocks_reorder'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/set-published/', public_results_editor.public_results_set_published, name='editor_public_results_set_published'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/freeze/', public_results_editor.public_results_freeze, name='editor_public_results_freeze'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/unfreeze/', public_results_editor.public_results_unfreeze, name='editor_public_results_unfreeze'),
 
     # Share & tracking links
     path('editor/surveys/<uuid:survey_uuid>/share/', share_views.share_page, name='editor_survey_share'),
@@ -104,6 +123,7 @@ urlpatterns = [
     path('alternatives/maptionnaire/', views.maptionnaire_alternative, name='maptionnaire_alternative'),
     path('alternatives/social-pinpoint/', views.social_pinpoint_alternative, name='social_pinpoint_alternative'),
     path('alternatives/metroquest/', views.metroquest_alternative, name='metroquest_alternative'),
+    path('r/<slug:slug>/', views.public_results, name='public_results'),
     path('robots.txt', views.robots_txt, name='robots_txt'),
     path('sitemap.xml', views.sitemap_xml, name='sitemap_xml'),
 ]

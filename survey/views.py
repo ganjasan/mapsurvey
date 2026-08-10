@@ -502,15 +502,31 @@ def editor(request):
 	if not show_archived:
 		survey_list = survey_list.exclude(status='archived')
 
-	# Annotate with session count
-	survey_list = survey_list.annotate(
-		session_count=Count('surveysession', distinct=True),
+	# Reverse OneToOne used by the "Results live" card chip — avoid N+1
+	survey_list = survey_list.select_related('public_results_page')
+
+	# Session counts span the whole version family: publish_draft() moves
+	# sessions onto archived headers, so a per-header Count would collapse to
+	# ~0 right after publishing. One grouped query over all families.
+	survey_list = list(survey_list)
+	from django.db.models.functions import Coalesce
+	family_counts = dict(
+		SurveySession.objects
+		.filter(
+			Q(survey__in=[s.id for s in survey_list])
+			| Q(survey__canonical_survey_id__in=[s.id for s in survey_list])
+		)
+		.annotate(fam=Coalesce('survey__canonical_survey_id', 'survey_id'))
+		.values('fam')
+		.annotate(n=Count('id'))
+		.values_list('fam', 'n')
 	)
 
-	# Compute completion KPIs per survey
+	# Compute completion KPIs per survey (family-wide via the service scope)
 	from .analytics import SurveyAnalyticsService
 	surveys_with_kpi = []
 	for survey in survey_list:
+		survey.session_count = family_counts.get(survey.id, 0)
 		overview = SurveyAnalyticsService(survey).get_overview()
 		survey.completed_count = overview['completed_count']
 		survey.completion_rate = overview['completion_rate']
@@ -764,8 +780,12 @@ def survey_section(request, survey_slug, section_name):
 	if survey.is_multilingual() and not request.session.get('survey_language'):
 		return redirect('survey_language_select', survey_slug=str(survey.uuid))
 
-	# Get selected language (None for single-language surveys)
+	# Get selected language. A single-language survey never shows the language
+	# picker, so default to its one language (otherwise content would fall back).
 	selected_language = request.session.get('survey_language')
+	if not selected_language and survey.available_languages:
+		selected_language = survey.available_languages[0]
+		request.session['survey_language'] = selected_language
 
 	# Activate Django i18n so {% trans %} renders in the selected language
 	if selected_language:
@@ -1366,6 +1386,24 @@ def story_detail(request, slug):
 	return render(request, 'story_detail.html', context)
 
 
+def public_results(request, slug):
+	"""Public, read-only results page served at /r/<slug>/.
+
+	404 unless the page exists and is published. Renders live aggregates
+	or a frozen snapshot. Unlisted pages are reachable here but emit
+	noindex and are excluded from listings/sitemap.
+	"""
+	from .models import PublicResultsPage
+	from .public_results import build_page_context
+
+	page = get_object_or_404(
+		PublicResultsPage.objects.select_related('survey'),
+		slug=slug, is_published=True,
+	)
+	lang = request.GET.get('lang') or 'en'
+	return render(request, 'public_results.html', build_page_context(page, lang=lang))
+
+
 @survey_permission_required('owner')
 def delete_survey(request, survey_uuid):
 	"""Move a survey to trash (soft-delete); recoverable for 30 days."""
@@ -1489,6 +1527,63 @@ def survey_thanks(request, survey_slug):
 		'thanks_html': thanks_html,
 		'lang': lang or 'en',
 	})
+
+
+# Allow-list for creator-authored thanks-page HTML (WYSIWYG output). The thanks
+# page renders this |safe to public respondents, so it is sanitized on save.
+THANKS_HTML_ALLOWED_TAGS = {
+	'h1', 'h2', 'h3', 'h4', 'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's',
+	'a', 'ul', 'ol', 'li', 'blockquote', 'span', 'div', 'img', 'iframe',
+}
+_STYLE_TAGS = {'p', 'h1', 'h2', 'h3', 'h4', 'div', 'blockquote', 'li', 'span'}
+THANKS_HTML_ALLOWED_ATTRS = {
+	'a': {'href', 'title', 'target'},  # rel is managed by link_rel
+	'img': {'src', 'alt', 'width', 'height'},
+	'iframe': {'src', 'width', 'height', 'frameborder', 'allowfullscreen', 'allow'},
+}
+# Allow a `style` attribute (restricted to text-align via filter_style_properties)
+# on text/block tags so alignment survives on the public page.
+for _t in _STYLE_TAGS:
+	THANKS_HTML_ALLOWED_ATTRS[_t] = {'style'}
+# Only these hosts may be embedded as <iframe> video (Quill video button).
+THANKS_VIDEO_HOSTS = {
+	'www.youtube.com', 'youtube.com', 'www.youtube-nocookie.com',
+	'youtube-nocookie.com', 'player.vimeo.com', 'vimeo.com',
+}
+
+
+def _thanks_attr_filter(tag, attr, value):
+	"""nh3 per-attribute filter: restrict <iframe> src to trusted video hosts.
+	Return None to drop the attribute."""
+	if tag == 'iframe' and attr == 'src':
+		from urllib.parse import urlparse
+		try:
+			host = (urlparse(value).hostname or '').lower()
+		except ValueError:
+			return None
+		return value if host in THANKS_VIDEO_HOSTS else None
+	return value
+
+
+def sanitize_thanks_html(html):
+	"""Sanitize creator WYSIWYG HTML against the thanks-page allow-list.
+
+	Strips scripts, event handlers, and unknown tags/attributes; keeps basic
+	formatting, alignment (inline text-align only), images, and trusted-host
+	video iframes; forces safe rel on links. Returns '' for falsy input.
+	"""
+	if not html:
+		return ''
+	import nh3
+	return nh3.clean(
+		str(html),
+		tags=THANKS_HTML_ALLOWED_TAGS,
+		attributes=THANKS_HTML_ALLOWED_ATTRS,
+		attribute_filter=_thanks_attr_filter,
+		filter_style_properties={'text-align'},
+		url_relative='pass_through',
+		link_rel='noopener noreferrer',
+	)
 
 
 def resolve_thanks_html(thanks_html, lang):
@@ -1634,6 +1729,7 @@ def robots_txt(request):
 		"Allow: /surveys/",
 		"Allow: /stories/",
 		"Allow: /services/",
+		"Allow: /r/",
 	]
 	# SEO landing pages — derived from the single-source registry
 	# (survey/seo_landings.py) so a new landing can't silently miss the allow-list.
@@ -1673,6 +1769,10 @@ def sitemap_xml(request):
 		urls.append(f"  <url><loc>{base}/stories/{story.slug}/</loc>{lastmod}</url>")
 	for survey in surveys:
 		urls.append(f"  <url><loc>{base}/surveys/{survey.uuid}/</loc></url>")
+	# Public (indexable) results pages; unlisted pages are excluded.
+	from .models import PublicResultsPage
+	for page in PublicResultsPage.objects.filter(is_published=True, visibility='public'):
+		urls.append(f"  <url><loc>{base}/r/{page.slug}/</loc></url>")
 	xml = (
 		'<?xml version="1.0" encoding="UTF-8"?>\n'
 		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'

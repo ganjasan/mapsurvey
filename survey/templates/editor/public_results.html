@@ -1,0 +1,414 @@
+{% extends "editor/editor_base.html" %}
+{% load survey_filters %}
+
+{% block page_title %}Publish – {{ survey.name }}{% endblock %}
+
+{% block navbar_content %}
+<span class="survey-name">{{ survey.name }}</span>
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="publish" %}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .pr-container { display: flex; height: calc(100vh - 49px); overflow: hidden; }
+  /* Sidebar reuses the Survey Editor's .editor-sidebar/.sidebar-header/.section-list
+     classes (see editor_base.html) — .pr-block only adds the block-type icon on
+     top of the shared .section-item look. */
+  .pr-block .icon { width:18px; text-align:center; color:#9ca3af; font-size:.8rem; }
+
+  .pr-main { flex:1; min-width:0; overflow-y:auto; }
+  /* .pr-ctxbar/.pr-scroll/.pr-card/.pr-field/.pr-help/.pr-switch/.pr-url/.pr-banner
+     are shared in editor_base.html (same look as the Build settings panel). */
+  .pr-slug-msg { color:#dc2626; }
+
+  .pr-preview { width:420px; flex-shrink:0; border-left:1px solid var(--border-color); display:flex; flex-direction:column; background:#fff; min-width:0; }
+  .pr-preview-head { padding:.6rem 1rem; border-bottom:1px solid var(--border-color); font-size:.8rem; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; display:flex; align-items:center; justify-content:space-between; }
+  .pr-preview-head button { border:none; background:none; cursor:pointer; color:#9ca3af; padding:2px 6px; border-radius:4px; }
+  .pr-preview-head button:hover { color:var(--accent); background:var(--accent-light); }
+  .pr-preview iframe { flex:1; border:none; width:100%; }
+  .pr-slug-msg { color:#dc2626; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pr-container">
+
+  <!-- LEFT: page-settings entry + blocks (styled like the Survey Editor sidebar) -->
+  <div class="pr-sidebar editor-sidebar">
+    <div class="sidebar-pinned">
+      <a class="sidebar-pinned-item {% if not selected_block %}active{% endif %}"
+         href="{% url 'editor_survey_public_results' survey.uuid %}">
+        <i class="fas fa-sliders-h"></i> <span>Page settings</span> <i class="fas fa-chevron-right chev"></i>
+      </a>
+    </div>
+    <div class="sidebar-header"><span>Content blocks</span></div>
+    <ul class="section-list" id="prBlocks">
+      {% for b in blocks %}
+        {% include "editor/partials/pr_block_list_item.html" with b=b %}
+      {% endfor %}
+    </ul>
+    <div class="sidebar-footer">
+      <button type="button" class="add-question-btn" data-toggle="modal" data-target="#addBlockModal">
+        <i class="fas fa-plus"></i> Add block
+      </button>
+    </div>
+  </div>
+
+  {% include "editor/partials/pr_add_block_modal.html" %}
+  {% include "editor/partials/_lifecycle_scripts.html" %}
+
+  <div class="resize-handle" id="prResizeSidebar"></div>
+
+  <!-- CENTER: contextual -->
+  <div class="pr-main">
+    {% if selected_block %}
+      {# ---- selected block config ---- #}
+      <div class="pr-ctxbar">
+        <span class="ico"><i class="fas {% if selected_block.block_type == 'map' %}fa-map-marked-alt{% elif selected_block.block_type == 'chart' %}fa-chart-bar{% elif selected_block.block_type == 'image' %}fa-image{% else %}fa-heading{% endif %}"></i></span>
+        <div><div class="t">Block: {{ selected_block.get_block_type_display }}</div><div class="s">{% if selected_block.question %}{{ selected_block.question.name }}{% endif %}</div></div>
+      </div>
+      <div class="pr-scroll">
+        <form method="post" id="prBlockForm" data-autosave enctype="multipart/form-data" action="{% url 'editor_public_results_block_edit' survey.uuid selected_block.id %}">
+          {% csrf_token %}
+          <div class="pr-card">
+            <h6>Block settings</h6>
+            <div class="pr-field">
+              <label>Custom title (optional)</label>
+              <input class="form-control" name="custom_title" value="{{ selected_block.custom_title.en|default:'' }}">
+            </div>
+            {% if selected_block.block_type == 'chart' %}
+            <div class="pr-field">
+              <label>Visualization</label>
+              <select class="form-control" name="viz">
+                {% for val, label in chart_viz_options %}
+                <option value="{{ val }}" {% if selected_block.viz == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            {% elif selected_block.block_type == 'map' %}
+            <div class="pr-field">
+              <label>Visualization</label>
+              <select class="form-control" name="viz">
+                {% for val, label in map_viz_options %}
+                <option value="{{ val }}" {% if selected_block.viz == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="pr-field">
+              <label>Basemap</label>
+              <select class="form-control" name="basemap">
+                {% for val, label in basemap_choices %}
+                <option value="{{ val }}" {% if selected_block.basemap == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="pr-field">
+              <label>Point popup fields</label>
+              <div class="pr-help" style="margin-top:0;margin-bottom:.4rem;">Attributes shown when a point is clicked — the sub-questions this respondent answered <em>for that point</em>. Empty = anonymous geometry only. Free-text answers can't be shown.</div>
+              {% for sq in geo_subquestions %}
+              <label style="font-weight:400;display:flex;gap:.5rem;align-items:center;">
+                <input type="checkbox" name="geo_label_fields" value="{{ sq.code }}"
+                  {% if sq.code in selected_block.geo_label_fields %}checked{% endif %}>
+                {{ sq.name }}
+              </label>
+              {% empty %}
+              <div class="pr-help" style="margin-top:0;"><i class="fas fa-info-circle"></i> This map question has no sub-questions, so points are shown as anonymous geometry.</div>
+              {% endfor %}
+            </div>
+            {% elif selected_block.block_type == 'text' %}
+            <div class="pr-field">
+              <label>Text</label>
+              <textarea class="form-control" name="content" rows="4">{{ selected_block.content.en|default:'' }}</textarea>
+            </div>
+            {% elif selected_block.block_type == 'image' %}
+            <div class="pr-field">
+              <label>Image</label>
+              {% if selected_block.image %}
+              <div class="mb-2"><img src="{{ selected_block.image.url }}" style="max-width:100%;max-height:180px;border-radius:6px;border:1px solid var(--border-color);"></div>
+              {% endif %}
+              <input type="file" name="image" class="form-control-file" accept="image/*">
+              <div class="pr-help">{% if selected_block.image %}Choose a new file to replace the current image.{% endif %}</div>
+            </div>
+            <div class="pr-field">
+              <label>Caption (optional)</label>
+              <textarea class="form-control" name="content" rows="2">{{ selected_block.content.en|default:'' }}</textarea>
+            </div>
+            {% endif %}
+            <label class="pr-switch"><span>Hidden <small class="pr-help">keep but don't show publicly</small></span>
+              <input type="checkbox" name="is_hidden" {% if selected_block.is_hidden %}checked{% endif %}></label>
+            <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
+            <noscript><button class="btn btn-primary mt-2" type="submit"><i class="fas fa-check"></i> Save block</button></noscript>
+          </div>
+        </form>
+      </div>
+    {% else %}
+      {# ---- page settings ---- #}
+      <div class="pr-ctxbar">
+        <span class="ico"><i class="fas fa-sliders-h"></i></span>
+        <div><div class="t">Page settings</div><div class="s">Applies to the whole public results page</div></div>
+        <span style="flex:1;"></span>
+        {% comment %}Preview must work before the page is live — use the editor preview endpoint, not the public /r/ URL (which 404s until published).{% endcomment %}
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank"><i class="fas fa-external-link-alt"></i> Preview</a>
+        {% if page.is_published %}
+        <a class="btn btn-sm btn-outline-secondary" href="{{ public_url }}" target="_blank" title="The page as visitors see it"><i class="fas fa-globe"></i> Live page</a>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="prSetPublished(false)"><i class="fas fa-eye-slash"></i> Unpublish</button>
+        {% else %}
+        <button type="button" class="btn btn-sm btn-success" onclick="prSetPublished(true)" {% if not can_publish %}disabled title="Publish the survey first"{% endif %}><i class="fas fa-globe"></i> Publish page</button>
+        {% endif %}
+      </div>
+      {% if page.is_published %}
+      <div class="pr-scroll" style="padding-bottom:0;"><div class="pr-banner" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46;"><i class="fas fa-circle" style="font-size:8px;"></i> This results page is <strong>live</strong> at <span class="pr-url" style="color:inherit;">/r/{{ page.slug }}/</span></div></div>
+      {% endif %}
+      <div class="pr-scroll">
+        {% if not can_publish %}
+        <div class="pr-banner"><i class="fas fa-exclamation-triangle"></i> This survey is a draft. Publish the survey before publishing its results page.</div>
+        {% endif %}
+        <form method="post" id="prPageForm" data-autosave action="{% url 'editor_public_results_save' survey.uuid %}">
+          {% csrf_token %}
+          <div class="pr-card">
+            <h6>Visibility &amp; address</h6>
+            <div class="pr-field">
+              <label>Visibility</label>
+              <select class="form-control" name="visibility">
+                {% for val, label in visibility_choices %}
+                <option value="{{ val }}" {% if page.visibility == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              <div class="pr-help">Public is indexable and listable. Unlisted is reachable by direct link only and not indexed.</div>
+            </div>
+            <div class="pr-field">
+              <label>Page address <small class="pr-help">changes the public URL — applied explicitly</small></label>
+              <div style="display:flex;gap:.4rem;align-items:center;">
+                <input class="form-control" name="slug" data-no-autosave value="{{ page.slug }}">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="prSlugApply" style="white-space:nowrap;">Apply</button>
+              </div>
+              <div class="pr-help">Public URL: <span class="pr-url">/r/{{ page.slug }}/</span> <span class="pr-slug-msg"></span></div>
+            </div>
+            <div class="pr-help" style="margin-top:.2rem;"><i class="fas fa-info-circle"></i> Use the <strong>Publish page</strong> button above to make this page live.</div>
+          </div>
+
+          <div class="pr-card">
+            <h6>Intro</h6>
+            <div class="pr-field"><label>Title</label>
+              <input class="form-control" name="intro_title" value="{{ page.intro.title.en|default:'' }}"></div>
+            <div class="pr-field"><label>Body</label>
+              <textarea class="form-control" name="intro_body" rows="3">{{ page.intro.body.en|default:'' }}</textarea></div>
+          </div>
+
+          <div class="pr-card">
+            <h6>Display &amp; privacy</h6>
+            <label class="pr-switch"><span>Show response counter</span>
+              <input type="checkbox" name="show_response_count" {% if page.show_response_count %}checked{% endif %}></label>
+            <label class="pr-switch"><span>Show “Take the survey” CTA <small class="pr-help">only while the survey is open</small></span>
+              <input type="checkbox" name="show_participate_cta" {% if page.show_participate_cta %}checked{% endif %}></label>
+            <label class="pr-switch"><span>Link from the thanks page <small class="pr-help">a “See the results” button after respondents submit</small></span>
+              <input type="checkbox" name="show_on_thanks" {% if page.show_on_thanks %}checked{% endif %}></label>
+            <label class="pr-switch"><span>Feature in public stories listing</span>
+              <input type="checkbox" name="feature_in_listing" {% if page.feature_in_listing %}checked{% endif %}></label>
+            <div class="pr-field" style="margin-top:.6rem;"><label>k-anonymity threshold</label>
+              <input class="form-control" style="max-width:120px;" type="number" min="1" name="k_anonymity_threshold" value="{{ page.k_anonymity_threshold }}">
+              <div class="pr-help">Mask buckets smaller than K as “&lt;K”. Set to 1 to disable.</div></div>
+          </div>
+
+          <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
+          <noscript><button class="btn btn-primary" type="submit"><i class="fas fa-check"></i> Save page settings</button></noscript>
+        </form>
+
+        <div class="pr-card" style="margin-top:1.1rem;">
+          <h6>Data mode</h6>
+          <p class="pr-help" style="margin-top:0;">Current: <strong>{{ page.get_mode_display }}</strong>{% if page.frozen_at %} · frozen {{ page.frozen_at|date:"j M Y H:i" }}{% endif %}</p>
+          <form method="post" action="{% url 'editor_public_results_freeze' survey.uuid %}" style="display:inline;">
+            {% csrf_token %}<button class="btn btn-sm btn-outline-secondary" type="submit"><i class="fas fa-snowflake"></i> Freeze snapshot</button>
+          </form>
+          {% if page.mode == 'frozen' %}
+          <form method="post" action="{% url 'editor_public_results_unfreeze' survey.uuid %}" style="display:inline;">
+            {% csrf_token %}<button class="btn btn-sm btn-outline-secondary" type="submit"><i class="fas fa-bolt"></i> Back to live</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="resize-handle" id="prResizePreview"></div>
+
+  <!-- RIGHT: live preview -->
+  <div class="pr-preview">
+    <div class="pr-preview-head">
+      <span>Live preview</span>
+      <button type="button" id="prPreviewRefresh" title="Refresh preview"><i class="fas fa-sync-alt"></i></button>
+    </div>
+    <iframe id="prPreviewFrame" src="{% url 'editor_public_results_preview' survey.uuid %}"></iframe>
+  </div>
+</div>
+
+<script>
+// Explicit publish / unpublish action (reloads so the widget, ribbon and
+// context bar all reflect the new state).
+function prSetPublished(publish){
+  var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+  var fd = new FormData(); fd.append('publish', publish ? '1' : '0');
+  fetch('{% url "editor_public_results_set_published" survey.uuid %}', {
+    method: 'POST', headers: { 'X-CSRFToken': token, 'X-Requested-With': 'XMLHttpRequest' }, body: fd
+  }).then(function(r){ return r.ok ? r.json() : Promise.reject(r); })
+    .then(function(){ window.location.reload(); })
+    .catch(function(){ alert('Could not change the page’s published state. Make sure the survey itself is published first.'); });
+}
+(function(){
+  var refresh = document.getElementById('prPreviewRefresh');
+  var frame = document.getElementById('prPreviewFrame');
+  if (refresh && frame) {
+    refresh.addEventListener('click', function(){ frame.contentWindow.location.reload(); });
+  }
+
+  // Scroll the live-preview iframe to the block selected in the sidebar and
+  // flash it. The preview is same-origin (xframe_options_sameorigin), so we can
+  // reach into its DOM. Runs on every iframe load (incl. autosave reloads).
+  var selectedBlockId = {{ selected_block.id|default:"null" }};
+  function scrollPreviewToSelected() {
+    if (!selectedBlockId || !frame) return;
+    try {
+      var doc = frame.contentDocument || frame.contentWindow.document;
+      var el = doc.querySelector('[data-block-id="' + selectedBlockId + '"]');
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      el.classList.remove('pr-preview-highlight');
+      void el.offsetWidth; // restart the CSS animation
+      el.classList.add('pr-preview-highlight');
+    } catch (e) {}
+  }
+  if (frame) {
+    frame.addEventListener('load', scrollPreviewToSelected);
+    // In case the iframe already finished loading before this listener attached.
+    scrollPreviewToSelected();
+  }
+
+  // Drag-to-resize panels (mirrors the WYSIWYG editor behavior)
+  function initResize(handle, targetEl, direction) {
+    if (!handle || !targetEl) return;
+    handle.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      var startX = e.clientX;
+      var startWidth = targetEl.getBoundingClientRect().width;
+      handle.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      document.querySelectorAll('iframe').forEach(function(f){ f.style.pointerEvents = 'none'; });
+      function onMove(ev) {
+        var delta = ev.clientX - startX;
+        var w = direction === 'left' ? Math.max(180, startWidth + delta)
+                                     : Math.max(260, startWidth - delta);
+        targetEl.style.width = w + 'px';
+      }
+      function onUp() {
+        handle.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        document.querySelectorAll('iframe').forEach(function(f){ f.style.pointerEvents = ''; });
+        try {
+          localStorage.setItem('prPanelW', JSON.stringify({
+            sidebar: document.querySelector('.pr-sidebar').style.width,
+            preview: document.querySelector('.pr-preview').style.width
+          }));
+        } catch (e) {}
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+  initResize(document.getElementById('prResizeSidebar'), document.querySelector('.pr-sidebar'), 'left');
+  initResize(document.getElementById('prResizePreview'), document.querySelector('.pr-preview'), 'right');
+
+  // Restore saved panel widths
+  try {
+    var saved = JSON.parse(localStorage.getItem('prPanelW') || '{}');
+    if (saved.sidebar) document.querySelector('.pr-sidebar').style.width = saved.sidebar;
+    if (saved.preview) document.querySelector('.pr-preview').style.width = saved.preview;
+  } catch (e) {}
+  var list = document.getElementById('prBlocks');
+  if (list && window.Sortable) {
+    new Sortable(list, {
+      handle: '.drag-handle', animation: 150,
+      onEnd: function(){
+        var ids = Array.from(list.querySelectorAll('.pr-block')).map(function(el){ return el.dataset.id; });
+        var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+        fetch('{% url "editor_public_results_blocks_reorder" survey.uuid %}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': token },
+          body: JSON.stringify({ order: ids })
+        });
+      }
+    });
+  }
+
+  // ---- Autosave: forms marked [data-autosave] persist on every change; the
+  // explicit Save buttons are gone (kept only inside <noscript>). The slug
+  // field is excluded (data-no-autosave) and applied via its own button so the
+  // public URL never changes from a half-typed value.
+  function debounce(fn, ms){ var t; return function(){ var a = arguments, c = this; clearTimeout(t); t = setTimeout(function(){ fn.apply(c, a); }, ms); }; }
+
+  function reloadPreview(){
+    var f = document.getElementById('prPreviewFrame');
+    if (f) { try { f.contentWindow.location.reload(); } catch (e) { f.src = f.src; } }
+  }
+
+  function setStatus(form, state){
+    var el = form.querySelector('[data-autosave-status]'); if (!el) return;
+    var span = el.querySelector('span') || el;
+    el.classList.remove('is-error', 'is-saving');
+    if (state === 'saving') { span.textContent = 'Saving…'; el.classList.add('is-saving'); }
+    else if (state === 'saved') { span.textContent = 'Saved'; }
+    else if (state === 'error') { span.textContent = 'Not saved — retry'; el.classList.add('is-error'); }
+  }
+
+  function postForm(form, opts){
+    opts = opts || {};
+    var fd = new FormData(form);
+    if (opts.excludeSlug) { fd.delete('slug'); }
+    var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || fd.get('csrfmiddlewaretoken') || '';
+    setStatus(form, 'saving');
+    return fetch(form.action, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': token },
+      body: fd
+    }).then(function(r){
+      if (!r.ok) { return Promise.reject(r); }
+      return r.json().catch(function(){ return { ok: true }; });
+    }).then(function(data){
+      setStatus(form, 'saved');
+      reloadPreview();
+      return data;
+    }).catch(function(){ setStatus(form, 'error'); return null; });
+  }
+
+  document.querySelectorAll('form[data-autosave]').forEach(function(form){
+    var save = function(){ postForm(form, { excludeSlug: true }); };
+    var dsave = debounce(save, 600);
+    form.querySelectorAll('input, select, textarea').forEach(function(field){
+      if (field.name === 'csrfmiddlewaretoken' || field.hasAttribute('data-no-autosave')) return;
+      var tag = field.tagName, t = field.type;
+      if (tag === 'SELECT' || t === 'checkbox' || t === 'radio') { field.addEventListener('change', save); }
+      else { field.addEventListener('input', dsave); field.addEventListener('change', save); }
+    });
+  });
+
+  var slugApply = document.getElementById('prSlugApply');
+  if (slugApply) {
+    slugApply.addEventListener('click', function(){
+      var form = document.getElementById('prPageForm'); if (!form) return;
+      var msg = document.querySelector('.pr-slug-msg');
+      postForm(form, { excludeSlug: false }).then(function(data){
+        if (!data) return;
+        if (data.slug_taken) { if (msg) msg.textContent = 'Address already taken'; return; }
+        if (msg) msg.textContent = '';
+        if (data.slug) {
+          var url = document.querySelector('.pr-url'); if (url) url.textContent = '/r/' + data.slug + '/';
+        }
+      });
+    });
+  }
+})();
+</script>
+{% endblock %}

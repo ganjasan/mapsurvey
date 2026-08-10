@@ -6,119 +6,294 @@
 <span class="survey-name">New Survey</span>
 {% endblock %}
 
+{% block extra_head %}
+<style>
+  .create-wrap { padding: 1.5rem 2rem; }
+  .create-card { max-width: 1400px; margin: 0 auto; }
+  .create-grid {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 1.75rem;
+    align-items: start;
+  }
+  .create-map-wrap { position: relative; margin-bottom: 0.5rem; }
+  .create-map {
+    width: 100%;
+    height: clamp(360px, calc(100vh - 300px), 720px);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+  }
+  /* Fixed centre marker — its tip marks the exact point respondents' map
+     will be centred on. Overlay only (respondents don't see it). */
+  .map-center-pin {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -100%);
+    z-index: 450; pointer-events: none;
+    color: var(--accent); font-size: 32px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  /* Place search above the map */
+  .map-search { position: relative; margin-bottom: 0.5rem; }
+  .map-search i { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 0.8rem; pointer-events: none; }
+  .map-search input {
+    width: 100%; padding: 0.45rem 0.6rem 0.45rem 2rem;
+    border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; background: #fff;
+  }
+  .map-search input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
+  /* On-map base-map dropdown */
+  .bm-dropdown { position: relative; font-size: 0.82rem; }
+  .bm-toggle {
+    display: flex; align-items: center; gap: 0.4rem;
+    min-width: 118px; padding: 0.35rem 0.6rem; margin: 0;
+    background: #fff; border: 1px solid rgba(0,0,0,0.2); border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2); color: #374151; cursor: pointer; white-space: nowrap;
+  }
+  .bm-toggle .bm-ico { color: #6b7280; width: 14px; text-align: center; }
+  .bm-toggle .bm-label { flex: 1; text-align: left; }
+  .bm-toggle .chev { color: #9ca3af; font-size: 0.68rem; }
+  .bm-menu {
+    display: none; position: absolute; top: calc(100% + 3px); right: 0; min-width: 148px;
+    background: #fff; border: 1px solid var(--border-color); border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.16); overflow: hidden; z-index: 1000;
+  }
+  .bm-menu.open { display: block; }
+  .bm-option { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.7rem; cursor: pointer; color: #374151; white-space: nowrap; }
+  .bm-option i { color: #6b7280; width: 14px; text-align: center; }
+  .bm-option:hover { background: var(--accent-light); color: var(--accent); }
+  .bm-option:hover i { color: var(--accent); }
+  .bm-option.active { color: var(--accent); font-weight: 500; }
+  .bm-option.active i { color: var(--accent); }
+  @media (max-width: 900px) {
+    .create-wrap { padding: 1rem; }
+    .create-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+    .create-map { height: 320px; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div style="max-width: 600px; margin: 2rem auto; padding: 0 1rem;">
-    <div class="section-form-card">
-        <h5 style="margin-bottom: 1.5rem; font-weight: 700;">Create New Survey</h5>
-        <form method="post">
-            {% csrf_token %}
-            {% for field in form %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {% if field.name == 'available_languages' %}
-                    {{ field }}
-                    {% include "editor/partials/language_picker.html" %}
-                {% elif field.name == 'basemaps' %}
-                    {{ field }}
-                    <div style="margin-top:0.4rem;">
-                        {% for slug, label in basemap_choices %}
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input basemap-cb" type="checkbox"
-                                   id="bm_{{ slug }}" value="{{ slug }}" checked>
-                            <label class="form-check-label" for="bm_{{ slug }}">{{ label }}</label>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <script>
-                    (function(){
-                        var inp = document.getElementById('id_basemaps');
-                        var cbs = document.querySelectorAll('.basemap-cb');
-                        function sync(){
-                            var v = [];
-                            cbs.forEach(function(c){ if (c.checked) v.push(c.value); });
-                            inp.value = JSON.stringify(v.length ? v : ['streets']);
-                        }
-                        sync();
-                        cbs.forEach(function(c){ c.addEventListener('change', sync); });
-                    })();
-                    </script>
-                {% else %}
-                    {{ field }}
-                {% endif %}
-                {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
-                {% for error in field.errors %}<div class="text-danger" style="font-size:0.85rem;">{{ error }}</div>{% endfor %}
-            </div>
-            {% endfor %}
-            <!-- Map Position -->
-            <div class="form-group">
-                <label>Default Map Position</label>
-                <div id="create-map-picker" style="height:250px;width:100%;border-radius:6px;border:1px solid #dee2e6;margin-bottom:0.5rem;"></div>
-                <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.5rem;">
-                    <span id="create-map-coords">Click map to set position</span>
-                </div>
-                <input type="hidden" name="map_lat" id="create-map-lat" value="">
-                <input type="hidden" name="map_lng" id="create-map-lng" value="">
-                <input type="hidden" name="map_zoom" id="create-map-zoom" value="">
-                <div class="form-check mb-1">
-                    <input type="checkbox" class="form-check-input" id="create-use-geolocation" name="use_geolocation" value="1">
-                    <label class="form-check-label" for="create-use-geolocation" style="font-size:0.85rem;cursor:pointer;">
-                        Auto-center on respondent's location
-                    </label>
-                </div>
-            </div>
+<div class="create-wrap">
+  <div class="pr-card create-card">
+    <h6 style="font-size:1.05rem;">Create New Survey</h6>
+    <form method="post">
+      {% csrf_token %}
+      <div class="create-grid">
 
-            <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
-                <button type="submit" class="btn btn-primary">Create Survey</button>
-                <a href="{% url 'editor' %}" class="btn btn-outline-secondary">Cancel</a>
-            </div>
-        </form>
+        <!-- Left: what is it called + actions -->
+        <div class="create-left">
+          <div class="pr-field">
+            <label for="{{ form.name.id_for_label }}">Survey name</label>
+            {{ form.name }}
+            {% for error in form.name.errors %}<div class="text-danger" style="font-size:0.85rem;">{{ error }}</div>{% endfor %}
+          </div>
 
-        <script>
-        (function() {
-            var lat = 52.52, lng = 13.405, zoom = 12;
-            var marker = null;
+          <div class="pr-field">
+            <label for="{{ form.available_languages.id_for_label }}">Available languages</label>
+            {{ form.available_languages }}
+            {% include "editor/partials/language_picker.html" %}
+            <div class="pr-help">The languages respondents can take this survey in. You can add more later.</div>
+          </div>
 
-            var map = L.map('create-map-picker').setView([lat, lng], zoom);
-            L.tileLayer('{{ MAPBOX_URL }}', {
-                attribution: '&copy; OpenStreetMap',
-                maxZoom: 23,
-                accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
-            }).addTo(map);
+          <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem;">
+            <button type="submit" class="btn btn-primary">Create Survey</button>
+            <a href="{% url 'editor' %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
 
-            // Try to geolocate the survey creator
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(pos) {
-                    lat = pos.coords.latitude;
-                    lng = pos.coords.longitude;
-                    zoom = 13;
-                    map.setView([lat, lng], zoom);
-                    marker = L.marker([lat, lng]).addTo(map);
-                    document.getElementById('create-map-lat').value = lat;
-                    document.getElementById('create-map-lng').value = lng;
-                    document.getElementById('create-map-zoom').value = zoom;
-                    document.getElementById('create-map-coords').textContent =
-                        'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
-                }, function() {}, { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 });
+          <div class="pr-help" style="margin-top:1rem;">
+            <i class="fas fa-info-circle"></i>
+            Languages, thanks page, visibility, and other options — later in <strong>Survey settings</strong>.
+          </div>
+        </div>
+
+        <!-- Right: the map respondents will see -->
+        <div class="create-right">
+          <label style="display:block;font-size:.82rem;font-weight:500;color:#374151;margin-bottom:.15rem;">The map people will see</label>
+          <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">This is <strong>exactly</strong> what respondents see when they open the survey. Drag, zoom, search, or pick a base map (top-right) to frame it — the pin marks the centre they'll land on.</div>
+          <input type="hidden" name="default_basemap" id="create-default-basemap" value="streets">
+
+          <div class="map-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="create-map-search" placeholder="Search for a place — city, address, landmark…"
+                   autocomplete="off" aria-label="Search the map for a place">
+          </div>
+          <div class="create-map-wrap">
+            <div id="create-map-picker" class="create-map"></div>
+            <div class="map-center-pin" aria-hidden="true"><i class="fas fa-map-marker-alt"></i></div>
+          </div>
+          <div class="pr-help" style="margin-top:0;">
+            <span id="create-map-coords"></span>
+          </div>
+          <input type="hidden" name="map_lat" id="create-map-lat" value="">
+          <input type="hidden" name="map_lng" id="create-map-lng" value="">
+          <input type="hidden" name="map_zoom" id="create-map-zoom" value="">
+        </div>
+
+      </div>
+    </form>
+
+    <script>
+    (function() {
+        var map = L.map('create-map-picker').setView([52.52, 13.405], 12);
+
+        // Base map providers — identical to what respondents get (see basemap_layers.html)
+        var providers = {
+            streets:   L.tileLayer('{{ MAPBOX_URL }}', { attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>', maxZoom: 23, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }),
+            satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; Esri', maxZoom: 19 }),
+            topo:      L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>', maxZoom: 17 })
+        };
+        var currentBase = null;
+        function setBasemap(slug) {
+            var layer = providers[slug] || providers.streets;
+            if (currentBase === layer) return;
+            if (currentBase) map.removeLayer(currentBase);
+            layer.addTo(map);
+            currentBase = layer;
+        }
+        setBasemap('streets');
+
+        // On-map base-map DROPDOWN (compact toggle → menu), with icons.
+        var BM_META = {
+            streets:   { label: 'Streets',   icon: 'fa-map' },
+            satellite: { label: 'Satellite', icon: 'fa-satellite' },
+            topo:      { label: 'Topo',       icon: 'fa-mountain' }
+        };
+        var BasemapControl = L.Control.extend({
+            options: { position: 'topright' },
+            onAdd: function() {
+                var slug = 'streets';
+                var wrap = L.DomUtil.create('div', 'leaflet-control bm-dropdown');
+
+                var toggle = L.DomUtil.create('button', 'bm-toggle', wrap);
+                toggle.type = 'button';
+                toggle.setAttribute('aria-haspopup', 'listbox');
+                var tIco = L.DomUtil.create('i', 'bm-ico fas ' + BM_META[slug].icon, toggle);
+                var tLabel = L.DomUtil.create('span', 'bm-label', toggle);
+                tLabel.textContent = BM_META[slug].label;
+                L.DomUtil.create('i', 'chev fas fa-chevron-down', toggle);
+
+                var menu = L.DomUtil.create('div', 'bm-menu', wrap);
+                menu.setAttribute('role', 'listbox');
+                function pick(newSlug) {
+                    slug = newSlug;
+                    setBasemap(slug);
+                    document.getElementById('create-default-basemap').value = slug;
+                    tIco.className = 'bm-ico fas ' + BM_META[slug].icon;
+                    tLabel.textContent = BM_META[slug].label;
+                    menu.querySelectorAll('.bm-option').forEach(function(o) {
+                        o.classList.toggle('active', o.getAttribute('data-slug') === slug);
+                    });
+                    menu.classList.remove('open');
+                }
+                ['streets', 'satellite', 'topo'].forEach(function(s) {
+                    var opt = L.DomUtil.create('div', 'bm-option' + (s === slug ? ' active' : ''), menu);
+                    opt.setAttribute('role', 'option');
+                    opt.setAttribute('data-slug', s);
+                    L.DomUtil.create('i', 'fas ' + BM_META[s].icon, opt);
+                    var lbl = document.createElement('span');
+                    lbl.textContent = BM_META[s].label;
+                    opt.appendChild(lbl);
+                    L.DomEvent.on(opt, 'click', function(e) { L.DomEvent.stop(e); pick(s); });
+                });
+
+                L.DomEvent.disableClickPropagation(wrap);
+                L.DomEvent.on(toggle, 'click', function(e) { L.DomEvent.stop(e); menu.classList.toggle('open'); });
+                document.addEventListener('click', function(e) { if (!wrap.contains(e.target)) menu.classList.remove('open'); });
+                return wrap;
             }
+        });
+        map.addControl(new BasemapControl());
 
-            map.on('click', function(e) {
-                lat = e.latlng.lat; lng = e.latlng.lng;
-                if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
-                else { marker.setLatLng(e.latlng); }
-                document.getElementById('create-map-lat').value = lat;
-                document.getElementById('create-map-lng').value = lng;
-                document.getElementById('create-map-zoom').value = map.getZoom();
-                document.getElementById('create-map-coords').textContent =
-                    'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + map.getZoom();
-            });
+        // WYSIWYG: the map CENTRE is the survey's start position — exactly what
+        // respondents open on. The pin overlay marks that centre. We sync the
+        // start position from the map centre live, so a point is always set.
+        var latEl = document.getElementById('create-map-lat');
+        var lngEl = document.getElementById('create-map-lng');
+        var zoomEl = document.getElementById('create-map-zoom');
+        var coordsEl = document.getElementById('create-map-coords');
+        var userInteracted = false;
 
-            map.on('zoomend', function() {
-                document.getElementById('create-map-zoom').value = map.getZoom();
-            });
+        function syncFromCentre() {
+            var c = map.getCenter();
+            latEl.value = c.lat;
+            lngEl.value = c.lng;
+            zoomEl.value = map.getZoom();
+            coordsEl.textContent = 'Respondents open here — centre ' +
+                c.lat.toFixed(5) + ', ' + c.lng.toFixed(5) + ' · zoom ' + map.getZoom();
+        }
+        syncFromCentre();
+        map.on('moveend', syncFromCentre);
+        map.on('zoomend', syncFromCentre);
+        map.on('dragstart', function() { userInteracted = true; });
 
-            setTimeout(function() { map.invalidateSize(); }, 200);
-        })();
-        </script>
-    </div>
+        // Open the map near the creator (unless they've already framed it)
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                if (userInteracted) return;
+                map.setView([pos.coords.latitude, pos.coords.longitude], 13);
+            }, function() {}, { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 });
+        }
+
+        // ── "My location" button ──
+        var LocateControl = L.Control.extend({
+            options: { position: 'bottomright' },
+            onAdd: function() {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                var link = L.DomUtil.create('a', '', container);
+                link.href = '#';
+                link.title = 'My location';
+                link.setAttribute('role', 'button');
+                link.setAttribute('aria-label', 'My location');
+                link.style.cssText = 'display:flex;align-items:center;justify-content:center;width:30px;height:30px;cursor:pointer;background:#fff;color:#374151;font-size:14px;';
+                L.DomUtil.create('i', 'fas fa-crosshairs', link);
+                L.DomEvent.on(link, 'click', function(e) {
+                    L.DomEvent.preventDefault(e);
+                    L.DomEvent.stopPropagation(e);
+                    if (!navigator.geolocation) {
+                        document.getElementById('create-map-coords').textContent =
+                            'Geolocation is not available in this browser.';
+                        return;
+                    }
+                    coordsEl.textContent = 'Locating you…';
+                    navigator.geolocation.getCurrentPosition(function(pos) {
+                        userInteracted = true;
+                        map.setView([pos.coords.latitude, pos.coords.longitude], 15); // moveend → sync
+                    }, function() {
+                        coordsEl.textContent =
+                            "Couldn't get your location — search for a place or drag the map instead.";
+                    }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+                });
+                return container;
+            }
+        });
+        map.addControl(new LocateControl());
+
+        // ── Place search (OpenStreetMap Nominatim — no API key) ──
+        var searchInput = document.getElementById('create-map-search');
+        function geocode() {
+            var q = searchInput.value.trim();
+            if (!q) return;
+            coordsEl.textContent = 'Searching…';
+            fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q),
+                  { headers: { 'Accept': 'application/json' } })
+                .then(function(r) { return r.json(); })
+                .then(function(results) {
+                    if (!results || !results.length) {
+                        coordsEl.textContent = 'No place found for “' + q + '”.';
+                        return;
+                    }
+                    var r = results[0];
+                    userInteracted = true;
+                    map.setView([parseFloat(r.lat), parseFloat(r.lon)], 13); // moveend → sync
+                })
+                .catch(function() { coordsEl.textContent = 'Search failed — check your connection and try again.'; });
+        }
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); geocode(); }
+        });
+
+        setTimeout(function() { map.invalidateSize(); }, 200);
+    })();
+    </script>
+  </div>
 </div>
 {% endblock %}

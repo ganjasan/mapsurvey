@@ -529,6 +529,15 @@ a:hover { color: var(--color-accent-hover); }
     margin-bottom: 2rem;
 }
 
+/* All three hero CTAs share one width: equal columns in the row (desktop),
+   full-width stacked (mobile — see the max-width: 768px block). */
+.hero__cta-group > .btn-primary-landing,
+.hero__cta-group > .btn-secondary-landing {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+}
+
 .hero__badges {
     display: flex;
     gap: 0.5rem;
@@ -1152,6 +1161,16 @@ a:hover { color: var(--color-accent-hover); }
     :root {
         --section-padding: 4.5rem 0;
         --section-inline-pad: 1.25rem;
+    }
+
+    /* Stack the hero CTAs into equal full-width buttons */
+    .hero__cta-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .hero__cta-group > .btn-primary-landing,
+    .hero__cta-group > .btn-secondary-landing {
+        flex: 0 0 auto;
     }
 
     /* Nav mobile */

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Public Results config — editor tab mockup</title>
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#4f46e5;--accent-light:#e0e7ff;--accent-hover:#4338ca;
+    --border-color:#e5e7eb;--bg-muted:#f9fafb;--radius:8px;
+    --sidebar-width:280px;--preview-width:400px;
+  }
+  *{box-sizing:border-box;}
+  body{font-family:'DM Sans',system-ui,sans-serif;margin:0;background:var(--bg-muted);color:#1f2937;font-size:15px;}
+
+  /* navbar */
+  .editor-navbar{background:#fff;border-bottom:1px solid var(--border-color);padding:.5rem 1rem;display:flex;align-items:center;gap:.5rem 1rem;flex-wrap:wrap;}
+  .editor-navbar a{color:#6b7280;text-decoration:none;font-size:.9rem;}
+  .editor-navbar .survey-name{font-weight:700;color:#111827;font-size:1.1rem;}
+  .editor-navbar .spacer{flex:1;}
+  .status-badge-static{font-size:.78rem;border-radius:20px;padding:.25rem .7rem;background:#dcfce7;color:#166534;font-weight:600;}
+  .survey-nav-tabs{display:inline-flex;align-items:center;gap:2px;margin-left:.75rem;background:#f3f4f6;border-radius:6px;padding:2px;}
+  .survey-nav-tab{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .65rem;font-size:.8rem;font-weight:500;color:#6b7280;text-decoration:none;border-radius:4px;}
+  .survey-nav-tab.active{color:var(--accent);background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.08);}
+  .badge-beta{font-size:.6rem;font-weight:600;text-transform:uppercase;background:#f59e0b;color:#fff;padding:1px 5px;border-radius:3px;margin-left:2px;}
+
+  .editor-container{display:flex;height:calc(100vh - 49px);overflow:hidden;}
+
+  /* left sidebar */
+  .editor-sidebar{width:var(--sidebar-width);background:#fff;border-right:1px solid var(--border-color);display:flex;flex-direction:column;}
+
+  /* pinned "Page settings" entry — visually separated from the content blocks */
+  .nav-pinned{padding:.55rem .75rem;border-bottom:1px solid var(--border-color);}
+  .page-settings-item{display:flex;align-items:center;gap:.6rem;padding:.6rem .7rem;border-radius:var(--radius);cursor:pointer;font-size:.9rem;}
+  .page-settings-item .pi{width:20px;text-align:center;}
+  .page-settings-item .pt{flex:1;font-weight:500;}
+  .page-settings-item .chev{color:#c4c7cf;font-size:.7rem;}
+  .page-settings-item.active{background:var(--accent-light);color:var(--accent);}
+  .page-settings-item.active .pi{color:var(--accent);}
+  .page-settings-item:not(.active):hover{background:var(--bg-muted);}
+
+  .sidebar-header{padding:.6rem 1rem;font-weight:600;font-size:.72rem;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between;align-items:center;}
+  .block-list{list-style:none;padding:0;margin:0;flex:1;overflow-y:auto;}
+  .block-item{display:flex;align-items:center;padding:.6rem 1rem;border-bottom:1px solid #f3f4f6;gap:.55rem;cursor:pointer;}
+  .block-item:hover{background:var(--bg-muted);}
+  .block-item.active{background:var(--accent-light);color:var(--accent);font-weight:500;}
+  .block-item .drag-handle{cursor:grab;color:#d1d5db;}
+  .block-item .bi-icon{width:20px;text-align:center;color:#9ca3af;font-size:.85rem;}
+  .block-item.active .bi-icon{color:var(--accent);}
+  .block-item .bt{flex:1;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .block-item .eye{color:#9ca3af;font-size:.78rem;}
+  .add-block-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;margin:.6rem;padding:.7rem;border:2px dashed #d1d5db;border-radius:var(--radius);background:transparent;color:#6b7280;cursor:pointer;font-size:.88rem;}
+  .add-block-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .sidebar-note{padding:.5rem 1rem .8rem;font-size:.72rem;color:#9ca3af;line-height:1.4;border-top:1px solid var(--border-color);}
+
+  /* center: contextual config */
+  .editor-main{flex:1;overflow-y:auto;padding:0;display:flex;flex-direction:column;}
+  .context-bar{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--border-color);padding:.7rem 1.5rem;display:flex;align-items:center;gap:.6rem;z-index:5;}
+  .context-bar .ctx-icon{width:30px;height:30px;border-radius:7px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.85rem;}
+  .context-bar .ctx-title{font-weight:600;font-size:.98rem;}
+  .context-bar .ctx-sub{font-size:.76rem;color:#9ca3af;}
+  .main-scroll{flex:1;overflow-y:auto;padding:1.25rem 1.5rem;}
+
+  .card{background:#fff;border:1px solid var(--border-color);border-radius:var(--radius);padding:1.1rem 1.25rem;margin-bottom:1.1rem;}
+  .card h6{margin:0 0 .9rem;font-weight:600;font-size:.95rem;display:flex;align-items:center;gap:.5rem;}
+  .card h6 .hint{font-weight:400;font-size:.78rem;color:#9ca3af;}
+  .field{margin-bottom:.85rem;}
+  .field:last-child{margin-bottom:0;}
+  label.lbl{display:block;font-size:.82rem;font-weight:500;color:#374151;margin-bottom:.35rem;}
+  .ctrl{width:100%;border:1px solid var(--border-color);border-radius:6px;padding:.5rem .65rem;font-size:.88rem;font-family:inherit;color:#1f2937;background:#fff;}
+  textarea.ctrl{resize:vertical;min-height:60px;}
+
+  .seg{display:inline-flex;background:#f3f4f6;border-radius:8px;padding:3px;gap:2px;}
+  .seg button{border:none;background:none;padding:.4rem .85rem;font-size:.83rem;font-weight:500;color:#6b7280;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;}
+  .seg button.on{background:#fff;color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.1);}
+  .seg-help{font-size:.76rem;color:#9ca3af;margin-top:.4rem;}
+
+  .switch-row{display:flex;align-items:center;justify-content:space-between;padding:.55rem 0;border-bottom:1px solid #f3f4f6;}
+  .switch-row:last-child{border-bottom:none;}
+  .switch-row .sl{font-size:.86rem;color:#374151;}
+  .switch-row .sl small{display:block;color:#9ca3af;font-size:.74rem;margin-top:1px;}
+  .sw{width:38px;height:22px;border-radius:999px;background:#d1d5db;position:relative;flex-shrink:0;cursor:pointer;transition:.15s;}
+  .sw:after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:2px;left:2px;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+  .sw.on{background:var(--accent);}
+  .sw.on:after{left:18px;}
+  .kanon input{width:64px;}
+
+  .url-pill{display:inline-flex;align-items:center;gap:.5rem;background:#f3f4f6;border-radius:6px;padding:.4rem .6rem;font-size:.82rem;color:#374151;font-family:ui-monospace,monospace;}
+  .url-pill a{color:var(--accent);}
+  .savebar{display:flex;gap:.6rem;align-items:center;}
+  .btn{border:none;border-radius:7px;padding:.55rem 1rem;font-size:.86rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.45rem;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-hover);}
+  .btn-ghost{background:#fff;border:1px solid var(--border-color);color:#374151;}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+
+  /* right preview */
+  .editor-preview{width:var(--preview-width);border-left:1px solid var(--border-color);display:flex;flex-direction:column;background:#fff;}
+  .preview-header{padding:.6rem 1rem;border-bottom:1px solid var(--border-color);font-size:.8rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;display:flex;justify-content:space-between;align-items:center;}
+  .preview-body{flex:1;overflow-y:auto;background:#f4f5f8;padding:16px;}
+  .pv-hero{text-align:center;padding:14px 8px 18px;}
+  .pv-eyebrow{display:inline-block;background:var(--accent-light);color:var(--accent);font-weight:600;font-size:.62rem;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:999px;margin-bottom:8px;}
+  .pv-hero h3{font-size:1.15rem;margin:.2rem 0 .4rem;}
+  .pv-hero p{font-size:.78rem;color:#6b7280;margin:0;line-height:1.45;}
+  .pv-counter{display:inline-flex;align-items:baseline;gap:6px;background:#fff;border:1px solid var(--border-color);border-radius:999px;padding:6px 14px;margin-top:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+  .pv-counter b{color:var(--accent);font-size:1.05rem;}
+  .pv-counter span{font-size:.74rem;color:#6b7280;}
+  .pv-card{background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:14px 15px;margin-top:12px;}
+  .pv-card h4{font-size:.9rem;margin:0 0 10px;}
+  .pv-bar{display:grid;grid-template-columns:62px 1fr 26px;align-items:center;gap:8px;font-size:.75rem;margin-bottom:7px;}
+  .pv-track{background:#f1f2f5;border-radius:5px;height:16px;overflow:hidden;}
+  .pv-fill{height:100%;background:linear-gradient(90deg,var(--accent),#7c73f0);border-radius:5px;}
+  .pv-val{text-align:right;font-weight:600;color:#6b7280;}
+  .pv-map{height:120px;border-radius:8px;margin-top:4px;background:
+      repeating-linear-gradient(0deg,#e9ebf0,#e9ebf0 1px,transparent 1px,transparent 26px),
+      repeating-linear-gradient(90deg,#e9ebf0,#e9ebf0 1px,transparent 1px,transparent 26px),#eef1f6;position:relative;overflow:hidden;}
+  .pv-heat{position:absolute;left:40%;top:45%;width:70px;height:70px;border-radius:50%;background:radial-gradient(rgba(239,68,68,.5),rgba(239,68,68,0) 70%);filter:blur(4px);}
+  .pv-made{text-align:center;font-size:.68rem;color:#9ca3af;margin-top:14px;}
+</style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <div class="editor-navbar">
+    <a href="#"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    <span class="survey-name">Riverside Park</span>
+    <span class="status-badge-static">Published</span>
+    <span class="survey-nav-tabs">
+      <a class="survey-nav-tab" href="#"><i class="fas fa-pen"></i> Editor</a>
+      <a class="survey-nav-tab" href="#"><i class="fas fa-chart-bar"></i> Analytics</a>
+      <a class="survey-nav-tab active" href="#"><i class="fas fa-globe"></i> Public results<span class="badge-beta">beta</span></a>
+      <a class="survey-nav-tab" href="#"><i class="fas fa-share-alt"></i> Share</a>
+    </span>
+    <span class="spacer"></span>
+    <span style="color:#9ca3af;font-size:.85rem;"><i class="fas fa-building" style="margin-right:4px;"></i>City Lab</span>
+    <span style="color:#9ca3af;font-size:.85rem;">artem</span>
+  </div>
+
+  <div class="editor-container">
+
+    <!-- LEFT: page-settings entry (pinned, separated) + content blocks -->
+    <div class="editor-sidebar">
+      <div class="nav-pinned">
+        <div class="page-settings-item active">
+          <i class="fas fa-sliders-h pi"></i>
+          <span class="pt">Page settings</span>
+          <i class="fas fa-chevron-right chev"></i>
+        </div>
+      </div>
+      <div class="sidebar-header"><span>Content blocks</span><i class="fas fa-grip-lines" style="color:#d1d5db;"></i></div>
+      <ul class="block-list">
+        <li class="block-item"><i class="fas fa-grip-vertical drag-handle"></i><i class="fas fa-heading bi-icon"></i><span class="bt">Intro text</span><i class="fas fa-eye eye"></i></li>
+        <li class="block-item"><i class="fas fa-grip-vertical drag-handle"></i><i class="fas fa-chart-bar bi-icon"></i><span class="bt">Improvements (bar)</span><i class="fas fa-eye eye"></i></li>
+        <li class="block-item"><i class="fas fa-grip-vertical drag-handle"></i><i class="fas fa-star bi-icon"></i><span class="bt">Safety rating (donut)</span><i class="fas fa-eye eye"></i></li>
+        <li class="block-item"><i class="fas fa-grip-vertical drag-handle"></i><i class="fas fa-map-marked-alt bi-icon"></i><span class="bt">Unsafe spots (map)</span><i class="fas fa-eye eye"></i></li>
+      </ul>
+      <button class="add-block-btn"><i class="fas fa-plus"></i> Add block</button>
+      <div class="sidebar-note"><i class="fas fa-info-circle"></i> Text questions are not available for publication — individual answers are never shown publicly.</div>
+    </div>
+
+    <!-- CENTER: contextual — shows PAGE settings only (a block is not selected) -->
+    <div class="editor-main">
+      <div class="context-bar">
+        <span class="ctx-icon"><i class="fas fa-sliders-h"></i></span>
+        <div>
+          <div class="ctx-title">Page settings</div>
+          <div class="ctx-sub">Applies to the whole public results page</div>
+        </div>
+        <span class="spacer" style="flex:1;"></span>
+        <span style="color:#9ca3af;font-size:.8rem;"><i class="fas fa-circle" style="color:#22c55e;font-size:.55rem;"></i> Published · live</span>
+      </div>
+
+      <div class="main-scroll">
+
+        <div class="card">
+          <h6><i class="fas fa-globe" style="color:var(--accent);"></i> Visibility &amp; address</h6>
+          <div class="field">
+            <label class="lbl">Visibility</label>
+            <div class="seg">
+              <button class="on"><i class="fas fa-globe"></i> Public</button>
+              <button><i class="fas fa-eye-slash"></i> Unlisted</button>
+            </div>
+            <div class="seg-help">Public is indexable and may appear in the Mapsurvey stories listing. Unlisted is reachable by direct link only and is not indexed.</div>
+          </div>
+          <div class="field">
+            <label class="lbl">Public URL</label>
+            <div class="url-pill"><i class="fas fa-link" style="color:#9ca3af;"></i> mapsurvey.app/r/<b>riverside-park</b> <a href="#" title="Copy"><i class="far fa-copy"></i></a> <a href="#" title="Open"><i class="fas fa-external-link-alt"></i></a></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h6><i class="fas fa-heading" style="color:var(--accent);"></i> Intro <span class="hint">title + lead text · EN / RU</span></h6>
+          <div class="field">
+            <input class="ctrl" style="margin-bottom:.6rem;font-weight:600;" value="Riverside Park — what should change?">
+            <textarea class="ctrl">Thank you to everyone who took part. Here is what the community told us about safety, accessibility, and the spots that matter most.</textarea>
+          </div>
+        </div>
+
+        <div class="card">
+          <h6><i class="fas fa-bolt" style="color:var(--accent);"></i> Data mode <span class="hint">live mirror vs frozen snapshot</span></h6>
+          <div class="seg">
+            <button class="on"><i class="fas fa-bolt"></i> Live</button>
+            <button><i class="fas fa-snowflake"></i> Frozen</button>
+          </div>
+          <div class="seg-help" style="margin-bottom:.7rem;">Live updates with every new response (cached ~60s). Freeze captures stable numbers for stakeholder reporting.</div>
+          <button class="btn-ghost btn"><i class="fas fa-snowflake"></i> Freeze current snapshot</button>
+        </div>
+
+        <div class="card">
+          <h6><i class="fas fa-user-shield" style="color:var(--accent);"></i> Display &amp; privacy</h6>
+          <div class="switch-row"><span class="sl">Show response counter <small>social proof — “342 responses”</small></span><div class="sw on"></div></div>
+          <div class="switch-row"><span class="sl">Show “Take the survey” CTA <small>only while the survey is open</small></span><div class="sw on"></div></div>
+          <div class="switch-row"><span class="sl">Feature in public stories listing <small>off by default</small></span><div class="sw"></div></div>
+          <div class="switch-row">
+            <span class="sl">k-anonymity threshold <small>mask buckets smaller than K as “&lt;K”</small></span>
+            <div class="kanon"><input class="ctrl" value="3"></div>
+          </div>
+        </div>
+
+        <div class="savebar">
+          <button class="btn btn-primary"><i class="fas fa-check"></i> Save page settings</button>
+          <button class="btn btn-ghost"><i class="fas fa-external-link-alt"></i> Preview</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: live preview -->
+    <div class="editor-preview">
+      <div class="preview-header"><span>Live preview</span><i class="fas fa-sync-alt" style="color:#9ca3af;"></i></div>
+      <div class="preview-body">
+        <div class="pv-hero">
+          <span class="pv-eyebrow">Survey results</span>
+          <h3>Riverside Park — what should change?</h3>
+          <p>Thank you to everyone who took part. Here is what the community told us…</p>
+          <div class="pv-counter"><b>342</b><span>responses</span></div>
+        </div>
+        <div class="pv-card">
+          <h4>Which improvements matter most?</h4>
+          <div class="pv-bar"><span>Lighting</span><div class="pv-track"><div class="pv-fill" style="width:88%"></div></div><span class="pv-val">154</span></div>
+          <div class="pv-bar"><span>Benches</span><div class="pv-track"><div class="pv-fill" style="width:61%"></div></div><span class="pv-val">107</span></div>
+          <div class="pv-bar"><span>Crossings</span><div class="pv-track"><div class="pv-fill" style="width:38%"></div></div><span class="pv-val">66</span></div>
+          <div class="pv-bar"><span>Dog area</span><div class="pv-track"><div class="pv-fill" style="width:5%;background:#d8dae0"></div></div><span class="pv-val" style="font-style:italic;color:#9ca3af;">&lt;3</span></div>
+        </div>
+        <div class="pv-card">
+          <h4>Where do you feel unsafe?</h4>
+          <div class="pv-map"><div class="pv-heat"></div></div>
+        </div>
+        <div class="pv-made"><i class="fas fa-map-marked-alt" style="color:var(--accent);"></i> Made with Mapsurvey</div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

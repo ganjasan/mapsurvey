@@ -1,6 +1,6 @@
 {% extends "editor/editor_base.html" %}
 
-{% block page_title %}Analytics – {{ survey.name }}{% endblock %}
+{% block page_title %}Results – {{ survey.name }}{% endblock %}
 
 {% load static %}
 {% block extra_head %}
@@ -350,13 +350,13 @@
 
 {% block navbar_content %}
 <span class="survey-name">{{ survey.name }}</span>
-{% include "editor/partials/_survey_nav_tabs.html" with active_tab="analytics" %}
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="results" %}
 {% endblock %}
 
 {% block content %}
-<!-- Primary tab bar -->
+<!-- Primary tab bar (sub-navigation within the Results space) -->
 <div style="padding:0.75rem 1.5rem 0;">
-    <div style="display:flex;gap:0;border-bottom:2px solid var(--border-color);margin-bottom:0;">
+    <div style="display:flex;gap:0;align-items:center;border-bottom:2px solid var(--border-color);margin-bottom:0;">
         <button class="analytics-tab active" data-tab="data"
                 onclick="switchAnalyticsTab('data')"
                 style="padding:0.5rem 1.25rem;border:none;background:none;border-bottom:3px solid var(--accent);margin-bottom:-2px;font-weight:600;cursor:pointer;color:var(--accent);font-size:0.9rem;">
@@ -367,6 +367,19 @@
                 style="padding:0.5rem 1.25rem;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;color:#6b7280;font-size:0.9rem;">
             Performance
         </button>
+        {% if version_choices %}
+        <select id="version-scope-select" title="Which survey version's responses to show"
+                onchange="location.search = this.value === 'all' ? '' : ('?version=' + this.value);"
+                style="margin-left:auto;margin-bottom:0.25rem;font-size:0.8rem;padding:0.25rem 0.5rem;border:1px solid var(--border-color);border-radius:6px;color:#374151;background:#fff;">
+            {% for c in version_choices %}
+            <option value="{{ c.value }}" {% if c.value == current_version %}selected{% endif %}>{{ c.label }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+        <a href="/surveys/{{ survey.uuid }}/download" class="btn btn-sm btn-outline-secondary"
+           style="{% if not version_choices %}margin-left:auto;{% else %}margin-left:0.5rem;{% endif %}margin-bottom:0.25rem;font-size:0.8rem;" title="Download clean responses (CSV + GeoJSON)">
+            <i class="fas fa-download"></i> Download data
+        </a>
     </div>
 </div>
 
@@ -507,6 +520,8 @@
         </div>
     </div>
 </div>
+
+{% include "editor/partials/_lifecycle_scripts.html" %}
 
 <script>
 /* ── SelectionManager ─────────────────────────────────────────── */
@@ -896,6 +911,23 @@ function switchAnalyticsTab(tab) {
     }
 }
 
+/* ── Deep-link into a Performance section (e.g. #traffic-sources from Share) ── */
+var _PERF_ANCHORS = ['traffic-sources'];
+function _openPerformanceHash() {
+    var id = (location.hash || '').replace('#', '');
+    if (!id || _PERF_ANCHORS.indexOf(id) === -1) return;
+    switchAnalyticsTab('performance');
+    // Recompute after the pane's charts settle; offset for the sticky header.
+    setTimeout(function() {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var y = el.getBoundingClientRect().top + window.pageYOffset - 70;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+    }, 150);
+}
+document.addEventListener('DOMContentLoaded', _openPerformanceHash);
+window.addEventListener('hashchange', _openPerformanceHash);
+
 /* ── Save/restore layout ───────────────────────────────────────── */
 var _dataLayoutKey = 'dataLayout_{{ survey.uuid }}';
 
@@ -970,6 +1002,9 @@ document.addEventListener('DOMContentLoaded', function() {
 /* ── Attribute table functions ──────────────────────────────────── */
 
 var _tableUrl = '{% url "analytics_table" survey.uuid %}';
+// Version scope for cross-version analytics ('all' or 'vN') — set by the
+// version filter; threaded into the table (and any future partial) requests.
+var _versionScope = '{{ current_version|default:"all"|escapejs }}';
 
 function loadTable(extraParams) {
     var fm = window.filterManager;
@@ -1005,6 +1040,7 @@ function loadTable(extraParams) {
               + (filters ? '&filters=' + encodeURIComponent(filters) : '')
               + (trash === '1' ? '&trash=1' : '')
               + (issuesVal ? '&issues=' + encodeURIComponent(issuesVal) : '')
+              + (_versionScope !== 'all' ? '&version=' + encodeURIComponent(_versionScope) : '')
               + cfParams
               + searchParams;
     htmx.ajax('GET', url, {target: '#pane-table-content', swap: 'innerHTML'});

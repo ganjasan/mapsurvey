@@ -1,0 +1,185 @@
+{% load i18n %}
+<div class="pr-panel-flush">
+
+  <div class="pr-ctxbar">
+    <span class="ico"><i class="fas fa-heart"></i></span>
+    <div><div class="t">Thanks page</div><div class="s">The last screen respondents see after they submit</div></div>
+    <span style="flex:1;"></span>
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'survey_thanks' survey.uuid %}" target="_blank"><i class="fas fa-external-link-alt"></i> Preview</a>
+  </div>
+
+  <div class="pr-scroll">
+
+    <form id="thanksForm" method="post" action="{% url 'editor_survey_thanks_panel' survey.uuid %}">
+      {% csrf_token %}
+      <div class="pr-card">
+        <h6>Message</h6>
+        <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">Written just how respondents will see it — no HTML needed.</div>
+        {% if langs|length > 1 %}
+        <div class="thanks-lang-tabs" style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.6rem;">
+          {% for lang in langs %}
+          <button type="button" class="thanks-lang-tab{% if forloop.first %} active{% endif %}" data-lang="{{ lang }}">{{ lang|upper }}</button>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <div id="thanks-quill"></div>
+        {% for lang in langs %}
+        <input type="hidden" name="thanks_{{ lang }}" id="thanks-input-{{ lang }}">
+        {% endfor %}
+        <div class="autosave-status" data-autosave-status style="margin-top:.6rem;"><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
+        <noscript><button type="submit" class="btn btn-primary btn-sm mt-2">Save</button></noscript>
+      </div>
+
+      {% if results_page %}
+      <div class="pr-card">
+        <h6>Results link</h6>
+        <input type="hidden" name="has_results_toggle" value="1">
+        <label class="pr-switch" style="border-bottom:none;">
+          <span>Show a “See the results” button
+            <small class="pr-help">{% if results_page.is_published %}links respondents to your public results page{% else %}appears once your results page is published (Publish tab){% endif %}</small></span>
+          <input type="checkbox" name="show_on_thanks" id="thanks-show-results" {% if results_page.show_on_thanks %}checked{% endif %}>
+        </label>
+      </div>
+      {% endif %}
+    </form>
+
+    <div class="pr-card">
+      <h6>Always shown below your message</h6>
+      <div class="pr-help" style="margin-top:0;margin-bottom:.8rem;">Every thanks page ends with a share action and the "Made with Mapsurvey" link — these are fixed and can't be removed.</div>
+      <div style="text-align:center;opacity:.7;">
+        <span class="btn btn-outline-primary btn-sm" style="pointer-events:none;"><i class="fas fa-share-alt mr-1"></i> Share this survey</span>
+      </div>
+      {% include "partials/_made_with_mapsurvey.html" with medium="thanks" %}
+    </div>
+
+  </div>
+
+  {{ thanks_by_lang|json_script:"thanks-data" }}
+  {{ langs|json_script:"thanks-langs" }}
+  <script>
+  (function() {
+      if (typeof Quill === 'undefined') return;
+      var langs = JSON.parse(document.getElementById('thanks-langs').textContent);
+      var data = JSON.parse(document.getElementById('thanks-data').textContent);
+      var current = langs[0];
+
+      // Emit alignment as inline `text-align` styles so it survives on the public
+      // thanks page (which has no Quill CSS).
+      Quill.register(Quill.import('attributors/style/align'), true);
+
+      // Image button uploads to the server and inserts the returned URL (no
+      // base64 bloat in thanks_html).
+      function imageHandler() {
+          var input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/png,image/jpeg,image/gif,image/webp';
+          input.style.display = 'none';
+          document.body.appendChild(input);   // some browsers need it in the DOM to open
+          function cleanup() { if (input.parentNode) input.parentNode.removeChild(input); }
+          input.onchange = function() {
+              var file = input.files && input.files[0];
+              if (!file) { cleanup(); return; }
+              var fd = new FormData(); fd.append('image', file);
+              var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+              fetch('{% url "editor_survey_thanks_image" survey.uuid %}', { method: 'POST', headers: { 'X-CSRFToken': token }, body: fd })
+                  .then(function(r) { return r.json(); })
+                  .then(function(d) {
+                      if (d && d.url) {
+                          var range = quill.getSelection(true);
+                          quill.insertEmbed(range.index, 'image', d.url, 'user');
+                          quill.setSelection(range.index + 1, 'silent');
+                          dirty[current] = true; syncCurrent(); dsave();
+                      }
+                  })
+                  .catch(function() {})
+                  .then(cleanup);
+          };
+          input.click();
+      }
+
+      var quill = new Quill('#thanks-quill', {
+          theme: 'snow',
+          placeholder: 'Thank you! Your responses have been recorded…',
+          modules: { toolbar: {
+              container: [
+                  [{ header: [1, 2, 3, false] }],
+                  ['bold', 'italic', 'underline'],
+                  [{ align: [] }],
+                  ['link', 'image', 'video'],
+                  [{ list: 'ordered' }, { list: 'bullet' }],
+                  ['blockquote'],
+                  ['clean']
+              ],
+              handlers: { image: imageHandler }
+          } }
+      });
+
+      // Shown (and editable) when a language has no saved content yet — the same
+      // default respondents get, but formatted in the editor instead of a
+      // placeholder. It is only persisted once the creator actually edits it.
+      var DEFAULT_HTML = '<h2 style="text-align: center;">Thank you!</h2><p style="text-align: center;">Your responses have been recorded.</p>';
+      var dirty = {};
+
+      function currentHtml() {
+          var h = quill.root.innerHTML;           // read-only
+          return (h === '<p><br></p>') ? '' : h;
+      }
+      function setHtml(html) {
+          // Load via Quill's own parser instead of touching innerHTML directly.
+          quill.setContents(quill.clipboard.convert({ html: html || '' }), 'silent');
+      }
+      function syncCurrent() {
+          if (!dirty[current]) return;   // never persist the untouched default seed
+          data[current] = currentHtml();
+          var inp = document.getElementById('thanks-input-' + current);
+          if (inp) inp.value = data[current];
+      }
+      function loadLang(lang) {
+          current = lang;
+          setHtml(data[lang] || DEFAULT_HTML);
+      }
+
+      // seed hidden inputs from stored data, then load the first language
+      langs.forEach(function(l) { var i = document.getElementById('thanks-input-' + l); if (i) i.value = data[l] || ''; });
+      loadLang(current);
+
+      // ── autosave (posts the form; server sanitizes) ──
+      var form = document.getElementById('thanksForm');
+      function debounce(fn, ms) { var t; return function() { clearTimeout(t); t = setTimeout(fn, ms); }; }
+      function setStatus(state) {
+          var el = form.querySelector('[data-autosave-status]'); if (!el) return;
+          var span = el.querySelector('span') || el;
+          el.classList.remove('is-error', 'is-saving');
+          if (state === 'saving') { span.textContent = 'Saving…'; el.classList.add('is-saving'); }
+          else if (state === 'saved') { span.textContent = 'Saved'; }
+          else if (state === 'error') { span.textContent = 'Not saved — retry'; el.classList.add('is-error'); }
+      }
+      function save() {
+          syncCurrent();
+          var fd = new FormData(form);
+          var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || fd.get('csrfmiddlewaretoken') || '';
+          setStatus('saving');
+          fetch(form.action, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': token }, body: fd })
+              .then(function(r) { if (!r.ok) return Promise.reject(r); return r.json(); })
+              .then(function() { setStatus('saved'); if (window.refreshBuildPreview) window.refreshBuildPreview(); })
+              .catch(function() { setStatus('error'); });
+      }
+      var dsave = debounce(save, 700);
+
+      quill.on('text-change', function(delta, old, source) { if (source === 'user') { dirty[current] = true; syncCurrent(); dsave(); } });
+
+      // "See the results" toggle (saved onto the results page) — save + refresh preview
+      var showResults = document.getElementById('thanks-show-results');
+      if (showResults) showResults.addEventListener('change', function() { save(); });
+
+      document.querySelectorAll('.thanks-lang-tab').forEach(function(tab) {
+          tab.addEventListener('click', function() {
+              syncCurrent();
+              document.querySelectorAll('.thanks-lang-tab').forEach(function(t) { t.classList.remove('active'); });
+              tab.classList.add('active');
+              loadLang(tab.getAttribute('data-lang'));
+          });
+      });
+  })();
+  </script>
+</div>

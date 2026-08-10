@@ -1,0 +1,210 @@
+<div class="modal fade editor-modal" id="addBlockModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add block</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form method="post" action="{% url 'editor_public_results_block_add' survey.uuid %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="pr-field">
+                        <label>Block type</label>
+                        <select name="block_type" class="form-control" id="prBlockType" onchange="prToggleAddBlockFields();">
+                            <option value="question">Question results…</option>
+                            <option value="image">Image</option>
+                            <option value="text">Text block</option>
+                        </select>
+                    </div>
+                    <div class="pr-field" id="prQWrap">
+                        <label>Question</label>
+                        <!-- Native <select> stays the source of truth for form submission
+                             (disabled options = not publishable); a custom listbox on top
+                             renders long question text on multiple lines with the type/count
+                             on their own muted line, and adds a search box — none of which a
+                             native <select> popup can do. -->
+                        <div class="pr-custom-select" id="prQCustom">
+                            <button type="button" class="pr-custom-select-trigger" id="prQTrigger">
+                                <span class="pr-custom-select-label"></span>
+                            </button>
+                            <div class="pr-custom-select-list" id="prQList">
+                                <div class="pr-custom-select-search">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" id="prQSearch" placeholder="Search by name or type…" autocomplete="off">
+                                </div>
+                                <div class="pr-custom-select-items" id="prQItems"></div>
+                                <div class="pr-custom-select-empty" id="prQEmpty" style="display:none;">No matching questions.</div>
+                            </div>
+                        </div>
+                        <select name="question_id" id="prQ" class="form-control" style="display:none;">
+                            {% for row in question_rows %}
+                            <option value="{{ row.question.id }}"
+                                    {% if not row.publishable %}disabled{% endif %}
+                                    data-qname="{{ row.question.name }}"
+                                    {% if row.publishable %}data-meta="{{ row.input_type_display }} · {{ row.answer_count }} response{{ row.answer_count|pluralize }}"{% else %}data-note="text — not publishable"{% endif %}>
+                                {{ row.question.name }}{% if not row.publishable %} (text — not publishable){% else %} — {{ row.input_type_display }} · {{ row.answer_count }} response{{ row.answer_count|pluralize }}{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="pr-help"><i class="fas fa-info-circle"></i> Text questions are not available for publication — individual answers are never shown publicly.</div>
+                    </div>
+                    <div class="pr-field" id="prImgWrap" style="display:none;">
+                        <label>Image file</label>
+                        <input type="file" name="image" id="prImg" class="form-control-file" accept="image/*">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Add block</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<style>
+    .pr-custom-select { position: relative; }
+    .pr-custom-select-trigger {
+        width: 100%; text-align: left; background: #fff; border: 1px solid #ced4da; border-radius: 4px;
+        padding: 0.375rem 0.75rem; font-size: 0.9rem; color: #495057; cursor: pointer;
+        display: flex; align-items: center; gap: 0.5rem;
+    }
+    .pr-custom-select-trigger .pr-custom-select-label {
+        flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .pr-custom-select-trigger:after {
+        content: '\f107'; font-family: 'Font Awesome 5 Free'; font-weight: 900; color: #9ca3af; flex-shrink: 0;
+    }
+    .pr-custom-select-list {
+        display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 20;
+        max-height: 320px; overflow-y: auto; background: #fff; border: 1px solid #ced4da; border-radius: 4px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.12); margin-top: 2px;
+    }
+    .pr-custom-select-list.open { display: block; }
+    .pr-custom-select-search {
+        position: sticky; top: 0; background: #fff; padding: 0.5rem; border-bottom: 1px solid #e5e7eb;
+        display: flex; align-items: center; gap: 0.5rem; z-index: 1;
+    }
+    .pr-custom-select-search i { color: #9ca3af; font-size: 0.8rem; }
+    .pr-custom-select-search input {
+        flex: 1; border: none; outline: none; font-size: 0.85rem; color: #374151; background: transparent;
+    }
+    .pr-custom-select-item {
+        padding: 0.5rem 0.75rem; cursor: pointer; line-height: 1.35; border-bottom: 1px solid #f3f4f6;
+    }
+    .pr-custom-select-item:last-child { border-bottom: none; }
+    .pr-custom-select-item:hover { background: var(--bg-muted); }
+    .pr-custom-select-item.selected { background: var(--accent-light); }
+    .pr-custom-select-item.disabled { cursor: not-allowed; }
+    .pr-custom-select-item .pr-opt-name {
+        font-size: 0.85rem; color: #374151; white-space: normal; word-break: break-word;
+    }
+    .pr-custom-select-item.selected .pr-opt-name { color: var(--accent); font-weight: 500; }
+    .pr-custom-select-item.disabled .pr-opt-name { color: #adb5bd; }
+    .pr-custom-select-item .pr-opt-meta {
+        margin-top: 2px; font-size: 0.72rem; color: #9ca3af; font-weight: 500;
+        text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .pr-custom-select-item.disabled .pr-opt-meta { text-transform: none; letter-spacing: 0; font-style: italic; }
+    .pr-custom-select-empty { padding: 0.75rem; font-size: 0.82rem; color: #9ca3af; text-align: center; }
+</style>
+<script>
+function prToggleAddBlockFields() {
+    var type = document.getElementById('prBlockType').value;
+    document.getElementById('prQWrap').style.display = type === 'question' ? '' : 'none';
+    document.getElementById('prImgWrap').style.display = type === 'image' ? '' : 'none';
+}
+(function() {
+    var select = document.getElementById('prQ');
+    var trigger = document.getElementById('prQTrigger');
+    var label = trigger ? trigger.querySelector('.pr-custom-select-label') : null;
+    var list = document.getElementById('prQList');
+    var itemsWrap = document.getElementById('prQItems');
+    var searchInput = document.getElementById('prQSearch');
+    var empty = document.getElementById('prQEmpty');
+    var wrap = document.getElementById('prQCustom');
+    if (!select || !label || !list || !itemsWrap || !searchInput || !wrap) return;
+
+    function updateTrigger() {
+        var opt = select.options[select.selectedIndex];
+        label.textContent = opt ? (opt.getAttribute('data-qname') || opt.textContent.trim()) : '';
+    }
+
+    function openList() {
+        list.classList.add('open');
+        searchInput.value = '';
+        applyFilter('');
+        searchInput.focus();
+    }
+    function closeList() { list.classList.remove('open'); }
+
+    function clearItems() {
+        while (itemsWrap.firstChild) { itemsWrap.removeChild(itemsWrap.firstChild); }
+    }
+
+    function buildList() {
+        clearItems();
+        Array.from(select.options).forEach(function(opt, index) {
+            var item = document.createElement('div');
+            item.className = 'pr-custom-select-item'
+                + (opt.disabled ? ' disabled' : '')
+                + (index === select.selectedIndex ? ' selected' : '');
+
+            var qname = opt.getAttribute('data-qname') || opt.textContent.trim();
+            var metaText = opt.getAttribute('data-meta') || opt.getAttribute('data-note') || '';
+            // Lowercased haystack for search: matches question name AND type/meta.
+            item.dataset.search = (qname + ' ' + metaText).toLowerCase();
+
+            var name = document.createElement('div');
+            name.className = 'pr-opt-name';
+            name.textContent = qname;
+            item.appendChild(name);
+
+            if (metaText) {
+                var meta = document.createElement('div');
+                meta.className = 'pr-opt-meta';
+                meta.textContent = metaText;
+                item.appendChild(meta);
+            }
+
+            if (!opt.disabled) {
+                item.addEventListener('click', function() {
+                    select.selectedIndex = index;
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                    itemsWrap.querySelectorAll('.pr-custom-select-item').forEach(function(el) {
+                        el.classList.remove('selected');
+                    });
+                    item.classList.add('selected');
+                    updateTrigger();
+                    closeList();
+                });
+            }
+            itemsWrap.appendChild(item);
+        });
+    }
+
+    function applyFilter(query) {
+        var q = (query || '').trim().toLowerCase();
+        var visible = 0;
+        itemsWrap.querySelectorAll('.pr-custom-select-item').forEach(function(el) {
+            var match = !q || el.dataset.search.indexOf(q) !== -1;
+            el.style.display = match ? '' : 'none';
+            if (match) visible++;
+        });
+        if (empty) empty.style.display = visible === 0 ? '' : 'none';
+    }
+
+    trigger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (list.classList.contains('open')) { closeList(); }
+        else { openList(); }
+    });
+    searchInput.addEventListener('input', function() { applyFilter(searchInput.value); });
+    searchInput.addEventListener('click', function(e) { e.stopPropagation(); });
+    document.addEventListener('click', function(e) {
+        if (!wrap.contains(e.target)) closeList();
+    });
+
+    buildList();
+    updateTrigger();
+})();
+</script>

@@ -1,0 +1,261 @@
+{% load survey_filters %}
+<div class="pr-panel-flush">
+
+  <!-- Context bar — mirrors the Publish space's Page settings header -->
+  <div class="pr-ctxbar">
+    <span class="ico"><i class="fas fa-cog"></i></span>
+    <div><div class="t">Survey settings</div><div class="s">Applies to the whole survey</div></div>
+  </div>
+
+  <div class="pr-scroll">
+
+    {% comment %}Survey settings — grouped into semantic cards (mirrors the
+    Publish space's Page settings). All fields stay inside one autosaving form.{% endcomment %}
+    <form method="post" id="surveySettingsGeneralForm" data-autosave
+          action="{% url 'editor_survey_settings_panel' survey.uuid %}" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="pr-card">
+        <h6>Basics</h6>
+        <div class="pr-field">
+          <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% if form.name.help_text %}<div class="pr-help">{{ form.name.help_text }}</div>{% endif %}
+          {% for error in form.name.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="pr-field">
+          <label for="{{ form.visibility.id_for_label }}">{{ form.visibility.label }}</label>
+          {{ form.visibility }}
+          {% if form.visibility.help_text %}<div class="pr-help">{{ form.visibility.help_text }}</div>{% endif %}
+          {% for error in form.visibility.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="pr-field">
+          <label for="{{ form.redirect_url.id_for_label }}">{{ form.redirect_url.label }}</label>
+          {{ form.redirect_url }}
+          {% if form.redirect_url.help_text %}<div class="pr-help">{{ form.redirect_url.help_text }}</div>{% endif %}
+          {% for error in form.redirect_url.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="pr-card">
+        <h6>Languages</h6>
+        <div class="pr-field">
+          <label for="{{ form.available_languages.id_for_label }}">{{ form.available_languages.label }}</label>
+          {{ form.available_languages }}
+          {% include "editor/partials/language_picker.html" %}
+          {% if form.available_languages.help_text %}<div class="pr-help">{{ form.available_languages.help_text }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="pr-card">
+        <h6>Respondent map</h6>
+        <div class="pr-help" style="margin-top:0;margin-bottom:.75rem;">The base map, starting position, and zoom respondents open on. Sections can override the position individually.</div>
+        <div class="pr-field">
+          <label for="{{ form.basemaps.id_for_label }}">{{ form.basemaps.label }}</label>
+          {{ form.basemaps }}
+          <div style="display:flex;flex-wrap:wrap;gap:.4rem 1rem;margin-top:.25rem;">
+            {% for slug, label in basemap_choices %}
+            <label style="font-weight:400;display:flex;gap:.4rem;align-items:center;margin:0;cursor:pointer;">
+              <input class="basemap-cb" type="checkbox"
+                     id="bm_{{ slug }}" value="{{ slug }}"
+                     {% if slug in survey.basemaps %}checked{% endif %}>
+              {{ label }}
+            </label>
+            {% endfor %}
+          </div>
+          {% if form.basemaps.help_text %}<div class="pr-help">{{ form.basemaps.help_text }}</div>{% endif %}
+          <script>
+          (function(){
+              var inp = document.getElementById('id_basemaps');
+              var cbs = document.querySelectorAll('.basemap-cb');
+              function sync(){
+                  var v = [];
+                  cbs.forEach(function(c){ if (c.checked) v.push(c.value); });
+                  inp.value = JSON.stringify(v.length ? v : ['streets']);
+              }
+              sync();
+              cbs.forEach(function(c){ c.addEventListener('change', sync); });
+          })();
+          </script>
+        </div>
+        <div class="pr-field">
+          <label for="{{ form.default_basemap.id_for_label }}">{{ form.default_basemap.label }}</label>
+          {{ form.default_basemap }}
+          {% if form.default_basemap.help_text %}<div class="pr-help">{{ form.default_basemap.help_text }}</div>{% endif %}
+        </div>
+
+        <div class="pr-field" style="margin-bottom:.5rem;">
+          <label>Default position</label>
+          <div id="survey-map-picker" style="height:300px;width:100%;border-radius:var(--radius);border:1px solid var(--border-color);margin-bottom:0.5rem;position:relative;z-index:0;"></div>
+          <div class="pr-help" style="margin-top:0;">
+            <span id="survey-map-coords">
+              {% if survey.start_map_postion %}
+                  Lat: {{ survey.start_map_postion.y|floatformat:5 }},
+                  Lng: {{ survey.start_map_postion.x|floatformat:5 }},
+                  Zoom: {{ survey.start_map_zoom|default:"12" }}
+              {% else %}
+                  Click the map to set position
+              {% endif %}
+            </span>
+          </div>
+        </div>
+        <label class="pr-switch" title="Auto-center the map on the respondent's browser location when they first enter the survey.">
+          <span>Auto-center on respondent's location <small class="pr-help">uses the visitor's browser geolocation on entry</small></span>
+          <input type="checkbox" id="survey-use-geolocation" {% if survey.use_geolocation %}checked{% endif %}>
+        </label>
+        <button type="button" class="btn btn-primary btn-sm" id="save-survey-map-position" style="margin-top:.75rem;">
+          <i class="fas fa-save mr-1"></i> Save map position
+        </button>
+        <span id="survey-map-saved" style="display:none;color:#10b981;font-size:0.85rem;margin-left:0.5rem;">Saved!</span>
+      </div>
+
+      <div class="pr-card">
+        <h6>Cover image</h6>
+        <div class="pr-field">
+          <label for="{{ form.cover_image.id_for_label }}">{{ form.cover_image.label }}</label>
+          {% if survey.cover_image %}
+          <div class="mb-2">
+            <img src="{{ survey.cover_image.url }}" style="max-width:200px;max-height:120px;border-radius:6px;border:1px solid var(--border-color);">
+          </div>
+          {% endif %}
+          {{ form.cover_image }}
+          {% if form.cover_image.help_text %}<div class="pr-help">{{ form.cover_image.help_text }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
+      <noscript><button type="submit" class="btn btn-primary btn-sm">Save Settings</button></noscript>
+    </form>
+
+    <script>
+    (function() {
+        var hasPosition = {{ survey.start_map_postion|yesno:"true,false" }};
+        var lat = hasPosition ? {{ survey.start_map_postion.y|default:"52.52" }} : 52.52;
+        var lng = hasPosition ? {{ survey.start_map_postion.x|default:"13.405" }} : 13.405;
+        var zoom = {{ survey.start_map_zoom|default:"12" }};
+
+        var map = L.map('survey-map-picker').setView([lat, lng], zoom);
+        L.tileLayer('{{ MAPBOX_URL }}', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
+            maxZoom: 23,
+            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
+        }).addTo(map);
+
+        var marker = hasPosition ? L.marker([lat, lng]).addTo(map) : null;
+
+        if (!hasPosition && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                lat = pos.coords.latitude;
+                lng = pos.coords.longitude;
+                zoom = 13;
+                map.setView([lat, lng], zoom);
+                marker = L.marker([lat, lng]).addTo(map);
+                document.getElementById('survey-map-coords').textContent =
+                    'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
+            }, function() {}, { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 });
+        }
+
+        map.on('click', function(e) {
+            lat = e.latlng.lat; lng = e.latlng.lng;
+            if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
+            else { marker.setLatLng(e.latlng); }
+            document.getElementById('survey-map-coords').textContent =
+                'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + map.getZoom();
+        });
+
+        map.on('zoomend', function() {
+            zoom = map.getZoom();
+            document.getElementById('survey-map-coords').textContent =
+                'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
+        });
+
+        document.getElementById('save-survey-map-position').addEventListener('click', function() {
+            zoom = map.getZoom();
+            var formData = new FormData();
+            formData.append('lat', lat);
+            formData.append('lng', lng);
+            formData.append('zoom', zoom);
+            formData.append('use_geolocation', document.getElementById('survey-use-geolocation').checked ? '1' : '0');
+
+            fetch('{% url "editor_survey_map_position" survey.uuid %}', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                body: formData
+            }).then(function(resp) {
+                if (resp.ok) {
+                    var el = document.getElementById('survey-map-saved');
+                    el.style.display = 'inline';
+                    setTimeout(function() { el.style.display = 'none'; }, 2000);
+                }
+            });
+        });
+
+        setTimeout(function() { map.invalidateSize(); }, 200);
+    })();
+    </script>
+
+    <!-- Collaborators -->
+    <div class="pr-card">
+      <h6>Collaborators</h6>
+      <div hx-get="{% url 'editor_survey_collaborators' survey.uuid %}"
+           hx-trigger="load"
+           hx-swap="innerHTML">
+      </div>
+    </div>
+
+    <!-- Password & Test Access -->
+    <div class="pr-card">
+      <h6>Password &amp; test access</h6>
+      <div class="password-container">
+        {% include "editor/partials/survey_password_modal.html" %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+    var form = document.getElementById('surveySettingsGeneralForm');
+    if (!form) return;
+
+    function debounce(fn, ms){ var t; return function(){ var a = arguments, c = this; clearTimeout(t); t = setTimeout(function(){ fn.apply(c, a); }, ms); }; }
+
+    function setStatus(state){
+        var el = form.querySelector('[data-autosave-status]'); if (!el) return;
+        var span = el.querySelector('span') || el;
+        el.classList.remove('is-error', 'is-saving');
+        if (state === 'saving') { span.textContent = 'Saving…'; el.classList.add('is-saving'); }
+        else if (state === 'saved') { span.textContent = 'Saved'; }
+        else if (state === 'error') { span.textContent = 'Not saved — retry'; el.classList.add('is-error'); }
+    }
+
+    function save(){
+        var fd = new FormData(form);
+        var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || fd.get('csrfmiddlewaretoken') || '';
+        setStatus('saving');
+        fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': token },
+            body: fd
+        }).then(function(r){
+            if (!r.ok) { return Promise.reject(r); }
+            return r.json();
+        }).then(function(){
+            setStatus('saved');
+            document.body.dispatchEvent(new Event('sectionSaved'));
+        }).catch(function(){ setStatus('error'); });
+    }
+    var dsave = debounce(save, 600);
+
+    form.querySelectorAll('input, select, textarea').forEach(function(field){
+        if (field.name === 'csrfmiddlewaretoken') return;
+        var tag = field.tagName, t = field.type;
+        if (tag === 'SELECT' || t === 'checkbox' || t === 'radio' || t === 'file') { field.addEventListener('change', save); }
+        else { field.addEventListener('input', dsave); field.addEventListener('change', save); }
+    });
+    // Basemap checkboxes aren't form fields themselves (they sync into the
+    // hidden `basemaps` input) — trigger autosave once that sync has run.
+    document.querySelectorAll('.basemap-cb').forEach(function(cb){ cb.addEventListener('change', save); });
+})();
+</script>

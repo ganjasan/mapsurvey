@@ -11,12 +11,12 @@ from django.views.decorators.http import require_POST
 
 from .models import (
     SurveyHeader, SurveySession, SurveySection, SurveySectionTranslation,
-    Question, QuestionTranslation, SurveyCollaborator,
+    Question, QuestionTranslation, SurveyCollaborator, Answer,
     Membership, SURVEY_ROLE_CHOICES, BASEMAP_CHOICES,
 )
 from .cloning import clone_question, clone_section
 from .editor_forms import (
-    SurveyHeaderForm, SurveySectionForm, QuestionForm,
+    SurveyHeaderForm, SurveyCreateForm, SurveySectionForm, QuestionForm,
     SUBQUESTION_DISALLOWED_INPUT_TYPES,
 )
 from .forms import SurveySectionAnswerForm
@@ -24,8 +24,60 @@ from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role,
 )
-from .versioning import clone_survey_for_draft, check_draft_compatibility, publish_draft, IncompatibleDraftError
+from .versioning import (
+    clone_survey_for_draft, check_draft_compatibility, publish_draft,
+    IncompatibleDraftError, family_ids,
+)
 from .audit import audit
+
+
+def _guard_choice_codes(question, new_choices):
+    """Prevent silently rebinding a historically answered choice code.
+
+    Cross-version analytics merges choice answers by code, so a code that
+    family answers used but that is absent from the question's current set
+    must never be handed to a NEW choice — the old and new meanings would
+    silently merge. Offending new entries get a fresh code above everything
+    ever used in the lineage. Existing codes stay untouched (renaming an
+    existing choice is a normal compatible edit).
+    """
+    if not isinstance(new_choices, list) or not question.code:
+        return new_choices
+
+    old_codes = {c.get('code') for c in (question.choices or []) if isinstance(c, dict)}
+
+    answered = set()
+    lineage_selected = (
+        Answer.objects
+        .filter(
+            question__code=question.code,
+            question__input_type=question.input_type,
+            question__survey_section__survey_header_id__in=family_ids(
+                question.survey_section.survey_header
+            ),
+        )
+        .exclude(selected_choices__isnull=True)
+        .values_list('selected_choices', flat=True)
+    )
+    for selected in lineage_selected:
+        answered.update(selected or [])
+    if not answered:
+        return new_choices
+
+    all_known = answered | old_codes | {
+        c.get('code') for c in new_choices if isinstance(c, dict)
+    }
+    numeric = [c for c in all_known if isinstance(c, int)]
+    next_code = (max(numeric) + 1) if numeric else 1
+
+    for choice in new_choices:
+        if not isinstance(choice, dict):
+            continue
+        code = choice.get('code')
+        if code in answered and code not in old_codes:
+            choice['code'] = next_code
+            next_code += 1
+    return new_choices
 
 
 def _check_structural_edit_allowed(survey):
@@ -80,6 +132,11 @@ def _can_read_survey(user, survey):
     return get_effective_survey_role(user, survey) is not None
 
 
+def _is_ajax(request):
+    """True for fetch/XHR autosave requests (vs a plain form submit)."""
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+
 def _get_sections_ordered(survey):
     """Return sections in linked-list order."""
     sections = list(SurveySection.objects.filter(survey_header=survey))
@@ -114,7 +171,7 @@ def _get_sections_ordered(survey):
 @org_permission_required('editor')
 def editor_survey_create(request):
     if request.method == 'POST':
-        form = SurveyHeaderForm(request.POST)
+        form = SurveyCreateForm(request.POST)
         if form.is_valid():
             survey = form.save(commit=False)
             survey.organization = request.active_org
@@ -128,6 +185,11 @@ def editor_survey_create(request):
             if map_zoom:
                 survey.start_map_zoom = int(map_zoom)
             survey.use_geolocation = request.POST.get('use_geolocation') == '1'
+            # Default base map (all basemaps stay enabled via the model default)
+            valid_basemaps = {slug for slug, _ in BASEMAP_CHOICES}
+            chosen_basemap = request.POST.get('default_basemap')
+            if chosen_basemap in valid_basemaps:
+                survey.default_basemap = chosen_basemap
             survey.save()
             # Create SurveyCollaborator owner entry
             SurveyCollaborator.objects.create(
@@ -145,10 +207,9 @@ def editor_survey_create(request):
             )
             return redirect('editor_survey_detail', survey_uuid=survey.uuid)
     else:
-        form = SurveyHeaderForm()
+        form = SurveyCreateForm()
     return render(request, 'editor/survey_create.html', {
         'form': form,
-        'basemap_choices': BASEMAP_CHOICES,
     })
 
 
@@ -159,14 +220,24 @@ def editor_survey_detail(request, survey_uuid):
     survey = request.survey
     sections = _get_sections_ordered(survey)
 
-    current_section_id = request.GET.get('section')
+    settings_panel_active = (
+        request.GET.get('panel') == 'settings'
+        and request.effective_survey_role == 'owner'
+    )
+    thanks_panel_active = (
+        request.GET.get('panel') == 'thanks'
+        and request.effective_survey_role in ('editor', 'owner')
+    )
+
     current_section = None
-    if current_section_id:
-        current_section = SurveySection.objects.filter(
-            id=current_section_id, survey_header=survey
-        ).first()
-    if not current_section and sections:
-        current_section = sections[0]
+    if not settings_panel_active and not thanks_panel_active:
+        current_section_id = request.GET.get('section')
+        if current_section_id:
+            current_section = SurveySection.objects.filter(
+                id=current_section_id, survey_header=survey
+            ).first()
+        if not current_section and sections:
+            current_section = sections[0]
 
     questions = []
     if current_section:
@@ -198,6 +269,8 @@ def editor_survey_detail(request, survey_uuid):
         'survey': survey,
         'sections': sections,
         'current_section': current_section,
+        'settings_panel_active': settings_panel_active,
+        'thanks_panel_active': thanks_panel_active,
         'questions': questions,
         'effective_role': request.effective_survey_role,
         'can_edit': can_edit and not is_read_only,
@@ -228,6 +301,118 @@ def editor_survey_settings(request, survey_uuid):
         'effective_role': request.effective_survey_role,
         'basemap_choices': BASEMAP_CHOICES,
     })
+
+
+@survey_permission_required('owner')
+def editor_survey_settings_panel(request, survey_uuid):
+    """Same settings as editor_survey_settings, rendered as an HTMX-swappable
+    partial for the pinned "Survey settings" entry in the editor sidebar. The
+    general fields autosave (mirrors public_results_editor.py's pattern); Map
+    Position / Collaborators / Password keep their own dedicated controls.
+    """
+    survey = request.survey
+    if request.method == 'POST':
+        form = SurveyHeaderForm(request.POST, request.FILES, instance=survey)
+        if form.is_valid():
+            form.save()
+            if _is_ajax(request):
+                return JsonResponse({'ok': True})
+            from django.urls import reverse
+            return redirect('{}?panel=settings'.format(reverse('editor_survey_detail', args=[survey.uuid])))
+        elif _is_ajax(request):
+            return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
+    else:
+        form = SurveyHeaderForm(instance=survey)
+    return render(request, 'editor/partials/survey_settings_panel.html', {
+        'survey': survey,
+        'form': form,
+        'effective_role': request.effective_survey_role,
+        'basemap_choices': BASEMAP_CHOICES,
+    })
+
+
+@survey_permission_required('editor')
+def editor_survey_thanks_panel(request, survey_uuid):
+    """WYSIWYG editor for the survey's thanks page, as an HTMX-swappable partial
+    for the pinned "Thanks page" entry (the last Build step). Per-language HTML
+    is sanitized on save and stored in SurveyHeader.thanks_html; autosaves.
+    """
+    from .views import sanitize_thanks_html
+    survey = request.survey
+    langs = list(survey.available_languages) or ['en']
+    results_page = getattr(survey, 'public_results_page', None)
+
+    if request.method == 'POST':
+        thanks = {}
+        for lang in langs:
+            cleaned = sanitize_thanks_html(request.POST.get('thanks_{}'.format(lang), ''))
+            if cleaned:
+                thanks[lang] = cleaned
+        survey.thanks_html = thanks
+        survey.save(update_fields=['thanks_html'])
+        # The "See the results" toggle lives on the results page; save it here too.
+        # A hidden marker tells us the checkbox was actually in the submitted form
+        # (an unchecked box sends nothing), so a stale form can't clobber it.
+        if results_page is not None and request.POST.get('has_results_toggle') == '1':
+            results_page.show_on_thanks = request.POST.get('show_on_thanks') == 'on'
+            results_page.save(update_fields=['show_on_thanks'])
+        if _is_ajax(request):
+            return JsonResponse({'ok': True})
+        from django.urls import reverse
+        return redirect('{}?panel=thanks'.format(reverse('editor_survey_detail', args=[survey.uuid])))
+
+    existing = survey.thanks_html or {}
+    if isinstance(existing, str):
+        existing = {langs[0]: existing}
+    thanks_by_lang = {lang: existing.get(lang, '') for lang in langs}
+    return render(request, 'editor/partials/thanks_panel.html', {
+        'survey': survey,
+        'langs': langs,
+        'thanks_by_lang': thanks_by_lang,
+        'results_page': results_page,
+        'effective_role': request.effective_survey_role,
+    })
+
+
+@survey_permission_required('viewer')
+def editor_survey_thanks_preview(request, survey_uuid):
+    """Editor-only render of the thanks page for the live-preview iframe.
+
+    Renders the same public thanks template in the requested language, but
+    gated on editor access (so draft/private surveys preview too) and with no
+    session side effects (unlike the public survey_thanks view).
+    """
+    from .views import resolve_thanks_html
+    survey = request.survey
+    lang = request.GET.get('lang') or (survey.available_languages[0] if survey.available_languages else 'en')
+    return render(request, 'survey_thanks.html', {
+        'survey': survey,
+        'thanks_html': resolve_thanks_html(survey.thanks_html, lang),
+        'lang': lang,
+    })
+
+
+@survey_permission_required('editor')
+@require_POST
+def editor_survey_thanks_image(request, survey_uuid):
+    """Upload an image for the thanks-page editor; returns its URL as JSON.
+
+    Stored via the default storage (local media or S3) so the thanks HTML holds
+    a plain URL instead of a bloated base64 data URI.
+    """
+    import os
+    import uuid as _uuid
+    from django.core.files.storage import default_storage
+    f = request.FILES.get('image')
+    if not f:
+        return JsonResponse({'error': 'No file'}, status=400)
+    if f.content_type not in ('image/png', 'image/jpeg', 'image/gif', 'image/webp'):
+        return JsonResponse({'error': 'Unsupported image type'}, status=400)
+    if f.size > 5 * 1024 * 1024:
+        return JsonResponse({'error': 'Image too large (max 5 MB)'}, status=400)
+    ext = (os.path.splitext(f.name)[1] or '.png')[:8]
+    name = default_storage.save('thanks_images/{}{}'.format(_uuid.uuid4().hex, ext), f)
+    return JsonResponse({'url': default_storage.url(name)})
 
 
 # ─── Survey map position ─────────────────────────────────────────────────────
@@ -436,7 +621,7 @@ def editor_question_create(request, survey_uuid, section_id):
             # Handle choices
             choices_json = request.POST.get('choices_json', '').strip()
             if choices_json:
-                question.choices = json.loads(choices_json)
+                question.choices = _guard_choice_codes(question, json.loads(choices_json))
             question.save()
             _save_question_translations(request, question, survey)
             response = render(request, 'editor/partials/question_list_item.html', {
@@ -476,7 +661,7 @@ def editor_question_edit(request, survey_uuid, question_id):
             q = form.save(commit=False)
             choices_json = request.POST.get('choices_json', '').strip()
             if choices_json:
-                q.choices = json.loads(choices_json)
+                q.choices = _guard_choice_codes(question, json.loads(choices_json))
             elif q.input_type not in ('choice', 'multichoice', 'range', 'rating'):
                 q.choices = None
             # Validation settings per question type
@@ -649,7 +834,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
             question.order_number = (max_order or 0) + 1
             choices_json = request.POST.get('choices_json', '').strip()
             if choices_json:
-                question.choices = json.loads(choices_json)
+                question.choices = _guard_choice_codes(question, json.loads(choices_json))
             question.save()
             _save_question_translations(request, question, survey)
             # Return the parent question item (includes sub-questions)
@@ -1129,6 +1314,25 @@ def editor_survey_transition(request, survey_uuid):
 
 @survey_permission_required('owner')
 @require_POST
+def editor_survey_visibility(request, survey_uuid):
+    """Toggle public-gallery visibility from the publishing widget.
+
+    Presentation-only helper: writes the single `visibility` field
+    (public ↔ private). `demo` is left untouched if posted.
+    """
+    survey = request.survey
+    value = request.POST.get('visibility')
+    if value not in ('public', 'private', 'demo'):
+        return HttpResponse('Invalid visibility', status=400)
+    survey.visibility = value
+    survey.save(update_fields=['visibility'])
+    if _is_ajax(request):
+        return JsonResponse({'ok': True, 'visibility': survey.visibility})
+    return redirect('editor_survey_detail', survey_uuid=survey.uuid)
+
+
+@survey_permission_required('owner')
+@require_POST
 def editor_survey_password(request, survey_uuid):
     """Manage survey password and test token."""
     survey = request.survey
@@ -1182,6 +1386,39 @@ def editor_create_draft(request, survey_uuid):
         return HttpResponse('A draft already exists for this survey', status=409)
 
     draft = clone_survey_for_draft(survey)
+    return redirect('editor_survey_detail', survey_uuid=draft.uuid)
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_restore_version(request, survey_uuid):
+    """Restore an archived version's questionnaire as a new draft copy.
+
+    Append-only rollback: the draft clones the archived structure; publishing
+    it creates a NEW version — no history is rewritten, no session moves.
+    """
+    survey = request.survey
+
+    if survey.status != 'published':
+        return HttpResponse('Only published surveys can restore a version', status=400)
+
+    if survey.has_draft_copy():
+        return HttpResponse('A draft already exists for this survey', status=409)
+
+    version_param = request.POST.get('version', '')
+    try:
+        version_num = int(str(version_param).lstrip('v'))
+    except (TypeError, ValueError):
+        return HttpResponse('Invalid version', status=400)
+
+    archived = get_object_or_404(
+        SurveyHeader,
+        canonical_survey=survey,
+        is_canonical=False,
+        version_number=version_num,
+    )
+
+    draft = clone_survey_for_draft(survey, structure_source=archived)
     return redirect('editor_survey_detail', survey_uuid=draft.uuid)
 
 

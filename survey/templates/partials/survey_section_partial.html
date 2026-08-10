@@ -28,7 +28,12 @@
             {% endif %}
         </div>
         <div class='questions'>
-            <form method="post" id="section_question_form"
+            <div id="required-summary" class="required-summary" style="display:none;" role="status">
+                <i class="fas fa-info-circle"></i>
+                <span>{% trans "A few required questions still need an answer." %}</span>
+            </div>
+            <form method="post" id="section_question_form" novalidate
+                  data-msg-required="{% trans 'This question is required' %}"
                   hx-post="{% url 'section' survey_slug=survey.uuid section_name=section.name %}"
                   hx-target="#section-panel"
                   hx-swap="innerHTML"
@@ -37,7 +42,9 @@
                 {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
                 {% for field in form.visible_fields %}
                     {% if field|uses_scale_style %}
-                        <div class="question-card question-card--scale">
+                        <div class="question-card question-card--scale"
+                             data-field-name="{{ field.html_name }}"
+                             {% if field.field.required %}data-required="true"{% endif %}>
                             {% if field.label %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
                             {{ field.errors }}
                             {% if field|rating_display_style == 'list_pips' %}
@@ -47,7 +54,9 @@
                             {% endif %}
                         </div>
                     {% elif field|is_card_question %}
-                        <div class="question-card">
+                        <div class="question-card"
+                             data-field-name="{{ field.html_name }}"
+                             {% if field.field.required %}data-required="true"{% endif %}>
                             {% if field.label %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
                             {{ field.errors }}
                             {{ field }}
@@ -86,6 +95,8 @@
                         {% endif %}
                     {% elif not preview %}
                         <input type="submit" class="btn btn-primary next_button" style="width: 80%" form="section_question_form" value="{% trans "Finish" %}">
+                    {% else %}
+                        <button type="button" class="btn btn-primary next_button" style="width: 80%" disabled title="{% trans 'This is the last section — respondents finish here' %}">{% trans "Finish" %}</button>
                     {% endif %}
                 </div>
             </div>

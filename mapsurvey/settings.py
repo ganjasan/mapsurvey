@@ -249,6 +249,8 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'survey/assets'),)
 INTERNAL_IPS = ('127.0.0.1',)
 
 LOGIN_REDIRECT_URL = '/editor/'
+# Skip the "Signed Out" confirmation page — LogoutView redirects straight home.
+LOGOUT_REDIRECT_URL = '/'
 
 ACCOUNT_ACTIVATION_DAYS = int(os.environ.get('ACCOUNT_ACTIVATION_DAYS', 7))
 

@@ -53,11 +53,20 @@ def share_page(request, survey_uuid):
         for link in links
     ]
 
+    # A shared link only reaches the public when the survey is published; every other
+    # status 404s (or is test-token only), so gate the copyable links behind that and
+    # nudge the creator to publish first (see backlog: publish-prompt-on-share-draft).
+    is_shareable = survey.status == 'published'
+    can_publish, publish_blocked_reason = survey.can_transition_to('published')
+
     return render(request, 'editor/survey_share.html', {
         'survey': survey,
         'form': form,
         'links': link_data,
         'effective_role': request.effective_survey_role,
+        'is_shareable': is_shareable,
+        'can_publish': can_publish,
+        'publish_blocked_reason': publish_blocked_reason,
     })
 
 

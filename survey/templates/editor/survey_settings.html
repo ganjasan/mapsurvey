@@ -5,19 +5,10 @@
 
 {% block extra_head %}
 <style>
-    .settings-main { max-width: 800px; margin: 0 auto; padding: 1.5rem; }
-    .settings-section {
-        background: #fff;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 1.25rem;
-        margin-bottom: 1rem;
-    }
-    .settings-section h6 {
-        margin-bottom: 1rem;
-        font-size: 0.95rem;
-        font-weight: 600;
-    }
+    /* .settings-main/.settings-section live in editor_base.html; this page
+       adds its own padding since (unlike the pinned-panel version swapped
+       into .editor-main) nothing else on this standalone page provides it. */
+    .settings-main { padding: 1.5rem; }
 </style>
 {% endblock %}
 

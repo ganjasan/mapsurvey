@@ -7,6 +7,7 @@
     <div class="q-stat-header">
         <div>
             <strong style="font-size:0.95rem;">{{ stat.question.name }}</strong>
+            {% if stat.archived %}<span class="badge badge-light" style="border:1px solid #e5e7eb;color:#92700c;background:#fdf7ea;" title="This question was removed in a newer version — historical answers only">archived · {{ stat.versions }}</span>{% endif %}
             <br><small class="text-muted">{{ stat.section.title|default:stat.section.name }}</small>
         </div>
         <div style="display:flex;align-items:center;gap:0.4rem;">

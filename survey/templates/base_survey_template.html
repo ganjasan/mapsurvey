@@ -40,6 +40,39 @@
    <!-- HTMX -->
    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
+   <style>
+     /* Required-question validation feedback — a gentle nudge, not an alarm.
+        Soft amber accent instead of a harsh red error state. */
+     .question-card--invalid,
+     .drawbutton.is-required-invalid {
+         box-shadow: 0 0 0 1.5px #e6b566;
+         border-radius: 6px;
+     }
+     .required-inline-msg {
+         display: flex;
+         align-items: center;
+         gap: .35rem;
+         margin-top: .4rem;
+         color: #9a7420;
+         font-size: .82rem;
+         font-weight: 400;
+     }
+     .required-inline-msg i { opacity: .8; }
+     .required-summary {
+         display: flex;
+         align-items: center;
+         gap: .45rem;
+         margin-bottom: 1rem;
+         padding: .55rem .8rem;
+         background: #fdf7ea;
+         color: #7d6420;
+         border: 1px solid #efe1bb;
+         border-radius: 6px;
+         font-size: .88rem;
+     }
+     .required-summary i { opacity: .85; }
+   </style>
+
 </head>
 
 
@@ -603,20 +636,53 @@
             $(".geo-inp[name='" + qid + "']").val(evt.detail.parameters[qid]);
         });
 
-        // Validate required geo fields (skip when going back)
+        // Validate required questions (skip when going back). Native HTML5
+        // validation is disabled on the form (novalidate) because hidden/custom
+        // widgets silently block submit without a visible message — we highlight
+        // every unanswered required question and show an inline note instead.
         if (!isBack) {
-            var isValid = true;
-            $('.drawbutton').css('border', '');
-            $('.geo-inp[data-required="true"]').each(function() {
-                if (!$(this).val()) {
-                    isValid = false;
-                    $('button.drawbutton[name="' + $(this).attr('name') + '"]').css('border', '3px solid #dc3545');
+            var firstInvalid = null;
+            var msgText = $(form).data('msg-required') || 'This question is required';
+
+            // reset previous highlights
+            $('.question-card--invalid').removeClass('question-card--invalid');
+            $('.required-inline-msg').remove();
+            $('.drawbutton').css('border', '').removeClass('is-required-invalid');
+            $('#required-summary').hide();
+
+            // 1) required card questions (text / choice / rating / range / datetime …)
+            $('#section_question_form .question-card[data-required="true"]').each(function() {
+                var card = this, filled = false;
+                $(card).find('input, textarea, select').each(function() {
+                    var t = (this.type || '').toLowerCase();
+                    if (t === 'radio' || t === 'checkbox') { if (this.checked) filled = true; }
+                    else if ($.trim(this.value || '') !== '') filled = true;
+                });
+                if (!filled) {
+                    $(card).addClass('question-card--invalid');
+                    var $msg = $('<div class="required-inline-msg"><i class="fas fa-info-circle"></i> <span></span></div>');
+                    $msg.find('span').text(msgText);
+                    $(card).append($msg);
+                    if (!firstInvalid) firstInvalid = card;
                 }
             });
 
-            if (!isValid) {
+            // 2) required geo questions (point / line / polygon draw buttons)
+            $('.geo-inp[data-required="true"]').each(function() {
+                if (!$(this).val()) {
+                    var btn = $('button.drawbutton[name="' + $(this).attr('name') + '"]');
+                    btn.addClass('is-required-invalid');
+                    if (!firstInvalid) firstInvalid = btn.get(0);
+                }
+            });
+
+            if (firstInvalid) {
+                // preventDefault() is what actually aborts the HTMX request;
+                // detail.cancel alone is NOT honoured by htmx:configRequest.
+                evt.preventDefault();
                 evt.detail.cancel = true;
-                alert('Please complete all required map questions before proceeding.');
+                $('#required-summary').show();
+                try { firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
             }
         }
     });

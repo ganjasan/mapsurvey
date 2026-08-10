@@ -4,6 +4,23 @@ from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP
 SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon')
 
 
+class SurveyCreateForm(forms.ModelForm):
+    """Minimal creation form — name, languages, and (via the view) map area.
+
+    The rest (redirect URL, visibility, thanks page, cover image, basemaps)
+    gets model defaults and is edited later in the Survey settings panel, which
+    uses the full ``SurveyHeaderForm``. Languages are asked up front because
+    they shape every later step (question text, translations).
+    """
+    class Meta:
+        model = SurveyHeader
+        fields = ['name', 'available_languages']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Park improvements'}),
+            'available_languages': forms.HiddenInput(attrs={'id': 'id_available_languages'}),
+        }
+
+
 class SurveyHeaderForm(forms.ModelForm):
     default_rating_display_style = forms.ChoiceField(
         choices=(('scale_strip', 'Compact scale'), ('list_pips', 'Labeled list')),
@@ -14,13 +31,14 @@ class SurveyHeaderForm(forms.ModelForm):
 
     class Meta:
         model = SurveyHeader
-        fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'thanks_html', 'cover_image', 'basemaps', 'default_basemap', 'show_branding']
+        # thanks_html now has its own WYSIWYG editor panel; show_branding is a
+        # future paid-tier flag on the model, not a creator-facing field.
+        fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'cover_image', 'basemaps', 'default_basemap']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'survey_name'}),
             'redirect_url': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '#'}),
             'available_languages': forms.HiddenInput(attrs={'id': 'id_available_languages'}),
             'visibility': forms.Select(attrs={'class': 'form-control'}),
-            'thanks_html': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': '{"en": "<h1>Thanks!</h1>"}'}),
             'cover_image': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
             'basemaps': forms.HiddenInput(attrs={'id': 'id_basemaps'}),
             'default_basemap': forms.Select(attrs={'class': 'form-control'}),
