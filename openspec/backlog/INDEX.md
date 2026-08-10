@@ -109,4 +109,4 @@
 | 111 | bug | [Color, Icon and Image are offered on every question type](bug-question-fields-shown-for-every-type.md) | high | frontend | — | 2026-08-09 |
 | 112 | improvement | [Group the question type list — display blocks are not input types](improvement-group-question-type-list.md) | medium | frontend | — | 2026-08-09 |
 | 113 | bug | [Results-page preview always claims "Unlisted"](bug-results-preview-always-claims-unlisted.md) | medium | frontend | — | 2026-08-09 |
-| 114 | bug | [Analytics and export disagree on which version they show](bug-analytics-and-export-disagree-on-version.md) | high | backend | — | 2026-08-09 |
+| ~~114~~ | ~~bug~~ | ~~[Analytics and export disagree on which version they show](bug-analytics-and-export-disagree-on-version.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-08-09~~ |

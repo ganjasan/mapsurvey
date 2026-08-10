@@ -10,30 +10,20 @@ from .models import (
     SurveyHeader, SurveySession, SurveySection, Answer, Question, SurveyEvent,
     VALIDATION_STATUS_CHOICES,
 )
-from .versioning import canonical_of, family_ids, lineage_map
+from .versioning import (
+    canonical_of, lineage_map,
+    resolve_version_scope as resolve_scope,
+)
 
 
 def resolve_version_scope(survey, version):
-    """Resolve a version filter value to a set of SurveyHeader ids.
+    """The SurveyHeader ids a version filter value resolves to.
 
-    version: 'all' (default) → the whole family; 'vN' / 'N' → that single
-    version's header. Unknown values fall back to 'all'.
+    Parsing lives in versioning.resolve_version_scope so the export and
+    analytics cannot drift apart on what a value means; this only unwraps the
+    ids the analytics services filter by.
     """
-    canonical = canonical_of(survey)
-    if version and version != 'all':
-        try:
-            num = int(str(version).lstrip('v'))
-        except (TypeError, ValueError):
-            num = None
-        if num is not None:
-            if num == canonical.version_number:
-                return {canonical.id}
-            match = SurveyHeader.objects.filter(
-                canonical_survey=canonical, version_number=num,
-            ).values_list('id', flat=True).first()
-            if match is not None:
-                return {match}
-    return family_ids(canonical)
+    return resolve_scope(survey, version).ids
 
 
 def version_choices(survey):
@@ -134,7 +124,8 @@ class SurveyAnalyticsService:
     def __init__(self, survey, include_deleted=False, version='all'):
         self.survey = survey
         self.version = version
-        self.scope_ids = resolve_version_scope(survey, version)
+        self.scope = resolve_scope(survey, version)
+        self.scope_ids = self.scope.ids
         if include_deleted:
             self.base_qs = SurveySession.objects.filter(survey_id__in=self.scope_ids)
         else:
@@ -145,11 +136,7 @@ class SurveyAnalyticsService:
     @property
     def _scope_surveys(self):
         """SurveyHeaders in scope (canonical first)."""
-        if not hasattr(self, '_scope_surveys_cache'):
-            headers = list(SurveyHeader.objects.filter(id__in=self.scope_ids))
-            headers.sort(key=lambda h: (not h.is_canonical, -h.version_number))
-            self._scope_surveys_cache = headers
-        return self._scope_surveys_cache
+        return self.scope.headers
 
     @property
     def _lineages(self):

@@ -4,6 +4,9 @@
 **Priority**: high
 **Area**: backend
 **Created**: 2026-08-09
+**Status**: fixed 2026-08-10 — `openspec/changes/version-filter-parity/`. One resolver in
+`survey/versioning.py` serves both surfaces; the default is the whole family on both, and `latest`
+means the canonical version on both.
 
 ## Description
 

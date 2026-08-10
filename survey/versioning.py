@@ -6,6 +6,8 @@ Provides draft-copy workflow for published surveys:
 - check_draft_compatibility(): Verify backward compatibility before publish
 - publish_draft(): Atomically publish a draft copy as a new version
 """
+from dataclasses import dataclass, field
+
 from django.db import transaction
 from django.db.models import Q
 
@@ -60,6 +62,81 @@ def family_sessions(survey, include_deleted=False):
     if not include_deleted:
         qs = qs.filter(is_deleted=False)
     return qs
+
+
+# ─── The `version` request filter ────────────────────────────────────────────
+#
+# Analytics and the data export both accept ?version=. They used to parse it
+# separately and disagreed: different defaults, and 'latest' narrowed one
+# surface while widening the other. One resolver serves both — the shapes they
+# need (ids for analytics, ordered headers for the export) come off one scope.
+
+@dataclass(frozen=True)
+class VersionScope:
+    """The version(s) a `version` filter value resolves to.
+
+    value:   the normalised filter value — always 'all' or 'vN'
+    headers: the SurveyHeaders in scope, canonical first then archived
+             newest-first (the export writes one file set per header, in order)
+    """
+    value: str
+    headers: list = field(default_factory=list)
+
+    @property
+    def ids(self):
+        return {header.id for header in self.headers}
+
+    @property
+    def is_family(self):
+        """True when the scope spans more than one version."""
+        return len(self.headers) > 1
+
+
+def family_headers(survey):
+    """The family's SurveyHeaders: canonical first, then archived newest-first."""
+    canonical = canonical_of(survey)
+    archived = list(
+        SurveyHeader.objects
+        .filter(canonical_survey=canonical)
+        .order_by('-version_number')
+    )
+    return [canonical] + archived
+
+
+def _requested_version_number(version, canonical):
+    """The version number a filter value names, or None for the whole family.
+
+    'latest' is an alias for the canonical version — resolved here rather than
+    crashing inside the int() parse, which is how the two surfaces used to
+    diverge. Anything unrecognised returns None, i.e. the default scope.
+    """
+    if not version:
+        return None
+    value = str(version).strip().lower()
+    if value in ('', 'all'):
+        return None
+    if value == 'latest':
+        return canonical.version_number
+    try:
+        return int(value.lstrip('v'))
+    except (TypeError, ValueError):
+        return None
+
+
+def resolve_version_scope(survey, version=None):
+    """Resolve a `version` filter value to a VersionScope.
+
+    Missing, 'all', or unresolvable values → the whole family. 'latest', 'vN'
+    and 'N' → that single version, when the family has one with that number.
+    """
+    canonical = canonical_of(survey)
+    headers = family_headers(canonical)
+    num = _requested_version_number(version, canonical)
+    if num is not None:
+        for header in headers:
+            if header.version_number == num:
+                return VersionScope(value=f'v{num}', headers=[header])
+    return VersionScope(value='all', headers=headers)
 
 
 def lineage_map(survey):
