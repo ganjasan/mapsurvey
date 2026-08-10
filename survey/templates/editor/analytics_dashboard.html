@@ -376,7 +376,7 @@
             {% endfor %}
         </select>
         {% endif %}
-        <a href="/surveys/{{ survey.uuid }}/download" class="btn btn-sm btn-outline-secondary"
+        <a href="/surveys/{{ survey.uuid }}/download?version={{ current_version }}" class="btn btn-sm btn-outline-secondary"
            style="{% if not version_choices %}margin-left:auto;{% else %}margin-left:0.5rem;{% endif %}margin-bottom:0.25rem;font-size:0.8rem;" title="Download clean responses (CSV + GeoJSON)">
             <i class="fas fa-download"></i> Download data
         </a>

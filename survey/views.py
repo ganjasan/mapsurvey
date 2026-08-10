@@ -42,6 +42,7 @@ import pandas as pd
 from .access_control import check_survey_access
 from .audit import audit
 from .trash import trash_survey, restore_survey, purge_survey, purge_expired_surveys
+from .versioning import resolve_version_scope
 import hmac
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -1009,30 +1010,18 @@ def survey_section(request, survey_slug, section_name):
 def _get_version_surveys(survey, version_param):
 	"""Resolve which survey(s) to export based on version parameter.
 
-	Returns list of (survey, prefix) tuples. prefix is empty string for single-version export.
+	Returns list of (survey, prefix) tuples. The prefix is empty when the scope
+	is a single version, so a single-version survey keeps unprefixed filenames
+	whatever the parameter says.
+
+	The parameter itself is parsed by versioning.resolve_version_scope — the
+	same call the analytics dashboard makes, so both surfaces answer the same
+	question for the same URL.
 	"""
-	if not version_param or version_param == 'latest':
-		return [(survey, '')]
-
-	if version_param == 'all':
-		# Current canonical + all archived versions
-		result = [(survey, f'v{survey.version_number}_')]
-		for archived in survey.get_version_history():
-			result.append((archived, f'v{archived.version_number}_'))
-		return result
-
-	# Parse "vN" format
-	if version_param.startswith('v') and version_param[1:].isdigit():
-		version_num = int(version_param[1:])
-		if version_num == survey.version_number:
-			return [(survey, '')]
-		archived = SurveyHeader.objects.filter(
-			canonical_survey=survey, version_number=version_num, is_canonical=False
-		).first()
-		if archived:
-			return [(archived, '')]
-
-	return [(survey, '')]
+	scope = resolve_version_scope(survey, version_param)
+	if scope.is_family:
+		return [(header, f'v{header.version_number}_') for header in scope.headers]
+	return [(header, '') for header in scope.headers]
 
 
 @login_required
