@@ -29,3 +29,4 @@ A geography teacher (lrbenedict12) is using Mapsurvey as interactive digital con
 - Survey: "Power Paper March Icebreaker" / "Power Paper April Icebreaker"
 - Value prop is dead simple to explain: "Like paper contour maps, but on a real interactive map"
 - Competitors in this niche: basically none — Survey123 and KoboToolbox don't position for education
+- **2026-08-10 — partially shipped.** The educator landing page exists (`survey/templates/for_educators.html`, `survey/urls.py:113`) and outreach has started. The product side has not: no survey-level duplication (only question and section), and no forkable contour template.

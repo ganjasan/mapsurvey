@@ -15,3 +15,4 @@ Add a search input on the editor dashboard (`/editor/`) and the public survey li
 - Public `/surveys/` list grows unboundedly across all users — search there is more pressing as the platform scales.
 - Implementation: HTMX-driven server-side filter (matches the existing editor stack); client-side substring filter is acceptable for v1 if list size is small.
 - Filter scope to consider: name, status (draft/testing/published/closed/archived), and "owned by me" vs "all".
+- **2026-08-10 — partially shipped.** The editor dashboard has a search box (`survey/templates/editor.html:213-215,478-505`). The public `/surveys/` list still has none — `survey/views.py:544` returns an unfiltered queryset. That is what is left.

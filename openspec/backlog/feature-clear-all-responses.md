@@ -32,3 +32,4 @@ their test data is unusable, which makes it more load-bearing than its priority 
   publish-time path already does.
 - Related: [Deleting a question silently destroys all answers](bug-editing-question-destroys-answers.md)
   — that bug is why a creator ends up needing this.
+- **2026-08-10 — partially shipped.** Bulk trash and hard-delete with select-all exist in analytics (`survey/analytics_views.py:408-422`, `analytics_dashboard.html:1175-1183`), and `clear_test_data` runs on the testing→published transition (`survey/editor_views.py:1297`). Missing: a single "clear all responses" action with type-to-confirm, independent of status.

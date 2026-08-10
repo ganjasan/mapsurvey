@@ -36,3 +36,4 @@ This is the **highest-leverage acquisition play** because it is the one growth p
 - Measure lift via [funnel monitoring](feature-funnel-monitoring.md) — tag education-channel registrations.
 - FTSPK contact policy: approach via the lecturer, not individual students (see `docs/marketing/user-outreach/ftspk_class/profile.md`).
 - Negative guardrail: avoid the "respondent" trap — a class of pure respondents (no creation) would not convert. The value is that students *build* surveys.
+- **2026-08-10 — partially shipped.** Landing page and first outreach are live (`survey/templates/for_educators.html:4,102-116`, `docs/marketing/user-outreach/ftspk_class/`). The classroom mechanics — cohort/classroom workspace, assignment templates — are not built.

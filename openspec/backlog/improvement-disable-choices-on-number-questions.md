@@ -14,3 +14,4 @@ The editor currently allows adding choices to number-type questions. This causes
 - Root cause of the "number field blank in CSV export" bug reported by bisq
 - The save logic fix (saving to `numeric` regardless of choices) is a safety net, but preventing the misconfiguration in the editor is the proper long-term solution
 - Affected editor component: question settings panel where choices are managed
+- **2026-08-10 — CLOSED.** The choices editor renders only for `choice`, `multichoice`, `range` and `rating` (`survey/templates/editor/partials/question_form_modal.html:199-207`, wired at `:244-246`), so a `number` question no longer offers them.

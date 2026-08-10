@@ -50,3 +50,4 @@ by sharing a login.
 
 - Do not gate the number of Members. Team collaboration stays free; differentiated
   *rights* are what is sold.
+- **2026-08-10 — partially shipped.** Org roles (viewer/editor/admin/owner) and per-survey collaborator roles pre-date this item (`survey/permissions.py:9-10,37`, `survey/models.py:254,480`). What it asks for is still missing: Analyst and Guest/Client read-only roles, export restriction for guests, magic-link guest invites, and the Pro gate.

@@ -45,3 +45,7 @@ rates alive over repeat projects:
 For a consultancy this converts into a sales argument: a published results map is the
 proof-of-process artefact their municipal client can point at. Full notes:
 `docs/research/ppgis-heat-participation.md`.
+
+## Status
+
+- **2026-08-10 — CLOSED** in PR #54. Public page at `/r/<slug>/` (`survey/urls.py:126`, `survey/views.py:1378`); map blocks emit a GeoJSON FeatureCollection (`survey/public_results.py:215-250`) rendered with Leaflet (`survey/templates/public_results.html:230-242`). k-anonymity masking and creator-selected popup fields shipped with it. Real-time updates are tracked separately as #83.

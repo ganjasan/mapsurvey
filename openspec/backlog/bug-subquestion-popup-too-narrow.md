@@ -74,3 +74,7 @@ or in addition to, the popup.
 - Raised by the user 2026-07-28 while reviewing the ThINK demo.
 - Related: [Rating question clips text labels](bug-rating-text-labels-clipped.md),
   [Image sub-question breaks point placement](bug-image-subquestion-breaks-geo-point.md).
+
+## Status
+
+- **2026-08-10 — CLOSED.** Popup width and height derive from the viewport instead of Leaflet's defaults — `maxWidth: min(520, 0.9 * window)` plus `minWidth` and a viewport-based `maxHeight` in `_subquestionPopupOptions()` (`survey/templates/base_survey_template.html:382-384`), applied at both call sites (`:427`, `:555`). The side-panel redesign floated under "Longer-term" is out of scope here and is not filed separately.

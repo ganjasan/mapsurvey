@@ -32,3 +32,4 @@ Turn the platform's highest-volume asset — survey responses — into an acquis
 - The public results page is brand-new and indexable (in sitemap) — pairs naturally with [public results showcase + SEO](idea-public-results-showcase-seo.md).
 - Conversion will be modest because most respondents are general public, not creators — that's expected; the value is that it's free and always-on.
 - Should be implemented through OpenSpec (`/opsx:new`) since it touches public templates.
+- **2026-08-10 — partially shipped.** The badge carries UTM parameters on the survey and thanks pages (`survey/templates/partials/_made_with_mapsurvey.html:11`, included at `base_survey_template.html:86` and `survey_thanks.html:48`). The public results page — the prime placement — has only a plain untracked link (`public_results.html:121`), and `show_branding` is deliberately not honoured yet (`_made_with_mapsurvey.html:4-5`).

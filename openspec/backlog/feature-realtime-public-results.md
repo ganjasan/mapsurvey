@@ -64,3 +64,4 @@ Resolve by making them distinct modes, not one page trying to be both: a static,
 - **Opt-in**: live mode is a per-survey flag, default off — most surveys want a clean, cacheable, final page.
 - Should be implemented through OpenSpec (`/opsx:new`) — touches public endpoints, caching, and a signal on `Answer`.
 - Blocks/unblocks: this is a **dependency** of #21 (projection) and a natural extension of #27 (public results map); pairs with #20 (kiosk) at events.
+- **2026-08-10 — partially shipped.** The server side of Phase 1 exists — live vs frozen mode with a 60s cached aggregate keyed on `updated_at` (`survey/public_results.py:27,343-360`). The delivery layer does not: no delta endpoint in `survey/urls.py`, and `public_results.html` has no polling or SSE.

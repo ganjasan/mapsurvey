@@ -43,3 +43,4 @@ Admin-only view that surfaces registration anomalies in the last 24h / 7d. The 2
 - Epic: [abuse-prevention](epics/abuse-prevention.md)
 - Sibling: [feature-unconfirmed-signup-purge.md](feature-unconfirmed-signup-purge.md)
 - Adjacent: [feature-funnel-monitoring.md](feature-funnel-monitoring.md) (#16 in INDEX) — analogous monitoring for the conversion funnel
+- **2026-08-10 — partially shipped.** Signup-burst and domain clusters plus blocked counts and top offending IPs render on the staff funnel dashboard (`survey/funnel.py:393,438`, `survey/templates/admin/funnel_dashboard.html:186,195`). Missing: the hourly 3σ sparkline, username-regex anomaly, email-prefix collision rate and unconfirmed-rate metric.

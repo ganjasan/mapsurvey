@@ -16,3 +16,4 @@ Generate a print-ready PDF poster with a QR code linking to the survey, plus the
 - Poster template: A4/Letter, customizable accent color, township logo upload
 - Multi-language: list available survey languages on the poster
 - PDF generated server-side or client-side (e.g., jsPDF + qrcode.js)
+- **2026-08-10 — partially shipped.** A QR code is generated and shown on the Share page (`survey/templates/editor/survey_share.html:6,129,271`). The poster itself is not: no print-ready A4/Letter PDF, no accent colour, logo upload or language list.

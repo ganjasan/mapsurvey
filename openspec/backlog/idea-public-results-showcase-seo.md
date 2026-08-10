@@ -28,3 +28,4 @@ Use the (already built) public results pages as an organic acquisition channel. 
 - Privacy is the hard constraint: only showcase results from creators who explicitly opt in; respect k-anonymity masking already in `PublicResultsService`. Never showcase `unlisted` pages.
 - Measure organic lift via [referrer tracking](feature-referrer-tracking.md) (search/Direct breakdown).
 - Lower urgency than coursework (#1) and the viral loop (#2), but compounds over time and reuses existing product surface.
+- **2026-08-10 — partially shipped.** The SEO half is done: results pages carry titles, meta and OG cards (`survey/templates/public_results.html:8-20`) and are in the sitemap (`survey/views.py:1754-1764`); a stories hub with a `results` story type exists (`survey/urls.py:111-112`, `survey/models.py:713`). The showcase gallery as specified — creator opt-in consent, grouped by use case — is not built; stories are staff-curated instead.

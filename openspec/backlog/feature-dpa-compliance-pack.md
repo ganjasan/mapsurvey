@@ -52,3 +52,4 @@ protection officer **in writing**.
 - [Frankfurt server migration](improvement-frankfurt-server-migration.md) (#11)
 - [Grant reporting pack](feature-grant-reporting-pack.md) (#94)
 - Existing `/trust/` page (`2026-04-02-trust-page`) is the public-facing entry point
+- **2026-08-10 — partially shipped.** An English Art. 28 DPA exists at `survey/assets/dpa/mapsurvey-dpa.pdf`, linked from `survey/templates/trust.html:142`. Missing for German buyers: the German AVV, SCC / third-country access disclosure, the access register, sub-processor change notification, and a self-serve countersignature flow.

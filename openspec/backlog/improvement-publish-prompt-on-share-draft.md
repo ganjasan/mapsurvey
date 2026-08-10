@@ -62,3 +62,7 @@ When a user tries to **Share** (or copy a tracked link for) a survey that is sti
   (`feature/public-survey-results-page`).
 - Related: [UTM parameters & link generator](feature-utm-link-generator.md) (the Share
   page this touches).
+
+## Status
+
+- **2026-08-10 — CLOSED.** The Share page now knows a link will 404: `is_shareable` and `can_publish` are computed server-side (`survey/share_views.py:56-69`) and the template shows a gate banner with an inline Publish action (`survey/templates/editor/survey_share.html:75-104`, transition POST at `:240-253`).

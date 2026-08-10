@@ -43,3 +43,4 @@ Researchers used to standard survey tools expect more:
   [datetime missing from CSV export](bug-datetime-missing-from-csv-export.md).
 - Related: [Budget/token allocation question type](feature-budget-token-allocation.md) (#17), which
   is the same family of "distribute or order a fixed set" input.
+- **2026-08-10 — partially shipped.** Only the display-style slice landed (`survey/forms.py:175` `DISPLAY_STYLE_TYPES`, `survey/models.py:117`). Continuous scale, vertical scale and ranking are still absent from `INPUT_TYPE_CHOICES`.

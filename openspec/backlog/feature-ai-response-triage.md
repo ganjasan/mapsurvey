@@ -56,3 +56,7 @@ municipal client.
   the same privacy notice as the AI agent, and interacts with EU hosting
   ([#35](feature-eu-data-hosting-option.md)). A German client requiring German hosting
   will ask where the moderation model runs. Do not assume the answer is acceptable.
+
+## Status
+
+- **2026-08-10 — partially shipped, rule-based only.** Empty/incomplete/missing-required/fast/duplicate flags and numeric-area outlier lints ship (`survey/analytics.py:708-856,940-990`), with reversible approve/not-approve, bulk actions and export exclusion. No model-assisted off-topic or spam detection, and no geometry-outside-study-area test (only relative area outliers).

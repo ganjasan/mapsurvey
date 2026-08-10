@@ -18,3 +18,4 @@ When a survey is republished as a new version, the analytics page and editor das
 - `check_draft_compatibility()` already exists in `survey/versioning.py` — can be extended to flag compatibility level at publish time
 - Affected areas: analytics page (charts, geo layers, table), editor dashboard response count, data export (`?version=` parameter already exists)
 - Dashboard survey list should show cumulative response count across all versions of a canonical survey
+- **2026-08-10 — CLOSED** in PR #54. Analytics reads the whole version family by default (`survey/analytics.py:124`, `survey/versioning.py:126` `resolve_version_scope`), dashboard counts span it (`survey/views.py:509-533`), and a version picker narrows it (`survey/analytics.py:29`). A follow-up divergence between analytics and the export was found during that work, filed as #114 and fixed in PR #55.

@@ -44,3 +44,4 @@ Caveat: answer-rate conflates "didn't reach", "reached but skipped", and "option
 - This is a respondent-completion fix, distinct from creator activation. High product priority because it touches the core value prop.
 - Measure impact via answer-rate-by-type before/after (the query above is the baseline).
 - Worth running through OpenSpec (`/opsx:new`) — touches respondent-facing forms and Leaflet widgets in `survey/forms.py` + `survey_section.html`.
+- **2026-08-10 — partially shipped.** Crosshair tap-to-place (`base_survey_template.html:94-105,313-340`), geolocation centering (`:815-817`) and the finish/cancel draw bar (#34) all landed. Still open: an explicit skip affordance, inline "tap the map" guidance, a real progress bar (#39), and any measurement of whether the answer rate moved.

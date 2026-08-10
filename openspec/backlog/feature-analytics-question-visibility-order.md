@@ -14,3 +14,4 @@ As an analyst, I want to hide certain questions from the analytics dashboard whi
 - Hide/show should be per-survey, not per-question-type
 - Reorder should persist across sessions (likely stored server-side)
 - Hidden questions should be easily discoverable (e.g. a "show hidden" toggle or a settings panel)
+- **2026-08-10 — partially shipped.** Column visibility and drag-reorder exist for the attribute table only, persisted in `localStorage` (`survey/templates/editor/partials/analytics_table.html:136-141`, `analytics_dashboard.html:1471-1545`). The question-stats charts have no such controls, and nothing is persisted server-side.
