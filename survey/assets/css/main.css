@@ -847,6 +847,106 @@ ul {
 }
 
 /* ============================================
+   Map place search
+   ============================================ */
+/* Shared by the respondent map and the editor's creation map — one control,
+   one look. Mounted as a Leaflet control on the survey map, and straight into
+   the DOM above the map in the editor. */
+.map-search {
+  position: relative;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  font-family: inherit;
+}
+
+.map-search i {
+  position: absolute;
+  left: 0.65rem;
+  top: 19px;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+.map-search input {
+  width: 100%;
+  height: 38px;
+  padding: 0 0.6rem 0 2rem;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.map-search input:focus {
+  outline: none;
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+.map-search-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--panel-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.map-search-result {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+.map-search-result.active,
+.map-search-result:hover {
+  background: var(--accent-light);
+}
+
+.map-search-name {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.map-search-context {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.map-search-message {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* The survey map's section panel sits over Leaflet's top-left corner, so the
+   control moves out from behind it — and back when the panel slides away. */
+.leaflet-top.leaflet-left {
+  left: 436px;
+  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* With the panel away, #showButton (the reopen arrow) takes that corner —
+   the search clears it rather than sitting under it. */
+body.sidebar-hidden .leaflet-top.leaflet-left {
+  left: 76px;
+}
+
+/* ============================================
    Form validation errors
    ============================================ */
 .question-card .errorlist {
@@ -895,5 +995,45 @@ ul {
     height: 100vh;
     width: 100%;
     z-index: 0;
+  }
+
+  /* The panel is a full-width overlay here, not a column beside the map, so
+     the control keeps the corner to itself — except when the reopen arrow is
+     showing. */
+  .leaflet-top.leaflet-left {
+    left: 0;
+  }
+
+  body.sidebar-hidden .leaflet-top.leaflet-left {
+    left: 68px;
+  }
+
+  /* Vertical space is scarce on a phone and panning is worst there, so the
+     search stays a button until it is actually wanted. */
+  .map-search {
+    width: 38px;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .map-search:focus-within {
+    width: calc(100vw - 24px);
+  }
+
+  .map-search input {
+    padding-right: 0;
+  }
+
+  .map-search:not(:focus-within) input {
+    color: transparent;
+    padding-left: 0;
+  }
+
+  .map-search:not(:focus-within) input::placeholder {
+    color: transparent;
+  }
+
+  .map-search:not(:focus-within) i {
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 }

@@ -47,9 +47,9 @@ Survey settings panel for them.
   value is ignored
 
 #### Scenario: Search the map for a place
-- **WHEN** a creator types a place name into the map search and presses Enter
+- **WHEN** a creator types a place name into the map search and picks a result
 - **THEN** the map recentres on that place and the start position is set to it
-  (no API key required — OpenStreetMap Nominatim)
+  (the platform-wide place search — see the `map-place-search` capability)
 
 #### Scenario: Jump to my location
 - **WHEN** a creator clicks the "My location" button and grants geolocation

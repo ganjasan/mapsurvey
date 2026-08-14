@@ -12,6 +12,7 @@
 
     <!-- js util -->
     <script type="text/javascript" src="{% static 'js/util.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/components/map_place_search.js' %}"></script>
 
     <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
@@ -136,6 +137,9 @@
             info_page.classList.add('hidden');
             showButton.style.visibility = "visible";
         }
+        // Map controls in the top-left corner sit behind the panel, and move
+        // out from under it when it slides away.
+        document.body.classList.toggle('sidebar-hidden', !show);
     }
 
     function toggleDrawbar(show){
@@ -199,6 +203,20 @@
         }
     });
     map.addControl(new LocateControl());
+
+    // Place search. Moves the view only — never places a marker, never writes
+    // an answer. Absent entirely when no Mapbox token is configured.
+    {% get_current_language as CURRENT_LANGUAGE %}
+    MapPlaceSearch.attach(map, {
+        accessToken: mapboxAccessToken,
+        language: '{{ CURRENT_LANGUAGE }}',
+        labels: {
+            placeholder: i18n.searchAddress,
+            ariaLabel: i18n.searchAddress,
+            noResults: i18n.noResultsFound,
+            failed: i18n.searchFailed
+        }
+    });
 
     L.Draw.Polyline.prototype._onTouch = L.Util.falseFn;
     L.Draw.Polygon.prototype._onTouch = L.Util.falseFn;
