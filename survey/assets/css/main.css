@@ -947,6 +947,25 @@ ul {
   color: var(--text-secondary);
 }
 
+/* ODbL attribution, shown only when the list holds OSM-derived results. A
+   footnote, not a row you can pick. */
+.map-search-attribution {
+  padding: 5px 12px 3px;
+  border-top: 1px solid var(--card-border);
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+  cursor: default;
+}
+
+.map-search-attribution a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.map-search-attribution a:hover {
+  text-decoration: underline;
+}
+
 /* The survey map's section panel sits over Leaflet's top-left corner, so the
    control moves out from behind it — and back when the panel slides away. */
 .leaflet-top.leaflet-left {
