@@ -56,6 +56,8 @@
       error surfaced to the respondent, no hang beyond 2s.
 - [x] 5.7 A Portuguese-language survey does not send `lang=pt` (which would 400) and still gets
       results.
-- [ ] 5.8 Selecting an OSM result moves the map and creates nothing — no marker, no answer.
+- [x] 5.8 Selecting an OSM result moves the map and creates nothing — no marker, no answer.
+      Verified on a live survey: "Ошский рынок" → map at 42.8773,74.5706 z17, markers 0,
+      editableLayers 0, drawbar hidden.
 - [x] 5.9 `python manage.py collectstatic`.
 - [x] 5.10 `./run_tests.sh survey` — one run.
