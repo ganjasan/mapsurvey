@@ -1,0 +1,36 @@
+{% comment %}
+Validation failure on the generate action.
+
+Must be a fragment, not the full create page: the Generate button is an HTMX
+button that swaps the response into a small slot inside the form. Returning
+the whole page here would inject a second copy of the page's scripts and IDs
+(Leaflet would refuse to re-initialise the map, and the duplicated form ids
+would break every later interaction).
+{% endcomment %}
+<div class="gen-wrap">
+  <div class="gen-card gen-card-error">
+    <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+    <div class="gen-copy">
+      <div class="gen-title">{{ message }}</div>
+      {% if errors %}
+      <ul class="gen-errors">
+        {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </div>
+
+  <style>
+    .gen-wrap { margin-top: 1.25rem; }
+    .gen-card {
+      display: flex; align-items: flex-start; gap: 1rem;
+      padding: 1.1rem 1.25rem;
+      border: 1px solid var(--border-color); border-radius: var(--radius);
+      background: #fff;
+    }
+    .gen-card-error { border-color: #fca5a5; background: #fef2f2; }
+    .gen-card-error > i { color: #dc2626; font-size: 1.25rem; }
+    .gen-title { font-weight: 600; font-size: 0.95rem; color: #374151; }
+    .gen-errors { margin: 0.35rem 0 0; padding-left: 1.1rem; font-size: 0.83rem; color: #6b7280; }
+  </style>
+</div>

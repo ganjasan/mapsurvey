@@ -1,0 +1,39 @@
+{% comment %}
+Terminal failure. Replaces the poller (no hx-trigger here, so polling stops)
+and keeps the overlay so the outcome cannot be missed — but unlike the loader
+it is dismissible, because the next step is editing the brief underneath.
+{% endcomment %}
+<div id="generation-status" class="gen-overlay" role="alert" hx-swap-oob="true">
+  <div class="gen-card gen-card-error">
+    <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+    <div class="gen-copy">
+      <div class="gen-title">{{ message }}</div>
+      <div class="gen-note">Your brief is still in the form — adjust it and try again.</div>
+      <button type="button" class="btn btn-outline-secondary gen-dismiss">Close</button>
+    </div>
+  </div>
+
+  {% include "editor/partials/_generation_overlay_css.html" %}
+
+  <script>
+  (function() {
+      if (window.__genQuipTimer) {
+          clearInterval(window.__genQuipTimer);
+          window.__genQuipTimer = null;
+      }
+      var overlay = document.getElementById('generation-status');
+      function dismiss() { if (overlay) overlay.remove(); }
+      var button = overlay && overlay.querySelector('.gen-dismiss');
+      if (button) button.addEventListener('click', dismiss);
+      // Clicking the backdrop or pressing Escape closes it too — a dead-end
+      // modal after a failed generation is worse than the failure.
+      if (overlay) overlay.addEventListener('click', function(e) {
+          if (e.target === overlay) dismiss();
+      });
+      document.addEventListener('keydown', function onKey(e) {
+          if (e.key === 'Escape') { dismiss(); document.removeEventListener('keydown', onKey); }
+      });
+      document.querySelectorAll('#create-form button').forEach(function(b) { b.disabled = false; });
+  })();
+  </script>
+</div>

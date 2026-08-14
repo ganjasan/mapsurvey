@@ -5,8 +5,9 @@ from django.contrib.gis.geos import Point
 from django.db import transaction
 from django.db.models import Q, Max
 from django.http import HttpResponse, JsonResponse
+from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_sameorigin
-from django.utils import translation
+from django.utils import timezone, translation
 from django.views.decorators.http import require_POST
 
 from .models import (
@@ -16,9 +17,14 @@ from .models import (
 )
 from .cloning import clone_question, clone_section
 from .editor_forms import (
-    SurveyHeaderForm, SurveyCreateForm, SurveySectionForm, QuestionForm,
+    SurveyHeaderForm, SurveyCreateForm, SurveyBriefForm, SurveySectionForm, QuestionForm,
     SUBQUESTION_DISALLOWED_INPUT_TYPES,
 )
+from .ai import client as ai_client
+from .ai.generation import SurveyBrief, start_generation
+from .ai.materialize import header_overrides_from_form
+from .ai.tasks import generate_survey_draft_task
+from .models import AIGenerationEvent
 from .forms import SurveySectionAnswerForm
 from .permissions import (
     org_permission_required, survey_permission_required,
@@ -168,10 +174,23 @@ def _get_sections_ordered(survey):
 
 # ─── Survey creation ─────────────────────────────────────────────────────────
 
+# Friendly, non-alarming copy per failure mode. The creator does not care
+# which layer failed — they care whether to retry or to build it by hand.
+GENERATION_ERROR_COPY = {
+    'not_configured': "AI drafting isn't available right now — create an empty survey instead.",
+    'provider_error': "Couldn't reach the AI service. Try again, or create an empty survey.",
+    'invalid_draft': "The draft came back malformed. Try rephrasing your brief, or create an empty survey.",
+    'error': "Something went wrong generating the draft. Try again, or create an empty survey.",
+}
+
+
 @org_permission_required('editor')
 def editor_survey_create(request):
+    brief_form = SurveyBriefForm()
     if request.method == 'POST':
         form = SurveyCreateForm(request.POST)
+        if request.POST.get('action') == 'generate':
+            return _start_survey_generation(request, form)
         if form.is_valid():
             survey = form.save(commit=False)
             survey.organization = request.active_org
@@ -210,6 +229,100 @@ def editor_survey_create(request):
         form = SurveyCreateForm()
     return render(request, 'editor/survey_create.html', {
         'form': form,
+        'brief_form': brief_form,
+        'ai_available': ai_client.provider_configured(),
+    })
+
+
+def _start_survey_generation(request, form):
+    """Validate the brief, enqueue generation, and hand the page to the poller."""
+    brief_form = SurveyBriefForm(request.POST)
+    if not ai_client.provider_configured():
+        return render(request, 'editor/partials/generation_invalid.html', {
+            'message': GENERATION_ERROR_COPY['not_configured'],
+        })
+    if not form.is_valid() or not brief_form.is_valid():
+        # A fragment, never the full page: this response is swapped into a
+        # small div inside the form the creator is still looking at, so
+        # re-rendering survey_create.html here would duplicate every id and
+        # re-run the page's Leaflet setup against an initialised map.
+        errors = []
+        for field_form in (form, brief_form):
+            for field_name, messages in field_form.errors.items():
+                label = field_form.fields[field_name].label or field_name.replace('_', ' ')
+                errors.extend('%s: %s' % (label, message) for message in messages)
+        return render(request, 'editor/partials/generation_invalid.html', {
+            'message': 'Check the form before generating a draft.',
+            'errors': errors,
+        })
+
+    languages = form.cleaned_data.get('available_languages') or ['en']
+    brief = SurveyBrief(
+        name=form.cleaned_data['name'],
+        goal=brief_form.cleaned_data['goal'],
+        audience=brief_form.cleaned_data['audience'],
+        map_target=brief_form.cleaned_data['map_target'],
+        use_case=brief_form.cleaned_data['use_case'],
+    )
+    valid_basemaps = {slug for slug, _ in BASEMAP_CHOICES}
+    chosen_basemap = request.POST.get('default_basemap')
+    header_overrides = header_overrides_from_form(
+        name=form.cleaned_data['name'],
+        languages=languages,
+        map_lat=request.POST.get('map_lat'),
+        map_lng=request.POST.get('map_lng'),
+        map_zoom=request.POST.get('map_zoom'),
+        default_basemap=chosen_basemap if chosen_basemap in valid_basemaps else None,
+    )
+
+    event = start_generation(request.user, request.active_org, brief, languages)
+    generate_survey_draft_task.delay(
+        event.id, brief.as_dict(), languages, header_overrides,
+    )
+    return render(request, 'editor/partials/generation_status.html', {
+        'event': event,
+    })
+
+
+@org_permission_required('editor')
+def editor_generation_status(request, event_id):
+    """Polled by the create page while a draft is being generated.
+
+    Scoped to the requesting user's own events: the brief is their project
+    description, and the event id is a guessable integer.
+    """
+    event = get_object_or_404(
+        AIGenerationEvent, pk=event_id, user=request.user, organization=request.active_org,
+    )
+    # Hypothesis telemetry, free because it is server-side: each poll stamps
+    # last_polled_at, so if the creator closes the tab the stamp freezes at
+    # the moment they stopped waiting. Queryset .update() on purpose — the
+    # worker writes this row concurrently and a load-modify-save here could
+    # clobber a terminal outcome with a stale 'pending'.
+    AIGenerationEvent.objects.filter(pk=event.pk).update(last_polled_at=timezone.now())
+    if event.outcome == 'pending':
+        # Deliberately empty: the overlay is already on the page and must not be
+        # re-rendered on every tick — swapping it restarted its animations and
+        # made the screen flicker. 204 leaves the DOM untouched.
+        return HttpResponse(status=204)
+
+    if event.outcome == 'success' and event.created_survey_id:
+        # The redirect being issued means the creator was still on the page
+        # when the draft finished — i.e. they waited. First stamp wins.
+        AIGenerationEvent.objects.filter(
+            pk=event.pk, redirected_at__isnull=True,
+        ).update(redirected_at=timezone.now())
+        # HX-Redirect turns the polled fragment into a real navigation, so the
+        # creator lands in the editor rather than seeing it swapped into a panel.
+        response = HttpResponse(status=204)
+        response['HX-Redirect'] = reverse(
+            'editor_survey_detail', kwargs={'survey_uuid': event.created_survey.uuid},
+        )
+        return response
+
+    return render(request, 'editor/partials/generation_failed.html', {
+        'event': event,
+        'message': GENERATION_ERROR_COPY.get(event.outcome, GENERATION_ERROR_COPY['error']),
     })
 
 

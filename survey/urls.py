@@ -29,6 +29,7 @@ urlpatterns = [
 
     # WYSIWYG survey editor
     path('editor/surveys/new/', editor_views.editor_survey_create, name='editor_survey_create'),
+    path('editor/generation/<int:event_id>/', editor_views.editor_generation_status, name='editor_generation_status'),
     path('editor/surveys/<uuid:survey_uuid>/', editor_views.editor_survey_detail, name='editor_survey_detail'),
     path('editor/surveys/<uuid:survey_uuid>/settings/', editor_views.editor_survey_settings, name='editor_survey_settings'),
     path('editor/surveys/<uuid:survey_uuid>/settings-panel/', editor_views.editor_survey_settings_panel, name='editor_survey_settings_panel'),
