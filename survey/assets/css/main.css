@@ -927,6 +927,20 @@ ul {
   color: var(--text-secondary);
 }
 
+/* Category of a point of interest — "park", "swimming pool" — so two places
+   sharing a name can be told apart before one is picked. */
+.map-search-category {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  vertical-align: middle;
+}
+
 .map-search-message {
   padding: 8px 12px;
   font-size: 0.85rem;
