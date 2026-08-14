@@ -14,7 +14,11 @@
 (function (window, document) {
     'use strict';
 
-    var ENDPOINT = 'https://api.mapbox.com/search/geocode/v6/forward';
+    // Search Box rather than Geocoding v6: the geocoding index has no points of
+    // interest, and a respondent naming a park or a station is the common case.
+    // Billed per request, like the endpoint it replaced, so the throttles below
+    // still bound the cost — see design.md for why not /suggest + /retrieve.
+    var ENDPOINT = 'https://api.mapbox.com/search/searchbox/v1/forward';
 
     var MIN_CHARS = 3;
     var DEBOUNCE_MS = 300;
@@ -60,7 +64,11 @@
         if (options.language) {
             params.push('language=' + encodeURIComponent(options.language));
         }
-        // `permanent` is left at its default of false — we never retain results.
+        // `auto_complete` is what makes "<place name> <city>" work: without it
+        // "Sportschwimmhalle Jena" returns three settlements called Jena and no
+        // pool; with it the pool is the first result. Measured, not assumed.
+        // Results are never retained, so no permanent-storage flag is needed.
+        params.push('auto_complete=true');
         return ENDPOINT + '?' + params.join('&');
     }
 
@@ -72,9 +80,18 @@
 
     function describe(feature) {
         var props = feature.properties || {};
+        var categories = props.poi_category || [];
         return {
             primary: props.name || props.full_address || '',
-            secondary: props.place_formatted || ''
+            secondary: props.place_formatted || '',
+            // Two places can share a name — "Jena Paradies" is both a railway
+            // station and a park — so the category is what tells them apart.
+            // Up to two, because the array is not ordered specific-first: a park
+            // comes back as ["outdoors", "park"], a station as ["train station",
+            // "transport"]. Taking one would show a park as "outdoors".
+            category: categories.slice(0, 2)
+                .map(function (c) { return String(c).replace(/_/g, ' '); })
+                .join(' · ')
         };
     }
 
@@ -180,6 +197,12 @@
                 var primary = document.createElement('span');
                 primary.className = 'map-search-name';
                 primary.textContent = text.primary;
+                if (text.category) {
+                    var category = document.createElement('span');
+                    category.className = 'map-search-category';
+                    category.textContent = text.category;
+                    primary.appendChild(category);
+                }
                 li.appendChild(primary);
 
                 if (text.secondary) {
