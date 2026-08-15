@@ -43,3 +43,5 @@ selected type. These three were simply never wired into it.
   in any meaningful sense.
 - Related: [Group the question type list](improvement-group-question-type-list.md), reported in the
   same message — both are about the dialog implying capabilities a type does not have.
+
+- **2026-08-15 — fixed** in change [question-type-picker](../changes/question-type-picker/proposal.md): Color and Icon class show only for geo types, Image only for the `image` type, Required is gone from display blocks. Hiding is CSS-level, so stored values still submit and nothing is cleared on save; what to do about images already uploaded against non-image types remains open here.

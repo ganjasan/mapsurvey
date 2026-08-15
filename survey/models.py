@@ -627,7 +627,9 @@ class Question(models.Model):
         return Answer.objects.filter(question_id__in=self.descendant_question_ids()).count()
 
     def get_translated_name(self, lang):
-        if not lang:
+        # Unsaved instances (the editor's live-preview drafts) have no
+        # translations relation to query.
+        if not lang or self.pk is None:
             return self.name
         try:
             translation = self.translations.get(language=lang)
@@ -636,7 +638,7 @@ class Question(models.Model):
             return self.name
 
     def get_translated_subtext(self, lang):
-        if not lang:
+        if not lang or self.pk is None:
             return self.subtext
         try:
             translation = self.translations.get(language=lang)

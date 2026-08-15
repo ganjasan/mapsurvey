@@ -13,6 +13,7 @@ from .models import (
     SurveyHeader, SurveySession, SurveySection, SurveySectionTranslation,
     Question, QuestionTranslation, SurveyCollaborator, Answer,
     Membership, SURVEY_ROLE_CHOICES, BASEMAP_CHOICES,
+    INPUT_TYPE_CHOICES, DISPLAY_STYLE_CHOICES,
 )
 from .cloning import clone_question, clone_section
 from .editor_forms import (
@@ -714,44 +715,100 @@ def editor_question_preview(request, survey_uuid, question_id):
     survey = request.survey
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
 
+    lang = _preview_language(request, survey)
+
+    # Unsaved picker state from the question modal ("Display as" live preview).
+    # Applied to the in-memory instance before the field is built, so for
+    # `range` the override also decides the field type, not just the widget.
+    style_override = request.GET.get('display_style')
+    if style_override in ('default', 'scale_strip', 'list_pips'):
+        question.display_style = style_override
+
+    form = SurveySectionAnswerForm.single_question_form(question, lang)
+
+    return _render_preview_frame(request, form, question, lang)
+
+
+def _preview_language(request, survey):
     lang = request.GET.get('lang')
     if lang and survey.available_languages and lang not in survey.available_languages:
         lang = None
     if not lang and survey.available_languages:
         lang = survey.available_languages[0]
+    return lang
 
-    # Build a form for the whole section, then keep only this question's field
-    form = SurveySectionAnswerForm(
-        initial={}, section=question.survey_section, question=None,
-        survey_session_id=None, language=lang,
-    )
-    for key in list(form.fields.keys()):
-        if key != question.code:
-            del form.fields[key]
 
-    # Unsaved picker state from the question modal ("Display as" live preview)
-    style_override = request.GET.get('display_style')
-    if style_override in ('default', 'scale_strip', 'list_pips'):
-        field = form.fields.get(question.code)
-        if field is not None:
-            field.widget.display_style = (
-                style_override
-                if style_override in ('scale_strip', 'list_pips')
-                else survey.get_default_rating_display_style()
-            )
-
+def _render_preview_frame(request, form, question, lang):
     if lang:
         translation.activate(lang)
-
     response = render(request, 'editor/partials/question_preview_frame.html', {
         'form': form,
         'question': question,
     })
-
     if lang:
         translation.deactivate()
-
     return response
+
+
+@survey_permission_required('viewer')
+@require_POST
+@xframe_options_sameorigin
+def editor_question_preview_live(request, survey_uuid, section_id):
+    """Respondent-side render of the question modal's current, unsaved state.
+
+    The modal posts its live values; an in-memory Question is built and pushed
+    through the same form machinery respondents hit. Nothing is ever saved —
+    this is how the dialog can show a real preview of a question that does not
+    exist yet.
+    """
+    survey = request.survey
+    section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
+
+    input_type = request.POST.get('input_type', '')
+    if input_type not in {value for value, _ in INPUT_TYPE_CHOICES}:
+        return HttpResponse('unknown input type', status=400)
+
+    display_style = request.POST.get('display_style', 'default')
+    if display_style not in {value for value, _ in DISPLAY_STYLE_CHOICES}:
+        display_style = 'default'
+
+    # A draft's choices arrive as the modal's serialized JSON. Malformed or
+    # odd-shaped payloads degrade to "no choices" — every choice-consuming
+    # type already has a fallback render for that — rather than erroring the
+    # preview pane.
+    choices = None
+    raw_choices = request.POST.get('choices_json', '').strip()
+    if raw_choices:
+        try:
+            parsed = json.loads(raw_choices)
+        except ValueError:
+            parsed = None
+        if isinstance(parsed, list):
+            cleaned = [
+                c for c in parsed
+                if isinstance(c, dict)
+                and isinstance(c.get('code'), (int, float))
+                and not isinstance(c.get('code'), bool)
+                and 'name' in c
+            ]
+            choices = cleaned or None
+
+    question = Question(
+        survey_section=section,
+        input_type=input_type,
+        name=request.POST.get('name', '').strip(),
+        subtext=request.POST.get('subtext', '').strip(),
+        choices=choices,
+        color=request.POST.get('color', '').strip() or '#000000',
+        icon_class=request.POST.get('icon_class', '').strip(),
+        display_style=display_style,
+        required=False,
+    )
+
+    lang = _preview_language(request, survey)
+    form = SurveySectionAnswerForm.single_question_form(question, lang)
+
+    return _render_preview_frame(request, form, question, lang)
 
 
 @survey_permission_required('editor')

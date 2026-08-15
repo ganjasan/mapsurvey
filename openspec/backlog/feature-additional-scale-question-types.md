@@ -44,3 +44,12 @@ Researchers used to standard survey tools expect more:
 - Related: [Budget/token allocation question type](feature-budget-token-allocation.md) (#17), which
   is the same family of "distribute or order a fixed set" input.
 - **2026-08-10 — partially shipped.** Only the display-style slice landed (`survey/forms.py:175` `DISPLAY_STYLE_TYPES`, `survey/models.py:117`). Continuous scale, vertical scale and ranking are still absent from `INPUT_TYPE_CHOICES`.
+- **2026-08-14 — second ranking request.** Jannis Hamp (jhmp, private survey, found us via
+  Google) asked for exactly the ranking type: "give a number of answers which the participants
+  have to order according to a scale … from 1 (best) to 5 (worst)". Two independent requests
+  in ten days (Manuel Frost 2026-08-04, Jannis Hamp 2026-08-14).
+  **Correction, same day:** Jannis's actual example ("how much do you like each fruit, 1–5") is
+  coverable today with one `rating` question per item — his request is at least partly a
+  discoverability failure of the flat type picker, not a missing capability. Logged against
+  [rework the question type picker](improvement-group-question-type-list.md). True drag-to-order
+  ranking (strict ordering, one answer shape) remains open here.

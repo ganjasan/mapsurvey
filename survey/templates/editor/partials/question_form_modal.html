@@ -1,4 +1,54 @@
-{% load static %}
+{% load static question_utils %}
+<style>
+    /* Wide two-pane question dialog. The id selector outranks .modal-lg. */
+    @media (min-width: 1200px) {
+        #questionModal .modal-dialog { max-width: 1100px; }
+    }
+    .qtp-body-cols { display: flex; gap: 1.25rem; align-items: flex-start; }
+    .qtp-form-col { flex: 1 1 auto; min-width: 0; }
+    .qtp-preview-col {
+        flex: 0 0 340px; position: sticky; top: 0;
+        display: flex; flex-direction: column;
+        background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px;
+    }
+    @media (max-width: 991.98px) { .qtp-preview-col { display: none; } }
+    .qtp-pv-title {
+        font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
+        text-transform: uppercase; color: #6b7280; margin-bottom: 8px;
+    }
+    .qtp-pv-note { font-size: 0.7rem; color: #9aa0a6; margin-top: 8px; }
+
+    /* Type picker card grid */
+    .qtp-group-caption {
+        font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+        color: #868e96; margin: 10px 0 6px; display: flex; align-items: center; gap: 8px;
+    }
+    .qtp-group-caption:first-child { margin-top: 0; }
+    .qtp-group-caption::after { content: ""; flex: 1; height: 1px; background: #e9ecef; }
+    .qtp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+    .qtp-card {
+        border: 1px solid #dee2e6; border-radius: 8px; padding: 10px 6px 8px;
+        text-align: center; cursor: pointer; background: #fff;
+        transition: border-color .12s ease, background .12s ease, box-shadow .12s ease;
+        user-select: none;
+    }
+    .qtp-card:hover { border-color: #80bdff; background: #f5faff; box-shadow: 0 3px 8px rgba(0,0,0,.08); }
+    .qtp-card.selected { border-color: #007bff; background: #e7f1ff; box-shadow: inset 0 0 0 1px #007bff; }
+    .qtp-card .qtp-icon { font-size: 19px; color: #495057; margin-bottom: 6px; }
+    .qtp-card.selected .qtp-icon { color: #007bff; }
+    .qtp-card .qtp-name { font-size: 0.72rem; font-weight: 600; color: #343a40; line-height: 1.2; }
+    .qtp-hint-line { font-size: 0.75rem; color: #6c757d; margin-top: 6px; min-height: 1em; }
+
+    /* Hover flyout with a canned example */
+    .qtp-flyout {
+        margin-top: 12px;
+    }
+    .qtp-flyout-hint { font-size: 0.7rem; color: #868e96; margin-bottom: 8px; }
+    .qtp-example-frame {
+        width: 100%; height: 190px; border: 1px solid #dee2e6; border-radius: 8px;
+        background: #fff;
+    }
+</style>
 <div class="modal-header">
     <h5 class="modal-title">
         {% if parent %}New Sub-question for "{{ parent.name }}"
@@ -24,11 +74,20 @@
       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
       enctype="multipart/form-data">
     {% csrf_token %}
-    <div class="modal-body" style="{% if question %}display:flex;gap:1rem;{% endif %}">
-        <div style="{% if question %}flex:1;min-width:0;{% endif %}">
+    <div class="modal-body qtp-body-cols">
+        <div class="qtp-form-col">
         {% for field in form %}
-        {% if field.name != 'display_style' %}
-        <div class="form-group">
+        {% if field.name == 'input_type' %}
+        <div class="form-group" id="fg-input_type">
+            <label>{{ field.label }}</label>
+            {# The native select stays as the submitted control; cards drive it. #}
+            <div style="display:none;">{{ field }}</div>
+            {% question_type_picker field %}
+            <div class="qtp-hint-line" id="qtp-hint-line"></div>
+            {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+        {% elif field.name != 'display_style' %}
+        <div class="form-group" id="fg-{{ field.name }}">
             {% if field.name == 'required' %}
                 <div class="form-check">
                     {{ field }}
@@ -170,15 +229,19 @@
         {% endif %}
         </div>
 
-        {% if question %}
-        <div class="question-preview-panel" style="width:280px;flex-shrink:0;border-left:1px solid var(--border-color);padding-left:1rem;display:flex;flex-direction:column;">
-            <div style="font-size:0.8rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">Preview</div>
+        <div class="question-preview-panel qtp-preview-col">
+            <div class="qtp-pv-title"><i class="fas fa-eye"></i> Respondent sees</div>
             <iframe id="question-preview-frame"
-                    src="{% url 'editor_question_preview' survey.uuid question.id %}"
-                    style="flex:1;border:1px solid #e5e7eb;border-radius:6px;width:100%;min-height:200px;background:#fff;">
+                    {% if question %}src="{% url 'editor_question_preview' survey.uuid question.id %}"{% endif %}
+                    style="flex:1;border:1px solid #e5e7eb;border-radius:6px;width:100%;min-height:260px;background:#fff;">
             </iframe>
+            <div class="qtp-pv-note">Updates as you edit — the real respondent-side rendering.</div>
+            <div class="qtp-flyout" id="qtp-flyout" hidden>
+                <div class="qtp-pv-title" style="margin-bottom:4px;">Type example</div>
+                <div class="qtp-flyout-hint"></div>
+                <iframe class="qtp-example-frame"></iframe>
+            </div>
         </div>
-        {% endif %}
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -240,11 +303,181 @@
         toggleStripWidthHint();
     }
 
+    // ── Type-scoped settings (#111): only fields the selected type consumes ──
+    var GEO_TYPES = ['point', 'line', 'polygon'];
+    var DISPLAY_BLOCK_TYPES = ['image', 'html'];
+
+    function toggleTypeScopedFields() {
+        var t = inputTypeSelect ? inputTypeSelect.value : '';
+        // CSS-hidden inputs still submit, so stored values pass through a save
+        // untouched. The hidden `required` checkbox is the deliberate
+        // exception: unchecked-when-hidden is correct for display blocks,
+        // which collect nothing and cannot be required.
+        function show(id, on) {
+            var el = document.getElementById(id);
+            if (el) el.style.display = on ? '' : 'none';
+        }
+        var isGeo = GEO_TYPES.indexOf(t) !== -1;
+        show('fg-color', isGeo);
+        show('fg-icon_class', isGeo);
+        show('fg-image', t === 'image');
+        show('fg-required', DISPLAY_BLOCK_TYPES.indexOf(t) === -1);
+    }
+
+    // ── Type picker cards drive the hidden select ──
+    var picker = document.getElementById('qtp-picker');
+    var hintLine = document.getElementById('qtp-hint-line');
+
+    function qtpSyncCards() {
+        if (!picker || !inputTypeSelect) return;
+        picker.querySelectorAll('.qtp-card').forEach(function(card) {
+            var on = card.getAttribute('data-qtp-value') === inputTypeSelect.value;
+            card.classList.toggle('selected', on);
+            if (on && hintLine) hintLine.textContent = card.getAttribute('data-qtp-hint') || '';
+        });
+    }
+
+    if (picker && inputTypeSelect) {
+        picker.addEventListener('click', function(e) {
+            var card = e.target.closest('.qtp-card');
+            if (!card) return;
+            inputTypeSelect.value = card.getAttribute('data-qtp-value');
+            inputTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            qtpHideExample();
+        });
+        picker.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            var card = e.target.closest('.qtp-card');
+            if (!card) return;
+            e.preventDefault();
+            card.click();
+        });
+    }
+
+    // ── Hover example, shown in the preview column under "Respondent sees" ──
+    // Real renders, not lookalikes: each type has a canned payload posted to
+    // the same live-preview endpoint the pane uses, cached per type. `image`
+    // is the one static case — without an uploaded file there is nothing real
+    // to render.
+    var exampleBox = document.getElementById('qtp-flyout');
+    var canHover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
+
+    var EXAMPLE_PAYLOADS = {
+        text: { name: 'Tell us about your favourite fruit' },
+        text_line: { name: 'Your favourite fruit' },
+        number: { name: 'How many apples per week?' },
+        choice: { name: 'Pick your favourite fruit',
+                  choices_json: '[{"code":1,"name":"Apples"},{"code":2,"name":"Bananas"},{"code":3,"name":"Cherries"}]' },
+        multichoice: { name: 'Which fruits do you eat?',
+                  choices_json: '[{"code":1,"name":"Apples"},{"code":2,"name":"Bananas"},{"code":3,"name":"Cherries"}]' },
+        range: { name: 'How ripe do you like bananas?',
+                  choices_json: '[{"code":1,"name":"green"},{"code":10,"name":"brown"}]' },
+        rating: { name: 'How much do you like apples?',
+                  choices_json: '[{"code":1,"name":"worst"},{"code":2,"name":"2"},{"code":3,"name":"3"},{"code":4,"name":"4"},{"code":5,"name":"best"}]' },
+        datetime: { name: 'When did you last buy fruit?' },
+        point: { name: 'Where is your fruit market?', color: '#d9534f' },
+        line: { name: 'Your route to the market', color: '#0d6efd' },
+        polygon: { name: 'Outline the orchard', color: '#0d6efd' },
+        html: { name: 'Welcome!', subtext: 'This survey takes 5 minutes. Your answers are anonymous.' },
+    };
+    // No closing body tag in this literal: django-debug-toolbar splices its
+    // markup in front of any closing-body tag it finds in a response — even
+    // inside a JS string or comment — which breaks this whole script.
+    // srcdoc doesn't need the tag anyway.
+    var IMAGE_EXAMPLE_DOC = '<body style="margin:0;font-family:sans-serif;">' +
+        '<div style="height:130px;margin:12px;border-radius:6px;background:#e9ecef;' +
+        'display:flex;align-items:center;justify-content:center;color:#9aa0a6;font-size:13px;">' +
+        'picture uploaded by the creator</div>';
+
+    // Geo examples are illustrations, not real renders: the real widget is
+    // just the draw button (the map lives beside it in the survey), which
+    // shows nothing of the interaction. A mini-map with the drawn geometry
+    // is what actually communicates "the respondent draws this on a map".
+    var GEO_EX_HEAD = '<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">' +
+        '<style>body{margin:0;padding:12px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}' +
+        '.t{font-weight:600;font-size:13px;margin-bottom:8px;color:#1a1d21;}' +
+        '.map{height:110px;border-radius:6px;position:relative;overflow:hidden;border:1px solid #ced4da;' +
+        'background:linear-gradient(rgba(255,255,255,.35) 1px,transparent 1px) 0 0/22px 22px,' +
+        'linear-gradient(90deg,rgba(255,255,255,.35) 1px,transparent 1px) 0 0/22px 22px,' +
+        'linear-gradient(135deg,#dce8d5 0%,#e9e5d6 55%,#d6e3e9 100%);}' +
+        '.map svg{position:absolute;inset:0;width:100%;height:100%;}' +
+        '.pin{position:absolute;top:34%;left:52%;color:#d9534f;font-size:22px;' +
+        'transform:translate(-50%,-90%);text-shadow:0 1px 2px rgba(0,0,0,.3);}' +
+        '.btn{position:absolute;bottom:8px;left:8px;background:#fff;border:1px solid #adb5bd;' +
+        'border-radius:6px;padding:3px 9px;font-size:12px;color:#1a1d21;}' +
+        '</style>';
+    var STATIC_EXAMPLE_DOCS = {
+        image: IMAGE_EXAMPLE_DOC,
+        point: GEO_EX_HEAD +
+            '<div class="t">Where is your fruit market?</div>' +
+            '<div class="map"><i class="fas fa-map-marker-alt pin"></i>' +
+            '<span class="btn"><i class="fas fa-map-marker-alt"></i> Place point</span></div>',
+        line: GEO_EX_HEAD +
+            '<div class="t">Your route to the market</div>' +
+            '<div class="map"><svg viewBox="0 0 300 110" preserveAspectRatio="none">' +
+            '<polyline points="20,90 90,70 150,80 210,35 280,25" fill="none" stroke="#0d6efd" ' +
+            'stroke-width="3" stroke-dasharray="7 4" stroke-linecap="round"/></svg>' +
+            '<span class="btn"><i class="fas fa-route"></i> Draw line</span></div>',
+        polygon: GEO_EX_HEAD +
+            '<div class="t">Outline the orchard</div>' +
+            '<div class="map"><svg viewBox="0 0 300 110" preserveAspectRatio="none">' +
+            '<polygon points="60,25 220,20 260,75 160,95 55,80" fill="rgba(13,110,253,.25)" ' +
+            'stroke="#0d6efd" stroke-width="2"/></svg>' +
+            '<span class="btn"><i class="fas fa-draw-polygon"></i> Draw area</span></div>',
+    };
+    var exampleCache = {};
+    var exampleCurrent = null;
+
+    function qtpShowExample(card) {
+        if (!exampleBox || !canHover) return;
+        var value = card.getAttribute('data-qtp-value');
+        exampleCurrent = value;
+        exampleBox.querySelector('.qtp-flyout-hint').textContent = card.getAttribute('data-qtp-hint') || '';
+        var frame = exampleBox.querySelector('.qtp-example-frame');
+        exampleBox.hidden = false;
+        if (STATIC_EXAMPLE_DOCS[value]) { frame.srcdoc = STATIC_EXAMPLE_DOCS[value]; return; }
+        if (exampleCache[value]) { frame.srcdoc = exampleCache[value]; return; }
+        frame.srcdoc = '';
+        var p = EXAMPLE_PAYLOADS[value] || {};
+        var fd = new FormData();
+        fd.append('input_type', value);
+        fd.append('name', p.name || '');
+        if (p.subtext) fd.append('subtext', p.subtext);
+        if (p.choices_json) fd.append('choices_json', p.choices_json);
+        if (p.color) fd.append('color', p.color);
+        fetch(PREVIEW_LIVE_URL, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: fd,
+        }).then(function(resp) { return resp.ok ? resp.text() : null; })
+          .then(function(html) {
+            if (!html) return;
+            exampleCache[value] = html;
+            if (exampleCurrent === value) frame.srcdoc = html;
+        }).catch(function() {});
+    }
+    function qtpHideExample() { exampleCurrent = null; if (exampleBox) exampleBox.hidden = true; }
+
+    if (picker) {
+        picker.addEventListener('mouseover', function(e) {
+            var card = e.target.closest('.qtp-card');
+            if (card) qtpShowExample(card);
+        });
+        picker.addEventListener('mouseout', function(e) {
+            if (!e.relatedTarget || !e.relatedTarget.closest('.qtp-card')) qtpHideExample();
+        });
+    }
+
     if (inputTypeSelect) {
-        inputTypeSelect.addEventListener('change', function() { toggleChoicesEditor(); toggleValidationFields(); toggleDisplayStyleFields(); });
+        inputTypeSelect.addEventListener('change', function() {
+            toggleChoicesEditor(); toggleValidationFields(); toggleDisplayStyleFields();
+            toggleTypeScopedFields(); qtpSyncCards();
+        });
         toggleChoicesEditor();
         toggleValidationFields();
         toggleDisplayStyleFields();
+        toggleTypeScopedFields();
+        qtpSyncCards();
     }
 
     document.querySelectorAll('#display-style-fields input[name="display_style"]').forEach(function(radio) {
@@ -284,9 +517,11 @@
             cells += '<td><input type="text" class="form-control form-control-sm choice-name-' + lang + '" value="' + v.replace(/"/g, '&quot;') + '"></td>';
         });
 
-        cells += '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
+        cells += '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'tr\').remove();window.schedulePreview&&window.schedulePreview()">&times;</button></td>';
         row.innerHTML = cells;
         tbody.appendChild(row);
+        // Row add/remove bypasses form input events; nudge the live preview.
+        if (window.schedulePreview) window.schedulePreview();
     };
 
     // ── Icon Picker ──
@@ -388,6 +623,9 @@
                     iconInput.value = icon;
                     updatePreview();
                     dropdown.classList.remove('open');
+                    // Programmatic value set fires no input event; the live
+                    // preview listens for one.
+                    iconInput.dispatchEvent(new Event('input', { bubbles: true }));
                 });
                 grid.appendChild(cell);
             });
@@ -473,16 +711,55 @@
     };
     {% endif %}
 
-    // Live-update the preview iframe when the display style picker changes
-    document.querySelectorAll('#display-style-fields input[name="display_style"]').forEach(function(radio) {
-        radio.addEventListener('change', function() {
-            var iframe = document.getElementById('question-preview-frame');
-            if (!iframe) return;
-            var url = new URL(iframe.src, window.location.origin);
-            url.searchParams.set('display_style', this.value);
-            iframe.src = url.toString();
+    // ── Live "Respondent sees" pane ──
+    // Any edit re-renders the pane through the real server-side form
+    // machinery (editor_question_preview_live) — no save, no Apply.
+    var previewFrame = document.getElementById('question-preview-frame');
+    var PREVIEW_LIVE_URL = '{% url "editor_question_preview_live" survey.uuid section.id %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}';
+    var previewTimer = null;
+    var previewSeq = 0;
+
+    function requestPreview() {
+        if (!previewFrame) return;
+        serializeChoices();
+        var f = document.querySelector('#questionModalBody form');
+        if (!f) return;
+        var fd = new FormData();
+        ['name', 'subtext', 'color', 'icon_class'].forEach(function(n) {
+            var el = f.querySelector('[name="' + n + '"]');
+            if (el) fd.append(n, el.value);
         });
-    });
+        fd.append('input_type', inputTypeSelect ? inputTypeSelect.value : 'text');
+        var ds = f.querySelector('input[name="display_style"]:checked');
+        fd.append('display_style', ds ? ds.value : 'default');
+        fd.append('choices_json', document.getElementById('choices-json-input').value);
+        var seq = ++previewSeq;
+        fetch(PREVIEW_LIVE_URL, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: fd,
+        }).then(function(resp) { return resp.ok ? resp.text() : null; })
+          .then(function(html) {
+            // Only the newest in-flight render wins.
+            if (html !== null && seq === previewSeq) previewFrame.srcdoc = html;
+        }).catch(function() { /* pane keeps its last render */ });
+    }
+
+    function schedulePreview() {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(requestPreview, 400);
+    }
+    window.schedulePreview = schedulePreview;
+
+    var modalForm = document.querySelector('#questionModalBody form');
+    if (modalForm) {
+        modalForm.addEventListener('input', schedulePreview);
+        modalForm.addEventListener('change', schedulePreview);
+    }
+    {% if not question %}
+    // A new question has no saved state to load; render the draft right away.
+    requestPreview();
+    {% endif %}
 
     // Populate existing choices when editing.
     // Runs LAST: addChoiceRow/serializeChoices must already be assigned to window,

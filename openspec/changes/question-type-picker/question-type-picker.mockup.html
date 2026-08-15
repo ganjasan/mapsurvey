@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapsurvey — мокап диалога Edit Question (пикер типов)</title>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+<style>
+  body { background:#e9ecef; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin:0; }
+
+  /* ===== Панель настроек мокапа ===== */
+  .config-bar {
+    position: sticky; top:0; z-index:1000;
+    background:#212529; color:#e9ecef;
+    padding:10px 18px; display:flex; flex-wrap:wrap; gap:24px; align-items:center;
+    font-size:13px; box-shadow:0 2px 8px rgba(0,0,0,.3);
+  }
+  .config-bar .cfg-group { display:flex; align-items:center; gap:8px; }
+  .config-bar .cfg-title { font-weight:600; color:#adb5bd; text-transform:uppercase; font-size:11px; letter-spacing:.5px; }
+  .config-bar .btn-group .btn { font-size:12px; padding:2px 10px; }
+  .config-bar label.chk { margin:0; cursor:pointer; display:flex; align-items:center; gap:5px; }
+  .config-bar .mock-badge { margin-left:auto; color:#6c757d; font-size:11px; }
+
+  /* ===== Фон «редактора» ===== */
+  .fake-editor { min-height:100vh; padding:24px; }
+  .fake-editor-header { background:#343a40; color:#fff; border-radius:6px; padding:10px 16px; margin-bottom:16px; opacity:.45; }
+  .fake-editor-body { display:flex; gap:16px; opacity:.45; }
+  .fake-panel { background:#fff; border-radius:6px; height:420px; flex:1; }
+  .fake-panel.map { flex:2; background:linear-gradient(135deg,#dde8d8 0%,#e8e4d8 60%,#d8e4e8 100%); }
+  .backdrop { position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:10; }
+
+  /* ===== Модалка ===== */
+  .modal-mock {
+    position:absolute; top:80px; left:50%; transform:translateX(-50%);
+    z-index:20; background:#fff; border-radius:8px;
+    box-shadow:0 12px 40px rgba(0,0,0,.25);
+    display:flex; flex-direction:column;
+    max-height:calc(100vh - 130px);
+    transition:width .25s ease;
+  }
+  .modal-mock.size-sm { width:500px; }   /* сегодняшний размер */
+  .modal-mock.size-lg { width:820px; }
+  .modal-mock.size-xl { width:1100px; }
+  .modal-mock .m-header { padding:14px 20px; border-bottom:1px solid #dee2e6; display:flex; justify-content:space-between; align-items:center; }
+  .modal-mock .m-header h5 { margin:0; font-size:17px; }
+  .modal-mock .m-body { padding:18px 20px; overflow-y:auto; }
+  .modal-mock .m-footer { padding:12px 20px; border-top:1px solid #dee2e6; display:flex; justify-content:flex-end; gap:8px; }
+
+  /* Две колонки: форма + живое превью */
+  .body-cols { display:flex; gap:20px; align-items:flex-start; }
+  .form-col { flex:1 1 auto; min-width:0; }
+  .live-col {
+    flex:0 0 340px; position:sticky; top:0;
+    background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px; padding:14px;
+  }
+  .modal-mock.size-sm .live-col { display:none; }   /* в тесной модалке превью не помещается */
+  .live-note { font-size:11px; color:#adb5bd; margin-top:8px; }
+
+  /* ===== Пикер: общие ===== */
+  .picker-label { font-weight:600; font-size:13px; color:#495057; margin-bottom:6px; }
+  .type-hint-line { font-size:12px; color:#6c757d; margin-top:5px; min-height:16px; }
+  .group-caption {
+    font-size:11px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+    color:#868e96; margin:12px 0 6px; display:flex; align-items:center; gap:8px;
+  }
+  .group-caption:first-child { margin-top:0; }
+  .group-caption::after { content:""; flex:1; height:1px; background:#e9ecef; }
+
+  /* ===== Вариант B: сетка карточек ===== */
+  .type-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:8px; }
+  .type-card {
+    border:1px solid #dee2e6; border-radius:8px; padding:10px 6px 8px;
+    text-align:center; cursor:pointer; background:#fff;
+    transition:all .12s ease; user-select:none;
+  }
+  .type-card:hover { border-color:#80bdff; background:#f5faff; transform:translateY(-1px); box-shadow:0 3px 8px rgba(0,0,0,.08); }
+  .type-card.selected { border-color:#007bff; background:#e7f1ff; box-shadow:inset 0 0 0 1px #007bff; }
+  .type-card .t-icon { font-size:20px; color:#495057; margin-bottom:6px; }
+  .type-card.selected .t-icon { color:#007bff; }
+  .type-card .t-name { font-size:12px; font-weight:600; color:#343a40; line-height:1.2; }
+
+  /* ===== Вариант C: двухпанельный ===== */
+  .two-pane { display:flex; gap:0; border:1px solid #dee2e6; border-radius:8px; overflow:hidden; }
+  .tp-list { flex:0 0 46%; max-height:340px; overflow-y:auto; border-right:1px solid #dee2e6; padding:10px; }
+  .tp-row {
+    display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:6px;
+    cursor:pointer; user-select:none;
+  }
+  .tp-row:hover { background:#f1f7ff; }
+  .tp-row.selected { background:#e7f1ff; box-shadow:inset 2px 0 0 #007bff; }
+  .tp-row .t-icon { width:22px; text-align:center; color:#495057; font-size:15px; flex:none; }
+  .tp-row.selected .t-icon { color:#007bff; }
+  .tp-row .t-texts { min-width:0; }
+  .tp-row .t-name { font-size:13px; font-weight:600; color:#343a40; line-height:1.25; }
+  .tp-row .t-hint { font-size:11px; color:#868e96; line-height:1.3; }
+  .tp-preview-pane { flex:1; background:#f8f9fa; padding:14px; display:flex; flex-direction:column; }
+  .pv-title { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:#868e96; margin-bottom:8px; }
+
+  /* ===== Превью-виджет респондента ===== */
+  .widget-preview {
+    background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:14px;
+    font-size:13px; box-shadow:0 1px 3px rgba(0,0,0,.05);
+  }
+  .widget-preview .q-title { font-weight:600; margin-bottom:8px; font-size:13px; }
+  .widget-preview .form-control, .widget-preview .custom-range { font-size:13px; }
+  .rating-inline { display:flex; gap:14px; align-items:flex-end; }
+  .rating-inline .r-opt { text-align:center; font-size:11px; color:#495057; }
+  .rating-inline .r-opt input { display:block; margin:4px auto 0; }
+  .range-labels { display:flex; justify-content:space-between; font-size:11px; color:#868e96; margin-top:2px; }
+  .strip-row { display:flex; gap:4px; }
+  .strip-cell {
+    flex:1; text-align:center; border:1px solid #ced4da; border-radius:4px;
+    padding:4px 0; font-size:12px; color:#495057; background:#fff; cursor:pointer;
+  }
+  .strip-cell.on { background:#007bff; border-color:#007bff; color:#fff; }
+  .list-pips label { display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:12px; color:#343a40; }
+  .mini-map {
+    height:110px; border-radius:6px; position:relative; overflow:hidden;
+    background:
+      linear-gradient(rgba(255,255,255,.35) 1px, transparent 1px) 0 0/22px 22px,
+      linear-gradient(90deg, rgba(255,255,255,.35) 1px, transparent 1px) 0 0/22px 22px,
+      linear-gradient(135deg,#dce8d5 0%,#e9e5d6 55%,#d6e3e9 100%);
+    border:1px solid #ced4da;
+  }
+  .mini-map svg { position:absolute; inset:0; width:100%; height:100%; }
+  .mini-map .pin { position:absolute; top:34%; left:52%; font-size:22px; transform:translate(-50%,-90%); text-shadow:0 1px 2px rgba(0,0,0,.3); }
+  .draw-btn {
+    position:absolute; bottom:8px; left:8px; background:#fff; border:1px solid #adb5bd;
+    border-radius:6px; padding:4px 10px; font-size:12px; box-shadow:0 1px 3px rgba(0,0,0,.15);
+  }
+  .img-placeholder {
+    height:90px; border-radius:6px; background:#e9ecef; display:flex; align-items:center;
+    justify-content:center; color:#adb5bd; font-size:28px;
+  }
+
+  /* ===== Флайаут-превью при наведении (вариант B) ===== */
+  .hover-flyout {
+    position:fixed; z-index:50; width:300px; display:none;
+    filter:drop-shadow(0 6px 18px rgba(0,0,0,.25));
+  }
+  .hover-flyout .fly-inner { background:#fff; border-radius:8px; padding:12px; }
+  .hover-flyout .fly-hint { font-size:11px; color:#868e96; margin-bottom:8px; }
+
+  /* ===== Поля формы ===== */
+  .form-group label { font-size:13px; font-weight:600; color:#495057; margin-bottom:4px; }
+  .form-group .form-text { font-size:11px; }
+  .choices-editor { border:1px solid #dee2e6; border-radius:6px; padding:10px; background:#f8f9fa; }
+  .choices-editor .row-choice { display:flex; gap:6px; margin-bottom:6px; align-items:center; }
+  .choices-editor input { font-size:12px; }
+  .choices-editor .rm { border:none; background:none; color:#adb5bd; cursor:pointer; padding:0 4px; }
+  .choices-editor .rm:hover { color:#dc3545; }
+  .dead-field { position:relative; }
+  .dead-field .dead-tag {
+    position:absolute; top:0; right:0; font-size:10px; color:#fff; background:#dc3545;
+    border-radius:3px; padding:1px 6px; opacity:.85;
+  }
+  .display-thumbs { display:flex; gap:8px; }
+  .display-thumb { flex:1; border:1px solid #dee2e6; border-radius:6px; padding:8px; text-align:center; font-size:11px; cursor:pointer; color:#495057; user-select:none; }
+  .display-thumb.selected { border-color:#007bff; background:#e7f1ff; }
+  .display-thumb .th-art { font-size:16px; margin-bottom:4px; color:#6c757d; }
+  .section-divider { border-top:1px solid #e9ecef; margin:16px 0 14px; }
+</style>
+</head>
+<body>
+
+<!-- ===================== ПАНЕЛЬ НАСТРОЕК МОКАПА ===================== -->
+<div class="config-bar">
+  <div class="cfg-group">
+    <span class="cfg-title">Вариант пикера</span>
+    <div class="btn-group" role="group">
+      <button class="btn btn-outline-light" data-cfg="variant" data-val="A">A — select</button>
+      <button class="btn btn-outline-light" data-cfg="variant" data-val="B">B — карточки</button>
+      <button class="btn btn-outline-light" data-cfg="variant" data-val="C">C — две панели</button>
+    </div>
+  </div>
+  <div class="cfg-group">
+    <span class="cfg-title">Модалка</span>
+    <div class="btn-group" role="group">
+      <button class="btn btn-outline-light" data-cfg="size" data-val="sm">500px (сейчас)</button>
+      <button class="btn btn-outline-light" data-cfg="size" data-val="lg">820px</button>
+      <button class="btn btn-outline-light" data-cfg="size" data-val="xl">1100px</button>
+    </div>
+  </div>
+  <div class="cfg-group">
+    <label class="chk"><input type="checkbox" id="cfg-hover" checked> превью при наведении</label>
+    <label class="chk"><input type="checkbox" id="cfg-hide" checked> скрывать нерелевантные поля</label>
+  </div>
+  <span class="mock-badge">мокап · backlog #111 + #112 · «Respondent sees» справа живёт от введённых значений</span>
+</div>
+
+<!-- ===================== ФОН РЕДАКТОРА ===================== -->
+<div class="fake-editor">
+  <div class="fake-editor-header"><i class="fas fa-map-marked-alt mr-2"></i>Mapsurvey — Survey editor · Fruit preferences</div>
+  <div class="fake-editor-body">
+    <div class="fake-panel"></div>
+    <div class="fake-panel map"></div>
+  </div>
+</div>
+<div class="backdrop"></div>
+
+<!-- ===================== МОДАЛКА ===================== -->
+<div class="modal-mock size-xl" id="modal">
+  <div class="m-header">
+    <h5>New Question</h5>
+    <button type="button" class="close"><span>&times;</span></button>
+  </div>
+  <div class="m-body">
+    <div class="body-cols">
+      <div class="form-col">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" class="form-control form-control-sm" id="q-name" value="fruit_rating"
+                 title="Becomes the column name in exports">
+        </div>
+        <div class="form-group">
+          <label>Text</label>
+          <input type="text" class="form-control form-control-sm" id="q-text" value="How much do you like apples?">
+        </div>
+
+        <div class="picker-label">Input type</div>
+        <div id="picker-area"></div>
+        <div class="type-hint-line" id="type-hint"></div>
+
+        <div class="section-divider"></div>
+        <div id="dynamic-fields"></div>
+      </div>
+
+      <div class="live-col">
+        <div class="pv-title"><i class="fas fa-eye mr-1"></i>Respondent sees</div>
+        <div class="widget-preview" id="live-preview"></div>
+        <div class="live-note">Живое превью: собирается из значений формы — текст, варианты, стиль, цвет.</div>
+      </div>
+    </div>
+  </div>
+  <div class="m-footer">
+    <button class="btn btn-sm btn-secondary">Cancel</button>
+    <button class="btn btn-sm btn-primary">Save</button>
+  </div>
+</div>
+
+<!-- Флайаут-превью -->
+<div class="hover-flyout" id="flyout">
+  <div class="fly-inner">
+    <div class="fly-hint" id="fly-hint"></div>
+    <div id="fly-preview"></div>
+  </div>
+</div>
+
+<script>
+/* Мокап полностью статичен и локален: в разметку попадают только литералы из этого
+   файла и значения полей самого мокапа, экранированные esc(). Рендер — через
+   createContextualFragment. */
+function setHTML(el, html) {
+  if (!el) return;
+  el.replaceChildren(document.createRange().createContextualFragment(html));
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ============ Данные о типах ============ */
+const GROUPS = [
+  { key:'plain', label:'Questions' },
+  { key:'geo',   label:'Map questions' },
+  { key:'display', label:'Display blocks — collect nothing' },
+];
+
+const TYPES = [
+  { key:'text',       group:'plain', label:'Text',             icon:'fa-align-left',
+    hint:'Multi-line free text answer',
+    fields:['required','validation'] },
+  { key:'text_line',  group:'plain', label:'Single Line Text', icon:'fa-i-cursor',
+    hint:'One short line of text',
+    fields:['required','validation'] },
+  { key:'number',     group:'plain', label:'Number',           icon:'fa-hashtag',
+    hint:'Numeric answer with min/max validation',
+    fields:['required','validation'] },
+  { key:'choice',     group:'plain', label:'Choices',          icon:'fa-dot-circle',
+    hint:'Pick one option from a list',
+    fields:['required','choices'] },
+  { key:'multichoice',group:'plain', label:'Multiple Choices', icon:'fa-check-square',
+    hint:'Pick any number of options',
+    fields:['required','choices'] },
+  { key:'range',      group:'plain', label:'Range',            icon:'fa-sliders-h',
+    hint:'Slider over a numbered scale',
+    fields:['required','choices','display'] },
+  { key:'rating',     group:'plain', label:'Rating',           icon:'fa-star',
+    hint:'One point on a labelled scale — one rating per item gives you a ranking',
+    fields:['required','choices','display'] },
+  { key:'datetime',   group:'plain', label:'Date/Time',        icon:'fa-calendar-alt',
+    hint:'Date and time picker',
+    fields:['required'] },
+  { key:'point',      group:'geo',   label:'Geo Point',        icon:'fa-map-marker-alt',
+    hint:'Respondent places a marker on the map',
+    fields:['required','color','icon','validation'] },
+  { key:'line',       group:'geo',   label:'Geo Line',         icon:'fa-route',
+    hint:'Respondent draws a route or line',
+    fields:['required','color','icon','validation'] },
+  { key:'polygon',    group:'geo',   label:'Geo Polygon',      icon:'fa-draw-polygon',
+    hint:'Respondent outlines an area',
+    fields:['required','color','icon','validation'] },
+  { key:'image',      group:'display', label:'Image',          icon:'fa-image',
+    hint:'Shows a picture to the respondent — collects nothing',
+    fields:['imagefile'] },
+  /* было «HTML» — создатели опросов не понимают термин; хранимое значение остаётся html */
+  { key:'html',       group:'display', label:'Formatted Text', icon:'fa-paragraph',
+    hint:'Your own formatted text — headings, bold, links; collects nothing',
+    fields:[] },
+];
+const typeByKey = k => TYPES.find(t => t.key === k);
+
+/* ============ Канонические примеры для флайаута (чужие типы при наведении) ============ */
+const PREVIEWS = {
+  text: `<div class="q-title">Tell us about your favourite fruit</div>
+         <textarea class="form-control" rows="3" placeholder="Type your answer…"></textarea>`,
+  text_line: `<div class="q-title">Your favourite fruit</div>
+              <input class="form-control" placeholder="Type your answer…">`,
+  number: `<div class="q-title">How many apples per week?</div>
+           <input type="number" class="form-control" value="4" style="max-width:120px">`,
+  choice: `<div class="q-title">Pick your favourite fruit</div>
+           <div><label><input type="radio" name="pv-c" checked> Apples</label></div>
+           <div><label><input type="radio" name="pv-c"> Bananas</label></div>
+           <div><label><input type="radio" name="pv-c"> Cherries</label></div>`,
+  multichoice: `<div class="q-title">Which fruits do you eat?</div>
+           <div><label><input type="checkbox" checked> Apples</label></div>
+           <div><label><input type="checkbox" checked> Bananas</label></div>
+           <div><label><input type="checkbox"> Cherries</label></div>`,
+  range: `<div class="q-title">How ripe do you like bananas?</div>
+          <input type="range" class="custom-range" min="1" max="10" value="6">
+          <div class="range-labels"><span>1 · green</span><span>10 · brown</span></div>`,
+  rating: `<div class="q-title">How much do you like apples?</div>
+           <div class="rating-inline">
+             <div class="r-opt">1<br><small>worst</small><input type="radio" name="pv-r"></div>
+             <div class="r-opt">2<br>&nbsp;<input type="radio" name="pv-r"></div>
+             <div class="r-opt">3<br>&nbsp;<input type="radio" name="pv-r"></div>
+             <div class="r-opt">4<br>&nbsp;<input type="radio" name="pv-r" checked></div>
+             <div class="r-opt">5<br><small>best</small><input type="radio" name="pv-r"></div>
+           </div>`,
+  datetime: `<div class="q-title">When did you last buy fruit?</div>
+             <input type="datetime-local" class="form-control" style="max-width:220px">`,
+  point: `<div class="q-title">Where is your fruit market?</div>
+          <div class="mini-map"><i class="fas fa-map-marker-alt pin" style="color:#d9534f"></i>
+            <span class="draw-btn"><i class="fas fa-map-marker-alt mr-1"></i>Place point</span></div>`,
+  line: `<div class="q-title">Your route to the market</div>
+         <div class="mini-map">
+           <svg viewBox="0 0 300 110" preserveAspectRatio="none">
+             <polyline points="20,90 90,70 150,80 210,35 280,25" fill="none"
+               stroke="#0d6efd" stroke-width="3" stroke-dasharray="7 4" stroke-linecap="round"/>
+           </svg>
+           <span class="draw-btn"><i class="fas fa-route mr-1"></i>Draw line</span></div>`,
+  polygon: `<div class="q-title">Outline the orchard</div>
+         <div class="mini-map">
+           <svg viewBox="0 0 300 110" preserveAspectRatio="none">
+             <polygon points="60,25 220,20 260,75 160,95 55,80" fill="rgba(13,110,253,.25)"
+               stroke="#0d6efd" stroke-width="2"/>
+           </svg>
+           <span class="draw-btn"><i class="fas fa-draw-polygon mr-1"></i>Draw area</span></div>`,
+  image: `<div class="q-title">(shown to respondent)</div><div class="img-placeholder"><i class="fas fa-image"></i></div>`,
+  html: `<div class="q-title">(shown to respondent as-is)</div>
+         <div style="font-size:12px"><b>Welcome!</b><p class="mb-0">This survey takes <i>5 minutes</i>. Your answers are anonymous.</p></div>`,
+};
+
+/* ============ Состояние ============ */
+const state = {
+  variant:'B', size:'xl', hover:true, hide:true,
+  selected:'rating',
+  qText:'How much do you like apples?',
+  choiceRows:[ {code:'1', label:'worst'}, {code:'5', label:'best'} ],
+  displayStyle:'default',            // default | strip | list
+  color:'#d9534f',
+  icon:'',
+};
+
+/* ============ ЖИВОЕ ПРЕВЬЮ из значений формы ============ */
+function buildSteps() {
+  const rows = state.choiceRows.filter(r => r.code !== '' || r.label !== '');
+  const nums = rows.map(r => parseInt(r.code, 10));
+  if (rows.length === 2 && nums.every(n => !isNaN(n))) {
+    const lo = Math.min(nums[0], nums[1]), hi = Math.max(nums[0], nums[1]);
+    if (hi - lo >= 2 && hi - lo <= 10) {         // «1=worst, 5=best» → развернуть шкалу
+      const steps = [];
+      for (let i = lo; i <= hi; i++) {
+        const row = rows.find(r => parseInt(r.code,10) === i);
+        steps.push({ code:String(i), label: row ? row.label : '' });
+      }
+      return steps;
+    }
+  }
+  return rows.length ? rows : [{code:'1',label:''},{code:'2',label:''},{code:'3',label:''}];
+}
+
+function scaleWidget(steps, style, kind) {
+  const mid = Math.floor(steps.length / 2);
+  if (style === 'strip')
+    return `<div class="strip-row">` + steps.map((s,i) =>
+      `<span class="strip-cell ${i===mid?'on':''}">${esc(s.code)}</span>`).join('') + `</div>
+      <div class="range-labels"><span>${esc(steps[0].label)}</span><span>${esc(steps[steps.length-1].label)}</span></div>`;
+  if (style === 'list')
+    return `<div class="list-pips">` + steps.map((s,i) =>
+      `<label><input type="radio" name="lv-l" ${i===mid?'checked':''}> ${esc(s.code)}${s.label ? ' — ' + esc(s.label) : ''}</label>`).join('') + `</div>`;
+  if (kind === 'range')                          // default для range — слайдер
+    return `<input type="range" class="custom-range" min="${esc(steps[0].code)}" max="${esc(steps[steps.length-1].code)}" value="${esc(steps[mid].code)}">
+      <div class="range-labels"><span>${esc(steps[0].code)}${steps[0].label ? ' · ' + esc(steps[0].label) : ''}</span>
+      <span>${esc(steps[steps.length-1].code)}${steps[steps.length-1].label ? ' · ' + esc(steps[steps.length-1].label) : ''}</span></div>`;
+  return `<div class="rating-inline">` + steps.map((s,i) =>  // default для rating — радио-шкала
+    `<div class="r-opt">${esc(s.code)}<br><small>${esc(s.label) || '&nbsp;'}</small><input type="radio" name="lv-r" ${i===mid?'checked':''}></div>`).join('') + `</div>`;
+}
+
+function renderLivePreview() {
+  const t = typeByKey(state.selected);
+  const title = `<div class="q-title">${esc(state.qText) || '<span class="text-muted">(текст вопроса)</span>'}</div>`;
+  const rows = state.choiceRows.filter(r => r.code !== '' || r.label !== '');
+  const icon = state.icon.trim();
+  let body = '';
+
+  switch (t.key) {
+    case 'text':      body = `<textarea class="form-control" rows="3" placeholder="Type your answer…"></textarea>`; break;
+    case 'text_line': body = `<input class="form-control" placeholder="Type your answer…">`; break;
+    case 'number':    body = `<input type="number" class="form-control" value="4" style="max-width:120px">`; break;
+    case 'datetime':  body = `<input type="datetime-local" class="form-control" style="max-width:220px">`; break;
+    case 'choice':
+      body = rows.length
+        ? rows.map((r,i) => `<div><label><input type="radio" name="lv-c" ${i===0?'checked':''}> ${esc(r.label) || esc(r.code)}</label></div>`).join('')
+        : `<div class="text-muted" style="font-size:12px">добавь варианты в Choices</div>`;
+      break;
+    case 'multichoice':
+      body = rows.length
+        ? rows.map((r,i) => `<div><label><input type="checkbox" ${i===0?'checked':''}> ${esc(r.label) || esc(r.code)}</label></div>`).join('')
+        : `<div class="text-muted" style="font-size:12px">добавь варианты в Choices</div>`;
+      break;
+    case 'rating': body = scaleWidget(buildSteps(), state.displayStyle, 'rating'); break;
+    case 'range':  body = scaleWidget(buildSteps(), state.displayStyle, 'range');  break;
+    case 'point':
+      body = `<div class="mini-map"><i class="fas ${icon || 'fa-map-marker-alt'} pin" style="color:${esc(state.color)}"></i>
+        <span class="draw-btn"><i class="fas ${icon || 'fa-map-marker-alt'} mr-1"></i>Place point</span></div>`;
+      break;
+    case 'line':
+      body = `<div class="mini-map"><svg viewBox="0 0 300 110" preserveAspectRatio="none">
+        <polyline points="20,90 90,70 150,80 210,35 280,25" fill="none" stroke="${esc(state.color)}" stroke-width="3" stroke-dasharray="7 4" stroke-linecap="round"/></svg>
+        <span class="draw-btn"><i class="fas ${icon || 'fa-route'} mr-1"></i>Draw line</span></div>`;
+      break;
+    case 'polygon':
+      body = `<div class="mini-map"><svg viewBox="0 0 300 110" preserveAspectRatio="none">
+        <polygon points="60,25 220,20 260,75 160,95 55,80" fill="${esc(state.color)}33" stroke="${esc(state.color)}" stroke-width="2"/></svg>
+        <span class="draw-btn"><i class="fas ${icon || 'fa-draw-polygon'} mr-1"></i>Draw area</span></div>`;
+      break;
+    case 'image': body = `<div class="img-placeholder"><i class="fas fa-image"></i></div>`; break;
+    case 'html':  body = `<div style="font-size:12px"><b>${esc(state.qText)}</b><p class="mb-0 text-muted">formatted block, no answer collected</p></div>`; break;
+  }
+  setHTML(document.getElementById('live-preview'),
+    (t.key === 'image' || t.key === 'html' ? '' : title) + body);
+}
+
+/* ============ Пикеры ============ */
+function renderPicker() {
+  const area = document.getElementById('picker-area');
+  if (state.variant === 'A') setHTML(area, renderVariantA());
+  if (state.variant === 'B') setHTML(area, renderVariantB());
+  if (state.variant === 'C') setHTML(area, renderVariantC());
+  bindPicker();
+  const t = typeByKey(state.selected);
+  setHTML(document.getElementById('type-hint'),
+    state.variant === 'C' ? '' : `<i class="fas ${t.icon} mr-1"></i>${t.hint}`);
+}
+
+function renderVariantA() {
+  const opts = GROUPS.map(g => `<optgroup label="${g.label}">` +
+    TYPES.filter(t => t.group === g.key)
+         .map(t => `<option value="${t.key}" ${t.key===state.selected?'selected':''}>${t.label}</option>`).join('') +
+    `</optgroup>`).join('');
+  return `<select class="form-control form-control-sm" id="type-select">${opts}</select>`;
+}
+
+function renderVariantB() {
+  return GROUPS.map(g =>
+    `<div class="group-caption">${g.label}</div>
+     <div class="type-grid">` +
+     TYPES.filter(t => t.group === g.key).map(t =>
+       `<div class="type-card ${t.key===state.selected?'selected':''}" data-type="${t.key}" title="${t.hint}">
+          <div class="t-icon"><i class="fas ${t.icon}"></i></div>
+          <div class="t-name">${t.label}</div>
+        </div>`).join('') +
+     `</div>`).join('');
+}
+
+function renderVariantC() {
+  const list = GROUPS.map(g =>
+    `<div class="group-caption">${g.label}</div>` +
+    TYPES.filter(x => x.group === g.key).map(x =>
+      `<div class="tp-row ${x.key===state.selected?'selected':''}" data-type="${x.key}">
+         <div class="t-icon"><i class="fas ${x.icon}"></i></div>
+         <div class="t-texts"><div class="t-name">${x.label}</div><div class="t-hint">${x.hint}</div></div>
+       </div>`).join('')).join('');
+  return `<div class="two-pane">
+            <div class="tp-list">${list}</div>
+            <div class="tp-preview-pane">
+              <div class="pv-title">Type example</div>
+              <div class="widget-preview" id="tp-preview">${PREVIEWS[state.selected]}</div>
+            </div>
+          </div>`;
+}
+
+/* ============ События пикера ============ */
+function bindPicker() {
+  const sel = document.getElementById('type-select');
+  if (sel) sel.addEventListener('change', e => { state.selected = e.target.value; render(); });
+
+  document.querySelectorAll('[data-type]').forEach(el => {
+    el.addEventListener('click', () => { state.selected = el.dataset.type; hideFlyout(); render(); });
+
+    el.addEventListener('mouseenter', () => {
+      const t = typeByKey(el.dataset.type);
+      if (state.variant === 'C') {           // пример типа в правой мини-панели пикера
+        setHTML(document.getElementById('tp-preview'), PREVIEWS[t.key]);
+        return;
+      }
+      if (!state.hover) return;              // флайаут для карточек
+      showFlyout(el, t);
+    });
+    el.addEventListener('mouseleave', () => {
+      if (state.variant === 'C') {
+        setHTML(document.getElementById('tp-preview'), PREVIEWS[state.selected]);
+        return;
+      }
+      hideFlyout();
+    });
+  });
+}
+
+function showFlyout(el, t) {
+  const fly = document.getElementById('flyout');
+  setHTML(document.getElementById('fly-hint'), `<i class="fas ${t.icon} mr-1"></i><b>${t.label}</b> — ${t.hint}`);
+  setHTML(document.getElementById('fly-preview'), `<div class="widget-preview">${PREVIEWS[t.key]}</div>`);
+  const r = el.getBoundingClientRect();
+  const m = document.getElementById('modal').getBoundingClientRect();
+  let left = m.right + 14;
+  if (left + 300 > window.innerWidth) left = m.left - 314;   // не влезло справа — слева
+  if (left < 6) left = Math.min(r.right + 10, window.innerWidth - 306);
+  const top = Math.min(r.top, window.innerHeight - 260);
+  fly.style.left = left + 'px';
+  fly.style.top = Math.max(60, top) + 'px';
+  fly.style.display = 'block';
+}
+function hideFlyout() { document.getElementById('flyout').style.display = 'none'; }
+
+/* ============ Динамические поля формы ============ */
+function renderFields() {
+  const t = typeByKey(state.selected);
+  const has = f => state.hide ? t.fields.includes(f) : true;
+  const dead = f => (!state.hide && !t.fields.includes(f))
+    ? `<span class="dead-tag">не работает для ${t.label}</span>` : '';
+  let html = '';
+
+  if (has('choices')) html += `
+    <div class="form-group">
+      <label>Choices</label>
+      <div class="choices-editor" id="choices-editor">` +
+      state.choiceRows.map((r,i) => `
+        <div class="row-choice">
+          <input class="form-control form-control-sm ch-code" data-idx="${i}" style="max-width:60px" value="${esc(r.code)}">
+          <input class="form-control form-control-sm ch-label" data-idx="${i}" value="${esc(r.label)}">
+          <button class="rm" data-idx="${i}" title="удалить">&times;</button>
+        </div>`).join('') + `
+        <button class="btn btn-sm btn-outline-secondary py-0" id="add-choice"><i class="fas fa-plus mr-1"></i>Add choice</button>
+      </div>
+    </div>`;
+
+  if (has('display')) html += `
+    <div class="form-group">
+      <label>Display as</label>
+      <div class="display-thumbs">
+        <div class="display-thumb ${state.displayStyle==='default'?'selected':''}" data-style="default"><div class="th-art"><i class="fas ${t.key==='range'?'fa-sliders-h':'fa-star'}"></i></div>${t.key==='range'?'Slider':'Radio scale'}</div>
+        <div class="display-thumb ${state.displayStyle==='strip'?'selected':''}" data-style="strip"><div class="th-art"><i class="fas fa-ellipsis-h"></i></div>Compact scale</div>
+        <div class="display-thumb ${state.displayStyle==='list'?'selected':''}" data-style="list"><div class="th-art"><i class="fas fa-list-ol"></i></div>Labeled list</div>
+      </div>
+    </div>`;
+
+  if (has('validation')) html += `
+    <div class="form-group">
+      <label>Validation</label>
+      <div class="form-row">
+        <div class="col"><input class="form-control form-control-sm" placeholder="min"></div>
+        <div class="col"><input class="form-control form-control-sm" placeholder="max"></div>
+      </div>
+    </div>`;
+
+  if (has('color')) html += `
+    <div class="form-group dead-field">${dead('color')}
+      <label>Color</label>
+      <input type="color" class="form-control form-control-sm" id="q-color" value="${esc(state.color)}" style="max-width:70px">
+      <small class="form-text text-muted">Marker / line colour on the map</small>
+    </div>`;
+
+  if (has('icon')) html += `
+    <div class="form-group dead-field">${dead('icon')}
+      <label>Icon class</label>
+      <input class="form-control form-control-sm" id="q-icon" placeholder="fas fa-map-marker-alt" value="${esc(state.icon)}">
+      <small class="form-text text-muted">Font-Awesome class for the map marker</small>
+    </div>`;
+
+  if (has('imagefile')) html += `
+    <div class="form-group dead-field">${dead('imagefile')}
+      <label>Image</label>
+      <input type="file" class="form-control-file" style="font-size:12px">
+    </div>`;
+
+  if (has('required')) html += `
+    <div class="form-group form-check mb-0">
+      <input type="checkbox" class="form-check-input" id="req" checked>
+      <label class="form-check-label" for="req" style="font-weight:400">Required</label>
+    </div>`;
+
+  if (!html) html = `<div class="text-muted" style="font-size:12px"><i class="fas fa-info-circle mr-1"></i>${t.label} is a display block — it has no answer settings.</div>`;
+  setHTML(document.getElementById('dynamic-fields'), html);
+  bindFields();
+}
+
+/* Поля формы → состояние → живое превью (без полного перерендера, чтобы не терять фокус) */
+function bindFields() {
+  document.querySelectorAll('#choices-editor .ch-code').forEach(inp =>
+    inp.addEventListener('input', () => { state.choiceRows[+inp.dataset.idx].code = inp.value; renderLivePreview(); }));
+  document.querySelectorAll('#choices-editor .ch-label').forEach(inp =>
+    inp.addEventListener('input', () => { state.choiceRows[+inp.dataset.idx].label = inp.value; renderLivePreview(); }));
+  document.querySelectorAll('#choices-editor .rm').forEach(btn =>
+    btn.addEventListener('click', () => { state.choiceRows.splice(+btn.dataset.idx, 1); renderFields(); renderLivePreview(); }));
+  const add = document.getElementById('add-choice');
+  if (add) add.addEventListener('click', () => { state.choiceRows.push({code:'', label:''}); renderFields(); renderLivePreview(); });
+
+  document.querySelectorAll('.display-thumb').forEach(th =>
+    th.addEventListener('click', () => { state.displayStyle = th.dataset.style; renderFields(); renderLivePreview(); }));
+
+  const color = document.getElementById('q-color');
+  if (color) color.addEventListener('input', () => { state.color = color.value; renderLivePreview(); });
+  const icon = document.getElementById('q-icon');
+  if (icon) icon.addEventListener('input', () => { state.icon = icon.value; renderLivePreview(); });
+}
+
+/* ============ Конфигуратор ============ */
+function render() {
+  const modal = document.getElementById('modal');
+  modal.className = 'modal-mock size-' + state.size;
+  document.querySelectorAll('[data-cfg]').forEach(b => {
+    const active = state[b.dataset.cfg] === b.dataset.val;
+    b.classList.toggle('btn-light', active);
+    b.classList.toggle('btn-outline-light', !active);
+  });
+  renderPicker();
+  renderFields();
+  renderLivePreview();
+}
+
+document.querySelectorAll('[data-cfg]').forEach(b =>
+  b.addEventListener('click', () => { state[b.dataset.cfg] = b.dataset.val; hideFlyout(); render(); }));
+document.getElementById('cfg-hover').addEventListener('change', e => { state.hover = e.target.checked; hideFlyout(); render(); });
+document.getElementById('cfg-hide').addEventListener('change', e => { state.hide = e.target.checked; render(); });
+document.getElementById('q-text').addEventListener('input', e => { state.qText = e.target.value; renderLivePreview(); });
+
+render();
+</script>
+</body>
+</html>
