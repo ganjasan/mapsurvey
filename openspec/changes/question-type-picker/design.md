@@ -62,14 +62,17 @@ fetches, and writes the HTML into the pane's iframe via `srcdoc`.
 - Image uploads are not previewed (the file lives client-side only); the pane shows the stored
   image for saved questions and a placeholder otherwise.
 
-### D4 — Hover examples are static snippets, not server renders
+### D4 — Hover examples are real renders of canned payloads
 
-A partial ships one small hidden example block per type (the mockup's canned examples); hovering a
-card clones the matching block into an example box in the preview column, directly under the
-"Respondent sees" pane (mockup review follow-up: a floating flyout beside the modal read as
-detached from the dialog). Zero latency, zero round-trips, and the
-examples deliberately show a *generic* question, distinct from the configured one in the pane —
-the two answer different questions ("what is this type?" vs "what will mine look like?").
+Hovering a card shows a "Type example" box in the preview column, directly under the "Respondent
+sees" pane (two review follow-ups: a floating flyout beside the modal read as detached from the
+dialog, and hand-written HTML snippets did not look like the product's actual widgets — the range
+slider gave it away). Each type has a small canned payload (generic fruit-survey question +
+choices) that is POSTed to the same live-preview endpoint the pane uses and rendered into an
+iframe, cached per type per modal open. `image` is the one static placeholder — without an
+uploaded file there is nothing real to render. The examples deliberately show a *generic*
+question, distinct from the configured one in the pane — the two answer different questions
+("what is this type?" vs "what will mine look like?").
 
 ### D5 — Modal layout
 

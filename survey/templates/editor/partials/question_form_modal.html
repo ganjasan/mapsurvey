@@ -44,35 +44,9 @@
         margin-top: 12px;
     }
     .qtp-flyout-hint { font-size: 0.7rem; color: #868e96; margin-bottom: 8px; }
-    .qtp-flyout-body {
-        border: 1px solid #dee2e6; border-radius: 8px; padding: 12px;
-        font-size: 0.8rem; background: #fff;
-    }
-    .qtp-ex-title { font-weight: 600; margin-bottom: 8px; font-size: 0.8rem; }
-    .qtp-ex-ends { display: flex; justify-content: space-between; font-size: 0.68rem; color: #868e96; }
-    .qtp-ex-rating { display: flex; gap: 12px; align-items: flex-end; }
-    .qtp-ex-opt { text-align: center; font-size: 0.68rem; color: #495057; }
-    .qtp-ex-opt input { display: block; margin: 4px auto 0; }
-    .qtp-ex-map {
-        height: 100px; border-radius: 6px; position: relative; overflow: hidden;
-        border: 1px solid #ced4da;
-        background:
-            linear-gradient(rgba(255,255,255,.35) 1px, transparent 1px) 0 0/22px 22px,
-            linear-gradient(90deg, rgba(255,255,255,.35) 1px, transparent 1px) 0 0/22px 22px,
-            linear-gradient(135deg, #dce8d5 0%, #e9e5d6 55%, #d6e3e9 100%);
-    }
-    .qtp-ex-map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-    .qtp-ex-pin {
-        position: absolute; top: 34%; left: 52%; color: #d9534f; font-size: 20px;
-        transform: translate(-50%, -90%); text-shadow: 0 1px 2px rgba(0,0,0,.3);
-    }
-    .qtp-ex-drawbtn {
-        position: absolute; bottom: 8px; left: 8px; background: #fff; border: 1px solid #adb5bd;
-        border-radius: 6px; padding: 3px 9px; font-size: 0.72rem;
-    }
-    .qtp-ex-imgph {
-        height: 80px; border-radius: 6px; background: #e9ecef; display: flex;
-        align-items: center; justify-content: center; color: #adb5bd; font-size: 26px;
+    .qtp-example-frame {
+        width: 100%; height: 190px; border: 1px solid #dee2e6; border-radius: 8px;
+        background: #fff;
     }
 </style>
 <div class="modal-header">
@@ -265,7 +239,7 @@
             <div class="qtp-flyout" id="qtp-flyout" hidden>
                 <div class="qtp-pv-title" style="margin-bottom:4px;">Type example</div>
                 <div class="qtp-flyout-hint"></div>
-                <div class="qtp-flyout-body"></div>
+                <iframe class="qtp-example-frame"></iframe>
             </div>
         </div>
     </div>
@@ -279,8 +253,6 @@
         <button type="submit" class="btn btn-primary" onclick="serializeChoices()">Save</button>
     </div>
 </form>
-
-{% include "editor/partials/question_type_examples.html" %}
 
 <script>
 (function() {
@@ -383,20 +355,71 @@
     }
 
     // ── Hover example, shown in the preview column under "Respondent sees" ──
+    // Real renders, not lookalikes: each type has a canned payload posted to
+    // the same live-preview endpoint the pane uses, cached per type. `image`
+    // is the one static case — without an uploaded file there is nothing real
+    // to render.
     var exampleBox = document.getElementById('qtp-flyout');
     var canHover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
 
+    var EXAMPLE_PAYLOADS = {
+        text: { name: 'Tell us about your favourite fruit' },
+        text_line: { name: 'Your favourite fruit' },
+        number: { name: 'How many apples per week?' },
+        choice: { name: 'Pick your favourite fruit',
+                  choices_json: '[{"code":1,"name":"Apples"},{"code":2,"name":"Bananas"},{"code":3,"name":"Cherries"}]' },
+        multichoice: { name: 'Which fruits do you eat?',
+                  choices_json: '[{"code":1,"name":"Apples"},{"code":2,"name":"Bananas"},{"code":3,"name":"Cherries"}]' },
+        range: { name: 'How ripe do you like bananas?',
+                  choices_json: '[{"code":1,"name":"green"},{"code":10,"name":"brown"}]' },
+        rating: { name: 'How much do you like apples?',
+                  choices_json: '[{"code":1,"name":"worst"},{"code":2,"name":"2"},{"code":3,"name":"3"},{"code":4,"name":"4"},{"code":5,"name":"best"}]' },
+        datetime: { name: 'When did you last buy fruit?' },
+        point: { name: 'Where is your fruit market?', color: '#d9534f' },
+        line: { name: 'Your route to the market', color: '#0d6efd' },
+        polygon: { name: 'Outline the orchard', color: '#0d6efd' },
+        html: { name: 'Welcome!', subtext: 'This survey takes 5 minutes. Your answers are anonymous.' },
+    };
+    // No closing body tag in this literal: django-debug-toolbar splices its
+    // markup in front of any closing-body tag it finds in a response — even
+    // inside a JS string or comment — which breaks this whole script.
+    // srcdoc doesn't need the tag anyway.
+    var IMAGE_EXAMPLE_DOC = '<body style="margin:0;font-family:sans-serif;">' +
+        '<div style="height:130px;margin:12px;border-radius:6px;background:#e9ecef;' +
+        'display:flex;align-items:center;justify-content:center;color:#9aa0a6;font-size:13px;">' +
+        'picture uploaded by the creator</div>';
+    var exampleCache = {};
+    var exampleCurrent = null;
+
     function qtpShowExample(card) {
         if (!exampleBox || !canHover) return;
-        var src = document.querySelector('[data-qtp-example="' + card.getAttribute('data-qtp-value') + '"]');
-        if (!src) return;
+        var value = card.getAttribute('data-qtp-value');
+        exampleCurrent = value;
         exampleBox.querySelector('.qtp-flyout-hint').textContent = card.getAttribute('data-qtp-hint') || '';
-        var clone = src.cloneNode(true);
-        clone.removeAttribute('hidden');
-        exampleBox.querySelector('.qtp-flyout-body').replaceChildren(clone);
+        var frame = exampleBox.querySelector('.qtp-example-frame');
         exampleBox.hidden = false;
+        if (value === 'image') { frame.srcdoc = IMAGE_EXAMPLE_DOC; return; }
+        if (exampleCache[value]) { frame.srcdoc = exampleCache[value]; return; }
+        frame.srcdoc = '';
+        var p = EXAMPLE_PAYLOADS[value] || {};
+        var fd = new FormData();
+        fd.append('input_type', value);
+        fd.append('name', p.name || '');
+        if (p.subtext) fd.append('subtext', p.subtext);
+        if (p.choices_json) fd.append('choices_json', p.choices_json);
+        if (p.color) fd.append('color', p.color);
+        fetch(PREVIEW_LIVE_URL, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: fd,
+        }).then(function(resp) { return resp.ok ? resp.text() : null; })
+          .then(function(html) {
+            if (!html) return;
+            exampleCache[value] = html;
+            if (exampleCurrent === value) frame.srcdoc = html;
+        }).catch(function() {});
     }
-    function qtpHideExample() { if (exampleBox) exampleBox.hidden = true; }
+    function qtpHideExample() { exampleCurrent = null; if (exampleBox) exampleBox.hidden = true; }
 
     if (picker) {
         picker.addEventListener('mouseover', function(e) {

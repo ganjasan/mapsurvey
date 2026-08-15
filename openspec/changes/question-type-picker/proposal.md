@@ -28,8 +28,9 @@ question, and that is exactly when it is absent.
   Display blocks — one card per type with an icon and a one-line hint. The native `<select>` stays
   in the form, hidden, as the submitted control; cards only set its value. Sub-question type
   restrictions continue to come from the form field's choices.
-- Hovering a card shows a **flyout with a canned example** of that type, so the choice is made by
-  picture rather than by name.
+- Hovering a card shows a **canned example** of that type under the preview pane — rendered
+  through the same server-side machinery, so the example is the real widget, not an imitation —
+  and the choice is made by picture rather than by name.
 - The preview pane renders the question **as currently configured, before it is saved**: a new
   endpoint accepts the modal's unsaved values (type, text, choices, display style, colour, icon)
   and returns the real respondent-side render built by `SurveySectionAnswerForm` — the same code
@@ -73,7 +74,6 @@ None. Respondent-side rendering, storage and export are untouched.
 - `survey/urls.py` — one route.
 - `survey/templates/editor/partials/question_form_modal.html` — layout, card grid, flyout,
   extended visibility toggles, live-preview wiring.
-- `survey/templates/editor/partials/question_type_examples.html` — new: canned example snippets.
 - `survey/templates/editor/survey_detail.html` — modal dialog width.
 - `survey/assets/css/editor.css` (or main.css) — picker/flyout/pane styles; collectstatic.
 - `survey/tests.py` — parity test, preview endpoint tests.

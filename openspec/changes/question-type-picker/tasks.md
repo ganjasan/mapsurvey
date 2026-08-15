@@ -36,14 +36,17 @@
 - [x] 4.1 Card grid partial rendered from metadata × the form field's actual choices (sub-question
       restrictions respected); native select hidden but present; card click sets select value +
       dispatches `change`; selected card highlighted; hint line under the grid.
-- [x] 4.2 `question_type_examples.html`: canned example snippet per type (from mockup); hovering a
-      card shows it in the preview column under "Respondent sees" (revised from a floating flyout
-      during review); suppressed on touch, absent below `lg` with the whole column.
+- [x] 4.2 Hover examples: canned payload per type POSTed to the live-preview endpoint, rendered
+      in an iframe under "Respondent sees", cached per type (revised twice in review: first from a
+      floating flyout into the preview column, then from hand-made HTML snippets to real renders —
+      the fake slider looked nothing like the product's). `image` stays a static placeholder;
+      suppressed on touch, absent below `lg` with the whole column.
 - [x] 4.3 Styles: kept inline in the modal partial's `<style>` block — the editor's existing idiom
       (the partial already styles `#display-style-fields` inline); no static asset touched, so no
-      collectstatic needed. Example snippets are hidden `<div>`s, not `<template>`s: htmx delivers
-      swaps wrapped in a template, and nested templates broke fragment parsing (the partial's
-      script never ran).
+      collectstatic needed.
+      (Historical: an earlier revision shipped example snippets as `<template>` elements — htmx
+      delivers swaps wrapped in a template, nesting broke fragment parsing and the partial's
+      script never ran. Snippets are gone entirely now, but don't reintroduce nested templates.)
 
 ## 5. Field visibility (#111)
 
