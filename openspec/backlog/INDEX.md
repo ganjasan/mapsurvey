@@ -110,8 +110,8 @@
 | 108 | bug | [Editing a question's type or choices invalidates stored answers](bug-question-edits-invalidate-stored-answers.md) | medium | backend | — | 2026-08-05 |
 | 109 | bug | [Multi-line template comments render into the page](bug-template-comments-leak-into-html.md) | medium | frontend | — | 2026-08-05 |
 | ~~110~~ | ~~improvement~~ | ~~[Publish prompt when sharing a Draft survey](improvement-publish-prompt-on-share-draft.md)~~ | ~~high~~ | ~~frontend~~ | ~~growth~~ | ~~2026-07-06~~ |
-| 111 | bug | [Color, Icon and Image are offered on every question type](bug-question-fields-shown-for-every-type.md) | high | frontend | — | 2026-08-09 |
-| 112 | improvement | [Rework the question type picker — groups, icons, hints, example previews, bigger modal](improvement-group-question-type-list.md) | high | frontend | — | 2026-08-09 |
+| ~~111~~ | ~~bug~~ | ~~[Color, Icon and Image are offered on every question type](bug-question-fields-shown-for-every-type.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-08-09~~ |
+| ~~112~~ | ~~improvement~~ | ~~[Rework the question type picker — groups, icons, hints, example previews, bigger modal](improvement-group-question-type-list.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-08-09~~ |
 | 113 | bug | [Results-page preview always claims "Unlisted"](bug-results-preview-always-claims-unlisted.md) | medium | frontend | — | 2026-08-09 |
 | ~~114~~ | ~~bug~~ | ~~[Analytics and export disagree on which version they show](bug-analytics-and-export-disagree-on-version.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-08-09~~ |
 | ~~115~~ | ~~feature~~ | ~~[Cross-filtering / cross-highlighting in analytics dashboard](feature-analytics-cross-filtering.md)~~ | ~~medium~~ | ~~frontend~~ | ~~survey-analytics~~ | ~~2026-04-02~~ |

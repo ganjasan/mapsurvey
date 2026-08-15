@@ -1,6 +1,8 @@
-{# Per-page structured data for SEO landings. FAQPage + BreadcrumbList are
-   pre-serialized valid JSON strings from the seo_landings registry, so they are
-   emitted with `safe` (never string-built in the template). #}
+{% comment %}
+Per-page structured data for SEO landings. FAQPage + BreadcrumbList are
+pre-serialized valid JSON strings from the seo_landings registry, so they are
+emitted with `safe` (never string-built in the template).
+{% endcomment %}
 {% if faqpage_jsonld %}
 <script type="application/ld+json">{{ faqpage_jsonld|safe }}</script>
 {% endif %}

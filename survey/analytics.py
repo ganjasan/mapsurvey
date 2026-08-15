@@ -11,7 +11,7 @@ from .models import (
     VALIDATION_STATUS_CHOICES,
 )
 from .versioning import (
-    canonical_of, lineage_map,
+    DRAFT_SCOPE, canonical_of, draft_copy_of, lineage_map,
     resolve_version_scope as resolve_scope,
 )
 
@@ -27,9 +27,10 @@ def resolve_version_scope(survey, version):
 
 
 def version_choices(survey):
-    """Return [{'value': 'all'|'vN', 'label': ...}] for the version filter UI.
+    """Return [{'value': 'all'|'vN'|'draft', 'label': ...}] for the filter UI.
 
-    Returns an empty list for single-version surveys (no filter to show).
+    Returns an empty list when there is nothing to choose between: a
+    single-version survey with no draft copy.
     """
     canonical = canonical_of(survey)
     versions = list(
@@ -38,11 +39,16 @@ def version_choices(survey):
         .order_by('-version_number')
         .values_list('version_number', flat=True)
     )
-    if not versions:
+    draft = draft_copy_of(canonical)
+    if not versions and draft is None:
         return []
     choices = [{'value': 'all', 'label': 'All versions'}]
     for num in [canonical.version_number] + versions:
         choices.append({'value': f'v{num}', 'label': f'v{num}'})
+    if draft is not None:
+        # Preview traffic, kept out of every other scope — offered here so a
+        # creator can inspect what a draft collected before publishing it.
+        choices.append({'value': DRAFT_SCOPE, 'label': 'Draft (test)'})
     return choices
 
 
@@ -119,6 +125,10 @@ class SurveyAnalyticsService:
     objects) onto an archived header, so all reads run over a *scope* of
     version headers — the whole family by default, or a single version when
     the creator filters. Questions aggregate by lineage (code, input_type).
+
+    A draft copy resolves to the family it was made from, so editing a live
+    survey never blanks its Results; the draft's own preview sessions are
+    reported only under the explicit 'draft' scope.
     """
 
     def __init__(self, survey, include_deleted=False, version='all'):
@@ -140,9 +150,16 @@ class SurveyAnalyticsService:
 
     @property
     def _lineages(self):
-        """Family lineage map (built once per instance)."""
+        """Family lineage map (built once per instance).
+
+        Under the draft scope the draft's cloned questions join their lineage —
+        the answers in scope point at those ids, so leaving them out would
+        report the right columns with nothing in them.
+        """
         if not hasattr(self, '_lineages_cache'):
-            self._lineages_cache = lineage_map(self.survey)
+            self._lineages_cache = lineage_map(
+                self.survey, include_draft=(self.scope.value == DRAFT_SCOPE),
+            )
         return self._lineages_cache
 
     def _lineage_ids(self, question):

@@ -1,4 +1,4 @@
-from django.test import TestCase, Client
+from django.test import TestCase, SimpleTestCase, Client
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, LineString, Polygon
 from io import BytesIO
@@ -8978,6 +8978,51 @@ class EditorVersioningEndpointsTest(TestCase):
         self.assertEqual(self.survey.version_number, original_version)
         self.assertEqual(self.survey.status, 'published')
 
+    def test_discard_draft_with_test_sessions_succeeds(self):
+        """
+        GIVEN a draft copy that has been previewed, so it owns test sessions
+        WHEN POST to discard-draft
+        THEN the draft and its test sessions are deleted, not a 500 from PROTECT
+        """
+        self.client.login(username='ver_owner', password='pass')
+        draft = clone_survey_for_draft(self.survey)
+        SurveyCollaborator.objects.get_or_create(
+            user=self.owner, survey=draft, defaults={'role': 'owner'},
+        )
+        draft_question = Question.objects.get(
+            survey_section__survey_header=draft, code='Q1',
+        )
+        test_session = SurveySession.objects.create(survey=draft)
+        Answer.objects.create(survey_session=test_session, question=draft_question,
+                              text='typed while previewing')
+
+        url = f'/editor/surveys/{draft.uuid}/discard-draft/'
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(SurveyHeader.objects.filter(id=draft.id).exists())
+        self.assertFalse(SurveySession.objects.filter(id=test_session.id).exists())
+        self.assertFalse(Answer.objects.filter(survey_session_id=test_session.id).exists())
+
+    def test_discard_draft_with_test_sessions_leaves_canonical_sessions(self):
+        """
+        GIVEN a previewed draft copy and a real session on the canonical
+        WHEN POST to discard-draft
+        THEN only the draft's sessions are deleted
+        """
+        self.client.login(username='ver_owner', password='pass')
+        real_session = SurveySession.objects.create(survey=self.survey)
+        draft = clone_survey_for_draft(self.survey)
+        SurveyCollaborator.objects.get_or_create(
+            user=self.owner, survey=draft, defaults={'role': 'owner'},
+        )
+        SurveySession.objects.create(survey=draft)
+
+        self.client.post(f'/editor/surveys/{draft.uuid}/discard-draft/')
+
+        self.assertTrue(SurveySession.objects.filter(id=real_session.id).exists())
+        self.assertEqual(SurveySession.objects.filter(survey=self.survey).count(), 1)
+
     # ─── check-compatibility ─────────────────────────────────────────────────
 
     def test_check_compatibility_returns_issues(self):
@@ -9981,6 +10026,406 @@ class PlausibleAnalyticsTest(TestCase):
             response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
             content = response.content.decode()
             self.assertIn("typeof plausible !== 'undefined'", content)
+
+
+class PostHogSnippetTest(TestCase):
+    """Tests for the internal product-analytics snippet.
+
+    PostHog measures us, not our customers' respondents. The exclusion tests below
+    are the load-bearing ones: they assert against genuinely routed respondent URLs,
+    so moving a route breaks a test instead of quietly opting respondents in.
+    """
+
+    KEY = 'phc_testkey123'
+
+    def setUp(self):
+        self.org = _make_org('PostHogOrg')
+        self.user = User.objects.create_user(
+            'posthoguser', email='creator@example.com', password='pass',
+        )
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='posthog_survey',
+            organization=self.org,
+            redirect_url='#',
+            status='published',
+        )
+        self.section1 = SurveySection.objects.create(
+            survey_header=self.survey,
+            name='section1',
+            start_map_postion=Point(0, 0),
+            start_map_zoom=10,
+        )
+        self.results_page = PublicResultsPage.objects.create(
+            survey=self.survey, slug='posthog-results', is_published=True,
+        )
+
+    def test_no_snippet_when_key_unset(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is empty (the default)
+        WHEN a creator-facing page is rendered
+        THEN neither the loader nor the init call appears in the HTML
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=''):
+            response = self.client.get('/trust/')
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, 'posthog-key')
+            self.assertNotContains(response, 'i.posthog.com')
+
+    def test_snippet_present_when_key_set(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN a creator-facing page is rendered
+        THEN the snippet carries that key and initialises against the configured host
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/trust/')
+            self.assertContains(response, self.KEY)
+            self.assertContains(response, 'posthog.init')
+            self.assertContains(response, 'https://eu.i.posthog.com')
+
+    def test_api_host_is_overridable(self):
+        """
+        GIVEN POSTHOG_API_HOST points somewhere other than Cloud EU
+        WHEN a creator-facing page is rendered
+        THEN the snippet initialises against that host and not the default
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_API_HOST='https://analytics.example.com',
+        ):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'https://analytics.example.com')
+            self.assertNotContains(response, 'https://eu.i.posthog.com')
+
+    def test_empty_api_host_falls_back_to_cloud_eu(self):
+        """
+        GIVEN the deployment supplies POSTHOG_API_HOST as an empty string
+        WHEN the snippet is rendered
+        THEN it still initialises against Cloud EU rather than nothing
+
+        render.yaml declares the variable as `sync: false`, so the Render
+        dashboard can hand the process an empty value. An empty api_host is a
+        silent no-op that looks identical to working analytics.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_API_HOST=''):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'https://eu.i.posthog.com')
+
+    def test_no_snippet_on_respondent_survey_page(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN a respondent loads a survey section under /surveys/
+        THEN no PostHog snippet is rendered
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, self.KEY)
+
+    def test_no_snippet_on_public_results_page(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN a visitor loads a public results page under /r/
+        THEN no PostHog snippet is rendered
+
+        Belt and braces: `public_results.html` is a standalone template that
+        includes no analytics partial at all today, so this would hold even
+        without the exclusion. The exclusion is what keeps it holding if that
+        template ever grows a shared head. The prefix rule itself is asserted
+        directly in PostHogContextProcessorTest.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get(f'/r/{self.results_page.slug}/')
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, self.KEY)
+
+    def test_snippet_on_editor_page(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured AND a creator is signed in
+        WHEN the editor dashboard is loaded
+        THEN the snippet is rendered
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.client.login(username='posthoguser', password='pass')
+            response = self.client.get('/editor/')
+            self.assertContains(response, 'posthog.init')
+            self.assertContains(response, self.KEY)
+
+    def test_plausible_still_renders_on_excluded_pages(self):
+        """
+        GIVEN both trackers are configured
+        WHEN a respondent survey page is rendered
+        THEN Plausible is still present and only PostHog is withheld
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js',
+        ):
+            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            self.assertContains(response, 'src="https://plausible.io/js/pa-test.js"')
+            self.assertNotContains(response, 'posthog.init')
+
+    def test_exclusion_list_is_configurable(self):
+        """
+        GIVEN /surveys/ is removed from POSTHOG_EXCLUDED_PREFIXES
+        WHEN a respondent survey page is rendered
+        THEN the snippet appears, proving the gate reads the setting rather
+             than hardcoding the prefixes
+
+        Uses /surveys/ deliberately: that template does include the shared
+        analytics partial, so lifting the exclusion has an observable effect.
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_EXCLUDED_PREFIXES=('/r/',),
+        ):
+            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            self.assertContains(response, 'posthog.init')
+            self.assertContains(response, self.KEY)
+
+    def test_authenticated_creator_is_identified(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured AND a creator is signed in
+        WHEN a creator-facing page is rendered
+        THEN the snippet identifies them by primary key with person properties attached
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.client.login(username='posthoguser', password='pass')
+            response = self.client.get('/editor/')
+            # The id="..." form, not the bare string: the snippet's
+            # getElementById('posthog-person') is present on every tracked
+            # page, so a bare match would pass without any payload at all.
+            self.assertContains(response, 'id="posthog-person"')
+            self.assertContains(response, f'"distinct_id": "{self.user.pk}"')
+            self.assertContains(response, 'creator@example.com')
+            self.assertContains(response, 'posthoguser')
+
+    def test_anonymous_visitor_is_not_identified(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured AND nobody is signed in
+        WHEN a marketing page is rendered
+        THEN no identify payload and no email address reach the HTML
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'posthog.init')
+            self.assertNotContains(response, 'id="posthog-person"')
+            self.assertNotContains(response, 'creator@example.com')
+
+    def test_person_properties_are_escaped(self):
+        """
+        GIVEN a username containing characters that would close the script block
+        WHEN the snippet is rendered for that user
+        THEN the identify payload escapes them and still round-trips to the real value
+        """
+        import re
+
+        hostile = User.objects.create_user(
+            'bad</script>"user', email='hostile@example.com', password='pass',
+        )
+        Membership.objects.create(user=hostile, organization=self.org, role='owner')
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.client.force_login(hostile)
+            response = self.client.get('/editor/')
+
+        match = re.search(
+            r'<script id="posthog-person" type="application/json">(.*?)</script>',
+            response.content.decode(),
+            re.S,
+        )
+        self.assertIsNotNone(match, 'identify payload missing')
+        payload = match.group(1)
+        # Escaped in transport: a raw closing tag here would end the block early.
+        self.assertNotIn('</script>', payload)
+        self.assertIn('\\u003C', payload)
+        # ...and still means the same thing once parsed.
+        self.assertEqual(json.loads(payload)['username'], 'bad</script>"user')
+
+    def test_session_recording_is_disabled(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN the snippet is rendered
+        THEN session recording is switched off in its initialisation
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'disable_session_recording: true')
+
+    def test_person_profiles_are_identified_only(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN the snippet is rendered
+        THEN profiles are created for identified users only, not anonymous visitors
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/trust/')
+            self.assertContains(response, "person_profiles: 'identified_only'")
+
+    def test_snippet_on_account_page(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN a page built on the shared base template is rendered
+        THEN the snippet is present
+
+        Covers the third of the four heads that include the analytics partial:
+        base_landing.html and editor_base.html are covered elsewhere, and
+        base_survey_template.html is covered by the exclusion tests.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/accounts/register/')
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'posthog.init')
+
+    def test_trust_page_discloses_creator_analytics(self):
+        """
+        GIVEN the trust page is the answer we give IT security teams
+        WHEN it is read
+        THEN it discloses that product analytics runs on creator-facing pages
+        AND states that it never loads where respondents answer surveys
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, 'Product analytics on creator-facing pages only')
+        self.assertContains(response, 'never to load where respondents answer surveys')
+
+    def test_trust_page_states_hosting_region_truthfully(self):
+        """
+        GIVEN every Render service and the production database run in Oregon
+        WHEN the trust page is read
+        THEN it names the United States as the hosting region
+        AND does not claim EU residency or Frankfurt hosting
+
+        This test exists because the page previously claimed Frankfurt and
+        "no cross-border transfers outside the EEA" while running in Oregon —
+        on the page most likely to be read by an EU procurement officer.
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, 'Oregon, United States')
+        self.assertContains(response, 'transferred outside the EEA')
+        self.assertNotContains(response, 'Frankfurt')
+        self.assertNotContains(response, 'Data stays in the EU')
+
+    def test_trust_page_does_not_claim_unimplemented_controls(self):
+        """
+        GIVEN there is no Content Security Policy and no self-serve account deletion
+        WHEN the trust page is read
+        THEN it makes neither claim
+
+        Both were asserted on the page while absent from the codebase. If either
+        ships later, this test is the reminder to put the claim back.
+        """
+        response = self.client.get('/trust/')
+        self.assertNotContains(response, 'Content Security Policy')
+        self.assertNotContains(response, 'deleting your account removes')
+        self.assertContains(response, 'Account deletion on request')
+
+    def test_trust_page_does_not_distribute_the_dpa(self):
+        """
+        GIVEN the DPA template was withdrawn pending legal review
+        WHEN the trust page is read
+        THEN it offers to agree one on request instead of serving a signable PDF
+
+        The file was moved out of survey/assets/ entirely, so unlinking it also
+        stops it being served: leaving it collected would keep the old URL alive
+        in every email that ever contained it.
+        """
+        response = self.client.get('/trust/')
+        self.assertNotContains(response, 'mapsurvey-dpa.pdf')
+        self.assertNotContains(response, 'Download DPA Template')
+        self.assertContains(response, 'Request a DPA')
+
+    def test_trust_page_discloses_respondent_metadata(self):
+        """
+        GIVEN survey sessions record the respondent's user-agent and referring page
+        WHEN the trust page is read
+        THEN that collection is disclosed rather than described as "no personal data"
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, 'Browser and referring page are recorded')
+        self.assertNotContains(response, 'collects no personal data')
+
+
+class PostHogContextProcessorTest(TestCase):
+    """The gate itself, independent of which templates happen to exist today.
+
+    The template-level tests above prove the four current heads behave. These
+    prove the *mechanism*, which is what makes a base template added tomorrow
+    inherit the exclusion instead of depending on which file its author copied.
+    """
+
+    KEY = 'phc_ctxkey'
+
+    def _context_for(self, path, user=None):
+        from django.contrib.auth.models import AnonymousUser
+        from django.test import RequestFactory
+
+        from .context_processors import analytics
+
+        request = RequestFactory().get(path)
+        request.user = user or AnonymousUser()
+        return analytics(request)
+
+    def test_key_present_on_our_own_paths(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN the context is built for a creator-facing path
+        THEN the key is passed through to the template
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            for path in ('/', '/trust/', '/editor/', '/accounts/register/'):
+                with self.subTest(path=path):
+                    self.assertEqual(
+                        self._context_for(path)['POSTHOG_PROJECT_KEY'], self.KEY,
+                    )
+
+    def test_key_withheld_on_excluded_paths(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN the context is built for a path belonging to somebody else's audience
+        THEN the key is empty, so no snippet can render whatever the template does
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            for path in ('/surveys/', '/surveys/abc/section1/', '/r/', '/r/slug/'):
+                with self.subTest(path=path):
+                    self.assertEqual(self._context_for(path)['POSTHOG_PROJECT_KEY'], '')
+
+    def test_unset_key_stays_unset_everywhere(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is empty
+        WHEN the context is built for any path
+        THEN the key is empty and no person data is computed
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=''):
+            context = self._context_for('/trust/')
+            self.assertEqual(context['POSTHOG_PROJECT_KEY'], '')
+
+    def test_person_is_none_for_anonymous(self):
+        """
+        GIVEN nobody is signed in
+        WHEN the context is built
+        THEN there is no identify payload
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.assertIsNone(self._context_for('/trust/')['POSTHOG_PERSON'])
+
+    def test_person_uses_primary_key_not_natural_key(self):
+        """
+        GIVEN a signed-in creator whose email and username are both editable
+        WHEN the context is built
+        THEN the distinct id is their primary key, so renaming does not split
+             one creator's history into two people
+        """
+        user = User.objects.create_user(
+            'ctxuser', email='ctx@example.com', password='pass',
+        )
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            person = self._context_for('/editor/', user=user)['POSTHOG_PERSON']
+        self.assertEqual(person['distinct_id'], str(user.pk))
+        self.assertEqual(person['email'], 'ctx@example.com')
+        self.assertEqual(person['username'], 'ctxuser')
+        self.assertTrue(person['date_joined'])
 
 
 class AnalyticsServiceTest(TestCase):
@@ -20139,6 +20584,259 @@ class CrossVersionAnalyticsTest(TestCase):
         ).exists())
 
 
+class DraftCopyResultsScopeTest(TestCase):
+    """Results read from a draft copy: the family by default, the draft on request."""
+
+    def setUp(self):
+        from .versioning import clone_survey_for_draft
+        self.org = _make_org('DraftScopeOrg')
+        self.user = User.objects.create_user('draft_scope_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='draft_scope_survey', organization=self.org, created_by=self.user,
+            status='published',
+        )
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='S1', code='S1', is_head=True,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, name='Colour', input_type='choice',
+            code='QCOL', order_number=1,
+            choices=[{'code': 1, 'name': 'Red'}, {'code': 2, 'name': 'Blue'}],
+        )
+
+        # Two real responses on the published survey.
+        self.real_sessions = [SurveySession.objects.create(survey=self.survey)
+                              for _ in range(2)]
+        for s in self.real_sessions:
+            Answer.objects.create(survey_session=s, question=self.question,
+                                  selected_choices=[1])
+
+        # A draft with one test session from previewing it.
+        self.draft = clone_survey_for_draft(self.survey)
+        SurveyCollaborator.objects.get_or_create(
+            user=self.user, survey=self.draft, defaults={'role': 'owner'},
+        )
+        self.draft_question = Question.objects.get(
+            survey_section__survey_header=self.draft, code='QCOL',
+        )
+        self.draft_session = SurveySession.objects.create(survey=self.draft)
+        Answer.objects.create(survey_session=self.draft_session,
+                              question=self.draft_question, selected_choices=[2])
+
+    def _service(self, survey=None, **kw):
+        from .analytics import SurveyAnalyticsService
+        return SurveyAnalyticsService(survey or self.draft, **kw)
+
+    # ─── scope helpers ───────────────────────────────────────────────────────
+
+    def test_canonical_of_a_draft_is_the_published_survey(self):
+        """
+        GIVEN a draft copy of a published survey
+        WHEN the canonical is resolved from the draft
+        THEN it is the published survey, not the draft
+        """
+        from .versioning import canonical_of
+
+        self.assertEqual(canonical_of(self.draft).id, self.survey.id)
+
+    def test_family_excludes_the_draft_but_the_action_scope_includes_it(self):
+        """
+        GIVEN a survey with a draft copy
+        WHEN the family and the action scope are built from the draft
+        THEN only the action scope contains the draft header
+        """
+        from .versioning import family_ids, family_ids_with_draft
+
+        self.assertNotIn(self.draft.id, family_ids(self.draft))
+        self.assertIn(self.survey.id, family_ids(self.draft))
+        self.assertIn(self.draft.id, family_ids_with_draft(self.draft))
+
+    # ─── default scope ───────────────────────────────────────────────────────
+
+    def test_draft_results_report_the_published_responses(self):
+        """
+        GIVEN a draft copy of a survey holding two responses
+        WHEN its Results is read with no version filter
+        THEN the published survey's responses are reported
+        """
+        self.assertEqual(self._service().get_overview()['total_sessions'], 2)
+
+    def test_draft_test_sessions_are_not_in_the_default_scope(self):
+        """
+        GIVEN a draft copy with a test session of its own
+        WHEN its Results is read with no version filter
+        THEN the test session is not among the reported sessions
+        """
+        reported = set(self._service().base_qs.values_list('id', flat=True))
+        self.assertNotIn(self.draft_session.id, reported)
+
+    def test_canonical_results_ignore_the_draft(self):
+        """
+        GIVEN a published survey whose draft copy has test sessions
+        WHEN the canonical's Results is read with no version filter
+        THEN only the published responses are reported
+        """
+        self.assertEqual(
+            self._service(survey=self.survey).get_overview()['total_sessions'], 2,
+        )
+
+    # ─── the draft scope ─────────────────────────────────────────────────────
+
+    def test_draft_scope_reports_the_test_sessions_alone(self):
+        """
+        GIVEN a family with a draft copy holding one test session
+        WHEN the version filter is 'draft'
+        THEN only that session is reported
+        """
+        service = self._service(version='draft')
+        self.assertEqual(service.scope.value, 'draft')
+        self.assertEqual(list(service.base_qs.values_list('id', flat=True)),
+                         [self.draft_session.id])
+
+    def test_draft_scope_is_reachable_from_the_canonical(self):
+        """
+        GIVEN a published survey with a draft copy
+        WHEN 'draft' is requested on the canonical's Results
+        THEN the draft's test sessions are reported
+        """
+        service = self._service(survey=self.survey, version='draft')
+        self.assertEqual(service.scope.ids, {self.draft.id})
+
+    def test_draft_scope_falls_back_when_no_draft_exists(self):
+        """
+        GIVEN a survey with no draft copy
+        WHEN the version filter is 'draft'
+        THEN the whole family is reported
+        """
+        from .versioning import resolve_version_scope
+
+        SurveySession.objects.filter(survey=self.draft).delete()
+        self.draft.delete()
+        scope = resolve_version_scope(self.survey, 'draft')
+        self.assertEqual(scope.value, 'all')
+        self.assertEqual(scope.ids, {self.survey.id})
+
+    def test_draft_scope_answers_report_under_the_cloned_question(self):
+        """
+        GIVEN a draft whose test session answered a question cloned from the canonical
+        WHEN question stats are built under the draft scope
+        THEN the answer is reported under that question
+        """
+        stats = {s['question'].code: s
+                 for s in self._service(version='draft').get_all_question_stats()}
+        self.assertEqual(stats['QCOL']['total_answers'], 1)
+        self.assertEqual(stats['QCOL']['choice_counts'][1], 1)  # 'Blue', the draft answer
+
+    def test_a_question_added_only_in_the_draft_is_reported(self):
+        """
+        GIVEN a question that exists only in the draft, answered by a test session
+        WHEN question stats are built under the draft scope
+        THEN that question appears with its answer
+        """
+        draft_section = SurveySection.objects.get(survey_header=self.draft)
+        new_q = Question.objects.create(
+            survey_section=draft_section, name='New only', input_type='text',
+            code='QNEW', order_number=9,
+        )
+        Answer.objects.create(survey_session=self.draft_session, question=new_q,
+                              text='draft words')
+        codes = [s['question'].code
+                 for s in self._service(version='draft').get_all_question_stats()]
+        self.assertIn('QNEW', codes)
+
+    def test_published_scope_is_unaffected_by_draft_questions(self):
+        """
+        GIVEN a draft copy carrying clones of the published questions
+        WHEN question stats are built with no version filter
+        THEN only the published answers are counted
+        """
+        stats = {s['question'].code: s
+                 for s in self._service().get_all_question_stats()}
+        self.assertEqual(stats['QCOL']['total_answers'], 2)
+        self.assertEqual(stats['QCOL']['choice_counts'][0], 2)  # 'Red', the published answers
+
+    # ─── the picker ──────────────────────────────────────────────────────────
+
+    def test_version_choices_offer_the_draft_on_a_single_version_survey(self):
+        """
+        GIVEN a single-version survey with a draft copy
+        WHEN the version picker choices are built
+        THEN they render and include the draft option
+        """
+        from .analytics import version_choices
+
+        values = [c['value'] for c in version_choices(self.survey)]
+        self.assertEqual(values, ['all', 'v1', 'draft'])
+
+    def test_version_choices_omit_the_draft_when_there_is_none(self):
+        """
+        GIVEN a single-version survey with no draft copy
+        WHEN the version picker choices are built
+        THEN there is nothing to choose between
+        """
+        from .analytics import version_choices
+
+        SurveySession.objects.filter(survey=self.draft).delete()
+        self.draft.delete()
+        self.assertEqual(version_choices(self.survey), [])
+
+    # ─── session actions ─────────────────────────────────────────────────────
+
+    def test_a_draft_session_can_be_opened(self):
+        """
+        GIVEN a session listed under the draft scope
+        WHEN its detail partial is requested
+        THEN the session is served
+        """
+        self.client.login(username='draft_scope_owner', password='pw')
+        url = f'/editor/surveys/{self.draft.uuid}/analytics/sessions/{self.draft_session.id}/'
+        self.assertEqual(self.client.get(url).status_code, 200)
+
+    def test_a_foreign_session_is_still_rejected(self):
+        """
+        GIVEN a session belonging to an unrelated survey
+        WHEN it is requested on this survey's analytics
+        THEN it is not found
+        """
+        other = SurveyHeader.objects.create(
+            name='other_survey', organization=self.org, created_by=self.user,
+            status='published',
+        )
+        foreign = SurveySession.objects.create(survey=other)
+        self.client.login(username='draft_scope_owner', password='pw')
+        url = f'/editor/surveys/{self.draft.uuid}/analytics/sessions/{foreign.id}/'
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    # ─── neighbours ──────────────────────────────────────────────────────────
+
+    def test_export_from_the_draft_returns_the_published_rows(self):
+        """
+        GIVEN a draft copy of a survey with responses
+        WHEN data is downloaded from the draft's uuid with no version parameter
+        THEN the published family's headers are exported
+        """
+        from .views import _get_version_surveys
+
+        exported = [h.id for h, _ in _get_version_surveys(self.draft, None)]
+        self.assertEqual(exported, [self.survey.id])
+
+    def test_public_results_ignore_draft_test_sessions(self):
+        """
+        GIVEN a survey with a public results page and a previewed draft copy
+        WHEN the page's clean session set is built
+        THEN the draft's test session is not in it
+        """
+        from .models import PublicResultsPage
+        from .public_results import PublicResultsService
+
+        page = PublicResultsPage.objects.create(survey=self.survey, slug='draft-scope-page')
+        service = PublicResultsService(page)
+        self.assertNotIn(self.draft_session.id, service._clean_ids)
+        self.assertEqual(len(service._clean_ids), 2)
+
+
 class RestoreVersionTest(TestCase):
     """Restore an archived version's questionnaire as a new draft (rollback)."""
 
@@ -21223,6 +21921,46 @@ class QuestionPreviewLiveTest(TestCase):
         response = self.client.post(self.url, {'input_type': 'text', 'name': 'Q'})
         self.assertNotEqual(response.status_code, 200)
 
+
+class TemplateCommentSyntaxTest(SimpleTestCase):
+    """Django's {# #} comment is single-line; a multi-line one renders as page text."""
+
+    def test_no_multi_line_hash_comments_in_templates(self):
+        """
+        GIVEN every template shipped with the survey app
+        WHEN each `{#` is checked for a closing `#}` on the same line
+        THEN none is left open, because Django would render the block as visible text
+        """
+        import pathlib
+
+        root = pathlib.Path(__file__).resolve().parent / 'templates'
+        offenders = []
+        for path in root.rglob('*.html'):
+            for number, line in enumerate(path.read_text().splitlines(), start=1):
+                if '{#' in line and '#}' not in line.split('{#', 1)[1]:
+                    offenders.append(f'{path.relative_to(root)}:{number}')
+
+        self.assertEqual(
+            offenders, [],
+            'Multi-line {# #} comments render as visible text — use '
+            '{% comment %}/{% endcomment %} instead: ' + ', '.join(offenders),
+        )
+
+    def test_comment_text_does_not_reach_a_rendered_page(self):
+        """
+        GIVEN partials whose comments used to render as page text
+        WHEN they are rendered with an empty context
+        THEN no wording from their comments appears in the output
+        """
+        from django.template.loader import render_to_string
+
+        faq = render_to_string('partials/_faq_section.html', {})
+        jsonld = render_to_string('partials/_landing_structured_data.html', {})
+
+        self.assertNotIn('seo_landings registry', faq)
+        self.assertNotIn('Visible FAQ section', faq)
+        self.assertNotIn('pre-serialized', jsonld)
+        self.assertNotIn('Per-page structured data', jsonld)
 
 class StarRatingDisplayTest(TestCase):
     """The star display style for rating questions (change star-rating-display)."""

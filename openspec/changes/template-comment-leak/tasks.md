@@ -1,0 +1,12 @@
+# Tasks
+
+- [x] 1.1 Convert the six multi-line `{# #}` blocks to `{% comment %}/{% endcomment %}`, wording
+      unchanged: `_publishing_widget.html`, `activation_confirm.html`, `activation_failed.html`,
+      `resend_activation_done.html`, `_faq_section.html`, `_landing_structured_data.html`.
+- [x] 1.2 Add `TemplateCommentSyntaxTest` scanning `survey/templates/**/*.html` for a `{#` with no
+      `#}` on the same line.
+- [x] 1.3 Prove the guard works: red on the pre-fix templates (all six named), green after.
+- [x] 1.4 `./run_tests.sh survey` — 1099 tests, OK (1 skipped). A second render-level test asserts
+      no comment wording reaches the FAQ and JSON-LD partials.
+- [ ] 1.5 Verify in production after deploy: the draft's editor navbar, an activation page, and a
+      landing page with an FAQ.

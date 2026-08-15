@@ -33,17 +33,24 @@ class IncompatibleDraftError(Exception):
 # publish. Every creator-facing count/aggregate must go through these helpers.
 
 def canonical_of(survey):
-    """Return the canonical survey for any version copy (or the survey itself)."""
-    return survey.canonical_survey or survey
+    """Return the canonical survey for any version or draft copy.
+
+    Two links lead home: an archived version points at the canonical via
+    canonical_survey, a draft copy via published_version. Following only the
+    first left a draft as its own canonical, so every scope built from here
+    described the draft's preview traffic instead of the survey's responses.
+    """
+    return survey.canonical_survey or survey.published_version or survey
 
 
 def family_ids(survey):
     """Return the set of SurveyHeader ids in the survey's version family.
 
     The family is the canonical survey plus its archived version copies
-    (linked via the canonical_survey FK). Draft copies are linked through
-    published_version instead, so they are naturally excluded — they never
-    own real sessions (test sessions die with the draft at publish time).
+    (linked via the canonical_survey FK). A draft copy is deliberately NOT a
+    member: it owns only test sessions, which must never reach a real count or
+    the public results page. Use family_ids_with_draft() where the draft's own
+    sessions are legitimately in play.
     """
     canonical = canonical_of(survey)
     ids = {canonical.id}
@@ -52,6 +59,27 @@ def family_ids(survey):
         .filter(canonical_survey=canonical)
         .values_list('id', flat=True)
     )
+    return ids
+
+
+def draft_copy_of(survey):
+    """The family's draft copy, or None."""
+    if survey.is_draft_copy:
+        return survey
+    return canonical_of(survey).get_draft_copy()
+
+
+def family_ids_with_draft(survey):
+    """Family ids plus the draft copy — every session a creator may act on.
+
+    Backs the session-level guards in analytics: a session listed under the
+    draft filter must also be openable, taggable and deletable, while a
+    session from an unrelated survey stays rejected.
+    """
+    ids = family_ids(survey)
+    draft = draft_copy_of(survey)
+    if draft is not None:
+        ids.add(draft.id)
     return ids
 
 
@@ -71,11 +99,16 @@ def family_sessions(survey, include_deleted=False):
 # surface while widening the other. One resolver serves both — the shapes they
 # need (ids for analytics, ordered headers for the export) come off one scope.
 
+# The filter value that selects the family's draft copy. Never the default:
+# preview traffic is only ever reported when explicitly asked for.
+DRAFT_SCOPE = 'draft'
+
+
 @dataclass(frozen=True)
 class VersionScope:
     """The version(s) a `version` filter value resolves to.
 
-    value:   the normalised filter value — always 'all' or 'vN'
+    value:   the normalised filter value — 'all', 'vN', or 'draft'
     headers: the SurveyHeaders in scope, canonical first then archived
              newest-first (the export writes one file set per header, in order)
     """
@@ -128,8 +161,13 @@ def resolve_version_scope(survey, version=None):
 
     Missing, 'all', or unresolvable values → the whole family. 'latest', 'vN'
     and 'N' → that single version, when the family has one with that number.
+    'draft' → the family's draft copy, when it has one.
     """
     canonical = canonical_of(survey)
+    if str(version or '').strip().lower() == DRAFT_SCOPE:
+        draft = draft_copy_of(canonical)
+        if draft is not None:
+            return VersionScope(value=DRAFT_SCOPE, headers=[draft])
     headers = family_headers(canonical)
     num = _requested_version_number(version, canonical)
     if num is not None:
@@ -139,7 +177,7 @@ def resolve_version_scope(survey, version=None):
     return VersionScope(value='all', headers=headers)
 
 
-def lineage_map(survey):
+def lineage_map(survey, include_draft=False):
     """Build the question-lineage map for a survey's version family.
 
     A lineage groups the questions that share (code, input_type) across the
@@ -147,16 +185,25 @@ def lineage_map(survey):
     (clones keep codes; an input_type change intentionally breaks the lineage
     so incompatible answer shapes are never merged).
 
+    include_draft adds the draft copy's questions to the lineages they belong
+    to. A draft's questions are clones — same code, new ids — so without them a
+    draft-scoped read finds the right columns and no answers at all. Off by
+    default: nothing in a published scope may aggregate over preview data.
+
     Returns an ordered dict {(code, input_type): {
         'questions':    [Question, ...]   # newest version first
         'question_ids': [int, ...],
         'current':      Question | None,  # the canonical version's object
-        'versions':     'v2' or 'v1–v3',  # display range label
+        'versions':     'v2' or 'v1–v3',  # display range label ('draft' when
+                                          # the lineage exists only in a draft)
     }} with current-structure lineages first (in canonical order), then
     archived-only lineages (newest first).
     """
     canonical = canonical_of(survey)
     ids = family_ids(canonical)
+    draft = draft_copy_of(canonical) if include_draft else None
+    if draft is not None:
+        ids = ids | {draft.id}
 
     questions = (
         Question.objects
@@ -174,13 +221,19 @@ def lineage_map(survey):
         })
         entry['questions'].append(q)
         entry['question_ids'].append(q.id)
-        entry['_vers'].append(header.version_number)
+        # A draft carries a placeholder version_number (it becomes a version
+        # only at publish), so it must not stretch the displayed range.
+        if not header.is_draft_copy:
+            entry['_vers'].append(header.version_number)
         if header.id == canonical.id:
             entry['current'] = q
 
     for entry in lineages.values():
-        lo, hi = min(entry['_vers']), max(entry['_vers'])
-        entry['versions'] = f'v{lo}' if lo == hi else f'v{lo}–v{hi}'
+        if entry['_vers']:
+            lo, hi = min(entry['_vers']), max(entry['_vers'])
+            entry['versions'] = f'v{lo}' if lo == hi else f'v{lo}–v{hi}'
+        else:
+            entry['versions'] = DRAFT_SCOPE
         del entry['_vers']
 
     # Current lineages first (canonical question order), archived after.
