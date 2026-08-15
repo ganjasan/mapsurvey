@@ -24079,3 +24079,38 @@ class StarColorEditorParityTest(SimpleTestCase):
         modal = Path('survey/templates/editor/partials/question_form_modal.html').read_text()
 
         self.assertIn(f"colorInput.value = '{DEFAULT_STAR_COLOR}';", modal)
+
+
+class AIGeneratorKnowsEveryTypeTest(SimpleTestCase):
+    """The generator's prompt must describe every type its schema permits.
+
+    The schema derives its enum from INPUT_TYPE_CHOICES, so a new input type
+    becomes emittable the moment it is added to the model — while the prompt,
+    which is prose, keeps describing the old set. `ranking` shipped in exactly
+    that state: allowed by the schema, unmentioned in the prompt, and exempt
+    from the validator's "this type needs choices" rule.
+    """
+
+    def test_prompt_mentions_every_type_the_schema_allows(self):
+        """
+        GIVEN the input types the generation schema permits at top level
+        WHEN the prompt text is searched for each one
+        THEN every type is named, so the model knows it exists
+        """
+        from survey.ai.prompts import PLATFORM_DESCRIPTION
+        from survey.ai.schema import TOP_LEVEL_INPUT_TYPES
+
+        missing = [t for t in TOP_LEVEL_INPUT_TYPES if f'`{t}`' not in PLATFORM_DESCRIPTION]
+
+        self.assertEqual(missing, [], f'input types absent from the prompt: {missing}')
+
+    def test_types_whose_choices_are_their_content_are_required_to_have_them(self):
+        """
+        GIVEN the types whose choices carry the question's content
+        WHEN the validator's requirement list is checked
+        THEN each is present, so a generated draft cannot ship one empty
+        """
+        from survey.ai.validator import CHOICE_REQUIRED_INPUT_TYPES
+
+        for input_type in ('choice', 'multichoice', 'range', 'rating', 'ranking'):
+            self.assertIn(input_type, CHOICE_REQUIRED_INPUT_TYPES)

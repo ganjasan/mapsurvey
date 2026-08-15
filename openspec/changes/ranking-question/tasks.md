@@ -73,3 +73,19 @@
 - [x] A multi-line `{# #}` comment leaked into the rendered page again. The repo's guard test
       caught it, but only at full-suite time, after it had already reached the user's screen —
       recorded as a working rule to run that one test straight after touching a template.
+
+## AI generator (asked 2026-08-16)
+
+- [x] The generation **schema** picked the type up for free: its enum derives from
+      `INPUT_TYPE_CHOICES` via `serialization.VALID_INPUT_TYPES`.
+- [x] The **prompt** did not — it names the types in prose and had never heard of `ranking`, so
+      the model could emit it in principle and never would in practice. Added, with guidance on
+      when a ranking is the right question (a trade-off between items) and when `rating` is.
+- [x] The **validator** had a real hole: `CHOICE_REQUIRED_INPUT_TYPES` did not include `ranking`,
+      whose choices *are* its items — a generated draft could therefore contain a ranking with
+      nothing to rank, which no respondent can answer. Fixed.
+- [x] Guard added: a test asserts the prompt names every type the schema permits, because a
+      derived enum and hand-written prose drift silently. (Same failure shape as the subtext
+      table test earlier today.)
+- Not changed: the generator never sets `display_style`, so generated ratings inherit the survey
+  default rather than asking for stars. Deliberate simplification, noted rather than fixed.

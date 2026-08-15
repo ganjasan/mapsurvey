@@ -33,10 +33,15 @@ Respondents open a page with the questions on one side and a map on the other.
   becomes a FIELD NAME in it. Short, concrete sub-question names are what make
   the data usable in QGIS afterwards.
 - Other question types: `text` (multi-line), `text_line`, `number`, `choice`,
-  `multichoice`, `range` (slider), `rating` (scale), `datetime`, `image`
-  (upload), `html` (a decoration block that collects nothing).
+  `multichoice`, `range` (slider), `rating` (scale), `ranking` (drag items into
+  a strict order), `datetime`, `image` (upload), `html` (a decoration block that
+  collects nothing).
 - `range` and `rating` build their scale from the choice codes, so those codes
   must be integers in ascending order.
+- `ranking` uses its choices as the ITEMS to be ordered, not as a scale: give it
+  3 to 6 short, comparable items. Ask for a ranking only when the point is a
+  trade-off between the items — a respondent must place every item, and no two
+  can share a rank. When independent scores are wanted instead, use `rating`.
 """
 
 DESIGN_RULES = """\
