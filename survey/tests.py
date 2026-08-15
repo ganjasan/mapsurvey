@@ -10689,6 +10689,186 @@ class PostHogErrorTrackingTest(TestCase):
         capture.assert_not_called()
 
 
+class CreatorFunnelEventTest(TestCase):
+    """Forward emission of the creator-lifecycle events.
+
+    These are the same events `backfill_posthog_events` reproduces from history,
+    so the two must agree exactly on names and on what each step counts. A
+    mismatch does not fail loudly — it produces a funnel with a step that
+    silently halves at the cutover date.
+    """
+
+    def setUp(self):
+        self.org = _make_org('FunnelEventOrg')
+        self.user = User.objects.create_user(
+            'funnelcreator', email='fc@example.com', password='pass',
+        )
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+
+    def test_emit_is_a_noop_when_posthog_is_disabled(self):
+        """
+        GIVEN PostHog is unconfigured, as in tests and local development
+        WHEN an event is emitted
+        THEN nothing is captured and nothing raises
+        """
+        import posthog
+
+        from survey import product_events as pe
+        with mock.patch.object(posthog, 'disabled', True), \
+                mock.patch('posthog.capture') as capture:
+            pe.emit(pe.SURVEY_CREATED, self.user.pk, {'survey_id': '1'})
+        capture.assert_not_called()
+
+    def test_emit_never_raises(self):
+        """
+        GIVEN analytics must never be able to break a request
+        WHEN the capture call itself fails
+        THEN emit swallows it
+        """
+        import posthog
+
+        from survey import product_events as pe
+        with mock.patch.object(posthog, 'disabled', False), \
+                mock.patch('posthog.capture', side_effect=RuntimeError('down')):
+            pe.emit(pe.SURVEY_CREATED, self.user.pk)  # must not raise
+
+    def test_emit_uses_user_pk_as_distinct_id(self):
+        """
+        GIVEN backfilled history must land on the same person as live traffic
+        WHEN an event is emitted
+        THEN the distinct id is the user's primary key, matching the snippet
+        """
+        import posthog
+
+        from survey import product_events as pe
+        with mock.patch.object(posthog, 'disabled', False), \
+                mock.patch('posthog.capture') as capture:
+            pe.emit(pe.SURVEY_CREATED, self.user.pk)
+        self.assertEqual(capture.call_args.kwargs['distinct_id'], str(self.user.pk))
+        self.assertEqual(
+            capture.call_args.kwargs['properties']['timestamp_source'], pe.SOURCE_LIVE,
+        )
+
+    def test_first_response_fires_once_per_survey(self):
+        """
+        GIVEN the funnel step means "this survey got its first answer"
+        WHEN several respondents start sessions on the same survey
+        THEN the event is emitted exactly once, for the first
+        """
+        import posthog
+
+        from survey import product_events as pe
+        survey = SurveyHeader.objects.create(
+            name='fe_survey', organization=self.org, redirect_url='#',
+            status='published', created_by=self.user,
+        )
+        with mock.patch.object(posthog, 'disabled', False), \
+                mock.patch('posthog.capture') as capture:
+            SurveySession.objects.create(survey=survey)
+            SurveySession.objects.create(survey=survey)
+            SurveySession.objects.create(survey=survey)
+
+        first = [c for c in capture.call_args_list
+                 if c.args and c.args[0] == pe.SURVEY_FIRST_RESPONSE]
+        self.assertEqual(len(first), 1)
+        self.assertEqual(first[0].kwargs['distinct_id'], str(self.user.pk))
+
+    def test_first_response_is_attributed_to_the_creator_only(self):
+        """
+        GIVEN respondents are anonymous and must not reach PostHog
+        WHEN the first-response event is emitted
+        THEN it carries the survey id and the owner, and nothing about the respondent
+        """
+        import posthog
+
+        from survey import product_events as pe
+        survey = SurveyHeader.objects.create(
+            name='fe_survey2', organization=self.org, redirect_url='#',
+            status='published', created_by=self.user,
+        )
+        with mock.patch.object(posthog, 'disabled', False), \
+                mock.patch('posthog.capture') as capture:
+            SurveySession.objects.create(survey=survey)
+
+        call = next(c for c in capture.call_args_list
+                    if c.args and c.args[0] == pe.SURVEY_FIRST_RESPONSE)
+        self.assertEqual(set(call.kwargs['properties']) - {'timestamp_source'},
+                         {'survey_id'})
+
+    def test_backfill_and_live_emission_use_the_same_event_names(self):
+        """
+        GIVEN a name that differs between the two halves splits the funnel
+        WHEN the backfill command's stage list is compared with the constants
+        THEN they are the same set
+        """
+        from survey import product_events as pe
+        from survey.management.commands.check_posthog_funnel_parity import STAGE_EVENTS
+        self.assertEqual({e for _, e in STAGE_EVENTS}, set(pe.CREATOR_FUNNEL_EVENTS))
+
+    def test_backfill_event_ids_are_deterministic(self):
+        """
+        GIVEN the import must be safe to re-run
+        WHEN the same (event, row) is hashed twice
+        THEN the uuid is identical, so PostHog deduplicates instead of doubling
+        """
+        from survey.management.commands.backfill_posthog_events import event_uuid
+        from survey import product_events as pe
+        a = event_uuid(pe.SURVEY_CREATED, 42)
+        b = event_uuid(pe.SURVEY_CREATED, 42)
+        c = event_uuid(pe.SURVEY_CREATED, 43)
+        self.assertEqual(a, b)
+        self.assertNotEqual(a, c)
+
+    def test_backfill_reuses_the_dashboard_published_statuses(self):
+        """
+        GIVEN a restated copy of PUBLISHED_STATUSES would drift
+        WHEN the backfill module is inspected
+        THEN it imports the constant from funnel.py rather than defining its own
+
+        'archived' belongs to that tuple and is easy to forget: counting only
+        published+closed understates the stage by every archived survey.
+        """
+        from survey.funnel import PUBLISHED_STATUSES
+        from survey.management.commands import backfill_posthog_events as cmd
+        self.assertIs(cmd.PUBLISHED_STATUSES, PUBLISHED_STATUSES)
+        self.assertIn('archived', PUBLISHED_STATUSES)
+
+    def test_backfill_dry_run_sends_nothing(self):
+        """
+        GIVEN the volume must be known before anything is sent
+        WHEN the command runs with --dry-run
+        THEN it prints counts and captures nothing
+        """
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        import posthog
+        SurveyHeader.objects.create(
+            name='bf_survey', organization=self.org, redirect_url='#',
+            status='published', created_by=self.user,
+        )
+        out = StringIO()
+        with mock.patch.object(posthog, 'disabled', False), \
+                mock.patch('posthog.capture') as capture:
+            call_command('backfill_posthog_events', '--dry-run', stdout=out)
+        capture.assert_not_called()
+        self.assertIn('creator_registered', out.getvalue())
+        self.assertIn('dry run', out.getvalue())
+
+    def test_backfill_refuses_without_a_key(self):
+        """
+        GIVEN a backfill against an unconfigured project would silently do nothing
+        WHEN the command runs for real with no key
+        THEN it fails loudly
+        """
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+        with self.settings(POSTHOG_PROJECT_KEY=''):
+            with self.assertRaises(CommandError):
+                call_command('backfill_posthog_events', verbosity=0)
+
+
 class AnalyticsServiceTest(TestCase):
     """Tests for SurveyAnalyticsService."""
 
