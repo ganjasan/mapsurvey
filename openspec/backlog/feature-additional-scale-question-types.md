@@ -20,7 +20,9 @@ Researchers used to standard survey tools expect more:
 
 ## Notes
 
-- Asked for by: Manuel Frost (manu04, Berlin Senate) 2026-08-04 — "It would be nice if you can
+- Asked for by: Manuel Frost (manu04, Berlin Senate) 2026-08-04 — inbound message never filed,
+  reconstructed in `docs/marketing/user-outreach/manu04/correspondence/2026-08-04_ranking-request-unfiled.md`
+  — "It would be nice if you can
   implement more and different Input types (continuous scale, vertical scale, ranking, different
   styles)." Framed by him as nice-to-have, but he is the second user to push on scale rendering.
 - Split before scheduling; these are three different sizes of work. Presentation variants of
@@ -48,10 +50,13 @@ Researchers used to standard survey tools expect more:
   Google) asked for exactly the ranking type: "give a number of answers which the participants
   have to order according to a scale … from 1 (best) to 5 (worst)". Two independent requests
   in ten days (Manuel Frost 2026-08-04, Jannis Hamp 2026-08-14).
-  **Correction, same day:** Jannis's actual example ("how much do you like each fruit, 1–5") is
-  coverable today with one `rating` question per item — his request is at least partly a
-  discoverability failure of the flat type picker, not a missing capability. Logged against
-  [rework the question type picker](improvement-group-question-type-list.md). True drag-to-order
-  ranking (strict ordering, one answer shape) remains open here.
+  **Correction, 2026-08-15 — ranking is a real gap, raise it.** Reading Jannis's survey settled
+  it: his `range` question named "Rating" carries the five items to be ranked *as its choices*, so
+  a respondent picks one instead of ordering all five, and it collects badly (5 answer rows, 1
+  with a value). Per-item `rating` is a workaround, not a match. Two askers in ten days (Manuel
+  Frost 2026-08-04, Jannis Hamp 2026-08-14) and one live broken workaround — **split ranking out
+  as its own item and schedule it**. The picker rework
+  ([#112](improvement-group-question-type-list.md), shipped) helps creators find the right type
+  but cannot supply a type that does not exist.
 
 - **2026-08-15 — range display styles retired** (change `range-slider-only`): production showed 122/124 range questions on the default slider and the only two exceptions were one creator imitating `rating`. Range is the slider again; a labelled discrete scale is what `rating` is for, and the reworked type picker routes creators there. The "presentation variants" idea in this item now applies to `rating` only.
