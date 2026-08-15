@@ -1453,7 +1453,12 @@ def editor_discard_draft(request, survey_uuid):
 
     canonical = survey.published_version
     audit(request, 'draft_discard', canonical, draft_uuid=str(survey.uuid))
-    survey.delete()
+    with transaction.atomic():
+        # SurveySession.survey is PROTECT, so previewing a draft even once used
+        # to make it undiscardable (ProtectedError → 500). publish_draft drops
+        # the same test sessions; discard has no reason to keep them either.
+        SurveySession.objects.filter(survey=survey).delete()
+        survey.delete()
     return redirect('editor_survey_detail', survey_uuid=canonical.uuid)
 
 
