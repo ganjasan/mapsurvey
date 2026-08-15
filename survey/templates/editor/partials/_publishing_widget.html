@@ -9,9 +9,11 @@ show_draft_actions, draft_copy, show_edit_published.
 {% endcomment %}
 {% load survey_filters %}
 {% if survey.is_draft_copy %}
-  {# Draft copies publish via the Build navbar's Publish Version / Discard, not here.
-     A draft keeps a placeholder version_number of its own, so show the version it
-     would become — the same number the publish dialog names. #}
+  {% comment %}
+  Draft copies publish via the Build navbar's Publish Version / Discard, not here.
+  A draft keeps a placeholder version_number of its own, so show the version it
+  would become — the same number the publish dialog names.
+  {% endcomment %}
   <span class="pub-chip badge-secondary"
         title="Publishing this draft creates v{{ survey.published_version.version_number|add:1 }}">Draft → v{{ survey.published_version.version_number|add:1 }}</span>
 {% elif effective_role == 'owner' and survey.status != 'archived' %}

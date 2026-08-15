@@ -10,10 +10,12 @@
     <span class="auth-icon">&#10003;</span>
     <h2>{% trans "Confirm Your Email" %}</h2>
     <p>{% trans "One click left: confirm your email address to activate your account. You'll be signed in right away." %}</p>
-    {# No JS auto-submit here, ever. The whole point of this page is that
-       mail-security link scanners GET the activation URL before the human
-       does; a scanner that executes JS would auto-submit and re-consume the
-       activation, which is the exact bug this page exists to fix. #}
+    {% comment %}
+    No JS auto-submit here, ever. The whole point of this page is that
+    mail-security link scanners GET the activation URL before the human
+    does; a scanner that executes JS would auto-submit and re-consume the
+    activation, which is the exact bug this page exists to fix.
+    {% endcomment %}
     <form method="post" action="">
         {% csrf_token %}
         <input type="hidden" name="activation_key" value="{{ activation_key }}">

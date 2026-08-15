@@ -1,7 +1,9 @@
 {% load i18n %}
-{# Visible FAQ section for SEO landing pages. Renders nothing when no FAQ is
-   supplied. Questions/answers come from the seo_landings registry (context var
-   `faq_items`), the same source as the FAQPage JSON-LD, so they can't drift. #}
+{% comment %}
+Visible FAQ section for SEO landing pages. Renders nothing when no FAQ is
+supplied. Questions/answers come from the seo_landings registry (context var
+`faq_items`), the same source as the FAQPage JSON-LD, so they can't drift.
+{% endcomment %}
 {% if faq_items %}
 <section class="showcase showcase--center faq-section" id="faq">
   <div class="landing-inner">

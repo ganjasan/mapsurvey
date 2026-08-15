@@ -1,4 +1,4 @@
-from django.test import TestCase, Client
+from django.test import TestCase, SimpleTestCase, Client
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, LineString, Polygon
 from io import BytesIO
@@ -21920,3 +21920,44 @@ class QuestionPreviewLiveTest(TestCase):
         self.client.logout()
         response = self.client.post(self.url, {'input_type': 'text', 'name': 'Q'})
         self.assertNotEqual(response.status_code, 200)
+
+
+class TemplateCommentSyntaxTest(SimpleTestCase):
+    """Django's {# #} comment is single-line; a multi-line one renders as page text."""
+
+    def test_no_multi_line_hash_comments_in_templates(self):
+        """
+        GIVEN every template shipped with the survey app
+        WHEN each `{#` is checked for a closing `#}` on the same line
+        THEN none is left open, because Django would render the block as visible text
+        """
+        import pathlib
+
+        root = pathlib.Path(__file__).resolve().parent / 'templates'
+        offenders = []
+        for path in root.rglob('*.html'):
+            for number, line in enumerate(path.read_text().splitlines(), start=1):
+                if '{#' in line and '#}' not in line.split('{#', 1)[1]:
+                    offenders.append(f'{path.relative_to(root)}:{number}')
+
+        self.assertEqual(
+            offenders, [],
+            'Multi-line {# #} comments render as visible text — use '
+            '{% comment %}/{% endcomment %} instead: ' + ', '.join(offenders),
+        )
+
+    def test_comment_text_does_not_reach_a_rendered_page(self):
+        """
+        GIVEN partials whose comments used to render as page text
+        WHEN they are rendered with an empty context
+        THEN no wording from their comments appears in the output
+        """
+        from django.template.loader import render_to_string
+
+        faq = render_to_string('partials/_faq_section.html', {})
+        jsonld = render_to_string('partials/_landing_structured_data.html', {})
+
+        self.assertNotIn('seo_landings registry', faq)
+        self.assertNotIn('Visible FAQ section', faq)
+        self.assertNotIn('pre-serialized', jsonld)
+        self.assertNotIn('Per-page structured data', jsonld)
