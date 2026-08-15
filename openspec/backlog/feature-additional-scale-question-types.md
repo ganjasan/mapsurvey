@@ -20,7 +20,9 @@ Researchers used to standard survey tools expect more:
 
 ## Notes
 
-- Asked for by: Manuel Frost (manu04, Berlin Senate) 2026-08-04 — "It would be nice if you can
+- Asked for by: Manuel Frost (manu04, Berlin Senate) 2026-08-04 — inbound message never filed,
+  reconstructed in `docs/marketing/user-outreach/manu04/correspondence/2026-08-04_ranking-request-unfiled.md`
+  — "It would be nice if you can
   implement more and different Input types (continuous scale, vertical scale, ranking, different
   styles)." Framed by him as nice-to-have, but he is the second user to push on scale rendering.
 - Split before scheduling; these are three different sizes of work. Presentation variants of
