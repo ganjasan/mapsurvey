@@ -1177,3 +1177,19 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
 @media (max-width: 480px) {
   .question-card--scale .rating-stars__star { font-size: 26px; }
 }
+
+/* Question subtext: the creator's helper line, between the question text and
+   the input. Deliberately quieter than the question itself and than an error. */
+.question-card__subtext {
+  margin: -2px 0 10px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #6b7280;
+}
+
+.image-block__caption {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #6b7280;
+}
