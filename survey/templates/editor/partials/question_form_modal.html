@@ -431,6 +431,8 @@
                   choices_json: '[{"code":1,"name":"green"},{"code":10,"name":"brown"}]' },
         rating: { name: 'How much do you like apples?',
                   choices_json: '[{"code":1,"name":"worst"},{"code":2,"name":"2"},{"code":3,"name":"3"},{"code":4,"name":"4"},{"code":5,"name":"best"}]' },
+        ranking: { name: 'Order these fruits, best first',
+                  choices_json: '[{"code":1,"name":"Apples"},{"code":2,"name":"Bananas"},{"code":3,"name":"Cherries"}]' },
         datetime: { name: 'When did you last buy fruit?' },
         point: { name: 'Where is your fruit market?', color: '#d9534f' },
         line: { name: 'Your route to the market', color: '#0d6efd' },
@@ -485,15 +487,46 @@
     var exampleCache = {};
     var exampleCurrent = null;
 
+    // Examples vary from one line (Text) to five rows plus a hint (Ranking),
+    // so the frame is sized to whatever it ends up holding rather than to a
+    // guess. Clamped so a long list scrolls instead of pushing the modal.
+    var EXAMPLE_MIN_H = 120, EXAMPLE_MAX_H = 340;
+
+    function fitExampleFrame(frame) {
+        try {
+            var doc = frame.contentDocument;
+            if (!doc || !doc.body) return;
+            // Measure the content wrapper, not the body: the body fills the
+            // iframe, so its scrollHeight can never come back smaller than the
+            // frame already is — which means the frame grows for a long
+            // example and then never shrinks again.
+            var content = doc.querySelector('.questions') || doc.body;
+            var h = content.getBoundingClientRect().height + 24;  // body padding
+            frame.style.height = Math.min(Math.max(h, EXAMPLE_MIN_H), EXAMPLE_MAX_H) + 'px';
+        } catch (e) { /* keep the CSS height */ }
+    }
+
     function qtpShowExample(card) {
         if (!exampleBox || !canHover) return;
         var value = card.getAttribute('data-qtp-value');
         exampleCurrent = value;
         exampleBox.querySelector('.qtp-flyout-hint').textContent = card.getAttribute('data-qtp-hint') || '';
         var frame = exampleBox.querySelector('.qtp-example-frame');
+        if (!frame.dataset.fitBound) {
+            frame.dataset.fitBound = '1';
+            frame.addEventListener('load', function () { fitExampleFrame(frame); });
+        }
         exampleBox.hidden = false;
-        if (STATIC_EXAMPLE_DOCS[value]) { frame.srcdoc = STATIC_EXAMPLE_DOCS[value]; return; }
-        if (exampleCache[value]) { frame.srcdoc = exampleCache[value]; return; }
+        if (STATIC_EXAMPLE_DOCS[value]) {
+            frame.srcdoc = STATIC_EXAMPLE_DOCS[value];
+            setTimeout(function () { fitExampleFrame(frame); }, 80);
+            return;
+        }
+        if (exampleCache[value]) {
+            frame.srcdoc = exampleCache[value];
+            setTimeout(function () { fitExampleFrame(frame); }, 80);
+            return;
+        }
         frame.srcdoc = '';
         var p = EXAMPLE_PAYLOADS[value] || {};
         var fd = new FormData();
@@ -501,6 +534,10 @@
         fd.append('name', p.name || '');
         if (p.subtext) fd.append('subtext', p.subtext);
         if (p.choices_json) fd.append('choices_json', p.choices_json);
+        // Marks this render as a type example, which is allowed to animate.
+        // The "Respondent sees" pane must not: it shows the creator's actual
+        // question and should sit still while they edit it.
+        fd.append('example', '1');
         if (p.color) fd.append('color', p.color);
         fetch(PREVIEW_LIVE_URL, {
             method: 'POST',

@@ -1271,3 +1271,62 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
   color: #6b7280;
   min-height: 1em;
 }
+
+/* ── Type examples in the question dialog ──────────────────────────────────
+   Only the picker's "Type example" frame carries .is-type-example. The
+   "Respondent sees" pane deliberately does not: it shows the creator's own
+   question while they are editing it, and a question that fidgets while you
+   type is worse than a still one.
+
+   Every animation here is decorative — it repeats what the example already
+   shows — so it is dropped entirely for prefers-reduced-motion.            */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* Ranking: rows breathe in turn, so the example reads as "these move"
+     without implying a reorder the rank numbers would then contradict. */
+  .is-type-example .ranking__item {
+    animation: qtp-lift 3.6s ease-in-out infinite;
+  }
+  .is-type-example .ranking__item:nth-child(1) { animation-delay: 0s; }
+  .is-type-example .ranking__item:nth-child(2) { animation-delay: 1.2s; }
+  .is-type-example .ranking__item:nth-child(3) { animation-delay: 2.4s; }
+
+  @keyframes qtp-lift {
+    0%, 72%, 100% { transform: none; box-shadow: none; }
+    12%, 60% {
+      transform: translateX(6px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, .12);
+    }
+  }
+
+  /* Stars: a fill sweep, then reset — the interaction in three seconds. */
+  .is-type-example .rating-stars__star {
+    animation: qtp-star-fill 3s ease-in-out infinite;
+  }
+  /* Rows are emitted in reverse (see rating_stars.html), so the LAST child is
+     star 1 and the delays count backwards. */
+  .is-type-example .rating-stars__star:nth-last-child(1) { animation-delay: 0s; }
+  .is-type-example .rating-stars__star:nth-last-child(2) { animation-delay: .18s; }
+  .is-type-example .rating-stars__star:nth-last-child(3) { animation-delay: .36s; }
+  .is-type-example .rating-stars__star:nth-last-child(4) { animation-delay: .54s; }
+  .is-type-example .rating-stars__star:nth-last-child(5) { animation-delay: .72s; }
+
+  @keyframes qtp-star-fill {
+    0%, 8% { color: var(--star-empty); transform: none; }
+    16% { color: var(--star-color); transform: scale(1.16); }
+    24%, 76% { color: var(--star-color); transform: none; }
+    88%, 100% { color: var(--star-empty); transform: none; }
+  }
+}
+
+.ranking__empty {
+  margin: 0;
+  padding: 14px 12px;
+  border: 1px dashed #ced4da;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #6b7280;
+  background: #f8f9fa;
+}
+
+.ranking__empty i { margin-right: 6px; color: #adb5bd; }

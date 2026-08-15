@@ -52,3 +52,24 @@
   the thing it called impossible got built is the good kind.
 - The widget script is loaded from `<head>`, so `document.body` does not exist when it runs;
   the htmx re-init listener sits on `document` instead.
+
+## Review follow-ups (2026-08-15)
+
+- [x] Empty state: a ranking with no items showed a drag hint over nothing. It now points at the
+      Choices editor. Stars could be given a default (five steps); ranking items cannot be
+      invented, so the fix is to say what is missing.
+- [x] `ranking` had no canned Type Example payload, so hovering its card rendered an empty frame.
+- [x] Type examples animate (rows lift in turn, stars fill in sequence). Scoped to the example
+      frame via `example=1` → `.is-type-example`; the "Respondent sees" pane deliberately does
+      not animate, since it shows the creator's own question while they type into it. Wrapped in
+      `prefers-reduced-motion: no-preference`. A range animation was written and dropped — a
+      native slider thumb cannot be moved from CSS, and a brightness pulse would have been
+      movement without meaning.
+- [x] The example frame sized to its content instead of a fixed 190px, which had been clipping
+      Choices, Multiple Choices and Ranking. Two traps: measuring after `requestAnimationFrame`
+      reads the *previous* example, and `body.scrollHeight` inside an iframe can never report
+      less than the frame's own height — so the frame grew once and never shrank. Measures the
+      content wrapper on load instead.
+- [x] A multi-line `{# #}` comment leaked into the rendered page again. The repo's guard test
+      caught it, but only at full-suite time, after it had already reached the user's screen —
+      recorded as a working rule to run that one test straight after touching a template.

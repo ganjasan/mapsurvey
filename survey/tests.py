@@ -22564,3 +22564,58 @@ class RankingQuestionTest(TestCase):
         self.assertIn('data-ranking', html)
         for name in self.ITEMS:
             self.assertIn(name, html)
+
+
+class RankingEmptyAndExampleTest(TestCase):
+    """A ranking with no items, and where animation is allowed to run."""
+
+    def setUp(self):
+        self.org = _make_org('RankingEmptyOrg')
+        self.user = User.objects.create_user('rankempty', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='ranking_empty', organization=self.org, created_by=self.user, status='draft',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.url = f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/question-preview/'
+
+    def test_a_ranking_without_items_says_what_is_missing(self):
+        """
+        GIVEN a ranking draft the creator has just picked, with no items yet
+        WHEN the preview renders
+        THEN it points at the Choices editor instead of showing a drag hint
+             over an empty list
+        """
+        html = self.client.post(self.url, {
+            'input_type': 'ranking', 'name': 'Order these', 'choices_json': '',
+        }).content.decode()
+
+        self.assertIn('ranking__empty', html)
+        self.assertNotIn('ranking__hint', html)
+
+    def test_type_examples_may_animate_and_the_pane_may_not(self):
+        """
+        GIVEN the same draft rendered as a type example and as the live pane
+        WHEN each is requested
+        THEN only the example carries the class the animations key on
+
+        The pane shows the creator's own question while they type into it; a
+        question that fidgets under the cursor is worse than a still one.
+        """
+        example = self.client.post(self.url, {
+            'input_type': 'ranking', 'name': 'Order these', 'example': '1',
+            'choices_json': '[{"code":1,"name":"Apples"},{"code":2,"name":"Bananas"}]',
+        }).content.decode()
+        pane = self.client.post(self.url, {
+            'input_type': 'ranking', 'name': 'Order these',
+            'choices_json': '[{"code":1,"name":"Apples"},{"code":2,"name":"Bananas"}]',
+        }).content.decode()
+
+        self.assertIn('is-type-example', example)
+        self.assertNotIn('is-type-example', pane)

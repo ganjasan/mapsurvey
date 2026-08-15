@@ -8,6 +8,7 @@ which is the same trade-off the map questions make. The alternative — typed
 rank boxes — is the tie problem this question type exists to remove.
 {% endcomment %}
 <div class="ranking" data-ranking>
+    {% if widget.items %}
     <p class="ranking__hint">
         Drag the items into order, or pick one up with Space and move it with the arrow keys.
     </p>
@@ -23,4 +24,14 @@ rank boxes — is the tie problem this question type exists to remove.
         {% endfor %}
     </ol>
     <p class="ranking__status" aria-live="polite" data-ranking-status></p>
+    {% else %}
+    {% comment %}
+    A ranking with no items is what a creator sees the moment they pick the
+    type: say what is missing instead of showing a drag hint over nothing.
+    {% endcomment %}
+    <p class="ranking__empty">
+        <i class="fas fa-list-ol" aria-hidden="true"></i>
+        Add the items to be ranked in <strong>Choices</strong> below.
+    </p>
+    {% endif %}
 </div>

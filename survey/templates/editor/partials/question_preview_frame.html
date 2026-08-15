@@ -12,7 +12,7 @@
         .drawbutton { pointer-events: none; }
     </style>
 </head>
-<body>
+<body class="{% if is_type_example %}is-type-example{% endif %}">
     <div class="questions">
         {% for field in form.visible_fields %}
             {% if field|uses_scale_style %}
