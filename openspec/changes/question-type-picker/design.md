@@ -69,8 +69,11 @@ sees" pane (two review follow-ups: a floating flyout beside the modal read as de
 dialog, and hand-written HTML snippets did not look like the product's actual widgets — the range
 slider gave it away). Each type has a small canned payload (generic fruit-survey question +
 choices) that is POSTed to the same live-preview endpoint the pane uses and rendered into an
-iframe, cached per type per modal open. `image` is the one static placeholder — without an
-uploaded file there is nothing real to render. The examples deliberately show a *generic*
+iframe, cached per type per modal open. Two deliberate exceptions stay illustrations: `image`
+(without an uploaded file there is nothing real to render) and the three geo types — their real
+widget is only the draw button, the map lives beside it in the survey, so a mini-map showing the
+drawn point/line/area is what actually communicates the interaction (review follow-up: the
+real-render geo example read as an empty button). The examples deliberately show a *generic*
 question, distinct from the configured one in the pane — the two answer different questions
 ("what is this type?" vs "what will mine look like?").
 
