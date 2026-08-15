@@ -1,0 +1,20 @@
+{% comment %}
+Grouped card grid for input_type. The native select stays in the form, hidden;
+cards set its value and dispatch `change`, so every listener keyed on the
+select keeps working. Rendered by the question_type_picker tag.
+{% endcomment %}
+<div class="qtp-picker" id="qtp-picker">
+    {% for group_label, types in groups %}
+    <div class="qtp-group-caption">{{ group_label }}</div>
+    <div class="qtp-grid">
+        {% for t in types %}
+        <div class="qtp-card{% if t.value == current %} selected{% endif %}"
+             data-qtp-value="{{ t.value }}" data-qtp-hint="{{ t.hint }}"
+             role="button" tabindex="0" title="{{ t.hint }}">
+            <div class="qtp-icon"><i class="fas {{ t.icon }}"></i></div>
+            <div class="qtp-name">{{ t.label }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>

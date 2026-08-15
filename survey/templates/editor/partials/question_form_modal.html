@@ -1,4 +1,80 @@
-{% load static %}
+{% load static question_utils %}
+<style>
+    /* Wide two-pane question dialog. The id selector outranks .modal-lg. */
+    @media (min-width: 1200px) {
+        #questionModal .modal-dialog { max-width: 1100px; }
+    }
+    .qtp-body-cols { display: flex; gap: 1.25rem; align-items: flex-start; }
+    .qtp-form-col { flex: 1 1 auto; min-width: 0; }
+    .qtp-preview-col {
+        flex: 0 0 340px; position: sticky; top: 0;
+        display: flex; flex-direction: column;
+        background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px;
+    }
+    @media (max-width: 991.98px) { .qtp-preview-col { display: none; } }
+    .qtp-pv-title {
+        font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
+        text-transform: uppercase; color: #6b7280; margin-bottom: 8px;
+    }
+    .qtp-pv-note { font-size: 0.7rem; color: #9aa0a6; margin-top: 8px; }
+
+    /* Type picker card grid */
+    .qtp-group-caption {
+        font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+        color: #868e96; margin: 10px 0 6px; display: flex; align-items: center; gap: 8px;
+    }
+    .qtp-group-caption:first-child { margin-top: 0; }
+    .qtp-group-caption::after { content: ""; flex: 1; height: 1px; background: #e9ecef; }
+    .qtp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+    .qtp-card {
+        border: 1px solid #dee2e6; border-radius: 8px; padding: 10px 6px 8px;
+        text-align: center; cursor: pointer; background: #fff;
+        transition: border-color .12s ease, background .12s ease, box-shadow .12s ease;
+        user-select: none;
+    }
+    .qtp-card:hover { border-color: #80bdff; background: #f5faff; box-shadow: 0 3px 8px rgba(0,0,0,.08); }
+    .qtp-card.selected { border-color: #007bff; background: #e7f1ff; box-shadow: inset 0 0 0 1px #007bff; }
+    .qtp-card .qtp-icon { font-size: 19px; color: #495057; margin-bottom: 6px; }
+    .qtp-card.selected .qtp-icon { color: #007bff; }
+    .qtp-card .qtp-name { font-size: 0.72rem; font-weight: 600; color: #343a40; line-height: 1.2; }
+    .qtp-hint-line { font-size: 0.75rem; color: #6c757d; margin-top: 6px; min-height: 1em; }
+
+    /* Hover flyout with a canned example */
+    .qtp-flyout {
+        margin-top: 12px;
+    }
+    .qtp-flyout-hint { font-size: 0.7rem; color: #868e96; margin-bottom: 8px; }
+    .qtp-flyout-body {
+        border: 1px solid #dee2e6; border-radius: 8px; padding: 12px;
+        font-size: 0.8rem; background: #fff;
+    }
+    .qtp-ex-title { font-weight: 600; margin-bottom: 8px; font-size: 0.8rem; }
+    .qtp-ex-ends { display: flex; justify-content: space-between; font-size: 0.68rem; color: #868e96; }
+    .qtp-ex-rating { display: flex; gap: 12px; align-items: flex-end; }
+    .qtp-ex-opt { text-align: center; font-size: 0.68rem; color: #495057; }
+    .qtp-ex-opt input { display: block; margin: 4px auto 0; }
+    .qtp-ex-map {
+        height: 100px; border-radius: 6px; position: relative; overflow: hidden;
+        border: 1px solid #ced4da;
+        background:
+            linear-gradient(rgba(255,255,255,.35) 1px, transparent 1px) 0 0/22px 22px,
+            linear-gradient(90deg, rgba(255,255,255,.35) 1px, transparent 1px) 0 0/22px 22px,
+            linear-gradient(135deg, #dce8d5 0%, #e9e5d6 55%, #d6e3e9 100%);
+    }
+    .qtp-ex-map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .qtp-ex-pin {
+        position: absolute; top: 34%; left: 52%; color: #d9534f; font-size: 20px;
+        transform: translate(-50%, -90%); text-shadow: 0 1px 2px rgba(0,0,0,.3);
+    }
+    .qtp-ex-drawbtn {
+        position: absolute; bottom: 8px; left: 8px; background: #fff; border: 1px solid #adb5bd;
+        border-radius: 6px; padding: 3px 9px; font-size: 0.72rem;
+    }
+    .qtp-ex-imgph {
+        height: 80px; border-radius: 6px; background: #e9ecef; display: flex;
+        align-items: center; justify-content: center; color: #adb5bd; font-size: 26px;
+    }
+</style>
 <div class="modal-header">
     <h5 class="modal-title">
         {% if parent %}New Sub-question for "{{ parent.name }}"
@@ -24,11 +100,20 @@
       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
       enctype="multipart/form-data">
     {% csrf_token %}
-    <div class="modal-body" style="{% if question %}display:flex;gap:1rem;{% endif %}">
-        <div style="{% if question %}flex:1;min-width:0;{% endif %}">
+    <div class="modal-body qtp-body-cols">
+        <div class="qtp-form-col">
         {% for field in form %}
-        {% if field.name != 'display_style' %}
-        <div class="form-group">
+        {% if field.name == 'input_type' %}
+        <div class="form-group" id="fg-input_type">
+            <label>{{ field.label }}</label>
+            {# The native select stays as the submitted control; cards drive it. #}
+            <div style="display:none;">{{ field }}</div>
+            {% question_type_picker field %}
+            <div class="qtp-hint-line" id="qtp-hint-line"></div>
+            {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+        {% elif field.name != 'display_style' %}
+        <div class="form-group" id="fg-{{ field.name }}">
             {% if field.name == 'required' %}
                 <div class="form-check">
                     {{ field }}
@@ -170,15 +255,19 @@
         {% endif %}
         </div>
 
-        {% if question %}
-        <div class="question-preview-panel" style="width:280px;flex-shrink:0;border-left:1px solid var(--border-color);padding-left:1rem;display:flex;flex-direction:column;">
-            <div style="font-size:0.8rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">Preview</div>
+        <div class="question-preview-panel qtp-preview-col">
+            <div class="qtp-pv-title"><i class="fas fa-eye"></i> Respondent sees</div>
             <iframe id="question-preview-frame"
-                    src="{% url 'editor_question_preview' survey.uuid question.id %}"
-                    style="flex:1;border:1px solid #e5e7eb;border-radius:6px;width:100%;min-height:200px;background:#fff;">
+                    {% if question %}src="{% url 'editor_question_preview' survey.uuid question.id %}"{% endif %}
+                    style="flex:1;border:1px solid #e5e7eb;border-radius:6px;width:100%;min-height:260px;background:#fff;">
             </iframe>
+            <div class="qtp-pv-note">Updates as you edit — the real respondent-side rendering.</div>
+            <div class="qtp-flyout" id="qtp-flyout" hidden>
+                <div class="qtp-pv-title" style="margin-bottom:4px;">Type example</div>
+                <div class="qtp-flyout-hint"></div>
+                <div class="qtp-flyout-body"></div>
+            </div>
         </div>
-        {% endif %}
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -190,6 +279,8 @@
         <button type="submit" class="btn btn-primary" onclick="serializeChoices()">Save</button>
     </div>
 </form>
+
+{% include "editor/partials/question_type_examples.html" %}
 
 <script>
 (function() {
@@ -240,11 +331,93 @@
         toggleStripWidthHint();
     }
 
+    // ── Type-scoped settings (#111): only fields the selected type consumes ──
+    var GEO_TYPES = ['point', 'line', 'polygon'];
+    var DISPLAY_BLOCK_TYPES = ['image', 'html'];
+
+    function toggleTypeScopedFields() {
+        var t = inputTypeSelect ? inputTypeSelect.value : '';
+        // CSS-hidden inputs still submit, so stored values pass through a save
+        // untouched. The hidden `required` checkbox is the deliberate
+        // exception: unchecked-when-hidden is correct for display blocks,
+        // which collect nothing and cannot be required.
+        function show(id, on) {
+            var el = document.getElementById(id);
+            if (el) el.style.display = on ? '' : 'none';
+        }
+        var isGeo = GEO_TYPES.indexOf(t) !== -1;
+        show('fg-color', isGeo);
+        show('fg-icon_class', isGeo);
+        show('fg-image', t === 'image');
+        show('fg-required', DISPLAY_BLOCK_TYPES.indexOf(t) === -1);
+    }
+
+    // ── Type picker cards drive the hidden select ──
+    var picker = document.getElementById('qtp-picker');
+    var hintLine = document.getElementById('qtp-hint-line');
+
+    function qtpSyncCards() {
+        if (!picker || !inputTypeSelect) return;
+        picker.querySelectorAll('.qtp-card').forEach(function(card) {
+            var on = card.getAttribute('data-qtp-value') === inputTypeSelect.value;
+            card.classList.toggle('selected', on);
+            if (on && hintLine) hintLine.textContent = card.getAttribute('data-qtp-hint') || '';
+        });
+    }
+
+    if (picker && inputTypeSelect) {
+        picker.addEventListener('click', function(e) {
+            var card = e.target.closest('.qtp-card');
+            if (!card) return;
+            inputTypeSelect.value = card.getAttribute('data-qtp-value');
+            inputTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            qtpHideExample();
+        });
+        picker.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            var card = e.target.closest('.qtp-card');
+            if (!card) return;
+            e.preventDefault();
+            card.click();
+        });
+    }
+
+    // ── Hover example, shown in the preview column under "Respondent sees" ──
+    var exampleBox = document.getElementById('qtp-flyout');
+    var canHover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
+
+    function qtpShowExample(card) {
+        if (!exampleBox || !canHover) return;
+        var src = document.querySelector('[data-qtp-example="' + card.getAttribute('data-qtp-value') + '"]');
+        if (!src) return;
+        exampleBox.querySelector('.qtp-flyout-hint').textContent = card.getAttribute('data-qtp-hint') || '';
+        var clone = src.cloneNode(true);
+        clone.removeAttribute('hidden');
+        exampleBox.querySelector('.qtp-flyout-body').replaceChildren(clone);
+        exampleBox.hidden = false;
+    }
+    function qtpHideExample() { if (exampleBox) exampleBox.hidden = true; }
+
+    if (picker) {
+        picker.addEventListener('mouseover', function(e) {
+            var card = e.target.closest('.qtp-card');
+            if (card) qtpShowExample(card);
+        });
+        picker.addEventListener('mouseout', function(e) {
+            if (!e.relatedTarget || !e.relatedTarget.closest('.qtp-card')) qtpHideExample();
+        });
+    }
+
     if (inputTypeSelect) {
-        inputTypeSelect.addEventListener('change', function() { toggleChoicesEditor(); toggleValidationFields(); toggleDisplayStyleFields(); });
+        inputTypeSelect.addEventListener('change', function() {
+            toggleChoicesEditor(); toggleValidationFields(); toggleDisplayStyleFields();
+            toggleTypeScopedFields(); qtpSyncCards();
+        });
         toggleChoicesEditor();
         toggleValidationFields();
         toggleDisplayStyleFields();
+        toggleTypeScopedFields();
+        qtpSyncCards();
     }
 
     document.querySelectorAll('#display-style-fields input[name="display_style"]').forEach(function(radio) {
@@ -284,9 +457,11 @@
             cells += '<td><input type="text" class="form-control form-control-sm choice-name-' + lang + '" value="' + v.replace(/"/g, '&quot;') + '"></td>';
         });
 
-        cells += '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
+        cells += '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'tr\').remove();window.schedulePreview&&window.schedulePreview()">&times;</button></td>';
         row.innerHTML = cells;
         tbody.appendChild(row);
+        // Row add/remove bypasses form input events; nudge the live preview.
+        if (window.schedulePreview) window.schedulePreview();
     };
 
     // ── Icon Picker ──
@@ -388,6 +563,9 @@
                     iconInput.value = icon;
                     updatePreview();
                     dropdown.classList.remove('open');
+                    // Programmatic value set fires no input event; the live
+                    // preview listens for one.
+                    iconInput.dispatchEvent(new Event('input', { bubbles: true }));
                 });
                 grid.appendChild(cell);
             });
@@ -473,16 +651,55 @@
     };
     {% endif %}
 
-    // Live-update the preview iframe when the display style picker changes
-    document.querySelectorAll('#display-style-fields input[name="display_style"]').forEach(function(radio) {
-        radio.addEventListener('change', function() {
-            var iframe = document.getElementById('question-preview-frame');
-            if (!iframe) return;
-            var url = new URL(iframe.src, window.location.origin);
-            url.searchParams.set('display_style', this.value);
-            iframe.src = url.toString();
+    // ── Live "Respondent sees" pane ──
+    // Any edit re-renders the pane through the real server-side form
+    // machinery (editor_question_preview_live) — no save, no Apply.
+    var previewFrame = document.getElementById('question-preview-frame');
+    var PREVIEW_LIVE_URL = '{% url "editor_question_preview_live" survey.uuid section.id %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}';
+    var previewTimer = null;
+    var previewSeq = 0;
+
+    function requestPreview() {
+        if (!previewFrame) return;
+        serializeChoices();
+        var f = document.querySelector('#questionModalBody form');
+        if (!f) return;
+        var fd = new FormData();
+        ['name', 'subtext', 'color', 'icon_class'].forEach(function(n) {
+            var el = f.querySelector('[name="' + n + '"]');
+            if (el) fd.append(n, el.value);
         });
-    });
+        fd.append('input_type', inputTypeSelect ? inputTypeSelect.value : 'text');
+        var ds = f.querySelector('input[name="display_style"]:checked');
+        fd.append('display_style', ds ? ds.value : 'default');
+        fd.append('choices_json', document.getElementById('choices-json-input').value);
+        var seq = ++previewSeq;
+        fetch(PREVIEW_LIVE_URL, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: fd,
+        }).then(function(resp) { return resp.ok ? resp.text() : null; })
+          .then(function(html) {
+            // Only the newest in-flight render wins.
+            if (html !== null && seq === previewSeq) previewFrame.srcdoc = html;
+        }).catch(function() { /* pane keeps its last render */ });
+    }
+
+    function schedulePreview() {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(requestPreview, 400);
+    }
+    window.schedulePreview = schedulePreview;
+
+    var modalForm = document.querySelector('#questionModalBody form');
+    if (modalForm) {
+        modalForm.addEventListener('input', schedulePreview);
+        modalForm.addEventListener('change', schedulePreview);
+    }
+    {% if not question %}
+    // A new question has no saved state to load; render the draft right away.
+    requestPreview();
+    {% endif %}
 
     // Populate existing choices when editing.
     // Runs LAST: addChoiceRow/serializeChoices must already be assigned to window,

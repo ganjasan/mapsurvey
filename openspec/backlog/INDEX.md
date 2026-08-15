@@ -28,7 +28,7 @@
 | 12 | feature | [Conditional question visibility](feature-conditional-question-visibility.md) | high | frontend | — | 2026-03-30 |
 | ~~13~~ | ~~improvement~~ | ~~[Versioning: cross-version analytics and response counts](improvement-versioning-cross-version-analytics.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-04-16~~ |
 | 14 | feature | [Export filter: completed surveys only](feature-export-completed-only-filter.md) | high | backend | — | 2026-03-30 |
-| 15 | idea | [AI agent that creates surveys from chat description](idea-ai-survey-creator-chat-agent.md) | high | frontend | growth | 2026-04-25 |
+| 15 | idea | [AI agent that creates surveys from chat description](idea-ai-survey-creator-chat-agent.md) (promoted) | high | frontend | growth | 2026-04-25 |
 | ~~16~~ | ~~feature~~ | ~~[Funnel monitoring: source → registration → survey → responses](feature-funnel-monitoring.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-04-25~~ |
 | ~~85~~ | ~~bug~~ | ~~[Rating question clips text labels](bug-rating-text-labels-clipped.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-07-28~~ |
 | ~~86~~ | ~~bug~~ | ~~[Sub-question popup is too narrow (Leaflet default width)](bug-subquestion-popup-too-narrow.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-07-28~~ |
@@ -110,7 +110,7 @@
 | 109 | bug | [Multi-line template comments render into the page](bug-template-comments-leak-into-html.md) | medium | frontend | — | 2026-08-05 |
 | ~~110~~ | ~~improvement~~ | ~~[Publish prompt when sharing a Draft survey](improvement-publish-prompt-on-share-draft.md)~~ | ~~high~~ | ~~frontend~~ | ~~growth~~ | ~~2026-07-06~~ |
 | 111 | bug | [Color, Icon and Image are offered on every question type](bug-question-fields-shown-for-every-type.md) | high | frontend | — | 2026-08-09 |
-| 112 | improvement | [Group the question type list — display blocks are not input types](improvement-group-question-type-list.md) | medium | frontend | — | 2026-08-09 |
+| 112 | improvement | [Rework the question type picker — groups, icons, hints, example previews, bigger modal](improvement-group-question-type-list.md) | high | frontend | — | 2026-08-09 |
 | 113 | bug | [Results-page preview always claims "Unlisted"](bug-results-preview-always-claims-unlisted.md) | medium | frontend | — | 2026-08-09 |
 | ~~114~~ | ~~bug~~ | ~~[Analytics and export disagree on which version they show](bug-analytics-and-export-disagree-on-version.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-08-09~~ |
 | ~~115~~ | ~~feature~~ | ~~[Cross-filtering / cross-highlighting in analytics dashboard](feature-analytics-cross-filtering.md)~~ | ~~medium~~ | ~~frontend~~ | ~~survey-analytics~~ | ~~2026-04-02~~ |

@@ -205,7 +205,8 @@ class SurveySectionAnswerForm(forms.Form):
 
         return chosen or survey_rating_style
 
-    def _get_form_from_input_type(self, input_type, required, question, label, sublabel, color, icon_class, image_source, language=None, display_style='default'):
+    @classmethod
+    def _get_form_from_input_type(cls, input_type, required, question, label, sublabel, color, icon_class, image_source, language=None, display_style='default'):
 
         if input_type == 'text':
             return forms.CharField(widget=forms.Textarea, label=label, required=required)
@@ -235,7 +236,7 @@ class SurveySectionAnswerForm(forms.Form):
             # The choice-based styles render one radio per choice, which an
             # IntegerField cannot supply. The stored value is unaffected: the
             # save path keys on question.input_type, not on the widget.
-            if display_style in self.CHOICE_BASED_STYLES and choices:
+            if display_style in cls.CHOICE_BASED_STYLES and choices:
                 return forms.ChoiceField(
                     widget=forms.RadioSelect(),
                     choices=[(c["code"], question.get_choice_name(c["code"], language)) for c in choices],
@@ -275,6 +276,32 @@ class SurveySectionAnswerForm(forms.Form):
         else:
             return forms.CharField(widget=forms.Textarea)
     
+
+    @classmethod
+    def single_question_form(cls, question, language=None):
+        """One-field form for `question`, which may be unsaved.
+
+        The field is built by the same machinery `__init__` uses for a whole
+        section, so the render is the respondent's render — this is what the
+        editor's preview endpoints ask for, including for a question that only
+        exists as the current state of the New Question dialog.
+        """
+        survey_rating_style = question.survey_section.survey_header.get_default_rating_display_style()
+        resolved_style = cls.resolve_display_style(question, survey_rating_style)
+
+        form = forms.Form()
+        field = cls._get_form_from_input_type(
+            question.input_type, question.required, question,
+            question.get_translated_name(language),
+            question.get_translated_subtext(language) if question.subtext else "",
+            question.color, question.icon_class,
+            question.image.url if question.image else None,
+            language, display_style=resolved_style,
+        )
+        field.widget.question_type = question.input_type
+        field.widget.display_style = resolved_style
+        form.fields[question.code] = field
+        return form
 
     def __init__(self, initial, section, question, survey_session_id, language=None, *args, **kwargs):
         super().__init__(*args, initial=initial, **kwargs)

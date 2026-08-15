@@ -46,3 +46,30 @@ def uses_scale_style(field):
 @register.filter
 def get_range(count):
     return range(int(count))
+
+
+@register.inclusion_tag('editor/partials/question_type_picker.html')
+def question_type_picker(bound_field):
+    """Grouped card grid for the input_type field.
+
+    Renders from the bound field's own choices, so sub-question restrictions
+    (QuestionForm filters them out of the field) carry through without the
+    picker knowing about them.
+    """
+    from survey.question_types import picker_groups_for
+
+    choices = list(bound_field.field.choices)
+    groups = picker_groups_for(choices)
+    current = bound_field.value()
+    if not current:
+        # The form pre-selects 'text' for new questions; this fallback only
+        # covers a re-render where the submitted value was empty. The model's
+        # BLANK_CHOICE_DASH entry has no metadata, so take the first real type.
+        for _label, types in groups:
+            if types:
+                current = types[0]['value']
+                break
+    return {
+        'groups': groups,
+        'current': current,
+    }
