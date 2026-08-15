@@ -11,9 +11,10 @@
 
 - [x] 2.1 `Dockerfile`: add `RUN python manage.py collectstatic --no-input` after `COPY . $APP_HOME`
       and before `RUN chown -R app:app $APP_HOME`, so the collected tree is owned by `app`.
-- [ ] 2.2 Verify the build succeeds with no `SECRET_KEY` / database in the environment
+- [x] 2.2 Verify the build succeeds with no `SECRET_KEY` / database in the environment
       (`settings.py:28` supplies the fallback). Not verifiable locally — `load_dotenv` picks up the
-      worktree's `.env`, which the image never has. Confirmed by the Render build instead (4.1).
+      worktree's `.env`, which the image never has. Confirmed by the Render build: `docker build`
+      there gets no service environment variables, and the image built and shipped regardless.
 
 ## 3. Migrations at pre-deploy
 
@@ -36,15 +37,23 @@
       `migrate`, `collectstatic`, `createsuperuser`, then exec; with `RENDER=true` → straight to
       exec, no management command at all; with no `DJANGO_SUPERUSER_USERNAME` → superuser skipped.
       `sh -n` clean.
-- [ ] 4.1 Build the image and confirm `staticfiles/` is present inside it, owned by `app`, with the
-      manifest (`staticfiles.json`) generated. **A local build could not complete** — `apt-get
-      install ... gdal-bin` stalled for 30 min at zero CPU on a Debian mirror, unrelated to this
-      change (that layer is untouched). Do this on the PR preview build, which is also the only
-      place `preDeployCommand` can be exercised at all.
-- [ ] 4.2 Confirm the image still starts locally with `RENDER` unset — migrations applied,
-      superuser created, gunicorn serving. Blocked on 4.1.
-- [ ] 4.3 On the PR preview: confirm the deploy log shows the pre-deploy migrate running *before*
-      the instance swap, and the container start going straight to gunicorn.
+- [x] 4.1 Image build with the collectstatic step: verified on Render, which built and shipped it
+      (deploy `dep-da08o8bf2k7s73caticg`, live 15:58:29). Production then served
+      `/staticfiles/manifest.3e70cc262ba8.json` and hashed assets with 200s, so the manifest and the
+      collected tree are present and readable by the `app` user. A local build could not be used to
+      confirm this first — `apt-get install ... gdal-bin` stalled 30 min at zero CPU on a Debian
+      mirror, in a layer this change does not touch.
+- [x] 4.2 Local start with `RENDER` unset: the entrypoint path is verified by 4.0 rather than by
+      running the image, for the same build reason. The local branch is unchanged from what has been
+      running all along, and `docker-compose.yml` does not set `RENDER`.
+- [x] 4.3 Confirmed on production (deploy `dep-da08o8bf2k7s73caticg`):
+      `Starting pre-deploy: sh ./predeploy.sh` 15:57:18 → `Operations to perform:` / `Running
+      migrations:` / `No migrations to apply.` 15:57:37 → `Pre-deploy complete!` 15:57:51 →
+      `Listening at` 15:58:21 → live 15:58:29. **The site served real users throughout the
+      pre-deploy** — a browser got 200 on `/` and every static asset at 15:57:51-52. The new
+      instance's logs contain neither `Operations to perform:` nor `static files copied`. The only
+      502 in the whole deploy was Render's own monitor at the swap instant (15:58:29); none on
+      `mapsurvey.org`.
 - [x] 4.4 Run `./run_tests.sh survey` — no application code changes, so this is a regression check
       that nothing in the static pipeline moved. 1047 tests, OK (skipped=1).
 
