@@ -118,6 +118,10 @@
                     <span class="ds-thumb" style="display:flex;gap:3px;">
                         <i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border-radius:3px;background:#4f46e5;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i>
                     </span>
+                    {% elif radio.data.value == 'stars' %}
+                    <span class="ds-thumb" style="display:flex;gap:2px;color:#f5b301;font-size:13px;">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star" style="color:#d5d8dc;"></i><i class="fas fa-star" style="color:#d5d8dc;"></i>
+                    </span>
                     {% else %}
                     <span class="ds-thumb" style="display:flex;flex-direction:column;gap:3px;">
                         <i style="width:74px;height:8px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:74px;height:8px;border-radius:3px;background:#4f46e5;"></i><i style="width:74px;height:8px;border:1px solid #d1d5db;border-radius:3px;"></i>
@@ -126,6 +130,15 @@
                     <span>{{ radio.choice_label }}</span>
                 </label>
                 {% endfor %}
+            </div>
+            <div id="star-count-field" style="display:none;margin-top:10px;">
+                <label style="font-weight:600;font-size:0.85rem;">Number of stars</label>
+                <input type="number" min="2" max="10" value="5" id="star-count-input"
+                       class="form-control form-control-sm" style="max-width:90px;">
+                <small class="form-text text-muted">
+                    Writes the choices below for you. Edit them directly if you want names on
+                    each step.
+                </small>
             </div>
             <small id="scale-strip-width-hint" class="form-text text-muted" style="display:none;">
                 <i class="fas fa-info-circle"></i>
@@ -287,6 +300,33 @@
     // 320px screen. Measured, not guessed: nine options give 20.5px.
     var STRIP_CRAMPED_ABOVE = 7;
 
+    function toggleStarCountField() {
+        var el = document.getElementById('star-count-field');
+        if (!el) return;
+        var starsChecked = document.querySelector('#display-style-fields input[value="stars"]:checked');
+        var on = !!starsChecked && inputTypeSelect && inputTypeSelect.value === 'rating';
+        el.style.display = on ? 'block' : 'none';
+        if (on) {
+            var tbody = document.getElementById('choices-rows');
+            var count = tbody ? tbody.querySelectorAll('.choice-code').length : 0;
+            var input = document.getElementById('star-count-input');
+            if (input && count) input.value = count;
+        }
+    }
+
+    function applyStarCount() {
+        var input = document.getElementById('star-count-input');
+        var tbody = document.getElementById('choices-rows');
+        if (!input || !tbody) return;
+        var wanted = parseInt(input.value, 10);
+        if (isNaN(wanted) || wanted < 2 || wanted > 10) return;
+        // Keep any names already typed; only the number of rows changes.
+        var names = Array.prototype.map.call(
+            tbody.querySelectorAll('.choice-name-default'), function(i) { return i.value; });
+        tbody.replaceChildren();
+        for (var i = 0; i < wanted; i++) addChoiceRow(i + 1, names[i] || '');
+    }
+
     function toggleStripWidthHint() {
         var hint = document.getElementById('scale-strip-width-hint');
         if (!hint) return;
@@ -318,8 +358,16 @@
             if (el) el.style.display = on ? '' : 'none';
         }
         var isGeo = GEO_TYPES.indexOf(t) !== -1;
-        show('fg-color', isGeo);
-        show('fg-icon_class', isGeo);
+        // Colour and icon serve two consumers now: map markers, and the star
+        // rating style. Shown exactly where they are read.
+        var isStars = t === 'rating' && !!document.querySelector(
+            '#display-style-fields input[value="stars"]:checked');
+        show('fg-color', isGeo || isStars);
+        show('fg-icon_class', isGeo || isStars);
+        // The stock placeholder is a map pin, which is the wrong suggestion
+        // when the field is dressing a star rating.
+        var iconInput = document.querySelector('#questionModalBody input[name="icon_class"]');
+        if (iconInput) iconInput.placeholder = isStars ? 'fas fa-star' : 'fas fa-map-marker-alt';
         show('fg-image', t === 'image');
         show('fg-required', DISPLAY_BLOCK_TYPES.indexOf(t) === -1);
     }
@@ -477,12 +525,19 @@
         toggleValidationFields();
         toggleDisplayStyleFields();
         toggleTypeScopedFields();
+        toggleStarCountField();
         qtpSyncCards();
     }
 
     document.querySelectorAll('#display-style-fields input[name="display_style"]').forEach(function(radio) {
-        radio.addEventListener('change', toggleStripWidthHint);
+        radio.addEventListener('change', function() {
+            toggleStripWidthHint();
+            toggleStarCountField();
+            toggleTypeScopedFields();
+        });
     });
+    var starCountInput = document.getElementById('star-count-input');
+    if (starCountInput) starCountInput.addEventListener('change', applyStarCount);
 
     window.addChoiceRow = function(code, name) {
         var tbody = document.getElementById('choices-rows');

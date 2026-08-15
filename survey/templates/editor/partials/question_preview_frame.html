@@ -20,6 +20,8 @@
                     {% if field.label %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
                     {% if field|rating_display_style == 'list_pips' %}
                         {% include "partials/rating_list_pips.html" %}
+                    {% elif field|rating_display_style == 'stars' %}
+                        {% include "partials/rating_stars.html" %}
                     {% else %}
                         {% include "partials/rating_scale_strip.html" %}
                     {% endif %}

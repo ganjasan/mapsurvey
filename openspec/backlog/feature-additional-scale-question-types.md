@@ -55,3 +55,5 @@ Researchers used to standard survey tools expect more:
   ranking (strict ordering, one answer shape) remains open here.
 
 - **2026-08-15 — range display styles retired** (change `range-slider-only`): production showed 122/124 range questions on the default slider and the only two exceptions were one creator imitating `rating`. Range is the slider again; a labelled discrete scale is what `rating` is for, and the reworked type picker routes creators there. The "presentation variants" idea in this item now applies to `rating` only.
+
+- **2026-08-15 — presentation-variants slice closed** by change `star-rating-display`: `rating` gains a star style — five gold stars by default, with any Font Awesome icon, any colour and any count. Still open in this item: continuous (non-stepped) and vertical scales. Ranking is tracked separately (see the 2026-08-15 note above).

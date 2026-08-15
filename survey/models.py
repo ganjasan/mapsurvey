@@ -118,7 +118,14 @@ DISPLAY_STYLE_CHOICES = (
     ("default", _("Survey default")),
     ("scale_strip", _("Compact scale")),
     ("list_pips", _("Labeled list")),
+    ("stars", _("Stars")),
 )
+
+# What a star rating looks like when its creator set neither icon nor colour.
+# Resolved at render time rather than written into the database, so no existing
+# rating question changes until someone opts into the style.
+DEFAULT_STAR_ICON = "fas fa-star"
+DEFAULT_STAR_COLOR = "#f5b301"
 
 VALIDATION_STATUS_CHOICES = (
     ('', 'No status'),
@@ -358,7 +365,7 @@ class SurveyHeader(models.Model):
 
     def get_default_rating_display_style(self):
         value = (self.style_settings or {}).get('rating_display_style')
-        return value if value in ('scale_strip', 'list_pips') else 'scale_strip'
+        return value if value in ('scale_strip', 'list_pips', 'stars') else 'scale_strip'
 
     def can_accept_responses(self):
         return self.status in ("testing", "published")
@@ -645,6 +652,22 @@ class Question(models.Model):
             return translation.subtext if translation.subtext else self.subtext
         except QuestionTranslation.DoesNotExist:
             return self.subtext
+
+    def star_icon(self):
+        """Icon a star rating draws, falling back to a solid star."""
+        return (self.icon_class or "").strip() or DEFAULT_STAR_ICON
+
+    def star_color(self):
+        """Colour a star rating draws in, falling back to gold.
+
+        `color` defaults to #000000 on every question, so black is read as
+        "never set" rather than as a deliberate choice — black stars are not
+        what an untouched question should render, and back-filling gold onto
+        existing questions would be a migration that changes questions nobody
+        asked to change. A creator who really wants black can pick #000001.
+        """
+        value = (self.color or "").strip()
+        return value if value and value.lower() != "#000000" else DEFAULT_STAR_COLOR
 
     def get_choice_name(self, code, lang=None):
         for choice in self.choices or []:
