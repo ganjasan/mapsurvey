@@ -16,6 +16,7 @@ from .models import (
     Membership, SURVEY_ROLE_CHOICES, BASEMAP_CHOICES,
     INPUT_TYPE_CHOICES, DISPLAY_STYLE_CHOICES,
 )
+from . import product_events as pe
 from .cloning import clone_question, clone_section
 from .editor_forms import (
     SurveyHeaderForm, SurveyCreateForm, SurveyBriefForm, SurveySectionForm, QuestionForm,
@@ -211,6 +212,13 @@ def editor_survey_create(request):
             if chosen_basemap in valid_basemaps:
                 survey.default_basemap = chosen_basemap
             survey.save()
+            # `creation_method` is what makes the AI generator measurable: every
+            # historical survey is `manual` by definition, so this is the baseline
+            # its variant gets compared against.
+            pe.emit(pe.SURVEY_CREATED, request.user.pk, {
+                'survey_id': str(survey.id),
+                'creation_method': pe.CREATION_MANUAL,
+            })
             # Create SurveyCollaborator owner entry
             SurveyCollaborator.objects.create(
                 user=request.user,
@@ -737,6 +745,14 @@ def editor_question_create(request, survey_uuid, section_id):
             if choices_json:
                 question.choices = _guard_choice_codes(question, json.loads(choices_json))
             question.save()
+            # Funnel stage, so it fires only for a survey's *first* question --
+            # emitting per question would make the step count questions rather
+            # than creators who got past the empty editor.
+            if not Question.objects.filter(
+                survey_section__survey_header=survey,
+            ).exclude(pk=question.pk).exists():
+                pe.emit(pe.SURVEY_QUESTION_ADDED, request.user.pk,
+                        {'survey_id': str(survey.id)})
             _save_question_translations(request, question, survey)
             response = render(request, 'editor/partials/question_list_item.html', {
                 'question': question,
@@ -1476,6 +1492,16 @@ def editor_survey_transition(request, survey_uuid):
         survey.is_archived = True
 
     survey.save(update_fields=['status', 'is_archived'])
+
+    # The real publish moment. Historical rows use survey creation as a proxy
+    # (no transition timestamp existed before this), so from here the series
+    # stops being approximate -- hence `timestamp_source` on every event, so a
+    # "time to publish" insight can drop the reconstructed half rather than
+    # average two different things.
+    if new_status == 'published':
+        pe.emit(pe.SURVEY_PUBLISHED, survey.created_by_id, {
+            'survey_id': str(survey.id),
+        })
 
     if request.headers.get('HX-Request'):
         return HttpResponse(status=204, headers={'HX-Trigger': 'statusChanged'})
