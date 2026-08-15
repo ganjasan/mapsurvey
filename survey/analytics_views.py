@@ -15,7 +15,7 @@ from .analytics import (
     version_choices,
 )
 from .events import emit_event
-from .versioning import family_ids
+from .versioning import family_ids_with_draft
 
 
 def _parse_filter_param(filters_str):
@@ -107,7 +107,10 @@ def analytics_dashboard(request, survey_uuid):
         'survey': survey,
         'effective_role': request.effective_survey_role,
         'version_choices': version_choices(survey),
-        'current_version': version,
+        # The resolved value, not the raw parameter: an unresolvable one (v99,
+        # or 'draft' where no draft exists) must leave the picker showing what
+        # is actually reported below it.
+        'current_version': service.scope.value,
         'total_sessions': overview['total_sessions'],
         'completed_count': overview['completed_count'],
         'completion_rate': overview['completion_rate'],
@@ -137,11 +140,12 @@ def analytics_dashboard(request, survey_uuid):
 def analytics_text_answers(request, survey_uuid, question_id):
     """HTMX partial: paginated text answers for a single question."""
     survey = request.survey
-    # Family-wide lookup: the question may be an archived-lineage representative
+    # Family-wide lookup: the question may be an archived-lineage
+    # representative, or the draft's clone under the draft scope
     question = get_object_or_404(
         Question,
         id=question_id,
-        survey_section__survey_header_id__in=family_ids(survey),
+        survey_section__survey_header_id__in=family_ids_with_draft(survey),
     )
 
     version = request.GET.get('version', 'all')
@@ -174,7 +178,7 @@ def analytics_text_answers(request, survey_uuid, question_id):
 def analytics_session_detail(request, survey_uuid, session_id):
     """HTMX partial: all answers for one session, with mini-map geo data."""
     survey = request.survey
-    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids(survey))
+    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids_with_draft(survey))
 
     service = SurveyAnalyticsService(survey)
     answer_rows, geo_features = service.format_session_answers(session)
@@ -292,7 +296,7 @@ def analytics_validation_settings(request, survey_uuid):
 @require_POST
 def analytics_answer_edit(request, survey_uuid, session_id, question_id):
     """Edit or create an answer value for a session+question pair."""
-    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids(request.survey))
+    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids_with_draft(request.survey))
     question = get_object_or_404(
         Question, id=question_id,
         survey_section__survey_header=request.survey,
@@ -345,7 +349,7 @@ def analytics_answer_edit(request, survey_uuid, session_id, question_id):
 @require_POST
 def analytics_session_update_tags(request, survey_uuid, session_id):
     """Update tags and notes on a session."""
-    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids(request.survey))
+    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids_with_draft(request.survey))
     try:
         body = json.loads(request.body)
     except (json.JSONDecodeError, AttributeError):
@@ -365,7 +369,7 @@ def analytics_session_update_tags(request, survey_uuid, session_id):
 @require_POST
 def analytics_session_set_status(request, survey_uuid, session_id):
     """Set validation_status on a session."""
-    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids(request.survey), is_deleted=False)
+    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids_with_draft(request.survey), is_deleted=False)
     status = request.POST.get('validation_status', '')
     svc = SessionValidationService()
     try:
@@ -379,7 +383,7 @@ def analytics_session_set_status(request, survey_uuid, session_id):
 @require_POST
 def analytics_session_trash(request, survey_uuid, session_id):
     """Soft-delete a session (move to trash)."""
-    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids(request.survey), is_deleted=False)
+    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids_with_draft(request.survey), is_deleted=False)
     svc = SessionValidationService()
     svc.trash(session)
     return HttpResponse(status=204, headers={'HX-Trigger': 'sessionTrashed'})
@@ -389,7 +393,7 @@ def analytics_session_trash(request, survey_uuid, session_id):
 @require_POST
 def analytics_session_restore(request, survey_uuid, session_id):
     """Restore a trashed session."""
-    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids(request.survey), is_deleted=True)
+    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids_with_draft(request.survey), is_deleted=True)
     svc = SessionValidationService()
     svc.restore(session)
     return HttpResponse(status=204, headers={'HX-Trigger': 'sessionRestored'})
@@ -399,7 +403,7 @@ def analytics_session_restore(request, survey_uuid, session_id):
 @require_POST
 def analytics_session_hard_delete(request, survey_uuid, session_id):
     """Permanently delete a trashed session and all its answers."""
-    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids(request.survey), is_deleted=True)
+    session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids_with_draft(request.survey), is_deleted=True)
     svc = SessionValidationService()
     svc.hard_delete(session)
     return HttpResponse(status=204, headers={'HX-Trigger': 'sessionDeleted'})
@@ -414,7 +418,7 @@ def _parse_bulk_session_ids(request, survey):
         return []
     if not isinstance(ids, list):
         return []
-    return list(SurveySession.objects.filter(id__in=ids, survey_id__in=family_ids(survey)))
+    return list(SurveySession.objects.filter(id__in=ids, survey_id__in=family_ids_with_draft(survey)))
 
 
 @survey_permission_required('editor')

@@ -847,6 +847,139 @@ ul {
 }
 
 /* ============================================
+   Map place search
+   ============================================ */
+/* Shared by the respondent map and the editor's creation map — one control,
+   one look. Mounted as a Leaflet control on the survey map, and straight into
+   the DOM above the map in the editor. */
+.map-search {
+  position: relative;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  font-family: inherit;
+}
+
+.map-search i {
+  position: absolute;
+  left: 0.65rem;
+  top: 19px;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+.map-search input {
+  width: 100%;
+  height: 38px;
+  padding: 0 0.6rem 0 2rem;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.map-search input:focus {
+  outline: none;
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+.map-search-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--panel-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.map-search-result {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+.map-search-result.active,
+.map-search-result:hover {
+  background: var(--accent-light);
+}
+
+.map-search-name {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.map-search-context {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* Category of a point of interest — "park", "swimming pool" — so two places
+   sharing a name can be told apart before one is picked. */
+.map-search-category {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  vertical-align: middle;
+}
+
+.map-search-message {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* ODbL attribution, shown only when the list holds OSM-derived results. A
+   footnote, not a row you can pick. */
+.map-search-attribution {
+  padding: 5px 12px 3px;
+  border-top: 1px solid var(--card-border);
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+  cursor: default;
+}
+
+.map-search-attribution a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.map-search-attribution a:hover {
+  text-decoration: underline;
+}
+
+/* The survey map's section panel sits over Leaflet's top-left corner, so the
+   control moves out from behind it — and back when the panel slides away. */
+.leaflet-top.leaflet-left {
+  left: 436px;
+  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* With the panel away, #showButton (the reopen arrow) takes that corner —
+   the search clears it rather than sitting under it. */
+body.sidebar-hidden .leaflet-top.leaflet-left {
+  left: 76px;
+}
+
+/* ============================================
    Form validation errors
    ============================================ */
 .question-card .errorlist {
@@ -896,4 +1029,167 @@ ul {
     width: 100%;
     z-index: 0;
   }
+
+  /* The panel is a full-width overlay here, not a column beside the map, so
+     the control keeps the corner to itself — except when the reopen arrow is
+     showing. */
+  .leaflet-top.leaflet-left {
+    left: 0;
+  }
+
+  body.sidebar-hidden .leaflet-top.leaflet-left {
+    left: 68px;
+  }
+
+  /* Vertical space is scarce on a phone and panning is worst there, so the
+     search stays a button until it is actually wanted. */
+  .map-search {
+    width: 38px;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .map-search:focus-within {
+    width: calc(100vw - 24px);
+  }
+
+  .map-search input {
+    padding-right: 0;
+  }
+
+  .map-search:not(:focus-within) input {
+    color: transparent;
+    padding-left: 0;
+  }
+
+  .map-search:not(:focus-within) input::placeholder {
+    color: transparent;
+  }
+
+  .map-search:not(:focus-within) i {
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* ── Rating: star style ────────────────────────────────────────────────────
+   Radios painted as icons. The choices are emitted in reverse and the row is
+   flipped back with row-reverse, so a plain `~` can fill every star up to the
+   checked one — no JavaScript, matching the other two rating styles. Read
+   this together with partials/rating_stars.html; changing the loop order
+   alone breaks the fill.
+
+   The colour rules are scoped under .question-card--scale on purpose: the
+   shared `.question-card label:has(input[type="radio"])` rule out-specifies a
+   bare .rating-stars__star and would paint every unselected star as body
+   text. Same scoping the scale-strip block uses above.                     */
+.rating-stars {
+  --star-color: #f5b301;
+  --star-empty: #d5d8dc;
+  padding: 4px 0 2px;
+}
+
+.rating-stars__row {
+  display: flex;
+  flex-direction: row-reverse;
+  /* Spread across the card, like the scale strip above, rather than huddling
+     at one edge. The gap is a floor for long scales, where space-between
+     would otherwise let the icons touch. */
+  justify-content: space-between;
+  gap: 6px;
+}
+
+/* The shared radio-label rule dresses every label in a card as a 44px pill
+   with 40px of left padding for the custom radio dot. A star is an icon, not
+   a pill: undo the box here, keep the pointer and the sizing.
+
+   The :has() is load-bearing, not decoration — without it this rule loses to
+   `.question-card label:has(input[type="radio"])` on specificity, the 40px
+   padding survives, and every star sits against the right edge of its own
+   clickable box. */
+.question-card--scale .rating-stars__star:has(input[type="radio"]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  min-width: 0;
+  width: auto;
+  padding: 2px;
+  margin: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1;
+  font-size: 30px;
+  transition: color 0.12s ease, transform 0.12s ease;
+}
+
+.rating-stars__star input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Unselected. */
+.question-card--scale .rating-stars__star:has(input[type="radio"]) {
+  color: var(--star-empty);
+}
+
+/* The checked star and every star drawn after it in the DOM — which is every
+   star to its left on screen. */
+.question-card--scale .rating-stars__star:has(input[type="radio"]:checked),
+.question-card--scale .rating-stars__star:has(input[type="radio"]:checked) ~ .rating-stars__star {
+  color: var(--star-color);
+}
+
+/* While the pointer is anywhere in the row, preview replaces the selection. */
+.question-card--scale .rating-stars__row:hover .rating-stars__star:has(input[type="radio"]) {
+  color: var(--star-empty);
+}
+
+.question-card--scale .rating-stars__row .rating-stars__star:has(input[type="radio"]):hover,
+.question-card--scale .rating-stars__row .rating-stars__star:has(input[type="radio"]):hover ~ .rating-stars__star {
+  color: var(--star-color);
+}
+
+.rating-stars__star:hover {
+  transform: scale(1.08);
+}
+
+/* Keyboard users get the same ring the rest of the form has. */
+.rating-stars__star:has(input:focus-visible) {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.rating-stars .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 480px) {
+  .question-card--scale .rating-stars__star { font-size: 26px; }
+}
+
+/* Question subtext: the creator's helper line, between the question text and
+   the input. Deliberately quieter than the question itself and than an error. */
+.question-card__subtext {
+  margin: -2px 0 10px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #6b7280;
+}
+
+.image-block__caption {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #6b7280;
 }

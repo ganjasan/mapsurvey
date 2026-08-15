@@ -1,4 +1,4 @@
-from django.test import TestCase, Client, override_settings
+from django.test import TestCase, SimpleTestCase, Client, override_settings
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, LineString, Polygon
 from django.urls import reverse
@@ -8990,6 +8990,51 @@ class EditorVersioningEndpointsTest(TestCase):
         self.assertEqual(self.survey.version_number, original_version)
         self.assertEqual(self.survey.status, 'published')
 
+    def test_discard_draft_with_test_sessions_succeeds(self):
+        """
+        GIVEN a draft copy that has been previewed, so it owns test sessions
+        WHEN POST to discard-draft
+        THEN the draft and its test sessions are deleted, not a 500 from PROTECT
+        """
+        self.client.login(username='ver_owner', password='pass')
+        draft = clone_survey_for_draft(self.survey)
+        SurveyCollaborator.objects.get_or_create(
+            user=self.owner, survey=draft, defaults={'role': 'owner'},
+        )
+        draft_question = Question.objects.get(
+            survey_section__survey_header=draft, code='Q1',
+        )
+        test_session = SurveySession.objects.create(survey=draft)
+        Answer.objects.create(survey_session=test_session, question=draft_question,
+                              text='typed while previewing')
+
+        url = f'/editor/surveys/{draft.uuid}/discard-draft/'
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(SurveyHeader.objects.filter(id=draft.id).exists())
+        self.assertFalse(SurveySession.objects.filter(id=test_session.id).exists())
+        self.assertFalse(Answer.objects.filter(survey_session_id=test_session.id).exists())
+
+    def test_discard_draft_with_test_sessions_leaves_canonical_sessions(self):
+        """
+        GIVEN a previewed draft copy and a real session on the canonical
+        WHEN POST to discard-draft
+        THEN only the draft's sessions are deleted
+        """
+        self.client.login(username='ver_owner', password='pass')
+        real_session = SurveySession.objects.create(survey=self.survey)
+        draft = clone_survey_for_draft(self.survey)
+        SurveyCollaborator.objects.get_or_create(
+            user=self.owner, survey=draft, defaults={'role': 'owner'},
+        )
+        SurveySession.objects.create(survey=draft)
+
+        self.client.post(f'/editor/surveys/{draft.uuid}/discard-draft/')
+
+        self.assertTrue(SurveySession.objects.filter(id=real_session.id).exists())
+        self.assertEqual(SurveySession.objects.filter(survey=self.survey).count(), 1)
+
     # ─── check-compatibility ─────────────────────────────────────────────────
 
     def test_check_compatibility_returns_issues(self):
@@ -9993,6 +10038,667 @@ class PlausibleAnalyticsTest(TestCase):
             response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
             content = response.content.decode()
             self.assertIn("typeof plausible !== 'undefined'", content)
+
+
+class PostHogSnippetTest(TestCase):
+    """Tests for the internal product-analytics snippet.
+
+    PostHog measures us, not our customers' respondents. The exclusion tests below
+    are the load-bearing ones: they assert against genuinely routed respondent URLs,
+    so moving a route breaks a test instead of quietly opting respondents in.
+    """
+
+    KEY = 'phc_testkey123'
+
+    def setUp(self):
+        self.org = _make_org('PostHogOrg')
+        self.user = User.objects.create_user(
+            'posthoguser', email='creator@example.com', password='pass',
+        )
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='posthog_survey',
+            organization=self.org,
+            redirect_url='#',
+            status='published',
+        )
+        self.section1 = SurveySection.objects.create(
+            survey_header=self.survey,
+            name='section1',
+            start_map_postion=Point(0, 0),
+            start_map_zoom=10,
+        )
+        self.results_page = PublicResultsPage.objects.create(
+            survey=self.survey, slug='posthog-results', is_published=True,
+        )
+
+    def test_no_snippet_when_key_unset(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is empty (the default)
+        WHEN a creator-facing page is rendered
+        THEN neither the loader nor the init call appears in the HTML
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=''):
+            response = self.client.get('/trust/')
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, 'posthog-key')
+            self.assertNotContains(response, 'i.posthog.com')
+
+    def test_snippet_present_when_key_set(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN a creator-facing page is rendered
+        THEN the snippet carries that key and initialises against the configured host
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/trust/')
+            self.assertContains(response, self.KEY)
+            self.assertContains(response, 'posthog.init')
+            self.assertContains(response, 'https://eu.i.posthog.com')
+
+    def test_api_host_is_overridable(self):
+        """
+        GIVEN POSTHOG_API_HOST points somewhere other than Cloud EU
+        WHEN a creator-facing page is rendered
+        THEN the snippet initialises against that host and not the default
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_API_HOST='https://analytics.example.com',
+        ):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'https://analytics.example.com')
+            self.assertNotContains(response, 'https://eu.i.posthog.com')
+
+    def test_empty_api_host_falls_back_to_cloud_eu(self):
+        """
+        GIVEN the deployment supplies POSTHOG_API_HOST as an empty string
+        WHEN the snippet is rendered
+        THEN it still initialises against Cloud EU rather than nothing
+
+        render.yaml declares the variable as `sync: false`, so the Render
+        dashboard can hand the process an empty value. An empty api_host is a
+        silent no-op that looks identical to working analytics.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_API_HOST=''):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'https://eu.i.posthog.com')
+
+    def test_no_snippet_on_respondent_survey_page(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN a respondent loads a survey section under /surveys/
+        THEN no PostHog snippet is rendered
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, self.KEY)
+
+    def test_no_snippet_on_public_results_page(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN a visitor loads a public results page under /r/
+        THEN no PostHog snippet is rendered
+
+        Belt and braces: `public_results.html` is a standalone template that
+        includes no analytics partial at all today, so this would hold even
+        without the exclusion. The exclusion is what keeps it holding if that
+        template ever grows a shared head. The prefix rule itself is asserted
+        directly in PostHogContextProcessorTest.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get(f'/r/{self.results_page.slug}/')
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, self.KEY)
+
+    def test_snippet_on_editor_page(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured AND a creator is signed in
+        WHEN the editor dashboard is loaded
+        THEN the snippet is rendered
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.client.login(username='posthoguser', password='pass')
+            response = self.client.get('/editor/')
+            self.assertContains(response, 'posthog.init')
+            self.assertContains(response, self.KEY)
+
+    def test_plausible_still_renders_on_excluded_pages(self):
+        """
+        GIVEN both trackers are configured
+        WHEN a respondent survey page is rendered
+        THEN Plausible is still present and only PostHog is withheld
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js',
+        ):
+            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            self.assertContains(response, 'src="https://plausible.io/js/pa-test.js"')
+            self.assertNotContains(response, 'posthog.init')
+
+    def test_exclusion_list_is_configurable(self):
+        """
+        GIVEN /surveys/ is removed from POSTHOG_EXCLUDED_PREFIXES
+        WHEN a respondent survey page is rendered
+        THEN the snippet appears, proving the gate reads the setting rather
+             than hardcoding the prefixes
+
+        Uses /surveys/ deliberately: that template does include the shared
+        analytics partial, so lifting the exclusion has an observable effect.
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_EXCLUDED_PREFIXES=('/r/',),
+        ):
+            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            self.assertContains(response, 'posthog.init')
+            self.assertContains(response, self.KEY)
+
+    def test_authenticated_creator_is_identified(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured AND a creator is signed in
+        WHEN a creator-facing page is rendered
+        THEN the snippet identifies them by primary key with person properties attached
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.client.login(username='posthoguser', password='pass')
+            response = self.client.get('/editor/')
+            # The id="..." form, not the bare string: the snippet's
+            # getElementById('posthog-person') is present on every tracked
+            # page, so a bare match would pass without any payload at all.
+            self.assertContains(response, 'id="posthog-person"')
+            self.assertContains(response, f'"distinct_id": "{self.user.pk}"')
+            self.assertContains(response, 'creator@example.com')
+            self.assertContains(response, 'posthoguser')
+
+    def test_anonymous_visitor_is_not_identified(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured AND nobody is signed in
+        WHEN a marketing page is rendered
+        THEN no identify payload and no email address reach the HTML
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'posthog.init')
+            self.assertNotContains(response, 'id="posthog-person"')
+            self.assertNotContains(response, 'creator@example.com')
+
+    def test_person_properties_are_escaped(self):
+        """
+        GIVEN a username containing characters that would close the script block
+        WHEN the snippet is rendered for that user
+        THEN the identify payload escapes them and still round-trips to the real value
+        """
+        import re
+
+        hostile = User.objects.create_user(
+            'bad</script>"user', email='hostile@example.com', password='pass',
+        )
+        Membership.objects.create(user=hostile, organization=self.org, role='owner')
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.client.force_login(hostile)
+            response = self.client.get('/editor/')
+
+        match = re.search(
+            r'<script id="posthog-person" type="application/json">(.*?)</script>',
+            response.content.decode(),
+            re.S,
+        )
+        self.assertIsNotNone(match, 'identify payload missing')
+        payload = match.group(1)
+        # Escaped in transport: a raw closing tag here would end the block early.
+        self.assertNotIn('</script>', payload)
+        self.assertIn('\\u003C', payload)
+        # ...and still means the same thing once parsed.
+        self.assertEqual(json.loads(payload)['username'], 'bad</script>"user')
+
+    def test_session_recording_is_disabled(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN the snippet is rendered
+        THEN session recording is switched off in its initialisation
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'disable_session_recording: true')
+
+    def test_person_profiles_are_identified_only(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN the snippet is rendered
+        THEN profiles are created for identified users only, not anonymous visitors
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/trust/')
+            self.assertContains(response, "person_profiles: 'identified_only'")
+
+    def test_snippet_on_account_page(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN a page built on the shared base template is rendered
+        THEN the snippet is present
+
+        Covers the third of the four heads that include the analytics partial:
+        base_landing.html and editor_base.html are covered elsewhere, and
+        base_survey_template.html is covered by the exclusion tests.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/accounts/register/')
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'posthog.init')
+
+    def test_trust_page_discloses_creator_analytics(self):
+        """
+        GIVEN the trust page is the answer we give IT security teams
+        WHEN it is read
+        THEN it discloses that product analytics runs on creator-facing pages
+        AND states that it never loads where respondents answer surveys
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, 'Product analytics on creator-facing pages only')
+        self.assertContains(response, 'never to load where respondents answer surveys')
+
+    def test_trust_page_states_hosting_region_truthfully(self):
+        """
+        GIVEN every Render service and the production database run in Oregon
+        WHEN the trust page is read
+        THEN it names the United States as the hosting region
+        AND does not claim EU residency or Frankfurt hosting
+
+        This test exists because the page previously claimed Frankfurt and
+        "no cross-border transfers outside the EEA" while running in Oregon —
+        on the page most likely to be read by an EU procurement officer.
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, 'Oregon, United States')
+        self.assertContains(response, 'transferred outside the EEA')
+        self.assertNotContains(response, 'Frankfurt')
+        self.assertNotContains(response, 'Data stays in the EU')
+
+    def test_trust_page_does_not_claim_unimplemented_controls(self):
+        """
+        GIVEN there is no Content Security Policy and no self-serve account deletion
+        WHEN the trust page is read
+        THEN it makes neither claim
+
+        Both were asserted on the page while absent from the codebase. If either
+        ships later, this test is the reminder to put the claim back.
+        """
+        response = self.client.get('/trust/')
+        self.assertNotContains(response, 'Content Security Policy')
+        self.assertNotContains(response, 'deleting your account removes')
+        self.assertContains(response, 'Account deletion on request')
+
+    def test_trust_page_does_not_distribute_the_dpa(self):
+        """
+        GIVEN the DPA template was withdrawn pending legal review
+        WHEN the trust page is read
+        THEN it offers to agree one on request instead of serving a signable PDF
+
+        The file was moved out of survey/assets/ entirely, so unlinking it also
+        stops it being served: leaving it collected would keep the old URL alive
+        in every email that ever contained it.
+        """
+        response = self.client.get('/trust/')
+        self.assertNotContains(response, 'mapsurvey-dpa.pdf')
+        self.assertNotContains(response, 'Download DPA Template')
+        self.assertContains(response, 'Request a DPA')
+
+    def test_trust_page_discloses_respondent_metadata(self):
+        """
+        GIVEN survey sessions record the respondent's user-agent and referring page
+        WHEN the trust page is read
+        THEN that collection is disclosed rather than described as "no personal data"
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, 'Browser and referring page are recorded')
+        self.assertNotContains(response, 'collects no personal data')
+
+
+class PostHogContextProcessorTest(TestCase):
+    """The gate itself, independent of which templates happen to exist today.
+
+    The template-level tests above prove the four current heads behave. These
+    prove the *mechanism*, which is what makes a base template added tomorrow
+    inherit the exclusion instead of depending on which file its author copied.
+    """
+
+    KEY = 'phc_ctxkey'
+
+    def _context_for(self, path, user=None):
+        from django.contrib.auth.models import AnonymousUser
+        from django.test import RequestFactory
+
+        from .context_processors import analytics
+
+        request = RequestFactory().get(path)
+        request.user = user or AnonymousUser()
+        return analytics(request)
+
+    def test_key_present_on_our_own_paths(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN the context is built for a creator-facing path
+        THEN the key is passed through to the template
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            for path in ('/', '/trust/', '/editor/', '/accounts/register/'):
+                with self.subTest(path=path):
+                    self.assertEqual(
+                        self._context_for(path)['POSTHOG_PROJECT_KEY'], self.KEY,
+                    )
+
+    def test_key_withheld_on_excluded_paths(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN the context is built for a path belonging to somebody else's audience
+        THEN the key is empty, so no snippet can render whatever the template does
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            for path in ('/surveys/', '/surveys/abc/section1/', '/r/', '/r/slug/'):
+                with self.subTest(path=path):
+                    self.assertEqual(self._context_for(path)['POSTHOG_PROJECT_KEY'], '')
+
+    def test_unset_key_stays_unset_everywhere(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is empty
+        WHEN the context is built for any path
+        THEN the key is empty and no person data is computed
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=''):
+            context = self._context_for('/trust/')
+            self.assertEqual(context['POSTHOG_PROJECT_KEY'], '')
+
+    def test_person_is_none_for_anonymous(self):
+        """
+        GIVEN nobody is signed in
+        WHEN the context is built
+        THEN there is no identify payload
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.assertIsNone(self._context_for('/trust/')['POSTHOG_PERSON'])
+
+    def test_person_uses_primary_key_not_natural_key(self):
+        """
+        GIVEN a signed-in creator whose email and username are both editable
+        WHEN the context is built
+        THEN the distinct id is their primary key, so renaming does not split
+             one creator's history into two people
+        """
+        user = User.objects.create_user(
+            'ctxuser', email='ctx@example.com', password='pass',
+        )
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            person = self._context_for('/editor/', user=user)['POSTHOG_PERSON']
+        self.assertEqual(person['distinct_id'], str(user.pk))
+        self.assertEqual(person['email'], 'ctx@example.com')
+        self.assertEqual(person['username'], 'ctxuser')
+        self.assertTrue(person['date_joined'])
+
+
+class PostHogErrorTrackingTest(TestCase):
+    """Server-side exception capture: middleware wiring, scrubbing, Celery hook.
+
+    The SDK pin matters here: posthog-python 6.7.5-6.7.13 shipped with the
+    Django middleware silently NOT capturing exceptions (upstream #286, then
+    regression #329), and 7.x needs Python >=3.10. The canary tests exist so a
+    quiet up- or downgrade fails the suite instead of silently blinding us.
+    """
+
+    def test_installed_sdk_is_the_pinned_series(self):
+        """
+        GIVEN the Pipfile pins posthog to the 6.9 series
+        WHEN the installed package version is read
+        THEN it is a 6.9.x release
+        """
+        import posthog.version
+        self.assertTrue(
+            posthog.version.VERSION.startswith('6.9'),
+            f'installed posthog {posthog.version.VERSION}, expected 6.9.x — '
+            'read openspec/changes/posthog-error-tracking/design.md before changing the pin',
+        )
+
+    def test_middleware_exception_hook_exists(self):
+        """
+        GIVEN two upstream releases shipped without working exception capture
+        WHEN the middleware class is inspected
+        THEN process_exception exists — the canary for that regression class
+        """
+        from posthog.integrations.django import PosthogContextMiddleware
+        self.assertTrue(callable(getattr(PosthogContextMiddleware, 'process_exception', None)))
+
+    def test_middleware_is_installed_after_auth(self):
+        """
+        GIVEN exceptions should carry the signed-in creator's pk as distinct id
+        WHEN the middleware order is read
+        THEN PosthogContextMiddleware sits after AuthenticationMiddleware
+        """
+        from django.conf import settings as s
+        mw = list(s.MIDDLEWARE)
+        self.assertIn('posthog.integrations.django.PosthogContextMiddleware', mw)
+        self.assertLess(
+            mw.index('django.contrib.auth.middleware.AuthenticationMiddleware'),
+            mw.index('posthog.integrations.django.PosthogContextMiddleware'),
+        )
+
+    def test_unset_key_disables_the_client(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is empty
+        WHEN the app config hook runs
+        THEN the module-level client is explicitly disabled
+        """
+        import posthog
+
+        from survey.apps import SurveyConfig
+        with self.settings(POSTHOG_PROJECT_KEY=''):
+            SurveyConfig._configure_posthog()
+        try:
+            self.assertTrue(posthog.disabled)
+        finally:
+            SurveyConfig._configure_posthog()
+
+    def test_set_key_configures_the_client(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is set
+        WHEN the app config hook runs
+        THEN api_key and host reach the module-level client and it is enabled
+        """
+        import posthog
+
+        from survey.apps import SurveyConfig
+        with self.settings(POSTHOG_PROJECT_KEY='phc_errtest', POSTHOG_API_HOST=''):
+            SurveyConfig._configure_posthog()
+        try:
+            self.assertFalse(posthog.disabled)
+            self.assertEqual(posthog.api_key, 'phc_errtest')
+            # Empty host falls back to Cloud EU, same guarantee as the snippet.
+            self.assertEqual(posthog.host, 'https://eu.i.posthog.com')
+        finally:
+            posthog.api_key = None
+            SurveyConfig._configure_posthog()
+
+    @staticmethod
+    def _sdk_tags_for(path):
+        """Tags the real SDK middleware produces for a request, scrubber applied.
+
+        Goes through the middleware's own extract_tags rather than hand-written
+        dicts. Hand-written dicts are how the first version of this test passed
+        while the scrubber popped `$ip` — a key the SDK never emits — leaving
+        the respondent's real IP (`$ip_address`) in the payload.
+        """
+        from django.contrib.auth.models import AnonymousUser
+        from django.test import RequestFactory
+
+        from posthog.integrations.django import PosthogContextMiddleware
+        request = RequestFactory().get(
+            path,
+            HTTP_X_FORWARDED_FOR='203.0.113.7',
+            HTTP_USER_AGENT='Mozilla/5.0 (probe)',
+        )
+        request.user = AnonymousUser()
+        return PosthogContextMiddleware(lambda r: None).extract_tags(request)
+
+    def test_sdk_tag_names_are_what_we_scrub(self):
+        """
+        GIVEN the scrubber can only remove tag names that actually exist
+        WHEN the SDK middleware builds tags for a request with IP and UA headers
+        THEN every name in POSTHOG_RESPONDENT_IDENTIFYING_TAGS is present
+
+        This is the canary. If the SDK renames a tag, this fails loudly instead
+        of the scrubber quietly popping nothing and shipping respondent data.
+        """
+        from django.conf import settings as s
+        from django.contrib.auth.models import AnonymousUser
+        from django.test import RequestFactory
+
+        from posthog.integrations.django import PosthogContextMiddleware
+        request = RequestFactory().get(
+            '/editor/',
+            HTTP_X_FORWARDED_FOR='203.0.113.7',
+            HTTP_USER_AGENT='Mozilla/5.0 (probe)',
+        )
+        request.user = AnonymousUser()
+        # Bypass the configured tag map to see the SDK's raw output.
+        mw = PosthogContextMiddleware(lambda r: None)
+        mw.tag_map = None
+        raw = mw.extract_tags(request)
+        for tag_name in s.POSTHOG_RESPONDENT_IDENTIFYING_TAGS:
+            self.assertIn(
+                tag_name, raw,
+                f'{tag_name} is not emitted by the installed SDK — the scrubber '
+                'would silently remove nothing',
+            )
+
+    def test_respondent_path_tags_are_scrubbed(self):
+        """
+        GIVEN an exception on a respondent survey page is ours to see
+        WHEN the real middleware builds tags for a /surveys/ request
+        THEN the respondent's IP and user-agent are gone and the URL is
+             truncated, so no survey slug or device fingerprint leaves the server
+        """
+        tags = self._sdk_tags_for('/surveys/abc-123/section1/')
+        self.assertNotIn('$ip_address', tags)
+        self.assertNotIn('$user_agent', tags)
+        self.assertEqual(tags['$request_path'], '/surveys/')
+        self.assertEqual(tags['$current_url'], '/surveys/')
+        self.assertNotIn('abc-123', str(tags))
+
+    def test_public_results_path_is_scrubbed_too(self):
+        """
+        GIVEN /r/ pages are read by a customer's audience
+        WHEN the middleware builds tags for one
+        THEN the same scrubbing applies
+        """
+        tags = self._sdk_tags_for('/r/some-slug/')
+        self.assertNotIn('$ip_address', tags)
+        self.assertNotIn('$user_agent', tags)
+        self.assertEqual(tags['$request_path'], '/r/')
+        self.assertNotIn('some-slug', str(tags))
+
+    def test_creator_path_tags_are_untouched(self):
+        """
+        GIVEN creator-facing pages are ours to measure fully
+        WHEN the middleware builds tags for an /editor/ path
+        THEN the IP, user-agent and full URL all survive
+        """
+        tags = self._sdk_tags_for('/editor/')
+        self.assertEqual(tags['$ip_address'], '203.0.113.7')
+        self.assertEqual(tags['$user_agent'], 'Mozilla/5.0 (probe)')
+        self.assertEqual(tags['$request_path'], '/editor/')
+
+    def test_reporter_is_inert_when_unconfigured(self):
+        """
+        GIVEN no POSTHOG_PROJECT_KEY, as in tests and local development
+        WHEN a view raises
+        THEN the reporter stays out of the way instead of raising a second error
+
+        posthog's lazy setup() raises ValueError("API key is required") before it
+        ever checks the `disabled` flag, so `disabled = True` alone is not enough.
+        Seventeen existing tests that raise on purpose died *inside the reporter*
+        before POSTHOG_MW_CAPTURE_EXCEPTIONS was gated on the key — the error
+        reporter breaking the error handling it exists to observe.
+        """
+        from django.conf import settings as s
+        from django.contrib.auth.models import AnonymousUser
+        from django.test import RequestFactory
+
+        from posthog.integrations.django import PosthogContextMiddleware
+        self.assertFalse(s.POSTHOG_MW_CAPTURE_EXCEPTIONS)
+        self.assertFalse(s.POSTHOG_MW_REQUEST_FILTER(RequestFactory().get('/editor/')))
+        mw = PosthogContextMiddleware(lambda r: None)
+        request = RequestFactory().get('/editor/')
+        request.user = AnonymousUser()
+        self.assertIsNone(mw.process_exception(request, RuntimeError('boom')))
+
+    def test_request_filter_skips_admin_but_not_respondents(self):
+        """
+        GIVEN admin tracebacks embed object reprs and respondent errors are ours
+        WHEN the request filter runs
+        THEN /admin/ and /__debug__/ are skipped while /surveys/ is captured
+        """
+        from django.test import RequestFactory
+
+        from mapsurvey.settings import _posthog_skip_request
+        rf = RequestFactory()
+        # Configured, or the filter short-circuits to False for everything and
+        # the admin/respondent distinction below would never be exercised.
+        with self.settings(POSTHOG_PROJECT_KEY='phc_filtertest'):
+            self.assertFalse(_posthog_skip_request(rf.get('/admin/survey/surveyheader/')))
+            self.assertFalse(_posthog_skip_request(rf.get('/__debug__/render_panel/')))
+            self.assertTrue(_posthog_skip_request(rf.get('/surveys/abc/section1/')))
+            self.assertTrue(_posthog_skip_request(rf.get('/editor/')))
+
+    def test_celery_failure_is_reported_with_task_name(self):
+        """
+        GIVEN the Django middleware never sees the worker
+        WHEN a task failure signal fires with the client enabled
+        THEN the exception is captured
+        """
+        import posthog
+
+        from mapsurvey.celery import report_task_failure_to_posthog
+        boom = ValueError('task went boom')
+        sender = mock.Mock()
+        sender.name = 'survey.tasks.generate_survey'
+        with mock.patch.object(posthog, 'disabled', False), \
+                mock.patch('posthog.capture_exception') as capture:
+            report_task_failure_to_posthog(sender=sender, task_id='tid-1', exception=boom)
+        capture.assert_called_once_with(boom)
+
+    def test_celery_reporter_never_raises(self):
+        """
+        GIVEN an error reporter that can break failure handling is worse than none
+        WHEN capture itself raises
+        THEN the receiver swallows it
+        """
+        import posthog
+
+        from mapsurvey.celery import report_task_failure_to_posthog
+        with mock.patch.object(posthog, 'disabled', False), \
+                mock.patch('posthog.capture_exception', side_effect=RuntimeError('down')):
+            report_task_failure_to_posthog(
+                sender=None, task_id='tid-2', exception=ValueError('x'),
+            )  # must not raise
+
+    def test_celery_reporter_noops_when_disabled(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is unset and the client disabled
+        WHEN a task failure signal fires
+        THEN nothing is captured
+        """
+        import posthog
+
+        from mapsurvey.celery import report_task_failure_to_posthog
+        with mock.patch.object(posthog, 'disabled', True), \
+                mock.patch('posthog.capture_exception') as capture:
+            report_task_failure_to_posthog(
+                sender=None, task_id='tid-3', exception=ValueError('x'),
+            )
+        capture.assert_not_called()
 
 
 class AnalyticsServiceTest(TestCase):
@@ -20151,6 +20857,259 @@ class CrossVersionAnalyticsTest(TestCase):
         ).exists())
 
 
+class DraftCopyResultsScopeTest(TestCase):
+    """Results read from a draft copy: the family by default, the draft on request."""
+
+    def setUp(self):
+        from .versioning import clone_survey_for_draft
+        self.org = _make_org('DraftScopeOrg')
+        self.user = User.objects.create_user('draft_scope_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='draft_scope_survey', organization=self.org, created_by=self.user,
+            status='published',
+        )
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='S1', code='S1', is_head=True,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, name='Colour', input_type='choice',
+            code='QCOL', order_number=1,
+            choices=[{'code': 1, 'name': 'Red'}, {'code': 2, 'name': 'Blue'}],
+        )
+
+        # Two real responses on the published survey.
+        self.real_sessions = [SurveySession.objects.create(survey=self.survey)
+                              for _ in range(2)]
+        for s in self.real_sessions:
+            Answer.objects.create(survey_session=s, question=self.question,
+                                  selected_choices=[1])
+
+        # A draft with one test session from previewing it.
+        self.draft = clone_survey_for_draft(self.survey)
+        SurveyCollaborator.objects.get_or_create(
+            user=self.user, survey=self.draft, defaults={'role': 'owner'},
+        )
+        self.draft_question = Question.objects.get(
+            survey_section__survey_header=self.draft, code='QCOL',
+        )
+        self.draft_session = SurveySession.objects.create(survey=self.draft)
+        Answer.objects.create(survey_session=self.draft_session,
+                              question=self.draft_question, selected_choices=[2])
+
+    def _service(self, survey=None, **kw):
+        from .analytics import SurveyAnalyticsService
+        return SurveyAnalyticsService(survey or self.draft, **kw)
+
+    # ─── scope helpers ───────────────────────────────────────────────────────
+
+    def test_canonical_of_a_draft_is_the_published_survey(self):
+        """
+        GIVEN a draft copy of a published survey
+        WHEN the canonical is resolved from the draft
+        THEN it is the published survey, not the draft
+        """
+        from .versioning import canonical_of
+
+        self.assertEqual(canonical_of(self.draft).id, self.survey.id)
+
+    def test_family_excludes_the_draft_but_the_action_scope_includes_it(self):
+        """
+        GIVEN a survey with a draft copy
+        WHEN the family and the action scope are built from the draft
+        THEN only the action scope contains the draft header
+        """
+        from .versioning import family_ids, family_ids_with_draft
+
+        self.assertNotIn(self.draft.id, family_ids(self.draft))
+        self.assertIn(self.survey.id, family_ids(self.draft))
+        self.assertIn(self.draft.id, family_ids_with_draft(self.draft))
+
+    # ─── default scope ───────────────────────────────────────────────────────
+
+    def test_draft_results_report_the_published_responses(self):
+        """
+        GIVEN a draft copy of a survey holding two responses
+        WHEN its Results is read with no version filter
+        THEN the published survey's responses are reported
+        """
+        self.assertEqual(self._service().get_overview()['total_sessions'], 2)
+
+    def test_draft_test_sessions_are_not_in_the_default_scope(self):
+        """
+        GIVEN a draft copy with a test session of its own
+        WHEN its Results is read with no version filter
+        THEN the test session is not among the reported sessions
+        """
+        reported = set(self._service().base_qs.values_list('id', flat=True))
+        self.assertNotIn(self.draft_session.id, reported)
+
+    def test_canonical_results_ignore_the_draft(self):
+        """
+        GIVEN a published survey whose draft copy has test sessions
+        WHEN the canonical's Results is read with no version filter
+        THEN only the published responses are reported
+        """
+        self.assertEqual(
+            self._service(survey=self.survey).get_overview()['total_sessions'], 2,
+        )
+
+    # ─── the draft scope ─────────────────────────────────────────────────────
+
+    def test_draft_scope_reports_the_test_sessions_alone(self):
+        """
+        GIVEN a family with a draft copy holding one test session
+        WHEN the version filter is 'draft'
+        THEN only that session is reported
+        """
+        service = self._service(version='draft')
+        self.assertEqual(service.scope.value, 'draft')
+        self.assertEqual(list(service.base_qs.values_list('id', flat=True)),
+                         [self.draft_session.id])
+
+    def test_draft_scope_is_reachable_from_the_canonical(self):
+        """
+        GIVEN a published survey with a draft copy
+        WHEN 'draft' is requested on the canonical's Results
+        THEN the draft's test sessions are reported
+        """
+        service = self._service(survey=self.survey, version='draft')
+        self.assertEqual(service.scope.ids, {self.draft.id})
+
+    def test_draft_scope_falls_back_when_no_draft_exists(self):
+        """
+        GIVEN a survey with no draft copy
+        WHEN the version filter is 'draft'
+        THEN the whole family is reported
+        """
+        from .versioning import resolve_version_scope
+
+        SurveySession.objects.filter(survey=self.draft).delete()
+        self.draft.delete()
+        scope = resolve_version_scope(self.survey, 'draft')
+        self.assertEqual(scope.value, 'all')
+        self.assertEqual(scope.ids, {self.survey.id})
+
+    def test_draft_scope_answers_report_under_the_cloned_question(self):
+        """
+        GIVEN a draft whose test session answered a question cloned from the canonical
+        WHEN question stats are built under the draft scope
+        THEN the answer is reported under that question
+        """
+        stats = {s['question'].code: s
+                 for s in self._service(version='draft').get_all_question_stats()}
+        self.assertEqual(stats['QCOL']['total_answers'], 1)
+        self.assertEqual(stats['QCOL']['choice_counts'][1], 1)  # 'Blue', the draft answer
+
+    def test_a_question_added_only_in_the_draft_is_reported(self):
+        """
+        GIVEN a question that exists only in the draft, answered by a test session
+        WHEN question stats are built under the draft scope
+        THEN that question appears with its answer
+        """
+        draft_section = SurveySection.objects.get(survey_header=self.draft)
+        new_q = Question.objects.create(
+            survey_section=draft_section, name='New only', input_type='text',
+            code='QNEW', order_number=9,
+        )
+        Answer.objects.create(survey_session=self.draft_session, question=new_q,
+                              text='draft words')
+        codes = [s['question'].code
+                 for s in self._service(version='draft').get_all_question_stats()]
+        self.assertIn('QNEW', codes)
+
+    def test_published_scope_is_unaffected_by_draft_questions(self):
+        """
+        GIVEN a draft copy carrying clones of the published questions
+        WHEN question stats are built with no version filter
+        THEN only the published answers are counted
+        """
+        stats = {s['question'].code: s
+                 for s in self._service().get_all_question_stats()}
+        self.assertEqual(stats['QCOL']['total_answers'], 2)
+        self.assertEqual(stats['QCOL']['choice_counts'][0], 2)  # 'Red', the published answers
+
+    # ─── the picker ──────────────────────────────────────────────────────────
+
+    def test_version_choices_offer_the_draft_on_a_single_version_survey(self):
+        """
+        GIVEN a single-version survey with a draft copy
+        WHEN the version picker choices are built
+        THEN they render and include the draft option
+        """
+        from .analytics import version_choices
+
+        values = [c['value'] for c in version_choices(self.survey)]
+        self.assertEqual(values, ['all', 'v1', 'draft'])
+
+    def test_version_choices_omit_the_draft_when_there_is_none(self):
+        """
+        GIVEN a single-version survey with no draft copy
+        WHEN the version picker choices are built
+        THEN there is nothing to choose between
+        """
+        from .analytics import version_choices
+
+        SurveySession.objects.filter(survey=self.draft).delete()
+        self.draft.delete()
+        self.assertEqual(version_choices(self.survey), [])
+
+    # ─── session actions ─────────────────────────────────────────────────────
+
+    def test_a_draft_session_can_be_opened(self):
+        """
+        GIVEN a session listed under the draft scope
+        WHEN its detail partial is requested
+        THEN the session is served
+        """
+        self.client.login(username='draft_scope_owner', password='pw')
+        url = f'/editor/surveys/{self.draft.uuid}/analytics/sessions/{self.draft_session.id}/'
+        self.assertEqual(self.client.get(url).status_code, 200)
+
+    def test_a_foreign_session_is_still_rejected(self):
+        """
+        GIVEN a session belonging to an unrelated survey
+        WHEN it is requested on this survey's analytics
+        THEN it is not found
+        """
+        other = SurveyHeader.objects.create(
+            name='other_survey', organization=self.org, created_by=self.user,
+            status='published',
+        )
+        foreign = SurveySession.objects.create(survey=other)
+        self.client.login(username='draft_scope_owner', password='pw')
+        url = f'/editor/surveys/{self.draft.uuid}/analytics/sessions/{foreign.id}/'
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    # ─── neighbours ──────────────────────────────────────────────────────────
+
+    def test_export_from_the_draft_returns_the_published_rows(self):
+        """
+        GIVEN a draft copy of a survey with responses
+        WHEN data is downloaded from the draft's uuid with no version parameter
+        THEN the published family's headers are exported
+        """
+        from .views import _get_version_surveys
+
+        exported = [h.id for h, _ in _get_version_surveys(self.draft, None)]
+        self.assertEqual(exported, [self.survey.id])
+
+    def test_public_results_ignore_draft_test_sessions(self):
+        """
+        GIVEN a survey with a public results page and a previewed draft copy
+        WHEN the page's clean session set is built
+        THEN the draft's test session is not in it
+        """
+        from .models import PublicResultsPage
+        from .public_results import PublicResultsService
+
+        page = PublicResultsPage.objects.create(survey=self.survey, slug='draft-scope-page')
+        service = PublicResultsService(page)
+        self.assertNotIn(self.draft_session.id, service._clean_ids)
+        self.assertEqual(len(service._clean_ids), 2)
+
+
 class RestoreVersionTest(TestCase):
     """Restore an archived version's questionnaire as a new draft (rollback)."""
 
@@ -20278,30 +21237,30 @@ class RestoreVersionTest(TestCase):
         self.assertNotIn('restore-version', html)
 
 
-class RangeDisplayStyleTest(TestCase):
-    """Display styles for range questions.
+class RangeSliderOnlyTest(TestCase):
+    """Range always renders as the slider (change range-slider-only).
 
-    The change rests on one claim — that the display style is presentation
-    only and never touches what is stored — so that is asserted first and
-    most directly.
+    Display styles were briefly offered for range and retired: of 124
+    production range questions, the only two non-default ones were a creator
+    imitating the rating type. These tests pin the new invariant against the
+    nine-point named-scale fixtures the retired feature was built on.
     """
 
     LABELS = [
-        '(positive) Geräusche', 'sehr angenehm', 'angenehm', 'eher angenehm',
-        'neutral', 'eher störend', 'störend', 'sehr störend', '(negativer) Lärm',
+        '(positive) Ger\u00e4usche', 'sehr angenehm', 'angenehm', 'eher angenehm',
+        'neutral', 'eher st\u00f6rend', 'st\u00f6rend', 'sehr st\u00f6rend', '(negativer) L\u00e4rm',
     ]
 
     def setUp(self):
-        self.org = _make_org('RangeStyleOrg')
-        self.user = User.objects.create_user('rangeuser', password='pass')
+        self.org = _make_org('RangeSliderOrg')
+        self.user = User.objects.create_user('rangeslideruser', password='pass')
         Membership.objects.create(user=self.user, organization=self.org, role='owner')
         self.choices = [{"code": i + 1, "name": {"en": name}}
                         for i, name in enumerate(self.LABELS)]
 
-    def _survey(self, display_style='default', choices='use-default', required=False,
-                rating_default='scale_strip'):
+    def _survey(self, display_style='default', rating_default='scale_strip'):
         survey = SurveyHeader.objects.create(
-            name=f'range_{display_style}_{id(self)}', organization=self.org,
+            name=f'range_slider_{display_style}_{id(self)}', organization=self.org,
             created_by=self.user, status='published',
             style_settings={'rating_display_style': rating_default},
         )
@@ -20310,194 +21269,100 @@ class RangeDisplayStyleTest(TestCase):
         )
         question = Question.objects.create(
             survey_section=section, name='Loudness', code='q_range',
-            input_type='range', order_number=1, required=required,
-            choices=self.choices if choices == 'use-default' else choices,
-            display_style=display_style,
+            input_type='range', order_number=1,
+            choices=self.choices, display_style=display_style,
         )
-        # A fresh client per survey: request.session['survey_session_id'] binds
-        # to the first survey a client visits, and every fixture here names its
-        # section s1, so a reused client would write answers into the previous
-        # survey's section. Per survey, not per request — the session has to
-        # survive between submitting and navigating back.
+        # Fresh client per survey: the respondent session binds to the first
+        # survey a client visits (see the retired RangeDisplayStyleTest).
         self.client = Client()
         return survey, section, question
 
     def _get(self, survey):
         return self.client.get(f'/surveys/{survey.uuid}/s1/')
 
-    def _submit(self, survey, data):
-        return self.client.post(f'/surveys/{survey.uuid}/s1/', data)
-
-    # ── The claim the whole change rests on ────────────────────────────────
-
-    def test_every_style_stores_the_same_value(self):
+    def test_stored_choice_based_styles_render_as_the_slider(self):
         """
-        GIVEN the same range question rendered as a slider, a scale strip and
-              a labelled list
-        WHEN a respondent answers 5 in each
-        THEN all three are stored as numeric 5
-        """
-        stored = {}
-        for style in ('default', 'scale_strip', 'list_pips'):
-            survey, _section, question = self._survey(display_style=style)
-            self._get(survey)
-            self._submit(survey, {'q_range': '5'})
-            answer = Answer.objects.get(question=question)
-            stored[style] = (answer.numeric, answer.selected_choices)
-
-        self.assertEqual(stored['default'][0], 5)
-        self.assertEqual(stored['scale_strip'], stored['default'])
-        self.assertEqual(stored['list_pips'], stored['default'])
-
-    def test_changing_style_leaves_existing_answers_untouched(self):
-        """
-        GIVEN a range question with an answer already collected
-        WHEN the creator switches its display style
-        THEN the stored answer is unchanged and still exports in its column
-        """
-        survey, _section, question = self._survey(display_style='default')
-        self._get(survey)
-        self._submit(survey, {'q_range': '7'})
-        before = Answer.objects.get(question=question)
-
-        question.display_style = 'list_pips'
-        question.save()
-
-        after = Answer.objects.get(pk=before.pk)
-        self.assertEqual(after.numeric, before.numeric)
-        self.assertEqual(after.selected_choices, before.selected_choices)
-
-        self.client.login(username='rangeuser', password='pass')
-        response = self.client.get(f'/surveys/{survey.uuid}/download')
-        with zipfile.ZipFile(BytesIO(response.content), 'r') as zf:
-            csv_name = [n for n in zf.namelist() if n.endswith('.csv')][0]
-            csv_text = zf.read(csv_name).decode('utf-8')
-        self.assertIn('Loudness', csv_text)
-        self.assertIn('7.0', csv_text)
-
-    # ── What each style renders ────────────────────────────────────────────
-
-    def test_list_pips_shows_every_choice_name(self):
-        """
-        GIVEN a nine-point range question displayed as a labelled list
+        GIVEN range questions whose stored display_style is default,
+              scale_strip and list_pips (the latter exists in production)
         WHEN a respondent opens the section
-        THEN all nine names are present, not just the endpoints
-        """
-        survey, _section, _q = self._survey(display_style='list_pips')
-
-        response = self._get(survey)
-
-        for name in self.LABELS:
-            self.assertContains(response, name)
-
-    def test_scale_strip_renders_one_cell_per_choice_with_anchors(self):
-        """
-        GIVEN a nine-point range question displayed as a scale strip
-        WHEN a respondent opens the section
-        THEN there is one cell per choice and the endpoint names anchor it
-        """
-        survey, _section, _q = self._survey(display_style='scale_strip')
-
-        response = self._get(survey)
-        content = response.content.decode()
-
-        # The trailing quote matters: the container is __cells, which contains
-        # __cell as a prefix and would inflate the count to ten.
-        self.assertEqual(content.count('rating-scale-strip__cell"'), 9)
-        self.assertIn('(positive) Geräusche', content)
-        self.assertIn('(negativer) Lärm', content)
-
-    def test_default_renders_a_slider_regardless_of_the_rating_default(self):
-        """
-        GIVEN a range question with no display style chosen, in a survey whose
-              rating default is list_pips
-        WHEN a respondent opens the section
-        THEN it renders as a slider, not as the rating default
-        """
-        survey, _section, _q = self._survey(
-            display_style='default', rating_default='list_pips',
-        )
-
-        content = self._get(survey).content.decode()
-
-        self.assertIn('type="range"', content)
-        self.assertNotIn('rating-list-pips', content)
-
-    def test_choice_based_style_falls_back_when_there_are_no_choices(self):
-        """
-        GIVEN a range question with no choices but a choice-based style
-        WHEN a respondent opens the section
-        THEN it renders as a slider without error
-
-        28% of range questions in production have no choices, so this is a
-        live path rather than a defensive one.
-        """
-        survey, _section, _q = self._survey(display_style='scale_strip', choices=None)
-
-        response = self._get(survey)
-
-        self.assertEqual(response.status_code, 200)
-        content = response.content.decode()
-        self.assertIn('type="range"', content)
-        # Not the bare block name: base_survey_template.html carries inline JS
-        # referencing .rating-scale-strip__chip on every page.
-        self.assertNotIn('rating-scale-strip__cell', content)
-
-    # ── Behaviour that must not differ between styles ──────────────────────
-
-    def test_unanswered_question_behaves_the_same_in_every_style(self):
-        """
-        GIVEN a required range question
-        WHEN the section is submitted with the field absent, in each style
-        THEN no answer is stored and the request does not error
-
-        This asserts sameness across styles, not rejection: answers are never
-        validated server-side, because the POST handler passes request.POST as
-        `initial` so the form is never bound. Pre-existing and platform-wide.
-        """
-        for style in ('default', 'scale_strip', 'list_pips'):
-            with self.subTest(style=style):
-                survey, _section, question = self._survey(
-                    display_style=style, required=True,
-                )
-                self._get(survey)
-
-                response = self._submit(survey, {})
-
-                self.assertIn(response.status_code, (200, 302))
-                self.assertFalse(Answer.objects.filter(question=question).exists())
-
-    def test_previous_answer_is_prepopulated_in_every_style(self):
-        """
-        GIVEN a range question already answered
-        WHEN the respondent navigates back to the section in each style
-        THEN the previous value is preselected
+        THEN every one renders as the slider, never through the scale partials
         """
         for style in ('default', 'scale_strip', 'list_pips'):
             with self.subTest(style=style):
                 survey, _section, _q = self._survey(display_style=style)
-                self._get(survey)
-                self._submit(survey, {'q_range': '4'})
 
                 content = self._get(survey).content.decode()
 
-                if style == 'default':
-                    self.assertIn('value="4"', content)
-                else:
-                    # id sits between value and checked, so match the input as
-                    # a whole rather than assuming attribute adjacency.
-                    self.assertRegex(
-                        content,
-                        r'<input[^>]*name="q_range"[^>]*value="4"[^>]*checked',
-                    )
+                self.assertIn('type="range"', content)
+                self.assertNotIn('rating-scale-strip__cell', content)
+                self.assertNotIn('rating-list-pips', content)
 
-    # ── Style resolution in isolation ──────────────────────────────────────
+    def test_stored_style_is_ignored_not_rewritten(self):
+        """
+        GIVEN a range question carrying list_pips from before the retirement
+        WHEN a respondent answers through the slider
+        THEN the answer stores as numeric and the stored style is untouched
+        """
+        survey, _section, question = self._survey(display_style='list_pips')
+        self._get(survey)
+
+        self.client.post(f'/surveys/{survey.uuid}/s1/', {'q_range': '5'})
+
+        answer = Answer.objects.get(question=question)
+        self.assertEqual(answer.numeric, 5)
+        question.refresh_from_db()
+        self.assertEqual(question.display_style, 'list_pips')
+
+    def test_answers_collected_under_a_removed_style_prepopulate_the_slider(self):
+        """
+        GIVEN an answer collected while the question rendered as a labelled list
+        WHEN the respondent navigates back, now on the slider
+        THEN the slider is prepopulated with the stored value
+        """
+        survey, _section, _q = self._survey(display_style='list_pips')
+        self._get(survey)
+        self.client.post(f'/surveys/{survey.uuid}/s1/', {'q_range': '4'})
+
+        content = self._get(survey).content.decode()
+
+        self.assertIn('type="range"', content)
+        self.assertIn('value="4"', content)
+
+    def test_live_preview_ignores_posted_style_for_range(self):
+        """
+        GIVEN the question dialog's live preview endpoint
+        WHEN a range draft is posted with display_style=list_pips
+        THEN the preview renders the slider — the editor cannot even preview
+             the removed combination
+        """
+        survey, section, _q = self._survey()
+        self.client = Client()
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+        response = self.client.post(
+            f'/editor/surveys/{survey.uuid}/sections/{section.id}/question-preview/',
+            {
+                'input_type': 'range',
+                'name': 'Loudness',
+                'display_style': 'list_pips',
+                'choices_json': '[{"code": 1, "name": "quiet"}, {"code": 9, "name": "loud"}]',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('type="range"', html)
+        self.assertNotIn('rating-list-pips', html)
 
     def test_rating_still_inherits_the_survey_default(self):
         """
         GIVEN a rating question with no style of its own
         WHEN the style is resolved
-        THEN it inherits the survey-wide rating default, as before this change
+        THEN it inherits the survey-wide rating default, unchanged by the
+             range retirement
         """
         _survey, _section, question = self._survey()
         question.input_type = 'rating'
@@ -20506,15 +21371,15 @@ class RangeDisplayStyleTest(TestCase):
 
         self.assertEqual(resolved, 'list_pips')
 
-    def test_range_does_not_inherit_the_survey_default(self):
+    def test_range_resolves_to_default_whatever_is_stored(self):
         """
-        GIVEN a range question with no style of its own
+        GIVEN a range question with a choice-based style stored
         WHEN the style is resolved
         THEN it is the slider, whatever the survey-wide rating default is
         """
-        _survey, _section, question = self._survey()
+        _survey, _section, question = self._survey(display_style='list_pips')
 
-        resolved = SurveySectionAnswerForm.resolve_display_style(question, 'list_pips')
+        resolved = SurveySectionAnswerForm.resolve_display_style(question, 'scale_strip')
 
         self.assertEqual(resolved, 'default')
 
@@ -22302,3 +23167,646 @@ class AIGenerationTelemetryTest(TestCase):
         event.refresh_from_db()
         self.assertEqual(event.outcome, 'invalid_draft')
         self.assertIsNotNone(event.generated_blob)
+class QuestionTypePickerMetadataTest(TestCase):
+    """Picker metadata (survey/question_types.py) stays in step with the model."""
+
+    def test_metadata_covers_every_input_type(self):
+        """
+        GIVEN the model's INPUT_TYPE_CHOICES and the picker's PICKER_TYPES
+        WHEN their key sets are compared
+        THEN they are identical, so a type added to the model without picker
+             metadata fails here instead of silently missing from the dialog
+        """
+        from survey.models import INPUT_TYPE_CHOICES
+        from survey.question_types import PICKER_TYPES
+
+        model_types = {value for value, _ in INPUT_TYPE_CHOICES}
+        self.assertEqual(model_types, set(PICKER_TYPES.keys()))
+
+    def test_every_type_belongs_to_exactly_one_known_group(self):
+        """
+        GIVEN the picker metadata
+        WHEN each entry's group is checked against PICKER_GROUPS
+        THEN every type names a declared group
+        """
+        from survey.question_types import PICKER_GROUPS, PICKER_TYPES
+
+        group_keys = {key for key, _ in PICKER_GROUPS}
+        for value, meta in PICKER_TYPES.items():
+            self.assertIn(meta["group"], group_keys, f"{value} has unknown group")
+
+    def test_html_reads_formatted_text_but_keeps_its_value(self):
+        """
+        GIVEN the html input type
+        WHEN the picker groups are built from the model choices
+        THEN the card is labelled "Formatted Text" while its value stays html
+        """
+        from survey.models import INPUT_TYPE_CHOICES
+        from survey.question_types import picker_groups_for
+
+        groups = dict(picker_groups_for(INPUT_TYPE_CHOICES))
+        display_blocks = groups["Display blocks — collect nothing"]
+        html_entry = next(t for t in display_blocks if t["value"] == "html")
+        self.assertEqual(html_entry["label"], "Formatted Text")
+
+    def test_groups_respect_restricted_choice_sets(self):
+        """
+        GIVEN a restricted choices list (as a sub-question's form field has)
+        WHEN picker groups are built from it
+        THEN excluded types are absent and emptied groups are dropped
+        """
+        from survey.question_types import picker_groups_for
+
+        groups = picker_groups_for([("text", "Text"), ("number", "Number")])
+        self.assertEqual(len(groups), 1)
+        label, types = groups[0]
+        self.assertEqual(label, "Questions")
+        self.assertEqual({t["value"] for t in types}, {"text", "number"})
+
+
+class QuestionPreviewLiveTest(TestCase):
+    """The question dialog's live preview renders unsaved drafts server-side."""
+
+    def setUp(self):
+        self.org = _make_org('PreviewLiveOrg')
+        self.owner = User.objects.create_user('qpl_owner', password='pw')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='qpl_survey', organization=self.org, created_by=self.owner, status='draft',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='S1', code='S1', is_head=True,
+        )
+        self.url = f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/question-preview/'
+        self.client.force_login(self.owner)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+    def test_rating_draft_renders_choices_without_saving(self):
+        """
+        GIVEN an unsaved rating draft with two labelled choices
+        WHEN the modal posts it to the live preview endpoint
+        THEN the response is the respondent-side radio rendering of those
+             choices AND no Question row was created
+        """
+        before = Question.objects.count()
+        response = self.client.post(self.url, {
+            'input_type': 'rating',
+            'name': 'How much do you like apples?',
+            'choices_json': '[{"code": 1, "name": "worst"}, {"code": 5, "name": "best"}]',
+        })
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('How much do you like apples?', html)
+        self.assertIn('worst', html)
+        self.assertIn('best', html)
+        self.assertIn('type="radio"', html)
+        self.assertEqual(Question.objects.count(), before)
+
+    def test_geo_draft_carries_colour_and_icon(self):
+        """
+        GIVEN an unsaved point draft with a colour and icon class
+        WHEN it is posted to the live preview endpoint
+        THEN the draw button renders with that colour and icon
+        """
+        response = self.client.post(self.url, {
+            'input_type': 'point',
+            'name': 'Where is your fruit market?',
+            'color': '#d9534f',
+            'icon_class': 'fas fa-store',
+        })
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('data-color="#d9534f"', html)
+        self.assertIn('fas fa-store', html)
+
+    def test_range_draft_uses_choice_codes_as_bounds(self):
+        """
+        GIVEN an unsaved range draft with codes 2 and 8
+        WHEN it is posted to the live preview endpoint
+        THEN the slider renders with min 2 and max 8
+        """
+        response = self.client.post(self.url, {
+            'input_type': 'range',
+            'name': 'Ripeness',
+            'choices_json': '[{"code": 2, "name": "green"}, {"code": 8, "name": "brown"}]',
+        })
+        html = response.content.decode()
+        self.assertIn('min="2"', html)
+        self.assertIn('max="8"', html)
+
+    def test_malformed_choices_fall_back_instead_of_erroring(self):
+        """
+        GIVEN a draft whose choices_json is mid-edit garbage
+        WHEN it is posted to the live preview endpoint
+        THEN the endpoint renders the type's no-choices fallback, not a 500
+        """
+        for bad in ('{not json', '"a string"', '[{"name": "no code"}]',
+                    '[{"code": "NaN", "name": "x"}]', '[42]'):
+            response = self.client.post(self.url, {
+                'input_type': 'rating',
+                'name': 'Q',
+                'choices_json': bad,
+            })
+            self.assertEqual(response.status_code, 200, f'choices_json={bad!r}')
+
+    def test_unknown_input_type_is_rejected(self):
+        """
+        GIVEN a draft naming an input type the model does not have
+        WHEN it is posted to the live preview endpoint
+        THEN the request is rejected with 400, not rendered
+        """
+        response = self.client.post(self.url, {'input_type': 'ranking', 'name': 'Q'})
+        self.assertEqual(response.status_code, 400)
+
+    def test_display_style_reaches_the_render(self):
+        """
+        GIVEN a rating draft with the labelled-list display style
+        WHEN it is posted to the live preview endpoint
+        THEN the response renders through the list style, one row per choice
+        """
+        response = self.client.post(self.url, {
+            'input_type': 'rating',
+            'name': 'Q',
+            'display_style': 'list_pips',
+            'choices_json': '[{"code": 1, "name": "worst"}, {"code": 2, "name": "best"}]',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('rating-list-pips', response.content.decode())
+
+    def test_anonymous_request_is_refused(self):
+        """
+        GIVEN no authenticated session
+        WHEN the live preview endpoint is posted to
+        THEN the request does not render the preview
+        """
+        self.client.logout()
+        response = self.client.post(self.url, {'input_type': 'text', 'name': 'Q'})
+        self.assertNotEqual(response.status_code, 200)
+
+
+class TemplateCommentSyntaxTest(SimpleTestCase):
+    """Django's {# #} comment is single-line; a multi-line one renders as page text."""
+
+    def test_no_multi_line_hash_comments_in_templates(self):
+        """
+        GIVEN every template shipped with the survey app
+        WHEN each `{#` is checked for a closing `#}` on the same line
+        THEN none is left open, because Django would render the block as visible text
+        """
+        import pathlib
+
+        root = pathlib.Path(__file__).resolve().parent / 'templates'
+        offenders = []
+        for path in root.rglob('*.html'):
+            for number, line in enumerate(path.read_text().splitlines(), start=1):
+                if '{#' in line and '#}' not in line.split('{#', 1)[1]:
+                    offenders.append(f'{path.relative_to(root)}:{number}')
+
+        self.assertEqual(
+            offenders, [],
+            'Multi-line {# #} comments render as visible text — use '
+            '{% comment %}/{% endcomment %} instead: ' + ', '.join(offenders),
+        )
+
+    def test_comment_text_does_not_reach_a_rendered_page(self):
+        """
+        GIVEN partials whose comments used to render as page text
+        WHEN they are rendered with an empty context
+        THEN no wording from their comments appears in the output
+        """
+        from django.template.loader import render_to_string
+
+        faq = render_to_string('partials/_faq_section.html', {})
+        jsonld = render_to_string('partials/_landing_structured_data.html', {})
+
+        self.assertNotIn('seo_landings registry', faq)
+        self.assertNotIn('Visible FAQ section', faq)
+        self.assertNotIn('pre-serialized', jsonld)
+        self.assertNotIn('Per-page structured data', jsonld)
+
+class StarRatingDisplayTest(TestCase):
+    """The star display style for rating questions (change star-rating-display)."""
+
+    def setUp(self):
+        self.org = _make_org('StarOrg')
+        self.user = User.objects.create_user('staruser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.choices = [{"code": i, "name": {"en": name}} for i, name in
+                        enumerate(['awful', 'poor', 'ok', 'good', 'great'], start=1)]
+
+    def _survey(self, display_style='stars', survey_default='scale_strip',
+                color='#000000', icon_class='', choices='use-default'):
+        survey = SurveyHeader.objects.create(
+            name=f'stars_{display_style}_{color}_{id(self)}', organization=self.org,
+            created_by=self.user, status='published',
+            style_settings={'rating_display_style': survey_default},
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='s1', code='S1', is_head=True,
+        )
+        question = Question.objects.create(
+            survey_section=section, name='How was it?', code='q_rate',
+            input_type='rating', order_number=1, display_style=display_style,
+            color=color, icon_class=icon_class,
+            choices=self.choices if choices == 'use-default' else choices,
+        )
+        self.client = Client()
+        return survey, section, question
+
+    def _get(self, survey):
+        return self.client.get(f'/surveys/{survey.uuid}/s1/')
+
+    def test_untouched_question_renders_gold_stars(self):
+        """
+        GIVEN a rating question set to stars whose colour and icon were never set
+        WHEN a respondent opens the section
+        THEN it renders solid stars in gold, one per choice
+        """
+        survey, _section, _q = self._survey()
+
+        content = self._get(survey).content.decode()
+
+        self.assertIn('rating-stars', content)
+        self.assertIn('--star-color: #f5b301', content)
+        self.assertEqual(content.count('rating-stars__star'), 5)
+        self.assertEqual(content.count('fas fa-star'), 5)
+
+    def test_creator_icon_and_colour_reach_the_render(self):
+        """
+        GIVEN a star rating whose creator picked a heart and a red colour
+        WHEN a respondent opens the section
+        THEN the question renders red hearts rather than gold stars
+        """
+        survey, _section, _q = self._survey(color='#d9534f', icon_class='fas fa-heart')
+
+        content = self._get(survey).content.decode()
+
+        self.assertIn('--star-color: #d9534f', content)
+        self.assertEqual(content.count('fas fa-heart'), 5)
+        self.assertNotIn('#f5b301', content)
+
+    def test_choice_names_are_available_to_assistive_technology(self):
+        """
+        GIVEN a star rating with named choices
+        WHEN it renders
+        THEN every choice name is present as text, not only as an icon
+        """
+        survey, _section, _q = self._survey()
+
+        content = self._get(survey).content.decode()
+
+        for name in ('awful', 'poor', 'ok', 'good', 'great'):
+            self.assertIn(name, content)
+
+    def test_stars_are_rendered_in_reverse_dom_order(self):
+        """
+        GIVEN the star partial, whose CSS fill depends on reversed DOM order
+        WHEN it renders
+        THEN the last choice appears before the first in the markup
+
+        Pinned because the template loop and the CSS sibling selector are one
+        mechanism split across two files: reversing the loop alone, or dropping
+        the reversal, silently breaks the fill.
+        """
+        survey, _section, _q = self._survey()
+
+        content = self._get(survey).content.decode()
+
+        self.assertLess(content.index('great'), content.index('awful'))
+
+    def test_survey_wide_default_applies_to_an_unset_question(self):
+        """
+        GIVEN a survey whose default rating style is stars
+        WHEN a rating question with no style of its own renders
+        THEN it renders as stars
+        """
+        survey, _section, _q = self._survey(display_style='default', survey_default='stars')
+
+        self.assertIn('rating-stars', self._get(survey).content.decode())
+
+    def test_storage_is_identical_across_styles(self):
+        """
+        GIVEN the same rating question rendered as stars and as a compact strip
+        WHEN a respondent picks the third choice in each
+        THEN both answers are stored identically
+        """
+        stored = {}
+        for style in ('stars', 'scale_strip'):
+            survey, _section, question = self._survey(display_style=style)
+            self._get(survey)
+            self.client.post(f'/surveys/{survey.uuid}/s1/', {'q_rate': '3'})
+            answer = Answer.objects.get(question=question)
+            stored[style] = (answer.selected_choices, answer.numeric)
+
+        self.assertEqual(stored['stars'], stored['scale_strip'])
+
+    def test_switching_an_answered_question_to_stars_keeps_its_answers(self):
+        """
+        GIVEN a rating question with answers collected as a compact strip
+        WHEN the creator switches it to stars
+        THEN the stored answers are unchanged and still export
+        """
+        survey, _section, question = self._survey(display_style='scale_strip')
+        self._get(survey)
+        self.client.post(f'/surveys/{survey.uuid}/s1/', {'q_rate': '4'})
+        before = Answer.objects.get(question=question)
+
+        question.display_style = 'stars'
+        question.save()
+
+        after = Answer.objects.get(pk=before.pk)
+        self.assertEqual(after.selected_choices, before.selected_choices)
+
+        self.client.login(username='staruser', password='pass')
+        response = self.client.get(f'/surveys/{survey.uuid}/download')
+        with zipfile.ZipFile(BytesIO(response.content), 'r') as zf:
+            csv_name = [n for n in zf.namelist() if n.endswith('.csv')][0]
+            csv_text = zf.read(csv_name).decode('utf-8')
+        self.assertIn('good', csv_text)
+
+    def test_star_defaults_resolve_on_the_model(self):
+        """
+        GIVEN questions with and without an explicit colour
+        WHEN the star colour is resolved
+        THEN the model default #000000 reads as "unset" and yields gold
+        """
+        _survey, _section, question = self._survey()
+        self.assertEqual(question.star_color(), '#f5b301')
+        self.assertEqual(question.star_icon(), 'fas fa-star')
+
+        question.color = '#112233'
+        question.icon_class = 'far fa-circle'
+        self.assertEqual(question.star_color(), '#112233')
+        self.assertEqual(question.star_icon(), 'far fa-circle')
+
+    def test_live_preview_renders_stars_for_an_unsaved_draft(self):
+        """
+        GIVEN the question dialog's live preview
+        WHEN a rating draft is posted with the star style, a colour and an icon
+        THEN the preview renders those icons in that colour, unsaved
+        """
+        survey, section, _q = self._survey()
+        before = Question.objects.count()
+        self.client = Client()
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+        response = self.client.post(
+            f'/editor/surveys/{survey.uuid}/sections/{section.id}/question-preview/',
+            {
+                'input_type': 'rating',
+                'name': 'How was it?',
+                'display_style': 'stars',
+                'color': '#22aa55',
+                'icon_class': 'fas fa-leaf',
+                'choices_json': '[{"code": 1, "name": "bad"}, {"code": 2, "name": "good"}]',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('--star-color: #22aa55', html)
+        self.assertEqual(html.count('fas fa-leaf'), 2)
+        self.assertEqual(Question.objects.count(), before)
+
+
+class StarRatingDefaultCountTest(TestCase):
+    """Picking stars means five stars, without writing a choice list."""
+
+    def setUp(self):
+        self.org = _make_org('StarCountOrg')
+        self.user = User.objects.create_user('starcount', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='star_count_survey', organization=self.org, created_by=self.user,
+            status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+
+    def test_stars_without_choices_render_five_numbered_steps(self):
+        """
+        GIVEN a rating question set to stars whose choices were never defined
+        WHEN a respondent opens the section
+        THEN five stars render, numbered 1 to 5
+
+        The style is picked far more often than a choice list is written; an
+        empty question here would be the creator's first impression of it.
+        """
+        Question.objects.create(
+            survey_section=self.section, name='How was it?', code='q_s',
+            input_type='rating', order_number=1, display_style='stars', choices=None,
+        )
+
+        content = self.client.get(f'/surveys/{self.survey.uuid}/s1/').content.decode()
+
+        self.assertEqual(content.count('rating-stars__star'), 5)
+        for step in ('1', '2', '3', '4', '5'):
+            self.assertIn(f'value="{step}"', content)
+
+    def test_the_fallback_is_not_written_to_the_question(self):
+        """
+        GIVEN a stars question rendered with the default five steps
+        WHEN the question is re-read from the database
+        THEN its choices are still unset — the default is resolved, not saved
+        """
+        question = Question.objects.create(
+            survey_section=self.section, name='How was it?', code='q_s2',
+            input_type='rating', order_number=1, display_style='stars', choices=None,
+        )
+
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+
+        question.refresh_from_db()
+        self.assertIsNone(question.choices)
+        self.assertEqual(len(question.star_choices()), 5)
+
+    def test_defined_choices_win_over_the_default(self):
+        """
+        GIVEN a stars question whose creator defined three named steps
+        WHEN it renders
+        THEN three stars render and the names are kept
+        """
+        Question.objects.create(
+            survey_section=self.section, name='How was it?', code='q_s3',
+            input_type='rating', order_number=1, display_style='stars',
+            choices=[{"code": 1, "name": "meh"}, {"code": 2, "name": "fine"},
+                     {"code": 3, "name": "great"}],
+        )
+
+        content = self.client.get(f'/surveys/{self.survey.uuid}/s1/').content.decode()
+
+        self.assertEqual(content.count('rating-stars__star'), 3)
+        self.assertIn('great', content)
+
+    def test_a_star_answer_exports_as_its_number(self):
+        """
+        GIVEN a stars question using the default numbered steps
+        WHEN a respondent picks the fourth star and the creator exports
+        THEN the answer reads as 4, not as a blank cell
+        """
+        Question.objects.create(
+            survey_section=self.section, name='How was it?', code='q_s4',
+            input_type='rating', order_number=1, display_style='stars',
+            choices=[{"code": i, "name": str(i)} for i in range(1, 6)],
+        )
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        self.client.post(f'/surveys/{self.survey.uuid}/s1/', {'q_s4': '4'})
+
+        self.client.login(username='starcount', password='pass')
+        response = self.client.get(f'/surveys/{self.survey.uuid}/download')
+        with zipfile.ZipFile(BytesIO(response.content), 'r') as zf:
+            csv_name = [n for n in zf.namelist() if n.endswith('.csv')][0]
+            csv_text = zf.read(csv_name).decode('utf-8')
+
+        self.assertIn('How was it?', csv_text)
+        self.assertIn('4', csv_text.split('\n')[1])
+
+    def test_live_preview_shows_five_stars_for_a_fresh_draft(self):
+        """
+        GIVEN the question dialog with stars just picked and no choices typed
+        WHEN the live preview renders the draft
+        THEN it already shows five stars
+        """
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/question-preview/',
+            {'input_type': 'rating', 'name': 'How was it?', 'display_style': 'stars',
+             'choices_json': ''},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content.decode().count('rating-stars__star'), 5)
+
+
+class QuestionSubtextRenderingTest(TestCase):
+    """Where a question's subtext reaches the respondent, per input type.
+
+    A table test on purpose: the bug this fixes existed because nothing
+    asserted the mapping, so a type could be added — or a branch changed —
+    and quietly stop delivering text a creator wrote.
+    """
+
+    # input_type -> (name shown to respondent, subtext shown to respondent)
+    EXPECTED = {
+        'text':        (True, True),
+        'text_line':   (True, True),
+        'number':      (True, True),
+        'choice':      (True, True),
+        'multichoice': (True, True),
+        'range':       (True, True),
+        'rating':      (True, True),
+        'datetime':    (True, True),
+        'point':       (True, True),
+        'line':        (True, True),
+        'polygon':     (True, True),
+        # The name identifies the block in the editor and is used as an
+        # internal label in published surveys; rendering it would put
+        # "html_block_1" on the respondent's screen.
+        'html':        (False, True),
+        'image':       (False, True),
+    }
+
+    def setUp(self):
+        self.org = _make_org('SubtextOrg')
+        self.user = User.objects.create_user('subtextuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='subtext_survey', organization=self.org, created_by=self.user,
+            status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        choice_types = ('choice', 'multichoice', 'range', 'rating')
+        for order, (input_type, _expected) in enumerate(self.EXPECTED.items(), start=1):
+            Question.objects.create(
+                survey_section=self.section, name=f'NAME_{input_type.upper()}',
+                code=f'q_{input_type}', input_type=input_type, order_number=order,
+                subtext=f'SUBTEXT_{input_type.upper()}',
+                choices=[{"code": c, "name": str(c)} for c in (1, 2, 3)]
+                        if input_type in choice_types else None,
+            )
+
+    def test_every_type_delivers_what_the_table_says(self):
+        """
+        GIVEN one question of every input type, each with a name and subtext
+        WHEN a respondent opens the section
+        THEN name and subtext appear exactly where the table says they should
+        """
+        content = self.client.get(f'/surveys/{self.survey.uuid}/s1/').content.decode()
+
+        for input_type, (name_shown, subtext_shown) in self.EXPECTED.items():
+            with self.subTest(input_type=input_type):
+                self.assertEqual(
+                    f'NAME_{input_type.upper()}' in content, name_shown,
+                    f'{input_type}: name should {"" if name_shown else "not "}render',
+                )
+                self.assertEqual(
+                    f'SUBTEXT_{input_type.upper()}' in content, subtext_shown,
+                    f'{input_type}: subtext should {"" if subtext_shown else "not "}render',
+                )
+
+    def test_subtext_sits_between_the_question_and_its_input(self):
+        """
+        GIVEN a text question with subtext
+        WHEN it renders
+        THEN the subtext comes after the question text and before the input,
+             which is where a respondent reads it before answering
+        """
+        content = self.client.get(f'/surveys/{self.survey.uuid}/s1/').content.decode()
+
+        name_at = content.index('NAME_TEXT')
+        subtext_at = content.index('SUBTEXT_TEXT')
+        # The input's id, not its name: the card wrapper carries
+        # data-field-name="q_text", which contains name="q_text" as a
+        # substring and matches earlier than the input itself.
+        input_at = content.index('id="id_q_text"')
+
+        self.assertLess(name_at, subtext_at)
+        self.assertLess(subtext_at, input_at)
+
+    def test_the_editor_preview_shows_subtext_too(self):
+        """
+        GIVEN the question dialog's live preview
+        WHEN a draft carrying subtext is previewed
+        THEN the preview shows it, so the dialog and the survey agree
+        """
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/question-preview/',
+            {'input_type': 'text', 'name': 'How was it?', 'subtext': 'One line, please'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('One line, please', response.content.decode())
+
+    def test_a_question_without_subtext_renders_no_empty_line(self):
+        """
+        GIVEN a question whose creator left subtext blank
+        WHEN it renders
+        THEN no subtext element is emitted for it
+        """
+        Question.objects.all().delete()
+        Question.objects.create(
+            survey_section=self.section, name='Just a question', code='q_bare',
+            input_type='text', order_number=1, subtext='',
+        )
+
+        content = self.client.get(f'/surveys/{self.survey.uuid}/s1/').content.decode()
+
+        self.assertIn('Just a question', content)
+        self.assertNotIn('question-card__subtext', content)

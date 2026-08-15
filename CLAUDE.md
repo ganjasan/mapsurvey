@@ -118,6 +118,34 @@ stored whole-property number reads higher than the GSC UI's total for the same w
 `DemoOpen` (forward-only; the user FK lives there and never on `SurveySession`, which must not link
 customers' respondents to platform accounts).
 
+**Internal product analytics (PostHog)**: client-side snippet in
+`survey/templates/partials/_analytics.html`, gated by `POSTHOG_PROJECT_KEY` (empty default = nothing
+renders, which is what keeps tests, local dev and PR previews out of the production project) and
+`POSTHOG_API_HOST` (Cloud EU). It measures **us**: which creator-facing screens get used, where
+activation leaks. Plausible still runs alongside it and is not being replaced yet.
+
+Two rules that are easy to get wrong:
+
+- **PostHog never loads on respondent surfaces.** `POSTHOG_EXCLUDED_PREFIXES` (`/surveys/`, `/r/`)
+  is enforced in `survey.context_processors.analytics`, *not* by omitting the include from
+  `base_survey_template.html` — an omission would be invisible in review and a new base template
+  would inherit whatever its author happened to copy.
+- **`SurveyEvent`/`TrackedLink`/`survey/events.py`/`PerformanceAnalyticsService` are a different
+  system and must never be folded into PostHog.** They measure our *customers'* respondents on the
+  customer's behalf (section funnel, referrer buckets, UTM campaigns, page load) and are a feature we
+  sell. That data stays in our database. The two answer superficially similar questions about
+  entirely different people.
+
+**Error tracking (PostHog, same key)**: three capture paths — Django view exceptions via
+`posthog.integrations.django.PosthogContextMiddleware` (in `MIDDLEWARE` after auth), Celery task
+failures via the `task_failure` receiver in `mapsurvey/celery.py`, and client-side JS exception
+autocapture (a PostHog project setting, not a template change). Unset key = the client is explicitly
+disabled in `survey.apps.SurveyConfig`. Errors on `/surveys/`/`/r/` ARE captured (they are our
+defects) but scrubbed by `_posthog_scrub_tags` in `settings.py` — no respondent IP/user-agent, URL
+truncated to the prefix; `/admin/` and `/__debug__/` are not captured at all. The `posthog` package
+is pinned `~=6.9`: 7.x needs Python ≥3.10, and 6.7.5–6.7.13 shipped with silently broken Django
+exception capture — canary tests in `PostHogErrorTrackingTest` guard both directions.
+
 ### URL Structure
 
 - `/` - Redirects to login or editor

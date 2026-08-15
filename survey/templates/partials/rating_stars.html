@@ -1,0 +1,22 @@
+{% load question_utils %}
+{% comment %}
+Star rating: real radios with icons as their labels, no JavaScript.
+
+The choices are emitted in REVERSE order and the row is flipped back with
+flex-direction: row-reverse. That is what lets plain CSS fill "this star and
+every lower one" — a sibling selector can only reach elements that come later
+in the DOM, and with the order reversed those are exactly the stars to the
+left on screen. Read the CSS block and this loop together; changing either one
+alone breaks the fill.
+{% endcomment %}
+<div class="rating-stars" style="--star-color: {{ field|star_color }};">
+    <div class="rating-stars__row">
+        {% for radio in field reversed %}
+        <label class="rating-stars__star" title="{{ radio.choice_label }}">
+            {{ radio.tag }}
+            <i class="{{ field|star_icon }}" aria-hidden="true"></i>
+            <span class="sr-only">{{ radio.choice_label }}</span>
+        </label>
+        {% endfor %}
+    </div>
+</div>

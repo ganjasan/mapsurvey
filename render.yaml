@@ -26,6 +26,19 @@ services:
     plan: starter
     dockerfilePath: ./Dockerfile
     dockerContext: .
+    # Migrations run here — after the new image is built, before the running instance is
+    # replaced — so schema changes land while the current version is still serving, and a
+    # failing migration aborts the deploy instead of taking the site down. The service
+    # mounts a disk, which rules out Render's zero-downtime deploy (a disk attaches to one
+    # instance at a time), so everything that can leave the start path has to.
+    #
+    # Only the web service gets this: the worker and the cron share the image and must not
+    # migrate.
+    #
+    # It has to be a script, not an inline command list: Render does NOT run this through a
+    # shell, so `migrate && createsuperuser || true` was parsed as arguments to migrate and
+    # the pre-deploy died with "unrecognized arguments: manage.py createsuperuser || true".
+    preDeployCommand: "sh ./predeploy.sh"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -117,6 +130,13 @@ services:
         value: "4"
       - key: GUNICORN_TIMEOUT
         value: "60"
+      # Internal product analytics. Deliberately WITHOUT previewEnvRenderServiceName:
+      # inheriting the production key would make every PR preview write test traffic
+      # into the real project. Previews leave it unset, and unset renders no snippet.
+      - key: POSTHOG_PROJECT_KEY
+        sync: false
+      - key: POSTHOG_API_HOST
+        sync: false
     disk:
       name: media-storage
       mountPath: /home/app/web/mediafiles
@@ -151,6 +171,12 @@ services:
           type: redis
           name: mapsurvey-redis
           property: connectionString
+      # Error tracking: the task_failure receiver in mapsurvey/celery.py reports
+      # failed tasks. Same no-preview-inheritance rule as on the web service.
+      - key: POSTHOG_PROJECT_KEY
+        sync: false
+      - key: POSTHOG_API_HOST
+        sync: false
       - key: DEFAULT_FROM_EMAIL
         sync: false
         previewEnvRenderServiceName: mapsurvey

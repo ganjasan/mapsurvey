@@ -1,4 +1,5 @@
 {% extends "editor/editor_base.html" %}
+{% load static %}
 
 {% block page_title %}New Survey{% endblock %}
 
@@ -7,6 +8,7 @@
 {% endblock %}
 
 {% block extra_head %}
+<script src="{% static 'js/components/map_place_search.js' %}"></script>
 <style>
   /* The whole page is meant to fit one desktop screen: the creator should see
      the brief, the map they are framing and both buttons without scrolling.
@@ -45,14 +47,38 @@
     color: var(--accent); font-size: 32px;
     text-shadow: 0 1px 3px rgba(0,0,0,0.4);
   }
-  /* Place search above the map */
-  .map-search { position: relative; margin-bottom: 0.5rem; }
-  .map-search i { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 0.8rem; pointer-events: none; }
-  .map-search input {
-    width: 100%; padding: 0.45rem 0.6rem 0.45rem 2rem;
-    border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; background: #fff;
+  /* Place search above the map — the shared control (map_place_search.js),
+     rendered into the DOM here rather than mounted on the map. */
+  .create-map-search { margin-bottom: 0.5rem; }
+  .create-map-search .map-search { width: 100%; max-width: none; }
+  .create-map-search .map-search i { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 0.8rem; pointer-events: none; }
+  .create-map-search .map-search input {
+    width: 100%; height: auto; padding: 0.45rem 0.6rem 0.45rem 2rem;
+    border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; background: #fff; box-shadow: none;
   }
-  .map-search input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
+  .create-map-search .map-search input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
+  .create-map-search .map-search-results {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 1000;
+    margin: 0; padding: 4px 0; list-style: none; background: #fff;
+    border: 1px solid var(--border-color); border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.16); max-height: 280px; overflow-y: auto;
+  }
+  .create-map-search .map-search-result { display: flex; flex-direction: column; gap: 1px; padding: 7px 12px; cursor: pointer; }
+  .create-map-search .map-search-result.active,
+  .create-map-search .map-search-result:hover { background: var(--accent-light); }
+  .create-map-search .map-search-name { font-size: 0.85rem; color: #374151; }
+  .create-map-search .map-search-context { font-size: 0.76rem; color: #6b7280; }
+  .create-map-search .map-search-message { padding: 8px 12px; font-size: 0.82rem; color: #6b7280; }
+  .create-map-search .map-search-category {
+    display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 9px;
+    background: #f3f4f6; color: #6b7280; font-size: 0.68rem; line-height: 1.5; vertical-align: middle;
+  }
+  .create-map-search .map-search-attribution {
+    padding: 5px 12px 3px; border-top: 1px solid var(--border-color);
+    font-size: 0.66rem; color: #9ca3af; cursor: default;
+  }
+  .create-map-search .map-search-attribution a { color: inherit; text-decoration: none; }
+  .create-map-search .map-search-attribution a:hover { text-decoration: underline; }
   /* On-map base-map dropdown */
   .bm-dropdown { position: relative; font-size: 0.82rem; }
   .bm-toggle {
@@ -230,11 +256,7 @@
           <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">This is <strong>exactly</strong> what respondents see when they open the survey. Drag, zoom, search, or pick a base map (top-right) to frame it — the pin marks the centre they'll land on.</div>
           <input type="hidden" name="default_basemap" id="create-default-basemap" value="streets">
 
-          <div class="map-search">
-            <i class="fas fa-search"></i>
-            <input type="text" id="create-map-search" placeholder="Search for a place — city, address, landmark…"
-                   autocomplete="off" aria-label="Search the map for a place">
-          </div>
+          <div class="create-map-search" id="create-map-search"></div>
           <div class="create-map-wrap">
             <div id="create-map-picker" class="create-map"></div>
             <div class="map-center-pin" aria-hidden="true"><i class="fas fa-map-marker-alt"></i></div>
@@ -386,28 +408,14 @@
         });
         map.addControl(new LocateControl());
 
-        // ── Place search (OpenStreetMap Nominatim — no API key) ──
-        var searchInput = document.getElementById('create-map-search');
-        function geocode() {
-            var q = searchInput.value.trim();
-            if (!q) return;
-            coordsEl.textContent = 'Searching…';
-            fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q),
-                  { headers: { 'Accept': 'application/json' } })
-                .then(function(r) { return r.json(); })
-                .then(function(results) {
-                    if (!results || !results.length) {
-                        coordsEl.textContent = 'No place found for “' + q + '”.';
-                        return;
-                    }
-                    var r = results[0];
-                    userInteracted = true;
-                    map.setView([parseFloat(r.lat), parseFloat(r.lon)], 13); // moveend → sync
-                })
-                .catch(function() { coordsEl.textContent = 'Search failed — check your connection and try again.'; });
-        }
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') { e.preventDefault(); geocode(); }
+        // ── Place search (shared control — same geocoder respondents get) ──
+        // The control only moves the map; the start position follows because
+        // the centre IS the start position (moveend → syncFromCentre).
+        MapPlaceSearch.attach(map, {
+            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
+            container: document.getElementById('create-map-search'),
+            labels: { placeholder: 'Search for a place — city, address, landmark…' },
+            onSelect: function() { userInteracted = true; }
         });
 
         setTimeout(function() { map.invalidateSize(); }, 200);

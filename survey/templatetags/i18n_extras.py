@@ -39,5 +39,6 @@ def i18n_json():
         # Geocoding search
         'searchAddress': _('Search address...'),
         'noResultsFound': _('No results found'),
+        'searchFailed': _('Search failed — check your connection and try again.'),
     }
     return mark_safe(json.dumps(translations, ensure_ascii=False))

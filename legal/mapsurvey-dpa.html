@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mapsurvey — Data Processing Agreement</title>
+<style>
+  @page { size: A4; margin: 22mm 20mm; }
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.55;
+    color: #2b3440;
+  }
+  h1 {
+    font-size: 21pt;
+    text-align: center;
+    color: #1c3050;
+    margin: 0 0 6pt;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 8.5pt;
+    color: #6b7684;
+    margin: 0 0 26pt;
+  }
+  h2 {
+    font-size: 12.5pt;
+    color: #1c3050;
+    margin: 22pt 0 8pt;
+    padding-bottom: 5pt;
+    border-bottom: 1px solid #d7dce3;
+  }
+  h3 { font-size: 10.5pt; color: #1c3050; margin: 14pt 0 5pt; }
+  p { margin: 0 0 9pt; }
+  ul { margin: 0 0 9pt; padding-left: 16pt; }
+  li { margin-bottom: 3pt; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 9pt 0 12pt;
+    font-size: 9pt;
+  }
+  th {
+    background: #eef1f5;
+    color: #1c3050;
+    text-align: left;
+    font-weight: 600;
+  }
+  th, td {
+    border: 1px solid #d7dce3;
+    padding: 6pt 7pt;
+    vertical-align: top;
+  }
+  .note {
+    background: #f7f9fb;
+    border-left: 3px solid #1c3050;
+    padding: 9pt 11pt;
+    margin: 10pt 0 12pt;
+  }
+  .field { margin: 0 0 7pt; }
+  .rule {
+    display: inline-block;
+    border-bottom: 1px solid #2b3440;
+    min-width: 62mm;
+  }
+  .sig-table { border: none; margin-top: 18pt; }
+  .sig-table td { border: none; width: 50%; padding: 0 12pt 0 0; vertical-align: top; }
+  .sig-line { border-bottom: 1px solid #2b3440; height: 26pt; margin-bottom: 3pt; }
+  .sig-label { font-size: 8.5pt; color: #6b7684; margin-bottom: 16pt; }
+  footer {
+    margin-top: 26pt;
+    padding-top: 10pt;
+    border-top: 1px solid #d7dce3;
+    text-align: center;
+    font-size: 8pt;
+    color: #6b7684;
+  }
+</style>
+</head>
+<body>
+
+<!--
+  DRAFT — NOT PUBLISHED. Withdrawn from /trust/ on 2026-08-15.
+
+  Open questions for legal review, in rough order of how badly they need answering:
+
+  1. Governing law and jurisdiction (section 8). The published v1.0 submitted to German law and
+     the exclusive jurisdiction of the courts of Berlin, while the Processor is an individual
+     operating from Kyrgyzstan. Nobody chose that deliberately. Decide what is actually
+     appropriate and enforceable before this is offered for signature again.
+  2. Whether the Processor should be a natural person at all, or a legal entity. Signing Article 28
+     agreements as an individual carries personal liability.
+  3. Whether Standard Contractual Clauses need to be annexed, given section 5.5 now admits
+     transfers to the United States.
+  4. Whether section 5.6 (assistance with data subject rights) and 5.7 (breach notification within
+     "undue delay") commit to timelines a one-person operation can meet.
+
+  Facts in this draft were verified against the running system on 2026-08-15: hosting region via
+  the Render API, Cloudflare via response headers, Plausible via the production page source,
+  email host via EMAIL_HOST. Re-verify before publishing — they drift.
+
+  Rebuild the PDF with scripts/build_dpa.sh.
+-->
+
+<h1>Data Processing Agreement</h1>
+<p class="subtitle">Pursuant to Article 28 of the General Data Protection Regulation (EU) 2016/679</p>
+<p class="subtitle" style="color:#a33; font-weight:600; letter-spacing:.04em">
+  DRAFT — PENDING LEGAL REVIEW. NOT FOR SIGNATURE.
+</p>
+
+<h2>1. Parties</h2>
+<p>This Data Processing Agreement ("DPA") is entered into between:</p>
+<p><strong>Data Controller ("Controller"):</strong></p>
+<p class="field">Organization: <span class="rule">&nbsp;</span></p>
+<p class="field">Address: <span class="rule">&nbsp;</span></p>
+<p class="field">Contact person: <span class="rule">&nbsp;</span></p>
+<p class="field">Email: <span class="rule">&nbsp;</span></p>
+<p><strong>Data Processor ("Processor"):</strong><br>
+Mapsurvey, operated by Artem Konuchov<br>
+Email: konuchovartem@mapsurvey.org</p>
+
+<h2>2. Subject Matter and Duration</h2>
+<p>The Processor processes personal data on behalf of the Controller in connection with the
+provision of the Mapsurvey platform — an open-source geospatial survey tool that enables the
+Controller to create, distribute, and analyze map-based surveys.</p>
+<p>This DPA shall remain in effect for the duration of the Controller's use of the Mapsurvey
+platform and shall automatically terminate upon deletion of the Controller's account and all
+associated data.</p>
+<p>This DPA governs the <strong>hosted service operated by the Processor at mapsurvey.org</strong>.
+Where the Controller self-hosts Mapsurvey on its own infrastructure, the Processor processes no
+personal data on the Controller's behalf and this DPA does not apply.</p>
+
+<h2>3. Nature and Purpose of Processing</h2>
+<p>The Processor processes data solely for the purpose of:</p>
+<ul>
+  <li>Hosting and storing surveys created by the Controller</li>
+  <li>Collecting and storing survey responses submitted by respondents</li>
+  <li>Providing data export functionality (GeoJSON, CSV)</li>
+  <li>Maintaining user accounts for the Controller's authorized personnel</li>
+  <li>Providing the Controller with aggregate response and traffic reports for its own surveys</li>
+</ul>
+
+<h2>4. Types of Personal Data</h2>
+<table>
+  <tr><th>Category</th><th>Data Elements</th><th>Data Subjects</th></tr>
+  <tr>
+    <td>Account data</td>
+    <td>Email address, username, hashed password</td>
+    <td>Survey creators (Controller's staff)</td>
+  </tr>
+  <tr>
+    <td>Survey responses</td>
+    <td>Text answers, numeric values, geographic coordinates (points, lines, polygons), uploaded images</td>
+    <td>Survey respondents</td>
+  </tr>
+  <tr>
+    <td>Technical data</td>
+    <td>Non-persistent session identifier; browser user-agent string; the referring page and any UTM
+        campaign parameters present in the link the respondent followed. No IP addresses are stored
+        with survey responses.</td>
+    <td>Survey respondents</td>
+  </tr>
+  <tr>
+    <td>Security and audit data</td>
+    <td>IP address, recorded when a registration attempt triggers an anti-abuse defense, and for
+        administrative actions in the audit log. Not linked to survey responses.</td>
+    <td>Survey creators and registration attempts</td>
+  </tr>
+</table>
+
+<div class="note">
+  <p><strong>Important note:</strong> Survey respondents are not required to provide any personal
+  data, and are not asked for a name, email address or account. The platform does not store
+  respondents' IP addresses with their responses.</p>
+  <p>It does record, per survey session, the browser user-agent string and the page the respondent
+  arrived from, so that the Controller can see completion and traffic reports for its own survey.
+  Depending on the circumstances this technical data may constitute personal data under the GDPR.</p>
+  <p style="margin-bottom:0">Whether the survey responses themselves constitute personal data
+  depends entirely on the questions designed by the Controller.</p>
+</div>
+
+<h2>5. Obligations of the Processor</h2>
+
+<h3>5.1 Processing Instructions</h3>
+<p>The Processor shall process personal data only on documented instructions from the Controller,
+including with regard to transfers of personal data to a third country, unless required to do so by
+Union or Member State law.</p>
+
+<h3>5.2 Confidentiality</h3>
+<p>The Processor shall ensure that persons authorized to process the personal data have committed
+themselves to confidentiality or are under an appropriate statutory obligation of confidentiality.</p>
+
+<h3>5.3 Security Measures</h3>
+<p>The Processor implements the following technical and organizational measures:</p>
+<ul>
+  <li>Encryption in transit (TLS/HTTPS for all connections)</li>
+  <li>Encrypted database connections (PostgreSQL with TLS)</li>
+  <li>Password hashing using PBKDF2 with SHA-256</li>
+  <li>CSRF, XSS, SQL injection, and clickjacking protection (Django security framework)</li>
+  <li>Access control: role-based permissions for survey management</li>
+  <li>Registration anti-abuse defenses: honeypot field, per-IP rate limiting, and a CAPTCHA challenge,
+      with an audit log of blocked attempts</li>
+  <li>No advertising scripts, ad networks, or cross-site profiling. Personal data is never sold or
+      shared for the purposes of any third party</li>
+  <li>Regular security updates and dependency patching</li>
+</ul>
+
+<h3>5.4 Sub-processors</h3>
+<p>The Processor engages the following sub-processors:</p>
+<table>
+  <tr><th>Sub-processor</th><th>Purpose</th><th>Location</th><th>Data subjects</th></tr>
+  <tr>
+    <td>Render Services, Inc.</td>
+    <td>Cloud hosting, application servers, PostgreSQL database, uploaded media storage</td>
+    <td>Oregon, United States</td>
+    <td>Creators and respondents</td>
+  </tr>
+  <tr>
+    <td>Cloudflare, Inc.</td>
+    <td>CDN and reverse proxy in front of mapsurvey.org; bot-protection challenge on account
+        registration</td>
+    <td>United States, global edge network</td>
+    <td>Creators and respondents</td>
+  </tr>
+  <tr>
+    <td>Mapbox, Inc.</td>
+    <td>Base map tiles and place search, requested directly by the respondent's browser</td>
+    <td>United States</td>
+    <td>Respondents</td>
+  </tr>
+  <tr>
+    <td>Plausible Insights OÜ</td>
+    <td>Cookieless aggregate visit analytics. Sets no cookies and builds no profiles of individuals</td>
+    <td>European Union</td>
+    <td>Creators and respondents</td>
+  </tr>
+  <tr>
+    <td>PostHog, Inc. (EU Cloud)</td>
+    <td>Product analytics on the Processor's own creator-facing pages (marketing, account, editor).
+        Enforced never to load on survey pages or public results pages</td>
+    <td>European Union (Frankfurt)</td>
+    <td>Creators only</td>
+  </tr>
+  <tr>
+    <td>Namecheap, Inc. (Private Email)</td>
+    <td>Transactional email to creators — account activation and password reset</td>
+    <td>United States</td>
+    <td>Creators only</td>
+  </tr>
+</table>
+
+<p>In addition, survey pages load interface assets (map tiles, mapping and interface JavaScript
+libraries, icon and web fonts) from public content delivery networks. Those providers receive the
+respondent's IP address and user-agent as an unavoidable consequence of serving the request, but
+receive no survey content. A self-hosted deployment can serve these assets from the Controller's own
+infrastructure.</p>
+
+<p>The Processor shall inform the Controller of any intended changes concerning the addition or
+replacement of sub-processors, giving the Controller the opportunity to object to such changes.</p>
+
+<h3>5.5 International Transfers</h3>
+<p>The hosted service runs in the United States (Render's Oregon region), and several sub-processors
+listed above are established in the United States. <strong>Using the hosted service therefore
+involves transfers of personal data outside the European Economic Area.</strong></p>
+<p>The Processor does not currently offer an EU-region deployment of the hosted service. Controllers
+subject to data-residency requirements that cannot accommodate such transfers should self-host
+Mapsurvey within their own jurisdiction; the platform is licensed under AGPLv3 and no functionality
+is withheld from the self-hosted build.</p>
+<p>The Controller should review the data processing terms and transfer safeguards published by each
+sub-processor named in section 5.4 and satisfy itself that they meet its own requirements before
+processing personal data through the hosted service.</p>
+
+<h3>5.6 Data Subject Rights</h3>
+<p>The Processor shall assist the Controller in responding to requests from data subjects exercising
+their rights under GDPR (access, rectification, erasure, restriction, portability, objection), taking
+into account the nature of the processing.</p>
+
+<h3>5.7 Data Breach Notification</h3>
+<p>The Processor shall notify the Controller without undue delay after becoming aware of a personal
+data breach. The notification shall include:</p>
+<ul>
+  <li>A description of the nature of the breach</li>
+  <li>The categories and approximate number of data subjects concerned</li>
+  <li>The likely consequences of the breach</li>
+  <li>The measures taken or proposed to address the breach</li>
+</ul>
+
+<h3>5.8 Deletion and Return of Data</h3>
+<p>Upon termination of this agreement or upon request by the Controller, the Processor shall delete
+all personal data processed on behalf of the Controller, unless Union or Member State law requires
+storage of the personal data. The Controller may export all data at any time using the built-in
+export functionality.</p>
+<p>Deletion within the product is performed in two stages: deleted surveys and responses are first
+removed from the Controller's account, then permanently purged by a scheduled job. Account deletion
+is carried out on request to the Processor at the address in section 1.</p>
+
+<h2>6. Obligations of the Controller</h2>
+<p>The Controller shall:</p>
+<ul>
+  <li>Ensure a lawful basis exists for any personal data collected through surveys</li>
+  <li>Inform respondents about data processing where required by applicable law, including the
+      transfers described in section 5.5</li>
+  <li>Design surveys in compliance with data minimization principles</li>
+  <li>Not use the platform to collect special categories of personal data (Article 9 GDPR) without
+      appropriate safeguards</li>
+</ul>
+
+<h2>7. Audits</h2>
+<p>The Processor shall make available to the Controller all information necessary to demonstrate
+compliance with the obligations laid down in Article 28 GDPR. The Processor shall allow for and
+contribute to audits, including inspections, conducted by the Controller or another auditor mandated
+by the Controller. As Mapsurvey is open-source software, the Controller may audit the codebase at any
+time via the public GitHub repository.</p>
+
+<h2>8. Governing Law</h2>
+<p>This DPA shall be governed by the laws of the Federal Republic of Germany, without regard to its
+conflict of law provisions. The courts of Berlin, Germany shall have exclusive jurisdiction.</p>
+
+<h2>9. Signatures</h2>
+<table class="sig-table">
+  <tr>
+    <td>
+      <p><strong>Data Controller</strong></p>
+      <div class="sig-line"></div>
+      <p class="sig-label">Name, Title</p>
+      <div class="sig-line"></div>
+      <p class="sig-label">Signature</p>
+      <div class="sig-line"></div>
+      <p class="sig-label">Date</p>
+    </td>
+    <td>
+      <p><strong>Data Processor</strong></p>
+      <p>Artem Konuchov<br>Mapsurvey</p>
+      <div class="sig-line"></div>
+      <p class="sig-label">Signature</p>
+      <div class="sig-line"></div>
+      <p class="sig-label">Date</p>
+    </td>
+  </tr>
+</table>
+
+<footer>
+  This document is a template provided by Mapsurvey for informational purposes. It should be reviewed
+  by qualified legal counsel before execution. Version 1.1 — August 2026.
+</footer>
+
+</body>
+</html>

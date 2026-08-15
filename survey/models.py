@@ -118,7 +118,20 @@ DISPLAY_STYLE_CHOICES = (
     ("default", _("Survey default")),
     ("scale_strip", _("Compact scale")),
     ("list_pips", _("Labeled list")),
+    ("stars", _("Stars")),
 )
+
+# What a star rating looks like when its creator set neither icon nor colour.
+# Resolved at render time rather than written into the database, so no existing
+# rating question changes until someone opts into the style.
+DEFAULT_STAR_ICON = "fas fa-star"
+DEFAULT_STAR_COLOR = "#f5b301"
+
+# A star rating that was never given choices still has to render something,
+# and "five stars" is what everyone means by a star rating. The steps are
+# numbered rather than named: a label per star is meaningless for this style,
+# and the number is what an export should show.
+DEFAULT_STAR_COUNT = 5
 
 VALIDATION_STATUS_CHOICES = (
     ('', 'No status'),
@@ -358,7 +371,7 @@ class SurveyHeader(models.Model):
 
     def get_default_rating_display_style(self):
         value = (self.style_settings or {}).get('rating_display_style')
-        return value if value in ('scale_strip', 'list_pips') else 'scale_strip'
+        return value if value in ('scale_strip', 'list_pips', 'stars') else 'scale_strip'
 
     def can_accept_responses(self):
         return self.status in ("testing", "published")
@@ -627,7 +640,9 @@ class Question(models.Model):
         return Answer.objects.filter(question_id__in=self.descendant_question_ids()).count()
 
     def get_translated_name(self, lang):
-        if not lang:
+        # Unsaved instances (the editor's live-preview drafts) have no
+        # translations relation to query.
+        if not lang or self.pk is None:
             return self.name
         try:
             translation = self.translations.get(language=lang)
@@ -636,13 +651,41 @@ class Question(models.Model):
             return self.name
 
     def get_translated_subtext(self, lang):
-        if not lang:
+        if not lang or self.pk is None:
             return self.subtext
         try:
             translation = self.translations.get(language=lang)
             return translation.subtext if translation.subtext else self.subtext
         except QuestionTranslation.DoesNotExist:
             return self.subtext
+
+    def star_choices(self):
+        """Choices a star rating lays out, defaulting to five numbered steps.
+
+        Kept out of the database: a question set to stars without choices gets
+        1..5 at render time, so the style works the moment it is picked and no
+        existing question is rewritten. Names are the numbers themselves, which
+        is what a star answer should read as in an export.
+        """
+        if self.choices:
+            return self.choices
+        return [{"code": i, "name": str(i)} for i in range(1, DEFAULT_STAR_COUNT + 1)]
+
+    def star_icon(self):
+        """Icon a star rating draws, falling back to a solid star."""
+        return (self.icon_class or "").strip() or DEFAULT_STAR_ICON
+
+    def star_color(self):
+        """Colour a star rating draws in, falling back to gold.
+
+        `color` defaults to #000000 on every question, so black is read as
+        "never set" rather than as a deliberate choice — black stars are not
+        what an untouched question should render, and back-filling gold onto
+        existing questions would be a migration that changes questions nobody
+        asked to change. A creator who really wants black can pick #000001.
+        """
+        value = (self.color or "").strip()
+        return value if value and value.lower() != "#000000" else DEFAULT_STAR_COLOR
 
     def get_choice_name(self, code, lang=None):
         for choice in self.choices or []:

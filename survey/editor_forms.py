@@ -73,7 +73,8 @@ class SurveyBriefForm(forms.Form):
 
 class SurveyHeaderForm(forms.ModelForm):
     default_rating_display_style = forms.ChoiceField(
-        choices=(('scale_strip', 'Compact scale'), ('list_pips', 'Labeled list')),
+        choices=(('scale_strip', 'Compact scale'), ('list_pips', 'Labeled list'),
+                 ('stars', 'Stars')),
         required=False,
         widget=forms.RadioSelect(),
         label='Rating questions',
@@ -171,6 +172,11 @@ class QuestionForm(forms.ModelForm):
     def __init__(self, *args, is_subquestion=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['display_style'].required = False
+        # A new question starts on a concrete type instead of the "---------"
+        # empty option, so the picker cards and the live preview have a
+        # selection to agree on from the first render.
+        if not self.instance.pk:
+            self.initial.setdefault('input_type', 'text')
         if is_subquestion:
             field = self.fields['input_type']
             field.choices = [

@@ -11,8 +11,10 @@
     <h2>{% trans "Activation Failed" %}</h2>
     {% if activation_error.message %}<p>{{ activation_error.message }}</p>{% endif %}
     <p>{% trans "This activation link may have expired or been used already. You can request a new one." %}</p>
-    {# Deliberately NOT "try registering again": the inactive account still
-       holds this username and email, so re-registering can only fail. #}
+    {% comment %}
+    Deliberately NOT "try registering again": the inactive account still
+    holds this username and email, so re-registering can only fail.
+    {% endcomment %}
     <div class="auth-links" style="margin-top:1.25rem;">
         <a href="{% url 'django_registration_resend_activation' %}">{% trans "Send me a new activation link" %}</a>
     </div>

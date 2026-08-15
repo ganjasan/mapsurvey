@@ -132,6 +132,7 @@ class ShowImageWidget(widgets.Widget):
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         context['widget']['image_source'] = context['widget']['attrs']['image_source']
+        context['widget']['subtitle'] = context['widget']['attrs'].get('subtitle', '')
 
         return context
 
@@ -156,14 +157,16 @@ class LeafletDrawButtonField(forms.Field):
         return attrs
 
 class ShowImageField(forms.Field):
-    def __init__(self, *, image_source, **kwargs):
+    def __init__(self, *, image_source, subtitle="", **kwargs):
         self.image_source = image_source
+        self.subtitle = subtitle
 
         super().__init__(**kwargs)
 
     def widget_attrs(self, widget):
         attrs = super().widget_attrs(widget)
         attrs['image_source'] = self.image_source
+        attrs['subtitle'] = self.subtitle
 
         return attrs
 
@@ -171,24 +174,18 @@ class SurveySectionAnswerForm(forms.Form):
 
     # Question types whose rendering the creator can pick. Membership, rather
     # than a chain of equality tests, so the next type to gain display styles
-    # is one entry here and in the editor's gate.
-    DISPLAY_STYLE_TYPES = ('rating', 'range')
+    # is one entry here and in the editor's gate. `range` was briefly in this
+    # list and is deliberately out again: a range is the slider — a labelled
+    # discrete scale is what `rating` is for. Stored display_style values on
+    # range questions are ignored, not rewritten.
+    DISPLAY_STYLE_TYPES = ('rating',)
 
     # Styles that lay out one element per choice, and so need choices to exist.
-    CHOICE_BASED_STYLES = ('scale_strip', 'list_pips')
+    CHOICE_BASED_STYLES = ('scale_strip', 'list_pips', 'stars')
 
     @classmethod
     def resolve_display_style(cls, question, survey_rating_style):
-        """Decide how a question is rendered.
-
-        For `range`, `default` means the slider and deliberately does not
-        inherit the survey-wide rating style — inheriting would silently
-        restyle every existing range question the first time this deploys.
-
-        A choice-based style with no choices to lay out falls back to the
-        slider rather than rendering an empty control. 28% of range questions
-        in production have no choices, so this is a live path.
-        """
+        """Decide how a question is rendered."""
         # Types that do not support display styles must resolve to the plain
         # rendering. Without this every question — text, number, geo — inherits
         # the survey-wide rating style and any consumer keying on the resolved
@@ -197,15 +194,10 @@ class SurveySectionAnswerForm(forms.Form):
             return 'default'
 
         chosen = question.display_style if question.display_style in cls.CHOICE_BASED_STYLES else None
-
-        if question.input_type == 'range':
-            if chosen and not question.choices:
-                return 'default'
-            return chosen or 'default'
-
         return chosen or survey_rating_style
 
-    def _get_form_from_input_type(self, input_type, required, question, label, sublabel, color, icon_class, image_source, language=None, display_style='default'):
+    @classmethod
+    def _get_form_from_input_type(cls, input_type, required, question, label, sublabel, color, icon_class, image_source, language=None, display_style='default'):
 
         if input_type == 'text':
             return forms.CharField(widget=forms.Textarea, label=label, required=required)
@@ -232,17 +224,6 @@ class SurveySectionAnswerForm(forms.Form):
         elif input_type == 'range':
             choices = question.choices or []
 
-            # The choice-based styles render one radio per choice, which an
-            # IntegerField cannot supply. The stored value is unaffected: the
-            # save path keys on question.input_type, not on the widget.
-            if display_style in self.CHOICE_BASED_STYLES and choices:
-                return forms.ChoiceField(
-                    widget=forms.RadioSelect(),
-                    choices=[(c["code"], question.get_choice_name(c["code"], language)) for c in choices],
-                    label=label,
-                    required=required,
-                )
-
             codes = [c["code"] for c in choices]
             minimum = min(codes) if codes else 0
             maximum = max(codes) if codes else 10
@@ -261,10 +242,16 @@ class SurveySectionAnswerForm(forms.Form):
             return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required)
 
         elif input_type == 'image':
-            return ShowImageField(widget=ShowImageWidget, label=False, image_source=image_source)
+            return ShowImageField(widget=ShowImageWidget, label=False, image_source=image_source,
+                                  subtitle=sublabel)
 
         elif input_type == 'rating':
-            choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
+            # Stars fall back to five numbered steps when the creator never
+            # defined choices — the style is picked far more often than a
+            # choice list is written.
+            source = question.star_choices() if display_style == 'stars' else (question.choices or [])
+            choices = [(c["code"], question.get_choice_name(c["code"], language) or str(c["code"]))
+                       for c in source]
             return forms.ChoiceField(widget=forms.RadioSelect(attrs={'class': 'form-check-inline', 'style': 'margin-right:0;'}), choices=choices, label=label, required=required)
 
         elif input_type == 'datetime':
@@ -275,6 +262,42 @@ class SurveySectionAnswerForm(forms.Form):
         else:
             return forms.CharField(widget=forms.Textarea)
     
+
+    @classmethod
+    def single_question_form(cls, question, language=None):
+        """One-field form for `question`, which may be unsaved.
+
+        The field is built by the same machinery `__init__` uses for a whole
+        section, so the render is the respondent's render — this is what the
+        editor's preview endpoints ask for, including for a question that only
+        exists as the current state of the New Question dialog.
+        """
+        survey_rating_style = question.survey_section.survey_header.get_default_rating_display_style()
+        resolved_style = cls.resolve_display_style(question, survey_rating_style)
+
+        form = forms.Form()
+        field = cls._get_form_from_input_type(
+            question.input_type, question.required, question,
+            question.get_translated_name(language),
+            question.get_translated_subtext(language) if question.subtext else "",
+            question.color, question.icon_class,
+            question.image.url if question.image else None,
+            language, display_style=resolved_style,
+        )
+        field.widget.question_type = question.input_type
+        field.widget.display_style = resolved_style
+        # Ordinary questions render their subtext from the section template,
+        # between the label and the input. Geo types and html carry it inside
+        # their own widget instead, so they are left out here.
+        field.widget.question_subtext = (
+            question.get_translated_subtext(language) if question.subtext else "")
+        if resolved_style == 'stars':
+            # The star partial paints from these; resolved here so the two form
+            # paths (whole section, single question) cannot disagree.
+            field.widget.star_icon = question.star_icon()
+            field.widget.star_color = question.star_color()
+        form.fields[question.code] = field
+        return form
 
     def __init__(self, initial, section, question, survey_session_id, language=None, *args, **kwargs):
         super().__init__(*args, initial=initial, **kwargs)
@@ -307,6 +330,10 @@ class SurveySectionAnswerForm(forms.Form):
             self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question, field_label, field_sublabel, field_color, field_icon_class, image_source, language, display_style=resolved_style)
             self.fields[field_name].widget.question_type = question.input_type
             self.fields[field_name].widget.display_style = resolved_style
+            self.fields[field_name].widget.question_subtext = field_sublabel
+            if resolved_style == 'stars':
+                self.fields[field_name].widget.star_icon = question.star_icon()
+                self.fields[field_name].widget.star_color = question.star_color()
 
 
     def save(self):

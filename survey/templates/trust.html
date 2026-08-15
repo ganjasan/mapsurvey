@@ -2,8 +2,8 @@
 {% load static i18n %}
 
 {% block title %}Trust & Security — Mapsurvey{% endblock %}
-{% block meta_description %}Everything your IT security team needs to know about Mapsurvey: GDPR compliance, EU data residency, open-source transparency, and security measures.{% endblock %}
-{% block meta_keywords %}GDPR, data privacy, trust, security, data processing agreement, DPA, EU data residency, open source, SOC 2{% endblock %}
+{% block meta_description %}Everything your IT security team needs to know about Mapsurvey: what we collect from survey respondents, where data is hosted, open-source transparency, and security measures.{% endblock %}
+{% block meta_keywords %}GDPR, data privacy, trust, security, data processing agreement, DPA, data residency, self-hosting, open source, SOC 2{% endblock %}
 {% block canonical_url %}https://mapsurvey.org/trust/{% endblock %}
 {% block og_url %}https://mapsurvey.org/trust/{% endblock %}
 {% block og_title %}Trust & Security — Mapsurvey{% endblock %}
@@ -31,14 +31,18 @@
                 </span>
                 Data Privacy (GDPR)
             </h2>
-            <p class="trust-section__lead">Survey respondents remain fully anonymous. Mapsurvey collects no personal data from people filling out surveys.</p>
+            <p class="trust-section__lead">Survey respondents stay anonymous: no account, no name, no email. Below is the full list of what is recorded when someone answers a survey — including the technical details most vendors leave out.</p>
             <ul class="trust-checklist">
                 <li><strong>No login required</strong> for survey respondents — anyone with the link can participate</li>
-                <li><strong>No cookies</strong> used for tracking or analytics purposes</li>
-                <li><strong>No IP addresses</strong> stored in survey responses or server logs</li>
-                <li><strong>No analytics</strong> tied to individual responses — aggregated data only</li>
-                <li><strong>No third-party trackers</strong> or advertising scripts</li>
+                <li><strong>No identity</strong> — responses carry no name, email, account or persistent identifier for the respondent</li>
+                <li><strong>No IP addresses</strong> stored with survey responses</li>
+                <li><strong>No tracking cookies</strong> on survey pages — respondents receive only a strictly necessary session cookie that remembers their progress through the survey</li>
+                <li><strong>Browser and referring page are recorded</strong> with each survey session — the user-agent string and the page the respondent arrived from. This powers the drop-off and traffic reports the survey creator sees, and it stays in our database</li>
+                <li><strong>Aggregate visit analytics</strong> on survey pages use Plausible, which is cookieless and builds no profiles of individuals</li>
+                <li><strong>Map tiles and interface libraries</strong> on survey pages load from third-party CDNs (map tiles, Leaflet, icons, fonts). Those providers see the request. Self-hosting removes this — see below</li>
+                <li><strong>No advertising scripts</strong>, ad networks, or cross-site profiling anywhere on the platform — and none of it is ever sold or shared</li>
                 <li><strong>Survey creators</strong> need an account (email and password only) — no further personal data required</li>
+                <li><strong>Product analytics on creator-facing pages only</strong> — our marketing, account and editor pages use PostHog (EU-hosted) so we can see how the tool itself is used. It is enforced never to load where respondents answer surveys</li>
             </ul>
         </section>
 
@@ -50,13 +54,15 @@
                 </span>
                 Hosting & Data Residency
             </h2>
-            <p class="trust-section__lead">All data is stored and processed within the European Union.</p>
+            <p class="trust-section__lead">Our hosted service runs in the United States. If your organisation requires EU data residency, self-hosting is the route today — the platform is AGPLv3 and deploys on your own infrastructure.</p>
             <ul class="trust-checklist">
-                <li><strong>Hosted on Render.com</strong> — Frankfurt, Germany (EU region)</li>
-                <li><strong>Data stays in the EU</strong> — no cross-border transfers outside the European Economic Area</li>
+                <li><strong>Hosted on Render.com — Oregon, United States.</strong> Application servers, background workers and the PostgreSQL database all run in Render's Oregon region</li>
+                <li><strong>Data is transferred outside the EEA</strong> when you use our hosted service. Institutions bound by EU-residency requirements should self-host rather than rely on the hosted offering</li>
+                <li><strong>Self-hosting gives full data sovereignty</strong> — run Mapsurvey in your own EU data centre, or any jurisdiction you choose. No feature is withheld from the self-hosted build</li>
+                <li><strong>An EU-region deployment of the hosted service is planned.</strong> This page will say so plainly the day it is live, and not before</li>
                 <li><strong>Render is SOC 2 Type II certified</strong> — independently audited security controls</li>
                 <li><strong>PostgreSQL database</strong> with encrypted connections (TLS)</li>
-                <li><strong>Self-hosting option</strong> — deploy on your own infrastructure for full data sovereignty</li>
+                <li><strong>Product analytics</strong> for our own creator-facing pages is hosted in the EU (PostHog Cloud EU) and never touches survey responses</li>
             </ul>
         </section>
 
@@ -92,8 +98,8 @@
                 <li><strong>HTTPS everywhere</strong> — all traffic encrypted in transit via TLS</li>
                 <li><strong>Django security framework</strong> — built-in CSRF protection, XSS prevention, SQL injection safeguards, clickjacking protection</li>
                 <li><strong>Password hashing</strong> — user passwords stored using PBKDF2 with SHA-256 (Django default)</li>
-                <li><strong>No third-party scripts</strong> — no external JavaScript, trackers, or CDN dependencies in the survey-taking flow</li>
-                <li><strong>Content Security Policy</strong> — strict headers to prevent code injection</li>
+                <li><strong>Registration abuse defenses</strong> — honeypot field, per-IP rate limiting and Cloudflare Turnstile, with an audit log of what was blocked</li>
+                <li><strong>Third-party code in the survey flow is limited to map and interface assets</strong> — map tiles, Leaflet, icons, fonts and cookieless visit analytics. No advertising or profiling scripts. Self-hosting lets you serve these from your own infrastructure</li>
                 <li><strong>Regular dependency updates</strong> — security patches applied promptly</li>
             </ul>
         </section>
@@ -110,8 +116,8 @@
             <ul class="trust-checklist">
                 <li><strong>Your data is yours</strong> — Mapsurvey claims no rights over survey content or responses</li>
                 <li><strong>Export at any time</strong> — download responses as GeoJSON and CSV with a single click</li>
-                <li><strong>Delete at any time</strong> — removing a survey permanently deletes all associated data</li>
-                <li><strong>Account deletion</strong> — deleting your account removes all surveys, responses, and personal information</li>
+                <li><strong>Delete at any time</strong> — deleting a survey removes it and its responses from your account; deleted items are permanently purged by a scheduled job</li>
+                <li><strong>Account deletion on request</strong> — there is no self-serve button yet; email{% if CONTACT_EMAIL %} <a href="mailto:{{ CONTACT_EMAIL }}">{{ CONTACT_EMAIL }}</a>{% else %} us{% endif %} and we remove your account, surveys, responses and personal information</li>
                 <li><strong>No vendor lock-in</strong> — standard data formats ensure portability to other tools</li>
             </ul>
         </section>
@@ -131,20 +137,29 @@
             </p>
         </section>
 
-        {# === DPA Download === #}
+        {# === DPA on request === #}
         <section class="trust-section trust-section--cta" id="dpa">
             <h2 class="trust-section__title">Data Processing Agreement</h2>
             <p class="trust-section__lead">
-                For institutional users who require a formal Data Processing Agreement (DPA),
-                we provide a ready-to-sign template that covers data handling, security measures,
-                sub-processors, and GDPR compliance obligations.
+                If your institution requires a Data Processing Agreement under Article 28 GDPR,
+                get in touch and we will work one through with you — covering the data categories,
+                security measures and sub-processors described above.
             </p>
-            <a href="{% static 'dpa/mapsurvey-dpa.pdf' %}" class="trust-dpa-btn" download>
+            <p class="trust-section__lead">
+                We previously offered a ready-to-sign template here. It has been withdrawn while it
+                is revised and reviewed: a signable agreement should be accurate about where data is
+                hosted and who processes it, and it should not commit either side to terms neither
+                has taken advice on. We would rather agree one with you than hand you a document we
+                cannot stand behind.
+            </p>
+            {% if CONTACT_EMAIL %}
+            <a href="mailto:{{ CONTACT_EMAIL }}?subject=Data%20Processing%20Agreement" class="trust-dpa-btn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
                 </svg>
-                Download DPA Template (PDF)
+                Request a DPA
             </a>
+            {% endif %}
         </section>
 
     </div>
