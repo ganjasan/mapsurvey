@@ -11,11 +11,11 @@ notice, and a "Generate draft" submit — only when an LLM provider is configure
 SHALL remain available and behaviorally unchanged in all cases.
 
 #### Scenario: Provider configured
-- **WHEN** an authenticated editor opens `/editor/surveys/new/` and `ANTHROPIC_API_KEY` is set
+- **WHEN** an authenticated editor opens `/editor/surveys/new/` and the key for the selected `AI_PROVIDER` is set
 - **THEN** the AI brief panel with the "Generate draft" button is rendered alongside the existing name/languages/map fields, including a privacy notice stating the brief is processed by the AI provider and that survey answers are never sent to AI providers
 
 #### Scenario: Provider not configured
-- **WHEN** `ANTHROPIC_API_KEY` is empty
+- **WHEN** the key for the selected `AI_PROVIDER` is empty
 - **THEN** the AI panel is not rendered, the page shows only the manual creation form, and no AI code path can be reached
 
 ### Requirement: Asynchronous generation with status polling

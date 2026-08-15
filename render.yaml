@@ -53,9 +53,20 @@ services:
       - key: MAPBOX_ACCESS_TOKEN
         sync: false
         previewEnvRenderServiceName: mapsurvey
-      # AI survey draft generation. The web service only needs it to decide
-      # whether to render the AI panel; the worker below makes the actual
-      # calls. Unset on any service = feature simply off there.
+      # AI survey draft generation. The web service only needs the provider
+      # credentials to decide whether to render the AI panel; the worker below
+      # makes the actual calls. A provider with no key = feature simply off.
+      # AI_PROVIDER is declared (not left to the settings.py default) because
+      # the gate is per-provider: with 'anthropic' set and only a Gemini key
+      # present the panel would never render.
+      - key: AI_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: GEMINI_MODEL
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
       - key: ANTHROPIC_API_KEY
         sync: false
         previewEnvRenderServiceName: mapsurvey
@@ -201,7 +212,17 @@ services:
       - key: NEWSLETTER_SITE_URL
         value: "https://mapsurvey.org"
       # AI survey draft generation runs here — this is the service that talks
-      # to the model provider.
+      # to the model provider. Keep AI_PROVIDER identical to the web service:
+      # the web side gates the panel on it, the worker resolves the client from
+      # it, and a mismatch shows a panel whose every generation then fails.
+      - key: AI_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: GEMINI_MODEL
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
       - key: ANTHROPIC_API_KEY
         sync: false
         previewEnvRenderServiceName: mapsurvey

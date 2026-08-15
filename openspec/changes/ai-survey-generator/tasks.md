@@ -35,7 +35,7 @@
 
 ## 5. Deployment config
 
-- [x] 5.1 `render.yaml`: enable worker previews; add `ANTHROPIC_API_KEY` (`sync: false`) to web + worker
+- [x] 5.1 `render.yaml`: enable worker previews; add `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL` (`sync: false`) plus an explicit `AI_PROVIDER` to web + worker. Provider is declared, not defaulted: prod runs Gemini (no Anthropic billing), and the panel gate reads the selected provider's key only
 - [x] 5.2 `.env.ports.example` / docs untouched — verify docker-compose celery picks up new env via `.env`
 
 ## 6. Tests (GIVEN/WHEN/THEN, survey/tests.py)

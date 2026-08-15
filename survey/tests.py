@@ -10302,6 +10302,21 @@ class PostHogSnippetTest(TestCase):
         self.assertContains(response, 'Product analytics on creator-facing pages only')
         self.assertContains(response, 'never to load where respondents answer surveys')
 
+    def test_trust_page_discloses_ai_drafting(self):
+        """
+        GIVEN AI draft generation sends the creator's brief to a US provider
+        WHEN the trust page is read
+        THEN it names that transfer, says the feature is optional
+        AND repeats that survey responses never reach an AI provider
+
+        The page's whole value is that it is checkable against the code. A
+        capability that ships to production without appearing here is the same
+        defect we spent 2026-08-15 correcting, only in the other direction.
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, "AI drafting sends the creator's brief to Google")
+        self.assertContains(response, 'Survey responses are never sent to an AI provider')
+
     def test_trust_page_states_hosting_region_truthfully(self):
         """
         GIVEN every Render service and the production database run in Oregon
