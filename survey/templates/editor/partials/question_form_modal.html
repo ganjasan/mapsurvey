@@ -306,11 +306,19 @@
         var starsChecked = document.querySelector('#display-style-fields input[value="stars"]:checked');
         var on = !!starsChecked && inputTypeSelect && inputTypeSelect.value === 'rating';
         el.style.display = on ? 'block' : 'none';
-        if (on) {
-            var tbody = document.getElementById('choices-rows');
-            var count = tbody ? tbody.querySelectorAll('.choice-code').length : 0;
-            var input = document.getElementById('star-count-input');
-            if (input && count) input.value = count;
+        if (!on) return;
+
+        var tbody = document.getElementById('choices-rows');
+        var count = tbody ? tbody.querySelectorAll('.choice-code').length : 0;
+        var input = document.getElementById('star-count-input');
+        if (count) {
+            // An existing question keeps whatever it already has, names and all.
+            if (input) input.value = count;
+        } else {
+            // Picking stars means five stars, immediately — not an empty
+            // question waiting for a choice list nobody wants to write.
+            for (var i = 1; i <= 5; i++) addChoiceRow(i, String(i));
+            if (input) input.value = 5;
         }
     }
 
@@ -320,11 +328,12 @@
         if (!input || !tbody) return;
         var wanted = parseInt(input.value, 10);
         if (isNaN(wanted) || wanted < 2 || wanted > 10) return;
-        // Keep any names already typed; only the number of rows changes.
+        // Keep any names already typed; steps that had none are numbered, so
+        // an exported star answer reads as "4" rather than as a blank.
         var names = Array.prototype.map.call(
             tbody.querySelectorAll('.choice-name-default'), function(i) { return i.value; });
         tbody.replaceChildren();
-        for (var i = 0; i < wanted; i++) addChoiceRow(i + 1, names[i] || '');
+        for (var i = 0; i < wanted; i++) addChoiceRow(i + 1, names[i] || String(i + 1));
     }
 
     function toggleStripWidthHint() {
@@ -531,8 +540,8 @@
 
     document.querySelectorAll('#display-style-fields input[name="display_style"]').forEach(function(radio) {
         radio.addEventListener('change', function() {
-            toggleStripWidthHint();
             toggleStarCountField();
+            toggleStripWidthHint();
             toggleTypeScopedFields();
         });
     });

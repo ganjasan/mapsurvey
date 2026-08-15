@@ -127,6 +127,12 @@ DISPLAY_STYLE_CHOICES = (
 DEFAULT_STAR_ICON = "fas fa-star"
 DEFAULT_STAR_COLOR = "#f5b301"
 
+# A star rating that was never given choices still has to render something,
+# and "five stars" is what everyone means by a star rating. The steps are
+# numbered rather than named: a label per star is meaningless for this style,
+# and the number is what an export should show.
+DEFAULT_STAR_COUNT = 5
+
 VALIDATION_STATUS_CHOICES = (
     ('', 'No status'),
     ('approved', 'Approved'),
@@ -652,6 +658,18 @@ class Question(models.Model):
             return translation.subtext if translation.subtext else self.subtext
         except QuestionTranslation.DoesNotExist:
             return self.subtext
+
+    def star_choices(self):
+        """Choices a star rating lays out, defaulting to five numbered steps.
+
+        Kept out of the database: a question set to stars without choices gets
+        1..5 at render time, so the style works the moment it is picked and no
+        existing question is rewritten. Names are the numbers themselves, which
+        is what a star answer should read as in an export.
+        """
+        if self.choices:
+            return self.choices
+        return [{"code": i, "name": str(i)} for i in range(1, DEFAULT_STAR_COUNT + 1)]
 
     def star_icon(self):
         """Icon a star rating draws, falling back to a solid star."""

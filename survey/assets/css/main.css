@@ -1091,14 +1091,22 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
 .rating-stars__row {
   display: flex;
   flex-direction: row-reverse;
-  justify-content: flex-end;
+  /* Spread across the card, like the scale strip above, rather than huddling
+     at one edge. The gap is a floor for long scales, where space-between
+     would otherwise let the icons touch. */
+  justify-content: space-between;
   gap: 6px;
 }
 
 /* The shared radio-label rule dresses every label in a card as a 44px pill
    with 40px of left padding for the custom radio dot. A star is an icon, not
-   a pill: undo the box here, keep the pointer and the sizing. */
-.question-card--scale .rating-stars__star {
+   a pill: undo the box here, keep the pointer and the sizing.
+
+   The :has() is load-bearing, not decoration — without it this rule loses to
+   `.question-card label:has(input[type="radio"])` on specificity, the 40px
+   padding survives, and every star sits against the right edge of its own
+   clickable box. */
+.question-card--scale .rating-stars__star:has(input[type="radio"]) {
   display: inline-flex;
   align-items: center;
   justify-content: center;

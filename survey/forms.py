@@ -242,7 +242,12 @@ class SurveySectionAnswerForm(forms.Form):
             return ShowImageField(widget=ShowImageWidget, label=False, image_source=image_source)
 
         elif input_type == 'rating':
-            choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
+            # Stars fall back to five numbered steps when the creator never
+            # defined choices — the style is picked far more often than a
+            # choice list is written.
+            source = question.star_choices() if display_style == 'stars' else (question.choices or [])
+            choices = [(c["code"], question.get_choice_name(c["code"], language) or str(c["code"]))
+                       for c in source]
             return forms.ChoiceField(widget=forms.RadioSelect(attrs={'class': 'form-check-inline', 'style': 'margin-right:0;'}), choices=choices, label=label, required=required)
 
         elif input_type == 'datetime':

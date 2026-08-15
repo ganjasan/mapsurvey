@@ -21410,3 +21410,117 @@ class StarRatingDisplayTest(TestCase):
         self.assertIn('--star-color: #22aa55', html)
         self.assertEqual(html.count('fas fa-leaf'), 2)
         self.assertEqual(Question.objects.count(), before)
+
+
+class StarRatingDefaultCountTest(TestCase):
+    """Picking stars means five stars, without writing a choice list."""
+
+    def setUp(self):
+        self.org = _make_org('StarCountOrg')
+        self.user = User.objects.create_user('starcount', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='star_count_survey', organization=self.org, created_by=self.user,
+            status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+
+    def test_stars_without_choices_render_five_numbered_steps(self):
+        """
+        GIVEN a rating question set to stars whose choices were never defined
+        WHEN a respondent opens the section
+        THEN five stars render, numbered 1 to 5
+
+        The style is picked far more often than a choice list is written; an
+        empty question here would be the creator's first impression of it.
+        """
+        Question.objects.create(
+            survey_section=self.section, name='How was it?', code='q_s',
+            input_type='rating', order_number=1, display_style='stars', choices=None,
+        )
+
+        content = self.client.get(f'/surveys/{self.survey.uuid}/s1/').content.decode()
+
+        self.assertEqual(content.count('rating-stars__star'), 5)
+        for step in ('1', '2', '3', '4', '5'):
+            self.assertIn(f'value="{step}"', content)
+
+    def test_the_fallback_is_not_written_to_the_question(self):
+        """
+        GIVEN a stars question rendered with the default five steps
+        WHEN the question is re-read from the database
+        THEN its choices are still unset — the default is resolved, not saved
+        """
+        question = Question.objects.create(
+            survey_section=self.section, name='How was it?', code='q_s2',
+            input_type='rating', order_number=1, display_style='stars', choices=None,
+        )
+
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+
+        question.refresh_from_db()
+        self.assertIsNone(question.choices)
+        self.assertEqual(len(question.star_choices()), 5)
+
+    def test_defined_choices_win_over_the_default(self):
+        """
+        GIVEN a stars question whose creator defined three named steps
+        WHEN it renders
+        THEN three stars render and the names are kept
+        """
+        Question.objects.create(
+            survey_section=self.section, name='How was it?', code='q_s3',
+            input_type='rating', order_number=1, display_style='stars',
+            choices=[{"code": 1, "name": "meh"}, {"code": 2, "name": "fine"},
+                     {"code": 3, "name": "great"}],
+        )
+
+        content = self.client.get(f'/surveys/{self.survey.uuid}/s1/').content.decode()
+
+        self.assertEqual(content.count('rating-stars__star'), 3)
+        self.assertIn('great', content)
+
+    def test_a_star_answer_exports_as_its_number(self):
+        """
+        GIVEN a stars question using the default numbered steps
+        WHEN a respondent picks the fourth star and the creator exports
+        THEN the answer reads as 4, not as a blank cell
+        """
+        Question.objects.create(
+            survey_section=self.section, name='How was it?', code='q_s4',
+            input_type='rating', order_number=1, display_style='stars',
+            choices=[{"code": i, "name": str(i)} for i in range(1, 6)],
+        )
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        self.client.post(f'/surveys/{self.survey.uuid}/s1/', {'q_s4': '4'})
+
+        self.client.login(username='starcount', password='pass')
+        response = self.client.get(f'/surveys/{self.survey.uuid}/download')
+        with zipfile.ZipFile(BytesIO(response.content), 'r') as zf:
+            csv_name = [n for n in zf.namelist() if n.endswith('.csv')][0]
+            csv_text = zf.read(csv_name).decode('utf-8')
+
+        self.assertIn('How was it?', csv_text)
+        self.assertIn('4', csv_text.split('\n')[1])
+
+    def test_live_preview_shows_five_stars_for_a_fresh_draft(self):
+        """
+        GIVEN the question dialog with stars just picked and no choices typed
+        WHEN the live preview renders the draft
+        THEN it already shows five stars
+        """
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/question-preview/',
+            {'input_type': 'rating', 'name': 'How was it?', 'display_style': 'stars',
+             'choices_json': ''},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content.decode().count('rating-stars__star'), 5)
