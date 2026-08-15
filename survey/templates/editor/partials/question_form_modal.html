@@ -272,7 +272,7 @@
     var languages = {{ survey.available_languages|safe|default:"[]" }};
     var choicesEditor = document.getElementById('choices-editor');
     var inputTypeSelect = document.querySelector('#questionModalBody select[name="input_type"]');
-    var choiceTypes = ['choice', 'multichoice', 'range', 'rating'];
+    var choiceTypes = ['choice', 'multichoice', 'range', 'rating', 'ranking'];
 
     function toggleChoicesEditor() {
         if (inputTypeSelect && choiceTypes.indexOf(inputTypeSelect.value) !== -1) {

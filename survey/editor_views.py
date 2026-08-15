@@ -663,7 +663,7 @@ def editor_question_edit(request, survey_uuid, question_id):
             choices_json = request.POST.get('choices_json', '').strip()
             if choices_json:
                 q.choices = _guard_choice_codes(question, json.loads(choices_json))
-            elif q.input_type not in ('choice', 'multichoice', 'range', 'rating'):
+            elif q.input_type not in ('choice', 'multichoice', 'range', 'rating', 'ranking'):
                 q.choices = None
             # Validation settings per question type
             vs = {}

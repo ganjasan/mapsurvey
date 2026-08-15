@@ -1,0 +1,26 @@
+{% comment %}
+Drag-to-order list. Each row carries a hidden input under the question's field
+name, so the submitted order IS the DOM order — moving a row moves its input,
+and getlist() reads the ranking back with nothing to parse.
+
+Without JavaScript the rows do not move and the question stays unanswered,
+which is the same trade-off the map questions make. The alternative — typed
+rank boxes — is the tie problem this question type exists to remove.
+{% endcomment %}
+<div class="ranking" data-ranking>
+    <p class="ranking__hint">
+        Drag the items into order, or pick one up with Space and move it with the arrow keys.
+    </p>
+    <ol class="ranking__list" data-ranking-list>
+        {% for item in widget.items %}
+        <li class="ranking__item" draggable="true" tabindex="0" role="option"
+            aria-grabbed="false" data-code="{{ item.code }}">
+            <span class="ranking__rank" data-ranking-rank>{{ forloop.counter }}</span>
+            <span class="ranking__label">{{ item.name }}</span>
+            <span class="ranking__grip" aria-hidden="true"><i class="fas fa-grip-lines"></i></span>
+            <input type="hidden" name="{{ widget.name }}" value="{{ item.code }}">
+        </li>
+        {% endfor %}
+    </ol>
+    <p class="ranking__status" aria-live="polite" data-ranking-status></p>
+</div>

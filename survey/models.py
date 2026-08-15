@@ -105,6 +105,7 @@ INPUT_TYPE_CHOICES = (
     ("multichoice", _("Multiple Choices")),
     ("range", _("Range")),
     ("rating", _("Rating")),
+    ("ranking", _("Ranking")),
     ("datetime", _("Date/Time")),
     ("point", _("Geo Point")),
     ("line", _("Geo Line")),
@@ -658,6 +659,13 @@ class Question(models.Model):
             return translation.subtext if translation.subtext else self.subtext
         except QuestionTranslation.DoesNotExist:
             return self.subtext
+
+    def ranking_items(self, language=None):
+        """Items a ranking question asks the respondent to order."""
+        return [
+            {"code": c["code"], "name": self.get_choice_name(c["code"], language) or str(c["code"])}
+            for c in (self.choices or [])
+        ]
 
     def star_choices(self):
         """Choices a star rating lays out, defaulting to five numbered steps.
