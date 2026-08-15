@@ -111,6 +111,13 @@ services:
         value: "4"
       - key: GUNICORN_TIMEOUT
         value: "60"
+      # Internal product analytics. Deliberately WITHOUT previewEnvRenderServiceName:
+      # inheriting the production key would make every PR preview write test traffic
+      # into the real project. Previews leave it unset, and unset renders no snippet.
+      - key: POSTHOG_PROJECT_KEY
+        sync: false
+      - key: POSTHOG_API_HOST
+        sync: false
     disk:
       name: media-storage
       mountPath: /home/app/web/mediafiles

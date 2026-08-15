@@ -2,6 +2,10 @@ from django.conf import settings
 
 from .models import Membership
 
+# Mirrors the settings.py default. Duplicated deliberately: the point is to have a
+# value that survives an empty setting, so deriving it from the setting is circular.
+POSTHOG_API_HOST_DEFAULT = 'https://eu.i.posthog.com'
+
 
 def mapbox(request):
     return {
@@ -26,6 +30,50 @@ def analytics(request):
         # Google Search Console URL-prefix verification (meta-tag method).
         # Empty (default) renders nothing; set the env var to the token GSC shows.
         'GOOGLE_SITE_VERIFICATION': getattr(settings, 'GOOGLE_SITE_VERIFICATION', ''),
+        'POSTHOG_PROJECT_KEY': _posthog_key_for(request),
+        # Falls back here as well as in settings.py: an empty api_host initialises
+        # the SDK against nothing, which is indistinguishable from working analytics
+        # until someone notices the project has no events.
+        'POSTHOG_API_HOST': (
+            getattr(settings, 'POSTHOG_API_HOST', '') or POSTHOG_API_HOST_DEFAULT
+        ),
+        'POSTHOG_PERSON': _posthog_person(request),
+    }
+
+
+def _posthog_key_for(request):
+    """The PostHog key, or '' on surfaces that belong to somebody else's audience.
+
+    Returning an empty key rather than a separate template flag reuses the
+    "unset means off" shape the other trackers already have, so one `{% if %}`
+    in `_analytics.html` covers both "not configured" and "not our page".
+    """
+    key = getattr(settings, 'POSTHOG_PROJECT_KEY', '')
+    if not key:
+        return ''
+    path = getattr(request, 'path', '') or ''
+    excluded = getattr(settings, 'POSTHOG_EXCLUDED_PREFIXES', ())
+    if any(path.startswith(prefix) for prefix in excluded):
+        return ''
+    return key
+
+
+def _posthog_person(request):
+    """Identify data for a signed-in creator, or None.
+
+    `distinct_id` is the primary key, not the email or username: both of those
+    are editable, and re-identifying an existing person under a new id would
+    split one creator's history into two.
+    """
+    user = getattr(request, 'user', None)
+    if user is None or not user.is_authenticated:
+        return None
+    date_joined = getattr(user, 'date_joined', None)
+    return {
+        'distinct_id': str(user.pk),
+        'email': user.email or '',
+        'username': user.get_username(),
+        'date_joined': date_joined.isoformat() if date_joined else '',
     }
 
 

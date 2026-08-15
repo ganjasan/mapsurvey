@@ -2,3 +2,42 @@
 <script async src="{{ PLAUSIBLE_SCRIPT_URL }}"></script>
 <script>window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()</script>
 {% endif %}
+{% comment %}
+Internal product analytics. The key arrives empty -- and so nothing below renders -- both
+when PostHog is unconfigured and when the current page belongs to somebody else's audience
+(respondent surveys, public results). `survey.context_processors.analytics` makes that
+decision; see POSTHOG_EXCLUDED_PREFIXES in settings.py for why it lives there and not in
+the templates.
+{% endcomment %}
+{% if POSTHOG_PROJECT_KEY %}
+{{ POSTHOG_PROJECT_KEY|json_script:"posthog-key" }}
+{{ POSTHOG_API_HOST|json_script:"posthog-host" }}
+{% if POSTHOG_PERSON %}{{ POSTHOG_PERSON|json_script:"posthog-person" }}{% endif %}
+<script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    (function () {
+        posthog.init(
+            JSON.parse(document.getElementById('posthog-key').textContent),
+            {
+                api_host: JSON.parse(document.getElementById('posthog-host').textContent),
+                capture_pageview: true,
+                autocapture: true,
+                // Recording needs a masking policy and a reviewed privacy statement first.
+                disable_session_recording: true,
+                // Anonymous landing traffic is already answered by Plausible; profiles for
+                // people who never sign up would be stored for nothing.
+                person_profiles: 'identified_only'
+            }
+        );
+        var el = document.getElementById('posthog-person');
+        if (el) {
+            var person = JSON.parse(el.textContent);
+            posthog.identify(person.distinct_id, {
+                email: person.email,
+                username: person.username,
+                date_joined: person.date_joined
+            });
+        }
+    })();
+</script>
+{% endif %}

@@ -118,6 +118,24 @@ stored whole-property number reads higher than the GSC UI's total for the same w
 `DemoOpen` (forward-only; the user FK lives there and never on `SurveySession`, which must not link
 customers' respondents to platform accounts).
 
+**Internal product analytics (PostHog)**: client-side snippet in
+`survey/templates/partials/_analytics.html`, gated by `POSTHOG_PROJECT_KEY` (empty default = nothing
+renders, which is what keeps tests, local dev and PR previews out of the production project) and
+`POSTHOG_API_HOST` (Cloud EU). It measures **us**: which creator-facing screens get used, where
+activation leaks. Plausible still runs alongside it and is not being replaced yet.
+
+Two rules that are easy to get wrong:
+
+- **PostHog never loads on respondent surfaces.** `POSTHOG_EXCLUDED_PREFIXES` (`/surveys/`, `/r/`)
+  is enforced in `survey.context_processors.analytics`, *not* by omitting the include from
+  `base_survey_template.html` — an omission would be invisible in review and a new base template
+  would inherit whatever its author happened to copy.
+- **`SurveyEvent`/`TrackedLink`/`survey/events.py`/`PerformanceAnalyticsService` are a different
+  system and must never be folded into PostHog.** They measure our *customers'* respondents on the
+  customer's behalf (section funnel, referrer buckets, UTM campaigns, page load) and are a feature we
+  sell. That data stays in our database. The two answer superficially similar questions about
+  entirely different people.
+
 ### URL Structure
 
 - `/` - Redirects to login or editor

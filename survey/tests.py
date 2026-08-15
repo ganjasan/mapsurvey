@@ -9983,6 +9983,406 @@ class PlausibleAnalyticsTest(TestCase):
             self.assertIn("typeof plausible !== 'undefined'", content)
 
 
+class PostHogSnippetTest(TestCase):
+    """Tests for the internal product-analytics snippet.
+
+    PostHog measures us, not our customers' respondents. The exclusion tests below
+    are the load-bearing ones: they assert against genuinely routed respondent URLs,
+    so moving a route breaks a test instead of quietly opting respondents in.
+    """
+
+    KEY = 'phc_testkey123'
+
+    def setUp(self):
+        self.org = _make_org('PostHogOrg')
+        self.user = User.objects.create_user(
+            'posthoguser', email='creator@example.com', password='pass',
+        )
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='posthog_survey',
+            organization=self.org,
+            redirect_url='#',
+            status='published',
+        )
+        self.section1 = SurveySection.objects.create(
+            survey_header=self.survey,
+            name='section1',
+            start_map_postion=Point(0, 0),
+            start_map_zoom=10,
+        )
+        self.results_page = PublicResultsPage.objects.create(
+            survey=self.survey, slug='posthog-results', is_published=True,
+        )
+
+    def test_no_snippet_when_key_unset(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is empty (the default)
+        WHEN a creator-facing page is rendered
+        THEN neither the loader nor the init call appears in the HTML
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=''):
+            response = self.client.get('/trust/')
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, 'posthog-key')
+            self.assertNotContains(response, 'i.posthog.com')
+
+    def test_snippet_present_when_key_set(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN a creator-facing page is rendered
+        THEN the snippet carries that key and initialises against the configured host
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/trust/')
+            self.assertContains(response, self.KEY)
+            self.assertContains(response, 'posthog.init')
+            self.assertContains(response, 'https://eu.i.posthog.com')
+
+    def test_api_host_is_overridable(self):
+        """
+        GIVEN POSTHOG_API_HOST points somewhere other than Cloud EU
+        WHEN a creator-facing page is rendered
+        THEN the snippet initialises against that host and not the default
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_API_HOST='https://analytics.example.com',
+        ):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'https://analytics.example.com')
+            self.assertNotContains(response, 'https://eu.i.posthog.com')
+
+    def test_empty_api_host_falls_back_to_cloud_eu(self):
+        """
+        GIVEN the deployment supplies POSTHOG_API_HOST as an empty string
+        WHEN the snippet is rendered
+        THEN it still initialises against Cloud EU rather than nothing
+
+        render.yaml declares the variable as `sync: false`, so the Render
+        dashboard can hand the process an empty value. An empty api_host is a
+        silent no-op that looks identical to working analytics.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_API_HOST=''):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'https://eu.i.posthog.com')
+
+    def test_no_snippet_on_respondent_survey_page(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN a respondent loads a survey section under /surveys/
+        THEN no PostHog snippet is rendered
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, self.KEY)
+
+    def test_no_snippet_on_public_results_page(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN a visitor loads a public results page under /r/
+        THEN no PostHog snippet is rendered
+
+        Belt and braces: `public_results.html` is a standalone template that
+        includes no analytics partial at all today, so this would hold even
+        without the exclusion. The exclusion is what keeps it holding if that
+        template ever grows a shared head. The prefix rule itself is asserted
+        directly in PostHogContextProcessorTest.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get(f'/r/{self.results_page.slug}/')
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, self.KEY)
+
+    def test_snippet_on_editor_page(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured AND a creator is signed in
+        WHEN the editor dashboard is loaded
+        THEN the snippet is rendered
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.client.login(username='posthoguser', password='pass')
+            response = self.client.get('/editor/')
+            self.assertContains(response, 'posthog.init')
+            self.assertContains(response, self.KEY)
+
+    def test_plausible_still_renders_on_excluded_pages(self):
+        """
+        GIVEN both trackers are configured
+        WHEN a respondent survey page is rendered
+        THEN Plausible is still present and only PostHog is withheld
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js',
+        ):
+            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            self.assertContains(response, 'src="https://plausible.io/js/pa-test.js"')
+            self.assertNotContains(response, 'posthog.init')
+
+    def test_exclusion_list_is_configurable(self):
+        """
+        GIVEN /surveys/ is removed from POSTHOG_EXCLUDED_PREFIXES
+        WHEN a respondent survey page is rendered
+        THEN the snippet appears, proving the gate reads the setting rather
+             than hardcoding the prefixes
+
+        Uses /surveys/ deliberately: that template does include the shared
+        analytics partial, so lifting the exclusion has an observable effect.
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_EXCLUDED_PREFIXES=('/r/',),
+        ):
+            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            self.assertContains(response, 'posthog.init')
+            self.assertContains(response, self.KEY)
+
+    def test_authenticated_creator_is_identified(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured AND a creator is signed in
+        WHEN a creator-facing page is rendered
+        THEN the snippet identifies them by primary key with person properties attached
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.client.login(username='posthoguser', password='pass')
+            response = self.client.get('/editor/')
+            # The id="..." form, not the bare string: the snippet's
+            # getElementById('posthog-person') is present on every tracked
+            # page, so a bare match would pass without any payload at all.
+            self.assertContains(response, 'id="posthog-person"')
+            self.assertContains(response, f'"distinct_id": "{self.user.pk}"')
+            self.assertContains(response, 'creator@example.com')
+            self.assertContains(response, 'posthoguser')
+
+    def test_anonymous_visitor_is_not_identified(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured AND nobody is signed in
+        WHEN a marketing page is rendered
+        THEN no identify payload and no email address reach the HTML
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'posthog.init')
+            self.assertNotContains(response, 'id="posthog-person"')
+            self.assertNotContains(response, 'creator@example.com')
+
+    def test_person_properties_are_escaped(self):
+        """
+        GIVEN a username containing characters that would close the script block
+        WHEN the snippet is rendered for that user
+        THEN the identify payload escapes them and still round-trips to the real value
+        """
+        import re
+
+        hostile = User.objects.create_user(
+            'bad</script>"user', email='hostile@example.com', password='pass',
+        )
+        Membership.objects.create(user=hostile, organization=self.org, role='owner')
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.client.force_login(hostile)
+            response = self.client.get('/editor/')
+
+        match = re.search(
+            r'<script id="posthog-person" type="application/json">(.*?)</script>',
+            response.content.decode(),
+            re.S,
+        )
+        self.assertIsNotNone(match, 'identify payload missing')
+        payload = match.group(1)
+        # Escaped in transport: a raw closing tag here would end the block early.
+        self.assertNotIn('</script>', payload)
+        self.assertIn('\\u003C', payload)
+        # ...and still means the same thing once parsed.
+        self.assertEqual(json.loads(payload)['username'], 'bad</script>"user')
+
+    def test_session_recording_is_disabled(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN the snippet is rendered
+        THEN session recording is switched off in its initialisation
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'disable_session_recording: true')
+
+    def test_person_profiles_are_identified_only(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN the snippet is rendered
+        THEN profiles are created for identified users only, not anonymous visitors
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/trust/')
+            self.assertContains(response, "person_profiles: 'identified_only'")
+
+    def test_snippet_on_account_page(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN a page built on the shared base template is rendered
+        THEN the snippet is present
+
+        Covers the third of the four heads that include the analytics partial:
+        base_landing.html and editor_base.html are covered elsewhere, and
+        base_survey_template.html is covered by the exclusion tests.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            response = self.client.get('/accounts/register/')
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'posthog.init')
+
+    def test_trust_page_discloses_creator_analytics(self):
+        """
+        GIVEN the trust page is the answer we give IT security teams
+        WHEN it is read
+        THEN it discloses that product analytics runs on creator-facing pages
+        AND states that it never loads where respondents answer surveys
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, 'Product analytics on creator-facing pages only')
+        self.assertContains(response, 'never to load where respondents answer surveys')
+
+    def test_trust_page_states_hosting_region_truthfully(self):
+        """
+        GIVEN every Render service and the production database run in Oregon
+        WHEN the trust page is read
+        THEN it names the United States as the hosting region
+        AND does not claim EU residency or Frankfurt hosting
+
+        This test exists because the page previously claimed Frankfurt and
+        "no cross-border transfers outside the EEA" while running in Oregon —
+        on the page most likely to be read by an EU procurement officer.
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, 'Oregon, United States')
+        self.assertContains(response, 'transferred outside the EEA')
+        self.assertNotContains(response, 'Frankfurt')
+        self.assertNotContains(response, 'Data stays in the EU')
+
+    def test_trust_page_does_not_claim_unimplemented_controls(self):
+        """
+        GIVEN there is no Content Security Policy and no self-serve account deletion
+        WHEN the trust page is read
+        THEN it makes neither claim
+
+        Both were asserted on the page while absent from the codebase. If either
+        ships later, this test is the reminder to put the claim back.
+        """
+        response = self.client.get('/trust/')
+        self.assertNotContains(response, 'Content Security Policy')
+        self.assertNotContains(response, 'deleting your account removes')
+        self.assertContains(response, 'Account deletion on request')
+
+    def test_trust_page_does_not_distribute_the_dpa(self):
+        """
+        GIVEN the DPA template was withdrawn pending legal review
+        WHEN the trust page is read
+        THEN it offers to agree one on request instead of serving a signable PDF
+
+        The file was moved out of survey/assets/ entirely, so unlinking it also
+        stops it being served: leaving it collected would keep the old URL alive
+        in every email that ever contained it.
+        """
+        response = self.client.get('/trust/')
+        self.assertNotContains(response, 'mapsurvey-dpa.pdf')
+        self.assertNotContains(response, 'Download DPA Template')
+        self.assertContains(response, 'Request a DPA')
+
+    def test_trust_page_discloses_respondent_metadata(self):
+        """
+        GIVEN survey sessions record the respondent's user-agent and referring page
+        WHEN the trust page is read
+        THEN that collection is disclosed rather than described as "no personal data"
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, 'Browser and referring page are recorded')
+        self.assertNotContains(response, 'collects no personal data')
+
+
+class PostHogContextProcessorTest(TestCase):
+    """The gate itself, independent of which templates happen to exist today.
+
+    The template-level tests above prove the four current heads behave. These
+    prove the *mechanism*, which is what makes a base template added tomorrow
+    inherit the exclusion instead of depending on which file its author copied.
+    """
+
+    KEY = 'phc_ctxkey'
+
+    def _context_for(self, path, user=None):
+        from django.contrib.auth.models import AnonymousUser
+        from django.test import RequestFactory
+
+        from .context_processors import analytics
+
+        request = RequestFactory().get(path)
+        request.user = user or AnonymousUser()
+        return analytics(request)
+
+    def test_key_present_on_our_own_paths(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN the context is built for a creator-facing path
+        THEN the key is passed through to the template
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            for path in ('/', '/trust/', '/editor/', '/accounts/register/'):
+                with self.subTest(path=path):
+                    self.assertEqual(
+                        self._context_for(path)['POSTHOG_PROJECT_KEY'], self.KEY,
+                    )
+
+    def test_key_withheld_on_excluded_paths(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN the context is built for a path belonging to somebody else's audience
+        THEN the key is empty, so no snippet can render whatever the template does
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            for path in ('/surveys/', '/surveys/abc/section1/', '/r/', '/r/slug/'):
+                with self.subTest(path=path):
+                    self.assertEqual(self._context_for(path)['POSTHOG_PROJECT_KEY'], '')
+
+    def test_unset_key_stays_unset_everywhere(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is empty
+        WHEN the context is built for any path
+        THEN the key is empty and no person data is computed
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=''):
+            context = self._context_for('/trust/')
+            self.assertEqual(context['POSTHOG_PROJECT_KEY'], '')
+
+    def test_person_is_none_for_anonymous(self):
+        """
+        GIVEN nobody is signed in
+        WHEN the context is built
+        THEN there is no identify payload
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.assertIsNone(self._context_for('/trust/')['POSTHOG_PERSON'])
+
+    def test_person_uses_primary_key_not_natural_key(self):
+        """
+        GIVEN a signed-in creator whose email and username are both editable
+        WHEN the context is built
+        THEN the distinct id is their primary key, so renaming does not split
+             one creator's history into two people
+        """
+        user = User.objects.create_user(
+            'ctxuser', email='ctx@example.com', password='pass',
+        )
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            person = self._context_for('/editor/', user=user)['POSTHOG_PERSON']
+        self.assertEqual(person['distinct_id'], str(user.pk))
+        self.assertEqual(person['email'], 'ctx@example.com')
+        self.assertEqual(person['username'], 'ctxuser')
+        self.assertTrue(person['date_joined'])
+
+
 class AnalyticsServiceTest(TestCase):
     """Tests for SurveyAnalyticsService."""
 
