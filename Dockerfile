@@ -30,6 +30,18 @@ RUN ["chmod", "u+x", "/home/app/web/entrypoint.sh"]
 # copy project
 COPY . $APP_HOME
 
+# Collect static assets into the image rather than at container start. Hashing and
+# compressing 500+ assets through CompressedManifestStaticFilesStorage took tens of
+# seconds on every Render start, inside the deploy's 502 window (the service mounts a
+# disk, so Render cannot run old and new instances side by side). It needs no secrets:
+# settings.py defaults SECRET_KEY, and collectstatic touches no database.
+#
+# Side benefit: a dangling {% static %} reference now fails the build instead of the
+# already-committed production deploy.
+#
+# Must stay above the chown, so the generated tree is owned by `app` like everything else.
+RUN python manage.py collectstatic --no-input
+
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME
 

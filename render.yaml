@@ -26,6 +26,16 @@ services:
     plan: starter
     dockerfilePath: ./Dockerfile
     dockerContext: .
+    # Migrations run here — after the new image is built, before the running instance is
+    # replaced — so schema changes land while the current version is still serving, and a
+    # failing migration aborts the deploy instead of taking the site down. The service
+    # mounts a disk, which rules out Render's zero-downtime deploy (a disk attaches to one
+    # instance at a time), so everything that can leave the start path has to.
+    #
+    # Only the web service gets this: the worker and the cron share the image and must not
+    # migrate. `|| true` binds to createsuperuser alone — a failing migrate short-circuits
+    # the `&&` and fails the pre-deploy, which is the intent.
+    preDeployCommand: "python manage.py migrate && python manage.py createsuperuser --noinput || true"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
