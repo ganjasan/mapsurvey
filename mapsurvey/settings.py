@@ -278,6 +278,26 @@ PLAUSIBLE_SCRIPT_URL = os.environ.get('PLAUSIBLE_SCRIPT_URL', '')
 # Google Search Console verification token (meta-tag method); empty = tag not rendered.
 GOOGLE_SITE_VERIFICATION = os.environ.get('GOOGLE_SITE_VERIFICATION', '')
 
+# Internal product analytics (PostHog). Empty key = no snippet at all, which is what
+# keeps local development, the test suite and PR previews out of the production project.
+# Cloud EU by default: production runs in Render's Oregon region, and pointing analytics
+# at the US too would add a second US processor to a stack whose data residency is already
+# the recurring objection in European public-sector conversations.
+POSTHOG_PROJECT_KEY = os.environ.get('POSTHOG_PROJECT_KEY', '')
+# `or` rather than a get() default: render.yaml declares this as `sync: false`, so the
+# dashboard can hand us an empty string, and an empty api_host initialises the SDK
+# against nothing at all -- a silent no-op that looks exactly like working analytics.
+POSTHOG_API_HOST = os.environ.get('POSTHOG_API_HOST') or 'https://eu.i.posthog.com'
+# Surfaces PostHog must never load on. Both belong to somebody else's audience:
+# `/surveys/` is a customer's respondents, `/r/` is a customer's public readers. Measuring
+# them is not our business -- it is a feature we sell, served by `SurveyEvent` out of our
+# own database (`survey/events.py`) -- and this list is what keeps the /trust/ promise that
+# the survey-taking flow carries no third-party scripts literally true.
+# Enforced in `survey.context_processors.analytics` rather than by omitting the include from
+# `base_survey_template.html`, so a base template added later inherits the exclusion instead
+# of depending on which existing one its author happened to copy.
+POSTHOG_EXCLUDED_PREFIXES = ('/surveys/', '/r/')
+
 # Acquisition metrics sync (top of the creator funnel).
 # Every credential below defaults to empty: unset means "not configured", which the
 # funnel dashboard renders as such instead of as a zero.
