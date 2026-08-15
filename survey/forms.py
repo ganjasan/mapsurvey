@@ -178,7 +178,7 @@ class SurveySectionAnswerForm(forms.Form):
     DISPLAY_STYLE_TYPES = ('rating',)
 
     # Styles that lay out one element per choice, and so need choices to exist.
-    CHOICE_BASED_STYLES = ('scale_strip', 'list_pips')
+    CHOICE_BASED_STYLES = ('scale_strip', 'list_pips', 'stars')
 
     @classmethod
     def resolve_display_style(cls, question, survey_rating_style):
@@ -242,7 +242,12 @@ class SurveySectionAnswerForm(forms.Form):
             return ShowImageField(widget=ShowImageWidget, label=False, image_source=image_source)
 
         elif input_type == 'rating':
-            choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
+            # Stars fall back to five numbered steps when the creator never
+            # defined choices — the style is picked far more often than a
+            # choice list is written.
+            source = question.star_choices() if display_style == 'stars' else (question.choices or [])
+            choices = [(c["code"], question.get_choice_name(c["code"], language) or str(c["code"]))
+                       for c in source]
             return forms.ChoiceField(widget=forms.RadioSelect(attrs={'class': 'form-check-inline', 'style': 'margin-right:0;'}), choices=choices, label=label, required=required)
 
         elif input_type == 'datetime':
@@ -277,6 +282,11 @@ class SurveySectionAnswerForm(forms.Form):
         )
         field.widget.question_type = question.input_type
         field.widget.display_style = resolved_style
+        if resolved_style == 'stars':
+            # The star partial paints from these; resolved here so the two form
+            # paths (whole section, single question) cannot disagree.
+            field.widget.star_icon = question.star_icon()
+            field.widget.star_color = question.star_color()
         form.fields[question.code] = field
         return form
 
@@ -311,6 +321,9 @@ class SurveySectionAnswerForm(forms.Form):
             self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question, field_label, field_sublabel, field_color, field_icon_class, image_source, language, display_style=resolved_style)
             self.fields[field_name].widget.question_type = question.input_type
             self.fields[field_name].widget.display_style = resolved_style
+            if resolved_style == 'stars':
+                self.fields[field_name].widget.star_icon = question.star_icon()
+                self.fields[field_name].widget.star_color = question.star_color()
 
 
     def save(self):

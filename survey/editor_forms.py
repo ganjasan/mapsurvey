@@ -23,7 +23,8 @@ class SurveyCreateForm(forms.ModelForm):
 
 class SurveyHeaderForm(forms.ModelForm):
     default_rating_display_style = forms.ChoiceField(
-        choices=(('scale_strip', 'Compact scale'), ('list_pips', 'Labeled list')),
+        choices=(('scale_strip', 'Compact scale'), ('list_pips', 'Labeled list'),
+                 ('stars', 'Stars')),
         required=False,
         widget=forms.RadioSelect(),
         label='Rating questions',

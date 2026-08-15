@@ -22,7 +22,7 @@ def rating_display_style(field):
 
 
 # Styles that lay out one element per choice, and so share the scale partials.
-CHOICE_BASED_STYLES = {'scale_strip', 'list_pips'}
+CHOICE_BASED_STYLES = {'scale_strip', 'list_pips', 'stars'}
 
 # Types that can render through those partials. The style alone is not enough
 # to decide: a text question would be sent through them and blow up on
@@ -74,3 +74,14 @@ def question_type_picker(bound_field):
         'groups': groups,
         'current': current,
     }
+
+
+@register.filter
+def star_icon(field):
+    """Font Awesome class a star rating draws, resolved on the widget."""
+    return getattr(field.field.widget, 'star_icon', 'fas fa-star')
+
+
+@register.filter
+def star_color(field):
+    return getattr(field.field.widget, 'star_color', '#f5b301')

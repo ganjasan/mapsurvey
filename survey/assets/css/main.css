@@ -1070,3 +1070,110 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
     transform: translate(-50%, -50%);
   }
 }
+
+/* ── Rating: star style ────────────────────────────────────────────────────
+   Radios painted as icons. The choices are emitted in reverse and the row is
+   flipped back with row-reverse, so a plain `~` can fill every star up to the
+   checked one — no JavaScript, matching the other two rating styles. Read
+   this together with partials/rating_stars.html; changing the loop order
+   alone breaks the fill.
+
+   The colour rules are scoped under .question-card--scale on purpose: the
+   shared `.question-card label:has(input[type="radio"])` rule out-specifies a
+   bare .rating-stars__star and would paint every unselected star as body
+   text. Same scoping the scale-strip block uses above.                     */
+.rating-stars {
+  --star-color: #f5b301;
+  --star-empty: #d5d8dc;
+  padding: 4px 0 2px;
+}
+
+.rating-stars__row {
+  display: flex;
+  flex-direction: row-reverse;
+  /* Spread across the card, like the scale strip above, rather than huddling
+     at one edge. The gap is a floor for long scales, where space-between
+     would otherwise let the icons touch. */
+  justify-content: space-between;
+  gap: 6px;
+}
+
+/* The shared radio-label rule dresses every label in a card as a 44px pill
+   with 40px of left padding for the custom radio dot. A star is an icon, not
+   a pill: undo the box here, keep the pointer and the sizing.
+
+   The :has() is load-bearing, not decoration — without it this rule loses to
+   `.question-card label:has(input[type="radio"])` on specificity, the 40px
+   padding survives, and every star sits against the right edge of its own
+   clickable box. */
+.question-card--scale .rating-stars__star:has(input[type="radio"]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  min-width: 0;
+  width: auto;
+  padding: 2px;
+  margin: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1;
+  font-size: 30px;
+  transition: color 0.12s ease, transform 0.12s ease;
+}
+
+.rating-stars__star input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Unselected. */
+.question-card--scale .rating-stars__star:has(input[type="radio"]) {
+  color: var(--star-empty);
+}
+
+/* The checked star and every star drawn after it in the DOM — which is every
+   star to its left on screen. */
+.question-card--scale .rating-stars__star:has(input[type="radio"]:checked),
+.question-card--scale .rating-stars__star:has(input[type="radio"]:checked) ~ .rating-stars__star {
+  color: var(--star-color);
+}
+
+/* While the pointer is anywhere in the row, preview replaces the selection. */
+.question-card--scale .rating-stars__row:hover .rating-stars__star:has(input[type="radio"]) {
+  color: var(--star-empty);
+}
+
+.question-card--scale .rating-stars__row .rating-stars__star:has(input[type="radio"]):hover,
+.question-card--scale .rating-stars__row .rating-stars__star:has(input[type="radio"]):hover ~ .rating-stars__star {
+  color: var(--star-color);
+}
+
+.rating-stars__star:hover {
+  transform: scale(1.08);
+}
+
+/* Keyboard users get the same ring the rest of the form has. */
+.rating-stars__star:has(input:focus-visible) {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.rating-stars .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 480px) {
+  .question-card--scale .rating-stars__star { font-size: 26px; }
+}
