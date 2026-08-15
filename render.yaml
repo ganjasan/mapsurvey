@@ -33,9 +33,12 @@ services:
     # instance at a time), so everything that can leave the start path has to.
     #
     # Only the web service gets this: the worker and the cron share the image and must not
-    # migrate. `|| true` binds to createsuperuser alone — a failing migrate short-circuits
-    # the `&&` and fails the pre-deploy, which is the intent.
-    preDeployCommand: "python manage.py migrate && python manage.py createsuperuser --noinput || true"
+    # migrate.
+    #
+    # It has to be a script, not an inline command list: Render does NOT run this through a
+    # shell, so `migrate && createsuperuser || true` was parsed as arguments to migrate and
+    # the pre-deploy died with "unrecognized arguments: manage.py createsuperuser || true".
+    preDeployCommand: "sh ./predeploy.sh"
     envVars:
       - key: DATABASE_URL
         fromDatabase:

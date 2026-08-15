@@ -64,10 +64,29 @@ site down because the old instance is already gone.
 `createsuperuser --noinput` joins it in the same command. It is idempotent (`|| true` today, because
 it fails once the user exists) and has no reason to sit in the start path.
 
-Command: `python manage.py migrate && python manage.py createsuperuser --noinput || true`
+**The command must be a script.** Render does *not* run `preDeployCommand` through a shell. The
+first attempt inlined a command list —
+`python manage.py migrate && python manage.py createsuperuser --noinput || true` — and Render passed
+the whole thing to `migrate` as arguments:
 
-The `|| true` binds to the `createsuperuser` half only; a failing `migrate` short-circuits the `&&`
-and fails the pre-deploy, which is the behaviour we want.
+```
+manage.py migrate: error: unrecognized arguments: manage.py createsuperuser || true
+==> Pre-deploy has failed
+==> Exited with status 2
+```
+
+So `preDeployCommand: "sh ./predeploy.sh"`, with the sequencing inside `predeploy.sh`: `set -e` so a
+failing migration fails the pre-deploy and aborts the deploy, and `|| true` on `createsuperuser`
+alone so "user already exists" is not a deploy failure. As a script it is also testable — the three
+paths (createsuperuser fails, no superuser configured, migrate fails) are exercised locally against a
+stubbed `python`.
+
+**What that failure looked like in production, and why it mattered more than it appeared.** The site
+stayed up: the earlier `new_commit` deploy was already live with the new image, so the failed
+pre-deploy took nothing down. But that live image *skips* migrations (it sees `RENDER`), and the
+pre-deploy that was supposed to run them had failed — leaving migrations applied by nobody. Harmless
+only because that commit carried none. The lesson is the same one in the Migration Plan below: the
+commit that introduces `preDeployCommand` must not also carry a migration.
 
 ### D3. The entrypoint branches on `RENDER`, not on `DATABASE_URL`
 
@@ -119,12 +138,40 @@ tooling directories. Two reasons, in order of importance:
 
 ## Migration Plan
 
-No data migration. Deploy order is enforced by the Blueprint itself: `render.yaml`, `Dockerfile` and
-`entrypoint.sh` land in the same commit, so the image that skips runtime migrations is the same one
-whose service definition carries `preDeployCommand`. There is no intermediate state in which
-migrations are run by nobody.
+No data migration. Rollback is a `git revert` of the same commit.
 
-Rollback is a `git revert` of the same commit.
+**Correction, from watching the actual rollout (2026-08-15).** The claim originally made here — that
+landing all three files in one commit leaves "no intermediate state in which migrations are run by
+nobody" — is wrong, and the deploy showed why. Render reacted to the merge commit with **two**
+deploys: `dep-da08l2id0e5s73aeigjg` (trigger `new_commit`, went live 15:50:40) built and shipped the
+new image against the *old* service definition, which had no `preDeployCommand`; only then did
+`dep-da08l2ur33ss73enbu80` (trigger `blueprint_sync`, 15:50:40 onward) apply the new definition and
+run pre-deploy. For roughly one minute a container that skips `migrate` ran under a service that had
+no pre-deploy step.
+
+Harmless here — this change carries no migration. But the rule it implies is not: **never put a
+schema migration in the same commit that first introduces `preDeployCommand`.** Land the
+`render.yaml` change on its own, let the Blueprint sync settle, then ship migrations.
+
+## Measured effect
+
+From the Render app logs of the two deploys before this change and the one after
+(`srv-d5v2t8shg0os73a52540`):
+
+| Deploy | migrate → collectstatic → `Listening at` | Startup work in the window |
+|---|---|---|
+| 15:26, instance `xrntx` | 15:26:01.06 → 15:26:05.72 → 15:26:09.56 | 8.5 s |
+| 15:28, instance `p7vfm` | 15:28:39.58 → 15:28:44.08 → 15:28:47.76 | 8.2 s |
+| 15:50, instance `cgjqg` (this change) | — → — → 15:50:32.30 | none; neither line appears |
+
+So the Django work is gone from the start path entirely, worth about **8 seconds**. That is less
+than the "tens of seconds" this document and the proposal originally estimated: on Render
+`collectstatic` took ~4.6 s and `migrate` ~4.5 s, not the tens of seconds a 0.5 CPU instance
+suggested. The estimate was wrong; the direction was not.
+
+The 502 window is therefore shortened, not closed — what remains is image pull, disk mount and
+container start. Only removing the disk addresses that, which is the follow-up change and where the
+real win is.
 
 ## Open Questions
 
