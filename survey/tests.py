@@ -1,8 +1,11 @@
-from django.test import TestCase, SimpleTestCase, Client
+from django.test import TestCase, SimpleTestCase, Client, override_settings
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, LineString, Polygon
+from django.urls import reverse
+from django.utils import timezone
 from io import BytesIO
 from unittest import mock
+from unittest.mock import patch
 import json
 import zipfile
 
@@ -22,6 +25,9 @@ from .forms import SurveySectionAnswerForm
 from .permissions import get_effective_survey_role
 from .access_control import check_survey_access
 from .models import SurveyEvent, TrackedLink
+from .models import (
+    SurveySectionTranslation, QuestionTranslation, AIGenerationEvent,
+)
 from .events import emit_event, _classify_referrer, _parse_user_agent, build_session_start_metadata
 from .analytics import PerformanceAnalyticsService, SurveyAnalyticsService, SessionValidationService
 
@@ -2378,7 +2384,10 @@ class SurveyTrashTest(TestCase):
         THEN the survey is not in the survey list but appears in the Trash section
         """
         self._trash()
-        response = self.client.get('/editor/')
+        # ?dashboard=1: with the survey trashed the org has no live surveys, so
+        # a bare /editor/ now redirects new creators to the create page. This
+        # test is about what the dashboard shows, so ask for it explicitly.
+        response = self.client.get('/editor/?dashboard=1')
 
         self.assertEqual(response.status_code, 200)
         self.assertNotIn(self.survey, response.context['survey_headers'])
@@ -7364,7 +7373,10 @@ class InvitationFlowTest(TestCase):
         session.save()
         # Log in and visit a page — should not error
         self.client.login(username='flow_existing', password='pass')
-        response = self.client.get('/editor/')
+        # ?dashboard=1 keeps this on the dashboard: the org has no surveys, and
+        # a bare /editor/ would redirect to the create page, which says nothing
+        # about the middleware under test.
+        response = self.client.get('/editor/?dashboard=1')
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('pending_invitation_token', self.client.session)
 
@@ -10289,6 +10301,21 @@ class PostHogSnippetTest(TestCase):
         response = self.client.get('/trust/')
         self.assertContains(response, 'Product analytics on creator-facing pages only')
         self.assertContains(response, 'never to load where respondents answer surveys')
+
+    def test_trust_page_discloses_ai_drafting(self):
+        """
+        GIVEN AI draft generation sends the creator's brief to a US provider
+        WHEN the trust page is read
+        THEN it names that transfer, says the feature is optional
+        AND repeats that survey responses never reach an AI provider
+
+        The page's whole value is that it is checkable against the code. A
+        capability that ships to production without appearing here is the same
+        defect we spent 2026-08-15 correcting, only in the other direction.
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, "AI drafting sends the creator's brief to Google")
+        self.assertContains(response, 'Survey responses are never sent to an AI provider')
 
     def test_trust_page_states_hosting_region_truthfully(self):
         """
@@ -22004,6 +22031,1157 @@ class HasNeverCollectedTest(TestCase):
         self.assertFalse(survey.has_never_collected())
 
 
+# ─── AI survey draft generation ──────────────────────────────────────────────
+
+def _ai_question(name_en, input_type='text', languages=('en',), choices=None,
+                 sub_questions=None, required=False, color=None, icon=None):
+    """Build one question in the model-output shape (localized dicts, no codes)."""
+    is_geo = input_type in ('point', 'line', 'polygon')
+    question = {
+        'name': {lang: f'{name_en} [{lang}]' for lang in languages},
+        'subtext': {lang: '' for lang in languages},
+        'input_type': input_type,
+        'required': required,
+        'choices': choices or [],
+        'sub_questions': sub_questions or [],
+        # Top-level style fields; geo questions must carry real values.
+        'color': color if color is not None else ('#E8590C' if is_geo else ''),
+        'icon': icon if icon is not None else ('map-marker-alt' if input_type == 'point' else 'none'),
+    }
+    return question
+
+
+def _ai_choice(code, label, languages=('en',)):
+    return {'code': code, 'name': {lang: f'{label} [{lang}]' for lang in languages}}
+
+
+def _ai_blob(languages=('en',)):
+    """A well-formed draft: 2 sections, one point question with a sub-question."""
+    return {
+        'sections': [
+            {
+                'title': {lang: f'About you [{lang}]' for lang in languages},
+                'subheading': {lang: '' for lang in languages},
+                'questions': [
+                    _ai_question('How do you travel?', 'choice', languages, choices=[
+                        _ai_choice(1, 'On foot', languages),
+                        _ai_choice(2, 'By bike', languages),
+                    ]),
+                ],
+            },
+            {
+                'title': {lang: f'Problem spots [{lang}]' for lang in languages},
+                'subheading': {lang: '' for lang in languages},
+                'questions': [
+                    _ai_question(
+                        'Mark the worst spot', 'point', languages, required=True,
+                        sub_questions=[
+                            _ai_question('What is wrong there?', 'text', languages),
+                        ],
+                    ),
+                    _ai_question('How severe is it?', 'rating', languages, choices=[
+                        _ai_choice(1, 'Minor', languages),
+                        _ai_choice(5, 'Severe', languages),
+                    ]),
+                ],
+            },
+        ],
+    }
+
+
+class AIValidatorTest(TestCase):
+    """The gate that stops a hallucinated draft before it reaches the database."""
+
+    def test_well_formed_draft_passes(self):
+        """
+        GIVEN a draft with two sections, choices and one geo question
+        WHEN it is validated against the requested languages
+        THEN no errors are reported
+        """
+        from survey.ai.validator import validate_blob
+
+        self.assertEqual(validate_blob(_ai_blob(('en',)), ['en']), [])
+
+    def test_missing_translation_is_rejected(self):
+        """
+        GIVEN a two-language survey whose first question lacks the German name
+        WHEN the draft is validated
+        THEN the missing translation is reported rather than silently falling back
+        """
+        from survey.ai.validator import validate_blob
+
+        blob = _ai_blob(('en', 'de'))
+        del blob['sections'][0]['questions'][0]['name']['de']
+
+        errors = validate_blob(blob, ['en', 'de'])
+
+        self.assertTrue(any('missing translations for de' in e for e in errors), errors)
+
+    def test_second_top_level_geo_question_is_rejected(self):
+        """
+        GIVEN a draft with two top-level geo questions
+        WHEN it is validated
+        THEN the extra geo question is reported (geo is the most-skipped type)
+        """
+        from survey.ai.validator import validate_blob
+
+        blob = _ai_blob(('en',))
+        blob['sections'][0]['questions'].append(
+            _ai_question('Draw your route', 'line', ('en',))
+        )
+
+        errors = validate_blob(blob, ['en'])
+
+        self.assertTrue(any('at most one top-level geo question' in e for e in errors), errors)
+
+    def test_draft_without_answerable_questions_is_rejected(self):
+        """
+        GIVEN a draft made only of html decoration blocks
+        WHEN it is validated
+        THEN it is rejected — it would import cleanly and collect nothing
+        """
+        from survey.ai.validator import validate_blob
+
+        blob = {
+            'sections': [
+                {
+                    'title': {'en': 'One'}, 'subheading': {'en': ''},
+                    'questions': [_ai_question('Intro', 'html', ('en',))],
+                },
+                {
+                    'title': {'en': 'Two'}, 'subheading': {'en': ''},
+                    'questions': [_ai_question('Outro', 'html', ('en',))],
+                },
+            ],
+        }
+
+        errors = validate_blob(blob, ['en'])
+
+        self.assertIn('the draft has no answerable questions', errors)
+
+    def test_choice_question_without_choices_is_rejected(self):
+        """
+        GIVEN a choice question with an empty choices list
+        WHEN the draft is validated
+        THEN the missing choices are reported
+        """
+        from survey.ai.validator import validate_blob
+
+        blob = _ai_blob(('en',))
+        blob['sections'][0]['questions'][0]['choices'] = []
+
+        errors = validate_blob(blob, ['en'])
+
+        self.assertTrue(any('requires choices' in e for e in errors), errors)
+
+    def test_non_integer_and_duplicate_choice_codes_are_rejected(self):
+        """
+        GIVEN choices with a string code and a duplicated code
+        WHEN the draft is validated
+        THEN both problems are reported — codes drive scales and answer merging
+        """
+        from survey.ai.validator import validate_blob
+
+        blob = _ai_blob(('en',))
+        blob['sections'][0]['questions'][0]['choices'] = [
+            _ai_choice('one', 'On foot'), _ai_choice(2, 'By bike'), _ai_choice(2, 'By car'),
+        ]
+
+        errors = validate_blob(blob, ['en'])
+
+        self.assertTrue(any('non-integer code' in e for e in errors), errors)
+        self.assertTrue(any('must be unique' in e for e in errors), errors)
+
+    def test_descending_rating_codes_are_rejected(self):
+        """
+        GIVEN a rating question whose codes descend
+        WHEN the draft is validated
+        THEN it is rejected because min/max are derived from code order
+        """
+        from survey.ai.validator import validate_blob
+
+        blob = _ai_blob(('en',))
+        blob['sections'][1]['questions'][1]['choices'] = [
+            _ai_choice(5, 'Severe'), _ai_choice(1, 'Minor'),
+        ]
+
+        errors = validate_blob(blob, ['en'])
+
+        self.assertTrue(any('must ascend' in e for e in errors), errors)
+
+    def test_section_count_outside_bounds_is_rejected(self):
+        """
+        GIVEN a draft with a single section
+        WHEN it is validated
+        THEN the section count is reported
+        """
+        from survey.ai.validator import validate_blob
+
+        blob = _ai_blob(('en',))
+        blob['sections'] = blob['sections'][:1]
+
+        errors = validate_blob(blob, ['en'])
+
+        self.assertTrue(any('between 2 and 4 sections' in e for e in errors), errors)
+
+    def test_geo_question_without_style_is_rejected(self):
+        """
+        GIVEN a point question with no color and no icon
+        WHEN the draft is validated
+        THEN both are reported — a default black marker reads as unfinished
+        """
+        from survey.ai.validator import validate_blob
+
+        blob = _ai_blob(('en',))
+        blob['sections'][1]['questions'][0]['color'] = ''
+        blob['sections'][1]['questions'][0]['icon'] = 'none'
+
+        errors = validate_blob(blob, ['en'])
+
+        self.assertTrue(any('hex color' in e for e in errors), errors)
+        self.assertTrue(any('marker icon' in e for e in errors), errors)
+
+    def test_unknown_icon_is_rejected(self):
+        """
+        GIVEN an icon outside the curated list
+        WHEN the draft is validated
+        THEN it is rejected — a hallucinated FA class silently draws nothing
+        """
+        from survey.ai.validator import validate_blob
+
+        blob = _ai_blob(('en',))
+        blob['sections'][1]['questions'][0]['icon'] = 'sparkling-unicorn'
+
+        errors = validate_blob(blob, ['en'])
+
+        self.assertTrue(any('unknown icon' in e for e in errors), errors)
+
+    def test_geo_sub_question_is_rejected(self):
+        """
+        GIVEN a geo question whose sub-question is itself a geo question
+        WHEN the draft is validated
+        THEN it is rejected — the editor forbids geo sub-questions
+        """
+        from survey.ai.validator import validate_blob
+
+        blob = _ai_blob(('en',))
+        blob['sections'][1]['questions'][0]['sub_questions'] = [
+            _ai_question('Draw it', 'polygon', ('en',))
+        ]
+
+        errors = validate_blob(blob, ['en'])
+
+        self.assertTrue(any('invalid input_type' in e for e in errors), errors)
+
+
+class AIMaterializeTest(TestCase):
+    """Turning a validated draft into rows, with structure computed not generated."""
+
+    def setUp(self):
+        self.org = _make_org('AIMaterializeOrg')
+        self.user = User.objects.create_user('aimatuser', password='pass')
+
+    def _materialize(self, blob, languages=('en',)):
+        from survey.ai.materialize import header_overrides_from_form, materialize_draft
+
+        overrides = header_overrides_from_form(
+            name='ai_draft', languages=list(languages),
+            map_lat='52.52', map_lng='13.405', map_zoom='12', default_basemap='streets',
+        )
+        return materialize_draft(
+            blob, overrides, list(languages),
+            organization=self.org, created_by=self.user,
+        )
+
+    def test_structure_is_computed_from_list_order(self):
+        """
+        GIVEN a model draft that contains no codes, is_head or section links
+        WHEN it is materialized
+        THEN exactly one head section exists and the sections form one chain
+        """
+        survey, _warnings = self._materialize(_ai_blob(('en',)))
+
+        sections = list(SurveySection.objects.filter(survey_header=survey).order_by('code'))
+        self.assertEqual([s.code for s in sections], ['S1', 'S2'])
+        self.assertEqual([s.is_head for s in sections], [True, False])
+        self.assertEqual(sections[0].next_section_id, sections[1].id)
+        self.assertEqual(sections[1].prev_section_id, sections[0].id)
+        self.assertIsNone(sections[1].next_section_id)
+
+    def test_questions_get_unique_codes_and_sequential_order(self):
+        """
+        GIVEN a draft whose questions carry no codes
+        WHEN it is materialized
+        THEN every question has a distinct code and order_number runs 1..N per section
+        """
+        survey, _warnings = self._materialize(_ai_blob(('en',)))
+
+        questions = list(Question.objects.filter(survey_section__survey_header=survey))
+        codes = [q.code for q in questions]
+        self.assertEqual(len(codes), len(set(codes)))
+        second_section = SurveySection.objects.get(survey_header=survey, code='S2')
+        top_level = list(
+            Question.objects.filter(survey_section=second_section, parent_question_id__isnull=True)
+            .order_by('order_number')
+        )
+        self.assertEqual([q.order_number for q in top_level], [1, 2])
+
+    def test_sub_question_is_attached_to_its_geo_parent(self):
+        """
+        GIVEN a point question with one sub-question
+        WHEN the draft is materialized
+        THEN the sub-question hangs off the point question, not off the section
+        """
+        survey, _warnings = self._materialize(_ai_blob(('en',)))
+
+        point = Question.objects.get(
+            survey_section__survey_header=survey, input_type='point',
+        )
+        subs = list(Question.objects.filter(parent_question_id=point))
+        self.assertEqual(len(subs), 1)
+        self.assertEqual(subs[0].input_type, 'text')
+
+    def test_every_requested_language_gets_translation_rows(self):
+        """
+        GIVEN a two-language draft
+        WHEN it is materialized
+        THEN each section and question has a translation row per language
+        """
+        survey, _warnings = self._materialize(_ai_blob(('en', 'de')), ('en', 'de'))
+
+        section = SurveySection.objects.filter(survey_header=survey, code='S1').first()
+        languages = set(
+            SurveySectionTranslation.objects.filter(section=section)
+            .values_list('language', flat=True)
+        )
+        self.assertEqual(languages, {'en', 'de'})
+        question = Question.objects.filter(survey_section=section).first()
+        q_languages = set(
+            QuestionTranslation.objects.filter(question=question)
+            .values_list('language', flat=True)
+        )
+        self.assertEqual(q_languages, {'en', 'de'})
+
+    def test_header_comes_from_the_form_not_the_model(self):
+        """
+        GIVEN map position and languages picked by the creator
+        WHEN the draft is materialized
+        THEN the survey header carries those values and starts as a draft
+        """
+        survey, _warnings = self._materialize(_ai_blob(('en',)))
+
+        self.assertEqual(survey.name, 'ai_draft')
+        self.assertEqual(survey.status, 'draft')
+        self.assertEqual(survey.available_languages, ['en'])
+        self.assertEqual(survey.start_map_zoom, 12)
+        self.assertIsNotNone(survey.start_map_postion)
+
+    def test_marker_style_reaches_the_question_row(self):
+        """
+        GIVEN a point question styled by the model
+        WHEN the draft is materialized
+        THEN the row carries the hex color and the fas-prefixed icon class
+        """
+        survey, _warnings = self._materialize(_ai_blob(('en',)))
+
+        point = Question.objects.get(
+            survey_section__survey_header=survey, input_type='point',
+        )
+        self.assertEqual(point.color, '#E8590C')
+        self.assertEqual(point.icon_class, 'fas fa-map-marker-alt')
+
+    def test_import_failure_leaves_nothing_behind(self):
+        """
+        GIVEN a draft that the import path rejects (unknown input_type)
+        WHEN materialization runs inside a transaction
+        THEN it raises and no survey survives
+        """
+        from django.db import transaction
+        from survey.serialization import ImportError as SerializationImportError
+
+        blob = _ai_blob(('en',))
+        blob['sections'][0]['questions'][0]['input_type'] = 'telepathy'
+        before = SurveyHeader.objects.count()
+
+        with self.assertRaises(SerializationImportError):
+            with transaction.atomic():
+                self._materialize(blob)
+
+        self.assertEqual(SurveyHeader.objects.count(), before)
+
+
+class _FakeProvider:
+    """Stands in for a real model: returns queued blobs, counts calls."""
+
+    def __init__(self, blobs, error=None):
+        self._blobs = list(blobs)
+        self._error = error
+        self.calls = []
+
+    def complete_structured(self, *, system, user, schema, max_tokens=64000):
+        from survey.ai.client import LLMUsage
+
+        self.calls.append(user)
+        if self._error is not None:
+            raise self._error
+        blob = self._blobs.pop(0)
+        usage = LLMUsage(
+            provider='fake', model='fake-model',
+            input_tokens=100, output_tokens=200, latency_ms=1234,
+        )
+        return blob, usage
+
+
+class AIClientConfigTest(TestCase):
+    """Credentials absent is a state, not an error."""
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='')
+    def test_missing_key_reports_not_configured(self):
+        """
+        GIVEN no provider credentials
+        WHEN a provider is requested
+        THEN NotConfigured is raised before any network call is attempted
+        """
+        from survey.ai import client
+
+        self.assertFalse(client.provider_configured())
+        with self.assertRaises(client.NotConfigured):
+            client.get_provider()
+
+    @override_settings(AI_PROVIDER='nonexistent', ANTHROPIC_API_KEY='sk-test')
+    def test_unknown_provider_reports_not_configured(self):
+        """
+        GIVEN AI_PROVIDER naming a provider that has no implementation
+        WHEN a provider is requested
+        THEN NotConfigured is raised rather than an opaque KeyError
+        """
+        from survey.ai import client
+
+        self.assertFalse(client.provider_configured())
+        with self.assertRaises(client.NotConfigured):
+            client.get_provider()
+
+
+class AIGenerationFlowTest(TestCase):
+    """The orchestrator: provider → validator → materializer → event."""
+
+    def setUp(self):
+        self.org = _make_org('AIGenOrg')
+        self.user = User.objects.create_user('aigenuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+
+    def _brief(self):
+        from survey.ai.generation import SurveyBrief
+
+        return SurveyBrief(
+            name='traffic_survey', goal='Where is traffic worst',
+            audience='Residents', map_target='Congestion spots',
+            use_case='urban_planning',
+        )
+
+    def _run(self, provider, languages=('en',)):
+        from survey.ai.generation import generate_survey_draft, start_generation
+        from survey.ai.materialize import header_overrides_from_form
+
+        brief = self._brief()
+        event = start_generation(self.user, self.org, brief, list(languages))
+        overrides = header_overrides_from_form(
+            name=brief.name, languages=list(languages),
+            map_lat='52.52', map_lng='13.405', map_zoom='12', default_basemap='streets',
+        )
+        with patch('survey.ai.generation.client.get_provider', return_value=provider):
+            generate_survey_draft(event, brief, list(languages), overrides)
+        event.refresh_from_db()
+        return event
+
+    def test_successful_generation_creates_survey_and_owner(self):
+        """
+        GIVEN a provider returning a valid draft
+        WHEN generation runs
+        THEN a survey exists, the creator owns it, and the event records usage
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+        self.assertIsNotNone(event.created_survey_id)
+        self.assertEqual(event.input_tokens, 100)
+        self.assertEqual(event.latency_ms, 1234)
+        self.assertTrue(SurveyCollaborator.objects.filter(
+            survey=event.created_survey, user=self.user, role='owner',
+        ).exists())
+        self.assertEqual(len(provider.calls), 1)
+
+    def test_invalid_draft_is_retried_once_then_rejected(self):
+        """
+        GIVEN a provider that returns an invalid draft twice
+        WHEN generation runs
+        THEN exactly two calls are made, nothing is written, and the outcome says why
+        """
+        bad = _ai_blob(('en',))
+        bad['sections'] = bad['sections'][:1]
+        provider = _FakeProvider([bad, dict(bad)])
+        before = SurveyHeader.objects.count()
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'invalid_draft')
+        self.assertEqual(len(provider.calls), 2)
+        self.assertEqual(SurveyHeader.objects.count(), before)
+        self.assertIn('sections', event.error_detail)
+
+    def test_retry_prompt_carries_the_validation_errors(self):
+        """
+        GIVEN a first draft that fails validation and a valid second one
+        WHEN generation runs
+        THEN the second prompt tells the model what was wrong, and the draft is saved
+        """
+        bad = _ai_blob(('en',))
+        bad['sections'] = bad['sections'][:1]
+        provider = _FakeProvider([bad, _ai_blob(('en',))])
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+        self.assertEqual(len(provider.calls), 2)
+        self.assertIn('rejected for these reasons', provider.calls[1])
+
+    def test_provider_error_writes_nothing(self):
+        """
+        GIVEN a provider that fails to answer
+        WHEN generation runs
+        THEN the failure is recorded and no partial survey is left behind
+        """
+        from survey.ai.client import ProviderError
+
+        provider = _FakeProvider([], error=ProviderError('connection error'))
+        before = SurveyHeader.objects.count()
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'provider_error')
+        self.assertEqual(SurveyHeader.objects.count(), before)
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='')
+    def test_unconfigured_provider_is_recorded_not_raised(self):
+        """
+        GIVEN no provider credentials
+        WHEN generation runs
+        THEN the event records not_configured instead of the task crashing
+        """
+        from survey.ai.generation import generate_survey_draft, start_generation
+
+        brief = self._brief()
+        event = start_generation(self.user, self.org, brief, ['en'])
+
+        generate_survey_draft(event, brief, ['en'], {'name': 'x', 'available_languages': ['en']})
+
+        event.refresh_from_db()
+        self.assertEqual(event.outcome, 'not_configured')
+
+
+class AISurveyCreateViewTest(TestCase):
+    """The create page: manual path untouched, AI path gated and asynchronous."""
+
+    def setUp(self):
+        self.org = _make_org('AIViewOrg')
+        self.user = User.objects.create_user('aiviewuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='aiviewuser', password='pass')
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='', GEMINI_API_KEY='')
+    def test_panel_is_absent_when_provider_unconfigured(self):
+        """
+        GIVEN no provider credentials
+        WHEN the create page is opened
+        THEN no AI panel is rendered and only manual creation is offered
+        """
+        response = self.client.get(reverse('editor_survey_create'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Generate draft')
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_panel_is_present_when_provider_configured(self):
+        """
+        GIVEN configured provider credentials
+        WHEN the create page is opened
+        THEN the brief panel and the privacy notice are rendered
+        """
+        response = self.client.get(reverse('editor_survey_create'))
+
+        self.assertContains(response, 'Generate draft')
+        self.assertContains(response, 'never sent to AI providers')
+
+    def test_manual_creation_is_unchanged(self):
+        """
+        GIVEN the manual action
+        WHEN the create form is submitted
+        THEN a survey with one head section is created and the user is redirected
+        """
+        response = self.client.post(reverse('editor_survey_create'), {
+            'name': 'manual_survey', 'available_languages': '["en"]', 'action': 'empty',
+        })
+
+        survey = SurveyHeader.objects.get(name='manual_survey')
+        self.assertRedirects(
+            response, reverse('editor_survey_detail', kwargs={'survey_uuid': survey.uuid}),
+        )
+        self.assertEqual(
+            SurveySection.objects.filter(survey_header=survey, is_head=True).count(), 1,
+        )
+
+    def test_legacy_post_without_action_still_creates_manually(self):
+        """
+        GIVEN a POST that predates the action parameter
+        WHEN it reaches the create view
+        THEN the manual path runs exactly as before
+        """
+        response = self.client.post(reverse('editor_survey_create'), {
+            'name': 'legacy_survey', 'available_languages': '["en"]',
+        })
+
+        self.assertTrue(SurveyHeader.objects.filter(name='legacy_survey').exists())
+        self.assertEqual(response.status_code, 302)
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_generate_enqueues_a_task_and_returns_the_poller(self):
+        """
+        GIVEN a filled brief and a configured provider
+        WHEN the generate action is submitted
+        THEN a pending event is created, a task is enqueued, and the poller is returned
+        """
+        with patch('survey.editor_views.generate_survey_draft_task.delay') as delay:
+            response = self.client.post(reverse('editor_survey_create'), {
+                'name': 'ai_survey', 'available_languages': '["en"]',
+                'action': 'generate', 'goal': 'Where is traffic worst',
+                'use_case': 'urban_planning',
+            })
+
+        event = AIGenerationEvent.objects.get(user=self.user)
+        self.assertEqual(event.outcome, 'pending')
+        self.assertEqual(event.brief['goal'], 'Where is traffic worst')
+        delay.assert_called_once()
+        # The POST is what puts the overlay and its poller on the page.
+        self.assertContains(response, 'Building your survey')
+        self.assertContains(response, 'hx-trigger')
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_generate_without_a_goal_redisplays_the_form(self):
+        """
+        GIVEN a generate submission with an empty goal
+        WHEN it is posted
+        THEN the form is re-rendered and no event or task is created
+        """
+        with patch('survey.editor_views.generate_survey_draft_task.delay') as delay:
+            response = self.client.post(reverse('editor_survey_create'), {
+                'name': 'ai_survey', 'available_languages': '["en"]',
+                'action': 'generate', 'goal': '',
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(AIGenerationEvent.objects.exists())
+        delay.assert_not_called()
+        # A fragment, not the page: this is swapped into a div inside the form
+        # the creator is still looking at, so a full page would duplicate every
+        # id and re-run the Leaflet setup against an initialised map.
+        self.assertNotContains(response, '<html')
+        self.assertNotContains(response, 'create-map-picker')
+        self.assertContains(response, 'Check the form before generating')
+
+
+class AIGenerationStatusViewTest(TestCase):
+    """The polled status endpoint."""
+
+    def setUp(self):
+        self.org = _make_org('AIStatusOrg')
+        self.user = User.objects.create_user('aistatususer', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='aistatususer', password='pass')
+
+    def _event(self, outcome='pending', survey=None):
+        return AIGenerationEvent.objects.create(
+            kind='survey_draft', user=self.user, organization=self.org,
+            outcome=outcome, created_survey=survey, languages=['en'],
+        )
+
+    def test_pending_event_changes_nothing_on_the_page(self):
+        """
+        GIVEN a generation still running
+        WHEN the status endpoint is polled
+        THEN it answers 204 so the overlay is left untouched and does not flicker
+        """
+        event = self._event()
+
+        response = self.client.get(
+            reverse('editor_generation_status', kwargs={'event_id': event.id})
+        )
+
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(response.content)
+
+    def test_success_redirects_to_the_populated_editor(self):
+        """
+        GIVEN a finished generation
+        WHEN the status endpoint is polled
+        THEN it answers with HX-Redirect to the new survey's editor
+        """
+        survey = SurveyHeader.objects.create(
+            name='generated', organization=self.org, created_by=self.user,
+        )
+        event = self._event(outcome='success', survey=survey)
+
+        response = self.client.get(
+            reverse('editor_generation_status', kwargs={'event_id': event.id})
+        )
+
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(
+            response['HX-Redirect'],
+            reverse('editor_survey_detail', kwargs={'survey_uuid': survey.uuid}),
+        )
+
+    def test_failure_stops_polling_and_explains(self):
+        """
+        GIVEN a generation that failed
+        WHEN the status endpoint is polled
+        THEN a message is shown and the fragment no longer polls
+        """
+        event = self._event(outcome='provider_error')
+
+        response = self.client.get(
+            reverse('editor_generation_status', kwargs={'event_id': event.id})
+        )
+
+        # No poller in the failure fragment, so polling stops; it arrives as an
+        # out-of-band swap because the poll itself no longer swaps anything.
+        self.assertNotContains(response, 'hx-trigger')
+        self.assertContains(response, 'hx-swap-oob')
+        # The copy contains an apostrophe, which the template escapes.
+        self.assertContains(response, 'reach the AI service')
+
+    def test_another_users_event_is_not_visible(self):
+        """
+        GIVEN an event belonging to a different user
+        WHEN it is polled
+        THEN the request 404s — the brief is the creator's project description
+        """
+        other = User.objects.create_user('aiotheruser', password='pass')
+        Membership.objects.create(user=other, organization=self.org, role='owner')
+        event = AIGenerationEvent.objects.create(
+            kind='survey_draft', user=other, organization=self.org, outcome='pending',
+        )
+
+        response = self.client.get(
+            reverse('editor_generation_status', kwargs={'event_id': event.id})
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+
+class EditorZeroSurveyRedirectTest(TestCase):
+    """New creators land on the create page, not an empty dashboard."""
+
+    def setUp(self):
+        self.org = _make_org('ZeroSurveyOrg')
+        self.user = User.objects.create_user('zerouser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='zerouser', password='pass')
+
+    def test_empty_org_is_redirected_to_create(self):
+        """
+        GIVEN an organization with no surveys
+        WHEN an owner opens the dashboard
+        THEN they are redirected to the create page with the welcome flag
+        """
+        response = self.client.get(reverse('editor'))
+
+        self.assertRedirects(
+            response, reverse('editor_survey_create') + '?welcome=1',
+        )
+
+    def test_dashboard_flag_defeats_the_redirect(self):
+        """
+        GIVEN an organization with no surveys
+        WHEN the dashboard is opened with ?dashboard=1
+        THEN it renders instead of redirecting, so the escape link cannot loop
+        """
+        response = self.client.get(reverse('editor') + '?dashboard=1')
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_org_with_a_survey_is_not_redirected(self):
+        """
+        GIVEN an organization that already has a survey
+        WHEN the dashboard is opened
+        THEN it renders as before
+        """
+        SurveyHeader.objects.create(
+            name='existing', organization=self.org, created_by=self.user,
+        )
+
+        response = self.client.get(reverse('editor'))
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_trashed_survey_does_not_count_as_content(self):
+        """
+        GIVEN an organization whose only survey is in the trash
+        WHEN the dashboard is opened
+        THEN the creator is still sent to the create page
+        """
+        SurveyHeader.objects.create(
+            name='trashed', organization=self.org, created_by=self.user,
+            deleted_at=timezone.now(),
+        )
+
+        response = self.client.get(reverse('editor'))
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_viewer_is_not_redirected(self):
+        """
+        GIVEN a viewer in an empty organization
+        WHEN they open the dashboard
+        THEN they stay there — they cannot create, so the create page is a dead end
+        """
+        viewer = User.objects.create_user('zeroviewer', password='pass')
+        Membership.objects.create(user=viewer, organization=self.org, role='viewer')
+        self.client.login(username='zeroviewer', password='pass')
+
+        response = self.client.get(reverse('editor'))
+
+        self.assertEqual(response.status_code, 200)
+
+
+class AIGenerationTaskTest(TestCase):
+    """The Celery entry point: never leaves the poller waiting forever."""
+
+    def setUp(self):
+        self.org = _make_org('AITaskOrg')
+        self.user = User.objects.create_user('aitaskuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+
+    def _event(self):
+        return AIGenerationEvent.objects.create(
+            kind='survey_draft', user=self.user, organization=self.org,
+            outcome='pending', languages=['en'],
+        )
+
+    def _brief_data(self):
+        return {
+            'name': 'task_survey', 'goal': 'Where is traffic worst',
+            'audience': '', 'map_target': '', 'use_case': 'urban_planning',
+        }
+
+    def test_task_runs_generation_end_to_end(self):
+        """
+        GIVEN a queued generation and a provider returning a valid draft
+        WHEN the task executes
+        THEN the survey is created and the event reaches a terminal outcome
+        """
+        from survey.ai.materialize import header_overrides_from_form
+        from survey.ai.tasks import generate_survey_draft_task
+
+        event = self._event()
+        overrides = header_overrides_from_form(
+            name='task_survey', languages=['en'],
+            map_lat=None, map_lng=None, map_zoom=None, default_basemap=None,
+        )
+        provider = _FakeProvider([_ai_blob(('en',))])
+
+        with patch('survey.ai.generation.client.get_provider', return_value=provider):
+            generate_survey_draft_task(event.id, self._brief_data(), ['en'], overrides)
+
+        event.refresh_from_db()
+        self.assertEqual(event.outcome, 'success')
+        self.assertTrue(SurveyHeader.objects.filter(name='task_survey').exists())
+
+    def test_unexpected_crash_still_terminates_the_event(self):
+        """
+        GIVEN generation that raises something unforeseen
+        WHEN the task executes
+        THEN the event leaves 'pending' so the page stops polling and explains
+        """
+        from survey.ai.tasks import generate_survey_draft_task
+
+        event = self._event()
+
+        # Patched at its definition site: tasks.py imports it inside the
+        # function body, so there is no module attribute to replace.
+        with patch('survey.ai.generation.generate_survey_draft', side_effect=RuntimeError('boom')):
+            generate_survey_draft_task(event.id, self._brief_data(), ['en'], {})
+
+        event.refresh_from_db()
+        self.assertEqual(event.outcome, 'error')
+        self.assertIn('boom', event.error_detail)
+
+    def test_missing_event_is_survivable(self):
+        """
+        GIVEN a task whose event row no longer exists
+        WHEN it executes
+        THEN it returns quietly instead of crashing the worker
+        """
+        from survey.ai.tasks import generate_survey_draft_task
+
+        generate_survey_draft_task(999999, self._brief_data(), ['en'], {})
+
+
+class AITruncatedOutputUsageTest(TestCase):
+    """A truncated call still spent tokens — the event must say how many."""
+
+    def setUp(self):
+        self.org = _make_org('AITruncOrg')
+        self.user = User.objects.create_user('aitruncuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+
+    def test_truncated_generation_records_the_failed_calls_usage(self):
+        """
+        GIVEN a provider whose every answer is cut off at the token ceiling
+        WHEN generation gives up
+        THEN the event carries the truncated call's own token counts, not None
+        """
+        from survey.ai.client import LLMUsage, TruncatedOutput
+        from survey.ai.generation import SurveyBrief, generate_survey_draft, start_generation
+
+        spent = LLMUsage(
+            provider='fake', model='fake-model',
+            input_tokens=900, output_tokens=64000, latency_ms=55000,
+        )
+
+        class _TruncatingProvider:
+            def complete_structured(self, **kwargs):
+                raise TruncatedOutput('output truncated at 64000 tokens', usage=spent)
+
+        brief = SurveyBrief(
+            name='truncated', goal='Everything about everything',
+            audience='', map_target='', use_case='other',
+        )
+        event = start_generation(self.user, self.org, brief, ['en'])
+
+        with patch('survey.ai.generation.client.get_provider', return_value=_TruncatingProvider()):
+            generate_survey_draft(event, brief, ['en'], {'name': 'truncated'})
+
+        event.refresh_from_db()
+        self.assertEqual(event.outcome, 'provider_error')
+        self.assertEqual(event.output_tokens, 64000)
+        self.assertEqual(event.input_tokens, 900)
+        self.assertEqual(event.model, 'fake-model')
+
+
+class GeminiProviderTest(TestCase):
+    """The free-tier provider used for end-to-end testing."""
+
+    @override_settings(AI_PROVIDER='gemini', GEMINI_API_KEY='')
+    def test_missing_key_reports_not_configured(self):
+        """
+        GIVEN AI_PROVIDER=gemini with no key
+        WHEN a provider is requested
+        THEN NotConfigured is raised and the UI gate stays closed
+        """
+        from survey.ai import client
+
+        self.assertFalse(client.provider_configured())
+        with self.assertRaises(client.NotConfigured):
+            client.get_provider()
+
+    @override_settings(AI_PROVIDER='gemini', GEMINI_API_KEY='test-key')
+    def test_configured_key_opens_the_gate(self):
+        """
+        GIVEN a Gemini key
+        WHEN the UI asks whether AI is available
+        THEN it is, without importing any vendor SDK
+        """
+        from survey.ai import client
+
+        self.assertTrue(client.provider_configured())
+
+    def test_schema_is_adapted_to_geminis_dialect(self):
+        """
+        GIVEN our JSON schema, which uses additionalProperties and lowercase types
+        WHEN it is adapted for Gemini
+        THEN additionalProperties is dropped and types are uppercased
+        """
+        from survey.ai.client import _to_gemini_schema
+        from survey.ai.schema import survey_draft_schema
+
+        adapted = _to_gemini_schema(survey_draft_schema(['en']))
+
+        self.assertEqual(adapted['type'], 'OBJECT')
+        self.assertNotIn('additionalProperties', adapted)
+        sections = adapted['properties']['sections']
+        self.assertEqual(sections['type'], 'ARRAY')
+        self.assertNotIn('additionalProperties', sections['items'])
+        title = sections['items']['properties']['title']
+        self.assertEqual(title['type'], 'OBJECT')
+        self.assertEqual(title['properties']['en']['type'], 'STRING')
+        self.assertEqual(sections['items']['required'], ['title', 'subheading', 'questions'])
+
+    @override_settings(AI_PROVIDER='gemini', GEMINI_API_KEY='test-key', GEMINI_MODEL='ghost-model')
+    def test_unknown_model_says_which_setting_to_change(self):
+        """
+        GIVEN a model name the key cannot use
+        WHEN generation is attempted
+        THEN the error names GEMINI_MODEL rather than reading like an outage
+        """
+        from survey.ai import client
+
+        provider = client.get_provider()
+        response = mock.Mock(status_code=404, text='not found')
+
+        with patch('requests.post', return_value=response):
+            with self.assertRaises(client.ProviderError) as ctx:
+                provider.complete_structured(system='s', user='u', schema={})
+
+        self.assertIn('GEMINI_MODEL', str(ctx.exception))
+
+    @override_settings(AI_PROVIDER='gemini', GEMINI_API_KEY='test-key')
+    def test_truncated_response_carries_its_usage(self):
+        """
+        GIVEN a response cut off at the token ceiling
+        WHEN it is parsed
+        THEN TruncatedOutput carries the spent tokens so the event can record them
+        """
+        from survey.ai import client
+
+        provider = client.get_provider()
+        response = mock.Mock(status_code=200)
+        response.json.return_value = {
+            'candidates': [{'finishReason': 'MAX_TOKENS', 'content': {'parts': [{'text': '{'}]}}],
+            'usageMetadata': {'promptTokenCount': 10, 'candidatesTokenCount': 4096},
+        }
+
+        with patch('requests.post', return_value=response):
+            with self.assertRaises(client.TruncatedOutput) as ctx:
+                provider.complete_structured(system='s', user='u', schema={})
+
+        self.assertEqual(ctx.exception.usage.output_tokens, 4096)
+        self.assertEqual(ctx.exception.usage.provider, 'gemini')
+
+    @override_settings(AI_PROVIDER='gemini', GEMINI_API_KEY='test-key')
+    def test_successful_response_is_parsed_with_usage(self):
+        """
+        GIVEN a well-formed Gemini response
+        WHEN it is parsed
+        THEN the JSON blob and the token usage both come back
+        """
+        from survey.ai import client
+
+        provider = client.get_provider()
+        response = mock.Mock(status_code=200)
+        response.json.return_value = {
+            'candidates': [{
+                'finishReason': 'STOP',
+                'content': {'parts': [{'text': '{"sections": []}'}]},
+            }],
+            'usageMetadata': {'promptTokenCount': 11, 'candidatesTokenCount': 22},
+        }
+
+        with patch('requests.post', return_value=response):
+            blob, usage = provider.complete_structured(system='s', user='u', schema={})
+
+        self.assertEqual(blob, {'sections': []})
+        self.assertEqual(usage.input_tokens, 11)
+        self.assertEqual(usage.output_tokens, 22)
+
+
+class AIGenerationTelemetryTest(TestCase):
+    """Server-side hypothesis telemetry: waited-or-left, and the draft snapshot."""
+
+    def setUp(self):
+        self.org = _make_org('AITelemetryOrg')
+        self.user = User.objects.create_user('aitelemuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='aitelemuser', password='pass')
+
+    def _event(self, outcome='pending', survey=None):
+        return AIGenerationEvent.objects.create(
+            kind='survey_draft', user=self.user, organization=self.org,
+            outcome=outcome, created_survey=survey, languages=['en'],
+        )
+
+    def test_each_poll_stamps_last_polled_at(self):
+        """
+        GIVEN a pending generation
+        WHEN the page polls the status endpoint
+        THEN last_polled_at is stamped — its freeze marks when the creator left
+        """
+        event = self._event()
+        self.assertIsNone(event.last_polled_at)
+
+        self.client.get(reverse('editor_generation_status', kwargs={'event_id': event.id}))
+
+        event.refresh_from_db()
+        self.assertIsNotNone(event.last_polled_at)
+
+    def test_redirect_stamps_redirected_at_once(self):
+        """
+        GIVEN a finished generation polled twice
+        WHEN both polls receive the redirect
+        THEN redirected_at keeps the FIRST stamp — the moment the creator waited to
+        """
+        survey = SurveyHeader.objects.create(
+            name='telemetry_ok', organization=self.org, created_by=self.user,
+        )
+        event = self._event(outcome='success', survey=survey)
+        url = reverse('editor_generation_status', kwargs={'event_id': event.id})
+
+        self.client.get(url)
+        event.refresh_from_db()
+        first = event.redirected_at
+        self.assertIsNotNone(first)
+
+        self.client.get(url)
+        event.refresh_from_db()
+        self.assertEqual(event.redirected_at, first)
+
+    def test_generated_blob_is_snapshotted_on_success(self):
+        """
+        GIVEN a provider returning a valid draft
+        WHEN generation succeeds
+        THEN the event keeps the model's blob as produced, for the edit-diff metric
+        """
+        from survey.ai.generation import SurveyBrief, generate_survey_draft, start_generation
+
+        brief = SurveyBrief(
+            name='telemetry_snap', goal='goal', audience='', map_target='',
+            use_case='other',
+        )
+        event = start_generation(self.user, self.org, brief, ['en'])
+        blob = _ai_blob(('en',))
+        provider = _FakeProvider([blob])
+
+        with patch('survey.ai.generation.client.get_provider', return_value=provider):
+            generate_survey_draft(event, brief, ['en'], {'name': 'telemetry_snap'})
+
+        event.refresh_from_db()
+        self.assertEqual(event.outcome, 'success')
+        self.assertEqual(event.generated_blob, blob)
+
+    def test_rejected_blob_is_kept_for_prompt_iteration(self):
+        """
+        GIVEN a draft that fails validation twice
+        WHEN generation gives up
+        THEN the last rejected blob is stored next to the reasons it was rejected
+        """
+        from survey.ai.generation import SurveyBrief, generate_survey_draft, start_generation
+
+        bad = _ai_blob(('en',))
+        bad['sections'] = bad['sections'][:1]
+        brief = SurveyBrief(
+            name='telemetry_bad', goal='goal', audience='', map_target='',
+            use_case='other',
+        )
+        event = start_generation(self.user, self.org, brief, ['en'])
+        provider = _FakeProvider([bad, dict(bad)])
+
+        with patch('survey.ai.generation.client.get_provider', return_value=provider):
+            generate_survey_draft(event, brief, ['en'], {'name': 'telemetry_bad'})
+
+        event.refresh_from_db()
+        self.assertEqual(event.outcome, 'invalid_draft')
+        self.assertIsNotNone(event.generated_blob)
 class QuestionTypePickerMetadataTest(TestCase):
     """Picker metadata (survey/question_types.py) stays in step with the model."""
 

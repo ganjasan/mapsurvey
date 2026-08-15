@@ -1383,3 +1383,79 @@ class PublicResultsBlock(models.Model):
     def __str__(self):
         return f"{self.block_type} block on {self.page.slug}"
 
+
+
+AI_GENERATION_KIND_CHOICES = (
+    ('survey_draft', _('Survey draft generation')),
+    # AI analytics (#92) and AI response triage (#95) append values here — no
+    # schema change needed when they land.
+)
+
+AI_GENERATION_OUTCOME_CHOICES = (
+    ('pending', _('Pending')),
+    ('success', _('Success')),
+    ('not_configured', _('Provider not configured')),
+    ('provider_error', _('Provider error')),
+    ('invalid_draft', _('Invalid draft')),
+    ('error', _('Unexpected error')),
+)
+
+
+class AIGenerationEvent(models.Model):
+    """One LLM generation attempt — survey drafts today, analytics/triage later.
+
+    Doubles as the async task-state row (`pending` → terminal outcome): the
+    create page polls a status endpoint that reads this row, so generation
+    state survives worker restarts and is inspectable in the admin. Also the
+    substrate for future per-organization quotas (#87 counts rows) and for
+    cost tracking (token usage is stored per attempt).
+
+    The brief is creator-authored project description (never respondent data);
+    it is kept because reading real briefs against their outcomes is the only
+    way to iterate on prompt quality.
+    """
+
+    kind = models.CharField(max_length=30, choices=AI_GENERATION_KIND_CHOICES, db_index=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='ai_generation_events',
+    )
+    organization = models.ForeignKey(
+        'Organization', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='ai_generation_events',
+    )
+    created_survey = models.ForeignKey(
+        'SurveyHeader', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='ai_generation_events',
+    )
+    brief = models.JSONField(default=dict, blank=True)
+    languages = models.JSONField(default=list, blank=True)
+    provider = models.CharField(max_length=30, blank=True, default='')
+    model = models.CharField(max_length=80, blank=True, default='')
+    input_tokens = models.IntegerField(null=True, blank=True)
+    output_tokens = models.IntegerField(null=True, blank=True)
+    latency_ms = models.IntegerField(null=True, blank=True)
+    outcome = models.CharField(
+        max_length=20, choices=AI_GENERATION_OUTCOME_CHOICES, default='pending',
+        db_index=True,
+    )
+    error_detail = models.TextField(blank=True, default='')
+    # Hypothesis telemetry, written server-side (no client JS to lose):
+    # - generated_blob: the model output as validated, BEFORE the creator edits
+    #   anything. Diffing it against the published survey measures how much
+    #   manual repair a draft needed — the honest quality metric.
+    # - last_polled_at: the create page polls every 2s while pending, so this
+    #   is effectively "when the creator stopped waiting" if they left.
+    # - redirected_at: set when the status endpoint issues the HX-Redirect,
+    #   i.e. the creator was still on the page when the draft finished.
+    generated_blob = models.JSONField(null=True, blank=True)
+    last_polled_at = models.DateTimeField(null=True, blank=True)
+    redirected_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('-created_at',)
+
+    def __str__(self):
+        return f"{self.kind} {self.outcome} by {self.user_id or 'unknown'} at {self.created_at:%Y-%m-%d %H:%M}"

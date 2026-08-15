@@ -13,6 +13,7 @@ from .models import (
     Cohort, CohortDimension, UserCohort, DomainSegmentRule,
     CreatorNote, CreatorProfile,
     PublicResultsPage, PublicResultsBlock,
+    AIGenerationEvent,
 )
 from .funnel import dashboard_context
 from leaflet.admin import LeafletGeoAdmin
@@ -336,3 +337,23 @@ class PublicResultsPageAdmin(admin.ModelAdmin):
 
 
 admin.site.register(PublicResultsPage, PublicResultsPageAdmin)
+
+
+@admin.register(AIGenerationEvent)
+class AIGenerationEventAdmin(admin.ModelAdmin):
+    """Read-only viewer for LLM generation attempts (cost, quality, failures)."""
+
+    list_display = ('created_at', 'kind', 'outcome', 'user', 'organization',
+                    'provider', 'model', 'latency_ms', 'input_tokens', 'output_tokens')
+    list_filter = ('kind', 'outcome', 'provider')
+    search_fields = ('user__username', 'organization__name', 'error_detail')
+    date_hierarchy = 'created_at'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

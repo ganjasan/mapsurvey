@@ -15,6 +15,8 @@ Conversational AI agent that builds a complete survey from a user's natural-lang
 
 ## Notes
 
+Promoted on 2026-08-14 — implemented in `openspec/changes/ai-survey-generator/` (one-shot brief MVP).
+
 - Goal: dramatically increase registration → first-published-survey conversion. Empty editor is the biggest drop-off point in the funnel today (most users register, create one empty draft, never return).
 - Funnel context: see related backlog item on funnel monitoring — needed to measure the lift from this feature.
 - Strong fit for our DB activity: most institutional users (NYU, Alexandria, TU Dortmund, Michael Baker) register, create an untitled "Test" draft, and disappear within minutes.

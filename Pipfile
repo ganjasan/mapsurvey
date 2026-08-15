@@ -27,6 +27,7 @@ requests = "*"
 google-api-python-client = "*"
 google-auth = "*"
 nh3 = "*"
+anthropic = "*"
 # Pinned to 6.9: 7.x needs Python >=3.10 (we run 3.9), and 6.7.5-6.7.13 shipped with
 # broken Django exception capture (posthog-python #286/#329). Read the design note in
 # openspec/changes/posthog-error-tracking/design.md before changing this in either direction.

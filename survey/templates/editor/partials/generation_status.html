@@ -1,0 +1,75 @@
+{% comment %}
+Polled while a draft is being generated.
+
+Rendered as a fixed overlay rather than inline in the form: generation takes
+up to a minute and the creator must not miss that it started, nor keep editing
+a form whose values are already on their way to the model. Inline it also sat
+below the fold on a laptop, which is exactly the confusion this replaces.
+
+The quips are entertainment, not telemetry: generation is a single opaque
+model call, so there is no honest per-step progress to show. Loading-screen
+flavour text is the established way to make a minute-long wait feel intentional
+rather than broken — it must never imply a pipeline stage the backend does not
+actually have.
+{% endcomment %}
+<div id="generation-status" class="gen-overlay" role="status" aria-live="polite">
+  {% comment %}
+  The poller is a separate, empty element with hx-swap="none": while the draft
+  is pending the endpoint answers 204 and nothing in the DOM changes. Polling
+  the overlay itself (and swapping it whole every 2s) restarted the fade-in and
+  the spinner on every tick, which read as the screen flickering.
+  {% endcomment %}
+  <div id="generation-poll" hidden
+       hx-get="{% url 'editor_generation_status' event.id %}"
+       hx-trigger="every 2s"
+       hx-swap="none"></div>
+  <div class="gen-card">
+    <div class="gen-spinner" aria-hidden="true"></div>
+    <div class="gen-copy">
+      <div class="gen-title">Building your survey…</div>
+      <div class="gen-quip" id="gen-quip">Unfolding the map…</div>
+      <div class="gen-note">This usually takes under a minute. You can leave this page —
+        the draft will be waiting on your dashboard.</div>
+    </div>
+  </div>
+
+  {% include "editor/partials/_generation_overlay_css.html" %}
+
+  <script>
+  (function() {
+      // Belt and braces: a second overlay (a retry in the same page load)
+      // must not leave two rotators running against one element.
+      if (window.__genQuipTimer) clearInterval(window.__genQuipTimer);
+      var QUIPS = [
+          'Unfolding the map…',
+          'Sharpening the map pins…',
+          'Consulting the cartographers…',
+          'Teaching the questions to behave…',
+          'Choosing words your respondents will actually read…',
+          'Talking the model out of another polygon…',
+          'Measuring twice, asking once…',
+          'Arranging sections in a sensible order…',
+          'Translating without losing the meaning…',
+          'Politely declining to ask for a fax number…',
+          'Making the required fields fewer…',
+          'Aligning the legend with the terrain…'
+      ];
+      // Shuffle so a repeat generation doesn't replay the same reel.
+      for (var i = QUIPS.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = QUIPS[i]; QUIPS[i] = QUIPS[j]; QUIPS[j] = tmp;
+      }
+      var index = 0;
+      window.__genQuipTimer = setInterval(function() {
+          var el = document.getElementById('gen-quip');
+          if (!el) { clearInterval(window.__genQuipTimer); window.__genQuipTimer = null; return; }
+          el.style.opacity = '0';
+          setTimeout(function() {
+              index = (index + 1) % QUIPS.length;
+              el.textContent = QUIPS[index];
+              el.style.opacity = '1';
+          }, 350);
+      }, 3200);
+  })();
+  </script>
+</div>

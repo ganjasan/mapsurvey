@@ -440,6 +440,30 @@ REGISTRATION_RATE_LIMIT_DAY = int(os.environ.get('REGISTRATION_RATE_LIMIT_DAY', 
 RESEND_ACTIVATION_RATE_LIMIT_HOUR = int(os.environ.get('RESEND_ACTIVATION_RATE_LIMIT_HOUR', 3))
 RESEND_ACTIVATION_RATE_LIMIT_DAY = int(os.environ.get('RESEND_ACTIVATION_RATE_LIMIT_DAY', 3))
 
+# AI survey draft generation (survey/ai/). Optional: an unset provider credential
+# means the AI panel on the create page simply does not render — never a crash,
+# same convention as GSC/Plausible/Turnstile above. Calls run in the Celery
+# worker, so the request path never blocks on a model. Provider access goes
+# through survey/ai/client.py's LLMProvider interface; 'anthropic' is the only
+# implementation today (EU-hosted/local providers plug in as one class later).
+# `or <default>` rather than a get() default throughout: render.yaml declares
+# these as `sync: false`, and a variable left blank in the Render dashboard
+# reaches the process as an empty string, which a get() default never replaces.
+# An empty model name fails every generation with the provider's own 404.
+AI_PROVIDER = os.environ.get('AI_PROVIDER') or 'anthropic'
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+AI_SURVEY_DRAFT_MODEL = os.environ.get('AI_SURVEY_DRAFT_MODEL') or 'claude-opus-5'
+AI_REQUEST_TIMEOUT_SECONDS = int(os.environ.get('AI_REQUEST_TIMEOUT_SECONDS') or 120)
+# Google AI Studio, used with AI_PROVIDER=gemini. Its free tier is what makes
+# end-to-end testing possible without a funded account; the model name is an
+# env var because Google retires and renames these faster than we deploy.
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+# Note: a model can appear in ListModels and still 404 on generateContent —
+# Google closes older models to new keys while keeping them listed for existing
+# ones (gemini-2.5-flash did exactly that). The provider surfaces the API's own
+# explanation so this is diagnosable without reading Google's changelog.
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL') or 'gemini-3.6-flash'
+
 LOGGING = {
     # The `abuse` logger keeps its dedicated routing (survey/abuse.py). The root
     # ('') logger sends everything else at WARNING+ to stdout so it reaches
