@@ -354,6 +354,21 @@
 {% endblock %}
 
 {% block content %}
+{% if survey.is_draft_copy %}
+{# A draft collects nothing of its own: say whose responses these are before the numbers are read. #}
+<div style="padding:0.6rem 1.5rem 0;">
+    <div style="background:var(--accent-light);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.85rem;color:#374151;">
+        <i class="fas fa-info-circle mr-1"></i>
+        {% if current_version == 'draft' %}
+        Test responses collected while previewing this draft. They are deleted when the draft is
+        published or discarded.
+        {% else %}
+        Responses of the published survey. This draft's own preview responses are under
+        <strong>Draft (test)</strong> in the version picker.
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 <!-- Primary tab bar (sub-navigation within the Results space) -->
 <div style="padding:0.75rem 1.5rem 0;">
     <div style="display:flex;gap:0;align-items:center;border-bottom:2px solid var(--border-color);margin-bottom:0;">
@@ -372,6 +387,7 @@
                 onchange="location.search = this.value === 'all' ? '' : ('?version=' + this.value);"
                 style="margin-left:auto;margin-bottom:0.25rem;font-size:0.8rem;padding:0.25rem 0.5rem;border:1px solid var(--border-color);border-radius:6px;color:#374151;background:#fff;">
             {% for c in version_choices %}
+            {% if c.value == 'draft' %}<option disabled>──────────</option>{% endif %}
             <option value="{{ c.value }}" {% if c.value == current_version %}selected{% endif %}>{{ c.label }}</option>
             {% endfor %}
         </select>
