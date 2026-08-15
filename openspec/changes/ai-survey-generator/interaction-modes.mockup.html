@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Survey Generator — interaction mode mockups</title>
+<style>
+  :root {
+    --accent: #4f46e5;
+    --accent-light: #e0e7ff;
+    --border-color: #e5e7eb;
+    --bg-muted: #f9fafb;
+    --radius: 8px;
+    --green: #16a34a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    background: var(--bg-muted);
+    margin: 0; color: #1f2937;
+  }
+  .topbar {
+    background: #fff; border-bottom: 1px solid var(--border-color);
+    padding: 0.6rem 1.5rem; display: flex; align-items: center; gap: 1.5rem;
+    position: sticky; top: 0; z-index: 10; flex-wrap: wrap;
+  }
+  .topbar .brand { font-weight: 700; color: var(--accent); }
+  .topbar .hint { font-size: 0.8rem; color: #6b7280; }
+  .tabs { display: flex; gap: 0.25rem; }
+  .tab {
+    padding: 0.45rem 0.9rem; border-radius: 6px; cursor: pointer;
+    font-size: 0.88rem; border: 1px solid transparent; background: none; color: #374151;
+    font-family: inherit;
+  }
+  .tab:hover { background: var(--bg-muted); }
+  .tab.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+  .tab .cost { font-size: 0.7rem; opacity: 0.7; margin-left: 0.3rem; }
+
+  .stage { max-width: 1100px; margin: 1.5rem auto; padding: 0 1.25rem; }
+  .variant { display: none; }
+  .variant.active { display: block; }
+  .variant-note {
+    font-size: 0.82rem; color: #6b7280; background: #fff;
+    border: 1px dashed var(--border-color); border-radius: var(--radius);
+    padding: 0.6rem 0.9rem; margin-bottom: 1rem;
+  }
+
+  .card {
+    background: #fff; border: 1px solid var(--border-color);
+    border-radius: var(--radius); padding: 1.4rem 1.6rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  h6 { font-size: 1.05rem; margin: 0 0 1rem; }
+  .field { margin-bottom: 0.9rem; }
+  .field label { display: block; font-size: 0.82rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem; }
+  .field input[type=text], .field textarea {
+    width: 100%; padding: 0.5rem 0.65rem; border: 1px solid var(--border-color);
+    border-radius: 6px; font-size: 0.9rem; font-family: inherit;
+  }
+  .field input:focus, .field textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
+  .help { font-size: 0.78rem; color: #6b7280; margin-top: 0.25rem; }
+  .lang-chips { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .chip {
+    padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.8rem;
+    border: 1px solid var(--border-color); background: #fff; cursor: pointer; user-select: none;
+  }
+  .chip.on { background: var(--accent-light); border-color: var(--accent); color: var(--accent); font-weight: 500; }
+  .usecase-chips { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .usecase-chips .chip { border-radius: 6px; padding: 0.35rem 0.7rem; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9rem;
+    border: 1px solid transparent; cursor: pointer; font-family: inherit;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #4338ca; }
+  .btn-outline { background: #fff; border-color: var(--border-color); color: #374151; }
+  .btn-outline:hover { background: var(--bg-muted); }
+  .btn:disabled { opacity: 0.55; cursor: default; }
+  .actions { display: flex; gap: 0.75rem; margin-top: 1.1rem; align-items: center; }
+
+  .grid2 { display: grid; grid-template-columns: 400px 1fr; gap: 1.75rem; align-items: start; }
+  @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+
+  /* fake map */
+  .fake-map {
+    height: 340px; border-radius: var(--radius); border: 1px solid var(--border-color);
+    background:
+      linear-gradient(rgba(255,255,255,0.25), rgba(255,255,255,0.25)),
+      repeating-linear-gradient(0deg, #e8ecef 0 1px, transparent 1px 46px),
+      repeating-linear-gradient(90deg, #e8ecef 0 1px, transparent 1px 46px),
+      #f3f6f4;
+    position: relative; overflow: hidden;
+  }
+  .fake-map .road { position: absolute; background: #d9dee3; }
+  .fake-map .pin {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -100%);
+    color: var(--accent); font-size: 30px; text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  }
+  .fake-map .maplabel { position: absolute; bottom: 6px; right: 10px; font-size: 0.7rem; color: #9ca3af; }
+
+  /* spinner + progress */
+  .genwrap { display: none; margin-top: 1rem; }
+  .genwrap.show { display: block; }
+  .genrow { display: flex; align-items: center; gap: 0.6rem; font-size: 0.88rem; color: #374151; }
+  .spinner {
+    width: 18px; height: 18px; border: 2.5px solid var(--accent-light);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .gensteps { margin-top: 0.5rem; font-size: 0.8rem; color: #6b7280; min-height: 1.2em; }
+
+  /* result: mini editor */
+  .result { display: none; margin-top: 1.25rem; }
+  .result.show { display: block; animation: fadein 0.4s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
+  .editor-mock {
+    border: 1px solid var(--border-color); border-radius: var(--radius);
+    overflow: hidden; background: #fff;
+  }
+  .editor-mock .em-nav {
+    background: #fff; border-bottom: 1px solid var(--border-color);
+    padding: 0.5rem 0.9rem; font-size: 0.82rem; display: flex; gap: 0.9rem; align-items: center;
+  }
+  .em-nav .em-title { font-weight: 600; }
+  .em-nav .badge-draft { background: #fef3c7; color: #92400e; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.7rem; }
+  .em-nav .em-meta { color: #9ca3af; }
+  .em-body { display: grid; grid-template-columns: 190px 1fr; min-height: 300px; }
+  .em-sidebar { border-right: 1px solid var(--border-color); background: #fff; padding: 0.5rem 0; }
+  .em-section {
+    padding: 0.45rem 0.9rem; font-size: 0.82rem; cursor: default;
+    display: flex; align-items: center; gap: 0.45rem;
+  }
+  .em-section.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+  .em-main { padding: 0.9rem 1.1rem; }
+  .q {
+    border: 1px solid var(--border-color); border-radius: 6px;
+    padding: 0.55rem 0.8rem; margin-bottom: 0.55rem; font-size: 0.85rem;
+    display: flex; align-items: center; gap: 0.6rem; background: #fff;
+    opacity: 0; transform: translateY(4px); transition: all 0.3s ease;
+  }
+  .q.vis { opacity: 1; transform: none; }
+  .q .qtype {
+    font-size: 0.68rem; padding: 0.12rem 0.45rem; border-radius: 4px;
+    background: var(--bg-muted); color: #6b7280; border: 1px solid var(--border-color);
+    white-space: nowrap;
+  }
+  .q .qtype.geo { background: var(--accent-light); color: var(--accent); border-color: transparent; }
+  .q .req { color: #dc2626; }
+  .q .sub { color: #9ca3af; font-size: 0.72rem; margin-left: auto; white-space: nowrap; }
+  .result .open-btn { margin-top: 0.8rem; }
+  .langnote { font-size: 0.75rem; color: var(--green); margin-top: 0.5rem; }
+
+  /* chat */
+  .chatwrap { max-width: 640px; }
+  .chatlog { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.9rem; min-height: 120px; }
+  .msg { max-width: 85%; padding: 0.55rem 0.8rem; border-radius: 12px; font-size: 0.88rem; line-height: 1.4; animation: fadein 0.25s ease; }
+  .msg.bot { background: var(--bg-muted); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; align-self: flex-start; }
+  .msg.user { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; align-self: flex-end; }
+  .msg.typing { color: #9ca3af; font-style: italic; }
+  .quickrow { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+  .quick { border: 1px solid var(--accent); color: var(--accent); background: #fff; border-radius: 999px; padding: 0.3rem 0.75rem; font-size: 0.8rem; cursor: pointer; font-family: inherit; }
+  .quick:hover { background: var(--accent-light); }
+  .chatinput { display: flex; gap: 0.5rem; }
+  .chatinput input { flex: 1; padding: 0.55rem 0.7rem; border: 1px solid var(--border-color); border-radius: 999px; font-size: 0.88rem; font-family: inherit; }
+  .chatinput input:focus { outline: none; border-color: var(--accent); }
+  .privacy { font-size: 0.72rem; color: #9ca3af; margin-top: 0.9rem; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">Mapsurvey · мокап</span>
+  <div class="tabs">
+    <button class="tab active" data-v="brief">A · Одношаговый бриф <span class="cost">dev: S</span></button>
+    <button class="tab" data-v="hints">B · Бриф + подсказки <span class="cost">dev: S+</span></button>
+    <button class="tab" data-v="chat">C · Чат с уточнениями <span class="cost">dev: L</span></button>
+  </div>
+  <span class="hint">Все три варианта дают один и тот же результат — сравниваем путь до него</span>
+</div>
+
+<!-- ============ VARIANT A: one-shot brief ============ -->
+<div class="stage variant active" id="v-brief">
+  <div class="variant-note">
+    <b>Гипотеза A:</b> расширяем существующую страницу «Create New Survey» одним textarea.
+    Пользователь описал цель → жмёт Generate → спиннер ~20-40 с → редирект в редактор с черновиком.
+    Минимальный путь, ноль новой инфраструктуры (обычный POST).
+  </div>
+  <div class="card">
+    <h6>Create New Survey</h6>
+    <div class="grid2">
+      <div>
+        <div class="field">
+          <label>Survey name</label>
+          <input type="text" value="treviglio_traffic">
+        </div>
+        <div class="field">
+          <label>Available languages</label>
+          <div class="lang-chips">
+            <span class="chip on">English</span><span class="chip on">Italiano</span><span class="chip">+ add</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>✨ Describe your survey — AI builds a draft <span style="color:#9ca3af;font-weight:400">(optional)</span></label>
+          <textarea rows="5" id="brief-text">I want to ask Treviglio residents where the worst traffic congestion is, what kind of problems they see there, and how they usually get around the city.</textarea>
+          <div class="help">Mention your goal, who you're asking, and what they should mark on the map.</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="generate('brief')" id="brief-btn">✨ Generate draft</button>
+          <button class="btn btn-outline">Create empty</button>
+        </div>
+        <div class="genwrap" id="brief-gen">
+          <div class="genrow"><div class="spinner"></div> Generating your survey…</div>
+          <div class="gensteps" id="brief-steps"></div>
+        </div>
+        <div class="privacy">Your description is processed by Anthropic Claude to build the draft. No survey answers are ever sent to AI providers.</div>
+      </div>
+      <div>
+        <label style="display:block;font-size:.82rem;font-weight:500;color:#374151;margin-bottom:.35rem;">The map people will see</label>
+        <div class="fake-map">
+          <div class="road" style="left:20%;top:0;width:14px;height:100%;transform:rotate(6deg)"></div>
+          <div class="road" style="left:0;top:55%;width:100%;height:10px;transform:rotate(-3deg)"></div>
+          <div class="road" style="left:60%;top:0;width:8px;height:100%;transform:rotate(-12deg)"></div>
+          <div class="pin">📍</div>
+          <div class="maplabel">Treviglio · zoom 13</div>
+        </div>
+      </div>
+    </div>
+    <div class="result" id="brief-result"></div>
+  </div>
+</div>
+
+<!-- ============ VARIANT B: brief + structured hints ============ -->
+<div class="stage variant" id="v-hints">
+  <div class="variant-note">
+    <b>Гипотеза B:</b> тот же одношаговый POST, но форма подсказывает, что сообщить модели:
+    аудитория, что маппить, use-case-шаблон. Пользователь думает меньше, модель получает больше контекста.
+    Чуть больше UI, инфраструктура та же.
+  </div>
+  <div class="card">
+    <h6>Create New Survey</h6>
+    <div class="grid2">
+      <div>
+        <div class="field">
+          <label>✨ What do you want to find out?</label>
+          <textarea rows="3" id="hints-text">Where is traffic congestion worst in Treviglio and why.</textarea>
+        </div>
+        <div class="field">
+          <label>Who will answer?</label>
+          <input type="text" value="Residents of Treviglio, all ages">
+        </div>
+        <div class="field">
+          <label>What should they mark on the map?</label>
+          <input type="text" value="Congestion spots, dangerous crossings">
+        </div>
+        <div class="field">
+          <label>Use case</label>
+          <div class="usecase-chips">
+            <span class="chip on">🏙 Urban planning</span>
+            <span class="chip">🔬 Citizen science</span>
+            <span class="chip">🏫 School routes</span>
+            <span class="chip">🎪 Event mapping</span>
+            <span class="chip">Other</span>
+          </div>
+          <div class="help">Steers the draft toward proven question sets for this scenario.</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="generate('hints')" id="hints-btn">✨ Generate draft</button>
+          <button class="btn btn-outline">Create empty</button>
+        </div>
+        <div class="genwrap" id="hints-gen">
+          <div class="genrow"><div class="spinner"></div> Generating your survey…</div>
+          <div class="gensteps" id="hints-steps"></div>
+        </div>
+        <div class="privacy">Your description is processed by Anthropic Claude to build the draft. No survey answers are ever sent to AI providers.</div>
+      </div>
+      <div>
+        <label style="display:block;font-size:.82rem;font-weight:500;color:#374151;margin-bottom:.35rem;">The map people will see</label>
+        <div class="fake-map">
+          <div class="road" style="left:20%;top:0;width:14px;height:100%;transform:rotate(6deg)"></div>
+          <div class="road" style="left:0;top:55%;width:100%;height:10px;transform:rotate(-3deg)"></div>
+          <div class="road" style="left:60%;top:0;width:8px;height:100%;transform:rotate(-12deg)"></div>
+          <div class="pin">📍</div>
+          <div class="maplabel">Treviglio · zoom 13</div>
+        </div>
+      </div>
+    </div>
+    <div class="result" id="hints-result"></div>
+  </div>
+</div>
+
+<!-- ============ VARIANT C: chat ============ -->
+<div class="stage variant" id="v-chat">
+  <div class="variant-note">
+    <b>Гипотеза C:</b> полноценный диалог как в бэклоге. Агент задаёт уточняющие вопросы, потом генерирует.
+    Требует стриминг/поллинг, хранение диалога, обработку «пользователь ушёл на середине» — самый дорогой вариант.
+    Нажимайте быстрые ответы или пишите своё.
+  </div>
+  <div class="card chatwrap">
+    <h6>✨ AI Survey Assistant</h6>
+    <div class="chatlog" id="chatlog"></div>
+    <div class="quickrow" id="quickrow"></div>
+    <div class="chatinput">
+      <input type="text" id="chat-in" placeholder="Type your answer…" onkeydown="if(event.key==='Enter')chatSend()">
+      <button class="btn btn-primary" onclick="chatSend()">Send</button>
+    </div>
+    <div class="privacy">Chat content is processed by Anthropic Claude. No survey answers are ever sent to AI providers.</div>
+    <div class="result" id="chat-result"></div>
+  </div>
+</div>
+
+<script>
+/* Mockup only: all rendered content below is hardcoded in this file —
+   nothing user-supplied is ever inserted as HTML. DOM is built with
+   createElement/textContent throughout. */
+
+/* ---------- tiny DOM helper ---------- */
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.variant').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('v-' + t.dataset.v).classList.add('active');
+  if (t.dataset.v === 'chat' && !chatStarted) startChat();
+}));
+
+/* ---------- shared fake result ---------- */
+const RESULT = [
+  { section: 'About you', qs: [
+    { name: 'How old are you?', type: 'choice', req: false, sub: '' },
+    { name: 'Which part of Treviglio do you live in?', type: 'choice', req: false, sub: '' },
+    { name: 'How do you usually get around the city?', type: 'multichoice', req: true, sub: '' },
+  ]},
+  { section: 'Traffic problems', qs: [
+    { name: 'Mark the spot where congestion is worst', type: 'point 📍', req: true, sub: '2 sub-questions', geo: true },
+    { name: 'What kind of problem is it?', type: 'choice', req: false, sub: 'sub · popup' },
+    { name: 'Describe what happens there', type: 'text', req: false, sub: 'sub · popup' },
+    { name: 'How severe is traffic overall?', type: 'rating', req: true, sub: '' },
+  ]},
+  { section: 'Your ideas', qs: [
+    { name: 'What would improve traffic most?', type: 'multichoice', req: false, sub: '' },
+    { name: 'Anything else we should know?', type: 'text', req: false, sub: '' },
+  ]},
+];
+
+function buildResult(container) {
+  container.replaceChildren();
+
+  const mock = el('div', 'editor-mock');
+
+  const nav = el('div', 'em-nav');
+  nav.appendChild(el('span', 'em-title', 'treviglio_traffic'));
+  nav.appendChild(el('span', 'badge-draft', 'Draft'));
+  nav.appendChild(el('span', 'em-meta', '· 3 sections · 9 questions'));
+  mock.appendChild(nav);
+
+  const body = el('div', 'em-body');
+  const sidebar = el('div', 'em-sidebar');
+  RESULT.forEach((s, i) => {
+    sidebar.appendChild(el('div', 'em-section' + (i === 1 ? ' active' : ''), '☰ ' + s.section));
+  });
+  const main = el('div', 'em-main');
+  RESULT.forEach(s => s.qs.forEach(q => {
+    const row = el('div', 'q');
+    const nameSpan = el('span', '', q.name + (q.req ? ' ' : ''));
+    if (q.req) nameSpan.appendChild(el('span', 'req', '*'));
+    row.appendChild(nameSpan);
+    row.appendChild(el('span', 'qtype' + (q.geo ? ' geo' : ''), q.type));
+    if (q.sub) row.appendChild(el('span', 'sub', q.sub));
+    main.appendChild(row);
+  }));
+  body.appendChild(sidebar);
+  body.appendChild(main);
+  mock.appendChild(body);
+
+  container.appendChild(mock);
+  container.appendChild(el('div', 'langnote', '✔ Generated in English + Italiano (translations included)'));
+  container.appendChild(el('button', 'btn btn-primary open-btn', 'Open in editor →'));
+
+  container.classList.add('show');
+  container.querySelectorAll('.q').forEach((n, i) =>
+    setTimeout(() => n.classList.add('vis'), 120 * i));
+  container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ---------- A & B: spinner then result ---------- */
+const STEPS = ['Reading your brief…', 'Choosing question types…', 'Writing questions in 2 languages…', 'Validating structure…'];
+function generate(v) {
+  const btn = document.getElementById(v + '-btn');
+  const gen = document.getElementById(v + '-gen');
+  const steps = document.getElementById(v + '-steps');
+  const res = document.getElementById(v + '-result');
+  btn.disabled = true;
+  gen.classList.add('show');
+  res.classList.remove('show');
+  let i = 0;
+  steps.textContent = STEPS[0];
+  const iv = setInterval(() => {
+    i++;
+    if (i < STEPS.length) { steps.textContent = STEPS[i]; return; }
+    clearInterval(iv);
+    gen.classList.remove('show');
+    btn.disabled = false;
+    buildResult(res);
+  }, 900);
+}
+
+/* ---------- C: scripted chat ---------- */
+let chatStarted = false, chatStep = 0;
+const SCRIPT = [
+  { bot: "Hi! What would you like to find out with your survey?",
+    quick: ["Where traffic is worst in Treviglio"] },
+  { bot: "Got it. Who are your respondents — and what exactly should they mark on the map?",
+    quick: ["Residents; congestion spots", "All ages; dangerous crossings"] },
+  { bot: "Last one: which languages should the survey be in?",
+    quick: ["English + Italiano", "Italiano only"] },
+];
+function addMsg(cls, text) {
+  const log = document.getElementById('chatlog');
+  const d = el('div', 'msg ' + cls, text);
+  log.appendChild(d);
+  d.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  return d;
+}
+function showQuick() {
+  const row = document.getElementById('quickrow');
+  row.replaceChildren();
+  (SCRIPT[chatStep] ? SCRIPT[chatStep].quick : []).forEach(q => {
+    const b = el('button', 'quick', q);
+    b.onclick = () => { document.getElementById('chat-in').value = q; chatSend(); };
+    row.appendChild(b);
+  });
+}
+function startChat() {
+  chatStarted = true;
+  const t = addMsg('bot typing', '…');
+  setTimeout(() => { t.classList.remove('typing'); t.textContent = SCRIPT[0].bot; showQuick(); }, 700);
+}
+function chatSend() {
+  const inp = document.getElementById('chat-in');
+  const val = inp.value.trim();
+  if (!val || chatStep >= SCRIPT.length) return;
+  addMsg('user', val);
+  inp.value = '';
+  document.getElementById('quickrow').replaceChildren();
+  chatStep++;
+  if (chatStep < SCRIPT.length) {
+    const t = addMsg('bot typing', '…');
+    setTimeout(() => { t.classList.remove('typing'); t.textContent = SCRIPT[chatStep].bot; showQuick(); }, 800);
+  } else {
+    const t = addMsg('bot typing', '…');
+    setTimeout(() => {
+      t.classList.remove('typing');
+      t.textContent = 'Perfect — generating your survey now…';
+      setTimeout(() => {
+        buildResult(document.getElementById('chat-result'));
+        addMsg('bot', 'Done! Your draft has 3 sections and 9 questions — open it in the editor to fine-tune.');
+      }, 2200);
+    }, 800);
+  }
+}
+</script>
+</body>
+</html>

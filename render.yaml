@@ -53,6 +53,23 @@ services:
       - key: MAPBOX_ACCESS_TOKEN
         sync: false
         previewEnvRenderServiceName: mapsurvey
+      # AI survey draft generation. The web service only needs the provider
+      # credentials to decide whether to render the AI panel; the worker below
+      # makes the actual calls. A provider with no key = feature simply off.
+      # AI_PROVIDER is declared (not left to the settings.py default) because
+      # the gate is per-provider: with 'anthropic' set and only a Gemini key
+      # present the panel would never render.
+      - key: AI_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: GEMINI_MODEL
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: ANTHROPIC_API_KEY
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
       - key: DEFAULT_FROM_EMAIL
         sync: false
         previewEnvRenderServiceName: mapsurvey
@@ -141,10 +158,10 @@ services:
     name: mapsurvey-celery
     runtime: docker
     plan: starter
-    # Previews exist to exercise the web service (PR review, load tests); the
-    # async email worker and the metrics cron only add per-hour instance cost.
-    previews:
-      generation: off
+    # Previews DO get a worker: AI draft generation runs here, and a preview
+    # without it would leave the feature untestable in the one environment
+    # where changes are reviewed before merge. The metrics cron stays off —
+    # nothing on a preview reads its numbers.
     dockerfilePath: ./Dockerfile
     dockerContext: .
     dockerCommand: celery -A mapsurvey worker -l info --concurrency 2
@@ -165,6 +182,12 @@ services:
           type: redis
           name: mapsurvey-redis
           property: connectionString
+      # Error tracking: the task_failure receiver in mapsurvey/celery.py reports
+      # failed tasks. Same no-preview-inheritance rule as on the web service.
+      - key: POSTHOG_PROJECT_KEY
+        sync: false
+      - key: POSTHOG_API_HOST
+        sync: false
       - key: DEFAULT_FROM_EMAIL
         sync: false
         previewEnvRenderServiceName: mapsurvey
@@ -188,6 +211,21 @@ services:
         previewEnvRenderServiceName: mapsurvey
       - key: NEWSLETTER_SITE_URL
         value: "https://mapsurvey.org"
+      # AI survey draft generation runs here — this is the service that talks
+      # to the model provider. Keep AI_PROVIDER identical to the web service:
+      # the web side gates the panel on it, the worker resolves the client from
+      # it, and a mismatch shows a panel whose every generation then fails.
+      - key: AI_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: GEMINI_MODEL
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: ANTHROPIC_API_KEY
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
 
   # Daily acquisition-metrics sync for the funnel dashboard. There is no celery beat,
   # so the schedule lives here (design D5). Re-runs a 7-day trailing window, which is

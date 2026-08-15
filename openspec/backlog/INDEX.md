@@ -30,6 +30,7 @@
 | ~~13~~ | ~~improvement~~ | ~~[Versioning: cross-version analytics and response counts](improvement-versioning-cross-version-analytics.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-04-16~~ |
 | 14 | feature | [Export filter: completed surveys only](feature-export-completed-only-filter.md) | high | backend | — | 2026-03-30 |
 | 15 | idea | [AI agent that creates surveys from chat description](idea-ai-survey-creator-chat-agent.md) (promoted) | high | frontend | growth | 2026-04-25 |
+| 124 | feature | [AI activation analytics — hypothesis instrument](feature-ai-activation-analytics.md) | high | backend | survey-analytics | 2026-08-14 |
 | ~~16~~ | ~~feature~~ | ~~[Funnel monitoring: source → registration → survey → responses](feature-funnel-monitoring.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-04-25~~ |
 | ~~85~~ | ~~bug~~ | ~~[Rating question clips text labels](bug-rating-text-labels-clipped.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-07-28~~ |
 | ~~86~~ | ~~bug~~ | ~~[Sub-question popup is too narrow (Leaflet default width)](bug-subquestion-popup-too-narrow.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-07-28~~ |

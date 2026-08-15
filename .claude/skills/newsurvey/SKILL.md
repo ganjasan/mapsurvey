@@ -9,6 +9,44 @@ metadata:
 
 Create a new survey interactively and generate an importable ZIP archive.
 
+## Design guidance (read before asking the user anything)
+
+A survey that imports cleanly and collects nothing is the normal failure mode here, so
+propose a good structure rather than transcribing whatever the user dictates. The rules
+below are the operative summary of `docs/research/survey-design-rules.md`, which carries
+the evidence and the citations — read it when the user pushes back on a recommendation.
+
+**What the respondent sees.** Questions on one side, a map on the other. A section is one
+screen. Geo questions are answered by placing a marker or drawing on the map, and ONE geo
+question accepts SEVERAL features. Sub-questions of a geo question open in a popup on the
+feature the respondent just placed — they are the only way to attach attributes to it, and
+on export each becomes a FIELD NAME in the GeoJSON layer. Short, concrete sub-question
+names are what make the data usable in QGIS afterwards.
+
+**Rules to apply when proposing structure:**
+
+- **One geo question per survey, and prefer `point`.** Points are answered twice as often
+  as polygons (our data: point 32%, line 31%, polygon 16.5%, non-geo 40–48%); polygons cost
+  far more effort per respondent (Brown & Kyttä 2014). Match geometry to intent: `point` for
+  places or observations, `line` for routes actually travelled, `polygon` for a perceived
+  extent such as "my neighbourhood".
+- **Always attach 1–2 sub-questions to the geo question.** Without them the map collects
+  dots with no meaning.
+- **Ask what people already do**, not only whether something bothers them — otherwise "not
+  affected" and "coping alone" are indistinguishable (Seebauer et al. 2024).
+- **Collect what works, not only what is broken.** The good places are what a plan protects
+  (Lehnert et al. 2023).
+- **Ask about reaching a place** — cost, hours, distance, barrier-free access — when the
+  survey is about a resource people travel to.
+- **Keep `required` to the mapping task and nothing else.** Interrogation costs responses
+  from the hardest-to-reach people, and online participation already skews to the engaged.
+- **Prefer closed answers with one or two open questions**, not the reverse.
+- **Assume weak map literacy**: the survey must still produce something usable from a
+  respondent who never touches the map (Alderton et al. 2026).
+
+If the user asks for something these rules advise against (a polygon where a point would
+do, six required questions), say so once with the reason, then build what they asked for.
+
 **Output location**: `user_surveys/<survey_name>/`
 - `survey.json` - Survey definition
 - `<survey_name>.zip` - Ready for import via `/editor/` → Import Survey

@@ -3,6 +3,14 @@ from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP
 
 SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon')
 
+USE_CASE_CHOICES = (
+    ('urban_planning', 'Urban planning'),
+    ('citizen_science', 'Citizen science'),
+    ('school_routes', 'School routes'),
+    ('event_mapping', 'Event mapping'),
+    ('other', 'Other'),
+)
+
 
 class SurveyCreateForm(forms.ModelForm):
     """Minimal creation form — name, languages, and (via the view) map area.
@@ -19,6 +27,48 @@ class SurveyCreateForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Park improvements'}),
             'available_languages': forms.HiddenInput(attrs={'id': 'id_available_languages'}),
         }
+
+
+class SurveyBriefForm(forms.Form):
+    """The AI brief — what the creator tells the model about their project.
+
+    Not a ModelForm: none of these fields belong on ``SurveyHeader``. They are
+    authoring metadata that stops meaning anything the moment a human edits
+    the generated draft, so they live only on the generation event.
+
+    Only ``goal`` is required. The other three sharpen the draft but a creator
+    who types one sentence and hits Generate should still get a survey — the
+    point of the feature is removing work, not relocating it.
+    """
+
+    goal = forms.CharField(
+        label='What do you want to find out?',
+        widget=forms.Textarea(attrs={
+            'class': 'form-control', 'rows': 3,
+            'placeholder': 'e.g. Where traffic congestion is worst in Treviglio and why',
+        }),
+    )
+    audience = forms.CharField(
+        required=False,
+        label='Who will answer?',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'placeholder': 'e.g. Residents of Treviglio, all ages',
+        }),
+    )
+    map_target = forms.CharField(
+        required=False,
+        label='What should they mark on the map?',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'placeholder': 'e.g. Congestion spots, dangerous crossings',
+        }),
+    )
+    use_case = forms.ChoiceField(
+        required=False, choices=USE_CASE_CHOICES, initial='urban_planning',
+        widget=forms.RadioSelect(),
+    )
+
+    def clean_use_case(self):
+        return self.cleaned_data.get('use_case') or 'other'
 
 
 class SurveyHeaderForm(forms.ModelForm):

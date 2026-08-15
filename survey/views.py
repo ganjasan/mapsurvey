@@ -465,6 +465,17 @@ def editor(request):
 	membership = get_org_membership(request.user, org)
 	org_role = membership.role if membership else None
 
+	# A creator whose org has no surveys has nothing to do on the dashboard —
+	# and 47% of registrations never make it past that empty screen. Send them
+	# straight to the thing they came to do. Viewers are exempt: they cannot
+	# create, so the create page would be a dead end for them.
+	if (org_role in ('owner', 'admin', 'editor')
+			and request.GET.get('dashboard') != '1'
+			and not SurveyHeader.objects.filter(
+				organization=org, is_canonical=True, deleted_at__isnull=True,
+			).exists()):
+		return redirect(reverse('editor_survey_create') + '?welcome=1')
+
 	if org_role in ('owner', 'admin'):
 		# Owner/admin see all surveys in the org
 		survey_list = SurveyHeader.objects.filter(organization=org)

@@ -10,18 +10,31 @@
 {% block extra_head %}
 <script src="{% static 'js/components/map_place_search.js' %}"></script>
 <style>
-  .create-wrap { padding: 1.5rem 2rem; }
-  .create-card { max-width: 1400px; margin: 0 auto; }
+  /* The whole page is meant to fit one desktop screen: the creator should see
+     the brief, the map they are framing and both buttons without scrolling.
+     Everything below is sized against the viewport rather than content. */
+  .create-wrap { padding: 0.9rem 1.5rem; }
+  .create-card { max-width: 1500px; margin: 0 auto; padding: 1rem 1.25rem; }
   .create-grid {
     display: grid;
-    grid-template-columns: 360px 1fr;
-    gap: 1.75rem;
+    grid-template-columns: 380px 1fr;
+    gap: 1.5rem;
     align-items: start;
   }
-  .create-map-wrap { position: relative; margin-bottom: 0.5rem; }
+  /* If a narrow window still cannot fit the fields, the left column scrolls on
+     its own — the map and the action buttons stay put. */
+  .create-left {
+    max-height: calc(100vh - 165px);
+    overflow-y: auto;
+    padding-right: 0.4rem;
+  }
+  .create-wrap .pr-field { margin-bottom: 0.55rem; }
+  .create-wrap .pr-help { font-size: 0.74rem; line-height: 1.25; }
+  .create-wrap label { margin-bottom: 0.1rem; }
+  .create-map-wrap { position: relative; margin-bottom: 0.4rem; }
   .create-map {
     width: 100%;
-    height: clamp(360px, calc(100vh - 300px), 720px);
+    height: clamp(300px, calc(100vh - 250px), 900px);
     border-radius: var(--radius);
     border: 1px solid var(--border-color);
   }
@@ -94,6 +107,36 @@
     .create-grid { grid-template-columns: 1fr; gap: 1.25rem; }
     .create-map { height: 320px; }
   }
+  /* AI brief panel */
+  .ai-panel {
+    margin-top: 0.7rem; padding-top: 0.7rem;
+    border-top: 1px solid var(--border-color);
+  }
+  .ai-panel h6 { font-size: 0.92rem; margin-bottom: 0.15rem; display: flex; align-items: center; gap: 0.4rem; }
+  .ai-panel h6 .ai-badge {
+    font-size: 0.62rem; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;
+    background: var(--accent-light); color: var(--accent); padding: 0.1rem 0.4rem; border-radius: 4px;
+  }
+  .usecase-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .usecase-chips label {
+    font-size: 0.8rem; padding: 0.3rem 0.65rem; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--border-color); background: #fff; color: #374151; margin: 0;
+    user-select: none;
+  }
+  .usecase-chips input { position: absolute; opacity: 0; pointer-events: none; }
+  .usecase-chips input:checked + span {
+    /* styling lives on the label via :has fallback below */
+  }
+  .usecase-chips label.chip-on {
+    background: var(--accent-light); border-color: var(--accent); color: var(--accent); font-weight: 500;
+  }
+  .usecase-chips label:focus-within { box-shadow: 0 0 0 2px var(--accent-light); }
+  .create-actions { margin-top: 0.7rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .create-actions .btn-block-row { width: 100%; justify-content: center; }
+  .create-actions-secondary { display: flex; gap: 0.5rem; }
+  .create-actions-secondary .btn { flex: 1; text-align: center; }
+  .ai-privacy { font-size: 0.7rem; color: #9ca3af; margin-top: 0.5rem; line-height: 1.3; }
+  .skip-dashboard { font-size: 0.82rem; }
 </style>
 {% endblock %}
 
@@ -101,7 +144,7 @@
 <div class="create-wrap">
   <div class="pr-card create-card">
     <h6 style="font-size:1.05rem;">Create New Survey</h6>
-    <form method="post">
+    <form method="post" id="create-form">
       {% csrf_token %}
       <div class="create-grid">
 
@@ -120,15 +163,91 @@
             <div class="pr-help">The languages respondents can take this survey in. You can add more later.</div>
           </div>
 
-          <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem;">
-            <button type="submit" class="btn btn-primary">Create Survey</button>
-            <a href="{% url 'editor' %}" class="btn btn-outline-secondary">Cancel</a>
+          {% if ai_available %}
+          <div class="ai-panel">
+            <h6><i class="fas fa-wand-magic-sparkles" style="color:var(--accent)"></i>
+              Let AI draft it <span class="ai-badge">optional</span></h6>
+            <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">
+              Describe your project and we'll generate sections, questions and translations —
+              then you edit whatever you like.
+            </div>
+
+            <div class="pr-field">
+              <label for="{{ brief_form.goal.id_for_label }}">{{ brief_form.goal.label }}</label>
+              {{ brief_form.goal }}
+              {% for error in brief_form.goal.errors %}<div class="text-danger" style="font-size:0.85rem;">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="pr-field">
+              <label for="{{ brief_form.audience.id_for_label }}">{{ brief_form.audience.label }}</label>
+              {{ brief_form.audience }}
+            </div>
+            <div class="pr-field">
+              <label for="{{ brief_form.map_target.id_for_label }}">{{ brief_form.map_target.label }}</label>
+              {{ brief_form.map_target }}
+            </div>
+            <div class="pr-field">
+              <label>Kind of project</label>
+              <div class="usecase-chips" id="usecase-chips">
+                {% for radio in brief_form.use_case %}
+                  <label class="{% if radio.data.selected %}chip-on{% endif %}">
+                    {{ radio.tag }}<span>{{ radio.choice_label }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+              <div class="pr-help">Steers the draft toward question sets that work for this scenario.</div>
+            </div>
           </div>
+          {% endif %}
+
+          {% comment %}
+          The primary action gets its own row so it reads as the intended path;
+          the manual fallback and the way out share the row beneath it.
+          {% endcomment %}
+          <div class="create-actions">
+            {% if ai_available %}
+            {# HTMX rather than a plain submit: generation is async, so the page #}
+            {# stays put and swaps in the poller instead of navigating away.     #}
+            <button type="button" id="generate-btn" class="btn btn-primary btn-block-row"
+                    hx-post="{% url 'editor_survey_create' %}"
+                    hx-include="#create-form"
+                    hx-vals='{"action": "generate"}'
+                    hx-target="#generation-slot"
+                    hx-swap="innerHTML"
+                    hx-disabled-elt="#generate-btn, #empty-btn">
+              <i class="fas fa-wand-magic-sparkles"></i> Generate draft
+            </button>
+            <div class="create-actions-secondary">
+              <button type="submit" name="action" value="empty" id="empty-btn" class="btn btn-outline-secondary">Create empty</button>
+              <a href="{% url 'editor' %}?dashboard=1" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+            {% else %}
+            <button type="submit" name="action" value="empty" class="btn btn-primary btn-block-row">Create Survey</button>
+            <div class="create-actions-secondary">
+              <a href="{% url 'editor' %}?dashboard=1" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+            {% endif %}
+          </div>
+
+          {% if ai_available %}
+          <div class="ai-privacy">
+            Your description is processed by an AI provider to build the draft.
+            Survey answers are never sent to AI providers.
+          </div>
+          {% endif %}
+
+          <!-- Generation status (spinner / error) is swapped in here by HTMX. -->
+          <div id="generation-slot"></div>
 
           <div class="pr-help" style="margin-top:1rem;">
             <i class="fas fa-info-circle"></i>
             Languages, thanks page, visibility, and other options — later in <strong>Survey settings</strong>.
           </div>
+
+          {% if request.GET.welcome %}
+          <div style="margin-top:0.75rem;">
+            <a class="skip-dashboard" href="{% url 'editor' %}?dashboard=1">Skip to dashboard →</a>
+          </div>
+          {% endif %}
         </div>
 
         <!-- Right: the map respondents will see -->
@@ -300,6 +419,23 @@
         });
 
         setTimeout(function() { map.invalidateSize(); }, 200);
+    })();
+    </script>
+
+    <script>
+    // Use-case chips: radio inputs are visually hidden, so the checked state
+    // has to be mirrored onto the label that the creator actually sees.
+    (function() {
+        var wrap = document.getElementById('usecase-chips');
+        if (!wrap) return;
+        function sync() {
+            wrap.querySelectorAll('label').forEach(function(label) {
+                var input = label.querySelector('input');
+                label.classList.toggle('chip-on', !!(input && input.checked));
+            });
+        }
+        wrap.addEventListener('change', sync);
+        sync();
     })();
     </script>
   </div>
