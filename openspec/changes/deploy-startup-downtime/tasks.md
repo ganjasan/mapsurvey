@@ -17,9 +17,15 @@
 
 ## 3. Migrations at pre-deploy
 
-- [x] 3.1 `render.yaml`: add `preDeployCommand` to the `mapsurvey` web service —
-      `python manage.py migrate && python manage.py createsuperuser --noinput || true`.
-      Web service only; not the worker, not the cron. YAML parses; no other service carries it.
+- [x] 3.1 `render.yaml`: add `preDeployCommand` to the `mapsurvey` web service. Web service only;
+      not the worker, not the cron. **Shipped broken and fixed in a follow-up:** the inline
+      `migrate && createsuperuser || true` failed in production — Render does not run
+      `preDeployCommand` through a shell, so the list was parsed as arguments to `migrate`
+      (`unrecognized arguments: manage.py createsuperuser || true`, exit 2). Now
+      `preDeployCommand: "sh ./predeploy.sh"`.
+- [x] 3.3 Add `predeploy.sh` (`set -e`; `migrate`; `createsuperuser || true` when configured).
+      Verified against a stubbed `python`: createsuperuser failing → exit 0; no superuser
+      configured → migrate only; migrate failing → exit 1, which aborts the deploy.
 - [x] 3.2 `entrypoint.sh`: wrap `migrate`, `collectstatic` and `createsuperuser` in
       `if [ -z "$RENDER" ]`, leaving the local path unchanged. Keep the existing
       `DATABASE_URL`-gated Postgres wait as it is — it answers a different question.
@@ -44,6 +50,11 @@
 
 ## 5. Measurement (informs the follow-up disk-removal change)
 
-- [ ] 5.1 Read the current 502 window off Render's deploy logs for the last deploy (stop of the old
-      instance → first successful request on the new one) and record it in `design.md`.
-- [ ] 5.2 After this change is deployed, record the same number and the delta.
+- [x] 5.1 Baseline from the two deploys immediately before this one (app logs, `srv-d5v2t8shg0os73a52540`):
+      instance `xrntx` — `Operations to perform:` 15:26:01.06 → `203 static files copied … 543
+      post-processed` 15:26:05.72 → `Listening at` 15:26:09.56 = **8.5 s**; instance `p7vfm` —
+      15:28:39.58 → 15:28:44.08 → 15:28:47.76 = **8.2 s**.
+- [x] 5.2 After this change, instance `cgjqg`: **neither `Operations to perform:` nor `static files
+      copied` appears at all** — the first app log is `Listening at` 15:50:32.30. ~8 s of Django work
+      removed from the window. The window itself is not gone: the remainder is image pull, disk
+      mount and container start, which only removing the disk addresses.
