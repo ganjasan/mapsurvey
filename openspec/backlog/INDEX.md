@@ -2,7 +2,7 @@
 
 | # | Type | Title | Priority | Area | Epic | Created |
 |---|------|-------|----------|------|------|---------|
-| 123 | bug | [Subtext is offered on every question type and rendered on four](bug-subtext-not-rendered-on-most-types.md) | high | frontend | — | 2026-08-15 |
+| ~~123~~ | ~~bug~~ | ~~[Subtext is offered on every question type and rendered on four](bug-subtext-not-rendered-on-most-types.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-08-15~~ |
 | 103 | improvement | [One geo question already accepts many features, and nobody knows it](improvement-multi-geometry-discoverability.md) | **very high** | frontend | — | 2026-08-05 |
 | 87 | feature | [Workspace plans & entitlements (Free / Pro)](feature-workspace-plans-entitlements.md) | **very high** | backend | pro-tier | 2026-07-29 |
 | 88 | feature | [DPA / AVV compliance pack](feature-dpa-compliance-pack.md) | **very high** | general | pro-tier | 2026-07-29 |

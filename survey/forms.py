@@ -132,6 +132,7 @@ class ShowImageWidget(widgets.Widget):
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         context['widget']['image_source'] = context['widget']['attrs']['image_source']
+        context['widget']['subtitle'] = context['widget']['attrs'].get('subtitle', '')
 
         return context
 
@@ -156,14 +157,16 @@ class LeafletDrawButtonField(forms.Field):
         return attrs
 
 class ShowImageField(forms.Field):
-    def __init__(self, *, image_source, **kwargs):
+    def __init__(self, *, image_source, subtitle="", **kwargs):
         self.image_source = image_source
+        self.subtitle = subtitle
 
         super().__init__(**kwargs)
 
     def widget_attrs(self, widget):
         attrs = super().widget_attrs(widget)
         attrs['image_source'] = self.image_source
+        attrs['subtitle'] = self.subtitle
 
         return attrs
 
@@ -239,7 +242,8 @@ class SurveySectionAnswerForm(forms.Form):
             return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required)
 
         elif input_type == 'image':
-            return ShowImageField(widget=ShowImageWidget, label=False, image_source=image_source)
+            return ShowImageField(widget=ShowImageWidget, label=False, image_source=image_source,
+                                  subtitle=sublabel)
 
         elif input_type == 'rating':
             # Stars fall back to five numbered steps when the creator never
@@ -282,6 +286,11 @@ class SurveySectionAnswerForm(forms.Form):
         )
         field.widget.question_type = question.input_type
         field.widget.display_style = resolved_style
+        # Ordinary questions render their subtext from the section template,
+        # between the label and the input. Geo types and html carry it inside
+        # their own widget instead, so they are left out here.
+        field.widget.question_subtext = (
+            question.get_translated_subtext(language) if question.subtext else "")
         if resolved_style == 'stars':
             # The star partial paints from these; resolved here so the two form
             # paths (whole section, single question) cannot disagree.
@@ -321,6 +330,7 @@ class SurveySectionAnswerForm(forms.Form):
             self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question, field_label, field_sublabel, field_color, field_icon_class, image_source, language, display_style=resolved_style)
             self.fields[field_name].widget.question_type = question.input_type
             self.fields[field_name].widget.display_style = resolved_style
+            self.fields[field_name].widget.question_subtext = field_sublabel
             if resolved_style == 'stars':
                 self.fields[field_name].widget.star_icon = question.star_icon()
                 self.fields[field_name].widget.star_color = question.star_color()

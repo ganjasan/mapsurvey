@@ -52,3 +52,5 @@ Two smaller gaps fall out of the same table:
 - Check the same question for the editor's own preview and the public results page.
 - Not fixed inside `star-rating-display`: unrelated scope, and the fix needs a per-type decision
   plus a template pass.
+
+- **2026-08-15 — fixed** in change `subtext-rendering`: subtext now renders for all eight answerable types (between the question text and the input) and as a caption on image blocks. The Name stays hidden on `image` and `html` by decision, not by accident — it is the block identifier in the editor and published surveys use internal labels there. A table test over every input type pins the whole mapping.

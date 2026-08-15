@@ -46,6 +46,7 @@
                              data-field-name="{{ field.html_name }}"
                              {% if field.field.required %}data-required="true"{% endif %}>
                             {% if field.label %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
+                            {% if field|question_subtext %}<p class="question-card__subtext">{{ field|question_subtext }}</p>{% endif %}
                             {{ field.errors }}
                             {% if field|rating_display_style == 'list_pips' %}
                                 {% include "partials/rating_list_pips.html" %}
@@ -60,6 +61,7 @@
                              data-field-name="{{ field.html_name }}"
                              {% if field.field.required %}data-required="true"{% endif %}>
                             {% if field.label %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
+                            {% if field|question_subtext %}<p class="question-card__subtext">{{ field|question_subtext }}</p>{% endif %}
                             {{ field.errors }}
                             {{ field }}
                         </div>

@@ -85,3 +85,19 @@ def star_icon(field):
 @register.filter
 def star_color(field):
     return getattr(field.field.widget, 'star_color', '#f5b301')
+
+
+# Types whose subtext is rendered by the section template. Geo types and html
+# carry theirs inside their own widget templates, and image renders it as a
+# caption, so all four are deliberately absent.
+SUBTEXT_IN_TEMPLATE_TYPES = {
+    'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating', 'datetime',
+}
+
+
+@register.filter
+def question_subtext(field):
+    """The helper line shown between a question's text and its input."""
+    if getattr(field.field.widget, 'question_type', None) not in SUBTEXT_IN_TEMPLATE_TYPES:
+        return ''
+    return getattr(field.field.widget, 'question_subtext', '') or ''

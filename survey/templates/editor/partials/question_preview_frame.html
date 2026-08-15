@@ -18,6 +18,7 @@
             {% if field|uses_scale_style %}
                 <div class="question-card question-card--scale">
                     {% if field.label %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
+                    {% if field|question_subtext %}<p class="question-card__subtext">{{ field|question_subtext }}</p>{% endif %}
                     {% if field|rating_display_style == 'list_pips' %}
                         {% include "partials/rating_list_pips.html" %}
                     {% elif field|rating_display_style == 'stars' %}
@@ -29,6 +30,7 @@
             {% elif field|is_card_question %}
                 <div class="question-card">
                     {% if field.label %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
+                    {% if field|question_subtext %}<p class="question-card__subtext">{{ field|question_subtext }}</p>{% endif %}
                     {{ field }}
                 </div>
             {% else %}
