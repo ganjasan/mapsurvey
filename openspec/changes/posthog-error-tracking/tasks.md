@@ -83,10 +83,19 @@
       `extract_tags`, and `test_sdk_tag_names_are_what_we_scrub` pins the names against the
       installed SDK.
 
-## 8. Project-side setup (MCP)
+## 8. Project-side setup
 
 - [ ] 8.1 Enable client-side exception autocapture in project settings (Error tracking section).
-- [ ] 8.2 Create a trends insight on `$exception` volume and a threshold alert to email.
+      **User's call — it changes what is collected from real users' browsers.**
+- [x] 8.2 ~~Trends insight on `$exception` volume plus a threshold alert.~~ Superseded: the GitHub
+      integration is connected instead (kind `github`, account `ganjasan`, no errors), so an error
+      tracking issue becomes a GitHub issue in the repo we already work in. No new vendor, no
+      channel to pick, and the follow-up lands where the work lands.
+
+      **Known trade-off, deliberately accepted:** this is pull, not push. Nothing notifies us when
+      volume spikes — we find out when we look at PostHog or when an issue is filed by hand. Good
+      enough while traffic is small; revisit if an incident is discovered late. Design §6 said
+      alerting was "part of done", and this consciously relaxes that.
 
 ## 9. Rollout
 
