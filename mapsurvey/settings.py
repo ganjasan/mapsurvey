@@ -73,6 +73,10 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # After auth so exceptions carry the signed-in creator's pk as distinct id.
+    # Captures view exceptions to PostHog error tracking (process_exception);
+    # inert when POSTHOG_PROJECT_KEY is unset -- see survey.apps.SurveyConfig.
+    'posthog.integrations.django.PosthogContextMiddleware',
     'survey.middleware.LastActivityMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'survey.middleware.ActiveOrgMiddleware',
@@ -297,6 +301,66 @@ POSTHOG_API_HOST = os.environ.get('POSTHOG_API_HOST') or 'https://eu.i.posthog.c
 # `base_survey_template.html`, so a base template added later inherits the exclusion instead
 # of depending on which existing one its author happened to copy.
 POSTHOG_EXCLUDED_PREFIXES = ('/surveys/', '/r/')
+
+# --- Server-side error capture (PosthogContextMiddleware) ---
+# The middleware's process_exception reports view exceptions to PostHog error tracking.
+# Client setup (and the "empty key = disabled" gate) lives in survey.apps.SurveyConfig.
+
+
+# Without a key the middleware must not even try: posthog's lazy setup() raises
+# ValueError("API key is required") before it ever looks at the `disabled` flag,
+# so an unconfigured deployment would have the error reporter break the very
+# error handling it exists to observe. Found by the full suite -- 17 tests that
+# raise on purpose died inside the reporter.
+POSTHOG_MW_CAPTURE_EXCEPTIONS = bool(POSTHOG_PROJECT_KEY)
+
+
+def _posthog_skip_request(request):
+    # Admin stack traces routinely embed object reprs; the debug toolbar is noise.
+    # Respondent paths are deliberately NOT skipped -- a 500 on /surveys/ is our
+    # defect -- their events are scrubbed by _posthog_scrub_tags instead.
+    #
+    # Reads the key through django.conf.settings rather than the module-level
+    # name so `override_settings` actually changes the behaviour under test; a
+    # closure over the module global is invisible to it and would let this
+    # function be "tested" without ever exercising the configured branch.
+    from django.conf import settings as configured
+
+    if not getattr(configured, 'POSTHOG_PROJECT_KEY', ''):
+        return False
+    return not request.path.startswith(('/admin/', '/__debug__/'))
+
+
+# The exact tag names the SDK's middleware emits. Spelled out here because
+# getting one wrong fails silently in the worst direction: `$ip_address` was
+# briefly written as `$ip`, which pops nothing, so a respondent's IP would have
+# been transmitted from behind Cloudflare (which always sets X-Forwarded-For).
+# `PostHogErrorTrackingTest.test_sdk_tag_names_are_what_we_scrub` pins these
+# against the installed SDK so a rename breaks the suite instead of leaking.
+POSTHOG_RESPONDENT_IDENTIFYING_TAGS = ('$ip_address', '$user_agent')
+
+
+def _posthog_scrub_tags(tags):
+    """Strip respondent-describing metadata from events on excluded surfaces.
+
+    Errors there are still ours to see, but the request metadata describes a
+    respondent: their IP, their browser, and a URL that names which survey they
+    were answering. Keep the exception, drop the description.
+    """
+    path = tags.get('$request_path') or ''
+    for prefix in POSTHOG_EXCLUDED_PREFIXES:
+        if path.startswith(prefix):
+            for tag_name in POSTHOG_RESPONDENT_IDENTIFYING_TAGS:
+                tags.pop(tag_name, None)
+            tags['$request_path'] = prefix
+            if '$current_url' in tags:
+                tags['$current_url'] = prefix
+            break
+    return tags
+
+
+POSTHOG_MW_REQUEST_FILTER = _posthog_skip_request
+POSTHOG_MW_TAG_MAP = _posthog_scrub_tags
 
 # Acquisition metrics sync (top of the creator funnel).
 # Every credential below defaults to empty: unset means "not configured", which the

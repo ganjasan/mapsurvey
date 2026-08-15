@@ -136,6 +136,16 @@ Two rules that are easy to get wrong:
   sell. That data stays in our database. The two answer superficially similar questions about
   entirely different people.
 
+**Error tracking (PostHog, same key)**: three capture paths — Django view exceptions via
+`posthog.integrations.django.PosthogContextMiddleware` (in `MIDDLEWARE` after auth), Celery task
+failures via the `task_failure` receiver in `mapsurvey/celery.py`, and client-side JS exception
+autocapture (a PostHog project setting, not a template change). Unset key = the client is explicitly
+disabled in `survey.apps.SurveyConfig`. Errors on `/surveys/`/`/r/` ARE captured (they are our
+defects) but scrubbed by `_posthog_scrub_tags` in `settings.py` — no respondent IP/user-agent, URL
+truncated to the prefix; `/admin/` and `/__debug__/` are not captured at all. The `posthog` package
+is pinned `~=6.9`: 7.x needs Python ≥3.10, and 6.7.5–6.7.13 shipped with silently broken Django
+exception capture — canary tests in `PostHogErrorTrackingTest` guard both directions.
+
 ### URL Structure
 
 - `/` - Redirects to login or editor

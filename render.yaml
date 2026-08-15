@@ -152,6 +152,12 @@ services:
           type: redis
           name: mapsurvey-redis
           property: connectionString
+      # Error tracking: the task_failure receiver in mapsurvey/celery.py reports
+      # failed tasks. Same no-preview-inheritance rule as on the web service.
+      - key: POSTHOG_PROJECT_KEY
+        sync: false
+      - key: POSTHOG_API_HOST
+        sync: false
       - key: DEFAULT_FROM_EMAIL
         sync: false
         previewEnvRenderServiceName: mapsurvey
