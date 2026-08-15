@@ -26,8 +26,9 @@ CHOICE_BASED_STYLES = {'scale_strip', 'list_pips'}
 
 # Types that can render through those partials. The style alone is not enough
 # to decide: a text question would be sent through them and blow up on
-# field.field.choices.
-SCALE_STYLE_TYPES = {'rating', 'range'}
+# field.field.choices. Range is deliberately absent — it always renders as
+# the slider, whatever display_style is stored.
+SCALE_STYLE_TYPES = {'rating'}
 
 
 @register.filter

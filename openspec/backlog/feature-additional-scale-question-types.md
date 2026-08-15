@@ -53,3 +53,5 @@ Researchers used to standard survey tools expect more:
   discoverability failure of the flat type picker, not a missing capability. Logged against
   [rework the question type picker](improvement-group-question-type-list.md). True drag-to-order
   ranking (strict ordering, one answer shape) remains open here.
+
+- **2026-08-15 — range display styles retired** (change `range-slider-only`): production showed 122/124 range questions on the default slider and the only two exceptions were one creator imitating `rating`. Range is the slider again; a labelled discrete scale is what `rating` is for, and the reworked type picker routes creators there. The "presentation variants" idea in this item now applies to `rating` only.
