@@ -38,5 +38,60 @@
             {% endif %}
         {% endfor %}
     </div>
+{% if is_type_example %}
+<script>
+/* Type-example only: show the ranking interaction instead of describing it.
+ *
+ * A CSS-only version cannot renumber the rank badges, so it could either move
+ * rows (leaving "1" sitting in position 3) or nudge them in place, which says
+ * "these wiggle" rather than "these reorder". This does the real thing: move
+ * the bottom item to the top, renumber, and FLIP the rows to their new places
+ * so the change is legible rather than a jump.
+ *
+ * Never runs in the "Respondent sees" pane — that frame does not carry
+ * .is-type-example, because the creator's own question should sit still while
+ * they type into it.
+ */
+(function () {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var list = document.querySelector('.is-type-example .ranking__list');
+    if (!list) return;
+
+    function rows() { return Array.prototype.slice.call(list.children); }
+
+    function step() {
+        var before = rows().map(function (r) { return r.getBoundingClientRect().top; });
+        var moving = rows()[rows().length - 1];
+
+        list.insertBefore(moving, list.firstElementChild);
+        rows().forEach(function (row, i) {
+            var badge = row.querySelector('[data-ranking-rank]');
+            if (badge) badge.textContent = i + 1;
+        });
+
+        // FLIP: put every row back where it was, then let it travel.
+        var after = rows().map(function (r) { return r.getBoundingClientRect().top; });
+        var order = rows();
+        order.forEach(function (row, i) {
+            var wasIndex = i === 0 ? before.length - 1 : i - 1;
+            var delta = before[wasIndex] - after[i];
+            if (!delta) return;
+            row.style.transition = 'none';
+            row.style.transform = 'translateY(' + delta + 'px)';
+        });
+        requestAnimationFrame(function () {
+            order.forEach(function (row) {
+                row.style.transition = 'transform .45s cubic-bezier(.2,.7,.3,1)';
+                row.style.transform = '';
+            });
+        });
+        moving.classList.add('is-grabbed');
+        setTimeout(function () { moving.classList.remove('is-grabbed'); }, 600);
+    }
+
+    setInterval(step, 2200);
+})();
+</script>
+{% endif %}
 </body>
 </html>

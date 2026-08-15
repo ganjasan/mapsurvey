@@ -377,6 +377,16 @@
         // when the field is dressing a star rating.
         var iconInput = document.querySelector('#questionModalBody input[name="icon_class"]');
         if (iconInput) iconInput.placeholder = isStars ? 'fas fa-star' : 'fas fa-map-marker-alt';
+        // Question.color defaults to #000000 and a star rating reads that as
+        // "never set", rendering gold. The creator would otherwise see a black
+        // swatch next to gold stars. Show the colour that actually renders —
+        // and, since they can now see it, saving makes it explicit.
+        var colorInput = document.querySelector('#questionModalBody input[name="color"]');
+        if (isStars && colorInput && colorInput.value.toLowerCase() === '#000000') {
+            // Mirrors survey.models.DEFAULT_STAR_COLOR; a test pins them together.
+            colorInput.value = '#f5b301';
+            colorInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
         show('fg-image', t === 'image');
         show('fg-required', DISPLAY_BLOCK_TYPES.indexOf(t) === -1);
     }

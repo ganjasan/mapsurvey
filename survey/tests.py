@@ -22619,3 +22619,24 @@ class RankingEmptyAndExampleTest(TestCase):
 
         self.assertIn('is-type-example', example)
         self.assertNotIn('is-type-example', pane)
+
+
+class StarColorEditorParityTest(SimpleTestCase):
+    """The editor's gold swatch and the model's gold must be the same gold."""
+
+    def test_modal_uses_the_models_default_star_colour(self):
+        """
+        GIVEN the question dialog, which pre-fills the colour picker with gold
+              when a creator picks the star style
+        WHEN that literal is compared with survey.models.DEFAULT_STAR_COLOR
+        THEN they agree
+
+        The dialog cannot read the constant (it is JavaScript in a template
+        rendered from five different views), so this test is the link.
+        """
+        from pathlib import Path
+        from survey.models import DEFAULT_STAR_COLOR
+
+        modal = Path('survey/templates/editor/partials/question_form_modal.html').read_text()
+
+        self.assertIn(f"colorInput.value = '{DEFAULT_STAR_COLOR}';", modal)

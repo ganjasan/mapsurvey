@@ -1282,22 +1282,9 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
    shows — so it is dropped entirely for prefers-reduced-motion.            */
 @media (prefers-reduced-motion: no-preference) {
 
-  /* Ranking: rows breathe in turn, so the example reads as "these move"
-     without implying a reorder the rank numbers would then contradict. */
-  .is-type-example .ranking__item {
-    animation: qtp-lift 3.6s ease-in-out infinite;
-  }
-  .is-type-example .ranking__item:nth-child(1) { animation-delay: 0s; }
-  .is-type-example .ranking__item:nth-child(2) { animation-delay: 1.2s; }
-  .is-type-example .ranking__item:nth-child(3) { animation-delay: 2.4s; }
-
-  @keyframes qtp-lift {
-    0%, 72%, 100% { transform: none; box-shadow: none; }
-    12%, 60% {
-      transform: translateX(6px);
-      box-shadow: 0 3px 10px rgba(0, 0, 0, .12);
-    }
-  }
+  /* Ranking reorders for real — the loop and the FLIP live in the example
+     frame's own script, because renumbering the rank badges is not something
+     CSS can do and a move without renumbering would be a lie. */
 
   /* Stars: a fill sweep, then reset — the interaction in three seconds. */
   .is-type-example .rating-stars__star {
