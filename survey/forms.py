@@ -171,24 +171,18 @@ class SurveySectionAnswerForm(forms.Form):
 
     # Question types whose rendering the creator can pick. Membership, rather
     # than a chain of equality tests, so the next type to gain display styles
-    # is one entry here and in the editor's gate.
-    DISPLAY_STYLE_TYPES = ('rating', 'range')
+    # is one entry here and in the editor's gate. `range` was briefly in this
+    # list and is deliberately out again: a range is the slider — a labelled
+    # discrete scale is what `rating` is for. Stored display_style values on
+    # range questions are ignored, not rewritten.
+    DISPLAY_STYLE_TYPES = ('rating',)
 
     # Styles that lay out one element per choice, and so need choices to exist.
     CHOICE_BASED_STYLES = ('scale_strip', 'list_pips')
 
     @classmethod
     def resolve_display_style(cls, question, survey_rating_style):
-        """Decide how a question is rendered.
-
-        For `range`, `default` means the slider and deliberately does not
-        inherit the survey-wide rating style — inheriting would silently
-        restyle every existing range question the first time this deploys.
-
-        A choice-based style with no choices to lay out falls back to the
-        slider rather than rendering an empty control. 28% of range questions
-        in production have no choices, so this is a live path.
-        """
+        """Decide how a question is rendered."""
         # Types that do not support display styles must resolve to the plain
         # rendering. Without this every question — text, number, geo — inherits
         # the survey-wide rating style and any consumer keying on the resolved
@@ -197,12 +191,6 @@ class SurveySectionAnswerForm(forms.Form):
             return 'default'
 
         chosen = question.display_style if question.display_style in cls.CHOICE_BASED_STYLES else None
-
-        if question.input_type == 'range':
-            if chosen and not question.choices:
-                return 'default'
-            return chosen or 'default'
-
         return chosen or survey_rating_style
 
     @classmethod
@@ -232,17 +220,6 @@ class SurveySectionAnswerForm(forms.Form):
 
         elif input_type == 'range':
             choices = question.choices or []
-
-            # The choice-based styles render one radio per choice, which an
-            # IntegerField cannot supply. The stored value is unaffected: the
-            # save path keys on question.input_type, not on the widget.
-            if display_style in cls.CHOICE_BASED_STYLES and choices:
-                return forms.ChoiceField(
-                    widget=forms.RadioSelect(),
-                    choices=[(c["code"], question.get_choice_name(c["code"], language)) for c in choices],
-                    label=label,
-                    required=required,
-                )
 
             codes = [c["code"] for c in choices]
             minimum = min(codes) if codes else 0
