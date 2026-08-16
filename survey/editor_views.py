@@ -285,6 +285,13 @@ def _start_survey_generation(request, form):
     )
 
     event = start_generation(request.user, request.active_org, brief, languages)
+    # Counts and categories only. The brief is the creator's project description,
+    # often a client's; it already goes to one processor and PostHog is not going
+    # to be a second one.
+    pe.emit(pe.AI_DRAFT_REQUESTED, request.user.pk, {
+        'language_count': len(languages),
+        'has_use_case': bool(brief.use_case),
+    })
     generate_survey_draft_task.delay(
         event.id, brief.as_dict(), languages, header_overrides,
     )
@@ -318,9 +325,15 @@ def editor_generation_status(request, event_id):
     if event.outcome == 'success' and event.created_survey_id:
         # The redirect being issued means the creator was still on the page
         # when the draft finished — i.e. they waited. First stamp wins.
-        AIGenerationEvent.objects.filter(
+        first_redirect = AIGenerationEvent.objects.filter(
             pk=event.pk, redirected_at__isnull=True,
         ).update(redirected_at=timezone.now())
+        # The conditional update's row count IS the transition test: a second
+        # poll (or a re-opened tab) matches nothing and must not emit again.
+        if first_redirect:
+            pe.emit(pe.AI_DRAFT_OPENED, request.user.pk, {
+                'survey_id': str(event.created_survey_id),
+            })
         # HX-Redirect turns the polled fragment into a real navigation, so the
         # creator lands in the editor rather than seeing it swapped into a panel.
         response = HttpResponse(status=204)
@@ -1503,6 +1516,7 @@ def editor_survey_transition(request, survey_uuid):
     if new_status == 'published':
         pe.emit(pe.SURVEY_PUBLISHED, survey.created_by_id, {
             'survey_id': str(survey.id),
+            'creation_method': pe.creation_method_for(survey.id),
         })
 
     if request.headers.get('HX-Request'):

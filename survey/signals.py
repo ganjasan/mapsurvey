@@ -99,4 +99,10 @@ def emit_first_response_event(sender, instance, created, **kwargs):
                .exists())
     if already:
         return
-    pe.emit(pe.SURVEY_FIRST_RESPONSE, owner_id, {'survey_id': str(instance.survey_id)})
+    pe.emit(pe.SURVEY_FIRST_RESPONSE, owner_id, {
+        'survey_id': str(instance.survey_id),
+        # Whether AI-drafted surveys actually collect answers is the end of the
+        # hypothesis, and carrying the method here makes it a breakdown rather
+        # than a join back to survey_created.
+        'creation_method': pe.creation_method_for(instance.survey_id),
+    })

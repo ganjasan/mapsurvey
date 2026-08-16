@@ -15,7 +15,8 @@ from .materialize import materialize_draft
 from .quota import QuotaExceeded, check_quota
 from .schema import survey_draft_schema
 from .validator import validate_blob
-from ..models import AIGenerationEvent, SurveyCollaborator
+from .. import product_events as pe
+from ..models import AIGenerationEvent, Question, SurveyCollaborator
 
 logger = logging.getLogger('survey.ai')
 
@@ -60,7 +61,53 @@ def _finish(event, outcome, error_detail='', survey=None, usage=None, blob=None)
         event.output_tokens = usage.output_tokens
         event.latency_ms = usage.latency_ms
     event.save()
+    _emit_terminal_events(event, outcome, survey)
     return event
+
+
+def _emit_terminal_events(event, outcome, survey):
+    """Analytics for a finished generation. After the save, never before it.
+
+    `survey_created` lives here rather than in `materialize_draft()` because a
+    materialized survey is not yet a created one: the collaborator row is added
+    by the caller, and a failure between the two rolls the survey back. This is
+    the point where the outcome is final.
+
+    The manual path emits its own `survey_created` in `editor_views`; without
+    this call an AI-drafted survey would produce none at all, and the
+    `manual`/`ai` split would read 100% manual forever.
+    """
+    properties = {'outcome': outcome}
+    if event.provider:
+        properties['provider'] = event.provider
+    if event.model:
+        properties['model'] = event.model
+    for field in ('latency_ms', 'input_tokens', 'output_tokens'):
+        value = getattr(event, field)
+        if value is not None:
+            properties[field] = value
+    pe.emit(pe.AI_DRAFT_FINISHED, event.user_id, properties)
+
+    if survey is None:
+        return
+
+    # `survey.id`, not `survey.uuid`: the manual path and the backfill both
+    # send the primary key, and two id spaces under one property name would
+    # make the ai/manual comparison unjoinable.
+    survey_props = {
+        'survey_id': str(survey.id),
+        'creation_method': pe.CREATION_AI,
+    }
+    pe.emit(pe.SURVEY_CREATED, event.user_id, survey_props)
+
+    # The step that would otherwise read backwards. `survey_question_added`
+    # fires in `editor_question_create` -- a human adding a question in the
+    # editor. An AI draft arrives with its questions already written, so the
+    # creator never visits that view, and the funnel would report AI users as
+    # stuck at the empty-editor step this generator exists to remove: the
+    # improvement would show up as a regression.
+    if Question.objects.filter(survey_section__survey_header=survey).exists():
+        pe.emit(pe.SURVEY_QUESTION_ADDED, event.user_id, survey_props)
 
 
 def generate_survey_draft(event, brief, languages, header_overrides):
