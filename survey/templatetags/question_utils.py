@@ -2,7 +2,8 @@ from django import template
 
 register = template.Library()
 
-CARD_INPUT_TYPES = {'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating', 'datetime'}
+CARD_INPUT_TYPES = {'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating',
+                    'ranking', 'datetime'}
 
 
 @register.filter
@@ -91,7 +92,8 @@ def star_color(field):
 # carry theirs inside their own widget templates, and image renders it as a
 # caption, so all four are deliberately absent.
 SUBTEXT_IN_TEMPLATE_TYPES = {
-    'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating', 'datetime',
+    'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating', 'ranking',
+    'datetime',
 }
 
 

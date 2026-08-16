@@ -744,6 +744,10 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 			elif question.input_type == 'multichoice':
 				if answer.selected_choices:
 					initial[question.code] = [str(c) for c in answer.selected_choices]
+			elif question.input_type == 'ranking':
+				# Order matters here, unlike multichoice: this list is the answer.
+				if answer.selected_choices:
+					initial[question.code] = [str(c) for c in answer.selected_choices]
 			elif question.input_type == 'range':
 				if answer.numeric is not None:
 					# The slider takes an int; the choice-based styles are radios
@@ -912,6 +916,20 @@ def survey_section(request, survey_slug, section_name):
 						else:
 							pass
 
+						answer.save()
+
+				elif question.input_type == 'ranking':
+					# The submitted order is the DOM order of the widget's hidden
+					# inputs. Store it only when it is a permutation of the
+					# question's items: every item exactly once, nothing else.
+					# An invalid ranking cannot be produced by the widget, so it
+					# is tampering or a bug — stored as nothing, the way an
+					# unanswered question is, rather than as a half-order.
+					submitted = [r for r in result if r != '']
+					defined = [str(c["code"]) for c in (question.choices or [])]
+					if sorted(submitted) == sorted(defined) and defined:
+						answer = Answer(survey_session=survey_session, question=question)
+						answer.selected_choices = [int(r) for r in submitted]
 						answer.save()
 
 				else:
@@ -1090,7 +1108,7 @@ def _sanitize_filename(name):
 # Carry respondent input; exported as a CSV column or a GeoJSON property.
 EXPORT_VALUE_TYPES = frozenset({
 	'text', 'text_line', 'number', 'range',
-	'choice', 'rating', 'multichoice', 'datetime',
+	'choice', 'rating', 'multichoice', 'datetime', 'ranking',
 })
 
 # Exported as GeoJSON layers in their own right, never as a cell.
@@ -1164,6 +1182,15 @@ def _answer_cell(question, answers):
 
 	if input_type == 'multichoice':
 		return "; ".join(answer.get_selected_choice_names())
+
+	if input_type == 'ranking':
+		# One column per item, valued by its rank: a single "a > b > c" cell
+		# reads well and analyses badly, and ranks are what the creator wants
+		# to average.
+		ranks = {}
+		for position, code in enumerate(answer.selected_choices or [], start=1):
+			ranks[f"{question.name}: {question.get_choice_name(code)}"] = position
+		return ranks
 
 	return ""
 
@@ -1269,7 +1296,11 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 			if cell is EXPORT_NO_COLUMN:
 				continue
 
-			properties[answer.question.name] = cell
+			# A ranking answer is several columns, not one cell.
+			if isinstance(cell, dict):
+				properties.update(cell)
+			else:
+				properties[answer.question.name] = cell
 
 		properties["session"] = str(session)
 		properties["session_id"] = session.id

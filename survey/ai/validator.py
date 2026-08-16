@@ -15,7 +15,9 @@ import re
 from .schema import MARKER_ICONS, SUB_QUESTION_INPUT_TYPES, TOP_LEVEL_INPUT_TYPES
 
 GEO_INPUT_TYPES = ('point', 'line', 'polygon')
-CHOICE_REQUIRED_INPUT_TYPES = ('choice', 'multichoice', 'range', 'rating')
+# `ranking` is here for a blunt reason: its choices are the items to order, so
+# a ranking without them is a question no respondent can answer.
+CHOICE_REQUIRED_INPUT_TYPES = ('choice', 'multichoice', 'range', 'rating', 'ranking')
 ORDERED_CODE_INPUT_TYPES = ('range', 'rating')
 MIN_SECTIONS = 2
 MAX_SECTIONS = 4

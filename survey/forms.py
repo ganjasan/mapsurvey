@@ -156,6 +156,59 @@ class LeafletDrawButtonField(forms.Field):
 
         return attrs
 
+class RankingWidget(widgets.Widget):
+    """Drag-to-order list.
+
+    Each item carries a hidden input under the question's field name, so the
+    submitted order is simply the DOM order and `request.POST.getlist(code)`
+    reads it back with no delimiter to parse. Moving an item moves its input.
+    """
+    template_name = 'ranking.html'
+
+    def __init__(self, attrs=None):
+        self.items = []
+        if attrs is not None:
+            attrs = attrs.copy()
+            self.items = attrs.pop('items', [])
+
+        super().__init__(attrs)
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        items = context['widget']['attrs'].get('items', [])
+        context['widget']['items'] = self._ordered(items, value)
+        return context
+
+    @staticmethod
+    def _ordered(items, value):
+        """Items in the respondent's stored order, if there is one.
+
+        `value` is whatever the form was given as initial: the stored codes on
+        a revisit, and nothing on a first view. Anything unrecognised leaves
+        the creator's order alone rather than dropping items.
+        """
+        if not value:
+            return items
+        wanted = [str(v) for v in value]
+        by_code = {str(item['code']): item for item in items}
+        if sorted(wanted) != sorted(by_code):
+            return items
+        return [by_code[code] for code in wanted]
+
+
+class RankingField(forms.Field):
+    def __init__(self, *, items, **kwargs):
+        self.items = items
+
+        super().__init__(**kwargs)
+
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        attrs['items'] = self.items
+
+        return attrs
+
+
 class ShowImageField(forms.Field):
     def __init__(self, *, image_source, subtitle="", **kwargs):
         self.image_source = image_source
@@ -253,6 +306,12 @@ class SurveySectionAnswerForm(forms.Form):
             choices = [(c["code"], question.get_choice_name(c["code"], language) or str(c["code"]))
                        for c in source]
             return forms.ChoiceField(widget=forms.RadioSelect(attrs={'class': 'form-check-inline', 'style': 'margin-right:0;'}), choices=choices, label=label, required=required)
+
+        elif input_type == 'ranking':
+            # `initial` carries the respondent's stored order when they navigate
+            # back; otherwise the creator's order stands.
+            return RankingField(widget=RankingWidget, label=label, required=required,
+                                items=question.ranking_items(language))
 
         elif input_type == 'datetime':
             return forms.DateTimeField(widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}), label=label, required=required)

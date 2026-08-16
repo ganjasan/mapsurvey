@@ -1193,3 +1193,127 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
   line-height: 1.4;
   color: #6b7280;
 }
+
+/* ── Ranking question ──────────────────────────────────────────────────────
+   The order lives in the DOM; these styles only make it draggable-looking and
+   keep the rank column steady while rows move. */
+.ranking__hint {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.ranking__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ranking__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  cursor: grab;
+  user-select: none;
+  transition: border-color .12s ease, box-shadow .12s ease, background .12s ease;
+}
+
+.ranking__item:hover { border-color: #adb5bd; }
+
+.ranking__item:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}
+
+.ranking__item.is-dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.ranking__item.is-grabbed {
+  border-color: #4f46e5;
+  background: #eef2ff;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, .18);
+}
+
+.ranking__rank {
+  flex: 0 0 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ranking__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.9rem;
+  color: #1a1d21;
+}
+
+.ranking__grip { color: #ced4da; }
+
+.ranking__status {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+  min-height: 1em;
+}
+
+/* ── Type examples in the question dialog ──────────────────────────────────
+   Only the picker's "Type example" frame carries .is-type-example. The
+   "Respondent sees" pane deliberately does not: it shows the creator's own
+   question while they are editing it, and a question that fidgets while you
+   type is worse than a still one.
+
+   Every animation here is decorative — it repeats what the example already
+   shows — so it is dropped entirely for prefers-reduced-motion.            */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* Ranking reorders for real — the loop and the FLIP live in the example
+     frame's own script, because renumbering the rank badges is not something
+     CSS can do and a move without renumbering would be a lie. */
+
+  /* Stars: a fill sweep, then reset — the interaction in three seconds. */
+  .is-type-example .rating-stars__star {
+    animation: qtp-star-fill 3s ease-in-out infinite;
+  }
+  /* Rows are emitted in reverse (see rating_stars.html), so the LAST child is
+     star 1 and the delays count backwards. */
+  .is-type-example .rating-stars__star:nth-last-child(1) { animation-delay: 0s; }
+  .is-type-example .rating-stars__star:nth-last-child(2) { animation-delay: .18s; }
+  .is-type-example .rating-stars__star:nth-last-child(3) { animation-delay: .36s; }
+  .is-type-example .rating-stars__star:nth-last-child(4) { animation-delay: .54s; }
+  .is-type-example .rating-stars__star:nth-last-child(5) { animation-delay: .72s; }
+
+  @keyframes qtp-star-fill {
+    0%, 8% { color: var(--star-empty); transform: none; }
+    16% { color: var(--star-color); transform: scale(1.16); }
+    24%, 76% { color: var(--star-color); transform: none; }
+    88%, 100% { color: var(--star-empty); transform: none; }
+  }
+}
+
+.ranking__empty {
+  margin: 0;
+  padding: 14px 12px;
+  border: 1px dashed #ced4da;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #6b7280;
+  background: #f8f9fa;
+}
+
+.ranking__empty i { margin-right: 6px; color: #adb5bd; }

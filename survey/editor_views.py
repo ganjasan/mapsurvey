@@ -792,7 +792,7 @@ def editor_question_edit(request, survey_uuid, question_id):
             choices_json = request.POST.get('choices_json', '').strip()
             if choices_json:
                 q.choices = _guard_choice_codes(question, json.loads(choices_json))
-            elif q.input_type not in ('choice', 'multichoice', 'range', 'rating'):
+            elif q.input_type not in ('choice', 'multichoice', 'range', 'rating', 'ranking'):
                 q.choices = None
             # Validation settings per question type
             vs = {}
@@ -867,12 +867,13 @@ def _preview_language(request, survey):
     return lang
 
 
-def _render_preview_frame(request, form, question, lang):
+def _render_preview_frame(request, form, question, lang, is_type_example=False):
     if lang:
         translation.activate(lang)
     response = render(request, 'editor/partials/question_preview_frame.html', {
         'form': form,
         'question': question,
+        'is_type_example': is_type_example,
     })
     if lang:
         translation.deactivate()
@@ -937,7 +938,8 @@ def editor_question_preview_live(request, survey_uuid, section_id):
     lang = _preview_language(request, survey)
     form = SurveySectionAnswerForm.single_question_form(question, lang)
 
-    return _render_preview_frame(request, form, question, lang)
+    return _render_preview_frame(request, form, question, lang,
+                                 is_type_example=request.POST.get('example') == '1')
 
 
 @survey_permission_required('editor')
