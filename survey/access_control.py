@@ -4,11 +4,32 @@ from django.shortcuts import redirect, render
 from .permissions import get_effective_survey_role, SURVEY_ROLE_RANK
 
 
+def mark_indexing(request, survey):
+    """Flag whether this survey's pages may be indexed.
+
+    Only a published survey may. Everything else -- draft, testing, closed,
+    archived -- is either not ready for an audience or no longer has one, and
+    the sitemap fix alone does not cover it: crawlers reach unpublished surveys
+    through links creators circulate before publishing, which is how seven
+    `private` drafts ended up crawled in the two days after error tracking
+    shipped.
+
+    Set here, applied by `SurveyIndexingMiddleware`. A flag rather than a
+    header on the spot because the caller often returns `None` and lets the
+    view build its own response, and because `survey_header` redirects to a
+    section or a language picker -- a header set on a response we do not own
+    would be lost.
+    """
+    request.survey_noindex = survey.status != 'published'
+
+
 def check_survey_access(request, survey):
     """Check if the current request is allowed to access the survey.
 
     Returns None if access is allowed, or an HttpResponse to return instead.
     """
+    mark_indexing(request, survey)
+
     # Editors and owners always bypass access control
     if request.user.is_authenticated:
         role = get_effective_survey_role(request.user, survey)
@@ -18,6 +39,11 @@ def check_survey_access(request, survey):
     status = survey.status
 
     if status == 'draft':
+        # Still a bare 404. The body comes from `survey_not_found`, wired as
+        # handler404, so a draft and a UUID that names nothing produce the same
+        # response down to the headers -- rendering an "unavailable" page here
+        # instead would make a draft distinguishable, which is the survey
+        # enumeration `tenant-data-exposure` just closed.
         raise Http404
 
     if status == 'testing':

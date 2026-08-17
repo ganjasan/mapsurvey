@@ -78,6 +78,9 @@ MIDDLEWARE = [
     # inert when POSTHOG_PROJECT_KEY is unset -- see survey.apps.SurveyConfig.
     'posthog.integrations.django.PosthogContextMiddleware',
     'survey.middleware.LastActivityMiddleware',
+    # Applies the noindex flag survey.access_control sets. Must sit outside the
+    # view so it also reaches the redirects survey_header returns.
+    'survey.middleware.SurveyIndexingMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'survey.middleware.ActiveOrgMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
