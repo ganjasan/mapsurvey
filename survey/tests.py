@@ -22593,9 +22593,13 @@ class AIMaterializeTest(TestCase):
 class _FakeProvider:
     """Stands in for a real model: returns queued blobs, counts calls."""
 
-    def __init__(self, blobs, error=None):
+    def __init__(self, blobs, error=None, usages=None):
         self._blobs = list(blobs)
         self._error = error
+        # Per-call usage overrides, consumed in order. Without them every call
+        # reports the same numbers, which cannot distinguish a summed attempt
+        # set from a single call -- the exact thing the accounting must prove.
+        self._usages = list(usages) if usages else None
         self.calls = []
 
     def complete_structured(self, *, system, user, schema, max_tokens=64000):
@@ -22605,10 +22609,12 @@ class _FakeProvider:
         if self._error is not None:
             raise self._error
         blob = self._blobs.pop(0)
-        usage = LLMUsage(
-            provider='fake', model='fake-model',
-            input_tokens=100, output_tokens=200, latency_ms=1234,
-        )
+        overrides = self._usages.pop(0) if self._usages else {}
+        usage = LLMUsage(**dict(
+            {'provider': 'fake', 'model': 'fake-model',
+             'input_tokens': 100, 'output_tokens': 200, 'latency_ms': 1234},
+            **overrides
+        ))
         return blob, usage
 
 
@@ -22642,8 +22648,13 @@ class AIClientConfigTest(TestCase):
             client.get_provider()
 
 
-class AIGenerationFlowTest(TestCase):
-    """The orchestrator: provider → validator → materializer → event."""
+class _AIGenerationFixture:
+    """Fixtures and the run helper shared by the orchestrator test classes.
+
+    A mixin rather than a base TestCase: subclassing a TestCase would re-run
+    every inherited test method in each child, which doubles the suite's slowest
+    AI cases for no coverage.
+    """
 
     def setUp(self):
         self.org = _make_org('AIGenOrg')
@@ -22673,6 +22684,10 @@ class AIGenerationFlowTest(TestCase):
             generate_survey_draft(event, brief, list(languages), overrides)
         event.refresh_from_db()
         return event
+
+
+class AIGenerationFlowTest(_AIGenerationFixture, TestCase):
+    """The orchestrator: provider → validator → materializer → event."""
 
     def test_successful_generation_creates_survey_and_owner(self):
         """
@@ -22759,6 +22774,232 @@ class AIGenerationFlowTest(TestCase):
 
         event.refresh_from_db()
         self.assertEqual(event.outcome, 'not_configured')
+
+
+class AIThinkingLevelRequestTest(TestCase):
+    """Reasoning effort is a value we send, not a provider default we inherit."""
+
+    def _post_and_capture(self):
+        """Run one Gemini call against a stubbed transport, return the request body."""
+        from survey.ai.client import GeminiProvider
+
+        response = mock.MagicMock()
+        response.status_code = 200
+        response.json.return_value = {
+            'usageMetadata': {'promptTokenCount': 10, 'candidatesTokenCount': 20,
+                              'totalTokenCount': 30},
+            'candidates': [{'finishReason': 'STOP',
+                            'content': {'parts': [{'text': '{"ok": true}'}]}}],
+        }
+        with patch('requests.post', return_value=response) as post:
+            GeminiProvider().complete_structured(
+                system='sys', user='usr', schema={'type': 'object'},
+            )
+        return post.call_args.kwargs['json']
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_configured_level_is_sent(self):
+        """
+        GIVEN AI_THINKING_LEVEL set to a non-empty value
+        WHEN a Gemini generation is requested
+        THEN the request body carries it at generationConfig.thinkingConfig.thinkingLevel
+        """
+        payload = self._post_and_capture()
+
+        self.assertEqual(
+            payload['generationConfig']['thinkingConfig']['thinkingLevel'], 'low',
+        )
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='')
+    def test_empty_level_omits_the_key_entirely(self):
+        """
+        GIVEN AI_THINKING_LEVEL set to an empty string
+        WHEN a Gemini generation is requested
+        THEN no thinkingConfig key is present, so a model that rejects the field
+             can be worked around by configuration rather than by a deploy
+        """
+        payload = self._post_and_capture()
+
+        self.assertNotIn('thinkingConfig', payload['generationConfig'])
+
+
+class AIThinkingTokensTest(TestCase):
+    """Reasoning usage: read it where reported, derive it where implied, else absent."""
+
+    def test_reported_field_wins(self):
+        """
+        GIVEN usage metadata carrying a reasoning-token count
+        WHEN reasoning usage is read
+        THEN that value is used without consulting the derived fallback
+        """
+        from survey.ai.client import _thinking_tokens
+
+        meta = {'thoughtsTokenCount': 512, 'promptTokenCount': 10,
+                'candidatesTokenCount': 20, 'totalTokenCount': 30}
+
+        self.assertEqual(_thinking_tokens(meta), 512)
+
+    def test_derived_from_the_total_when_no_field(self):
+        """
+        GIVEN metadata with no reasoning field but a total exceeding prompt plus candidates
+        WHEN reasoning usage is read
+        THEN the difference is returned
+        """
+        from survey.ai.client import _thinking_tokens
+
+        meta = {'promptTokenCount': 100, 'candidatesTokenCount': 200,
+                'totalTokenCount': 900}
+
+        self.assertEqual(_thinking_tokens(meta), 600)
+
+    def test_absent_is_none_not_zero(self):
+        """
+        GIVEN metadata whose total is fully accounted for by prompt and candidates
+        WHEN reasoning usage is read
+        THEN it is None, because "not reported" and "reasoned for nothing" are
+             different facts and a zero would average the first into the second
+        """
+        from survey.ai.client import _thinking_tokens
+
+        meta = {'promptTokenCount': 100, 'candidatesTokenCount': 200,
+                'totalTokenCount': 300}
+
+        self.assertIsNone(_thinking_tokens(meta))
+
+    def test_missing_total_is_none(self):
+        """
+        GIVEN metadata with neither a reasoning field nor a total
+        WHEN reasoning usage is read
+        THEN it is None rather than a value derived from absent numbers
+        """
+        from survey.ai.client import _thinking_tokens
+
+        self.assertIsNone(_thinking_tokens({'promptTokenCount': 100}))
+
+
+class AIGenerationLatencyAccountingTest(_AIGenerationFixture, TestCase):
+    """A retried generation must not read as one fast call."""
+
+    def test_single_attempt_totals_equal_the_one_call(self):
+        """
+        GIVEN a provider whose first draft passes validation
+        WHEN generation runs
+        THEN one attempt is recorded and the summed elapsed equals latency_ms
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+
+        event = self._run(provider)
+
+        self.assertEqual(event.attempts, 1)
+        self.assertEqual(event.total_latency_ms, event.latency_ms)
+        self.assertEqual(event.total_latency_ms, 1234)
+
+    def test_retry_sums_elapsed_and_tokens_but_not_latency_ms(self):
+        """
+        GIVEN a first draft rejected by validation and a valid second one
+        WHEN generation runs
+        THEN both calls are accounted, while latency_ms stays the terminal call's
+        """
+        bad = _ai_blob(('en',))
+        bad['sections'] = bad['sections'][:1]
+        provider = _FakeProvider(
+            [bad, _ai_blob(('en',))],
+            usages=[{'latency_ms': 40000, 'input_tokens': 1000, 'output_tokens': 500},
+                    {'latency_ms': 9000, 'input_tokens': 1100, 'output_tokens': 700}],
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+        self.assertEqual(event.attempts, 2)
+        self.assertEqual(event.total_latency_ms, 49000)
+        self.assertEqual(event.latency_ms, 9000)
+        self.assertEqual(event.input_tokens, 2100)
+        self.assertEqual(event.output_tokens, 1200)
+
+    def test_failed_set_is_accounted_too(self):
+        """
+        GIVEN every attempt in the set rejected by validation
+        WHEN generation runs
+        THEN the attempt count and summed elapsed are still recorded
+        """
+        bad = _ai_blob(('en',))
+        bad['sections'] = bad['sections'][:1]
+        provider = _FakeProvider(
+            [bad, dict(bad)],
+            usages=[{'latency_ms': 5000}, {'latency_ms': 6000}],
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'invalid_draft')
+        self.assertEqual(event.attempts, 2)
+        self.assertEqual(event.total_latency_ms, 11000)
+
+    def test_provider_error_counts_the_call_it_could_not_measure(self):
+        """
+        GIVEN a provider whose first call raises before reporting any usage
+        WHEN generation runs
+        THEN the attempt is counted, and elapsed stays absent rather than invented
+        """
+        from survey.ai.client import ProviderError
+
+        provider = _FakeProvider([], error=ProviderError('API error 503: high demand'))
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'provider_error')
+        self.assertEqual(event.attempts, 1)
+        self.assertIsNone(event.total_latency_ms)
+
+    def test_thinking_tokens_sum_only_over_calls_that_reported(self):
+        """
+        GIVEN one attempt reporting reasoning usage and one not
+        WHEN generation runs
+        THEN the reported one is summed and the silent one contributes nothing
+        """
+        bad = _ai_blob(('en',))
+        bad['sections'] = bad['sections'][:1]
+        provider = _FakeProvider(
+            [bad, _ai_blob(('en',))],
+            usages=[{'thinking_tokens': 800}, {'thinking_tokens': None}],
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.thinking_tokens, 800)
+
+    def test_thinking_tokens_stay_absent_when_nothing_reports(self):
+        """
+        GIVEN a provider that never reports reasoning usage
+        WHEN generation runs
+        THEN the row records None, not 0
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+
+        event = self._run(provider)
+
+        self.assertIsNone(event.thinking_tokens)
+
+    def test_analytics_carries_the_accounting_and_omits_what_is_absent(self):
+        """
+        GIVEN a successful generation with no reasoning usage reported
+        WHEN ai_draft_finished is emitted
+        THEN attempts and elapsed are present and thinking_tokens is omitted
+             rather than sent as a zero that a breakdown would average in
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+
+        with patch('survey.product_events.emit') as emit:
+            self._run(provider)
+
+        finished = [c for c in emit.call_args_list
+                    if c.args[0] == 'ai_draft_finished']
+        self.assertEqual(len(finished), 1)
+        props = finished[0].args[2]
+        self.assertEqual(props['attempts'], 1)
+        self.assertEqual(props['total_latency_ms'], 1234)
+        self.assertNotIn('thinking_tokens', props)
 
 
 class AISurveyCreateViewTest(TestCase):
@@ -23116,11 +23357,12 @@ class AITruncatedOutputUsageTest(TestCase):
         self.user = User.objects.create_user('aitruncuser', password='pass')
         Membership.objects.create(user=self.user, organization=self.org, role='owner')
 
-    def test_truncated_generation_records_the_failed_calls_usage(self):
+    def test_truncated_generation_records_every_failed_calls_usage(self):
         """
         GIVEN a provider whose every answer is cut off at the token ceiling
-        WHEN generation gives up
-        THEN the event carries the truncated call's own token counts, not None
+        WHEN generation gives up after both attempts
+        THEN the event carries what the whole set spent, not one call's share:
+             two truncated attempts really did burn the ceiling twice
         """
         from survey.ai.client import LLMUsage, TruncatedOutput
         from survey.ai.generation import SurveyBrief, generate_survey_draft, start_generation
@@ -23145,8 +23387,13 @@ class AITruncatedOutputUsageTest(TestCase):
 
         event.refresh_from_db()
         self.assertEqual(event.outcome, 'provider_error')
-        self.assertEqual(event.output_tokens, 64000)
-        self.assertEqual(event.input_tokens, 900)
+        self.assertEqual(event.attempts, 2)
+        self.assertEqual(event.output_tokens, 128000)
+        self.assertEqual(event.input_tokens, 1800)
+        self.assertEqual(event.total_latency_ms, 110000)
+        # The terminal call alone, so the pre-existing column keeps meaning what
+        # the rows written before the accounting existed were measured as.
+        self.assertEqual(event.latency_ms, 55000)
         self.assertEqual(event.model, 'fake-model')
 
 

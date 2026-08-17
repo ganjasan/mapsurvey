@@ -463,6 +463,21 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 # ones (gemini-2.5-flash did exactly that). The provider surfaces the API's own
 # explanation so this is diagnosable without reading Google's changelog.
 GEMINI_MODEL = os.environ.get('GEMINI_MODEL') or 'gemini-3.6-flash'
+# How hard the model is asked to think before answering: `minimal`, `low`,
+# `medium` or `high`. Defaults to `medium` because that is already what Gemini 3
+# models do when the field is absent -- introducing the setting must not change
+# generation quality while we are measuring what the time is spent on. Turning
+# it down is the experiment this setting exists to enable, made against data
+# rather than guessed here.
+#
+# Empty string sends no thinkingConfig at all, which is the escape hatch if a
+# future model rejects the field: a dashboard edit, not a deploy. Sent only by
+# the Gemini provider; Anthropic has its own reasoning controls and ignores it.
+#
+# Deliberately `get(..., default)` and NOT the `or` pattern used above: here a
+# blank value is a meaningful instruction ("send no thinkingConfig"), so `or`
+# would swallow the very escape hatch this setting provides.
+AI_THINKING_LEVEL = os.environ.get('AI_THINKING_LEVEL', 'medium')
 
 LOGGING = {
     # The `abuse` logger keeps its dedicated routing (survey/abuse.py). The root

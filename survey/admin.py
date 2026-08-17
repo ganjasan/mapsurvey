@@ -343,8 +343,12 @@ admin.site.register(PublicResultsPage, PublicResultsPageAdmin)
 class AIGenerationEventAdmin(admin.ModelAdmin):
     """Read-only viewer for LLM generation attempts (cost, quality, failures)."""
 
+    # `total_latency_ms` and `attempts` sit next to `latency_ms` on purpose:
+    # read alone, a large latency does not say whether the model was slow or
+    # the draft was retried, and that is the first question a spike raises.
     list_display = ('created_at', 'kind', 'outcome', 'user', 'organization',
-                    'provider', 'model', 'latency_ms', 'input_tokens', 'output_tokens')
+                    'provider', 'model', 'attempts', 'latency_ms', 'total_latency_ms',
+                    'input_tokens', 'output_tokens', 'thinking_tokens')
     list_filter = ('kind', 'outcome', 'provider')
     search_fields = ('user__username', 'organization__name', 'error_detail')
     date_hierarchy = 'created_at'

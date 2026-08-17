@@ -19,7 +19,7 @@ Failure taxonomy mirrors `survey/acquisition.py`:
 import json
 import time
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 from django.conf import settings
 
@@ -52,6 +52,12 @@ class LLMUsage:
     input_tokens: int
     output_tokens: int
     latency_ms: int
+    # Reasoning tokens the model spent before writing its answer. `None` means
+    # the provider did not report them -- deliberately not 0, because "we could
+    # not see it" and "it reasoned for nothing" are different facts, and
+    # averaging the first into the second is how a latency question stops being
+    # answerable. Anthropic reports no such number here and leaves it None.
+    thinking_tokens: Optional[int] = None
 
 
 class AnthropicProvider:
@@ -153,14 +159,24 @@ class GeminiProvider:
         # type: (...) -> Tuple[Dict, LLMUsage]
         import requests
 
+        generation_config = {
+            "responseMimeType": "application/json",
+            "responseSchema": _to_gemini_schema(schema),
+            "maxOutputTokens": max_tokens,
+        }
+        # Reasoning effort is ours to choose, not the provider's to assume: left
+        # unset, Gemini 3 models reason at `medium`, which is unbounded time we
+        # neither asked for nor measured. An empty setting omits the key
+        # entirely so a model that rejects the field is an env-var edit rather
+        # than a hotfix -- the same escape GEMINI_MODEL exists for.
+        if settings.AI_THINKING_LEVEL:
+            generation_config["thinkingConfig"] = {
+                "thinkingLevel": settings.AI_THINKING_LEVEL,
+            }
         payload = {
             "system_instruction": {"parts": [{"text": system}]},
             "contents": [{"role": "user", "parts": [{"text": user}]}],
-            "generationConfig": {
-                "responseMimeType": "application/json",
-                "responseSchema": _to_gemini_schema(schema),
-                "maxOutputTokens": max_tokens,
-            },
+            "generationConfig": generation_config,
         }
         started = time.monotonic()
         try:
@@ -198,6 +214,7 @@ class GeminiProvider:
             input_tokens=meta.get('promptTokenCount') or 0,
             output_tokens=meta.get('candidatesTokenCount') or 0,
             latency_ms=latency_ms,
+            thinking_tokens=_thinking_tokens(meta),
         )
 
         candidates = body.get('candidates') or []
@@ -233,6 +250,32 @@ def _error_message(response):
         return (response.json().get('error') or {}).get('message') or response.text[:300]
     except ValueError:
         return response.text[:300]
+
+
+def _thinking_tokens(meta):
+    # type: (Dict) -> Optional[int]
+    """Reasoning tokens from Gemini's usage metadata, or None if unknowable.
+
+    Two sources, in order, because the field name is not something to bet the
+    measurement on: Google renames and adds keys here faster than we deploy
+    (`GEMINI_MODEL` is an env var for the same reason), and a hardcoded key that
+    quietly stops matching would record nothing while looking like it worked.
+
+    The fallback is arithmetic on fields the documented response shape does
+    carry: whatever the total accounts for beyond prompt and candidates is
+    reasoning. Guarded to a positive difference so a provider that excludes
+    reasoning from the total yields None rather than a fabricated 0 or a
+    negative.
+    """
+    reported = meta.get('thoughtsTokenCount')
+    if reported is not None:
+        return reported
+    total = meta.get('totalTokenCount')
+    if total is None:
+        return None
+    accounted = (meta.get('promptTokenCount') or 0) + (meta.get('candidatesTokenCount') or 0)
+    remainder = total - accounted
+    return remainder if remainder > 0 else None
 
 
 # Gemini accepts a subset of JSON Schema: `additionalProperties` is rejected,
