@@ -1,4 +1,5 @@
 from django.urls import path, re_path
+from django.views.generic import RedirectView
 
 from . import views
 from . import editor_views
@@ -103,7 +104,12 @@ urlpatterns = [
 
     path('trust/', views.trust_page, name='trust_page'),
     path('surveys/track/event/', analytics_views.analytics_track_event, name='track_event'),
-    path('surveys/', views.survey_list, name='survey_list'),
+    # The listing that used to live here rendered every SurveyHeader in the
+    # database -- every organization's surveys, drafts and private ones included --
+    # to anyone, unauthenticated. The landing page at `/` lists the public set
+    # correctly, so this redirects there rather than 404ing: the URL was in
+    # sitemap.xml and allowed in robots.txt, so it may be indexed.
+    path('surveys/', RedirectView.as_view(url='/', permanent=True), name='survey_list'),
     path('surveys/<str:survey_slug>/', views.survey_header, name='survey'),
     path('surveys/<str:survey_slug>/language/', views.survey_language_select, name='survey_language_select'),
     path('surveys/<str:survey_slug>/password/', views.survey_password_gate, name='survey_password_gate'),
