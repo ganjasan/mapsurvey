@@ -24,13 +24,25 @@
     <div class="alert alert-danger">
         {% trans "Invalid username/email or password. Please try again." %}
     </div>
+    <p class="auth-hint">
+        {% url 'django_registration_resend_activation' as resend_url %}
+        {% blocktrans %}Haven't activated your account yet? <a href="{{ resend_url }}">Resend the activation email</a>.{% endblocktrans %}
+    </p>
     {% endif %}
 
+    {% comment %}
+    The username input carries an explicit value so a wrong password does not
+    also wipe the username — retyping both after every typo is what the sign-in
+    page used to demand. The password is deliberately not repopulated.
+    The message above stays generic on purpose: naming the real reason would
+    reveal whether an account exists for the submitted address.
+    {% endcomment %}
     <form method="post" action="{% url 'login' %}">
         {% csrf_token %}
         <div class="form-group">
             <label for="id_username">{% trans "Username or Email" %}</label>
-            <input type="text" name="username" id="id_username" class="form-control" autofocus required>
+            <input type="text" name="username" id="id_username" class="form-control"
+                   value="{{ form.username.value|default:'' }}" autofocus required>
         </div>
         <div class="form-group">
             <label for="id_password">{{ form.password.label }}</label>

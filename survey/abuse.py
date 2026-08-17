@@ -26,7 +26,10 @@ from urllib.error import URLError
 
 from django import forms
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
 from django_registration.forms import RegistrationForm
+from django_ratelimit.core import get_usage, is_ratelimited
 
 
 TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
@@ -72,6 +75,89 @@ def ratelimit_email_key(group, request):
     """
     email = (request.POST.get("email") or "").strip().lower()
     return email or client_ip(request)
+
+
+def registration_limits(kind):
+    """Return the (group, rate, retry_after, detail) tuples for one counter set.
+
+    `kind` is "valid" or "invalid". The two sets use different django-ratelimit
+    group names, so they are independent buckets in Redis sharing one key
+    function (the client IP).
+    """
+    if kind == "invalid":
+        return (
+            ("registration_invalid_hour",
+             f"{settings.REGISTRATION_INVALID_LIMIT_HOUR}/h", 3600, "invalid_hour"),
+            ("registration_invalid_day",
+             f"{settings.REGISTRATION_INVALID_LIMIT_DAY}/d", 86400, "invalid_day"),
+        )
+    return (
+        ("registration_hour",
+         f"{settings.REGISTRATION_RATE_LIMIT_HOUR}/h", 3600, "hour"),
+        ("registration_day",
+         f"{settings.REGISTRATION_RATE_LIMIT_DAY}/d", 86400, "day"),
+    )
+
+
+def check_registration_limit(request, kind):
+    """Return (retry_after, detail) if `kind`'s limit is already exceeded.
+
+    Read-only: never advances a counter. Called before form processing so an
+    already-limited IP is refused without the cost of validating the form or
+    the network round-trip to Cloudflare.
+
+    Uses get_usage() rather than is_ratelimited() because the two ask different
+    questions. is_ratelimited() reports `count > limit`, which is correct when
+    the same call also increments — the request being counted is the one that
+    tips it over. Here the increment happens later, so the question is whether
+    the budget is *already* spent: `count >= limit`. Using is_ratelimited() here
+    would let through exactly one attempt more than configured.
+
+    Fail-open: any cache-backend exception (Redis outage) is swallowed and
+    treated as "not limited", so a Redis outage cannot stop legitimate
+    signups. Honeypot and Turnstile still apply while the limiter is blind.
+    """
+    for group, rate, retry_after, detail in registration_limits(kind):
+        try:
+            usage = get_usage(
+                request=request,
+                group=group,
+                fn=None,
+                key="survey.abuse.ratelimit_key",
+                rate=rate,
+                method="POST",
+                increment=False,
+            )
+            limited = usage is not None and usage["count"] >= usage["limit"]
+        except Exception:
+            limited = False
+        if limited:
+            return retry_after, detail
+    return None
+
+
+def increment_registration_limit(request, kind):
+    """Advance `kind`'s counters by one. Called once validity is known.
+
+    Split from check_registration_limit() deliberately: checking early is
+    correct (it is cheap and short-circuits), but counting early is what
+    turned three password typos into an hour-long lockout. Validity is the
+    signal that separates a confused human from a bot, and it is not
+    available until the form has been validated.
+    """
+    for group, rate, _retry_after, _detail in registration_limits(kind):
+        try:
+            is_ratelimited(
+                request=request,
+                group=group,
+                fn=None,
+                key="survey.abuse.ratelimit_key",
+                rate=rate,
+                method="POST",
+                increment=True,
+            )
+        except Exception:
+            pass
 
 
 def verify_turnstile(token, remote_ip=""):
@@ -164,6 +250,21 @@ class RegistrationAbuseForm(RegistrationForm):
             }),
             label="",
         )
+        # Django's stock username help text is "Required. 150 characters or
+        # fewer. Letters, digits and @/./+/-/_ only." — it leads with a ceiling
+        # no human input approaches and buries the part that can actually
+        # reject a submission. Help text should name the wall someone can walk
+        # into, not the one they cannot reach.
+        for name in ("username", get_user_model().USERNAME_FIELD):
+            if name in self.fields:
+                self.fields[name].help_text = _(
+                    "Letters, digits and @ . + - _ only. No spaces."
+                )
+        # The live checklist rendered under the password field carries the
+        # rules now; the stock paragraph duplicated them as unstyled prose.
+        for name in ("password1", "password2"):
+            if name in self.fields:
+                self.fields[name].help_text = ""
 
 
 class ResendActivationForm(forms.Form):

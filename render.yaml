@@ -134,10 +134,22 @@ services:
         previewEnvRenderServiceName: mapsurvey
       - key: CLOUDFLARE_TRUSTED
         value: "True"
+      # Attempts that pass form validation.
       - key: REGISTRATION_RATE_LIMIT_HOUR
         value: "3"
       - key: REGISTRATION_RATE_LIMIT_DAY
         value: "10"
+      # Attempts rejected by form validation — a separate, far looser budget so
+      # someone fighting the password field is never locked out. Nobody
+      # legitimate should reach these; watch AbuseEvent(detail='invalid_hour').
+      - key: REGISTRATION_INVALID_LIMIT_HOUR
+        value: "15"
+      - key: REGISTRATION_INVALID_LIMIT_DAY
+        value: "50"
+      # Kill switch for the split above. Set to "False" from the dashboard to
+      # restore the previous single-counter behaviour without a rebuild.
+      - key: REGISTRATION_SPLIT_RATE_LIMIT
+        value: "True"
       - key: NEWSLETTER_SITE_URL
         value: "https://mapsurvey.org"
       # Gunicorn concurrency — tunable from the dashboard without an image rebuild.
