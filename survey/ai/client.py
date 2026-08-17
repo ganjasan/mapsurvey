@@ -17,11 +17,29 @@ Failure taxonomy mirrors `survey/acquisition.py`:
                    hint) is worth attempting where a network error is not.
 """
 import json
+import logging
 import time
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 from django.conf import settings
+
+from .progress import DraftProgress
+
+logger = logging.getLogger('survey.ai')
+
+
+def _report(on_progress, tracker):
+    """Hand progress to the caller, never letting it break what it describes.
+
+    A draft lost because a progress write hit a database hiccup would be a
+    strictly worse product than a draft with no progress bar, so the callback's
+    failures are logged and swallowed rather than propagated.
+    """
+    try:
+        on_progress(tracker.sections, tracker.questions)
+    except Exception:  # noqa: BLE001 - see docstring
+        logger.warning('AI progress callback failed; generation continues', exc_info=True)
 
 
 class NotConfigured(Exception):
@@ -52,6 +70,12 @@ class LLMUsage:
     input_tokens: int
     output_tokens: int
     latency_ms: int
+    # Reasoning tokens the model spent before writing its answer. `None` means
+    # the provider did not report them -- deliberately not 0, because "we could
+    # not see it" and "it reasoned for nothing" are different facts, and
+    # averaging the first into the second is how a latency question stops being
+    # answerable. Anthropic reports no such number here and leaves it None.
+    thinking_tokens: Optional[int] = None
 
 
 class AnthropicProvider:
@@ -82,7 +106,7 @@ class AnthropicProvider:
         )
         self._model = settings.AI_SURVEY_DRAFT_MODEL
 
-    def complete_structured(self, *, system, user, schema, max_tokens=64000):
+    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None):
         # type: (...) -> Tuple[Dict, LLMUsage]
         started = time.monotonic()
         try:
@@ -93,6 +117,14 @@ class AnthropicProvider:
                 messages=[{"role": "user", "content": user}],
                 output_config={"format": {"type": "json_schema", "schema": schema}},
             ) as stream:
+                if on_progress is not None:
+                    # The increments were always there — this call has streamed
+                    # since it was written, because the SDK refuses large
+                    # max_tokens otherwise — and were simply thrown away.
+                    tracker = DraftProgress()
+                    for text in stream.text_stream:
+                        if tracker.feed(text):
+                            _report(on_progress, tracker)
                 message = stream.get_final_message()
         except self._anthropic.APIConnectionError as exc:
             raise ProviderError('connection error: %s' % exc) from exc
@@ -138,6 +170,13 @@ class GeminiProvider:
 
     name = 'gemini'
     endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent'
+    # `?alt=sse` matters: without it the streaming endpoint answers with one
+    # long JSON array, which cannot be consumed incrementally and would defeat
+    # the entire point of asking for a stream.
+    stream_endpoint = (
+        'https://generativelanguage.googleapis.com/v1beta/models/'
+        '%s:streamGenerateContent?alt=sse'
+    )
 
     @staticmethod
     def configured():
@@ -149,28 +188,75 @@ class GeminiProvider:
         self._api_key = settings.GEMINI_API_KEY
         self._model = settings.GEMINI_MODEL
 
-    def complete_structured(self, *, system, user, schema, max_tokens=64000):
+    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None):
         # type: (...) -> Tuple[Dict, LLMUsage]
-        import requests
+        payload = self._payload(system, user, schema, max_tokens)
+        started = time.monotonic()
+        if on_progress is None:
+            text, meta, finish_reason, block_reason = self._collect(payload)
+        else:
+            text, meta, finish_reason, block_reason = self._collect_streamed(payload, on_progress)
+        # Before the outcome checks, exactly as in the non-streaming original:
+        # a truncated call carries its usage, and that usage needs a duration.
+        latency_ms = int((time.monotonic() - started) * 1000)
 
-        payload = {
+        usage = LLMUsage(
+            provider=self.name,
+            model=self._model,
+            input_tokens=meta.get('promptTokenCount') or 0,
+            output_tokens=meta.get('candidatesTokenCount') or 0,
+            latency_ms=latency_ms,
+            thinking_tokens=_thinking_tokens(meta),
+        )
+
+        if block_reason is not None:
+            # Prompt-level block: the request never produced a candidate.
+            raise ProviderError('request blocked by the provider (%s)' % block_reason)
+        if finish_reason == 'MAX_TOKENS':
+            raise TruncatedOutput(
+                'output truncated at %d tokens' % usage.output_tokens, usage=usage,
+            )
+        if finish_reason not in (None, 'STOP'):
+            raise ProviderError('generation stopped: %s' % finish_reason)
+
+        try:
+            return json.loads(text), usage
+        except ValueError as exc:
+            raise ProviderError('unparseable model output: %s' % exc) from exc
+
+    def _payload(self, system, user, schema, max_tokens):
+        generation_config = {
+            "responseMimeType": "application/json",
+            "responseSchema": _to_gemini_schema(schema),
+            "maxOutputTokens": max_tokens,
+        }
+        # Reasoning effort is ours to choose, not the provider's to assume: left
+        # unset, Gemini 3 models reason at `medium`, which is unbounded time we
+        # neither asked for nor measured. An empty setting omits the key
+        # entirely so a model that rejects the field is an env-var edit rather
+        # than a hotfix -- the same escape GEMINI_MODEL exists for.
+        if settings.AI_THINKING_LEVEL:
+            generation_config["thinkingConfig"] = {
+                "thinkingLevel": settings.AI_THINKING_LEVEL,
+            }
+        return {
             "system_instruction": {"parts": [{"text": system}]},
             "contents": [{"role": "user", "parts": [{"text": user}]}],
-            "generationConfig": {
-                "responseMimeType": "application/json",
-                "responseSchema": _to_gemini_schema(schema),
-                "maxOutputTokens": max_tokens,
-            },
+            "generationConfig": generation_config,
         }
-        started = time.monotonic()
+
+    def _post(self, payload, endpoint, stream=False):
+        import requests
+
         try:
             response = requests.post(
-                self.endpoint % self._model,
+                endpoint % self._model,
                 json=payload,
                 # Header rather than ?key=: keeps the credential out of URLs,
                 # proxy logs and tracebacks.
                 headers={"x-goog-api-key": self._api_key},
                 timeout=settings.AI_REQUEST_TIMEOUT_SECONDS,
+                stream=stream,
             )
         except requests.RequestException as exc:
             raise ProviderError('connection error: %s' % exc) from exc
@@ -188,39 +274,68 @@ class GeminiProvider:
             raise ProviderError(
                 'API error %s: %s' % (response.status_code, _error_message(response))
             )
+        return response
 
-        latency_ms = int((time.monotonic() - started) * 1000)
-        body = response.json()
+    def _collect(self, payload):
+        """One blocking call → (text, usage metadata, finish reason, block reason)."""
+        body = self._post(payload, self.endpoint).json()
         meta = body.get('usageMetadata') or {}
-        usage = LLMUsage(
-            provider=self.name,
-            model=self._model,
-            input_tokens=meta.get('promptTokenCount') or 0,
-            output_tokens=meta.get('candidatesTokenCount') or 0,
-            latency_ms=latency_ms,
-        )
-
         candidates = body.get('candidates') or []
         if not candidates:
-            # Prompt-level block: the request never produced a candidate.
             reason = (body.get('promptFeedback') or {}).get('blockReason', 'unknown')
-            raise ProviderError('request blocked by the provider (%s)' % reason)
-
+            return '', meta, None, reason
         candidate = candidates[0]
-        finish_reason = candidate.get('finishReason')
-        if finish_reason == 'MAX_TOKENS':
-            raise TruncatedOutput(
-                'output truncated at %d tokens' % usage.output_tokens, usage=usage,
-            )
-        if finish_reason not in (None, 'STOP'):
-            raise ProviderError('generation stopped: %s' % finish_reason)
-
         parts = (candidate.get('content') or {}).get('parts') or []
         text = ''.join(part.get('text', '') for part in parts)
+        return text, meta, candidate.get('finishReason'), None
+
+    def _collect_streamed(self, payload, on_progress):
+        """Same tuple, assembled from an SSE stream, reporting progress as it goes.
+
+        Status is checked before the body is consumed (in `_post`), so an
+        outright rejection still fails the same way it does unstreamed. A
+        failure *after* headers — the case that only exists here — is normalized
+        to ProviderError like any other, and lands on the same `provider_error`
+        outcome. `usageMetadata` rides the final chunk, so a stream that dies
+        mid-way leaves none, exactly as a connection error does today.
+        """
+        import requests
+
+        response = self._post(payload, self.stream_endpoint, stream=True)
+        tracker = DraftProgress()
+        chunks = []
+        meta = {}
+        finish_reason = None
+        block_reason = None
         try:
-            return json.loads(text), usage
-        except ValueError as exc:
-            raise ProviderError('unparseable model output: %s' % exc) from exc
+            for line in response.iter_lines(decode_unicode=True):
+                event = _sse_payload(line)
+                if event is None:
+                    continue
+                if event.get('usageMetadata'):
+                    # Later chunks supersede earlier ones: the counts are
+                    # cumulative, and the last one is the whole call.
+                    meta = event['usageMetadata']
+                candidates = event.get('candidates') or []
+                if not candidates:
+                    reason = (event.get('promptFeedback') or {}).get('blockReason')
+                    if reason:
+                        block_reason = reason
+                    continue
+                candidate = candidates[0]
+                if candidate.get('finishReason'):
+                    finish_reason = candidate['finishReason']
+                parts = (candidate.get('content') or {}).get('parts') or []
+                text = ''.join(part.get('text', '') for part in parts)
+                if not text:
+                    continue
+                chunks.append(text)
+                if tracker.feed(text):
+                    _report(on_progress, tracker)
+        except requests.RequestException as exc:
+            raise ProviderError('connection lost mid-stream: %s' % exc) from exc
+
+        return ''.join(chunks), meta, finish_reason, block_reason
 
 
 def _error_message(response):
@@ -233,6 +348,52 @@ def _error_message(response):
         return (response.json().get('error') or {}).get('message') or response.text[:300]
     except ValueError:
         return response.text[:300]
+
+
+def _sse_payload(line):
+    # type: (str) -> Optional[Dict]
+    """One SSE line → its decoded JSON event, or None if it carries no event.
+
+    Keep-alives, blank separators and the terminal sentinel are all normal
+    traffic rather than errors. An undecodable data line is skipped too: half a
+    progress count is not worth failing a generation that is still arriving.
+    """
+    if not line or not line.startswith('data:'):
+        return None
+    raw = line[len('data:'):].strip()
+    if not raw or raw == '[DONE]':
+        return None
+    try:
+        return json.loads(raw)
+    except ValueError:
+        logger.warning('undecodable SSE chunk from the provider; skipped')
+        return None
+
+
+def _thinking_tokens(meta):
+    # type: (Dict) -> Optional[int]
+    """Reasoning tokens from Gemini's usage metadata, or None if unknowable.
+
+    Two sources, in order, because the field name is not something to bet the
+    measurement on: Google renames and adds keys here faster than we deploy
+    (`GEMINI_MODEL` is an env var for the same reason), and a hardcoded key that
+    quietly stops matching would record nothing while looking like it worked.
+
+    The fallback is arithmetic on fields the documented response shape does
+    carry: whatever the total accounts for beyond prompt and candidates is
+    reasoning. Guarded to a positive difference so a provider that excludes
+    reasoning from the total yields None rather than a fabricated 0 or a
+    negative.
+    """
+    reported = meta.get('thoughtsTokenCount')
+    if reported is not None:
+        return reported
+    total = meta.get('totalTokenCount')
+    if total is None:
+        return None
+    accounted = (meta.get('promptTokenCount') or 0) + (meta.get('candidatesTokenCount') or 0)
+    remainder = total - accounted
+    return remainder if remainder > 0 else None
 
 
 # Gemini accepts a subset of JSON Schema: `additionalProperties` is rejected,

@@ -45,7 +45,93 @@ class SurveyBrief:
         }
 
 
-def _finish(event, outcome, error_detail='', survey=None, usage=None, blob=None):
+class AttemptSet:
+    """Running account of the provider calls one generation makes.
+
+    Exists because `usage` used to be reassigned on every iteration of the retry
+    loop: a two-attempt generation then reported only its second call, while the
+    creator had waited for both, and nothing in the row said a retry had
+    happened at all. With MAX_ATTEMPTS=2 and a 120s client timeout that is up to
+    four minutes of waiting that the log would render as one ordinary call.
+
+    Counts calls *started*, not calls that returned: a call that raised before
+    producing usage still cost the creator their wait. Its duration is simply
+    unknown, so it contributes to `count` and not to `total_latency_ms` —
+    understating the time is honest, inventing it is not.
+    """
+
+    def __init__(self):
+        self.count = 0
+        self.total_latency_ms = 0
+        self.input_tokens = 0
+        self.output_tokens = 0
+        self.thinking_tokens = None
+        self.terminal = None
+
+    def started(self):
+        self.count += 1
+
+    def record(self, usage):
+        """Fold in a call that came back with usage — completed or truncated."""
+        if usage is None:
+            return
+        self.terminal = usage
+        self.total_latency_ms += usage.latency_ms or 0
+        self.input_tokens += usage.input_tokens or 0
+        self.output_tokens += usage.output_tokens or 0
+        if usage.thinking_tokens is not None:
+            # Summed across the set like the other token counts, but only over
+            # the calls that reported: staying None until something is actually
+            # measured keeps "not reported" distinguishable from "reasoned for
+            # nothing", which is the whole point of the field.
+            self.thinking_tokens = (self.thinking_tokens or 0) + usage.thinking_tokens
+
+
+def _progress_recorder(event):
+    """A callback that publishes draft counts to the row the poller reads.
+
+    `queryset.update()` rather than saving the instance, for the reason already
+    documented at the status endpoint: the worker and the poller write this row
+    concurrently, and a load-modify-save here could clobber a terminal outcome
+    with a stale `pending`. The `outcome='pending'` filter is the second half of
+    that guarantee — once the generation has finished, a late progress callback
+    matches nothing and writes nothing.
+
+    Fresh per attempt, and only writes when a count actually advances: a section
+    closing happens a handful of times per generation, not per chunk.
+
+    Clearing the stored counts up front is what makes a retry legible. The
+    second attempt writes a whole new draft, so leaving the first one's numbers
+    in place would make the counter jump backwards when the new draft's first
+    section closes. Back to null, and the overlay hides the counter until the
+    replacement draft has actually produced something.
+    """
+    # Both the row and the in-memory instance, always together: `_finish()`
+    # ends with a full `event.save()`, so an instance still carrying the stale
+    # values it was loaded with would write them back over everything recorded
+    # here. Keeping the two in step is what makes the counts survive the finish.
+    event.sections_drafted = None
+    event.questions_drafted = None
+    AIGenerationEvent.objects.filter(pk=event.pk, outcome='pending').update(
+        sections_drafted=None, questions_drafted=None,
+    )
+    seen = {'sections': -1, 'questions': -1}
+
+    def record(sections, questions):
+        if sections <= seen['sections'] and questions <= seen['questions']:
+            return
+        seen['sections'] = sections
+        seen['questions'] = questions
+        event.sections_drafted = sections
+        event.questions_drafted = questions
+        AIGenerationEvent.objects.filter(pk=event.pk, outcome='pending').update(
+            sections_drafted=sections, questions_drafted=questions,
+        )
+
+    return record
+
+
+def _finish(event, outcome, error_detail='', survey=None, attempts=None, blob=None):
     event.outcome = outcome
     event.error_detail = error_detail[:2000]
     if survey is not None:
@@ -54,12 +140,21 @@ def _finish(event, outcome, error_detail='', survey=None, usage=None, blob=None)
         # The draft as the model produced it, before any human edit — the
         # baseline for the generated-vs-published diff (quality telemetry).
         event.generated_blob = blob
+    if attempts is not None and attempts.count:
+        event.attempts = attempts.count
+    usage = attempts.terminal if attempts is not None else None
     if usage is not None:
+        # provider/model from the terminal call (they cannot differ within a
+        # set); token counts and elapsed summed, because that is what the
+        # generation cost and how long the creator waited. `latency_ms` stays
+        # the terminal call alone — see the model's field comment.
         event.provider = usage.provider
         event.model = usage.model
-        event.input_tokens = usage.input_tokens
-        event.output_tokens = usage.output_tokens
+        event.input_tokens = attempts.input_tokens
+        event.output_tokens = attempts.output_tokens
+        event.thinking_tokens = attempts.thinking_tokens
         event.latency_ms = usage.latency_ms
+        event.total_latency_ms = attempts.total_latency_ms
     event.save()
     _emit_terminal_events(event, outcome, survey)
     return event
@@ -82,7 +177,10 @@ def _emit_terminal_events(event, outcome, survey):
         properties['provider'] = event.provider
     if event.model:
         properties['model'] = event.model
-    for field in ('latency_ms', 'input_tokens', 'output_tokens'):
+    # Each omitted when absent rather than sent as 0: a breakdown that averages
+    # "not reported" in as a zero is worse than one with fewer rows in it.
+    for field in ('latency_ms', 'total_latency_ms', 'attempts',
+                  'input_tokens', 'output_tokens', 'thinking_tokens'):
         value = getattr(event, field)
         if value is not None:
             properties[field] = value
@@ -129,29 +227,38 @@ def generate_survey_draft(event, brief, languages, header_overrides):
 
     schema = survey_draft_schema(languages)
     user_prompt = prompts.build_user_prompt(brief, languages)
-    usage = None
+    attempts = AttemptSet()
     errors = []
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
+        attempts.started()
+        # Reset per attempt: a retry starts a new draft, and counts that carried
+        # over would show the creator a survey growing past what any single
+        # answer contains.
+        record_progress = _progress_recorder(event)
         try:
             blob, usage = provider.complete_structured(
                 system=prompts.SYSTEM_PROMPT, user=user_prompt, schema=schema,
+                on_progress=record_progress,
             )
         except client.TruncatedOutput as exc:
             # Worth one retry with a brevity hint; a second truncation means
             # the brief is asking for more survey than the ceiling allows.
-            # Prefer the failed call's own usage: the assignment above never
-            # ran, so the outer `usage` is either None or the previous
-            # attempt's — both would misreport what this generation cost.
-            usage = exc.usage or usage
+            # The failed call's own usage still counts: those tokens were spent
+            # and that time was waited, so it folds into the set like any other.
+            attempts.record(exc.usage)
             if attempt >= MAX_ATTEMPTS:
-                return _finish(event, 'provider_error', str(exc), usage=usage)
+                return _finish(event, 'provider_error', str(exc), attempts=attempts)
             errors = ['the previous answer was cut off — produce a shorter survey']
             user_prompt = prompts.build_retry_prompt(brief, languages, errors)
             continue
         except client.ProviderError as exc:
-            return _finish(event, 'provider_error', str(exc), usage=usage)
+            # No usage to fold in: the call raised before reporting any. The
+            # attempt is still counted by `started()` above, so the row shows a
+            # call was made even though its cost is unknown.
+            return _finish(event, 'provider_error', str(exc), attempts=attempts)
 
+        attempts.record(usage)
         errors = validate_blob(blob, languages)
         if not errors:
             break
@@ -159,7 +266,7 @@ def generate_survey_draft(event, brief, languages, header_overrides):
         if attempt >= MAX_ATTEMPTS:
             # Keep the rejected blob too: reading real failures against real
             # briefs is how the prompt gets iterated.
-            return _finish(event, 'invalid_draft', '; '.join(errors), usage=usage, blob=blob)
+            return _finish(event, 'invalid_draft', '; '.join(errors), attempts=attempts, blob=blob)
         user_prompt = prompts.build_retry_prompt(brief, languages, errors)
 
     try:
@@ -175,11 +282,12 @@ def generate_survey_draft(event, brief, languages, header_overrides):
             )
     except Exception as exc:  # noqa: BLE001 - recorded, never surfaced raw
         logger.exception('AI draft materialization failed')
-        return _finish(event, 'error', '%s: %s' % (type(exc).__name__, exc), usage=usage, blob=blob)
+        return _finish(event, 'error', '%s: %s' % (type(exc).__name__, exc),
+                       attempts=attempts, blob=blob)
 
     if warnings:
         logger.info('AI draft imported with warnings: %s', '; '.join(warnings))
-    return _finish(event, 'success', survey=survey, usage=usage, blob=blob)
+    return _finish(event, 'success', survey=survey, attempts=attempts, blob=blob)
 
 
 def start_generation(user, organization, brief, languages):

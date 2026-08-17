@@ -1,0 +1,17 @@
+{% comment %}
+Swapped into the waiting card when the draft has actually grown.
+
+Out-of-band on purpose: the poller keeps hx-swap="none", so this element is the
+only thing that changes and the card's spinner, fade-in and quip rotator are
+untouched by a poll. `data-sections` is what the poller sends back next tick,
+which is how the endpoint can answer 204 when nothing has moved.
+
+A count of what the model has finished writing, never a percentage: nobody knows
+how many sections the draft will end up with, and a denominator we invented
+would be exactly the fabricated progress this card has always refused to show.
+{% endcomment %}
+<div id="gen-progress" class="gen-progress" hx-swap-oob="true"
+     data-sections="{{ sections }}">
+  {{ sections }} section{{ sections|pluralize }} drafted{% if questions %} ·
+  {{ questions }} question{{ questions|pluralize }}{% endif %}
+</div>
