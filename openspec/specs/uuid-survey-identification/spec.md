@@ -1,5 +1,8 @@
-## ADDED Requirements
+# uuid-survey-identification Specification
 
+## Purpose
+TBD - created by archiving change uuid-survey-identification. Update Purpose after archive.
+## Requirements
 ### Requirement: SurveyHeader UUID field
 The system SHALL have a `uuid` field on `SurveyHeader` of type `UUIDField` with `default=uuid.uuid4`, `unique=True`, `editable=False`. The UUID SHALL be auto-generated on creation and SHALL NOT change after creation.
 
@@ -69,7 +72,7 @@ Public survey routes (`/surveys/<survey_slug>/...`) SHALL accept either a UUID s
 - **THEN** the system SHALL return 404
 
 ### Requirement: Dashboard and template links use UUID
-All links to surveys in dashboard and editor templates SHALL use `survey.uuid` to build URLs. Public-facing templates (landing page, survey list) SHALL also use `survey.uuid` for unambiguous linking.
+All links to surveys in dashboard and editor templates SHALL use `survey.uuid` to build URLs. Public-facing templates (landing page) SHALL also use `survey.uuid` for unambiguous linking.
 
 #### Scenario: Dashboard edit link uses UUID
 - **WHEN** the editor dashboard renders a survey row
@@ -86,10 +89,6 @@ All links to surveys in dashboard and editor templates SHALL use `survey.uuid` t
 #### Scenario: Landing page survey links use UUID
 - **WHEN** the landing page renders survey cards
 - **THEN** each card link SHALL use `/surveys/<uuid>/` for unambiguous access
-
-#### Scenario: Survey list links use UUID
-- **WHEN** the survey list page renders
-- **THEN** each survey link SHALL use `/surveys/<uuid>/`
 
 ### Requirement: Management command supports UUID lookup
 The `export_survey` management command SHALL accept either a survey name or UUID string as the positional argument.
@@ -121,3 +120,4 @@ The UUID field SHALL be introduced via a safe three-step migration sequence to h
 - **WHEN** migration 0011 runs
 - **THEN** the `uuid` field SHALL become non-null with a unique constraint
 - **AND** the `unique=True` constraint SHALL be removed from the `name` field
+

@@ -49,6 +49,10 @@
 - [x] 4.1 `./run_tests.sh survey` green. Run `collectstatic` in this worktree first —
       `staticfiles/` is gitignored and its absence surfaces as unrelated template errors.
 - [x] 4.2 `openspec validate tenant-data-exposure` passes.
-- [ ] 4.3 Post-deploy, against production: `curl -sI https://mapsurvey.org/surveys/` is 301;
+- [x] 4.3 Post-deploy, against production: `curl -sI https://mapsurvey.org/surveys/` is 301;
       `/sitemap.xml` has no bare `/surveys/`; a signed-in account with no role on a survey
       gets 404 from its `/download`.
+
+**Verified on production 2026-08-17** (deploy `555ab44`, live 05:27 UTC):
+`/surveys/` → `301` with `Location: https://mapsurvey.org/`; `/sitemap.xml` carries no
+bare `/surveys/` entry and still lists `/surveys/<uuid>/` pages.
