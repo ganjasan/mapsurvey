@@ -62,16 +62,21 @@ def publicly_visible_surveys():
     )
 ```
 
-The sitemap then adds `.filter(status='published')`. The two consumers legitimately differ
-here and the difference is worth stating: the landing page *shows* closed and archived
-surveys, with an "archived" ordering and a closed notice, because a person browsing may
-reasonably want to see that a survey existed. A search engine should not hold a URL whose
-only content is "this survey is closed" — it is a dead end from a search result, and 41 of
-the current 140 entries are exactly that, 36 of them duplicates of a canonical survey via
-non-canonical version headers.
+Both consumers call it unchanged — no narrowing at either call site.
 
-Rejected: making the sitemap call `index`'s queryset verbatim and accepting the closed
-entries. It keeps one query but indexes 44 dead ends, trading one defect for a smaller one.
+The first draft of this design had the sitemap add `.filter(status='published')` on top, on
+the reasoning that the landing page legitimately *shows* closed and archived surveys while a
+search engine should not hold a URL whose only content is "this survey is closed". Writing the
+test for that difference disproved it: `landing.html` contains no loop over `surveys` and no
+include that does. `index` computes the queryset and nothing renders it. There is no second
+consumer to differ from.
+
+So the filter carries `status='published'` itself, and both call sites take it whole. The
+justification for excluding `closed` and `archived` still holds on its own terms — 41 of the
+140 entries were dead ends, 36 of them duplicates via non-canonical version headers — it just
+does not need a fork to express. A test pins that the landing page renders no survey list, so
+restoring one is a deliberate act that has to face this function rather than quietly growing a
+second filter, which is exactly how the original defect happened.
 
 Rejected: a `SurveyHeader.objects` custom manager method. The filter is a policy about
 anonymous visitors, not an intrinsic property of the model, and two call sites do not justify

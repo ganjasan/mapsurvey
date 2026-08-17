@@ -39,12 +39,13 @@ import logging
 from zipfile import ZipFile
 import pandas as pd
 
-from .access_control import check_survey_access
+from .access_control import check_survey_access, mark_indexing
 from .audit import audit
 from .trash import trash_survey, restore_survey, purge_survey, purge_expired_surveys
 from .versioning import resolve_version_scope
 import hmac
 from django.http import JsonResponse
+from django.views.defaults import page_not_found
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from .serialization import (
@@ -435,13 +436,57 @@ def resolve_survey(survey_slug):
         raise Http404
     raise Http404
 
+def survey_not_found(request, exception=None):
+	"""handler404: give respondent 404s a body, everything else Django's.
+
+	Under `/surveys/` a 404 is usually a person following a link an organizer
+	gave them -- a draft that was never published, or a survey since removed.
+	Django's default page tells them nothing. This one tells them what to do
+	without saying which case applies: a draft, a deleted survey and a UUID that
+	names nothing all land here and produce byte-identical responses, so the
+	page cannot be used to test whether a survey exists.
+
+	`noindex` is set here too rather than left to the middleware, because
+	`resolve_survey` raises before any survey is in hand and the flag would
+	otherwise distinguish the draft case from the unknown-UUID one by header.
+	"""
+	if not request.path.startswith('/surveys/'):
+		return page_not_found(request, exception)
+	response = render(request, 'survey_unavailable.html', status=404)
+	response['X-Robots-Tag'] = 'noindex'
+	return response
+
+
+def publicly_visible_surveys():
+	"""Surveys an anonymous visitor may be shown or sent to.
+
+	The landing page and the sitemap are the only two places that make this
+	decision, and when they made it separately they diverged: `sitemap_xml`
+	filtered on `visibility` alone and so advertised 61 drafts to search
+	engines as crawlable URLs, every one of them a hard 404. Both callers go
+	through here now; a third one must too.
+
+	`status='published'` rather than the landing page's older
+	`exclude(status='draft')`: `closed` and `archived` surveys answer a request
+	with "this survey is closed", which is a dead end from a search result and
+	was 41 of the 140 entries the sitemap used to carry. Nothing renders them
+	on the landing page either -- `landing.html` has no loop over `surveys` at
+	all -- so this narrows a set that reaches no template today.
+	"""
+	return SurveyHeader.objects.filter(
+		visibility__in=['demo', 'public'],
+		status='published',
+		is_canonical=True,
+		published_version__isnull=True,
+		deleted_at__isnull=True,
+	)
+
+
 @lang_override('en')
 def index(request):
 	capture_signup_source(request)  # first-touch acquisition source for creator signups
 	surveys = (
-		SurveyHeader.objects
-		.filter(visibility__in=['demo', 'public'], is_canonical=True, published_version__isnull=True, deleted_at__isnull=True)
-		.exclude(status='draft')
+		publicly_visible_surveys()
 		.select_related('organization')
 		.annotate(session_count=Count('surveysession'))
 		.order_by(
@@ -1510,6 +1555,10 @@ def purge_survey_view(request, survey_uuid):
 
 def survey_password_gate(request, survey_slug):
 	survey = resolve_survey(survey_slug)
+	# The only respondent view that does not go through check_survey_access --
+	# it *is* the denial. Flag it directly so the gate for an unpublished survey
+	# is not indexable either.
+	mark_indexing(request, survey)
 	error = None
 
 	if request.method == 'POST':
@@ -1778,9 +1827,9 @@ def robots_txt(request):
 
 def sitemap_xml(request):
 	base = f"{request.scheme}://{request.get_host()}"
-	surveys = SurveyHeader.objects.filter(
-		visibility__in=['public', 'demo'],
-	)
+	# Only surveys that actually open for an anonymous visitor. Before this,
+	# 108 of the 140 entries here were 404s, duplicates or dead ends.
+	surveys = publicly_visible_surveys()
 	urls = [f"  <url><loc>{base}/</loc></url>"]
 	urls.append(f"  <url><loc>{base}/services/</loc></url>")
 	# SEO landing pages with crawl hints — from the single-source registry.

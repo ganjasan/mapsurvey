@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% comment %}
+Served with HTTP status 404, deliberately: an explanation with a 200 would keep
+the URL indexable. Names neither the survey nor which condition applied -- a
+draft, a removed survey and an unknown UUID must be indistinguishable here, or
+this page re-establishes the survey enumeration that tenant-data-exposure closed.
+{% endcomment %}
+
+{% block title %}{% trans "Survey unavailable" %}{% endblock %}
+
+{% block content %}
+<div class="container text-center" style="max-width: 500px; margin-top: 100px;">
+    <i class="fas fa-map-signs fa-3x text-muted mb-4" style="display:block;"></i>
+    <h3>{% trans "This survey isn't available" %}</h3>
+    <p class="text-muted mt-3">{% trans "It may not be published yet, or it may have been closed or removed. If you have a link from an organizer, check with them." %}</p>
+    <a href="{% url 'index' %}" class="btn btn-outline-primary mt-4">{% trans "Back to Home" %}</a>
+</div>
+{% endblock %}

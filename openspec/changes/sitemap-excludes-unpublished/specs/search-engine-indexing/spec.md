@@ -6,8 +6,8 @@ that satisfy all of: `visibility` in (`public`, `demo`), `status='published'`,
 `is_canonical=True`, `published_version` unset, and `deleted_at` unset.
 
 The set of surveys the platform considers publicly visible SHALL be computed by a single
-function used by both the landing page and the sitemap. The sitemap SHALL narrow that set to
-`status='published'`; it SHALL NOT re-express the base filter.
+function used by both the landing page and the sitemap. Neither consumer SHALL re-express or
+narrow that filter.
 
 #### Scenario: A draft survey is not advertised
 - **GIVEN** a survey with `visibility='public'` and `status='draft'`
@@ -18,7 +18,6 @@ function used by both the landing page and the sitemap. The sitemap SHALL narrow
 - **GIVEN** a survey with `visibility='public'` and `status` in (`closed`, `archived`)
 - **WHEN** `/sitemap.xml` is fetched
 - **THEN** the response SHALL NOT contain that survey's UUID
-- **AND** the landing page at `/` SHALL still list it
 
 #### Scenario: A non-canonical version header is not advertised
 - **GIVEN** a survey with `visibility='public'` and `is_canonical=False`
