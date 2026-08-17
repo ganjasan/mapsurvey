@@ -385,8 +385,13 @@ def editor_generation_status(request, event_id):
         # HX-Redirect turns the polled fragment into a real navigation, so the
         # creator lands in the editor rather than seeing it swapped into a panel.
         response = HttpResponse(status=204)
-        response['HX-Redirect'] = reverse(
-            'editor_survey_detail', kwargs={'survey_uuid': event.created_survey.uuid},
+        # `?draft=` is what tells the editor this arrival deserves the one-shot
+        # feedback prompt. Only this redirect produces it, which is the
+        # server-side half of "asked once per draft".
+        response['HX-Redirect'] = '%s?draft=%d' % (
+            reverse('editor_survey_detail',
+                    kwargs={'survey_uuid': event.created_survey.uuid}),
+            event.pk,
         )
         return response
 
@@ -448,7 +453,21 @@ def editor_survey_detail(request, survey_uuid):
         is_owner and is_read_only and not survey.is_draft_copy and survey.has_never_collected()
     )
 
+    # The one-shot AI-draft feedback prompt, keyed by the generation redirect's
+    # ?draft=. An unvalidated id must not conjure UI: the event has to be the
+    # requesting user's own AND the one that produced THIS survey — one indexed
+    # lookup. Forged, foreign or mismatched ids fall through to None.
+    feedback_trace_id = None
+    draft_param = _int_param(request.GET.get('draft'))
+    if draft_param:
+        draft_event = AIGenerationEvent.objects.filter(
+            pk=draft_param, user=request.user, created_survey=survey,
+        ).only('id').first()
+        if draft_event is not None:
+            feedback_trace_id = pe.llm_trace_id(draft_event.pk)
+
     return render(request, 'editor/survey_detail.html', {
+        'ai_feedback_trace_id': feedback_trace_id,
         'survey': survey,
         'sections': sections,
         'current_section': current_section,

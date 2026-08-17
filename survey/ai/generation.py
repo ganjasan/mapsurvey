@@ -233,6 +233,11 @@ def _emit_terminal_events(event, outcome, survey):
         if value is not None:
             properties[field] = value
     pe.emit(pe.AI_DRAFT_FINISHED, event.user_id, properties)
+    # The same fact again, in PostHog's LLM-analytics schema: that is what puts
+    # cost/latency/error-rate on its AI dashboards. Skipped for not_configured —
+    # no provider was reached, so there is no LLM call to account.
+    if outcome != 'not_configured':
+        pe.emit_llm_generation(event)
 
     if survey is None:
         return
