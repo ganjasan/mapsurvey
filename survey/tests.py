@@ -23548,11 +23548,18 @@ class GeminiStreamingTest(TestCase):
     """Streaming changes how the blob arrives, not what happens to it."""
 
     def _sse(self, events):
-        """Encode dicts as the SSE lines the provider will read back."""
+        """Encode dicts as the SSE byte lines the provider will read back.
+
+        Bytes, not str, because that is what `requests.iter_lines()` actually
+        yields — and the distinction is not pedantry: a fake that spoke str is
+        exactly why the mojibake bug (UTF-8 stream decoded as the ISO-8859-1
+        default) shipped with green tests. `ensure_ascii=False` so Cyrillic
+        content crosses the wire as real UTF-8 bytes, the way Gemini sends it.
+        """
         lines = []
         for event in events:
-            lines.append('data: %s' % json.dumps(event))
-            lines.append('')
+            lines.append(('data: %s' % json.dumps(event, ensure_ascii=False)).encode('utf-8'))
+            lines.append(b'')
         return lines
 
     def _chunk(self, text, finish_reason=None, usage=None):
@@ -23677,6 +23684,39 @@ class GeminiStreamingTest(TestCase):
                 )
 
         self.assertEqual(raised.exception.usage.output_tokens, 64000)
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_cyrillic_content_survives_the_stream(self):
+        """
+        GIVEN a streamed draft whose text is Russian, arriving as UTF-8 bytes
+        WHEN the provider assembles it
+        THEN the parsed blob carries the exact Cyrillic text — the regression
+             that killed every Russian draft on 2026-08-17, when the stream was
+             decoded with requests' ISO-8859-1 fallback instead of the UTF-8
+             that SSE specifies
+        """
+        from survey.ai.client import GeminiProvider
+
+        text = ('{"sections": [{"title": {"ru": "Ваш опыт вечерних прогулок"}, '
+                '"subheading": {"ru": "Тёмное время — расскажите"}, '
+                '"questions": [{"name": "q1"}]}]}')
+        events = [
+            self._chunk(text[:60]),
+            self._chunk(text[60:]),
+            self._chunk('', finish_reason='STOP',
+                        usage={'promptTokenCount': 1, 'candidatesTokenCount': 2,
+                               'totalTokenCount': 3}),
+        ]
+        seen = []
+
+        with patch('requests.post', return_value=self._stream(events)):
+            blob, _ = GeminiProvider().complete_structured(
+                system='s', user='u', schema={'type': 'object'},
+                on_progress=lambda s, q: seen.append((s, q)),
+            )
+
+        self.assertEqual(blob['sections'][0]['title']['ru'], 'Ваш опыт вечерних прогулок')
+        self.assertEqual(seen, [(1, 1)])
 
     @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low',
                        AI_REQUEST_TIMEOUT_SECONDS=120)

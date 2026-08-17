@@ -356,14 +356,26 @@ class GeminiProvider:
         # 2026-08-17's stall ran until Celery's 300s soft limit shot the task.
         deadline = time.monotonic() + settings.AI_REQUEST_TIMEOUT_SECONDS
         try:
-            for line in response.iter_lines(decode_unicode=True):
+            # Bytes, decoded by US explicitly — never decode_unicode=True. Google
+            # sends `text/event-stream` with no charset, so requests falls back
+            # to ISO-8859-1 per RFC and decodes UTF-8 Cyrillic into mojibake
+            # whose bytes include raw control characters, which strict
+            # json.loads rejects. That took down every Russian draft on
+            # 2026-08-17 ("unparseable model output ... char 16") and
+            # intermittently broke English ones on a typographic dash. SSE is
+            # UTF-8 by specification, and newline bytes never occur inside a
+            # UTF-8 sequence, so byte-level line splitting is always safe.
+            for raw_line in response.iter_lines():
                 if time.monotonic() > deadline:
                     raise ProviderError(
                         'stream exceeded %ss total; %d characters received'
                         % (settings.AI_REQUEST_TIMEOUT_SECONDS, len(''.join(chunks))),
                         transient=True,
                     )
-                event = _sse_payload(line)
+                # 'replace' rather than strict: a genuinely corrupt byte should
+                # cost one replacement character inside one string value, not
+                # the whole generation via an uncaught UnicodeDecodeError.
+                event = _sse_payload(raw_line.decode('utf-8', 'replace'))
                 if event is None:
                     continue
                 if event.get('usageMetadata'):
