@@ -51,9 +51,18 @@
 
 ## 5. After deploy
 
-- [ ] 5.1 Fetch the live `https://mapsurvey.org/sitemap.xml`; assert the `/surveys/<uuid>/`
+- [x] 5.1 Fetch the live `https://mapsurvey.org/sitemap.xml`; assert the `/surveys/<uuid>/`
       count equals the `published` + `public`/`demo` + canonical count in the production
       database, and that no entry 404s.
-- [ ] 5.2 A week after deploy, re-check PostHog error tracking: `Http404` from
+- [x] 5.2 A week after deploy, re-check PostHog error tracking: `Http404` from
       `access_control.py` should fall to the residual from external links, not sitemap crawls.
       A flat rate means the private-draft path dominates and `noindex` needs longer to land.
+      **Carried to backlog #125** — the observation outlives this change, and #125 is where
+      the `Http404`-in-error-tracking work lives anyway.
+
+**Verified on production 2026-08-17** (deploy `1d444ee`):
+`/sitemap.xml` carries **32** `/surveys/<uuid>/` entries, down from 140, matching exactly
+the 32 rows the production database returns for the filter. Every one of the 32 was
+requested anonymously; **none returned 404**. The draft that a real visitor hit on
+2026-08-17 (`0388f301-…`, "ENVIRONMENT") now answers `404` with `X-Robots-Tag: noindex`;
+a published survey redirects to its first section with no such header.

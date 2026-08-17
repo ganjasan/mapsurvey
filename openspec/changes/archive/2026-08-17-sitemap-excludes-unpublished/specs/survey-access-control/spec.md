@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: A survey that cannot be opened returns an explanation, not a blank 404
 A `draft` survey denied by `check_survey_access` SHALL respond with HTTP status `404` and
