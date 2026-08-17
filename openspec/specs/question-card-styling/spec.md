@@ -1,5 +1,9 @@
-## ADDED Requirements
+# Question Card Styling Specification
 
+## Purpose
+How a question renders as a card in the respondent form: the wrapper, the visual styling, and the per-widget markup that replaces Django's `form.as_p` so radios, checkboxes and geo buttons can be styled.
+
+## Requirements
 ### Requirement: Question card wrapping
 Questions with input types `text`, `text_line`, `number`, `choice`, `multichoice`, and `range` SHALL be rendered inside a card wrapper element with class `question-card`.
 

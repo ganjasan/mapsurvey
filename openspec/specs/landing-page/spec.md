@@ -1,5 +1,9 @@
-## ADDED Requirements
+# Landing Page Specification
 
+## Purpose
+The public marketing page at the root URL — its own base template, section layout, hero and contact CTAs, navbar and footer — kept separate from the authenticated editor chrome.
+
+## Requirements
 ### Requirement: Public landing page at root URL
 The system SHALL serve a public landing page at `/` for all visitors (anonymous and authenticated).
 

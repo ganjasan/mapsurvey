@@ -1,5 +1,9 @@
-## ADDED Requirements
+# Survey Cards Specification
 
+## Purpose
+How surveys are presented as cards on the landing page — the `visibility` and archived fields that decide which appear, the card content and response count, and the ordering.
+
+## Requirements
 ### Requirement: Survey visibility field
 `SurveyHeader` SHALL have a `visibility` CharField with choices: `"private"` (default), `"demo"`, `"public"`.
 

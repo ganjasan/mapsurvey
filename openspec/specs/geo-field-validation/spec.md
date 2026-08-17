@@ -1,5 +1,9 @@
-## ADDED Requirements
+# Geo Field Validation Specification
 
+## Purpose
+How a required geo question is enforced in the browser before submission, and how the failure is shown, given that a map widget cannot rely on the native `required` attribute.
+
+## Requirements
 ### Requirement: Geo fields use data-required attribute
 
 The system SHALL use `data-required="true"` attribute instead of HTML5 `required` attribute on hidden geo-input fields to mark required geographic questions.
