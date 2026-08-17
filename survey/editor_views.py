@@ -300,6 +300,16 @@ def _start_survey_generation(request, form):
     })
 
 
+# How many questions a draft is expected to contain — the progress bar's
+# denominator. A display calibration, not a promise: the median of recorded
+# drafts (AIGenerationEvent.questions_drafted; both stand drafts and the
+# production drafts landed at 3 sections / 8-9 questions). Worth revisiting
+# against that column once a few dozen real generations exist. The bar caps at
+# 90% regardless, so an unusually long draft degrades to "parked near the end",
+# never to a lie.
+EXPECTED_QUESTIONS = 8
+
+
 def _int_param(raw):
     """A non-negative integer from a query string, or 0 for anything else.
 
@@ -351,6 +361,12 @@ def editor_generation_status(request, event_id):
             return render(request, 'editor/partials/generation_progress.html', {
                 'sections': sections,
                 'questions': questions,
+                # The bar's fill. Linear against the calibrated expectation and
+                # capped at 90: a draft that runs long parks near the end
+                # instead of pinning at full and then visibly stalling — the
+                # classic progress-bar lie this bar exists to avoid. The
+                # remaining 10% belongs to the success redirect.
+                'fill': min(90, round(questions * 90 / EXPECTED_QUESTIONS)),
             })
         return HttpResponse(status=204)
 

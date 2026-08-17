@@ -520,8 +520,16 @@ AI_THINKING_LEVEL = os.environ.get('AI_THINKING_LEVEL', 'medium')
 # a trickle of keep-alives resets the clock forever. This is the gap limit; the
 # total budget below is enforced separately in the client loop. 2026-08-17's
 # production stall sat quiet for 4+ minutes until Celery's soft limit killed the
-# task -- with this, the same stream dies in 30s as a retryable error instead.
-AI_STREAM_STALL_SECONDS = int(os.environ.get('AI_STREAM_STALL_SECONDS') or 30)
+# task -- with this, the same stream dies as a retryable error instead.
+#
+# 15, down from the initial 30, calibrated from a 10-run batch on the stand:
+# every healthy stream delivered its first chunk within 2-7 seconds, while 9 of
+# 19 provider calls stalled outright — so 15s of silence is almost certainly a
+# dead stream, and each stall burned is a stall the creator waits through. The
+# cut took the observed worst case from ~78s toward ~48s. Lower ONLY against
+# fresh first-chunk data: at medium thinking the pre-first-chunk silence is
+# legitimately long, and a limit under it would kill healthy streams.
+AI_STREAM_STALL_SECONDS = int(os.environ.get('AI_STREAM_STALL_SECONDS') or 15)
 # Streamed generation, OFF by default. On = the creator sees a progress counter
 # while the draft is written; off = one blocking call, exactly as before the
 # streaming change, with no progress and nothing else different.
