@@ -1,0 +1,69 @@
+{% comment %}
+One-shot feedback on a freshly generated draft.
+
+Rendered only when the view resolved a legitimate ?draft= (the creator's own
+generation, for this survey) AND PostHog is configured — no snippet means the
+vote would go nowhere, so no strip. The vote is captured client-side as
+PostHog's $ai_feedback with the generation's own trace id, which is what makes
+the verdict land on the exact $ai_generation it judges in LLM Analytics.
+
+The comment box is the creator's opinion about OUR feature, addressed to us —
+the one kind of creator-typed text that belongs in PostHog. The draft itself
+never rides along.
+
+localStorage is the client half of "asked once": the server half is that only
+the generation redirect carries ?draft=.
+{% endcomment %}
+{% if ai_feedback_trace_id and POSTHOG_PROJECT_KEY %}
+<div id="ai-feedback-strip" class="ai-feedback-strip" hidden>
+  <span class="ai-feedback-q">How is the AI draft?</span>
+  <button type="button" class="btn btn-sm btn-outline-secondary" data-rating="up"
+          title="Good starting point"><i class="fas fa-thumbs-up"></i></button>
+  <button type="button" class="btn btn-sm btn-outline-secondary" data-rating="down"
+          title="Not useful"><i class="fas fa-thumbs-down"></i></button>
+  <input type="text" id="ai-feedback-comment" class="form-control form-control-sm"
+         maxlength="500" placeholder="Anything to add? (optional)">
+  <button type="button" class="btn btn-sm btn-link ai-feedback-dismiss" title="Dismiss">×</button>
+</div>
+<style>
+  .ai-feedback-strip {
+    display: flex; align-items: center; gap: .5rem; flex-shrink: 0;
+    padding: .4rem .9rem; font-size: .85rem;
+    background: #f5f3ff; border-bottom: 1px solid var(--border-color);
+  }
+  .ai-feedback-q { color: #374151; font-weight: 500; }
+  .ai-feedback-strip input { max-width: 320px; font-size: .8rem; }
+  .ai-feedback-dismiss { color: #9ca3af; text-decoration: none; font-size: 1rem; }
+</style>
+{{ ai_feedback_trace_id|json_script:"ai-feedback-trace" }}
+<script>
+(function () {
+    var strip = document.getElementById('ai-feedback-strip');
+    var traceId = JSON.parse(document.getElementById('ai-feedback-trace').textContent);
+    var storageKey = 'ai-feedback-' + traceId;
+    // Asked once per draft: a reload of the ?draft= URL must not re-ask.
+    try { if (localStorage.getItem(storageKey)) return; } catch (e) {}
+    strip.hidden = false;
+
+    function close(remember) {
+        strip.remove();
+        if (remember) { try { localStorage.setItem(storageKey, '1'); } catch (e) {} }
+    }
+    strip.querySelector('.ai-feedback-dismiss').addEventListener('click', function () {
+        close(true);
+    });
+    strip.querySelectorAll('button[data-rating]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (window.posthog && posthog.capture) {
+                posthog.capture('$ai_feedback', {
+                    '$ai_trace_id': traceId,
+                    'rating': btn.dataset.rating,
+                    'comment': (document.getElementById('ai-feedback-comment').value || '').slice(0, 500),
+                });
+            }
+            close(true);
+        });
+    });
+})();
+</script>
+{% endif %}

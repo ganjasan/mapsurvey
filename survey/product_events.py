@@ -96,6 +96,75 @@ def creation_method_for(survey_id):
     return CREATION_AI if is_ai else CREATION_MANUAL
 
 
+def llm_trace_id(event_pk):
+    """The trace id shared by a generation's $ai_generation and $ai_feedback.
+
+    Derived from the row pk so both sides — the worker emitting the generation
+    and the editor page emitting the creator's verdict — can reconstruct it
+    without passing anything extra around. Stays within PostHog's documented
+    character set for $ai_trace_id.
+    """
+    return 'survey-draft-%s' % event_pk
+
+
+def emit_llm_generation(event):
+    """One PostHog LLM-analytics event per finished attempt-set. Never raises.
+
+    This is what puts the generator on PostHog's LLM Analytics dashboards —
+    cost, latency, error rate — next to the funnel's own ai_draft_finished,
+    which stays untouched as the product-metrics view of the same fact.
+
+    NEVER content. The brief is the creator's project description and the draft
+    is their survey; neither is ours to ship to an analytics vendor. That also
+    excludes error_detail: provider messages have quoted fragments of model
+    output before, and model output can quote the brief.
+
+    $ai_output_tokens folds reasoning in because Gemini bills thinking at the
+    output rate — the folded number is what makes PostHog's computed cost equal
+    the actual invoice (acceptance check: the 2026-08-17 batch, 12,669 in /
+    15,430 out+think, must price out to ≈$0.067). The split is preserved in
+    thinking_tokens for anyone asking how much of the spend was reasoning.
+    """
+    if event.user_id is None:
+        return
+    try:
+        import posthog
+
+        if posthog.disabled:
+            return
+        properties = {
+            '$ai_trace_id': llm_trace_id(event.pk),
+            '$ai_span_name': 'survey_draft',
+        }
+        if event.provider:
+            properties['$ai_provider'] = event.provider
+        if event.model:
+            properties['$ai_model'] = event.model
+        if event.input_tokens is not None:
+            properties['$ai_input_tokens'] = event.input_tokens
+        if event.output_tokens is not None:
+            properties['$ai_output_tokens'] = (
+                event.output_tokens + (event.thinking_tokens or 0)
+            )
+        if event.thinking_tokens is not None:
+            properties['thinking_tokens'] = event.thinking_tokens
+        if event.latency_ms is not None:
+            properties['$ai_latency'] = event.latency_ms / 1000.0
+        if event.attempts is not None:
+            properties['attempts'] = event.attempts
+        if event.outcome != 'success':
+            properties['$ai_is_error'] = True
+            # The slug only — see the docstring for why never error_detail.
+            properties['$ai_error'] = event.outcome
+        posthog.capture(
+            '$ai_generation',
+            distinct_id=str(event.user_id),
+            properties=properties,
+        )
+    except Exception:
+        logger.warning('posthog: failed to emit $ai_generation', exc_info=True)
+
+
 def emit(event, user_id, properties=None, timestamp=None):
     """Send one creator-lifecycle event. Never raises.
 

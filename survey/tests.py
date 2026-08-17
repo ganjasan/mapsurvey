@@ -24175,6 +24175,177 @@ class AIGenerationProgressPollingTest(TestCase):
         self.assertIn(response.status_code, (403, 404))
 
 
+class AILLMAnalyticsEmissionTest(_AIGenerationFixture, TestCase):
+    """The generator on PostHog's LLM dashboards — numbers, never content."""
+
+    def _captured(self, emit_mock, name):
+        return [c for c in emit_mock.call_args_list if c.args and c.args[0] == name]
+
+    def test_success_emits_billing_accurate_generation_event(self):
+        """
+        GIVEN a successful generation with output and reasoning tokens
+        WHEN the terminal events are emitted
+        THEN one $ai_generation carries output+reasoning as the output count
+             (Gemini bills thinking at the output rate, and the computed cost
+             must equal the invoice), latency in seconds, and the row's trace id
+        """
+        provider = _FakeProvider(
+            [_ai_blob(('en',))],
+            usages=[{'latency_ms': 8000, 'input_tokens': 1300,
+                     'output_tokens': 1000, 'thinking_tokens': 500}],
+        )
+
+        with patch('posthog.capture') as capture, patch('posthog.disabled', False):
+            event = self._run(provider)
+
+        calls = self._captured(capture, '$ai_generation')
+        self.assertEqual(len(calls), 1)
+        props = calls[0].kwargs['properties']
+        self.assertEqual(props['$ai_trace_id'], 'survey-draft-%s' % event.pk)
+        self.assertEqual(props['$ai_input_tokens'], 1300)
+        self.assertEqual(props['$ai_output_tokens'], 1500)
+        self.assertEqual(props['thinking_tokens'], 500)
+        self.assertEqual(props['$ai_latency'], 8.0)
+        self.assertEqual(props['$ai_provider'], 'fake')
+        self.assertNotIn('$ai_is_error', props)
+
+    def test_no_content_ever_reaches_the_event(self):
+        """
+        GIVEN any emitted $ai_generation
+        WHEN its properties are inspected
+        THEN neither the brief nor the draft is among them — the creator's
+             project description is not ours to ship to an analytics vendor
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+
+        with patch('posthog.capture') as capture, patch('posthog.disabled', False):
+            self._run(provider)
+
+        props = self._captured(capture, '$ai_generation')[0].kwargs['properties']
+        dumped = str(props)
+        self.assertNotIn('$ai_input', props)
+        self.assertNotIn('$ai_output_choices', props)
+        self.assertNotIn('Where is traffic worst', dumped)
+
+    def test_failure_emits_flagged_without_the_error_message(self):
+        """
+        GIVEN a generation that ends in provider_error
+        WHEN the terminal events are emitted
+        THEN $ai_generation is flagged with the outcome slug only — provider
+             messages have quoted model output, and model output can quote the
+             brief
+        """
+        from survey.ai.client import ProviderError
+
+        provider = _FakeProvider([], error=ProviderError('API error 503: brief-ish detail'))
+
+        with patch('posthog.capture') as capture, patch('posthog.disabled', False):
+            self._run(provider)
+
+        props = self._captured(capture, '$ai_generation')[0].kwargs['properties']
+        self.assertTrue(props['$ai_is_error'])
+        self.assertEqual(props['$ai_error'], 'provider_error')
+        self.assertNotIn('brief-ish', str(props))
+
+
+class AIDraftFeedbackStripTest(_AIGenerationFixture, TestCase):
+    """The one-shot verdict prompt: only for the right person, right draft."""
+
+    def _open_editor(self, survey, draft_param):
+        self.client.force_login(self.user)
+        url = reverse('editor_survey_detail', kwargs={'survey_uuid': survey.uuid})
+        return self.client.get(url, {'draft': draft_param})
+
+    @override_settings(POSTHOG_PROJECT_KEY='phc_test')
+    def test_redirect_carries_the_draft_parameter(self):
+        """
+        GIVEN a successful generation being polled
+        WHEN the success redirect is issued
+        THEN it carries ?draft=<event id>, the only source of the prompt
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+        event = self._run(provider)
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            reverse('editor_generation_status', kwargs={'event_id': event.pk}))
+
+        self.assertEqual(
+            response['HX-Redirect'],
+            '%s?draft=%d' % (
+                reverse('editor_survey_detail',
+                        kwargs={'survey_uuid': event.created_survey.uuid}),
+                event.pk,
+            ))
+
+    @override_settings(POSTHOG_PROJECT_KEY='phc_test')
+    def test_legitimate_arrival_gets_the_strip(self):
+        """
+        GIVEN the creator arriving via their own generation's redirect
+        WHEN the editor renders
+        THEN the strip is present and carries the generation's trace id
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+        event = self._run(provider)
+
+        response = self._open_editor(event.created_survey, event.pk)
+
+        self.assertContains(response, 'ai-feedback-strip')
+        self.assertContains(response, 'survey-draft-%s' % event.pk)
+
+    @override_settings(POSTHOG_PROJECT_KEY='phc_test')
+    def test_foreign_or_mismatched_draft_conjures_nothing(self):
+        """
+        GIVEN a draft parameter naming another user's event, or one that did
+              not produce this survey
+        WHEN the editor renders
+        THEN no strip appears — an unvalidated id must not conjure UI
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+        event = self._run(provider)
+        other = AIGenerationEvent.objects.create(
+            kind='survey_draft',
+            user=User.objects.create_user('someone-else', password='x'),
+            organization=self.org, outcome='success',
+        )
+
+        self.assertNotContains(
+            self._open_editor(event.created_survey, other.pk), 'ai-feedback-strip')
+        self.assertNotContains(
+            self._open_editor(event.created_survey, 999999), 'ai-feedback-strip')
+
+    @override_settings(POSTHOG_PROJECT_KEY='phc_test')
+    def test_manual_arrival_never_asks(self):
+        """
+        GIVEN the editor opened without the generation redirect's parameter
+        WHEN it renders
+        THEN no strip appears — manual surveys have no draft to judge
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+        event = self._run(provider)
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            reverse('editor_survey_detail',
+                    kwargs={'survey_uuid': event.created_survey.uuid}))
+
+        self.assertNotContains(response, 'ai-feedback-strip')
+
+    @override_settings(POSTHOG_PROJECT_KEY='')
+    def test_no_posthog_means_no_strip(self):
+        """
+        GIVEN PostHog unconfigured
+        WHEN the creator arrives via the generation redirect
+        THEN no strip appears — the vote would have nowhere to go
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+        event = self._run(provider)
+
+        response = self._open_editor(event.created_survey, event.pk)
+
+        self.assertNotContains(response, 'ai-feedback-strip')
+
+
 class AISurveyCreateViewTest(TestCase):
     """The create page: manual path untouched, AI path gated and asynchronous."""
 
@@ -24349,9 +24520,14 @@ class AIGenerationStatusViewTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 204)
+        # ?draft= is what entitles the arrival to the one-shot feedback prompt;
+        # only this redirect ever carries it.
         self.assertEqual(
             response['HX-Redirect'],
-            reverse('editor_survey_detail', kwargs={'survey_uuid': survey.uuid}),
+            '%s?draft=%d' % (
+                reverse('editor_survey_detail', kwargs={'survey_uuid': survey.uuid}),
+                event.pk,
+            ),
         )
 
     def test_failure_stops_polling_and_explains(self):
