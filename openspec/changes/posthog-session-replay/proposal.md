@@ -36,8 +36,14 @@ reviewed privacy statement. This change is those two things, plus the switch.
   browser — question wording, respondent-facing text, organisation names, email addresses in account
   forms. Interface text stays visible, which is what makes a recording readable: we need to see
   which control someone hunted for, not what they wrote in it.
-- **Console logs and network payloads stay off.** Both are offered as replay add-ons and both are
-  side channels for exactly the data the masking policy exists to keep out.
+- **Console logs and recorded requests stay on, with one hole plugged.** Both were initially going
+  to be switched off as "side channels", and that was checked rather than assumed: our entire
+  frontend contains one `console.error` about a failed clipboard write, and the recorder's own
+  defaults keep request bodies and headers off, so what is captured is a URL and its timings. A
+  console error is usually the answer to "clicked and nothing happened", which is the question
+  being asked. The single genuine leak is ours — `map_place_search.js` sends what the creator typed
+  as `?q=...`, so a masked field would reappear inside a recorded request URL — and it is closed by
+  a `maskRequestFn` that strips the query string from every recorded request.
 - **Recording is pinned to our origin.** `recording_domains` set to the production host, so a fork,
   a local checkout or a PR preview running with a real key cannot start recording.
 - **A defined retention.** 30 days — the shortest PostHog offers, and long enough for the question
@@ -72,7 +78,7 @@ reviewed privacy statement. This change is those two things, plus the switch.
 - `session_recording_masking_config` — server-side mirror of the client masking policy
 - `session_recording_retention_period: 30d`
 - `recording_domains` → the production origin
-- `capture_console_log_opt_in: false`, `capture_performance_opt_in: false`
+- `capture_console_log_opt_in` and `capture_performance_opt_in` stay `true` (already are)
 
 **Not affected**
 

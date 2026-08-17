@@ -29,8 +29,9 @@ self-hosted installs record nothing without a deliberate decision.
 When recording is enabled, the rendered snippet SHALL configure input masking so that the contents of
 form fields are masked in the browser, before any recording payload is transmitted.
 
-The snippet SHALL NOT enable console-log capture or network-payload capture, both of which would
-re-admit content that masking removes.
+Where a recorded request URL would carry typed content in its query string, the snippet SHALL strip
+the query string before the request is stored. The snippet SHALL NOT enable recording of request
+bodies or headers.
 
 #### Scenario: Input masking is present whenever recording is possible
 - **GIVEN** recording is enabled
@@ -43,10 +44,15 @@ re-admit content that masking removes.
 - **THEN** the configuration does not mask all text, so the product's own interface stays legible in
   playback
 
-#### Scenario: Side channels stay closed
+#### Scenario: Recorded request URLs carry no query string
 - **GIVEN** recording is enabled
 - **WHEN** a creator-facing page is rendered
-- **THEN** the snippet enables neither console-log capture nor network-payload capture
+- **THEN** the configuration rewrites every recorded request to drop its query string
+
+#### Scenario: Request bodies and headers are not recorded
+- **GIVEN** recording is enabled
+- **WHEN** a creator-facing page is rendered
+- **THEN** nothing in the configuration enables body or header recording
 
 ### Requirement: Respondent surfaces cannot be recorded
 

@@ -30,7 +30,8 @@
 - [x] 4.1 Recording disabled by default: the rendered snippet disables session recording when the
       setting is unset
 - [x] 4.2 Recording enabled: the snippet stops disabling it and carries `maskAllInputs`
-- [x] 4.3 Neither console-log nor network-payload capture appears in the rendered config
+- [x] 4.3 Recorded request URLs are stripped of their query string, and neither request bodies nor
+      headers are enabled
 - [x] 4.4 `/surveys/` and `/r/` carry no snippet and no recording config with recording enabled
 - [x] 4.5 Trust-page assertions for all four disclosure claims
 - [x] 4.6 Run the full suite and record the delta against the pre-change baseline — 1273 tests,
@@ -47,7 +48,10 @@
 - [ ] 5.5 `session_recording_retention_period: 30d`
 - [ ] 5.6 `recording_domains` → the production origin, so a fork or preview holding a real key
       cannot record into the production project
-- [ ] 5.7 `capture_console_log_opt_in: false`, `capture_performance_opt_in: false`
+- [x] 5.7 Leave `capture_console_log_opt_in` and `capture_performance_opt_in` ON — both already are.
+      Verified rather than assumed: our frontend logs nothing but a clipboard failure, the recorder
+      defaults `recordBody`/`recordHeaders` to false, and the one real leak (place search sending
+      `?q=<typed text>`) is closed client-side by `maskRequestFn`
 
 ## 6. Enable and verify
 

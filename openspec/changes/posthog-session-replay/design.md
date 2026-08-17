@@ -58,7 +58,7 @@ Rejected: relying on `session_recording_opt_in` in the PostHog project alone. Th
 dashboard nobody reviews and is invisible to anyone reading the repository — including a
 self-hoster, and including us in six months.
 
-### 2. Masking policy: all inputs, no console, no network payloads
+### 2. Masking policy: all inputs, query strings stripped, console kept
 
 `maskAllInputs: true` in the client's `session_recording` config. Field contents never leave the
 browser: question wording, section names, organisation names, and the email address on account
@@ -70,9 +70,35 @@ recording exists for. The line is therefore *what the user typed* versus *what t
 which is also the line that matters for personal data: our chrome is the same for everyone, their
 text is theirs.
 
-`capture_console_log_opt_in` and `capture_performance_opt_in` stay off. Console lines routinely
-carry object dumps, and captured network payloads would re-admit exactly the request bodies masking
-just removed.
+`capture_console_log_opt_in` and `capture_performance_opt_in` stay **on**. The first draft of this
+design turned them off as "side channels", which did not survive checking:
+
+- The whole frontend contains exactly one console call — `console.error('Clipboard write failed', e)`
+  in `editor_clipboard.js`. We log no user content anywhere. What the console does carry is other
+  people's errors (Leaflet, our own code when it throws), and a console error is usually the answer
+  to "clicked and nothing happened" — the exact question `$dead_click` raises and replay is meant to
+  settle.
+- "Network payloads" conflated two different settings. Reading the shipped recorder bundle, its
+  defaults are `recordHeaders: false` and `recordBody: false`; bodies are a separate project setting
+  (`session_recording_network_payload_capture_config`, currently null). What performance capture
+  records is the request URL and its timings.
+
+That leaves one real leak, and it is ours rather than PostHog's: `map_place_search.js` builds its
+request as `'q=' + encodeURIComponent(query)`, so the text a creator typed into the place search —
+masked in the replay itself — would ride along intact inside a recorded request URL. The same bundle
+exposes `maskRequestFn`, called for every captured request, where a falsy return drops the request
+and any returned object is what gets stored. Stripping the query string there closes the leak
+without giving up the timings:
+
+```js
+maskRequestFn: function (request) {
+    request.name = String(request.name || '').split('?')[0];
+    return request;
+}
+```
+
+Turning both channels off would have been the easier decision and the worse one: it costs the most
+useful diagnostic signal to avoid a leak that is one line to close.
 
 ### 3. Scope by URL trigger, not by sampling
 

@@ -47,11 +47,26 @@ asset host with "posthog" in it would be blocked exactly like the ingest host wa
                 // (A test asserts the text-masking option is absent, so it also fails if this
                 // comment names it -- deliberate: the option should appear nowhere.)
                 //
-                // Console logs and network payloads stay off (project settings). Both would
-                // re-admit exactly what masking removes.
+                // Console logs and recorded requests are deliberately left ON at project
+                // level: our own JS logs nothing but a clipboard failure, and a console
+                // error is usually the answer to "clicked and nothing happened", which is
+                // the whole reason for watching. Request bodies and headers are off by the
+                // recorder's own defaults, so what gets recorded is the URL and its timings.
+                // (Tests assert those two option names appear nowhere in the response, so
+                // naming them even in a comment fails the suite -- deliberate: turning them
+                // on should be a visible act, not a line nobody notices.)
+                //
+                // The one real leak that opens is ours: the place search sends what the
+                // creator typed as ?q=..., so a masked field would ride along inside a
+                // recorded request URL. maskRequestFn drops the query string from every
+                // recorded request, which closes it without giving up the timings.
                 disable_session_recording: {% if POSTHOG_SESSION_REPLAY %}false{% else %}true{% endif %},
                 session_recording: {
-                    maskAllInputs: true
+                    maskAllInputs: true,
+                    maskRequestFn: function (request) {
+                        request.name = String(request.name || '').split('?')[0];
+                        return request;
+                    }
                 },
                 // Anonymous landing traffic is already answered by Plausible; profiles for
                 // people who never sign up would be stored for nothing.

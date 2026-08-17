@@ -10390,16 +10390,35 @@ class PostHogSnippetTest(TestCase):
             response = self.client.get('/trust/')
             self.assertNotContains(response, 'maskTextSelector')
 
-    def test_console_and_network_capture_stay_off(self):
+    def test_recorded_request_urls_lose_their_query_string(self):
         """
-        GIVEN both would re-admit content that input masking removes
+        GIVEN the place search sends what the creator typed as ?q=...
         WHEN the snippet is rendered with replay on
-        THEN neither console-log nor network-payload capture is enabled client-side
+        THEN recorded requests are rewritten to drop the query string
+
+        Without this, a field masked in the replay reappears intact inside a
+        recorded request URL — the one leak that input masking does not cover,
+        and it is our own code that opens it (map_place_search.js).
         """
         with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
             response = self.client.get('/trust/')
-            self.assertNotContains(response, 'capture_performance')
-            self.assertNotContains(response, 'enable_recording_console_log')
+            self.assertContains(response, 'maskRequestFn')
+            self.assertContains(response, "split('?')[0]")
+
+    def test_request_bodies_are_not_recorded(self):
+        """
+        GIVEN request bodies and headers would carry exactly what masking removes
+        WHEN the snippet is rendered with replay on
+        THEN nothing in the config turns them on
+
+        The SDK defaults them off (recordBody / recordHeaders in the recorder
+        bundle). This test exists so that enabling them becomes a deliberate,
+        visible act rather than a line added to a config nobody re-reads.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get('/trust/')
+            self.assertNotContains(response, 'recordBody')
+            self.assertNotContains(response, 'recordHeaders')
 
     def test_no_recording_config_on_respondent_pages(self):
         """
