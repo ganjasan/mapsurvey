@@ -70,13 +70,16 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
         previewEnvRenderServiceName: mapsurvey
-      # On everywhere since 2026-08-17: the stand proof this flag was waiting
-      # for happened (streamed drafts with the progress counter moving from the
-      # first question; stalls and truncations bounded into silent retries).
-      # The dashboard kill switch still works — setting `false` there falls
-      # back to one blocking call with no progress and nothing else different.
+      # Off in production since 2026-08-17 evening, by product decision, after
+      # a day of measuring Gemini's SSE in anger: 47% of streamed calls failed
+      # (mid-answer cuts, stalls) in the morning batch, and one creator hit
+      # four consecutive failures — a dead end even through the retries. The
+      # blocking call has neither stream-specific failure mode, and at thinking
+      # `low` the wait is short enough for an indeterminate bar. Previews keep
+      # streaming on so the path stays exercised; reconsider against fresh
+      # $ai_generation error-rate data, not memory.
       - key: AI_STREAMING_ENABLED
-        value: "true"
+        value: "false"
         previewValue: "true"
       - key: DEFAULT_FROM_EMAIL
         sync: false
@@ -246,13 +249,16 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
         previewEnvRenderServiceName: mapsurvey
-      # On everywhere since 2026-08-17: the stand proof this flag was waiting
-      # for happened (streamed drafts with the progress counter moving from the
-      # first question; stalls and truncations bounded into silent retries).
-      # The dashboard kill switch still works — setting `false` there falls
-      # back to one blocking call with no progress and nothing else different.
+      # Off in production since 2026-08-17 evening, by product decision, after
+      # a day of measuring Gemini's SSE in anger: 47% of streamed calls failed
+      # (mid-answer cuts, stalls) in the morning batch, and one creator hit
+      # four consecutive failures — a dead end even through the retries. The
+      # blocking call has neither stream-specific failure mode, and at thinking
+      # `low` the wait is short enough for an indeterminate bar. Previews keep
+      # streaming on so the path stays exercised; reconsider against fresh
+      # $ai_generation error-rate data, not memory.
       - key: AI_STREAMING_ENABLED
-        value: "true"
+        value: "false"
         previewValue: "true"
 
   # Daily acquisition-metrics sync for the funnel dashboard. There is no celery beat,
