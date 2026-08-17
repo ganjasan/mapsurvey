@@ -597,11 +597,6 @@ def editor(request):
 	}
 	return render(request, "editor.html", context)
 
-def survey_list(request):
-	survey_list = SurveyHeader.objects.filter(deleted_at__isnull=True)
-	context = {'survey_list': survey_list}
-	return render(request, 'survey_list.html', context)
-
 
 # ISO 639-1 language names in their native form
 LANGUAGE_NAMES = {
@@ -1105,6 +1100,26 @@ def download_data(request, survey_slug):
 
 	survey = resolve_survey(survey_slug)
 
+	# Authorization, not just authentication: this export carries respondent
+	# geometry and free text, so being signed in is not enough -- the caller needs
+	# a role on this survey. `survey_permission_required` cannot be used here
+	# because it looks the survey up by UUID, and this route accepts a name too.
+	#
+	# Every denial is a 404, including "no role" and "wrong org". A 403 would
+	# confirm that a UUID names a real survey, which is exactly the fact the
+	# removed public listing used to hand out.
+	role = get_effective_survey_role(request.user, survey)
+	if SURVEY_ROLE_RANK.get(role, -1) < SURVEY_ROLE_RANK['viewer']:
+		logger.warning(
+			"Denied survey export: user=%s survey=%s role=%s",
+			request.user.pk, survey.uuid, role,
+		)
+		raise Http404
+
+	# Checked once, on the survey the URL names, before the family is expanded:
+	# a SurveyCollaborator holds a row on the canonical survey, not on each
+	# archived version header, so re-checking per version would deny them their
+	# own history.
 	version_param = request.GET.get('version')
 	version_surveys = _get_version_surveys(survey, version_param)
 
@@ -1841,7 +1856,9 @@ def sitemap_xml(request):
 			f"<priority>{landing.priority}</priority></url>"
 		)
 	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
-	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
+	# `/surveys/` itself is not listed: it now redirects to `/`, and a sitemap
+	# should not advertise a redirect. Individual `/surveys/<uuid>/` entries below
+	# are still listed.
 	# Stories hub + published stories
 	urls.append(f"  <url><loc>{base}/stories/</loc></url>")
 	for story in Story.objects.filter(is_published=True).order_by('-published_date'):
