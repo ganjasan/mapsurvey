@@ -148,6 +148,10 @@ services:
         sync: false
       - key: POSTHOG_API_HOST
         sync: false
+      # First-party host for browser events only (managed reverse proxy). Unset falls
+      # back to POSTHOG_API_HOST, so a preview that never got the CNAME behaves as before.
+      - key: POSTHOG_CLIENT_HOST
+        sync: false
     disk:
       name: media-storage
       mountPath: /home/app/web/mediafiles
@@ -187,6 +191,10 @@ services:
       - key: POSTHOG_PROJECT_KEY
         sync: false
       - key: POSTHOG_API_HOST
+        sync: false
+      # Renders no templates, so this changes nothing here. Declared anyway so the two
+      # services cannot drift into different PostHog configurations.
+      - key: POSTHOG_CLIENT_HOST
         sync: false
       - key: DEFAULT_FROM_EMAIL
         sync: false

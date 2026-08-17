@@ -10126,6 +10126,87 @@ class PostHogSnippetTest(TestCase):
             response = self.client.get('/trust/')
             self.assertContains(response, 'https://eu.i.posthog.com')
 
+    def test_browser_uses_the_proxy_host_when_one_is_configured(self):
+        """
+        GIVEN POSTHOG_CLIENT_HOST names a first-party reverse proxy
+        WHEN a creator-facing page is rendered
+        THEN the snippet initialises against it and PostHog's own host is absent
+
+        The absence matters as much as the presence: a hostname containing
+        "posthog" anywhere in the page is a hostname the blocklists match, which
+        is the entire reason the proxy exists.
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_CLIENT_HOST='https://e.example.org',
+        ):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'https://e.example.org')
+            self.assertNotContains(response, 'eu.i.posthog.com')
+
+    def test_unset_proxy_host_falls_back_to_the_api_host(self):
+        """
+        GIVEN POSTHOG_CLIENT_HOST is empty (no proxy provisioned)
+        WHEN a creator-facing page is rendered
+        THEN the snippet initialises against POSTHOG_API_HOST, exactly as before
+             the proxy existed
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_CLIENT_HOST='',
+            POSTHOG_API_HOST='https://eu.i.posthog.com',
+        ):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'https://eu.i.posthog.com')
+
+    def test_ui_host_is_pinned_regardless_of_proxy(self):
+        """
+        GIVEN the snippet may be pointed at a domain of ours
+        WHEN it is rendered, with and without a proxy configured
+        THEN ui_host names the PostHog app, so toolbar links do not resolve
+             against the proxy
+        """
+        for client_host in ('', 'https://e.example.org'):
+            with self.subTest(client_host=client_host):
+                with self.settings(
+                    POSTHOG_PROJECT_KEY=self.KEY,
+                    POSTHOG_CLIENT_HOST=client_host,
+                ):
+                    response = self.client.get('/trust/')
+                    self.assertContains(response, "ui_host: 'https://eu.posthog.com'")
+
+    def test_no_snippet_on_respondent_survey_page_even_with_proxy(self):
+        """
+        GIVEN both the key and a first-party proxy host are configured
+        WHEN a respondent loads a survey section under /surveys/
+        THEN neither the snippet nor the proxy hostname appears
+
+        A first-party host is the one thing that could make PostHog on a
+        respondent page look innocuous in review. It must not get there at all.
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_CLIENT_HOST='https://e.example.org',
+        ):
+            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, 'https://e.example.org')
+
+    def test_no_snippet_without_a_key_even_with_proxy(self):
+        """
+        GIVEN a proxy host is configured but POSTHOG_PROJECT_KEY is empty
+        WHEN a creator-facing page is rendered
+        THEN nothing renders — the key remains the single on/off switch
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY='',
+            POSTHOG_CLIENT_HOST='https://e.example.org',
+        ):
+            response = self.client.get('/trust/')
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, 'https://e.example.org')
+
     def test_no_snippet_on_respondent_survey_page(self):
         """
         GIVEN POSTHOG_PROJECT_KEY is configured
@@ -10319,6 +10400,24 @@ class PostHogSnippetTest(TestCase):
         self.assertContains(response, "AI drafting sends the creator's brief to Google")
         self.assertContains(response, 'Survey responses are never sent to an AI provider')
 
+    def test_trust_page_names_cloudflare_as_the_proxy(self):
+        """
+        GIVEN Cloudflare fronts every request to the hosted service, and browser
+              analytics is deliberately routed through a first-party proxy
+        WHEN the trust page is read
+        THEN Cloudflare is named as CDN and reverse proxy, not only as Turnstile
+        AND storage in the EU is distinguished from transit that is not
+            contractually EU-only
+
+        The disclosure predates the proxy — Render already fronts us with
+        Cloudflare — but adding a second Cloudflare path while the page named it
+        as an anti-abuse widget would repeat 2026-08-15 exactly.
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, 'Cloudflare fronts the hosted service')
+        self.assertContains(response, 'including product-analytics traffic')
+        self.assertContains(response, 'not contractually guaranteed to')
+
     def test_trust_page_states_hosting_region_truthfully(self):
         """
         GIVEN every Render service and the production database run in Oregon
@@ -10456,6 +10555,55 @@ class PostHogContextProcessorTest(TestCase):
         self.assertEqual(person['username'], 'ctxuser')
         self.assertTrue(person['date_joined'])
 
+    def test_client_host_prefers_the_proxy(self):
+        """
+        GIVEN a first-party proxy host is configured
+        WHEN the context is built
+        THEN the browser is handed the proxy, not PostHog's host
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_CLIENT_HOST='https://e.example.org',
+            POSTHOG_API_HOST='https://eu.i.posthog.com',
+        ):
+            context = self._context_for('/trust/')
+        self.assertEqual(context['POSTHOG_CLIENT_HOST'], 'https://e.example.org')
+
+    def test_client_host_falls_back_to_the_api_host(self):
+        """
+        GIVEN no proxy is configured
+        WHEN the context is built
+        THEN the browser is handed whatever POSTHOG_API_HOST currently is
+
+        Resolved here rather than at settings import time so that overriding the
+        API host — a preview pointed at a throwaway project, or this test — moves
+        the browser with it instead of leaving it on the value frozen at startup.
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_CLIENT_HOST='',
+            POSTHOG_API_HOST='https://analytics.example.com',
+        ):
+            context = self._context_for('/trust/')
+        self.assertEqual(context['POSTHOG_CLIENT_HOST'], 'https://analytics.example.com')
+
+    def test_both_hosts_empty_falls_back_to_cloud_eu(self):
+        """
+        GIVEN Render hands the process empty strings for both hosts
+        WHEN the context is built
+        THEN the browser still gets Cloud EU rather than an empty host
+
+        An empty api_host initialises the SDK against nothing, which looks
+        exactly like working analytics until someone notices no events arrive.
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_CLIENT_HOST='',
+            POSTHOG_API_HOST='',
+        ):
+            context = self._context_for('/trust/')
+        self.assertEqual(context['POSTHOG_CLIENT_HOST'], 'https://eu.i.posthog.com')
+
 
 class PostHogErrorTrackingTest(TestCase):
     """Server-side exception capture: middleware wiring, scrubbing, Celery hook.
@@ -10533,6 +10681,31 @@ class PostHogErrorTrackingTest(TestCase):
             self.assertFalse(posthog.disabled)
             self.assertEqual(posthog.api_key, 'phc_errtest')
             # Empty host falls back to Cloud EU, same guarantee as the snippet.
+            self.assertEqual(posthog.host, 'https://eu.i.posthog.com')
+        finally:
+            posthog.api_key = None
+            SurveyConfig._configure_posthog()
+
+    def test_server_client_ignores_the_browser_proxy_host(self):
+        """
+        GIVEN a first-party proxy host is configured for the browser
+        WHEN the app config hook runs
+        THEN the server-side client still talks to POSTHOG_API_HOST directly
+
+        The proxy exists to defeat ad blockers, which do not run inside our
+        containers. Routing error capture through it would make the subsystem
+        that has to survive an outage depend on a DNS record and a CDN edge.
+        """
+        import posthog
+
+        from survey.apps import SurveyConfig
+        with self.settings(
+            POSTHOG_PROJECT_KEY='phc_errtest',
+            POSTHOG_API_HOST='https://eu.i.posthog.com',
+            POSTHOG_CLIENT_HOST='https://e.example.org',
+        ):
+            SurveyConfig._configure_posthog()
+        try:
             self.assertEqual(posthog.host, 'https://eu.i.posthog.com')
         finally:
             posthog.api_key = None

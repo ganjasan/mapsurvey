@@ -63,7 +63,8 @@
                 <li><strong>An EU-region deployment of the hosted service is planned.</strong> This page will say so plainly the day it is live, and not before</li>
                 <li><strong>Render is SOC 2 Type II certified</strong> — independently audited security controls</li>
                 <li><strong>PostgreSQL database</strong> with encrypted connections (TLS)</li>
-                <li><strong>Product analytics</strong> for our own creator-facing pages is hosted in the EU (PostHog Cloud EU) and never touches survey responses</li>
+                <li><strong>Cloudflare fronts the hosted service</strong> as CDN and reverse proxy — every request to mapsurvey.org, including product-analytics traffic, passes through Cloudflare's network before reaching our servers</li>
+                <li><strong>Product analytics</strong> for our own creator-facing pages is <em>stored</em> in the EU (PostHog Cloud EU) and never touches survey responses. Its traffic <em>transits</em> Cloudflare's network, which normally terminates EU requests at EU edges but is not contractually guaranteed to</li>
             </ul>
         </section>
 
@@ -99,7 +100,7 @@
                 <li><strong>HTTPS everywhere</strong> — all traffic encrypted in transit via TLS</li>
                 <li><strong>Django security framework</strong> — built-in CSRF protection, XSS prevention, SQL injection safeguards, clickjacking protection</li>
                 <li><strong>Password hashing</strong> — user passwords stored using PBKDF2 with SHA-256 (Django default)</li>
-                <li><strong>Registration abuse defenses</strong> — honeypot field, per-IP rate limiting and Cloudflare Turnstile, with an audit log of what was blocked</li>
+                <li><strong>Registration abuse defenses</strong> — honeypot field, per-IP rate limiting and Cloudflare Turnstile (one use of Cloudflare among several; see Hosting &amp; Data Residency), with an audit log of what was blocked</li>
                 <li><strong>Third-party code in the survey flow is limited to map and interface assets</strong> — map tiles, Leaflet, icons, fonts and cookieless visit analytics. No advertising or profiling scripts. Self-hosting lets you serve these from your own infrastructure</li>
                 <li><strong>Regular dependency updates</strong> — security patches applied promptly</li>
             </ul>
