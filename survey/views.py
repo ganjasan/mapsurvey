@@ -59,10 +59,13 @@ from .abuse import (
     HONEYPOT_FIELD_NAME,
     RegistrationAbuseForm,
     ResendActivationForm,
+    check_registration_limit,
     client_ip,
+    increment_registration_limit,
     log_abuse_event,
     verify_turnstile,
 )
+from .password_rules import password_checklist_rules
 from django_ratelimit.core import is_ratelimited
 from django.conf import settings as conf_settings
 from django.http import HttpResponse
@@ -111,11 +114,21 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
     Defenses fire in this order on POST:
       1. Honeypot — `website` field must be empty. Filled → silent
          fake-success redirect, no User created, no email sent.
-      2. Rate limit — per-IP via django-ratelimit on dispatch().
+      2. Rate limit — per-IP via django-ratelimit. The *check* runs in
+         dispatch(), before form processing; the *counter* is advanced in
+         post(), once form validity is known.
       3. Turnstile — siteverify token check before form save.
 
+    The check/increment split is the correction of a shipped defect: the
+    counter used to advance on every POST, so three password typos exhausted
+    the 3/hour budget and locked a real person out (2026-08-17 — six POSTs,
+    three 429s, no account). Validity is exactly the signal that separates a
+    confused human from a bot, and it is not known until the form is
+    validated. Form-invalid attempts now feed a separate, far looser counter.
+
     See `survey/abuse.py` for the helpers and openspec/changes/
-    add-registration-abuse-defenses/ for the design.
+    add-registration-abuse-defenses/ plus
+    openspec/changes/registration-rate-limit-traps-humans/ for the design.
     """
 
     form_class = RegistrationAbuseForm
@@ -123,6 +136,7 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["TURNSTILE_SITE_KEY"] = conf_settings.TURNSTILE_SITE_KEY
+        ctx["password_rules"] = password_checklist_rules()
         return ctx
 
     def dispatch(self, request, *args, **kwargs):
@@ -130,44 +144,46 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
         # (e.g. an outreach link straight to /register/?utm_source=edu).
         if request.method == "GET":
             capture_signup_source(request)
-        # Rate limiting on POST only. Two stacked windows (hourly, daily) share
-        # the same key (client IP). We call is_ratelimited imperatively rather
-        # than using @ratelimit so we can log the AbuseEvent before responding
-        # with our own 429 instead of django-ratelimit's default exception.
+        # Rate-limit CHECK on POST only — read-only, never advances a counter.
+        # Running it here (before form processing) keeps an already-limited IP
+        # from costing us a form validation or a Cloudflare round-trip. The
+        # increment happens in post(), where validity is known.
         #
-        # Fail-open: any exception from the cache backend (Redis outage etc.)
-        # is swallowed so legitimate signups continue working. Honeypot +
-        # Turnstile remain in effect to catch bots even when rate-limit is
-        # temporarily blind.
+        # We call is_ratelimited imperatively rather than using @ratelimit so we
+        # can log the AbuseEvent before responding with our own 429 instead of
+        # django-ratelimit's default exception.
+        #
+        # Fail-open on a cache-backend outage lives in the helpers: a blind
+        # limiter must not block signups. Honeypot + Turnstile still apply.
         if request.method == "POST":
-            limits = (
-                # (group, rate, retry_after_seconds, detail)
-                ("registration_hour", f"{conf_settings.REGISTRATION_RATE_LIMIT_HOUR}/h", 3600, "hour"),
-                ("registration_day", f"{conf_settings.REGISTRATION_RATE_LIMIT_DAY}/d", 86400, "day"),
-            )
-            for group, rate, retry_after, detail in limits:
-                try:
-                    limited = is_ratelimited(
-                        request=request,
-                        group=group,
-                        fn=None,
-                        key="survey.abuse.ratelimit_key",
-                        rate=rate,
-                        method="POST",
-                        increment=True,
-                    )
-                except Exception:
-                    limited = False
-                if limited:
+            for kind in ("valid", "invalid"):
+                hit = check_registration_limit(request, kind)
+                if hit:
+                    retry_after, detail = hit
                     log_abuse_event("ratelimit", request, detail)
-                    resp = HttpResponse(
-                        "Too many registration attempts. Please try again later.",
-                        status=429,
-                        content_type="text/plain",
-                    )
-                    resp["Retry-After"] = str(retry_after)
-                    return resp
+                    return self.rate_limited_response(request, retry_after)
+            if not conf_settings.REGISTRATION_SPLIT_RATE_LIMIT:
+                # Kill switch: count every POST up front, as before this change.
+                increment_registration_limit(request, "valid")
         return super().dispatch(request, *args, **kwargs)
+
+    def rate_limited_response(self, request, retry_after):
+        """Render the 429 page, keeping the machine-readable contract intact.
+
+        Deliberately does not say which limit was hit, what the thresholds are,
+        or how many attempts remain — that would let an attacker map the
+        defense. It does link to sign-in and password reset, because a
+        meaningful share of the people who hit this are returning users who
+        forgot they already have an account.
+        """
+        resp = render(
+            request,
+            "registration/rate_limited.html",
+            {"retry_after_minutes": max(1, round(retry_after / 60))},
+            status=429,
+        )
+        resp["Retry-After"] = str(retry_after)
+        return resp
 
     def post(self, request, *args, **kwargs):
         from django.urls import reverse
@@ -181,10 +197,23 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
             return redirect(reverse("django_registration_complete"))
 
         form = self.get_form()
+
+        # 2. Rate-limit counter. Now — and only now — we know which bucket this
+        # attempt belongs to. A form-invalid attempt is overwhelmingly a human
+        # fighting the password validators, so it feeds the loose counter; a
+        # well-formed one feeds the strict counter that actually gates account
+        # creation. Under the kill switch dispatch() already counted it.
+        if conf_settings.REGISTRATION_SPLIT_RATE_LIMIT:
+            increment_registration_limit(
+                request, "valid" if form.is_valid() else "invalid"
+            )
+
         if not form.is_valid():
             return self.form_invalid(form)
 
-        # 2. Turnstile — Cloudflare's JS widget posts as `cf-turnstile-response`.
+        # 3. Turnstile — Cloudflare's JS widget posts as `cf-turnstile-response`.
+        # A well-formed submission with a bad token is bot-shaped, and it has
+        # already been counted against the strict budget above.
         token = request.POST.get("cf-turnstile-response", "")
         if not verify_turnstile(token, client_ip(request)):
             detail = "missing_token" if not token else "siteverify_rejected"

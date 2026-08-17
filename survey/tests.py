@@ -6,6 +6,7 @@ from django.utils import timezone
 from io import BytesIO
 from unittest import mock
 from unittest.mock import patch
+import contextlib
 import json
 import re
 import uuid
@@ -15574,6 +15575,398 @@ class RegistrationAbuseDefenseTest(TestCase):
                 # (verify_turnstile may have been called for r1 only.)
                 self.assertLessEqual(patched.call_count, 1)
 
+
+class RegistrationInvalidAttemptLimitTest(TestCase):
+    """The rate limit must not spend a human's budget on their own typos.
+
+    Regression cover for the 2026-08-17 incident: a visitor mistyped a password
+    three times, exhausted REGISTRATION_RATE_LIMIT_HOUR=3, and was refused with
+    a bare text/plain 429. No account, no email, no way to reach them. The
+    counter ran before form validation, so a person fighting the password
+    validators was indistinguishable from a bot posting registrations.
+    """
+
+    def setUp(self):
+        from django.contrib.auth.models import User as _U
+        from django.core.cache import cache
+        from .models import AbuseEvent
+        _U.objects.all().delete()
+        AbuseEvent.objects.all().delete()
+        cache.clear()
+
+    def _valid_data(self, **overrides):
+        data = {
+            "username": "testuser",
+            "email": "test@example.com",
+            "password1": "Xx12345!secure",
+            "password2": "Xx12345!secure",
+            "website": "",
+            "cf-turnstile-response": "any-token",
+        }
+        data.update(overrides)
+        return data
+
+    def _invalid_data(self, **overrides):
+        # Fails MinimumLengthValidator and CommonPasswordValidator — the exact
+        # shape of failure the incident user kept hitting.
+        return self._valid_data(password1="abc", password2="abc", **overrides)
+
+    @contextlib.contextmanager
+    def _isolated_cache(self, **extra):
+        """Override the abuse settings onto a private, empty LocMem cache.
+
+        A LocMemCache keyed only by LOCATION is shared process-wide, so counters
+        from an earlier test in this class leak into the next one and every
+        assertion after the first becomes meaningless. Clearing *inside* the
+        override (the cache handle is per-settings) is what makes each test
+        start from zero.
+        """
+        from django.core.cache import cache
+        from django.test import override_settings
+
+        settings = dict(
+            TURNSTILE_SECRET_KEY="",
+            REGISTRATION_RATE_LIMIT_HOUR=3,
+            REGISTRATION_RATE_LIMIT_DAY=10,
+            REGISTRATION_INVALID_LIMIT_HOUR=15,
+            REGISTRATION_INVALID_LIMIT_DAY=50,
+            REGISTRATION_SPLIT_RATE_LIMIT=True,
+            CACHES={
+                "default": {
+                    "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                    "LOCATION": "invalid-attempt-%s" % self.id(),
+                }
+            },
+        )
+        settings.update(extra)
+        with override_settings(**settings):
+            cache.clear()
+            yield
+
+    def test_form_invalid_attempts_do_not_consume_registration_budget(self):
+        """
+        GIVEN an IP that has made three form-invalid registration POSTs
+        WHEN a fourth POST arrives carrying valid data
+        THEN it is not rate-limited AND a User is created
+        """
+        from django.contrib.auth.models import User as _U
+
+        with self._isolated_cache():
+            for i in range(3):
+                r = self.client.post("/accounts/register/", self._invalid_data(
+                    username="u%d" % i, email="u%d@example.com" % i,
+                ))
+                self.assertEqual(r.status_code, 200)
+            self.assertEqual(_U.objects.count(), 0)
+
+            r4 = self.client.post("/accounts/register/", self._valid_data(
+                username="realuser", email="real@example.com",
+            ))
+            self.assertEqual(r4.status_code, 302)
+            self.assertTrue(_U.objects.filter(username="realuser").exists())
+
+    def test_invalid_attempt_ceiling_still_bounds_abuse(self):
+        """
+        GIVEN REGISTRATION_INVALID_LIMIT_HOUR form-invalid POSTs from one IP
+        WHEN one more form-invalid POST arrives
+        THEN it is refused 429 AND an AbuseEvent(detail='invalid_hour') exists
+        """
+        from .models import AbuseEvent
+
+        with self._isolated_cache(REGISTRATION_INVALID_LIMIT_HOUR=4):
+            for i in range(4):
+                r = self.client.post("/accounts/register/", self._invalid_data(
+                    username="u%d" % i, email="u%d@example.com" % i,
+                ))
+                self.assertEqual(r.status_code, 200)
+
+            blocked = self.client.post("/accounts/register/", self._invalid_data(
+                username="u9", email="u9@example.com",
+            ))
+            self.assertEqual(blocked.status_code, 429)
+        self.assertEqual(
+            AbuseEvent.objects.filter(
+                defense="ratelimit", detail="invalid_hour",
+            ).count(),
+            1,
+        )
+
+    def test_valid_submission_budget_is_unchanged(self):
+        """
+        GIVEN REGISTRATION_RATE_LIMIT_HOUR=3 and three valid registrations
+        WHEN a fourth valid registration is posted
+        THEN it is refused 429 — the bot-facing limit is exactly as before
+        """
+        with self._isolated_cache():
+            for i in range(3):
+                r = self.client.post("/accounts/register/", self._valid_data(
+                    username="ok%d" % i, email="ok%d@example.com" % i,
+                ))
+                self.assertEqual(r.status_code, 302)
+
+            blocked = self.client.post("/accounts/register/", self._valid_data(
+                username="ok9", email="ok9@example.com",
+            ))
+            self.assertEqual(blocked.status_code, 429)
+
+    def test_turnstile_failure_counts_against_the_strict_budget(self):
+        """
+        GIVEN a well-formed submission whose Turnstile token is rejected
+        WHEN it is posted
+        THEN it consumes the valid-submission budget, not the invalid one
+        """
+        with self._isolated_cache(TURNSTILE_SECRET_KEY="real-secret"):
+            with mock.patch("survey.views.verify_turnstile", return_value=False):
+                for i in range(3):
+                    r = self.client.post("/accounts/register/", self._valid_data(
+                        username="cf%d" % i, email="cf%d@example.com" % i,
+                    ))
+                    self.assertEqual(r.status_code, 200)
+
+            # The strict budget is now spent, so even a clean submission with a
+            # working token is refused.
+            with mock.patch("survey.views.verify_turnstile", return_value=True):
+                blocked = self.client.post("/accounts/register/", self._valid_data(
+                    username="cf9", email="cf9@example.com",
+                ))
+                self.assertEqual(blocked.status_code, 429)
+
+    def test_kill_switch_restores_previous_counting(self):
+        """
+        GIVEN REGISTRATION_SPLIT_RATE_LIMIT=False
+        WHEN four form-invalid POSTs arrive from one IP
+        THEN the fourth is refused 429, as it was before this change
+        """
+        with self._isolated_cache(REGISTRATION_SPLIT_RATE_LIMIT=False):
+            for i in range(3):
+                r = self.client.post("/accounts/register/", self._invalid_data(
+                    username="k%d" % i, email="k%d@example.com" % i,
+                ))
+                self.assertEqual(r.status_code, 200)
+
+            blocked = self.client.post("/accounts/register/", self._invalid_data(
+                username="k9", email="k9@example.com",
+            ))
+            self.assertEqual(blocked.status_code, 429)
+
+    def test_rate_limited_response_is_a_rendered_page(self):
+        """
+        GIVEN an IP that has exhausted its registration budget
+        WHEN it posts again
+        THEN the 429 is HTML with Retry-After, links to sign-in and password
+             reset, and discloses no threshold values
+        """
+        with self._isolated_cache(REGISTRATION_RATE_LIMIT_HOUR=1):
+            self.client.post("/accounts/register/", self._valid_data(
+                username="p1", email="p1@example.com",
+            ))
+            blocked = self.client.post("/accounts/register/", self._valid_data(
+                username="p2", email="p2@example.com",
+            ))
+
+            self.assertEqual(blocked.status_code, 429)
+            self.assertIn("Retry-After", blocked)
+            self.assertIn("text/html", blocked["Content-Type"])
+            body = blocked.content.decode()
+            self.assertIn(reverse("login"), body)
+            self.assertIn(reverse("password_reset"), body)
+            # Thresholds must not leak — knowing them makes the defense
+            # trivial to pace against.
+            self.assertNotIn("REGISTRATION_RATE_LIMIT", body)
+
+    def test_redis_outage_still_fails_open(self):
+        """
+        GIVEN the cache backend raises on every access
+        WHEN a valid registration is posted
+        THEN the limiter does not block it and the User is created
+        """
+        from django.contrib.auth.models import User as _U
+
+        with self._isolated_cache():
+            with mock.patch(
+                "survey.abuse.get_usage", side_effect=Exception("redis down"),
+            ), mock.patch(
+                "survey.abuse.is_ratelimited", side_effect=Exception("redis down"),
+            ):
+                r = self.client.post("/accounts/register/", self._valid_data(
+                    username="openuser", email="open@example.com",
+                ))
+            self.assertEqual(r.status_code, 302)
+            self.assertTrue(_U.objects.filter(username="openuser").exists())
+
+
+class PasswordChecklistTest(TestCase):
+    """The checklist must describe the validators the server actually runs."""
+
+    def test_every_configured_validator_has_a_checklist_rule(self):
+        """
+        GIVEN the project's AUTH_PASSWORD_VALIDATORS
+        WHEN the checklist rules are derived
+        THEN no configured validator is missing a rule
+        """
+        from .password_rules import unmapped_validators
+
+        missing = unmapped_validators()
+        self.assertEqual(
+            missing, [],
+            "AUTH_PASSWORD_VALIDATORS contains validators with no checklist "
+            "entry (%s). Add them to VALIDATOR_RULES in survey/password_rules.py "
+            "— otherwise the registration page advertises rules that do not "
+            "match what the server enforces." % ", ".join(missing),
+        )
+
+    def test_registration_page_renders_the_checklist(self):
+        """
+        GIVEN the registration page
+        WHEN it is fetched
+        THEN it contains one checklist item per configured rule
+        """
+        from .password_rules import password_checklist_rules
+
+        response = self.client.get("/accounts/register/")
+        body = response.content.decode()
+        self.assertIn("data-password-checklist", body)
+        for rule in password_checklist_rules():
+            self.assertIn('data-rule="%s"' % rule["check"], body)
+
+    def test_common_password_is_accepted_with_advice_not_rejected(self):
+        """
+        GIVEN password composition is advisory, not enforced (2026-08-17)
+        WHEN registration is submitted with a well-known common password
+        THEN the account is created rather than the form rejecting it
+        """
+        from django.contrib.auth.models import User as _U
+        from django.test import override_settings
+
+        with override_settings(TURNSTILE_SECRET_KEY=""):
+            response = self.client.post("/accounts/register/", {
+                "username": "commonpw",
+                "email": "commonpw@example.com",
+                "password1": "password123",
+                "password2": "password123",
+                "website": "",
+                "cf-turnstile-response": "any-token",
+            })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(_U.objects.filter(username="commonpw").exists())
+
+    def test_password_similar_to_email_is_accepted(self):
+        """
+        GIVEN UserAttributeSimilarityValidator is no longer configured
+        WHEN a password closely resembling the email is submitted
+        THEN the account is created — this is the exact rejection that cost a
+             real signup on 2026-08-17
+        """
+        from django.contrib.auth.models import User as _U
+        from django.test import override_settings
+
+        with override_settings(TURNSTILE_SECRET_KEY=""):
+            response = self.client.post("/accounts/register/", {
+                "username": "marcuswildner",
+                "email": "marcuswildner@example.com",
+                "password1": "marcuswildner",
+                "password2": "marcuswildner",
+                "website": "",
+                "cf-turnstile-response": "any-token",
+            })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(_U.objects.filter(username="marcuswildner").exists())
+
+    def test_short_password_is_still_rejected(self):
+        """
+        GIVEN MinimumLengthValidator remains the one enforced rule
+        WHEN a seven-character password is submitted
+        THEN the form rejects it and no User is created
+        """
+        from django.contrib.auth.models import User as _U
+        from django.test import override_settings
+
+        with override_settings(TURNSTILE_SECRET_KEY=""):
+            response = self.client.post("/accounts/register/", {
+                "username": "shortpw",
+                "email": "shortpw@example.com",
+                "password1": "Xx12345",
+                "password2": "Xx12345",
+                "website": "",
+                "cf-turnstile-response": "any-token",
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(_U.objects.filter(username="shortpw").exists())
+
+    def test_advisory_rules_are_marked_as_advisory(self):
+        """
+        GIVEN rules that the server does not enforce
+        WHEN the registration page renders them
+        THEN they carry data-advisory so they are not styled as errors
+        """
+        from .password_rules import password_checklist_rules
+
+        response = self.client.get("/accounts/register/")
+        body = response.content.decode()
+        advisory = [r for r in password_checklist_rules() if r["advisory"]]
+
+        self.assertTrue(advisory, "expected at least one advisory rule")
+        for rule in advisory:
+            self.assertIn('data-rule="%s"' % rule["check"], body)
+        self.assertIn("data-advisory", body)
+
+    def test_username_help_text_drops_the_150_character_ceiling(self):
+        """
+        GIVEN the registration page
+        WHEN it is fetched
+        THEN the username help text states allowed characters, not a ceiling
+             nobody reaches
+        """
+        response = self.client.get("/accounts/register/")
+        body = response.content.decode()
+        self.assertNotIn("150 characters or fewer", body)
+
+
+class SignInFormRetentionTest(TestCase):
+    """A wrong password must not also wipe the username."""
+
+    def test_failed_sign_in_keeps_username_and_clears_password(self):
+        """
+        GIVEN an existing user
+        WHEN sign-in is submitted with the right username and a wrong password
+        THEN the re-rendered page carries the username and no password value
+        """
+        from django.contrib.auth.models import User as _U
+
+        _U.objects.create_user(username="keeper", password="Xx12345!secure")
+        response = self.client.post(reverse("login"), {
+            "username": "keeper",
+            "password": "wrong-password",
+        })
+        body = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('value="keeper"', body)
+        self.assertNotIn("wrong-password", body)
+
+    def test_failure_message_does_not_enumerate_accounts(self):
+        """
+        GIVEN one existing user and one identifier with no account
+        WHEN each is submitted with a bad password
+        THEN both responses carry the same failure message
+        """
+        from django.contrib.auth.models import User as _U
+
+        _U.objects.create_user(username="exists", password="Xx12345!secure")
+
+        known = self.client.post(reverse("login"), {
+            "username": "exists", "password": "wrong-password",
+        }).content.decode()
+        unknown = self.client.post(reverse("login"), {
+            "username": "nobody-here", "password": "wrong-password",
+        }).content.decode()
+
+        message = "Invalid username/email or password"
+        self.assertIn(message, known)
+        self.assertIn(message, unknown)
 
 
 from django.urls import reverse

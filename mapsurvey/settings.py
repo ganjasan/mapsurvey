@@ -159,18 +159,21 @@ if os.environ.get("DATABASE_URL"):
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
+# Only minimum length is enforced. Everything else — common passwords, reuse of
+# personal information, all-numeric — is surfaced as advice on the registration
+# form (see survey/password_rules.py) and does not block a signup.
+#
+# The deliberate trade-off: NIST SP 800-63B states the compromised-password
+# check as a SHALL, so a security questionnaire asking "do you reject known
+# breached passwords?" gets a "no, we warn" from us. That was accepted on
+# 2026-08-17, after a validator rejection cost a real signup — the person hit
+# UserAttributeSimilarityValidator (Django's SequenceMatcher at 0.7 against the
+# email, which is not what NIST asks for) and left. Revisit if an enterprise
+# deal turns on that questionnaire line: re-adding CommonPasswordValidator here
+# is a one-line change and the checklist follows automatically.
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
 
@@ -470,6 +473,21 @@ TURNSTILE_SECRET_KEY = os.environ.get('TURNSTILE_SECRET_KEY', '')
 CLOUDFLARE_TRUSTED = os.environ.get('CLOUDFLARE_TRUSTED', 'False').lower() in ('true', '1')
 REGISTRATION_RATE_LIMIT_HOUR = int(os.environ.get('REGISTRATION_RATE_LIMIT_HOUR', 3))
 REGISTRATION_RATE_LIMIT_DAY = int(os.environ.get('REGISTRATION_RATE_LIMIT_DAY', 10))
+# Attempts rejected by form validation are counted separately and far more
+# loosely. A human mistyping a password three times is indistinguishable, to a
+# counter that runs before validation, from a bot posting three registrations —
+# and on 2026-08-17 that cost us a real signup (six POSTs, three 429s, no
+# account, no email, no trace). These ceilings exist only to stop the endpoint
+# being used as an unmetered password-validator oracle; nobody legitimate should
+# ever reach them.
+REGISTRATION_INVALID_LIMIT_HOUR = int(os.environ.get('REGISTRATION_INVALID_LIMIT_HOUR', 15))
+REGISTRATION_INVALID_LIMIT_DAY = int(os.environ.get('REGISTRATION_INVALID_LIMIT_DAY', 50))
+# Kill switch. False restores the pre-2026-08-17 behaviour where every POST,
+# valid or not, counts against REGISTRATION_RATE_LIMIT_*. Merges reach prod in
+# minutes with no staging gate, so this is the rollback.
+REGISTRATION_SPLIT_RATE_LIMIT = os.environ.get(
+    'REGISTRATION_SPLIT_RATE_LIMIT', 'True'
+).lower() in ('true', '1')
 # Resend-activation endpoint. Tighter than registration: it emails an address
 # the sender does not have to control, so it is the more attractive bombing
 # vector of the two. Per-IP hourly + per-email daily.
