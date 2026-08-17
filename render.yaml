@@ -70,6 +70,13 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
         previewEnvRenderServiceName: mapsurvey
+      # Off in production until a preview proves a stalled or truncated stream
+      # ends in a bounded retry (see settings.py); on in previews so every PR
+      # stand IS that proof. This split is the re-enablement mechanism: flip
+      # the production value only after watching a stand behave.
+      - key: AI_STREAMING_ENABLED
+        value: "false"
+        previewValue: "true"
       - key: DEFAULT_FROM_EMAIL
         sync: false
         previewEnvRenderServiceName: mapsurvey
@@ -234,6 +241,13 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
         previewEnvRenderServiceName: mapsurvey
+      # Off in production until a preview proves a stalled or truncated stream
+      # ends in a bounded retry (see settings.py); on in previews so every PR
+      # stand IS that proof. This split is the re-enablement mechanism: flip
+      # the production value only after watching a stand behave.
+      - key: AI_STREAMING_ENABLED
+        value: "false"
+        previewValue: "true"
 
   # Daily acquisition-metrics sync for the funnel dashboard. There is no celery beat,
   # so the schedule lives here (design D5). Re-runs a 7-day trailing window, which is
