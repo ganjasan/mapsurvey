@@ -1456,6 +1456,14 @@ class AIGenerationEvent(models.Model):
     attempts = models.IntegerField(null=True, blank=True)
     total_latency_ms = models.IntegerField(null=True, blank=True)
     thinking_tokens = models.IntegerField(null=True, blank=True)
+    # How much of the draft has actually been written, updated as it streams.
+    # The worker cannot talk to the polling request, so the row is the channel —
+    # the same reasoning that put last_polled_at and redirected_at here, with
+    # the same benefit: a worker restart leaves a visible partial state instead
+    # of a silently lost one. Null until the first section closes, because a
+    # displayed 0 during the model's opening reasoning reads as a stall.
+    sections_drafted = models.IntegerField(null=True, blank=True)
+    questions_drafted = models.IntegerField(null=True, blank=True)
     outcome = models.CharField(
         max_length=20, choices=AI_GENERATION_OUTCOME_CHOICES, default='pending',
         db_index=True,

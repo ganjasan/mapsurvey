@@ -22602,7 +22602,7 @@ class _FakeProvider:
         self._usages = list(usages) if usages else None
         self.calls = []
 
-    def complete_structured(self, *, system, user, schema, max_tokens=64000):
+    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None):
         from survey.ai.client import LLMUsage
 
         self.calls.append(user)
@@ -22616,6 +22616,30 @@ class _FakeProvider:
             **overrides
         ))
         return blob, usage
+
+
+class _ProgressingProvider(_FakeProvider):
+    """A fake that reports draft progress before handing back its blob.
+
+    Stands in for a streaming provider without a stream: the orchestrator only
+    ever sees the callback being invoked, so a scripted sequence of counts
+    exercises the same wiring an SSE response would.
+    """
+
+    def __init__(self, blobs, steps, progress_on_first_only=False, **kwargs):
+        super().__init__(blobs, **kwargs)
+        self._steps = list(steps)
+        self._progress_on_first_only = progress_on_first_only
+        self._call = 0
+
+    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None):
+        self._call += 1
+        if on_progress is not None and not (self._progress_on_first_only and self._call > 1):
+            for sections, questions in self._steps:
+                on_progress(sections, questions)
+        return super().complete_structured(
+            system=system, user=user, schema=schema, max_tokens=max_tokens,
+        )
 
 
 class AIClientConfigTest(TestCase):
@@ -23000,6 +23024,401 @@ class AIGenerationLatencyAccountingTest(_AIGenerationFixture, TestCase):
         self.assertEqual(props['attempts'], 1)
         self.assertEqual(props['total_latency_ms'], 1234)
         self.assertNotIn('thinking_tokens', props)
+
+
+class DraftProgressScannerTest(TestCase):
+    """Progress counted from structure, so it cannot drift into fiction."""
+
+    def _draft(self, sections):
+        """A draft blob's JSON text with `sections` sections of two questions each."""
+        section = ('{"title": {"en": "T"}, "subheading": {"en": "S"}, "questions": ['
+                   '{"name": "q1"}, {"name": "q2"}]}')
+        return '{"sections": [' + ', '.join([section] * sections) + ']}'
+
+    def test_counts_sections_and_questions(self):
+        """
+        GIVEN a complete draft fed in one piece
+        WHEN the scanner consumes it
+        THEN it reports every closed section and question
+        """
+        from survey.ai.progress import DraftProgress
+
+        tracker = DraftProgress()
+        tracker.feed(self._draft(3))
+
+        self.assertEqual(tracker.sections, 3)
+        self.assertEqual(tracker.questions, 6)
+
+    def test_chunk_boundaries_do_not_change_the_count(self):
+        """
+        GIVEN the same draft split at every possible character boundary
+        WHEN the scanner consumes it chunk by chunk
+        THEN the totals match the unsplit reading, because a stream's chunking
+             is the provider's business and must not be visible in the count
+        """
+        from survey.ai.progress import DraftProgress
+
+        text = self._draft(2)
+        for size in (1, 3, 7, 50):
+            tracker = DraftProgress()
+            for start in range(0, len(text), size):
+                tracker.feed(text[start:start + size])
+            self.assertEqual((tracker.sections, tracker.questions), (2, 4),
+                             'chunk size %d' % size)
+
+    def test_braces_and_quotes_in_label_text_are_not_structure(self):
+        """
+        GIVEN question text containing braces, brackets, quotes and backslashes
+        WHEN the scanner consumes it
+        THEN the counts are unaffected, because a creator's wording is not JSON
+        """
+        from survey.ai.progress import DraftProgress
+
+        text = (
+            '{"sections": [{"title": {"en": "Where {is} it [worst]?"}, '
+            '"subheading": {"en": "say \\"why\\" \\\\ how"}, '
+            '"questions": [{"name": "a {b} [c]"}]}]}'
+        )
+
+        tracker = DraftProgress()
+        tracker.feed(text)
+
+        self.assertEqual((tracker.sections, tracker.questions), (1, 1))
+
+    def test_open_section_is_not_counted_until_it_closes(self):
+        """
+        GIVEN a stream cut off midway through the second section
+        WHEN the scanner consumes what arrived
+        THEN only the completed section counts, so the number never has to go
+             backwards if the stream then fails
+        """
+        from survey.ai.progress import DraftProgress
+
+        text = self._draft(2)
+        tracker = DraftProgress()
+        tracker.feed(text[:text.rindex('{"title"')])
+
+        self.assertEqual(tracker.sections, 1)
+
+    def test_feed_reports_whether_anything_advanced(self):
+        """
+        GIVEN a chunk that closes nothing
+        WHEN it is fed
+        THEN feed() reports no advance, which is what suppresses a needless write
+        """
+        from survey.ai.progress import DraftProgress
+
+        tracker = DraftProgress()
+
+        self.assertFalse(tracker.feed('{"sections": [{"title": '))
+        self.assertTrue(tracker.feed('{"en": "T"}, "questions": []}'))
+
+    def test_unbalanced_close_is_ignored_not_raised(self):
+        """
+        GIVEN corrupt text with more closing braces than opening ones
+        WHEN the scanner consumes it
+        THEN it does not raise, because a counter must never be the reason a
+             draft fails
+        """
+        from survey.ai.progress import DraftProgress
+
+        tracker = DraftProgress()
+        tracker.feed('}}]}')
+
+        self.assertEqual(tracker.sections, 0)
+
+
+class GeminiStreamingTest(TestCase):
+    """Streaming changes how the blob arrives, not what happens to it."""
+
+    def _sse(self, events):
+        """Encode dicts as the SSE lines the provider will read back."""
+        lines = []
+        for event in events:
+            lines.append('data: %s' % json.dumps(event))
+            lines.append('')
+        return lines
+
+    def _chunk(self, text, finish_reason=None, usage=None):
+        event = {'candidates': [{'content': {'parts': [{'text': text}]}}]}
+        if finish_reason:
+            event['candidates'][0]['finishReason'] = finish_reason
+        if usage:
+            event['usageMetadata'] = usage
+        return event
+
+    def _stream(self, events):
+        response = mock.MagicMock()
+        response.status_code = 200
+        response.iter_lines.return_value = iter(self._sse(events))
+        return response
+
+    def _blob_text(self):
+        return ('{"sections": [{"title": {"en": "T"}, "subheading": {"en": "S"}, '
+                '"questions": [{"name": "q1"}]}]}')
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_progress_is_reported_and_the_result_is_unchanged(self):
+        """
+        GIVEN a callback and a response streamed in several chunks
+        WHEN generation runs
+        THEN progress is reported as sections close, and the parsed blob and
+             usage are what the same response would have produced unstreamed
+        """
+        from survey.ai.client import GeminiProvider
+
+        text = self._blob_text()
+        events = [
+            self._chunk(text[:40]),
+            self._chunk(text[40:]),
+            self._chunk('', finish_reason='STOP',
+                        usage={'promptTokenCount': 11, 'candidatesTokenCount': 22,
+                               'totalTokenCount': 60}),
+        ]
+        seen = []
+
+        with patch('requests.post', return_value=self._stream(events)):
+            blob, usage = GeminiProvider().complete_structured(
+                system='s', user='u', schema={'type': 'object'},
+                on_progress=lambda sections, questions: seen.append((sections, questions)),
+            )
+
+        self.assertEqual(blob, json.loads(text))
+        self.assertEqual(usage.input_tokens, 11)
+        self.assertEqual(usage.output_tokens, 22)
+        self.assertEqual(usage.thinking_tokens, 27)
+        self.assertEqual(seen, [(1, 1)])
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_streaming_endpoint_is_used_only_with_a_callback(self):
+        """
+        GIVEN a call with no progress callback
+        WHEN generation runs
+        THEN the blocking endpoint is used, so a caller that wants no progress
+             pays nothing for the streaming path
+        """
+        from survey.ai.client import GeminiProvider
+
+        response = mock.MagicMock()
+        response.status_code = 200
+        response.json.return_value = {
+            'usageMetadata': {'promptTokenCount': 1, 'candidatesTokenCount': 2,
+                              'totalTokenCount': 3},
+            'candidates': [{'finishReason': 'STOP',
+                            'content': {'parts': [{'text': self._blob_text()}]}}],
+        }
+
+        with patch('requests.post', return_value=response) as post:
+            GeminiProvider().complete_structured(
+                system='s', user='u', schema={'type': 'object'},
+            )
+
+        self.assertIn(':generateContent', post.call_args.args[0])
+        self.assertNotIn('streamGenerateContent', post.call_args.args[0])
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_a_raising_callback_does_not_fail_the_draft(self):
+        """
+        GIVEN a progress callback that raises every time it is called
+        WHEN generation runs
+        THEN the draft still comes back, because progress reporting is strictly
+             less important than the draft it describes
+        """
+        from survey.ai.client import GeminiProvider
+
+        text = self._blob_text()
+        events = [self._chunk(text),
+                  self._chunk('', finish_reason='STOP', usage={'promptTokenCount': 1})]
+
+        def explode(sections, questions):
+            raise RuntimeError('progress store is down')
+
+        with patch('requests.post', return_value=self._stream(events)):
+            blob, _ = GeminiProvider().complete_structured(
+                system='s', user='u', schema={'type': 'object'}, on_progress=explode,
+            )
+
+        self.assertEqual(blob, json.loads(text))
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_truncation_still_raises_with_its_usage(self):
+        """
+        GIVEN a stream whose final chunk reports the token ceiling
+        WHEN generation runs
+        THEN TruncatedOutput is raised carrying the usage, exactly as unstreamed
+        """
+        from survey.ai.client import GeminiProvider, TruncatedOutput
+
+        events = [self._chunk('{"sections": ['),
+                  self._chunk('', finish_reason='MAX_TOKENS',
+                              usage={'candidatesTokenCount': 64000})]
+
+        with patch('requests.post', return_value=self._stream(events)):
+            with self.assertRaises(TruncatedOutput) as raised:
+                GeminiProvider().complete_structured(
+                    system='s', user='u', schema={'type': 'object'},
+                    on_progress=lambda s, q: None,
+                )
+
+        self.assertEqual(raised.exception.usage.output_tokens, 64000)
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_mid_stream_failure_is_a_provider_error(self):
+        """
+        GIVEN a stream that dies after headers were already accepted
+        WHEN generation runs
+        THEN it surfaces as ProviderError, landing on the same outcome any other
+             provider failure does
+        """
+        import requests
+
+        from survey.ai.client import GeminiProvider, ProviderError
+
+        response = mock.MagicMock()
+        response.status_code = 200
+        response.iter_lines.side_effect = requests.RequestException('connection reset')
+
+        with patch('requests.post', return_value=response):
+            with self.assertRaises(ProviderError):
+                GeminiProvider().complete_structured(
+                    system='s', user='u', schema={'type': 'object'},
+                    on_progress=lambda s, q: None,
+                )
+
+
+class AIGenerationProgressRecordingTest(_AIGenerationFixture, TestCase):
+    """Progress reaches the row the poller reads, and a retry restarts it."""
+
+    def test_counts_are_recorded_as_the_draft_grows(self):
+        """
+        GIVEN a provider that reports progress while generating
+        WHEN generation runs
+        THEN the event row carries the counts a poll would have read
+        """
+        blob = _ai_blob(('en',))
+        provider = _ProgressingProvider([blob], [(1, 2), (2, 5)])
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+        recorded = AIGenerationEvent.objects.get(pk=event.pk)
+        self.assertEqual(recorded.sections_drafted, 2)
+        self.assertEqual(recorded.questions_drafted, 5)
+
+    def test_retry_restarts_the_counts(self):
+        """
+        GIVEN a first attempt that drafted sections and was then rejected
+        WHEN the second attempt begins
+        THEN the stored counts are cleared, so the counter does not jump
+             backwards when the replacement draft's first section closes
+        """
+        bad = _ai_blob(('en',))
+        bad['sections'] = bad['sections'][:1]
+        provider = _ProgressingProvider([bad, _ai_blob(('en',))], [(4, 9)], progress_on_first_only=True)
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+        recorded = AIGenerationEvent.objects.get(pk=event.pk)
+        self.assertIsNone(recorded.sections_drafted)
+
+    def test_progress_cannot_resurrect_a_finished_generation(self):
+        """
+        GIVEN a progress callback invoked after the outcome was already written
+        WHEN it fires
+        THEN the row is not touched, because the update is filtered on pending
+        """
+        from survey.ai.generation import _progress_recorder
+
+        event = AIGenerationEvent.objects.create(
+            kind='survey_draft', user=self.user, organization=self.org, outcome='success',
+        )
+
+        _progress_recorder(event)(3, 7)
+
+        event.refresh_from_db()
+        self.assertIsNone(event.sections_drafted)
+
+
+class AIGenerationProgressPollingTest(TestCase):
+    """The status endpoint reports news, and stays silent otherwise."""
+
+    def setUp(self):
+        self.org = _make_org('AIPollOrg')
+        self.user = User.objects.create_user('aipolluser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.force_login(self.user)
+        self.event = AIGenerationEvent.objects.create(
+            kind='survey_draft', user=self.user, organization=self.org, outcome='pending',
+        )
+        self.url = reverse('editor_generation_status', kwargs={'event_id': self.event.pk})
+
+    def test_nothing_drafted_yet_leaves_the_page_alone(self):
+        """
+        GIVEN a pending event with no counts recorded
+        WHEN the status endpoint is polled
+        THEN it answers 204, so the waiting card is never re-rendered and no
+             zero is shown that would read as a stall
+        """
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 204)
+
+    def test_advanced_counts_return_a_fragment(self):
+        """
+        GIVEN stored counts ahead of what the poller reports having
+        WHEN the status endpoint is polled
+        THEN the fragment carries the current counts
+        """
+        AIGenerationEvent.objects.filter(pk=self.event.pk).update(
+            sections_drafted=3, questions_drafted=8)
+
+        response = self.client.get(self.url, {'sections': 1})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '3 sections drafted')
+        self.assertContains(response, '8 questions')
+
+    def test_unchanged_counts_return_no_content(self):
+        """
+        GIVEN stored counts the poller already has
+        WHEN the status endpoint is polled
+        THEN it answers 204 rather than re-sending what is already on screen
+        """
+        AIGenerationEvent.objects.filter(pk=self.event.pk).update(
+            sections_drafted=3, questions_drafted=8)
+
+        response = self.client.get(self.url, {'sections': 3})
+
+        self.assertEqual(response.status_code, 204)
+
+    def test_malformed_client_count_is_tolerated(self):
+        """
+        GIVEN a junk `sections` parameter
+        WHEN the status endpoint is polled
+        THEN it answers with the fragment rather than a 400: the value is a hint
+             about what the browser rendered, not a permission
+        """
+        AIGenerationEvent.objects.filter(pk=self.event.pk).update(sections_drafted=2)
+
+        response = self.client.get(self.url, {'sections': 'banana'})
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_another_users_event_is_not_disclosed(self):
+        """
+        GIVEN an event belonging to a different user
+        WHEN it is polled
+        THEN the request is rejected and no progress is disclosed
+        """
+        other = User.objects.create_user('aipollother', password='pass')
+        other_org = _make_org('AIPollOther')
+        Membership.objects.create(user=other, organization=other_org, role='owner')
+        self.client.force_login(other)
+
+        response = self.client.get(self.url, {'sections': 0})
+
+        self.assertIn(response.status_code, (403, 404))
 
 
 class AISurveyCreateViewTest(TestCase):

@@ -87,6 +87,50 @@ class AttemptSet:
             self.thinking_tokens = (self.thinking_tokens or 0) + usage.thinking_tokens
 
 
+def _progress_recorder(event):
+    """A callback that publishes draft counts to the row the poller reads.
+
+    `queryset.update()` rather than saving the instance, for the reason already
+    documented at the status endpoint: the worker and the poller write this row
+    concurrently, and a load-modify-save here could clobber a terminal outcome
+    with a stale `pending`. The `outcome='pending'` filter is the second half of
+    that guarantee — once the generation has finished, a late progress callback
+    matches nothing and writes nothing.
+
+    Fresh per attempt, and only writes when a count actually advances: a section
+    closing happens a handful of times per generation, not per chunk.
+
+    Clearing the stored counts up front is what makes a retry legible. The
+    second attempt writes a whole new draft, so leaving the first one's numbers
+    in place would make the counter jump backwards when the new draft's first
+    section closes. Back to null, and the overlay hides the counter until the
+    replacement draft has actually produced something.
+    """
+    # Both the row and the in-memory instance, always together: `_finish()`
+    # ends with a full `event.save()`, so an instance still carrying the stale
+    # values it was loaded with would write them back over everything recorded
+    # here. Keeping the two in step is what makes the counts survive the finish.
+    event.sections_drafted = None
+    event.questions_drafted = None
+    AIGenerationEvent.objects.filter(pk=event.pk, outcome='pending').update(
+        sections_drafted=None, questions_drafted=None,
+    )
+    seen = {'sections': -1, 'questions': -1}
+
+    def record(sections, questions):
+        if sections <= seen['sections'] and questions <= seen['questions']:
+            return
+        seen['sections'] = sections
+        seen['questions'] = questions
+        event.sections_drafted = sections
+        event.questions_drafted = questions
+        AIGenerationEvent.objects.filter(pk=event.pk, outcome='pending').update(
+            sections_drafted=sections, questions_drafted=questions,
+        )
+
+    return record
+
+
 def _finish(event, outcome, error_detail='', survey=None, attempts=None, blob=None):
     event.outcome = outcome
     event.error_detail = error_detail[:2000]
@@ -188,9 +232,14 @@ def generate_survey_draft(event, brief, languages, header_overrides):
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
         attempts.started()
+        # Reset per attempt: a retry starts a new draft, and counts that carried
+        # over would show the creator a survey growing past what any single
+        # answer contains.
+        record_progress = _progress_recorder(event)
         try:
             blob, usage = provider.complete_structured(
                 system=prompts.SYSTEM_PROMPT, user=user_prompt, schema=schema,
+                on_progress=record_progress,
             )
         except client.TruncatedOutput as exc:
             # Worth one retry with a brevity hint; a second truncation means

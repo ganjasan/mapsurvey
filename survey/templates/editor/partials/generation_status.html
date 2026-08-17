@@ -6,11 +6,16 @@ up to a minute and the creator must not miss that it started, nor keep editing
 a form whose values are already on their way to the model. Inline it also sat
 below the fold on a laptop, which is exactly the confusion this replaces.
 
-The quips are entertainment, not telemetry: generation is a single opaque
-model call, so there is no honest per-step progress to show. Loading-screen
-flavour text is the established way to make a minute-long wait feel intentional
-rather than broken — it must never imply a pipeline stage the backend does not
-actually have.
+The quips are entertainment, not telemetry, and they stay that way. What changed
+is that the call now streams, so alongside them there IS an honest number: the
+`gen-progress` line below counts sections the model has actually finished
+writing, swapped in out-of-band by the poller (see generation_progress.html).
+
+The rule that produced this comment is unchanged and still binding — flavour
+text must never imply a pipeline stage the backend does not have. The quips
+cover the opening stretch, where the model is reasoning and the honest count is
+zero; showing "0 sections" there would read as a stall, so the line is absent
+until the first section closes.
 {% endcomment %}
 <div id="generation-status" class="gen-overlay" role="status" aria-live="polite">
   {% comment %}
@@ -22,12 +27,19 @@ actually have.
   <div id="generation-poll" hidden
        hx-get="{% url 'editor_generation_status' event.id %}"
        hx-trigger="every 2s"
+       hx-vals="js:{sections: (document.getElementById('gen-progress') || {dataset:{}}).dataset.sections || 0}"
        hx-swap="none"></div>
   <div class="gen-card">
     <div class="gen-spinner" aria-hidden="true"></div>
     <div class="gen-copy">
       <div class="gen-title">Building your survey…</div>
       <div class="gen-quip" id="gen-quip">Unfolding the map…</div>
+      {% comment %}
+      Empty until the first section closes: the endpoint replaces this whole
+      element out-of-band, so an empty placeholder is what "nothing drafted yet"
+      looks like — not a zero the creator would read as a stalled generation.
+      {% endcomment %}
+      <div id="gen-progress" class="gen-progress" data-sections="0"></div>
       <div class="gen-note">This usually takes under a minute. You can leave this page —
         the draft will be waiting on your dashboard.</div>
     </div>

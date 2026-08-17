@@ -300,6 +300,19 @@ def _start_survey_generation(request, form):
     })
 
 
+def _int_param(raw):
+    """A non-negative integer from a query string, or 0 for anything else.
+
+    The value is a hint about what the browser already rendered, not a
+    permission or an identifier, so a malformed one deserves a redundant
+    fragment rather than a 400.
+    """
+    try:
+        return max(0, int(raw))
+    except (TypeError, ValueError):
+        return 0
+
+
 @org_permission_required('editor')
 def editor_generation_status(request, event_id):
     """Polled by the create page while a draft is being generated.
@@ -317,9 +330,22 @@ def editor_generation_status(request, event_id):
     # clobber a terminal outcome with a stale 'pending'.
     AIGenerationEvent.objects.filter(pk=event.pk).update(last_polled_at=timezone.now())
     if event.outcome == 'pending':
-        # Deliberately empty: the overlay is already on the page and must not be
-        # re-rendered on every tick — swapping it restarted its animations and
-        # made the screen flicker. 204 leaves the DOM untouched.
+        # Deliberately empty unless there is news: the overlay is already on the
+        # page and must not be re-rendered on every tick — swapping it restarted
+        # its animations and made the screen flicker. 204 leaves the DOM
+        # untouched, so it stays the answer whenever the draft has not moved.
+        #
+        # The client sends what it already has rather than the server tracking
+        # it: this endpoint is hit every 2s for the length of the wait, and
+        # per-poll state would mean a write on each one.
+        sections = event.sections_drafted or 0
+        questions = event.questions_drafted or 0
+        known = _int_param(request.GET.get('sections'))
+        if sections and sections > known:
+            return render(request, 'editor/partials/generation_progress.html', {
+                'sections': sections,
+                'questions': questions,
+            })
         return HttpResponse(status=204)
 
     if event.outcome == 'success' and event.created_survey_id:
