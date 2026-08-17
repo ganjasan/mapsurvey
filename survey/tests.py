@@ -24432,6 +24432,12 @@ class AISurveyCreateViewTest(TestCase):
         self.assertContains(response, 'Building your survey')
         self.assertContains(response, 'hx-trigger')
 
+    # The decorator is load-bearing: without it the test only passes on a
+    # machine whose .env happens to hold a real provider key (run_tests.sh
+    # exports .env), because an unconfigured provider returns the
+    # not-configured fragment instead of the waiting card. It shipped without
+    # one and failed on the first checkout that lacked a key.
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
     def test_waiting_card_opens_with_an_indeterminate_bar_and_no_quips(self):
         """
         GIVEN a generate submission that succeeds in enqueueing
