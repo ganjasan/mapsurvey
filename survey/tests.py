@@ -22642,6 +22642,119 @@ class _ProgressingProvider(_FakeProvider):
         )
 
 
+class _FlakyProvider(_FakeProvider):
+    """Fails a scripted number of calls before behaving, like a provider under load."""
+
+    def __init__(self, blobs, error, failures, **kwargs):
+        super().__init__(blobs, **kwargs)
+        self._error = None  # the base class would raise it on every call
+        self._flaky_error = error
+        self._failures = failures
+        self.attempts_made = 0
+
+    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None):
+        self.attempts_made += 1
+        if self.attempts_made <= self._failures:
+            raise self._flaky_error
+        return super().complete_structured(
+            system=system, user=user, schema=schema, max_tokens=max_tokens,
+        )
+
+
+class AIProviderErrorClassificationTest(TestCase):
+    """Which failures are worth another try, decided where the status is seen."""
+
+    def test_server_side_statuses_are_transient(self):
+        """
+        GIVEN a 429 or any 5xx
+        WHEN it is classified
+        THEN it is transient, because it describes the provider's moment
+        """
+        from survey.ai.client import _transient_status
+
+        for status in (429, 500, 502, 503, 504):
+            self.assertTrue(_transient_status(status), status)
+
+    def test_client_side_statuses_are_verdicts(self):
+        """
+        GIVEN a 4xx other than rate limiting
+        WHEN it is classified
+        THEN it is not transient, because it describes our request
+        """
+        from survey.ai.client import _transient_status
+
+        for status in (400, 401, 403, 404):
+            self.assertFalse(_transient_status(status), status)
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='')
+    def test_gemini_overload_is_raised_as_transient(self):
+        """
+        GIVEN the provider answering 503
+        WHEN the call is made
+        THEN the raised error is marked transient, which is what earns the retry
+        """
+        from survey.ai.client import GeminiProvider, ProviderError
+
+        response = mock.MagicMock()
+        response.status_code = 503
+        response.json.return_value = {'error': {'message': 'high demand'}}
+
+        with patch('requests.post', return_value=response):
+            with self.assertRaises(ProviderError) as raised:
+                GeminiProvider().complete_structured(
+                    system='s', user='u', schema={'type': 'object'},
+                )
+
+        self.assertTrue(raised.exception.transient)
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='')
+    def test_gemini_unparseable_output_is_transient(self):
+        """
+        GIVEN a 200 whose body is not the JSON the schema demanded
+        WHEN the call is made
+        THEN the error is transient: this is the failure that hit production on
+             2026-08-17 and it is the provider stumbling, not a bad brief
+        """
+        from survey.ai.client import GeminiProvider, ProviderError
+
+        response = mock.MagicMock()
+        response.status_code = 200
+        response.json.return_value = {
+            'usageMetadata': {'promptTokenCount': 1},
+            'candidates': [{'finishReason': 'STOP',
+                            'content': {'parts': [{'text': '{"sections": [{"tit'}]}}],
+        }
+
+        with patch('requests.post', return_value=response):
+            with self.assertRaises(ProviderError) as raised:
+                GeminiProvider().complete_structured(
+                    system='s', user='u', schema={'type': 'object'},
+                )
+
+        self.assertTrue(raised.exception.transient)
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='')
+    def test_retired_model_is_not_transient(self):
+        """
+        GIVEN a 404 for a model this key cannot use
+        WHEN the call is made
+        THEN the error is final, because retrying cannot make the model exist
+        """
+        from survey.ai.client import GeminiProvider, ProviderError
+
+        response = mock.MagicMock()
+        response.status_code = 404
+        response.json.return_value = {'error': {'message': 'model not found'}}
+
+        with patch('requests.post', return_value=response):
+            with self.assertRaises(ProviderError) as raised:
+                GeminiProvider().complete_structured(
+                    system='s', user='u', schema={'type': 'object'},
+                )
+
+        self.assertFalse(raised.exception.transient)
+
+
 class AIClientConfigTest(TestCase):
     """Credentials absent is a state, not an error."""
 
@@ -23263,6 +23376,29 @@ class GeminiStreamingTest(TestCase):
         self.assertEqual(raised.exception.usage.output_tokens, 64000)
 
     @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_stream_cut_short_is_not_mistaken_for_a_complete_answer(self):
+        """
+        GIVEN a stream that stops mid-JSON without ever reporting a finish reason
+        WHEN the call is made
+        THEN it raises a transient ProviderError rather than handing the partial
+             text to the parser — the regression that reached production on
+             2026-08-17 and surfaced to creators as an unreachable AI service
+        """
+        from survey.ai.client import GeminiProvider, ProviderError
+
+        events = [self._chunk('{"sections": [{"title": {"en": "Half a dr')]
+
+        with patch('requests.post', return_value=self._stream(events)):
+            with self.assertRaises(ProviderError) as raised:
+                GeminiProvider().complete_structured(
+                    system='s', user='u', schema={'type': 'object'},
+                    on_progress=lambda s, q: None,
+                )
+
+        self.assertTrue(raised.exception.transient)
+        self.assertNotIn('unparseable', str(raised.exception))
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
     def test_mid_stream_failure_is_a_provider_error(self):
         """
         GIVEN a stream that dies after headers were already accepted
@@ -23284,6 +23420,153 @@ class GeminiStreamingTest(TestCase):
                     system='s', user='u', schema={'type': 'object'},
                     on_progress=lambda s, q: None,
                 )
+
+
+class AITransientRetryTest(_AIGenerationFixture, TestCase):
+    """A provider having a bad second must not become the creator's dead end."""
+
+    def setUp(self):
+        super().setUp()
+        # The waits are real seconds in production and pure delay in a test.
+        sleep = patch('survey.ai.generation.time.sleep')
+        self.sleep = sleep.start()
+        self.addCleanup(sleep.stop)
+
+    def test_overload_is_ridden_out(self):
+        """
+        GIVEN a provider that returns 503 twice and then succeeds
+        WHEN generation runs
+        THEN the creator gets their survey, never seeing the failures
+        """
+        from survey.ai.client import ProviderError
+
+        provider = _FlakyProvider(
+            [_ai_blob(('en',))],
+            ProviderError('API error 503: high demand', transient=True),
+            failures=2,
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+        self.assertIsNotNone(event.created_survey_id)
+        self.assertEqual(provider.attempts_made, 3)
+
+    def test_malformed_reply_is_ridden_out(self):
+        """
+        GIVEN a provider whose first reply does not parse and whose second does
+        WHEN generation runs
+        THEN the draft still lands, because a garbled payload is the provider
+             stumbling rather than an answer to the creator's brief
+        """
+        from survey.ai.client import ProviderError
+
+        provider = _FlakyProvider(
+            [_ai_blob(('en',))],
+            ProviderError('unparseable model output: Expecting value', transient=True),
+            failures=1,
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+
+    def test_every_retry_is_counted_as_waiting(self):
+        """
+        GIVEN a provider that is transiently broken for the whole budget
+        WHEN generation gives up
+        THEN the event records every call made, so the wait the creator sat
+             through is visible rather than reported as a single failure
+        """
+        from survey.ai.client import ProviderError
+        from survey.ai.generation import TRANSIENT_BACKOFF_SECONDS
+
+        provider = _FlakyProvider(
+            [], ProviderError('API error 503: high demand', transient=True), failures=99,
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'provider_error')
+        self.assertEqual(provider.attempts_made, len(TRANSIENT_BACKOFF_SECONDS) + 1)
+        self.assertEqual(event.attempts, len(TRANSIENT_BACKOFF_SECONDS) + 1)
+        self.assertEqual(self.sleep.call_count, len(TRANSIENT_BACKOFF_SECONDS))
+
+    def test_backoff_grows_between_retries(self):
+        """
+        GIVEN a provider that stays overloaded
+        WHEN the retries run
+        THEN each wait is longer than the last, so a struggling provider is not
+             hammered at a fixed rate
+        """
+        from survey.ai.client import ProviderError
+        from survey.ai.generation import TRANSIENT_BACKOFF_SECONDS
+
+        provider = _FlakyProvider(
+            [], ProviderError('API error 503', transient=True), failures=99,
+        )
+
+        self._run(provider)
+
+        waited = [call.args[0] for call in self.sleep.call_args_list]
+        self.assertEqual(waited, list(TRANSIENT_BACKOFF_SECONDS))
+        self.assertEqual(waited, sorted(waited))
+
+    @override_settings(AI_STREAMING_ENABLED=False)
+    def test_streaming_can_be_switched_off_without_a_deploy(self):
+        """
+        GIVEN the streaming kill switch turned off
+        WHEN generation runs
+        THEN no progress callback is passed, so the provider takes the blocking
+             path and the draft still lands
+        """
+        provider = _ProgressingProvider([_ai_blob(('en',))], [(1, 2)])
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+        self.assertIsNone(event.sections_drafted)
+
+    def test_a_verdict_is_not_retried(self):
+        """
+        GIVEN a failure the provider will repeat — a rejected key, say
+        WHEN generation runs
+        THEN it is reported once, because spending the creator's wait twice
+             arrives at the same message
+        """
+        from survey.ai.client import ProviderError
+
+        provider = _FlakyProvider(
+            [], ProviderError('API error 401: invalid key'), failures=99,
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'provider_error')
+        self.assertEqual(provider.attempts_made, 1)
+        self.assertFalse(self.sleep.called)
+
+    def test_transient_retries_do_not_spend_the_validation_budget(self):
+        """
+        GIVEN a provider that is overloaded once and then returns an invalid draft
+        WHEN generation runs
+        THEN the invalid draft still gets its own retry, because riding out a
+             503 must not consume the attempt a bad draft needed
+        """
+        from survey.ai.client import ProviderError
+
+        bad = _ai_blob(('en',))
+        bad['sections'] = bad['sections'][:1]
+        provider = _FlakyProvider(
+            [bad, _ai_blob(('en',))],
+            ProviderError('API error 503', transient=True),
+            failures=1,
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+        self.assertEqual(provider.attempts_made, 3)
 
 
 class AIGenerationProgressRecordingTest(_AIGenerationFixture, TestCase):

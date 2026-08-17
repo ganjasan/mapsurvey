@@ -478,6 +478,17 @@ GEMINI_MODEL = os.environ.get('GEMINI_MODEL') or 'gemini-3.6-flash'
 # blank value is a meaningful instruction ("send no thinkingConfig"), so `or`
 # would swallow the very escape hatch this setting provides.
 AI_THINKING_LEVEL = os.environ.get('AI_THINKING_LEVEL', 'medium')
+# Kill switch for streamed generation. On = the creator sees a progress counter
+# while the draft is written; off = one blocking call, exactly as before the
+# streaming change, with no progress and nothing else different.
+#
+# It exists because streaming has a failure mode a blocking call does not: the
+# connection can close mid-answer. On 2026-08-17 that reached production and
+# read to creators as "Couldn't reach the AI service". That specific hole is
+# closed (a stream with no finish reason is now a retryable error), but the
+# class of problem is real, and getting back to the known-good path should be a
+# dashboard edit rather than a revert and a deploy.
+AI_STREAMING_ENABLED = os.environ.get('AI_STREAMING_ENABLED', 'true').lower() != 'false'
 
 LOGGING = {
     # The `abuse` logger keeps its dedicated routing (survey/abuse.py). The root
