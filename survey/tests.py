@@ -24070,36 +24070,6 @@ class AIGenerationProgressPollingTest(TestCase):
         self.assertContains(response, '8 questions')
         self.assertContains(response, '3 sections')
 
-    def test_fragment_carries_a_proportional_bar_fill(self):
-        """
-        GIVEN four questions drafted of the calibrated expectation of eight
-        WHEN the status endpoint is polled
-        THEN the fragment's bar is filled proportionally (45%), derived from the
-             model's own output rather than elapsed time
-        """
-        AIGenerationEvent.objects.filter(pk=self.event.pk).update(
-            sections_drafted=1, questions_drafted=4)
-
-        response = self.client.get(self.url, {'sections': 0, 'questions': 0})
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'width: 45%')
-
-    def test_bar_never_claims_completion_while_pending(self):
-        """
-        GIVEN more questions drafted than the calibrated expectation
-        WHEN the status endpoint is polled
-        THEN the fill parks at the 90% cap — the bar may sit near the end, but
-             it must never read as complete while the draft is still arriving
-        """
-        AIGenerationEvent.objects.filter(pk=self.event.pk).update(
-            sections_drafted=4, questions_drafted=14)
-
-        response = self.client.get(self.url, {'sections': 0, 'questions': 0})
-
-        self.assertContains(response, 'width: 90%')
-        self.assertNotContains(response, 'width: 100%')
-
     def test_fragment_has_no_percentage_label(self):
         """
         GIVEN any progress fragment
@@ -24438,12 +24408,12 @@ class AISurveyCreateViewTest(TestCase):
     # not-configured fragment instead of the waiting card. It shipped without
     # one and failed on the first checkout that lacked a key.
     @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
-    def test_waiting_card_opens_with_an_indeterminate_bar_and_no_quips(self):
+    def test_waiting_card_opens_with_quips_and_elapsed(self):
         """
         GIVEN a generate submission that succeeds in enqueueing
         WHEN the waiting card is returned
-        THEN it carries the indeterminate bar (the model is reasoning, nothing
-             is measurable yet) and none of the retired flavour-text machinery
+        THEN it carries the rotating quips and the ticking elapsed counter, and
+             no trace of the removed progress bar
         """
         with patch('survey.editor_views.generate_survey_draft_task.delay'):
             response = self.client.post(reverse('editor_survey_create'), {
@@ -24452,9 +24422,9 @@ class AISurveyCreateViewTest(TestCase):
                 'use_case': 'urban_planning',
             })
 
-        self.assertContains(response, 'gen-bar-indeterminate')
-        self.assertNotContains(response, 'gen-quip')
-        self.assertNotContains(response, 'Unfolding the map')
+        self.assertContains(response, 'gen-quip')
+        self.assertContains(response, 'gen-elapsed')
+        self.assertNotContains(response, 'gen-bar')
 
     @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
     def test_generate_without_a_goal_redisplays_the_form(self):

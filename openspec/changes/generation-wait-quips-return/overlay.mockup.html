@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Generation wait — mockup (quips + elapsed, no bar)</title>
+<style>
+  :root { --accent: #6d28d9; --accent-light: #ede9fe; --radius: 10px; --border-color: #e5e7eb; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #f3f4f6; }
+  h2 { font-size: .95rem; color: #374151; margin: 2rem auto .6rem; max-width: 520px; }
+  h2 small { font-weight: 400; color: #6b7280; }
+  .stage {
+    position: relative; max-width: 520px; height: 210px; margin: 0 auto;
+    border-radius: 12px; overflow: hidden;
+    /* faux map under the overlay, like the real create page */
+    background:
+      radial-gradient(circle at 20% 30%, #bbe5b3 0 12%, transparent 13%),
+      radial-gradient(circle at 75% 65%, #a8d5f2 0 16%, transparent 17%),
+      radial-gradient(circle at 60% 20%, #f2e2a8 0 9%, transparent 10%),
+      repeating-linear-gradient(64deg, #e8e6df 0 26px, #dcd9d0 26px 28px),
+      #eceae3;
+  }
+  .gen-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(17, 24, 39, 0.45); backdrop-filter: blur(2px);
+  }
+  .gen-card {
+    display: flex; align-items: flex-start; gap: 1.1rem;
+    max-width: 460px; margin: 1rem; padding: 1.4rem 1.6rem;
+    border-radius: var(--radius); background: #fff;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+  }
+  .gen-spinner {
+    width: 30px; height: 30px; flex-shrink: 0; margin-top: .15rem;
+    border: 3px solid var(--accent-light); border-top-color: var(--accent);
+    border-radius: 50%; animation: gen-spin .9s linear infinite;
+  }
+  @keyframes gen-spin { to { transform: rotate(360deg); } }
+  .gen-title { font-weight: 600; font-size: 1rem; color: #111827; }
+  .gen-quip {
+    font-size: .88rem; color: var(--accent); margin-top: .2rem;
+    min-height: 1.2em; transition: opacity .35s ease;
+  }
+  .gen-elapsed { color: #9ca3af; font-weight: 400; font-size: .85rem; font-variant-numeric: tabular-nums; }
+  .gen-counts { font-size: .88rem; color: #374151; margin-top: .2rem; font-variant-numeric: tabular-nums; }
+  .gen-note { font-size: .79rem; color: #6b7280; margin-top: .45rem; line-height: 1.4; }
+</style>
+</head>
+<body>
+
+<h2>Прод (без стриминга): спиннер + квип + секунды <small>— квипы ротируются, таймер тикает</small></h2>
+<div class="stage">
+  <div class="gen-overlay"><div class="gen-card">
+    <div class="gen-spinner"></div>
+    <div>
+      <div class="gen-title">Building your survey… <span class="gen-elapsed">(<span id="t1">0</span>s)</span></div>
+      <div class="gen-quip"><span id="quip1">Unfolding the map…</span></div>
+      <div class="gen-note">This usually takes under a minute. You can leave this page —
+        the draft will be waiting on your dashboard.</div>
+    </div>
+  </div></div>
+</div>
+
+<h2>Превью (стриминг жив): те же квип и секунды, ПОД ними — реальный счётчик <small>— появляется с первого вопроса</small></h2>
+<div class="stage">
+  <div class="gen-overlay"><div class="gen-card">
+    <div class="gen-spinner"></div>
+    <div>
+      <div class="gen-title">Building your survey… <span class="gen-elapsed">(<span id="t2">9</span>s)</span></div>
+      <div class="gen-quip"><span id="quip2">Choosing words your respondents will actually read…</span></div>
+      <div class="gen-counts" id="counts2">1 question drafted</div>
+      <div class="gen-note">This usually takes under a minute. You can leave this page —
+        the draft will be waiting on your dashboard.</div>
+    </div>
+  </div></div>
+</div>
+
+<script>
+  var QUIPS = ['Unfolding the map…','Sharpening the map pins…','Consulting the cartographers…',
+    'Teaching the questions to behave…','Choosing words your respondents will actually read…',
+    'Measuring twice, asking once…','Arranging sections in a sensible order…',
+    'Aligning the legend with the terrain…'];
+  function rotate(id, offset) {
+    var i = offset, el = document.getElementById(id);
+    setInterval(function () {
+      el.style.opacity = '0';
+      setTimeout(function () { i = (i + 1) % QUIPS.length; el.textContent = QUIPS[i]; el.style.opacity = '1'; }, 350);
+    }, 3200);
+  }
+  rotate('quip1', 0); rotate('quip2', 4);
+  var t1 = 0, t2 = 9;
+  setInterval(function () { document.getElementById('t1').textContent = ++t1; }, 1000);
+  setInterval(function () { document.getElementById('t2').textContent = ++t2; }, 1000);
+  // The preview pane demonstrates counts advancing as sections close.
+  var stages = ['1 question drafted', '3 questions · 1 section drafted',
+                '5 questions · 2 sections drafted', '7 questions · 3 sections drafted'];
+  var s = 0;
+  setInterval(function () { s = Math.min(s + 1, stages.length - 1);
+    document.getElementById('counts2').textContent = stages[s]; }, 4000);
+</script>
+</body>
+</html>
