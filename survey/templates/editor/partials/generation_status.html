@@ -27,7 +27,8 @@ until the first section closes.
   <div id="generation-poll" hidden
        hx-get="{% url 'editor_generation_status' event.id %}"
        hx-trigger="every 2s"
-       hx-vals="js:{sections: (document.getElementById('gen-progress') || {dataset:{}}).dataset.sections || 0}"
+       hx-vals="js:{sections: (document.getElementById('gen-progress') || {dataset:{}}).dataset.sections || 0,
+                    questions: (document.getElementById('gen-progress') || {dataset:{}}).dataset.questions || 0}"
        hx-swap="none"></div>
   <div class="gen-card">
     <div class="gen-spinner" aria-hidden="true"></div>
@@ -35,11 +36,13 @@ until the first section closes.
       <div class="gen-title">Building your survey…</div>
       <div class="gen-quip" id="gen-quip">Unfolding the map…</div>
       {% comment %}
-      Empty until the first section closes: the endpoint replaces this whole
+      Empty until the first QUESTION closes: the endpoint replaces this whole
       element out-of-band, so an empty placeholder is what "nothing drafted yet"
       looks like — not a zero the creator would read as a stalled generation.
+      Questions, not sections, because a section only closes after its whole
+      question list — gating on sections kept this blank for most of the wait.
       {% endcomment %}
-      <div id="gen-progress" class="gen-progress" data-sections="0"></div>
+      <div id="gen-progress" class="gen-progress" data-sections="0" data-questions="0"></div>
       <div class="gen-note">This usually takes under a minute. You can leave this page —
         the draft will be waiting on your dashboard.</div>
     </div>
