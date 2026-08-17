@@ -70,12 +70,13 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
         previewEnvRenderServiceName: mapsurvey
-      # Off in production until a preview proves a stalled or truncated stream
-      # ends in a bounded retry (see settings.py); on in previews so every PR
-      # stand IS that proof. This split is the re-enablement mechanism: flip
-      # the production value only after watching a stand behave.
+      # On everywhere since 2026-08-17: the stand proof this flag was waiting
+      # for happened (streamed drafts with the progress counter moving from the
+      # first question; stalls and truncations bounded into silent retries).
+      # The dashboard kill switch still works — setting `false` there falls
+      # back to one blocking call with no progress and nothing else different.
       - key: AI_STREAMING_ENABLED
-        value: "false"
+        value: "true"
         previewValue: "true"
       - key: DEFAULT_FROM_EMAIL
         sync: false
@@ -245,12 +246,13 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
         previewEnvRenderServiceName: mapsurvey
-      # Off in production until a preview proves a stalled or truncated stream
-      # ends in a bounded retry (see settings.py); on in previews so every PR
-      # stand IS that proof. This split is the re-enablement mechanism: flip
-      # the production value only after watching a stand behave.
+      # On everywhere since 2026-08-17: the stand proof this flag was waiting
+      # for happened (streamed drafts with the progress counter moving from the
+      # first question; stalls and truncations bounded into silent retries).
+      # The dashboard kill switch still works — setting `false` there falls
+      # back to one blocking call with no progress and nothing else different.
       - key: AI_STREAMING_ENABLED
-        value: "false"
+        value: "true"
         previewValue: "true"
 
   # Daily acquisition-metrics sync for the funnel dashboard. There is no celery beat,

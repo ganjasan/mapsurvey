@@ -2,19 +2,23 @@
 Swapped into the waiting card when the draft has actually grown.
 
 Out-of-band on purpose: the poller keeps hx-swap="none", so this element is the
-only thing that changes and the card's spinner, fade-in and quip rotator are
-untouched by a poll. The data attributes are what the poller sends back next
-tick, which is how the endpoint can answer 204 when nothing has moved.
+only thing that changes and the card's spinner and fade-in are untouched by a
+poll. The data attributes are what the poller sends back next tick, which is
+how the endpoint can answer 204 when nothing has moved.
 
-Questions lead the line: they close continuously, while a section closes only
-after its whole question list, so questions are the number that visibly moves
-during the wait. Still a count of what the model has finished writing, never a
-percentage — nobody knows how many sections the draft will end up with, and an
-invented denominator would be exactly the fabricated progress this card has
-always refused to show.
+The bar's fill is computed server-side (see EXPECTED_QUESTIONS in
+editor_views.py) from questions the model has finished writing, and is capped
+below full: the bar may park near the end, but it can never sit at complete
+while the draft is still arriving — that is the progress-bar lie this design
+exists to avoid. The caption states the only exact facts we have; there is
+deliberately no percentage label, which would claim a precision the calibrated
+denominator does not possess.
 {% endcomment %}
 <div id="gen-progress" class="gen-progress" hx-swap-oob="true"
      data-sections="{{ sections }}" data-questions="{{ questions }}">
-  {{ questions }} question{{ questions|pluralize }}{% if sections %} ·
-  {{ sections }} section{{ sections|pluralize }}{% endif %} drafted
+  <div class="gen-bar"><div class="gen-bar-fill" style="width: {{ fill }}%"></div></div>
+  <div class="gen-progress-caption">
+    {{ questions }} question{{ questions|pluralize }}{% if sections %} ·
+    {{ sections }} section{{ sections|pluralize }}{% endif %} drafted
+  </div>
 </div>
