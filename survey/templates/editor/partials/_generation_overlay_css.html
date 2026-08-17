@@ -30,37 +30,29 @@ replaced would render unstyled the moment generation failed.
   }
   @keyframes gen-spin { to { transform: rotate(360deg); } }
   .gen-title { font-weight: 600; font-size: 1rem; color: #111827; }
-  .gen-progress { margin-top: 0.55rem; }
-  .gen-bar {
-    height: 6px; border-radius: 3px; background: #e5e7eb;
-    overflow: hidden; position: relative;
-  }
-  /* Determinate: width set inline by the fragment; the transition makes each
-     2s poll step read as motion rather than a jump. */
-  .gen-bar-fill {
-    height: 100%; border-radius: 3px; background: var(--accent);
-    transition: width 0.6s ease;
-  }
-  /* Indeterminate: the pre-first-question phase, while the model reasons and
-     there is genuinely nothing to measure. A sweeping stripe, the established
-     idiom for exactly that — never a fake percentage. */
-  .gen-bar-indeterminate {
-    width: 35%; position: absolute; left: -35%;
-    animation: gen-bar-sweep 1.4s ease-in-out infinite;
-  }
-  @keyframes gen-bar-sweep { to { left: 100%; } }
-  .gen-progress-caption {
-    font-size: 0.82rem; color: #374151; margin-top: 0.35rem;
+  /* The ticking wall-clock beside the title. Smaller and grey by explicit
+     mockup sign-off — a fact accompanying the title, not part of the name. */
+  .gen-elapsed {
+    color: #9ca3af; font-weight: 400; font-size: 0.85rem;
     font-variant-numeric: tabular-nums;
   }
+  .gen-quip {
+    font-size: 0.88rem; color: var(--accent); margin-top: 0.2rem;
+    min-height: 1.2em; transition: opacity 0.35s ease;
+  }
+  /* Streamed counts, plain text (the bar is gone by explicit user decision).
+     No min-height: empty means hidden, and reserving space would leave a gap
+     that reads as something failing to load. */
+  .gen-progress {
+    font-size: 0.82rem; color: #374151; margin-top: 0.3rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .gen-progress:empty { display: none; }
   .gen-note { font-size: 0.79rem; color: #6b7280; margin-top: 0.45rem; line-height: 1.4; }
   .gen-card-error > i { color: #dc2626; font-size: 1.4rem; margin-top: 0.1rem; }
   .gen-dismiss { margin-top: 0.8rem; padding: 0.35rem 0.9rem; font-size: 0.85rem; }
   @media (prefers-reduced-motion: reduce) {
     .gen-spinner { animation-duration: 3s; }
-    .gen-overlay, .gen-bar-fill { transition: none; }
-    /* Reduced motion must not mean "no signal": the stripe stops sweeping and
-       sits as a static partial fill, which still reads as in-progress. */
-    .gen-bar-indeterminate { animation: none; left: 0; }
+    .gen-quip, .gen-overlay { transition: none; animation: none; }
   }
 </style>

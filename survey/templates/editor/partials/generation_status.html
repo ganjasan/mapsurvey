@@ -6,21 +6,27 @@ up to a minute and the creator must not miss that it started, nor keep editing
 a form whose values are already on their way to the model. Inline it also sat
 below the fold on a laptop, which is exactly the confusion this replaces.
 
-The wait is presented as a progress bar, and the rule that has governed this
-card since the quips era is unchanged: nothing here may imply a pipeline stage
-the backend does not have. The bar honours it in both phases — indeterminate
-(animated stripe) while the model is reasoning and there is genuinely nothing
-to measure, determinate once questions start closing, filled from counts of
-what the model has actually written (see generation_progress.html for the
-denominator's honesty rules). The quips were removed by explicit product
-decision, 2026-08-17: creators should see the process, not flavour text.
+The card is spinner + title with a live elapsed counter + rotating quips —
+the shape settled by mockup with the user on 2026-08-17 (see
+openspec/changes/generation-wait-quips-return/overlay.mockup.html), modelled on
+Claude Code's own status line: personality plus a ticking fact, no progress
+bar. The bar was tried and removed the same day: an indeterminate sweep
+irritates, and a determinate fill needs streamed counts production no longer
+has. Elapsed wall-clock is the one number a wait screen can show without
+measuring the backend.
+
+The no-fabricated-stages rule is unchanged: quips are entertainment, never
+telemetry, and must not imply a pipeline stage the backend does not have. When
+streaming DOES supply real counts (PR previews), the out-of-band fragment
+fills #gen-progress with the drafted-counts caption — data beside flavour,
+neither displacing the other.
 {% endcomment %}
 <div id="generation-status" class="gen-overlay" role="status" aria-live="polite">
   {% comment %}
   The poller is a separate, empty element with hx-swap="none": while the draft
   is pending the endpoint answers 204 and nothing in the DOM changes. Polling
-  the overlay itself (and swapping it whole every 2s) restarted the fade-in and
-  the bar animation on every tick, which read as the screen flickering.
+  the overlay itself (and swapping it whole every 2s) restarted its animations
+  on every tick, which read as the screen flickering.
   {% endcomment %}
   <div id="generation-poll" hidden
        hx-get="{% url 'editor_generation_status' event.id %}"
@@ -31,23 +37,64 @@ decision, 2026-08-17: creators should see the process, not flavour text.
   <div class="gen-card">
     <div class="gen-spinner" aria-hidden="true"></div>
     <div class="gen-copy">
-      <div class="gen-title">Building your survey…</div>
+      <div class="gen-title">Building your survey…
+        <span class="gen-elapsed">(<span id="gen-elapsed-s">0</span>s)</span></div>
+      <div class="gen-quip" id="gen-quip">Unfolding the map…</div>
       {% comment %}
-      Replaced whole, out-of-band, whenever a count advances. This placeholder
-      is the pre-first-question state: an indeterminate bar and no numbers —
-      a zero count while the model reasons would read as a stall, and the
-      stripe is the honest idiom for "working, nothing measurable yet".
-      Questions gate the switch, not sections: a section only closes after its
-      whole question list, and gating on sections kept this blank for most of
-      the wait.
+      Empty until streamed counts exist (previews); replaced whole, out-of-band.
+      An empty placeholder is what "no counts" looks like — never a zero.
       {% endcomment %}
-      <div id="gen-progress" class="gen-progress" data-sections="0" data-questions="0">
-        <div class="gen-bar"><div class="gen-bar-fill gen-bar-indeterminate"></div></div>
-      </div>
+      <div id="gen-progress" class="gen-progress" data-sections="0" data-questions="0"></div>
       <div class="gen-note">This usually takes under a minute. You can leave this page —
         the draft will be waiting on your dashboard.</div>
     </div>
   </div>
 
   {% include "editor/partials/_generation_overlay_css.html" %}
+
+  <script>
+  (function() {
+      // Belt and braces: a second overlay (a retry in the same page load)
+      // must not leave two rotators or timers running against one element.
+      if (window.__genQuipTimer) clearInterval(window.__genQuipTimer);
+      if (window.__genElapsedTimer) clearInterval(window.__genElapsedTimer);
+
+      var seconds = 0;
+      window.__genElapsedTimer = setInterval(function () {
+          var el = document.getElementById('gen-elapsed-s');
+          if (!el) { clearInterval(window.__genElapsedTimer); window.__genElapsedTimer = null; return; }
+          el.textContent = ++seconds;
+      }, 1000);
+
+      var QUIPS = [
+          'Unfolding the map…',
+          'Sharpening the map pins…',
+          'Consulting the cartographers…',
+          'Teaching the questions to behave…',
+          'Choosing words your respondents will actually read…',
+          'Talking the model out of another polygon…',
+          'Measuring twice, asking once…',
+          'Arranging sections in a sensible order…',
+          'Translating without losing the meaning…',
+          'Making the required fields fewer…',
+          'Aligning the legend with the terrain…'
+      ];
+      // Shuffle so a repeat generation doesn't replay the same reel.
+      for (var i = QUIPS.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = QUIPS[i]; QUIPS[i] = QUIPS[j]; QUIPS[j] = tmp;
+      }
+      var index = 0;
+      window.__genQuipTimer = setInterval(function() {
+          var el = document.getElementById('gen-quip');
+          if (!el) { clearInterval(window.__genQuipTimer); window.__genQuipTimer = null; return; }
+          el.style.opacity = '0';
+          setTimeout(function() {
+              index = (index + 1) % QUIPS.length;
+              el.textContent = QUIPS[index];
+              el.style.opacity = '1';
+          }, 350);
+      }, 3200);
+  })();
+  </script>
 </div>
