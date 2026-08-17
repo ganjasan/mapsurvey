@@ -152,6 +152,10 @@ services:
       # back to POSTHOG_API_HOST, so a preview that never got the CNAME behaves as before.
       - key: POSTHOG_CLIENT_HOST
         sync: false
+      # Session replay of the editor. Unset = off, which is what previews get: they
+      # never carry a real key, and a recording posture should not be inherited.
+      - key: POSTHOG_SESSION_REPLAY
+        sync: false
     disk:
       name: media-storage
       mountPath: /home/app/web/mediafiles
