@@ -58,8 +58,11 @@
       issued target. Done 2026-08-17 via the MCP `proxy-create` tool: `e.mapsurvey.org` →
       `3fcb8a68424c2bb1aabd.cf-prod-eu-proxy.europehog.com.`, id
       `01a00e50-a2c8-0000-cc0f-69c8a4f127c7`, status `waiting` until DNS resolves
-- [ ] 6.2 Namecheap: `CNAME e → 3fcb8a68424c2bb1aabd.cf-prod-eu-proxy.europehog.com.`; wait for
-      PostHog to move the record off `waiting` (2–5 min for a new record) and issue the certificate
+- [x] 6.2 Namecheap: `CNAME e → 3fcb8a68424c2bb1aabd.cf-prod-eu-proxy.europehog.com.`; wait for
+      PostHog to move the record off `waiting` (2–5 min for a new record) and issue the certificate.
+      Done 2026-08-17: resolving on the authoritative NS, 1.1.1.1 and 8.8.8.8; record went
+      `waiting` → `issuing` → `valid` at 06:10 UTC; `https://e.mapsurvey.org/static/array.js`
+      returns 200 (248932 bytes), which is the proxy serving PostHog's own SDK asset
 - [ ] 6.3 Merge and deploy with `POSTHOG_CLIENT_HOST` unset — a no-op by construction
 - [ ] 6.4 Set `POSTHOG_CLIENT_HOST=https://e.mapsurvey.org` on the Render web service and the worker
       **in the same session as 6.3**. Between the two, `/trust/` says analytics traffic transits
