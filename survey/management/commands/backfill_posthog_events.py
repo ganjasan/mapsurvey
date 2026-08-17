@@ -15,28 +15,16 @@ Safe to re-run: every event carries a deterministic uuid5 derived from
 (event, source row), so PostHog deduplicates instead of doubling the funnel.
 """
 
-import uuid
-
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.db.models import Min
 
 from survey import product_events as pe
 from survey.funnel import PUBLISHED_STATUSES
-from survey.models import Question, SurveyHeader, SurveySession
-
-# Stable namespace for deterministic event ids. Changing it re-imports everything
-# as new events -- which is why it is a constant here and not a setting.
-NAMESPACE = uuid.UUID('6f9a1a7e-0d3c-4c1f-9a2e-5f1b2c3d4e5f')
-
-
-def event_uuid(event, *parts):
-    """Deterministic id for one (event, source row) pair.
-
-    Idempotency is the difference between a migration we can re-run and a
-    one-shot we are afraid to touch.
-    """
-    return str(uuid.uuid5(NAMESPACE, ':'.join([event, *(str(p) for p in parts)])))
+from survey.models import AIGenerationEvent, Question, SurveyHeader, SurveySession
+# Re-exported: the id scheme and the migration client are shared with
+# `backfill_ai_events`, and both are imported from here by name in tests.
+from survey.posthog_backfill import NAMESPACE, event_uuid, send_events  # noqa: F401
 
 
 class Command(BaseCommand):
@@ -135,9 +123,25 @@ class Command(BaseCommand):
             .values_list('survey_section__survey_header_id', flat=True)
         )
 
+        # Surveys the AI generator produced. Without this the re-runnable part of
+        # this command becomes a data corruption: `_event` labels everything
+        # `manual`, and since `backfill_ai_events` derives the same uuid5 for the
+        # same survey, whichever command ran first would win the dedup and pin
+        # the wrong creation_method. Both sides must agree instead.
+        ai_survey_ids = set(
+            AIGenerationEvent.objects
+            .filter(created_survey_id__isnull=False)
+            .values_list('created_survey_id', flat=True)
+        )
+
         for s in surveys:
             sid, uid, created_at = s['id'], s['created_by_id'], s['created_at']
-            props = {'survey_id': str(sid)}
+            props = {
+                'survey_id': str(sid),
+                'creation_method': (
+                    pe.CREATION_AI if sid in ai_survey_ids else pe.CREATION_MANUAL
+                ),
+            }
             out.append(self._event(pe.SURVEY_CREATED, created_at, uid, sid, **props))
 
             if sid in surveys_with_question:
@@ -173,64 +177,24 @@ class Command(BaseCommand):
             'distinct_id': str(user_id),
             'timestamp': timestamp,
             'uuid': event_uuid(name, *key_parts),
-            'properties': {
-                'timestamp_source': source,
-                # Everything historical predates the AI generator.
-                'creation_method': pe.CREATION_MANUAL,
-                **props,
-            },
+            # `creation_method` is passed in per survey rather than defaulted
+            # here: it belongs to survey-scoped events only, and defaulting it
+            # to `manual` put the property on registration and activation too,
+            # where it means nothing -- and silently mislabelled AI surveys once
+            # the generator existed.
+            'properties': {'timestamp_source': source, **props},
         }
 
     # -- sending --------------------------------------------------------------
 
     def _send(self, events):
-        """Send through a dedicated historical-migration client.
+        """Send through the shared historical-migration client.
 
-        A separate Client rather than the global one, for two reasons:
-        `historical_migration` is a client-level setting in this SDK, and keeping
-        it off the global client means a backfill can never accidentally reroute
-        live traffic.
-
-        No `$set` anywhere: during a historical migration PostHog overwrites
-        person properties regardless of the event timestamp (PostHog/posthog#37000),
-        so a March event would clobber today's values. Person properties are
-        written separately by `sync_posthog_person_properties`.
+        Person properties are deliberately not written here -- they go through
+        `sync_posthog_person_properties`, present-dated. See survey/posthog_backfill.py
+        for why that separation exists.
         """
-        from django.conf import settings
-
-        from posthog import Client
-
-        if not settings.POSTHOG_PROJECT_KEY:
-            raise CommandError(
-                'POSTHOG_PROJECT_KEY is not set — refusing to run a backfill against nothing.'
-            )
-
-        client = Client(
-            settings.POSTHOG_PROJECT_KEY,
-            host=settings.POSTHOG_API_HOST,
-            historical_migration=True,
-        )
-        try:
-            for i, e in enumerate(events, 1):
-                if '$set' in e['properties'] or '$set_once' in e['properties']:
-                    raise CommandError(
-                        'refusing to send $set during a historical migration '
-                        '(PostHog/posthog#37000 overwrites regardless of timestamp)'
-                    )
-                client.capture(
-                    e['event'],
-                    distinct_id=e['distinct_id'],
-                    properties=e['properties'],
-                    timestamp=e['timestamp'],
-                    uuid=e['uuid'],
-                )
-                if i % 250 == 0:
-                    self.stdout.write(f'  sent {i}/{len(events)}')
-            client.flush()
-        finally:
-            client.shutdown()
-
-        self.stdout.write(self.style.SUCCESS(f'sent {len(events)} events'))
+        send_events(self, events)
         self.stdout.write('now run: manage.py check_posthog_funnel_parity')
 
 
