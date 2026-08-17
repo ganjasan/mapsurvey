@@ -47,6 +47,8 @@ def analytics(request):
             or POSTHOG_API_HOST_DEFAULT
         ),
         'POSTHOG_PERSON': _posthog_person(request),
+        # Off unless switched on; see settings.py for why it is an environment variable.
+        'POSTHOG_SESSION_REPLAY': bool(getattr(settings, 'POSTHOG_SESSION_REPLAY', False)),
     }
 
 

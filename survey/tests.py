@@ -10339,15 +10339,107 @@ class PostHogSnippetTest(TestCase):
         # ...and still means the same thing once parsed.
         self.assertEqual(json.loads(payload)['username'], 'bad</script>"user')
 
-    def test_session_recording_is_disabled(self):
+    def test_session_recording_is_disabled_by_default(self):
         """
-        GIVEN POSTHOG_PROJECT_KEY is configured
+        GIVEN POSTHOG_PROJECT_KEY is configured and replay is not switched on
         WHEN the snippet is rendered
         THEN session recording is switched off in its initialisation
+
+        The default is what local development, the test suite, PR previews, forks
+        and self-hosted installs get. Recording is a deliberate act, everywhere.
         """
-        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=False):
             response = self.client.get('/trust/')
             self.assertContains(response, 'disable_session_recording: true')
+
+    def test_session_recording_is_enabled_by_the_setting(self):
+        """
+        GIVEN replay is switched on
+        WHEN the snippet is rendered
+        THEN recording is not disabled in its initialisation
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'disable_session_recording: false')
+            self.assertNotContains(response, 'disable_session_recording: true')
+
+    def test_inputs_are_masked_whenever_recording_is_possible(self):
+        """
+        GIVEN replay is switched on
+        WHEN the snippet is rendered
+        THEN every input is masked in the browser before anything is transmitted
+
+        This assertion is the entire privacy claim on /trust/. An edit that removes
+        the flag to make replays "more useful" starts recording keystrokes, and it
+        must fail here rather than be discovered in a recording.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'maskAllInputs: true')
+
+    def test_interface_text_is_not_masked(self):
+        """
+        GIVEN masking everything would make playback unreadable
+        WHEN the snippet is rendered with replay on
+        THEN the config does not mask all text
+
+        The policy is: what the user typed is masked, what the product showed is
+        not. Grey rectangles cannot answer which control someone hunted for.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get('/trust/')
+            self.assertNotContains(response, 'maskTextSelector')
+
+    def test_console_and_network_capture_stay_off(self):
+        """
+        GIVEN both would re-admit content that input masking removes
+        WHEN the snippet is rendered with replay on
+        THEN neither console-log nor network-payload capture is enabled client-side
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get('/trust/')
+            self.assertNotContains(response, 'capture_performance')
+            self.assertNotContains(response, 'enable_recording_console_log')
+
+    def test_no_recording_config_on_respondent_pages(self):
+        """
+        GIVEN replay is switched on and a key is configured
+        WHEN a respondent loads a survey page
+        THEN there is no snippet and therefore no recording configuration
+
+        What protects respondents is the snippet's absence, not the URL trigger in
+        the PostHog project — a dashboard setting could be changed by anyone with
+        access, whereas this is enforced in the context processor.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, 'maskAllInputs')
+            self.assertNotContains(response, 'disable_session_recording')
+
+    def test_no_recording_config_on_public_results_page(self):
+        """
+        GIVEN replay is switched on and a key is configured
+        WHEN a visitor loads a public results page
+        THEN there is no snippet and no recording configuration
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get(f'/r/{self.results_page.slug}/')
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, 'maskAllInputs')
+
+    def test_replay_setting_without_a_key_renders_nothing(self):
+        """
+        GIVEN replay is switched on but POSTHOG_PROJECT_KEY is empty
+        WHEN a creator-facing page is rendered
+        THEN nothing renders — the key stays the single on/off switch
+        """
+        with self.settings(POSTHOG_PROJECT_KEY='', POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get('/trust/')
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, 'maskAllInputs')
 
     def test_person_profiles_are_identified_only(self):
         """
@@ -10399,6 +10491,23 @@ class PostHogSnippetTest(TestCase):
         response = self.client.get('/trust/')
         self.assertContains(response, "AI drafting sends the creator's brief to Google")
         self.assertContains(response, 'Survey responses are never sent to an AI provider')
+
+    def test_trust_page_discloses_session_recording(self):
+        """
+        GIVEN we record what happens on screen while creators build surveys
+        WHEN the trust page is read
+        THEN it says recording happens, that typed content is masked, how long
+             recordings are kept, and that respondents are never recorded
+
+        Recording is the most invasive thing we point at a user, and the users are
+        our own customers. A page describing analytics while omitting screen
+        recording is worse than one that never mentioned analytics at all.
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, 'Editor sessions of signed-in creators may be recorded')
+        self.assertContains(response, 'What creators type is masked in their browser')
+        self.assertContains(response, 'kept for 30 days')
+        self.assertContains(response, 'People answering surveys are never recorded')
 
     def test_trust_page_names_cloudflare_as_the_proxy(self):
         """

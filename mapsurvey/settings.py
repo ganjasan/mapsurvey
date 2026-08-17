@@ -313,6 +313,21 @@ POSTHOG_API_HOST = os.environ.get('POSTHOG_API_HOST') or 'https://eu.i.posthog.c
 # (tests, a preview pointed at another project) would silently leave the browser on the
 # old one.
 POSTHOG_CLIENT_HOST = os.environ.get('POSTHOG_CLIENT_HOST', '')
+# Session replay of the editor, off unless explicitly switched on. Two reasons this is a
+# setting rather than a constant in the template:
+#
+# 1. The emergency stop must not need a deploy. A mounted disk pins us to one instance and
+#    rules out zero-downtime deploys, so "turn recording off right now" has to be an
+#    environment change, not a release.
+# 2. This repository is public. A fork or a self-hosted install must not inherit our
+#    recording posture from our source; they get the same default as local development.
+#
+# What is recorded is bounded in three places, and only the first is here: the snippet
+# masks every input before anything leaves the browser (see _analytics.html), the snippet
+# is absent on respondent surfaces (POSTHOG_EXCLUDED_PREFIXES), and a URL trigger in the
+# PostHog project keeps recording to /editor/ so anonymous marketing visitors are left
+# alone. The respondent boundary is the second one, never the trigger.
+POSTHOG_SESSION_REPLAY = os.environ.get('POSTHOG_SESSION_REPLAY', 'False').lower() in ('true', '1')
 # Surfaces PostHog must never load on. Both belong to somebody else's audience:
 # `/surveys/` is a customer's respondents, `/r/` is a customer's public readers. Measuring
 # them is not our business -- it is a feature we sell, served by `SurveyEvent` out of our

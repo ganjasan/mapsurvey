@@ -35,8 +35,24 @@ asset host with "posthog" in it would be blocked exactly like the ingest host wa
                 ui_host: 'https://eu.posthog.com',
                 capture_pageview: true,
                 autocapture: true,
-                // Recording needs a masking policy and a reviewed privacy statement first.
-                disable_session_recording: true,
+                // Session replay of the editor, gated by POSTHOG_SESSION_REPLAY.
+                //
+                // maskAllInputs is the whole privacy story: field contents are replaced in
+                // the browser, so question wording, organisation names and the email on
+                // account forms are never transmitted. Interface text is deliberately NOT
+                // masked: a mask-all-text policy produces a video of grey rectangles, which
+                // cannot answer "which control did they hunt for", the only question the
+                // recording exists to answer. The line is what the user typed vs what the
+                // product showed: our chrome is identical for everyone, their text is theirs.
+                // (A test asserts the text-masking option is absent, so it also fails if this
+                // comment names it -- deliberate: the option should appear nowhere.)
+                //
+                // Console logs and network payloads stay off (project settings). Both would
+                // re-admit exactly what masking removes.
+                disable_session_recording: {% if POSTHOG_SESSION_REPLAY %}false{% else %}true{% endif %},
+                session_recording: {
+                    maskAllInputs: true
+                },
                 // Anonymous landing traffic is already answered by Plausible; profiles for
                 // people who never sign up would be stored for nothing.
                 person_profiles: 'identified_only'
