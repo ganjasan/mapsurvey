@@ -63,8 +63,8 @@
       Done 2026-08-17: resolving on the authoritative NS, 1.1.1.1 and 8.8.8.8; record went
       `waiting` → `issuing` → `valid` at 06:10 UTC; `https://e.mapsurvey.org/static/array.js`
       returns 200 (248932 bytes), which is the proxy serving PostHog's own SDK asset
-- [ ] 6.3 Merge and deploy with `POSTHOG_CLIENT_HOST` unset — a no-op by construction
-- [ ] 6.4 Set `POSTHOG_CLIENT_HOST=https://e.mapsurvey.org` on the Render web service and the worker
+- [x] 6.3 Merge and deploy with `POSTHOG_CLIENT_HOST` unset — a no-op by construction
+- [x] 6.4 Set `POSTHOG_CLIENT_HOST=https://e.mapsurvey.org` on the Render web service and the worker
       **in the same session as 6.3**. Between the two, `/trust/` says analytics traffic transits
       Cloudflare while the browser is still talking to PostHog directly — a disclosure wider than
       the fact, which is the harmless direction but not one to leave standing for days. Do not merge
@@ -72,17 +72,29 @@
 
 ## 7. Verification in production
 
-- [ ] 7.1 Load `/editor/` and confirm in the network tab: the PostHog asset loads from the proxy host
-      with a 200, and ingest requests return 200
-- [ ] 7.2 Confirm events arrive in the PostHog project and an authenticated creator is still
-      identified
+- [x] 7.1 Load `/editor/` and confirm in the network tab: the PostHog asset loads from the proxy host
+      with a 200, and ingest requests return 200. Done 2026-08-17 on `/` and `/trust/`:
+      `POST https://e.mapsurvey.org/e/` → 200, no request to any `posthog` hostname; the rendered
+      snippet carries `e.mapsurvey.org` as api_host and `eu.posthog.com` as ui_host
+- [x] 7.2 Confirm events arrive in the PostHog project and an authenticated creator is still
+      identified. Proxied visits land: `$set` and `$pageleave` rows for `https://mapsurvey.org/` and
+      `/trust/` at 06:17–06:18 UTC, and real `/editor/` traffic at 06:21 produced `$pageview` and
+      `$autocapture` through the proxy
 - [ ] 7.3 Repeat 7.1 with uBlock Origin enabled — events must still arrive; this is the only check
       that measures what the change is for
-- [ ] 7.4 Load a survey page under `/surveys/` and a results page under `/r/` and confirm neither
-      carries the proxy host or any PostHog reference
+- [x] 7.4 Load a survey page under `/surveys/` and a results page under `/r/` and confirm neither
+      carries the proxy host or any PostHog reference. Done for `/surveys/`: the live demo survey
+      renders zero `posthog` / `e.mapsurvey.org` matches, and with a cleared network log a reload
+      issues no request to the proxy. Plausible still loads there, unchanged and separately known.
+      No `/r/` page is currently published, so that half rests on the unit tests
 - [ ] 7.5 Trigger a deliberate server-side error on staging or a preview and confirm it still reaches
       PostHog error tracking with the proxy configured
 - [ ] 7.6 A week after 6.4, record the change in `$pageview` volume and identified creators on
       `/editor/` against the preceding week, and note it in the change — it is the only estimate we
       will ever get of what blocking was costing, and it informs whether Plausible needs the same
       treatment before retirement
+- [x] 7.7 Explain the missing `$pageview` seen during 7.2. Two automated Chrome visits produced
+      `$set` and `$pageleave` but no `$pageview`, which briefly looked like proxied pageviews being
+      dropped — the metric 7.6 is built on. Resolved by ordinary traffic minutes later: real
+      `/editor/` visits at 06:21 UTC captured `$pageview` and `$autocapture` through the proxy, so
+      the gap was PostHog's bot filtering reacting to the automated session, not the proxy
