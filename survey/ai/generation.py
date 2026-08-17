@@ -6,8 +6,10 @@ command or a future chat turn without changing shape. Everything the caller
 needs afterwards is on the `AIGenerationEvent` row.
 """
 import logging
+import time
 from dataclasses import dataclass
 
+from django.conf import settings
 from django.db import transaction
 
 from . import client, prompts
@@ -25,6 +27,18 @@ KIND_SURVEY_DRAFT = 'survey_draft'
 # the errors spelled out is not going to converge on the third attempt, and
 # each attempt costs real money and a minute of the creator's time.
 MAX_ATTEMPTS = 2
+
+# Waits between retries of a *transient* provider failure — overload, a dropped
+# connection, a malformed payload. A separate budget from MAX_ATTEMPTS on
+# purpose: that one is about the model writing a bad survey, this one is about
+# the provider having a bad second, and spending one on the other means a 503
+# eats the retry a genuinely invalid draft needed.
+#
+# Sized from what we have actually seen: both of 2026-08-17's failures were of
+# this kind, a minute apart, and both were shown to the creator as a dead end.
+# Backing off to ~23s total keeps the whole thing inside the Celery task's
+# 300s soft limit even when every retry is spent on top of a 50s generation.
+TRANSIENT_BACKOFF_SECONDS = (2, 6, 15)
 
 
 @dataclass
@@ -85,6 +99,40 @@ class AttemptSet:
             # measured keeps "not reported" distinguishable from "reasoned for
             # nothing", which is the whole point of the field.
             self.thinking_tokens = (self.thinking_tokens or 0) + usage.thinking_tokens
+
+
+def _call_provider(provider, attempts, on_progress, **kwargs):
+    """One draft from the provider, riding out a provider that is briefly unwell.
+
+    The creator asked for a survey, not for a status report on Google's
+    capacity. A 503 that the API itself calls "usually temporary", a dropped
+    connection, a reply that arrives malformed — none of those are answers to
+    their request, and handing them back as "Couldn't reach the AI service" ends
+    the interaction at the exact moment the product was about to deliver. Both
+    of the failures on 2026-08-17 were this, one minute apart.
+
+    Retries only what `ProviderError.transient` marks: a rejected key or a model
+    this key may not use is a verdict, and repeating it would spend the
+    creator's wait twice to arrive at the same message.
+
+    `TruncatedOutput` passes straight through — it is a content problem the
+    caller answers with a "be shorter" prompt, not something a delay fixes.
+    Every call is counted in `attempts`, including the ones spent here, so the
+    event row still says how much waiting really happened.
+    """
+    for delay in TRANSIENT_BACKOFF_SECONDS + (None,):
+        attempts.started()
+        try:
+            return provider.complete_structured(on_progress=on_progress, **kwargs)
+        except client.TruncatedOutput:
+            raise
+        except client.ProviderError as exc:
+            if not exc.transient or delay is None:
+                raise
+            logger.warning(
+                'AI provider failed transiently (%s); retrying in %ss', exc, delay,
+            )
+            time.sleep(delay)
 
 
 def _progress_recorder(event):
@@ -231,15 +279,14 @@ def generate_survey_draft(event, brief, languages, header_overrides):
     errors = []
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
-        attempts.started()
         # Reset per attempt: a retry starts a new draft, and counts that carried
         # over would show the creator a survey growing past what any single
         # answer contains.
-        record_progress = _progress_recorder(event)
+        record_progress = _progress_recorder(event) if settings.AI_STREAMING_ENABLED else None
         try:
-            blob, usage = provider.complete_structured(
+            blob, usage = _call_provider(
+                provider, attempts, record_progress,
                 system=prompts.SYSTEM_PROMPT, user=user_prompt, schema=schema,
-                on_progress=record_progress,
             )
         except client.TruncatedOutput as exc:
             # Worth one retry with a brevity hint; a second truncation means

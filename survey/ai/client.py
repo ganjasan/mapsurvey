@@ -29,6 +29,17 @@ from .progress import DraftProgress
 logger = logging.getLogger('survey.ai')
 
 
+def _transient_status(status):
+    """Is this HTTP status the provider having a bad second, rather than a verdict?
+
+    429 and 5xx only. A 4xx other than rate limiting is a statement about the
+    request — a bad key, a model this key may not use, a payload the API
+    rejects — and repeating it unchanged just spends the creator's wait twice
+    to reach the same answer.
+    """
+    return status == 429 or 500 <= status < 600
+
+
 def _report(on_progress, tracker):
     """Hand progress to the caller, never letting it break what it describes.
 
@@ -47,7 +58,23 @@ class NotConfigured(Exception):
 
 
 class ProviderError(Exception):
-    """The provider call failed after being properly configured."""
+    """The provider call failed after being properly configured.
+
+    `transient` says whether trying again is worth the creator's time. It is set
+    at each raise site rather than sniffed from the message later, because only
+    the code that saw the status line knows the difference between "the model is
+    busy" and "this key may not use this model".
+
+    Defaults to False: a failure nobody classified is shown to the creator once
+    rather than retried blindly, which is the safer way to be wrong. Overload,
+    connection loss and malformed output are the classified-transient cases —
+    all three are the provider having a bad second, and all three cost the
+    creator a dead end today when a second attempt would very likely land.
+    """
+
+    def __init__(self, message, transient=False):
+        super().__init__(message)
+        self.transient = transient
 
 
 class TruncatedOutput(ProviderError):
@@ -127,9 +154,12 @@ class AnthropicProvider:
                             _report(on_progress, tracker)
                 message = stream.get_final_message()
         except self._anthropic.APIConnectionError as exc:
-            raise ProviderError('connection error: %s' % exc) from exc
+            raise ProviderError('connection error: %s' % exc, transient=True) from exc
         except self._anthropic.APIStatusError as exc:
-            raise ProviderError('API error %s: %s' % (exc.status_code, exc.message)) from exc
+            raise ProviderError(
+                'API error %s: %s' % (exc.status_code, exc.message),
+                transient=_transient_status(exc.status_code),
+            ) from exc
 
         latency_ms = int((time.monotonic() - started) * 1000)
         usage = LLMUsage(
@@ -152,7 +182,7 @@ class AnthropicProvider:
         try:
             return json.loads(text), usage
         except ValueError as exc:
-            raise ProviderError('unparseable model output: %s' % exc) from exc
+            raise ProviderError('unparseable model output: %s' % exc, transient=True) from exc
 
 
 
@@ -222,7 +252,7 @@ class GeminiProvider:
         try:
             return json.loads(text), usage
         except ValueError as exc:
-            raise ProviderError('unparseable model output: %s' % exc) from exc
+            raise ProviderError('unparseable model output: %s' % exc, transient=True) from exc
 
     def _payload(self, system, user, schema, max_tokens):
         generation_config = {
@@ -259,7 +289,7 @@ class GeminiProvider:
                 stream=stream,
             )
         except requests.RequestException as exc:
-            raise ProviderError('connection error: %s' % exc) from exc
+            raise ProviderError('connection error: %s' % exc, transient=True) from exc
 
         if response.status_code == 404:
             # Model names churn faster than this file does, and a listed model
@@ -272,7 +302,8 @@ class GeminiProvider:
             )
         if response.status_code >= 400:
             raise ProviderError(
-                'API error %s: %s' % (response.status_code, _error_message(response))
+                'API error %s: %s' % (response.status_code, _error_message(response)),
+                transient=_transient_status(response.status_code),
             )
         return response
 
@@ -333,7 +364,24 @@ class GeminiProvider:
                 if tracker.feed(text):
                     _report(on_progress, tracker)
         except requests.RequestException as exc:
-            raise ProviderError('connection lost mid-stream: %s' % exc) from exc
+            raise ProviderError('connection lost mid-stream: %s' % exc, transient=True) from exc
+
+        if block_reason is None and finish_reason is None:
+            # The stream ran out without ever saying why it stopped. That is not
+            # a complete answer, it is a connection that closed mid-sentence —
+            # and unlike the blocking call, which gets a whole body or nothing,
+            # this failure mode only exists here. Left unchecked the partial
+            # JSON falls through to json.loads and surfaces as "unparseable
+            # model output", which is what reached production on 2026-08-17
+            # and read to the creator as the AI being unreachable.
+            #
+            # Transient: the draft was arriving and simply got cut off, so the
+            # retry that rides out a 503 is exactly the right response here too.
+            raise ProviderError(
+                'stream ended after %d characters without a finish reason'
+                % len(''.join(chunks)),
+                transient=True,
+            )
 
         return ''.join(chunks), meta, finish_reason, block_reason
 
