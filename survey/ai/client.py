@@ -278,6 +278,17 @@ class GeminiProvider:
     def _post(self, payload, endpoint, stream=False):
         import requests
 
+        # For a blocking call the timeout bounds the whole read, which is the
+        # behaviour AI_REQUEST_TIMEOUT_SECONDS was written for. Streaming
+        # changes its meaning under our feet: `requests` restarts the read
+        # timer on every chunk, so the same number stops bounding anything a
+        # trickle of data can reset. There it becomes the STALL limit — how
+        # long the stream may go silent — and the total budget is enforced in
+        # `_collect_streamed`'s loop, where wall-clock is actually visible.
+        timeout = (
+            settings.AI_STREAM_STALL_SECONDS if stream
+            else settings.AI_REQUEST_TIMEOUT_SECONDS
+        )
         try:
             response = requests.post(
                 endpoint % self._model,
@@ -285,7 +296,7 @@ class GeminiProvider:
                 # Header rather than ?key=: keeps the credential out of URLs,
                 # proxy logs and tracebacks.
                 headers={"x-goog-api-key": self._api_key},
-                timeout=settings.AI_REQUEST_TIMEOUT_SECONDS,
+                timeout=timeout,
                 stream=stream,
             )
         except requests.RequestException as exc:
@@ -338,8 +349,20 @@ class GeminiProvider:
         meta = {}
         finish_reason = None
         block_reason = None
+        # The stall limit lives in the read timeout (see _post); this is the
+        # other bound — total wall clock. Checked per line because that is the
+        # only place a streamed call can see the clock at all: a stream that
+        # keeps trickling resets the read timeout forever, which is exactly how
+        # 2026-08-17's stall ran until Celery's 300s soft limit shot the task.
+        deadline = time.monotonic() + settings.AI_REQUEST_TIMEOUT_SECONDS
         try:
             for line in response.iter_lines(decode_unicode=True):
+                if time.monotonic() > deadline:
+                    raise ProviderError(
+                        'stream exceeded %ss total; %d characters received'
+                        % (settings.AI_REQUEST_TIMEOUT_SECONDS, len(''.join(chunks))),
+                        transient=True,
+                    )
                 event = _sse_payload(line)
                 if event is None:
                     continue

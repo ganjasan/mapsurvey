@@ -23678,6 +23678,68 @@ class GeminiStreamingTest(TestCase):
 
         self.assertEqual(raised.exception.usage.output_tokens, 64000)
 
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low',
+                       AI_REQUEST_TIMEOUT_SECONDS=120)
+    def test_stream_cannot_outlive_the_total_budget(self):
+        """
+        GIVEN a stream still trickling data past the total time budget
+        WHEN the next line arrives
+        THEN the call is abandoned as a transient error — a trickle resets the
+             read timeout forever, which is how 2026-08-17's stall ran until
+             Celery's soft limit killed the task
+        """
+        from survey.ai.client import GeminiProvider, ProviderError
+
+        events = [self._chunk('{"sections": [')]
+
+        with patch('requests.post', return_value=self._stream(events)):
+            with patch('survey.ai.client.time.monotonic',
+                       side_effect=[0, 0] + [999] * 10):
+                with self.assertRaises(ProviderError) as raised:
+                    GeminiProvider().complete_structured(
+                        system='s', user='u', schema={'type': 'object'},
+                        on_progress=lambda s, q: None,
+                    )
+
+        self.assertTrue(raised.exception.transient)
+        self.assertIn('exceeded', str(raised.exception))
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low',
+                       AI_REQUEST_TIMEOUT_SECONDS=120, AI_STREAM_STALL_SECONDS=30)
+    def test_streamed_read_timeout_is_the_stall_limit(self):
+        """
+        GIVEN a streamed call and a blocking call
+        WHEN each posts to the provider
+        THEN the streamed one uses the stall limit as its read timeout and the
+             blocking one keeps the full budget — requests restarts the read
+             timer per chunk, so the full budget cannot bound silence there
+        """
+        from survey.ai.client import GeminiProvider
+
+        text = self._blob_text()
+        events = [self._chunk(text),
+                  self._chunk('', finish_reason='STOP', usage={'promptTokenCount': 1})]
+
+        with patch('requests.post', return_value=self._stream(events)) as post:
+            GeminiProvider().complete_structured(
+                system='s', user='u', schema={'type': 'object'},
+                on_progress=lambda s, q: None,
+            )
+        self.assertEqual(post.call_args.kwargs['timeout'], 30)
+
+        blocking = mock.MagicMock()
+        blocking.status_code = 200
+        blocking.json.return_value = {
+            'usageMetadata': {'promptTokenCount': 1},
+            'candidates': [{'finishReason': 'STOP',
+                            'content': {'parts': [{'text': text}]}}],
+        }
+        with patch('requests.post', return_value=blocking) as post:
+            GeminiProvider().complete_structured(
+                system='s', user='u', schema={'type': 'object'},
+            )
+        self.assertEqual(post.call_args.kwargs['timeout'], 120)
+
     @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
     def test_stream_cut_short_is_not_mistaken_for_a_complete_answer(self):
         """
@@ -23872,6 +23934,9 @@ class AITransientRetryTest(_AIGenerationFixture, TestCase):
         self.assertEqual(provider.attempts_made, 3)
 
 
+# Explicit rather than relying on the default, because the default is now OFF:
+# these tests exercise what the streamed path records when it is switched on.
+@override_settings(AI_STREAMING_ENABLED=True)
 class AIGenerationProgressRecordingTest(_AIGenerationFixture, TestCase):
     """Progress reaches the row the poller reads, and a retry restarts it."""
 
@@ -23959,11 +24024,29 @@ class AIGenerationProgressPollingTest(TestCase):
         AIGenerationEvent.objects.filter(pk=self.event.pk).update(
             sections_drafted=3, questions_drafted=8)
 
-        response = self.client.get(self.url, {'sections': 1})
+        response = self.client.get(self.url, {'sections': 1, 'questions': 4})
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '3 sections drafted')
         self.assertContains(response, '8 questions')
+        self.assertContains(response, '3 sections')
+
+    def test_first_question_shows_before_any_section_closes(self):
+        """
+        GIVEN one question drafted and no section closed yet
+        WHEN the status endpoint is polled
+        THEN the fragment appears — gating on sections kept the counter blank
+             for most of the wait, observed live on 2026-08-17
+        """
+        AIGenerationEvent.objects.filter(pk=self.event.pk).update(
+            sections_drafted=0, questions_drafted=1)
+
+        response = self.client.get(self.url, {'sections': 0, 'questions': 0})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '1 question drafted')
+        # The data-sections attribute may carry a 0, but no visible "0 sections"
+        # line should reach the creator's eyes.
+        self.assertNotContains(response, '0 sections')
 
     def test_unchanged_counts_return_no_content(self):
         """
@@ -23974,7 +24057,7 @@ class AIGenerationProgressPollingTest(TestCase):
         AIGenerationEvent.objects.filter(pk=self.event.pk).update(
             sections_drafted=3, questions_drafted=8)
 
-        response = self.client.get(self.url, {'sections': 3})
+        response = self.client.get(self.url, {'sections': 3, 'questions': 8})
 
         self.assertEqual(response.status_code, 204)
 

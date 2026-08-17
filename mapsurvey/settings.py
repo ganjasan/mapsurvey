@@ -514,17 +514,29 @@ GEMINI_MODEL = os.environ.get('GEMINI_MODEL') or 'gemini-3.6-flash'
 # blank value is a meaningful instruction ("send no thinkingConfig"), so `or`
 # would swallow the very escape hatch this setting provides.
 AI_THINKING_LEVEL = os.environ.get('AI_THINKING_LEVEL', 'medium')
-# Kill switch for streamed generation. On = the creator sees a progress counter
+# How long a stream may go silent before the call is abandoned as stalled.
+# Needed because `requests` applies its read timeout BETWEEN chunks when
+# streaming, so AI_REQUEST_TIMEOUT_SECONDS alone cannot bound a streamed call:
+# a trickle of keep-alives resets the clock forever. This is the gap limit; the
+# total budget below is enforced separately in the client loop. 2026-08-17's
+# production stall sat quiet for 4+ minutes until Celery's soft limit killed the
+# task -- with this, the same stream dies in 30s as a retryable error instead.
+AI_STREAM_STALL_SECONDS = int(os.environ.get('AI_STREAM_STALL_SECONDS') or 30)
+# Streamed generation, OFF by default. On = the creator sees a progress counter
 # while the draft is written; off = one blocking call, exactly as before the
 # streaming change, with no progress and nothing else different.
 #
-# It exists because streaming has a failure mode a blocking call does not: the
-# connection can close mid-answer. On 2026-08-17 that reached production and
-# read to creators as "Couldn't reach the AI service". That specific hole is
-# closed (a stream with no finish reason is now a retryable error), but the
-# class of problem is real, and getting back to the known-good path should be a
-# dashboard edit rather than a revert and a deploy.
-AI_STREAMING_ENABLED = os.environ.get('AI_STREAMING_ENABLED', 'true').lower() != 'false'
+# Default flipped to off on 2026-08-17 after streaming broke production twice in
+# one hour: first a stream that ended without a finish reason (surfaced as
+# "Couldn't reach the AI service"), then a stream that stalled after one
+# question and ran until Celery's 300s soft limit killed it. Both are failure
+# modes the blocking call does not have, and neither showed up in tests written
+# against a well-behaved fake.
+#
+# Turning it back on is a dashboard edit, and the bar for doing so is evidence
+# from a preview environment that a stalled or truncated stream now ends in a
+# bounded, retryable error rather than a five-minute spinner.
+AI_STREAMING_ENABLED = os.environ.get('AI_STREAMING_ENABLED', 'false').lower() == 'true'
 
 LOGGING = {
     # The `abuse` logger keeps its dedicated routing (survey/abuse.py). The root

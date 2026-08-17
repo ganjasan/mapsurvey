@@ -340,8 +340,14 @@ def editor_generation_status(request, event_id):
         # per-poll state would mean a write on each one.
         sections = event.sections_drafted or 0
         questions = event.questions_drafted or 0
-        known = _int_param(request.GET.get('sections'))
-        if sections and sections > known:
+        known = (_int_param(request.GET.get('sections')),
+                 _int_param(request.GET.get('questions')))
+        # Questions gate this too, not just sections: a section only closes
+        # after all of its questions, so waiting for one meant the counter was
+        # blank for most of the generation — observed live on 2026-08-17, one
+        # question drafted and nothing on screen. The first question is also
+        # exactly the moment the creator most needs to hear "not stuck".
+        if (sections, questions) > known and (sections or questions):
             return render(request, 'editor/partials/generation_progress.html', {
                 'sections': sections,
                 'questions': questions,
