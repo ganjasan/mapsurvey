@@ -31,11 +31,20 @@ def analytics(request):
         # Empty (default) renders nothing; set the env var to the token GSC shows.
         'GOOGLE_SITE_VERIFICATION': getattr(settings, 'GOOGLE_SITE_VERIFICATION', ''),
         'POSTHOG_PROJECT_KEY': _posthog_key_for(request),
-        # Falls back here as well as in settings.py: an empty api_host initialises
-        # the SDK against nothing, which is indistinguishable from working analytics
+        # The browser gets the client host -- the first-party proxy when one is
+        # provisioned, the PostHog host otherwise. The server-side client keeps
+        # POSTHOG_API_HOST (survey/apps.py); the two are separate on purpose.
+        #
+        # The whole chain is resolved here, at request time, rather than in
+        # settings.py at import time -- otherwise an override of POSTHOG_API_HOST
+        # would move the server and leave the browser on the value frozen at
+        # startup. The last link matters because an empty api_host initialises the
+        # SDK against nothing, which is indistinguishable from working analytics
         # until someone notices the project has no events.
-        'POSTHOG_API_HOST': (
-            getattr(settings, 'POSTHOG_API_HOST', '') or POSTHOG_API_HOST_DEFAULT
+        'POSTHOG_CLIENT_HOST': (
+            getattr(settings, 'POSTHOG_CLIENT_HOST', '')
+            or getattr(settings, 'POSTHOG_API_HOST', '')
+            or POSTHOG_API_HOST_DEFAULT
         ),
         'POSTHOG_PERSON': _posthog_person(request),
     }

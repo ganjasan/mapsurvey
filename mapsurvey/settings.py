@@ -292,6 +292,24 @@ POSTHOG_PROJECT_KEY = os.environ.get('POSTHOG_PROJECT_KEY', '')
 # dashboard can hand us an empty string, and an empty api_host initialises the SDK
 # against nothing at all -- a silent no-op that looks exactly like working analytics.
 POSTHOG_API_HOST = os.environ.get('POSTHOG_API_HOST') or 'https://eu.i.posthog.com'
+# Where the *browser* sends events, which is a different question from where the server
+# sends them. `eu.i.posthog.com` is on every mainstream blocklist, and the audience of our
+# creator-facing pages -- planners, GIS analysts, researchers -- runs blockers more than
+# most, so the events we lose are biased rather than random. Pointing the snippet at a
+# first-party hostname (a PostHog-managed reverse proxy, CNAME'd from our own domain)
+# leaves blocklists nothing to match.
+#
+# The server-side client deliberately does NOT use this: see survey/apps.py. Ad blockers
+# do not exist inside our containers, so proxying error capture would add a DNS record and
+# a CDN edge to the one subsystem whose job is to keep working when things are broken.
+#
+# Empty = identical to the behaviour before the proxy existed, which is what keeps local
+# development, the test suite and PR previews out of it. The fall-back to POSTHOG_API_HOST
+# lives in `survey.context_processors.analytics`, not here: resolving it at import time
+# would freeze whatever POSTHOG_API_HOST was then, so overriding the API host afterwards
+# (tests, a preview pointed at another project) would silently leave the browser on the
+# old one.
+POSTHOG_CLIENT_HOST = os.environ.get('POSTHOG_CLIENT_HOST', '')
 # Surfaces PostHog must never load on. Both belong to somebody else's audience:
 # `/surveys/` is a customer's respondents, `/r/` is a customer's public readers. Measuring
 # them is not our business -- it is a feature we sell, served by `SurveyEvent` out of our
