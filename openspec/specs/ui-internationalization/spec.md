@@ -1,5 +1,6 @@
 # UI Internationalization
 
+## Purpose
 This spec defines the internationalization (i18n) infrastructure for the survey application.
 
 ## Requirements

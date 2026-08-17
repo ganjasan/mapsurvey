@@ -1,9 +1,9 @@
 # Survey Language Selection
 
+## Purpose
 This spec defines how respondents select their preferred language when starting a multilingual survey.
 
-## ADDED Requirements
-
+## Requirements
 ### Requirement: Language selection screen is the first screen for multilingual surveys
 The system SHALL display a language selection screen as the first step when a respondent opens a multilingual survey.
 

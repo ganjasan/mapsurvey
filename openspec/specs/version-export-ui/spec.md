@@ -1,5 +1,9 @@
-## ADDED Requirements
+# Version Export UI Specification
 
+## Purpose
+The version-aware download control in the editor dashboard, which lets a creator export a specific version of a survey rather than only the current one.
+
+## Requirements
 ### Requirement: Version-aware download dropdown in editor dashboard
 
 The editor dashboard SHALL display a dropdown menu for "Download Data" when a survey has more than one version. The dropdown SHALL offer options to download data for specific versions or all versions.

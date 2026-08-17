@@ -1,3 +1,9 @@
+# Inline Choices Specification
+
+## Purpose
+How a question stores its answer options inline as a JSONField rather than through separate OptionGroup/OptionChoice models: the choice object shape, translation lookup, how answers reference codes, form-field generation, validation and admin editing.
+
+## Requirements
 ### Requirement: Question stores choices inline as JSONField
 The Question model SHALL store answer choices directly in a `choices` JSONField instead of referencing external OptionGroup.
 

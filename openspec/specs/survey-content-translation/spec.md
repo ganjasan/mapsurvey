@@ -1,9 +1,9 @@
 # Survey Content Translation
 
+## Purpose
 This spec defines how survey content (sections, questions, option choices) is translated into multiple languages.
 
-## ADDED Requirements
-
+## Requirements
 ### Requirement: Survey defines available languages
 The system SHALL allow each survey to define a list of available languages for respondents.
 

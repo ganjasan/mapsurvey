@@ -1,3 +1,9 @@
+# Marker Popup Isolation Specification
+
+## Purpose
+How each feature's popup form stays bound to its own layer — unique form identity, popup-scoped property serialization and restoration, and handlers that cannot act on another feature.
+
+## Requirements
 ### Requirement: Unique popup form identity
 Each map feature's popup form SHALL have a unique `id` attribute derived from the Leaflet layer's internal stamp (`L.Util.stamp(layer)`). The format SHALL be `subquestion_form_<stamp>`.
 

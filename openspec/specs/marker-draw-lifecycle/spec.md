@@ -1,3 +1,9 @@
+# Marker Draw Lifecycle Specification
+
+## Purpose
+How drawing a geometry begins and ends: draw mode is single-shot for every geometry type, only one feature may be in edit mode at a time, and mode cleanup stays idempotent.
+
+## Requirements
 ### Requirement: Single-shot draw mode for all geometry types
 When a user activates a draw tool (point, line, or polygon) and completes drawing a feature, the draw handler SHALL be disabled immediately. The user MUST click the draw button again to place another feature.
 

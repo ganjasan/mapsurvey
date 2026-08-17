@@ -1,3 +1,9 @@
+# Survey Thanks Page Specification
+
+## Purpose
+What a respondent sees after finishing a survey — the built-in thanks page, custom multilingual content, session cleanup, the precedence of a custom redirect URL, and the URL-pattern ordering the page depends on.
+
+## Requirements
 ### Requirement: Thanks page displays after survey completion
 The system SHALL serve a thanks page at `/surveys/<survey_name>/thanks/` that confirms the survey has been completed.
 

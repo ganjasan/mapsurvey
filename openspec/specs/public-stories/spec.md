@@ -1,5 +1,9 @@
-## ADDED Requirements
+# Public Stories Specification
 
+## Purpose
+The customer-story content type behind `/stories/` — the Story model and its admin, the cards on the landing page, and the detail page with its own base template.
+
+## Requirements
 ### Requirement: Story model
 The system SHALL have a `Story` model with: `title` (CharField), `slug` (SlugField, unique), `body` (TextField, HTML content), `cover_image` (ImageField, optional), `story_type` (CharField with choices: `"map"`, `"open-data"`, `"results"`, `"article"`), `survey` (FK to SurveyHeader, nullable), `is_published` (BooleanField, default False), `published_date` (DateTimeField).
 
