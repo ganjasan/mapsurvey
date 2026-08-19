@@ -1,24 +1,32 @@
+/* Box matches the 32x52 svg below, and the negative margins put the path's
+   tip (16,51) exactly on the marker's latlng. */
 .leaflet-fa-markers {
     position: absolute;
     left: 0;
     top: 0;
     display: block;
     text-align: center;
-    margin-left: -15px;
-    margin-top: -50px;
-    width: 30px;
-    height: 50px;
+    margin-left: -16px;
+    margin-top: -51px;
+    width: 32px;
+    height: 52px;
 }
 
 .leaflet-fa-markers .marker-icon-svg {
     position: absolute;
 }
 
+/* Centred across the full pin width — Font Awesome glyphs differ in width, so a
+   fixed `left` drifts per icon. Keep in sync with #crosshair-overlay
+   .crosshair-pin-icon in main.css: the placed marker must look like the pin the
+   respondent aimed with. */
 .leaflet-fa-markers .feature-icon {
     position: absolute;
-    font-size: 20px;
-    line-height: 0px;
-    left: 8px;
-    top: 16px;
-    display: inline-block;
+    font-size: 16px;
+    line-height: 1;
+    left: 0;
+    top: 8px;
+    width: 100%;
+    text-align: center;
+    display: block;
 }
