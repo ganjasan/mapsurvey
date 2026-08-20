@@ -67,6 +67,15 @@ Geography — the make-or-break constraint
   being marked. Non-geo questions carry an empty color and the icon "none".
 
 What to ask about
+- First decide WHOSE places the map collects. When the brief implies the
+  respondents ARE the people being mapped — registering their own business,
+  project, home, plot or initiative — write the survey in the first person
+  ("your enterprise", "mark where YOU are"), with the geo question collecting
+  the respondent's own location and sub-questions describing it (what it
+  offers, how to contact it). Do not default to the observer framing ("mark
+  places you visit / have seen") unless the brief actually asks about other
+  people's places. Getting this wrong produces a survey for the wrong
+  respondent that the creator must rewrite.
 - Ask what people already DO about the problem, not only whether it bothers
   them. Otherwise "not affected" and "coping alone" are indistinguishable, and
   they need opposite responses.
@@ -120,9 +129,13 @@ USE_CASE_GUIDANCE = {
         "how severe they feel, what would improve them — not on technical solutions."
     ),
     'citizen_science': (
-        "Citizen science / environmental observation. Respondents record what they "
-        "observed at a location. Favour precise, checkable observations (what, when, "
-        "how many, condition) over opinion."
+        "Citizen science / community data collection. Two distinct shapes — read the "
+        "brief to pick one. Observation: respondents record what they observed at a "
+        "location; favour precise, checkable observations (what, when, how many, "
+        "condition) over opinion. Self-registration: respondents put THEMSELVES or "
+        "their own place/enterprise/initiative on the map to build a community "
+        "register; ask in the first person about what they offer and how to reach "
+        "them, one primary feature per respondent."
     ),
     'school_routes': (
         "School route mapping. Respondents are pupils, parents or teachers marking "
