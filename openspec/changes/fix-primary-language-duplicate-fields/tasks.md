@@ -83,4 +83,4 @@
       summarize delta
 - [x] 8.2 Manual pass in the editor: single-language survey (no translation UI), trilingual
       survey (labels, badges, choices columns), publish warning
-- [ ] 8.3 `openspec validate --strict` for this change; then PR referencing the change
+- [x] 8.3 `openspec validate --strict` for this change; then PR referencing the change
