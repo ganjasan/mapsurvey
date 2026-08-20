@@ -64,6 +64,22 @@ extents ("the area I think of as my neighbourhood").
 Every geo question is a separate act of map work. Ask for one, attach sub-questions to
 it, and let the respondent add several features if they have more to say.
 
+### 2a. Decide whose places the map collects: observation vs self-registration
+
+Two survey shapes share the same mechanics but need opposite framings. **Observation**:
+respondents report on the world around them — places visited, problems seen, routes
+travelled. **Self-registration**: respondents put *themselves* on the map — their
+business, plot, project or initiative — to build a community register or inventory.
+The second shape is written in the first person ("register YOUR enterprise"), collects
+one primary feature per respondent, and its sub-questions describe the respondent's own
+place (what it offers, how to reach them).
+
+Observed failure (survey 465, PROGRAMA RAICES, 2026-08-19): a brief for an entrepreneur
+registry ("emprendimientos locales", audience "residentes") was drafted in the observer
+framing — how often do you *buy from* local businesses — and the creator rewrote two of
+three sections by hand. When the brief is ambiguous about who maps what, the audience
+being the mapped subject is the tell for self-registration.
+
 ### 3. Ask what people already do, not only what is wrong
 
 Vienna's heat study enters adaptive behaviours as Block 0 of every regression; subjective

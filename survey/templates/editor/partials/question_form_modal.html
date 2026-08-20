@@ -1,4 +1,4 @@
-{% load static question_utils %}
+{% load static question_utils survey_filters %}
 <style>
     /* Wide two-pane question dialog. The id selector outranks .modal-lg. */
     @media (min-width: 1200px) {
@@ -94,7 +94,8 @@
                     <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                 </div>
             {% else %}
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {# Base name/subtext hold the primary language; label it when translations exist. #}
+                <label for="{{ field.id_for_label }}">{{ field.label }}{% if survey.available_languages|length > 1 and field.name == 'name' or survey.available_languages|length > 1 and field.name == 'subtext' %} ({{ survey.available_languages.0|language_name }}){% endif %}</label>
                 {{ field }}
             {% endif %}
             {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text|safe }}</small>{% endif %}
@@ -159,10 +160,14 @@
                 <thead>
                     <tr>
                         <th style="width:80px;">Code</th>
+                        {% if survey.available_languages|length > 1 %}
+                            {# One column per language; the first is the primary and doubles as the base text. No separate "default" column — it silently lost edits. #}
+                            {% for lang in survey.available_languages %}
+                            <th {% if forloop.first %}title="Primary language"{% endif %}>{{ lang|upper }}{% if forloop.first %} ({{ lang|language_name }}){% endif %}</th>
+                            {% endfor %}
+                        {% else %}
                         <th>Name</th>
-                        {% for lang in survey.available_languages %}
-                        <th>{{ lang|upper }}</th>
-                        {% endfor %}
+                        {% endif %}
                         <th style="width:40px;"></th>
                     </tr>
                 </thead>
@@ -216,13 +221,13 @@
             </div>
         </div>
 
-        {% if survey.available_languages %}
+        {% if survey.available_languages|length > 1 %}
         <div class="translations-section">
             <button type="button" class="translations-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
                 <i class="fas fa-chevron-right"></i> Translations
             </button>
             <div class="translations-body">
-                {% for lang in survey.available_languages %}
+                {% for lang in survey.available_languages|slice:"1:" %}
                 <fieldset style="margin-bottom:0.5rem;">
                     <legend>{{ lang|upper }}</legend>
                     <div class="form-group">
@@ -270,6 +275,9 @@
 <script>
 (function() {
     var languages = {{ survey.available_languages|safe|default:"[]" }};
+    // The first language is the primary; with fewer than two languages the
+    // choices table has a single name column saved as a flat string.
+    var multilingual = languages.length > 1;
     var choicesEditor = document.getElementById('choices-editor');
     var inputTypeSelect = document.querySelector('#questionModalBody select[name="input_type"]');
     var choiceTypes = ['choice', 'multichoice', 'range', 'rating', 'ranking'];
@@ -328,10 +336,21 @@
         if (!input || !tbody) return;
         var wanted = parseInt(input.value, 10);
         if (isNaN(wanted) || wanted < 2 || wanted > 10) return;
-        // Keep any names already typed; steps that had none are numbered, so
-        // an exported star answer reads as "4" rather than as a blank.
-        var names = Array.prototype.map.call(
-            tbody.querySelectorAll('.choice-name-default'), function(i) { return i.value; });
+        // Keep any names already typed (all language columns); steps that had
+        // none are numbered, so an exported star answer reads as "4" rather
+        // than as a blank.
+        var names = Array.prototype.map.call(tbody.querySelectorAll('tr'), function(row) {
+            if (multilingual) {
+                var obj = {};
+                languages.forEach(function(lang) {
+                    var inp = row.querySelector('.choice-name-' + lang);
+                    if (inp && inp.value.trim()) obj[lang] = inp.value.trim();
+                });
+                return Object.keys(obj).length ? obj : '';
+            }
+            var inp = row.querySelector('.choice-name-default');
+            return inp ? inp.value : '';
+        });
         tbody.replaceChildren();
         for (var i = 0; i < wanted; i++) addChoiceRow(i + 1, names[i] || String(i + 1));
     }
@@ -609,24 +628,30 @@
             });
             codeVal = maxCode + 1;
         }
-        var nameVal = '';
+        // Legacy shapes: flat string (single-language) or per-language dict.
+        // The primary language is languages[0]; a flat string belongs to it.
         var langVals = {};
-
         if (typeof name === 'string') {
-            nameVal = name;
+            langVals[languages[0] || 'default'] = name;
         } else if (typeof name === 'object' && name !== null) {
-            // Pick first language as default display
-            nameVal = name[Object.keys(name)[0]] || '';
             langVals = name;
         }
 
         var cells = '<td><input type="number" class="form-control form-control-sm choice-code" value="' + codeVal + '"></td>';
-        cells += '<td><input type="text" class="form-control form-control-sm choice-name-default" value="' + (nameVal || '').replace(/"/g, '&quot;') + '"></td>';
 
-        languages.forEach(function(lang) {
-            var v = langVals[lang] || '';
-            cells += '<td><input type="text" class="form-control form-control-sm choice-name-' + lang + '" value="' + v.replace(/"/g, '&quot;') + '"></td>';
-        });
+        if (multilingual) {
+            // One input per language, primary included — no separate "default"
+            // column: it used to be silently discarded whenever any language
+            // column was filled.
+            languages.forEach(function(lang) {
+                var v = langVals[lang] || '';
+                cells += '<td><input type="text" class="form-control form-control-sm choice-name-' + lang + '" value="' + v.replace(/"/g, '&quot;') + '"></td>';
+            });
+        } else {
+            var flat = langVals[languages[0]] || langVals['default'] ||
+                       (Object.keys(langVals).length ? langVals[Object.keys(langVals)[0]] : '');
+            cells += '<td><input type="text" class="form-control form-control-sm choice-name-default" value="' + (flat || '').replace(/"/g, '&quot;') + '"></td>';
+        }
 
         cells += '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'tr\').remove();window.schedulePreview&&window.schedulePreview()">&times;</button></td>';
         row.innerHTML = cells;
@@ -772,20 +797,22 @@
             var code = parseInt(row.querySelector('.choice-code').value);
             if (isNaN(code)) return;
 
-            var nameDefault = row.querySelector('.choice-name-default').value.trim();
-            var nameObj = {};
-            var hasLang = false;
-
-            languages.forEach(function(lang) {
-                var inp = row.querySelector('.choice-name-' + lang);
-                if (inp && inp.value.trim()) {
-                    nameObj[lang] = inp.value.trim();
-                    hasLang = true;
-                }
-            });
-
-            // If no language-specific names, use simple string
-            var name = hasLang ? nameObj : nameDefault;
+            var name;
+            if (multilingual) {
+                // Dict over the filled language columns (primary included).
+                // Every entered value is kept — nothing is discarded.
+                var nameObj = {};
+                languages.forEach(function(lang) {
+                    var inp = row.querySelector('.choice-name-' + lang);
+                    if (inp && inp.value.trim()) {
+                        nameObj[lang] = inp.value.trim();
+                    }
+                });
+                name = Object.keys(nameObj).length ? nameObj : '';
+            } else {
+                // Single-language survey: flat string.
+                name = row.querySelector('.choice-name-default').value.trim();
+            }
             choices.push({ code: code, name: name });
         });
 

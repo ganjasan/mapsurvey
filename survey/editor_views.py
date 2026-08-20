@@ -18,6 +18,7 @@ from .models import (
 )
 from . import product_events as pe
 from .cloning import clone_question, clone_section
+from .translation_gaps import survey_translation_gaps
 from .editor_forms import (
     SurveyHeaderForm, SurveyCreateForm, SurveyBriefForm, SurveySectionForm, QuestionForm,
     SUBQUESTION_DISALLOWED_INPUT_TYPES,
@@ -701,9 +702,20 @@ def editor_section_detail(request, survey_uuid, section_id):
     })
 
 
+def _translation_languages(survey):
+    """Languages that carry translation rows: everything after the primary.
+
+    The first entry of available_languages is the survey's primary language;
+    its content lives in base model fields only. Iterating this instead of the
+    full list is also what makes stale translation_<primary>_* POST keys
+    (old open forms) a no-op instead of a resurrected duplicate row.
+    """
+    return (survey.available_languages or [])[1:]
+
+
 def _save_section_translations(request, section, survey):
-    """Save section translations from POST data."""
-    for lang in (survey.available_languages or []):
+    """Save section translations from POST data (non-primary languages only)."""
+    for lang in _translation_languages(survey):
         title = request.POST.get(f'translation_{lang}_title', '').strip()
         subheading = request.POST.get(f'translation_{lang}_subheading', '').strip()
         if title or subheading:
@@ -1024,8 +1036,8 @@ def editor_question_delete(request, survey_uuid, question_id):
 
 
 def _save_question_translations(request, question, survey):
-    """Save question translations from POST data."""
-    for lang in (survey.available_languages or []):
+    """Save question translations from POST data (non-primary languages only)."""
+    for lang in _translation_languages(survey):
         name = request.POST.get(f'translation_{lang}_name', '').strip()
         subtext = request.POST.get(f'translation_{lang}_subtext', '').strip()
         if name or subtext:
@@ -1544,6 +1556,14 @@ def editor_survey_transition(request, survey_uuid):
     if not can:
         return HttpResponse(error, status=400)
 
+    # Non-blocking translation-gap warning: publishing with holes is allowed,
+    # but never silently — the respondent-side fallback would mask them. The
+    # client confirms and retries with the acknowledgement flag.
+    if new_status == 'published' and request.POST.get('ack_translation_gaps') != 'true':
+        gaps = survey_translation_gaps(survey)
+        if gaps:
+            return JsonResponse({'translation_gaps': gaps}, status=409)
+
     # Test data cleanup on testing → published
     if survey.status == 'testing' and new_status == 'published':
         if request.POST.get('clear_test_data') == 'true':
@@ -1695,6 +1715,13 @@ def editor_publish_draft(request, survey_uuid):
         return HttpResponse('This survey is not a draft copy', status=400)
 
     force = request.POST.get('force') == 'true'
+
+    # Same non-blocking translation-gap warning as the draft→published
+    # transition: this path replaces the live version's content.
+    if request.POST.get('ack_translation_gaps') != 'true':
+        gaps = survey_translation_gaps(survey)
+        if gaps:
+            return JsonResponse({'translation_gaps': gaps}, status=409)
 
     try:
         canonical = publish_draft(survey, force=force)

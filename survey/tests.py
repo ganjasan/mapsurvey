@@ -23217,11 +23217,13 @@ class AIMaterializeTest(TestCase):
         self.assertEqual(len(subs), 1)
         self.assertEqual(subs[0].input_type, 'text')
 
-    def test_every_requested_language_gets_translation_rows(self):
+    def test_non_primary_languages_get_translation_rows_primary_stays_in_base(self):
         """
         GIVEN a two-language draft
         WHEN it is materialized
-        THEN each section and question has a translation row per language
+        THEN sections and questions carry translation rows for the non-primary
+             language only, and the primary text lives in base fields — a
+             primary row would shadow later base-field edits via the fallback
         """
         survey, _warnings = self._materialize(_ai_blob(('en', 'de')), ('en', 'de'))
 
@@ -23230,13 +23232,54 @@ class AIMaterializeTest(TestCase):
             SurveySectionTranslation.objects.filter(section=section)
             .values_list('language', flat=True)
         )
-        self.assertEqual(languages, {'en', 'de'})
+        self.assertEqual(languages, {'de'})
+        self.assertEqual(section.title, 'About you [en]')
         question = Question.objects.filter(survey_section=section).first()
         q_languages = set(
             QuestionTranslation.objects.filter(question=question)
             .values_list('language', flat=True)
         )
-        self.assertEqual(q_languages, {'en', 'de'})
+        self.assertEqual(q_languages, {'de'})
+
+    def test_single_language_draft_creates_no_translation_rows_and_flat_choices(self):
+        """
+        GIVEN a single-language draft whose choice names are locale dicts
+        WHEN it is materialized
+        THEN no translation rows exist and choice names collapse to flat
+             strings — the shapes the choices editor itself saves
+        """
+        survey, _warnings = self._materialize(_ai_blob(('en',)), ('en',))
+
+        self.assertFalse(
+            SurveySectionTranslation.objects.filter(section__survey_header=survey).exists()
+        )
+        self.assertFalse(
+            QuestionTranslation.objects.filter(
+                question__survey_section__survey_header=survey,
+            ).exists()
+        )
+        choice_q = Question.objects.get(
+            survey_section__survey_header=survey, input_type='choice',
+        )
+        self.assertEqual(
+            [c['name'] for c in choice_q.choices],
+            ['On foot [en]', 'By bike [en]'],
+        )
+
+    def test_multilingual_choice_dicts_keep_the_primary_key(self):
+        """
+        GIVEN a two-language draft
+        WHEN it is materialized
+        THEN choice name dicts keep both languages — the primary key is the
+             base slot for choices, there is no separate base field in the JSON
+        """
+        survey, _warnings = self._materialize(_ai_blob(('en', 'de')), ('en', 'de'))
+
+        choice_q = Question.objects.get(
+            survey_section__survey_header=survey, input_type='choice',
+        )
+        for choice in choice_q.choices:
+            self.assertEqual(set(choice['name'].keys()), {'en', 'de'})
 
     def test_header_comes_from_the_form_not_the_model(self):
         """
@@ -27242,3 +27285,393 @@ class PrivatePublishedSurveyStaysLinkAccessibleTest(TestCase):
         )
         response = self.client.get(f'/surveys/{survey.uuid}/')
         self.assertEqual(response.status_code, 404)
+
+
+class PrimaryLanguageBaseFieldsTest(TestCase):
+    """The primary language lives in base fields; translation rows are for
+    non-primary languages only (change: fix-primary-language-duplicate-fields)."""
+
+    def setUp(self):
+        self.org = _make_org('PrimaryLangOrg')
+        self.user = User.objects.create_user(username='primlang', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='primlang', password='pass')
+
+    def _survey(self, languages):
+        survey = SurveyHeader.objects.create(
+            name='primlang_survey', visibility='private', organization=self.org,
+            available_languages=languages,
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='sec1', title='Base title', code='S1', is_head=True,
+        )
+        return survey, section
+
+    def test_single_language_save_creates_no_translation_rows(self):
+        """
+        GIVEN a single-language ["es"] survey
+        WHEN the section form is saved with a stale translation_es_title value
+        THEN no SurveySectionTranslation row is created — the primary language
+             lives in the base field only
+        """
+        survey, section = self._survey(['es'])
+        response = self.client.post(
+            f'/editor/surveys/{survey.uuid}/sections/{section.id}/',
+            {'title': 'Título real', 'subheading': '', 'code': 'S1',
+             'translation_es_title': 'Fantasma', 'translation_es_subheading': ''},
+        )
+        self.assertIn(response.status_code, (200, 204, 302))
+        section.refresh_from_db()
+        self.assertEqual(section.title, 'Título real')
+        self.assertFalse(SurveySectionTranslation.objects.filter(section=section).exists())
+
+    def test_stale_primary_translation_post_is_ignored_multilingual(self):
+        """
+        GIVEN a ["pt", "es"] survey
+        WHEN the section form posts translation values for both pt and es
+        THEN only the es row is created; the pt key is ignored
+        """
+        survey, section = self._survey(['pt', 'es'])
+        response = self.client.post(
+            f'/editor/surveys/{survey.uuid}/sections/{section.id}/',
+            {'title': 'Título base', 'subheading': '', 'code': 'S1',
+             'translation_pt_title': 'Fantasma pt',
+             'translation_es_title': 'Título es'},
+        )
+        self.assertIn(response.status_code, (200, 204, 302))
+        languages = set(
+            SurveySectionTranslation.objects.filter(section=section)
+            .values_list('language', flat=True)
+        )
+        self.assertEqual(languages, {'es'})
+
+    def test_question_save_skips_primary_language_row(self):
+        """
+        GIVEN a ["pt", "es"] survey
+        WHEN a question is created with pt and es translation values posted
+        THEN only the es QuestionTranslation row exists
+        """
+        survey, section = self._survey(['pt', 'es'])
+        response = self.client.post(
+            f'/editor/surveys/{survey.uuid}/sections/{section.id}/questions/new/',
+            {'name': 'Pergunta base', 'input_type': 'text', 'color': '#000000',
+             'translation_pt_name': 'Fantasma', 'translation_es_name': 'Pregunta es'},
+        )
+        self.assertEqual(response.status_code, 200)
+        question = Question.objects.get(survey_section=section, name='Pergunta base')
+        languages = set(
+            QuestionTranslation.objects.filter(question=question)
+            .values_list('language', flat=True)
+        )
+        self.assertEqual(languages, {'es'})
+
+    def test_editor_templates_render_translation_inputs_for_non_primary_only(self):
+        """
+        GIVEN a ["pt", "es"] survey
+        WHEN the section detail partial is rendered
+        THEN es translation inputs are present, pt ones are not, and the base
+             label names the primary language
+        """
+        survey, section = self._survey(['pt', 'es'])
+        response = self.client.get(
+            f'/editor/surveys/{survey.uuid}/sections/{section.id}/',
+        )
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('translation_es_title', html)
+        self.assertNotIn('translation_pt_title', html)
+        self.assertIn('(Portuguese)', html)
+
+    def test_single_language_survey_renders_no_translation_inputs(self):
+        """
+        GIVEN a single-language ["es"] survey
+        WHEN the section detail partial is rendered
+        THEN no translation inputs and no language suffix on base labels appear
+        """
+        survey, section = self._survey(['es'])
+        response = self.client.get(
+            f'/editor/surveys/{survey.uuid}/sections/{section.id}/',
+        )
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertNotIn('translation_es_title', html)
+        self.assertNotIn('(Spanish)', html)
+
+
+class FoldPrimaryTranslationsMigrationTest(TestCase):
+    """The 0052 data migration logic: fold primary rows into base, normalize
+    choice shapes, preserve exactly what respondents currently see."""
+
+    def setUp(self):
+        self.org = _make_org('FoldMigrationOrg')
+
+    def _run_migration(self):
+        from importlib import import_module
+        migration = import_module(
+            'survey.migrations.0052_fold_primary_language_translations',
+        )
+        from django.apps import apps as live_apps
+        migration.fold_primary_translations(live_apps, None)
+
+    def test_divergent_primary_row_wins_over_base(self):
+        """
+        GIVEN a single-language survey whose section has a non-empty primary
+              translation row diverging from the base field (the survey-465 shape)
+        WHEN the migration runs
+        THEN the base field takes the translation's value (what respondents saw
+             via the fallback) and the row is gone
+        """
+        survey = SurveyHeader.objects.create(
+            name='fold_465', organization=self.org, available_languages=['es'],
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='sec1', title='AI text', subheading='AI sub',
+            code='S1', is_head=True,
+        )
+        SurveySectionTranslation.objects.create(
+            section=section, language='es', title='Author text', subheading='',
+        )
+
+        self._run_migration()
+
+        section.refresh_from_db()
+        # Non-empty translation wins; empty subheading means base was showing.
+        self.assertEqual(section.title, 'Author text')
+        self.assertEqual(section.subheading, 'AI sub')
+        self.assertFalse(SurveySectionTranslation.objects.filter(section=section).exists())
+
+    def test_identical_primary_rows_folded_on_multilingual_survey(self):
+        """
+        GIVEN a ["pt", "es"] survey with a pt question row identical to base
+              (the survey-467 shape)
+        WHEN the migration runs
+        THEN the pt row is deleted, the es row survives, base text is unchanged
+        """
+        survey = SurveyHeader.objects.create(
+            name='fold_467', organization=self.org, available_languages=['pt', 'es'],
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='sec1', title='Base', code='S1', is_head=True,
+        )
+        question = Question.objects.create(
+            survey_section=section, name='Pergunta', input_type='text',
+        )
+        QuestionTranslation.objects.create(question=question, language='pt', name='Pergunta')
+        QuestionTranslation.objects.create(question=question, language='es', name='Pregunta')
+
+        self._run_migration()
+
+        question.refresh_from_db()
+        self.assertEqual(question.name, 'Pergunta')
+        languages = set(
+            QuestionTranslation.objects.filter(question=question)
+            .values_list('language', flat=True)
+        )
+        self.assertEqual(languages, {'es'})
+
+    def test_choice_shapes_are_normalized(self):
+        """
+        GIVEN a single-language survey with dict choice names and a
+              multilingual survey whose dict lacks the primary key
+        WHEN the migration runs
+        THEN the first flattens to strings and the second gains the primary key
+             with the value the resolver currently falls back to
+        """
+        single = SurveyHeader.objects.create(
+            name='fold_single', organization=self.org, available_languages=['es'],
+        )
+        s_section = SurveySection.objects.create(
+            survey_header=single, name='sec1', title='S', code='S1', is_head=True,
+        )
+        s_q = Question.objects.create(
+            survey_section=s_section, name='Q', input_type='choice',
+            choices=[{'code': 1, 'name': {'es': 'Sí'}}, {'code': 2, 'name': 'No'}],
+        )
+        multi = SurveyHeader.objects.create(
+            name='fold_multi', organization=self.org, available_languages=['pt', 'en'],
+        )
+        m_section = SurveySection.objects.create(
+            survey_header=multi, name='sec1', title='S', code='S1', is_head=True,
+        )
+        m_q = Question.objects.create(
+            survey_section=m_section, name='Q', input_type='choice',
+            choices=[{'code': 1, 'name': {'en': 'Yes'}}],
+        )
+
+        self._run_migration()
+
+        s_q.refresh_from_db()
+        self.assertEqual(s_q.choices, [{'code': 1, 'name': 'Sí'}, {'code': 2, 'name': 'No'}])
+        m_q.refresh_from_db()
+        # Missing pt key gains what get_choice_name resolves today ('en' fallback).
+        self.assertEqual(m_q.choices[0]['name'], {'pt': 'Yes', 'en': 'Yes'})
+
+    def test_migration_is_idempotent(self):
+        """
+        GIVEN a survey already folded once
+        WHEN the migration runs again
+        THEN nothing changes
+        """
+        survey = SurveyHeader.objects.create(
+            name='fold_idem', organization=self.org, available_languages=['es'],
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='sec1', title='T', code='S1', is_head=True,
+        )
+        SurveySectionTranslation.objects.create(section=section, language='es', title='T2')
+
+        self._run_migration()
+        section.refresh_from_db()
+        first_title = section.title
+        self._run_migration()
+        section.refresh_from_db()
+
+        self.assertEqual(section.title, first_title)
+        self.assertEqual(first_title, 'T2')
+
+
+class TranslationCompletenessTest(TestCase):
+    """Editor-side visibility of translation gaps (spec: translation-completeness)."""
+
+    def setUp(self):
+        self.org = _make_org('CompletenessOrg')
+        self.user = User.objects.create_user(username='gapsuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='gapsuser', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='gaps_survey', visibility='private', organization=self.org,
+            available_languages=['pt', 'es', 'en'],
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Base', code='S1', is_head=True,
+        )
+        SurveySectionTranslation.objects.create(
+            section=self.section, language='es', title='Base es',
+        )
+        SurveySectionTranslation.objects.create(
+            section=self.section, language='en', title='Base en',
+        )
+
+    def test_untranslated_question_reports_all_non_primary_languages(self):
+        """
+        GIVEN a question with no translation rows on a trilingual survey
+        WHEN missing languages are computed
+        THEN both non-primary languages are reported (the survey-467 manual
+             question shape) and the primary is not
+        """
+        from survey.translation_gaps import question_missing_languages
+
+        question = Question.objects.create(
+            survey_section=self.section, name='Identifique-se', input_type='text',
+        )
+        self.assertEqual(question_missing_languages(question, self.survey), ['es', 'en'])
+
+    def test_choice_dict_missing_one_language_flags_that_language(self):
+        """
+        GIVEN a choice question translated everywhere except one choice's en key
+        WHEN missing languages are computed
+        THEN only en is reported
+        """
+        from survey.translation_gaps import question_missing_languages
+
+        question = Question.objects.create(
+            survey_section=self.section, name='Escolha', input_type='choice',
+            choices=[{'code': 1, 'name': {'pt': 'Sim', 'es': 'Sí'}}],
+        )
+        QuestionTranslation.objects.create(question=question, language='es', name='Elige')
+        QuestionTranslation.objects.create(question=question, language='en', name='Choose')
+        self.assertEqual(question_missing_languages(question, self.survey), ['en'])
+
+    def test_optional_subtext_counts_only_when_base_is_non_empty(self):
+        """
+        GIVEN a translated question whose base subtext is empty
+        WHEN missing languages are computed
+        THEN nothing is reported — an empty optional field is not a gap
+        """
+        from survey.translation_gaps import question_missing_languages
+
+        question = Question.objects.create(
+            survey_section=self.section, name='Nome', subtext='', input_type='text',
+        )
+        QuestionTranslation.objects.create(question=question, language='es', name='Nombre')
+        QuestionTranslation.objects.create(question=question, language='en', name='Name')
+        self.assertEqual(question_missing_languages(question, self.survey), [])
+
+    def test_single_language_survey_reports_no_gaps(self):
+        """
+        GIVEN a single-language survey
+        WHEN survey-wide gaps are computed
+        THEN the list is empty regardless of content
+        """
+        from survey.translation_gaps import survey_translation_gaps
+
+        survey = SurveyHeader.objects.create(
+            name='mono', organization=self.org, available_languages=['es'],
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='sec1', title='T', code='S1', is_head=True,
+        )
+        Question.objects.create(survey_section=section, name='Q', input_type='text')
+        self.assertEqual(survey_translation_gaps(survey), [])
+
+    def test_publish_transition_warns_once_then_respects_acknowledgement(self):
+        """
+        GIVEN a trilingual survey with an untranslated question
+        WHEN the owner publishes without, then with, the acknowledgement flag
+        THEN the first POST returns 409 naming the gap and does not publish,
+             and the second publishes — the warning never blocks
+        """
+        Question.objects.create(
+            survey_section=self.section, name='Identifique-se', input_type='text',
+        )
+
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/',
+            {'status': 'published'},
+        )
+        self.assertEqual(response.status_code, 409)
+        gaps = response.json()['translation_gaps']
+        self.assertTrue(any('Identifique-se' in g['label'] for g in gaps))
+        self.survey.refresh_from_db()
+        self.assertNotEqual(self.survey.status, 'published')
+
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/',
+            {'status': 'published', 'ack_translation_gaps': 'true'},
+        )
+        self.assertIn(response.status_code, (200, 204, 302))
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.status, 'published')
+
+    def test_fully_translated_survey_publishes_without_warning(self):
+        """
+        GIVEN a survey whose sections and questions are fully translated
+        WHEN the owner publishes
+        THEN no 409 warning is returned
+        """
+        question = Question.objects.create(
+            survey_section=self.section, name='Nome', input_type='text',
+        )
+        QuestionTranslation.objects.create(question=question, language='es', name='Nombre')
+        QuestionTranslation.objects.create(question=question, language='en', name='Name')
+
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/',
+            {'status': 'published'},
+        )
+        self.assertIn(response.status_code, (200, 204, 302))
+
+    def test_question_list_shows_missing_language_badge(self):
+        """
+        GIVEN an untranslated question on a trilingual survey
+        WHEN the section detail partial renders
+        THEN the warning badge lists the missing languages
+        """
+        Question.objects.create(
+            survey_section=self.section, name='Identifique-se', input_type='text',
+        )
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('es, en', response.content.decode())
