@@ -40,6 +40,12 @@ Weekly time-series (Feb–Jun 2026) of new signups vs. user-survey responses:
 - [Interactive onboarding](../idea-interactive-onboarding.md) — guided wrapper, drives publish/share
 - [Survey template gallery](../feature-survey-template-gallery.md) — seed library + cheap fallback/baseline
 
+**Collection (response-funnel analysis, 2026-08-21 — distribution barely exists: 1 social + 1 search arrival in 1934 respondent sessions):**
+- [Embeddable survey widget](../feature-survey-embed-widget.md) — customer's own site traffic becomes respondents; largest single lever
+- [Publish launch kit](../feature-publish-launch-kit.md) — QR poster, embed snippet, copy-paste texts, each on its own TrackedLink
+- [AI audience plan](../feature-ai-audience-plan.md) — the AI layer over the kit: who/where/what to send
+- [`end_datetime` never set](../bug-session-end-datetime-never-set.md) — completion funnel for creators is blocked on this
+
 **Adjacent UX fixes surfaced by the funnel analysis:**
 - [Reduce geo-input friction](../improvement-reduce-geo-input-friction.md) — geo is the most-skipped respondent question type
 - [Account-dedup / signup-login UX](../improvement-account-dedup-signup-ux.md) — duplicate accounts signal signup friction

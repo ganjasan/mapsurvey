@@ -14,8 +14,11 @@
 | 90 | feature | [White-label branding](feature-white-label-branding.md) | high | frontend | pro-tier | 2026-07-29 |
 | 91 | feature | [Workspace roles & permissions (read-only client access)](feature-workspace-roles-permissions.md) | high | backend | pro-tier | 2026-07-29 |
 | 95 | feature | [AI-assisted response triage (relevance, spam, duplicates)](feature-ai-response-triage.md) | high | backend | pro-tier | 2026-07-31 |
+| 131 | feature | [Embeddable survey widget (iframe on the customer's own site)](feature-survey-embed-widget.md) | high | frontend | growth | 2026-08-21 |
+| 132 | feature | [Publish launch kit — ready-made distribution artifacts](feature-publish-launch-kit.md) | high | backend | growth | 2026-08-21 |
 | 129 | feature | [AI audience plan — "how to reach your respondents" in the publish kit](feature-ai-audience-plan.md) | high | backend | growth | 2026-08-21 |
 | 130 | feature | [Auto-draft the public results page when a survey is published](feature-auto-draft-public-results-page.md) | high | backend | growth | 2026-08-21 |
+| 105 | bug | [`SurveySession.end_datetime` is never written (0 of 4586 rows)](bug-session-end-datetime-never-set.md) | high | backend | — | 2026-08-05 |
 | 92 | feature | [AI analytics over survey responses](feature-ai-analytics.md) | medium | backend | pro-tier | 2026-07-29 |
 | 94 | feature | [Grant reporting pack (Verwendungsnachweis support)](feature-grant-reporting-pack.md) | medium | backend | pro-tier | 2026-07-29 |
 | ~~1~~ | ~~feature~~ | ~~[GDPR / Security / Trust page](feature-gdpr-privacy-page.md)~~ | ~~**very high**~~ | ~~general~~ | ~~—~~ | ~~2026-03-26~~ |
@@ -40,7 +43,6 @@
 | ~~86~~ | ~~bug~~ | ~~[Sub-question popup is too narrow (Leaflet default width)](bug-subquestion-popup-too-narrow.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-07-28~~ |
 | ~~104~~ | ~~improvement~~ | ~~[Authors publish and close repeatedly because there is no way to try a survey](improvement-test-survey-without-publishing.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-08-05~~ |
 | ~~62~~ | ~~bug~~ | ~~[Default map in survey settings cannot be None](bug-default-map-cannot-be-none.md)~~ | ~~medium~~ | ~~frontend~~ | ~~—~~ | ~~2026-04-25~~ |
-| 105 | bug | [`SurveySession.end_datetime` is never written (0 of 4586 rows)](bug-session-end-datetime-never-set.md) | medium | backend | — | 2026-08-05 |
 | 127 | improvement | [Language picker: `eu` (Basque) reads as "EU / European"](improvement-language-picker-eu-basque-trap.md) | medium | frontend | — | 2026-08-17 |
 | 128 | improvement | [Share flow dead-ends: published-but-private surveys, no respondent path](improvement-share-flow-private-dead-end.md) | medium | frontend | growth | 2026-08-17 |
 | 17 | feature | [Budget/token allocation question type](feature-budget-token-allocation.md) | medium | frontend | community-engagement | 2026-04-02 |
