@@ -20007,6 +20007,37 @@ class AcquisitionServiceTest(TestCase):
 
         self.assertEqual(regs["value"], 2)
 
+    def test_registrations_card_is_all_time_while_conversions_stay_windowed(self):
+        """
+        GIVEN one real user inside the window and one registered long before it
+        WHEN the block is built
+        THEN the card counts both while the conversion rows count only the windowed one
+        """
+        _synced("plausible")
+        _plausible_row(self.end, AcquisitionDaily.SEGMENT_LANDING, visitors=100)
+        _user_at("acq_inside", timezone.now() - _dt.timedelta(days=ACQUISITION_LAG_DAYS + 1))
+        _user_at("acq_ancient", timezone.now() - _dt.timedelta(days=400))
+
+        block = AcquisitionService(days=30).block()
+
+        self.assertEqual(block["stages"][2]["value"], 2)
+        self.assertEqual(block["registrations_in_window"]["value"], 1)
+        # visits -> registrations: 1 windowed signup against 100 visitors, not 2.
+        self.assertEqual(block["conversions"][1]["pct"], 1.0)
+
+    def test_registrations_card_ignores_the_search_console_lag(self):
+        """
+        GIVEN a real user who registered today, inside the lag the window skips
+        WHEN the block is built
+        THEN the card already counts them
+        """
+        _user_at("acq_today", timezone.now())
+
+        block = AcquisitionService(days=30).block()
+
+        self.assertEqual(block["stages"][2]["value"], 1)
+        self.assertEqual(block["registrations_in_window"]["value"], 0)
+
     def test_demo_total_and_split(self):
         """
         GIVEN demo sessions with and without recorded identity
