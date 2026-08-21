@@ -10953,6 +10953,14 @@ class PostHogErrorTrackingTest(TestCase):
         request.user = AnonymousUser()
         self.assertIsNone(mw.process_exception(request, RuntimeError('boom')))
 
+    # A believable desktop-browser user-agent. RequestFactory sends none by
+    # default, and an absent UA now reads as a bot, so every "this IS tracked"
+    # assertion has to say who is asking.
+    BROWSER_UA = (
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+        '(KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36'
+    )
+
     def test_request_filter_skips_admin_but_not_respondents(self):
         """
         GIVEN admin tracebacks embed object reprs and respondent errors are ours
@@ -10962,7 +10970,7 @@ class PostHogErrorTrackingTest(TestCase):
         from django.test import RequestFactory
 
         from mapsurvey.settings import _posthog_skip_request
-        rf = RequestFactory()
+        rf = RequestFactory(HTTP_USER_AGENT=self.BROWSER_UA)
         # Configured, or the filter short-circuits to False for everything and
         # the admin/respondent distinction below would never be exercised.
         with self.settings(POSTHOG_PROJECT_KEY='phc_filtertest'):
@@ -10970,6 +10978,29 @@ class PostHogErrorTrackingTest(TestCase):
             self.assertFalse(_posthog_skip_request(rf.get('/__debug__/render_panel/')))
             self.assertTrue(_posthog_skip_request(rf.get('/surveys/abc/section1/')))
             self.assertTrue(_posthog_skip_request(rf.get('/editor/')))
+
+    def test_request_filter_skips_bots(self):
+        """
+        GIVEN crawlers re-walking dead draft URLs read as "affected users"
+        WHEN the request filter sees a bot user-agent or none at all
+        THEN the request is excluded from capture entirely
+        """
+        from django.test import RequestFactory
+
+        from mapsurvey.settings import _posthog_skip_request
+        rf = RequestFactory()
+        crawler = ('Mozilla/5.0 (compatible; Googlebot/2.1; '
+                   '+http://www.google.com/bot.html)')
+        with self.settings(POSTHOG_PROJECT_KEY='phc_filtertest'):
+            self.assertFalse(_posthog_skip_request(
+                rf.get('/surveys/abc/', HTTP_USER_AGENT=crawler)))
+            self.assertFalse(_posthog_skip_request(
+                rf.get('/surveys/abc/', HTTP_USER_AGENT='python-requests/2.32')))
+            # RequestFactory sends no User-Agent unless told to: the absent-UA case.
+            self.assertFalse(_posthog_skip_request(rf.get('/surveys/abc/')))
+            # And the browser control, or this test passes for the wrong reason.
+            self.assertTrue(_posthog_skip_request(
+                rf.get('/surveys/abc/', HTTP_USER_AGENT=self.BROWSER_UA)))
 
     def test_celery_failure_is_reported_with_task_name(self):
         """
