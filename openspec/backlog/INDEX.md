@@ -9,13 +9,18 @@
 | 93 | feature | [Billing & invoicing for Pro (project-based)](feature-billing-invoicing.md) | **very high** | backend | pro-tier | 2026-07-29 |
 | 35 | feature | [Hosting geo-zone selection (EU / US)](feature-eu-data-hosting-option.md) | **very high** | infra | pro-tier | 2026-04-05 |
 | 84 | feature | [Migrate transactional email to a dedicated ESP (deliverability)](feature-transactional-email-deliverability.md) | **very high** | infra | — | 2026-07-05 |
+| 12 | feature | [Conditional question visibility](feature-conditional-question-visibility.md) | **very high** | frontend | — | 2026-03-30 |
 | 89 | feature | [Custom domain for surveys and results pages](feature-custom-domain.md) | high | infra | pro-tier | 2026-07-29 |
 | 90 | feature | [White-label branding](feature-white-label-branding.md) | high | frontend | pro-tier | 2026-07-29 |
 | 91 | feature | [Workspace roles & permissions (read-only client access)](feature-workspace-roles-permissions.md) | high | backend | pro-tier | 2026-07-29 |
 | 95 | feature | [AI-assisted response triage (relevance, spam, duplicates)](feature-ai-response-triage.md) | high | backend | pro-tier | 2026-07-31 |
+| 129 | feature | [AI audience plan — "how to reach your respondents" in the publish kit](feature-ai-audience-plan.md) | high | backend | growth | 2026-08-21 |
+| 130 | feature | [Auto-draft the public results page when a survey is published](feature-auto-draft-public-results-page.md) | high | backend | growth | 2026-08-21 |
 | 92 | feature | [AI analytics over survey responses](feature-ai-analytics.md) | medium | backend | pro-tier | 2026-07-29 |
 | 94 | feature | [Grant reporting pack (Verwendungsnachweis support)](feature-grant-reporting-pack.md) | medium | backend | pro-tier | 2026-07-29 |
 | ~~1~~ | ~~feature~~ | ~~[GDPR / Security / Trust page](feature-gdpr-privacy-page.md)~~ | ~~**very high**~~ | ~~general~~ | ~~—~~ | ~~2026-03-26~~ |
+| 125 | bug | [Leaked modal backdrops stack up and make the editor unclickable](bug-editor-modal-backdrop-leak.md) | high | frontend | — | 2026-08-17 |
+| 126 | bug | [Survey name is silently truncated at 45 characters](bug-survey-name-silently-truncated.md) | high | backend | — | 2026-08-17 |
 | 2 | bug | [Image sub-question breaks point placement on geo question](bug-image-subquestion-breaks-geo-point.md) | high | frontend | — | 2026-04-25 |
 | ~~3~~ | ~~bug~~ | ~~[Export vs Download confusion](bug-export-download-confusion.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-03-26~~ |
 | ~~4~~ | ~~bug~~ | ~~[GeoJSON export not importable in QGIS](bug-geojson-qgis-import.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-03-26~~ |
@@ -26,7 +31,6 @@
 | ~~9~~ | ~~bug~~ | ~~[Pinned point disappears in subsequent sections](bug-pinned-point-disappears.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-03-26~~ |
 | ~~10~~ | ~~feature~~ | ~~[Show response count in editor dashboard](feature-response-count-in-editor.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-03-26~~ |
 | 11 | improvement | [Migrate servers to Frankfurt, Germany](improvement-frankfurt-server-migration.md) | high | infra | — | 2026-03-26 |
-| 12 | feature | [Conditional question visibility](feature-conditional-question-visibility.md) | high | frontend | — | 2026-03-30 |
 | ~~13~~ | ~~improvement~~ | ~~[Versioning: cross-version analytics and response counts](improvement-versioning-cross-version-analytics.md)~~ | ~~high~~ | ~~backend~~ | ~~—~~ | ~~2026-04-16~~ |
 | 14 | feature | [Export filter: completed surveys only](feature-export-completed-only-filter.md) | high | backend | — | 2026-03-30 |
 | 15 | idea | [AI agent that creates surveys from chat description](idea-ai-survey-creator-chat-agent.md) (promoted) | high | frontend | growth | 2026-04-25 |
@@ -37,6 +41,8 @@
 | ~~104~~ | ~~improvement~~ | ~~[Authors publish and close repeatedly because there is no way to try a survey](improvement-test-survey-without-publishing.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-08-05~~ |
 | ~~62~~ | ~~bug~~ | ~~[Default map in survey settings cannot be None](bug-default-map-cannot-be-none.md)~~ | ~~medium~~ | ~~frontend~~ | ~~—~~ | ~~2026-04-25~~ |
 | 105 | bug | [`SurveySession.end_datetime` is never written (0 of 4586 rows)](bug-session-end-datetime-never-set.md) | medium | backend | — | 2026-08-05 |
+| 127 | improvement | [Language picker: `eu` (Basque) reads as "EU / European"](improvement-language-picker-eu-basque-trap.md) | medium | frontend | — | 2026-08-17 |
+| 128 | improvement | [Share flow dead-ends: published-but-private surveys, no respondent path](improvement-share-flow-private-dead-end.md) | medium | frontend | growth | 2026-08-17 |
 | 17 | feature | [Budget/token allocation question type](feature-budget-token-allocation.md) | medium | frontend | community-engagement | 2026-04-02 |
 | 18 | feature | [Search in survey list](feature-search-in-survey-list.md) | medium | frontend | — | 2026-04-25 |
 | 19 | feature | [Map tagging with categorized pins](feature-map-tagging-pins.md) | medium | frontend | community-engagement | 2026-04-02 |
