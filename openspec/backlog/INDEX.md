@@ -23,7 +23,7 @@
 | 92 | feature | [AI analytics over survey responses](feature-ai-analytics.md) | medium | backend | pro-tier | 2026-07-29 |
 | 94 | feature | [Grant reporting pack (Verwendungsnachweis support)](feature-grant-reporting-pack.md) | medium | backend | pro-tier | 2026-07-29 |
 | ~~1~~ | ~~feature~~ | ~~[GDPR / Security / Trust page](feature-gdpr-privacy-page.md)~~ | ~~**very high**~~ | ~~general~~ | ~~—~~ | ~~2026-03-26~~ |
-| 125 | bug | [Leaked modal backdrops stack up and make the editor unclickable](bug-editor-modal-backdrop-leak.md) | high | frontend | — | 2026-08-17 |
+| 133 | bug | [Leaked modal backdrops stack up and make the editor unclickable](bug-editor-modal-backdrop-leak.md) | high | frontend | — | 2026-08-17 |
 | 126 | bug | [Survey name is silently truncated at 45 characters](bug-survey-name-silently-truncated.md) | high | backend | — | 2026-08-17 |
 | 2 | bug | [Image sub-question breaks point placement on geo question](bug-image-subquestion-breaks-geo-point.md) | high | frontend | — | 2026-04-25 |
 | ~~3~~ | ~~bug~~ | ~~[Export vs Download confusion](bug-export-download-confusion.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-03-26~~ |
