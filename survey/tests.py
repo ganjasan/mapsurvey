@@ -24885,6 +24885,54 @@ class AISurveyCreateViewTest(TestCase):
         self.assertNotContains(response, 'create-map-picker')
         self.assertContains(response, 'Check the form before generating')
 
+    # The two tests below guard the same defect from both sides. It is worth
+    # saying why the obvious one is not enough: `test_manual_creation_is_unchanged`
+    # above passed throughout the whole time "Create empty" was dead in
+    # production, because the test client posts straight to the view and never
+    # runs browser validation. The bug lived entirely in the rendered HTML, so
+    # only an assertion about the markup can catch it coming back.
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_brief_fields_carry_no_html5_required(self):
+        """
+        GIVEN the AI panel is rendered
+        WHEN the create page markup is inspected
+        THEN no brief field carries `required`, because the panel shares one
+             form with the "Create empty" submit and the browser validates the
+             whole form -- while the survey name keeps its own `required`
+        """
+        response = self.client.get(reverse('editor_survey_create'))
+        html = response.content.decode()
+
+        for field_id in ('id_goal', 'id_audience', 'id_map_target'):
+            tag = re.search(r'<[^>]*id="%s"[^>]*>' % field_id, html)
+            self.assertIsNotNone(tag, 'brief field %s is not rendered' % field_id)
+            self.assertNotIn('required', tag.group(0))
+
+        name_tag = re.search(r'<[^>]*id="id_name"[^>]*>', html)
+        self.assertIn('required', name_tag.group(0))
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_create_empty_works_with_an_untouched_brief(self):
+        """
+        GIVEN the AI panel is present and every brief field is left blank
+        WHEN "Create empty" is submitted
+        THEN the survey is created with its head section, exactly as when the
+             panel is absent -- declining AI costs the creator nothing
+        """
+        response = self.client.post(reverse('editor_survey_create'), {
+            'name': 'declined_ai', 'available_languages': '["en"]', 'action': 'empty',
+            'goal': '', 'audience': '', 'map_target': '',
+        })
+
+        survey = SurveyHeader.objects.get(name='declined_ai')
+        self.assertRedirects(
+            response, reverse('editor_survey_detail', kwargs={'survey_uuid': survey.uuid}),
+        )
+        self.assertEqual(
+            SurveySection.objects.filter(survey_header=survey, is_head=True).count(), 1,
+        )
+        self.assertFalse(AIGenerationEvent.objects.exists())
+
 
 class AIGenerationStatusViewTest(TestCase):
     """The polled status endpoint."""

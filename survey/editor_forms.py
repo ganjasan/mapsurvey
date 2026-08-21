@@ -41,6 +41,16 @@ class SurveyBriefForm(forms.Form):
     point of the feature is removing work, not relocating it.
     """
 
+    # Server-side only: the brief shares one <form> with the "Create empty"
+    # submit, and the browser validates the whole form on any submit. With
+    # HTML5 `required` on `goal`, clicking "Create empty" with an untouched
+    # brief was refused by the browser -- the POST never left the page, and the
+    # creator got a "fill this in" tooltip pointing at the AI panel they were
+    # declining to use. `goal` is still required for the generate path, where
+    # `_start_survey_generation` validates it and renders the errors into the
+    # status slot.
+    use_required_attribute = False
+
     goal = forms.CharField(
         label='What do you want to find out?',
         widget=forms.Textarea(attrs={
