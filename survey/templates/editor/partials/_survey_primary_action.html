@@ -1,0 +1,30 @@
+{% comment %}
+Survey context-bar primary action — the state-driven counterpart to the Public
+results tab's "Publish page" button. Owner-only, non-archived, canonical survey
+(a draft-copy keeps its own Publish Version / Discard and does not include this).
+Presentation over survey.status only; reuses the lifecycle JS already loaded by
+_lifecycle_scripts.html (doTransition / showPublishConfirm). No server change.
+
+Requires: survey, effective_role.
+{% endcomment %}
+{% if effective_role == 'owner' and not survey.is_draft_copy and survey.status != 'archived' %}
+  {% if survey.status == 'draft' %}
+  <button class="btn btn-sm btn-success" onclick="doTransition('published')" title="Open the survey for responses">
+    <i class="fas fa-globe"></i> Publish
+  </button>
+  {% elif survey.status == 'testing' %}
+  <button class="btn btn-sm btn-success" onclick="showPublishConfirm()" title="Open the survey for responses">
+    <i class="fas fa-globe"></i> Publish — open for responses
+  </button>
+  {% elif survey.status == 'published' %}
+  <span class="pub-chip badge-success" title="Accepting responses"><i class="fas fa-circle" style="font-size:7px;vertical-align:middle;"></i> Open</span>
+  <button class="btn btn-sm btn-outline-danger" onclick="doTransition('closed')" title="Stop accepting responses">
+    <i class="fas fa-lock"></i> Close
+  </button>
+  {% elif survey.status == 'closed' %}
+  <span class="pub-chip badge-secondary" title="Not accepting responses"><i class="fas fa-circle" style="font-size:7px;vertical-align:middle;"></i> Closed</span>
+  <button class="btn btn-sm btn-outline-primary" onclick="doTransition('published')" title="Accept responses again">
+    <i class="fas fa-globe"></i> Reopen
+  </button>
+  {% endif %}
+{% endif %}
