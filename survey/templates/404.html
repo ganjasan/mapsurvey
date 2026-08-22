@@ -1,0 +1,90 @@
+{% load i18n %}<!doctype html>
+{% comment %}
+Standalone 404 — intentionally NOT extending base_landing.html. A 404 must render
+even when the marketing CSS pipeline is unavailable, so everything here is inline
+and self-contained: no {% templatetag openblock %} static {% templatetag closeblock %} assets, no site nav, no footer.
+Copy is context-aware: a miss on a survey-facing path (/surveys/, /r/, /editor/surveys/)
+almost always means the survey is unpublished, deleted, or the link is wrong — say so;
+any other path gets generic wording. `request` and `user` are available because the
+404 handler renders with a RequestContext.
+{% endcomment %}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{% trans "Page not found" %} — Mapsurvey</title>
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+      padding: 2rem 1.25rem;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1f2937; background: #ffffff;
+    }
+    a { color: #6d28d9; }
+    .brand {
+      position: absolute; top: 1.5rem; left: 1.75rem;
+      font-weight: 800; font-size: 1.15rem; letter-spacing: -.01em;
+      color: #6d28d9; text-decoration: none;
+    }
+    .nf { max-width: 560px; }
+    .nf__code {
+      font-size: 6rem; font-weight: 800; line-height: 1; margin: 0 0 .25rem;
+      color: #6d28d9; letter-spacing: -.03em;
+    }
+    .nf__title { font-size: 1.7rem; font-weight: 700; margin: 0 0 1rem; }
+    .nf__lead { font-size: 1.05rem; line-height: 1.55; color: #4b5563; margin: 0 0 1.25rem; }
+    .nf__reasons {
+      text-align: left; display: inline-block; margin: 0 auto 1.5rem; padding: 0; list-style: none;
+      color: #4b5563; line-height: 1.55;
+    }
+    .nf__reasons li { padding: .3rem 0 .3rem 1.5rem; position: relative; }
+    .nf__reasons li::before { content: "•"; color: #6d28d9; position: absolute; left: .35rem; font-weight: 700; }
+    .nf__cta { display: flex; gap: 1.25rem; justify-content: center; flex-wrap: wrap; margin-top: .5rem; }
+    .nf__cta a { font-weight: 600; text-decoration: none; }
+    .nf__cta a:hover { text-decoration: underline; }
+    @media (prefers-color-scheme: dark) {
+      body { color: #e5e7eb; background: #0f1116; }
+      .nf__lead, .nf__reasons { color: #9ca3af; }
+      .brand, .nf__code, a { color: #a78bfa; }
+      .nf__reasons li::before { color: #a78bfa; }
+    }
+  </style>
+</head>
+<body>
+  <a class="brand" href="{% url 'index' %}">Mapsurvey</a>
+
+  {% with p=request.path %}
+  <main class="nf">
+    <div class="nf__code">404</div>
+
+    {% if "/surveys/" in p or "/editor/surveys/" in p or p|slice:":3" == "/r/" %}
+      <h1 class="nf__title">{% trans "This survey isn’t available" %}</h1>
+      <p class="nf__lead">{% trans "We couldn’t open the survey at this link. That usually means one of these:" %}</p>
+      <ul class="nf__reasons">
+        <li>{% trans "It hasn’t been published yet — the creator is still working on it." %}</li>
+        <li>{% trans "It was removed by its creator." %}</li>
+        <li>{% trans "The link is incomplete or mistyped." %}</li>
+      </ul>
+      <p class="nf__lead">{% trans "If someone shared this link with you, ask them to send the public link again." %}</p>
+    {% else %}
+      <h1 class="nf__title">{% trans "Page not found" %}</h1>
+      <p class="nf__lead">{% trans "The page you were looking for doesn’t exist, or has moved." %}</p>
+    {% endif %}
+
+    <div class="nf__cta">
+      {% if user.is_authenticated %}
+        <a href="{% url 'editor' %}">{% trans "Go to your dashboard" %}</a>
+        <a href="{% url 'survey_list' %}">{% trans "Browse public surveys" %}</a>
+      {% else %}
+        <a href="{% url 'survey_list' %}">{% trans "Browse public surveys" %}</a>
+        <a href="{% url 'index' %}">{% trans "Back to homepage" %}</a>
+      {% endif %}
+    </div>
+  </main>
+  {% endwith %}
+</body>
+</html>

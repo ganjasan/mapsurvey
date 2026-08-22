@@ -18,7 +18,7 @@
 | 131 | feature | [Embeddable survey widget (iframe on the customer's own site)](feature-survey-embed-widget.md) | high | frontend | growth | 2026-08-21 |
 | 132 | feature | [Publish launch kit — ready-made distribution artifacts](feature-publish-launch-kit.md) | high | backend | growth | 2026-08-21 |
 | 129 | feature | [AI audience plan — "how to reach your respondents" in the publish kit](feature-ai-audience-plan.md) | high | backend | growth | 2026-08-21 |
-| 130 | feature | [Auto-draft the public results page when a survey is published](feature-auto-draft-public-results-page.md) | high | backend | growth | 2026-08-21 |
+| 130 | feature | [Auto-draft the public results page when a survey is published](feature-auto-draft-public-results-page.md) (promoted) | high | backend | growth | 2026-08-21 |
 | 105 | bug | [`SurveySession.end_datetime` is never written (0 of 4586 rows)](bug-session-end-datetime-never-set.md) | high | backend | — | 2026-08-05 |
 | 92 | feature | [AI analytics over survey responses](feature-ai-analytics.md) | medium | backend | pro-tier | 2026-07-29 |
 | 94 | feature | [Grant reporting pack (Verwendungsnachweis support)](feature-grant-reporting-pack.md) | medium | backend | pro-tier | 2026-07-29 |

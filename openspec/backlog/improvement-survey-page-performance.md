@@ -35,6 +35,38 @@ Survey section page loads ~465KB of blocking resources (290KB JS + 175KB CSS) wi
 | Leaflet Draw CSS | 15KB | Yes |
 | **Total** | **~465KB** | **All blocking** |
 
+## Measured on production, 2026-08-17
+
+SurveyEvent `page_load` data now exists, so the April estimate above ("5-10 seconds on
+mobile") can be replaced with numbers. Survey 440 (*Mapa colaborativo LGBT+ em Belo
+Horizonte*, 29 sessions, all traffic 2026-08-10/11) — median `load_ms` by device, all
+sections except the first (the first has no map):
+
+| Device | Loads | Median | p90 |
+|--------|-------|--------|-----|
+| desktop | 44 | 0.9 s | 41 s |
+| mobile | 16 | **36.5 s** | 50 s |
+
+Same survey, median by section: S1 (no map) 0.8 s, S2 6.5 s, S3 16.6 s, S4 22 s, S5 11.5 s.
+The map is the whole difference.
+
+The estimate was low by roughly 4x, and it is a *mobile* problem specifically — desktop is
+fine. Completion on that survey: 5/20 desktop vs 1/9 mobile, with mobile at 31% of sessions.
+
+Cross-survey check over the last 30 days (median `load_ms`, non-first sections): surveys
+373/383/441 sit at 320–490 ms, while 379 is at 56 s, 396 at 35 s, 438 at 30 s. So this is
+not uniform — some configurations are fine and some are catastrophic, which suggests a
+per-survey trigger on top of the fixed 465KB bundle.
+
+Candidate trigger, unverified: survey 440 enables three basemaps (`streets`, `satellite`,
+`topo`) where most surveys enable one. Worth checking whether all enabled basemaps get their
+tiles fetched at init rather than on switch.
+
+**Reproduce before changing anything**: PR preview, throttled to 4G, a section with three
+basemaps enabled, read the network waterfall. Do not optimize from this table alone —
+`load_ms` measures to the `load` event, so a backgrounded tab inflates the tail (though not
+a median of 36 s).
+
 ## Notes
 
 - Geolocation request can add 10s timeout on top of resource loading

@@ -60,9 +60,14 @@
 
 ## 6. Rollout
 
-- [ ] Dry-run the importer over `docs/marketing/user-outreach/`, review the
-      unmatched list.
-- [ ] Apply against production.
-- [ ] Run the export once to verify the CRM exit path on real data.
+- [x] Dry-run the importer over `docs/marketing/user-outreach/`: 123 of 125
+      dossiers matched; the two misses are a batch working file and a
+      company-level dossier, neither describing a single account.
+- [x] Applied against production 2026-07-29: 36 profiles, 214 notes
+      (122 research + 92 email) across 120 users. Source files untouched.
+- [x] Re-ran the matcher afterwards: would create 0 further notes (idempotent).
+- [x] Exported on real data: 277 profile rows, 214 note rows; every note body
+      contains newlines and all 214 survive a CSV parse round trip (longest
+      11k characters).
 - [x] Update `/user-outreach` so research is written to the DB, and record that
       the markdown tree is now a frozen archive.

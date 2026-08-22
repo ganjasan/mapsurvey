@@ -121,3 +121,37 @@ silently stalled scheduled job is apparent to whoever reads the numbers.
 - **WHEN** a configured source has not synchronised successfully for longer than the expected
   interval
 - **THEN** the section marks that source's data as stale
+
+## MODIFIED Requirements
+
+### Requirement: No new data table for the funnel dashboard
+The **registration-onward** stages of the funnel SHALL be computed live from existing tables
+(`auth_user`, `SurveyHeader`, `SurveySection`, `Question`, `SurveySession`) and SHALL NOT require a
+new data-bearing table or a data backfill for those stages. A metadata-only migration for the
+display proxy model (no DDL, no table) is permitted.
+
+This constraint applies to everything derivable from our own rows. It SHALL NOT apply to the
+pre-registration acquisition stages, which are not derivable from our tables at all: impressions and
+landing visits exist only inside third-party systems, and a staff page must not call those APIs
+during a request. Those metrics SHALL therefore be persisted locally by an out-of-band sync, and the
+respondent-identity needed to split demo opens SHALL live in its own table rather than being added to
+`SurveySession`.
+
+#### Scenario: Dashboard reflects history on first deploy
+- **WHEN** the dashboard is deployed for the first time with no prior instrumentation
+- **THEN** the registration-onward stages display the full historical funnel computed from existing
+  rows, with no backfill step
+
+#### Scenario: No data-bearing schema change for derivable stages
+- **WHEN** a stage can be computed from existing rows
+- **THEN** it is computed live and no table is added to store it
+
+#### Scenario: Externally sourced stages are persisted locally
+- **WHEN** a stage's data exists only in a third-party analytics system
+- **THEN** it is stored in a local table by a scheduled sync, and the dashboard reads that table
+  instead of calling the provider during a request
+
+#### Scenario: Forward-only stages state their start date
+- **WHEN** a stage or breakdown cannot be reconstructed for the period before it began recording
+- **THEN** the dashboard reports the date recording started rather than presenting the earlier period
+  as if it had been measured

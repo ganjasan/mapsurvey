@@ -29,7 +29,7 @@ when the published survey is read-only the bar goes amber and carries the
 <div class="pr-ctxbar build-ctxbar" style="flex-shrink:0;">
     <div style="flex:1;display:flex;align-items:center;gap:.6rem;min-width:0;">
         <span class="ico"><i class="fas fa-lock"></i></span>
-        <div class="t">Build <span class="ro-pill">read-only</span></div>
+        <div class="t">Survey <span class="ro-pill">read-only</span></div>
     </div>
     <div style="display:flex;align-items:center;gap:.6rem;flex-shrink:0;">
         <span class="build-ro-msg"><i class="fas fa-lock"></i>
@@ -45,17 +45,18 @@ when the published survey is read-only the bar goes amber and carries the
         </form>
         {% endif %}
     </div>
-    <div style="flex:1;display:flex;justify-content:flex-end;">
+    <div style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:.6rem;">
         <a class="btn btn-sm btn-outline-secondary" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
             <i class="fas fa-external-link-alt"></i> Preview
         </a>
+        {% include "editor/partials/_survey_primary_action.html" %}
     </div>
 </div>
 {% else %}
 <div class="pr-ctxbar build-ctxbar" style="flex-shrink:0;">
     <span class="ico"><i class="fas fa-hammer"></i></span>
     <div>
-        <div class="t">Build</div>
+        <div class="t">Survey</div>
         <div class="s">Sections, questions &amp; survey settings</div>
     </div>
     <span style="flex:1;"></span>
@@ -70,12 +71,13 @@ when the published survey is read-only the bar goes amber and carries the
         <i class="fas fa-trash"></i> Discard
     </button>
     {% elif is_owner and survey.status == 'draft' and not survey.is_draft_copy %}
-    <button class="btn btn-sm btn-success" onclick="doTransition('published')">
-        <i class="fas fa-globe"></i> Publish
-    </button>
+    {% include "editor/partials/_survey_primary_action.html" %}
     <button class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#discardDraftSurveyModal">
         <i class="fas fa-trash"></i> Discard
     </button>
+    {% else %}
+    {% comment %}testing (and any non-draft editable state) now surfaces its primary action too{% endcomment %}
+    {% include "editor/partials/_survey_primary_action.html" %}
     {% endif %}
 </div>
 {% endif %}

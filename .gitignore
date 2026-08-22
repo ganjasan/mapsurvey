@@ -10,3 +10,13 @@ staticfiles/
 mediafiles/
 .playwright-mcp/
 .pytest_cache/
+scripts/.outreach-sent.log
+
+# Local working directories — never for the public repo.
+# raw/ and exports/ can hold client and respondent data.
+.drydock/
+backlog/
+designs/
+exports/
+raw/
+requirements/

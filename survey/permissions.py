@@ -1,5 +1,6 @@
 from functools import wraps
 
+from django.contrib.auth.views import redirect_to_login
 from django.http import HttpResponseForbidden, Http404
 from django.shortcuts import redirect
 
@@ -91,13 +92,14 @@ def org_permission_required(min_role='viewer'):
     """
     Decorator for views that require a minimum org-level role.
     The view must accept `request` as first argument.
-    Redirects to login if not authenticated, returns 403 if insufficient role.
+    Redirects to login (carrying ?next=) if not authenticated, returns 403 if
+    insufficient role.
     """
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped(request, *args, **kwargs):
             if not request.user.is_authenticated:
-                return redirect('login')
+                return redirect_to_login(request.get_full_path())
             if not request.user.is_superuser and not _check_org_role(request.user, request.active_org, min_role):
                 return HttpResponseForbidden()
             return view_func(request, *args, **kwargs)
@@ -112,12 +114,16 @@ def survey_permission_required(min_role='viewer', survey_kwarg='survey_uuid', al
     Returns 404 if survey not in active org.
     Returns 403 if effective role insufficient.
     Trashed surveys 404 unless allow_trashed=True (trash endpoints only).
+
+    Anonymous requests redirect to login carrying ?next=, so that signing in
+    returns the visitor to the URL they asked for. Without it a shared editor
+    link silently becomes "log in, land on the dashboard, give up".
     """
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped(request, *args, **kwargs):
             if not request.user.is_authenticated:
-                return redirect('login')
+                return redirect_to_login(request.get_full_path())
 
             survey_uuid = kwargs.get(survey_kwarg)
             qs = SurveyHeader.objects.all()

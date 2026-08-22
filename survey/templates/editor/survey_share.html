@@ -99,7 +99,7 @@
             {% elif effective_role == 'owner' and survey.status == 'draft' %}
             <p class="share-gate-hint"><i class="fas fa-info-circle"></i>
                 {{ publish_blocked_reason }} — finish it in
-                <a href="{% url 'editor_survey_detail' survey.uuid %}">Build</a> before you can publish.</p>
+                <a href="{% url 'editor_survey_detail' survey.uuid %}">Survey</a> before you can publish.</p>
             {% elif effective_role != 'owner' %}
             <p class="share-gate-hint"><i class="fas fa-info-circle"></i> Ask the survey owner to publish it.</p>
             {% endif %}
@@ -137,7 +137,7 @@
         <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem;">
             Make a separate link per channel — newsletter, Instagram, a printed poster.
             Every response that arrives through it is tagged with its source, so you can compare
-            channels in <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">Results&nbsp;→&nbsp;Traffic&nbsp;Sources</a>.
+            channels in <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">Responses&nbsp;→&nbsp;Traffic&nbsp;Sources</a>.
         </p>
         <form method="post">
             {% csrf_token %}
@@ -215,12 +215,12 @@
         <div class="share-monitor">
             <i class="fas fa-chart-line"></i>
             <div>See how each link performs — started, completed and completion rate per source —
-            in <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">Results&nbsp;→&nbsp;Traffic&nbsp;Sources</a>.</div>
+            in <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">Responses&nbsp;→&nbsp;Traffic&nbsp;Sources</a>.</div>
         </div>
         {% else %}
         <p style="color:#9ca3af;font-size:0.9rem;text-align:center;padding:2rem 0;">
             No tracking links yet. Create one above, then watch each source's performance in
-            <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">Results&nbsp;→&nbsp;Traffic&nbsp;Sources</a>.
+            <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">Responses&nbsp;→&nbsp;Traffic&nbsp;Sources</a>.
         </p>
         {% endif %}
     </div>

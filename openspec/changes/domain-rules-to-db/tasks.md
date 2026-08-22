@@ -47,10 +47,14 @@
 
 ## 7. Rollout
 
-- [ ] Merge, then on production:
-      `assign_cohorts --rules-csv docs/marketing/cohorts/domain-rules.csv --apply`.
-- [ ] Re-run `assign_cohorts` and confirm the dashboard breakdown is unchanged
-      (77 rule-classified users before the move).
+- [x] Merged and loaded on production 2026-07-29: 42 rules
+      (16 university, 15 consultancy, 6 business, 3 municipality, 2 ngo).
+- [x] Re-ran the classifier against all 276 accounts with the database rules:
+      **1 difference out of 276**. `mail.uc.edu` had been hard-coded as a student
+      marker; removing it as a customer domain moves that account to `university`
+      via the generic `.edu` rule, which matches the dossier (a researcher, not a
+      course). Applied that one correction. The cohort breakdown is otherwise
+      identical.
 
 ## 8. History scrub (tracked here, executed separately)
 
