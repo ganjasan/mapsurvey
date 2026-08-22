@@ -54,7 +54,7 @@ show_draft_actions, draft_copy, show_edit_published.
     <div class="nm-head">Results page</div>
     {% with page=survey.public_results_page %}
       {% if page and page.is_published %}
-      <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:#16a34a;font-size:8px;"></i> Live — /r/{{ page.slug }}/<span class="sub">manage in the Publish space</span></span>
+      <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:#16a34a;font-size:8px;"></i> Live — /r/{{ page.slug }}/<span class="sub">manage in the Public results space</span></span>
         <a class="nm-item" style="width:auto;padding:4px 9px;border:1px solid var(--border-color);border-radius:6px;" href="{% url 'editor_survey_public_results' survey.uuid %}">Open</a></div>
       {% elif page %}
       <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:#9ca3af;font-size:8px;"></i> Draft — not live yet<span class="sub">/r/{{ page.slug }}/ is prepared but unpublished</span></span>

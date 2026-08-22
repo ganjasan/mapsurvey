@@ -1,7 +1,11 @@
 {% comment %}
 Workspace navigation for survey-management pages (Variant A "lifecycle").
-Three spaces (Build / Results / Publish) + action dropdowns (Share / Preview)
-+ a gear that opens the in-Build settings panel. Routes/view names unchanged.
+Three spaces (Survey / Responses / Public results) + action dropdowns
+(Share / Preview) + a gear that opens the in-Survey settings panel.
+The active_tab codes ("build"|"results"|"publish") are internal and unchanged;
+only the visible labels were renamed — "Responses" and "Public results" no
+longer both read as "results", and "Survey" no longer collides with the
+survey's own "Publish — open for responses" lifecycle action.
 
 Requires: survey, active_tab ("build"|"results"|"publish").
 Optional: effective_role, hide_status_badge (kept for back-compat; ignored).
@@ -12,16 +16,16 @@ Optional: effective_role, hide_status_badge (kept for back-compat; ignored).
 
 <div class="survey-nav-tabs">
     <a href="{% url 'editor_survey_detail' survey.uuid %}"
-       class="survey-nav-tab{% if active_tab == 'build' %} active{% endif %}" title="Build the survey">
-        <i class="fas fa-hammer"></i> Build
+       class="survey-nav-tab{% if active_tab == 'build' %} active{% endif %}" title="Build the survey — sections, questions & settings">
+        <i class="fas fa-hammer"></i> Survey
     </a>
     <a href="{% url 'editor_survey_analytics' survey.uuid %}"
        class="survey-nav-tab{% if active_tab == 'results' %} active{% endif %}" title="Responses & analysis">
-        <i class="fas fa-chart-bar"></i> Results
+        <i class="fas fa-chart-bar"></i> Responses
     </a>
     <a href="{% url 'editor_survey_public_results' survey.uuid %}"
-       class="survey-nav-tab{% if active_tab == 'publish' %} active{% endif %}" title="Public results page">
-        <i class="fas fa-globe"></i> Publish <span class="badge-beta">beta</span>
+       class="survey-nav-tab{% if active_tab == 'publish' %} active{% endif %}" title="Public results page — a shareable page of aggregated responses">
+        <i class="fas fa-globe"></i> Public results <span class="badge-beta">beta</span>
     </a>
 </div>
 
@@ -47,7 +51,12 @@ Optional: effective_role, hide_status_badge (kept for back-compat; ignored).
     <button onclick="navMenuToggle(this,event)"><i class="fas fa-external-link-alt"></i> Preview <i class="fas fa-angle-down caret"></i></button>
     <div class="nav-menu">
         <a class="nm-item" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank"><i class="fas fa-user lead"></i> Survey — as respondent</a>
-        <a class="nm-item" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank"><i class="fas fa-globe lead"></i> Results page</a>
+        {% comment %}
+        Private preview, not a shareable link — a visitor following this URL has no editor
+        rights and gets forwarded to /r/<slug>/ (or bounced, if the page is unpublished).
+        The shareable one is "Copy results link" in the Share menu above.
+        {% endcomment %}
+        <a class="nm-item" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank"><i class="fas fa-globe lead"></i> Results page <small>private</small></a>
     </div>
 </div>
 {% endif %}
