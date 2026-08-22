@@ -1,3 +1,9 @@
+# Crosshair Marker Edit Specification
+
+## Purpose
+How an already-placed marker is repositioned through the crosshair overlay — what Apply and Cancel do, how the info panel behaves during the edit, and what state is tracked while the crosshair is live.
+
+## Requirements
 ### Requirement: Crosshair-based marker repositioning
 When the user clicks the "Edit" button in a point marker's popup, the system SHALL enter crosshair mode to allow repositioning the marker. The crosshair overlay SHALL display with the marker's color and icon. The map SHALL pan to center on the marker's current position.
 

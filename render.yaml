@@ -70,6 +70,17 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
         previewEnvRenderServiceName: mapsurvey
+      # Off in production since 2026-08-17 evening, by product decision, after
+      # a day of measuring Gemini's SSE in anger: 47% of streamed calls failed
+      # (mid-answer cuts, stalls) in the morning batch, and one creator hit
+      # four consecutive failures — a dead end even through the retries. The
+      # blocking call has neither stream-specific failure mode, and at thinking
+      # `low` the wait is short enough for an indeterminate bar. Previews keep
+      # streaming on so the path stays exercised; reconsider against fresh
+      # $ai_generation error-rate data, not memory.
+      - key: AI_STREAMING_ENABLED
+        value: "false"
+        previewValue: "true"
       - key: DEFAULT_FROM_EMAIL
         sync: false
         previewEnvRenderServiceName: mapsurvey
@@ -126,10 +137,22 @@ services:
         previewEnvRenderServiceName: mapsurvey
       - key: CLOUDFLARE_TRUSTED
         value: "True"
+      # Attempts that pass form validation.
       - key: REGISTRATION_RATE_LIMIT_HOUR
         value: "3"
       - key: REGISTRATION_RATE_LIMIT_DAY
         value: "10"
+      # Attempts rejected by form validation — a separate, far looser budget so
+      # someone fighting the password field is never locked out. Nobody
+      # legitimate should reach these; watch AbuseEvent(detail='invalid_hour').
+      - key: REGISTRATION_INVALID_LIMIT_HOUR
+        value: "15"
+      - key: REGISTRATION_INVALID_LIMIT_DAY
+        value: "50"
+      # Kill switch for the split above. Set to "False" from the dashboard to
+      # restore the previous single-counter behaviour without a rebuild.
+      - key: REGISTRATION_SPLIT_RATE_LIMIT
+        value: "True"
       - key: NEWSLETTER_SITE_URL
         value: "https://mapsurvey.org"
       # Gunicorn concurrency — tunable from the dashboard without an image rebuild.
@@ -147,6 +170,14 @@ services:
       - key: POSTHOG_PROJECT_KEY
         sync: false
       - key: POSTHOG_API_HOST
+        sync: false
+      # First-party host for browser events only (managed reverse proxy). Unset falls
+      # back to POSTHOG_API_HOST, so a preview that never got the CNAME behaves as before.
+      - key: POSTHOG_CLIENT_HOST
+        sync: false
+      # Session replay of the editor. Unset = off, which is what previews get: they
+      # never carry a real key, and a recording posture should not be inherited.
+      - key: POSTHOG_SESSION_REPLAY
         sync: false
     disk:
       name: media-storage
@@ -188,6 +219,10 @@ services:
         sync: false
       - key: POSTHOG_API_HOST
         sync: false
+      # Renders no templates, so this changes nothing here. Declared anyway so the two
+      # services cannot drift into different PostHog configurations.
+      - key: POSTHOG_CLIENT_HOST
+        sync: false
       - key: DEFAULT_FROM_EMAIL
         sync: false
         previewEnvRenderServiceName: mapsurvey
@@ -226,6 +261,17 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
         previewEnvRenderServiceName: mapsurvey
+      # Off in production since 2026-08-17 evening, by product decision, after
+      # a day of measuring Gemini's SSE in anger: 47% of streamed calls failed
+      # (mid-answer cuts, stalls) in the morning batch, and one creator hit
+      # four consecutive failures — a dead end even through the retries. The
+      # blocking call has neither stream-specific failure mode, and at thinking
+      # `low` the wait is short enough for an indeterminate bar. Previews keep
+      # streaming on so the path stays exercised; reconsider against fresh
+      # $ai_generation error-rate data, not memory.
+      - key: AI_STREAMING_ENABLED
+        value: "false"
+        previewValue: "true"
 
   # Daily acquisition-metrics sync for the funnel dashboard. There is no celery beat,
   # so the schedule lives here (design D5). Re-runs a 7-day trailing window, which is

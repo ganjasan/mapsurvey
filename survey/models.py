@@ -1443,6 +1443,27 @@ class AIGenerationEvent(models.Model):
     input_tokens = models.IntegerField(null=True, blank=True)
     output_tokens = models.IntegerField(null=True, blank=True)
     latency_ms = models.IntegerField(null=True, blank=True)
+    # Latency accounting, deliberately three fields rather than one redefined.
+    # `latency_ms` above keeps meaning the TERMINAL provider call, which is what
+    # the rows written before this existed were actually measured as -- widening
+    # it in place would have made history say something it never measured.
+    # `attempts`/`total_latency_ms` cover the whole set, so a generation that
+    # retried stops being indistinguishable from a single slow one. For a
+    # single-attempt set, total_latency_ms == latency_ms and attempts == 1.
+    #
+    # `thinking_tokens` is null when the provider did not report reasoning usage
+    # (see client._thinking_tokens) -- never 0, which would be a measurement.
+    attempts = models.IntegerField(null=True, blank=True)
+    total_latency_ms = models.IntegerField(null=True, blank=True)
+    thinking_tokens = models.IntegerField(null=True, blank=True)
+    # How much of the draft has actually been written, updated as it streams.
+    # The worker cannot talk to the polling request, so the row is the channel —
+    # the same reasoning that put last_polled_at and redirected_at here, with
+    # the same benefit: a worker restart leaves a visible partial state instead
+    # of a silently lost one. Null until the first section closes, because a
+    # displayed 0 during the model's opening reasoning reads as a stall.
+    sections_drafted = models.IntegerField(null=True, blank=True)
+    questions_drafted = models.IntegerField(null=True, blank=True)
     outcome = models.CharField(
         max_length=20, choices=AI_GENERATION_OUTCOME_CHOICES, default='pending',
         db_index=True,

@@ -18,6 +18,7 @@ from .models import (
 )
 from . import product_events as pe
 from .cloning import clone_question, clone_section
+from .translation_gaps import survey_translation_gaps
 from .editor_forms import (
     SurveyHeaderForm, SurveyCreateForm, SurveyBriefForm, SurveySectionForm, QuestionForm,
     SUBQUESTION_DISALLOWED_INPUT_TYPES,
@@ -300,6 +301,19 @@ def _start_survey_generation(request, form):
     })
 
 
+def _int_param(raw):
+    """A non-negative integer from a query string, or 0 for anything else.
+
+    The value is a hint about what the browser already rendered, not a
+    permission or an identifier, so a malformed one deserves a redundant
+    fragment rather than a 400.
+    """
+    try:
+        return max(0, int(raw))
+    except (TypeError, ValueError):
+        return 0
+
+
 @org_permission_required('editor')
 def editor_generation_status(request, event_id):
     """Polled by the create page while a draft is being generated.
@@ -317,9 +331,28 @@ def editor_generation_status(request, event_id):
     # clobber a terminal outcome with a stale 'pending'.
     AIGenerationEvent.objects.filter(pk=event.pk).update(last_polled_at=timezone.now())
     if event.outcome == 'pending':
-        # Deliberately empty: the overlay is already on the page and must not be
-        # re-rendered on every tick — swapping it restarted its animations and
-        # made the screen flicker. 204 leaves the DOM untouched.
+        # Deliberately empty unless there is news: the overlay is already on the
+        # page and must not be re-rendered on every tick — swapping it restarted
+        # its animations and made the screen flicker. 204 leaves the DOM
+        # untouched, so it stays the answer whenever the draft has not moved.
+        #
+        # The client sends what it already has rather than the server tracking
+        # it: this endpoint is hit every 2s for the length of the wait, and
+        # per-poll state would mean a write on each one.
+        sections = event.sections_drafted or 0
+        questions = event.questions_drafted or 0
+        known = (_int_param(request.GET.get('sections')),
+                 _int_param(request.GET.get('questions')))
+        # Questions gate this too, not just sections: a section only closes
+        # after all of its questions, so waiting for one meant the counter was
+        # blank for most of the generation — observed live on 2026-08-17, one
+        # question drafted and nothing on screen. The first question is also
+        # exactly the moment the creator most needs to hear "not stuck".
+        if (sections, questions) > known and (sections or questions):
+            return render(request, 'editor/partials/generation_progress.html', {
+                'sections': sections,
+                'questions': questions,
+            })
         return HttpResponse(status=204)
 
     if event.outcome == 'success' and event.created_survey_id:
@@ -337,8 +370,13 @@ def editor_generation_status(request, event_id):
         # HX-Redirect turns the polled fragment into a real navigation, so the
         # creator lands in the editor rather than seeing it swapped into a panel.
         response = HttpResponse(status=204)
-        response['HX-Redirect'] = reverse(
-            'editor_survey_detail', kwargs={'survey_uuid': event.created_survey.uuid},
+        # `?draft=` is what tells the editor this arrival deserves the one-shot
+        # feedback prompt. Only this redirect produces it, which is the
+        # server-side half of "asked once per draft".
+        response['HX-Redirect'] = '%s?draft=%d' % (
+            reverse('editor_survey_detail',
+                    kwargs={'survey_uuid': event.created_survey.uuid}),
+            event.pk,
         )
         return response
 
@@ -400,7 +438,21 @@ def editor_survey_detail(request, survey_uuid):
         is_owner and is_read_only and not survey.is_draft_copy and survey.has_never_collected()
     )
 
+    # The one-shot AI-draft feedback prompt, keyed by the generation redirect's
+    # ?draft=. An unvalidated id must not conjure UI: the event has to be the
+    # requesting user's own AND the one that produced THIS survey — one indexed
+    # lookup. Forged, foreign or mismatched ids fall through to None.
+    feedback_trace_id = None
+    draft_param = _int_param(request.GET.get('draft'))
+    if draft_param:
+        draft_event = AIGenerationEvent.objects.filter(
+            pk=draft_param, user=request.user, created_survey=survey,
+        ).only('id').first()
+        if draft_event is not None:
+            feedback_trace_id = pe.llm_trace_id(draft_event.pk)
+
     return render(request, 'editor/survey_detail.html', {
+        'ai_feedback_trace_id': feedback_trace_id,
         'survey': survey,
         'sections': sections,
         'current_section': current_section,
@@ -650,9 +702,20 @@ def editor_section_detail(request, survey_uuid, section_id):
     })
 
 
+def _translation_languages(survey):
+    """Languages that carry translation rows: everything after the primary.
+
+    The first entry of available_languages is the survey's primary language;
+    its content lives in base model fields only. Iterating this instead of the
+    full list is also what makes stale translation_<primary>_* POST keys
+    (old open forms) a no-op instead of a resurrected duplicate row.
+    """
+    return (survey.available_languages or [])[1:]
+
+
 def _save_section_translations(request, section, survey):
-    """Save section translations from POST data."""
-    for lang in (survey.available_languages or []):
+    """Save section translations from POST data (non-primary languages only)."""
+    for lang in _translation_languages(survey):
         title = request.POST.get(f'translation_{lang}_title', '').strip()
         subheading = request.POST.get(f'translation_{lang}_subheading', '').strip()
         if title or subheading:
@@ -973,8 +1036,8 @@ def editor_question_delete(request, survey_uuid, question_id):
 
 
 def _save_question_translations(request, question, survey):
-    """Save question translations from POST data."""
-    for lang in (survey.available_languages or []):
+    """Save question translations from POST data (non-primary languages only)."""
+    for lang in _translation_languages(survey):
         name = request.POST.get(f'translation_{lang}_name', '').strip()
         subtext = request.POST.get(f'translation_{lang}_subtext', '').strip()
         if name or subtext:
@@ -1493,6 +1556,14 @@ def editor_survey_transition(request, survey_uuid):
     if not can:
         return HttpResponse(error, status=400)
 
+    # Non-blocking translation-gap warning: publishing with holes is allowed,
+    # but never silently — the respondent-side fallback would mask them. The
+    # client confirms and retries with the acknowledgement flag.
+    if new_status == 'published' and request.POST.get('ack_translation_gaps') != 'true':
+        gaps = survey_translation_gaps(survey)
+        if gaps:
+            return JsonResponse({'translation_gaps': gaps}, status=409)
+
     # Test data cleanup on testing → published
     if survey.status == 'testing' and new_status == 'published':
         if request.POST.get('clear_test_data') == 'true':
@@ -1644,6 +1715,13 @@ def editor_publish_draft(request, survey_uuid):
         return HttpResponse('This survey is not a draft copy', status=400)
 
     force = request.POST.get('force') == 'true'
+
+    # Same non-blocking translation-gap warning as the draft→published
+    # transition: this path replaces the live version's content.
+    if request.POST.get('ack_translation_gaps') != 'true':
+        gaps = survey_translation_gaps(survey)
+        if gaps:
+            return JsonResponse({'translation_gaps': gaps}, status=409)
 
     try:
         canonical = publish_draft(survey, force=force)

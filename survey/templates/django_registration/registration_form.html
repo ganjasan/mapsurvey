@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block title %}{% trans "Create Account" %} — Mapsurvey{% endblock %}
 
@@ -33,6 +33,28 @@
                     {% if field.help_text %}
                         <small class="helptext">{{ field.help_text }}</small>
                     {% endif %}
+                    {% if field.name == "password1" and password_rules %}
+                    {% comment %}
+                    Progressive enhancement: with JS off this renders as a plain
+                    list of the rules, which still beats the paragraph of prose
+                    it replaced. The script only adds the state as the user
+                    types, and never blocks submission — the server decides.
+                    Rules come from survey/password_rules.py: enforced ones are
+                    derived from AUTH_PASSWORD_VALIDATORS so the UI cannot drift
+                    from what is actually rejected, advisory ones are advice we
+                    deliberately do not enforce and must never render as errors.
+                    {% endcomment %}
+                    <ul class="password-checklist" data-password-checklist
+                        data-similar-fields="username,email">
+                        {% for rule in password_rules %}
+                        <li data-rule="{{ rule.check }}"
+                            {% if rule.advisory %}data-advisory="1"{% endif %}
+                            {% if rule.min_length %}data-min-length="{{ rule.min_length }}"{% endif %}>
+                            <span class="password-checklist__mark" aria-hidden="true"></span>{{ rule.label }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
                     {% if field.errors %}
                         <ul class="errorlist">
                         {% for error in field.errors %}
@@ -60,7 +82,7 @@
         {% endif %}
     </form>
     {% if TURNSTILE_SITE_KEY %}
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer crossorigin="anonymous"></script>
     {% endif %}
     <script>
     document.getElementById('register-btn').closest('form').addEventListener('submit', function() {
@@ -70,6 +92,7 @@
     });
     </script>
     <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+    <script src="{% static 'js/password-checklist.js' %}" defer></script>
 
     <div class="auth-links">
         <a href="{% url 'login' %}">{% trans "Already have an account? Sign in" %}</a>

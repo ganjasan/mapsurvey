@@ -6,28 +6,45 @@ up to a minute and the creator must not miss that it started, nor keep editing
 a form whose values are already on their way to the model. Inline it also sat
 below the fold on a laptop, which is exactly the confusion this replaces.
 
-The quips are entertainment, not telemetry: generation is a single opaque
-model call, so there is no honest per-step progress to show. Loading-screen
-flavour text is the established way to make a minute-long wait feel intentional
-rather than broken — it must never imply a pipeline stage the backend does not
-actually have.
+The card is spinner + title with a live elapsed counter + rotating quips —
+the shape settled by mockup with the user on 2026-08-17 (see
+openspec/changes/generation-wait-quips-return/overlay.mockup.html), modelled on
+Claude Code's own status line: personality plus a ticking fact, no progress
+bar. The bar was tried and removed the same day: an indeterminate sweep
+irritates, and a determinate fill needs streamed counts production no longer
+has. Elapsed wall-clock is the one number a wait screen can show without
+measuring the backend.
+
+The no-fabricated-stages rule is unchanged: quips are entertainment, never
+telemetry, and must not imply a pipeline stage the backend does not have. When
+streaming DOES supply real counts (PR previews), the out-of-band fragment
+fills #gen-progress with the drafted-counts caption — data beside flavour,
+neither displacing the other.
 {% endcomment %}
 <div id="generation-status" class="gen-overlay" role="status" aria-live="polite">
   {% comment %}
   The poller is a separate, empty element with hx-swap="none": while the draft
   is pending the endpoint answers 204 and nothing in the DOM changes. Polling
-  the overlay itself (and swapping it whole every 2s) restarted the fade-in and
-  the spinner on every tick, which read as the screen flickering.
+  the overlay itself (and swapping it whole every 2s) restarted its animations
+  on every tick, which read as the screen flickering.
   {% endcomment %}
   <div id="generation-poll" hidden
        hx-get="{% url 'editor_generation_status' event.id %}"
        hx-trigger="every 2s"
+       hx-vals="js:{sections: (document.getElementById('gen-progress') || {dataset:{}}).dataset.sections || 0,
+                    questions: (document.getElementById('gen-progress') || {dataset:{}}).dataset.questions || 0}"
        hx-swap="none"></div>
   <div class="gen-card">
     <div class="gen-spinner" aria-hidden="true"></div>
     <div class="gen-copy">
-      <div class="gen-title">Building your survey…</div>
+      <div class="gen-title">Building your survey…
+        <span class="gen-elapsed">(<span id="gen-elapsed-s">0</span>s)</span></div>
       <div class="gen-quip" id="gen-quip">Unfolding the map…</div>
+      {% comment %}
+      Empty until streamed counts exist (previews); replaced whole, out-of-band.
+      An empty placeholder is what "no counts" looks like — never a zero.
+      {% endcomment %}
+      <div id="gen-progress" class="gen-progress" data-sections="0" data-questions="0"></div>
       <div class="gen-note">This usually takes under a minute. You can leave this page —
         the draft will be waiting on your dashboard.</div>
     </div>
@@ -38,8 +55,17 @@ actually have.
   <script>
   (function() {
       // Belt and braces: a second overlay (a retry in the same page load)
-      // must not leave two rotators running against one element.
+      // must not leave two rotators or timers running against one element.
       if (window.__genQuipTimer) clearInterval(window.__genQuipTimer);
+      if (window.__genElapsedTimer) clearInterval(window.__genElapsedTimer);
+
+      var seconds = 0;
+      window.__genElapsedTimer = setInterval(function () {
+          var el = document.getElementById('gen-elapsed-s');
+          if (!el) { clearInterval(window.__genElapsedTimer); window.__genElapsedTimer = null; return; }
+          el.textContent = ++seconds;
+      }, 1000);
+
       var QUIPS = [
           'Unfolding the map…',
           'Sharpening the map pins…',
@@ -50,7 +76,6 @@ actually have.
           'Measuring twice, asking once…',
           'Arranging sections in a sensible order…',
           'Translating without losing the meaning…',
-          'Politely declining to ask for a fax number…',
           'Making the required fields fewer…',
           'Aligning the legend with the terrain…'
       ];

@@ -1,0 +1,99 @@
+## MODIFIED Requirements
+
+### Requirement: Provider-agnostic LLM client
+LLM access SHALL go through a provider interface (`complete_structured(system, user,
+schema, max_tokens)`), selected by `AI_PROVIDER` (default `anthropic`). Vendor SDKs SHALL
+be imported only inside `survey/ai/client.py`; provider failures SHALL be normalized to
+`NotConfigured` (credentials absent) or `ProviderError` (call failed). The Anthropic
+implementation SHALL use the official SDK with model `AI_SURVEY_DRAFT_MODEL` (default
+`claude-opus-5`), an explicit request timeout, and structured JSON output. A Gemini
+implementation (`AI_PROVIDER=gemini`, `GEMINI_API_KEY`, `GEMINI_MODEL`) SHALL be available
+over plain HTTP without adding a vendor SDK, adapting the shared schema to that provider's
+JSON Schema subset at the client boundary.
+
+Reasoning effort SHALL be a value this system sets rather than a provider default it inherits: the
+Gemini implementation SHALL send `AI_THINKING_LEVEL` (default `medium`, matching the provider's own
+default so the setting's introduction changes no behavior) as `generationConfig.thinkingConfig.thinkingLevel`,
+and SHALL omit `thinkingConfig` entirely when the setting is empty.
+
+Usage returned by a provider SHALL additionally carry reasoning-token usage where the provider
+accounts for it. Reasoning usage SHALL be read from the provider's own reasoning-token field when
+present, and otherwise derived as total minus prompt minus candidate tokens when that difference is
+positive. When neither yields a value, reasoning usage SHALL be absent — never zero, because a
+provider that does not report reasoning and a generation that reasoned for zero tokens are
+different facts.
+
+#### Scenario: Credentials absent
+- **WHEN** the selected provider's credentials are not configured and generation is invoked programmatically
+- **THEN** `NotConfigured` is raised before any network call and the event outcome is `not_configured`
+
+#### Scenario: Switching providers changes no other module
+- **WHEN** `AI_PROVIDER` selects a different implemented provider
+- **THEN** prompts, validation, materialization and the orchestrator behave identically, and only the client's request/response translation differs
+
+#### Scenario: Provider call fails
+- **WHEN** the provider API times out, returns a non-2xx error, or refuses the request
+- **THEN** the failure is recorded as `provider_error` with detail, nothing is written to survey tables, and the user sees a retry-or-create-empty message
+
+#### Scenario: Thinking level is sent on every Gemini request
+- **WHEN** `AI_THINKING_LEVEL` is set to a non-empty value and a Gemini generation is requested
+- **THEN** the request body carries that value at `generationConfig.thinkingConfig.thinkingLevel`
+
+#### Scenario: Thinking level can be disabled entirely
+- **WHEN** `AI_THINKING_LEVEL` is set to an empty string
+- **THEN** the request body contains no `thinkingConfig` key at all, so a provider that rejects the field can be worked around by configuration rather than by a deploy
+
+#### Scenario: Provider reports reasoning tokens directly
+- **WHEN** the provider response's usage metadata contains a reasoning-token count
+- **THEN** that value is carried on the returned usage, without consulting the derived fallback
+
+#### Scenario: Provider accounts for reasoning only in the total
+- **WHEN** usage metadata carries no reasoning-token field but its total exceeds prompt plus candidate tokens
+- **THEN** the difference is carried as reasoning usage
+
+#### Scenario: Reasoning usage is unavailable
+- **WHEN** usage metadata carries no reasoning-token field and its total does not exceed prompt plus candidate tokens
+- **THEN** reasoning usage is absent rather than zero
+
+### Requirement: Generation event log
+Every generation attempt SHALL write one `AIGenerationEvent` row carrying `kind`
+(`survey_draft`), user, organization, brief, languages, provider, model, token usage,
+latency, outcome (`pending/success/not_configured/provider_error/invalid_draft/error`),
+error detail, and the created survey FK on success. The model SHALL be registered
+read-only in Django admin. `check_quota(organization, kind)` SHALL exist as a documented
+no-op precondition called before any provider call.
+
+The row SHALL additionally make a retried generation distinguishable from a single slow one. It
+SHALL carry the number of provider calls the attempt set started, the summed duration of those
+calls that reported one, and reasoning-token usage. `latency_ms` SHALL keep its existing meaning —
+the duration of the terminal provider call — so rows written before this requirement remain readable
+as measured. Input, output and reasoning token counts SHALL be summed across the attempt set, since
+that is what the generation cost, with reasoning remaining absent until at least one call reports
+it; `provider` and `model` SHALL be those of the terminal call.
+
+These fields SHALL ride the existing `ai_draft_finished` analytics event, each omitted when absent,
+so the split is a breakdown rather than a join back to the database.
+
+#### Scenario: Success is measurable
+- **WHEN** a generation succeeds
+- **THEN** its event row has `outcome='success'`, non-null token counts and latency, and links to the created survey
+
+#### Scenario: Quota seam spends no tokens
+- **WHEN** `check_quota` raises `QuotaExceeded` (future #87 behavior)
+- **THEN** no provider call is made and the event outcome is recorded without token spend
+
+#### Scenario: Single-attempt generation
+- **WHEN** the first provider call returns a draft that passes validation
+- **THEN** the row records one attempt and its summed duration equals `latency_ms`
+
+#### Scenario: Retried generation is not reported as one fast call
+- **WHEN** the first provider call is rejected by validation and a second call succeeds
+- **THEN** the row records two attempts, a summed duration covering both calls, and summed token counts, while `latency_ms` remains the second call's own duration
+
+#### Scenario: Failure after retry is accounted too
+- **WHEN** every attempt in the set fails or is rejected
+- **THEN** the row still records the attempt count and the summed duration of the calls that were made
+
+#### Scenario: Analytics carries the new measurements
+- **WHEN** `ai_draft_finished` is emitted for a generation that has reasoning usage and an attempt count
+- **THEN** those properties are present on the event, and properties without a value are omitted rather than sent as zero

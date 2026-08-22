@@ -1,7 +1,8 @@
-# survey-serialization Specification
+# Survey Serialization Specification
 
 ## Purpose
-Export and import of survey definitions and responses as ZIP archives (survey.json + media files), via CLI and the editor Web UI, with backward-compatible defaults for legacy archives.
+Export and import of a survey as a ZIP archive, over both CLI and web UI: the archive structure, the response serialization format, and how import reconstructs sections, questions, inline choices, answers, geo fields and image files.
+
 ## Requirements
 ### Requirement: Export modes
 The system SHALL support three export modes: structure, data, and full.

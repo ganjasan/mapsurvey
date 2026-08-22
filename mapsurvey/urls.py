@@ -23,7 +23,12 @@ from survey.views import (
     AbuseProtectedRegistrationView,
     DirectActivationView,
     ResendActivationView,
+    survey_not_found,
 )
+
+# Respondent 404s get an explanation instead of Django's blank page; every other
+# path keeps the default. See survey.views.survey_not_found.
+handler404 = survey_not_found
 
 
 urlpatterns = [

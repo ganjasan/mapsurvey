@@ -83,19 +83,35 @@ document.addEventListener('click', function(e){
 });
 document.body.addEventListener('statusChanged', function(){ window.location.reload(); });
 
-function doTransition(status){
-    var form = new FormData(); form.append('status', status);
+// A 409 with translation_gaps is the non-blocking pre-publish warning:
+// show what is untranslated, and on confirm retry with the ack flag.
+function postTransition(form){
     fetch('{% url "editor_survey_transition" survey.uuid %}', {
         method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}, body:form
-    }).then(function(r){ if(r.ok){ window.location.reload(); } else { r.text().then(function(m){ alert(m); }); } });
+    }).then(function(r){
+        if (r.ok) { window.location.reload(); return; }
+        if (r.status === 409) {
+            r.json().then(function(data){
+                var gaps = data.translation_gaps || [];
+                var lines = gaps.map(function(g){ return '• ' + g.label + ' — ' + g.missing.join(', '); });
+                var msg = 'Some content has no translation yet; those respondents will see the primary language instead:\n\n'
+                        + lines.join('\n') + '\n\nPublish anyway?';
+                if (confirm(msg)) { form.append('ack_translation_gaps','true'); postTransition(form); }
+            });
+            return;
+        }
+        r.text().then(function(m){ alert(m); });
+    });
+}
+function doTransition(status){
+    var form = new FormData(); form.append('status', status);
+    postTransition(form);
 }
 function showPublishConfirm(){ $('#publishConfirmModal').modal('show'); }
 function doPublishFromTesting(){
     var form = new FormData(); form.append('status','published');
     if (document.getElementById('clearTestData').checked) form.append('clear_test_data','true');
-    fetch('{% url "editor_survey_transition" survey.uuid %}', {
-        method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}, body:form
-    }).then(function(r){ if(r.ok){ window.location.reload(); } else { r.text().then(function(m){ alert(m); }); } });
+    postTransition(form);
 }
 function toggleVisibility(btn){
     var makePublic = btn.classList.contains('off'); // off = currently private
@@ -127,7 +143,28 @@ function checkAndPublishDraft(){
 function doPublishDraft(force){
     var form = new FormData(); if (force) form.append('force','true');
     fetch('{% url "editor_publish_draft" survey.uuid %}', {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}, body:form})
-      .then(function(r){ if(r.redirected){ window.location.href=r.url; } else if(r.ok){ window.location.reload(); } else { r.text().then(function(m){ alert(m); }); } });
+      .then(function(r){
+          if (r.redirected) { window.location.href = r.url; return; }
+          if (r.ok) { window.location.reload(); return; }
+          if (r.status === 409) {
+              r.json().then(function(data){
+                  if (data.translation_gaps) {
+                      var lines = data.translation_gaps.map(function(g){ return '• ' + g.label + ' — ' + g.missing.join(', '); });
+                      if (confirm('Some content has no translation yet; those respondents will see the primary language instead:\n\n'
+                                  + lines.join('\n') + '\n\nPublish anyway?')) {
+                          form.append('ack_translation_gaps','true');
+                          fetch('{% url "editor_publish_draft" survey.uuid %}', {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}, body:form})
+                            .then(function(r2){ if(r2.redirected){ window.location.href=r2.url; } else if(r2.ok){ window.location.reload(); } else { r2.text().then(function(m){ alert(m); }); } });
+                      }
+                      return;
+                  }
+                  // Compatibility issues keep their existing modal flow.
+                  alert('Draft is not compatible with the published version. Use the compatibility check.');
+              });
+              return;
+          }
+          r.text().then(function(m){ alert(m); });
+      });
 }
 {% endif %}
 </script>

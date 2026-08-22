@@ -717,11 +717,26 @@ class AcquisitionService:
         return _stage('Landing visits', total or 0, 'Plausible',
                       note='unique visitors on the landing page, all channels')
 
+    def _real_users(self):
+        """Same population the cohort funnel counts (see CreatorFunnelService)."""
+        return get_user_model().objects.filter(is_staff=False, is_superuser=False)
+
     def registrations(self):
-        """Real signups in the window -- same population the cohort funnel counts."""
-        n = (get_user_model().objects
-             .filter(is_staff=False, is_superuser=False,
-                     date_joined__date__gte=self.start, date_joined__date__lte=self.end)
+        """Every real signup ever -- deliberately not windowed.
+
+        The stages around it come from external systems with a limited history, but our
+        own user table holds all of it, and the question this card answers is "how many
+        creators do we have", not "how many did we add lately". Windowing it also hid
+        the earliest signups behind whatever chart period happened to be selected.
+        `registrations_in_window` keeps the comparable number for the conversion rows.
+        """
+        return _stage('Registrations', self._real_users().count(), 'our database',
+                      note='all time, staff and superusers excluded')
+
+    def registrations_in_window(self):
+        """Real signups inside the window -- the side conversions can be measured against."""
+        n = (self._real_users()
+             .filter(date_joined__date__gte=self.start, date_joined__date__lte=self.end)
              .count())
         return _stage('Registrations', n, 'our database',
                       note='staff and superusers excluded')
@@ -797,6 +812,9 @@ class AcquisitionService:
         impressions = self.impressions()
         visits = self.landing_visits()
         regs = self.registrations()
+        # Conversions compare stages measured over the same window, so they use the
+        # windowed count even though the card above shows the all-time one.
+        regs_window = self.registrations_in_window()
         demo = self.demo()
 
         return {
@@ -805,11 +823,12 @@ class AcquisitionService:
             'days': self.days,
             'lag_days': ACQUISITION_LAG_DAYS,
             'stages': [impressions, visits, regs, demo['stage']],
+            'registrations_in_window': regs_window,
             'clicks': self.google_clicks(),
             'conversions': [
                 _conversion('impressions → visits', impressions, visits),
-                _conversion('visits → registrations', visits, regs),
-                _conversion('registrations → demo', regs, demo['stage']),
+                _conversion('visits → registrations', visits, regs_window),
+                _conversion('registrations → demo', regs_window, demo['stage']),
             ],
             'demo': demo,
             'channels': self.channels(),

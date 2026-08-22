@@ -1,5 +1,9 @@
-## ADDED Requirements
+# Mobile Point Crosshair Specification
 
+## Purpose
+How point placement works on touch devices: a crosshair overlay with touch-accessible Apply and Cancel instead of a tap-to-place marker, limited to point questions, producing the same stored data as the desktop flow.
+
+## Requirements
 ### Requirement: Touch device detection
 The system SHALL use crosshair mode for point placement on ALL devices, regardless of pointer type. The `window.matchMedia('(pointer: coarse)')` check SHALL NOT be used to gate crosshair mode activation.
 

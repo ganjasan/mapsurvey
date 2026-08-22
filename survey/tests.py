@@ -6,7 +6,10 @@ from django.utils import timezone
 from io import BytesIO
 from unittest import mock
 from unittest.mock import patch
+import contextlib
 import json
+import re
+import uuid
 import zipfile
 
 from .models import (
@@ -10124,6 +10127,87 @@ class PostHogSnippetTest(TestCase):
             response = self.client.get('/trust/')
             self.assertContains(response, 'https://eu.i.posthog.com')
 
+    def test_browser_uses_the_proxy_host_when_one_is_configured(self):
+        """
+        GIVEN POSTHOG_CLIENT_HOST names a first-party reverse proxy
+        WHEN a creator-facing page is rendered
+        THEN the snippet initialises against it and PostHog's own host is absent
+
+        The absence matters as much as the presence: a hostname containing
+        "posthog" anywhere in the page is a hostname the blocklists match, which
+        is the entire reason the proxy exists.
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_CLIENT_HOST='https://e.example.org',
+        ):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'https://e.example.org')
+            self.assertNotContains(response, 'eu.i.posthog.com')
+
+    def test_unset_proxy_host_falls_back_to_the_api_host(self):
+        """
+        GIVEN POSTHOG_CLIENT_HOST is empty (no proxy provisioned)
+        WHEN a creator-facing page is rendered
+        THEN the snippet initialises against POSTHOG_API_HOST, exactly as before
+             the proxy existed
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_CLIENT_HOST='',
+            POSTHOG_API_HOST='https://eu.i.posthog.com',
+        ):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'https://eu.i.posthog.com')
+
+    def test_ui_host_is_pinned_regardless_of_proxy(self):
+        """
+        GIVEN the snippet may be pointed at a domain of ours
+        WHEN it is rendered, with and without a proxy configured
+        THEN ui_host names the PostHog app, so toolbar links do not resolve
+             against the proxy
+        """
+        for client_host in ('', 'https://e.example.org'):
+            with self.subTest(client_host=client_host):
+                with self.settings(
+                    POSTHOG_PROJECT_KEY=self.KEY,
+                    POSTHOG_CLIENT_HOST=client_host,
+                ):
+                    response = self.client.get('/trust/')
+                    self.assertContains(response, "ui_host: 'https://eu.posthog.com'")
+
+    def test_no_snippet_on_respondent_survey_page_even_with_proxy(self):
+        """
+        GIVEN both the key and a first-party proxy host are configured
+        WHEN a respondent loads a survey section under /surveys/
+        THEN neither the snippet nor the proxy hostname appears
+
+        A first-party host is the one thing that could make PostHog on a
+        respondent page look innocuous in review. It must not get there at all.
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_CLIENT_HOST='https://e.example.org',
+        ):
+            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, 'https://e.example.org')
+
+    def test_no_snippet_without_a_key_even_with_proxy(self):
+        """
+        GIVEN a proxy host is configured but POSTHOG_PROJECT_KEY is empty
+        WHEN a creator-facing page is rendered
+        THEN nothing renders — the key remains the single on/off switch
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY='',
+            POSTHOG_CLIENT_HOST='https://e.example.org',
+        ):
+            response = self.client.get('/trust/')
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, 'https://e.example.org')
+
     def test_no_snippet_on_respondent_survey_page(self):
         """
         GIVEN POSTHOG_PROJECT_KEY is configured
@@ -10256,15 +10340,126 @@ class PostHogSnippetTest(TestCase):
         # ...and still means the same thing once parsed.
         self.assertEqual(json.loads(payload)['username'], 'bad</script>"user')
 
-    def test_session_recording_is_disabled(self):
+    def test_session_recording_is_disabled_by_default(self):
         """
-        GIVEN POSTHOG_PROJECT_KEY is configured
+        GIVEN POSTHOG_PROJECT_KEY is configured and replay is not switched on
         WHEN the snippet is rendered
         THEN session recording is switched off in its initialisation
+
+        The default is what local development, the test suite, PR previews, forks
+        and self-hosted installs get. Recording is a deliberate act, everywhere.
         """
-        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=False):
             response = self.client.get('/trust/')
             self.assertContains(response, 'disable_session_recording: true')
+
+    def test_session_recording_is_enabled_by_the_setting(self):
+        """
+        GIVEN replay is switched on
+        WHEN the snippet is rendered
+        THEN recording is not disabled in its initialisation
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'disable_session_recording: false')
+            self.assertNotContains(response, 'disable_session_recording: true')
+
+    def test_inputs_are_masked_whenever_recording_is_possible(self):
+        """
+        GIVEN replay is switched on
+        WHEN the snippet is rendered
+        THEN every input is masked in the browser before anything is transmitted
+
+        This assertion is the entire privacy claim on /trust/. An edit that removes
+        the flag to make replays "more useful" starts recording keystrokes, and it
+        must fail here rather than be discovered in a recording.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'maskAllInputs: true')
+
+    def test_interface_text_is_not_masked(self):
+        """
+        GIVEN masking everything would make playback unreadable
+        WHEN the snippet is rendered with replay on
+        THEN the config does not mask all text
+
+        The policy is: what the user typed is masked, what the product showed is
+        not. Grey rectangles cannot answer which control someone hunted for.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get('/trust/')
+            self.assertNotContains(response, 'maskTextSelector')
+
+    def test_recorded_request_urls_lose_their_query_string(self):
+        """
+        GIVEN the place search sends what the creator typed as ?q=...
+        WHEN the snippet is rendered with replay on
+        THEN recorded requests are rewritten to drop the query string
+
+        Without this, a field masked in the replay reappears intact inside a
+        recorded request URL — the one leak that input masking does not cover,
+        and it is our own code that opens it (map_place_search.js).
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get('/trust/')
+            self.assertContains(response, 'maskRequestFn')
+            self.assertContains(response, "split('?')[0]")
+
+    def test_request_bodies_are_not_recorded(self):
+        """
+        GIVEN request bodies and headers would carry exactly what masking removes
+        WHEN the snippet is rendered with replay on
+        THEN nothing in the config turns them on
+
+        The SDK defaults them off (recordBody / recordHeaders in the recorder
+        bundle). This test exists so that enabling them becomes a deliberate,
+        visible act rather than a line added to a config nobody re-reads.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get('/trust/')
+            self.assertNotContains(response, 'recordBody')
+            self.assertNotContains(response, 'recordHeaders')
+
+    def test_no_recording_config_on_respondent_pages(self):
+        """
+        GIVEN replay is switched on and a key is configured
+        WHEN a respondent loads a survey page
+        THEN there is no snippet and therefore no recording configuration
+
+        What protects respondents is the snippet's absence, not the URL trigger in
+        the PostHog project — a dashboard setting could be changed by anyone with
+        access, whereas this is enforced in the context processor.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, 'maskAllInputs')
+            self.assertNotContains(response, 'disable_session_recording')
+
+    def test_no_recording_config_on_public_results_page(self):
+        """
+        GIVEN replay is switched on and a key is configured
+        WHEN a visitor loads a public results page
+        THEN there is no snippet and no recording configuration
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY, POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get(f'/r/{self.results_page.slug}/')
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, 'maskAllInputs')
+
+    def test_replay_setting_without_a_key_renders_nothing(self):
+        """
+        GIVEN replay is switched on but POSTHOG_PROJECT_KEY is empty
+        WHEN a creator-facing page is rendered
+        THEN nothing renders — the key stays the single on/off switch
+        """
+        with self.settings(POSTHOG_PROJECT_KEY='', POSTHOG_SESSION_REPLAY=True):
+            response = self.client.get('/trust/')
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, 'maskAllInputs')
 
     def test_person_profiles_are_identified_only(self):
         """
@@ -10316,6 +10511,41 @@ class PostHogSnippetTest(TestCase):
         response = self.client.get('/trust/')
         self.assertContains(response, "AI drafting sends the creator's brief to Google")
         self.assertContains(response, 'Survey responses are never sent to an AI provider')
+
+    def test_trust_page_discloses_session_recording(self):
+        """
+        GIVEN we record what happens on screen while creators build surveys
+        WHEN the trust page is read
+        THEN it says recording happens, that typed content is masked, how long
+             recordings are kept, and that respondents are never recorded
+
+        Recording is the most invasive thing we point at a user, and the users are
+        our own customers. A page describing analytics while omitting screen
+        recording is worse than one that never mentioned analytics at all.
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, 'Editor sessions of signed-in creators may be recorded')
+        self.assertContains(response, 'What creators type is masked in their browser')
+        self.assertContains(response, 'kept for 30 days')
+        self.assertContains(response, 'People answering surveys are never recorded')
+
+    def test_trust_page_names_cloudflare_as_the_proxy(self):
+        """
+        GIVEN Cloudflare fronts every request to the hosted service, and browser
+              analytics is deliberately routed through a first-party proxy
+        WHEN the trust page is read
+        THEN Cloudflare is named as CDN and reverse proxy, not only as Turnstile
+        AND storage in the EU is distinguished from transit that is not
+            contractually EU-only
+
+        The disclosure predates the proxy — Render already fronts us with
+        Cloudflare — but adding a second Cloudflare path while the page named it
+        as an anti-abuse widget would repeat 2026-08-15 exactly.
+        """
+        response = self.client.get('/trust/')
+        self.assertContains(response, 'Cloudflare fronts the hosted service')
+        self.assertContains(response, 'including product-analytics traffic')
+        self.assertContains(response, 'not contractually guaranteed to')
 
     def test_trust_page_states_hosting_region_truthfully(self):
         """
@@ -10454,6 +10684,55 @@ class PostHogContextProcessorTest(TestCase):
         self.assertEqual(person['username'], 'ctxuser')
         self.assertTrue(person['date_joined'])
 
+    def test_client_host_prefers_the_proxy(self):
+        """
+        GIVEN a first-party proxy host is configured
+        WHEN the context is built
+        THEN the browser is handed the proxy, not PostHog's host
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_CLIENT_HOST='https://e.example.org',
+            POSTHOG_API_HOST='https://eu.i.posthog.com',
+        ):
+            context = self._context_for('/trust/')
+        self.assertEqual(context['POSTHOG_CLIENT_HOST'], 'https://e.example.org')
+
+    def test_client_host_falls_back_to_the_api_host(self):
+        """
+        GIVEN no proxy is configured
+        WHEN the context is built
+        THEN the browser is handed whatever POSTHOG_API_HOST currently is
+
+        Resolved here rather than at settings import time so that overriding the
+        API host — a preview pointed at a throwaway project, or this test — moves
+        the browser with it instead of leaving it on the value frozen at startup.
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_CLIENT_HOST='',
+            POSTHOG_API_HOST='https://analytics.example.com',
+        ):
+            context = self._context_for('/trust/')
+        self.assertEqual(context['POSTHOG_CLIENT_HOST'], 'https://analytics.example.com')
+
+    def test_both_hosts_empty_falls_back_to_cloud_eu(self):
+        """
+        GIVEN Render hands the process empty strings for both hosts
+        WHEN the context is built
+        THEN the browser still gets Cloud EU rather than an empty host
+
+        An empty api_host initialises the SDK against nothing, which looks
+        exactly like working analytics until someone notices no events arrive.
+        """
+        with self.settings(
+            POSTHOG_PROJECT_KEY=self.KEY,
+            POSTHOG_CLIENT_HOST='',
+            POSTHOG_API_HOST='',
+        ):
+            context = self._context_for('/trust/')
+        self.assertEqual(context['POSTHOG_CLIENT_HOST'], 'https://eu.i.posthog.com')
+
 
 class PostHogErrorTrackingTest(TestCase):
     """Server-side exception capture: middleware wiring, scrubbing, Celery hook.
@@ -10531,6 +10810,31 @@ class PostHogErrorTrackingTest(TestCase):
             self.assertFalse(posthog.disabled)
             self.assertEqual(posthog.api_key, 'phc_errtest')
             # Empty host falls back to Cloud EU, same guarantee as the snippet.
+            self.assertEqual(posthog.host, 'https://eu.i.posthog.com')
+        finally:
+            posthog.api_key = None
+            SurveyConfig._configure_posthog()
+
+    def test_server_client_ignores_the_browser_proxy_host(self):
+        """
+        GIVEN a first-party proxy host is configured for the browser
+        WHEN the app config hook runs
+        THEN the server-side client still talks to POSTHOG_API_HOST directly
+
+        The proxy exists to defeat ad blockers, which do not run inside our
+        containers. Routing error capture through it would make the subsystem
+        that has to survive an outage depend on a DNS record and a CDN edge.
+        """
+        import posthog
+
+        from survey.apps import SurveyConfig
+        with self.settings(
+            POSTHOG_PROJECT_KEY='phc_errtest',
+            POSTHOG_API_HOST='https://eu.i.posthog.com',
+            POSTHOG_CLIENT_HOST='https://e.example.org',
+        ):
+            SurveyConfig._configure_posthog()
+        try:
             self.assertEqual(posthog.host, 'https://eu.i.posthog.com')
         finally:
             posthog.api_key = None
@@ -15272,6 +15576,398 @@ class RegistrationAbuseDefenseTest(TestCase):
                 self.assertLessEqual(patched.call_count, 1)
 
 
+class RegistrationInvalidAttemptLimitTest(TestCase):
+    """The rate limit must not spend a human's budget on their own typos.
+
+    Regression cover for the 2026-08-17 incident: a visitor mistyped a password
+    three times, exhausted REGISTRATION_RATE_LIMIT_HOUR=3, and was refused with
+    a bare text/plain 429. No account, no email, no way to reach them. The
+    counter ran before form validation, so a person fighting the password
+    validators was indistinguishable from a bot posting registrations.
+    """
+
+    def setUp(self):
+        from django.contrib.auth.models import User as _U
+        from django.core.cache import cache
+        from .models import AbuseEvent
+        _U.objects.all().delete()
+        AbuseEvent.objects.all().delete()
+        cache.clear()
+
+    def _valid_data(self, **overrides):
+        data = {
+            "username": "testuser",
+            "email": "test@example.com",
+            "password1": "Xx12345!secure",
+            "password2": "Xx12345!secure",
+            "website": "",
+            "cf-turnstile-response": "any-token",
+        }
+        data.update(overrides)
+        return data
+
+    def _invalid_data(self, **overrides):
+        # Fails MinimumLengthValidator and CommonPasswordValidator — the exact
+        # shape of failure the incident user kept hitting.
+        return self._valid_data(password1="abc", password2="abc", **overrides)
+
+    @contextlib.contextmanager
+    def _isolated_cache(self, **extra):
+        """Override the abuse settings onto a private, empty LocMem cache.
+
+        A LocMemCache keyed only by LOCATION is shared process-wide, so counters
+        from an earlier test in this class leak into the next one and every
+        assertion after the first becomes meaningless. Clearing *inside* the
+        override (the cache handle is per-settings) is what makes each test
+        start from zero.
+        """
+        from django.core.cache import cache
+        from django.test import override_settings
+
+        settings = dict(
+            TURNSTILE_SECRET_KEY="",
+            REGISTRATION_RATE_LIMIT_HOUR=3,
+            REGISTRATION_RATE_LIMIT_DAY=10,
+            REGISTRATION_INVALID_LIMIT_HOUR=15,
+            REGISTRATION_INVALID_LIMIT_DAY=50,
+            REGISTRATION_SPLIT_RATE_LIMIT=True,
+            CACHES={
+                "default": {
+                    "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                    "LOCATION": "invalid-attempt-%s" % self.id(),
+                }
+            },
+        )
+        settings.update(extra)
+        with override_settings(**settings):
+            cache.clear()
+            yield
+
+    def test_form_invalid_attempts_do_not_consume_registration_budget(self):
+        """
+        GIVEN an IP that has made three form-invalid registration POSTs
+        WHEN a fourth POST arrives carrying valid data
+        THEN it is not rate-limited AND a User is created
+        """
+        from django.contrib.auth.models import User as _U
+
+        with self._isolated_cache():
+            for i in range(3):
+                r = self.client.post("/accounts/register/", self._invalid_data(
+                    username="u%d" % i, email="u%d@example.com" % i,
+                ))
+                self.assertEqual(r.status_code, 200)
+            self.assertEqual(_U.objects.count(), 0)
+
+            r4 = self.client.post("/accounts/register/", self._valid_data(
+                username="realuser", email="real@example.com",
+            ))
+            self.assertEqual(r4.status_code, 302)
+            self.assertTrue(_U.objects.filter(username="realuser").exists())
+
+    def test_invalid_attempt_ceiling_still_bounds_abuse(self):
+        """
+        GIVEN REGISTRATION_INVALID_LIMIT_HOUR form-invalid POSTs from one IP
+        WHEN one more form-invalid POST arrives
+        THEN it is refused 429 AND an AbuseEvent(detail='invalid_hour') exists
+        """
+        from .models import AbuseEvent
+
+        with self._isolated_cache(REGISTRATION_INVALID_LIMIT_HOUR=4):
+            for i in range(4):
+                r = self.client.post("/accounts/register/", self._invalid_data(
+                    username="u%d" % i, email="u%d@example.com" % i,
+                ))
+                self.assertEqual(r.status_code, 200)
+
+            blocked = self.client.post("/accounts/register/", self._invalid_data(
+                username="u9", email="u9@example.com",
+            ))
+            self.assertEqual(blocked.status_code, 429)
+        self.assertEqual(
+            AbuseEvent.objects.filter(
+                defense="ratelimit", detail="invalid_hour",
+            ).count(),
+            1,
+        )
+
+    def test_valid_submission_budget_is_unchanged(self):
+        """
+        GIVEN REGISTRATION_RATE_LIMIT_HOUR=3 and three valid registrations
+        WHEN a fourth valid registration is posted
+        THEN it is refused 429 — the bot-facing limit is exactly as before
+        """
+        with self._isolated_cache():
+            for i in range(3):
+                r = self.client.post("/accounts/register/", self._valid_data(
+                    username="ok%d" % i, email="ok%d@example.com" % i,
+                ))
+                self.assertEqual(r.status_code, 302)
+
+            blocked = self.client.post("/accounts/register/", self._valid_data(
+                username="ok9", email="ok9@example.com",
+            ))
+            self.assertEqual(blocked.status_code, 429)
+
+    def test_turnstile_failure_counts_against_the_strict_budget(self):
+        """
+        GIVEN a well-formed submission whose Turnstile token is rejected
+        WHEN it is posted
+        THEN it consumes the valid-submission budget, not the invalid one
+        """
+        with self._isolated_cache(TURNSTILE_SECRET_KEY="real-secret"):
+            with mock.patch("survey.views.verify_turnstile", return_value=False):
+                for i in range(3):
+                    r = self.client.post("/accounts/register/", self._valid_data(
+                        username="cf%d" % i, email="cf%d@example.com" % i,
+                    ))
+                    self.assertEqual(r.status_code, 200)
+
+            # The strict budget is now spent, so even a clean submission with a
+            # working token is refused.
+            with mock.patch("survey.views.verify_turnstile", return_value=True):
+                blocked = self.client.post("/accounts/register/", self._valid_data(
+                    username="cf9", email="cf9@example.com",
+                ))
+                self.assertEqual(blocked.status_code, 429)
+
+    def test_kill_switch_restores_previous_counting(self):
+        """
+        GIVEN REGISTRATION_SPLIT_RATE_LIMIT=False
+        WHEN four form-invalid POSTs arrive from one IP
+        THEN the fourth is refused 429, as it was before this change
+        """
+        with self._isolated_cache(REGISTRATION_SPLIT_RATE_LIMIT=False):
+            for i in range(3):
+                r = self.client.post("/accounts/register/", self._invalid_data(
+                    username="k%d" % i, email="k%d@example.com" % i,
+                ))
+                self.assertEqual(r.status_code, 200)
+
+            blocked = self.client.post("/accounts/register/", self._invalid_data(
+                username="k9", email="k9@example.com",
+            ))
+            self.assertEqual(blocked.status_code, 429)
+
+    def test_rate_limited_response_is_a_rendered_page(self):
+        """
+        GIVEN an IP that has exhausted its registration budget
+        WHEN it posts again
+        THEN the 429 is HTML with Retry-After, links to sign-in and password
+             reset, and discloses no threshold values
+        """
+        with self._isolated_cache(REGISTRATION_RATE_LIMIT_HOUR=1):
+            self.client.post("/accounts/register/", self._valid_data(
+                username="p1", email="p1@example.com",
+            ))
+            blocked = self.client.post("/accounts/register/", self._valid_data(
+                username="p2", email="p2@example.com",
+            ))
+
+            self.assertEqual(blocked.status_code, 429)
+            self.assertIn("Retry-After", blocked)
+            self.assertIn("text/html", blocked["Content-Type"])
+            body = blocked.content.decode()
+            self.assertIn(reverse("login"), body)
+            self.assertIn(reverse("password_reset"), body)
+            # Thresholds must not leak — knowing them makes the defense
+            # trivial to pace against.
+            self.assertNotIn("REGISTRATION_RATE_LIMIT", body)
+
+    def test_redis_outage_still_fails_open(self):
+        """
+        GIVEN the cache backend raises on every access
+        WHEN a valid registration is posted
+        THEN the limiter does not block it and the User is created
+        """
+        from django.contrib.auth.models import User as _U
+
+        with self._isolated_cache():
+            with mock.patch(
+                "survey.abuse.get_usage", side_effect=Exception("redis down"),
+            ), mock.patch(
+                "survey.abuse.is_ratelimited", side_effect=Exception("redis down"),
+            ):
+                r = self.client.post("/accounts/register/", self._valid_data(
+                    username="openuser", email="open@example.com",
+                ))
+            self.assertEqual(r.status_code, 302)
+            self.assertTrue(_U.objects.filter(username="openuser").exists())
+
+
+class PasswordChecklistTest(TestCase):
+    """The checklist must describe the validators the server actually runs."""
+
+    def test_every_configured_validator_has_a_checklist_rule(self):
+        """
+        GIVEN the project's AUTH_PASSWORD_VALIDATORS
+        WHEN the checklist rules are derived
+        THEN no configured validator is missing a rule
+        """
+        from .password_rules import unmapped_validators
+
+        missing = unmapped_validators()
+        self.assertEqual(
+            missing, [],
+            "AUTH_PASSWORD_VALIDATORS contains validators with no checklist "
+            "entry (%s). Add them to VALIDATOR_RULES in survey/password_rules.py "
+            "— otherwise the registration page advertises rules that do not "
+            "match what the server enforces." % ", ".join(missing),
+        )
+
+    def test_registration_page_renders_the_checklist(self):
+        """
+        GIVEN the registration page
+        WHEN it is fetched
+        THEN it contains one checklist item per configured rule
+        """
+        from .password_rules import password_checklist_rules
+
+        response = self.client.get("/accounts/register/")
+        body = response.content.decode()
+        self.assertIn("data-password-checklist", body)
+        for rule in password_checklist_rules():
+            self.assertIn('data-rule="%s"' % rule["check"], body)
+
+    def test_common_password_is_accepted_with_advice_not_rejected(self):
+        """
+        GIVEN password composition is advisory, not enforced (2026-08-17)
+        WHEN registration is submitted with a well-known common password
+        THEN the account is created rather than the form rejecting it
+        """
+        from django.contrib.auth.models import User as _U
+        from django.test import override_settings
+
+        with override_settings(TURNSTILE_SECRET_KEY=""):
+            response = self.client.post("/accounts/register/", {
+                "username": "commonpw",
+                "email": "commonpw@example.com",
+                "password1": "password123",
+                "password2": "password123",
+                "website": "",
+                "cf-turnstile-response": "any-token",
+            })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(_U.objects.filter(username="commonpw").exists())
+
+    def test_password_similar_to_email_is_accepted(self):
+        """
+        GIVEN UserAttributeSimilarityValidator is no longer configured
+        WHEN a password closely resembling the email is submitted
+        THEN the account is created — this is the exact rejection that cost a
+             real signup on 2026-08-17
+        """
+        from django.contrib.auth.models import User as _U
+        from django.test import override_settings
+
+        with override_settings(TURNSTILE_SECRET_KEY=""):
+            response = self.client.post("/accounts/register/", {
+                "username": "marcuswildner",
+                "email": "marcuswildner@example.com",
+                "password1": "marcuswildner",
+                "password2": "marcuswildner",
+                "website": "",
+                "cf-turnstile-response": "any-token",
+            })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(_U.objects.filter(username="marcuswildner").exists())
+
+    def test_short_password_is_still_rejected(self):
+        """
+        GIVEN MinimumLengthValidator remains the one enforced rule
+        WHEN a seven-character password is submitted
+        THEN the form rejects it and no User is created
+        """
+        from django.contrib.auth.models import User as _U
+        from django.test import override_settings
+
+        with override_settings(TURNSTILE_SECRET_KEY=""):
+            response = self.client.post("/accounts/register/", {
+                "username": "shortpw",
+                "email": "shortpw@example.com",
+                "password1": "Xx12345",
+                "password2": "Xx12345",
+                "website": "",
+                "cf-turnstile-response": "any-token",
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(_U.objects.filter(username="shortpw").exists())
+
+    def test_advisory_rules_are_marked_as_advisory(self):
+        """
+        GIVEN rules that the server does not enforce
+        WHEN the registration page renders them
+        THEN they carry data-advisory so they are not styled as errors
+        """
+        from .password_rules import password_checklist_rules
+
+        response = self.client.get("/accounts/register/")
+        body = response.content.decode()
+        advisory = [r for r in password_checklist_rules() if r["advisory"]]
+
+        self.assertTrue(advisory, "expected at least one advisory rule")
+        for rule in advisory:
+            self.assertIn('data-rule="%s"' % rule["check"], body)
+        self.assertIn("data-advisory", body)
+
+    def test_username_help_text_drops_the_150_character_ceiling(self):
+        """
+        GIVEN the registration page
+        WHEN it is fetched
+        THEN the username help text states allowed characters, not a ceiling
+             nobody reaches
+        """
+        response = self.client.get("/accounts/register/")
+        body = response.content.decode()
+        self.assertNotIn("150 characters or fewer", body)
+
+
+class SignInFormRetentionTest(TestCase):
+    """A wrong password must not also wipe the username."""
+
+    def test_failed_sign_in_keeps_username_and_clears_password(self):
+        """
+        GIVEN an existing user
+        WHEN sign-in is submitted with the right username and a wrong password
+        THEN the re-rendered page carries the username and no password value
+        """
+        from django.contrib.auth.models import User as _U
+
+        _U.objects.create_user(username="keeper", password="Xx12345!secure")
+        response = self.client.post(reverse("login"), {
+            "username": "keeper",
+            "password": "wrong-password",
+        })
+        body = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('value="keeper"', body)
+        self.assertNotIn("wrong-password", body)
+
+    def test_failure_message_does_not_enumerate_accounts(self):
+        """
+        GIVEN one existing user and one identifier with no account
+        WHEN each is submitted with a bad password
+        THEN both responses carry the same failure message
+        """
+        from django.contrib.auth.models import User as _U
+
+        _U.objects.create_user(username="exists", password="Xx12345!secure")
+
+        known = self.client.post(reverse("login"), {
+            "username": "exists", "password": "wrong-password",
+        }).content.decode()
+        unknown = self.client.post(reverse("login"), {
+            "username": "nobody-here", "password": "wrong-password",
+        }).content.decode()
+
+        message = "Invalid username/email or password"
+        self.assertIn(message, known)
+        self.assertIn(message, unknown)
+
 
 from django.urls import reverse
 from django.utils import timezone
@@ -19311,6 +20007,37 @@ class AcquisitionServiceTest(TestCase):
 
         self.assertEqual(regs["value"], 2)
 
+    def test_registrations_card_is_all_time_while_conversions_stay_windowed(self):
+        """
+        GIVEN one real user inside the window and one registered long before it
+        WHEN the block is built
+        THEN the card counts both while the conversion rows count only the windowed one
+        """
+        _synced("plausible")
+        _plausible_row(self.end, AcquisitionDaily.SEGMENT_LANDING, visitors=100)
+        _user_at("acq_inside", timezone.now() - _dt.timedelta(days=ACQUISITION_LAG_DAYS + 1))
+        _user_at("acq_ancient", timezone.now() - _dt.timedelta(days=400))
+
+        block = AcquisitionService(days=30).block()
+
+        self.assertEqual(block["stages"][2]["value"], 2)
+        self.assertEqual(block["registrations_in_window"]["value"], 1)
+        # visits -> registrations: 1 windowed signup against 100 visitors, not 2.
+        self.assertEqual(block["conversions"][1]["pct"], 1.0)
+
+    def test_registrations_card_ignores_the_search_console_lag(self):
+        """
+        GIVEN a real user who registered today, inside the lag the window skips
+        WHEN the block is built
+        THEN the card already counts them
+        """
+        _user_at("acq_today", timezone.now())
+
+        block = AcquisitionService(days=30).block()
+
+        self.assertEqual(block["stages"][2]["value"], 1)
+        self.assertEqual(block["registrations_in_window"]["value"], 0)
+
     def test_demo_total_and_split(self):
         """
         GIVEN demo sessions with and without recorded identity
@@ -22932,11 +23659,13 @@ class AIMaterializeTest(TestCase):
         self.assertEqual(len(subs), 1)
         self.assertEqual(subs[0].input_type, 'text')
 
-    def test_every_requested_language_gets_translation_rows(self):
+    def test_non_primary_languages_get_translation_rows_primary_stays_in_base(self):
         """
         GIVEN a two-language draft
         WHEN it is materialized
-        THEN each section and question has a translation row per language
+        THEN sections and questions carry translation rows for the non-primary
+             language only, and the primary text lives in base fields — a
+             primary row would shadow later base-field edits via the fallback
         """
         survey, _warnings = self._materialize(_ai_blob(('en', 'de')), ('en', 'de'))
 
@@ -22945,13 +23674,54 @@ class AIMaterializeTest(TestCase):
             SurveySectionTranslation.objects.filter(section=section)
             .values_list('language', flat=True)
         )
-        self.assertEqual(languages, {'en', 'de'})
+        self.assertEqual(languages, {'de'})
+        self.assertEqual(section.title, 'About you [en]')
         question = Question.objects.filter(survey_section=section).first()
         q_languages = set(
             QuestionTranslation.objects.filter(question=question)
             .values_list('language', flat=True)
         )
-        self.assertEqual(q_languages, {'en', 'de'})
+        self.assertEqual(q_languages, {'de'})
+
+    def test_single_language_draft_creates_no_translation_rows_and_flat_choices(self):
+        """
+        GIVEN a single-language draft whose choice names are locale dicts
+        WHEN it is materialized
+        THEN no translation rows exist and choice names collapse to flat
+             strings — the shapes the choices editor itself saves
+        """
+        survey, _warnings = self._materialize(_ai_blob(('en',)), ('en',))
+
+        self.assertFalse(
+            SurveySectionTranslation.objects.filter(section__survey_header=survey).exists()
+        )
+        self.assertFalse(
+            QuestionTranslation.objects.filter(
+                question__survey_section__survey_header=survey,
+            ).exists()
+        )
+        choice_q = Question.objects.get(
+            survey_section__survey_header=survey, input_type='choice',
+        )
+        self.assertEqual(
+            [c['name'] for c in choice_q.choices],
+            ['On foot [en]', 'By bike [en]'],
+        )
+
+    def test_multilingual_choice_dicts_keep_the_primary_key(self):
+        """
+        GIVEN a two-language draft
+        WHEN it is materialized
+        THEN choice name dicts keep both languages — the primary key is the
+             base slot for choices, there is no separate base field in the JSON
+        """
+        survey, _warnings = self._materialize(_ai_blob(('en', 'de')), ('en', 'de'))
+
+        choice_q = Question.objects.get(
+            survey_section__survey_header=survey, input_type='choice',
+        )
+        for choice in choice_q.choices:
+            self.assertEqual(set(choice['name'].keys()), {'en', 'de'})
 
     def test_header_comes_from_the_form_not_the_model(self):
         """
@@ -23004,23 +23774,166 @@ class AIMaterializeTest(TestCase):
 class _FakeProvider:
     """Stands in for a real model: returns queued blobs, counts calls."""
 
-    def __init__(self, blobs, error=None):
+    def __init__(self, blobs, error=None, usages=None):
         self._blobs = list(blobs)
         self._error = error
+        # Per-call usage overrides, consumed in order. Without them every call
+        # reports the same numbers, which cannot distinguish a summed attempt
+        # set from a single call -- the exact thing the accounting must prove.
+        self._usages = list(usages) if usages else None
         self.calls = []
 
-    def complete_structured(self, *, system, user, schema, max_tokens=64000):
+    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None):
         from survey.ai.client import LLMUsage
 
         self.calls.append(user)
         if self._error is not None:
             raise self._error
         blob = self._blobs.pop(0)
-        usage = LLMUsage(
-            provider='fake', model='fake-model',
-            input_tokens=100, output_tokens=200, latency_ms=1234,
-        )
+        overrides = self._usages.pop(0) if self._usages else {}
+        usage = LLMUsage(**dict(
+            {'provider': 'fake', 'model': 'fake-model',
+             'input_tokens': 100, 'output_tokens': 200, 'latency_ms': 1234},
+            **overrides
+        ))
         return blob, usage
+
+
+class _ProgressingProvider(_FakeProvider):
+    """A fake that reports draft progress before handing back its blob.
+
+    Stands in for a streaming provider without a stream: the orchestrator only
+    ever sees the callback being invoked, so a scripted sequence of counts
+    exercises the same wiring an SSE response would.
+    """
+
+    def __init__(self, blobs, steps, progress_on_first_only=False, **kwargs):
+        super().__init__(blobs, **kwargs)
+        self._steps = list(steps)
+        self._progress_on_first_only = progress_on_first_only
+        self._call = 0
+
+    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None):
+        self._call += 1
+        if on_progress is not None and not (self._progress_on_first_only and self._call > 1):
+            for sections, questions in self._steps:
+                on_progress(sections, questions)
+        return super().complete_structured(
+            system=system, user=user, schema=schema, max_tokens=max_tokens,
+        )
+
+
+class _FlakyProvider(_FakeProvider):
+    """Fails a scripted number of calls before behaving, like a provider under load."""
+
+    def __init__(self, blobs, error, failures, **kwargs):
+        super().__init__(blobs, **kwargs)
+        self._error = None  # the base class would raise it on every call
+        self._flaky_error = error
+        self._failures = failures
+        self.attempts_made = 0
+
+    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None):
+        self.attempts_made += 1
+        if self.attempts_made <= self._failures:
+            raise self._flaky_error
+        return super().complete_structured(
+            system=system, user=user, schema=schema, max_tokens=max_tokens,
+        )
+
+
+class AIProviderErrorClassificationTest(TestCase):
+    """Which failures are worth another try, decided where the status is seen."""
+
+    def test_server_side_statuses_are_transient(self):
+        """
+        GIVEN a 429 or any 5xx
+        WHEN it is classified
+        THEN it is transient, because it describes the provider's moment
+        """
+        from survey.ai.client import _transient_status
+
+        for status in (429, 500, 502, 503, 504):
+            self.assertTrue(_transient_status(status), status)
+
+    def test_client_side_statuses_are_verdicts(self):
+        """
+        GIVEN a 4xx other than rate limiting
+        WHEN it is classified
+        THEN it is not transient, because it describes our request
+        """
+        from survey.ai.client import _transient_status
+
+        for status in (400, 401, 403, 404):
+            self.assertFalse(_transient_status(status), status)
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='')
+    def test_gemini_overload_is_raised_as_transient(self):
+        """
+        GIVEN the provider answering 503
+        WHEN the call is made
+        THEN the raised error is marked transient, which is what earns the retry
+        """
+        from survey.ai.client import GeminiProvider, ProviderError
+
+        response = mock.MagicMock()
+        response.status_code = 503
+        response.json.return_value = {'error': {'message': 'high demand'}}
+
+        with patch('requests.post', return_value=response):
+            with self.assertRaises(ProviderError) as raised:
+                GeminiProvider().complete_structured(
+                    system='s', user='u', schema={'type': 'object'},
+                )
+
+        self.assertTrue(raised.exception.transient)
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='')
+    def test_gemini_unparseable_output_is_transient(self):
+        """
+        GIVEN a 200 whose body is not the JSON the schema demanded
+        WHEN the call is made
+        THEN the error is transient: this is the failure that hit production on
+             2026-08-17 and it is the provider stumbling, not a bad brief
+        """
+        from survey.ai.client import GeminiProvider, ProviderError
+
+        response = mock.MagicMock()
+        response.status_code = 200
+        response.json.return_value = {
+            'usageMetadata': {'promptTokenCount': 1},
+            'candidates': [{'finishReason': 'STOP',
+                            'content': {'parts': [{'text': '{"sections": [{"tit'}]}}],
+        }
+
+        with patch('requests.post', return_value=response):
+            with self.assertRaises(ProviderError) as raised:
+                GeminiProvider().complete_structured(
+                    system='s', user='u', schema={'type': 'object'},
+                )
+
+        self.assertTrue(raised.exception.transient)
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='')
+    def test_retired_model_is_not_transient(self):
+        """
+        GIVEN a 404 for a model this key cannot use
+        WHEN the call is made
+        THEN the error is final, because retrying cannot make the model exist
+        """
+        from survey.ai.client import GeminiProvider, ProviderError
+
+        response = mock.MagicMock()
+        response.status_code = 404
+        response.json.return_value = {'error': {'message': 'model not found'}}
+
+        with patch('requests.post', return_value=response):
+            with self.assertRaises(ProviderError) as raised:
+                GeminiProvider().complete_structured(
+                    system='s', user='u', schema={'type': 'object'},
+                )
+
+        self.assertFalse(raised.exception.transient)
 
 
 class AIClientConfigTest(TestCase):
@@ -23053,8 +23966,13 @@ class AIClientConfigTest(TestCase):
             client.get_provider()
 
 
-class AIGenerationFlowTest(TestCase):
-    """The orchestrator: provider → validator → materializer → event."""
+class _AIGenerationFixture:
+    """Fixtures and the run helper shared by the orchestrator test classes.
+
+    A mixin rather than a base TestCase: subclassing a TestCase would re-run
+    every inherited test method in each child, which doubles the suite's slowest
+    AI cases for no coverage.
+    """
 
     def setUp(self):
         self.org = _make_org('AIGenOrg')
@@ -23084,6 +24002,10 @@ class AIGenerationFlowTest(TestCase):
             generate_survey_draft(event, brief, list(languages), overrides)
         event.refresh_from_db()
         return event
+
+
+class AIGenerationFlowTest(_AIGenerationFixture, TestCase):
+    """The orchestrator: provider → validator → materializer → event."""
 
     def test_successful_generation_creates_survey_and_owner(self):
         """
@@ -23172,6 +24094,1106 @@ class AIGenerationFlowTest(TestCase):
         self.assertEqual(event.outcome, 'not_configured')
 
 
+class AIThinkingLevelRequestTest(TestCase):
+    """Reasoning effort is a value we send, not a provider default we inherit."""
+
+    def _post_and_capture(self):
+        """Run one Gemini call against a stubbed transport, return the request body."""
+        from survey.ai.client import GeminiProvider
+
+        response = mock.MagicMock()
+        response.status_code = 200
+        response.json.return_value = {
+            'usageMetadata': {'promptTokenCount': 10, 'candidatesTokenCount': 20,
+                              'totalTokenCount': 30},
+            'candidates': [{'finishReason': 'STOP',
+                            'content': {'parts': [{'text': '{"ok": true}'}]}}],
+        }
+        with patch('requests.post', return_value=response) as post:
+            GeminiProvider().complete_structured(
+                system='sys', user='usr', schema={'type': 'object'},
+            )
+        return post.call_args.kwargs['json']
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_configured_level_is_sent(self):
+        """
+        GIVEN AI_THINKING_LEVEL set to a non-empty value
+        WHEN a Gemini generation is requested
+        THEN the request body carries it at generationConfig.thinkingConfig.thinkingLevel
+        """
+        payload = self._post_and_capture()
+
+        self.assertEqual(
+            payload['generationConfig']['thinkingConfig']['thinkingLevel'], 'low',
+        )
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='')
+    def test_empty_level_omits_the_key_entirely(self):
+        """
+        GIVEN AI_THINKING_LEVEL set to an empty string
+        WHEN a Gemini generation is requested
+        THEN no thinkingConfig key is present, so a model that rejects the field
+             can be worked around by configuration rather than by a deploy
+        """
+        payload = self._post_and_capture()
+
+        self.assertNotIn('thinkingConfig', payload['generationConfig'])
+
+
+class AIThinkingTokensTest(TestCase):
+    """Reasoning usage: read it where reported, derive it where implied, else absent."""
+
+    def test_reported_field_wins(self):
+        """
+        GIVEN usage metadata carrying a reasoning-token count
+        WHEN reasoning usage is read
+        THEN that value is used without consulting the derived fallback
+        """
+        from survey.ai.client import _thinking_tokens
+
+        meta = {'thoughtsTokenCount': 512, 'promptTokenCount': 10,
+                'candidatesTokenCount': 20, 'totalTokenCount': 30}
+
+        self.assertEqual(_thinking_tokens(meta), 512)
+
+    def test_derived_from_the_total_when_no_field(self):
+        """
+        GIVEN metadata with no reasoning field but a total exceeding prompt plus candidates
+        WHEN reasoning usage is read
+        THEN the difference is returned
+        """
+        from survey.ai.client import _thinking_tokens
+
+        meta = {'promptTokenCount': 100, 'candidatesTokenCount': 200,
+                'totalTokenCount': 900}
+
+        self.assertEqual(_thinking_tokens(meta), 600)
+
+    def test_absent_is_none_not_zero(self):
+        """
+        GIVEN metadata whose total is fully accounted for by prompt and candidates
+        WHEN reasoning usage is read
+        THEN it is None, because "not reported" and "reasoned for nothing" are
+             different facts and a zero would average the first into the second
+        """
+        from survey.ai.client import _thinking_tokens
+
+        meta = {'promptTokenCount': 100, 'candidatesTokenCount': 200,
+                'totalTokenCount': 300}
+
+        self.assertIsNone(_thinking_tokens(meta))
+
+    def test_missing_total_is_none(self):
+        """
+        GIVEN metadata with neither a reasoning field nor a total
+        WHEN reasoning usage is read
+        THEN it is None rather than a value derived from absent numbers
+        """
+        from survey.ai.client import _thinking_tokens
+
+        self.assertIsNone(_thinking_tokens({'promptTokenCount': 100}))
+
+
+class AIGenerationLatencyAccountingTest(_AIGenerationFixture, TestCase):
+    """A retried generation must not read as one fast call."""
+
+    def test_single_attempt_totals_equal_the_one_call(self):
+        """
+        GIVEN a provider whose first draft passes validation
+        WHEN generation runs
+        THEN one attempt is recorded and the summed elapsed equals latency_ms
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+
+        event = self._run(provider)
+
+        self.assertEqual(event.attempts, 1)
+        self.assertEqual(event.total_latency_ms, event.latency_ms)
+        self.assertEqual(event.total_latency_ms, 1234)
+
+    def test_retry_sums_elapsed_and_tokens_but_not_latency_ms(self):
+        """
+        GIVEN a first draft rejected by validation and a valid second one
+        WHEN generation runs
+        THEN both calls are accounted, while latency_ms stays the terminal call's
+        """
+        bad = _ai_blob(('en',))
+        bad['sections'] = bad['sections'][:1]
+        provider = _FakeProvider(
+            [bad, _ai_blob(('en',))],
+            usages=[{'latency_ms': 40000, 'input_tokens': 1000, 'output_tokens': 500},
+                    {'latency_ms': 9000, 'input_tokens': 1100, 'output_tokens': 700}],
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+        self.assertEqual(event.attempts, 2)
+        self.assertEqual(event.total_latency_ms, 49000)
+        self.assertEqual(event.latency_ms, 9000)
+        self.assertEqual(event.input_tokens, 2100)
+        self.assertEqual(event.output_tokens, 1200)
+
+    def test_failed_set_is_accounted_too(self):
+        """
+        GIVEN every attempt in the set rejected by validation
+        WHEN generation runs
+        THEN the attempt count and summed elapsed are still recorded
+        """
+        bad = _ai_blob(('en',))
+        bad['sections'] = bad['sections'][:1]
+        provider = _FakeProvider(
+            [bad, dict(bad)],
+            usages=[{'latency_ms': 5000}, {'latency_ms': 6000}],
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'invalid_draft')
+        self.assertEqual(event.attempts, 2)
+        self.assertEqual(event.total_latency_ms, 11000)
+
+    def test_provider_error_counts_the_call_it_could_not_measure(self):
+        """
+        GIVEN a provider whose first call raises before reporting any usage
+        WHEN generation runs
+        THEN the attempt is counted, and elapsed stays absent rather than invented
+        """
+        from survey.ai.client import ProviderError
+
+        provider = _FakeProvider([], error=ProviderError('API error 503: high demand'))
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'provider_error')
+        self.assertEqual(event.attempts, 1)
+        self.assertIsNone(event.total_latency_ms)
+
+    def test_thinking_tokens_sum_only_over_calls_that_reported(self):
+        """
+        GIVEN one attempt reporting reasoning usage and one not
+        WHEN generation runs
+        THEN the reported one is summed and the silent one contributes nothing
+        """
+        bad = _ai_blob(('en',))
+        bad['sections'] = bad['sections'][:1]
+        provider = _FakeProvider(
+            [bad, _ai_blob(('en',))],
+            usages=[{'thinking_tokens': 800}, {'thinking_tokens': None}],
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.thinking_tokens, 800)
+
+    def test_thinking_tokens_stay_absent_when_nothing_reports(self):
+        """
+        GIVEN a provider that never reports reasoning usage
+        WHEN generation runs
+        THEN the row records None, not 0
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+
+        event = self._run(provider)
+
+        self.assertIsNone(event.thinking_tokens)
+
+    def test_analytics_carries_the_accounting_and_omits_what_is_absent(self):
+        """
+        GIVEN a successful generation with no reasoning usage reported
+        WHEN ai_draft_finished is emitted
+        THEN attempts and elapsed are present and thinking_tokens is omitted
+             rather than sent as a zero that a breakdown would average in
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+
+        with patch('survey.product_events.emit') as emit:
+            self._run(provider)
+
+        finished = [c for c in emit.call_args_list
+                    if c.args[0] == 'ai_draft_finished']
+        self.assertEqual(len(finished), 1)
+        props = finished[0].args[2]
+        self.assertEqual(props['attempts'], 1)
+        self.assertEqual(props['total_latency_ms'], 1234)
+        self.assertNotIn('thinking_tokens', props)
+
+
+class DraftProgressScannerTest(TestCase):
+    """Progress counted from structure, so it cannot drift into fiction."""
+
+    def _draft(self, sections):
+        """A draft blob's JSON text with `sections` sections of two questions each."""
+        section = ('{"title": {"en": "T"}, "subheading": {"en": "S"}, "questions": ['
+                   '{"name": "q1"}, {"name": "q2"}]}')
+        return '{"sections": [' + ', '.join([section] * sections) + ']}'
+
+    def test_counts_sections_and_questions(self):
+        """
+        GIVEN a complete draft fed in one piece
+        WHEN the scanner consumes it
+        THEN it reports every closed section and question
+        """
+        from survey.ai.progress import DraftProgress
+
+        tracker = DraftProgress()
+        tracker.feed(self._draft(3))
+
+        self.assertEqual(tracker.sections, 3)
+        self.assertEqual(tracker.questions, 6)
+
+    def test_chunk_boundaries_do_not_change_the_count(self):
+        """
+        GIVEN the same draft split at every possible character boundary
+        WHEN the scanner consumes it chunk by chunk
+        THEN the totals match the unsplit reading, because a stream's chunking
+             is the provider's business and must not be visible in the count
+        """
+        from survey.ai.progress import DraftProgress
+
+        text = self._draft(2)
+        for size in (1, 3, 7, 50):
+            tracker = DraftProgress()
+            for start in range(0, len(text), size):
+                tracker.feed(text[start:start + size])
+            self.assertEqual((tracker.sections, tracker.questions), (2, 4),
+                             'chunk size %d' % size)
+
+    def test_braces_and_quotes_in_label_text_are_not_structure(self):
+        """
+        GIVEN question text containing braces, brackets, quotes and backslashes
+        WHEN the scanner consumes it
+        THEN the counts are unaffected, because a creator's wording is not JSON
+        """
+        from survey.ai.progress import DraftProgress
+
+        text = (
+            '{"sections": [{"title": {"en": "Where {is} it [worst]?"}, '
+            '"subheading": {"en": "say \\"why\\" \\\\ how"}, '
+            '"questions": [{"name": "a {b} [c]"}]}]}'
+        )
+
+        tracker = DraftProgress()
+        tracker.feed(text)
+
+        self.assertEqual((tracker.sections, tracker.questions), (1, 1))
+
+    def test_open_section_is_not_counted_until_it_closes(self):
+        """
+        GIVEN a stream cut off midway through the second section
+        WHEN the scanner consumes what arrived
+        THEN only the completed section counts, so the number never has to go
+             backwards if the stream then fails
+        """
+        from survey.ai.progress import DraftProgress
+
+        text = self._draft(2)
+        tracker = DraftProgress()
+        tracker.feed(text[:text.rindex('{"title"')])
+
+        self.assertEqual(tracker.sections, 1)
+
+    def test_feed_reports_whether_anything_advanced(self):
+        """
+        GIVEN a chunk that closes nothing
+        WHEN it is fed
+        THEN feed() reports no advance, which is what suppresses a needless write
+        """
+        from survey.ai.progress import DraftProgress
+
+        tracker = DraftProgress()
+
+        self.assertFalse(tracker.feed('{"sections": [{"title": '))
+        self.assertTrue(tracker.feed('{"en": "T"}, "questions": []}'))
+
+    def test_unbalanced_close_is_ignored_not_raised(self):
+        """
+        GIVEN corrupt text with more closing braces than opening ones
+        WHEN the scanner consumes it
+        THEN it does not raise, because a counter must never be the reason a
+             draft fails
+        """
+        from survey.ai.progress import DraftProgress
+
+        tracker = DraftProgress()
+        tracker.feed('}}]}')
+
+        self.assertEqual(tracker.sections, 0)
+
+
+class GeminiStreamingTest(TestCase):
+    """Streaming changes how the blob arrives, not what happens to it."""
+
+    def _sse(self, events):
+        """Encode dicts as the SSE byte lines the provider will read back.
+
+        Bytes, not str, because that is what `requests.iter_lines()` actually
+        yields — and the distinction is not pedantry: a fake that spoke str is
+        exactly why the mojibake bug (UTF-8 stream decoded as the ISO-8859-1
+        default) shipped with green tests. `ensure_ascii=False` so Cyrillic
+        content crosses the wire as real UTF-8 bytes, the way Gemini sends it.
+        """
+        lines = []
+        for event in events:
+            lines.append(('data: %s' % json.dumps(event, ensure_ascii=False)).encode('utf-8'))
+            lines.append(b'')
+        return lines
+
+    def _chunk(self, text, finish_reason=None, usage=None):
+        event = {'candidates': [{'content': {'parts': [{'text': text}]}}]}
+        if finish_reason:
+            event['candidates'][0]['finishReason'] = finish_reason
+        if usage:
+            event['usageMetadata'] = usage
+        return event
+
+    def _stream(self, events):
+        response = mock.MagicMock()
+        response.status_code = 200
+        response.iter_lines.return_value = iter(self._sse(events))
+        return response
+
+    def _blob_text(self):
+        return ('{"sections": [{"title": {"en": "T"}, "subheading": {"en": "S"}, '
+                '"questions": [{"name": "q1"}]}]}')
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_progress_is_reported_and_the_result_is_unchanged(self):
+        """
+        GIVEN a callback and a response streamed in several chunks
+        WHEN generation runs
+        THEN progress is reported as sections close, and the parsed blob and
+             usage are what the same response would have produced unstreamed
+        """
+        from survey.ai.client import GeminiProvider
+
+        text = self._blob_text()
+        events = [
+            self._chunk(text[:40]),
+            self._chunk(text[40:]),
+            self._chunk('', finish_reason='STOP',
+                        usage={'promptTokenCount': 11, 'candidatesTokenCount': 22,
+                               'totalTokenCount': 60}),
+        ]
+        seen = []
+
+        with patch('requests.post', return_value=self._stream(events)):
+            blob, usage = GeminiProvider().complete_structured(
+                system='s', user='u', schema={'type': 'object'},
+                on_progress=lambda sections, questions: seen.append((sections, questions)),
+            )
+
+        self.assertEqual(blob, json.loads(text))
+        self.assertEqual(usage.input_tokens, 11)
+        self.assertEqual(usage.output_tokens, 22)
+        self.assertEqual(usage.thinking_tokens, 27)
+        self.assertEqual(seen, [(1, 1)])
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_streaming_endpoint_is_used_only_with_a_callback(self):
+        """
+        GIVEN a call with no progress callback
+        WHEN generation runs
+        THEN the blocking endpoint is used, so a caller that wants no progress
+             pays nothing for the streaming path
+        """
+        from survey.ai.client import GeminiProvider
+
+        response = mock.MagicMock()
+        response.status_code = 200
+        response.json.return_value = {
+            'usageMetadata': {'promptTokenCount': 1, 'candidatesTokenCount': 2,
+                              'totalTokenCount': 3},
+            'candidates': [{'finishReason': 'STOP',
+                            'content': {'parts': [{'text': self._blob_text()}]}}],
+        }
+
+        with patch('requests.post', return_value=response) as post:
+            GeminiProvider().complete_structured(
+                system='s', user='u', schema={'type': 'object'},
+            )
+
+        self.assertIn(':generateContent', post.call_args.args[0])
+        self.assertNotIn('streamGenerateContent', post.call_args.args[0])
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_a_raising_callback_does_not_fail_the_draft(self):
+        """
+        GIVEN a progress callback that raises every time it is called
+        WHEN generation runs
+        THEN the draft still comes back, because progress reporting is strictly
+             less important than the draft it describes
+        """
+        from survey.ai.client import GeminiProvider
+
+        text = self._blob_text()
+        events = [self._chunk(text),
+                  self._chunk('', finish_reason='STOP', usage={'promptTokenCount': 1})]
+
+        def explode(sections, questions):
+            raise RuntimeError('progress store is down')
+
+        with patch('requests.post', return_value=self._stream(events)):
+            blob, _ = GeminiProvider().complete_structured(
+                system='s', user='u', schema={'type': 'object'}, on_progress=explode,
+            )
+
+        self.assertEqual(blob, json.loads(text))
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_truncation_still_raises_with_its_usage(self):
+        """
+        GIVEN a stream whose final chunk reports the token ceiling
+        WHEN generation runs
+        THEN TruncatedOutput is raised carrying the usage, exactly as unstreamed
+        """
+        from survey.ai.client import GeminiProvider, TruncatedOutput
+
+        events = [self._chunk('{"sections": ['),
+                  self._chunk('', finish_reason='MAX_TOKENS',
+                              usage={'candidatesTokenCount': 64000})]
+
+        with patch('requests.post', return_value=self._stream(events)):
+            with self.assertRaises(TruncatedOutput) as raised:
+                GeminiProvider().complete_structured(
+                    system='s', user='u', schema={'type': 'object'},
+                    on_progress=lambda s, q: None,
+                )
+
+        self.assertEqual(raised.exception.usage.output_tokens, 64000)
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_cyrillic_content_survives_the_stream(self):
+        """
+        GIVEN a streamed draft whose text is Russian, arriving as UTF-8 bytes
+        WHEN the provider assembles it
+        THEN the parsed blob carries the exact Cyrillic text — the regression
+             that killed every Russian draft on 2026-08-17, when the stream was
+             decoded with requests' ISO-8859-1 fallback instead of the UTF-8
+             that SSE specifies
+        """
+        from survey.ai.client import GeminiProvider
+
+        text = ('{"sections": [{"title": {"ru": "Ваш опыт вечерних прогулок"}, '
+                '"subheading": {"ru": "Тёмное время — расскажите"}, '
+                '"questions": [{"name": "q1"}]}]}')
+        events = [
+            self._chunk(text[:60]),
+            self._chunk(text[60:]),
+            self._chunk('', finish_reason='STOP',
+                        usage={'promptTokenCount': 1, 'candidatesTokenCount': 2,
+                               'totalTokenCount': 3}),
+        ]
+        seen = []
+
+        with patch('requests.post', return_value=self._stream(events)):
+            blob, _ = GeminiProvider().complete_structured(
+                system='s', user='u', schema={'type': 'object'},
+                on_progress=lambda s, q: seen.append((s, q)),
+            )
+
+        self.assertEqual(blob['sections'][0]['title']['ru'], 'Ваш опыт вечерних прогулок')
+        self.assertEqual(seen, [(1, 1)])
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low',
+                       AI_REQUEST_TIMEOUT_SECONDS=120)
+    def test_stream_cannot_outlive_the_total_budget(self):
+        """
+        GIVEN a stream still trickling data past the total time budget
+        WHEN the next line arrives
+        THEN the call is abandoned as a transient error — a trickle resets the
+             read timeout forever, which is how 2026-08-17's stall ran until
+             Celery's soft limit killed the task
+        """
+        from survey.ai.client import GeminiProvider, ProviderError
+
+        events = [self._chunk('{"sections": [')]
+
+        with patch('requests.post', return_value=self._stream(events)):
+            with patch('survey.ai.client.time.monotonic',
+                       side_effect=[0, 0] + [999] * 10):
+                with self.assertRaises(ProviderError) as raised:
+                    GeminiProvider().complete_structured(
+                        system='s', user='u', schema={'type': 'object'},
+                        on_progress=lambda s, q: None,
+                    )
+
+        self.assertTrue(raised.exception.transient)
+        self.assertIn('exceeded', str(raised.exception))
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low',
+                       AI_REQUEST_TIMEOUT_SECONDS=120, AI_STREAM_STALL_SECONDS=30)
+    def test_streamed_read_timeout_is_the_stall_limit(self):
+        """
+        GIVEN a streamed call and a blocking call
+        WHEN each posts to the provider
+        THEN the streamed one uses the stall limit as its read timeout and the
+             blocking one keeps the full budget — requests restarts the read
+             timer per chunk, so the full budget cannot bound silence there
+        """
+        from survey.ai.client import GeminiProvider
+
+        text = self._blob_text()
+        events = [self._chunk(text),
+                  self._chunk('', finish_reason='STOP', usage={'promptTokenCount': 1})]
+
+        with patch('requests.post', return_value=self._stream(events)) as post:
+            GeminiProvider().complete_structured(
+                system='s', user='u', schema={'type': 'object'},
+                on_progress=lambda s, q: None,
+            )
+        self.assertEqual(post.call_args.kwargs['timeout'], 30)
+
+        blocking = mock.MagicMock()
+        blocking.status_code = 200
+        blocking.json.return_value = {
+            'usageMetadata': {'promptTokenCount': 1},
+            'candidates': [{'finishReason': 'STOP',
+                            'content': {'parts': [{'text': text}]}}],
+        }
+        with patch('requests.post', return_value=blocking) as post:
+            GeminiProvider().complete_structured(
+                system='s', user='u', schema={'type': 'object'},
+            )
+        self.assertEqual(post.call_args.kwargs['timeout'], 120)
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_stream_cut_short_is_not_mistaken_for_a_complete_answer(self):
+        """
+        GIVEN a stream that stops mid-JSON without ever reporting a finish reason
+        WHEN the call is made
+        THEN it raises a transient ProviderError rather than handing the partial
+             text to the parser — the regression that reached production on
+             2026-08-17 and surfaced to creators as an unreachable AI service
+        """
+        from survey.ai.client import GeminiProvider, ProviderError
+
+        events = [self._chunk('{"sections": [{"title": {"en": "Half a dr')]
+
+        with patch('requests.post', return_value=self._stream(events)):
+            with self.assertRaises(ProviderError) as raised:
+                GeminiProvider().complete_structured(
+                    system='s', user='u', schema={'type': 'object'},
+                    on_progress=lambda s, q: None,
+                )
+
+        self.assertTrue(raised.exception.transient)
+        self.assertNotIn('unparseable', str(raised.exception))
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='low')
+    def test_mid_stream_failure_is_a_provider_error(self):
+        """
+        GIVEN a stream that dies after headers were already accepted
+        WHEN generation runs
+        THEN it surfaces as ProviderError, landing on the same outcome any other
+             provider failure does
+        """
+        import requests
+
+        from survey.ai.client import GeminiProvider, ProviderError
+
+        response = mock.MagicMock()
+        response.status_code = 200
+        response.iter_lines.side_effect = requests.RequestException('connection reset')
+
+        with patch('requests.post', return_value=response):
+            with self.assertRaises(ProviderError):
+                GeminiProvider().complete_structured(
+                    system='s', user='u', schema={'type': 'object'},
+                    on_progress=lambda s, q: None,
+                )
+
+
+class AITransientRetryTest(_AIGenerationFixture, TestCase):
+    """A provider having a bad second must not become the creator's dead end."""
+
+    def setUp(self):
+        super().setUp()
+        # The waits are real seconds in production and pure delay in a test.
+        sleep = patch('survey.ai.generation.time.sleep')
+        self.sleep = sleep.start()
+        self.addCleanup(sleep.stop)
+
+    def test_overload_is_ridden_out(self):
+        """
+        GIVEN a provider that returns 503 twice and then succeeds
+        WHEN generation runs
+        THEN the creator gets their survey, never seeing the failures
+        """
+        from survey.ai.client import ProviderError
+
+        provider = _FlakyProvider(
+            [_ai_blob(('en',))],
+            ProviderError('API error 503: high demand', transient=True),
+            failures=2,
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+        self.assertIsNotNone(event.created_survey_id)
+        self.assertEqual(provider.attempts_made, 3)
+
+    def test_malformed_reply_is_ridden_out(self):
+        """
+        GIVEN a provider whose first reply does not parse and whose second does
+        WHEN generation runs
+        THEN the draft still lands, because a garbled payload is the provider
+             stumbling rather than an answer to the creator's brief
+        """
+        from survey.ai.client import ProviderError
+
+        provider = _FlakyProvider(
+            [_ai_blob(('en',))],
+            ProviderError('unparseable model output: Expecting value', transient=True),
+            failures=1,
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+
+    def test_every_retry_is_counted_as_waiting(self):
+        """
+        GIVEN a provider that is transiently broken for the whole budget
+        WHEN generation gives up
+        THEN the event records every call made, so the wait the creator sat
+             through is visible rather than reported as a single failure
+        """
+        from survey.ai.client import ProviderError
+        from survey.ai.generation import TRANSIENT_BACKOFF_SECONDS
+
+        provider = _FlakyProvider(
+            [], ProviderError('API error 503: high demand', transient=True), failures=99,
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'provider_error')
+        self.assertEqual(provider.attempts_made, len(TRANSIENT_BACKOFF_SECONDS) + 1)
+        self.assertEqual(event.attempts, len(TRANSIENT_BACKOFF_SECONDS) + 1)
+        self.assertEqual(self.sleep.call_count, len(TRANSIENT_BACKOFF_SECONDS))
+
+    def test_backoff_grows_between_retries(self):
+        """
+        GIVEN a provider that stays overloaded
+        WHEN the retries run
+        THEN each wait is longer than the last, so a struggling provider is not
+             hammered at a fixed rate
+        """
+        from survey.ai.client import ProviderError
+        from survey.ai.generation import TRANSIENT_BACKOFF_SECONDS
+
+        provider = _FlakyProvider(
+            [], ProviderError('API error 503', transient=True), failures=99,
+        )
+
+        self._run(provider)
+
+        waited = [call.args[0] for call in self.sleep.call_args_list]
+        self.assertEqual(waited, list(TRANSIENT_BACKOFF_SECONDS))
+        self.assertEqual(waited, sorted(waited))
+
+    @override_settings(AI_STREAMING_ENABLED=False)
+    def test_streaming_can_be_switched_off_without_a_deploy(self):
+        """
+        GIVEN the streaming kill switch turned off
+        WHEN generation runs
+        THEN no progress callback is passed, so the provider takes the blocking
+             path and the draft still lands
+        """
+        provider = _ProgressingProvider([_ai_blob(('en',))], [(1, 2)])
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+        self.assertIsNone(event.sections_drafted)
+
+    def test_a_verdict_is_not_retried(self):
+        """
+        GIVEN a failure the provider will repeat — a rejected key, say
+        WHEN generation runs
+        THEN it is reported once, because spending the creator's wait twice
+             arrives at the same message
+        """
+        from survey.ai.client import ProviderError
+
+        provider = _FlakyProvider(
+            [], ProviderError('API error 401: invalid key'), failures=99,
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'provider_error')
+        self.assertEqual(provider.attempts_made, 1)
+        self.assertFalse(self.sleep.called)
+
+    def test_transient_retries_do_not_spend_the_validation_budget(self):
+        """
+        GIVEN a provider that is overloaded once and then returns an invalid draft
+        WHEN generation runs
+        THEN the invalid draft still gets its own retry, because riding out a
+             503 must not consume the attempt a bad draft needed
+        """
+        from survey.ai.client import ProviderError
+
+        bad = _ai_blob(('en',))
+        bad['sections'] = bad['sections'][:1]
+        provider = _FlakyProvider(
+            [bad, _ai_blob(('en',))],
+            ProviderError('API error 503', transient=True),
+            failures=1,
+        )
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+        self.assertEqual(provider.attempts_made, 3)
+
+
+# Explicit rather than relying on the default, because the default is now OFF:
+# these tests exercise what the streamed path records when it is switched on.
+@override_settings(AI_STREAMING_ENABLED=True)
+class AIGenerationProgressRecordingTest(_AIGenerationFixture, TestCase):
+    """Progress reaches the row the poller reads, and a retry restarts it."""
+
+    def test_counts_are_recorded_as_the_draft_grows(self):
+        """
+        GIVEN a provider that reports progress while generating
+        WHEN generation runs
+        THEN the event row carries the counts a poll would have read
+        """
+        blob = _ai_blob(('en',))
+        provider = _ProgressingProvider([blob], [(1, 2), (2, 5)])
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+        recorded = AIGenerationEvent.objects.get(pk=event.pk)
+        self.assertEqual(recorded.sections_drafted, 2)
+        self.assertEqual(recorded.questions_drafted, 5)
+
+    def test_retry_restarts_the_counts(self):
+        """
+        GIVEN a first attempt that drafted sections and was then rejected
+        WHEN the second attempt begins
+        THEN the stored counts are cleared, so the counter does not jump
+             backwards when the replacement draft's first section closes
+        """
+        bad = _ai_blob(('en',))
+        bad['sections'] = bad['sections'][:1]
+        provider = _ProgressingProvider([bad, _ai_blob(('en',))], [(4, 9)], progress_on_first_only=True)
+
+        event = self._run(provider)
+
+        self.assertEqual(event.outcome, 'success')
+        recorded = AIGenerationEvent.objects.get(pk=event.pk)
+        self.assertIsNone(recorded.sections_drafted)
+
+    def test_progress_cannot_resurrect_a_finished_generation(self):
+        """
+        GIVEN a progress callback invoked after the outcome was already written
+        WHEN it fires
+        THEN the row is not touched, because the update is filtered on pending
+        """
+        from survey.ai.generation import _progress_recorder
+
+        event = AIGenerationEvent.objects.create(
+            kind='survey_draft', user=self.user, organization=self.org, outcome='success',
+        )
+
+        _progress_recorder(event)(3, 7)
+
+        event.refresh_from_db()
+        self.assertIsNone(event.sections_drafted)
+
+
+class AIGenerationProgressPollingTest(TestCase):
+    """The status endpoint reports news, and stays silent otherwise."""
+
+    def setUp(self):
+        self.org = _make_org('AIPollOrg')
+        self.user = User.objects.create_user('aipolluser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.force_login(self.user)
+        self.event = AIGenerationEvent.objects.create(
+            kind='survey_draft', user=self.user, organization=self.org, outcome='pending',
+        )
+        self.url = reverse('editor_generation_status', kwargs={'event_id': self.event.pk})
+
+    def test_nothing_drafted_yet_leaves_the_page_alone(self):
+        """
+        GIVEN a pending event with no counts recorded
+        WHEN the status endpoint is polled
+        THEN it answers 204, so the waiting card is never re-rendered and no
+             zero is shown that would read as a stall
+        """
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 204)
+
+    def test_advanced_counts_return_a_fragment(self):
+        """
+        GIVEN stored counts ahead of what the poller reports having
+        WHEN the status endpoint is polled
+        THEN the fragment carries the current counts
+        """
+        AIGenerationEvent.objects.filter(pk=self.event.pk).update(
+            sections_drafted=3, questions_drafted=8)
+
+        response = self.client.get(self.url, {'sections': 1, 'questions': 4})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '8 questions')
+        self.assertContains(response, '3 sections')
+
+    def test_fragment_has_no_percentage_label(self):
+        """
+        GIVEN any progress fragment
+        WHEN it is rendered
+        THEN no percentage text reaches the creator — the width is styling, and
+             a printed "45%" would claim precision the denominator does not have
+        """
+        AIGenerationEvent.objects.filter(pk=self.event.pk).update(
+            sections_drafted=1, questions_drafted=4)
+
+        response = self.client.get(self.url, {'sections': 0, 'questions': 0})
+
+        visible = re.sub(r'<[^>]*>', '', response.content.decode())
+        self.assertNotIn('%', visible)
+
+    def test_first_question_shows_before_any_section_closes(self):
+        """
+        GIVEN one question drafted and no section closed yet
+        WHEN the status endpoint is polled
+        THEN the fragment appears — gating on sections kept the counter blank
+             for most of the wait, observed live on 2026-08-17
+        """
+        AIGenerationEvent.objects.filter(pk=self.event.pk).update(
+            sections_drafted=0, questions_drafted=1)
+
+        response = self.client.get(self.url, {'sections': 0, 'questions': 0})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '1 question drafted')
+        # The data-sections attribute may carry a 0, but no visible "0 sections"
+        # line should reach the creator's eyes.
+        self.assertNotContains(response, '0 sections')
+
+    def test_unchanged_counts_return_no_content(self):
+        """
+        GIVEN stored counts the poller already has
+        WHEN the status endpoint is polled
+        THEN it answers 204 rather than re-sending what is already on screen
+        """
+        AIGenerationEvent.objects.filter(pk=self.event.pk).update(
+            sections_drafted=3, questions_drafted=8)
+
+        response = self.client.get(self.url, {'sections': 3, 'questions': 8})
+
+        self.assertEqual(response.status_code, 204)
+
+    def test_malformed_client_count_is_tolerated(self):
+        """
+        GIVEN a junk `sections` parameter
+        WHEN the status endpoint is polled
+        THEN it answers with the fragment rather than a 400: the value is a hint
+             about what the browser rendered, not a permission
+        """
+        AIGenerationEvent.objects.filter(pk=self.event.pk).update(sections_drafted=2)
+
+        response = self.client.get(self.url, {'sections': 'banana'})
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_another_users_event_is_not_disclosed(self):
+        """
+        GIVEN an event belonging to a different user
+        WHEN it is polled
+        THEN the request is rejected and no progress is disclosed
+        """
+        other = User.objects.create_user('aipollother', password='pass')
+        other_org = _make_org('AIPollOther')
+        Membership.objects.create(user=other, organization=other_org, role='owner')
+        self.client.force_login(other)
+
+        response = self.client.get(self.url, {'sections': 0})
+
+        self.assertIn(response.status_code, (403, 404))
+
+
+class AILLMAnalyticsEmissionTest(_AIGenerationFixture, TestCase):
+    """The generator on PostHog's LLM dashboards — numbers, never content."""
+
+    def _captured(self, emit_mock, name):
+        return [c for c in emit_mock.call_args_list if c.args and c.args[0] == name]
+
+    def test_success_emits_billing_accurate_generation_event(self):
+        """
+        GIVEN a successful generation with output and reasoning tokens
+        WHEN the terminal events are emitted
+        THEN one $ai_generation carries output+reasoning as the output count
+             (Gemini bills thinking at the output rate, and the computed cost
+             must equal the invoice), latency in seconds, and the row's trace id
+        """
+        provider = _FakeProvider(
+            [_ai_blob(('en',))],
+            usages=[{'latency_ms': 8000, 'input_tokens': 1300,
+                     'output_tokens': 1000, 'thinking_tokens': 500}],
+        )
+
+        with patch('posthog.capture') as capture, patch('posthog.disabled', False):
+            event = self._run(provider)
+
+        calls = self._captured(capture, '$ai_generation')
+        self.assertEqual(len(calls), 1)
+        props = calls[0].kwargs['properties']
+        self.assertEqual(props['$ai_trace_id'], 'survey-draft-%s' % event.pk)
+        self.assertEqual(props['$ai_input_tokens'], 1300)
+        self.assertEqual(props['$ai_output_tokens'], 1500)
+        self.assertEqual(props['thinking_tokens'], 500)
+        self.assertEqual(props['$ai_latency'], 8.0)
+        self.assertEqual(props['$ai_provider'], 'fake')
+        self.assertNotIn('$ai_is_error', props)
+
+    def test_no_content_ever_reaches_the_event(self):
+        """
+        GIVEN any emitted $ai_generation
+        WHEN its properties are inspected
+        THEN neither the brief nor the draft is among them — the creator's
+             project description is not ours to ship to an analytics vendor
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+
+        with patch('posthog.capture') as capture, patch('posthog.disabled', False):
+            self._run(provider)
+
+        props = self._captured(capture, '$ai_generation')[0].kwargs['properties']
+        dumped = str(props)
+        self.assertNotIn('$ai_input', props)
+        self.assertNotIn('$ai_output_choices', props)
+        self.assertNotIn('Where is traffic worst', dumped)
+
+    def test_failure_emits_flagged_without_the_error_message(self):
+        """
+        GIVEN a generation that ends in provider_error
+        WHEN the terminal events are emitted
+        THEN $ai_generation is flagged with the outcome slug only — provider
+             messages have quoted model output, and model output can quote the
+             brief
+        """
+        from survey.ai.client import ProviderError
+
+        provider = _FakeProvider([], error=ProviderError('API error 503: brief-ish detail'))
+
+        with patch('posthog.capture') as capture, patch('posthog.disabled', False):
+            self._run(provider)
+
+        props = self._captured(capture, '$ai_generation')[0].kwargs['properties']
+        self.assertTrue(props['$ai_is_error'])
+        self.assertEqual(props['$ai_error'], 'provider_error')
+        self.assertNotIn('brief-ish', str(props))
+
+
+class AIDraftFeedbackStripTest(_AIGenerationFixture, TestCase):
+    """The one-shot verdict prompt: only for the right person, right draft."""
+
+    def _open_editor(self, survey, draft_param):
+        self.client.force_login(self.user)
+        url = reverse('editor_survey_detail', kwargs={'survey_uuid': survey.uuid})
+        return self.client.get(url, {'draft': draft_param})
+
+    @override_settings(POSTHOG_PROJECT_KEY='phc_test')
+    def test_redirect_carries_the_draft_parameter(self):
+        """
+        GIVEN a successful generation being polled
+        WHEN the success redirect is issued
+        THEN it carries ?draft=<event id>, the only source of the prompt
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+        event = self._run(provider)
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            reverse('editor_generation_status', kwargs={'event_id': event.pk}))
+
+        self.assertEqual(
+            response['HX-Redirect'],
+            '%s?draft=%d' % (
+                reverse('editor_survey_detail',
+                        kwargs={'survey_uuid': event.created_survey.uuid}),
+                event.pk,
+            ))
+
+    @override_settings(POSTHOG_PROJECT_KEY='phc_test')
+    def test_legitimate_arrival_gets_the_strip(self):
+        """
+        GIVEN the creator arriving via their own generation's redirect
+        WHEN the editor renders
+        THEN the strip is present and carries the generation's trace id
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+        event = self._run(provider)
+
+        response = self._open_editor(event.created_survey, event.pk)
+
+        self.assertContains(response, 'ai-feedback-strip')
+        self.assertContains(response, 'survey-draft-%s' % event.pk)
+
+    @override_settings(POSTHOG_PROJECT_KEY='phc_test')
+    def test_foreign_or_mismatched_draft_conjures_nothing(self):
+        """
+        GIVEN a draft parameter naming another user's event, or one that did
+              not produce this survey
+        WHEN the editor renders
+        THEN no strip appears — an unvalidated id must not conjure UI
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+        event = self._run(provider)
+        other = AIGenerationEvent.objects.create(
+            kind='survey_draft',
+            user=User.objects.create_user('someone-else', password='x'),
+            organization=self.org, outcome='success',
+        )
+
+        self.assertNotContains(
+            self._open_editor(event.created_survey, other.pk), 'ai-feedback-strip')
+        self.assertNotContains(
+            self._open_editor(event.created_survey, 999999), 'ai-feedback-strip')
+
+    @override_settings(POSTHOG_PROJECT_KEY='phc_test')
+    def test_manual_arrival_never_asks(self):
+        """
+        GIVEN the editor opened without the generation redirect's parameter
+        WHEN it renders
+        THEN no strip appears — manual surveys have no draft to judge
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+        event = self._run(provider)
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            reverse('editor_survey_detail',
+                    kwargs={'survey_uuid': event.created_survey.uuid}))
+
+        self.assertNotContains(response, 'ai-feedback-strip')
+
+    @override_settings(POSTHOG_PROJECT_KEY='')
+    def test_no_posthog_means_no_strip(self):
+        """
+        GIVEN PostHog unconfigured
+        WHEN the creator arrives via the generation redirect
+        THEN no strip appears — the vote would have nowhere to go
+        """
+        provider = _FakeProvider([_ai_blob(('en',))])
+        event = self._run(provider)
+
+        response = self._open_editor(event.created_survey, event.pk)
+
+        self.assertNotContains(response, 'ai-feedback-strip')
+
+
 class AISurveyCreateViewTest(TestCase):
     """The create page: manual path untouched, AI path gated and asynchronous."""
 
@@ -23258,6 +25280,30 @@ class AISurveyCreateViewTest(TestCase):
         self.assertContains(response, 'Building your survey')
         self.assertContains(response, 'hx-trigger')
 
+    # The decorator is load-bearing: without it the test only passes on a
+    # machine whose .env happens to hold a real provider key (run_tests.sh
+    # exports .env), because an unconfigured provider returns the
+    # not-configured fragment instead of the waiting card. It shipped without
+    # one and failed on the first checkout that lacked a key.
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_waiting_card_opens_with_quips_and_elapsed(self):
+        """
+        GIVEN a generate submission that succeeds in enqueueing
+        WHEN the waiting card is returned
+        THEN it carries the rotating quips and the ticking elapsed counter, and
+             no trace of the removed progress bar
+        """
+        with patch('survey.editor_views.generate_survey_draft_task.delay'):
+            response = self.client.post(reverse('editor_survey_create'), {
+                'name': 'ai_survey', 'available_languages': '["en"]',
+                'action': 'generate', 'goal': 'Where is traffic worst',
+                'use_case': 'urban_planning',
+            })
+
+        self.assertContains(response, 'gen-quip')
+        self.assertContains(response, 'gen-elapsed')
+        self.assertNotContains(response, 'gen-bar')
+
     @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
     def test_generate_without_a_goal_redisplays_the_form(self):
         """
@@ -23280,6 +25326,54 @@ class AISurveyCreateViewTest(TestCase):
         self.assertNotContains(response, '<html')
         self.assertNotContains(response, 'create-map-picker')
         self.assertContains(response, 'Check the form before generating')
+
+    # The two tests below guard the same defect from both sides. It is worth
+    # saying why the obvious one is not enough: `test_manual_creation_is_unchanged`
+    # above passed throughout the whole time "Create empty" was dead in
+    # production, because the test client posts straight to the view and never
+    # runs browser validation. The bug lived entirely in the rendered HTML, so
+    # only an assertion about the markup can catch it coming back.
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_brief_fields_carry_no_html5_required(self):
+        """
+        GIVEN the AI panel is rendered
+        WHEN the create page markup is inspected
+        THEN no brief field carries `required`, because the panel shares one
+             form with the "Create empty" submit and the browser validates the
+             whole form -- while the survey name keeps its own `required`
+        """
+        response = self.client.get(reverse('editor_survey_create'))
+        html = response.content.decode()
+
+        for field_id in ('id_goal', 'id_audience', 'id_map_target'):
+            tag = re.search(r'<[^>]*id="%s"[^>]*>' % field_id, html)
+            self.assertIsNotNone(tag, 'brief field %s is not rendered' % field_id)
+            self.assertNotIn('required', tag.group(0))
+
+        name_tag = re.search(r'<[^>]*id="id_name"[^>]*>', html)
+        self.assertIn('required', name_tag.group(0))
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_create_empty_works_with_an_untouched_brief(self):
+        """
+        GIVEN the AI panel is present and every brief field is left blank
+        WHEN "Create empty" is submitted
+        THEN the survey is created with its head section, exactly as when the
+             panel is absent -- declining AI costs the creator nothing
+        """
+        response = self.client.post(reverse('editor_survey_create'), {
+            'name': 'declined_ai', 'available_languages': '["en"]', 'action': 'empty',
+            'goal': '', 'audience': '', 'map_target': '',
+        })
+
+        survey = SurveyHeader.objects.get(name='declined_ai')
+        self.assertRedirects(
+            response, reverse('editor_survey_detail', kwargs={'survey_uuid': survey.uuid}),
+        )
+        self.assertEqual(
+            SurveySection.objects.filter(survey_header=survey, is_head=True).count(), 1,
+        )
+        self.assertFalse(AIGenerationEvent.objects.exists())
 
 
 class AIGenerationStatusViewTest(TestCase):
@@ -23328,9 +25422,14 @@ class AIGenerationStatusViewTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 204)
+        # ?draft= is what entitles the arrival to the one-shot feedback prompt;
+        # only this redirect ever carries it.
         self.assertEqual(
             response['HX-Redirect'],
-            reverse('editor_survey_detail', kwargs={'survey_uuid': survey.uuid}),
+            '%s?draft=%d' % (
+                reverse('editor_survey_detail', kwargs={'survey_uuid': survey.uuid}),
+                event.pk,
+            ),
         )
 
     def test_failure_stops_polling_and_explains(self):
@@ -23527,11 +25626,12 @@ class AITruncatedOutputUsageTest(TestCase):
         self.user = User.objects.create_user('aitruncuser', password='pass')
         Membership.objects.create(user=self.user, organization=self.org, role='owner')
 
-    def test_truncated_generation_records_the_failed_calls_usage(self):
+    def test_truncated_generation_records_every_failed_calls_usage(self):
         """
         GIVEN a provider whose every answer is cut off at the token ceiling
-        WHEN generation gives up
-        THEN the event carries the truncated call's own token counts, not None
+        WHEN generation gives up after both attempts
+        THEN the event carries what the whole set spent, not one call's share:
+             two truncated attempts really did burn the ceiling twice
         """
         from survey.ai.client import LLMUsage, TruncatedOutput
         from survey.ai.generation import SurveyBrief, generate_survey_draft, start_generation
@@ -23556,8 +25656,13 @@ class AITruncatedOutputUsageTest(TestCase):
 
         event.refresh_from_db()
         self.assertEqual(event.outcome, 'provider_error')
-        self.assertEqual(event.output_tokens, 64000)
-        self.assertEqual(event.input_tokens, 900)
+        self.assertEqual(event.attempts, 2)
+        self.assertEqual(event.output_tokens, 128000)
+        self.assertEqual(event.input_tokens, 1800)
+        self.assertEqual(event.total_latency_ms, 110000)
+        # The terminal call alone, so the pre-existing column keeps meaning what
+        # the rows written before the accounting existed were measured as.
+        self.assertEqual(event.latency_ms, 55000)
         self.assertEqual(event.model, 'fake-model')
 
 
@@ -24394,6 +26499,79 @@ class TemplateCommentSyntaxTest(SimpleTestCase):
         self.assertNotIn('pre-serialized', jsonld)
         self.assertNotIn('Per-page structured data', jsonld)
 
+
+class ExternalScriptCrossOriginTest(SimpleTestCase):
+    """Third-party scripts must be loaded so that their exceptions stay readable.
+
+    A script from another origin that throws reaches `window.onerror` — and
+    therefore PostHog — as `Script error.` with no message, file, line or stack,
+    unless its tag carries `crossorigin` and the host answers with CORS headers.
+    That is not hypothetical: the first recorded editor session produced two such
+    blanked errors on the analytics page, and we still do not know what threw.
+
+    All twelve CDN hosts we load from answer `Access-Control-Allow-Origin: *`, so
+    the attribute is safe. Adding it to a host that does NOT would make the
+    browser refuse the script outright, so a new host needs that check first.
+    """
+
+    #: Matches a whole <script> element, including tags split across lines.
+    SCRIPT_TAG = re.compile(r'<script\b[^>]*>', re.IGNORECASE | re.DOTALL)
+
+    def test_every_external_script_tag_carries_crossorigin(self):
+        """
+        GIVEN every template shipped with the survey app
+        WHEN each script tag loading from an external origin is inspected
+        THEN it carries a crossorigin attribute, so its errors arrive with detail
+        """
+        import pathlib
+
+        root = pathlib.Path(__file__).resolve().parent / 'templates'
+        offenders = []
+        for path in root.rglob('*.html'):
+            for tag in self.SCRIPT_TAG.findall(path.read_text()):
+                if 'src="https://' not in tag and "src='https://" not in tag:
+                    continue
+                if 'crossorigin' in tag:
+                    continue
+                src = re.search(r'src=["\'](https://[^"\']+)', tag)
+                offenders.append(
+                    f'{path.relative_to(root)}: {src.group(1) if src else tag[:60]}'
+                )
+
+        self.assertEqual(
+            offenders, [],
+            'External <script> tags without crossorigin="anonymous" report their '
+            'exceptions as a bare "Script error." with no message, file or stack. '
+            'Add the attribute — and if the host is new, first confirm it answers '
+            'Access-Control-Allow-Origin, or the browser will refuse the script '
+            'entirely: ' + '; '.join(offenders),
+        )
+
+    def test_the_guard_would_catch_a_missing_attribute(self):
+        """
+        GIVEN a guard that passes vacuously is worse than no guard
+        WHEN the same matching is applied to a tag without the attribute
+        THEN it is recognised as an offender
+
+        Cheap insurance against the regex quietly ceasing to match anything —
+        which would look identical to "all templates are fine".
+        """
+        bad = '<script src="https://cdn.example.com/x.js"></script>'
+        good = '<script src="https://cdn.example.com/x.js" crossorigin="anonymous"></script>'
+        multiline = (
+            '<script src="https://cdn.example.com/x.js"\n'
+            '   integrity="sha512-abc"\n'
+            '   crossorigin="anonymous"></script>'
+        )
+
+        found = self.SCRIPT_TAG.findall(bad)
+        self.assertEqual(len(found), 1)
+        self.assertNotIn('crossorigin', found[0])
+
+        self.assertIn('crossorigin', self.SCRIPT_TAG.findall(good)[0])
+        self.assertIn('crossorigin', self.SCRIPT_TAG.findall(multiline)[0])
+
+
 class StarRatingDisplayTest(TestCase):
     """The star display style for rating questions (change star-rating-display)."""
 
@@ -25105,3 +27283,885 @@ class AIGeneratorKnowsEveryTypeTest(SimpleTestCase):
 
         for input_type in ('choice', 'multichoice', 'range', 'rating', 'ranking'):
             self.assertIn(input_type, CHOICE_REQUIRED_INPUT_TYPES)
+
+
+class SitemapExcludesUnpublishedTest(TestCase):
+    """The sitemap advertised 61 drafts as crawlable URLs, every one a hard 404.
+
+    `sitemap_xml` filtered on `visibility` alone while the landing page — the
+    other consumer of the same decision — filtered on five conditions. These
+    tests pin both consumers against `publicly_visible_surveys`.
+    """
+
+    def setUp(self):
+        self.org = _make_org('SitemapOrg')
+        self.owner = User.objects.create_user(username='sm_owner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+
+    def _make_survey(self, status='published', visibility='public', **kwargs):
+        survey = SurveyHeader.objects.create(
+            name=f'sitemap_{status}_{visibility}_{kwargs.get("suffix", "")}',
+            organization=self.org, status=status, visibility=visibility,
+            created_by=self.owner,
+            is_canonical=kwargs.get('is_canonical', True),
+        )
+        SurveyCollaborator.objects.create(user=self.owner, survey=survey, role='owner')
+        return survey
+
+    def test_published_survey_is_advertised(self):
+        """
+        GIVEN a canonical, public, published survey
+        WHEN /sitemap.xml is fetched
+        THEN its UUID appears in the sitemap
+        """
+        survey = self._make_survey(status='published')
+        response = self.client.get('/sitemap.xml')
+        self.assertContains(response, f'/surveys/{survey.uuid}/')
+
+    def test_draft_survey_is_not_advertised(self):
+        """
+        GIVEN a public survey still in draft
+        WHEN /sitemap.xml is fetched
+        THEN its UUID does not appear — it would be a hard 404 for a crawler
+        """
+        survey = self._make_survey(status='draft')
+        response = self.client.get('/sitemap.xml')
+        self.assertNotContains(response, str(survey.uuid))
+
+    def test_closed_and_archived_surveys_are_not_advertised(self):
+        """
+        GIVEN public surveys in closed and archived status
+        WHEN /sitemap.xml is fetched
+        THEN neither UUID appears — a search result leading to "survey closed"
+             is a dead end
+        """
+        closed = self._make_survey(status='closed')
+        archived = self._make_survey(status='archived')
+        response = self.client.get('/sitemap.xml')
+        self.assertNotContains(response, str(closed.uuid))
+        self.assertNotContains(response, str(archived.uuid))
+
+    def test_landing_page_renders_no_survey_list(self):
+        """
+        GIVEN surveys of every status
+        WHEN the landing page is fetched
+        THEN none of their UUIDs appear
+
+        `index` computes a `surveys` queryset that `landing.html` never loops
+        over. Pinned so that restoring the list is a deliberate act that has to
+        face `publicly_visible_surveys` rather than reintroducing a second,
+        divergent filter.
+        """
+        published = self._make_survey(status='published')
+        closed = self._make_survey(status='closed')
+        response = self.client.get('/')
+        self.assertNotContains(response, str(published.uuid))
+        self.assertNotContains(response, str(closed.uuid))
+
+    def test_testing_survey_is_not_advertised(self):
+        """
+        GIVEN a demo-visibility survey in testing status
+        WHEN /sitemap.xml is fetched
+        THEN its UUID does not appear — testing is a pre-publication state
+        """
+        survey = self._make_survey(status='testing', visibility='demo')
+        response = self.client.get('/sitemap.xml')
+        self.assertNotContains(response, str(survey.uuid))
+
+    def test_non_canonical_version_header_is_not_advertised(self):
+        """
+        GIVEN a published survey whose non-canonical version header is public
+        WHEN /sitemap.xml is fetched
+        THEN the version header's UUID does not appear — it duplicates the
+             canonical survey
+        """
+        canonical = self._make_survey(status='published')
+        version = self._make_survey(status='published', is_canonical=False, suffix='v')
+        version.canonical_survey = canonical
+        version.save()
+        response = self.client.get('/sitemap.xml')
+        self.assertNotContains(response, str(version.uuid))
+        self.assertContains(response, str(canonical.uuid))
+
+    def test_survey_superseded_by_published_version_is_not_advertised(self):
+        """
+        GIVEN a canonical survey whose published_version points elsewhere
+        WHEN /sitemap.xml is fetched
+        THEN its UUID does not appear
+        """
+        live = self._make_survey(status='published', suffix='live')
+        superseded = self._make_survey(status='published', suffix='old')
+        superseded.published_version = live
+        superseded.save()
+        response = self.client.get('/sitemap.xml')
+        self.assertNotContains(response, str(superseded.uuid))
+
+    def test_every_advertised_survey_url_is_reachable(self):
+        """
+        GIVEN surveys in every status and visibility combination
+        WHEN each /surveys/<uuid>/ entry in the sitemap is requested anonymously
+        THEN none of them responds 404
+
+        This is the test that would have caught the original defect.
+        """
+        for status in ('draft', 'testing', 'published', 'closed', 'archived'):
+            for visibility in ('public', 'demo', 'private'):
+                self._make_survey(status=status, visibility=visibility, suffix=visibility)
+
+        sitemap = self.client.get('/sitemap.xml').content.decode()
+        entries = re.findall(r'<loc>[^<]*(/surveys/[0-9a-f-]{36}/)</loc>', sitemap)
+        self.assertTrue(entries, 'sitemap advertised no survey URLs at all')
+        for path in entries:
+            self.assertNotEqual(
+                self.client.get(path).status_code, 404,
+                f'sitemap advertises {path}, which 404s',
+            )
+
+
+class UnpublishedSurveysAreNotIndexableTest(TestCase):
+    """Crawlers reach unpublished surveys through links, not only the sitemap.
+
+    Seven of the thirteen crawled UUIDs in the incident were `private` and were
+    never in the sitemap at all — creators circulate a draft link before
+    publishing and backlink crawlers follow it.
+    """
+
+    def setUp(self):
+        self.org = _make_org('NoindexOrg')
+        self.owner = User.objects.create_user(username='ni_owner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+
+    def _make_survey(self, status, visibility='public'):
+        survey = SurveyHeader.objects.create(
+            name=f'noindex_{status}_{visibility}', organization=self.org,
+            status=status, visibility=visibility, created_by=self.owner,
+        )
+        SurveyCollaborator.objects.create(user=self.owner, survey=survey, role='owner')
+        SurveySection.objects.create(survey_header=survey, name='s1', is_head=True, code='s1')
+        return survey
+
+    def test_private_draft_reached_by_link_is_not_indexable(self):
+        """
+        GIVEN a private survey still in draft
+        WHEN an anonymous visitor requests its URL
+        THEN the response carries X-Robots-Tag: noindex
+        """
+        survey = self._make_survey('draft', visibility='private')
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        self.assertEqual(response['X-Robots-Tag'], 'noindex')
+
+    def test_testing_survey_is_not_indexable(self):
+        """
+        GIVEN a testing survey with no password
+        WHEN an anonymous visitor requests its URL
+        THEN the response carries X-Robots-Tag: noindex
+        """
+        survey = self._make_survey('testing')
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        self.assertEqual(response['X-Robots-Tag'], 'noindex')
+
+    def test_closed_survey_is_not_indexable(self):
+        """
+        GIVEN a closed survey
+        WHEN an anonymous visitor requests its URL
+        THEN the response carries X-Robots-Tag: noindex
+        """
+        survey = self._make_survey('closed')
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        self.assertEqual(response['X-Robots-Tag'], 'noindex')
+
+    def test_published_survey_is_indexable(self):
+        """
+        GIVEN a canonical published survey
+        WHEN an anonymous visitor requests its URL
+        THEN the response carries no noindex header
+        """
+        survey = self._make_survey('published')
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        self.assertNotIn('X-Robots-Tag', response)
+
+    def test_password_gate_for_unpublished_survey_is_not_indexable(self):
+        """
+        GIVEN a testing survey behind a password
+        WHEN an anonymous visitor requests the password gate
+        THEN the gate carries X-Robots-Tag: noindex
+        """
+        survey = self._make_survey('testing')
+        survey.set_password('hunter2')
+        survey.save()
+        response = self.client.get(f'/surveys/{survey.uuid}/password/')
+        self.assertEqual(response['X-Robots-Tag'], 'noindex')
+
+
+class SurveyNotFoundPageTest(TestCase):
+    """A respondent 404 explains itself without saying which case applied."""
+
+    def setUp(self):
+        self.org = _make_org('NotFoundOrg')
+        self.owner = User.objects.create_user(username='nf_owner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+
+    def _make_draft(self):
+        survey = SurveyHeader.objects.create(
+            name='notfound_draft', organization=self.org, status='draft',
+            visibility='public', created_by=self.owner,
+        )
+        SurveyCollaborator.objects.create(user=self.owner, survey=survey, role='owner')
+        return survey
+
+    def test_draft_returns_404_with_an_explanation(self):
+        """
+        GIVEN a draft survey
+        WHEN an anonymous visitor requests its URL
+        THEN the status is 404 and the body explains what to do
+        """
+        survey = self._make_draft()
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "isn't available", status_code=404)
+
+    def test_the_page_does_not_name_the_survey(self):
+        """
+        GIVEN a draft survey
+        WHEN an anonymous visitor requests its URL
+        THEN the body contains neither its name nor its UUID
+        """
+        survey = self._make_draft()
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        body = response.content.decode()
+        self.assertNotIn(survey.name, body)
+        # The UUID does appear, in the navbar's login ?next= link -- it is the
+        # path the visitor requested, not a fact about the survey. Anything
+        # beyond that echo would be.
+        self.assertEqual(body.count(str(survey.uuid)), 1)
+        self.assertIn(f'next=/surveys/{survey.uuid}/', body)
+
+    def test_a_draft_and_an_unknown_uuid_are_indistinguishable(self):
+        """
+        GIVEN a draft survey and a UUID that names no survey
+        WHEN both URLs are requested
+        THEN the responses match in status, body and noindex header
+
+        A difference here would let anyone test whether a UUID names a real
+        survey, which is the enumeration tenant-data-exposure closed.
+        """
+        survey = self._make_draft()
+        other = uuid.uuid4()
+        draft = self.client.get(f'/surveys/{survey.uuid}/')
+        unknown = self.client.get(f'/surveys/{other}/')
+
+        placeholder = 'UUID'
+        draft_body = draft.content.decode().replace(str(survey.uuid), placeholder)
+        unknown_body = unknown.content.decode().replace(str(other), placeholder)
+
+        self.assertEqual(draft.status_code, unknown.status_code)
+        self.assertEqual(draft_body, unknown_body)
+        self.assertEqual(draft['X-Robots-Tag'], unknown['X-Robots-Tag'])
+
+    def test_non_survey_paths_keep_djangos_default_404(self):
+        """
+        GIVEN a path outside /surveys/
+        WHEN it 404s
+        THEN the respondent page is not served
+        """
+        response = self.client.get('/no-such-page-anywhere/')
+        self.assertEqual(response.status_code, 404)
+        self.assertNotContains(response, "isn't available", status_code=404)
+class PublicSurveyListingRemovedTest(TestCase):
+    """The public /surveys/ listing exposed every survey in the database."""
+
+    def setUp(self):
+        self.org_a = _make_org('ListingOrgA')
+        self.org_b = _make_org('ListingOrgB')
+
+        self.private_survey = SurveyHeader.objects.create(
+            name='private_one', organization=self.org_a,
+            visibility='private', status='published',
+        )
+        self.public_draft = SurveyHeader.objects.create(
+            name='public_draft', organization=self.org_b,
+            visibility='public', status='draft',
+        )
+        self.public_published = SurveyHeader.objects.create(
+            name='public_live', organization=self.org_b,
+            visibility='public', status='published',
+        )
+
+    def test_listing_route_redirects_to_landing(self):
+        """
+        GIVEN the former public survey listing
+        WHEN any visitor requests /surveys/
+        THEN the response is a permanent redirect to /
+        """
+        response = self.client.get('/surveys/')
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response['Location'], '/')
+
+    def test_listing_route_leaks_no_survey_identifiers(self):
+        """
+        GIVEN surveys belonging to two different organizations
+        WHEN an anonymous visitor requests /surveys/
+        THEN the response body carries no survey name and no survey UUID
+        """
+        response = self.client.get('/surveys/')
+        body = response.content.decode()
+        for survey in (self.private_survey, self.public_draft, self.public_published):
+            self.assertNotIn(survey.name, body)
+            self.assertNotIn(str(survey.uuid), body)
+
+    def test_private_survey_is_not_discoverable_anonymously(self):
+        """
+        GIVEN a survey with visibility='private'
+        WHEN an anonymous visitor requests the landing page and /surveys/
+        THEN neither response names it or exposes its UUID
+        """
+        for path in ('/', '/surveys/'):
+            body = self.client.get(path).content.decode()
+            self.assertNotIn(self.private_survey.name, body)
+            self.assertNotIn(str(self.private_survey.uuid), body)
+
+    def test_public_draft_is_not_discoverable_anonymously(self):
+        """
+        GIVEN a survey with visibility='public' but status='draft'
+        WHEN an anonymous visitor requests the landing page
+        THEN the response does not name it or expose its UUID
+        """
+        body = self.client.get('/').content.decode()
+        self.assertNotIn(self.public_draft.name, body)
+        self.assertNotIn(str(self.public_draft.uuid), body)
+
+    def test_sitemap_drops_the_listing_but_keeps_survey_pages(self):
+        """
+        GIVEN the listing route now redirects
+        WHEN /sitemap.xml is fetched
+        THEN it has no bare /surveys/ entry but still lists /surveys/<uuid>/
+        """
+        body = self.client.get('/sitemap.xml').content.decode()
+        self.assertNotIn('<loc>http://testserver/surveys/</loc>', body)
+        self.assertIn(f'/surveys/{self.public_published.uuid}/', body)
+
+
+class SurveyExportAuthorizationTest(TestCase):
+    """`/surveys/<slug>/download` must check a role, not just authentication."""
+
+    def setUp(self):
+        self.org = _make_org('ExportOrg')
+        self.other_org = _make_org('ExportOtherOrg')
+
+        self.viewer = User.objects.create_user(username='exp_viewer', password='pass')
+        Membership.objects.create(user=self.viewer, organization=self.org, role='viewer')
+
+        self.outsider = User.objects.create_user(username='exp_outsider', password='pass')
+        Membership.objects.create(
+            user=self.outsider, organization=self.other_org, role='owner',
+        )
+
+        self.collaborator = User.objects.create_user(username='exp_collab', password='pass')
+
+        self.survey = SurveyHeader.objects.create(
+            name='export_survey', organization=self.org, status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', code='S1', is_head=True,
+        )
+
+    def test_user_with_viewer_role_can_export(self):
+        """
+        GIVEN a signed-in user whose effective survey role is viewer
+        WHEN they request the survey export
+        THEN the export is returned
+        """
+        self.client.login(username='exp_viewer', password='pass')
+        response = self.client.get(f'/surveys/{self.survey.uuid}/download')
+        self.assertEqual(response.status_code, 200)
+
+    def test_signed_in_user_from_another_org_is_denied(self):
+        """
+        GIVEN a signed-in user who belongs to a different organization and holds
+              no collaborator role on the survey
+        WHEN they request the survey export
+        THEN they get 404 and no export payload
+        """
+        self.client.login(username='exp_outsider', password='pass')
+        response = self.client.get(f'/surveys/{self.survey.uuid}/download')
+        self.assertEqual(response.status_code, 404)
+        self.assertNotEqual(response.get('Content-Type'), 'application/zip')
+
+    def test_anonymous_visitor_gets_no_export(self):
+        """
+        GIVEN an anonymous visitor
+        WHEN they request the survey export
+        THEN they are not served the export
+        """
+        response = self.client.get(f'/surveys/{self.survey.uuid}/download')
+        self.assertNotEqual(response.status_code, 200)
+        self.assertNotEqual(response.get('Content-Type'), 'application/zip')
+
+    def test_denial_does_not_disclose_whether_the_survey_exists(self):
+        """
+        GIVEN a signed-in user with no role on the target organization
+        WHEN they request the export for a real survey and for a random UUID
+        THEN both responses carry the same status
+        """
+        self.client.login(username='exp_outsider', password='pass')
+        real = self.client.get(f'/surveys/{self.survey.uuid}/download')
+        missing = self.client.get(f'/surveys/{uuid.uuid4()}/download')
+        self.assertEqual(real.status_code, missing.status_code)
+        self.assertEqual(real.status_code, 404)
+
+    def test_collaborator_on_canonical_survey_can_export_all_versions(self):
+        """
+        GIVEN an org editor -- whose org role grants no baseline survey access --
+              holding a collaborator row on the canonical survey only, with no row
+              on its archived version headers
+        WHEN they export with ?version=all
+        THEN the export succeeds, because the role is checked once on the survey
+             the URL names rather than per version header
+        """
+        Membership.objects.create(
+            user=self.collaborator, organization=self.org, role='editor',
+        )
+        SurveyCollaborator.objects.create(
+            user=self.collaborator, survey=self.survey, role='viewer',
+        )
+        archived = SurveyHeader.objects.create(
+            name='export_survey', organization=self.org, status='closed',
+            is_canonical=False, canonical_survey=self.survey, version_number=1,
+        )
+        SurveySection.objects.create(
+            survey_header=archived, name='sec1', code='S1', is_head=True,
+        )
+
+        self.client.login(username='exp_collab', password='pass')
+        response = self.client.get(f'/surveys/{self.survey.uuid}/download?version=all')
+        self.assertEqual(response.status_code, 200)
+
+
+class PrivatePublishedSurveyStaysLinkAccessibleTest(TestCase):
+    """visibility governs discovery, not access -- deliberately preserved."""
+
+    def setUp(self):
+        self.org = _make_org('LinkAccessOrg')
+
+    def test_private_published_survey_opens_by_link(self):
+        """
+        GIVEN a private, published survey with no password
+        WHEN an anonymous visitor opens its link
+        THEN they are admitted rather than turned away
+        """
+        survey = SurveyHeader.objects.create(
+            name='unlisted_live', organization=self.org,
+            visibility='private', status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=survey, name='sec1', code='S1', is_head=True,
+        )
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('sec1', response['Location'])
+
+    def test_public_draft_survey_stays_closed(self):
+        """
+        GIVEN a public survey still in draft
+        WHEN an anonymous visitor opens its link
+        THEN they get 404
+        """
+        survey = SurveyHeader.objects.create(
+            name='public_draft_link', organization=self.org,
+            visibility='public', status='draft',
+        )
+        SurveySection.objects.create(
+            survey_header=survey, name='sec1', code='S1', is_head=True,
+        )
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        self.assertEqual(response.status_code, 404)
+
+
+class PrimaryLanguageBaseFieldsTest(TestCase):
+    """The primary language lives in base fields; translation rows are for
+    non-primary languages only (change: fix-primary-language-duplicate-fields)."""
+
+    def setUp(self):
+        self.org = _make_org('PrimaryLangOrg')
+        self.user = User.objects.create_user(username='primlang', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='primlang', password='pass')
+
+    def _survey(self, languages):
+        survey = SurveyHeader.objects.create(
+            name='primlang_survey', visibility='private', organization=self.org,
+            available_languages=languages,
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='sec1', title='Base title', code='S1', is_head=True,
+        )
+        return survey, section
+
+    def test_single_language_save_creates_no_translation_rows(self):
+        """
+        GIVEN a single-language ["es"] survey
+        WHEN the section form is saved with a stale translation_es_title value
+        THEN no SurveySectionTranslation row is created — the primary language
+             lives in the base field only
+        """
+        survey, section = self._survey(['es'])
+        response = self.client.post(
+            f'/editor/surveys/{survey.uuid}/sections/{section.id}/',
+            {'title': 'Título real', 'subheading': '', 'code': 'S1',
+             'translation_es_title': 'Fantasma', 'translation_es_subheading': ''},
+        )
+        self.assertIn(response.status_code, (200, 204, 302))
+        section.refresh_from_db()
+        self.assertEqual(section.title, 'Título real')
+        self.assertFalse(SurveySectionTranslation.objects.filter(section=section).exists())
+
+    def test_stale_primary_translation_post_is_ignored_multilingual(self):
+        """
+        GIVEN a ["pt", "es"] survey
+        WHEN the section form posts translation values for both pt and es
+        THEN only the es row is created; the pt key is ignored
+        """
+        survey, section = self._survey(['pt', 'es'])
+        response = self.client.post(
+            f'/editor/surveys/{survey.uuid}/sections/{section.id}/',
+            {'title': 'Título base', 'subheading': '', 'code': 'S1',
+             'translation_pt_title': 'Fantasma pt',
+             'translation_es_title': 'Título es'},
+        )
+        self.assertIn(response.status_code, (200, 204, 302))
+        languages = set(
+            SurveySectionTranslation.objects.filter(section=section)
+            .values_list('language', flat=True)
+        )
+        self.assertEqual(languages, {'es'})
+
+    def test_question_save_skips_primary_language_row(self):
+        """
+        GIVEN a ["pt", "es"] survey
+        WHEN a question is created with pt and es translation values posted
+        THEN only the es QuestionTranslation row exists
+        """
+        survey, section = self._survey(['pt', 'es'])
+        response = self.client.post(
+            f'/editor/surveys/{survey.uuid}/sections/{section.id}/questions/new/',
+            {'name': 'Pergunta base', 'input_type': 'text', 'color': '#000000',
+             'translation_pt_name': 'Fantasma', 'translation_es_name': 'Pregunta es'},
+        )
+        self.assertEqual(response.status_code, 200)
+        question = Question.objects.get(survey_section=section, name='Pergunta base')
+        languages = set(
+            QuestionTranslation.objects.filter(question=question)
+            .values_list('language', flat=True)
+        )
+        self.assertEqual(languages, {'es'})
+
+    def test_editor_templates_render_translation_inputs_for_non_primary_only(self):
+        """
+        GIVEN a ["pt", "es"] survey
+        WHEN the section detail partial is rendered
+        THEN es translation inputs are present, pt ones are not, and the base
+             label names the primary language
+        """
+        survey, section = self._survey(['pt', 'es'])
+        response = self.client.get(
+            f'/editor/surveys/{survey.uuid}/sections/{section.id}/',
+        )
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('translation_es_title', html)
+        self.assertNotIn('translation_pt_title', html)
+        self.assertIn('(Portuguese)', html)
+
+    def test_single_language_survey_renders_no_translation_inputs(self):
+        """
+        GIVEN a single-language ["es"] survey
+        WHEN the section detail partial is rendered
+        THEN no translation inputs and no language suffix on base labels appear
+        """
+        survey, section = self._survey(['es'])
+        response = self.client.get(
+            f'/editor/surveys/{survey.uuid}/sections/{section.id}/',
+        )
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertNotIn('translation_es_title', html)
+        self.assertNotIn('(Spanish)', html)
+
+
+class FoldPrimaryTranslationsMigrationTest(TestCase):
+    """The 0052 data migration logic: fold primary rows into base, normalize
+    choice shapes, preserve exactly what respondents currently see."""
+
+    def setUp(self):
+        self.org = _make_org('FoldMigrationOrg')
+
+    def _run_migration(self):
+        from importlib import import_module
+        migration = import_module(
+            'survey.migrations.0052_fold_primary_language_translations',
+        )
+        from django.apps import apps as live_apps
+        migration.fold_primary_translations(live_apps, None)
+
+    def test_divergent_primary_row_wins_over_base(self):
+        """
+        GIVEN a single-language survey whose section has a non-empty primary
+              translation row diverging from the base field (the survey-465 shape)
+        WHEN the migration runs
+        THEN the base field takes the translation's value (what respondents saw
+             via the fallback) and the row is gone
+        """
+        survey = SurveyHeader.objects.create(
+            name='fold_465', organization=self.org, available_languages=['es'],
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='sec1', title='AI text', subheading='AI sub',
+            code='S1', is_head=True,
+        )
+        SurveySectionTranslation.objects.create(
+            section=section, language='es', title='Author text', subheading='',
+        )
+
+        self._run_migration()
+
+        section.refresh_from_db()
+        # Non-empty translation wins; empty subheading means base was showing.
+        self.assertEqual(section.title, 'Author text')
+        self.assertEqual(section.subheading, 'AI sub')
+        self.assertFalse(SurveySectionTranslation.objects.filter(section=section).exists())
+
+    def test_identical_primary_rows_folded_on_multilingual_survey(self):
+        """
+        GIVEN a ["pt", "es"] survey with a pt question row identical to base
+              (the survey-467 shape)
+        WHEN the migration runs
+        THEN the pt row is deleted, the es row survives, base text is unchanged
+        """
+        survey = SurveyHeader.objects.create(
+            name='fold_467', organization=self.org, available_languages=['pt', 'es'],
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='sec1', title='Base', code='S1', is_head=True,
+        )
+        question = Question.objects.create(
+            survey_section=section, name='Pergunta', input_type='text',
+        )
+        QuestionTranslation.objects.create(question=question, language='pt', name='Pergunta')
+        QuestionTranslation.objects.create(question=question, language='es', name='Pregunta')
+
+        self._run_migration()
+
+        question.refresh_from_db()
+        self.assertEqual(question.name, 'Pergunta')
+        languages = set(
+            QuestionTranslation.objects.filter(question=question)
+            .values_list('language', flat=True)
+        )
+        self.assertEqual(languages, {'es'})
+
+    def test_choice_shapes_are_normalized(self):
+        """
+        GIVEN a single-language survey with dict choice names and a
+              multilingual survey whose dict lacks the primary key
+        WHEN the migration runs
+        THEN the first flattens to strings and the second gains the primary key
+             with the value the resolver currently falls back to
+        """
+        single = SurveyHeader.objects.create(
+            name='fold_single', organization=self.org, available_languages=['es'],
+        )
+        s_section = SurveySection.objects.create(
+            survey_header=single, name='sec1', title='S', code='S1', is_head=True,
+        )
+        s_q = Question.objects.create(
+            survey_section=s_section, name='Q', input_type='choice',
+            choices=[{'code': 1, 'name': {'es': 'Sí'}}, {'code': 2, 'name': 'No'}],
+        )
+        multi = SurveyHeader.objects.create(
+            name='fold_multi', organization=self.org, available_languages=['pt', 'en'],
+        )
+        m_section = SurveySection.objects.create(
+            survey_header=multi, name='sec1', title='S', code='S1', is_head=True,
+        )
+        m_q = Question.objects.create(
+            survey_section=m_section, name='Q', input_type='choice',
+            choices=[{'code': 1, 'name': {'en': 'Yes'}}],
+        )
+
+        self._run_migration()
+
+        s_q.refresh_from_db()
+        self.assertEqual(s_q.choices, [{'code': 1, 'name': 'Sí'}, {'code': 2, 'name': 'No'}])
+        m_q.refresh_from_db()
+        # Missing pt key gains what get_choice_name resolves today ('en' fallback).
+        self.assertEqual(m_q.choices[0]['name'], {'pt': 'Yes', 'en': 'Yes'})
+
+    def test_migration_is_idempotent(self):
+        """
+        GIVEN a survey already folded once
+        WHEN the migration runs again
+        THEN nothing changes
+        """
+        survey = SurveyHeader.objects.create(
+            name='fold_idem', organization=self.org, available_languages=['es'],
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='sec1', title='T', code='S1', is_head=True,
+        )
+        SurveySectionTranslation.objects.create(section=section, language='es', title='T2')
+
+        self._run_migration()
+        section.refresh_from_db()
+        first_title = section.title
+        self._run_migration()
+        section.refresh_from_db()
+
+        self.assertEqual(section.title, first_title)
+        self.assertEqual(first_title, 'T2')
+
+
+class TranslationCompletenessTest(TestCase):
+    """Editor-side visibility of translation gaps (spec: translation-completeness)."""
+
+    def setUp(self):
+        self.org = _make_org('CompletenessOrg')
+        self.user = User.objects.create_user(username='gapsuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='gapsuser', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='gaps_survey', visibility='private', organization=self.org,
+            available_languages=['pt', 'es', 'en'],
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Base', code='S1', is_head=True,
+        )
+        SurveySectionTranslation.objects.create(
+            section=self.section, language='es', title='Base es',
+        )
+        SurveySectionTranslation.objects.create(
+            section=self.section, language='en', title='Base en',
+        )
+
+    def test_untranslated_question_reports_all_non_primary_languages(self):
+        """
+        GIVEN a question with no translation rows on a trilingual survey
+        WHEN missing languages are computed
+        THEN both non-primary languages are reported (the survey-467 manual
+             question shape) and the primary is not
+        """
+        from survey.translation_gaps import question_missing_languages
+
+        question = Question.objects.create(
+            survey_section=self.section, name='Identifique-se', input_type='text',
+        )
+        self.assertEqual(question_missing_languages(question, self.survey), ['es', 'en'])
+
+    def test_choice_dict_missing_one_language_flags_that_language(self):
+        """
+        GIVEN a choice question translated everywhere except one choice's en key
+        WHEN missing languages are computed
+        THEN only en is reported
+        """
+        from survey.translation_gaps import question_missing_languages
+
+        question = Question.objects.create(
+            survey_section=self.section, name='Escolha', input_type='choice',
+            choices=[{'code': 1, 'name': {'pt': 'Sim', 'es': 'Sí'}}],
+        )
+        QuestionTranslation.objects.create(question=question, language='es', name='Elige')
+        QuestionTranslation.objects.create(question=question, language='en', name='Choose')
+        self.assertEqual(question_missing_languages(question, self.survey), ['en'])
+
+    def test_optional_subtext_counts_only_when_base_is_non_empty(self):
+        """
+        GIVEN a translated question whose base subtext is empty
+        WHEN missing languages are computed
+        THEN nothing is reported — an empty optional field is not a gap
+        """
+        from survey.translation_gaps import question_missing_languages
+
+        question = Question.objects.create(
+            survey_section=self.section, name='Nome', subtext='', input_type='text',
+        )
+        QuestionTranslation.objects.create(question=question, language='es', name='Nombre')
+        QuestionTranslation.objects.create(question=question, language='en', name='Name')
+        self.assertEqual(question_missing_languages(question, self.survey), [])
+
+    def test_single_language_survey_reports_no_gaps(self):
+        """
+        GIVEN a single-language survey
+        WHEN survey-wide gaps are computed
+        THEN the list is empty regardless of content
+        """
+        from survey.translation_gaps import survey_translation_gaps
+
+        survey = SurveyHeader.objects.create(
+            name='mono', organization=self.org, available_languages=['es'],
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='sec1', title='T', code='S1', is_head=True,
+        )
+        Question.objects.create(survey_section=section, name='Q', input_type='text')
+        self.assertEqual(survey_translation_gaps(survey), [])
+
+    def test_publish_transition_warns_once_then_respects_acknowledgement(self):
+        """
+        GIVEN a trilingual survey with an untranslated question
+        WHEN the owner publishes without, then with, the acknowledgement flag
+        THEN the first POST returns 409 naming the gap and does not publish,
+             and the second publishes — the warning never blocks
+        """
+        Question.objects.create(
+            survey_section=self.section, name='Identifique-se', input_type='text',
+        )
+
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/',
+            {'status': 'published'},
+        )
+        self.assertEqual(response.status_code, 409)
+        gaps = response.json()['translation_gaps']
+        self.assertTrue(any('Identifique-se' in g['label'] for g in gaps))
+        self.survey.refresh_from_db()
+        self.assertNotEqual(self.survey.status, 'published')
+
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/',
+            {'status': 'published', 'ack_translation_gaps': 'true'},
+        )
+        self.assertIn(response.status_code, (200, 204, 302))
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.status, 'published')
+
+    def test_fully_translated_survey_publishes_without_warning(self):
+        """
+        GIVEN a survey whose sections and questions are fully translated
+        WHEN the owner publishes
+        THEN no 409 warning is returned
+        """
+        question = Question.objects.create(
+            survey_section=self.section, name='Nome', input_type='text',
+        )
+        QuestionTranslation.objects.create(question=question, language='es', name='Nombre')
+        QuestionTranslation.objects.create(question=question, language='en', name='Name')
+
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/',
+            {'status': 'published'},
+        )
+        self.assertIn(response.status_code, (200, 204, 302))
+
+    def test_question_list_shows_missing_language_badge(self):
+        """
+        GIVEN an untranslated question on a trilingual survey
+        WHEN the section detail partial renders
+        THEN the warning badge lists the missing languages
+        """
+        Question.objects.create(
+            survey_section=self.section, name='Identifique-se', input_type='text',
+        )
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('es, en', response.content.decode())

@@ -78,6 +78,9 @@ MIDDLEWARE = [
     # inert when POSTHOG_PROJECT_KEY is unset -- see survey.apps.SurveyConfig.
     'posthog.integrations.django.PosthogContextMiddleware',
     'survey.middleware.LastActivityMiddleware',
+    # Applies the noindex flag survey.access_control sets. Must sit outside the
+    # view so it also reaches the redirects survey_header returns.
+    'survey.middleware.SurveyIndexingMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'survey.middleware.ActiveOrgMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -156,18 +159,21 @@ if os.environ.get("DATABASE_URL"):
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
+# Only minimum length is enforced. Everything else — common passwords, reuse of
+# personal information, all-numeric — is surfaced as advice on the registration
+# form (see survey/password_rules.py) and does not block a signup.
+#
+# The deliberate trade-off: NIST SP 800-63B states the compromised-password
+# check as a SHALL, so a security questionnaire asking "do you reject known
+# breached passwords?" gets a "no, we warn" from us. That was accepted on
+# 2026-08-17, after a validator rejection cost a real signup — the person hit
+# UserAttributeSimilarityValidator (Django's SequenceMatcher at 0.7 against the
+# email, which is not what NIST asks for) and left. Revisit if an enterprise
+# deal turns on that questionnaire line: re-adding CommonPasswordValidator here
+# is a one-line change and the checklist follows automatically.
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
 
@@ -292,6 +298,39 @@ POSTHOG_PROJECT_KEY = os.environ.get('POSTHOG_PROJECT_KEY', '')
 # dashboard can hand us an empty string, and an empty api_host initialises the SDK
 # against nothing at all -- a silent no-op that looks exactly like working analytics.
 POSTHOG_API_HOST = os.environ.get('POSTHOG_API_HOST') or 'https://eu.i.posthog.com'
+# Where the *browser* sends events, which is a different question from where the server
+# sends them. `eu.i.posthog.com` is on every mainstream blocklist, and the audience of our
+# creator-facing pages -- planners, GIS analysts, researchers -- runs blockers more than
+# most, so the events we lose are biased rather than random. Pointing the snippet at a
+# first-party hostname (a PostHog-managed reverse proxy, CNAME'd from our own domain)
+# leaves blocklists nothing to match.
+#
+# The server-side client deliberately does NOT use this: see survey/apps.py. Ad blockers
+# do not exist inside our containers, so proxying error capture would add a DNS record and
+# a CDN edge to the one subsystem whose job is to keep working when things are broken.
+#
+# Empty = identical to the behaviour before the proxy existed, which is what keeps local
+# development, the test suite and PR previews out of it. The fall-back to POSTHOG_API_HOST
+# lives in `survey.context_processors.analytics`, not here: resolving it at import time
+# would freeze whatever POSTHOG_API_HOST was then, so overriding the API host afterwards
+# (tests, a preview pointed at another project) would silently leave the browser on the
+# old one.
+POSTHOG_CLIENT_HOST = os.environ.get('POSTHOG_CLIENT_HOST', '')
+# Session replay of the editor, off unless explicitly switched on. Two reasons this is a
+# setting rather than a constant in the template:
+#
+# 1. The emergency stop must not need a deploy. A mounted disk pins us to one instance and
+#    rules out zero-downtime deploys, so "turn recording off right now" has to be an
+#    environment change, not a release.
+# 2. This repository is public. A fork or a self-hosted install must not inherit our
+#    recording posture from our source; they get the same default as local development.
+#
+# What is recorded is bounded in three places, and only the first is here: the snippet
+# masks every input before anything leaves the browser (see _analytics.html), the snippet
+# is absent on respondent surfaces (POSTHOG_EXCLUDED_PREFIXES), and a URL trigger in the
+# PostHog project keeps recording to /editor/ so anonymous marketing visitors are left
+# alone. The respondent boundary is the second one, never the trigger.
+POSTHOG_SESSION_REPLAY = os.environ.get('POSTHOG_SESSION_REPLAY', 'False').lower() in ('true', '1')
 # Surfaces PostHog must never load on. Both belong to somebody else's audience:
 # `/surveys/` is a customer's respondents, `/r/` is a customer's public readers. Measuring
 # them is not our business -- it is a feature we sell, served by `SurveyEvent` out of our
@@ -444,6 +483,21 @@ TURNSTILE_SECRET_KEY = os.environ.get('TURNSTILE_SECRET_KEY', '')
 CLOUDFLARE_TRUSTED = os.environ.get('CLOUDFLARE_TRUSTED', 'False').lower() in ('true', '1')
 REGISTRATION_RATE_LIMIT_HOUR = int(os.environ.get('REGISTRATION_RATE_LIMIT_HOUR', 3))
 REGISTRATION_RATE_LIMIT_DAY = int(os.environ.get('REGISTRATION_RATE_LIMIT_DAY', 10))
+# Attempts rejected by form validation are counted separately and far more
+# loosely. A human mistyping a password three times is indistinguishable, to a
+# counter that runs before validation, from a bot posting three registrations —
+# and on 2026-08-17 that cost us a real signup (six POSTs, three 429s, no
+# account, no email, no trace). These ceilings exist only to stop the endpoint
+# being used as an unmetered password-validator oracle; nobody legitimate should
+# ever reach them.
+REGISTRATION_INVALID_LIMIT_HOUR = int(os.environ.get('REGISTRATION_INVALID_LIMIT_HOUR', 15))
+REGISTRATION_INVALID_LIMIT_DAY = int(os.environ.get('REGISTRATION_INVALID_LIMIT_DAY', 50))
+# Kill switch. False restores the pre-2026-08-17 behaviour where every POST,
+# valid or not, counts against REGISTRATION_RATE_LIMIT_*. Merges reach prod in
+# minutes with no staging gate, so this is the rollback.
+REGISTRATION_SPLIT_RATE_LIMIT = os.environ.get(
+    'REGISTRATION_SPLIT_RATE_LIMIT', 'True'
+).lower() in ('true', '1')
 # Resend-activation endpoint. Tighter than registration: it emails an address
 # the sender does not have to control, so it is the more attractive bombing
 # vector of the two. Per-IP hourly + per-email daily.
@@ -473,6 +527,52 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 # ones (gemini-2.5-flash did exactly that). The provider surfaces the API's own
 # explanation so this is diagnosable without reading Google's changelog.
 GEMINI_MODEL = os.environ.get('GEMINI_MODEL') or 'gemini-3.6-flash'
+# How hard the model is asked to think before answering: `minimal`, `low`,
+# `medium` or `high`. Defaults to `medium` because that is already what Gemini 3
+# models do when the field is absent -- introducing the setting must not change
+# generation quality while we are measuring what the time is spent on. Turning
+# it down is the experiment this setting exists to enable, made against data
+# rather than guessed here.
+#
+# Empty string sends no thinkingConfig at all, which is the escape hatch if a
+# future model rejects the field: a dashboard edit, not a deploy. Sent only by
+# the Gemini provider; Anthropic has its own reasoning controls and ignores it.
+#
+# Deliberately `get(..., default)` and NOT the `or` pattern used above: here a
+# blank value is a meaningful instruction ("send no thinkingConfig"), so `or`
+# would swallow the very escape hatch this setting provides.
+AI_THINKING_LEVEL = os.environ.get('AI_THINKING_LEVEL', 'medium')
+# How long a stream may go silent before the call is abandoned as stalled.
+# Needed because `requests` applies its read timeout BETWEEN chunks when
+# streaming, so AI_REQUEST_TIMEOUT_SECONDS alone cannot bound a streamed call:
+# a trickle of keep-alives resets the clock forever. This is the gap limit; the
+# total budget below is enforced separately in the client loop. 2026-08-17's
+# production stall sat quiet for 4+ minutes until Celery's soft limit killed the
+# task -- with this, the same stream dies as a retryable error instead.
+#
+# 15, down from the initial 30, calibrated from a 10-run batch on the stand:
+# every healthy stream delivered its first chunk within 2-7 seconds, while 9 of
+# 19 provider calls stalled outright — so 15s of silence is almost certainly a
+# dead stream, and each stall burned is a stall the creator waits through. The
+# cut took the observed worst case from ~78s toward ~48s. Lower ONLY against
+# fresh first-chunk data: at medium thinking the pre-first-chunk silence is
+# legitimately long, and a limit under it would kill healthy streams.
+AI_STREAM_STALL_SECONDS = int(os.environ.get('AI_STREAM_STALL_SECONDS') or 15)
+# Streamed generation, OFF by default. On = the creator sees a progress counter
+# while the draft is written; off = one blocking call, exactly as before the
+# streaming change, with no progress and nothing else different.
+#
+# Default flipped to off on 2026-08-17 after streaming broke production twice in
+# one hour: first a stream that ended without a finish reason (surfaced as
+# "Couldn't reach the AI service"), then a stream that stalled after one
+# question and ran until Celery's 300s soft limit killed it. Both are failure
+# modes the blocking call does not have, and neither showed up in tests written
+# against a well-behaved fake.
+#
+# Turning it back on is a dashboard edit, and the bar for doing so is evidence
+# from a preview environment that a stalled or truncated stream now ends in a
+# bounded, retryable error rather than a five-minute spinner.
+AI_STREAMING_ENABLED = os.environ.get('AI_STREAMING_ENABLED', 'false').lower() == 'true'
 
 LOGGING = {
     # The `abuse` logger keeps its dedicated routing (survey/abuse.py). The root

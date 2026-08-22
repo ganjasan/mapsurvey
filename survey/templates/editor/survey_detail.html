@@ -18,6 +18,8 @@
 {% block content %}
 <div style="display:flex;flex-direction:column;height:calc(100vh - 49px);">
 
+{% include "editor/partials/_ai_feedback_strip.html" %}
+
 {% comment %}Persistent Build toolbar — survey-level status + Preview +
 lifecycle actions, always visible across section editing and the settings
 panel (moved out of the top navbar). The read-only banner is folded in:

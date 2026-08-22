@@ -1,0 +1,17 @@
+{% comment %}
+Swapped into the waiting card when streamed counts have actually grown.
+
+Out-of-band on purpose: the poller keeps hx-swap="none", so this element is the
+only thing that changes and the card's spinner, quip rotator and elapsed timer
+are untouched by a poll. The data attributes are what the poller sends back
+next tick, which is how the endpoint can answer 204 when nothing has moved.
+
+Text only — the bar it once fed was removed at the user's direction
+(2026-08-17): a count of what the model has finished writing, never a
+percentage or a fill.
+{% endcomment %}
+<div id="gen-progress" class="gen-progress" hx-swap-oob="true"
+     data-sections="{{ sections }}" data-questions="{{ questions }}">
+  {{ questions }} question{{ questions|pluralize }}{% if sections %} ·
+  {{ sections }} section{{ sections|pluralize }}{% endif %} drafted
+</div>

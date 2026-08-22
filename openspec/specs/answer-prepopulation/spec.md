@@ -1,3 +1,9 @@
+# Answer Prepopulation Specification
+
+## Purpose
+How a respondent's existing answers are loaded back into a section's form when they navigate to it again, across every field type including geo features and their sub-questions, so that going back never silently discards work.
+
+## Requirements
 ### Requirement: Load existing answers on section visit
 When a user navigates to a survey section via GET request and a survey session exists, the system SHALL query all Answer records for the current session and section, and pass them as initial values to the form.
 

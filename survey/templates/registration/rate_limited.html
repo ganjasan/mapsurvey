@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% comment %}
+Shown instead of the bare text/plain 429 that used to be returned here. Says
+nothing about which limit was hit or how many attempts remain — disclosing that
+would let an attacker map the thresholds. Links to sign-in and password reset
+because a meaningful share of people who reach this page are returning users
+who forgot they already have an account.
+{% endcomment %}
+
+{% block title %}{% trans "Too many attempts" %} — Mapsurvey{% endblock %}
+
+{% block content_wrapper_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h2>{% trans "Too many attempts" %}</h2>
+    <p class="auth-subtitle">
+        {% blocktrans %}We've had a lot of sign-up attempts from your connection, so we've paused new ones for a short while.{% endblocktrans %}
+    </p>
+
+    <p>
+        {% blocktrans count minutes=retry_after_minutes %}Please try again in about a minute.{% plural %}Please try again in about {{ minutes }} minutes.{% endblocktrans %}
+    </p>
+
+    <p>
+        {% trans "If you already have a Mapsurvey account, you can sign in instead — or reset your password if you don't remember it." %}
+    </p>
+
+    <div class="auth-links">
+        <a href="{% url 'login' %}">{% trans "Sign in" %}</a>
+        <span class="auth-divider">&middot;</span>
+        <a href="{% url 'password_reset' %}">{% trans "Reset password" %}</a>
+    </div>
+</div>
+{% endblock %}

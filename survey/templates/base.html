@@ -174,14 +174,96 @@
                 font-size: 0.8rem;
                 color: #6b6560;
             }
+            /* Errors used to be 0.85rem of red text under the field, with no
+               icon and no background. In a four-field form they read as body
+               copy: on 2026-08-17 a user clicked directly on the password
+               error text 23 times, evidently not registering it as an error,
+               and left without an account. Give them a surface. */
             .auth-card .errorlist {
                 list-style: none;
-                padding: 0;
-                margin: 0 0 0.5rem 0;
+                padding: 0.5rem 0.65rem;
+                margin: 0.4rem 0 0 0;
+                background: #fdf2f2;
+                border-left: 3px solid #dc3545;
+                border-radius: 4px;
             }
             .auth-card .errorlist li {
-                color: #dc3545;
+                color: #b02a37;
                 font-size: 0.85rem;
+                line-height: 1.4;
+            }
+            .auth-card .errorlist li + li {
+                margin-top: 0.25rem;
+            }
+            .auth-card .errorlist li::before {
+                content: "\26A0";
+                margin-right: 0.4rem;
+            }
+            .auth-card .errorlist-nonfield {
+                margin-bottom: 1rem;
+            }
+            .auth-card .auth-hint {
+                font-size: 0.85rem;
+                color: #6b6560;
+                margin: -0.5rem 0 1rem 0;
+            }
+            .auth-card .auth-hint a {
+                color: #2a7f6f;
+            }
+            /* Live password checklist. Neutral until the user types: an
+               untouched field covered in red crosses reads as failure before
+               any attempt was made. */
+            .auth-card .password-checklist {
+                list-style: none;
+                padding: 0;
+                margin: 0.45rem 0 0 0;
+            }
+            .auth-card .password-checklist li {
+                font-size: 0.8rem;
+                color: #6b6560;
+                line-height: 1.5;
+                display: flex;
+                align-items: baseline;
+            }
+            .auth-card .password-checklist__mark {
+                display: inline-block;
+                width: 1rem;
+                flex: 0 0 1rem;
+                color: #c8c2b8;
+            }
+            .auth-card .password-checklist__mark::before {
+                content: "\2022";
+            }
+            .auth-card .password-checklist .is-met {
+                color: #2a7f6f;
+            }
+            .auth-card .password-checklist .is-met .password-checklist__mark {
+                color: #2a7f6f;
+            }
+            .auth-card .password-checklist .is-met .password-checklist__mark::before {
+                content: "\2713";
+            }
+            .auth-card .password-checklist .is-unmet {
+                color: #6b6560;
+            }
+            .auth-card .password-checklist .is-unmet .password-checklist__mark {
+                color: #b02a37;
+            }
+            .auth-card .password-checklist .is-unmet .password-checklist__mark::before {
+                content: "\2717";
+            }
+            /* Advisory rules are not enforced by the server, so an unmet one is
+               a suggestion. Amber, not red — a red cross next to a rule that
+               will not actually block the submission is a lie about what
+               happens when they press the button. */
+            .auth-card .password-checklist .is-suggested {
+                color: #8a6d3b;
+            }
+            .auth-card .password-checklist .is-suggested .password-checklist__mark {
+                color: #d29a2c;
+            }
+            .auth-card .password-checklist .is-suggested .password-checklist__mark::before {
+                content: "\26A0";
             }
             .auth-card p > label {
                 display: block;

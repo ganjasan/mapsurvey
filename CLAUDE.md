@@ -124,6 +124,19 @@ renders, which is what keeps tests, local dev and PR previews out of the product
 `POSTHOG_API_HOST` (Cloud EU). It measures **us**: which creator-facing screens get used, where
 activation leaks. Plausible still runs alongside it and is not being replaced yet.
 
+**Two hosts, on purpose.** The browser initialises against `POSTHOG_CLIENT_HOST` — a first-party
+hostname CNAME'd to PostHog's managed reverse proxy, because `eu.i.posthog.com` is on every
+mainstream blocklist and our creator audience runs blockers more than most. The server-side client
+(`survey/apps.py`, and through it the middleware and the Celery receiver) keeps using
+`POSTHOG_API_HOST` directly: no ad blocker runs inside our containers, so proxying error capture
+would only add a DNS record and a CDN edge to the subsystem that must survive an outage. Empty
+`POSTHOG_CLIENT_HOST` falls back to `POSTHOG_API_HOST`, and that fallback lives in the context
+processor rather than in `settings.py` — resolving it at import time would freeze the value and
+leave the browser on a stale host whenever the API host is overridden. `ui_host` is pinned to
+`https://eu.posthog.com` because a custom `api_host` leaves the SDK unable to find the PostHog app.
+Note the snippet derives its asset host by string-replacing `.i.posthog.com`, which is a no-op
+against a proxy domain — so `array.js` correctly loads from the proxy too.
+
 Two rules that are easy to get wrong:
 
 - **PostHog never loads on respondent surfaces.** `POSTHOG_EXCLUDED_PREFIXES` (`/surveys/`, `/r/`)

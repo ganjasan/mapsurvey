@@ -17,6 +17,40 @@ def status_badge_class(status):
 
 
 @register.filter
+def question_missing_langs(question, survey):
+    """Non-primary languages this question lacks translations for."""
+    from ..translation_gaps import question_missing_languages
+    return question_missing_languages(question, survey)
+
+
+@register.filter
+def section_missing_langs(section, survey):
+    """Non-primary languages this section lacks translations for."""
+    from ..translation_gaps import section_missing_languages
+    return section_missing_languages(section, survey)
+
+
+@register.filter
+def language_name(code):
+    """Human-readable language name for a survey-content language code.
+
+    Backed by Django's locale registry rather than duplicating the 75-entry
+    list in language_picker.html; the six picker codes Django's registry lacks
+    are supplemented, and anything else falls back to the upper-cased code so
+    the label never renders empty.
+    """
+    from django.utils.translation import get_language_info
+    extra = {'am': 'Amharic', 'gu': 'Gujarati', 'lo': 'Lao',
+             'si': 'Sinhala', 'tl': 'Filipino', 'zh': 'Chinese'}
+    if code in extra:
+        return extra[code]
+    try:
+        return get_language_info(code)['name']
+    except (KeyError, TypeError):
+        return (code or '').upper()
+
+
+@register.filter
 def cover_gradient(name):
     """Generate a deterministic gradient CSS from a string."""
     import hashlib

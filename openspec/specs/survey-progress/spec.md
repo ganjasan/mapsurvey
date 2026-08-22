@@ -1,3 +1,9 @@
+# Survey Progress Specification
+
+## Purpose
+The progress indicator on a survey section page — how its position and total are computed from the section linked list, and what it exposes to the template.
+
+## Requirements
 ### Requirement: Survey section page displays progress indicator
 
 The survey section page SHALL display a progress indicator showing the current section number and the total number of sections in the survey (e.g., "3 / 7").

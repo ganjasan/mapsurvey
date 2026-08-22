@@ -31,6 +31,32 @@ class CloudflareIPMiddleware:
         return self.get_response(request)
 
 
+class SurveyIndexingMiddleware:
+    """Apply `X-Robots-Tag: noindex` to unpublished surveys' pages.
+
+    `survey.access_control.mark_indexing` decides; this applies. The split
+    exists because the decision needs the survey and the header needs the
+    response, and the two are not available in the same place: access control
+    frequently returns None and lets the view build its own response, and
+    `survey_header` redirects to a section or language picker.
+
+    A header rather than a `<meta>` tag: the redirect responses render no
+    template at all, and a tag would have to be added to every survey base
+    template -- the same failure mode POSTHOG_EXCLUDED_PREFIXES was written to
+    avoid, where a base template added later inherits whatever its author
+    happened to copy.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if getattr(request, 'survey_noindex', False):
+            response['X-Robots-Tag'] = 'noindex'
+        return response
+
+
 class LastActivityMiddleware:
     """Record the last time an authenticated user touched the app.
 

@@ -30,17 +30,39 @@ def _translations(languages, keys):
     """Convert {lang: text} dicts into the import format's translation rows.
 
     `keys` maps the import field name to the localized dict, e.g.
-    {'title': {...}, 'subheading': {...}} — every requested language gets a
-    row, including the primary one, matching what the editor writes when a
-    creator adds translations by hand.
+    {'title': {...}, 'subheading': {...}}. Only non-primary languages get a
+    row: the primary language (languages[0]) lives in base fields, matching
+    what the editor writes — a primary row would shadow every later base-field
+    edit via the get_translated_* fallback.
     """
     rows = []
-    for language in languages:
+    for language in languages[1:]:
         row = {"language": language}
         for field, values in keys.items():
             row[field] = (values or {}).get(language) or None
         rows.append(row)
     return rows
+
+
+def _choices(question, languages):
+    """Normalize model-emitted choice names to the editor's storage shapes.
+
+    The model returns locale dicts for every survey. A single-language survey
+    stores flat strings (what the choices editor saves), so the dict collapses
+    to its primary value; multilingual surveys keep the dict, primary key
+    included.
+    """
+    choices = question.get('choices') or None
+    if not choices or len(languages) > 1:
+        return choices
+    primary = languages[0]
+    normalized = []
+    for choice in choices:
+        name = choice.get('name')
+        if isinstance(name, dict):
+            name = name.get(primary) or next(iter(name.values()), '')
+        normalized.append({**choice, "name": name})
+    return normalized
 
 
 def _question_dict(question, languages, primary, order_number):
@@ -55,7 +77,7 @@ def _question_dict(question, languages, primary, order_number):
         "name": localized_name.get(primary) or '',
         "subtext": localized_subtext.get(primary) or None,
         "input_type": question.get('input_type'),
-        "choices": question.get('choices') or None,
+        "choices": _choices(question, languages),
         "required": bool(question.get('required')),
         # The model emits a bare curated icon name; the FA prefix is ours so a
         # hallucinated "fab"/"far" variant can never reach the widget.

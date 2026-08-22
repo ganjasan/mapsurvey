@@ -39,12 +39,13 @@ import logging
 from zipfile import ZipFile
 import pandas as pd
 
-from .access_control import check_survey_access
+from .access_control import check_survey_access, mark_indexing
 from .audit import audit
 from .trash import trash_survey, restore_survey, purge_survey, purge_expired_surveys
 from .versioning import resolve_version_scope
 import hmac
 from django.http import JsonResponse
+from django.views.defaults import page_not_found
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from .serialization import (
@@ -58,10 +59,13 @@ from .abuse import (
     HONEYPOT_FIELD_NAME,
     RegistrationAbuseForm,
     ResendActivationForm,
+    check_registration_limit,
     client_ip,
+    increment_registration_limit,
     log_abuse_event,
     verify_turnstile,
 )
+from .password_rules import password_checklist_rules
 from django_ratelimit.core import is_ratelimited
 from django.conf import settings as conf_settings
 from django.http import HttpResponse
@@ -110,11 +114,21 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
     Defenses fire in this order on POST:
       1. Honeypot — `website` field must be empty. Filled → silent
          fake-success redirect, no User created, no email sent.
-      2. Rate limit — per-IP via django-ratelimit on dispatch().
+      2. Rate limit — per-IP via django-ratelimit. The *check* runs in
+         dispatch(), before form processing; the *counter* is advanced in
+         post(), once form validity is known.
       3. Turnstile — siteverify token check before form save.
 
+    The check/increment split is the correction of a shipped defect: the
+    counter used to advance on every POST, so three password typos exhausted
+    the 3/hour budget and locked a real person out (2026-08-17 — six POSTs,
+    three 429s, no account). Validity is exactly the signal that separates a
+    confused human from a bot, and it is not known until the form is
+    validated. Form-invalid attempts now feed a separate, far looser counter.
+
     See `survey/abuse.py` for the helpers and openspec/changes/
-    add-registration-abuse-defenses/ for the design.
+    add-registration-abuse-defenses/ plus
+    openspec/changes/registration-rate-limit-traps-humans/ for the design.
     """
 
     form_class = RegistrationAbuseForm
@@ -122,6 +136,7 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["TURNSTILE_SITE_KEY"] = conf_settings.TURNSTILE_SITE_KEY
+        ctx["password_rules"] = password_checklist_rules()
         return ctx
 
     def dispatch(self, request, *args, **kwargs):
@@ -129,44 +144,46 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
         # (e.g. an outreach link straight to /register/?utm_source=edu).
         if request.method == "GET":
             capture_signup_source(request)
-        # Rate limiting on POST only. Two stacked windows (hourly, daily) share
-        # the same key (client IP). We call is_ratelimited imperatively rather
-        # than using @ratelimit so we can log the AbuseEvent before responding
-        # with our own 429 instead of django-ratelimit's default exception.
+        # Rate-limit CHECK on POST only — read-only, never advances a counter.
+        # Running it here (before form processing) keeps an already-limited IP
+        # from costing us a form validation or a Cloudflare round-trip. The
+        # increment happens in post(), where validity is known.
         #
-        # Fail-open: any exception from the cache backend (Redis outage etc.)
-        # is swallowed so legitimate signups continue working. Honeypot +
-        # Turnstile remain in effect to catch bots even when rate-limit is
-        # temporarily blind.
+        # We call is_ratelimited imperatively rather than using @ratelimit so we
+        # can log the AbuseEvent before responding with our own 429 instead of
+        # django-ratelimit's default exception.
+        #
+        # Fail-open on a cache-backend outage lives in the helpers: a blind
+        # limiter must not block signups. Honeypot + Turnstile still apply.
         if request.method == "POST":
-            limits = (
-                # (group, rate, retry_after_seconds, detail)
-                ("registration_hour", f"{conf_settings.REGISTRATION_RATE_LIMIT_HOUR}/h", 3600, "hour"),
-                ("registration_day", f"{conf_settings.REGISTRATION_RATE_LIMIT_DAY}/d", 86400, "day"),
-            )
-            for group, rate, retry_after, detail in limits:
-                try:
-                    limited = is_ratelimited(
-                        request=request,
-                        group=group,
-                        fn=None,
-                        key="survey.abuse.ratelimit_key",
-                        rate=rate,
-                        method="POST",
-                        increment=True,
-                    )
-                except Exception:
-                    limited = False
-                if limited:
+            for kind in ("valid", "invalid"):
+                hit = check_registration_limit(request, kind)
+                if hit:
+                    retry_after, detail = hit
                     log_abuse_event("ratelimit", request, detail)
-                    resp = HttpResponse(
-                        "Too many registration attempts. Please try again later.",
-                        status=429,
-                        content_type="text/plain",
-                    )
-                    resp["Retry-After"] = str(retry_after)
-                    return resp
+                    return self.rate_limited_response(request, retry_after)
+            if not conf_settings.REGISTRATION_SPLIT_RATE_LIMIT:
+                # Kill switch: count every POST up front, as before this change.
+                increment_registration_limit(request, "valid")
         return super().dispatch(request, *args, **kwargs)
+
+    def rate_limited_response(self, request, retry_after):
+        """Render the 429 page, keeping the machine-readable contract intact.
+
+        Deliberately does not say which limit was hit, what the thresholds are,
+        or how many attempts remain — that would let an attacker map the
+        defense. It does link to sign-in and password reset, because a
+        meaningful share of the people who hit this are returning users who
+        forgot they already have an account.
+        """
+        resp = render(
+            request,
+            "registration/rate_limited.html",
+            {"retry_after_minutes": max(1, round(retry_after / 60))},
+            status=429,
+        )
+        resp["Retry-After"] = str(retry_after)
+        return resp
 
     def post(self, request, *args, **kwargs):
         from django.urls import reverse
@@ -180,10 +197,23 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
             return redirect(reverse("django_registration_complete"))
 
         form = self.get_form()
+
+        # 2. Rate-limit counter. Now — and only now — we know which bucket this
+        # attempt belongs to. A form-invalid attempt is overwhelmingly a human
+        # fighting the password validators, so it feeds the loose counter; a
+        # well-formed one feeds the strict counter that actually gates account
+        # creation. Under the kill switch dispatch() already counted it.
+        if conf_settings.REGISTRATION_SPLIT_RATE_LIMIT:
+            increment_registration_limit(
+                request, "valid" if form.is_valid() else "invalid"
+            )
+
         if not form.is_valid():
             return self.form_invalid(form)
 
-        # 2. Turnstile — Cloudflare's JS widget posts as `cf-turnstile-response`.
+        # 3. Turnstile — Cloudflare's JS widget posts as `cf-turnstile-response`.
+        # A well-formed submission with a bad token is bot-shaped, and it has
+        # already been counted against the strict budget above.
         token = request.POST.get("cf-turnstile-response", "")
         if not verify_turnstile(token, client_ip(request)):
             detail = "missing_token" if not token else "siteverify_rejected"
@@ -435,13 +465,57 @@ def resolve_survey(survey_slug):
         raise Http404
     raise Http404
 
+def survey_not_found(request, exception=None):
+	"""handler404: give respondent 404s a body, everything else Django's.
+
+	Under `/surveys/` a 404 is usually a person following a link an organizer
+	gave them -- a draft that was never published, or a survey since removed.
+	Django's default page tells them nothing. This one tells them what to do
+	without saying which case applies: a draft, a deleted survey and a UUID that
+	names nothing all land here and produce byte-identical responses, so the
+	page cannot be used to test whether a survey exists.
+
+	`noindex` is set here too rather than left to the middleware, because
+	`resolve_survey` raises before any survey is in hand and the flag would
+	otherwise distinguish the draft case from the unknown-UUID one by header.
+	"""
+	if not request.path.startswith('/surveys/'):
+		return page_not_found(request, exception)
+	response = render(request, 'survey_unavailable.html', status=404)
+	response['X-Robots-Tag'] = 'noindex'
+	return response
+
+
+def publicly_visible_surveys():
+	"""Surveys an anonymous visitor may be shown or sent to.
+
+	The landing page and the sitemap are the only two places that make this
+	decision, and when they made it separately they diverged: `sitemap_xml`
+	filtered on `visibility` alone and so advertised 61 drafts to search
+	engines as crawlable URLs, every one of them a hard 404. Both callers go
+	through here now; a third one must too.
+
+	`status='published'` rather than the landing page's older
+	`exclude(status='draft')`: `closed` and `archived` surveys answer a request
+	with "this survey is closed", which is a dead end from a search result and
+	was 41 of the 140 entries the sitemap used to carry. Nothing renders them
+	on the landing page either -- `landing.html` has no loop over `surveys` at
+	all -- so this narrows a set that reaches no template today.
+	"""
+	return SurveyHeader.objects.filter(
+		visibility__in=['demo', 'public'],
+		status='published',
+		is_canonical=True,
+		published_version__isnull=True,
+		deleted_at__isnull=True,
+	)
+
+
 @lang_override('en')
 def index(request):
 	capture_signup_source(request)  # first-touch acquisition source for creator signups
 	surveys = (
-		SurveyHeader.objects
-		.filter(visibility__in=['demo', 'public'], is_canonical=True, published_version__isnull=True, deleted_at__isnull=True)
-		.exclude(status='draft')
+		publicly_visible_surveys()
 		.select_related('organization')
 		.annotate(session_count=Count('surveysession'))
 		.order_by(
@@ -551,11 +625,6 @@ def editor(request):
 		"trashed_surveys": trashed_surveys,
 	}
 	return render(request, "editor.html", context)
-
-def survey_list(request):
-	survey_list = SurveyHeader.objects.filter(deleted_at__isnull=True)
-	context = {'survey_list': survey_list}
-	return render(request, 'survey_list.html', context)
 
 
 # ISO 639-1 language names in their native form
@@ -1060,6 +1129,26 @@ def download_data(request, survey_slug):
 
 	survey = resolve_survey(survey_slug)
 
+	# Authorization, not just authentication: this export carries respondent
+	# geometry and free text, so being signed in is not enough -- the caller needs
+	# a role on this survey. `survey_permission_required` cannot be used here
+	# because it looks the survey up by UUID, and this route accepts a name too.
+	#
+	# Every denial is a 404, including "no role" and "wrong org". A 403 would
+	# confirm that a UUID names a real survey, which is exactly the fact the
+	# removed public listing used to hand out.
+	role = get_effective_survey_role(request.user, survey)
+	if SURVEY_ROLE_RANK.get(role, -1) < SURVEY_ROLE_RANK['viewer']:
+		logger.warning(
+			"Denied survey export: user=%s survey=%s role=%s",
+			request.user.pk, survey.uuid, role,
+		)
+		raise Http404
+
+	# Checked once, on the survey the URL names, before the family is expanded:
+	# a SurveyCollaborator holds a row on the canonical survey, not on each
+	# archived version header, so re-checking per version would deny them their
+	# own history.
 	version_param = request.GET.get('version')
 	version_surveys = _get_version_surveys(survey, version_param)
 
@@ -1510,6 +1599,10 @@ def purge_survey_view(request, survey_uuid):
 
 def survey_password_gate(request, survey_slug):
 	survey = resolve_survey(survey_slug)
+	# The only respondent view that does not go through check_survey_access --
+	# it *is* the denial. Flag it directly so the gate for an unpublished survey
+	# is not indexable either.
+	mark_indexing(request, survey)
 	error = None
 
 	if request.method == 'POST':
@@ -1778,9 +1871,9 @@ def robots_txt(request):
 
 def sitemap_xml(request):
 	base = f"{request.scheme}://{request.get_host()}"
-	surveys = SurveyHeader.objects.filter(
-		visibility__in=['public', 'demo'],
-	)
+	# Only surveys that actually open for an anonymous visitor. Before this,
+	# 108 of the 140 entries here were 404s, duplicates or dead ends.
+	surveys = publicly_visible_surveys()
 	urls = [f"  <url><loc>{base}/</loc></url>"]
 	urls.append(f"  <url><loc>{base}/services/</loc></url>")
 	# SEO landing pages with crawl hints — from the single-source registry.
@@ -1792,7 +1885,9 @@ def sitemap_xml(request):
 			f"<priority>{landing.priority}</priority></url>"
 		)
 	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
-	urls.append(f"  <url><loc>{base}/surveys/</loc></url>")
+	# `/surveys/` itself is not listed: it now redirects to `/`, and a sitemap
+	# should not advertise a redirect. Individual `/surveys/<uuid>/` entries below
+	# are still listed.
 	# Stories hub + published stories
 	urls.append(f"  <url><loc>{base}/stories/</loc></url>")
 	for story in Story.objects.filter(is_published=True).order_by('-published_date'):
