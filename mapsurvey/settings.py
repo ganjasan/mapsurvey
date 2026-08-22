@@ -354,10 +354,29 @@ POSTHOG_EXCLUDED_PREFIXES = ('/surveys/', '/r/')
 POSTHOG_MW_CAPTURE_EXCEPTIONS = bool(POSTHOG_PROJECT_KEY)
 
 
+# Substrings that mark a user-agent as an automated client. Lowercase; matched
+# case-insensitively. 'bot' alone covers Googlebot, bingbot, PetalBot, AhrefsBot
+# and most of the long tail. The check lives in the request filter and NOT in a
+# before_send hook because on respondent surfaces `_posthog_scrub_tags` removes
+# `$user_agent` before capture -- downstream there is nothing left to classify.
+POSTHOG_BOT_UA_MARKERS = (
+    'bot', 'crawl', 'spider', 'slurp', 'preview', 'headless',
+    'python-requests', 'python-httpx', 'aiohttp', 'curl/', 'wget/',
+    'scrapy', 'go-http-client', 'okhttp', 'java/', 'libwww',
+)
+
+
 def _posthog_skip_request(request):
     # Admin stack traces routinely embed object reprs; the debug toolbar is noise.
     # Respondent paths are deliberately NOT skipped -- a 500 on /surveys/ is our
     # defect -- their events are scrubbed by _posthog_scrub_tags instead.
+    #
+    # Bot requests ARE skipped, exceptions included. Crawlers re-walking dead
+    # draft-survey URLs made the top error-tracking issue read as "58 affected
+    # users" when 78 of 82 hits in the request log were bot user-agents
+    # (audited 2026-08-21). A defect only bots can trigger is indistinguishable
+    # from that noise, so their exceptions are not worth the signal they cost.
+    # An absent User-Agent counts as a bot: browsers always send one.
     #
     # Reads the key through django.conf.settings rather than the module-level
     # name so `override_settings` actually changes the behaviour under test; a
@@ -366,6 +385,9 @@ def _posthog_skip_request(request):
     from django.conf import settings as configured
 
     if not getattr(configured, 'POSTHOG_PROJECT_KEY', ''):
+        return False
+    user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+    if not user_agent or any(marker in user_agent for marker in POSTHOG_BOT_UA_MARKERS):
         return False
     return not request.path.startswith(('/admin/', '/__debug__/'))
 
