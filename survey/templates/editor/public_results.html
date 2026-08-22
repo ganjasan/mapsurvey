@@ -147,9 +147,15 @@
         <span class="ico"><i class="fas fa-sliders-h"></i></span>
         <div><div class="t">Page settings</div><div class="s">Applies to the whole public results page</div></div>
         <span style="flex:1;"></span>
-        {% comment %}Preview must work before the page is live — use the editor preview endpoint, not the public /r/ URL (which 404s until published).{% endcomment %}
-        <a class="btn btn-sm btn-outline-primary" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank"><i class="fas fa-external-link-alt"></i> Preview</a>
+        {% comment %}
+        Preview must work before the page is live — use the editor preview endpoint, not the
+        public /r/ URL (which 404s until published). It is labelled "private" because creators
+        were sharing this URL by copying it from the address bar; the copy button below is the
+        one that yields a link visitors can actually open.
+        {% endcomment %}
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank" title="Private preview — only you can open this URL"><i class="fas fa-eye"></i> Preview <small>private</small></a>
         {% if page.is_published %}
+        <button type="button" class="btn btn-sm btn-outline-success" id="prCopyPublicLink" onclick="prCopyPublicLink(this)" title="{{ public_url }}"><i class="fas fa-link"></i> Copy public link</button>
         <a class="btn btn-sm btn-outline-secondary" href="{{ public_url }}" target="_blank" title="The page as visitors see it"><i class="fas fa-globe"></i> Live page</a>
         <button type="button" class="btn btn-sm btn-outline-danger" onclick="prSetPublished(false)"><i class="fas fa-eye-slash"></i> Unpublish</button>
         {% else %}
@@ -253,6 +259,16 @@ function prSetPublished(publish){
   }).then(function(r){ return r.ok ? r.json() : Promise.reject(r); })
     .then(function(){ window.location.reload(); })
     .catch(function(){ alert('Could not change the page’s published state. Make sure the survey itself is published first.'); });
+}
+// Copy the public /r/<slug>/ URL. Exists so that sharing results does not mean
+// copying the editor URL out of the address bar — that yields the private
+// preview link, which strangers cannot open.
+function prCopyPublicLink(btn){
+  var url = '{{ public_url }}';
+  if (navigator.clipboard) { navigator.clipboard.writeText(url); }
+  var icon = btn.querySelector('i');
+  if (icon) { var old = icon.className; icon.className = 'fas fa-check';
+    setTimeout(function(){ icon.className = old; }, 1200); }
 }
 (function(){
   var refresh = document.getElementById('prPreviewRefresh');

@@ -395,6 +395,16 @@ GITHUB_REPO_URL = os.environ.get('GITHUB_REPO_URL', 'https://github.com/ganjasan
 DEMO_SURVEY_URL = os.environ.get('DEMO_SURVEY_URL', '')
 DISCORD_INVITE_URL = os.environ.get('DISCORD_INVITE_URL', 'https://discord.gg/v6YYw3zjKH')
 
+# Public results sharing
+# Creators share results by copying the editor URL out of the address bar, which is the
+# editor-only preview URL rather than `/r/<slug>/`. When a visitor without editor rights
+# follows such a link and the results page is published, forward them there instead of
+# denying the request -- otherwise the login wall turns the creator's audience into
+# registrations that never wanted an account. Kill switch: set to False to restore the
+# previous deny-only behaviour from the Render dashboard, without a deploy.
+PUBLIC_RESULTS_PREVIEW_FALLBACK = os.environ.get(
+    'PUBLIC_RESULTS_PREVIEW_FALLBACK', 'True').lower() in ('true', '1')
+
 # Celery
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')

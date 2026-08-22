@@ -8,6 +8,8 @@ The page is lazily created on first visit.
 import json
 import uuid as uuid_module
 
+from django.conf import settings
+from django.contrib.auth.views import redirect_to_login
 from django.http import HttpResponse, JsonResponse, Http404
 from django.shortcuts import redirect, get_object_or_404
 from django.template.loader import render_to_string
@@ -17,10 +19,12 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
 from .models import (
-    PublicResultsPage, PublicResultsBlock, Question, Answer,
+    PublicResultsPage, PublicResultsBlock, Question, Answer, SurveyHeader,
     PUBLIC_RESULTS_BLOCK_TYPE_CHOICES, BASEMAP_CHOICES,
 )
-from .permissions import survey_permission_required
+from .permissions import (
+    survey_permission_required, get_effective_survey_role, _check_survey_role,
+)
 from .public_results import freeze_page, unfreeze_page, bump_page_version
 
 # Map a question input type to the block type it renders as on the page.
@@ -48,6 +52,43 @@ def _unique_slug(survey):
     if PublicResultsPage.objects.filter(slug=candidate).exists():
         candidate = '{}-{}'.format(base, uuid_module.uuid4().hex[:6])
     return candidate
+
+
+def _may_edit(request, survey):
+    """True if the requester may see the editor preview of this survey.
+
+    Mirrors what @survey_permission_required('editor') enforces: authenticated,
+    survey in the active org, effective role at least 'editor'.
+    """
+    if not request.user.is_authenticated:
+        return False
+    active_org = getattr(request, 'active_org', None)
+    if active_org is None or survey.organization_id != active_org.id:
+        return False
+    return _check_survey_role(get_effective_survey_role(request.user, survey), 'editor')
+
+
+def _preview_denied(request, survey):
+    """Response for a preview request from someone without editor rights.
+
+    Forwards to the public results page when one is published — this is the
+    whole point of the view being decorator-free. `visibility` is not consulted:
+    an `unlisted` page is one the creator handed out by link, and `/r/<slug>/`
+    serves it already. Reads only; never creates a page row on a path a
+    stranger can trigger.
+
+    With no published page there is nowhere to send them, so the original
+    denial stands.
+    """
+    if getattr(settings, 'PUBLIC_RESULTS_PREVIEW_FALLBACK', True):
+        page = PublicResultsPage.objects.filter(
+            survey=survey, is_published=True).only('slug').first()
+        if page is not None:
+            return redirect('public_results', slug=page.slug)
+
+    if not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path())
+    raise Http404
 
 
 def _get_or_create_page(survey):
@@ -123,18 +164,35 @@ def public_results_config(request, survey_uuid):
     return render(request, 'editor/public_results.html', context)
 
 
-@survey_permission_required('editor')
 @xframe_options_sameorigin
 def public_results_preview(request, survey_uuid):
     """Render the public page inside the editor preview pane (iframe).
 
     Editor-only; renders regardless of publish state so the creator can see
     changes before publishing. Always noindex.
+
+    This view deliberately does NOT use @survey_permission_required, because it
+    is the one editor URL that escapes into the wild: creators share results by
+    copying it out of the address bar instead of using `/r/<slug>/`. A visitor
+    who follows such a link and has no editor rights is forwarded to the public
+    page when one is published, rather than being bounced to login (anonymous)
+    or 404 (signed in elsewhere) — see `_preview_denied`. The guards the
+    decorator used to provide are reproduced here and must stay: trashed
+    surveys are excluded, an unknown UUID is a 404, and the survey must belong
+    to the requester's active org for the preview itself to render.
     """
     from django.shortcuts import render
     from .public_results import build_page_context
 
-    survey = request.survey
+    survey = SurveyHeader.objects.filter(
+        uuid=survey_uuid, deleted_at__isnull=True).first()
+    if survey is None:
+        raise Http404
+
+    if not _may_edit(request, survey):
+        return _preview_denied(request, survey)
+
+    request.survey = survey
     page = _get_or_create_page(survey)
     lang = request.GET.get('lang') or 'en'
     context = build_page_context(page, lang=lang)
