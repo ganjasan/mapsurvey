@@ -68,6 +68,10 @@ exist.
   the draft? (Deleting all blocks should not resurrect them on next publish —
   scaffolding must run only when no page row exists.)
 
+## Notes
+
+Promoted on 2026-08-22
+
 ## Status
 
-Proposed.
+Promoted.
