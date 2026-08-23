@@ -833,6 +833,7 @@
                     unreachable on phones). Discard reuses the state-appropriate
                     modal already present on the page.{% endcomment %}
                     <a class="dropdown-item" href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-share-alt" style="margin-right:4px;"></i>Share…</a>
+                    <a class="dropdown-item" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank"><i class="fas fa-external-link-alt" style="margin-right:4px;"></i>Open as respondent</a>
                     {% if show_draft_actions %}
                     <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftModal"><i class="fas fa-trash" style="margin-right:4px;"></i>Discard draft</a>
                     {% elif is_owner and survey.status == 'draft' and not survey.is_draft_copy %}
