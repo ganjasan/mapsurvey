@@ -460,7 +460,9 @@
             } else {
                 $btn.prop('disabled', false);
                 if (n === 0 || single) {
-                    if ($subtitle.length) $subtitle.text(origSubtitle);
+                    // .html(), not .text(): the creator's subtitle is sanitized
+                    // rich text now, and .text() would print its tags.
+                    if ($subtitle.length) $subtitle.html(origSubtitle);
                 } else if ($subtitle.length) {
                     $subtitle.text('＋ ' + i18n.addAnother +
                         (max > 0 ? ' — ' + _fmt(i18n.upToNMore, {n: max - n}) : ''));

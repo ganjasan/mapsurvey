@@ -22,6 +22,7 @@ from .models import (
     INPUT_TYPE_CHOICES, SurveySectionTranslation,
     QuestionTranslation, default_basemaps,
 )
+from .html_sanitize import coerce_creator_html
 
 # Format version for compatibility checking
 FORMAT_VERSION = "1.0"
@@ -514,7 +515,7 @@ def create_sections(
             survey_header=survey,
             name=section_data["name"][:45],
             title=section_data.get("title", "")[:256] if section_data.get("title") else None,
-            subheading=section_data.get("subheading"),
+            subheading=_import_rich_text(section_data.get("subheading")),
             code=section_data.get("code", "")[:8],
             is_head=section_data.get("is_head", False),
             start_map_postion=start_map_position,
@@ -530,7 +531,7 @@ def create_sections(
                 section=section,
                 language=trans_data["language"],
                 title=trans_data.get("title"),
-                subheading=trans_data.get("subheading"),
+                subheading=_import_rich_text(trans_data.get("subheading")),
             )
 
         result[section.name] = section
@@ -545,6 +546,18 @@ def _generate_unique_code(original_code: str) -> str:
         new_code = f"Q_{str(random.random())[2:12]}"
         if not Question.objects.filter(code=new_code).exists():
             return new_code
+
+
+def _import_rich_text(raw: Optional[str]) -> Optional[str]:
+    """Creator rich text from an imported ZIP, ready to store.
+
+    Subtext and subheading render `|safe`, and a ZIP is content from outside this
+    installation — including archives exported before these fields held markup,
+    whose plain text has to be escaped rather than sanitized.
+    """
+    if not raw:
+        return None
+    return coerce_creator_html(raw) or None
 
 
 def _create_question(
@@ -601,7 +614,10 @@ def _create_question(
         code=code[:50],
         order_number=question_data.get("order_number", 0),
         name=question_data.get("name", "")[:512] if question_data.get("name") else None,
-        subtext=question_data.get("subtext", "")[:512] if question_data.get("subtext") else None,
+        # Not truncated: for a Formatted Text block the subtext is the block's
+        # whole body. Sanitized for that type because it renders |safe, and an
+        # imported ZIP is content from outside this installation.
+        subtext=_import_rich_text(question_data.get("subtext")),
         input_type=input_type[:80],
         choices=choices,
         required=question_data.get("required", False),
@@ -617,7 +633,7 @@ def _create_question(
             question=question,
             language=trans_data["language"],
             name=trans_data.get("name"),
-            subtext=trans_data.get("subtext"),
+            subtext=_import_rich_text(trans_data.get("subtext")),
         )
 
     # Create sub-questions recursively

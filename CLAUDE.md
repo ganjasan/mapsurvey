@@ -85,6 +85,25 @@ Organization
 
 **Question Types**: `text`, `text_line`, `number`, `choice`, `multichoice`, `range`, `rating`, `datetime`, `point`, `line`, `polygon`, `image`, `html`
 
+**Creator rich text (`Question.subtext`, `SurveySection.subheading`, `SurveyHeader.thanks_html`)**:
+everything a creator writes in their own words is authored in Quill and rendered to respondents as
+markup. All of it is unbounded `TextField` and all of it passes `survey/html_sanitize.py` on the way
+in — `QuestionForm.clean()`, `SurveySectionForm.clean_subheading()`, the translation savers in
+`editor_views.py`, `serialization._import_rich_text()` (ZIP import, which is also how AI generation
+writes), and `editor_question_preview_live` so the preview equals what a save keeps. **A new way to
+write these fields must go through the same helper**; the allow-list is what stands between a
+creator and stored XSS on every respondent.
+
+Use `coerce_creator_html`, not `sanitize_creator_html`, anywhere a value might not be from an
+editor. These fields hold plain text from before the editors existed (old rows, old ZIPs, AI
+drafts), and `nh3` would read "takes <5 minutes" as an unknown tag and delete it; `coerce_` escapes
+what carries no creator markup and sanitizes what does. Migration `0055` did the same one-off pass
+over the rows already in the database.
+
+The **Formatted Text block (`html`)** is the extreme case: it collects nothing and its `subtext` IS
+the whole body, rendered `|safe` in `html_text.html`. `Question.name` for `html` and `image` is an
+editor-only label that never reaches the respondent (see the `question-subtext` spec).
+
 **Hierarchical Questions/Answers**: Both Question and Answer models support self-referential parent relationships via `parent_question_id` and `parent_answer_id` for conditional sub-questions.
 
 **Session Management**: Survey sessions are created on first section view and tracked via `request.session['survey_session_id']`.

@@ -511,7 +511,8 @@ class SurveySection(models.Model):
     survey_header = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE)
     name = models.CharField(max_length=45, default="survey_description", validators=[validate_url_name]) #section_a
     title = models.CharField(max_length=256, null=True, blank=True) #Your Home Area
-    subheading = models.CharField(max_length=4096, null=True, blank=True) #Several question about your home area quality
+    # Creator-authored rich text (rendered |safe on the section page), so no cap.
+    subheading = models.TextField(null=True, blank=True) #Several question about your home area quality
     code = models.CharField(max_length=8)
 
     start_map_postion = geomodels.PointField(null=True, blank=True, help_text=_('Override map position for this section. Null = keep current map position.'))
@@ -565,7 +566,8 @@ class SurveySectionTranslation(models.Model):
     section = models.ForeignKey("SurveySection", on_delete=models.CASCADE, related_name='translations')
     language = models.CharField(max_length=10, help_text=_('ISO 639-1 language code'))
     title = models.CharField(max_length=256, null=True, blank=True)
-    subheading = models.CharField(max_length=4096, null=True, blank=True)
+    # Mirrors SurveySection.subheading.
+    subheading = models.TextField(null=True, blank=True)
 
     class Meta:
         app_label = 'survey'
@@ -589,7 +591,9 @@ class Question(models.Model):
     code = models.CharField(max_length=50, default=question_code_generator)
     order_number = models.IntegerField(default=0) # unique in section or popup
     name = models.CharField(max_length=512, null=True, blank=True)
-    subtext = models.CharField(max_length=512, null=True, blank=True)
+    # Unbounded: for a Formatted Text block this field is the block's whole body,
+    # authored in a rich-text editor, so 512 characters is not a hint but a wall.
+    subtext = models.TextField(null=True, blank=True)
     input_type = models.CharField(max_length=80, choices=INPUT_TYPE_CHOICES)
     choices = models.JSONField(null=True, blank=True, validators=[ChoicesValidator()])
     required = models.BooleanField(default=False)
@@ -713,7 +717,8 @@ class QuestionTranslation(models.Model):
     question = models.ForeignKey("Question", on_delete=models.CASCADE, related_name='translations')
     language = models.CharField(max_length=10, help_text=_('ISO 639-1 language code'))
     name = models.CharField(max_length=512, null=True, blank=True)
-    subtext = models.CharField(max_length=512, null=True, blank=True)
+    # Mirrors Question.subtext — a translated Formatted Text body is just as long.
+    subtext = models.TextField(null=True, blank=True)
 
     class Meta:
         app_label = 'survey'

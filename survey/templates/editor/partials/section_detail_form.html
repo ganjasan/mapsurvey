@@ -29,6 +29,10 @@
             {# Base fields hold the primary language; name it when translations exist so "Title" doesn't read as a language-neutral default. #}
             <label for="{{ field.id_for_label }}">{{ field.label }}{% if survey.available_languages|length > 1 and field.name != 'code' %} ({{ survey.available_languages.0|language_name }}){% endif %}</label>
             {{ field }}
+            {% comment %}The subheading has always been rendered |safe on the section page;
+            this is where the creator finally gets to write it as formatted text instead of
+            hand-typed HTML. The textarea above stays the value the form posts.{% endcomment %}
+            {% if field.name == 'subheading' %}<div id="section-subheading-quill"></div>{% endif %}
             {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
         </div>
         {% endfor %}
@@ -51,6 +55,7 @@
                         <label style="font-size:0.8rem;">Subheading ({{ lang }})</label>
                         <input type="text" name="translation_{{ lang }}_subheading" class="form-control form-control-sm"
                                value="{% for t_lang, t in translations.items %}{% if t_lang == lang %}{{ t.subheading|default:'' }}{% endif %}{% endfor %}">
+                        <div class="subheading-quill-wrap" data-subheading-quill="{{ lang }}"></div>
                     </div>
                 </fieldset>
                 {% endfor %}
@@ -125,6 +130,50 @@
             clearTimeout(timer);
             htmx.trigger(form, 'submit');
         });
+    });
+
+    // ── Subheading: rich text, in the base language and each translation ──
+    // Each editor writes into the plain field beside it, which stays the value
+    // the form posts and the thing autosave listens to.
+    if (typeof Quill === 'undefined') return;
+    // Inline `text-align`: the section page carries no Quill CSS, so a
+    // class-based alignment would silently do nothing there.
+    Quill.register(Quill.import('attributors/style/align'), true);
+    var SUBHEADING_TOOLBAR = [
+        ['bold', 'italic'],
+        [{ align: [] }],
+        ['link'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['clean']
+    ];
+
+    function mountSubheadingQuill(mount, field) {
+        var q = new Quill(mount, {
+            theme: 'snow',
+            placeholder: 'Optional text under the section title',
+            modules: { toolbar: SUBHEADING_TOOLBAR }
+        });
+        q.setContents(q.clipboard.convert({ html: field.value || '' }), 'silent');
+        field.style.display = 'none';
+        q.on('text-change', function(delta, old, source) {
+            if (source !== 'user') return;
+            var h = q.root.innerHTML;
+            field.value = (h === '<p><br></p>') ? '' : h;
+            autoSave();
+        });
+    }
+
+    var baseMount = document.getElementById('section-subheading-quill');
+    var baseField = form.querySelector('[name="subheading"]');
+    if (baseMount && baseField) mountSubheadingQuill(baseMount, baseField);
+
+    form.querySelectorAll('[data-subheading-quill]').forEach(function(wrap) {
+        var lang = wrap.getAttribute('data-subheading-quill');
+        var field = form.querySelector('[name="translation_' + lang + '_subheading"]');
+        if (!field) return;
+        var mount = document.createElement('div');
+        wrap.appendChild(mount);
+        mountSubheadingQuill(mount, field);
     });
 })();
 </script>
