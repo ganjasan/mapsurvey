@@ -31,6 +31,6 @@
 
 ## 4. Ship & apply to Olney
 
-- [ ] 4.1 Full test run via `./run_tests.sh survey`; PR referencing this change.
+- [x] 4.1 Full test run via `./run_tests.sh survey`; PR referencing this change.
 - [ ] 4.2 After deploy: `UPDATE survey_question SET display_style='dropdown' WHERE id=4190;`
       and verify the 35-zone question on the live test link (desktop + phone).
