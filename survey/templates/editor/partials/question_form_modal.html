@@ -6,8 +6,13 @@
     }
     .qtp-body-cols { display: flex; gap: 1.25rem; align-items: flex-start; }
     .qtp-form-col { flex: 1 1 auto; min-width: 0; }
+    /* The column itself is a transparent stack; each section (preview, tips,
+       type example) is its own card so they read as separate things. */
     .qtp-preview-col {
         flex: 0 0 340px; position: sticky; top: 0;
+        display: flex; flex-direction: column; gap: 12px;
+    }
+    .qtp-pv-card {
         display: flex; flex-direction: column;
         background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px;
     }
@@ -17,6 +22,12 @@
         text-transform: uppercase; color: #6b7280; margin-bottom: 8px;
     }
     .qtp-pv-note { font-size: 0.7rem; color: #9aa0a6; margin-top: 8px; }
+    .qtp-tips-list {
+        margin: 0; padding-left: 1.1rem;
+        font-size: 0.76rem; line-height: 1.45; color: #495057;
+    }
+    .qtp-tips-list li { margin-bottom: 7px; }
+    .qtp-tips-list li:last-child { margin-bottom: 0; }
 
     /* Type picker card grid */
     .qtp-group-caption {
@@ -40,9 +51,6 @@
     .qtp-hint-line { font-size: 0.75rem; color: #6c757d; margin-top: 6px; min-height: 1em; }
 
     /* Hover flyout with a canned example */
-    .qtp-flyout {
-        margin-top: 12px;
-    }
     .qtp-flyout-hint { font-size: 0.7rem; color: #868e96; margin-bottom: 8px; }
     .qtp-example-frame {
         width: 100%; height: 190px; border: 1px solid #dee2e6; border-radius: 8px;
@@ -76,6 +84,11 @@
     {% csrf_token %}
     <div class="modal-body qtp-body-cols">
         <div class="qtp-form-col">
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger py-1 px-2" style="font-size:0.8rem;">
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        </div>
+        {% endif %}
         {% for field in form %}
         {% if field.name == 'input_type' %}
         <div class="form-group" id="fg-input_type">
@@ -220,6 +233,22 @@
                        placeholder="10">
             </div>
         </div>
+        <div id="vs-geo-fields" style="display:none;" class="mt-2">
+            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-map-marker-alt"></i> Places per respondent</label>
+            <div class="form-row">
+                <div class="form-group col-4">
+                    <label style="font-size:0.75rem;">Min</label>
+                    <input type="number" step="1" min="0" name="vs_min_features" class="form-control form-control-sm"
+                           value="{% if question and question.validation_settings %}{{ question.validation_settings.min_features|default:'' }}{% endif %}">
+                </div>
+                <div class="form-group col-4">
+                    <label style="font-size:0.75rem;">Max</label>
+                    <input type="number" step="1" min="1" name="vs_max_features" class="form-control form-control-sm"
+                           value="{% if question and question.validation_settings %}{{ question.validation_settings.max_features|default:'' }}{% endif %}">
+                </div>
+            </div>
+            <small class="text-muted" style="font-size:0.72rem;">Respondents can add several places to one map question. Leave max empty for unlimited; the export stays a single layer either way.</small>
+        </div>
 
         {% if survey.available_languages|length > 1 %}
         <div class="translations-section">
@@ -248,16 +277,52 @@
         </div>
 
         <div class="question-preview-panel qtp-preview-col">
-            <div class="qtp-pv-title"><i class="fas fa-eye"></i> Respondent sees</div>
-            <iframe id="question-preview-frame"
-                    {% if question %}src="{% url 'editor_question_preview' survey.uuid question.id %}"{% endif %}
-                    style="flex:1;border:1px solid #e5e7eb;border-radius:6px;width:100%;min-height:260px;background:#fff;">
-            </iframe>
-            <div class="qtp-pv-note">Updates as you edit — the real respondent-side rendering.</div>
-            <div class="qtp-flyout" id="qtp-flyout" hidden>
+            <div class="qtp-pv-card">
+                <div class="qtp-pv-title"><i class="fas fa-eye"></i> Respondent sees</div>
+                <iframe id="question-preview-frame"
+                        {% if question %}src="{% url 'editor_question_preview' survey.uuid question.id %}"{% endif %}
+                        style="flex:1;border:1px solid #e5e7eb;border-radius:6px;width:100%;min-height:260px;background:#fff;">
+                </iframe>
+                <div class="qtp-pv-note">Updates as you edit — the real respondent-side rendering.</div>
+            </div>
+
+            <div class="qtp-pv-card qtp-flyout" id="qtp-flyout" hidden>
                 <div class="qtp-pv-title" style="margin-bottom:4px;">Type example</div>
                 <div class="qtp-flyout-hint"></div>
                 <iframe class="qtp-example-frame"></iframe>
+            </div>
+
+            {% comment %}Per-type tips: shown for the current input type, hidden when a type
+            has none. This is where creators decide to clone a geo question instead of using
+            sub-questions + limits — the geo tips exist to prevent exactly that.{% endcomment %}
+            <div class="qtp-pv-card qtp-tips" id="qtp-tips" hidden>
+                <div class="qtp-pv-title"><i class="far fa-lightbulb"></i> Tips</div>
+                <ul class="qtp-tips-list" data-tip-for="point line polygon">
+                    <li><b>One map question collects many places.</b> Respondents keep adding
+                        marks to the same question — never create "Mark the 1st / 2nd location"
+                        copies. Use <b>Places per respondent</b> below to ask for, say, 1&ndash;5.</li>
+                    <li><b>Describe each place with sub-questions.</b> They pop up on every
+                        placed mark, and each becomes a column of your GeoJSON layer in QGIS.
+                        Without them the map collects dots with no meaning.</li>
+                    <li><b>Points get answered about twice as often</b> as polygons — draw
+                        requests cost respondents real effort. When in doubt, ask for a point.</li>
+                </ul>
+                <ul class="qtp-tips-list" data-tip-for="range rating">
+                    <li><b>The scale is built from your choice codes</b> — keep them integers in
+                        ascending order (1, 2, 3&hellip;).</li>
+                    <li>Label at least the endpoints ("Not at all" &hellip; "Very much") so the
+                        scale reads the same for everyone.</li>
+                </ul>
+                <ul class="qtp-tips-list" data-tip-for="ranking">
+                    <li><b>Choices are the items to be ordered</b>, not a scale. Give 3&ndash;6
+                        short, comparable items.</li>
+                    <li>Respondents must place <i>every</i> item and no two can share a rank —
+                        use Rating instead when independent scores are enough.</li>
+                </ul>
+                <ul class="qtp-tips-list" data-tip-for="choice multichoice">
+                    <li>Codes end up in your data export; names are what respondents see.
+                        Keep codes stable once responses start arriving.</li>
+                </ul>
             </div>
         </div>
     </div>
@@ -295,9 +360,11 @@
         var numEl = document.getElementById('vs-number-fields');
         var textEl = document.getElementById('vs-text-fields');
         var polyEl = document.getElementById('vs-polygon-fields');
+        var geoEl = document.getElementById('vs-geo-fields');
         if (numEl) numEl.style.display = (t === 'number' || t === 'range') ? 'block' : 'none';
         if (textEl) textEl.style.display = (t === 'text' || t === 'text_line') ? 'block' : 'none';
         if (polyEl) polyEl.style.display = (t === 'polygon') ? 'block' : 'none';
+        if (geoEl) geoEl.style.display = (t === 'point' || t === 'line' || t === 'polygon') ? 'block' : 'none';
     }
 
     // Types whose rendering the creator can pick. Mirrors
@@ -539,6 +606,7 @@
         if (!exampleBox || !canHover) return;
         var value = card.getAttribute('data-qtp-value');
         exampleCurrent = value;
+        toggleTips(value);   // tips follow the hovered type, like the example does
         exampleBox.querySelector('.qtp-flyout-hint').textContent = card.getAttribute('data-qtp-hint') || '';
         var frame = exampleBox.querySelector('.qtp-example-frame');
         if (!frame.dataset.fitBound) {
@@ -579,7 +647,11 @@
             if (exampleCurrent === value) frame.srcdoc = html;
         }).catch(function() {});
     }
-    function qtpHideExample() { exampleCurrent = null; if (exampleBox) exampleBox.hidden = true; }
+    function qtpHideExample() {
+        exampleCurrent = null;
+        if (exampleBox) exampleBox.hidden = true;
+        toggleTips();   // revert to the selected type's tips
+    }
 
     if (picker) {
         picker.addEventListener('mouseover', function(e) {
@@ -591,10 +663,26 @@
         });
     }
 
+    // `overrideType` lets the type-picker hover show the hovered type's tips
+    // (in step with the Type example flyout); without it, tips follow the
+    // selected type.
+    function toggleTips(overrideType) {
+        var box = document.getElementById('qtp-tips');
+        if (!box) return;
+        var t = overrideType || (inputTypeSelect ? inputTypeSelect.value : '');
+        var any = false;
+        box.querySelectorAll('.qtp-tips-list').forEach(function(ul) {
+            var on = ul.getAttribute('data-tip-for').split(' ').indexOf(t) !== -1;
+            ul.style.display = on ? 'block' : 'none';
+            if (on) any = true;
+        });
+        box.hidden = !any;
+    }
+
     if (inputTypeSelect) {
         inputTypeSelect.addEventListener('change', function() {
             toggleChoicesEditor(); toggleValidationFields(); toggleDisplayStyleFields();
-            toggleTypeScopedFields(); qtpSyncCards();
+            toggleTypeScopedFields(); qtpSyncCards(); toggleTips();
         });
         toggleChoicesEditor();
         toggleValidationFields();
@@ -602,6 +690,7 @@
         toggleTypeScopedFields();
         toggleStarCountField();
         qtpSyncCards();
+        toggleTips();
     }
 
     document.querySelectorAll('#display-style-fields input[name="display_style"]').forEach(function(radio) {

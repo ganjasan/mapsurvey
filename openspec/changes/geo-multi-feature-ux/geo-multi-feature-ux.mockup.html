@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Multi-feature geo question UX</title>
+<style>
+  :root {
+    --panel-bg: #ffffff;
+    --panel-border: rgba(0, 0, 0, 0.06);
+    --card-bg: #f7f8fa;
+    --card-border: rgba(0, 0, 0, 0.06);
+    --card-hover: #f0f2f5;
+    --text-primary: #1a1d21;
+    --text-secondary: #5f6368;
+    --text-tertiary: #9aa0a6;
+    --accent: #4f46e5;
+    --accent-light: #eef2ff;
+    --accent-hover: #4338ca;
+    --input-border: #d1d5db;
+    --input-focus: #4f46e5;
+    --input-bg: #ffffff;
+    --danger: #ef4444;
+    --success: #22c55e;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+    --transition: 0.15s ease;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    background: #eceef2;
+    color: var(--text-primary);
+    padding: 32px 16px 64px;
+  }
+  h1 { font-size: 1.3em; margin: 0 auto 4px; max-width: 1120px; }
+  .lead { max-width: 1120px; margin: 0 auto 28px; color: var(--text-secondary); font-size: 0.92em; line-height: 1.5; }
+  .stage { max-width: 1120px; margin: 0 auto 44px; }
+  .stage > h2 {
+    font-size: 0.8em; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-tertiary); margin: 0 0 12px;
+  }
+  .row { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+
+  /* ---------- Respondent section panel ---------- */
+  .panel {
+    width: 360px; flex-shrink: 0;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 20px 18px;
+    max-height: 620px; overflow-y: auto;
+  }
+  .panel h3 { margin: 0 0 2px; font-size: 1.05em; }
+  .panel .step { color: var(--text-tertiary); font-size: 0.78em; margin-bottom: 10px; }
+  .panel .intro { font-size: 0.88em; color: var(--text-secondary); margin: 0 0 14px; line-height: 1.45; }
+
+  /* Product styles: plain question card (from main.css) */
+  .question-card {
+    background: var(--card-bg);
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--card-border);
+    margin-bottom: 12px;
+  }
+  .question-card > label {
+    display: block; font-weight: 500; font-size: 0.92em;
+    color: var(--text-secondary); margin-bottom: 10px; letter-spacing: 0.01em;
+  }
+  .question-card input[type="text"] {
+    width: 100%; padding: 10px 14px;
+    border: 1px solid var(--input-border); border-radius: var(--radius-sm);
+    font-size: 1em; font-family: inherit; background: var(--input-bg); outline: none;
+  }
+  .radio-row { display: flex; flex-direction: column; gap: 7px; }
+  .radio-row label { font-size: 0.88em; display: flex; gap: 8px; align-items: center; color: var(--text-primary); cursor: pointer; }
+
+  /* Product styles: geo button (from main.css) */
+  .geo-block { margin-bottom: 12px; }
+  .drawbutton {
+    margin-bottom: 0;
+    width: 100%;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    padding: 8px 12px;
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+    cursor: pointer; font: inherit;
+  }
+  .drawbutton:hover:not(:disabled) { background: var(--card-hover); border-color: rgba(79,70,229,0.2); box-shadow: var(--shadow-sm); }
+  .drawbutton:active:not(:disabled) { transform: scale(0.985); }
+  .drawbutton.armed { border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 3px var(--accent-light); }
+  .drawbutton:disabled { cursor: default; opacity: 0.5; }
+  .geo-question { display: flex; align-items: center; gap: 14px; text-align: left; }
+  .geo-question-icon {
+    flex-shrink: 0; width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center; border-radius: 10px;
+  }
+  .geo-question-text { flex: 1; min-width: 0; }
+  .geo-question-title { margin: 0; font-weight: 500; font-size: 0.95em; color: var(--text-primary); }
+  .geo-question-subtitle { margin: 2px 0 0; font-size: 0.85em; color: var(--text-secondary); }
+
+  /* NEW: counter chip on the button */
+  .geo-count {
+    flex-shrink: 0; min-width: 26px; height: 26px; padding: 0 8px;
+    display: none; align-items: center; justify-content: center;
+    border-radius: 999px; color: #fff; font-size: 0.8em; font-weight: 600;
+  }
+  .geo-count.visible { display: inline-flex; }
+
+  /* NEW: progress line (only when the creator set min/max) */
+  .geo-progress { display: none; margin: 8px 2px 0; font-size: 0.8em; color: var(--text-secondary); }
+  .geo-progress.visible { display: block; }
+  .geo-progress .bar { height: 4px; border-radius: 4px; background: rgba(0,0,0,0.07); margin-top: 5px; overflow: hidden; }
+  .geo-progress .bar > div { height: 100%; width: 0%; border-radius: 4px; transition: width 0.25s ease, background 0.25s ease; }
+
+  /* NEW: per-question list of placed features */
+  .geo-features { margin: 8px 0 0; padding: 0; list-style: none; }
+  .geo-features li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px;
+    border: 1px solid var(--card-border); border-radius: var(--radius-sm);
+    background: #fff; margin-bottom: 6px; font-size: 0.85em;
+    animation: pop-in 0.18s ease; cursor: pointer;
+  }
+  .geo-features li:hover { border-color: rgba(79,70,229,0.3); }
+  .geo-features li.pending { border-style: dashed; }
+  @keyframes pop-in { from { opacity: 0; transform: translateY(-4px); } }
+  .geo-features .dot { width: 20px; height: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .geo-features .flabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .geo-features .fattrs { color: var(--text-tertiary); font-size: 0.92em; }
+  .geo-features .fdel {
+    flex-shrink: 0; border: none; background: none; cursor: pointer;
+    color: var(--text-tertiary); font-size: 1.05em; line-height: 1; padding: 2px 4px; border-radius: 4px;
+  }
+  .geo-features .fdel:hover { color: var(--danger); background: rgba(239,68,68,0.08); }
+  .geo-more {
+    display: none; font: inherit; font-size: 0.78em; cursor: pointer;
+    background: none; border: none; color: var(--accent); padding: 2px 4px; margin-top: -2px;
+  }
+  .geo-more.visible { display: inline-block; }
+
+  .hint { margin-top: 6px; font-size: 0.78em; color: var(--text-tertiary); display: flex; gap: 6px; align-items: baseline; }
+
+  /* ---------- Fake map ---------- */
+  .map {
+    flex: 1; min-width: 320px; align-self: stretch; min-height: 620px;
+    border-radius: var(--radius-lg); border: 1px solid var(--panel-border);
+    position: relative; overflow: hidden;
+    background:
+      repeating-linear-gradient(0deg, transparent 0 44px, rgba(255,255,255,0.7) 44px 47px),
+      repeating-linear-gradient(90deg, transparent 0 60px, rgba(255,255,255,0.8) 60px 64px),
+      repeating-linear-gradient(35deg, transparent 0 90px, rgba(255,255,255,0.5) 90px 96px),
+      linear-gradient(160deg, #e8ecdf 0%, #dde5d4 45%, #d5e2e6 100%);
+    cursor: default;
+  }
+  .map.armed { cursor: crosshair; }
+  /* NEW: which question am I drawing for */
+  .map .map-hint {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    background: rgba(26,29,33,0.85); color: #fff;
+    padding: 7px 8px 7px 7px; border-radius: 999px; font-size: 0.8em;
+    opacity: 0; transition: opacity var(--transition); pointer-events: none;
+    white-space: nowrap; display: flex; align-items: center; gap: 8px; max-width: 92%;
+  }
+  /* while a popup is open the popup itself is the instruction — badge would just collide with it */
+  .map.armed .map-hint { opacity: 1; pointer-events: auto; }
+  .map .map-hint .swatch { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; }
+  .map .map-hint .htext { overflow: hidden; text-overflow: ellipsis; }
+  .map .map-hint .hstop {
+    font: inherit; font-size: 0.92em; cursor: pointer; flex-shrink: 0;
+    background: rgba(255,255,255,0.18); border: none; color: #fff;
+    border-radius: 999px; padding: 3px 10px; margin-left: 2px;
+  }
+  .map .map-hint .hstop:hover { background: rgba(255,255,255,0.3); }
+  .map.busy .map-hint .hstop { display: none; }
+
+  .map .pin {
+    position: absolute; transform: translate(-50%, -100%);
+    animation: drop 0.25s ease; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25)); cursor: pointer;
+  }
+  .map .pin.dim { opacity: 0.45; }
+  @keyframes drop { from { transform: translate(-50%, -140%); opacity: 0; } }
+  .map .area {
+    position: absolute; transform: translate(-50%, -50%);
+    width: 120px; height: 84px; border-radius: 42% 58% 47% 53%;
+    animation: pop-in 0.2s ease; cursor: pointer;
+  }
+  .map .area.dim { opacity: 0.45; }
+
+  /* NEW: legend, because a section can have several geo questions */
+  .map .legend {
+    position: absolute; left: 12px; bottom: 12px;
+    background: rgba(255,255,255,0.94); border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm); padding: 9px 12px; font-size: 0.78em;
+  }
+  .map .legend h5 { margin: 0 0 6px; font-size: 0.95em; color: var(--text-tertiary); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .map .legend .lrow { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; color: var(--text-secondary); }
+  .map .legend .lrow:last-child { margin-bottom: 0; }
+  .map .legend .lsw { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .map .legend .lrow.empty { opacity: 0.45; }
+
+  /* ---------- Feature popup (sub-questions) ---------- */
+  .feature-popup {
+    position: absolute; z-index: 10; width: 244px;
+    transform: translate(-50%, calc(-100% - 38px));
+    background: #fff; border-radius: var(--radius-md);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+    padding: 12px 14px; display: none; animation: pop-in 0.15s ease;
+  }
+  .feature-popup.open { display: block; }
+  .feature-popup::after {
+    content: ""; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%);
+    border: 8px solid transparent; border-bottom: none; border-top-color: #fff;
+  }
+  .feature-popup h4 { margin: 0 0 2px; font-size: 0.85em; display: flex; align-items: center; gap: 7px; }
+  .feature-popup h4 .swatch { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .feature-popup .pq { margin: 0 0 10px; font-size: 0.74em; color: var(--text-tertiary); }
+  .feature-popup .subq { margin-bottom: 10px; }
+  .feature-popup .subq-label { font-size: 0.78em; color: var(--text-secondary); margin: 0 0 5px; }
+  .chip-group { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip {
+    font: inherit; font-size: 0.75em; cursor: pointer;
+    border: 1px solid var(--input-border); background: #fff;
+    border-radius: 999px; padding: 4px 10px; color: var(--text-primary);
+  }
+  .chip.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .layer-controls { display: flex; gap: 8px; margin-top: 12px; justify-content: center; }
+  .layer-controls .btn { font: inherit; font-size: 0.8em; cursor: pointer; border-radius: var(--radius-sm); padding: 6px 14px; border: none; }
+  .btn-save { background: var(--accent); color: #fff; }
+  .btn-save:disabled { opacity: 0.5; cursor: default; }
+  .btn-del { background: none; border: 1px solid var(--input-border); color: var(--text-secondary); }
+  .btn-del:hover { color: var(--danger); border-color: var(--danger); }
+
+  /* ---------- Editor ---------- */
+  .editor-card {
+    width: 520px; max-width: 100%;
+    background: var(--panel-bg); border: 1px solid var(--panel-border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 18px;
+  }
+  .q-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .q-head .grip { color: var(--text-tertiary); cursor: grab; font-size: 0.9em; letter-spacing: -2px; }
+  .q-head .qname { font-weight: 500; font-size: 0.95em; flex: 1; }
+  .badge { font-size: 0.68em; font-weight: 600; padding: 3px 8px; border-radius: 6px; color: #fff; white-space: nowrap; }
+  .badge.geo { background: #6b7280; }
+  .badge.req { background: var(--danger); }
+  .q-tools { display: flex; gap: 8px; color: var(--text-tertiary); font-size: 0.85em; }
+  .q-sub { font-size: 0.78em; color: var(--text-tertiary); margin: 6px 0 0 22px; }
+
+  .settings-row {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    border-top: 1px dashed var(--card-border); margin-top: 12px; padding-top: 12px;
+  }
+  .settings-row label { font-size: 0.85em; color: var(--text-secondary); }
+  .num-wrap { display: flex; align-items: center; gap: 6px; }
+  .num-wrap input {
+    width: 58px; padding: 6px 8px; font-size: 0.9em;
+    border: 1px solid var(--input-border); border-radius: var(--radius-sm); text-align: center;
+  }
+  .num-wrap input:focus { outline: 2px solid var(--accent-light); border-color: var(--accent); }
+  .settings-note { flex-basis: 100%; font-size: 0.78em; color: var(--text-tertiary); margin: 2px 0 0; }
+  .settings-note b { color: var(--text-secondary); font-weight: 600; }
+
+  .callout {
+    margin-top: 14px; border-radius: var(--radius-md);
+    padding: 10px 14px; font-size: 0.85em;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .callout.warn { background: #fffbeb; border: 1px solid #fde68a; color: #78350f; }
+  .callout.ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: #14532d; }
+  .callout .actions { margin-top: 8px; display: flex; gap: 8px; }
+  .callout button { font: inherit; font-size: 0.92em; cursor: pointer; border-radius: var(--radius-sm); padding: 5px 12px; }
+  .callout .merge { background: #b45309; color: #fff; border: none; }
+  .callout .dismiss { background: none; border: 1px solid #d6b25e; color: #92400e; }
+
+  .caption { font-size: 0.8em; color: var(--text-tertiary); margin: 10px 2px 0; max-width: 520px; line-height: 1.55; }
+  .caption b { color: var(--text-secondary); }
+  .reset-btn {
+    font: inherit; font-size: 0.8em; cursor: pointer; margin-top: 10px;
+    border: 1px solid var(--input-border); background: #fff; border-radius: var(--radius-sm);
+    padding: 5px 12px; color: var(--text-secondary);
+  }
+</style>
+</head>
+<body>
+
+<h1>Multi-feature geo question — mockup</h1>
+<p class="lead">Fix for creators cloning the same geo question («Mark the 1st / 2nd / … location»).
+Part A is a whole section — several geo questions of different types mixed with ordinary ones —
+because that is the case the design has to survive. Click a map question, then click the map.</p>
+
+<!-- ================= PART A ================= -->
+<div class="stage">
+  <h2>A · Respondent view — a real section: 3 geo questions + 2 ordinary ones</h2>
+  <div class="row">
+    <div class="panel" id="panel">
+      <h3>Getting around your neighbourhood</h3>
+      <div class="step">2 / 3</div>
+      <p class="intro">Some questions are answered on the map. You can mark as many places as you
+      like on each map question — they stay separate layers in the results.</p>
+
+      <!-- ordinary question -->
+      <div class="question-card">
+        <label>How do you usually get around here?</label>
+        <div class="radio-row">
+          <label><input type="radio" name="mode"> On foot</label>
+          <label><input type="radio" name="mode"> Bicycle</label>
+          <label><input type="radio" name="mode"> Car</label>
+          <label><input type="radio" name="mode"> Public transport</label>
+        </div>
+      </div>
+
+      <!-- geo question 1 -->
+      <div class="geo-block" data-q="q1">
+        <button class="drawbutton" data-role="btn">
+          <div class="geo-question">
+            <div class="geo-question-icon" data-role="icon"></div>
+            <div class="geo-question-text">
+              <p class="geo-question-title" data-role="title"></p>
+              <p class="geo-question-subtitle" data-role="sub"></p>
+            </div>
+            <span class="geo-count" data-role="chip">0</span>
+          </div>
+        </button>
+        <div class="geo-progress" data-role="progress">
+          <span data-role="ptext"></span>
+          <div class="bar"><div data-role="pfill"></div></div>
+        </div>
+        <ul class="geo-features" data-role="list"></ul>
+        <button class="geo-more" data-role="more" type="button"></button>
+        <div class="hint" data-role="hint">💡 <span></span></div>
+      </div>
+
+      <!-- geo question 2 -->
+      <div class="geo-block" data-q="q2">
+        <button class="drawbutton" data-role="btn">
+          <div class="geo-question">
+            <div class="geo-question-icon" data-role="icon"></div>
+            <div class="geo-question-text">
+              <p class="geo-question-title" data-role="title"></p>
+              <p class="geo-question-subtitle" data-role="sub"></p>
+            </div>
+            <span class="geo-count" data-role="chip">0</span>
+          </div>
+        </button>
+        <div class="geo-progress" data-role="progress">
+          <span data-role="ptext"></span>
+          <div class="bar"><div data-role="pfill"></div></div>
+        </div>
+        <ul class="geo-features" data-role="list"></ul>
+        <button class="geo-more" data-role="more" type="button"></button>
+        <div class="hint" data-role="hint">💡 <span></span></div>
+      </div>
+
+      <!-- geo question 3 -->
+      <div class="geo-block" data-q="q3">
+        <button class="drawbutton" data-role="btn">
+          <div class="geo-question">
+            <div class="geo-question-icon" data-role="icon"></div>
+            <div class="geo-question-text">
+              <p class="geo-question-title" data-role="title"></p>
+              <p class="geo-question-subtitle" data-role="sub"></p>
+            </div>
+            <span class="geo-count" data-role="chip">0</span>
+          </div>
+        </button>
+        <div class="geo-progress" data-role="progress">
+          <span data-role="ptext"></span>
+          <div class="bar"><div data-role="pfill"></div></div>
+        </div>
+        <ul class="geo-features" data-role="list"></ul>
+        <button class="geo-more" data-role="more" type="button"></button>
+        <div class="hint" data-role="hint">💡 <span></span></div>
+      </div>
+
+      <!-- ordinary question -->
+      <div class="question-card">
+        <label>Anything else we should know?</label>
+        <input type="text" placeholder="Optional">
+      </div>
+    </div>
+
+    <div class="map" id="map">
+      <div class="map-hint">
+        <span class="swatch" id="hintSwatch"></span>
+        <span class="htext" id="hintText"></span>
+        <button type="button" class="hstop" id="hintStop">Done</button>
+      </div>
+      <div class="legend" id="legend"><h5>Your marks</h5></div>
+
+      <div class="feature-popup" id="popup">
+        <h4><span class="swatch" id="popupSwatch"></span><span id="popupTitle">Spot 1</span></h4>
+        <p class="pq" id="popupQuestion"></p>
+        <div id="popupBody"></div>
+        <div class="layer-controls">
+          <button type="button" class="btn btn-save" id="popupSave">Save</button>
+          <button type="button" class="btn btn-del" id="popupDelete">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="caption" style="max-width:1120px;">
+  What the section context forces on top of the single-question design:
+  <b>① only one geo question can be armed at a time</b> — arming another disarms the first, and the
+  map badge always names the question being answered, with its colour;
+  <b>② counter, progress and feature list are per question</b>, never section-wide;
+  <b>③ each popup shows that question's own sub-questions</b> (q1 asks frequency/cause, q2 asks a
+  rating, q3 asks nothing at all — an anonymous polygon layer);
+  <b>④ lists collapse past 3 items</b>, otherwise three geo questions × 5 features push the ordinary
+  questions off the panel;
+  <b>⑤ a question with max = 1 keeps today's look</b> — no chip, no progress, no list clutter (q3);
+  <b>⑥ the legend</b> makes it obvious the marks are different layers, not one pile.</p>
+  <button class="reset-btn" id="resetBtn">↺ Reset demo</button>
+</div>
+
+<!-- ================= PART B ================= -->
+<div class="stage">
+  <h2>B · Editor — “how many answers” lives on the question, not in clones</h2>
+  <div class="row">
+    <div class="editor-card">
+      <div class="q-head">
+        <span class="grip">⋮⋮</span>
+        <span class="qname">Blocked sidewalks</span>
+        <span class="badge geo">Geo Point</span>
+        <span class="badge req">Required</span>
+        <span class="q-tools">✎ ⧉ 🗑</span>
+      </div>
+      <p class="q-sub">↳ 2 sub-questions · How often? · What blocks it?</p>
+
+      <div class="settings-row">
+        <label>Places per respondent:</label>
+        <div class="num-wrap">
+          <label for="minF">min</label>
+          <input id="minF" type="number" value="1" min="0" max="99">
+        </div>
+        <div class="num-wrap">
+          <label for="maxF">max</label>
+          <input id="maxF" type="number" value="5" min="1" max="99">
+        </div>
+        <p class="settings-note">Respondents see “<b><span id="noteLive">0 of 5 marked</span></b>” and add up to
+        the max on this single question. Empty max = unlimited; max = 1 keeps the old single-pin look.
+        Export stays one GeoJSON layer either way.</p>
+      </div>
+    </div>
+
+    <div class="editor-card">
+      <div class="q-head">
+        <span class="grip">⋮⋮</span>
+        <span class="qname">Mark the 2nd location</span>
+        <span class="badge geo">Geo Point</span>
+        <span class="q-tools">✎ ⧉ 🗑</span>
+      </div>
+      <div class="callout warn">
+        <span>⚠️</span>
+        <div>
+          <b>Looks like a copy of “Mark the 1st location”.</b><br>
+          One geo question already accepts several pins — respondents can mark
+          all 5 spots on it, and your export stays a single clean layer instead of 5.
+          <div class="actions">
+            <button class="merge">Merge into one question (max = 5)</button>
+            <button class="dismiss">Keep separate</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout ok" style="margin-top:18px;">
+        <span>✅</span>
+        <div>
+          <b>Does not fire here:</b> “Places where you do sport” + “Places where you attend events”.
+          Same type, different meaning → different layers, which is a legitimate design.
+          The detector only fires when the names differ <i>solely</i> by a number
+          (“1st/2nd”, “n°1/n°2”, “(1)/(2)”).
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  var LIST_COLLAPSE_AT = 3;
+
+  // A section holds several geo questions. Everything below is per question.
+  var QUESTIONS = [
+    {
+      id: 'q1', geom: 'point', color: '#ef4444',
+      title: 'Blocked sidewalks',
+      sub: 'Click on the map for each spot where parked cars block the pavement.',
+      addTitle: '＋ Add another blocked spot',
+      min: 1, max: 5, noun: 'spot',
+      subq: [
+        { label: 'How often is it blocked?', options: ['Daily', 'Weekly', 'Rarely'] },
+        { label: 'What blocks it?', options: ['Car on curb', 'Van / truck', 'Motorbike'] }
+      ]
+    },
+    {
+      id: 'q2', geom: 'point', color: '#0ea5e9',
+      title: 'Crossings that feel unsafe',
+      sub: 'Optional — mark as many crossings as you want.',
+      addTitle: '＋ Add another crossing',
+      min: 0, max: null, noun: 'crossing',
+      subq: [
+        { label: 'How unsafe does it feel?', options: ['1', '2', '3', '4', '5'] }
+      ]
+    },
+    {
+      id: 'q3', geom: 'polygon', color: '#8b5cf6',
+      title: 'The area you consider your neighbourhood',
+      sub: 'Draw one area on the map.',
+      addTitle: 'Draw the area',
+      min: 0, max: 1, noun: 'area',
+      subq: []
+    }
+  ];
+  var Q = {};
+  QUESTIONS.forEach(function (q) { Q[q.id] = q; });
+
+  var features = {};   // fid -> {qid, x, y, el, liEl, answers, saved}
+  var seq = 0;
+  var armedQid = null;
+  var openFid = null;
+
+  var map = document.getElementById('map');
+  var legend = document.getElementById('legend');
+  var mapHint = map.querySelector('.map-hint');
+  var hintSwatch = document.getElementById('hintSwatch');
+  var hintText = document.getElementById('hintText');
+  var hintStop = document.getElementById('hintStop');
+  var popup = document.getElementById('popup');
+  var popupTitle = document.getElementById('popupTitle');
+  var popupSwatch = document.getElementById('popupSwatch');
+  var popupQuestion = document.getElementById('popupQuestion');
+  var popupBody = document.getElementById('popupBody');
+  var popupSave = document.getElementById('popupSave');
+  var popupDelete = document.getElementById('popupDelete');
+
+  /* ---------- small DOM helpers (no innerHTML) ---------- */
+  function svgEl(tag, attrs) {
+    var el = document.createElementNS(SVG_NS, tag);
+    Object.keys(attrs).forEach(function (k) { el.setAttribute(k, attrs[k]); });
+    return el;
+  }
+  function pinSvg(size, color, label) {
+    var svg = svgEl('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none' });
+    svg.appendChild(svgEl('path', { d: 'M12 22s-7.5-6.5-7.5-11.5a7.5 7.5 0 1 1 15 0C19.5 15.5 12 22 12 22z', fill: color }));
+    svg.appendChild(svgEl('circle', { cx: 12, cy: 10.5, r: 3.4, fill: '#fff' }));
+    if (label !== null) {   // '' still creates the node — renumber() fills it in
+      var t = svgEl('text', { x: 12, y: 12.6, 'text-anchor': 'middle', 'font-size': 6.2, 'font-weight': 700, fill: color });
+      t.textContent = label;
+      svg.appendChild(t);
+    }
+    return svg;
+  }
+  function polySvg(size, color) {
+    var svg = svgEl('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none' });
+    svg.appendChild(svgEl('path', {
+      d: 'M4 8l7-4 9 3-2 9-8 3-6-5z', fill: color, 'fill-opacity': 0.25,
+      stroke: color, 'stroke-width': 1.8, 'stroke-linejoin': 'round'
+    }));
+    return svg;
+  }
+  function glyph(size, q, label) {
+    return q.geom === 'polygon' ? polySvg(size, q.color) : pinSvg(size, q.color, label);
+  }
+
+  /* ---------- per-question block wiring ---------- */
+  var blocks = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.geo-block'), function (block) {
+    var qid = block.getAttribute('data-q');
+    var q = Q[qid];
+    var r = {};
+    ['btn', 'icon', 'title', 'sub', 'chip', 'progress', 'ptext', 'pfill', 'list', 'more', 'hint'].forEach(function (name) {
+      r[name] = block.querySelector('[data-role="' + name + '"]');
+    });
+    r.block = block;
+    r.expanded = false;
+    blocks[qid] = r;
+
+    r.icon.style.background = q.color + '15';
+    r.icon.appendChild(glyph(24, q, null));
+    r.chip.style.background = q.color;
+    r.pfill.style.background = q.color;
+    r.hint.querySelector('span').textContent = q.max === 1
+      ? 'This question takes a single area.'
+      : 'You can mark several — after you save one, drawing continues automatically.';
+
+    r.btn.addEventListener('click', function () {
+      if (r.btn.disabled) return;
+      armedQid === qid ? disarm() : arm(qid);
+    });
+    r.more.addEventListener('click', function () {
+      r.expanded = !r.expanded;
+      renderQuestion(qid);
+    });
+  });
+
+  function featuresOf(qid) {
+    return Object.keys(features)
+      .filter(function (fid) { return features[fid].qid === qid; })
+      .sort(function (a, b) { return a - b; });
+  }
+
+  /* ---------- arming: only ONE question at a time ---------- */
+  function arm(qid) {
+    armedQid = qid;
+    map.classList.add('armed');
+    map.classList.remove('busy');
+    var q = Q[qid];
+    hintSwatch.style.background = q.color;
+    hintText.textContent = q.geom === 'polygon'
+      ? 'Drawing area for: ' + q.title
+      : 'Placing pins for: ' + q.title;
+    renderAll();
+  }
+  function disarm() {
+    armedQid = null;
+    map.classList.remove('armed');
+    if (openFid === null) map.classList.remove('busy');
+    renderAll();
+  }
+  hintStop.addEventListener('click', function (e) { e.stopPropagation(); disarm(); });
+  // Legend and popup sit INSIDE the map. Without this, clicking "Save" re-arms the
+  // question and the same click then bubbles to the map and drops a stray feature.
+  legend.addEventListener('click', function (e) { e.stopPropagation(); });
+  popup.addEventListener('click', function (e) { e.stopPropagation(); });
+
+  map.addEventListener('click', function (e) {
+    if (openFid !== null) return;                 // popup is modal for the map
+    if (!armedQid) return;
+    var q = Q[armedQid];
+    if (q.max !== null && featuresOf(armedQid).length >= q.max) return;
+    var r = map.getBoundingClientRect();
+    addFeature(armedQid, e.clientX - r.left, e.clientY - r.top);
+  });
+
+  /* ---------- features ---------- */
+  function addFeature(qid, x, y) {
+    var q = Q[qid];
+    var fid = ++seq;
+
+    var el = document.createElement('div');
+    if (q.geom === 'polygon') {
+      el.className = 'area';
+      el.style.background = q.color + '33';
+      el.style.border = '2px solid ' + q.color;
+    } else {
+      el.className = 'pin';
+      el.appendChild(pinSvg(30, q.color, ''));
+    }
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      if (openFid === null) openPopup(fid);
+    });
+    map.appendChild(el);
+
+    var li = document.createElement('li');
+    var dot = document.createElement('span');
+    dot.className = 'dot';
+    dot.appendChild(glyph(16, q, null));
+    var flabel = document.createElement('span');
+    flabel.className = 'flabel';
+    var fattrs = document.createElement('span');
+    fattrs.className = 'fattrs';
+    flabel.appendChild(fattrs);
+    var fdel = document.createElement('button');
+    fdel.className = 'fdel';
+    fdel.title = 'Remove';
+    fdel.textContent = '✕';
+    fdel.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      if (openFid === fid) closePopup();
+      removeFeature(fid);
+    });
+    li.appendChild(dot); li.appendChild(flabel); li.appendChild(fdel);
+    li.addEventListener('click', function () { if (openFid === null) openPopup(fid); });
+
+    features[fid] = { qid: qid, x: x, y: y, el: el, liEl: li, answers: {}, saved: false };
+
+    if (q.subq.length === 0) {
+      // no sub-questions → nothing to fill in, the feature is done on placement
+      features[fid].saved = true;
+      renderAll();
+      if (q.max !== null && featuresOf(qid).length >= q.max) disarm();
+    } else {
+      renderAll();
+      openPopup(fid);
+    }
+  }
+
+  function removeFeature(fid) {
+    var f = features[fid];
+    if (!f) return;
+    f.el.remove();
+    f.liEl.remove();
+    delete features[fid];
+    renderAll();
+  }
+
+  /* ---------- popup: the sub-questions of THAT question ---------- */
+  function openPopup(fid) {
+    var f = features[fid];
+    var q = Q[f.qid];
+    openFid = fid;
+    map.classList.add('busy');
+    map.classList.remove('armed');
+
+    popupSwatch.style.background = q.color;
+    popupTitle.textContent = capitalize(q.noun) + ' ' + (featuresOf(f.qid).indexOf(String(fid)) + 1);
+    popupQuestion.textContent = q.title;
+    while (popupBody.firstChild) popupBody.removeChild(popupBody.firstChild);
+    q.subq.forEach(function (sq, i) {
+      var wrap = document.createElement('div');
+      wrap.className = 'subq';
+      var lab = document.createElement('p');
+      lab.className = 'subq-label';
+      lab.textContent = sq.label;
+      var group = document.createElement('div');
+      group.className = 'chip-group';
+      sq.options.forEach(function (opt) {
+        var c = document.createElement('button');
+        c.type = 'button';
+        c.className = 'chip' + (f.answers[i] === opt ? ' selected' : '');
+        c.textContent = opt;
+        c.addEventListener('click', function () {
+          f.answers[i] = opt;
+          Array.prototype.forEach.call(group.querySelectorAll('.chip'), function (o) {
+            o.classList.toggle('selected', o === c);
+          });
+          popupSave.disabled = !allAnswered(fid);
+        });
+        group.appendChild(c);
+      });
+      wrap.appendChild(lab); wrap.appendChild(group);
+      popupBody.appendChild(wrap);
+    });
+
+    popupSave.disabled = !allAnswered(fid);
+    popup.style.left = f.x + 'px';
+    popup.style.top = f.y + 'px';
+    popup.classList.add('open');
+    renderAll();
+  }
+
+  function allAnswered(fid) {
+    var f = features[fid];
+    return Q[f.qid].subq.every(function (sq, i) { return f.answers[i]; });
+  }
+
+  function closePopup() {
+    openFid = null;
+    popup.classList.remove('open');
+    map.classList.remove('busy');
+  }
+
+  popupSave.addEventListener('click', function () {
+    var fid = openFid, f = features[fid], q = Q[f.qid];
+    f.saved = true;
+    closePopup();
+    // re-arm THIS question, so drawing continues where the respondent was
+    if (q.max === null || featuresOf(f.qid).length < q.max) arm(f.qid);
+    else renderAll();
+  });
+  popupDelete.addEventListener('click', function () {
+    var fid = openFid;
+    closePopup();
+    removeFeature(fid);
+  });
+
+  /* ---------- rendering ---------- */
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  function renderQuestion(qid) {
+    var q = Q[qid], r = blocks[qid];
+    var ids = featuresOf(qid);
+    var n = ids.length;
+    var armedHere = armedQid === qid;
+    var busyHere = openFid !== null && features[openFid].qid === qid;
+    var atMax = q.max !== null && n >= q.max;
+    var single = q.max === 1;
+
+    // counter chip — pointless on a single-feature question
+    r.chip.textContent = n;
+    r.chip.classList.toggle('visible', !single && n > 0);
+
+    // progress — only when the creator constrained the count
+    var showProgress = !single && (q.max !== null || q.min > 0);
+    r.progress.classList.toggle('visible', showProgress);
+    if (showProgress) {
+      var cap = q.max !== null ? q.max : Math.max(n, q.min, 1);
+      r.pfill.style.width = Math.min(100, n / cap * 100) + '%';
+      r.pfill.style.background = n >= q.min ? '#22c55e' : q.color;
+      if (q.max !== null && n >= q.max) r.ptext.textContent = 'All ' + q.max + ' marked — thank you!';
+      else if (q.max !== null) r.ptext.textContent = n + ' of ' + q.max + ' marked' + (n < q.min ? ' · at least ' + q.min + ' required' : '');
+      else r.ptext.textContent = n + ' marked';
+    }
+
+    // button copy reflects this question's own state
+    if (busyHere) {
+      r.btn.disabled = true;
+      r.title.textContent = 'Describe this ' + q.noun;
+      r.sub.textContent = 'Answer the questions in the popup, then Save.';
+    } else if (openFid !== null) {
+      r.btn.disabled = true;                       // another question's popup is open
+      r.title.textContent = q.title;
+      r.sub.textContent = q.sub;
+    } else if (atMax) {
+      r.btn.disabled = true;
+      r.title.textContent = single ? q.title : 'Maximum reached';
+      r.sub.textContent = single
+        ? 'Area drawn — remove it below to draw a different one.'
+        : 'Remove one below if you want to change it.';
+    } else {
+      r.btn.disabled = false;
+      r.title.textContent = n === 0 ? q.title : q.addTitle;
+      if (armedHere) r.sub.textContent = q.geom === 'polygon' ? 'Now draw on the map…' : 'Now click the map…';
+      else if (n === 0) r.sub.textContent = q.sub;
+      else if (q.max !== null) r.sub.textContent = 'Optional — up to ' + (q.max - n) + ' more.';
+      else r.sub.textContent = 'Optional — add as many as you like.';
+    }
+    r.btn.classList.toggle('armed', armedHere);
+    r.hint.style.display = n === 0 && !armedHere ? 'flex' : 'none';
+
+    // list, collapsed past LIST_COLLAPSE_AT
+    var visible = r.expanded ? ids.length : Math.min(ids.length, LIST_COLLAPSE_AT);
+    ids.forEach(function (fid, i) {
+      var f = features[fid];
+      if (f.liEl.parentNode !== r.list) r.list.appendChild(f.liEl);
+      f.liEl.style.display = i < visible ? 'flex' : 'none';
+      f.liEl.classList.toggle('pending', !f.saved);
+      var flabel = f.liEl.querySelector('.flabel');
+      var fattrs = f.liEl.querySelector('.fattrs');
+      while (flabel.firstChild !== fattrs) flabel.removeChild(flabel.firstChild);
+      flabel.insertBefore(document.createTextNode(capitalize(q.noun) + ' ' + (i + 1) + ' '), fattrs);
+      var vals = q.subq.map(function (sq, si) { return f.answers[si]; }).filter(Boolean);
+      fattrs.textContent = !f.saved ? '· filling in…' : (vals.length ? '· ' + vals.join(' · ') : '');
+      var t = f.el.querySelector('text');
+      if (t) t.textContent = i + 1;
+      f.el.classList.toggle('dim', armedQid !== null && armedQid !== qid);
+    });
+    r.more.classList.toggle('visible', ids.length > LIST_COLLAPSE_AT);
+    r.more.textContent = r.expanded
+      ? '▴ Show fewer'
+      : '▾ Show all ' + ids.length + ' ' + q.noun + 's';
+  }
+
+  function renderLegend() {
+    while (legend.childNodes.length > 1) legend.removeChild(legend.lastChild);
+    QUESTIONS.forEach(function (q) {
+      var n = featuresOf(q.id).length;
+      var row = document.createElement('div');
+      row.className = 'lrow' + (n === 0 ? ' empty' : '');
+      var sw = document.createElement('span');
+      sw.className = 'lsw';
+      sw.style.background = q.color;
+      if (q.geom === 'polygon') { sw.style.borderRadius = '3px'; sw.style.opacity = '0.55'; }
+      var txt = document.createElement('span');
+      txt.textContent = q.title + ' · ' + n;
+      row.appendChild(sw); row.appendChild(txt);
+      legend.appendChild(row);
+    });
+  }
+
+  function renderAll() {
+    QUESTIONS.forEach(function (q) { renderQuestion(q.id); });
+    renderLegend();
+  }
+
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    closePopup();
+    Object.keys(features).forEach(function (fid) {
+      features[fid].el.remove();
+      features[fid].liEl.remove();
+    });
+    features = {}; seq = 0;
+    Object.keys(blocks).forEach(function (qid) { blocks[qid].expanded = false; });
+    disarm();
+  });
+
+  // Part B: live note follows the max input
+  var maxInput = document.getElementById('maxF');
+  var noteLive = document.getElementById('noteLive');
+  maxInput.addEventListener('input', function () {
+    noteLive.textContent = '0 of ' + (maxInput.value || '∞') + ' marked';
+  });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
