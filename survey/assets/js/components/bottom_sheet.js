@@ -19,10 +19,27 @@
 
     function panel() { return document.getElementById('info_page'); }
 
+    // "half" fits the content (owner review: a short section should be fully
+    // visible, like the legacy full-height panel showed it) — clamped so the
+    // map always keeps at least 15% of the screen and the sheet never opens
+    // smaller than 35%.
+    function fittedHalfPx(p) {
+        // scrollHeight of a TALL element reports the element, not the content —
+        // collapse for a beat (same frame, no paint in between) to measure the
+        // real content height.
+        var prev = p.style.height;
+        p.style.height = '0px';
+        var content = p.scrollHeight;
+        p.style.height = prev;
+        var vh = window.innerHeight;
+        return Math.round(Math.min(Math.max(content + 8, vh * 0.35), vh * 0.85));
+    }
+
     function setDetent(name) {
         var p = panel();
         if (!p) return;
         p.setAttribute('data-detent', name);
+        p.style.height = name === 'half' ? fittedHalfPx(p) + 'px' : '';
         p.classList.remove('hidden');
         DETENTS.forEach(function (d) {
             document.body.classList.toggle('sheet-at-' + d, d === name);
@@ -85,6 +102,14 @@
         };
 
         if (sheetMode()) setDetent('half');
+
+        // Section content arrives/changes via htmx — re-fit the open sheet.
+        document.body.addEventListener('htmx:afterSettle', function () {
+            if (sheetMode() && currentDetent() === 'half') setDetent('half');
+        });
+        window.addEventListener('resize', function () {
+            if (sheetMode() && currentDetent() === 'half') setDetent('half');
+        });
 
         // Crossing the breakpoint (rotation, resize): reset whichever chrome
         // becomes active so neither mode inherits the other's state.
