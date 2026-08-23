@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('survey', '0053_formatted_text_body_unbounded'),
+        ('survey', '0054_formatted_text_body_unbounded'),
     ]
 
     operations = [

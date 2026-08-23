@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('survey', '0052_fold_primary_language_translations'),
+        ('survey', '0053_choice_dropdown_display_style'),
     ]
 
     operations = [
