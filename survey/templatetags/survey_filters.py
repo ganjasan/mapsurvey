@@ -74,3 +74,16 @@ def lint_tooltip(lint_list):
     if not lint_list:
         return ''
     return '; '.join(LINT_DESCRIPTIONS.get(code, code) for code in lint_list)
+
+
+@register.filter
+def input_type_label(question):
+    """Presentation label for a question's type.
+
+    The model's choice labels are storage-era names ("HTML"); the type picker
+    overrides some of them for creators ("Formatted Text"). Every creator-facing
+    surface must show the picker's name, or the same block gets two names.
+    """
+    from survey.question_types import PICKER_TYPES
+    meta = PICKER_TYPES.get(question.input_type) or {}
+    return meta.get('label') or question.get_input_type_display()

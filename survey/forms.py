@@ -38,6 +38,26 @@ class HTMLField(forms.Field):
         return attrs
 
 
+class ChoiceDropdownWidget(widgets.Select):
+    """Searchable dropdown for choice questions with many options.
+
+    The real form control stays a native <select> (hidden), so validation and
+    the submitted value are identical to the radio rendering. The visible part
+    is a search input plus a filterable option list.
+    """
+    template_name = 'choice_dropdown.html'
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        selected_label = ''
+        for _, group_choices, _ in context['widget']['optgroups']:
+            for option in group_choices:
+                if option['selected']:
+                    selected_label = option['label']
+        context['widget']['selected_label'] = selected_label
+        return context
+
+
 class RangeWidget(widgets.Input):
     """Range input with tick marks and min/max labels."""
     input_type = 'range'
@@ -104,6 +124,8 @@ class LeafletDrawButtonWidget(widgets.Widget):
         context['widget']['icon_class'] = context['widget']['attrs']['icon_class']
         context['widget']['draw_icon_class'] = context['widget']['attrs']['draw_icon_class']
         context['widget']['required'] = context['widget']['required']
+        context['widget']['min_features'] = context['widget']['attrs'].get('min_features', '')
+        context['widget']['max_features'] = context['widget']['attrs'].get('max_features', '')
         return context
 
 class PointDrawButtonWidget(LeafletDrawButtonWidget):
@@ -137,12 +159,14 @@ class ShowImageWidget(widgets.Widget):
         return context
 
 class LeafletDrawButtonField(forms.Field):
-    def __init__(self,*, title, subtitle, color, icon_class, draw_icon_class, **kwargs):
+    def __init__(self,*, title, subtitle, color, icon_class, draw_icon_class, min_features=None, max_features=None, **kwargs):
         self.title = title
         self.subtitle = subtitle
         self.color = color
         self.icon_class = icon_class
         self.draw_icon_class = draw_icon_class
+        self.min_features = min_features
+        self.max_features = max_features
 
         super().__init__(**kwargs)
 
@@ -153,6 +177,10 @@ class LeafletDrawButtonField(forms.Field):
         attrs['color'] = self.color
         attrs['icon_class'] = self.icon_class
         attrs['draw_icon_class'] = self.draw_icon_class
+        if self.min_features is not None:
+            attrs['min_features'] = self.min_features
+        if self.max_features is not None:
+            attrs['max_features'] = self.max_features
 
         return attrs
 
@@ -231,10 +259,17 @@ class SurveySectionAnswerForm(forms.Form):
     # list and is deliberately out again: a range is the slider — a labelled
     # discrete scale is what `rating` is for. Stored display_style values on
     # range questions are ignored, not rewritten.
-    DISPLAY_STYLE_TYPES = ('rating',)
+    DISPLAY_STYLE_TYPES = ('rating', 'choice')
 
     # Styles that lay out one element per choice, and so need choices to exist.
     CHOICE_BASED_STYLES = ('scale_strip', 'list_pips', 'stars')
+
+    # Styles valid per input type. A value stored on any other type (or an
+    # unknown value) resolves to the type's plain rendering.
+    STYLES_BY_TYPE = {
+        'rating': CHOICE_BASED_STYLES,
+        'choice': ('dropdown',),
+    }
 
     @classmethod
     def resolve_display_style(cls, question, survey_rating_style):
@@ -246,8 +281,11 @@ class SurveySectionAnswerForm(forms.Form):
         if question.input_type not in cls.DISPLAY_STYLE_TYPES:
             return 'default'
 
-        chosen = question.display_style if question.display_style in cls.CHOICE_BASED_STYLES else None
-        return chosen or survey_rating_style
+        allowed = cls.STYLES_BY_TYPE.get(question.input_type, ())
+        chosen = question.display_style if question.display_style in allowed else None
+        if question.input_type == 'rating':
+            return chosen or survey_rating_style
+        return chosen or 'default'
 
     @classmethod
     def _get_form_from_input_type(cls, input_type, required, question, label, sublabel, color, icon_class, image_source, language=None, display_style='default'):
@@ -263,7 +301,8 @@ class SurveySectionAnswerForm(forms.Form):
 
         elif input_type == 'choice':
             choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
-            return forms.ChoiceField(widget=forms.RadioSelect, choices=choices, label=label, required=required)
+            widget = ChoiceDropdownWidget if display_style == 'dropdown' else forms.RadioSelect
+            return forms.ChoiceField(widget=widget, choices=choices, label=label, required=required)
 
         elif input_type == 'multichoice':
             choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
@@ -284,15 +323,18 @@ class SurveySectionAnswerForm(forms.Form):
 
         elif input_type == 'point':
             draw_icon_class = icon_class if icon_class else "fas fa-map-marker-alt"
-            return LeafletDrawButtonField(widget=PointDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required)
+            vs = question.validation_settings or {}
+            return LeafletDrawButtonField(widget=PointDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required, min_features=vs.get('min_features'), max_features=vs.get('max_features'))
 
         elif input_type == 'line':
             draw_icon_class = icon_class if icon_class else "fas fa-route"
-            return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required)
+            vs = question.validation_settings or {}
+            return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required, min_features=vs.get('min_features'), max_features=vs.get('max_features'))
 
         elif input_type == 'polygon':
             draw_icon_class = icon_class if icon_class else "fas fa-draw-polygon"
-            return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required)
+            vs = question.validation_settings or {}
+            return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required, min_features=vs.get('min_features'), max_features=vs.get('max_features'))
 
         elif input_type == 'image':
             return ShowImageField(widget=ShowImageWidget, label=False, image_source=image_source,

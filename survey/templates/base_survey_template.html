@@ -398,6 +398,7 @@ locale.{% endcomment %}
         hideCrosshair();
         toggleInfo(true);
         currentQ = null;
+        refreshGeoQuestionUI();
     });
 
     // --- Helpers ---
@@ -428,6 +429,83 @@ locale.{% endcomment %}
             icon: btn.attr('data-icon') || 'fas fa-map-marker-alt'
         };
     }
+
+    // --- Multi-feature geo question UI ---
+    // One geo question accepts many features; the counter chip, the subtitle
+    // invitation and the in-button progress make that visible per question.
+    // All counts derive from editableLayers — no second state. Editing or
+    // deleting a placed feature happens through its popup on the map.
+    function _fmt(tpl, vars) {
+        return tpl.replace(/\{(\w+)\}/g, function(m, k) {
+            return vars[k] !== undefined ? vars[k] : m;
+        });
+    }
+
+    function _geoLayersFor(qid) {
+        var layers = [];
+        editableLayers.eachLayer(function(l) {
+            if (l.feature && l.feature.properties && l.feature.properties.question_id === qid) layers.push(l);
+        });
+        return layers;
+    }
+
+    function refreshGeoQuestionUI() {
+        $('#info_page .geo-block').each(function() {
+            var $block = $(this);
+            var $btn = $block.find('button.drawbutton');
+            var qid = $btn.attr('name');
+            var layers = _geoLayersFor(qid);
+            var n = layers.length;
+            var min = parseInt($btn.attr('data-min-features'), 10) || 0;
+            var max = parseInt($btn.attr('data-max-features'), 10) || 0;   // 0 = unlimited
+            var single = max === 1;
+            var atMax = max > 0 && n >= max;
+            var origSubtitle = $btn.attr('data-orig-subtitle') || '';
+
+            // Counter chip — pointless on a single-feature question
+            $btn.find('.geo-count').text(n).toggleClass('visible', !single && n > 0);
+
+            // Armed highlight
+            $btn.toggleClass('geo-armed', currentQ === qid);
+
+            // Button copy + disabled state. The title is NEVER replaced — it is
+            // the only thing distinguishing several geo questions in a section;
+            // the multi-feature state lives in the chip and the subtitle.
+            var $subtitle = $btn.find('.geo-question-subtitle');
+            if (atMax) {
+                $btn.prop('disabled', true);
+                if ($subtitle.length && !single) $subtitle.text(i18n.maximumReachedHint);
+            } else {
+                $btn.prop('disabled', false);
+                if (n === 0 || single) {
+                    // .html(), not .text(): the creator's subtitle is sanitized
+                    // rich text now, and .text() would print its tags.
+                    if ($subtitle.length) $subtitle.html(origSubtitle);
+                } else if ($subtitle.length) {
+                    $subtitle.text('＋ ' + i18n.addAnother +
+                        (max > 0 ? ' — ' + _fmt(i18n.upToNMore, {n: max - n}) : ''));
+                }
+            }
+
+            // Progress — inside the button, only when the creator constrained
+            // the count (it must be obvious WHICH question it belongs to)
+            var $progress = $btn.find('.geo-progress');
+            var showProgress = !single && (max > 0 || min > 0);
+            $progress.toggleClass('visible', showProgress);
+            if (showProgress) {
+                var text;
+                if (max > 0 && n >= max) text = _fmt(i18n.allMarkedThanks, {m: max});
+                else if (max > 0) text = _fmt(i18n.nOfMMarked, {n: n, m: max});
+                else text = _fmt(i18n.nMarked, {n: n});
+                if (n < min) text += ' · ' + _fmt(i18n.atLeastNRequired, {n: min});
+                $progress.find('.geo-progress-text').text(text);
+                var cap = max > 0 ? max : Math.max(n, min, 1);
+                $progress.find('.geo-progress-bar > div').css('width', Math.min(100, n / cap * 100) + '%');
+                $progress.toggleClass('geo-progress-met', n >= min);
+            }
+        });
+    }
+
 
     // --- Basemap switching ---
     function switchBasemap(slug) {
@@ -469,9 +547,11 @@ locale.{% endcomment %}
 
         if (sqHtml) {
             layer.openPopup();
+            refreshGeoQuestionUI();
         } else {
             toggleInfo(true);
             currentQ = null;
+            refreshGeoQuestionUI();
         }
     });
 
@@ -509,6 +589,7 @@ locale.{% endcomment %}
             editableLayers.removeLayer(tempLayer);
             toggleInfo(true);
             currentQ = null;
+            refreshGeoQuestionUI();
         })
 
         $popup.find("button.layer-edit").click(function(){
@@ -538,6 +619,7 @@ locale.{% endcomment %}
             tempLayer.closePopup();
             toggleInfo(true);
             currentQ = null;
+            refreshGeoQuestionUI();
         })
     }
 
@@ -549,6 +631,7 @@ locale.{% endcomment %}
             tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
         }
         toggleInfo(true);
+        refreshGeoQuestionUI();
     }
 
     // --- Restore geo answers from server data ---
@@ -596,6 +679,7 @@ locale.{% endcomment %}
                 }
             }
         }
+        refreshGeoQuestionUI();
     }
 
     // --- Event tracking ---
@@ -711,6 +795,16 @@ locale.{% endcomment %}
                 }
             });
 
+            // 3) geo questions below their min_features (forward-only, like required)
+            $('#info_page button.drawbutton[data-min-features]').each(function() {
+                var $btn = $(this);
+                var min = parseInt($btn.attr('data-min-features'), 10) || 0;
+                if (min > 0 && _geoLayersFor($btn.attr('name')).length < min) {
+                    $btn.addClass('is-required-invalid');
+                    if (!firstInvalid) firstInvalid = $btn.get(0);
+                }
+            });
+
             if (firstInvalid) {
                 // preventDefault() is what actually aborts the HTMX request;
                 // detail.cancel alone is NOT honoured by htmx:configRequest.
@@ -753,6 +847,7 @@ locale.{% endcomment %}
         currentQ = $(this).attr('name');
         drawMinVertices = 3;
         showDrawbar('draw');
+        refreshGeoQuestionUI();
     });
 
     $(document).on('click', '.drawline', function() {
@@ -764,6 +859,7 @@ locale.{% endcomment %}
         currentQ = $(this).attr('name');
         drawMinVertices = 2;
         showDrawbar('draw');
+        refreshGeoQuestionUI();
     });
 
     $(document).on('click', '.drawpoint', function() {
@@ -773,6 +869,7 @@ locale.{% endcomment %}
         currentQ = $(this).attr('name');
         showButton.style.visibility = "hidden";
         showCrosshair(color, icon);
+        refreshGeoQuestionUI();
     });
 
     // --- Draw action bar buttons ---
@@ -781,6 +878,7 @@ locale.{% endcomment %}
         hideDrawbar();
         toggleInfo(true);
         currentQ = null;
+        refreshGeoQuestionUI();
     });
 
     $('#draw-finish').click(function() {
@@ -861,6 +959,7 @@ locale.{% endcomment %}
         var geoEl = document.getElementById('geo-answers-data');
         var existingGeoAnswers = geoEl ? JSON.parse(geoEl.textContent) : {};
         restoreGeoAnswers(existingGeoAnswers);
+        refreshGeoQuestionUI();
 
         // 6b. Rating scale-strip: show chip for pre-checked radios (back navigation)
         syncRatingChips();

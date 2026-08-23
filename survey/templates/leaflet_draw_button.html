@@ -1,13 +1,23 @@
-<div>
-	<button name = "{{ widget.name }}" type="button" class="drawbutton {{ widget.draw_type }}" draw-type="{{widget.draw_type}}" data-color="{{widget.color}}" data-icon="{{widget.icon_class}}" >
+<div class="geo-block" data-question="{{ widget.name }}">
+	<button name = "{{ widget.name }}" type="button" class="drawbutton {{ widget.draw_type }}" draw-type="{{widget.draw_type}}" data-color="{{widget.color}}" data-icon="{{widget.icon_class}}"
+		data-orig-subtitle="{{ widget.subtitle }}"
+		{% if widget.min_features %}data-min-features="{{ widget.min_features }}"{% endif %}
+		{% if widget.max_features %}data-max-features="{{ widget.max_features }}"{% endif %} >
 		<div class="geo-question">
 			<div class="geo-question-icon" style="background: {{ widget.color }}15;">
 				<i class="{{ widget.draw_icon_class }}" style="font-size:22px; color: {{ widget.color }}"></i>
 			</div>
 			<div class="geo-question-text">
 				<p class="geo-question-title">{{ widget.title }}</p>
-				{% if widget.subtitle %}<p class="geo-question-subtitle">{{widget.subtitle}}</p>{% endif %}
+				{# Always rendered: the "add another" invitation lands here even when the creator wrote no subtext #}
+				<p class="geo-question-subtitle">{{ widget.subtitle|default:""|safe }}</p>
+				{# Progress lives inside the button so it is unambiguous which question it belongs to; JS shows it only when min/max is set #}
+				<div class="geo-progress">
+					<span class="geo-progress-text"></span>
+					<div class="geo-progress-bar"><div style="background: {{ widget.color }};"></div></div>
+				</div>
 			</div>
+			<span class="geo-count" style="background: {{ widget.color }};"></span>
 		</div>
 	</button>
 	<input type="text" name="{{ widget.name }}" hidden class="geo-inp" {% if widget.required %}data-required="true"{% endif %}>

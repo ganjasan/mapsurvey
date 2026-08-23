@@ -1,5 +1,6 @@
 from django import forms
 from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP_CHOICES
+from .html_sanitize import coerce_creator_html
 
 SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon')
 
@@ -161,6 +162,11 @@ class SurveySectionForm(forms.ModelForm):
             'code': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 8}),
         }
 
+    def clean_subheading(self):
+        # Rendered |safe on the section page — and was already, before it had an
+        # editor, which is the hole this closes.
+        return coerce_creator_html(self.cleaned_data.get('subheading'))
+
 
 class QuestionForm(forms.ModelForm):
     class Meta:
@@ -196,3 +202,19 @@ class QuestionForm(forms.ModelForm):
 
     def clean_display_style(self):
         return self.cleaned_data.get('display_style') or 'default'
+
+    def clean(self):
+        cleaned = super().clean()
+        # Subtext is rich text for every type now — the block body for `html`,
+        # a formatted helper line for the rest — and all of it renders |safe to
+        # respondents. This is the one place all three question-saving views
+        # pass through, so the allow-list belongs here.
+        cleaned['subtext'] = coerce_creator_html(cleaned.get('subtext'))
+        style = cleaned.get('display_style') or 'default'
+        input_type = cleaned.get('input_type')
+        if input_type == 'choice':
+            if style not in ('default', 'dropdown'):
+                cleaned['display_style'] = 'default'
+        elif style == 'dropdown':
+            cleaned['display_style'] = 'default'
+        return cleaned

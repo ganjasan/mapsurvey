@@ -6,8 +6,13 @@
     }
     .qtp-body-cols { display: flex; gap: 1.25rem; align-items: flex-start; }
     .qtp-form-col { flex: 1 1 auto; min-width: 0; }
+    /* The column itself is a transparent stack; each section (preview, tips,
+       type example) is its own card so they read as separate things. */
     .qtp-preview-col {
         flex: 0 0 340px; position: sticky; top: 0;
+        display: flex; flex-direction: column; gap: 12px;
+    }
+    .qtp-pv-card {
         display: flex; flex-direction: column;
         background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px;
     }
@@ -17,6 +22,12 @@
         text-transform: uppercase; color: #6b7280; margin-bottom: 8px;
     }
     .qtp-pv-note { font-size: 0.7rem; color: #9aa0a6; margin-top: 8px; }
+    .qtp-tips-list {
+        margin: 0; padding-left: 1.1rem;
+        font-size: 0.76rem; line-height: 1.45; color: #495057;
+    }
+    .qtp-tips-list li { margin-bottom: 7px; }
+    .qtp-tips-list li:last-child { margin-bottom: 0; }
 
     /* Type picker card grid */
     .qtp-group-caption {
@@ -40,9 +51,6 @@
     .qtp-hint-line { font-size: 0.75rem; color: #6c757d; margin-top: 6px; min-height: 1em; }
 
     /* Hover flyout with a canned example */
-    .qtp-flyout {
-        margin-top: 12px;
-    }
     .qtp-flyout-hint { font-size: 0.7rem; color: #868e96; margin-bottom: 8px; }
     .qtp-example-frame {
         width: 100%; height: 190px; border: 1px solid #dee2e6; border-radius: 8px;
@@ -77,6 +85,11 @@
     {% csrf_token %}
     <div class="modal-body qtp-body-cols">
         <div class="qtp-form-col">
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger py-1 px-2" style="font-size:0.8rem;">
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        </div>
+        {% endif %}
         {% for field in form %}
         {% if field.name == 'input_type' %}
         <div class="form-group" id="fg-input_type">
@@ -87,17 +100,22 @@
             <div class="qtp-hint-line" id="qtp-hint-line"></div>
             {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
         </div>
-        {% elif field.name != 'display_style' %}
+        {% elif field.name == 'name' or field.name == 'subtext' %}
         <div class="form-group" id="fg-{{ field.name }}">
-            {% if field.name == 'required' %}
-                <div class="form-check">
-                    {{ field }}
-                    <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                </div>
-            {% else %}
-                {# Base name/subtext hold the primary language; label it when translations exist. #}
-                <label for="{{ field.id_for_label }}">{{ field.label }}{% if survey.available_languages|length > 1 and field.name == 'name' or survey.available_languages|length > 1 and field.name == 'subtext' %} ({{ survey.available_languages.0|language_name }}){% endif %}</label>
-                {{ field }}
+            {# Base name/subtext hold the primary language; label it when translations exist. #}
+            <label for="{{ field.id_for_label }}">{{ field.label }}{% if survey.available_languages|length > 1 %} ({{ survey.available_languages.0|language_name }}){% endif %}</label>
+            {{ field }}
+            {% if field.name == 'subtext' %}
+            {% comment %}Subtext is rich text now (rendered |safe). The input above stays
+            the value the form posts; this is what the creator actually types into.{% endcomment %}
+            <div id="subtext-quill"></div>
+            {% endif %}
+            {% if field.name == 'name' %}
+            {% comment %}image and html never render their name to respondents (see the
+            question-subtext spec) — say so instead of letting "Name" read as a heading.{% endcomment %}
+            <small class="form-text text-muted" id="name-internal-hint" style="display:none;">
+                Editor-only label — respondents don't see it.
+            </small>
             {% endif %}
             {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text|safe }}</small>{% endif %}
             {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
@@ -105,24 +123,57 @@
         {% endif %}
         {% endfor %}
 
+        {% comment %}The Formatted Text block's body. It sits here, below the type picker,
+        because it is a type-scoped setting like the choices editor and the validation
+        fields — the whole lower half of this dialog is "settings for the type you picked".
+        The value still submits from the `subtext` input above, which is hidden for this
+        type.{% endcomment %}
+        <div class="form-group" id="html-body-editor" style="display:none;">
+            <label id="html-body-label" style="font-weight:600;">Content{% if survey.available_languages|length > 1 %} ({{ survey.available_languages.0|language_name }}){% endif %}</label>
+            <div id="html-body-quill"></div>
+            <small class="form-text text-muted">Respondents see exactly this — it collects no answer.</small>
+        </div>
+
         <!-- Display style (see DISPLAY_STYLE_TYPES below) -->
         <div id="display-style-fields" style="display:none;" class="mb-3">
             <label style="font-weight:600;">Display as</label>
+            {% comment %}Only concrete styles get cards. "Inherit the survey default" is not a
+            style a creator thinks in — the survey-default card carries a corner "Default"
+            ribbon instead, and its radio submits the stored value 'default' so the inherit
+            semantics survive unchanged.{% endcomment %}
+            {% with sdef=survey.get_default_rating_display_style %}
             <div style="display:flex;gap:8px;">
-                {% for radio in form.display_style %}
-                <label class="ds-option" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;">
-                    {{ radio.tag }}
-                    {% if radio.data.value == 'default' %}
-                    <span class="ds-thumb" style="display:flex;align-items:center;justify-content:center;width:74px;height:22px;border:1px dashed #9aa0a6;border-radius:4px;color:#9aa0a6;">
-                        <i class="fas fa-sliders-h"></i>
+                <label class="ds-option" data-types="choice" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;position:relative;overflow:hidden;">
+                    <input type="radio" name="display_style" value="default"{% if not form.display_style.value or form.display_style.value == 'default' %} checked{% endif %}>
+                    <span class="ds-default-ribbon">Default</span>
+                    <span class="ds-thumb" style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
+                        <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:1px solid #9aa0a6;border-radius:50%;"></i><i style="width:56px;height:6px;background:#e5e7eb;border-radius:3px;"></i></i>
+                        <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:2px solid #4f46e5;border-radius:50%;"></i><i style="width:44px;height:6px;background:#e5e7eb;border-radius:3px;"></i></i>
+                        <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:1px solid #9aa0a6;border-radius:50%;"></i><i style="width:50px;height:6px;background:#e5e7eb;border-radius:3px;"></i></i>
                     </span>
-                    {% elif radio.data.value == 'scale_strip' %}
+                    <span>List</span>
+                </label>
+                {% for radio in form.display_style %}
+                {% if radio.data.value != 'default' %}
+                <label class="ds-option" data-types="{% if radio.data.value == 'dropdown' %}choice{% else %}rating{% endif %}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;position:relative;overflow:hidden;">
+                    {% if radio.data.value == sdef %}
+                    {# The survey's own default rating style: submits 'default' (inherit), wears the ribbon. #}
+                    <input type="radio" name="display_style" value="default"{% if not form.display_style.value or form.display_style.value == 'default' or form.display_style.value == sdef %} checked{% endif %}>
+                    <span class="ds-default-ribbon">Default</span>
+                    {% else %}
+                    {{ radio.tag }}
+                    {% endif %}
+                    {% if radio.data.value == 'scale_strip' %}
                     <span class="ds-thumb" style="display:flex;gap:3px;">
                         <i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border-radius:3px;background:#4f46e5;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i>
                     </span>
                     {% elif radio.data.value == 'stars' %}
                     <span class="ds-thumb" style="display:flex;gap:2px;color:#f5b301;font-size:13px;">
                         <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star" style="color:#d5d8dc;"></i><i class="fas fa-star" style="color:#d5d8dc;"></i>
+                    </span>
+                    {% elif radio.data.value == 'dropdown' %}
+                    <span class="ds-thumb" style="display:flex;align-items:center;justify-content:space-between;width:74px;height:22px;border:1px solid #9aa0a6;border-radius:4px;color:#9aa0a6;padding:0 6px;">
+                        <i class="fas fa-search" style="font-size:10px;"></i><i class="fas fa-caret-down"></i>
                     </span>
                     {% else %}
                     <span class="ds-thumb" style="display:flex;flex-direction:column;gap:3px;">
@@ -131,8 +182,10 @@
                     {% endif %}
                     <span>{{ radio.choice_label }}</span>
                 </label>
+                {% endif %}
                 {% endfor %}
             </div>
+            {% endwith %}
             <div id="star-count-field" style="display:none;margin-top:10px;">
                 <label style="font-weight:600;font-size:0.85rem;">Number of stars</label>
                 <input type="number" min="2" max="10" value="5" id="star-count-input"
@@ -152,7 +205,33 @@
         <style>
             #display-style-fields .ds-option input[type="radio"] { position:absolute; opacity:0; width:0; height:0; }
             #display-style-fields .ds-option:has(input:checked) { border-color:#4f46e5; background:#eef2ff; }
+            #display-style-fields .ds-default-ribbon {
+                position:absolute; top:6px; right:-18px; transform:rotate(45deg);
+                width:64px; line-height:1.4; background:#9aa0a6; color:#fff;
+                font-size:0.5rem; font-weight:600; letter-spacing:0.03em;
+                text-transform:uppercase; text-align:center; pointer-events:none;
+            }
+            #display-style-fields .ds-option:has(input:checked) .ds-default-ribbon { background:#4f46e5; }
         </style>
+
+        {# Settings follow the style choice: pick how the question renders first, then tune it. #}
+        {% for field in form %}
+        {% if field.name == 'required' or field.name == 'color' or field.name == 'icon_class' or field.name == 'image' %}
+        <div class="form-group" id="fg-{{ field.name }}">
+            {% if field.name == 'required' %}
+                <div class="form-check">
+                    {{ field }}
+                    <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                </div>
+            {% else %}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+            {% endif %}
+            {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text|safe }}</small>{% endif %}
+            {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+        {% endif %}
+        {% endfor %}
 
         <!-- Choices editor -->
         <div class="choices-editor" id="choices-editor" style="display:none;">
@@ -221,6 +300,22 @@
                        placeholder="10">
             </div>
         </div>
+        <div id="vs-geo-fields" style="display:none;" class="mt-2">
+            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-map-marker-alt"></i> Places per respondent</label>
+            <div class="form-row">
+                <div class="form-group col-4">
+                    <label style="font-size:0.75rem;">Min</label>
+                    <input type="number" step="1" min="0" name="vs_min_features" class="form-control form-control-sm"
+                           value="{% if question and question.validation_settings %}{{ question.validation_settings.min_features|default:'' }}{% endif %}">
+                </div>
+                <div class="form-group col-4">
+                    <label style="font-size:0.75rem;">Max</label>
+                    <input type="number" step="1" min="1" name="vs_max_features" class="form-control form-control-sm"
+                           value="{% if question and question.validation_settings %}{{ question.validation_settings.max_features|default:'' }}{% endif %}">
+                </div>
+            </div>
+            <small class="text-muted" style="font-size:0.72rem;">Respondents can add several places to one map question. Leave max empty for unlimited; the export stays a single layer either way.</small>
+        </div>
 
         {% if survey.available_languages|length > 1 %}
         <div class="translations-section">
@@ -237,9 +332,12 @@
                                value="{% if question %}{% for t in question.translations.all %}{% if t.language == lang %}{{ t.name|default:'' }}{% endif %}{% endfor %}{% endif %}">
                     </div>
                     <div class="form-group">
-                        <label style="font-size:0.8rem;">Subtext ({{ lang }})</label>
+                        <label style="font-size:0.8rem;" data-translation-subtext-label="{{ lang }}">Subtext ({{ lang }})</label>
                         <input type="text" name="translation_{{ lang }}_subtext" class="form-control form-control-sm"
                                value="{% if question %}{% for t in question.translations.all %}{% if t.language == lang %}{{ t.subtext|default:'' }}{% endif %}{% endfor %}{% endif %}">
+                        {% comment %}Formatted Text bodies are edited here too — same editor as the
+                        base language, writing into the input above.{% endcomment %}
+                        <div class="translation-quill-wrap" data-translation-quill="{{ lang }}" style="display:none;"></div>
                     </div>
                 </fieldset>
                 {% endfor %}
@@ -249,16 +347,52 @@
         </div>
 
         <div class="question-preview-panel qtp-preview-col">
-            <div class="qtp-pv-title"><i class="fas fa-eye"></i> Respondent sees</div>
-            <iframe id="question-preview-frame"
-                    {% if question %}src="{% url 'editor_question_preview' survey.uuid question.id %}"{% endif %}
-                    style="flex:1;border:1px solid #e5e7eb;border-radius:6px;width:100%;min-height:260px;background:#fff;">
-            </iframe>
-            <div class="qtp-pv-note">Updates as you edit — the real respondent-side rendering.</div>
-            <div class="qtp-flyout" id="qtp-flyout" hidden>
+            <div class="qtp-pv-card">
+                <div class="qtp-pv-title"><i class="fas fa-eye"></i> Respondent sees</div>
+                <iframe id="question-preview-frame"
+                        {% if question %}src="{% url 'editor_question_preview' survey.uuid question.id %}"{% endif %}
+                        style="flex:1;border:1px solid #e5e7eb;border-radius:6px;width:100%;min-height:260px;background:#fff;">
+                </iframe>
+                <div class="qtp-pv-note">Updates as you edit — the real respondent-side rendering.</div>
+            </div>
+
+            <div class="qtp-pv-card qtp-flyout" id="qtp-flyout" hidden>
                 <div class="qtp-pv-title" style="margin-bottom:4px;">Type example</div>
                 <div class="qtp-flyout-hint"></div>
                 <iframe class="qtp-example-frame"></iframe>
+            </div>
+
+            {% comment %}Per-type tips: shown for the current input type, hidden when a type
+            has none. This is where creators decide to clone a geo question instead of using
+            sub-questions + limits — the geo tips exist to prevent exactly that.{% endcomment %}
+            <div class="qtp-pv-card qtp-tips" id="qtp-tips" hidden>
+                <div class="qtp-pv-title"><i class="far fa-lightbulb"></i> Tips</div>
+                <ul class="qtp-tips-list" data-tip-for="point line polygon">
+                    <li><b>One map question collects many places.</b> Respondents keep adding
+                        marks to the same question — never create "Mark the 1st / 2nd location"
+                        copies. Use <b>Places per respondent</b> below to ask for, say, 1&ndash;5.</li>
+                    <li><b>Describe each place with sub-questions.</b> They pop up on every
+                        placed mark, and each becomes a column of your GeoJSON layer in QGIS.
+                        Without them the map collects dots with no meaning.</li>
+                    <li><b>Points get answered about twice as often</b> as polygons — draw
+                        requests cost respondents real effort. When in doubt, ask for a point.</li>
+                </ul>
+                <ul class="qtp-tips-list" data-tip-for="range rating">
+                    <li><b>The scale is built from your choice codes</b> — keep them integers in
+                        ascending order (1, 2, 3&hellip;).</li>
+                    <li>Label at least the endpoints ("Not at all" &hellip; "Very much") so the
+                        scale reads the same for everyone.</li>
+                </ul>
+                <ul class="qtp-tips-list" data-tip-for="ranking">
+                    <li><b>Choices are the items to be ordered</b>, not a scale. Give 3&ndash;6
+                        short, comparable items.</li>
+                    <li>Respondents must place <i>every</i> item and no two can share a rank —
+                        use Rating instead when independent scores are enough.</li>
+                </ul>
+                <ul class="qtp-tips-list" data-tip-for="choice multichoice">
+                    <li>Codes end up in your data export; names are what respondents see.
+                        Keep codes stable once responses start arriving.</li>
+                </ul>
             </div>
         </div>
     </div>
@@ -308,14 +442,16 @@
         var numEl = document.getElementById('vs-number-fields');
         var textEl = document.getElementById('vs-text-fields');
         var polyEl = document.getElementById('vs-polygon-fields');
+        var geoEl = document.getElementById('vs-geo-fields');
         if (numEl) numEl.style.display = (t === 'number' || t === 'range') ? 'block' : 'none';
         if (textEl) textEl.style.display = (t === 'text' || t === 'text_line') ? 'block' : 'none';
         if (polyEl) polyEl.style.display = (t === 'polygon') ? 'block' : 'none';
+        if (geoEl) geoEl.style.display = (t === 'point' || t === 'line' || t === 'polygon') ? 'block' : 'none';
     }
 
     // Types whose rendering the creator can pick. Mirrors
     // SurveySectionAnswerForm.DISPLAY_STYLE_TYPES — keep the two in step.
-    var DISPLAY_STYLE_TYPES = ['rating'];
+    var DISPLAY_STYLE_TYPES = ['rating', 'choice'];
 
     // Beyond this many options the scale strip is under ~25px per cell on a
     // 320px screen. Measured, not guessed: nine options give 20.5px.
@@ -380,7 +516,24 @@
 
     function toggleDisplayStyleFields() {
         var el = document.getElementById('display-style-fields');
-        if (el) el.style.display = (inputTypeSelect && DISPLAY_STYLE_TYPES.indexOf(inputTypeSelect.value) !== -1) ? 'block' : 'none';
+        var t = inputTypeSelect ? inputTypeSelect.value : '';
+        if (el) el.style.display = (DISPLAY_STYLE_TYPES.indexOf(t) !== -1) ? 'block' : 'none';
+        // Each style option belongs to specific question types (data-types);
+        // hide the rest. Two cards carry a value="default" radio (the choice
+        // "List" card and the survey-default rating card) — only one is ever
+        // visible, so after filtering make sure the checked radio is a visible
+        // one, falling back to the visible default card.
+        var visibleChecked = null, visibleDefault = null, hiddenChecked = false;
+        document.querySelectorAll('#display-style-fields .ds-option').forEach(function(lbl) {
+            var radio = lbl.querySelector('input[name="display_style"]');
+            var visible = (lbl.dataset.types || '').split(' ').indexOf(t) !== -1;
+            lbl.style.display = visible ? '' : 'none';
+            if (!radio) return;
+            if (visible && radio.checked) visibleChecked = radio;
+            if (visible && radio.value === 'default') visibleDefault = radio;
+            if (!visible && radio.checked) hiddenChecked = true;
+        });
+        if (!visibleChecked && hiddenChecked && visibleDefault) visibleDefault.checked = true;
         toggleStripWidthHint();
     }
 
@@ -388,16 +541,17 @@
     var GEO_TYPES = ['point', 'line', 'polygon'];
     var DISPLAY_BLOCK_TYPES = ['image', 'html'];
 
+    // CSS-hidden inputs still submit, so stored values pass through a save
+    // untouched. The hidden `required` checkbox is the deliberate exception:
+    // unchecked-when-hidden is correct for display blocks, which collect
+    // nothing and cannot be required.
+    function show(id, on) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = on ? '' : 'none';
+    }
+
     function toggleTypeScopedFields() {
         var t = inputTypeSelect ? inputTypeSelect.value : '';
-        // CSS-hidden inputs still submit, so stored values pass through a save
-        // untouched. The hidden `required` checkbox is the deliberate
-        // exception: unchecked-when-hidden is correct for display blocks,
-        // which collect nothing and cannot be required.
-        function show(id, on) {
-            var el = document.getElementById(id);
-            if (el) el.style.display = on ? '' : 'none';
-        }
         var isGeo = GEO_TYPES.indexOf(t) !== -1;
         // Colour and icon serve two consumers now: map markers, and the star
         // rating style. Shown exactly where they are read.
@@ -421,6 +575,107 @@
         }
         show('fg-image', t === 'image');
         show('fg-required', DISPLAY_BLOCK_TYPES.indexOf(t) === -1);
+        show('name-internal-hint', DISPLAY_BLOCK_TYPES.indexOf(t) !== -1);
+        toggleHtmlBodyEditor(t === 'html');
+    }
+
+    // ── Formatted Text body: the WYSIWYG editor ──
+    // `html` blocks render their subtext as the block's content (|safe, sanitized
+    // server-side), so the creator writes it here rather than hand-typing HTML into
+    // the one-line Subtext input — which stays in the DOM as the value the form
+    // submits. Quill instances are built on first use and reused afterwards.
+    var BODY_TOOLBAR = [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline'],
+        [{ align: [] }],
+        ['link'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['blockquote'],
+        ['clean']
+    ];
+    // Subtext is a helper line under a question, not a page. Headings and
+    // alignment there produce shouty questionnaires, so the toolbar stops at
+    // emphasis, links and lists.
+    var SUBTEXT_TOOLBAR = [
+        ['bold', 'italic'],
+        ['link'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['clean']
+    ];
+    var subtextInput = document.querySelector('#questionModalBody [name="subtext"]');
+    var bodyEditorBox = document.getElementById('html-body-editor');
+    var bodyQuill = null;
+    var subtextQuill = null;
+    var translationQuills = {};
+
+    function makeQuill(mount, input, placeholder, toolbar) {
+        // Alignment as inline `text-align` styles: the respondent's page has no
+        // Quill CSS, so a class-based alignment would silently do nothing there.
+        Quill.register(Quill.import('attributors/style/align'), true);
+        var q = new Quill(mount, {
+            theme: 'snow',
+            placeholder: placeholder,
+            modules: { toolbar: toolbar || SUBTEXT_TOOLBAR }
+        });
+        q.setContents(q.clipboard.convert({ html: input.value || '' }), 'silent');
+        q.on('text-change', function(delta, old, source) {
+            if (source !== 'user') return;
+            var h = q.root.innerHTML;
+            input.value = (h === '<p><br></p>') ? '' : h;
+            // The live preview pane listens on the form, and a scripted value
+            // assignment fires nothing on its own.
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        return q;
+    }
+
+    function loadInto(quill) {
+        if (quill) quill.setContents(
+            quill.clipboard.convert({ html: subtextInput.value || '' }), 'silent');
+    }
+
+    // `html` edits the same value in a bigger editor further down the dialog —
+    // one field, two presentations. Whichever is on screen is loaded from the
+    // input, so switching type never loses what was typed.
+    function toggleHtmlBodyEditor(on) {
+        if (!bodyEditorBox || !subtextInput) return;
+        bodyEditorBox.style.display = on ? '' : 'none';
+        show('fg-subtext', !on);
+        // The plain input is a value carrier in both layouts. Without Quill on
+        // the page (offline CDN) it stays visible, so the field is still usable.
+        if (typeof Quill === 'undefined') return;
+        subtextInput.style.display = 'none';
+        if (on) {
+            if (!bodyQuill) {
+                bodyQuill = makeQuill(document.getElementById('html-body-quill'), subtextInput,
+                                      'Write what respondents will read…', BODY_TOOLBAR);
+            } else {
+                loadInto(bodyQuill);
+            }
+        } else {
+            if (!subtextQuill) {
+                subtextQuill = makeQuill(document.getElementById('subtext-quill'), subtextInput,
+                                         'Optional help text under the question');
+            } else {
+                loadInto(subtextQuill);
+            }
+        }
+    }
+
+    // Translations are edited in the same editor regardless of type; their
+    // plain inputs are value carriers only and stay hidden for good.
+    function mountTranslationEditors() {
+        if (typeof Quill === 'undefined') return;
+        document.querySelectorAll('[data-translation-quill]').forEach(function(wrap) {
+            var lang = wrap.getAttribute('data-translation-quill');
+            var input = document.querySelector('[name="translation_' + lang + '_subtext"]');
+            if (!input || translationQuills[lang]) return;
+            wrap.style.display = '';
+            input.style.display = 'none';
+            var mount = document.createElement('div');
+            wrap.appendChild(mount);
+            translationQuills[lang] = makeQuill(mount, input, '');
+        });
     }
 
     // ── Type picker cards drive the hidden select ──
@@ -552,6 +807,7 @@
         if (!exampleBox || !canHover) return;
         var value = card.getAttribute('data-qtp-value');
         exampleCurrent = value;
+        toggleTips(value);   // tips follow the hovered type, like the example does
         exampleBox.querySelector('.qtp-flyout-hint').textContent = card.getAttribute('data-qtp-hint') || '';
         var frame = exampleBox.querySelector('.qtp-example-frame');
         if (!frame.dataset.fitBound) {
@@ -592,7 +848,11 @@
             if (exampleCurrent === value) frame.srcdoc = html;
         }).catch(function() {});
     }
-    function qtpHideExample() { exampleCurrent = null; if (exampleBox) exampleBox.hidden = true; }
+    function qtpHideExample() {
+        exampleCurrent = null;
+        if (exampleBox) exampleBox.hidden = true;
+        toggleTips();   // revert to the selected type's tips
+    }
 
     if (picker) {
         picker.addEventListener('mouseover', function(e) {
@@ -604,10 +864,26 @@
         });
     }
 
+    // `overrideType` lets the type-picker hover show the hovered type's tips
+    // (in step with the Type example flyout); without it, tips follow the
+    // selected type.
+    function toggleTips(overrideType) {
+        var box = document.getElementById('qtp-tips');
+        if (!box) return;
+        var t = overrideType || (inputTypeSelect ? inputTypeSelect.value : '');
+        var any = false;
+        box.querySelectorAll('.qtp-tips-list').forEach(function(ul) {
+            var on = ul.getAttribute('data-tip-for').split(' ').indexOf(t) !== -1;
+            ul.style.display = on ? 'block' : 'none';
+            if (on) any = true;
+        });
+        box.hidden = !any;
+    }
+
     if (inputTypeSelect) {
         inputTypeSelect.addEventListener('change', function() {
             toggleChoicesEditor(); toggleValidationFields(); toggleDisplayStyleFields();
-            toggleTypeScopedFields(); qtpSyncCards();
+            toggleTypeScopedFields(); qtpSyncCards(); toggleTips();
         });
         toggleChoicesEditor();
         toggleValidationFields();
@@ -615,6 +891,8 @@
         toggleTypeScopedFields();
         toggleStarCountField();
         qtpSyncCards();
+        toggleTips();
+        mountTranslationEditors();
     }
 
     document.querySelectorAll('#display-style-fields input[name="display_style"]').forEach(function(radio) {

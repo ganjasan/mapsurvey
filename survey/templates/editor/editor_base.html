@@ -219,6 +219,35 @@
         /* Thanks-page editor (Quill) */
         #thanks-quill { background: #fff; border-radius: 0 0 var(--radius) var(--radius); }
         #thanks-quill .ql-editor { min-height: 180px; font-size: .95rem; }
+        /* Formatted Text block editor (Quill), inside the question dialog */
+        #html-body-quill { background: #fff; border-radius: 0 0 var(--radius) var(--radius); }
+        #html-body-quill .ql-editor { min-height: 160px; font-size: .95rem; }
+        /* Subtext / subheading: a helper line, so the box stays close to the
+           height of the one-line input it replaces. The explicit height is
+           required — Quill's snow theme sets `.ql-container { height: 100% }`,
+           which against an auto-height parent collapses to "as tall as the
+           panel" rather than "as tall as the content". */
+        /* Note the attached selectors: Quill turns the element you mount it on
+           INTO the .ql-container, so `#subtext-quill .ql-container` matches
+           nothing. */
+        #subtext-quill.ql-container,
+        #section-subheading-quill.ql-container,
+        #html-body-quill.ql-container,
+        .translation-quill-wrap .ql-container,
+        .subheading-quill-wrap .ql-container { height: auto; background: #fff; }
+        /* `height: auto` is the load-bearing part: Quill's own stylesheet sets
+           `.ql-editor { height: 100% }`, which here resolves against the editor
+           panel and produces a text box hundreds of pixels tall. These boxes
+           grow with their content instead. */
+        #subtext-quill .ql-editor,
+        #section-subheading-quill .ql-editor { height: auto; min-height: 62px; font-size: .9rem; }
+        .translation-quill-wrap .ql-editor,
+        .subheading-quill-wrap .ql-editor { height: auto; min-height: 52px; font-size: .85rem; }
+        #html-body-quill .ql-editor { height: auto; }
+        /* Toolbar dropdowns (heading, alignment) must escape the dialog's own
+           scroll container, or they open clipped and unusable. */
+        #questionModal .ql-toolbar { z-index: 2; }
+        #questionModal .ql-picker-options { z-index: 3; }
         .thanks-lang-tab { border: 1px solid var(--border-color); background: #fff; color: #6b7280; border-radius: 6px; padding: .2rem .6rem; font-size: .8rem; cursor: pointer; }
         .thanks-lang-tab.active { border-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 500; }
         .pr-scroll { padding: 1.25rem 1.5rem; max-width: 720px; }

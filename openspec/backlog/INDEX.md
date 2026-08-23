@@ -45,6 +45,7 @@
 | ~~104~~ | ~~improvement~~ | ~~[Authors publish and close repeatedly because there is no way to try a survey](improvement-test-survey-without-publishing.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-08-05~~ |
 | ~~62~~ | ~~bug~~ | ~~[Default map in survey settings cannot be None](bug-default-map-cannot-be-none.md)~~ | ~~medium~~ | ~~frontend~~ | ~~—~~ | ~~2026-04-25~~ |
 | 127 | improvement | [Language picker: `eu` (Basque) reads as "EU / European"](improvement-language-picker-eu-basque-trap.md) | medium | frontend | — | 2026-08-17 |
+| 134 | improvement | [Test link is hidden in password settings while a Share button exists](improvement-test-link-in-share-dialog.md) | medium | frontend | growth | 2026-08-23 |
 | 128 | improvement | [Share flow dead-ends: published-but-private surveys, no respondent path](improvement-share-flow-private-dead-end.md) | medium | frontend | growth | 2026-08-17 |
 | 17 | feature | [Budget/token allocation question type](feature-budget-token-allocation.md) | medium | frontend | community-engagement | 2026-04-02 |
 | 18 | feature | [Search in survey list](feature-search-in-survey-list.md) | medium | frontend | — | 2026-04-25 |

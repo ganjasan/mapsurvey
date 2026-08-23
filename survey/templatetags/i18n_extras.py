@@ -52,5 +52,14 @@ def i18n_json():
         'searchAddress': _('Search address...'),
         'noResultsFound': _('No results found'),
         'searchFailed': _('Search failed — check your connection and try again.'),
+
+        # Multi-feature geo questions
+        'addAnother': _('Add another'),
+        'upToNMore': _('up to {n} more'),
+        'maximumReachedHint': _('Maximum reached — remove one below to change it.'),
+        'nMarked': _('{n} marked'),
+        'nOfMMarked': _('{n} of {m} marked'),
+        'atLeastNRequired': _('at least {n} required'),
+        'allMarkedThanks': _('All {m} marked — thank you!'),
     }
     return mark_safe(json.dumps(translations, ensure_ascii=False))

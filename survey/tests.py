@@ -6748,13 +6748,14 @@ class EditorPermissionTest(TestCase):
         self.assertIn('settings-panel/', content)
         self.assertIn('sidebar-pinned-item active', content)
 
-    # ── Lifecycle-IA navigation (Build / Results / Publish) ──
+    # ── Lifecycle-IA navigation (Survey / Responses / Public results) ──
 
     def test_nav_shows_three_lifecycle_spaces(self):
         """
         GIVEN the survey editor
         WHEN it renders for an owner
-        THEN the navbar shows Build/Results/Publish tabs and no Editor/Settings tab
+        THEN the navbar shows Survey/Responses/Public results tabs and no
+        Editor/Settings tab
         """
         self.client.login(username='ep_owner', password='pass')
         content = self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
@@ -28829,3 +28830,708 @@ class PublicResultsStatusLineTest(TestCase):
         html = self._page()
         self.assertNotIn('mobile-statusbar', html)
         self.assertIn('Publish page', html)
+
+
+class GeoMultiFeatureTest(TestCase):
+    """Tests for per-question feature-count limits and the multi-feature widget."""
+
+    def setUp(self):
+        self.org = _make_org('GeoMultiOrg')
+        self.user = User.objects.create_user(username='geomulti', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='geomulti_survey', organization=self.org,
+            redirect_url='/thanks/', status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section One',
+            code='S1', is_head=True,
+        )
+        self.point_q = Question.objects.create(
+            survey_section=self.section, name='Problem spots',
+            input_type='point', order_number=1,
+        )
+        self.text_q = Question.objects.create(
+            survey_section=self.section, name='Comment',
+            input_type='text', order_number=2,
+        )
+
+    def _login(self):
+        self.client.login(username='geomulti', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        # Structural edits are blocked on a published survey; editor tests run
+        # against draft, respondent tests keep the published status from setUp.
+        self.survey.status = 'draft'
+        self.survey.save(update_fields=['status'])
+
+    def _edit_post(self, question, extra):
+        data = {'name': question.name, 'input_type': question.input_type, 'color': '#000000'}
+        data.update(extra)
+        return self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{question.id}/edit/', data,
+        )
+
+    def _point_feature(self, x, y):
+        return json.dumps({
+            'type': 'Feature',
+            'properties': {'question_id': self.point_q.code},
+            'geometry': {'type': 'Point', 'coordinates': [x, y]},
+        })
+
+    # --- Editor round-trip ---
+
+    def test_editor_saves_feature_limits(self):
+        """
+        GIVEN a point question
+        WHEN the editor saves it with vs_min_features=1 and vs_max_features=5
+        THEN validation_settings contains both as ints and the reopened modal shows them
+        """
+        self._login()
+        response = self._edit_post(self.point_q, {'vs_min_features': '1', 'vs_max_features': '5'})
+        self.assertEqual(response.status_code, 200)
+        self.point_q.refresh_from_db()
+        self.assertEqual(self.point_q.validation_settings.get('min_features'), 1)
+        self.assertEqual(self.point_q.validation_settings.get('max_features'), 5)
+        modal = self.client.get(f'/editor/surveys/{self.survey.uuid}/questions/{self.point_q.id}/edit/')
+        self.assertContains(modal, 'vs_min_features')
+        self.assertContains(modal, 'value="1"')
+        self.assertContains(modal, 'value="5"')
+
+    def test_editor_blank_clears_feature_limits(self):
+        """
+        GIVEN a point question with saved feature limits
+        WHEN the editor saves it with both inputs blank
+        THEN neither key remains in validation_settings
+        """
+        self._login()
+        self.point_q.validation_settings = {'min_features': 1, 'max_features': 5}
+        self.point_q.save()
+        self._edit_post(self.point_q, {'vs_min_features': '', 'vs_max_features': ''})
+        self.point_q.refresh_from_db()
+        self.assertNotIn('min_features', self.point_q.validation_settings)
+        self.assertNotIn('max_features', self.point_q.validation_settings)
+
+    def test_editor_rejects_max_below_min(self):
+        """
+        GIVEN a point question
+        WHEN the editor saves max_features below min_features
+        THEN a form error renders and nothing is saved
+        """
+        self._login()
+        response = self._edit_post(self.point_q, {'vs_min_features': '4', 'vs_max_features': '2'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Max places must be greater than or equal to min places.')
+        self.point_q.refresh_from_db()
+        self.assertNotIn('max_features', self.point_q.validation_settings)
+
+    def test_editor_ignores_feature_limits_on_non_geo(self):
+        """
+        GIVEN a text question
+        WHEN the editor saves it with feature-limit inputs present
+        THEN validation_settings never gains the keys
+        """
+        self._login()
+        self._edit_post(self.text_q, {'vs_min_features': '1', 'vs_max_features': '5'})
+        self.text_q.refresh_from_db()
+        self.assertNotIn('min_features', self.text_q.validation_settings)
+        self.assertNotIn('max_features', self.text_q.validation_settings)
+
+    # --- Widget rendering ---
+
+    def test_widget_renders_limit_attributes_and_containers(self):
+        """
+        GIVEN a point question with feature limits
+        WHEN the respondent section page renders
+        THEN the draw button carries data-min/max-features and the in-button progress container,
+        and no per-feature list container renders (managed on the map instead)
+        """
+        self.point_q.validation_settings = {'min_features': 1, 'max_features': 5}
+        self.point_q.save()
+        response = self.client.get(f'/surveys/{self.survey.name}/{self.section.name}/')
+        self.assertContains(response, 'data-min-features="1"')
+        self.assertContains(response, 'data-max-features="5"')
+        self.assertContains(response, 'geo-progress')
+        self.assertContains(response, 'data-orig-subtitle')
+        self.assertNotContains(response, 'geo-features')
+
+    def test_widget_omits_limit_attributes_when_unset(self):
+        """
+        GIVEN a point question without feature limits
+        WHEN the respondent section page renders
+        THEN the draw button carries no data-min/max-features attributes
+        (the bare attribute name also lives in the base template's JS selectors,
+        so the assertion targets the attribute-with-value form)
+        """
+        response = self.client.get(f'/surveys/{self.survey.name}/{self.section.name}/')
+        self.assertNotContains(response, 'data-min-features="')
+        self.assertNotContains(response, 'data-max-features="')
+
+    # --- Server clamp ---
+
+    def test_post_clamps_features_to_max(self):
+        """
+        GIVEN a point question with max_features=2
+        WHEN a section POST carries three features (a tampered submission)
+        THEN only the first two are stored as answers
+        """
+        self.point_q.validation_settings = {'max_features': 2}
+        self.point_q.save()
+        self.client.get(f'/surveys/{self.survey.name}/{self.section.name}/')
+        session_id = self.client.session['survey_session_id']
+        payload = '|'.join([
+            self._point_feature(30.1, 60.1),
+            self._point_feature(30.2, 60.2),
+            self._point_feature(30.3, 60.3),
+        ]) + '|'
+        self.client.post(
+            f'/surveys/{self.survey.name}/{self.section.name}/',
+            {self.point_q.code: payload},
+        )
+        self.assertEqual(
+            Answer.objects.filter(survey_session_id=session_id, question=self.point_q).count(), 2,
+        )
+
+    def test_post_without_limit_stores_all_features(self):
+        """
+        GIVEN a point question with no feature limits
+        WHEN a section POST carries three features
+        THEN all three are stored as answers
+        """
+        self.client.get(f'/surveys/{self.survey.name}/{self.section.name}/')
+        session_id = self.client.session['survey_session_id']
+        payload = '|'.join([
+            self._point_feature(30.1, 60.1),
+            self._point_feature(30.2, 60.2),
+            self._point_feature(30.3, 60.3),
+        ]) + '|'
+        self.client.post(
+            f'/surveys/{self.survey.name}/{self.section.name}/',
+            {self.point_q.code: payload},
+        )
+        self.assertEqual(
+            Answer.objects.filter(survey_session_id=session_id, question=self.point_q).count(), 3,
+        )
+
+
+class ChoiceDropdownDisplayTest(TestCase):
+    """Respondent rendering of choice questions with display_style 'dropdown'."""
+
+    AREAS = [{"code": i, "name": f"Area {i}"} for i in range(1, 6)]
+
+    def setUp(self):
+        self.client = Client()
+        self.org = Organization.objects.create(name="Dropdown Org")
+        self.survey = SurveyHeader.objects.create(
+            name="choice_dropdown_survey",
+            organization=self.org,
+            redirect_url="/thanks/",
+            status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="section1",
+            title="Section One",
+            code="S1",
+            is_head=True,
+        )
+        self.choice_q = Question.objects.create(
+            survey_section=self.section,
+            code="CDQ001",
+            name="Which counting area?",
+            input_type="choice",
+            choices=self.AREAS,
+            order_number=1,
+        )
+
+    def _visit(self):
+        return self.client.get('/surveys/choice_dropdown_survey/section1/')
+
+    def test_default_choice_renders_radios_without_dropdown(self):
+        """
+        GIVEN a choice question with display_style 'default'
+        WHEN the section is rendered
+        THEN the radio list appears and no dropdown markup is emitted
+        """
+        response = self._visit()
+
+        self.assertContains(response, 'type="radio" name="CDQ001"')
+        self.assertNotContains(response, 'choice-dropdown')
+
+    def test_dropdown_style_renders_search_widget(self):
+        """
+        GIVEN a choice question with display_style 'dropdown'
+        WHEN the section is rendered
+        THEN the searchable dropdown markup replaces the radio list
+        """
+        self.choice_q.display_style = 'dropdown'
+        self.choice_q.save()
+
+        response = self._visit()
+
+        self.assertContains(response, 'data-choice-dropdown')
+        self.assertContains(response, 'cd-search')
+        self.assertContains(response, 'data-value="3"')
+        self.assertNotContains(response, 'type="radio" name="CDQ001"')
+
+    def test_dropdown_select_submits_under_question_code(self):
+        """
+        GIVEN a dropdown-styled choice question
+        WHEN the section is rendered
+        THEN the hidden select carries the question's field name, so the
+             submitted value is identical to a radio submission
+        """
+        self.choice_q.display_style = 'dropdown'
+        self.choice_q.save()
+
+        response = self._visit()
+
+        self.assertContains(response, 'name="CDQ001"')
+
+    def test_dropdown_on_rating_question_is_ignored(self):
+        """
+        GIVEN a rating question wrongly carrying display_style 'dropdown'
+        WHEN the display style is resolved
+        THEN the survey-wide rating default applies
+        """
+        rating_q = Question.objects.create(
+            survey_section=self.section,
+            code="CDQ002",
+            name="Rate it",
+            input_type="rating",
+            choices=[{"code": 1, "name": "bad"}, {"code": 2, "name": "good"}],
+            display_style='dropdown',
+            order_number=2,
+        )
+
+        resolved = SurveySectionAnswerForm.resolve_display_style(rating_q, 'scale_strip')
+
+        self.assertEqual(resolved, 'scale_strip')
+
+    def test_rating_style_on_choice_question_resolves_to_default(self):
+        """
+        GIVEN a choice question carrying a rating-only style value
+        WHEN the display style is resolved
+        THEN it falls back to the plain radio rendering
+        """
+        self.choice_q.display_style = 'list_pips'
+        self.choice_q.save()
+
+        resolved = SurveySectionAnswerForm.resolve_display_style(self.choice_q, 'scale_strip')
+
+        self.assertEqual(resolved, 'default')
+
+    def test_required_dropdown_rejects_empty_submission(self):
+        """
+        GIVEN a required dropdown-styled choice question
+        WHEN the single-question form is bound without a value
+        THEN validation fails exactly as it would for radios
+        """
+        self.choice_q.display_style = 'dropdown'
+        self.choice_q.required = True
+        self.choice_q.save()
+
+        form = SurveySectionAnswerForm.single_question_form(self.choice_q)
+        field = form.fields[self.choice_q.code]
+
+        from django.core.exceptions import ValidationError
+        with self.assertRaises(ValidationError):
+            field.clean('')
+        self.assertEqual(field.clean('3'), '3')
+
+
+class ChoiceDropdownSerializationTest(TestCase):
+    """display_style 'dropdown' in export/import round-trip."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="DropdownSer Org")
+        self.survey = SurveyHeader.objects.create(
+            name="dropdown_ser_survey",
+            organization=self.org,
+            redirect_url="/thanks/",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="s1",
+            title="S1",
+            code="S1",
+            is_head=True,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section,
+            code="CDS001",
+            name="Pick area",
+            input_type="choice",
+            choices=[{"code": 1, "name": "A"}, {"code": 2, "name": "B"}],
+            display_style='dropdown',
+            order_number=1,
+        )
+
+    def _roundtrip(self, mutate=None):
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+        output.seek(0)
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_json = json.loads(zf.read("survey.json"))
+
+        survey_json["survey"]["name"] = "dropdown_ser_imported"
+        if mutate:
+            mutate(survey_json["survey"]["sections"][0]["questions"][0])
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_json))
+        import_buffer.seek(0)
+
+        imported_survey, _ = import_survey_from_zip(import_buffer)
+        return Question.objects.get(
+            survey_section__survey_header=imported_survey, name="Pick area",
+        )
+
+    def test_dropdown_round_trips_on_choice_question(self):
+        """
+        GIVEN a choice question with display_style 'dropdown'
+        WHEN the survey is exported and re-imported
+        THEN the imported question keeps display_style 'dropdown'
+        """
+        imported = self._roundtrip()
+
+        self.assertEqual(imported.display_style, 'dropdown')
+
+    def test_dropdown_on_non_choice_question_falls_back(self):
+        """
+        GIVEN an archive whose text question carries display_style 'dropdown'
+        WHEN the archive is imported
+        THEN the question falls back to display_style 'default'
+        """
+        def mutate(q):
+            q["input_type"] = "text"
+            q["choices"] = None
+            q["display_style"] = "dropdown"
+
+        imported = self._roundtrip(mutate)
+
+        self.assertEqual(imported.display_style, 'default')
+
+
+class ChoiceDropdownEditorFormTest(TestCase):
+    """QuestionForm accepts 'dropdown' for choice questions only."""
+
+    def _form_data(self, **overrides):
+        data = {
+            'name': 'Pick one',
+            'subtext': '',
+            'input_type': 'choice',
+            'color': '#000000',
+            'icon_class': '',
+            'display_style': 'dropdown',
+        }
+        data.update(overrides)
+        return data
+
+    def test_dropdown_persists_on_choice_question(self):
+        """
+        GIVEN a question form for a choice question with display_style 'dropdown'
+        WHEN the form is validated
+        THEN the cleaned display_style is 'dropdown'
+        """
+        from .editor_forms import QuestionForm
+        form = QuestionForm(self._form_data())
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['display_style'], 'dropdown')
+
+    def test_dropdown_on_text_question_normalizes_to_default(self):
+        """
+        GIVEN a question form for a text question submitted with 'dropdown'
+        WHEN the form is validated
+        THEN the cleaned display_style is normalized to 'default'
+        """
+        from .editor_forms import QuestionForm
+        form = QuestionForm(self._form_data(input_type='text'))
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['display_style'], 'default')
+
+    def test_rating_style_on_choice_question_normalizes_to_default(self):
+        """
+        GIVEN a question form for a choice question submitted with 'stars'
+        WHEN the form is validated
+        THEN the cleaned display_style is normalized to 'default'
+        """
+        from .editor_forms import QuestionForm
+        form = QuestionForm(self._form_data(display_style='stars'))
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['display_style'], 'default')
+
+
+class FormattedTextBlockEditorTest(TestCase):
+    """The Formatted Text block (`input_type='html'`) is authored in a WYSIWYG.
+
+    Its subtext is the block's whole body and is rendered `|safe` to
+    respondents, which makes both properties tested here load-bearing: the body
+    must not be capped at a tweet's length, and it must not be able to carry a
+    script to the respondent's browser.
+    """
+
+    def setUp(self):
+        self.org = _make_org('FormattedTextOrg')
+        self.user = User.objects.create_user(username='ft_editor', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='ft_editor', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='ft_survey', visibility='private', organization=self.org,
+            created_by=self.user, available_languages=['en', 'de'],
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section 1', code='S1',
+            is_head=True,
+        )
+
+    def _create_block(self, subtext, **extra):
+        data = {'name': 'intro_block', 'input_type': 'html', 'color': '#000000',
+                'subtext': subtext}
+        data.update(extra)
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+            data,
+        )
+        self.assertEqual(response.status_code, 200)
+        return Question.objects.get(survey_section=self.section, name='intro_block')
+
+    def test_body_longer_than_the_old_column_is_kept(self):
+        """
+        GIVEN a Formatted Text body far longer than the former 512-char cap
+        WHEN the creator saves the block
+        THEN the whole body is stored and reaches the respondent
+        """
+        body = '<p>' + ('Mapping the neighbourhood. ' * 60) + '</p>'
+        self.assertGreater(len(body), 512)
+
+        block = self._create_block(body)
+
+        self.assertEqual(block.subtext, body)
+        SurveyHeader.objects.filter(pk=self.survey.pk).update(status='published')
+        # A multilingual survey asks for a language before it shows a section.
+        self.client.post(f'/surveys/{self.survey.uuid}/language/', {'language': 'en'})
+        content = self.client.get(
+            f'/surveys/{self.survey.uuid}/sec1/', follow=True).content.decode()
+        self.assertIn('Mapping the neighbourhood.', content)
+
+    def test_formatting_survives_the_save(self):
+        """
+        GIVEN a body with a heading, a bold run and a list
+        WHEN the block is saved
+        THEN the markup is stored rather than escaped away
+        """
+        block = self._create_block(
+            '<h2>Welcome</h2><p><strong>Read this first.</strong></p><ul><li>One</li></ul>')
+
+        self.assertIn('<h2>Welcome</h2>', block.subtext)
+        self.assertIn('<strong>Read this first.</strong>', block.subtext)
+        self.assertIn('<li>One</li>', block.subtext)
+
+    def test_script_is_stripped_from_the_body(self):
+        """
+        GIVEN a body carrying a script tag and an inline event handler
+        WHEN the block is saved
+        THEN both are gone and the allow-listed formatting stays
+
+        The block renders |safe, so an unsanitized body would be stored XSS
+        aimed at every respondent of the survey.
+        """
+        block = self._create_block(
+            '<h2>Hi</h2><script>alert(1)</script><p onclick="steal()">Text</p>')
+
+        self.assertNotIn('<script>', block.subtext)
+        self.assertNotIn('onclick', block.subtext)
+        self.assertIn('<h2>Hi</h2>', block.subtext)
+        self.assertIn('Text', block.subtext)
+
+    def test_translated_body_is_sanitized_too(self):
+        """
+        GIVEN a German translation of a Formatted Text body carrying a script
+        WHEN the block is saved
+        THEN the stored translation is sanitized like the base language
+        """
+        block = self._create_block(
+            '<p>Hello</p>',
+            translation_de_subtext='<p>Hallo</p><script>alert(1)</script>',
+        )
+
+        translation = block.translations.get(language='de')
+        self.assertNotIn('<script>', translation.subtext)
+        self.assertIn('<p>Hallo</p>', translation.subtext)
+
+    def test_other_types_keep_the_creator_sentence_intact(self):
+        """
+        GIVEN a text question whose subtext contains angle brackets
+        WHEN it is saved
+        THEN the sentence survives, escaped rather than swallowed
+
+        Subtext renders |safe for every type now, so "takes <5 minutes" has to
+        be escaped — running it through the tag allow-list alone would drop
+        "<5 minutes" as an unknown tag.
+        """
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+            {'name': 'Duration', 'input_type': 'text', 'color': '#000000',
+             'subtext': 'takes <5 minutes'},
+        )
+
+        q = Question.objects.get(survey_section=self.section, name='Duration')
+        self.assertEqual(q.subtext, 'takes &lt;5 minutes')
+
+    def test_dialog_ships_the_editor_mount(self):
+        """
+        GIVEN the question dialog
+        WHEN it is opened
+        THEN it carries the Quill mount and the per-language mounts
+
+        A server-side test suite would otherwise pass with a dead editor: every
+        assertion above works fine against the plain one-line input.
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/')
+        content = response.content.decode()
+
+        self.assertIn('id="html-body-quill"', content)
+        self.assertIn('data-translation-quill="de"', content)
+        self.assertIn('new Quill(', content)
+
+
+class RichSubtextAndSubheadingTest(TestCase):
+    """Question subtext and section subheading are creator rich text.
+
+    Both render as markup to respondents now, so the interesting cases are the
+    ones where a value is NOT markup: text typed before the editors existed,
+    text from an AI draft, and text that merely looks like a tag.
+    """
+
+    def setUp(self):
+        self.org = _make_org('RichTextOrg')
+        self.user = User.objects.create_user(username='rich_editor', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='rich_editor', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='rich_survey', visibility='private', organization=self.org,
+            created_by=self.user,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section 1', code='S1',
+            is_head=True,
+        )
+
+    def _respondent_page(self):
+        # Structural edits are blocked on a published survey, so the tests build
+        # the survey as a draft and publish it only to look at the result.
+        SurveyHeader.objects.filter(pk=self.survey.pk).update(status='published')
+        return self.client.get(f'/surveys/{self.survey.uuid}/sec1/').content.decode()
+
+    def test_formatted_subtext_reaches_the_respondent(self):
+        """
+        GIVEN a question whose subtext carries bold and a link
+        WHEN a respondent opens the section
+        THEN the markup renders instead of being printed as tags
+        """
+        Question.objects.create(
+            survey_section=self.section, name='Q1', code='q1', input_type='text',
+            order_number=1,
+            subtext='<p>Read <strong>this</strong> and the <a href="/rules">rules</a>.</p>',
+        )
+
+        content = self._respondent_page()
+
+        self.assertIn('<strong>this</strong>', content)
+        self.assertIn('href="/rules"', content)
+        self.assertNotIn('&lt;strong&gt;', content)
+
+    def test_angle_brackets_typed_by_a_creator_are_kept(self):
+        """
+        GIVEN a creator typing "takes <5 minutes" into the subtext editor
+        WHEN the question is saved
+        THEN the stored value escapes it, so the respondent still reads "<5 minutes"
+
+        Quill wraps typed text in <p>, so the value arriving here is markup whose
+        payload is the literal text — sanitizing alone would eat "<5 minutes" as
+        an unknown tag.
+        """
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+            {'name': 'Duration', 'input_type': 'text', 'color': '#000000',
+             'subtext': '<p>takes &lt;5 minutes</p>'},
+        )
+
+        q = Question.objects.get(survey_section=self.section, name='Duration')
+        self.assertEqual(q.subtext, '<p>takes &lt;5 minutes</p>')
+        self.assertIn('takes &lt;5 minutes', self._respondent_page())
+
+    def test_plain_text_from_a_machine_is_escaped_not_sanitized(self):
+        """
+        GIVEN plain text containing angle brackets, as an AI draft or an old ZIP supplies it
+        WHEN it is stored through the import path
+        THEN it is escaped, not fed to the tag allow-list
+
+        nh3 would drop "<5 minutes" as an unknown tag; escaping is what keeps the
+        creator's sentence intact.
+        """
+        from survey.html_sanitize import coerce_creator_html
+
+        self.assertEqual(coerce_creator_html('takes <5 minutes & counting'),
+                         'takes &lt;5 minutes &amp; counting')
+
+    def test_script_is_stripped_from_subtext_of_any_type(self):
+        """
+        GIVEN a subtext on an ordinary question carrying a script tag
+        WHEN it is saved
+        THEN the script is gone — subtext renders |safe for every type now
+        """
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+            {'name': 'Trap', 'input_type': 'text', 'color': '#000000',
+             'subtext': '<p>hi</p><script>alert(1)</script>'},
+        )
+
+        q = Question.objects.get(survey_section=self.section, name='Trap')
+        self.assertNotIn('<script>', q.subtext)
+        self.assertIn('<p>hi</p>', q.subtext)
+
+    def test_section_subheading_is_sanitized_on_save(self):
+        """
+        GIVEN a section subheading containing a script
+        WHEN the section panel saves it
+        THEN the stored subheading keeps the formatting and drops the script
+
+        The subheading was already rendered |safe before it had an editor, so
+        this closes a hole rather than opening one.
+        """
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/',
+            {'title': 'Section 1', 'code': 'S1',
+             'subheading': '<p>Map the <em>hot</em> spots</p><script>alert(1)</script>'},
+        )
+
+        self.section.refresh_from_db()
+        self.assertNotIn('<script>', self.section.subheading)
+        self.assertIn('<em>hot</em>', self.section.subheading)
+
+    def test_editor_ships_the_subtext_and_subheading_editors(self):
+        """
+        GIVEN the question dialog and the section panel
+        WHEN they render
+        THEN each carries its rich-text mount
+
+        Server-side assertions above pass just as well against the old plain
+        inputs; this is what fails if the editor stops being wired up.
+        """
+        dialog = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/'
+        ).content.decode()
+        panel = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/'
+        ).content.decode()
+
+        self.assertIn('id="subtext-quill"', dialog)
+        self.assertIn('id="section-subheading-quill"', panel)
