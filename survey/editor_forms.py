@@ -210,4 +210,11 @@ class QuestionForm(forms.ModelForm):
         # respondents. This is the one place all three question-saving views
         # pass through, so the allow-list belongs here.
         cleaned['subtext'] = coerce_creator_html(cleaned.get('subtext'))
+        style = cleaned.get('display_style') or 'default'
+        input_type = cleaned.get('input_type')
+        if input_type == 'choice':
+            if style not in ('default', 'dropdown'):
+                cleaned['display_style'] = 'default'
+        elif style == 'dropdown':
+            cleaned['display_style'] = 'default'
         return cleaned

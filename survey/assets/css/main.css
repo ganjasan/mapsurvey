@@ -1380,3 +1380,28 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
 }
 
 .ranking__empty i { margin-right: 6px; color: #adb5bd; }
+
+/* Searchable dropdown for choice questions (display_style = "dropdown") */
+.choice-dropdown { position: relative; }
+.choice-dropdown .cd-list {
+    position: absolute;
+    z-index: 1100;
+    left: 0; right: 0;
+    margin: 2px 0 0;
+    padding: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+.choice-dropdown .cd-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+.choice-dropdown .cd-option:hover,
+.choice-dropdown .cd-option.cd-active { background: #eef0ff; }
+.choice-dropdown .cd-option[aria-selected="true"] { font-weight: 600; }

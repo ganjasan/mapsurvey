@@ -997,7 +997,11 @@ def editor_question_preview_live(request, survey_uuid, section_id):
         return HttpResponse('unknown input type', status=400)
 
     display_style = request.POST.get('display_style', 'default')
-    if display_style not in {value for value, _ in DISPLAY_STYLE_CHOICES}:
+    allowed_styles = (
+        {'default', 'dropdown'} if input_type == 'choice'
+        else {value for value, _ in DISPLAY_STYLE_CHOICES}
+    )
+    if display_style not in allowed_styles:
         display_style = 'default'
 
     # A draft's choices arrive as the modal's serialized JSON. Malformed or

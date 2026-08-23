@@ -120,6 +120,7 @@ DISPLAY_STYLE_CHOICES = (
     ("scale_strip", _("Compact scale")),
     ("list_pips", _("Labeled list")),
     ("stars", _("Stars")),
+    ("dropdown", _("Dropdown with search")),
 )
 
 # What a star rating looks like when its creator set neither icon nor colour.
@@ -601,7 +602,7 @@ class Question(models.Model):
     color = models.CharField(verbose_name=_(u'Color'), max_length=7, help_text=_(u'HEX color, as #RRGGBB'), default="#000000")
     icon_class = models.CharField(default="", max_length=80, help_text=_(u'Must be Font-Awesome class'), blank=True, null=True)
     image = models.ImageField(upload_to ='images/', null=True, blank=True)
-    display_style = models.CharField(max_length=20, choices=DISPLAY_STYLE_CHOICES, default="default", help_text=_('Rendering style, only used by rating questions; "default" inherits the survey-wide style'))
+    display_style = models.CharField(max_length=20, choices=DISPLAY_STYLE_CHOICES, default="default", help_text=_('Rendering style: rating styles ("default" inherits the survey-wide style) or "dropdown" for choice questions'))
 
     class Meta:
         app_label = 'survey'
