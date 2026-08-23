@@ -36,18 +36,13 @@
 - [x] 3.4 Tests: autosave persists after settle; failure shows error state; no Save button
       rendered when flag on
 
-## 4. Respondent bottom sheet
+## 4. Respondent bottom sheet — REVERTED (owner decision 2026-08-23)
 
-- [x] 4.1 Shared bottom-sheet component (`survey/assets/js/components/bottom_sheet.js` +
-      styles): collapsed/expanded via drag handle, map interactive above
-- [x] 4.2 Wire into `base_survey_template.html` behind `MOBILE_BOTTOM_SHEET`; desktop
-      unchanged
-- [x] 4.3 Post-apply geometry confirmation on question card ("N added ✓" + edit/delete)
-- [x] 4.4 Touch-accurate instruction copy for point/line/area (tap-phrased drawLocal
-      tooltips via pointer:coarse). NOTE: "Draw a routes" is creator content of the prod
-      demo survey, not code — fix it in the prod DB when rolling out
-- [x] 4.5 Tests: sheet renders behind flag at mobile width; legacy layout when flag off;
-      applied-geometry count in rendered markup
+- [x] 4.x Built, then removed in review: the legacy panel/crosshair flow works and the
+      sheet was never explicitly approved as a respondent-flow mockup. Kept from this
+      group: tap-phrased Leaflet.draw tooltips via pointer:coarse (flag-independent).
+      The MOBILE_BOTTOM_SHEET flag, bottom-sheet assets and the "N added" chip are gone
+      (master's geo-multi counters cover the confirmation need).
 
 ## 5. Responses & Public results mobile
 

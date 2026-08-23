@@ -28357,68 +28357,34 @@ class EditorAutosaveTest(TestCase):
         self.assertNotIn('autosave-indicator', html)
 
 
-class RespondentBottomSheetTest(TestCase):
-    """Respondent bottom sheet behind the MOBILE_BOTTOM_SHEET kill switch.
-
-    Sheet geometry (detents, drag) needs a layout engine — device pass covers
-    it. Here: the flag gates the assets and the confirmation/copy scripts.
-    """
+class RespondentTouchCopyTest(TestCase):
+    """Touch-phrased instruction copy on the respondent map (kept from the
+    reverted bottom-sheet experiment — accurate copy is flag-independent)."""
 
     def setUp(self):
-        self.org = Organization.objects.create(name="Sheet Org")
+        self.org = Organization.objects.create(name="Touch Org")
         self.survey = SurveyHeader.objects.create(
-            name="sheet_survey",
+            name="touch_survey",
             organization=self.org,
             available_languages=[],
             status='published',
         )
-        self.section = SurveySection.objects.create(
-            survey_header=self.survey,
-            name="section1",
-            title="Sheet Section",
-            code="SH1",
-            is_head=True,
+        SurveySection.objects.create(
+            survey_header=self.survey, name="section1", title="S1",
+            code="TC1", is_head=True,
         )
-
-    @override_settings(MOBILE_BOTTOM_SHEET=True)
-    def test_flag_on_renders_sheet_assets(self):
-        """
-        GIVEN the MOBILE_BOTTOM_SHEET flag is on
-        WHEN a survey section page renders
-        THEN the bottom-sheet stylesheet, controller script and the
-             applied-geometry counter are present
-        """
-        response = self.client.get('/surveys/sheet_survey/section1/')
-        self.assertEqual(response.status_code, 200)
-        html = response.content.decode()
-        self.assertIn('bottom-sheet', html)
-        self.assertIn('bottom_sheet', html)
-        self.assertIn('geo-count-chip', html)
-
-    def test_flag_off_serves_legacy_panel(self):
-        """
-        GIVEN the MOBILE_BOTTOM_SHEET flag is off (default)
-        WHEN a survey section page renders
-        THEN no bottom-sheet asset or counter markup is emitted
-        """
-        response = self.client.get('/surveys/sheet_survey/section1/')
-        self.assertEqual(response.status_code, 200)
-        html = response.content.decode()
-        self.assertNotIn('bottom_sheet', html)
-        self.assertNotIn('geo-count-chip', html)
 
     def test_touch_instruction_strings_served(self):
         """
         GIVEN the respondent map page
-        WHEN it renders (any flag state)
+        WHEN it renders
         THEN the i18n payload carries tap-phrased tooltips and the template
              picks them for coarse pointers
         """
-        response = self.client.get('/surveys/sheet_survey/section1/')
+        response = self.client.get('/surveys/touch_survey/section1/')
         html = response.content.decode()
         self.assertIn('tapToPlaceMarker', html)
         self.assertIn('pointer: coarse', html)
-
 
 class LandingRevealProgressiveTest(SimpleTestCase):
     """Landing scroll-reveal must be progressive enhancement (landing-page spec)."""

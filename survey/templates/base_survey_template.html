@@ -21,13 +21,6 @@ locale.{% endcomment %}
     <script type="text/javascript" src="{% static 'js/components/ranking.js' %}"></script>
 
     <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
-    {% if MOBILE_BOTTOM_SHEET %}
-    {% comment %}Kill switch MOBILE_BOTTOM_SHEET (openspec: mobile-adaptive-refactor):
-    the ≤768px question panel becomes a three-detent bottom sheet over an
-    always-visible map. Unset = legacy slide-in panel.{% endcomment %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/bottom-sheet.css' %}">
-    <script type="text/javascript" src="{% static 'js/components/bottom_sheet.js' %}" defer></script>
-    {% endif %}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
    integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
    crossorigin=""/>
@@ -287,41 +280,6 @@ locale.{% endcomment %}
 
     var editableLayers = new L.FeatureGroup();
 
-    {% if MOBILE_BOTTOM_SHEET %}
-    // Applied-geometry confirmation (openspec: respondent-bottom-sheet): the
-    // question card shows "✓ N added" as soon as a geometry lands in
-    // editableLayers, so a respondent returning to the panel can tell their
-    // answer was recorded. Behind the MOBILE_BOTTOM_SHEET kill switch with the
-    // rest of the respondent-surface changes.
-    function updateGeoCounts() {
-        var counts = {};
-        editableLayers.eachLayer(function(layer) {
-            var qid = layer.feature && layer.feature.properties && layer.feature.properties.question_id;
-            if (qid) counts[qid] = (counts[qid] || 0) + 1;
-        });
-        document.querySelectorAll('button.drawbutton').forEach(function(btn) {
-            var qid = btn.getAttribute('name');
-            var n = counts[qid] || 0;
-            var chip = btn.querySelector('.geo-count-chip');
-            if (n === 0) {
-                if (chip) chip.remove();
-                return;
-            }
-            if (!chip) {
-                chip = document.createElement('span');
-                chip.className = 'geo-count-chip';
-                var text = btn.querySelector('.geo-question-text') || btn;
-                text.appendChild(chip);
-            }
-            chip.textContent = '✓ ' + n + ' ' + i18n.geoAdded;
-        });
-    }
-    editableLayers.on('layeradd layerremove', function() {
-        // Defer: the feature property is attached right after addLayer.
-        setTimeout(updateGeoCounts, 0);
-    });
-    document.addEventListener('DOMContentLoaded', updateGeoCounts);
-    {% endif %}
     var currentQ = null;
     var currentDrawFeature = null;
     var currentEditLayer = null;

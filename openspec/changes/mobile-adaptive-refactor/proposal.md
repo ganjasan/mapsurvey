@@ -23,9 +23,10 @@ against a "desktop-only" editor fallback — the editor is in scope.
   types as a first-class group; picking a type creates the question and opens Edit.
 - **Autosave replaces the explicit Save button — on desktop too** ("All changes saved"
   indicator line). This is the only intentional desktop behavior change.
-- **Respondent survey page moves to a bottom-sheet pattern on mobile**: map always visible,
-  question panel as a draggable sheet; visible confirmation after a geometry is applied;
-  instruction copy matches the actual crosshair interaction.
+- **Respondent survey page keeps its existing layout** (REVERSED in review 2026-08-23:
+  a bottom-sheet variant was built and removed — the panel/crosshair flow works and no
+  respondent-flow mockup was ever explicitly approved). Only instruction copy becomes
+  touch-accurate.
 - **The 4-row editor toolbar collapses to one row** on mobile: back · title · version chip ·
   ⋯ overflow (Share / Settings / Versions / Publish / account).
 - **Landing content renders without scroll-triggered JS**: sections visible by default,
@@ -42,9 +43,6 @@ against a "desktop-only" editor fallback — the editor is in scope.
   drill-down inside Structure, one-row toolbar with overflow menu.
 - `editor-autosave`: autosave of editor changes with a saved-state indicator, replacing the
   explicit Save button on all viewports.
-- `respondent-bottom-sheet`: bottom-sheet question panel over an always-visible map on the
-  respondent survey page (mobile), including post-apply geometry confirmation and
-  interaction-accurate instruction copy.
 - `survey-page-metadata`: respondent survey pages carry a meaningful `<title>` and
   `html[lang]`.
 

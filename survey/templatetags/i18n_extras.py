@@ -44,8 +44,6 @@ def i18n_json():
         'tapToContinueLine': _('Tap to add the next point.'),
         'tapLastPointToFinish': _('Tap the last point to finish the line.'),
 
-        # Applied-geometry confirmation chip
-        'geoAdded': _('added'),
 
         # Error messages
         'shapeEdgesCannotIntersect': _('<strong>Error:</strong> Shape edges cannot intersect!'),

@@ -27,7 +27,6 @@ def contact(request):
 def mobile_adaptive(request):
     return {
         'MOBILE_EDITOR_NAV': getattr(settings, 'MOBILE_EDITOR_NAV', False),
-        'MOBILE_BOTTOM_SHEET': getattr(settings, 'MOBILE_BOTTOM_SHEET', False),
         'EDITOR_AUTOSAVE': getattr(settings, 'EDITOR_AUTOSAVE', False),
     }
 

@@ -459,10 +459,8 @@ DISCORD_INVITE_URL = os.environ.get('DISCORD_INVITE_URL', 'https://discord.gg/v6
 
 # Mobile-adaptive rollout kill switches (openspec: mobile-adaptive-refactor).
 # Unset/False serves the pre-change layout on all viewports, so a bad rollout is
-# reverted by flipping the env var -- no deploy rollback needed. Rollout order per
-# design.md: MOBILE_BOTTOM_SHEET (respondent surface) first, MOBILE_EDITOR_NAV second.
+# reverted by flipping the env var -- no deploy rollback needed.
 MOBILE_EDITOR_NAV = os.environ.get('MOBILE_EDITOR_NAV', 'False').lower() in ('true', '1')
-MOBILE_BOTTOM_SHEET = os.environ.get('MOBILE_BOTTOM_SHEET', 'False').lower() in ('true', '1')
 # Autosave replaces the explicit Save button on question edit forms (all viewports —
 # the one intentional desktop change of the refactor). Separate switch so desktop
 # autosave can be rolled back without touching the mobile navigation.
