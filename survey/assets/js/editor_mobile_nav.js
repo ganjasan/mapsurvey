@@ -21,6 +21,24 @@
         document.querySelectorAll('.mobile-tabbar button[data-pane]').forEach(function (btn) {
             btn.classList.toggle('active', btn.getAttribute('data-pane') === name);
         });
+        // Preview owns the whole screen on mobile (owner review): tab bar and
+        // context bars hide, exit is the ‹ button injected into its header.
+        document.body.classList.toggle('pane-preview-full', name === 'preview');
+        if (name === 'preview') injectPreviewBack();
+    }
+
+    function injectPreviewBack() {
+        var head = document.querySelector('.editor-preview .preview-header, .pr-preview .pr-preview-head');
+        if (!head || head.querySelector('.mobile-preview-back')) return;
+        var back = document.createElement('button');
+        back.type = 'button';
+        back.className = 'mobile-preview-back';
+        back.setAttribute('aria-label', 'Close preview');
+        var icon = document.createElement('i');
+        icon.className = 'fas fa-chevron-left';
+        back.appendChild(icon);
+        back.addEventListener('click', function () { setPane('structure'); });
+        head.insertBefore(back, head.firstChild);
     }
 
     // Drill-down (Structure → question tap) and the type picker need to switch

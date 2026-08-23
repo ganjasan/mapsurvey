@@ -110,7 +110,29 @@ body.mobile-nav-enabled .navbar-overflow { display: none; }
     }
     body.mobile-nav-enabled .editor-container[data-active-pane="structure"] .editor-sidebar { display: flex; }
     body.mobile-nav-enabled .editor-container[data-active-pane="edit"] .editor-main { display: block; overflow-y: auto; }
-    body.mobile-nav-enabled .editor-container[data-active-pane="preview"] .editor-preview { display: flex; }
+
+    /* Preview = the whole screen (owner review): fixed overlay, iframe fills,
+       exit via the injected ‹ button; tab bar and context bars hide (the
+       pane-preview-full body class is toggled by editor_mobile_nav.js). */
+    body.mobile-nav-enabled .editor-container[data-active-pane="preview"] .editor-preview,
+    body.mobile-nav-enabled .pr-container[data-active-pane="preview"] .pr-preview {
+        display: flex; flex-direction: column;
+        position: fixed; inset: 0; z-index: 700; width: 100%; max-width: none;
+        background: #fff; border: none;
+    }
+    body.mobile-nav-enabled .editor-container[data-active-pane="preview"] .editor-preview iframe,
+    body.mobile-nav-enabled .pr-container[data-active-pane="preview"] .pr-preview iframe {
+        flex: 1; min-height: 0;
+    }
+    body.mobile-nav-enabled.pane-preview-full .mobile-tabbar { display: none; }
+    body.mobile-nav-enabled.pane-preview-full .pr-ctxbar { display: none; }
+    body.mobile-nav-enabled.pane-preview-full .editor-navbar { display: none; }
+    body.mobile-nav-enabled .mobile-preview-back {
+        width: 40px; height: 40px; margin-right: 8px; flex: 0 0 auto;
+        border: 1px solid var(--border-color); border-radius: 8px;
+        background: #fff; color: #374151; display: grid; place-items: center;
+    }
+    body.mobile-nav-enabled.pane-preview-full #preview-collapse { display: none; }
 
     /* Collapsed-state classes from the desktop split-pane logic must not hide
        a pane the mobile nav made active. */
