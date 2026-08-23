@@ -24,7 +24,13 @@
         // Preview owns the whole screen on mobile (owner review): tab bar and
         // context bars hide, exit is the ‹ button injected into its header.
         document.body.classList.toggle('pane-preview-full', name === 'preview');
-        if (name === 'preview') injectPreviewBack();
+        if (name === 'preview') {
+            injectPreviewBack();
+            // Belt: the desktop split-pane persistence may have written an
+            // inline width/height on the pane from localStorage.
+            var pv = document.querySelector('.editor-preview, .pr-preview');
+            if (pv) { pv.style.width = ''; pv.style.height = ''; }
+        }
     }
 
     function injectPreviewBack() {

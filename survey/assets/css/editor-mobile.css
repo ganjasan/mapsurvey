@@ -114,10 +114,16 @@ body.mobile-nav-enabled .navbar-overflow { display: none; }
     /* Preview = the whole screen (owner review): fixed overlay, iframe fills,
        exit via the injected ‹ button; tab bar and context bars hide (the
        pane-preview-full body class is toggled by editor_mobile_nav.js). */
+    /* !important on the geometry: the desktop split-pane persistence
+       (restorePanelState + resize handles) writes INLINE width on this pane
+       from localStorage — that inline style beat the overlay and rendered the
+       preview 452px wide on a 375px screen (the owner's clipped-preview bug,
+       invisible in a fresh profile that never resized panes). */
     body.mobile-nav-enabled .editor-container[data-active-pane="preview"] .editor-preview,
     body.mobile-nav-enabled .pr-container[data-active-pane="preview"] .pr-preview {
         display: flex; flex-direction: column;
-        position: fixed; inset: 0; z-index: 700; width: 100%; max-width: none;
+        position: fixed; inset: 0 !important; z-index: 700;
+        width: 100% !important; max-width: none !important; height: auto !important;
         background: #fff; border: none;
     }
     body.mobile-nav-enabled .editor-container[data-active-pane="preview"] .editor-preview iframe,
