@@ -46,7 +46,7 @@ when the published survey is read-only the bar goes amber and carries the
         {% endif %}
     </div>
     <div style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:.6rem;">
-        <a class="btn btn-sm btn-outline-secondary" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
+        <a class="btn btn-sm btn-outline-secondary ctx-preview-btn" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
             <i class="fas fa-external-link-alt"></i> Preview
         </a>
         {% include "editor/partials/_survey_primary_action.html" %}
@@ -60,7 +60,7 @@ when the published survey is read-only the bar goes amber and carries the
         <div class="s">Sections, questions &amp; survey settings</div>
     </div>
     <span style="flex:1;"></span>
-    <a class="btn btn-sm btn-outline-secondary" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
+    <a class="btn btn-sm btn-outline-secondary ctx-preview-btn" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
         <i class="fas fa-external-link-alt"></i> Preview
     </a>
     {% if show_draft_actions %}

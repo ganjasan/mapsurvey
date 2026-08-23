@@ -244,6 +244,9 @@ body.mobile-nav-enabled .navbar-overflow { display: none; }
     }
     body.mobile-nav-enabled .build-ro-msg { white-space: normal; }
     body.mobile-nav-enabled .pr-ctxbar .btn { min-height: 40px; }
+    /* The ctx-bar "Preview" duplicates the bottom bar's Preview pane on
+       phones (owner review) — the pane is the mobile way to preview. */
+    body.mobile-nav-enabled .pr-ctxbar .ctx-preview-btn { display: none; }
 
     /* Question type picker inside the (full-screen) question dialog: larger
        touch targets, map types highlighted as the product's identity group
