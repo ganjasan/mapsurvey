@@ -429,5 +429,6 @@ function prCopyPublicLink(btn){
 })();
 </script>
 
-{% include "editor/partials/_mobile_nav.html" with pane_context="public-results" active_pane=selected_block|yesno:"edit,structure" %}
+{% url 'editor_public_results_preview' survey.uuid as pr_preview_url %}
+{% include "editor/partials/_mobile_nav.html" with pane_context="public-results" active_pane=selected_block|yesno:"edit,structure" preview_url=pr_preview_url %}
 {% endblock %}

@@ -54,7 +54,16 @@
         if (!bar) return;
         bar.addEventListener('click', function (e) {
             var btn = e.target.closest('button[data-pane]');
-            if (btn) setPane(btn.getAttribute('data-pane'));
+            if (!btn) return;
+            // Preview navigates to the REAL page instead of embedding it in an
+            // iframe: iframe media-query behavior proved unreliable across
+            // device emulators, and the owner asked for full-screen preview
+            // with the system back button as the exit anyway.
+            if (btn.getAttribute('data-pane') === 'preview' && btn.getAttribute('data-preview-url')) {
+                window.location.href = btn.getAttribute('data-preview-url');
+                return;
+            }
+            setPane(btn.getAttribute('data-pane'));
         });
         var initial = bar.querySelector('button.active') || bar.querySelector('button[data-pane]');
         if (initial) setPane(initial.getAttribute('data-pane'));
