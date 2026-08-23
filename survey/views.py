@@ -935,7 +935,14 @@ def survey_section(request, survey_slug, section_name):
 				if not question.choices:
 					result = result[0]
 					if (question.input_type in ['point', 'line', 'polygon']):
-						geostr_list = result.split('|')
+						geostr_list = [g for g in result.split('|') if g != '']
+						# The UI enforces max_features; this clamp only keeps a
+						# tampered or scripted POST within bounds. The section
+						# POST has no error-render path (required is client-side
+						# too), so excess features are discarded, not rejected.
+						max_features = (question.validation_settings or {}).get('max_features')
+						if isinstance(max_features, int) and max_features > 0:
+							geostr_list = geostr_list[:max_features]
 						for geostr in geostr_list:
 							if geostr != '':
 								answer = Answer(survey_session=survey_session, question=question)

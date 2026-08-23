@@ -661,6 +661,69 @@ ul {
   color: var(--text-secondary);
 }
 
+/* --- Multi-feature affordance --- */
+.drawbutton.geo-armed {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.drawbutton:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.drawbutton:disabled:hover {
+  background: var(--card-bg);
+  box-shadow: none;
+  border-color: var(--card-border);
+}
+
+.geo-count {
+  flex-shrink: 0;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 8px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+.geo-count.visible {
+  display: inline-flex;
+}
+
+/* Progress sits INSIDE the button (so it is obvious which question it belongs
+   to) and renders only when the creator set min/max features */
+.geo-progress {
+  display: none;
+  margin: 6px 0 0;
+  font-size: 0.78em;
+  color: var(--text-secondary);
+  text-align: left;
+}
+.geo-progress.visible {
+  display: block;
+}
+.geo-progress-bar {
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.07);
+  margin-top: 4px;
+  overflow: hidden;
+}
+.geo-progress-bar > div {
+  height: 100%;
+  width: 0%;
+  border-radius: 4px;
+  transition: width 0.25s ease, background 0.25s ease;
+}
+.geo-progress.geo-progress-met .geo-progress-bar > div {
+  background: var(--success) !important;
+}
+
 /* ============================================
    Layer popup controls
    ============================================ */

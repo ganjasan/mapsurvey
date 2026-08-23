@@ -104,6 +104,8 @@ class LeafletDrawButtonWidget(widgets.Widget):
         context['widget']['icon_class'] = context['widget']['attrs']['icon_class']
         context['widget']['draw_icon_class'] = context['widget']['attrs']['draw_icon_class']
         context['widget']['required'] = context['widget']['required']
+        context['widget']['min_features'] = context['widget']['attrs'].get('min_features', '')
+        context['widget']['max_features'] = context['widget']['attrs'].get('max_features', '')
         return context
 
 class PointDrawButtonWidget(LeafletDrawButtonWidget):
@@ -137,12 +139,14 @@ class ShowImageWidget(widgets.Widget):
         return context
 
 class LeafletDrawButtonField(forms.Field):
-    def __init__(self,*, title, subtitle, color, icon_class, draw_icon_class, **kwargs):
+    def __init__(self,*, title, subtitle, color, icon_class, draw_icon_class, min_features=None, max_features=None, **kwargs):
         self.title = title
         self.subtitle = subtitle
         self.color = color
         self.icon_class = icon_class
         self.draw_icon_class = draw_icon_class
+        self.min_features = min_features
+        self.max_features = max_features
 
         super().__init__(**kwargs)
 
@@ -153,6 +157,10 @@ class LeafletDrawButtonField(forms.Field):
         attrs['color'] = self.color
         attrs['icon_class'] = self.icon_class
         attrs['draw_icon_class'] = self.draw_icon_class
+        if self.min_features is not None:
+            attrs['min_features'] = self.min_features
+        if self.max_features is not None:
+            attrs['max_features'] = self.max_features
 
         return attrs
 
@@ -284,15 +292,18 @@ class SurveySectionAnswerForm(forms.Form):
 
         elif input_type == 'point':
             draw_icon_class = icon_class if icon_class else "fas fa-map-marker-alt"
-            return LeafletDrawButtonField(widget=PointDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required)
+            vs = question.validation_settings or {}
+            return LeafletDrawButtonField(widget=PointDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required, min_features=vs.get('min_features'), max_features=vs.get('max_features'))
 
         elif input_type == 'line':
             draw_icon_class = icon_class if icon_class else "fas fa-route"
-            return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required)
+            vs = question.validation_settings or {}
+            return LeafletDrawButtonField(widget=LineDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required, min_features=vs.get('min_features'), max_features=vs.get('max_features'))
 
         elif input_type == 'polygon':
             draw_icon_class = icon_class if icon_class else "fas fa-draw-polygon"
-            return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required)
+            vs = question.validation_settings or {}
+            return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required, min_features=vs.get('min_features'), max_features=vs.get('max_features'))
 
         elif input_type == 'image':
             return ShowImageField(widget=ShowImageWidget, label=False, image_source=image_source,

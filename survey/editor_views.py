@@ -888,6 +888,26 @@ def editor_question_edit(request, survey_uuid, question_id):
                 if val:
                     try: vs['area_outlier_factor'] = float(val)
                     except ValueError: pass
+            # Feature-count limits apply to every geo type (polygon keeps its
+            # area factor above as well, hence a separate `if`, not `elif`)
+            if q.input_type in ('point', 'line', 'polygon'):
+                for key, floor in (('min_features', 0), ('max_features', 1)):
+                    val = request.POST.get(f'vs_{key}', '').strip()
+                    if val:
+                        try:
+                            parsed = int(val)
+                        except ValueError:
+                            continue
+                        if parsed >= floor:
+                            vs[key] = parsed
+                if 'min_features' in vs and 'max_features' in vs and vs['max_features'] < vs['min_features']:
+                    form.add_error(None, 'Max places must be greater than or equal to min places.')
+                    return render(request, 'editor/partials/question_form_modal.html', {
+                        'form': form,
+                        'survey': survey,
+                        'section': question.survey_section,
+                        'question': question,
+                    })
             q.validation_settings = vs
             q.save()
             _save_question_translations(request, q, survey)
