@@ -218,7 +218,9 @@ body.mobile-nav-enabled .pr-container { height: auto; flex: 1; min-height: 0; }
     body.mobile-nav-enabled .editor-container .editor-main,
     body.mobile-nav-enabled .editor-container .editor-preview {
         display: none;
-        width: 100%;
+        /* !important: restorePanelState() re-applies the desktop drag width
+           as an inline style, which would shrink the single mobile pane. */
+        width: 100% !important;
         max-width: none;
         height: 100%;
         border-right: none;
@@ -261,8 +263,8 @@ body.mobile-nav-enabled .pr-container { height: auto; flex: 1; min-height: 0; }
 
     /* Collapsed-state classes from the desktop split-pane logic must not hide
        a pane the mobile nav made active. */
-    body.mobile-nav-enabled .editor-container[data-active-pane="structure"] .editor-sidebar.collapsed { display: flex; width: 100%; }
-    body.mobile-nav-enabled .editor-container[data-active-pane="preview"] .editor-preview.collapsed { display: flex; width: 100%; }
+    body.mobile-nav-enabled .editor-container[data-active-pane="structure"] .editor-sidebar.collapsed { display: flex; width: 100% !important; }
+    body.mobile-nav-enabled .editor-container[data-active-pane="preview"] .editor-preview.collapsed { display: flex; width: 100% !important; }
 
     /* Public results (.pr-container): same one-pane-at-a-time treatment.
        Structure = block sidebar, Edit = block config main, Preview = live
@@ -277,7 +279,9 @@ body.mobile-nav-enabled .pr-container { height: auto; flex: 1; min-height: 0; }
     body.mobile-nav-enabled .pr-container .pr-main,
     body.mobile-nav-enabled .pr-container .pr-preview {
         display: none;
-        width: 100%;
+        /* !important: the PR page's own restore code re-applies saved drag
+           widths inline (see prPanelW), which would shrink the mobile pane. */
+        width: 100% !important;
         max-width: none;
         height: 100%;
         border-left: none;
