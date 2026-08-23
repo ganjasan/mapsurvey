@@ -82,7 +82,7 @@ when the published survey is read-only the bar goes amber and carries the
 </div>
 {% endif %}
 
-<div class="editor-container" style="flex:1;min-height:0;">
+<div class="editor-container" style="flex:1;min-height:0;" data-active-pane="structure">
     <!-- Sidebar expand tab (visible when collapsed) -->
     <div class="panel-expand-tab" id="sidebar-expand" title="Show sections">
         <i class="fas fa-chevron-right"></i> Sections
@@ -207,6 +207,8 @@ when the published survey is read-only the bar goes amber and carries the
 </div>
 </div><!-- /editor-content-wrapper -->
 
+{% include "editor/partials/_mobile_nav.html" with pane_context="survey" %}
+
 <!-- Question Form Modal -->
 <div class="modal fade editor-modal" id="questionModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -266,6 +268,11 @@ document.addEventListener('DOMContentLoaded', function() {
         Sortable.create(sectionsList, {
             animation: 150,
             handle: '.drag-handle',
+            // Touch: long-press activates the drag so scrolling stays natural
+            // (openspec: mobile-adaptive-refactor). No effect with a mouse.
+            delay: 300,
+            delayOnTouchOnly: true,
+            touchStartThreshold: 4,
             onEnd: function() {
                 var ids = Array.from(sectionsList.children).map(function(el) {
                     return el.dataset.sectionId;
@@ -490,6 +497,9 @@ document.addEventListener('DOMContentLoaded', function() {
         listEl._sortable = Sortable.create(listEl, {
             animation: 150,
             handle: '.drag-handle',
+            delay: 300,
+            delayOnTouchOnly: true,
+            touchStartThreshold: 4,
             onEnd: function() {
                 var ids = Array.from(listEl.children).map(function(el) {
                     return el.dataset.questionId;

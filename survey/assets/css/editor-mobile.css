@@ -1,0 +1,239 @@
+/* Mobile editor chrome (openspec: mobile-adaptive-refactor).
+ *
+ * Everything here is double-gated: by the `mobile-nav-enabled` body class (the
+ * MOBILE_EDITOR_NAV kill switch — see settings.py) and by the <768px media query.
+ * With the flag off or on desktop widths this file changes nothing, which is the
+ * rollback story: flip the env var, redeploy, legacy layout is back. */
+
+body.mobile-nav-enabled .mobile-tabbar { display: none; }
+body.mobile-nav-enabled .navbar-overflow { display: none; }
+
+@media (max-width: 767.98px) {
+
+    /* --- One-row toolbar ------------------------------------------------- */
+    /* Grid instead of the wrapping flex row: row 1 = back · title · overflow,
+       row 2 = the page-tab strip (level 1 of the mobile navigation). */
+    body.mobile-nav-enabled .editor-navbar {
+        display: grid;
+        /* back · title · version chip (publishing widget) · ⋯ overflow */
+        grid-template-columns: auto minmax(0, 1fr) auto auto;
+        align-items: center;
+        row-gap: 0;
+        padding: 0.4rem 0.75rem 0;
+    }
+    body.mobile-nav-enabled .editor-navbar .survey-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 1rem;
+    }
+    /* Desktop-only toolbar items collapse into the ⋯ overflow menu.
+       !important: some carry Bootstrap's .d-inline, whose display:inline
+       !important would win otherwise. */
+    body.mobile-nav-enabled .editor-navbar .nav-desktop,
+    body.mobile-nav-enabled .editor-navbar .spacer,
+    body.mobile-nav-enabled .editor-navbar #clipboardPill { display: none !important; }
+    body.mobile-nav-enabled .navbar-overflow {
+        display: block;
+        justify-self: end;
+        /* Explicit placement: DOM order puts this after the row-2 tab strip,
+           so auto-placement would push it to a third row. */
+        grid-row: 1;
+        grid-column: 4;
+    }
+    body.mobile-nav-enabled .editor-navbar #publishing-widget.nav-action {
+        grid-row: 1;
+        grid-column: 3;
+    }
+    body.mobile-nav-enabled .navbar-overflow > a {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: #6b7280;
+    }
+
+    /* --- Level 1: page-tab strip ---------------------------------------- */
+    body.mobile-nav-enabled .editor-navbar .survey-nav-tabs {
+        grid-column: 1 / -1;
+        display: flex;
+        overflow-x: auto;
+        margin: 0.35rem -0.75rem 0;
+        padding: 0 0.5rem;
+        border-top: 1px solid var(--border-color);
+        scrollbar-width: none;
+    }
+    body.mobile-nav-enabled .editor-navbar .survey-nav-tabs::-webkit-scrollbar { display: none; }
+    body.mobile-nav-enabled .editor-navbar .survey-nav-tab {
+        white-space: nowrap;
+        padding: 0.55rem 0.7rem;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+    }
+    /* Share / Preview / gear actions leave the toolbar on mobile; their
+       destinations stay reachable from the panes themselves. The publishing
+       widget stays: it is the mockup's version chip, and its dropdown carries
+       the lifecycle (Publish/Close/...) actions the overflow must expose. */
+    body.mobile-nav-enabled .editor-navbar .nav-action { display: none; }
+    body.mobile-nav-enabled .editor-navbar #publishing-widget.nav-action { display: block; }
+    body.mobile-nav-enabled .editor-navbar #publishing-widget .nav-menu {
+        left: auto;
+        right: 0;
+        max-width: calc(100vw - 1.5rem);
+    }
+
+    /* --- Panes: one at a time ------------------------------------------- */
+    body.mobile-nav-enabled .editor-container {
+        display: block;
+        position: relative;
+        height: auto;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+        padding-bottom: 58px; /* room for the fixed bottom tab bar */
+    }
+    body.mobile-nav-enabled .editor-container .panel-expand-tab,
+    body.mobile-nav-enabled .editor-container .resize-handle { display: none !important; }
+
+    body.mobile-nav-enabled .editor-container .editor-sidebar,
+    body.mobile-nav-enabled .editor-container .editor-main,
+    body.mobile-nav-enabled .editor-container .editor-preview {
+        display: none;
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        border-right: none;
+        border-left: none;
+    }
+    body.mobile-nav-enabled .editor-container[data-active-pane="structure"] .editor-sidebar { display: flex; }
+    body.mobile-nav-enabled .editor-container[data-active-pane="edit"] .editor-main { display: block; overflow-y: auto; }
+    body.mobile-nav-enabled .editor-container[data-active-pane="preview"] .editor-preview { display: flex; }
+
+    /* Collapsed-state classes from the desktop split-pane logic must not hide
+       a pane the mobile nav made active. */
+    body.mobile-nav-enabled .editor-container[data-active-pane="structure"] .editor-sidebar.collapsed { display: flex; width: 100%; }
+    body.mobile-nav-enabled .editor-container[data-active-pane="preview"] .editor-preview.collapsed { display: flex; width: 100%; }
+
+    /* Public results (.pr-container): same one-pane-at-a-time treatment.
+       Structure = block sidebar, Edit = block config main, Preview = live
+       public page iframe — the shared pane vocabulary. */
+    body.mobile-nav-enabled .pr-container {
+        display: block;
+        position: relative;
+        overflow: hidden;
+        padding-bottom: 58px;
+    }
+    body.mobile-nav-enabled .pr-container .pr-sidebar,
+    body.mobile-nav-enabled .pr-container .pr-main,
+    body.mobile-nav-enabled .pr-container .pr-preview {
+        display: none;
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        border-left: none;
+        border-right: none;
+    }
+    body.mobile-nav-enabled .pr-container[data-active-pane="structure"] .pr-sidebar { display: flex; }
+    body.mobile-nav-enabled .pr-container[data-active-pane="edit"] .pr-main { display: block; overflow-y: auto; }
+    body.mobile-nav-enabled .pr-container[data-active-pane="preview"] .pr-preview { display: flex; }
+
+    /* Responses: keep content clear of the fixed bottom bar. */
+    body.mobile-nav-enabled #pane-data,
+    body.mobile-nav-enabled #pane-performance { padding-bottom: 58px; }
+
+    /* --- Level 2: contextual bottom tab bar ------------------------------ */
+    body.mobile-nav-enabled .mobile-tabbar {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 200;
+        background: #fff;
+        border-top: 1px solid var(--border-color);
+        padding: 4px 6px calc(6px + env(safe-area-inset-bottom));
+    }
+    body.mobile-nav-enabled .mobile-tabbar button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        min-height: 48px;
+        padding: 4px 0;
+        border: none;
+        background: none;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        color: #6b7280;
+        cursor: pointer;
+    }
+    body.mobile-nav-enabled .mobile-tabbar button i { font-size: 1.05rem; }
+    body.mobile-nav-enabled .mobile-tabbar button.active {
+        color: var(--accent);
+        background: var(--accent-light);
+    }
+
+    /* Breadcrumb back (injected by editor_mobile_nav.js, mobile-only) */
+    body.mobile-nav-enabled .mobile-pane-back {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 44px;
+        margin: -0.5rem 0 0.5rem;
+        padding: 0 0.25rem;
+        border: none;
+        background: none;
+        color: var(--accent);
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    /* Question form modal goes full-screen on phones. */
+    body.mobile-nav-enabled .editor-modal .modal-dialog {
+        margin: 0;
+        max-width: 100vw;
+        min-height: 100vh;
+        display: flex;
+    }
+    body.mobile-nav-enabled .editor-modal .modal-content {
+        border-radius: 0;
+        min-height: 100vh;
+    }
+
+    /* Context bar / read-only banner: stack instead of a squeezed row, so the
+       lock message, pill and action button never overlap or clip (audit
+       finding: banner self-overlap at 390px). */
+    body.mobile-nav-enabled .pr-ctxbar {
+        flex-wrap: wrap;
+        padding: 0.6rem 0.75rem;
+        row-gap: 0.5rem;
+    }
+    body.mobile-nav-enabled .pr-ctxbar > div[style*="flex:1"] {
+        flex: 1 1 100% !important;
+        justify-content: flex-start !important;
+    }
+    body.mobile-nav-enabled .build-ro-msg { white-space: normal; }
+    body.mobile-nav-enabled .pr-ctxbar .btn { min-height: 40px; }
+
+    /* Question type picker inside the (full-screen) question dialog: larger
+       touch targets, map types highlighted as the product's identity group
+       (mockup screen 3). */
+    body.mobile-nav-enabled .qtp-card { min-height: 72px; padding: 10px 6px; }
+    body.mobile-nav-enabled .qtp-grid-geo .qtp-card {
+        background: var(--accent-light);
+        border-color: #c7d2fe;
+    }
+    body.mobile-nav-enabled .qtp-grid-geo .qtp-card .qtp-icon,
+    body.mobile-nav-enabled .qtp-grid-geo .qtp-card .qtp-name { color: var(--accent); }
+    body.mobile-nav-enabled .qtp-group-geo { color: var(--accent); font-weight: 600; }
+
+    /* Touch targets */
+    body.mobile-nav-enabled .section-item,
+    body.mobile-nav-enabled .sidebar-pinned-item { min-height: 44px; }
+    body.mobile-nav-enabled .section-item .drag-handle { padding: 10px 6px; }
+}

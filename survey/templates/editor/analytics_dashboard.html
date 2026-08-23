@@ -2565,4 +2565,42 @@ document.addEventListener('DOMContentLoaded', function() {
     fm.registerComponent(FilterManager.prototype._renderSelection);
 });
 </script>
+
+{% include "editor/partials/_mobile_nav.html" with pane_context="responses" %}
+{% if MOBILE_EDITOR_NAV %}
+<script>
+/* Mobile pane bar for Responses (openspec: mobile-adaptive-refactor).
+   The Data workspace is a split-pane tree on desktop; on a phone the bar
+   forces a single full-width leaf showing the chosen panel. Performance is
+   the existing top-level tab. Mobile default is Charts, not Table — the grid
+   answers "inspect a record", the phone answers "how is my survey doing". */
+function mobileAnalyticsPane(pane) {
+    var bar = document.querySelector('.mobile-tabbar');
+    if (bar) {
+        bar.querySelectorAll('button[data-pane]').forEach(function(b) {
+            b.classList.toggle('active', b.dataset.pane === pane);
+        });
+    }
+    if (pane === 'performance') {
+        switchAnalyticsTab('performance');
+        return;
+    }
+    switchAnalyticsTab('data');
+    _splitTree = { type: 'leaf', id: 'pane-0', panel: pane };
+    _renderTree();
+    if (typeof _postShowPanel === 'function') _postShowPanel(pane);
+}
+document.addEventListener('DOMContentLoaded', function() {
+    var bar = document.querySelector('.mobile-tabbar');
+    if (!bar) return;
+    bar.addEventListener('click', function(e) {
+        var btn = e.target.closest('button[data-pane]');
+        if (btn) mobileAnalyticsPane(btn.dataset.pane);
+    });
+    if (window.matchMedia('(max-width: 767.98px)').matches) {
+        mobileAnalyticsPane('charts');
+    }
+});
+</script>
+{% endif %}
 {% endblock %}

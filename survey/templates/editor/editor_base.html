@@ -23,6 +23,20 @@
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js" crossorigin="anonymous"></script>
     <script src="{% static 'js/editor_dialog.js' %}"></script>
     <script src="{% static 'js/editor_clipboard.js' %}"></script>
+    {% if MOBILE_EDITOR_NAV %}
+    <link rel="stylesheet" href="{% static 'css/editor-mobile.css' %}">
+    <script src="{% static 'js/editor_mobile_nav.js' %}"></script>
+    {% endif %}
+    {% if EDITOR_AUTOSAVE %}
+    <script src="{% static 'js/editor_autosave.js' %}"></script>
+    <style>
+        .autosave-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #6b7280; }
+        .autosave-indicator .autosave-dot { font-size: 0.55rem; color: #198754; }
+        .autosave-indicator[data-state="saving"] .autosave-dot { color: #f59e0b; }
+        .autosave-indicator[data-state="error"] { color: #b91c1c; font-weight: 600; cursor: pointer; }
+        .autosave-indicator[data-state="error"] .autosave-dot { color: #dc2626; }
+    </style>
+    {% endif %}
     <style>
         :root {
             --accent: #4f46e5;
@@ -787,10 +801,10 @@
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body{% if MOBILE_EDITOR_NAV %} class="mobile-nav-enabled"{% endif %}>
     {% block navbar %}
     <div class="editor-navbar">
-        <a href="{% url 'editor' %}"><i class="fas fa-arrow-left"></i> Dashboard</a>
+        <a href="{% url 'editor' %}"><i class="fas fa-arrow-left"></i><span class="nav-desktop"> Dashboard</span></a>
         {% block navbar_content %}{% endblock %}
         <span class="spacer"></span>
         <!-- Clipboard status pill — populated by editor_clipboard.js -->
@@ -803,7 +817,26 @@
             </button>
         </div>
         {% if user.is_authenticated %}
-            <div class="dropdown d-inline">
+            {% if MOBILE_EDITOR_NAV %}
+            {% comment %}Mobile ⋯ overflow — absorbs the account items the one-row
+            toolbar hides (design D2). display gated by editor-mobile.css.{% endcomment %}
+            <div class="dropdown navbar-overflow">
+                <a href="#" role="button" data-toggle="dropdown" aria-label="More actions">
+                    <i class="fas fa-ellipsis-h"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">
+                    <h6 class="dropdown-header">{{ user.get_username }} · {{ active_org.name|default:"No organization" }}</h6>
+                    {% if active_org %}
+                    <a class="dropdown-item" href="{% url 'org_settings' active_org.slug %}"><i class="fas fa-cog" style="margin-right:4px;"></i>Organization settings</a>
+                    <a class="dropdown-item" href="{% url 'org_members' active_org.slug %}"><i class="fas fa-users" style="margin-right:4px;"></i>Members</a>
+                    {% endif %}
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>Help &amp; support</a>
+                    <a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt" style="margin-right:4px;"></i>Logout</a>
+                </div>
+            </div>
+            {% endif %}
+            <div class="dropdown d-inline nav-desktop">
                 <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" style="color:#6b7280;font-size:0.85rem;text-decoration:none;">
                     <i class="fas fa-building" style="margin-right:4px;"></i>{{ active_org.name|default:"No organization" }}
                 </a>
@@ -821,10 +854,14 @@
                     <a class="dropdown-item" href="{% url 'org_settings' active_org.slug %}"><i class="fas fa-cog" style="margin-right:4px;"></i>Settings</a>
                     <a class="dropdown-item" href="{% url 'org_members' active_org.slug %}"><i class="fas fa-users" style="margin-right:4px;"></i>Members</a>
                     {% endif %}
+                    {% if MOBILE_EDITOR_NAV %}
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>Help &amp; support</a>
+                    {% endif %}
                 </div>
             </div>
-            <span style="color:#9ca3af;font-size:0.85rem;">{{ user.get_username }}</span>
-            <a href="{% url 'logout' %}" style="font-size:0.85rem;">Logout</a>
+            <span class="nav-desktop" style="color:#9ca3af;font-size:0.85rem;">{{ user.get_username }}</span>
+            <a class="nav-desktop" href="{% url 'logout' %}" style="font-size:0.85rem;">Logout</a>
         {% endif %}
     </div>
     {% endblock %}
@@ -903,6 +940,30 @@
     <script type="text/javascript">
     var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
     Tawk_API.onLoad = function(){ Tawk_API.minimize(); };
+    {% if MOBILE_EDITOR_NAV %}
+    // No floating bubble on working surfaces (owner decision): support opens
+    // via "Help & support" in the ⋯ / account menus. autoStart=false keeps
+    // the widget from rendering (and connecting) until asked — hiding in
+    // onLoad instead flashed the bubble briefly after page load.
+    Tawk_API.autoStart = false;
+    Tawk_API.onLoad = function(){ if (!window._tawkWanted) Tawk_API.hideWidget(); };
+    Tawk_API.onChatMinimized = function(){ Tawk_API.hideWidget(); };
+    window.openSupportChat = function(e){
+        if (e) e.preventDefault();
+        window._tawkWanted = true;
+        function reveal() {
+            if (window.Tawk_API && Tawk_API.showWidget && Tawk_API.maximize) {
+                Tawk_API.showWidget(); Tawk_API.maximize(); return true;
+            }
+            return false;
+        }
+        if (window.Tawk_API && Tawk_API.start) { try { Tawk_API.start(); } catch (err) {} }
+        if (!reveal()) {
+            var t = setInterval(function(){ if (reveal()) clearInterval(t); }, 300);
+            setTimeout(function(){ clearInterval(t); }, 10000);
+        }
+    };
+    {% endif %}
     (function(){
     var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
     s1.async=true;

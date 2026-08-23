@@ -31,7 +31,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="pr-container">
+<div class="pr-container" data-active-pane="{% if selected_block %}edit{% else %}structure{% endif %}">
 
   <!-- LEFT: page-settings entry + blocks (styled like the Survey Editor sidebar) -->
   <div class="pr-sidebar editor-sidebar">
@@ -347,6 +347,7 @@ function prCopyPublicLink(btn){
   if (list && window.Sortable) {
     new Sortable(list, {
       handle: '.drag-handle', animation: 150,
+      delay: 300, delayOnTouchOnly: true, touchStartThreshold: 4,
       onEnd: function(){
         var ids = Array.from(list.querySelectorAll('.pr-block')).map(function(el){ return el.dataset.id; });
         var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
@@ -427,4 +428,6 @@ function prCopyPublicLink(btn){
   }
 })();
 </script>
+
+{% include "editor/partials/_mobile_nav.html" with pane_context="public-results" active_pane=selected_block|yesno:"edit,structure" %}
 {% endblock %}

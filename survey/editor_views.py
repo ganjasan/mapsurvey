@@ -898,6 +898,11 @@ def editor_question_edit(request, survey_uuid, question_id):
             })
             response['HX-Trigger'] = 'questionSaved'
             return response
+        if request.POST.get('autosave'):
+            # Autosave must never replace the form the creator is typing in —
+            # report the errors and let the client show the indicator instead
+            # (openspec: mobile-adaptive-refactor, editor-autosave).
+            return JsonResponse({'ok': False, 'errors': form.errors}, status=422)
         return render(request, 'editor/partials/question_form_modal.html', {
             'form': form,
             'survey': survey,
