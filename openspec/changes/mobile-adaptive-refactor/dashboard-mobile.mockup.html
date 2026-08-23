@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Mobile dashboard top block (3 variants)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #10241f; --paper: #f2efe6; --accent: #0e8f76; --annot: #8a4b12;
+    --p-indigo: #4f46e5; --p-indigo-soft: #eef2ff; --p-bg: #f8f9fb;
+    --p-border: #e5e7eb; --p-text: #1f2937; --p-muted: #6b7280; --p-chip: #f3f4f6;
+    --p-green: #198754;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    background-image: radial-gradient(rgba(16,36,31,.06) 1px, transparent 1px);
+    background-size: 22px 22px;
+    color: var(--ink); font-family: "IBM Plex Sans", sans-serif; padding: 48px 32px 80px;
+  }
+  header.pagehead { max-width: 1400px; margin: 0 auto 8px; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  h1 { font-family: "Fraunces", serif; font-size: clamp(28px, 4vw, 42px); line-height: 1.08; max-width: 760px; margin-bottom: 14px; }
+  .lede { max-width: 680px; color: #47554f; font-size: 15px; line-height: 1.55; }
+  .lede b { color: var(--ink); }
+
+  .stage { max-width: 1400px; margin: 40px auto 0; display: flex; gap: 44px; align-items: flex-start; flex-wrap: wrap; }
+  .exhibit { flex: 0 0 auto; width: 360px; }
+  .exhibit-label { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; font-family: "IBM Plex Mono", monospace; }
+  .exhibit-label .num { font-family: "Fraunces", serif; font-size: 30px; color: var(--accent); }
+  .exhibit-label .name { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+
+  .phone {
+    width: 360px; height: 640px; background: #0d1117; border-radius: 34px; padding: 10px;
+    box-shadow: 0 24px 48px -20px rgba(16,36,31,.45), 0 4px 12px rgba(16,36,31,.15); position: relative;
+  }
+  .screen { background: var(--p-bg); border-radius: 26px; height: 100%; overflow: hidden; display: flex; flex-direction: column; font-size: 14px; color: var(--p-text); }
+
+  .topbar { background: #fff; border-bottom: 1px solid var(--p-border); padding: 12px 14px; display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+  .topbar .logo { font-weight: 700; font-size: 16px; }
+  .topbar .spacer { flex: 1; }
+  .iconbtn { width: 40px; height: 40px; border-radius: 9px; border: 1px solid var(--p-border); background: #fff; display: grid; place-items: center; color: var(--p-muted); font-size: 15px; }
+
+  .toolrow { display: flex; gap: 8px; padding: 10px 14px 0; align-items: center; }
+  .btn-new {
+    flex: 1; background: var(--p-indigo); color: #fff; border: none; border-radius: 10px;
+    min-height: 44px; font-weight: 600; font-size: 14px;
+  }
+  .search-pill {
+    display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--p-border);
+    border-radius: 10px; min-height: 44px; padding: 0 12px; color: #9ca3af; flex: 1; font-size: 14px;
+  }
+  .count-label { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--p-muted); padding: 12px 16px 4px; }
+
+  .rows { padding: 8px 14px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+  .srow { background: #fff; border: 1px solid var(--p-border); border-radius: 12px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; }
+  .avatar { width: 40px; height: 40px; border-radius: 9px; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 16px; flex: 0 0 auto; }
+  .srow .mid { flex: 1; min-width: 0; }
+  .srow .name-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .srow .sname { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .st-chip { font-size: 10px; font-weight: 600; border-radius: 5px; padding: 1px 6px; flex: 0 0 auto; }
+  .st-open { background: #e8f5ee; color: var(--p-green); }
+  .st-draft { background: var(--p-chip); color: var(--p-muted); }
+  .srow .meta { font-size: 12px; color: var(--p-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .srow .meta b { color: var(--p-text); font-weight: 600; }
+  .srow .chev { color: #c3c8d1; font-size: 16px; }
+  .srow .kebab-sm { width: 34px; height: 34px; border-radius: 8px; border: none; background: none; color: #c3c8d1; display: grid; place-items: center; font-size: 15px; flex: 0 0 auto; }
+
+  .fab {
+    position: absolute; right: 22px; bottom: 84px; width: 56px; height: 56px; border-radius: 50%;
+    background: var(--p-indigo); color: #fff; display: grid; place-items: center; font-size: 24px;
+    box-shadow: 0 8px 20px rgba(79,70,229,.4); z-index: 3;
+  }
+  .help-bubble {
+    position: absolute; right: 22px; bottom: 20px; width: 46px; height: 46px; border-radius: 50%;
+    background: #0e8f76; color: #fff; display: grid; place-items: center; font-size: 18px;
+    box-shadow: 0 6px 16px rgba(14,143,118,.4);
+  }
+
+  /* expanded search state (variant C row) */
+  .search-open { display: flex; gap: 8px; padding: 10px 14px 0; }
+  .search-open .field { flex: 1; display: flex; align-items: center; gap: 8px; background: #fff; border: 1.5px solid var(--p-indigo); border-radius: 10px; min-height: 44px; padding: 0 12px; font-size: 14px; color: var(--p-text); }
+  .search-open .cancel { border: none; background: none; color: var(--p-indigo); font-weight: 500; font-size: 14px; }
+
+  .notes { margin-top: 18px; display: flex; flex-direction: column; gap: 9px; }
+  .note { display: flex; gap: 9px; font-size: 13px; line-height: 1.45; color: #47554f; }
+  .note .txt { flex: 1; }
+  .note .tag { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; background: var(--annot); color: #fff; font-family: "IBM Plex Mono", monospace; font-size: 11px; display: grid; place-items: center; margin-top: 1px; }
+  .callout { position: absolute; z-index: 5; background: var(--annot); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-family: "IBM Plex Mono", monospace; font-size: 12px; box-shadow: 0 0 0 4px rgba(138,75,18,.22); }
+
+  footer.decisions { max-width: 900px; margin: 64px auto 0; border-top: 2px solid var(--ink); padding-top: 24px; }
+  footer.decisions h2 { font-family: "Fraunces", serif; font-size: 24px; margin-bottom: 14px; }
+  footer.decisions ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  footer.decisions li { font-size: 14px; line-height: 1.5; color: #33413b; padding-left: 18px; position: relative; }
+  footer.decisions li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="pagehead">
+  <div class="kicker">mobile-adaptive-refactor · mockup · dashboard &lt;768px</div>
+  <h1>Dashboard top block: three ways to spend one row</h1>
+  <p class="lede">Agreed hierarchy: <b>P1</b> + New Survey · <b>P2</b> Search · <b>P3</b> title ·
+  <b>P4</b> Import, Show Archived · <b>P5</b> grid/list toggle. Mobile default is the <b>list</b>
+  view; P4–P5 live in the ⋯ menu in every variant. List rows are the compact single-line kind —
+  today one survey card eats most of the screen. The help bubble is pinned to the viewport
+  (fixing the "appears only after scrolling" Tawk bug).</p>
+</header>
+
+<div class="stage">
+
+  <!-- ============ A. ONE ROW ============ -->
+  <section class="exhibit">
+    <div class="exhibit-label"><span class="num">A</span><span class="name">One row</span></div>
+    <div class="phone">
+      <div class="callout" style="top: 84px; right: -11px;">1</div>
+      <div class="callout" style="top: 156px; right: -11px;">2</div>
+      <div class="screen">
+        <div class="topbar">
+          <span class="logo">Mapsurvey</span>
+          <span class="spacer"></span>
+          <span class="iconbtn">⋯</span>
+        </div>
+        <div class="toolrow">
+          <span class="iconbtn" style="min-width:44px;height:44px;">🔍</span>
+          <button class="btn-new">＋ New Survey</button>
+          <span class="iconbtn" style="min-width:44px;height:44px;">⋯</span>
+        </div>
+        <div class="count-label">My Surveys · 4</div>
+        <div class="rows">
+          <div class="srow">
+            <div class="avatar" style="background:#22a06b;">C</div>
+            <div class="mid">
+              <div class="name-line"><span class="sname">citypulse</span><span class="st-chip st-open">Open</span></div>
+              <div class="meta"><b>65</b> started · <b>98%</b> · 2d ago</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+          <div class="srow">
+            <div class="avatar" style="background:#4f46e5;">M</div>
+            <div class="mid">
+              <div class="name-line"><span class="sname">mobiletest</span><span class="st-chip st-draft">Draft</span></div>
+              <div class="meta"><b>0</b> started · 6h ago</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+          <div class="srow">
+            <div class="avatar" style="background:#d97706;">W</div>
+            <div class="mid">
+              <div class="name-line"><span class="sname">waermeplanung_quedlinburg</span><span class="st-chip st-open">Open</span></div>
+              <div class="meta"><b>12</b> started · <b>84%</b> · 5d ago</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+          <div class="srow">
+            <div class="avatar" style="background:#0e8f76;">H</div>
+            <div class="mid">
+              <div class="name-line"><span class="sname">hitzekarte</span><span class="st-chip st-draft">Draft</span></div>
+              <div class="meta"><b>0</b> started · 3w ago</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+        </div>
+        <div class="help-bubble">💬</div>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note"><span class="tag">1</span><span class="txt">Everything in one 44px row: search collapsed to an icon (expands over the row, the existing map-search pattern), New Survey takes the leftover width, ⋯ holds Import / Show Archived / view toggle.</span></div>
+      <div class="note"><span class="tag">2</span><span class="txt">Title becomes a small "My Surveys · N" label — keeps the count, frees a heading row. Row tap opens the survey (whole row is the target); per-survey actions move into the survey page itself.</span></div>
+    </div>
+  </section>
+
+  <!-- ============ B. FAB ============ -->
+  <section class="exhibit">
+    <div class="exhibit-label"><span class="num">B</span><span class="name">FAB — list first</span></div>
+    <div class="phone">
+      <div class="callout" style="top: 22px; right: -11px;">3</div>
+      <div class="callout" style="bottom: 118px; right: -11px;">4</div>
+      <div class="screen">
+        <div class="topbar">
+          <span class="logo">My Surveys</span>
+          <span class="spacer"></span>
+          <span class="iconbtn">🔍</span>
+          <span class="iconbtn">⋯</span>
+        </div>
+        <div class="rows" style="padding-top: 10px;">
+          <div class="srow">
+            <div class="avatar" style="background:#22a06b;">C</div>
+            <div class="mid">
+              <div class="name-line"><span class="sname">citypulse</span><span class="st-chip st-open">Open</span></div>
+              <div class="meta"><b>65</b> started · <b>98%</b> · 2d ago</div>
+            </div>
+            <button class="kebab-sm">⋯</button>
+          </div>
+          <div class="srow">
+            <div class="avatar" style="background:#4f46e5;">M</div>
+            <div class="mid">
+              <div class="name-line"><span class="sname">mobiletest</span><span class="st-chip st-draft">Draft</span></div>
+              <div class="meta"><b>0</b> started · 6h ago</div>
+            </div>
+            <button class="kebab-sm">⋯</button>
+          </div>
+          <div class="srow">
+            <div class="avatar" style="background:#d97706;">W</div>
+            <div class="mid">
+              <div class="name-line"><span class="sname">waermeplanung_quedlinburg</span><span class="st-chip st-open">Open</span></div>
+              <div class="meta"><b>12</b> started · <b>84%</b> · 5d ago</div>
+            </div>
+            <button class="kebab-sm">⋯</button>
+          </div>
+          <div class="srow">
+            <div class="avatar" style="background:#0e8f76;">H</div>
+            <div class="mid">
+              <div class="name-line"><span class="sname">hitzekarte</span><span class="st-chip st-draft">Draft</span></div>
+              <div class="meta"><b>0</b> started · 3w ago</div>
+            </div>
+            <button class="kebab-sm">⋯</button>
+          </div>
+        </div>
+        <div class="fab">＋</div>
+        <div class="help-bubble">💬</div>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note"><span class="tag">3</span><span class="txt">Zero toolbar rows: the navbar itself becomes "My Surveys" + search icon + ⋯. The list starts immediately — most screen given to content of all three variants.</span></div>
+      <div class="note"><span class="tag">4</span><span class="txt">New Survey is a floating action button. Trade-offs: FAB covers part of the last row, sits next to the help bubble, and is a less discoverable pattern for the older civic-sector audience. Per-row ⋯ gives quick actions (Share, Results) without opening the survey.</span></div>
+    </div>
+  </section>
+
+  <!-- ============ C. SEARCH OPEN ============ -->
+  <section class="exhibit">
+    <div class="exhibit-label"><span class="num">C</span><span class="name">Search always visible</span></div>
+    <div class="phone">
+      <div class="callout" style="top: 84px; right: -11px;">5</div>
+      <div class="callout" style="top: 140px; right: -11px;">6</div>
+      <div class="screen">
+        <div class="topbar">
+          <span class="logo">My Surveys</span>
+          <span class="spacer"></span>
+          <span class="iconbtn">⋯</span>
+        </div>
+        <div class="toolrow">
+          <span class="search-pill">🔍 Search surveys…</span>
+          <button class="btn-new" style="flex: 0 0 auto; padding: 0 16px;">＋ New</button>
+        </div>
+        <div class="count-label">4 surveys</div>
+        <div class="rows">
+          <div class="srow">
+            <div class="avatar" style="background:#22a06b;">C</div>
+            <div class="mid">
+              <div class="name-line"><span class="sname">citypulse</span><span class="st-chip st-open">Open</span></div>
+              <div class="meta"><b>65</b> started · <b>98%</b> · 2d ago</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+          <div class="srow">
+            <div class="avatar" style="background:#4f46e5;">M</div>
+            <div class="mid">
+              <div class="name-line"><span class="sname">mobiletest</span><span class="st-chip st-draft">Draft</span></div>
+              <div class="meta"><b>0</b> started · 6h ago</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+          <div class="srow">
+            <div class="avatar" style="background:#d97706;">W</div>
+            <div class="mid">
+              <div class="name-line"><span class="sname">waermeplanung_quedlinburg</span><span class="st-chip st-open">Open</span></div>
+              <div class="meta"><b>12</b> started · <b>84%</b> · 5d ago</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+          <div class="srow">
+            <div class="avatar" style="background:#0e8f76;">H</div>
+            <div class="mid">
+              <div class="name-line"><span class="sname">hitzekarte</span><span class="st-chip st-draft">Draft</span></div>
+              <div class="meta"><b>0</b> started · 3w ago</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+        </div>
+        <div class="help-bubble">💬</div>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note"><span class="tag">5</span><span class="txt">Search stays a visible field (power users with dozens of surveys type immediately, no extra tap); New Survey compresses to "＋ New". P2 gets more weight than P1 here — defensible only if search usage proves high.</span></div>
+      <div class="note"><span class="tag">6</span><span class="txt">The row bar is sticky: on scroll the list slides under it, so search and New are always reachable. Works for A as well.</span></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ============ ADAPTIVE LADDER ============ -->
+<section class="ladder">
+  <h2 class="ladder-title">Adaptive ladder — the same components across widths</h2>
+  <p class="ladder-lede">Desktop stays exactly as shipped today (scope rule). The variants differ
+  only in how the block collapses on the way down. Breakpoints: <b>≥1024</b> current two-row
+  layout · <b>768–1023</b> one flexible row · <b>&lt;768</b> the phone variants above.</p>
+
+  <div class="strip-block">
+    <div class="strip-cap">≥1024 · shared, unchanged (today's layout)</div>
+    <div class="strip" style="width: 1000px;">
+      <div class="strip-row">
+        <span style="font-weight:700;font-size:18px;">My Surveys</span>
+        <span class="spacer"></span>
+        <span class="ghostbtn">Show Archived</span>
+      </div>
+      <div class="strip-row">
+        <span class="search-pill" style="max-width: 300px;">🔍 Search surveys…</span>
+        <span class="ghostbtn seg">▦ ☰</span>
+        <button class="btn-new" style="flex:0 0 auto;padding:0 16px;">＋ New Survey</button>
+        <span class="ghostbtn">Import</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="strip-block">
+    <div class="strip-cap">768–1023 · variant A / C converge: one row, search stays a field</div>
+    <div class="strip" style="width: 760px;">
+      <div class="strip-row">
+        <span class="search-pill">🔍 Search surveys…</span>
+        <button class="btn-new" style="flex:0 0 auto;padding:0 16px;">＋ New Survey</button>
+        <span class="ghostbtn">⋯</span>
+      </div>
+      <div class="strip-note">Title merges into the page header; toggle, Import, Show Archived → ⋯.
+      Variant B differs here too: search collapses into the navbar already at this width, FAB appears.</div>
+    </div>
+  </div>
+
+  <div class="strip-block">
+    <div class="strip-cap">&lt;768 · the three phone variants above; list view forced as default</div>
+    <div class="strip" style="width: 372px;">
+      <div class="strip-row">
+        <span class="iconbtn" style="min-width:44px;">🔍</span>
+        <button class="btn-new">＋ New Survey</button>
+        <span class="iconbtn" style="min-width:44px;">⋯</span>
+      </div>
+      <div class="strip-note">Variant A shown; B = FAB, C = search field survives.</div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .ladder { max-width: 1400px; margin: 72px auto 0; }
+  .ladder-title { font-family: "Fraunces", serif; font-size: 26px; margin-bottom: 10px; }
+  .ladder-lede { max-width: 720px; color: #47554f; font-size: 14px; line-height: 1.5; margin-bottom: 26px; }
+  .ladder-lede b { color: var(--ink); }
+  .strip-block { margin-bottom: 26px; }
+  .strip-cap { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .strip { background: #fff; border: 1px solid var(--p-border); border-radius: 14px; padding: 14px; max-width: 100%; box-shadow: 0 8px 20px -12px rgba(16,36,31,.25); }
+  .strip-row { display: flex; gap: 8px; align-items: center; }
+  .strip-row + .strip-row { margin-top: 10px; }
+  .ghostbtn { border: 1px solid var(--p-border); border-radius: 9px; min-height: 40px; display: inline-flex; align-items: center; padding: 0 12px; color: var(--p-muted); font-size: 13px; background: #fff; white-space: nowrap; }
+  .ghostbtn.seg { letter-spacing: 3px; }
+  .strip-note { font-size: 12.5px; color: #47554f; margin-top: 10px; line-height: 1.45; }
+</style>
+
+<footer class="decisions">
+  <h2>Shared across all variants</h2>
+  <ul>
+    <li><b>List view is the mobile default</b>; the grid/list toggle survives inside ⋯ (P5). Desktop untouched.</li>
+    <li><b>Compact rows</b>: avatar · name · status chip · one metrics line. Fixes today's broken list row (name pushed out, wrapping "6 hours, 5 minutes ago") and cuts a 77-survey page from ~20,000px to ~5,000px.</li>
+    <li><b>Import and Show Archived live in ⋯</b> (P4) in every variant.</li>
+    <li><b>Help bubble pinned to the viewport bottom-right</b> — fixes the Tawk container landing at top:100% (visible only after scroll). Implementation: correct `customStyle` offsets as strings, or CSS override.</li>
+    <li>Relative timestamps compress to "6h ago" style — no more three-line "6 hours, 5 minutes ago".</li>
+  </ul>
+</footer>
+
+</body>
+</html>

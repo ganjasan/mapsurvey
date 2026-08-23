@@ -1,0 +1,394 @@
+/* Mobile editor chrome (openspec: mobile-adaptive-refactor).
+ *
+ * Everything here is double-gated: by the `mobile-nav-enabled` body class (the
+ * MOBILE_EDITOR_NAV kill switch — see settings.py) and by the <768px media query.
+ * With the flag off or on desktop widths this file changes nothing, which is the
+ * rollback story: flip the env var, redeploy, legacy layout is back. */
+
+body.mobile-nav-enabled .mobile-tabbar { display: none; }
+body.mobile-nav-enabled .navbar-overflow { display: none; }
+body.mobile-nav-enabled .mobile-pane-back { display: none; }
+
+
+/* ── Variant C status line — ALL widths (owner: carry the mobile decisions to
+   desktop). The legacy ctx-bars render only with the flag off; this bar is the
+   one control surface. Sheets are bottom sheets on phones and centered dialogs
+   on desktop. */
+body.mobile-nav-enabled .build-ctxbar { display: none; }
+body.mobile-nav-enabled .mobile-statusbar {
+    display: flex; align-items: center; gap: 8px;
+    background: #fff; border-bottom: 1px solid var(--border-color);
+    padding: 8px 12px;
+}
+body.mobile-nav-enabled .msb-ico {
+    display: none; width: 30px; height: 30px; border-radius: 7px;
+    background: var(--accent-light); color: var(--accent);
+    align-items: center; justify-content: center; flex: 0 0 auto;
+}
+body.mobile-nav-enabled .msb-titleblock { display: none; min-width: 0; }
+body.mobile-nav-enabled .msb-titleblock .msb-title { font-weight: 600; font-size: 14px; }
+body.mobile-nav-enabled .msb-status {
+    flex: 1; min-width: 0; font-size: 12.5px; color: #6b7280;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+body.mobile-nav-enabled .msb-btn {
+    border: none; border-radius: 9px; min-height: 40px; padding: 0 13px;
+    font-weight: 600; font-size: 13px; flex: 0 0 auto; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    text-decoration: none; white-space: nowrap;
+}
+body.mobile-nav-enabled a.msb-btn:hover { text-decoration: none; }
+body.mobile-nav-enabled .msb-green { background: #198754; color: #fff; }
+/* Same soft-amber family as the Testing chip — the button and the badge read
+   as one state. */
+body.mobile-nav-enabled .msb-amber { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+body.mobile-nav-enabled .msb-indigo {
+    background: var(--accent-light, #e0e7ff); color: var(--accent, #4f46e5);
+    border: 1px solid #c7d2fe;
+}
+body.mobile-nav-enabled .msb-outline { background: #fff; color: #374151; border: 1px solid var(--border-color); }
+body.mobile-nav-enabled .msb-ghost { background: none; color: #6b7280; }
+body.mobile-nav-enabled .msb-full { width: 100%; min-height: 44px; margin-top: 6px; }
+
+body.mobile-nav-enabled .mobile-sheet { position: fixed; inset: 0; z-index: 800; }
+body.mobile-nav-enabled .mobile-sheet[hidden] { display: none; }
+body.mobile-nav-enabled .mobile-sheet-backdrop { position: absolute; inset: 0; background: rgba(17,24,39,.45); }
+body.mobile-nav-enabled .mobile-sheet-panel {
+    position: absolute; left: 0; right: 0; bottom: 0; background: #fff;
+    border-radius: 16px 16px 0 0; box-shadow: 0 -10px 28px rgba(0,0,0,.18);
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+}
+body.mobile-nav-enabled .mobile-sheet-title { font-weight: 600; font-size: 14.5px; margin-bottom: 8px; }
+body.mobile-nav-enabled .mobile-sheet-help { font-size: 12.5px; color: #6b7280; line-height: 1.45; margin: 10px 0 12px; }
+body.mobile-nav-enabled .msb-linkrow { display: flex; gap: 8px; margin-bottom: 10px; }
+body.mobile-nav-enabled .msb-linkrow input {
+    flex: 1; min-width: 0; font-family: monospace; font-size: 11px;
+    background: var(--bg-muted); border: 1px solid var(--border-color);
+    border-radius: 8px; padding: 9px 10px;
+}
+body.mobile-nav-enabled .msb-passrow label { font-size: 11.5px; font-weight: 600; color: #6b7280; display: block; margin-bottom: 4px; }
+body.mobile-nav-enabled .msb-passline { display: flex; gap: 8px; }
+body.mobile-nav-enabled .msb-passline input {
+    flex: 1; min-width: 0; border: 1px solid var(--border-color);
+    border-radius: 8px; padding: 9px 11px; font-size: 16px;
+}
+body.mobile-nav-enabled .section-qcount {
+    font-size: 11px; color: #9ca3af; background: var(--bg-muted);
+    border-radius: 8px; padding: 1px 7px; flex: 0 0 auto;
+}
+
+/* ── Colored status chips (approved pr-parity mockup): grey = inactive,
+   amber = restricted access (Testing), green = live (Open/Live),
+   sky = stopped-with-data (Closed / Frozen). Overrides the Bootstrap
+   badge-* colors the chip carries with the flag off. */
+body.mobile-nav-enabled .pub-chip.badge-secondary,
+body.mobile-nav-enabled .pub-chip.badge-dark { background: #f3f4f6; border: 1px solid #e5e7eb; color: #6b7280; }
+body.mobile-nav-enabled .pub-chip.badge-warning { background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; }
+body.mobile-nav-enabled .pub-chip.badge-success { background: #e8f5ee; border: 1px solid #b7e0c8; color: #198754; }
+body.mobile-nav-enabled .pub-chip.badge-info { background: #e0f2fe; border: 1px solid #7dd3fc; color: #075985; }
+
+/* Status dots on the workspace tabs — the navbar is shared, so instead of a
+   chip it shows both entities' states at a glance (rendered flag-on only). */
+.tabdot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; vertical-align: 1px; }
+.tabdot.td-draft, .tabdot.td-off { background: #c3c8d1; }
+.tabdot.td-testing { background: #f59e0b; }
+.tabdot.td-published, .tabdot.td-live { background: #198754; }
+.tabdot.td-closed, .tabdot.td-frozen { background: #38bdf8; }
+.tabdot.td-archived { background: #c3c8d1; }
+
+/* The PR status line sits above .pr-container inside a flex column — the
+   container's own viewport-height rule must yield to flex sizing. */
+body.mobile-nav-enabled .pr-container { height: auto; flex: 1; min-height: 0; }
+
+@media (min-width: 768px) {
+    /* Desktop dress: icon + title appear, roomier padding, sheets center. */
+    /* z-index above the panel resize-handles (10): the bar is a stacking
+       context, so the chip's dropdown inside it inherits this ceiling and a
+       handle would otherwise paint across the open menu. */
+    body.mobile-nav-enabled .mobile-statusbar { padding: 10px 18px; gap: 12px; position: sticky; top: 0; z-index: 60; }
+    body.mobile-nav-enabled .msb-ico { display: flex; }
+    body.mobile-nav-enabled .msb-titleblock { display: block; }
+    body.mobile-nav-enabled .msb-status { flex: 1; }
+    body.mobile-nav-enabled .mobile-sheet-panel {
+        left: 50%; right: auto; bottom: auto; top: 50%;
+        transform: translate(-50%, -50%); width: 460px; max-width: calc(100vw - 40px);
+        border-radius: 16px; padding: 20px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    body.mobile-nav-enabled .msb-desktop { display: none !important; }
+    /* Chip + primary + Share can exceed 390px (e.g. "Frozen · 23 Aug") —
+       wrap onto a second row rather than clipping the last button.
+       (No overflow-x scroll: it would clip the chip's dropdown menu.) */
+    body.mobile-nav-enabled .mobile-statusbar { flex-wrap: wrap; row-gap: 6px; }
+}
+
+@media (max-width: 767.98px) {
+
+    /* --- One-row toolbar ------------------------------------------------- */
+    /* Grid instead of the wrapping flex row: row 1 = back · title · overflow,
+       row 2 = the page-tab strip (level 1 of the mobile navigation). */
+    body.mobile-nav-enabled .editor-navbar {
+        display: grid;
+        /* back · title · version chip (publishing widget) · ⋯ overflow */
+        grid-template-columns: auto minmax(0, 1fr) auto auto;
+        align-items: center;
+        row-gap: 0;
+        padding: 0.4rem 0.75rem 0;
+    }
+    body.mobile-nav-enabled .editor-navbar .survey-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 1rem;
+    }
+    /* Desktop-only toolbar items collapse into the ⋯ overflow menu.
+       !important: some carry Bootstrap's .d-inline, whose display:inline
+       !important would win otherwise. */
+    body.mobile-nav-enabled .editor-navbar .nav-desktop,
+    body.mobile-nav-enabled .editor-navbar .spacer,
+    body.mobile-nav-enabled .editor-navbar #clipboardPill { display: none !important; }
+    body.mobile-nav-enabled .navbar-overflow {
+        display: block;
+        justify-self: end;
+        /* Explicit placement: DOM order puts this after the row-2 tab strip,
+           so auto-placement would push it to a third row. */
+        grid-row: 1;
+        grid-column: 4;
+    }
+    body.mobile-nav-enabled .editor-navbar #publishing-widget.nav-action {
+        grid-row: 1;
+        grid-column: 3;
+    }
+    body.mobile-nav-enabled .navbar-overflow > a {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: #6b7280;
+    }
+
+    /* --- Level 1: page-tab strip ---------------------------------------- */
+    body.mobile-nav-enabled .editor-navbar .survey-nav-tabs {
+        grid-column: 1 / -1;
+        display: flex;
+        overflow-x: auto;
+        margin: 0.35rem -0.75rem 0;
+        padding: 0 0.5rem;
+        border-top: 1px solid var(--border-color);
+        scrollbar-width: none;
+    }
+    body.mobile-nav-enabled .editor-navbar .survey-nav-tabs::-webkit-scrollbar { display: none; }
+    body.mobile-nav-enabled .editor-navbar .survey-nav-tab {
+        white-space: nowrap;
+        padding: 0.55rem 0.7rem;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+    }
+    /* Share / Preview / gear actions leave the toolbar on mobile; their
+       destinations stay reachable from the panes themselves. The publishing
+       widget stays: it is the mockup's version chip, and its dropdown carries
+       the lifecycle (Publish/Close/...) actions the overflow must expose. */
+    body.mobile-nav-enabled .editor-navbar .nav-action { display: none; }
+    body.mobile-nav-enabled .editor-navbar #publishing-widget.nav-action { display: block; }
+    body.mobile-nav-enabled .editor-navbar #publishing-widget .nav-menu {
+        left: auto;
+        right: 0;
+        max-width: calc(100vw - 1.5rem);
+    }
+
+    /* --- Panes: one at a time ------------------------------------------- */
+    body.mobile-nav-enabled .editor-container {
+        display: block;
+        position: relative;
+        height: auto;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+        padding-bottom: 58px; /* room for the fixed bottom tab bar */
+    }
+    body.mobile-nav-enabled .editor-container .panel-expand-tab,
+    body.mobile-nav-enabled .editor-container .resize-handle { display: none !important; }
+
+    body.mobile-nav-enabled .editor-container .editor-sidebar,
+    body.mobile-nav-enabled .editor-container .editor-main,
+    body.mobile-nav-enabled .editor-container .editor-preview {
+        display: none;
+        /* !important: restorePanelState() re-applies the desktop drag width
+           as an inline style, which would shrink the single mobile pane. */
+        width: 100% !important;
+        max-width: none;
+        height: 100%;
+        border-right: none;
+        border-left: none;
+    }
+    body.mobile-nav-enabled .editor-container[data-active-pane="structure"] .editor-sidebar { display: flex; }
+    body.mobile-nav-enabled .editor-container[data-active-pane="edit"] .editor-main { display: block; overflow-y: auto; }
+
+    /* Preview = the whole screen (owner review): fixed overlay, iframe fills,
+       exit via the injected ‹ button; tab bar and context bars hide (the
+       pane-preview-full body class is toggled by editor_mobile_nav.js). */
+    /* !important on the geometry: the desktop split-pane persistence
+       (restorePanelState + resize handles) writes INLINE width on this pane
+       from localStorage — that inline style beat the overlay and rendered the
+       preview 452px wide on a 375px screen (the owner's clipped-preview bug,
+       invisible in a fresh profile that never resized panes). */
+    body.mobile-nav-enabled .editor-container[data-active-pane="preview"] .editor-preview,
+    body.mobile-nav-enabled .pr-container[data-active-pane="preview"] .pr-preview {
+        display: flex; flex-direction: column;
+        position: fixed; inset: 0 !important; z-index: 700;
+        width: 100% !important; max-width: none !important; height: auto !important;
+        background: #fff; border: none;
+    }
+    body.mobile-nav-enabled .editor-container[data-active-pane="preview"] .editor-preview iframe,
+    body.mobile-nav-enabled .pr-container[data-active-pane="preview"] .pr-preview iframe {
+        flex: 1; min-height: 0;
+        /* Belt: a flex item's min-width:auto can let the iframe lay out wider
+           than the overlay and clip the respondent page on the right. */
+        width: 100%; min-width: 0; max-width: 100%;
+    }
+    body.mobile-nav-enabled.pane-preview-full .mobile-tabbar { display: none; }
+    body.mobile-nav-enabled.pane-preview-full .pr-ctxbar { display: none; }
+    body.mobile-nav-enabled.pane-preview-full .editor-navbar { display: none; }
+    body.mobile-nav-enabled .mobile-preview-back {
+        width: 40px; height: 40px; margin-right: 8px; flex: 0 0 auto;
+        border: 1px solid var(--border-color); border-radius: 8px;
+        background: #fff; color: #374151; display: grid; place-items: center;
+    }
+    body.mobile-nav-enabled.pane-preview-full #preview-collapse { display: none; }
+
+    /* Collapsed-state classes from the desktop split-pane logic must not hide
+       a pane the mobile nav made active. */
+    body.mobile-nav-enabled .editor-container[data-active-pane="structure"] .editor-sidebar.collapsed { display: flex; width: 100% !important; }
+    body.mobile-nav-enabled .editor-container[data-active-pane="preview"] .editor-preview.collapsed { display: flex; width: 100% !important; }
+
+    /* Public results (.pr-container): same one-pane-at-a-time treatment.
+       Structure = block sidebar, Edit = block config main, Preview = live
+       public page iframe — the shared pane vocabulary. */
+    body.mobile-nav-enabled .pr-container {
+        display: block;
+        position: relative;
+        overflow: hidden;
+        padding-bottom: 58px;
+    }
+    body.mobile-nav-enabled .pr-container .pr-sidebar,
+    body.mobile-nav-enabled .pr-container .pr-main,
+    body.mobile-nav-enabled .pr-container .pr-preview {
+        display: none;
+        /* !important: the PR page's own restore code re-applies saved drag
+           widths inline (see prPanelW), which would shrink the mobile pane. */
+        width: 100% !important;
+        max-width: none;
+        height: 100%;
+        border-left: none;
+        border-right: none;
+    }
+    body.mobile-nav-enabled .pr-container[data-active-pane="structure"] .pr-sidebar { display: flex; }
+    body.mobile-nav-enabled .pr-container[data-active-pane="edit"] .pr-main { display: block; overflow-y: auto; }
+    body.mobile-nav-enabled .pr-container[data-active-pane="preview"] .pr-preview { display: flex; }
+
+    /* Responses: keep content clear of the fixed bottom bar. */
+    body.mobile-nav-enabled #pane-data,
+    body.mobile-nav-enabled #pane-performance { padding-bottom: 58px; }
+
+    /* --- Level 2: contextual bottom tab bar ------------------------------ */
+    body.mobile-nav-enabled .mobile-tabbar {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 200;
+        background: #fff;
+        border-top: 1px solid var(--border-color);
+        padding: 4px 6px calc(6px + env(safe-area-inset-bottom));
+    }
+    body.mobile-nav-enabled .mobile-tabbar button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        min-height: 48px;
+        padding: 4px 0;
+        border: none;
+        background: none;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        color: #6b7280;
+        cursor: pointer;
+    }
+    body.mobile-nav-enabled .mobile-tabbar button i { font-size: 1.05rem; }
+    body.mobile-nav-enabled .mobile-tabbar button.active {
+        color: var(--accent);
+        background: var(--accent-light);
+    }
+
+    /* Breadcrumb back (injected by editor_mobile_nav.js, mobile-only) */
+    body.mobile-nav-enabled .mobile-pane-back {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 44px;
+        margin: -0.5rem 0 0.5rem;
+        padding: 0 0.25rem;
+        border: none;
+        background: none;
+        color: var(--accent);
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    /* Reorder by touch: without touch-action:none the browser claims the
+       gesture for scrolling and the long-press drag never starts. Scoped to
+       the handles so the rest of the row still scrolls the list. */
+    body.mobile-nav-enabled .drag-handle { touch-action: none; }
+
+    /* Question form modal goes full-screen on phones. Bootstrap adds inline
+       padding-right (scrollbar compensation) on open — on overlay-scrollbar
+       phones that is a dead 15px stripe, hence the !important zero. */
+    body.mobile-nav-enabled .editor-modal.modal { padding: 0 !important; }
+    body.mobile-nav-enabled .editor-modal .modal-dialog {
+        margin: 0;
+        max-width: 100vw;
+        min-height: 100vh;
+        display: flex;
+    }
+    body.mobile-nav-enabled .editor-modal .modal-content {
+        border-radius: 0;
+        min-height: 100vh;
+    }
+
+    /* Context bar / read-only banner: stack instead of a squeezed row, so the
+       lock message, pill and action button never overlap or clip (audit
+       finding: banner self-overlap at 390px). */
+    body.mobile-nav-enabled .pr-ctxbar {
+        flex-wrap: wrap;
+        padding: 0.6rem 0.75rem;
+        row-gap: 0.5rem;
+    }
+    body.mobile-nav-enabled .pr-ctxbar > div[style*="flex:1"] {
+        flex: 1 1 100% !important;
+        justify-content: flex-start !important;
+    }
+    body.mobile-nav-enabled .build-ro-msg { white-space: normal; }
+    body.mobile-nav-enabled .pr-ctxbar .btn { min-height: 40px; }
+    /* The ctx-bar "Preview" duplicates the bottom bar's Preview pane on
+       phones (owner review) — the pane is the mobile way to preview. */
+    body.mobile-nav-enabled .pr-ctxbar .ctx-preview-btn { display: none; }
+
+    /* Question type picker inside the (full-screen) question dialog: larger
+       touch targets. (A purple wash on the geo group was tried and removed —
+       it read as "selected", clashing with the actual selection outline.) */
+    body.mobile-nav-enabled .qtp-card { min-height: 72px; padding: 10px 6px; }
+
+    /* Touch targets */
+    body.mobile-nav-enabled .section-item,
+    body.mobile-nav-enabled .sidebar-pinned-item { min-height: 44px; }
+    body.mobile-nav-enabled .section-item .drag-handle { padding: 10px 6px; }
+}

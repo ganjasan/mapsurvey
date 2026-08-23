@@ -31,7 +31,67 @@
 {% endblock %}
 
 {% block content %}
-<div class="pr-container">
+<div style="display:flex;flex-direction:column;height:calc(100vh - 49px);">
+
+{% if MOBILE_EDITOR_NAV %}
+{% comment %}Status line — same anatomy as the Survey tab (pr-parity mockup):
+icon + title + colored status chip (opens the page lifecycle menu) + the
+primary action for the current state. Live data actions: Share copies the
+public /r/ link (the editor URL in the address bar is a private preview that
+visitors cannot open), Freeze snapshots before a public announcement.{% endcomment %}
+<div class="mobile-statusbar" style="flex-shrink:0;">
+    <span class="msb-ico"><i class="fas fa-globe"></i></span>
+    <div class="msb-titleblock"><div class="msb-title">Public results</div></div>
+    <div class="nav-action">
+        <button class="pub-chip {% if page.is_published and page.mode == 'frozen' %}badge-info{% elif page.is_published %}badge-success{% else %}badge-secondary{% endif %}" onclick="navMenuToggle(this,event)">
+            {% if page.is_published and page.mode == 'frozen' %}Frozen · {{ page.frozen_at|date:"j M" }}{% elif page.is_published %}Live{% else %}Not published{% endif %}
+            <i class="fas fa-angle-down caret"></i>
+        </button>
+        <div class="nav-menu left" style="min-width:260px;">
+            <div class="nm-head">Page</div>
+            {% if page.is_published %}
+            <button class="nm-item" onclick="prSetPublished(false)"><i class="fas fa-eye-slash lead"></i> Unpublish<span class="sub">/r/{{ page.slug }}/ stops opening for visitors</span></button>
+            {% else %}
+            <button class="nm-item" onclick="prSetPublished(true)" {% if not can_publish %}disabled{% endif %}><i class="fas fa-globe lead"></i> Publish page{% if not can_publish %}<span class="sub">publish the survey first</span>{% endif %}</button>
+            {% endif %}
+            <div class="nm-sep"></div>
+            <div class="nm-head">Data</div>
+            <form method="post" action="{% url 'editor_public_results_freeze' survey.uuid %}" style="margin:0;">
+                {% csrf_token %}
+                <button type="submit" class="nm-item"><i class="fas fa-snowflake lead"></i> {% if page.mode == 'frozen' %}Update snapshot{% else %}Freeze snapshot{% endif %}<span class="sub">show a fixed snapshot instead of live data</span></button>
+            </form>
+            {% if page.mode == 'frozen' %}
+            <form method="post" action="{% url 'editor_public_results_unfreeze' survey.uuid %}" style="margin:0;">
+                {% csrf_token %}
+                <button type="submit" class="nm-item"><i class="fas fa-bolt lead"></i> Back to live data</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    <span class="msb-spacer" style="flex:1;min-width:0;"></span>
+    {% if page.is_published %}
+        {% if page.mode == 'frozen' %}
+        <form method="post" action="{% url 'editor_public_results_freeze' survey.uuid %}" style="display:contents;">
+            {% csrf_token %}
+            <button type="submit" class="msb-btn msb-green" title="Refresh the frozen snapshot with the data collected since">⟳ Update snapshot</button>
+        </form>
+        <button class="msb-btn msb-indigo" onclick="prCopyPublicLink(this)" title="{{ public_url }}">🔗 Share</button>
+        {% else %}
+        <button class="msb-btn msb-indigo" onclick="prCopyPublicLink(this)" title="{{ public_url }}">🔗 Share</button>
+        <form method="post" action="{% url 'editor_public_results_freeze' survey.uuid %}" style="display:contents;">
+            {% csrf_token %}
+            <button type="submit" class="msb-btn msb-outline msb-desktop" title="Show visitors a fixed snapshot instead of live data — useful before a public announcement">❄ Freeze snapshot</button>
+        </form>
+        {% endif %}
+        <a class="msb-btn msb-outline msb-desktop" href="{{ public_url }}" target="_blank" title="The live page exactly as visitors see it">↗ Open as visitor</a>
+    {% else %}
+        <button class="msb-btn msb-green" onclick="prSetPublished(true)" {% if not can_publish %}disabled title="Publish the survey first"{% endif %}>🌐 Publish page</button>
+        <a class="msb-btn msb-outline msb-desktop" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank" title="Private preview — only you can open this URL">↗ Open as visitor</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="pr-container" data-active-pane="{% if selected_block %}edit{% else %}structure{% endif %}">
 
   <!-- LEFT: page-settings entry + blocks (styled like the Survey Editor sidebar) -->
   <div class="pr-sidebar editor-sidebar">
@@ -147,6 +207,8 @@
         <span class="ico"><i class="fas fa-sliders-h"></i></span>
         <div><div class="t">Page settings</div><div class="s">Applies to the whole public results page</div></div>
         <span style="flex:1;"></span>
+        {% if not MOBILE_EDITOR_NAV %}
+        {% comment %}Flag on: these actions live in the status line above.{% endcomment %}
         {% comment %}
         Preview must work before the page is live — use the editor preview endpoint, not the
         public /r/ URL (which 404s until published). It is labelled "private" because creators
@@ -161,8 +223,9 @@
         {% else %}
         <button type="button" class="btn btn-sm btn-success" onclick="prSetPublished(true)" {% if not can_publish %}disabled title="Publish the survey first"{% endif %}><i class="fas fa-globe"></i> Publish page</button>
         {% endif %}
+        {% endif %}
       </div>
-      {% if page.is_published %}
+      {% if page.is_published and not MOBILE_EDITOR_NAV %}
       <div class="pr-scroll" style="padding-bottom:0;"><div class="pr-banner" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46;"><i class="fas fa-circle" style="font-size:8px;"></i> This results page is <strong>live</strong> at <span class="pr-url" style="color:inherit;">/r/{{ page.slug }}/</span></div></div>
       {% endif %}
       <div class="pr-scroll">
@@ -247,6 +310,7 @@
     <iframe id="prPreviewFrame" src="{% url 'editor_public_results_preview' survey.uuid %}"></iframe>
   </div>
 </div>
+</div>
 
 <script>
 // Explicit publish / unpublish action (reloads so the widget, ribbon and
@@ -269,6 +333,8 @@ function prCopyPublicLink(btn){
   var icon = btn.querySelector('i');
   if (icon) { var old = icon.className; icon.className = 'fas fa-check';
     setTimeout(function(){ icon.className = old; }, 1200); }
+  else { var oldText = btn.textContent; btn.textContent = '✓ Copied';
+    setTimeout(function(){ btn.textContent = oldText; }, 1200); }
 }
 (function(){
   var refresh = document.getElementById('prPreviewRefresh');
@@ -347,6 +413,7 @@ function prCopyPublicLink(btn){
   if (list && window.Sortable) {
     new Sortable(list, {
       handle: '.drag-handle', animation: 150,
+      delay: 300, delayOnTouchOnly: true, touchStartThreshold: 4,
       onEnd: function(){
         var ids = Array.from(list.querySelectorAll('.pr-block')).map(function(el){ return el.dataset.id; });
         var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
@@ -427,4 +494,6 @@ function prCopyPublicLink(btn){
   }
 })();
 </script>
+
+{% include "editor/partials/_mobile_nav.html" with pane_context="public-results" active_pane=selected_block|yesno:"edit,structure" %}
 {% endblock %}

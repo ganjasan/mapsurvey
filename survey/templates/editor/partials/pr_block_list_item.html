@@ -4,6 +4,7 @@
     <a class="section-title" href="{% url 'editor_survey_public_results' survey.uuid %}?block={{ b.id }}">
         {% if b.custom_title.en %}{{ b.custom_title.en }}{% elif b.question %}{{ b.question.name }}{% else %}{{ b.get_block_type_display }}{% endif %}
     </a>
+    {% if MOBILE_EDITOR_NAV %}<span class="section-qcount">{{ b.block_type }}</span>{% endif %}
     {% if b.is_hidden %}<i class="fas fa-eye-slash" style="color:#d1d5db;font-size:.75rem;"></i>{% endif %}
     <form method="post" action="{% url 'editor_public_results_block_delete' survey.uuid b.id %}" onsubmit="return confirm('Delete this block?');">
         {% csrf_token %}
