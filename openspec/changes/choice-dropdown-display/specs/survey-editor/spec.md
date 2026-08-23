@@ -16,3 +16,14 @@ existing display-style validation.
 #### Scenario: Picker absent on non-applicable types
 - **WHEN** the creator edits a text question
 - **THEN** no choice display-style selector is rendered
+
+#### Scenario: Only concrete styles get cards; default-ness is a badge
+- **WHEN** the creator opens the style picker on any question type that has one
+- **THEN** every card names a concrete rendering (choice: "List", "Dropdown with search";
+  rating: "Compact scale", "Labeled list", "Stars") and no card is named "Survey default";
+  the card matching the survey-wide default carries a corner "Default" ribbon
+
+#### Scenario: Picking the badged card preserves inherit semantics
+- **WHEN** the creator selects the ribbon-badged card and saves
+- **THEN** the stored `display_style` is `default` (inherit), so a later change of the
+  survey-wide style still re-styles the question

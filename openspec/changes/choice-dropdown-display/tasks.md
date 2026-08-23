@@ -21,6 +21,9 @@
       `input_type == 'choice'`, normalize otherwise.
 - [x] 2.3 Tests: save persists `dropdown` on choice; `dropdown` on text normalizes to
       `default`; template guard test right after the modal edit.
+- [x] 2.4 Follow-up (user feedback): the default card describes the concrete rendering
+      ("List" + radio-list thumb for choice) and carries a corner "Default" ribbon;
+      per-type thumb/label variants toggled via data-*-types markers.
 
 ## 3. Serialization
 
