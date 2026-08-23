@@ -207,8 +207,7 @@ when the published survey is read-only the bar goes amber and carries the
 </div>
 </div><!-- /editor-content-wrapper -->
 
-{% url 'survey' survey_slug=survey.uuid as respondent_url %}
-{% include "editor/partials/_mobile_nav.html" with pane_context="survey" preview_url=respondent_url %}
+{% include "editor/partials/_mobile_nav.html" with pane_context="survey" %}
 
 <!-- Question Form Modal -->
 <div class="modal fade editor-modal" id="questionModal" tabindex="-1">
