@@ -1,5 +1,10 @@
 {% load static i18n i18n_extras l10n %}
+{% comment %}lang reflects the survey content language the respondent chose
+(survey-page-metadata spec); single-language surveys fall back to the UI
+locale.{% endcomment %}
+<html lang="{% if selected_language %}{{ selected_language }}{% else %}{{ LANGUAGE_CODE|default:'en' }}{% endif %}">
 <head>
+    <title>{% block page_title %}{% if survey %}{{ survey.name }} — {% endif %}Mapsurvey{% endblock %}</title>
     {% include "partials/_analytics.html" %}
 
     <link rel="icon" href="{% static 'favicon.ico' %}" sizes="any">
@@ -16,6 +21,13 @@
     <script type="text/javascript" src="{% static 'js/components/ranking.js' %}"></script>
 
     <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
+    {% if MOBILE_BOTTOM_SHEET %}
+    {% comment %}Kill switch MOBILE_BOTTOM_SHEET (openspec: mobile-adaptive-refactor):
+    the ≤768px question panel becomes a three-detent bottom sheet over an
+    always-visible map. Unset = legacy slide-in panel.{% endcomment %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/bottom-sheet.css' %}">
+    <script type="text/javascript" src="{% static 'js/components/bottom_sheet.js' %}" defer></script>
+    {% endif %}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
    integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
    crossorigin=""/>
@@ -223,6 +235,18 @@
     L.Draw.Polygon.prototype._onTouch = L.Util.falseFn;
 
     //l18n
+    // Coarse pointers get "tap" phrasing — "click" instructions describe an
+    // interaction touch devices don't have (openspec: mobile-adaptive-refactor).
+    var _coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    var _t = {
+        marker: _coarse ? i18n.tapToPlaceMarker : i18n.clickToPlaceMarker,
+        shapeStart: _coarse ? i18n.tapToStartShape : i18n.clickToStartShape,
+        shapeCont: _coarse ? i18n.tapToContinueShape : i18n.clickToContinueShape,
+        shapeEnd: _coarse ? i18n.tapFirstPointToClose : i18n.clickFirstPointToClose,
+        lineStart: _coarse ? i18n.tapToStartLine : i18n.clickToStartLine,
+        lineCont: _coarse ? i18n.tapToContinueLine : i18n.clickToContinueLine,
+        lineEnd: _coarse ? i18n.tapLastPointToFinish : i18n.clickLastPointToFinish
+    };
     L.drawLocal = {
         draw: {
             toolbar: {
@@ -238,9 +262,9 @@
             handlers: {
                 circle: { tooltip: { start: 'Click and drag to draw circle.' }, radius: 'Radius' },
                 circlemarker: { tooltip: { start: 'Click map to place circle marker.' } },
-                marker: { tooltip: { start: i18n.clickToPlaceMarker } },
-                polygon: { tooltip: { start: i18n.clickToStartShape, cont: i18n.clickToContinueShape, end: i18n.clickFirstPointToClose } },
-                polyline: { error: i18n.shapeEdgesCannotIntersect, tooltip: { start: i18n.clickToStartLine, cont: i18n.clickToContinueLine, end: i18n.clickLastPointToFinish } },
+                marker: { tooltip: { start: _t.marker } },
+                polygon: { tooltip: { start: _t.shapeStart, cont: _t.shapeCont, end: _t.shapeEnd } },
+                polyline: { error: i18n.shapeEdgesCannotIntersect, tooltip: { start: _t.lineStart, cont: _t.lineCont, end: _t.lineEnd } },
                 rectangle: { tooltip: { start: 'Click and drag to draw rectangle.' } },
                 simpleshape: { tooltip: { end: 'Release mouse to finish drawing.' } }
             }
@@ -262,6 +286,42 @@
     };
 
     var editableLayers = new L.FeatureGroup();
+
+    {% if MOBILE_BOTTOM_SHEET %}
+    // Applied-geometry confirmation (openspec: respondent-bottom-sheet): the
+    // question card shows "✓ N added" as soon as a geometry lands in
+    // editableLayers, so a respondent returning to the panel can tell their
+    // answer was recorded. Behind the MOBILE_BOTTOM_SHEET kill switch with the
+    // rest of the respondent-surface changes.
+    function updateGeoCounts() {
+        var counts = {};
+        editableLayers.eachLayer(function(layer) {
+            var qid = layer.feature && layer.feature.properties && layer.feature.properties.question_id;
+            if (qid) counts[qid] = (counts[qid] || 0) + 1;
+        });
+        document.querySelectorAll('button.drawbutton').forEach(function(btn) {
+            var qid = btn.getAttribute('name');
+            var n = counts[qid] || 0;
+            var chip = btn.querySelector('.geo-count-chip');
+            if (n === 0) {
+                if (chip) chip.remove();
+                return;
+            }
+            if (!chip) {
+                chip = document.createElement('span');
+                chip.className = 'geo-count-chip';
+                var text = btn.querySelector('.geo-question-text') || btn;
+                text.appendChild(chip);
+            }
+            chip.textContent = '✓ ' + n + ' ' + i18n.geoAdded;
+        });
+    }
+    editableLayers.on('layeradd layerremove', function() {
+        // Defer: the feature property is attached right after addLayer.
+        setTimeout(updateGeoCounts, 0);
+    });
+    document.addEventListener('DOMContentLoaded', updateGeoCounts);
+    {% endif %}
     var currentQ = null;
     var currentDrawFeature = null;
     var currentEditLayer = null;

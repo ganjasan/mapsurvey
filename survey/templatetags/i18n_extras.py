@@ -33,6 +33,20 @@ def i18n_json():
         'clickToContinueLine': _('Click to continue drawing the line.'),
         'clickLastPointToFinish': _('Click the last point to finish the line.'),
 
+        # Touch variants: on coarse pointers "click" instructions describe an
+        # interaction that does not exist (audit finding — the map ignores taps
+        # until a tool is active). The template picks these via pointer:coarse.
+        'tapToPlaceMarker': _('Move the map to position the pin, then press Apply.'),
+        'tapToStartShape': _('Tap to add the shape’s corners.'),
+        'tapToContinueShape': _('Tap to add the next corner.'),
+        'tapFirstPointToClose': _('Tap the first point to close the shape.'),
+        'tapToStartLine': _('Tap to start the line.'),
+        'tapToContinueLine': _('Tap to add the next point.'),
+        'tapLastPointToFinish': _('Tap the last point to finish the line.'),
+
+        # Applied-geometry confirmation chip
+        'geoAdded': _('added'),
+
         # Error messages
         'shapeEdgesCannotIntersect': _('<strong>Error:</strong> Shape edges cannot intersect!'),
 
