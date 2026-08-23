@@ -196,3 +196,14 @@ class QuestionForm(forms.ModelForm):
 
     def clean_display_style(self):
         return self.cleaned_data.get('display_style') or 'default'
+
+    def clean(self):
+        cleaned = super().clean()
+        style = cleaned.get('display_style') or 'default'
+        input_type = cleaned.get('input_type')
+        if input_type == 'choice':
+            if style not in ('default', 'dropdown'):
+                cleaned['display_style'] = 'default'
+        elif style == 'dropdown':
+            cleaned['display_style'] = 'default'
+        return cleaned
