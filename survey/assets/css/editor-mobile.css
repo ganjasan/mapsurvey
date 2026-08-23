@@ -344,7 +344,15 @@ body.mobile-nav-enabled .pr-container { height: auto; flex: 1; min-height: 0; }
         cursor: pointer;
     }
 
-    /* Question form modal goes full-screen on phones. */
+    /* Reorder by touch: without touch-action:none the browser claims the
+       gesture for scrolling and the long-press drag never starts. Scoped to
+       the handles so the rest of the row still scrolls the list. */
+    body.mobile-nav-enabled .drag-handle { touch-action: none; }
+
+    /* Question form modal goes full-screen on phones. Bootstrap adds inline
+       padding-right (scrollbar compensation) on open — on overlay-scrollbar
+       phones that is a dead 15px stripe, hence the !important zero. */
+    body.mobile-nav-enabled .editor-modal.modal { padding: 0 !important; }
     body.mobile-nav-enabled .editor-modal .modal-dialog {
         margin: 0;
         max-width: 100vw;
