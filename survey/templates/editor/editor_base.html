@@ -24,11 +24,14 @@
     <script src="{% static 'js/editor_dialog.js' %}"></script>
     <script src="{% static 'js/editor_clipboard.js' %}"></script>
     {% if MOBILE_EDITOR_NAV %}
-    <link rel="stylesheet" href="{% static 'css/editor-mobile.css' %}">
-    <script src="{% static 'js/editor_mobile_nav.js' %}"></script>
+    {% comment %}Dev-only cache-buster: DEBUG serves unhashed static, and stale
+    copies of exactly these files produced three phantom layout bugs in one
+    review day. In production the manifest hash does this properly.{% endcomment %}
+    <link rel="stylesheet" href="{% static 'css/editor-mobile.css' %}{% if debug %}?t={% now 'U' %}{% endif %}">
+    <script src="{% static 'js/editor_mobile_nav.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
     {% endif %}
     {% if EDITOR_AUTOSAVE %}
-    <script src="{% static 'js/editor_autosave.js' %}"></script>
+    <script src="{% static 'js/editor_autosave.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
     <style>
         .autosave-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #6b7280; }
         .autosave-indicator .autosave-dot { font-size: 0.55rem; color: #198754; }

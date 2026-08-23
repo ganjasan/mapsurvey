@@ -123,6 +123,9 @@ body.mobile-nav-enabled .navbar-overflow { display: none; }
     body.mobile-nav-enabled .editor-container[data-active-pane="preview"] .editor-preview iframe,
     body.mobile-nav-enabled .pr-container[data-active-pane="preview"] .pr-preview iframe {
         flex: 1; min-height: 0;
+        /* Belt: a flex item's min-width:auto can let the iframe lay out wider
+           than the overlay and clip the respondent page on the right. */
+        width: 100%; min-width: 0; max-width: 100%;
     }
     body.mobile-nav-enabled.pane-preview-full .mobile-tabbar { display: none; }
     body.mobile-nav-enabled.pane-preview-full .pr-ctxbar { display: none; }
