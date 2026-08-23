@@ -200,7 +200,7 @@
         width: 40px; height: 40px; display: grid; place-items: center;
         border: 1px solid var(--border-color); border-radius: 8px; color: #6b7280;
     }
-    /* View toggle sits with the list it controls. */
+    /* Row above the collection — holds the count label (mobile title). */
     body.mobile-nav-enabled .list-controls {
         display: flex; align-items: center; margin: -0.5rem 0 0.75rem;
     }
@@ -237,8 +237,6 @@
             display: block; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
             color: #9ca3af; font-weight: 600;
         }
-        /* <768 the toggle lives in ⋯ — hide the list-controls copy */
-        body.mobile-nav-enabled .list-controls .view-toggle { display: none; }
         /* Compact list rows: no wrap, no per-row action strip, one KPI */
         body.mobile-nav-enabled .survey-row { flex-wrap: nowrap; }
         body.mobile-nav-enabled .survey-row .row-actions { display: none; }
@@ -335,15 +333,10 @@
         {% endif %}
     </div>
     {% if MOBILE_EDITOR_NAV %}
-    {% comment %}The view toggle sits with the collection it controls, not in
-    the page toolbar (owner review). Count label doubles as the mobile title.{% endcomment %}
+    {% comment %}Count label doubles as the mobile title. The grid/list toggle
+    lives only in the ⋯ menu (owner review) — no inline copy.{% endcomment %}
     <div class="list-controls">
         <div class="dash-count">My Surveys · {{ survey_headers|length }}</div>
-        <span class="spacer" style="flex:1;"></span>
-        <div class="view-toggle">
-            <button onclick="setView('grid')" id="btn-grid" title="Cards"><i class="fas fa-th-large"></i></button>
-            <button onclick="setView('list')" id="btn-list" title="List"><i class="fas fa-list"></i></button>
-        </div>
     </div>
     {% endif %}
 
@@ -564,18 +557,19 @@
 function setView(mode) {
     var grid = document.getElementById('view-grid');
     var list = document.getElementById('view-list');
+    // With the flag on the header toggle is gone (⋯ menu only) — null-safe.
     var btnGrid = document.getElementById('btn-grid');
     var btnList = document.getElementById('btn-list');
     if (mode === 'list') {
         grid.classList.add('hidden');
         list.classList.remove('hidden');
-        btnGrid.classList.remove('active');
-        btnList.classList.add('active');
+        if (btnGrid) btnGrid.classList.remove('active');
+        if (btnList) btnList.classList.add('active');
     } else {
         list.classList.add('hidden');
         grid.classList.remove('hidden');
-        btnList.classList.remove('active');
-        btnGrid.classList.add('active');
+        if (btnList) btnList.classList.remove('active');
+        if (btnGrid) btnGrid.classList.add('active');
     }
     try { localStorage.setItem('dashboard_view', mode); } catch(e) {}
 }
