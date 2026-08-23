@@ -28641,3 +28641,34 @@ class CreateSurveyWizardTest(TestCase):
         self.assertEqual(response.status_code, 302)
         survey = SurveyHeader.objects.get(name='Untitled survey', organization=self.org)
         self.assertTrue(survey.surveysection_set.filter(is_head=True).exists())
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_cyrillic_name_accepted(self):
+        """
+        GIVEN a creator briefing in Russian (any language is supported)
+        WHEN the wizard posts a Cyrillic-derived survey name
+        THEN validate_url_name (now Unicode) accepts it and the survey is created
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'Лучшие места в Бишкеке',
+            'available_languages': '["ru"]',
+            'action': 'empty',
+            'map_lat': '42.87', 'map_lng': '74.59', 'map_zoom': '12',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(SurveyHeader.objects.filter(name='Лучшие места в Бишкеке').exists())
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_languages_stay_on_step_one(self):
+        """
+        GIVEN the wizard flag on
+        WHEN the create page renders
+        THEN the language picker is NOT wrapped in the hidden legacy block —
+             languages are chosen up front so drafts generate translations
+        """
+        html = self.client.get('/editor/surveys/new/').content.decode()
+        wrapper = re.search(r'class="create-legacy-fields".*?</div>\s*</div>', html, re.S)
+        self.assertIsNotNone(wrapper)
+        self.assertIn('name="name"', wrapper.group(0))
+        self.assertNotIn('available_languages', wrapper.group(0))
+        self.assertIn('Available languages', html)
+

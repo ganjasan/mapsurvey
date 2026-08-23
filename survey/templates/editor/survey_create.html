@@ -154,14 +154,16 @@
         <!-- Left: what is it called + actions -->
         <div class="create-left">
           {% comment %}Wizard (openspec: mobile-adaptive-refactor, group 9): with the
-          flag on, name and languages leave the critical path on every width —
-          the inputs stay in the DOM (hidden) so the backend contract is
-          unchanged; JS fills the name from the goal / a default.{% endcomment %}
+          flag on, only the NAME leaves the critical path (hidden input, JS
+          derives it from the goal). Languages stay on step 1 by owner decision:
+          creators brief in any language, and picking languages up front lets
+          the draft generate its translations immediately.{% endcomment %}
           <div class="create-legacy-fields">
           <div class="pr-field">
             <label for="{{ form.name.id_for_label }}">Survey name</label>
             {{ form.name }}
             {% for error in form.name.errors %}<div class="text-danger" style="font-size:0.85rem;">{{ error }}</div>{% endfor %}
+          </div>
           </div>
 
           <div class="pr-field">
@@ -169,7 +171,6 @@
             {{ form.available_languages }}
             {% include "editor/partials/language_picker.html" %}
             <div class="pr-help">The languages respondents can take this survey in. You can add more later.</div>
-          </div>
           </div>
 
           {% if ai_available %}
@@ -658,15 +659,15 @@
         };
 
         // Name leaves the flow: derive it from the goal (draft path) or use a
-        // placeholder the creator renames in the editor. The model's
-        // validate_url_name needs at least one [a-zA-Z0-9_] character and
-        // max_length is 45 — an all-Cyrillic goal falls back to the default.
+        // placeholder the creator renames in the editor. Goals come in any
+        // language — validate_url_name is Unicode ("contains a word char"),
+        // max_length 45.
         function ensureName() {
             var name = document.getElementById('{{ form.name.id_for_label }}');
             if (!name || name.value.trim()) return;
             var goal = document.getElementById('{{ brief_form.goal.id_for_label }}');
             var base = (path === 'draft' && goal && goal.value.trim()) ? goal.value.trim() : '';
-            if (!/[a-zA-Z0-9_]/.test(base)) base = 'Untitled survey';
+            if (!/[\p{L}\p{N}]/u.test(base)) base = 'Untitled survey';
             name.value = base.length > 45 ? base.slice(0, 44) : base;
         }
 

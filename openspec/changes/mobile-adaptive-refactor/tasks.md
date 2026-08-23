@@ -97,9 +97,10 @@
       create), >=1024 = merged two-column with reordered blocks; flag off = legacy page
 - [x] 9.2 Full-screen map step: map owns the viewport (search, basemap, zoom, center pin);
       fixes pan-vs-scroll and the stray absolute search icon
-- [x] 9.3 Name and languages leave the flow: name auto-suggested (draft path) or
-      "Untitled survey" (empty path, renamed in editor); languages default, edited in
-      Survey settings
+- [x] 9.3 AMENDED in review: only the NAME leaves the flow (derived from the goal;
+      validate_url_name relaxed to Unicode "contains a word char" — creators brief in
+      any language, no migration). LANGUAGES returned to step 1 by owner decision:
+      picking them up front lets the draft generate translations immediately
 - [x] 9.4 Draft path = primary ("Draft my survey"), empty path = secondary ("Start with an
       empty survey"); no "AI" wording in UI copy
 - [x] 9.5 Generation progress: draft path returns to the (now full-width) goal pane and

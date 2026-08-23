@@ -52,9 +52,14 @@ class ChoicesValidator(BaseValidator):
         return False
 
 #VALIDATORS
+# Unicode on purpose: creators name surveys in their own language (Cyrillic,
+# CJK, accents — production already holds names with spaces and diacritics).
+# The check is "contains at least one word character" — Python 3 \w is
+# Unicode-aware. Kept inside the validate_url_name wrapper so the field
+# definition (and therefore migrations) stay untouched.
 url_name_validator = RegexValidator(
-    regex = r'[a-zA-Z0-9_]',
-    message=_('Only alphanumeric character and "_" sign'),
+    regex = r'\w',
+    message=_('The name must contain at least one letter or digit'),
     code='invalid',
 )
 
