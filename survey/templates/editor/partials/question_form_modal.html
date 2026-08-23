@@ -99,29 +99,22 @@
             <div class="qtp-hint-line" id="qtp-hint-line"></div>
             {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
         </div>
-        {% elif field.name != 'display_style' %}
+        {% elif field.name == 'name' or field.name == 'subtext' %}
         <div class="form-group" id="fg-{{ field.name }}">
-            {% if field.name == 'required' %}
-                <div class="form-check">
-                    {{ field }}
-                    <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                </div>
-            {% else %}
-                {# Base name/subtext hold the primary language; label it when translations exist. #}
-                <label for="{{ field.id_for_label }}">{{ field.label }}{% if survey.available_languages|length > 1 and field.name == 'name' or survey.available_languages|length > 1 and field.name == 'subtext' %} ({{ survey.available_languages.0|language_name }}){% endif %}</label>
-                {{ field }}
-                {% if field.name == 'subtext' %}
-                {% comment %}Subtext is rich text now (rendered |safe). The input above stays
-                the value the form posts; this is what the creator actually types into.{% endcomment %}
-                <div id="subtext-quill"></div>
-                {% endif %}
-                {% if field.name == 'name' %}
-                {% comment %}image and html never render their name to respondents (see the
-                question-subtext spec) — say so instead of letting "Name" read as a heading.{% endcomment %}
-                <small class="form-text text-muted" id="name-internal-hint" style="display:none;">
-                    Editor-only label — respondents don't see it.
-                </small>
-                {% endif %}
+            {# Base name/subtext hold the primary language; label it when translations exist. #}
+            <label for="{{ field.id_for_label }}">{{ field.label }}{% if survey.available_languages|length > 1 %} ({{ survey.available_languages.0|language_name }}){% endif %}</label>
+            {{ field }}
+            {% if field.name == 'subtext' %}
+            {% comment %}Subtext is rich text now (rendered |safe). The input above stays
+            the value the form posts; this is what the creator actually types into.{% endcomment %}
+            <div id="subtext-quill"></div>
+            {% endif %}
+            {% if field.name == 'name' %}
+            {% comment %}image and html never render their name to respondents (see the
+            question-subtext spec) — say so instead of letting "Name" read as a heading.{% endcomment %}
+            <small class="form-text text-muted" id="name-internal-hint" style="display:none;">
+                Editor-only label — respondents don't see it.
+            </small>
             {% endif %}
             {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text|safe }}</small>{% endif %}
             {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
@@ -143,15 +136,33 @@
         <!-- Display style (see DISPLAY_STYLE_TYPES below) -->
         <div id="display-style-fields" style="display:none;" class="mb-3">
             <label style="font-weight:600;">Display as</label>
+            {% comment %}Only concrete styles get cards. "Inherit the survey default" is not a
+            style a creator thinks in — the survey-default card carries a corner "Default"
+            ribbon instead, and its radio submits the stored value 'default' so the inherit
+            semantics survive unchanged.{% endcomment %}
+            {% with sdef=survey.get_default_rating_display_style %}
             <div style="display:flex;gap:8px;">
-                {% for radio in form.display_style %}
-                <label class="ds-option" data-types="{% if radio.data.value == 'default' %}rating choice{% elif radio.data.value == 'dropdown' %}choice{% else %}rating{% endif %}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;">
-                    {{ radio.tag }}
-                    {% if radio.data.value == 'default' %}
-                    <span class="ds-thumb" style="display:flex;align-items:center;justify-content:center;width:74px;height:22px;border:1px dashed #9aa0a6;border-radius:4px;color:#9aa0a6;">
-                        <i class="fas fa-sliders-h"></i>
+                <label class="ds-option" data-types="choice" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;position:relative;overflow:hidden;">
+                    <input type="radio" name="display_style" value="default"{% if not form.display_style.value or form.display_style.value == 'default' %} checked{% endif %}>
+                    <span class="ds-default-ribbon">Default</span>
+                    <span class="ds-thumb" style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
+                        <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:1px solid #9aa0a6;border-radius:50%;"></i><i style="width:56px;height:6px;background:#e5e7eb;border-radius:3px;"></i></i>
+                        <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:2px solid #4f46e5;border-radius:50%;"></i><i style="width:44px;height:6px;background:#e5e7eb;border-radius:3px;"></i></i>
+                        <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:1px solid #9aa0a6;border-radius:50%;"></i><i style="width:50px;height:6px;background:#e5e7eb;border-radius:3px;"></i></i>
                     </span>
-                    {% elif radio.data.value == 'scale_strip' %}
+                    <span>List</span>
+                </label>
+                {% for radio in form.display_style %}
+                {% if radio.data.value != 'default' %}
+                <label class="ds-option" data-types="{% if radio.data.value == 'dropdown' %}choice{% else %}rating{% endif %}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;position:relative;overflow:hidden;">
+                    {% if radio.data.value == sdef %}
+                    {# The survey's own default rating style: submits 'default' (inherit), wears the ribbon. #}
+                    <input type="radio" name="display_style" value="default"{% if not form.display_style.value or form.display_style.value == 'default' or form.display_style.value == sdef %} checked{% endif %}>
+                    <span class="ds-default-ribbon">Default</span>
+                    {% else %}
+                    {{ radio.tag }}
+                    {% endif %}
+                    {% if radio.data.value == 'scale_strip' %}
                     <span class="ds-thumb" style="display:flex;gap:3px;">
                         <i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border-radius:3px;background:#4f46e5;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i>
                     </span>
@@ -170,8 +181,10 @@
                     {% endif %}
                     <span>{{ radio.choice_label }}</span>
                 </label>
+                {% endif %}
                 {% endfor %}
             </div>
+            {% endwith %}
             <div id="star-count-field" style="display:none;margin-top:10px;">
                 <label style="font-weight:600;font-size:0.85rem;">Number of stars</label>
                 <input type="number" min="2" max="10" value="5" id="star-count-input"
@@ -191,7 +204,33 @@
         <style>
             #display-style-fields .ds-option input[type="radio"] { position:absolute; opacity:0; width:0; height:0; }
             #display-style-fields .ds-option:has(input:checked) { border-color:#4f46e5; background:#eef2ff; }
+            #display-style-fields .ds-default-ribbon {
+                position:absolute; top:6px; right:-18px; transform:rotate(45deg);
+                width:64px; line-height:1.4; background:#9aa0a6; color:#fff;
+                font-size:0.5rem; font-weight:600; letter-spacing:0.03em;
+                text-transform:uppercase; text-align:center; pointer-events:none;
+            }
+            #display-style-fields .ds-option:has(input:checked) .ds-default-ribbon { background:#4f46e5; }
         </style>
+
+        {# Settings follow the style choice: pick how the question renders first, then tune it. #}
+        {% for field in form %}
+        {% if field.name == 'required' or field.name == 'color' or field.name == 'icon_class' or field.name == 'image' %}
+        <div class="form-group" id="fg-{{ field.name }}">
+            {% if field.name == 'required' %}
+                <div class="form-check">
+                    {{ field }}
+                    <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                </div>
+            {% else %}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+            {% endif %}
+            {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text|safe }}</small>{% endif %}
+            {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+        {% endif %}
+        {% endfor %}
 
         <!-- Choices editor -->
         <div class="choices-editor" id="choices-editor" style="display:none;">
@@ -467,16 +506,21 @@
         var t = inputTypeSelect ? inputTypeSelect.value : '';
         if (el) el.style.display = (DISPLAY_STYLE_TYPES.indexOf(t) !== -1) ? 'block' : 'none';
         // Each style option belongs to specific question types (data-types);
-        // hide the rest and drop a selection that just became invalid.
-        var defaultRadio = null;
+        // hide the rest. Two cards carry a value="default" radio (the choice
+        // "List" card and the survey-default rating card) — only one is ever
+        // visible, so after filtering make sure the checked radio is a visible
+        // one, falling back to the visible default card.
+        var visibleChecked = null, visibleDefault = null, hiddenChecked = false;
         document.querySelectorAll('#display-style-fields .ds-option').forEach(function(lbl) {
             var radio = lbl.querySelector('input[name="display_style"]');
-            var forTypes = (lbl.dataset.types || '').split(' ');
-            var visible = forTypes.indexOf(t) !== -1;
+            var visible = (lbl.dataset.types || '').split(' ').indexOf(t) !== -1;
             lbl.style.display = visible ? '' : 'none';
-            if (radio && radio.value === 'default') defaultRadio = radio;
-            if (!visible && radio && radio.checked && defaultRadio) defaultRadio.checked = true;
+            if (!radio) return;
+            if (visible && radio.checked) visibleChecked = radio;
+            if (visible && radio.value === 'default') visibleDefault = radio;
+            if (!visible && radio.checked) hiddenChecked = true;
         });
+        if (!visibleChecked && hiddenChecked && visibleDefault) visibleDefault.checked = true;
         toggleStripWidthHint();
     }
 

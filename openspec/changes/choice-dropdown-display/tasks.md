@@ -21,6 +21,9 @@
       `input_type == 'choice'`, normalize otherwise.
 - [x] 2.3 Tests: save persists `dropdown` on choice; `dropdown` on text normalizes to
       `default`; template guard test right after the modal edit.
+- [x] 2.4 Follow-up (user feedback): the default card describes the concrete rendering
+      ("List" + radio-list thumb for choice) and carries a corner "Default" ribbon;
+      per-type thumb/label variants toggled via data-*-types markers.
 
 ## 3. Serialization
 
@@ -32,5 +35,5 @@
 ## 4. Ship & apply to Olney
 
 - [x] 4.1 Full test run via `./run_tests.sh survey`; PR referencing this change.
-- [ ] 4.2 After deploy: `UPDATE survey_question SET display_style='dropdown' WHERE id=4190;`
+- [x] 4.2 After deploy: `UPDATE survey_question SET display_style='dropdown' WHERE id=4190;`
       and verify the 35-zone question on the live test link (desktop + phone).
