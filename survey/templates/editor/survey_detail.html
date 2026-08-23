@@ -421,16 +421,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     body: JSON.stringify({ section_ids: ids })
                 });
-                // Move HEAD badge to the first section
+                // The HEAD badge is retired — just clear any leftover one.
                 sectionsList.querySelectorAll('.badge-info').forEach(function(b) { b.remove(); });
-                var first = sectionsList.children[0];
-                if (first) {
-                    var badge = document.createElement('span');
-                    badge.className = 'badge badge-info';
-                    badge.style.fontSize = '0.65rem';
-                    badge.textContent = 'HEAD';
-                    first.querySelector('.section-title').after(badge);
-                }
             }
         });
     }
@@ -592,16 +584,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // After section delete, update HEAD badge and load first remaining section
+    // After section delete, load the first remaining section (the HEAD badge
+    // is retired — clear any leftover one).
     document.body.addEventListener('sectionDeleted', function() {
         sectionsList.querySelectorAll('.badge-info').forEach(function(b) { b.remove(); });
         var first = document.querySelector('.section-item');
         if (first) {
-            var badge = document.createElement('span');
-            badge.className = 'badge badge-info';
-            badge.style.fontSize = '0.65rem';
-            badge.textContent = 'HEAD';
-            first.querySelector('.section-title').after(badge);
             first.click();
         } else {
             document.getElementById('section-content').innerHTML =
