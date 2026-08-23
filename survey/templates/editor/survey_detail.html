@@ -111,7 +111,7 @@ flow.{% endcomment %}
     <button class="msb-btn msb-outline" onclick="openEditIntercept()">✎ Edit</button>
     <a class="msb-btn msb-indigo" href="{% url 'editor_survey_share' survey.uuid %}">🔗 Share</a>
     {% endif %}
-    <a class="msb-btn msb-outline msb-desktop" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">↗ Preview</a>
+    <a class="msb-btn msb-outline msb-desktop" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Take the survey the way a respondent will — real page, real map, real submit">↗ Open as respondent</a>
     {% if is_owner %}
     <div class="dropdown msb-desktop" style="flex:0 0 auto;">
         <button class="msb-btn msb-outline" data-toggle="dropdown" aria-label="More survey actions">⋯</button>
@@ -300,7 +300,7 @@ function copyTestLink(btn) {
     <!-- Right Panel: Live Preview -->
     <aside class="editor-preview" id="editor-preview">
         <div class="preview-header">
-            <span>Preview</span>
+            <span>Live preview</span>
             {% if survey.available_languages %}
             <select id="preview-lang" style="border:1px solid var(--border-color);border-radius:4px;padding:2px 6px;font-size:0.75rem;color:#374151;background:#fff;outline:none;text-transform:uppercase;cursor:pointer;">
                 {% for lang in survey.available_languages %}
