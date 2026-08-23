@@ -18,6 +18,7 @@ from .models import (
 )
 from . import product_events as pe
 from .cloning import clone_question, clone_section
+from .html_sanitize import coerce_creator_html
 from .translation_gaps import survey_translation_gaps
 from .editor_forms import (
     SurveyHeaderForm, SurveyCreateForm, SurveyBriefForm, SurveySectionForm, QuestionForm,
@@ -717,7 +718,8 @@ def _save_section_translations(request, section, survey):
     """Save section translations from POST data (non-primary languages only)."""
     for lang in _translation_languages(survey):
         title = request.POST.get(f'translation_{lang}_title', '').strip()
-        subheading = request.POST.get(f'translation_{lang}_subheading', '').strip()
+        subheading = coerce_creator_html(
+            request.POST.get(f'translation_{lang}_subheading', '')).strip()
         if title or subheading:
             SurveySectionTranslation.objects.update_or_create(
                 section=section, language=lang,
@@ -1027,7 +1029,9 @@ def editor_question_preview_live(request, survey_uuid, section_id):
         survey_section=section,
         input_type=input_type,
         name=request.POST.get('name', '').strip(),
-        subtext=request.POST.get('subtext', '').strip(),
+        # Put through the same allow-list a save would, so the preview shows what
+        # the question will actually become rather than the raw draft.
+        subtext=coerce_creator_html(request.POST.get('subtext', '')),
         choices=choices,
         color=request.POST.get('color', '').strip() or '#000000',
         icon_class=request.POST.get('icon_class', '').strip(),
@@ -1063,7 +1067,10 @@ def _save_question_translations(request, question, survey):
     """Save question translations from POST data (non-primary languages only)."""
     for lang in _translation_languages(survey):
         name = request.POST.get(f'translation_{lang}_name', '').strip()
-        subtext = request.POST.get(f'translation_{lang}_subtext', '').strip()
+        # Same allow-list the base language goes through in QuestionForm; a
+        # translated subtext is rendered |safe just the same.
+        subtext = coerce_creator_html(
+            request.POST.get(f'translation_{lang}_subtext', '')).strip()
         if name or subtext:
             QuestionTranslation.objects.update_or_create(
                 question=question, language=lang,

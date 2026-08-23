@@ -110,12 +110,35 @@
                 {# Base name/subtext hold the primary language; label it when translations exist. #}
                 <label for="{{ field.id_for_label }}">{{ field.label }}{% if survey.available_languages|length > 1 and field.name == 'name' or survey.available_languages|length > 1 and field.name == 'subtext' %} ({{ survey.available_languages.0|language_name }}){% endif %}</label>
                 {{ field }}
+                {% if field.name == 'subtext' %}
+                {% comment %}Subtext is rich text now (rendered |safe). The input above stays
+                the value the form posts; this is what the creator actually types into.{% endcomment %}
+                <div id="subtext-quill"></div>
+                {% endif %}
+                {% if field.name == 'name' %}
+                {% comment %}image and html never render their name to respondents (see the
+                question-subtext spec) — say so instead of letting "Name" read as a heading.{% endcomment %}
+                <small class="form-text text-muted" id="name-internal-hint" style="display:none;">
+                    Editor-only label — respondents don't see it.
+                </small>
+                {% endif %}
             {% endif %}
             {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text|safe }}</small>{% endif %}
             {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
         </div>
         {% endif %}
         {% endfor %}
+
+        {% comment %}The Formatted Text block's body. It sits here, below the type picker,
+        because it is a type-scoped setting like the choices editor and the validation
+        fields — the whole lower half of this dialog is "settings for the type you picked".
+        The value still submits from the `subtext` input above, which is hidden for this
+        type.{% endcomment %}
+        <div class="form-group" id="html-body-editor" style="display:none;">
+            <label id="html-body-label" style="font-weight:600;">Content{% if survey.available_languages|length > 1 %} ({{ survey.available_languages.0|language_name }}){% endif %}</label>
+            <div id="html-body-quill"></div>
+            <small class="form-text text-muted">Respondents see exactly this — it collects no answer.</small>
+        </div>
 
         <!-- Display style (see DISPLAY_STYLE_TYPES below) -->
         <div id="display-style-fields" style="display:none;" class="mb-3">
@@ -269,9 +292,12 @@
                                value="{% if question %}{% for t in question.translations.all %}{% if t.language == lang %}{{ t.name|default:'' }}{% endif %}{% endfor %}{% endif %}">
                     </div>
                     <div class="form-group">
-                        <label style="font-size:0.8rem;">Subtext ({{ lang }})</label>
+                        <label style="font-size:0.8rem;" data-translation-subtext-label="{{ lang }}">Subtext ({{ lang }})</label>
                         <input type="text" name="translation_{{ lang }}_subtext" class="form-control form-control-sm"
                                value="{% if question %}{% for t in question.translations.all %}{% if t.language == lang %}{{ t.subtext|default:'' }}{% endif %}{% endfor %}{% endif %}">
+                        {% comment %}Formatted Text bodies are edited here too — same editor as the
+                        base language, writing into the input above.{% endcomment %}
+                        <div class="translation-quill-wrap" data-translation-quill="{{ lang }}" style="display:none;"></div>
                     </div>
                 </fieldset>
                 {% endfor %}
@@ -458,16 +484,17 @@
     var GEO_TYPES = ['point', 'line', 'polygon'];
     var DISPLAY_BLOCK_TYPES = ['image', 'html'];
 
+    // CSS-hidden inputs still submit, so stored values pass through a save
+    // untouched. The hidden `required` checkbox is the deliberate exception:
+    // unchecked-when-hidden is correct for display blocks, which collect
+    // nothing and cannot be required.
+    function show(id, on) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = on ? '' : 'none';
+    }
+
     function toggleTypeScopedFields() {
         var t = inputTypeSelect ? inputTypeSelect.value : '';
-        // CSS-hidden inputs still submit, so stored values pass through a save
-        // untouched. The hidden `required` checkbox is the deliberate
-        // exception: unchecked-when-hidden is correct for display blocks,
-        // which collect nothing and cannot be required.
-        function show(id, on) {
-            var el = document.getElementById(id);
-            if (el) el.style.display = on ? '' : 'none';
-        }
         var isGeo = GEO_TYPES.indexOf(t) !== -1;
         // Colour and icon serve two consumers now: map markers, and the star
         // rating style. Shown exactly where they are read.
@@ -491,6 +518,107 @@
         }
         show('fg-image', t === 'image');
         show('fg-required', DISPLAY_BLOCK_TYPES.indexOf(t) === -1);
+        show('name-internal-hint', DISPLAY_BLOCK_TYPES.indexOf(t) !== -1);
+        toggleHtmlBodyEditor(t === 'html');
+    }
+
+    // ── Formatted Text body: the WYSIWYG editor ──
+    // `html` blocks render their subtext as the block's content (|safe, sanitized
+    // server-side), so the creator writes it here rather than hand-typing HTML into
+    // the one-line Subtext input — which stays in the DOM as the value the form
+    // submits. Quill instances are built on first use and reused afterwards.
+    var BODY_TOOLBAR = [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline'],
+        [{ align: [] }],
+        ['link'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['blockquote'],
+        ['clean']
+    ];
+    // Subtext is a helper line under a question, not a page. Headings and
+    // alignment there produce shouty questionnaires, so the toolbar stops at
+    // emphasis, links and lists.
+    var SUBTEXT_TOOLBAR = [
+        ['bold', 'italic'],
+        ['link'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['clean']
+    ];
+    var subtextInput = document.querySelector('#questionModalBody [name="subtext"]');
+    var bodyEditorBox = document.getElementById('html-body-editor');
+    var bodyQuill = null;
+    var subtextQuill = null;
+    var translationQuills = {};
+
+    function makeQuill(mount, input, placeholder, toolbar) {
+        // Alignment as inline `text-align` styles: the respondent's page has no
+        // Quill CSS, so a class-based alignment would silently do nothing there.
+        Quill.register(Quill.import('attributors/style/align'), true);
+        var q = new Quill(mount, {
+            theme: 'snow',
+            placeholder: placeholder,
+            modules: { toolbar: toolbar || SUBTEXT_TOOLBAR }
+        });
+        q.setContents(q.clipboard.convert({ html: input.value || '' }), 'silent');
+        q.on('text-change', function(delta, old, source) {
+            if (source !== 'user') return;
+            var h = q.root.innerHTML;
+            input.value = (h === '<p><br></p>') ? '' : h;
+            // The live preview pane listens on the form, and a scripted value
+            // assignment fires nothing on its own.
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        return q;
+    }
+
+    function loadInto(quill) {
+        if (quill) quill.setContents(
+            quill.clipboard.convert({ html: subtextInput.value || '' }), 'silent');
+    }
+
+    // `html` edits the same value in a bigger editor further down the dialog —
+    // one field, two presentations. Whichever is on screen is loaded from the
+    // input, so switching type never loses what was typed.
+    function toggleHtmlBodyEditor(on) {
+        if (!bodyEditorBox || !subtextInput) return;
+        bodyEditorBox.style.display = on ? '' : 'none';
+        show('fg-subtext', !on);
+        // The plain input is a value carrier in both layouts. Without Quill on
+        // the page (offline CDN) it stays visible, so the field is still usable.
+        if (typeof Quill === 'undefined') return;
+        subtextInput.style.display = 'none';
+        if (on) {
+            if (!bodyQuill) {
+                bodyQuill = makeQuill(document.getElementById('html-body-quill'), subtextInput,
+                                      'Write what respondents will read…', BODY_TOOLBAR);
+            } else {
+                loadInto(bodyQuill);
+            }
+        } else {
+            if (!subtextQuill) {
+                subtextQuill = makeQuill(document.getElementById('subtext-quill'), subtextInput,
+                                         'Optional help text under the question');
+            } else {
+                loadInto(subtextQuill);
+            }
+        }
+    }
+
+    // Translations are edited in the same editor regardless of type; their
+    // plain inputs are value carriers only and stay hidden for good.
+    function mountTranslationEditors() {
+        if (typeof Quill === 'undefined') return;
+        document.querySelectorAll('[data-translation-quill]').forEach(function(wrap) {
+            var lang = wrap.getAttribute('data-translation-quill');
+            var input = document.querySelector('[name="translation_' + lang + '_subtext"]');
+            if (!input || translationQuills[lang]) return;
+            wrap.style.display = '';
+            input.style.display = 'none';
+            var mount = document.createElement('div');
+            wrap.appendChild(mount);
+            translationQuills[lang] = makeQuill(mount, input, '');
+        });
     }
 
     // ── Type picker cards drive the hidden select ──
@@ -707,6 +835,7 @@
         toggleStarCountField();
         qtpSyncCards();
         toggleTips();
+        mountTranslationEditors();
     }
 
     document.querySelectorAll('#display-style-fields input[name="display_style"]').forEach(function(radio) {

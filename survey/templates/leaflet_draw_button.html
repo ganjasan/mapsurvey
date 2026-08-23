@@ -10,7 +10,7 @@
 			<div class="geo-question-text">
 				<p class="geo-question-title">{{ widget.title }}</p>
 				{# Always rendered: the "add another" invitation lands here even when the creator wrote no subtext #}
-				<p class="geo-question-subtitle">{{ widget.subtitle|default:"" }}</p>
+				<p class="geo-question-subtitle">{{ widget.subtitle|default:""|safe }}</p>
 				{# Progress lives inside the button so it is unambiguous which question it belongs to; JS shows it only when min/max is set #}
 				<div class="geo-progress">
 					<span class="geo-progress-text"></span>
