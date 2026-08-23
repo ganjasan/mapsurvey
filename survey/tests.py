@@ -6748,19 +6748,20 @@ class EditorPermissionTest(TestCase):
         self.assertIn('settings-panel/', content)
         self.assertIn('sidebar-pinned-item active', content)
 
-    # ── Lifecycle-IA navigation (Build / Results / Publish) ──
+    # ── Lifecycle-IA navigation (Survey / Responses / Public results) ──
 
     def test_nav_shows_three_lifecycle_spaces(self):
         """
         GIVEN the survey editor
         WHEN it renders for an owner
-        THEN the navbar shows Build/Results/Publish tabs and no Editor/Settings tab
+        THEN the navbar shows Survey/Responses/Public results tabs and no
+        Editor/Settings tab
         """
         self.client.login(username='ep_owner', password='pass')
         content = self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
-        self.assertIn('fa-hammer"></i> Build', content)
-        self.assertIn('fa-chart-bar"></i> Results', content)
-        self.assertIn('fa-globe"></i> Publish', content)
+        self.assertIn('fa-hammer"></i> Survey', content)
+        self.assertIn('fa-chart-bar"></i> Responses', content)
+        self.assertIn('fa-globe"></i> Public results', content)
         # The old Editor label and the deprecated Settings tab are gone
         self.assertNotIn('title="Editor"', content)
         self.assertNotIn('badge-moved', content)
