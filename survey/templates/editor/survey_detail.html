@@ -93,14 +93,11 @@ flow.{% endcomment %}
 <div class="mobile-statusbar" style="flex-shrink:0;">
     <span class="msb-ico"><i class="fas fa-hammer"></i></span>
     <div class="msb-titleblock"><div class="msb-title">Survey</div></div>
-    <span class="msb-status">
-        {% if survey.is_draft_copy %}Draft of v{{ survey.published_version.version_number|add:1 }} — edit freely, then publish
-        {% elif survey.status == 'draft' %}Draft — not collecting responses
-        {% elif survey.status == 'testing' %}Testing — invite-link access
-        {% elif survey.status == 'published' %}Open · {{ session_count }} response{{ session_count|pluralize }}
-        {% elif survey.status == 'closed' %}Closed · {{ session_count }} response{{ session_count|pluralize }}
-        {% endif %}
-    </span>
+    {% comment %}The status chip (colored, opens the lifecycle menu) sits next
+    to the tab title — it describes this tab's entity. Approved pr-parity
+    mockup dropped the secondary text line.{% endcomment %}
+    {% include "editor/partials/_publishing_widget.html" %}
+    <span class="msb-spacer" style="flex:1;min-width:0;"></span>
     {% if survey.is_draft_copy %}
     <button class="msb-btn msb-green" onclick="checkAndPublishDraft()">🌐 Publish</button>
     {% elif survey.status == 'draft' %}
@@ -108,7 +105,18 @@ flow.{% endcomment %}
     {% elif survey.status == 'testing' %}
     <button class="msb-btn msb-amber" onclick="openTestSheet()">🔗 Share test link</button>
     {% elif survey.status == 'published' or survey.status == 'closed' %}
-    <button class="msb-btn msb-outline" onclick="openEditIntercept()">✎ Edit</button>
+    {% comment %}Explicit Edit = clear intent, act directly. The explanatory
+    intercept sheet is reserved for clicks on the disabled editing surface.{% endcomment %}
+    {% if draft_copy %}
+    <a class="msb-btn msb-outline" href="{% url 'editor_survey_detail' draft_copy.uuid %}">✎ Edit</a>
+    {% elif show_back_to_draft %}
+    <button class="msb-btn msb-outline" onclick="doTransition('draft')">✎ Edit</button>
+    {% elif show_edit_published %}
+    <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" style="display:contents;">
+        {% csrf_token %}
+        <button type="submit" class="msb-btn msb-outline">✎ Edit</button>
+    </form>
+    {% endif %}
     <a class="msb-btn msb-indigo" href="{% url 'editor_survey_share' survey.uuid %}">🔗 Share</a>
     {% endif %}
     <a class="msb-btn msb-outline msb-desktop" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Take the survey the way a respondent will — real page, real map, real submit">↗ Open as respondent</a>
@@ -180,6 +188,22 @@ flow.{% endcomment %}
     <button class="msb-btn msb-ghost msb-full" onclick="closeMobileSheet('editIntercept')">Cancel</button>
   </div>
 </div>
+<style>
+  /* Let clicks on disabled controls land on their wrapper so the intercept
+     below can catch them — disabled elements swallow clicks otherwise. */
+  #editor-main [disabled], .sidebar-footer [disabled] { pointer-events: none; }
+</style>
+<script>
+document.addEventListener('click', function (e) {
+    if (!e.target.closest || e.target.closest('.mobile-sheet, .modal')) return;
+    var editIntent = e.target.closest(
+        '#editor-main .form-group, #editor-main .question-item, ' +
+        '#editor-main .add-question-btn, #editor-main .section-form-card > h6, ' +
+        '.sidebar-footer .add-question-btn, .sidebar-footer'
+    );
+    if (editIntent) { e.preventDefault(); openEditIntercept(); }
+}, true);
+</script>
 {% endif %}
 
 <script>

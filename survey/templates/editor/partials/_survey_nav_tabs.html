@@ -12,12 +12,18 @@ Optional: effective_role, hide_status_badge (kept for back-compat; ignored).
 {% endcomment %}
 {% load survey_filters %}
 
+{% if not MOBILE_EDITOR_NAV %}
+{% comment %}With the flag on, the status chip lives in each tab's own status
+line (pr-parity mockup): it describes the tab's entity, and the navbar is
+shared by all three tabs — a survey-status chip there would mislead on the
+Public results tab. The tabs carry colored status dots instead.{% endcomment %}
 {% include "editor/partials/_publishing_widget.html" %}
+{% endif %}
 
 <div class="survey-nav-tabs">
     <a href="{% url 'editor_survey_detail' survey.uuid %}"
        class="survey-nav-tab{% if active_tab == 'build' %} active{% endif %}" title="Build the survey — sections, questions & settings">
-        <i class="fas fa-hammer"></i> Survey
+        <i class="fas fa-hammer"></i> Survey{% if MOBILE_EDITOR_NAV %} <i class="tabdot td-{{ survey.status }}"></i>{% endif %}
     </a>
     <a href="{% url 'editor_survey_analytics' survey.uuid %}"
        class="survey-nav-tab{% if active_tab == 'results' %} active{% endif %}" title="Responses & analysis">
@@ -25,11 +31,15 @@ Optional: effective_role, hide_status_badge (kept for back-compat; ignored).
     </a>
     <a href="{% url 'editor_survey_public_results' survey.uuid %}"
        class="survey-nav-tab{% if active_tab == 'publish' %} active{% endif %}" title="Public results page — a shareable page of aggregated responses">
-        <i class="fas fa-globe"></i> Public results <span class="badge-beta">beta</span>
+        <i class="fas fa-globe"></i> Public results <span class="badge-beta">beta</span>{% if MOBILE_EDITOR_NAV %}{% with page=survey.public_results_page %} <i class="tabdot {% if page.is_published and page.mode == 'frozen' %}td-frozen{% elif page.is_published %}td-live{% else %}td-off{% endif %}"></i>{% endwith %}{% endif %}
     </a>
 </div>
 
 {% with page=survey.public_results_page %}
+{% comment %}With the flag on, Build and Public results carry their own status
+lines with Share/Preview actions — the navbar menus would duplicate them. The
+Responses tab has no status line, so it keeps the navbar menus.{% endcomment %}
+{% if not MOBILE_EDITOR_NAV or active_tab == 'results' %}
 <!-- Share ▾ — action over both shareable objects -->
 <div class="nav-action ml-2">
     <button onclick="navMenuToggle(this,event)"><i class="fas fa-share-alt"></i> Share <i class="fas fa-angle-down caret"></i></button>
@@ -60,9 +70,10 @@ Optional: effective_role, hide_status_badge (kept for back-compat; ignored).
     </div>
 </div>
 {% endif %}
+{% endif %}
 {% endwith %}
 
-{% if effective_role == 'owner' %}
+{% if effective_role == 'owner' and not MOBILE_EDITOR_NAV %}
 <a href="{% url 'editor_survey_detail' survey.uuid %}?panel=settings"
    class="nav-action ml-1" title="Survey settings"
    style="border:1px solid var(--border-color);border-radius:6px;padding:0.28rem 0.5rem;color:#374151;text-decoration:none;">

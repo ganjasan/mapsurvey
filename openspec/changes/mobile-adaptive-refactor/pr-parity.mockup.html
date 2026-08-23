@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Survey ↔ Public results parity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:#10241f; --paper:#f2efe6; --accent:#0e8f76; --annot:#8a4b12;
+    --p-indigo:#4f46e5; --p-indigo-soft:#eef2ff; --p-bg:#f8f9fb;
+    --p-border:#e5e7eb; --p-text:#1f2937; --p-muted:#6b7280; --p-chip:#f3f4f6;
+    --p-green:#198754;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--paper); background-image:radial-gradient(rgba(16,36,31,.06) 1px, transparent 1px); background-size:22px 22px; color:var(--ink); font-family:"IBM Plex Sans",sans-serif; padding:48px 32px 80px; }
+  header.pagehead { max-width:1400px; margin:0 auto 8px; }
+  .kicker { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+  h1 { font-family:"Fraunces",serif; font-size:clamp(28px,4vw,42px); line-height:1.08; max-width:820px; margin-bottom:14px; }
+  h2 { font-family:"Fraunces",serif; font-size:24px; margin:44px 0 12px; }
+  .lede { max-width:720px; color:#47554f; font-size:15px; line-height:1.55; }
+  .lede b { color:var(--ink); }
+  .wrap { max-width:1400px; margin:0 auto; }
+
+  table.map { border-collapse:collapse; font-size:13.5px; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 8px 20px -12px rgba(16,36,31,.3); }
+  table.map th, table.map td { padding:9px 16px; border-bottom:1px solid var(--p-border); text-align:left; }
+  table.map th { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); background:#fbfaf6; }
+  table.map td.same { color:var(--p-green); font-weight:600; }
+
+  .ladder-cap { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin:26px 0 8px; }
+  .browser { max-width:100%; border-radius:14px; overflow:hidden; border:1px solid rgba(16,36,31,.15); box-shadow:0 14px 32px -18px rgba(16,36,31,.4); background:#fff; }
+  .browser-bar { display:flex; gap:6px; padding:10px 12px; background:#eceae2; border-bottom:1px solid rgba(16,36,31,.08); }
+  .browser-bar span { width:10px; height:10px; border-radius:50%; background:#cfc9b8; }
+
+  .navrow { background:#fff; border-bottom:1px solid var(--p-border); padding:10px 18px; display:flex; align-items:center; gap:12px; font-size:13px; }
+  .chip { font-size:12px; border:1px solid var(--p-border); border-radius:999px; padding:4px 10px; white-space:nowrap; background:var(--p-chip); color:var(--p-muted); }
+  .chip.st-draft { background:var(--p-chip); border-color:var(--p-border); color:var(--p-muted); }
+  .chip.st-testing { background:#fef3c7; border-color:#fcd34d; color:#92400e; font-weight:600; }
+  .chip.st-open { background:#e8f5ee; border-color:#b7e0c8; color:var(--p-green); font-weight:600; }
+  .chip.st-frozen { background:#e0f2fe; border-color:#7dd3fc; color:#075985; font-weight:600; }
+  .tabdot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; vertical-align:1px; }
+  .td-green { background:var(--p-green); } .td-grey { background:#c3c8d1; } .td-amber { background:#f59e0b; } .td-sky { background:#38bdf8; }
+  .tabs-inline { display:flex; gap:4px; }
+  .tabs-inline span { padding:6px 12px; color:var(--p-muted); }
+  .tabs-inline span.on { color:var(--p-indigo); font-weight:600; border-bottom:2px solid var(--p-indigo); }
+
+  .statusrow { background:#fff; border-bottom:1px solid var(--p-border); padding:10px 18px; display:flex; align-items:center; gap:12px; }
+  .statusrow .ico { width:30px; height:30px; border-radius:7px; background:var(--p-indigo-soft); color:var(--p-indigo); display:grid; place-items:center; flex:0 0 auto; }
+  .statusrow .tb { flex:1; min-width:0; }
+  .statusrow .tb .t { font-weight:600; font-size:14px; }
+  .statusrow .tb .s { font-size:12px; color:var(--p-muted); }
+  .sbtn { border:none; border-radius:9px; min-height:38px; padding:0 13px; font-weight:600; font-size:13px; display:inline-flex; align-items:center; white-space:nowrap; }
+  .sbtn.green { background:var(--p-green); color:#fff; }
+  .sbtn.soft { background:var(--p-indigo-soft); color:var(--p-indigo); border:1px solid #c7d2fe; }
+  .sbtn.outline { background:#fff; color:#374151; border:1px solid var(--p-border); }
+
+  .cols { display:flex; min-height:250px; }
+  .col-side { width:230px; background:#fff; border-right:1px solid var(--p-border); font-size:13px; }
+  .pinrow { display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--p-border); color:var(--p-text); }
+  .seclbl { font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--p-muted); padding:10px 14px 4px; }
+  .item { display:flex; align-items:center; gap:8px; padding:9px 14px; }
+  .item.on { background:var(--p-indigo-soft); color:var(--p-indigo); font-weight:500; }
+  .item .cnt { margin-left:auto; font-size:11px; color:#9ca3af; background:var(--p-bg); border-radius:8px; padding:1px 7px; }
+  .addrow { margin:10px 12px; border:1.5px dashed #cfd4dd; border-radius:10px; padding:9px; text-align:center; color:var(--p-muted); font-size:12.5px; }
+  .col-main { flex:1; padding:14px 18px; background:var(--p-bg); font-size:13px; }
+  .card { background:#fff; border:1px solid var(--p-border); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .card .h { font-weight:600; font-size:13.5px; margin-bottom:4px; }
+  .card .m { font-size:12px; color:var(--p-muted); }
+  .col-prev { width:250px; background:#fff; border-left:1px solid var(--p-border); }
+  .prevhead { padding:8px 12px; border-bottom:1px solid var(--p-border); font-size:11px; font-weight:600; color:var(--p-muted); letter-spacing:.05em; display:flex; justify-content:space-between; }
+  .prevbody { height:180px; background:linear-gradient(115deg,transparent 46%,#cfe3cd 46%,#cfe3cd 54%,transparent 54%),linear-gradient(0deg,#eceae4,#f1efe9); position:relative; }
+  .prevcardlet { position:absolute; left:10%; right:10%; bottom:0; top:35%; background:#fff; border-radius:8px 8px 0 0; box-shadow:0 -4px 12px rgba(0,0,0,.1); padding:10px; font-size:11px; }
+
+  .note { display:flex; gap:9px; font-size:13px; line-height:1.45; color:#47554f; margin-top:10px; max-width:900px; }
+  .note .tag { flex:0 0 auto; width:20px; height:20px; border-radius:50%; background:var(--annot); color:#fff; font-family:"IBM Plex Mono",monospace; font-size:11px; display:grid; place-items:center; margin-top:1px; }
+  .note .txt { flex:1; }
+
+  footer.decisions { max-width:900px; margin:56px auto 0; border-top:2px solid var(--ink); padding-top:24px; }
+  footer.decisions h2 { margin-top:0; }
+  footer.decisions ul { list-style:none; display:flex; flex-direction:column; gap:10px; }
+  footer.decisions li { font-size:14px; line-height:1.5; color:#33413b; padding-left:18px; position:relative; }
+  footer.decisions li::before { content:"▸"; position:absolute; left:0; color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="pagehead">
+  <div class="kicker">mobile-adaptive-refactor · mockup · survey ↔ public results parity</div>
+  <h1>Одна анатомия для двух вкладок</h1>
+  <p class="lede">Public results структурно повторяет Survey: пользователь задаёт структуру,
+  редактирует элемент, смотрит живое превью, публикует, замораживает/обновляет версию. Значит и
+  интерфейс обязан быть одним: <b>чип состояния (цветной)</b> → <b>статус-строка с primary-действием
+  по состоянию</b> → <b>три панели Structure / Edit / Preview</b>. Ниже — маппинг и два десктоп-кадра,
+  различающиеся только содержимым, не формой.</p>
+</header>
+
+<div class="wrap">
+  <h2>Маппинг понятий</h2>
+  <table class="map">
+    <tr><th>Слой</th><th>Survey</th><th>Public results</th></tr>
+    <tr><td>Чип состояния (в статус-строке вкладки)</td><td><span class="chip st-draft">Draft · v1 ▾</span> <span class="chip st-testing">Testing · v1 ▾</span> <span class="chip st-open">Open · v1 ▾</span></td><td><span class="chip st-draft">Not published ▾</span> <span class="chip st-open">Live ▾</span> <span class="chip st-frozen">Frozen · 12 Aug ▾</span></td></tr>
+    <tr><td>Primary по состоянию</td><td>draft→Publish · testing→Share test link · open→Share</td><td>not published→Publish page · live→Share · frozen→Update snapshot</td></tr>
+    <tr><td>Вторичные</td><td>✎ Edit · ↗ Open as respondent · ⋯</td><td>✎ (freeze/настройки) · ↗ Open as visitor · ⋯ (Unpublish)</td></tr>
+    <tr><td class="same">Панель Structure</td><td>Survey settings → Sections (+счётчики) → New Section</td><td>Page settings → Blocks (+тип) → Add block</td></tr>
+    <tr><td class="same">Панель Edit</td><td>Форма секции + вопросы (autosave)</td><td>Конфиг блока (autosave)</td></tr>
+    <tr><td class="same">Панель Preview</td><td>Live preview респондентской страницы</td><td>Live preview страницы /r/</td></tr>
+    <tr><td class="same">Мобильный бар</td><td>Structure · Edit · Preview</td><td>Structure · Edit · Preview</td></tr>
+  </table>
+
+  <h2>Десктоп: две вкладки, один скелет</h2>
+
+  <div class="ladder-cap">Вкладка Survey (published)</div>
+  <div class="browser" style="width:1080px;">
+    <div class="browser-bar"><span></span><span></span><span></span></div>
+    <div class="navrow">
+      <span style="color:var(--p-muted);">← Dashboard</span>
+      <b>Лучшие места в городе Бишкек</b>
+      <div class="tabs-inline"><span class="on"><i class="tabdot td-green"></i>Survey</span><span>Responses</span><span><i class="tabdot td-green"></i>Public results</span></div>
+      <span style="flex:1;"></span><span style="color:var(--p-muted);">🏢 Mapsurvey ▾ · admin</span>
+    </div>
+    <div class="statusrow">
+      <span class="ico">⚒</span>
+      <div class="tb"><div class="t">Survey <span class="chip st-open">Open · v1 ▾</span></div></div>
+      <button class="sbtn outline">✎ Edit</button>
+      <button class="sbtn soft">🔗 Share</button>
+      <button class="sbtn outline">↗ Open as respondent</button>
+      <button class="sbtn outline">⋯</button>
+    </div>
+    <div class="cols">
+      <div class="col-side">
+        <div class="pinrow">⚙ Survey settings <span style="margin-left:auto;color:#c3c8d1;">›</span></div>
+        <div class="seclbl">Sections</div>
+        <div class="item on">⠿ Отдых и любимые уголки <span class="cnt">4</span></div>
+        <div class="item">⠿ Карта лучших мест <span class="cnt">2</span></div>
+        <div class="item">⠿ Сохранение и развитие <span class="cnt">3</span></div>
+        <div class="addrow">＋ New Section</div>
+      </div>
+      <div class="col-main">
+        <div class="card"><div class="h">Section: Отдых и любимые уголки</div><div class="m">Title · Subheading · Code</div></div>
+        <div class="card"><div class="h">Как часто вы проводите время…</div><div class="m">choice · required</div></div>
+        <div class="card"><div class="h">Как вы обычно добираетесь…</div><div class="m">multichoice</div></div>
+      </div>
+      <div class="col-prev">
+        <div class="prevhead"><span>LIVE PREVIEW</span><span>RU ▾</span></div>
+        <div class="prevbody"><div class="prevcardlet"><b>Отдых и любимые уголки</b><div style="color:var(--p-muted);text-align:center;">1 / 3</div>Расскажите, как вы…</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ladder-cap">Вкладка Public results (live) — тот же скелет</div>
+  <div class="browser" style="width:1080px;">
+    <div class="browser-bar"><span></span><span></span><span></span></div>
+    <div class="navrow">
+      <span style="color:var(--p-muted);">← Dashboard</span>
+      <b>Лучшие места в городе Бишкек</b>
+      <div class="tabs-inline"><span><i class="tabdot td-green"></i>Survey</span><span>Responses</span><span class="on"><i class="tabdot td-green"></i>Public results</span></div>
+      <span style="flex:1;"></span><span style="color:var(--p-muted);">🏢 Mapsurvey ▾ · admin</span>
+    </div>
+    <div class="statusrow">
+      <span class="ico">🌐</span>
+      <div class="tb"><div class="t">Public results <span class="chip st-open">Live ▾</span></div></div>
+      <button class="sbtn soft">🔗 Share</button>
+      <button class="sbtn outline">↗ Open as visitor</button>
+      <button class="sbtn outline">❄ Freeze snapshot</button>
+      <button class="sbtn outline">⋯</button>
+    </div>
+    <div class="cols">
+      <div class="col-side">
+        <div class="pinrow">⚙ Page settings <span style="margin-left:auto;color:#c3c8d1;">›</span></div>
+        <div class="seclbl">Blocks</div>
+        <div class="item on">⠿ 🗺 Response map <span class="cnt">гео</span></div>
+        <div class="item">⠿ 📊 Как часто вы… <span class="cnt">chart</span></div>
+        <div class="item">⠿ 📊 Как добираетесь… <span class="cnt">chart</span></div>
+        <div class="addrow">＋ Add block</div>
+      </div>
+      <div class="col-main">
+        <div class="card"><div class="h">Block: Response map</div><div class="m">Visualization · Basemap · Popup fields · Hidden</div></div>
+        <div class="card"><div class="m" style="color:#198754;">● Changes save automatically</div></div>
+      </div>
+      <div class="col-prev">
+        <div class="prevhead"><span>LIVE PREVIEW</span><span>⟳</span></div>
+        <div class="prevbody"><div class="prevcardlet"><b>Лучшие места — результаты</b><div style="color:var(--p-muted);">65 responses</div>▂▅▃▇ карта + чарты</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note"><span class="tag">A</span><span class="txt"><b>Чипы состояния цветные и единые</b>: серый «не активен» (Draft / Not published), янтарный «ограниченный доступ» (Testing), зелёный «живой» (Open / Live), голубой «заморожен» (Frozen · дата). Чип PR — тоже меню: Publish/Unpublish/Freeze/Unfreeze, как чип Survey несёт lifecycle. <b>Чип уходит из навбара в статус-строку своей вкладки</b> — он описывает сущность вкладки (опрос ↔ публичная страница), а навбар общий для всех трёх вкладок, поэтому там чип статуса опроса вводил бы в заблуждение на вкладке Public results. В навбаре вместо него — цветные точки на самих табах: статус обеих сущностей виден с любой вкладки одним взглядом.</span></div>
+  <div class="note"><span class="tag">B</span><span class="txt"><b>Share у PR копирует /r/-ссылку</b> (существующий prCopyPublicLink) — тот же смысл, что Share опроса: «дай людям адрес». «↗ Open as visitor» зеркалит «Open as respondent». Freeze — второе по важности действие живой страницы (снимок перед публичным анонсом), поэтому в строке, а не в ⋯; Unpublish — деструктив, в ⋯.</span></div>
+  <div class="note"><span class="tag">C</span><span class="txt"><b>Мобильный вид наследуется автоматически</b>: statusbar уже общий компонент, нижний бар Structure/Edit/Preview у PR уже есть. Отдельные мобильные кадры не нужны — они получаются из этих же строк тем же CSS, что у Survey.</span></div>
+
+</div>
+
+<footer class="decisions">
+  <h2>Решения (в design.md)</h2>
+  <ul>
+    <li><b>Один скелет</b>: чип состояния → статус-строка → Structure/Edit/Preview — идентичен на обеих вкладках и на всех ширинах.</li>
+    <li><b>Цветовая семантика чипов</b>: grey=неактивен, amber=ограниченный доступ, green=живой, sky=заморожен. Применяется и к чипу Survey (сейчас он всегда серый), и к новому чипу PR.</li>
+    <li><b>Статусы PR</b>: Not published (primary: Publish page; disabled с подсказкой, пока опрос-черновик) · Live (primary: Share; рядом Freeze) · Frozen (primary: Update snapshot; рядом Unfreeze в чипе/⋯).</li>
+    <li>Разбросанные контролы старого pr-ctxbar (Preview private / Copy link / Live page / Unpublish) и зелёный баннер уезжают в статус-строку и ⋯; сам бар остаётся только при выключенном флаге.</li>
+    <li>Блоки в Structure получают тип-бейдж (гео/chart/text) — аналог счётчиков вопросов у секций.</li>
+  </ul>
+</footer>
+
+</body>
+</html>

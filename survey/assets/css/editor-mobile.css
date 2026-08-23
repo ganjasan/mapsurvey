@@ -75,6 +75,29 @@ body.mobile-nav-enabled .section-qcount {
     border-radius: 8px; padding: 1px 7px; flex: 0 0 auto;
 }
 
+/* ── Colored status chips (approved pr-parity mockup): grey = inactive,
+   amber = restricted access (Testing), green = live (Open/Live),
+   sky = stopped-with-data (Closed / Frozen). Overrides the Bootstrap
+   badge-* colors the chip carries with the flag off. */
+body.mobile-nav-enabled .pub-chip.badge-secondary,
+body.mobile-nav-enabled .pub-chip.badge-dark { background: #f3f4f6; border: 1px solid #e5e7eb; color: #6b7280; }
+body.mobile-nav-enabled .pub-chip.badge-warning { background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; }
+body.mobile-nav-enabled .pub-chip.badge-success { background: #e8f5ee; border: 1px solid #b7e0c8; color: #198754; }
+body.mobile-nav-enabled .pub-chip.badge-info { background: #e0f2fe; border: 1px solid #7dd3fc; color: #075985; }
+
+/* Status dots on the workspace tabs — the navbar is shared, so instead of a
+   chip it shows both entities' states at a glance (rendered flag-on only). */
+.tabdot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; vertical-align: 1px; }
+.tabdot.td-draft, .tabdot.td-off { background: #c3c8d1; }
+.tabdot.td-testing { background: #f59e0b; }
+.tabdot.td-published, .tabdot.td-live { background: #198754; }
+.tabdot.td-closed, .tabdot.td-frozen { background: #38bdf8; }
+.tabdot.td-archived { background: #c3c8d1; }
+
+/* The PR status line sits above .pr-container inside a flex column — the
+   container's own viewport-height rule must yield to flex sizing. */
+body.mobile-nav-enabled .pr-container { height: auto; flex: 1; min-height: 0; }
+
 @media (min-width: 768px) {
     /* Desktop dress: icon + title appear, roomier padding, sheets center. */
     body.mobile-nav-enabled .mobile-statusbar { padding: 10px 18px; gap: 12px; position: sticky; top: 0; z-index: 5; }
@@ -90,6 +113,10 @@ body.mobile-nav-enabled .section-qcount {
 
 @media (max-width: 767.98px) {
     body.mobile-nav-enabled .msb-desktop { display: none !important; }
+    /* Chip + primary + Share can exceed 390px (e.g. "Frozen · 23 Aug") —
+       wrap onto a second row rather than clipping the last button.
+       (No overflow-x scroll: it would clip the chip's dropdown menu.) */
+    body.mobile-nav-enabled .mobile-statusbar { flex-wrap: wrap; row-gap: 6px; }
 }
 
 @media (max-width: 767.98px) {

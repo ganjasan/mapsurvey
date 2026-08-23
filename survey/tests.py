@@ -28663,12 +28663,18 @@ class SurveyStatusLineTest(TestCase):
         """
         GIVEN a draft survey and the flag on
         WHEN the editor renders
-        THEN the status line says the draft collects nothing and offers Publish
+        THEN the status line carries the grey Draft chip (lifecycle menu) and
+             offers Publish; the navbar chip is gone
         """
         html = self._page()
-        self.assertIn('Draft — not collecting responses', html)
         self.assertIn('mobile-statusbar', html)
         self.assertIn("doTransition('published')", html)
+        # Chip in the status line, colored by status (draft = grey/secondary)
+        self.assertIn('pub-chip badge-secondary', html)
+        statusbar = html.split('mobile-statusbar', 1)[1]
+        self.assertIn('publishing-widget', statusbar)
+        # Tab dots replace the navbar chip
+        self.assertIn('tabdot td-draft', html)
 
     @override_settings(MOBILE_EDITOR_NAV=True)
     def test_testing_status_has_share_link_sheet(self):
@@ -28681,7 +28687,7 @@ class SurveyStatusLineTest(TestCase):
         self.survey.status = 'testing'
         self.survey.save(update_fields=['status'])
         html = self._page()
-        self.assertIn('Testing — invite-link access', html)
+        self.assertIn('pub-chip badge-warning', html)
         self.assertIn('Share test link', html)
         self.assertIn(f'token={self.survey.test_token}', html)
         self.assertIn('editor_survey_password'.replace('editor_survey_password', f'/editor/surveys/{self.survey.uuid}/password/'), html)
@@ -28698,7 +28704,7 @@ class SurveyStatusLineTest(TestCase):
         self.survey.status = 'published'
         self.survey.save(update_fields=['status'])
         html = self._page()
-        self.assertIn('Open · 0 responses', html)
+        self.assertIn('pub-chip badge-success', html)
         self.assertIn('✎ Edit', html)
         self.assertIn('editIntercept', html)
         self.assertIn(f'/editor/surveys/{self.survey.uuid}/share/', html)
@@ -28726,3 +28732,99 @@ class SurveyStatusLineTest(TestCase):
         self.assertNotIn('mobile-statusbar', html)
         self.assertNotIn('testSheet', html)
         self.assertIn('build-ctxbar', html)
+
+
+class PublicResultsStatusLineTest(TestCase):
+    """Survey↔Public-results parity: the PR tab gets the same status-line
+    anatomy (colored chip with lifecycle menu + primary action per state)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="PR Status Org")
+        self.user = User.objects.create_user('pr_status_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="pr_status_survey", organization=self.org, status='published',
+        )
+        self.page = PublicResultsPage.objects.create(survey=self.survey, slug='pr-status')
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.client.force_login(self.user)
+
+    def _page(self):
+        return self.client.get(f'/editor/surveys/{self.survey.uuid}/public-results/').content.decode()
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_not_published_state(self):
+        """
+        GIVEN an unpublished results page and the flag on
+        WHEN the PR tab renders
+        THEN the status line shows the grey Not published chip and the green
+             Publish page primary, and the legacy ctx-bar buttons stay out
+        """
+        html = self._page()
+        self.assertIn('mobile-statusbar', html)
+        self.assertIn('Not published', html)
+        self.assertIn('pub-chip badge-secondary', html)
+        self.assertIn('Publish page', html)
+        self.assertNotIn('Copy public link', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_live_state_share_freeze_visitor(self):
+        """
+        GIVEN a live results page
+        WHEN the PR tab renders
+        THEN the chip is green Live and the line offers Share (copies /r/),
+             Freeze snapshot and Open as visitor on the real public URL
+        """
+        self.page.is_published = True
+        self.page.save(update_fields=['is_published'])
+        html = self._page()
+        self.assertIn('pub-chip badge-success', html)
+        self.assertIn('Live', html)
+        self.assertIn('prCopyPublicLink(this)', html)
+        self.assertIn('Freeze snapshot', html)
+        self.assertIn('Open as visitor', html)
+        self.assertIn('/r/pr-status/', html)
+        self.assertIn('Unpublish', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_frozen_state_update_snapshot(self):
+        """
+        GIVEN a live page in frozen mode
+        WHEN the PR tab renders
+        THEN the chip is the sky Frozen one with its date and the primary
+             action becomes Update snapshot
+        """
+        from django.utils import timezone
+        self.page.is_published = True
+        self.page.mode = 'frozen'
+        self.page.frozen_at = timezone.now()
+        self.page.save(update_fields=['is_published', 'mode', 'frozen_at'])
+        html = self._page()
+        self.assertIn('pub-chip badge-info', html)
+        self.assertIn('Frozen ·', html)
+        self.assertIn('Update snapshot', html)
+        self.assertIn('Back to live data', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_tab_dots_and_block_type_badges(self):
+        """
+        GIVEN the flag on
+        WHEN the PR tab renders with a block
+        THEN the navbar tabs carry status dots instead of the survey chip and
+             block rows show their type badge
+        """
+        PublicResultsBlock.objects.create(page=self.page, block_type='text', order=1)
+        html = self._page()
+        self.assertIn('tabdot td-published', html)
+        self.assertIn('tabdot td-off', html)
+        self.assertIn('section-qcount', html)
+
+    def test_flag_off_keeps_legacy_ctxbar(self):
+        """
+        GIVEN the flag off (default)
+        WHEN the PR tab renders
+        THEN no status line is emitted and the scattered ctx-bar controls stay
+        """
+        html = self._page()
+        self.assertNotIn('mobile-statusbar', html)
+        self.assertIn('Publish page', html)

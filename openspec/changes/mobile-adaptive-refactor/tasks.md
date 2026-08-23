@@ -125,3 +125,28 @@
 - [x] 10.5 Desktop: ctx-bar subtitle becomes the live status text (minimal desktop change)
 - [x] 10.6 Tests: status line per status, intercept sheet markup, share menu item,
       counts (GIVEN/WHEN/THEN)
+
+## 11. Survey <-> Public results parity (pr-parity mockup, approved)
+
+- [x] 11.1 Status chip moves from the shared navbar into each tab's status line
+      (it describes the tab's entity); navbar tabs get colored status dots for
+      both entities (Survey + Public results); flag-gated
+- [x] 11.2 Colored chip semantics on both tabs: grey=inactive (Draft/Not
+      published), amber=Testing, green=Open/Live, sky=Closed/Frozen (with date)
+- [x] 11.3 Public results status line (same anatomy as Survey): chip opens the
+      page lifecycle menu (Publish/Unpublish, Freeze/Unfreeze); primary per
+      state -- not published->Publish page (disabled+hint until the survey is
+      published), live->Share (copies /r/ link)+Freeze+Open as visitor,
+      frozen->Update snapshot
+- [x] 11.4 Old pr-ctxbar buttons (Preview private/Copy public link/Live
+      page/Unpublish/Publish page) and the green live banner render only with
+      the flag off; navbar Share/Preview menus stay only on Responses (no
+      status line there)
+- [x] 11.5 Secondary status text dropped from both status lines (approved v3);
+      block rows get type badges; mobile statusbar wraps instead of clipping
+- [x] 11.6 Edit button acts directly (draft link/back-to-draft/create version);
+      the edit-intercept sheet fires on taps on the disabled editing surface
+      instead
+- [x] 11.7 Tests: PublicResultsStatusLineTest (per-state chip+primary, dots,
+      badges, flag off), SurveyStatusLineTest updated for the chip move
+      (GIVEN/WHEN/THEN)
