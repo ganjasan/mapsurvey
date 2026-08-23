@@ -6758,9 +6758,9 @@ class EditorPermissionTest(TestCase):
         """
         self.client.login(username='ep_owner', password='pass')
         content = self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
-        self.assertIn('fa-hammer"></i> Build', content)
-        self.assertIn('fa-chart-bar"></i> Results', content)
-        self.assertIn('fa-globe"></i> Publish', content)
+        self.assertIn('fa-hammer"></i> Survey', content)
+        self.assertIn('fa-chart-bar"></i> Responses', content)
+        self.assertIn('fa-globe"></i> Public results', content)
         # The old Editor label and the deprecated Settings tab are gone
         self.assertNotIn('title="Editor"', content)
         self.assertNotIn('badge-moved', content)
@@ -28196,3 +28196,448 @@ class TranslationCompletenessTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn('es, en', response.content.decode())
+
+
+class MobileEditorNavTest(TestCase):
+    """Mobile editor chrome behind the MOBILE_EDITOR_NAV kill switch.
+
+    Markup-level assertions only: layout properties (no horizontal overflow,
+    one-row toolbar) need a rendering engine and are covered by the device
+    pass on a PR preview, not by the test client.
+    """
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Mobile Org")
+        self.user = User.objects.create_user('mobile_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="mobile_nav_survey", organization=self.org)
+        self.client.force_login(self.user)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_flag_on_renders_mobile_chrome(self):
+        """
+        GIVEN the MOBILE_EDITOR_NAV flag is on
+        WHEN the survey editor page renders
+        THEN the mobile chrome (body class, contextual bottom tab bar with the
+             Structure/Edit/Preview panes, overflow menu, mobile stylesheet) is present
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('mobile-nav-enabled', html)
+        self.assertIn('mobile-tabbar', html)
+        self.assertIn('data-pane="structure"', html)
+        self.assertIn('data-pane="edit"', html)
+        self.assertIn('data-pane="preview"', html)
+        self.assertIn('navbar-overflow', html)
+        self.assertIn('editor-mobile', html)
+        self.assertIn('data-active-pane="structure"', html)
+
+    def test_flag_off_serves_legacy_layout(self):
+        """
+        GIVEN the MOBILE_EDITOR_NAV flag is off (default)
+        WHEN the survey editor page renders
+        THEN no mobile chrome markup is emitted on any viewport
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertNotIn('mobile-nav-enabled', html)
+        self.assertNotIn('mobile-tabbar', html)
+        self.assertNotIn('editor-mobile', html)
+
+    def test_type_picker_marks_geo_group(self):
+        """
+        GIVEN the grouped question type picker
+        WHEN the picker partial renders
+        THEN the map-questions group carries the geo classes the mobile styles highlight
+        """
+        from django.template.loader import render_to_string
+        from survey.question_types import picker_groups_for
+        from survey.models import INPUT_TYPE_CHOICES
+        groups = picker_groups_for(INPUT_TYPE_CHOICES)
+        html = render_to_string(
+            'editor/partials/question_type_picker.html',
+            {'groups': groups, 'current': 'text'},
+        )
+        self.assertIn('qtp-grid-geo', html)
+        self.assertIn('qtp-group-geo', html)
+
+
+class EditorAutosaveTest(TestCase):
+    """Autosave on question edit forms behind the EDITOR_AUTOSAVE kill switch."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Autosave Org")
+        self.user = User.objects.create_user('autosave_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="autosave_survey", organization=self.org)
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='Section 1',
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, name='Old name', input_type='text',
+        )
+        self.client.force_login(self.user)
+
+    @override_settings(EDITOR_AUTOSAVE=True)
+    def test_autosave_post_persists_change(self):
+        """
+        GIVEN an existing text question and the autosave flag on
+        WHEN the form is POSTed with the autosave marker and a new name
+        THEN the change is persisted and the response is not a form re-render
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/',
+            {'name': 'New name', 'input_type': 'text', 'color': '#e74c3c', 'autosave': '1'},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.name, 'New name')
+
+    @override_settings(EDITOR_AUTOSAVE=True)
+    def test_autosave_validation_error_returns_422_not_rerender(self):
+        """
+        GIVEN an autosave POST with invalid data (missing required input_type)
+        WHEN the form fails validation
+        THEN the view answers 422 JSON and never replaces the typed-in form,
+             and the stored question is unchanged
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/',
+            {'name': 'Half-typed', 'autosave': '1'},
+        )
+        self.assertEqual(response.status_code, 422)
+        self.assertIn('errors', response.json())
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.name, 'Old name')
+
+    @override_settings(EDITOR_AUTOSAVE=True)
+    def test_edit_form_renders_indicator_instead_of_save(self):
+        """
+        GIVEN the autosave flag on
+        WHEN an existing question's form modal renders
+        THEN the saved-state indicator is present and Save/Apply buttons are not
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/',
+        )
+        html = response.content.decode()
+        self.assertIn('autosave-indicator', html)
+        self.assertIn('data-autosave', html)
+        self.assertNotIn('id="apply-question-btn"', html)
+        self.assertNotIn('>Save</button>', html)
+
+    @override_settings(EDITOR_AUTOSAVE=True)
+    def test_new_question_form_keeps_create_button(self):
+        """
+        GIVEN the autosave flag on
+        WHEN the new-question form renders
+        THEN it still carries an explicit Create button and no autosave marker
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+        )
+        html = response.content.decode()
+        self.assertIn('>Create</button>', html)
+        self.assertNotIn('data-autosave', html)
+
+    def test_flag_off_keeps_legacy_save_buttons(self):
+        """
+        GIVEN the autosave flag off (default)
+        WHEN an existing question's form modal renders
+        THEN the legacy Save and Apply buttons are present, no indicator
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/',
+        )
+        html = response.content.decode()
+        self.assertIn('>Save</button>', html)
+        self.assertIn('id="apply-question-btn"', html)
+        self.assertNotIn('autosave-indicator', html)
+
+
+class RespondentBottomSheetTest(TestCase):
+    """Respondent bottom sheet behind the MOBILE_BOTTOM_SHEET kill switch.
+
+    Sheet geometry (detents, drag) needs a layout engine — device pass covers
+    it. Here: the flag gates the assets and the confirmation/copy scripts.
+    """
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Sheet Org")
+        self.survey = SurveyHeader.objects.create(
+            name="sheet_survey",
+            organization=self.org,
+            available_languages=[],
+            status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="section1",
+            title="Sheet Section",
+            code="SH1",
+            is_head=True,
+        )
+
+    @override_settings(MOBILE_BOTTOM_SHEET=True)
+    def test_flag_on_renders_sheet_assets(self):
+        """
+        GIVEN the MOBILE_BOTTOM_SHEET flag is on
+        WHEN a survey section page renders
+        THEN the bottom-sheet stylesheet, controller script and the
+             applied-geometry counter are present
+        """
+        response = self.client.get('/surveys/sheet_survey/section1/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('bottom-sheet', html)
+        self.assertIn('bottom_sheet', html)
+        self.assertIn('geo-count-chip', html)
+
+    def test_flag_off_serves_legacy_panel(self):
+        """
+        GIVEN the MOBILE_BOTTOM_SHEET flag is off (default)
+        WHEN a survey section page renders
+        THEN no bottom-sheet asset or counter markup is emitted
+        """
+        response = self.client.get('/surveys/sheet_survey/section1/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertNotIn('bottom_sheet', html)
+        self.assertNotIn('geo-count-chip', html)
+
+    def test_touch_instruction_strings_served(self):
+        """
+        GIVEN the respondent map page
+        WHEN it renders (any flag state)
+        THEN the i18n payload carries tap-phrased tooltips and the template
+             picks them for coarse pointers
+        """
+        response = self.client.get('/surveys/sheet_survey/section1/')
+        html = response.content.decode()
+        self.assertIn('tapToPlaceMarker', html)
+        self.assertIn('pointer: coarse', html)
+
+
+class LandingRevealProgressiveTest(SimpleTestCase):
+    """Landing scroll-reveal must be progressive enhancement (landing-page spec)."""
+
+    def test_reveal_visible_by_default_in_css(self):
+        """
+        GIVEN the landing stylesheet
+        WHEN the .reveal rules are read
+        THEN the hidden starting state is scoped to html.js-reveal only,
+             so a no-JS render shows every section
+        """
+        import pathlib
+        css = pathlib.Path('survey/assets/css/landing.css').read_text()
+        base_rule = css.split('.reveal {', 1)[1].split('}', 1)[0]
+        self.assertIn('opacity: 1', base_rule)
+        self.assertIn('html.js-reveal .reveal', css)
+
+    def test_head_gate_respects_reduced_motion(self):
+        """
+        GIVEN the landing base template
+        WHEN the head gate script is read
+        THEN it checks IntersectionObserver support and prefers-reduced-motion
+             before enabling the hidden reveal state
+        """
+        import pathlib
+        html = pathlib.Path('survey/templates/base_landing.html').read_text()
+        self.assertIn("classList.add('js-reveal')", html)
+        self.assertIn('prefers-reduced-motion', html)
+        self.assertIn('IntersectionObserver', html)
+
+
+class SurveyPageMetadataTest(TestCase):
+    """Survey pages carry a real <title> and html[lang] (survey-page-metadata)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Meta Org")
+        self.survey = SurveyHeader.objects.create(
+            name="meta_survey",
+            organization=self.org,
+            available_languages=[],
+            status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name="section1", title="S1",
+            code="M1", is_head=True,
+        )
+
+    def test_section_page_title_contains_survey_name(self):
+        """
+        GIVEN a published survey
+        WHEN a respondent opens a section
+        THEN the document title contains the survey name
+        """
+        response = self.client.get('/surveys/meta_survey/section1/')
+        html = response.content.decode()
+        self.assertIn('<title>meta_survey — Mapsurvey</title>', html)
+
+    def test_section_page_declares_language(self):
+        """
+        GIVEN a single-language survey served in the default locale
+        WHEN a respondent opens a section
+        THEN the root html element declares a lang attribute
+        """
+        response = self.client.get('/surveys/meta_survey/section1/')
+        html = response.content.decode()
+        self.assertIn('<html lang="en"', html)
+
+
+class MobileContextualPaneBarTest(TestCase):
+    """The bottom tab bar is contextual to the active level-1 page tab."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Ctx Org")
+        self.user = User.objects.create_user('ctx_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="ctx_survey", organization=self.org)
+        self.client.force_login(self.user)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_responses_bar_has_its_own_panes(self):
+        """
+        GIVEN the mobile nav flag on
+        WHEN the Responses (analytics) page renders
+        THEN the bottom bar carries Table/Map/Charts/Performance, with Charts
+             as the mobile default
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/analytics/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('data-pane="table"', html)
+        self.assertIn('data-pane="map"', html)
+        self.assertIn('data-pane="charts"', html)
+        self.assertIn('data-pane="performance"', html)
+        self.assertIn("mobileAnalyticsPane('charts')", html)
+        self.assertNotIn('data-pane="structure"', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_public_results_bar_shares_pane_vocabulary(self):
+        """
+        GIVEN the mobile nav flag on
+        WHEN the Public results config page renders
+        THEN the bottom bar carries Structure/Edit/Preview and the pane
+             container starts on Structure when no block is selected
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/public-results/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('data-pane="structure"', html)
+        self.assertIn('data-pane="edit"', html)
+        self.assertIn('data-pane="preview"', html)
+        self.assertIn('data-active-pane="structure"', html)
+        self.assertNotIn('data-pane="charts"', html)
+
+    def test_flag_off_no_bars_anywhere(self):
+        """
+        GIVEN the mobile nav flag off
+        WHEN Responses and Public results pages render
+        THEN neither carries a mobile tab bar
+        """
+        for path in (f'/editor/surveys/{self.survey.uuid}/analytics/',
+                     f'/editor/surveys/{self.survey.uuid}/public-results/'):
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 200)
+            self.assertNotIn('mobile-tabbar', response.content.decode())
+
+
+class DashboardVariantATest(TestCase):
+    """Dashboard adaptive top block (variant A) behind MOBILE_EDITOR_NAV."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Dash Org")
+        self.user = User.objects.create_user('dash_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        SurveyHeader.objects.create(name="dash_survey", organization=self.org)
+        self.client.force_login(self.user)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_flag_on_renders_adaptive_header(self):
+        """
+        GIVEN the MOBILE_EDITOR_NAV flag on
+        WHEN the dashboard renders
+        THEN the collapsed-search button, the overflow menu (Import, Show
+             Archived, view toggle) and the count label are present
+        """
+        html = self.client.get('/editor/').content.decode()
+        self.assertIn('mobile-nav-enabled', html)
+        self.assertIn('dash-search-btn', html)
+        self.assertIn('dash-overflow', html)
+        self.assertIn('My Surveys · 1', html)
+        self.assertIn('List view', html)
+        self.assertIn('Show Archived', html)
+
+    def test_flag_off_serves_legacy_header(self):
+        """
+        GIVEN the flag off (default)
+        WHEN the dashboard renders
+        THEN none of the variant-A chrome is emitted
+        """
+        html = self.client.get('/editor/').content.decode()
+        # CSS selectors naming these classes are always in the <style> block;
+        # what must be absent with the flag off is the MARKUP and JS.
+        self.assertNotIn('<body class="mobile-nav-enabled"', html)
+        self.assertNotIn('dashSearchToggle', html)
+        self.assertNotIn('class="dropdown dash-overflow"', html)
+        self.assertNotIn('dash-count', html.split('</style>')[-1])
+
+
+class CreateSurveyWizardTest(TestCase):
+    """Create-survey wizard (variant A) behind MOBILE_EDITOR_NAV."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Wizard Org")
+        self.user = User.objects.create_user('wizard_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.force_login(self.user)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_flag_on_renders_wizard_chrome(self):
+        """
+        GIVEN the MOBILE_EDITOR_NAV flag on
+        WHEN the create page renders
+        THEN the wizard chrome is present (map topbar, step footers, novalidate),
+             the path buttons carry the approved copy, and the legacy name and
+             language fields are wrapped for hiding
+        """
+        html = self.client.get('/editor/surveys/new/').content.decode()
+        self.assertIn('wizard-map-topbar', html)
+        self.assertIn('wizard-goal-footer', html)
+        self.assertIn('wizard-create-btn', html)
+        self.assertIn('novalidate', html)
+        self.assertIn('create-legacy-fields', html)
+        self.assertIn('Start with an empty survey', html)
+        self.assertNotIn('>Create empty</button>', html)
+
+    def test_flag_off_serves_legacy_page(self):
+        """
+        GIVEN the flag off (default)
+        WHEN the create page renders
+        THEN no wizard chrome or copy is emitted and the legacy buttons remain
+        """
+        html = self.client.get('/editor/surveys/new/').content.decode()
+        self.assertNotIn('wizard-map-topbar', html)
+        self.assertNotIn('novalidate', html)
+        self.assertIn('>Create empty</button>', html)
+        self.assertNotIn('Start with an empty survey', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_empty_path_creates_untitled_survey(self):
+        """
+        GIVEN the wizard's empty path (JS fills the hidden name with the default)
+        WHEN the form posts the wizard-produced payload
+        THEN the survey is created with the placeholder name and a head section
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'Untitled survey',
+            'available_languages': '[]',
+            'action': 'empty',
+            'map_lat': '52.52', 'map_lng': '13.405', 'map_zoom': '12',
+        })
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='Untitled survey', organization=self.org)
+        self.assertTrue(survey.surveysection_set.filter(is_head=True).exists())
