@@ -39,7 +39,9 @@ body.mobile-nav-enabled .msb-btn {
 }
 body.mobile-nav-enabled a.msb-btn:hover { text-decoration: none; }
 body.mobile-nav-enabled .msb-green { background: #198754; color: #fff; }
-body.mobile-nav-enabled .msb-amber { background: #b45309; color: #fff; }
+/* Same soft-amber family as the Testing chip — the button and the badge read
+   as one state. */
+body.mobile-nav-enabled .msb-amber { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
 body.mobile-nav-enabled .msb-indigo {
     background: var(--accent-light, #e0e7ff); color: var(--accent, #4f46e5);
     border: 1px solid #c7d2fe;
