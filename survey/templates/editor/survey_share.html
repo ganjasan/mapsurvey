@@ -131,6 +131,33 @@
         </div>
     </div>
 
+    <!-- Public results page -->
+    {% if results_page %}
+    <div class="share-section">
+        <h6>Results page</h6>
+        {% if results_page.is_published %}
+        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+            Your public results page is live — share it so respondents can see what others said.
+        </p>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+            <input type="text" readonly class="form-control" style="font-family:monospace;font-size:0.85rem;"
+                   id="results-link" value="{{ request.scheme }}://{{ request.get_host }}/r/{{ results_page.slug }}/">
+            <button class="btn btn-sm btn-outline-secondary" title="Copy link" onclick="copyLink(this, document.getElementById('results-link').value)">
+                <i class="fas fa-copy"></i>
+            </button>
+        </div>
+        {% else %}
+        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+            We drafted a public results page from your questions.
+            Review it and publish to give your audience a live view of the answers.
+        </p>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'editor_survey_public_results' survey.uuid %}">
+            <i class="fas fa-chart-bar"></i> Review &amp; publish the results page
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Create Tracking Link -->
     <div class="share-section">
         <h6>Track where responses come from</h6>
