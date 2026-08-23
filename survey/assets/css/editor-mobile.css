@@ -100,7 +100,10 @@ body.mobile-nav-enabled .pr-container { height: auto; flex: 1; min-height: 0; }
 
 @media (min-width: 768px) {
     /* Desktop dress: icon + title appear, roomier padding, sheets center. */
-    body.mobile-nav-enabled .mobile-statusbar { padding: 10px 18px; gap: 12px; position: sticky; top: 0; z-index: 5; }
+    /* z-index above the panel resize-handles (10): the bar is a stacking
+       context, so the chip's dropdown inside it inherits this ceiling and a
+       handle would otherwise paint across the open menu. */
+    body.mobile-nav-enabled .mobile-statusbar { padding: 10px 18px; gap: 12px; position: sticky; top: 0; z-index: 60; }
     body.mobile-nav-enabled .msb-ico { display: flex; }
     body.mobile-nav-enabled .msb-titleblock { display: block; }
     body.mobile-nav-enabled .msb-status { flex: 1; }
