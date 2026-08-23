@@ -19,8 +19,10 @@
     @media (max-width: 991.98px) {
         .qtp-preview-col { display: none; }
         /* Flag on: the preview + tips stack below the form instead of
-           disappearing — on a phone this is the only "how will it look". */
-        body.mobile-nav-enabled .qtp-body-cols { flex-direction: column; }
+           disappearing — on a phone this is the only "how will it look".
+           align-items must flip to stretch: the row layout's flex-start
+           becomes horizontal shrink-to-content once the axis is vertical. */
+        body.mobile-nav-enabled .qtp-body-cols { flex-direction: column; align-items: stretch; }
         body.mobile-nav-enabled .qtp-preview-col {
             display: flex; position: static; flex: 1 1 auto; width: 100%;
         }
