@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.gis.geos import Point
 from django.db import transaction
-from django.db.models import Q, Max
+from django.db.models import Q, Max, Count
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -20,6 +20,7 @@ from .models import (
 )
 from . import product_events as pe
 from .cloning import clone_question, clone_section
+from .html_sanitize import coerce_creator_html
 from .translation_gaps import survey_translation_gaps
 from .editor_forms import (
     SurveyHeaderForm, SurveyCreateForm, SurveyBriefForm, SurveySectionForm, QuestionForm,
@@ -152,10 +153,18 @@ def _is_ajax(request):
 
 
 def _get_sections_ordered(survey):
-    """Return sections in linked-list order."""
+    """Return sections in linked-list order, each carrying .question_count."""
     sections = list(SurveySection.objects.filter(survey_header=survey))
     if not sections:
         return []
+
+    counts = {
+        row['survey_section']: row['n']
+        for row in Question.objects.filter(survey_section__in=sections)
+        .values('survey_section').annotate(n=Count('id'))
+    }
+    for s in sections:
+        s.question_count = counts.get(s.id, 0)
 
     by_id = {s.id: s for s in sections}
     head = None
@@ -457,6 +466,7 @@ def editor_survey_detail(request, survey_uuid):
             feedback_trace_id = pe.llm_trace_id(draft_event.pk)
 
     return render(request, 'editor/survey_detail.html', {
+        'session_count': survey.surveysession_set.count(),
         'ai_feedback_trace_id': feedback_trace_id,
         'survey': survey,
         'sections': sections,
@@ -722,7 +732,8 @@ def _save_section_translations(request, section, survey):
     """Save section translations from POST data (non-primary languages only)."""
     for lang in _translation_languages(survey):
         title = request.POST.get(f'translation_{lang}_title', '').strip()
-        subheading = request.POST.get(f'translation_{lang}_subheading', '').strip()
+        subheading = coerce_creator_html(
+            request.POST.get(f'translation_{lang}_subheading', '')).strip()
         if title or subheading:
             SurveySectionTranslation.objects.update_or_create(
                 section=section, language=lang,
@@ -893,6 +904,26 @@ def editor_question_edit(request, survey_uuid, question_id):
                 if val:
                     try: vs['area_outlier_factor'] = float(val)
                     except ValueError: pass
+            # Feature-count limits apply to every geo type (polygon keeps its
+            # area factor above as well, hence a separate `if`, not `elif`)
+            if q.input_type in ('point', 'line', 'polygon'):
+                for key, floor in (('min_features', 0), ('max_features', 1)):
+                    val = request.POST.get(f'vs_{key}', '').strip()
+                    if val:
+                        try:
+                            parsed = int(val)
+                        except ValueError:
+                            continue
+                        if parsed >= floor:
+                            vs[key] = parsed
+                if 'min_features' in vs and 'max_features' in vs and vs['max_features'] < vs['min_features']:
+                    form.add_error(None, 'Max places must be greater than or equal to min places.')
+                    return render(request, 'editor/partials/question_form_modal.html', {
+                        'form': form,
+                        'survey': survey,
+                        'section': question.survey_section,
+                        'question': question,
+                    })
             q.validation_settings = vs
             q.save()
             _save_question_translations(request, q, survey)
@@ -903,6 +934,11 @@ def editor_question_edit(request, survey_uuid, question_id):
             })
             response['HX-Trigger'] = 'questionSaved'
             return response
+        if request.POST.get('autosave'):
+            # Autosave must never replace the form the creator is typing in —
+            # report the errors and let the client show the indicator instead
+            # (openspec: mobile-adaptive-refactor, editor-autosave).
+            return JsonResponse({'ok': False, 'errors': form.errors}, status=422)
         return render(request, 'editor/partials/question_form_modal.html', {
             'form': form,
             'survey': survey,
@@ -980,7 +1016,11 @@ def editor_question_preview_live(request, survey_uuid, section_id):
         return HttpResponse('unknown input type', status=400)
 
     display_style = request.POST.get('display_style', 'default')
-    if display_style not in {value for value, _ in DISPLAY_STYLE_CHOICES}:
+    allowed_styles = (
+        {'default', 'dropdown'} if input_type == 'choice'
+        else {value for value, _ in DISPLAY_STYLE_CHOICES}
+    )
+    if display_style not in allowed_styles:
         display_style = 'default'
 
     # A draft's choices arrive as the modal's serialized JSON. Malformed or
@@ -1008,7 +1048,9 @@ def editor_question_preview_live(request, survey_uuid, section_id):
         survey_section=section,
         input_type=input_type,
         name=request.POST.get('name', '').strip(),
-        subtext=request.POST.get('subtext', '').strip(),
+        # Put through the same allow-list a save would, so the preview shows what
+        # the question will actually become rather than the raw draft.
+        subtext=coerce_creator_html(request.POST.get('subtext', '')),
         choices=choices,
         color=request.POST.get('color', '').strip() or '#000000',
         icon_class=request.POST.get('icon_class', '').strip(),
@@ -1044,7 +1086,10 @@ def _save_question_translations(request, question, survey):
     """Save question translations from POST data (non-primary languages only)."""
     for lang in _translation_languages(survey):
         name = request.POST.get(f'translation_{lang}_name', '').strip()
-        subtext = request.POST.get(f'translation_{lang}_subtext', '').strip()
+        # Same allow-list the base language goes through in QuestionForm; a
+        # translated subtext is rendered |safe just the same.
+        subtext = coerce_creator_html(
+            request.POST.get(f'translation_{lang}_subtext', '')).strip()
         if name or subtext:
             QuestionTranslation.objects.update_or_create(
                 question=question, language=lang,

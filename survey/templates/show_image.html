@@ -1,4 +1,4 @@
 <div class="image-block">
 	<img src="{{ widget.image_source}}" class="img-fluid" style="max-width: 100%; height:auto;" />
-	{% if widget.subtitle %}<p class="image-block__caption">{{ widget.subtitle }}</p>{% endif %}
+	{% if widget.subtitle %}<p class="image-block__caption">{{ widget.subtitle|safe }}</p>{% endif %}
 </div>

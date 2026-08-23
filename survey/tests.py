@@ -6552,6 +6552,7 @@ class EditorPermissionTest(TestCase):
         self.assertEqual(survey.organization, self.org)
         self.assertEqual(survey.created_by, self.editor)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_viewer_sees_read_only_badge(self):
         """
         GIVEN an org viewer and a published survey
@@ -6748,23 +6749,25 @@ class EditorPermissionTest(TestCase):
         self.assertIn('settings-panel/', content)
         self.assertIn('sidebar-pinned-item active', content)
 
-    # ── Lifecycle-IA navigation (Build / Results / Publish) ──
+    # ── Lifecycle-IA navigation (Survey / Responses / Public results) ──
 
     def test_nav_shows_three_lifecycle_spaces(self):
         """
         GIVEN the survey editor
         WHEN it renders for an owner
-        THEN the navbar shows Build/Results/Publish tabs and no Editor/Settings tab
+        THEN the navbar shows Survey/Responses/Public results tabs and no
+        Editor/Settings tab
         """
         self.client.login(username='ep_owner', password='pass')
         content = self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
-        self.assertIn('fa-hammer"></i> Build', content)
-        self.assertIn('fa-chart-bar"></i> Results', content)
-        self.assertIn('fa-globe"></i> Publish', content)
+        self.assertIn('fa-hammer"></i> Survey', content)
+        self.assertIn('fa-chart-bar"></i> Responses', content)
+        self.assertIn('fa-globe"></i> Public results', content)
         # The old Editor label and the deprecated Settings tab are gone
         self.assertNotIn('title="Editor"', content)
         self.assertNotIn('badge-moved', content)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_publishing_widget_renders_on_all_spaces(self):
         """
         GIVEN an owner
@@ -20914,6 +20917,7 @@ class PublicResultsEditorTest(TestCase):
         self.assertEqual(r.status_code, 302)
         self.assertIn(f"?block={block.id}", r.url)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_settings_preview_button_works_before_page_is_live(self):
         """
         GIVEN a results page that is not yet published
@@ -21550,6 +21554,7 @@ class SurveyPrimaryActionTest(TestCase):
         self.assertContains(r, "doTransition('published')")
         self.assertContains(r, "Publish")
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_testing_surfaces_open_for_responses(self):
         """
         GIVEN a survey in testing
@@ -21562,6 +21567,7 @@ class SurveyPrimaryActionTest(TestCase):
         # bar too, so it must now appear at least twice (chip + bar).
         self.assertContains(r, "Publish — open for responses", count=2)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_published_shows_open_state_and_close(self):
         """
         GIVEN a published (open) survey
@@ -25249,6 +25255,7 @@ class AISurveyCreateViewTest(TestCase):
         self.assertNotContains(response, 'Generate draft')
 
     @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_panel_is_present_when_provider_configured(self):
         """
         GIVEN configured provider credentials
@@ -28200,6 +28207,7 @@ class TranslationCompletenessTest(TestCase):
         self.assertIn('es, en', response.content.decode())
 
 
+
 class PublicResultsScaffoldTest(TestCase):
     """Tests for auto-drafting the public results page at publish time."""
 
@@ -28463,3 +28471,1349 @@ class ScaffoldPublicResultsCommandTest(TestCase):
         output = self._run()
         self.assertIn('Nothing to scaffold', output)
         self.assertEqual(page.blocks.count(), 1)
+
+
+class MobileEditorNavTest(TestCase):
+    """Mobile editor chrome behind the MOBILE_EDITOR_NAV kill switch.
+
+    Markup-level assertions only: layout properties (no horizontal overflow,
+    one-row toolbar) need a rendering engine and are covered by the device
+    pass on a PR preview, not by the test client.
+    """
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Mobile Org")
+        self.user = User.objects.create_user('mobile_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="mobile_nav_survey", organization=self.org)
+        self.client.force_login(self.user)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_flag_on_renders_mobile_chrome(self):
+        """
+        GIVEN the MOBILE_EDITOR_NAV flag is on
+        WHEN the survey editor page renders
+        THEN the mobile chrome (body class, contextual bottom tab bar with the
+             Structure/Edit/Preview panes, overflow menu, mobile stylesheet) is present
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('mobile-nav-enabled', html)
+        self.assertIn('mobile-tabbar', html)
+        self.assertIn('data-pane="structure"', html)
+        self.assertIn('data-pane="edit"', html)
+        self.assertIn('data-pane="preview"', html)
+        self.assertIn('navbar-overflow', html)
+        self.assertIn('editor-mobile', html)
+        self.assertIn('data-active-pane="structure"', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=False)
+    def test_flag_off_serves_legacy_layout(self):
+        """
+        GIVEN the MOBILE_EDITOR_NAV flag is off (default)
+        WHEN the survey editor page renders
+        THEN no mobile chrome markup is emitted on any viewport
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertNotIn('mobile-nav-enabled', html)
+        self.assertNotIn('mobile-tabbar', html)
+        self.assertNotIn('editor-mobile', html)
+
+    def test_type_picker_has_no_geo_highlight(self):
+        """
+        GIVEN the grouped question type picker
+        WHEN the picker partial renders
+        THEN the map-questions group is NOT specially highlighted — the purple
+             wash was removed (it read as a selected state)
+        """
+        from django.template.loader import render_to_string
+        from survey.question_types import picker_groups_for
+        from survey.models import INPUT_TYPE_CHOICES
+        groups = picker_groups_for(INPUT_TYPE_CHOICES)
+        html = render_to_string(
+            'editor/partials/question_type_picker.html',
+            {'groups': groups, 'current': 'text'},
+        )
+        self.assertNotIn('qtp-grid-geo', html)
+        self.assertNotIn('qtp-group-geo', html)
+
+
+class EditorAutosaveTest(TestCase):
+    """Autosave on question edit forms behind the EDITOR_AUTOSAVE kill switch."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Autosave Org")
+        self.user = User.objects.create_user('autosave_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="autosave_survey", organization=self.org)
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='Section 1',
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, name='Old name', input_type='text',
+        )
+        self.client.force_login(self.user)
+
+    @override_settings(EDITOR_AUTOSAVE=True)
+    def test_autosave_post_persists_change(self):
+        """
+        GIVEN an existing text question and the autosave flag on
+        WHEN the form is POSTed with the autosave marker and a new name
+        THEN the change is persisted and the response is not a form re-render
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/',
+            {'name': 'New name', 'input_type': 'text', 'color': '#e74c3c', 'autosave': '1'},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.name, 'New name')
+
+    @override_settings(EDITOR_AUTOSAVE=True)
+    def test_autosave_validation_error_returns_422_not_rerender(self):
+        """
+        GIVEN an autosave POST with invalid data (missing required input_type)
+        WHEN the form fails validation
+        THEN the view answers 422 JSON and never replaces the typed-in form,
+             and the stored question is unchanged
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/',
+            {'name': 'Half-typed', 'autosave': '1'},
+        )
+        self.assertEqual(response.status_code, 422)
+        self.assertIn('errors', response.json())
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.name, 'Old name')
+
+    @override_settings(EDITOR_AUTOSAVE=True)
+    def test_edit_form_renders_indicator_instead_of_save(self):
+        """
+        GIVEN the autosave flag on
+        WHEN an existing question's form modal renders
+        THEN the saved-state indicator is present and Save/Apply buttons are not
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/',
+        )
+        html = response.content.decode()
+        self.assertIn('autosave-indicator', html)
+        self.assertIn('data-autosave', html)
+        self.assertNotIn('id="apply-question-btn"', html)
+        self.assertNotIn('>Save</button>', html)
+
+    @override_settings(EDITOR_AUTOSAVE=True)
+    def test_new_question_form_keeps_create_button(self):
+        """
+        GIVEN the autosave flag on
+        WHEN the new-question form renders
+        THEN it still carries an explicit Create button and no autosave marker
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+        )
+        html = response.content.decode()
+        self.assertIn('>Create</button>', html)
+        self.assertNotIn('data-autosave', html)
+
+    @override_settings(EDITOR_AUTOSAVE=False)
+    def test_flag_off_keeps_legacy_save_buttons(self):
+        """
+        GIVEN the autosave flag explicitly off
+        WHEN an existing question's form modal renders
+        THEN the legacy Save and Apply buttons are present, no indicator
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/',
+        )
+        html = response.content.decode()
+        self.assertIn('>Save</button>', html)
+        self.assertIn('id="apply-question-btn"', html)
+        self.assertNotIn('autosave-indicator', html)
+
+
+class RespondentTouchCopyTest(TestCase):
+    """Touch-phrased instruction copy on the respondent map (kept from the
+    reverted bottom-sheet experiment — accurate copy is flag-independent)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Touch Org")
+        self.survey = SurveyHeader.objects.create(
+            name="touch_survey",
+            organization=self.org,
+            available_languages=[],
+            status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name="section1", title="S1",
+            code="TC1", is_head=True,
+        )
+
+    def test_touch_instruction_strings_served(self):
+        """
+        GIVEN the respondent map page
+        WHEN it renders
+        THEN the i18n payload carries tap-phrased tooltips and the template
+             picks them for coarse pointers
+        """
+        response = self.client.get('/surveys/touch_survey/section1/')
+        html = response.content.decode()
+        self.assertIn('tapToPlaceMarker', html)
+        self.assertIn('pointer: coarse', html)
+
+class LandingRevealProgressiveTest(SimpleTestCase):
+    """Landing scroll-reveal must be progressive enhancement (landing-page spec)."""
+
+    def test_reveal_visible_by_default_in_css(self):
+        """
+        GIVEN the landing stylesheet
+        WHEN the .reveal rules are read
+        THEN the hidden starting state is scoped to html.js-reveal only,
+             so a no-JS render shows every section
+        """
+        import pathlib
+        css = pathlib.Path('survey/assets/css/landing.css').read_text()
+        base_rule = css.split('.reveal {', 1)[1].split('}', 1)[0]
+        self.assertIn('opacity: 1', base_rule)
+        self.assertIn('html.js-reveal .reveal', css)
+
+    def test_head_gate_respects_reduced_motion(self):
+        """
+        GIVEN the landing base template
+        WHEN the head gate script is read
+        THEN it checks IntersectionObserver support and prefers-reduced-motion
+             before enabling the hidden reveal state
+        """
+        import pathlib
+        html = pathlib.Path('survey/templates/base_landing.html').read_text()
+        self.assertIn("classList.add('js-reveal')", html)
+        self.assertIn('prefers-reduced-motion', html)
+        self.assertIn('IntersectionObserver', html)
+
+
+class SurveyPageMetadataTest(TestCase):
+    """Survey pages carry a real <title> and html[lang] (survey-page-metadata)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Meta Org")
+        self.survey = SurveyHeader.objects.create(
+            name="meta_survey",
+            organization=self.org,
+            available_languages=[],
+            status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name="section1", title="S1",
+            code="M1", is_head=True,
+        )
+
+    def test_section_page_title_contains_survey_name(self):
+        """
+        GIVEN a published survey
+        WHEN a respondent opens a section
+        THEN the document title contains the survey name
+        """
+        response = self.client.get('/surveys/meta_survey/section1/')
+        html = response.content.decode()
+        self.assertIn('<title>meta_survey — Mapsurvey</title>', html)
+
+    def test_section_page_declares_language(self):
+        """
+        GIVEN a single-language survey served in the default locale
+        WHEN a respondent opens a section
+        THEN the root html element declares a lang attribute
+        """
+        response = self.client.get('/surveys/meta_survey/section1/')
+        html = response.content.decode()
+        self.assertIn('<html lang="en"', html)
+
+
+class MobileContextualPaneBarTest(TestCase):
+    """The bottom tab bar is contextual to the active level-1 page tab."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Ctx Org")
+        self.user = User.objects.create_user('ctx_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="ctx_survey", organization=self.org)
+        self.client.force_login(self.user)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_responses_bar_has_its_own_panes(self):
+        """
+        GIVEN the mobile nav flag on
+        WHEN the Responses (analytics) page renders
+        THEN the bottom bar carries Table/Map/Charts/Performance, with Charts
+             as the mobile default
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/analytics/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('data-pane="table"', html)
+        self.assertIn('data-pane="map"', html)
+        self.assertIn('data-pane="charts"', html)
+        self.assertIn('data-pane="performance"', html)
+        self.assertIn("mobileAnalyticsPane('charts')", html)
+        self.assertNotIn('data-pane="structure"', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_public_results_bar_shares_pane_vocabulary(self):
+        """
+        GIVEN the mobile nav flag on
+        WHEN the Public results config page renders
+        THEN the bottom bar carries Structure/Edit/Preview and the pane
+             container starts on Structure when no block is selected
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/public-results/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('data-pane="structure"', html)
+        self.assertIn('data-pane="edit"', html)
+        self.assertIn('data-pane="preview"', html)
+        self.assertIn('data-active-pane="structure"', html)
+        self.assertNotIn('data-pane="charts"', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=False)
+    def test_flag_off_no_bars_anywhere(self):
+        """
+        GIVEN the mobile nav flag off
+        WHEN Responses and Public results pages render
+        THEN neither carries a mobile tab bar
+        """
+        for path in (f'/editor/surveys/{self.survey.uuid}/analytics/',
+                     f'/editor/surveys/{self.survey.uuid}/public-results/'):
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 200)
+            self.assertNotIn('mobile-tabbar', response.content.decode())
+
+
+class DashboardVariantATest(TestCase):
+    """Dashboard adaptive top block (variant A) behind MOBILE_EDITOR_NAV."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Dash Org")
+        self.user = User.objects.create_user('dash_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        SurveyHeader.objects.create(name="dash_survey", organization=self.org)
+        self.client.force_login(self.user)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_flag_on_renders_adaptive_header(self):
+        """
+        GIVEN the MOBILE_EDITOR_NAV flag on
+        WHEN the dashboard renders
+        THEN the collapsed-search button, the overflow menu (Import, Show
+             Archived, view toggle) and the count label are present
+        """
+        html = self.client.get('/editor/').content.decode()
+        self.assertIn('mobile-nav-enabled', html)
+        self.assertIn('dash-search-btn', html)
+        self.assertIn('dash-overflow', html)
+        self.assertIn('My Surveys · 1', html)
+        self.assertIn('List view', html)
+        self.assertIn('Show Archived', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=False)
+    def test_flag_off_serves_legacy_header(self):
+        """
+        GIVEN the flag explicitly off
+        WHEN the dashboard renders
+        THEN none of the variant-A chrome is emitted
+        """
+        html = self.client.get('/editor/').content.decode()
+        # CSS selectors naming these classes are always in the <style> block;
+        # what must be absent with the flag off is the MARKUP and JS.
+        self.assertNotIn('<body class="mobile-nav-enabled"', html)
+        self.assertNotIn('dashSearchToggle', html)
+        self.assertNotIn('class="dropdown dash-overflow"', html)
+        self.assertNotIn('dash-count', html.split('</style>')[-1])
+
+
+class CreateSurveyWizardTest(TestCase):
+    """Create-survey wizard (variant A) behind MOBILE_EDITOR_NAV."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Wizard Org")
+        self.user = User.objects.create_user('wizard_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.force_login(self.user)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_flag_on_renders_wizard_chrome(self):
+        """
+        GIVEN the MOBILE_EDITOR_NAV flag on
+        WHEN the create page renders
+        THEN the wizard chrome is present (map topbar, step footers, novalidate),
+             the path buttons carry the approved copy, and the legacy name and
+             language fields are wrapped for hiding
+        """
+        html = self.client.get('/editor/surveys/new/').content.decode()
+        self.assertIn('wizard-map-topbar', html)
+        self.assertIn('wizard-goal-footer', html)
+        self.assertIn('wizard-create-btn', html)
+        self.assertIn('novalidate', html)
+        self.assertIn('create-legacy-fields', html)
+        self.assertIn('Start with an empty survey', html)
+        self.assertNotIn('>Create empty</button>', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=False)
+    def test_flag_off_serves_legacy_page(self):
+        """
+        GIVEN the flag explicitly off
+        WHEN the create page renders
+        THEN no wizard chrome or copy is emitted and the legacy buttons remain
+        """
+        html = self.client.get('/editor/surveys/new/').content.decode()
+        self.assertNotIn('wizard-map-topbar', html)
+        self.assertNotIn('novalidate', html)
+        self.assertIn('>Create empty</button>', html)
+        self.assertNotIn('Start with an empty survey', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_empty_path_creates_untitled_survey(self):
+        """
+        GIVEN the wizard's empty path (JS fills the hidden name with the default)
+        WHEN the form posts the wizard-produced payload
+        THEN the survey is created with the placeholder name and a head section
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'Untitled survey',
+            'available_languages': '[]',
+            'action': 'empty',
+            'map_lat': '52.52', 'map_lng': '13.405', 'map_zoom': '12',
+        })
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='Untitled survey', organization=self.org)
+        self.assertTrue(survey.surveysection_set.filter(is_head=True).exists())
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_cyrillic_name_accepted(self):
+        """
+        GIVEN a creator briefing in Russian (any language is supported)
+        WHEN the wizard posts a Cyrillic-derived survey name
+        THEN validate_url_name (now Unicode) accepts it and the survey is created
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'Лучшие места в Бишкеке',
+            'available_languages': '["ru"]',
+            'action': 'empty',
+            'map_lat': '42.87', 'map_lng': '74.59', 'map_zoom': '12',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(SurveyHeader.objects.filter(name='Лучшие места в Бишкеке').exists())
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_languages_stay_on_step_one(self):
+        """
+        GIVEN the wizard flag on
+        WHEN the create page renders
+        THEN the language picker is NOT wrapped in the hidden legacy block —
+             languages are chosen up front so drafts generate translations
+        """
+        html = self.client.get('/editor/surveys/new/').content.decode()
+        wrapper = re.search(r'class="create-legacy-fields".*?</div>\s*</div>', html, re.S)
+        self.assertIsNotNone(wrapper)
+        self.assertIn('name="name"', wrapper.group(0))
+        self.assertNotIn('available_languages', wrapper.group(0))
+        self.assertIn('Available languages', html)
+
+
+
+class SurveyStatusLineTest(TestCase):
+    """Variant C status line, sheets and menus behind MOBILE_EDITOR_NAV."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Status Org")
+        self.user = User.objects.create_user('status_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="status_survey", organization=self.org)
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='S1', is_head=True,
+        )
+        Question.objects.create(survey_section=self.section, name='Q1', input_type='text')
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.client.force_login(self.user)
+
+    def _page(self):
+        return self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_draft_status_line(self):
+        """
+        GIVEN a draft survey and the flag on
+        WHEN the editor renders
+        THEN the status line carries the grey Draft chip (lifecycle menu) and
+             offers Publish; the navbar chip is gone
+        """
+        html = self._page()
+        self.assertIn('mobile-statusbar', html)
+        self.assertIn("doTransition('published')", html)
+        # Chip in the status line, colored by status (draft = grey/secondary)
+        self.assertIn('pub-chip badge-secondary', html)
+        statusbar = html.split('mobile-statusbar', 1)[1]
+        self.assertIn('publishing-widget', statusbar)
+        # Tab dots replace the navbar chip
+        self.assertIn('tabdot td-draft', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_testing_status_has_share_link_sheet(self):
+        """
+        GIVEN a testing survey
+        WHEN the editor renders
+        THEN the status line offers the test link and the sheet carries the
+             tokenized URL, the password form and the Publish exit
+        """
+        self.survey.status = 'testing'
+        self.survey.save(update_fields=['status'])
+        html = self._page()
+        self.assertIn('pub-chip badge-warning', html)
+        self.assertIn('Share test link', html)
+        self.assertIn(f'token={self.survey.test_token}', html)
+        self.assertIn('editor_survey_password'.replace('editor_survey_password', f'/editor/surveys/{self.survey.uuid}/password/'), html)
+        self.assertIn('Publish — open for everyone', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_published_status_edit_and_share(self):
+        """
+        GIVEN a published survey
+        WHEN the editor renders
+        THEN the status line shows the live count with Edit + Share, the edit
+             intercept sheet exists, and the ctx-bar Preview duplicate stays out
+        """
+        self.survey.status = 'published'
+        self.survey.save(update_fields=['status'])
+        html = self._page()
+        self.assertIn('pub-chip badge-success', html)
+        self.assertIn('✎ Edit', html)
+        self.assertIn('editIntercept', html)
+        self.assertIn(f'/editor/surveys/{self.survey.uuid}/share/', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_overflow_menu_has_share_and_sections_have_counts(self):
+        """
+        GIVEN the flag on
+        WHEN the editor renders
+        THEN the overflow menu offers Share…, the HEAD badge is gone and the
+             section rows carry question counts
+        """
+        html = self._page()
+        self.assertIn('Share…', html)
+        self.assertNotIn('>HEAD<', html)
+        self.assertIn('section-qcount', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=False)
+    def test_flag_off_keeps_ctx_bar_only(self):
+        """
+        GIVEN the flag explicitly off
+        WHEN the editor renders
+        THEN no status line or sheets are emitted and the legacy ctx-bar remains
+        """
+        html = self._page()
+        self.assertNotIn('mobile-statusbar', html)
+        self.assertNotIn('testSheet', html)
+        self.assertIn('build-ctxbar', html)
+
+
+class PublicResultsStatusLineTest(TestCase):
+    """Survey↔Public-results parity: the PR tab gets the same status-line
+    anatomy (colored chip with lifecycle menu + primary action per state)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="PR Status Org")
+        self.user = User.objects.create_user('pr_status_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="pr_status_survey", organization=self.org, status='published',
+        )
+        self.page = PublicResultsPage.objects.create(survey=self.survey, slug='pr-status')
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.client.force_login(self.user)
+
+    def _page(self):
+        return self.client.get(f'/editor/surveys/{self.survey.uuid}/public-results/').content.decode()
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_not_published_state(self):
+        """
+        GIVEN an unpublished results page and the flag on
+        WHEN the PR tab renders
+        THEN the status line shows the grey Not published chip and the green
+             Publish page primary, and the legacy ctx-bar buttons stay out
+        """
+        html = self._page()
+        self.assertIn('mobile-statusbar', html)
+        self.assertIn('Not published', html)
+        self.assertIn('pub-chip badge-secondary', html)
+        self.assertIn('Publish page', html)
+        self.assertNotIn('Copy public link', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_live_state_share_freeze_visitor(self):
+        """
+        GIVEN a live results page
+        WHEN the PR tab renders
+        THEN the chip is green Live and the line offers Share (copies /r/),
+             Freeze snapshot and Open as visitor on the real public URL
+        """
+        self.page.is_published = True
+        self.page.save(update_fields=['is_published'])
+        html = self._page()
+        self.assertIn('pub-chip badge-success', html)
+        self.assertIn('Live', html)
+        self.assertIn('prCopyPublicLink(this)', html)
+        self.assertIn('Freeze snapshot', html)
+        self.assertIn('Open as visitor', html)
+        self.assertIn('/r/pr-status/', html)
+        self.assertIn('Unpublish', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_frozen_state_update_snapshot(self):
+        """
+        GIVEN a live page in frozen mode
+        WHEN the PR tab renders
+        THEN the chip is the sky Frozen one with its date and the primary
+             action becomes Update snapshot
+        """
+        from django.utils import timezone
+        self.page.is_published = True
+        self.page.mode = 'frozen'
+        self.page.frozen_at = timezone.now()
+        self.page.save(update_fields=['is_published', 'mode', 'frozen_at'])
+        html = self._page()
+        self.assertIn('pub-chip badge-info', html)
+        self.assertIn('Frozen ·', html)
+        self.assertIn('Update snapshot', html)
+        self.assertIn('Back to live data', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_tab_dots_and_block_type_badges(self):
+        """
+        GIVEN the flag on
+        WHEN the PR tab renders with a block
+        THEN the navbar tabs carry status dots instead of the survey chip and
+             block rows show their type badge
+        """
+        PublicResultsBlock.objects.create(page=self.page, block_type='text', order=1)
+        html = self._page()
+        self.assertIn('tabdot td-published', html)
+        self.assertIn('tabdot td-off', html)
+        self.assertIn('section-qcount', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=False)
+    def test_flag_off_keeps_legacy_ctxbar(self):
+        """
+        GIVEN the flag explicitly off
+        WHEN the PR tab renders
+        THEN no status line is emitted and the scattered ctx-bar controls stay
+        """
+        html = self._page()
+        self.assertNotIn('mobile-statusbar', html)
+        self.assertIn('Publish page', html)
+
+
+class GeoMultiFeatureTest(TestCase):
+    """Tests for per-question feature-count limits and the multi-feature widget."""
+
+    def setUp(self):
+        self.org = _make_org('GeoMultiOrg')
+        self.user = User.objects.create_user(username='geomulti', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='geomulti_survey', organization=self.org,
+            redirect_url='/thanks/', status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section One',
+            code='S1', is_head=True,
+        )
+        self.point_q = Question.objects.create(
+            survey_section=self.section, name='Problem spots',
+            input_type='point', order_number=1,
+        )
+        self.text_q = Question.objects.create(
+            survey_section=self.section, name='Comment',
+            input_type='text', order_number=2,
+        )
+
+    def _login(self):
+        self.client.login(username='geomulti', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        # Structural edits are blocked on a published survey; editor tests run
+        # against draft, respondent tests keep the published status from setUp.
+        self.survey.status = 'draft'
+        self.survey.save(update_fields=['status'])
+
+    def _edit_post(self, question, extra):
+        data = {'name': question.name, 'input_type': question.input_type, 'color': '#000000'}
+        data.update(extra)
+        return self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{question.id}/edit/', data,
+        )
+
+    def _point_feature(self, x, y):
+        return json.dumps({
+            'type': 'Feature',
+            'properties': {'question_id': self.point_q.code},
+            'geometry': {'type': 'Point', 'coordinates': [x, y]},
+        })
+
+    # --- Editor round-trip ---
+
+    def test_editor_saves_feature_limits(self):
+        """
+        GIVEN a point question
+        WHEN the editor saves it with vs_min_features=1 and vs_max_features=5
+        THEN validation_settings contains both as ints and the reopened modal shows them
+        """
+        self._login()
+        response = self._edit_post(self.point_q, {'vs_min_features': '1', 'vs_max_features': '5'})
+        self.assertEqual(response.status_code, 200)
+        self.point_q.refresh_from_db()
+        self.assertEqual(self.point_q.validation_settings.get('min_features'), 1)
+        self.assertEqual(self.point_q.validation_settings.get('max_features'), 5)
+        modal = self.client.get(f'/editor/surveys/{self.survey.uuid}/questions/{self.point_q.id}/edit/')
+        self.assertContains(modal, 'vs_min_features')
+        self.assertContains(modal, 'value="1"')
+        self.assertContains(modal, 'value="5"')
+
+    def test_editor_blank_clears_feature_limits(self):
+        """
+        GIVEN a point question with saved feature limits
+        WHEN the editor saves it with both inputs blank
+        THEN neither key remains in validation_settings
+        """
+        self._login()
+        self.point_q.validation_settings = {'min_features': 1, 'max_features': 5}
+        self.point_q.save()
+        self._edit_post(self.point_q, {'vs_min_features': '', 'vs_max_features': ''})
+        self.point_q.refresh_from_db()
+        self.assertNotIn('min_features', self.point_q.validation_settings)
+        self.assertNotIn('max_features', self.point_q.validation_settings)
+
+    def test_editor_rejects_max_below_min(self):
+        """
+        GIVEN a point question
+        WHEN the editor saves max_features below min_features
+        THEN a form error renders and nothing is saved
+        """
+        self._login()
+        response = self._edit_post(self.point_q, {'vs_min_features': '4', 'vs_max_features': '2'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Max places must be greater than or equal to min places.')
+        self.point_q.refresh_from_db()
+        self.assertNotIn('max_features', self.point_q.validation_settings)
+
+    def test_editor_ignores_feature_limits_on_non_geo(self):
+        """
+        GIVEN a text question
+        WHEN the editor saves it with feature-limit inputs present
+        THEN validation_settings never gains the keys
+        """
+        self._login()
+        self._edit_post(self.text_q, {'vs_min_features': '1', 'vs_max_features': '5'})
+        self.text_q.refresh_from_db()
+        self.assertNotIn('min_features', self.text_q.validation_settings)
+        self.assertNotIn('max_features', self.text_q.validation_settings)
+
+    # --- Widget rendering ---
+
+    def test_widget_renders_limit_attributes_and_containers(self):
+        """
+        GIVEN a point question with feature limits
+        WHEN the respondent section page renders
+        THEN the draw button carries data-min/max-features and the in-button progress container,
+        and no per-feature list container renders (managed on the map instead)
+        """
+        self.point_q.validation_settings = {'min_features': 1, 'max_features': 5}
+        self.point_q.save()
+        response = self.client.get(f'/surveys/{self.survey.name}/{self.section.name}/')
+        self.assertContains(response, 'data-min-features="1"')
+        self.assertContains(response, 'data-max-features="5"')
+        self.assertContains(response, 'geo-progress')
+        self.assertContains(response, 'data-orig-subtitle')
+        self.assertNotContains(response, 'geo-features')
+
+    def test_widget_omits_limit_attributes_when_unset(self):
+        """
+        GIVEN a point question without feature limits
+        WHEN the respondent section page renders
+        THEN the draw button carries no data-min/max-features attributes
+        (the bare attribute name also lives in the base template's JS selectors,
+        so the assertion targets the attribute-with-value form)
+        """
+        response = self.client.get(f'/surveys/{self.survey.name}/{self.section.name}/')
+        self.assertNotContains(response, 'data-min-features="')
+        self.assertNotContains(response, 'data-max-features="')
+
+    # --- Server clamp ---
+
+    def test_post_clamps_features_to_max(self):
+        """
+        GIVEN a point question with max_features=2
+        WHEN a section POST carries three features (a tampered submission)
+        THEN only the first two are stored as answers
+        """
+        self.point_q.validation_settings = {'max_features': 2}
+        self.point_q.save()
+        self.client.get(f'/surveys/{self.survey.name}/{self.section.name}/')
+        session_id = self.client.session['survey_session_id']
+        payload = '|'.join([
+            self._point_feature(30.1, 60.1),
+            self._point_feature(30.2, 60.2),
+            self._point_feature(30.3, 60.3),
+        ]) + '|'
+        self.client.post(
+            f'/surveys/{self.survey.name}/{self.section.name}/',
+            {self.point_q.code: payload},
+        )
+        self.assertEqual(
+            Answer.objects.filter(survey_session_id=session_id, question=self.point_q).count(), 2,
+        )
+
+    def test_post_without_limit_stores_all_features(self):
+        """
+        GIVEN a point question with no feature limits
+        WHEN a section POST carries three features
+        THEN all three are stored as answers
+        """
+        self.client.get(f'/surveys/{self.survey.name}/{self.section.name}/')
+        session_id = self.client.session['survey_session_id']
+        payload = '|'.join([
+            self._point_feature(30.1, 60.1),
+            self._point_feature(30.2, 60.2),
+            self._point_feature(30.3, 60.3),
+        ]) + '|'
+        self.client.post(
+            f'/surveys/{self.survey.name}/{self.section.name}/',
+            {self.point_q.code: payload},
+        )
+        self.assertEqual(
+            Answer.objects.filter(survey_session_id=session_id, question=self.point_q).count(), 3,
+        )
+
+
+class ChoiceDropdownDisplayTest(TestCase):
+    """Respondent rendering of choice questions with display_style 'dropdown'."""
+
+    AREAS = [{"code": i, "name": f"Area {i}"} for i in range(1, 6)]
+
+    def setUp(self):
+        self.client = Client()
+        self.org = Organization.objects.create(name="Dropdown Org")
+        self.survey = SurveyHeader.objects.create(
+            name="choice_dropdown_survey",
+            organization=self.org,
+            redirect_url="/thanks/",
+            status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="section1",
+            title="Section One",
+            code="S1",
+            is_head=True,
+        )
+        self.choice_q = Question.objects.create(
+            survey_section=self.section,
+            code="CDQ001",
+            name="Which counting area?",
+            input_type="choice",
+            choices=self.AREAS,
+            order_number=1,
+        )
+
+    def _visit(self):
+        return self.client.get('/surveys/choice_dropdown_survey/section1/')
+
+    def test_default_choice_renders_radios_without_dropdown(self):
+        """
+        GIVEN a choice question with display_style 'default'
+        WHEN the section is rendered
+        THEN the radio list appears and no dropdown markup is emitted
+        """
+        response = self._visit()
+
+        self.assertContains(response, 'type="radio" name="CDQ001"')
+        self.assertNotContains(response, 'choice-dropdown')
+
+    def test_dropdown_style_renders_search_widget(self):
+        """
+        GIVEN a choice question with display_style 'dropdown'
+        WHEN the section is rendered
+        THEN the searchable dropdown markup replaces the radio list
+        """
+        self.choice_q.display_style = 'dropdown'
+        self.choice_q.save()
+
+        response = self._visit()
+
+        self.assertContains(response, 'data-choice-dropdown')
+        self.assertContains(response, 'cd-search')
+        self.assertContains(response, 'data-value="3"')
+        self.assertNotContains(response, 'type="radio" name="CDQ001"')
+
+    def test_dropdown_select_submits_under_question_code(self):
+        """
+        GIVEN a dropdown-styled choice question
+        WHEN the section is rendered
+        THEN the hidden select carries the question's field name, so the
+             submitted value is identical to a radio submission
+        """
+        self.choice_q.display_style = 'dropdown'
+        self.choice_q.save()
+
+        response = self._visit()
+
+        self.assertContains(response, 'name="CDQ001"')
+
+    def test_dropdown_on_rating_question_is_ignored(self):
+        """
+        GIVEN a rating question wrongly carrying display_style 'dropdown'
+        WHEN the display style is resolved
+        THEN the survey-wide rating default applies
+        """
+        rating_q = Question.objects.create(
+            survey_section=self.section,
+            code="CDQ002",
+            name="Rate it",
+            input_type="rating",
+            choices=[{"code": 1, "name": "bad"}, {"code": 2, "name": "good"}],
+            display_style='dropdown',
+            order_number=2,
+        )
+
+        resolved = SurveySectionAnswerForm.resolve_display_style(rating_q, 'scale_strip')
+
+        self.assertEqual(resolved, 'scale_strip')
+
+    def test_rating_style_on_choice_question_resolves_to_default(self):
+        """
+        GIVEN a choice question carrying a rating-only style value
+        WHEN the display style is resolved
+        THEN it falls back to the plain radio rendering
+        """
+        self.choice_q.display_style = 'list_pips'
+        self.choice_q.save()
+
+        resolved = SurveySectionAnswerForm.resolve_display_style(self.choice_q, 'scale_strip')
+
+        self.assertEqual(resolved, 'default')
+
+    def test_required_dropdown_rejects_empty_submission(self):
+        """
+        GIVEN a required dropdown-styled choice question
+        WHEN the single-question form is bound without a value
+        THEN validation fails exactly as it would for radios
+        """
+        self.choice_q.display_style = 'dropdown'
+        self.choice_q.required = True
+        self.choice_q.save()
+
+        form = SurveySectionAnswerForm.single_question_form(self.choice_q)
+        field = form.fields[self.choice_q.code]
+
+        from django.core.exceptions import ValidationError
+        with self.assertRaises(ValidationError):
+            field.clean('')
+        self.assertEqual(field.clean('3'), '3')
+
+
+class ChoiceDropdownSerializationTest(TestCase):
+    """display_style 'dropdown' in export/import round-trip."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="DropdownSer Org")
+        self.survey = SurveyHeader.objects.create(
+            name="dropdown_ser_survey",
+            organization=self.org,
+            redirect_url="/thanks/",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey,
+            name="s1",
+            title="S1",
+            code="S1",
+            is_head=True,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section,
+            code="CDS001",
+            name="Pick area",
+            input_type="choice",
+            choices=[{"code": 1, "name": "A"}, {"code": 2, "name": "B"}],
+            display_style='dropdown',
+            order_number=1,
+        )
+
+    def _roundtrip(self, mutate=None):
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+        output.seek(0)
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_json = json.loads(zf.read("survey.json"))
+
+        survey_json["survey"]["name"] = "dropdown_ser_imported"
+        if mutate:
+            mutate(survey_json["survey"]["sections"][0]["questions"][0])
+
+        import_buffer = BytesIO()
+        with zipfile.ZipFile(import_buffer, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_json))
+        import_buffer.seek(0)
+
+        imported_survey, _ = import_survey_from_zip(import_buffer)
+        return Question.objects.get(
+            survey_section__survey_header=imported_survey, name="Pick area",
+        )
+
+    def test_dropdown_round_trips_on_choice_question(self):
+        """
+        GIVEN a choice question with display_style 'dropdown'
+        WHEN the survey is exported and re-imported
+        THEN the imported question keeps display_style 'dropdown'
+        """
+        imported = self._roundtrip()
+
+        self.assertEqual(imported.display_style, 'dropdown')
+
+    def test_dropdown_on_non_choice_question_falls_back(self):
+        """
+        GIVEN an archive whose text question carries display_style 'dropdown'
+        WHEN the archive is imported
+        THEN the question falls back to display_style 'default'
+        """
+        def mutate(q):
+            q["input_type"] = "text"
+            q["choices"] = None
+            q["display_style"] = "dropdown"
+
+        imported = self._roundtrip(mutate)
+
+        self.assertEqual(imported.display_style, 'default')
+
+
+class ChoiceDropdownEditorFormTest(TestCase):
+    """QuestionForm accepts 'dropdown' for choice questions only."""
+
+    def _form_data(self, **overrides):
+        data = {
+            'name': 'Pick one',
+            'subtext': '',
+            'input_type': 'choice',
+            'color': '#000000',
+            'icon_class': '',
+            'display_style': 'dropdown',
+        }
+        data.update(overrides)
+        return data
+
+    def test_dropdown_persists_on_choice_question(self):
+        """
+        GIVEN a question form for a choice question with display_style 'dropdown'
+        WHEN the form is validated
+        THEN the cleaned display_style is 'dropdown'
+        """
+        from .editor_forms import QuestionForm
+        form = QuestionForm(self._form_data())
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['display_style'], 'dropdown')
+
+    def test_dropdown_on_text_question_normalizes_to_default(self):
+        """
+        GIVEN a question form for a text question submitted with 'dropdown'
+        WHEN the form is validated
+        THEN the cleaned display_style is normalized to 'default'
+        """
+        from .editor_forms import QuestionForm
+        form = QuestionForm(self._form_data(input_type='text'))
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['display_style'], 'default')
+
+    def test_rating_style_on_choice_question_normalizes_to_default(self):
+        """
+        GIVEN a question form for a choice question submitted with 'stars'
+        WHEN the form is validated
+        THEN the cleaned display_style is normalized to 'default'
+        """
+        from .editor_forms import QuestionForm
+        form = QuestionForm(self._form_data(display_style='stars'))
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['display_style'], 'default')
+
+
+class FormattedTextBlockEditorTest(TestCase):
+    """The Formatted Text block (`input_type='html'`) is authored in a WYSIWYG.
+
+    Its subtext is the block's whole body and is rendered `|safe` to
+    respondents, which makes both properties tested here load-bearing: the body
+    must not be capped at a tweet's length, and it must not be able to carry a
+    script to the respondent's browser.
+    """
+
+    def setUp(self):
+        self.org = _make_org('FormattedTextOrg')
+        self.user = User.objects.create_user(username='ft_editor', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='ft_editor', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='ft_survey', visibility='private', organization=self.org,
+            created_by=self.user, available_languages=['en', 'de'],
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section 1', code='S1',
+            is_head=True,
+        )
+
+    def _create_block(self, subtext, **extra):
+        data = {'name': 'intro_block', 'input_type': 'html', 'color': '#000000',
+                'subtext': subtext}
+        data.update(extra)
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+            data,
+        )
+        self.assertEqual(response.status_code, 200)
+        return Question.objects.get(survey_section=self.section, name='intro_block')
+
+    def test_body_longer_than_the_old_column_is_kept(self):
+        """
+        GIVEN a Formatted Text body far longer than the former 512-char cap
+        WHEN the creator saves the block
+        THEN the whole body is stored and reaches the respondent
+        """
+        body = '<p>' + ('Mapping the neighbourhood. ' * 60) + '</p>'
+        self.assertGreater(len(body), 512)
+
+        block = self._create_block(body)
+
+        self.assertEqual(block.subtext, body)
+        SurveyHeader.objects.filter(pk=self.survey.pk).update(status='published')
+        # A multilingual survey asks for a language before it shows a section.
+        self.client.post(f'/surveys/{self.survey.uuid}/language/', {'language': 'en'})
+        content = self.client.get(
+            f'/surveys/{self.survey.uuid}/sec1/', follow=True).content.decode()
+        self.assertIn('Mapping the neighbourhood.', content)
+
+    def test_formatting_survives_the_save(self):
+        """
+        GIVEN a body with a heading, a bold run and a list
+        WHEN the block is saved
+        THEN the markup is stored rather than escaped away
+        """
+        block = self._create_block(
+            '<h2>Welcome</h2><p><strong>Read this first.</strong></p><ul><li>One</li></ul>')
+
+        self.assertIn('<h2>Welcome</h2>', block.subtext)
+        self.assertIn('<strong>Read this first.</strong>', block.subtext)
+        self.assertIn('<li>One</li>', block.subtext)
+
+    def test_script_is_stripped_from_the_body(self):
+        """
+        GIVEN a body carrying a script tag and an inline event handler
+        WHEN the block is saved
+        THEN both are gone and the allow-listed formatting stays
+
+        The block renders |safe, so an unsanitized body would be stored XSS
+        aimed at every respondent of the survey.
+        """
+        block = self._create_block(
+            '<h2>Hi</h2><script>alert(1)</script><p onclick="steal()">Text</p>')
+
+        self.assertNotIn('<script>', block.subtext)
+        self.assertNotIn('onclick', block.subtext)
+        self.assertIn('<h2>Hi</h2>', block.subtext)
+        self.assertIn('Text', block.subtext)
+
+    def test_translated_body_is_sanitized_too(self):
+        """
+        GIVEN a German translation of a Formatted Text body carrying a script
+        WHEN the block is saved
+        THEN the stored translation is sanitized like the base language
+        """
+        block = self._create_block(
+            '<p>Hello</p>',
+            translation_de_subtext='<p>Hallo</p><script>alert(1)</script>',
+        )
+
+        translation = block.translations.get(language='de')
+        self.assertNotIn('<script>', translation.subtext)
+        self.assertIn('<p>Hallo</p>', translation.subtext)
+
+    def test_other_types_keep_the_creator_sentence_intact(self):
+        """
+        GIVEN a text question whose subtext contains angle brackets
+        WHEN it is saved
+        THEN the sentence survives, escaped rather than swallowed
+
+        Subtext renders |safe for every type now, so "takes <5 minutes" has to
+        be escaped — running it through the tag allow-list alone would drop
+        "<5 minutes" as an unknown tag.
+        """
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+            {'name': 'Duration', 'input_type': 'text', 'color': '#000000',
+             'subtext': 'takes <5 minutes'},
+        )
+
+        q = Question.objects.get(survey_section=self.section, name='Duration')
+        self.assertEqual(q.subtext, 'takes &lt;5 minutes')
+
+    def test_dialog_ships_the_editor_mount(self):
+        """
+        GIVEN the question dialog
+        WHEN it is opened
+        THEN it carries the Quill mount and the per-language mounts
+
+        A server-side test suite would otherwise pass with a dead editor: every
+        assertion above works fine against the plain one-line input.
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/')
+        content = response.content.decode()
+
+        self.assertIn('id="html-body-quill"', content)
+        self.assertIn('data-translation-quill="de"', content)
+        self.assertIn('new Quill(', content)
+
+
+class RichSubtextAndSubheadingTest(TestCase):
+    """Question subtext and section subheading are creator rich text.
+
+    Both render as markup to respondents now, so the interesting cases are the
+    ones where a value is NOT markup: text typed before the editors existed,
+    text from an AI draft, and text that merely looks like a tag.
+    """
+
+    def setUp(self):
+        self.org = _make_org('RichTextOrg')
+        self.user = User.objects.create_user(username='rich_editor', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='rich_editor', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='rich_survey', visibility='private', organization=self.org,
+            created_by=self.user,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section 1', code='S1',
+            is_head=True,
+        )
+
+    def _respondent_page(self):
+        # Structural edits are blocked on a published survey, so the tests build
+        # the survey as a draft and publish it only to look at the result.
+        SurveyHeader.objects.filter(pk=self.survey.pk).update(status='published')
+        return self.client.get(f'/surveys/{self.survey.uuid}/sec1/').content.decode()
+
+    def test_formatted_subtext_reaches_the_respondent(self):
+        """
+        GIVEN a question whose subtext carries bold and a link
+        WHEN a respondent opens the section
+        THEN the markup renders instead of being printed as tags
+        """
+        Question.objects.create(
+            survey_section=self.section, name='Q1', code='q1', input_type='text',
+            order_number=1,
+            subtext='<p>Read <strong>this</strong> and the <a href="/rules">rules</a>.</p>',
+        )
+
+        content = self._respondent_page()
+
+        self.assertIn('<strong>this</strong>', content)
+        self.assertIn('href="/rules"', content)
+        self.assertNotIn('&lt;strong&gt;', content)
+
+    def test_angle_brackets_typed_by_a_creator_are_kept(self):
+        """
+        GIVEN a creator typing "takes <5 minutes" into the subtext editor
+        WHEN the question is saved
+        THEN the stored value escapes it, so the respondent still reads "<5 minutes"
+
+        Quill wraps typed text in <p>, so the value arriving here is markup whose
+        payload is the literal text — sanitizing alone would eat "<5 minutes" as
+        an unknown tag.
+        """
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+            {'name': 'Duration', 'input_type': 'text', 'color': '#000000',
+             'subtext': '<p>takes &lt;5 minutes</p>'},
+        )
+
+        q = Question.objects.get(survey_section=self.section, name='Duration')
+        self.assertEqual(q.subtext, '<p>takes &lt;5 minutes</p>')
+        self.assertIn('takes &lt;5 minutes', self._respondent_page())
+
+    def test_plain_text_from_a_machine_is_escaped_not_sanitized(self):
+        """
+        GIVEN plain text containing angle brackets, as an AI draft or an old ZIP supplies it
+        WHEN it is stored through the import path
+        THEN it is escaped, not fed to the tag allow-list
+
+        nh3 would drop "<5 minutes" as an unknown tag; escaping is what keeps the
+        creator's sentence intact.
+        """
+        from survey.html_sanitize import coerce_creator_html
+
+        self.assertEqual(coerce_creator_html('takes <5 minutes & counting'),
+                         'takes &lt;5 minutes &amp; counting')
+
+    def test_script_is_stripped_from_subtext_of_any_type(self):
+        """
+        GIVEN a subtext on an ordinary question carrying a script tag
+        WHEN it is saved
+        THEN the script is gone — subtext renders |safe for every type now
+        """
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+            {'name': 'Trap', 'input_type': 'text', 'color': '#000000',
+             'subtext': '<p>hi</p><script>alert(1)</script>'},
+        )
+
+        q = Question.objects.get(survey_section=self.section, name='Trap')
+        self.assertNotIn('<script>', q.subtext)
+        self.assertIn('<p>hi</p>', q.subtext)
+
+    def test_section_subheading_is_sanitized_on_save(self):
+        """
+        GIVEN a section subheading containing a script
+        WHEN the section panel saves it
+        THEN the stored subheading keeps the formatting and drops the script
+
+        The subheading was already rendered |safe before it had an editor, so
+        this closes a hole rather than opening one.
+        """
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/',
+            {'title': 'Section 1', 'code': 'S1',
+             'subheading': '<p>Map the <em>hot</em> spots</p><script>alert(1)</script>'},
+        )
+
+        self.section.refresh_from_db()
+        self.assertNotIn('<script>', self.section.subheading)
+        self.assertIn('<em>hot</em>', self.section.subheading)
+
+    def test_editor_ships_the_subtext_and_subheading_editors(self):
+        """
+        GIVEN the question dialog and the section panel
+        WHEN they render
+        THEN each carries its rich-text mount
+
+        Server-side assertions above pass just as well against the old plain
+        inputs; this is what fails if the editor stops being wired up.
+        """
+        dialog = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/'
+        ).content.decode()
+        panel = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/'
+        ).content.decode()
+
+        self.assertIn('id="subtext-quill"', dialog)
+        self.assertIn('id="section-subheading-quill"', panel)
+

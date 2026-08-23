@@ -85,6 +85,25 @@ Organization
 
 **Question Types**: `text`, `text_line`, `number`, `choice`, `multichoice`, `range`, `rating`, `datetime`, `point`, `line`, `polygon`, `image`, `html`
 
+**Creator rich text (`Question.subtext`, `SurveySection.subheading`, `SurveyHeader.thanks_html`)**:
+everything a creator writes in their own words is authored in Quill and rendered to respondents as
+markup. All of it is unbounded `TextField` and all of it passes `survey/html_sanitize.py` on the way
+in — `QuestionForm.clean()`, `SurveySectionForm.clean_subheading()`, the translation savers in
+`editor_views.py`, `serialization._import_rich_text()` (ZIP import, which is also how AI generation
+writes), and `editor_question_preview_live` so the preview equals what a save keeps. **A new way to
+write these fields must go through the same helper**; the allow-list is what stands between a
+creator and stored XSS on every respondent.
+
+Use `coerce_creator_html`, not `sanitize_creator_html`, anywhere a value might not be from an
+editor. These fields hold plain text from before the editors existed (old rows, old ZIPs, AI
+drafts), and `nh3` would read "takes <5 minutes" as an unknown tag and delete it; `coerce_` escapes
+what carries no creator markup and sanitizes what does. Migration `0056` did the same one-off pass
+over the rows already in the database.
+
+The **Formatted Text block (`html`)** is the extreme case: it collects nothing and its `subtext` IS
+the whole body, rendered `|safe` in `html_text.html`. `Question.name` for `html` and `image` is an
+editor-only label that never reaches the respondent (see the `question-subtext` spec).
+
 **Hierarchical Questions/Answers**: Both Question and Answer models support self-referential parent relationships via `parent_question_id` and `parent_answer_id` for conditional sub-questions.
 
 **Session Management**: Survey sessions are created on first section view and tracked via `request.session['survey_session_id']`.
@@ -94,6 +113,25 @@ Organization
 - CSV file for non-geographic data
 
 **Public results page**: Creators expose aggregated results at `/r/<slug>/` via `PublicResultsPage` (1:1 with `SurveyHeader`) + ordered `PublicResultsBlock`s. Config tab at `/editor/surveys/<uuid>/public-results/`. Rendering logic in `survey/public_results.py` (`PublicResultsService`, `render_page_data`, `freeze_page`/`unfreeze_page`); editor views in `survey/public_results_editor.py`. Aggregates run over CLEAN sessions only (not deleted, excludes `not_approved`/`on_hold`) across the canonical survey + all versions. Privacy: k-anonymity masks buckets `<K` (default 3); geo popups expose only creator-selected `geo_label_fields`; individual free-text answers are never published. Hybrid `live` (60s cache) vs `frozen` (snapshot) mode. Visibility `public` (indexed, in sitemap) vs `unlisted` (noindex). The page config is intentionally NOT included in survey ZIP export/import.
+
+**Mobile-adaptive layouts (two kill switches)**: `MOBILE_EDITOR_NAV` gives the editor
+two-level contextual navigation below 768px: top strip = page tabs, bottom bar = panes of
+the active page — Survey and Public results share the Structure/Edit/Preview vocabulary,
+Responses gets Table/Map/Charts/Perf (chrome in `editor/partials/_mobile_nav.html` +
+`css/editor-mobile.css` + `js/editor_mobile_nav.js`; double-gated by the
+`mobile-nav-enabled` body class AND the media query, so desktop is untouched; the Preview
+pane is a full-screen overlay with a back button). `EDITOR_AUTOSAVE` replaces Save/Apply on
+question EDIT forms with debounced autosave + a loud saved/saving/error indicator on ALL
+viewports (autosave POSTs carry `autosave=1`, validation errors return 422 JSON so the
+typed-in form is never re-rendered); new-question forms keep an explicit Create button.
+Both default ON since PR #108 (owner decision); setting the env var to
+False serves the pre-change layout, which is the rollback story. The RESPONDENT
+survey page was deliberately left as-is: a bottom-sheet variant was built, reviewed and
+REMOVED (2026-08-23) — the owner kept the legacy panel/crosshair flow; do not reintroduce
+a sheet without an explicitly approved respondent-flow mockup. Touch reorder uses
+SortableJS `delay:300 + delayOnTouchOnly` (long-press) — do not add ▲▼ reorder buttons.
+Leaflet.draw tooltips pick tap-phrased strings via `pointer: coarse`
+(`survey/templatetags/i18n_extras.py`).
 
 **Registration abuse prevention**: `/accounts/register/` is served by `AbuseProtectedRegistrationView` (subclass of `AsyncEmailRegistrationView`). Three layered defenses run in order: honeypot field `website` (silent fake-success redirect), per-IP rate limit (`django-ratelimit`, fail-open on Redis outage), Cloudflare Turnstile siteverify (fail-closed on network error, dev-bypass when `TURNSTILE_SECRET_KEY=""`). Helpers in `survey/abuse.py`. Audit log in `AbuseEvent` model. Real client IP via `survey.middleware.CloudflareIPMiddleware` reading `CF-Connecting-IP` only when `CLOUDFLARE_TRUSTED=True`.
 

@@ -33,6 +33,18 @@ def i18n_json():
         'clickToContinueLine': _('Click to continue drawing the line.'),
         'clickLastPointToFinish': _('Click the last point to finish the line.'),
 
+        # Touch variants: on coarse pointers "click" instructions describe an
+        # interaction that does not exist (audit finding — the map ignores taps
+        # until a tool is active). The template picks these via pointer:coarse.
+        'tapToPlaceMarker': _('Move the map to position the pin, then press Apply.'),
+        'tapToStartShape': _('Tap to add the shape’s corners.'),
+        'tapToContinueShape': _('Tap to add the next corner.'),
+        'tapFirstPointToClose': _('Tap the first point to close the shape.'),
+        'tapToStartLine': _('Tap to start the line.'),
+        'tapToContinueLine': _('Tap to add the next point.'),
+        'tapLastPointToFinish': _('Tap the last point to finish the line.'),
+
+
         # Error messages
         'shapeEdgesCannotIntersect': _('<strong>Error:</strong> Shape edges cannot intersect!'),
 
@@ -40,5 +52,14 @@ def i18n_json():
         'searchAddress': _('Search address...'),
         'noResultsFound': _('No results found'),
         'searchFailed': _('Search failed — check your connection and try again.'),
+
+        # Multi-feature geo questions
+        'addAnother': _('Add another'),
+        'upToNMore': _('up to {n} more'),
+        'maximumReachedHint': _('Maximum reached — remove one below to change it.'),
+        'nMarked': _('{n} marked'),
+        'nOfMMarked': _('{n} of {m} marked'),
+        'atLeastNRequired': _('at least {n} required'),
+        'allMarkedThanks': _('All {m} marked — thank you!'),
     }
     return mark_safe(json.dumps(translations, ensure_ascii=False))

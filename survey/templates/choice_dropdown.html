@@ -1,0 +1,99 @@
+<div class="choice-dropdown" data-choice-dropdown>
+    <input type="text" class="form-control cd-search" autocomplete="off"
+           role="combobox" aria-expanded="false" aria-haspopup="listbox"
+           placeholder="Type to search…" value="{{ widget.selected_label }}">
+    <select name="{{ widget.name }}" class="cd-select" hidden
+            {% for name, value in widget.attrs.items %}{% if value is not False %} {{ name }}{% if value is not True %}="{{ value|stringformat:'s' }}"{% endif %}{% endif %}{% endfor %}>
+        {% for group_name, group_choices, group_index in widget.optgroups %}{% for option in group_choices %}
+        <option value="{{ option.value|stringformat:'s' }}"{% if option.selected %} selected{% endif %}></option>
+        {% endfor %}{% endfor %}
+    </select>
+    <ul class="cd-list" role="listbox" hidden>
+        {% for group_name, group_choices, group_index in widget.optgroups %}{% for option in group_choices %}
+        <li class="cd-option" role="option" data-value="{{ option.value|stringformat:'s' }}"
+            {% if option.selected %}aria-selected="true"{% endif %}>{{ option.label }}</li>
+        {% endfor %}{% endfor %}
+    </ul>
+</div>
+<script>
+(function () {
+    if (window._choiceDropdownBound) return;
+    window._choiceDropdownBound = true;
+
+    function root(el) { return el.closest('[data-choice-dropdown]'); }
+    function items(box) { return box.querySelectorAll('.cd-option'); }
+
+    function openList(box) {
+        box.querySelector('.cd-list').hidden = false;
+        box.querySelector('.cd-search').setAttribute('aria-expanded', 'true');
+    }
+    function closeList(box) {
+        box.querySelector('.cd-list').hidden = true;
+        box.querySelector('.cd-search').setAttribute('aria-expanded', 'false');
+        items(box).forEach(function (li) { li.classList.remove('cd-active'); });
+    }
+    function filterList(box, term) {
+        term = term.trim().toLowerCase();
+        items(box).forEach(function (li) {
+            li.hidden = term !== '' && li.textContent.toLowerCase().indexOf(term) === -1;
+        });
+    }
+    function pick(box, li) {
+        box.querySelector('.cd-select').value = li.dataset.value;
+        box.querySelector('.cd-search').value = li.textContent.trim();
+        items(box).forEach(function (o) { o.removeAttribute('aria-selected'); });
+        li.setAttribute('aria-selected', 'true');
+        closeList(box);
+    }
+    function activeItem(box) { return box.querySelector('.cd-option.cd-active'); }
+    function visibleItems(box) {
+        return Array.prototype.filter.call(items(box), function (li) { return !li.hidden; });
+    }
+
+    document.addEventListener('focusin', function (e) {
+        if (e.target.classList && e.target.classList.contains('cd-search')) {
+            var box = root(e.target);
+            filterList(box, '');
+            openList(box);
+        }
+    });
+    document.addEventListener('input', function (e) {
+        if (e.target.classList && e.target.classList.contains('cd-search')) {
+            var box = root(e.target);
+            // Free text invalidates the previous pick until an option is chosen
+            // again, so a stale value can never ride under edited text.
+            box.querySelector('.cd-select').value = '';
+            filterList(box, e.target.value);
+            openList(box);
+        }
+    });
+    document.addEventListener('click', function (e) {
+        var li = e.target.closest && e.target.closest('.cd-option');
+        if (li) { pick(root(li), li); return; }
+        document.querySelectorAll('[data-choice-dropdown]').forEach(function (box) {
+            if (!box.contains(e.target)) closeList(box);
+        });
+    });
+    document.addEventListener('keydown', function (e) {
+        if (!(e.target.classList && e.target.classList.contains('cd-search'))) return;
+        var box = root(e.target);
+        var vis = visibleItems(box);
+        if (!vis.length) return;
+        var cur = activeItem(box);
+        var idx = cur ? vis.indexOf(cur) : -1;
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            openList(box);
+            if (cur) cur.classList.remove('cd-active');
+            idx = e.key === 'ArrowDown' ? Math.min(idx + 1, vis.length - 1) : Math.max(idx - 1, 0);
+            vis[idx].classList.add('cd-active');
+            vis[idx].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Enter') {
+            if (cur) { e.preventDefault(); pick(box, cur); }
+            else if (vis.length === 1) { e.preventDefault(); pick(box, vis[0]); }
+        } else if (e.key === 'Escape') {
+            closeList(box);
+        }
+    });
+})();
+</script>

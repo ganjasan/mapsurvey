@@ -25,6 +25,7 @@ lifecycle actions, always visible across section editing and the settings
 panel (moved out of the top navbar). The read-only banner is folded in:
 when the published survey is read-only the bar goes amber and carries the
 "edit a draft" action.{% endcomment %}
+{% if not MOBILE_EDITOR_NAV %}
 {% if is_read_only and not survey.is_draft_copy %}
 <div class="pr-ctxbar build-ctxbar" style="flex-shrink:0;">
     <div style="flex:1;display:flex;align-items:center;gap:.6rem;min-width:0;">
@@ -46,7 +47,7 @@ when the published survey is read-only the bar goes amber and carries the
         {% endif %}
     </div>
     <div style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:.6rem;">
-        <a class="btn btn-sm btn-outline-secondary" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
+        <a class="btn btn-sm btn-outline-secondary ctx-preview-btn" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
             <i class="fas fa-external-link-alt"></i> Preview
         </a>
         {% include "editor/partials/_survey_primary_action.html" %}
@@ -57,10 +58,10 @@ when the published survey is read-only the bar goes amber and carries the
     <span class="ico"><i class="fas fa-hammer"></i></span>
     <div>
         <div class="t">Survey</div>
-        <div class="s">Sections, questions &amp; survey settings</div>
+        <div class="s">{% if survey.status == 'draft' %}Draft — not collecting responses{% elif survey.status == 'testing' %}Testing — invite-link access{% elif survey.status == 'published' %}Open · {{ session_count }} response{{ session_count|pluralize }}{% elif survey.status == 'closed' %}Closed · {{ session_count }} response{{ session_count|pluralize }}{% else %}Sections, questions &amp; survey settings{% endif %}</div>
     </div>
     <span style="flex:1;"></span>
-    <a class="btn btn-sm btn-outline-secondary" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
+    <a class="btn btn-sm btn-outline-secondary ctx-preview-btn" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
         <i class="fas fa-external-link-alt"></i> Preview
     </a>
     {% if show_draft_actions %}
@@ -81,8 +82,143 @@ when the published survey is read-only the bar goes amber and carries the
     {% endif %}
 </div>
 {% endif %}
+{% endif %}
 
-<div class="editor-container" style="flex:1;min-height:0;">
+{% if MOBILE_EDITOR_NAV %}
+{% comment %}Status line (variant C, approved mockup): replaces the ctx-bar
+below 768px. Text explains the state; the primary action follows the status —
+draft/testing lead to publish/test-sharing, published leads to Share (the top
+action in PostHog data) and an intent-named Edit that runs the new-version
+flow.{% endcomment %}
+<div class="mobile-statusbar" style="flex-shrink:0;">
+    <span class="msb-ico"><i class="fas fa-hammer"></i></span>
+    <div class="msb-titleblock"><div class="msb-title">Survey</div></div>
+    {% comment %}The status chip (colored, opens the lifecycle menu) sits next
+    to the tab title — it describes this tab's entity. Approved pr-parity
+    mockup dropped the secondary text line.{% endcomment %}
+    {% include "editor/partials/_publishing_widget.html" %}
+    <span class="msb-spacer" style="flex:1;min-width:0;"></span>
+    {% if survey.is_draft_copy %}
+    <button class="msb-btn msb-green" onclick="checkAndPublishDraft()">🌐 Publish</button>
+    {% elif survey.status == 'draft' %}
+    <button class="msb-btn msb-green" onclick="doTransition('published')">🌐 Publish</button>
+    {% elif survey.status == 'testing' %}
+    <button class="msb-btn msb-amber" onclick="openTestSheet()">🔗 Share test link</button>
+    {% elif survey.status == 'published' or survey.status == 'closed' %}
+    {% comment %}Explicit Edit = clear intent, act directly. The explanatory
+    intercept sheet is reserved for clicks on the disabled editing surface.{% endcomment %}
+    {% if draft_copy %}
+    <a class="msb-btn msb-outline" href="{% url 'editor_survey_detail' draft_copy.uuid %}">✎ Edit</a>
+    {% elif show_back_to_draft %}
+    <button class="msb-btn msb-outline" onclick="doTransition('draft')">✎ Edit</button>
+    {% elif show_edit_published %}
+    <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" style="display:contents;">
+        {% csrf_token %}
+        <button type="submit" class="msb-btn msb-outline">✎ Edit</button>
+    </form>
+    {% endif %}
+    <a class="msb-btn msb-indigo" href="{% url 'editor_survey_share' survey.uuid %}">🔗 Share</a>
+    {% endif %}
+    <a class="msb-btn msb-outline msb-desktop" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Take the survey the way a respondent will — real page, real map, real submit">↗ Open as respondent</a>
+    {% if is_owner %}
+    <div class="dropdown msb-desktop" style="flex:0 0 auto;">
+        <button class="msb-btn msb-outline" data-toggle="dropdown" aria-label="More survey actions">⋯</button>
+        <div class="dropdown-menu dropdown-menu-right">
+            {% if show_draft_actions %}
+            <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftModal"><i class="fas fa-trash" style="margin-right:4px;"></i>Discard draft</a>
+            {% elif survey.status == 'draft' and not survey.is_draft_copy %}
+            <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftSurveyModal"><i class="fas fa-trash" style="margin-right:4px;"></i>Discard survey</a>
+            {% else %}
+            <span class="dropdown-item text-muted" style="pointer-events:none;">No extra actions</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if survey.status == 'testing' %}
+<div class="mobile-sheet" id="testSheet" hidden>
+  <div class="mobile-sheet-backdrop" onclick="closeMobileSheet('testSheet')"></div>
+  <div class="mobile-sheet-panel">
+    <div class="mobile-sheet-title">Test mode</div>
+    <div class="msb-linkrow">
+      <input readonly id="testLinkInput" value="{{ request.scheme }}://{{ request.get_host }}{% url 'survey' survey_slug=survey.uuid %}?token={{ survey.test_token }}">
+      <button class="msb-btn msb-indigo" onclick="copyTestLink(this)">Copy</button>
+    </div>
+    <form class="msb-passrow"
+          hx-post="{% url 'editor_survey_password' survey.uuid %}"
+          hx-vals='{"action": "set"}'
+          hx-swap="none"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+      <label>Access password</label>
+      <div class="msb-passline">
+        <input name="password" type="text" autocomplete="off"
+               placeholder="{% if survey.has_password %}Set — link is protected{% else %}Not set — anyone with the link can open it{% endif %}">
+        <button type="submit" class="msb-btn msb-outline">Save</button>
+      </div>
+    </form>
+    <div class="mobile-sheet-help">
+      Take the survey yourself and send the link to colleagues — before going
+      public. Test responses can be cleared with one switch when you publish.
+    </div>
+    <button class="msb-btn msb-green msb-full" onclick="closeMobileSheet('testSheet'); showPublishConfirm()">🌐 Publish — open for everyone</button>
+  </div>
+</div>
+{% endif %}
+
+{% if is_read_only and not survey.is_draft_copy %}
+<div class="mobile-sheet" id="editIntercept" hidden>
+  <div class="mobile-sheet-backdrop" onclick="closeMobileSheet('editIntercept')"></div>
+  <div class="mobile-sheet-panel">
+    <div class="mobile-sheet-title">This survey is live and collecting responses</div>
+    <div class="mobile-sheet-help" style="margin-top:0;">
+      Edits are made in a new version. The current version keeps collecting
+      until you publish the update.
+    </div>
+    {% if draft_copy %}
+    <a class="msb-btn msb-indigo msb-full" href="{% url 'editor_survey_detail' draft_copy.uuid %}">Continue editing the draft →</a>
+    {% elif show_back_to_draft %}
+    <button class="msb-btn msb-indigo msb-full" onclick="doTransition('draft')">Back to editing</button>
+    {% elif show_edit_published %}
+    <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" style="margin:0;">
+        {% csrf_token %}
+        <button type="submit" class="msb-btn msb-indigo msb-full">Open a new version</button>
+    </form>
+    {% endif %}
+    <button class="msb-btn msb-ghost msb-full" onclick="closeMobileSheet('editIntercept')">Cancel</button>
+  </div>
+</div>
+<style>
+  /* Let clicks on disabled controls land on their wrapper so the intercept
+     below can catch them — disabled elements swallow clicks otherwise. */
+  #editor-main [disabled], .sidebar-footer [disabled] { pointer-events: none; }
+</style>
+<script>
+document.addEventListener('click', function (e) {
+    if (!e.target.closest || e.target.closest('.mobile-sheet, .modal')) return;
+    var editIntent = e.target.closest(
+        '#editor-main .form-group, #editor-main .question-item, ' +
+        '#editor-main .add-question-btn, #editor-main .section-form-card > h6, ' +
+        '.sidebar-footer .add-question-btn, .sidebar-footer'
+    );
+    if (editIntent) { e.preventDefault(); openEditIntercept(); }
+}, true);
+</script>
+{% endif %}
+
+<script>
+function openTestSheet() { var el = document.getElementById('testSheet'); if (el) el.hidden = false; }
+function openEditIntercept() { var el = document.getElementById('editIntercept'); if (el) el.hidden = false; }
+function closeMobileSheet(id) { var el = document.getElementById(id); if (el) el.hidden = true; }
+function copyTestLink(btn) {
+    var inp = document.getElementById('testLinkInput');
+    if (navigator.clipboard) navigator.clipboard.writeText(inp.value); else { inp.select(); document.execCommand('copy'); }
+    var old = btn.textContent; btn.textContent = '✓'; setTimeout(function(){ btn.textContent = old; }, 1200);
+}
+</script>
+{% endif %}
+
+<div class="editor-container" style="flex:1;min-height:0;" data-active-pane="structure">
     <!-- Sidebar expand tab (visible when collapsed) -->
     <div class="panel-expand-tab" id="sidebar-expand" title="Show sections">
         <i class="fas fa-chevron-right"></i> Sections
@@ -188,7 +324,7 @@ when the published survey is read-only the bar goes amber and carries the
     <!-- Right Panel: Live Preview -->
     <aside class="editor-preview" id="editor-preview">
         <div class="preview-header">
-            <span>Preview</span>
+            <span>Live preview</span>
             {% if survey.available_languages %}
             <select id="preview-lang" style="border:1px solid var(--border-color);border-radius:4px;padding:2px 6px;font-size:0.75rem;color:#374151;background:#fff;outline:none;text-transform:uppercase;cursor:pointer;">
                 {% for lang in survey.available_languages %}
@@ -206,6 +342,8 @@ when the published survey is read-only the bar goes amber and carries the
     </aside>
 </div>
 </div><!-- /editor-content-wrapper -->
+
+{% include "editor/partials/_mobile_nav.html" with pane_context="survey" %}
 
 <!-- Question Form Modal -->
 <div class="modal fade editor-modal" id="questionModal" tabindex="-1">
@@ -266,6 +404,11 @@ document.addEventListener('DOMContentLoaded', function() {
         Sortable.create(sectionsList, {
             animation: 150,
             handle: '.drag-handle',
+            // Touch: long-press activates the drag so scrolling stays natural
+            // (openspec: mobile-adaptive-refactor). No effect with a mouse.
+            delay: 300,
+            delayOnTouchOnly: true,
+            touchStartThreshold: 4,
             onEnd: function() {
                 var ids = Array.from(sectionsList.children).map(function(el) {
                     return el.dataset.sectionId;
@@ -278,16 +421,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     body: JSON.stringify({ section_ids: ids })
                 });
-                // Move HEAD badge to the first section
+                // The HEAD badge is retired — just clear any leftover one.
                 sectionsList.querySelectorAll('.badge-info').forEach(function(b) { b.remove(); });
-                var first = sectionsList.children[0];
-                if (first) {
-                    var badge = document.createElement('span');
-                    badge.className = 'badge badge-info';
-                    badge.style.fontSize = '0.65rem';
-                    badge.textContent = 'HEAD';
-                    first.querySelector('.section-title').after(badge);
-                }
             }
         });
     }
@@ -449,16 +584,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // After section delete, update HEAD badge and load first remaining section
+    // After section delete, load the first remaining section (the HEAD badge
+    // is retired — clear any leftover one).
     document.body.addEventListener('sectionDeleted', function() {
         sectionsList.querySelectorAll('.badge-info').forEach(function(b) { b.remove(); });
         var first = document.querySelector('.section-item');
         if (first) {
-            var badge = document.createElement('span');
-            badge.className = 'badge badge-info';
-            badge.style.fontSize = '0.65rem';
-            badge.textContent = 'HEAD';
-            first.querySelector('.section-title').after(badge);
             first.click();
         } else {
             document.getElementById('section-content').innerHTML =
@@ -490,6 +621,9 @@ document.addEventListener('DOMContentLoaded', function() {
         listEl._sortable = Sortable.create(listEl, {
             animation: 150,
             handle: '.drag-handle',
+            delay: 300,
+            delayOnTouchOnly: true,
+            touchStartThreshold: 4,
             onEnd: function() {
                 var ids = Array.from(listEl.children).map(function(el) {
                     return el.dataset.questionId;

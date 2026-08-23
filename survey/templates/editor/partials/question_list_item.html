@@ -2,7 +2,7 @@
     <div class="question-item-row">
         <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
         <span class="q-name">{{ question.name|default:"(unnamed)" }}</span>
-        <span class="badge badge-secondary">{{ question.get_input_type_display }}</span>
+        <span class="badge badge-secondary">{{ question|input_type_label }}</span>
         {% if question.required %}<span class="badge badge-danger">Required</span>{% endif %}
         {% with missing=question|question_missing_langs:survey %}{% if missing %}
         <span class="badge badge-warning" title="Missing translations — respondents in these languages will see {{ survey.available_languages.0|language_name }} text">

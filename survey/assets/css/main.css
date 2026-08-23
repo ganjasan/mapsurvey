@@ -661,6 +661,69 @@ ul {
   color: var(--text-secondary);
 }
 
+/* --- Multi-feature affordance --- */
+.drawbutton.geo-armed {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.drawbutton:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.drawbutton:disabled:hover {
+  background: var(--card-bg);
+  box-shadow: none;
+  border-color: var(--card-border);
+}
+
+.geo-count {
+  flex-shrink: 0;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 8px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+.geo-count.visible {
+  display: inline-flex;
+}
+
+/* Progress sits INSIDE the button (so it is obvious which question it belongs
+   to) and renders only when the creator set min/max features */
+.geo-progress {
+  display: none;
+  margin: 6px 0 0;
+  font-size: 0.78em;
+  color: var(--text-secondary);
+  text-align: left;
+}
+.geo-progress.visible {
+  display: block;
+}
+.geo-progress-bar {
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.07);
+  margin-top: 4px;
+  overflow: hidden;
+}
+.geo-progress-bar > div {
+  height: 100%;
+  width: 0%;
+  border-radius: 4px;
+  transition: width 0.25s ease, background 0.25s ease;
+}
+.geo-progress.geo-progress-met .geo-progress-bar > div {
+  background: var(--success) !important;
+}
+
 /* ============================================
    Layer popup controls
    ============================================ */
@@ -1317,3 +1380,28 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
 }
 
 .ranking__empty i { margin-right: 6px; color: #adb5bd; }
+
+/* Searchable dropdown for choice questions (display_style = "dropdown") */
+.choice-dropdown { position: relative; }
+.choice-dropdown .cd-list {
+    position: absolute;
+    z-index: 1100;
+    left: 0; right: 0;
+    margin: 2px 0 0;
+    padding: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+.choice-dropdown .cd-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+.choice-dropdown .cd-option:hover,
+.choice-dropdown .cd-option.cd-active { background: #eef0ff; }
+.choice-dropdown .cd-option[aria-selected="true"] { font-weight: 600; }

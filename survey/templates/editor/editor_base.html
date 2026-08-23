@@ -23,6 +23,23 @@
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js" crossorigin="anonymous"></script>
     <script src="{% static 'js/editor_dialog.js' %}"></script>
     <script src="{% static 'js/editor_clipboard.js' %}"></script>
+    {% if MOBILE_EDITOR_NAV %}
+    {% comment %}Dev-only cache-buster: DEBUG serves unhashed static, and stale
+    copies of exactly these files produced three phantom layout bugs in one
+    review day. In production the manifest hash does this properly.{% endcomment %}
+    <link rel="stylesheet" href="{% static 'css/editor-mobile.css' %}{% if debug %}?t={% now 'U' %}{% endif %}">
+    <script src="{% static 'js/editor_mobile_nav.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
+    {% endif %}
+    {% if EDITOR_AUTOSAVE %}
+    <script src="{% static 'js/editor_autosave.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
+    <style>
+        .autosave-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #6b7280; }
+        .autosave-indicator .autosave-dot { font-size: 0.55rem; color: #198754; }
+        .autosave-indicator[data-state="saving"] .autosave-dot { color: #f59e0b; }
+        .autosave-indicator[data-state="error"] { color: #b91c1c; font-weight: 600; cursor: pointer; }
+        .autosave-indicator[data-state="error"] .autosave-dot { color: #dc2626; }
+    </style>
+    {% endif %}
     <style>
         :root {
             --accent: #4f46e5;
@@ -202,9 +219,38 @@
         /* Thanks-page editor (Quill) */
         #thanks-quill { background: #fff; border-radius: 0 0 var(--radius) var(--radius); }
         #thanks-quill .ql-editor { min-height: 180px; font-size: .95rem; }
+        /* Formatted Text block editor (Quill), inside the question dialog */
+        #html-body-quill { background: #fff; border-radius: 0 0 var(--radius) var(--radius); }
+        #html-body-quill .ql-editor { min-height: 160px; font-size: .95rem; }
+        /* Subtext / subheading: a helper line, so the box stays close to the
+           height of the one-line input it replaces. The explicit height is
+           required — Quill's snow theme sets `.ql-container { height: 100% }`,
+           which against an auto-height parent collapses to "as tall as the
+           panel" rather than "as tall as the content". */
+        /* Note the attached selectors: Quill turns the element you mount it on
+           INTO the .ql-container, so `#subtext-quill .ql-container` matches
+           nothing. */
+        #subtext-quill.ql-container,
+        #section-subheading-quill.ql-container,
+        #html-body-quill.ql-container,
+        .translation-quill-wrap .ql-container,
+        .subheading-quill-wrap .ql-container { height: auto; background: #fff; }
+        /* `height: auto` is the load-bearing part: Quill's own stylesheet sets
+           `.ql-editor { height: 100% }`, which here resolves against the editor
+           panel and produces a text box hundreds of pixels tall. These boxes
+           grow with their content instead. */
+        #subtext-quill .ql-editor,
+        #section-subheading-quill .ql-editor { height: auto; min-height: 62px; font-size: .9rem; }
+        .translation-quill-wrap .ql-editor,
+        .subheading-quill-wrap .ql-editor { height: auto; min-height: 52px; font-size: .85rem; }
+        #html-body-quill .ql-editor { height: auto; }
+        /* Toolbar dropdowns (heading, alignment) must escape the dialog's own
+           scroll container, or they open clipped and unusable. */
+        #questionModal .ql-toolbar { z-index: 2; }
+        #questionModal .ql-picker-options { z-index: 3; }
         .thanks-lang-tab { border: 1px solid var(--border-color); background: #fff; color: #6b7280; border-radius: 6px; padding: .2rem .6rem; font-size: .8rem; cursor: pointer; }
         .thanks-lang-tab.active { border-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 500; }
-        .pr-scroll { padding: 1.25rem 1.5rem; max-width: 720px; }
+        .pr-scroll { padding: 1.25rem 1.5rem; }
         .pr-card { background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin-bottom: 1.1rem; }
         .pr-card h6 { font-weight: 600; font-size: .95rem; margin: 0 0 .9rem; }
         .pr-field { margin-bottom: .85rem; }
@@ -787,10 +833,10 @@
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body{% if MOBILE_EDITOR_NAV %} class="mobile-nav-enabled"{% endif %}>
     {% block navbar %}
     <div class="editor-navbar">
-        <a href="{% url 'editor' %}"><i class="fas fa-arrow-left"></i> Dashboard</a>
+        <a href="{% url 'editor' %}"><i class="fas fa-arrow-left"></i><span class="nav-desktop"> Dashboard</span></a>
         {% block navbar_content %}{% endblock %}
         <span class="spacer"></span>
         <!-- Clipboard status pill — populated by editor_clipboard.js -->
@@ -803,7 +849,39 @@
             </button>
         </div>
         {% if user.is_authenticated %}
-            <div class="dropdown d-inline">
+            {% if MOBILE_EDITOR_NAV %}
+            {% comment %}Mobile ⋯ overflow — absorbs the account items the one-row
+            toolbar hides (design D2). display gated by editor-mobile.css.{% endcomment %}
+            <div class="dropdown navbar-overflow">
+                <a href="#" role="button" data-toggle="dropdown" aria-label="More actions">
+                    <i class="fas fa-ellipsis-h"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">
+                    {% if survey %}
+                    {% comment %}Survey-scoped items first (audit: Share was
+                    unreachable on phones). Discard reuses the state-appropriate
+                    modal already present on the page.{% endcomment %}
+                    <a class="dropdown-item" href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-share-alt" style="margin-right:4px;"></i>Share…</a>
+                    <a class="dropdown-item" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank"><i class="fas fa-external-link-alt" style="margin-right:4px;"></i>Open as respondent</a>
+                    {% if show_draft_actions %}
+                    <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftModal"><i class="fas fa-trash" style="margin-right:4px;"></i>Discard draft</a>
+                    {% elif is_owner and survey.status == 'draft' and not survey.is_draft_copy %}
+                    <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftSurveyModal"><i class="fas fa-trash" style="margin-right:4px;"></i>Discard survey</a>
+                    {% endif %}
+                    <div class="dropdown-divider"></div>
+                    {% endif %}
+                    <h6 class="dropdown-header">{{ user.get_username }} · {{ active_org.name|default:"No organization" }}</h6>
+                    {% if active_org %}
+                    <a class="dropdown-item" href="{% url 'org_settings' active_org.slug %}"><i class="fas fa-cog" style="margin-right:4px;"></i>Organization settings</a>
+                    <a class="dropdown-item" href="{% url 'org_members' active_org.slug %}"><i class="fas fa-users" style="margin-right:4px;"></i>Members</a>
+                    {% endif %}
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>Help &amp; support</a>
+                    <a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt" style="margin-right:4px;"></i>Logout</a>
+                </div>
+            </div>
+            {% endif %}
+            <div class="dropdown d-inline nav-desktop">
                 <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" style="color:#6b7280;font-size:0.85rem;text-decoration:none;">
                     <i class="fas fa-building" style="margin-right:4px;"></i>{{ active_org.name|default:"No organization" }}
                 </a>
@@ -821,10 +899,14 @@
                     <a class="dropdown-item" href="{% url 'org_settings' active_org.slug %}"><i class="fas fa-cog" style="margin-right:4px;"></i>Settings</a>
                     <a class="dropdown-item" href="{% url 'org_members' active_org.slug %}"><i class="fas fa-users" style="margin-right:4px;"></i>Members</a>
                     {% endif %}
+                    {% if MOBILE_EDITOR_NAV %}
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>Help &amp; support</a>
+                    {% endif %}
                 </div>
             </div>
-            <span style="color:#9ca3af;font-size:0.85rem;">{{ user.get_username }}</span>
-            <a href="{% url 'logout' %}" style="font-size:0.85rem;">Logout</a>
+            <span class="nav-desktop" style="color:#9ca3af;font-size:0.85rem;">{{ user.get_username }}</span>
+            <a class="nav-desktop" href="{% url 'logout' %}" style="font-size:0.85rem;">Logout</a>
         {% endif %}
     </div>
     {% endblock %}
@@ -903,6 +985,30 @@
     <script type="text/javascript">
     var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
     Tawk_API.onLoad = function(){ Tawk_API.minimize(); };
+    {% if MOBILE_EDITOR_NAV %}
+    // No floating bubble on working surfaces (owner decision): support opens
+    // via "Help & support" in the ⋯ / account menus. autoStart=false keeps
+    // the widget from rendering (and connecting) until asked — hiding in
+    // onLoad instead flashed the bubble briefly after page load.
+    Tawk_API.autoStart = false;
+    Tawk_API.onLoad = function(){ if (!window._tawkWanted) Tawk_API.hideWidget(); };
+    Tawk_API.onChatMinimized = function(){ Tawk_API.hideWidget(); };
+    window.openSupportChat = function(e){
+        if (e) e.preventDefault();
+        window._tawkWanted = true;
+        function reveal() {
+            if (window.Tawk_API && Tawk_API.showWidget && Tawk_API.maximize) {
+                Tawk_API.showWidget(); Tawk_API.maximize(); return true;
+            }
+            return false;
+        }
+        if (window.Tawk_API && Tawk_API.start) { try { Tawk_API.start(); } catch (err) {} }
+        if (!reveal()) {
+            var t = setInterval(function(){ if (reveal()) clearInterval(t); }, 300);
+            setTimeout(function(){ clearInterval(t); }, 10000);
+        }
+    };
+    {% endif %}
     (function(){
     var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
     s1.async=true;

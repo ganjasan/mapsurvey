@@ -144,16 +144,26 @@
 <div class="create-wrap">
   <div class="pr-card create-card">
     <h6 style="font-size:1.05rem;">Create New Survey</h6>
-    <form method="post" id="create-form">
+    {% comment %}novalidate with the wizard: the required name input is hidden
+    (JS fills it), and a hidden required control would make the browser refuse
+    the submit with an un-focusable-control error.{% endcomment %}
+    <form method="post" id="create-form"{% if MOBILE_EDITOR_NAV %} novalidate{% endif %}>
       {% csrf_token %}
       <div class="create-grid">
 
         <!-- Left: what is it called + actions -->
         <div class="create-left">
+          {% comment %}Wizard (openspec: mobile-adaptive-refactor, group 9): with the
+          flag on, only the NAME leaves the critical path (hidden input, JS
+          derives it from the goal). Languages stay on step 1 by owner decision:
+          creators brief in any language, and picking languages up front lets
+          the draft generate its translations immediately.{% endcomment %}
+          <div class="create-legacy-fields">
           <div class="pr-field">
             <label for="{{ form.name.id_for_label }}">Survey name</label>
             {{ form.name }}
             {% for error in form.name.errors %}<div class="text-danger" style="font-size:0.85rem;">{{ error }}</div>{% endfor %}
+          </div>
           </div>
 
           <div class="pr-field">
@@ -165,11 +175,13 @@
 
           {% if ai_available %}
           <div class="ai-panel">
+            <div class="ai-panel-intro">
             <h6><i class="fas fa-wand-magic-sparkles" style="color:var(--accent)"></i>
               Let AI draft it <span class="ai-badge">optional</span></h6>
             <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">
               Describe your project and we'll generate sections, questions and translations —
               then you edit whatever you like.
+            </div>
             </div>
 
             <div class="pr-field">
@@ -214,11 +226,15 @@
                     hx-target="#generation-slot"
                     hx-swap="innerHTML"
                     hx-disabled-elt="#generate-btn, #empty-btn">
-              <i class="fas fa-wand-magic-sparkles"></i> Generate draft
+              {% if MOBILE_EDITOR_NAV %}✨ Draft my survey{% else %}<i class="fas fa-wand-magic-sparkles"></i> Generate draft{% endif %}
             </button>
             <div class="create-actions-secondary">
-              <button type="submit" name="action" value="empty" id="empty-btn" class="btn btn-outline-secondary">Create empty</button>
+              <button type="submit" name="action" value="empty" id="empty-btn" class="btn btn-outline-secondary{% if MOBILE_EDITOR_NAV %} btn-block-row{% endif %}">{% if MOBILE_EDITOR_NAV %}Start with an empty survey{% else %}Create empty{% endif %}</button>
+              {% if not MOBILE_EDITOR_NAV %}
+              {% comment %}With the wizard chrome the navbar's "‹ Dashboard" is the
+              way out — a third button here just wraps the row.{% endcomment %}
               <a href="{% url 'editor' %}?dashboard=1" class="btn btn-outline-secondary">Cancel</a>
+              {% endif %}
             </div>
             {% else %}
             <button type="submit" name="action" value="empty" class="btn btn-primary btn-block-row">Create Survey</button>
@@ -252,6 +268,13 @@
 
         <!-- Right: the map respondents will see -->
         <div class="create-right">
+          {% if MOBILE_EDITOR_NAV %}
+          <div class="wizard-map-topbar">
+            <button type="button" class="wizard-back" onclick="wizardGoto('goal')" aria-label="Back"><i class="fas fa-chevron-left"></i></button>
+            <span class="wizard-map-title">Where?</span>
+            <span class="wizard-dots"><span class="on"></span><span class="on"></span><span></span></span>
+          </div>
+          {% endif %}
           <label style="display:block;font-size:.82rem;font-weight:500;color:#374151;margin-bottom:.15rem;">The map people will see</label>
           <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">This is <strong>exactly</strong> what respondents see when they open the survey. Drag, zoom, search, or pick a base map (top-right) to frame it — the pin marks the centre they'll land on.</div>
           <input type="hidden" name="default_basemap" id="create-default-basemap" value="streets">
@@ -267,14 +290,41 @@
           <input type="hidden" name="map_lat" id="create-map-lat" value="">
           <input type="hidden" name="map_lng" id="create-map-lng" value="">
           <input type="hidden" name="map_zoom" id="create-map-zoom" value="">
+
+          {% if MOBILE_EDITOR_NAV %}
+          <div class="wizard-map-footer">
+            {% comment %}Permanent caption, not a timed overlay: every corner of
+            the map belongs to a control, and a disappearing hint kept colliding
+            with them (usability review, H8/H10).{% endcomment %}
+            <div class="wizard-frame-caption">Respondents will open the map exactly like this</div>
+            <button type="button" id="wizard-create-btn" class="btn btn-primary btn-block-row">Create survey</button>
+          </div>
+          {% endif %}
         </div>
 
       </div>
+
+      {% if MOBILE_EDITOR_NAV %}
+      {% comment %}Step-1 footer of the wizard (<1024px). The path choice is
+      made here: primary = draft, ghost = empty; both continue to the map
+      step, where one Create button dispatches to the chosen path.{% endcomment %}
+      <div class="wizard-goal-footer">
+        {% if ai_available %}
+        <button type="button" class="btn btn-primary btn-block-row" onclick="wizardNext('draft')">Next — choose the place</button>
+        <button type="button" class="btn btn-link wizard-ghost" onclick="wizardNext('empty')">Start with an empty survey</button>
+        {% else %}
+        <button type="button" class="btn btn-primary btn-block-row" onclick="wizardNext('empty')">Next — choose the place</button>
+        {% endif %}
+      </div>
+      {% endif %}
     </form>
 
     <script>
     (function() {
         var map = L.map('create-map-picker').setView([52.52, 13.405], 12);
+        // The wizard step controller needs invalidateSize() when the map pane
+        // becomes visible (openspec: mobile-adaptive-refactor, group 9).
+        window._createMap = map;
 
         // Base map providers — identical to what respondents get (see basemap_layers.html)
         var providers = {
@@ -438,6 +488,221 @@
         sync();
     })();
     </script>
+
+    <style>
+    /* Contain the collapsed map-search icon: .map-search relies on a positioned
+       ancestor; without one the absolute icon anchored to the page card and
+       floated over the form (audit bug). Unconditional one-line fix. */
+    .create-map-search { position: relative; }
+    </style>
+
+    {% if MOBILE_EDITOR_NAV %}
+    <style>
+    /* ── Create-survey wizard (openspec: mobile-adaptive-refactor, group 9) ──
+       Gated by MOBILE_EDITOR_NAV. All widths: name/languages leave the flow
+       (inputs stay in the DOM, hidden — JS fills the name). <1024px: the page
+       runs as a wizard — step "goal" (brief) → step "map" (full screen). ≥1024:
+       merged two-column, wizard chrome hidden. */
+    body.mobile-nav-enabled .create-legacy-fields { display: none; }
+    body.mobile-nav-enabled .ai-panel-intro { display: none; }
+    body.mobile-nav-enabled .ai-panel { border-top: none; margin-top: 0; padding-top: 0; }
+    body.mobile-nav-enabled .wizard-goal-footer,
+    body.mobile-nav-enabled .wizard-map-topbar,
+    body.mobile-nav-enabled .wizard-map-footer { display: none; }
+
+    @media (max-width: 1023.98px) {
+        body.mobile-nav-enabled .create-actions { display: none; }
+
+        /* No inner form scroll on mobile (owner review): the page scrolls as a
+           whole; the desktop own-scroll column only makes sense beside a fixed
+           map. */
+        body.mobile-nav-enabled .create-left { max-height: none; overflow: visible; padding-right: 0; }
+
+        /* step: goal */
+        body.mobile-nav-enabled .create-card[data-step="goal"] .create-right { display: none; }
+        body.mobile-nav-enabled .create-card[data-step="goal"] .wizard-goal-footer {
+            display: flex; flex-direction: column; gap: 6px; margin-top: 0.9rem;
+        }
+        body.mobile-nav-enabled .wizard-ghost { color: #6b7280; font-size: 0.85rem; text-decoration: none; }
+
+        /* step: map — the pane owns the viewport */
+        body.mobile-nav-enabled .create-card[data-step="map"] .create-left { display: none; }
+        body.mobile-nav-enabled .create-card[data-step="map"] .create-right {
+            display: flex; flex-direction: column;
+            position: fixed; inset: 0; z-index: 600; background: #fff; margin: 0;
+        }
+        /* On the map step only four things exist: topbar, search, map, footer.
+           A :not() catch-all beats hunting stray labels/help blocks one by one
+           (they leaked into the fixed pane and ate the map's height).
+           !important: the legacy label carries an inline display:block. */
+        body.mobile-nav-enabled .create-card[data-step="map"] .create-right > :not(.wizard-map-topbar):not(.create-map-search):not(.create-map-wrap):not(.wizard-map-footer) { display: none !important; }
+        body.mobile-nav-enabled .create-card[data-step="map"] .wizard-map-topbar {
+            display: flex; align-items: center; gap: 10px; flex: 0 0 auto;
+            padding: 10px 14px; border-bottom: 1px solid var(--border-color);
+        }
+        body.mobile-nav-enabled .wizard-map-topbar .wizard-back {
+            width: 40px; height: 40px; border: 1px solid var(--border-color); border-radius: 8px;
+            background: #fff; color: #374151;
+        }
+        body.mobile-nav-enabled .wizard-map-topbar .wizard-map-title { font-weight: 600; flex: 1; }
+        body.mobile-nav-enabled .wizard-dots { display: flex; gap: 5px; }
+        body.mobile-nav-enabled .wizard-dots span { width: 7px; height: 7px; border-radius: 50%; background: #d6d9df; }
+        body.mobile-nav-enabled .wizard-dots span.on { background: var(--accent); }
+        /* Search is part of the chrome, not a float over the map — the map's
+           own corner controls (zoom, basemap) get their corners back.
+           position stays RELATIVE: the magnifier icon (top:50% absolute, see
+           the page styles above) anchors to this box. */
+        body.mobile-nav-enabled .create-card[data-step="map"] .create-map-search {
+            position: relative; flex: 0 0 auto; padding: 8px 10px; margin-bottom: 0;
+            background: #fff; border-bottom: 1px solid var(--border-color);
+        }
+        body.mobile-nav-enabled .create-card[data-step="map"] .create-map-search .map-search { width: 100%; }
+        body.mobile-nav-enabled .create-card[data-step="map"] .create-map-search .map-search i {
+            left: calc(10px + 0.65rem);
+        }
+        body.mobile-nav-enabled .create-card[data-step="map"] .create-map-wrap { flex: 1; min-height: 0; position: relative; }
+        body.mobile-nav-enabled .create-card[data-step="map"] .create-map { height: 100%; }
+        body.mobile-nav-enabled .wizard-frame-caption {
+            font-size: 12px; color: #6b7280; text-align: center; margin-bottom: 8px; line-height: 1.35;
+        }
+        body.mobile-nav-enabled .create-card[data-step="map"] .wizard-map-footer {
+            display: block; flex: 0 0 auto; padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+            border-top: 1px solid var(--border-color); background: #fff;
+        }
+        /* .btn-block-row is only styled inside .create-actions — stretch it here too. */
+        body.mobile-nav-enabled .wizard-map-footer .btn-block-row { width: 100%; min-height: 46px; }
+    }
+    </style>
+
+    <script>
+    (function() {
+        var card = document.querySelector('.create-card');
+        if (!card) return;
+        var path = 'draft';
+
+        function wizardMode() { return window.matchMedia('(max-width: 1023.98px)').matches; }
+
+        window.wizardGoto = function(step) {
+            card.setAttribute('data-step', step);
+            if (step === 'map' && window._createMap) {
+                setTimeout(function(){ window._createMap.invalidateSize(); }, 80);
+                prefillPlaceFromGoal();
+            }
+        };
+
+        // ── Geocode-prefill (no AI): if the goal names a place ("Лучшие места
+        // в Бишкеке", "parks in Berlin"), aim the map there before the creator
+        // even touches it. Heuristic candidates = capitalized word groups that
+        // don't open a sentence; each also gets a variant with a stripped
+        // Russian locative ending ("Бишкеке" → "Бишкек"). Resolved through the
+        // same Photon geocoder the map search uses. First hit wins; the map is
+        // only moved while it still sits on the untouched default view.
+        var _prefillFor = null;   // goal text the last prefill ran for
+        var _userMovedMap = false;
+        if (window._createMap) {
+            window._createMap.on('dragend zoomend', function(){ _userMovedMap = true; });
+        }
+        function extractPlaceCandidates(text) {
+            var out = [];
+            var re = /(^|[\s.,;:!?()«»"']+)([A-ZА-ЯЁÀ-ÞĀ-Ž][\wА-Яа-яёÀ-ÿĀ-žß'-]+(?:\s+[A-ZА-ЯЁÀ-ÞĀ-Ž][\wА-Яа-яёÀ-ÿĀ-žß'-]+)*)/g;
+            Array.from(text.matchAll(re)).forEach(function(m) {
+                var atSentenceStart = m.index === 0 || /[.!?]\s*$/.test(m[1]);
+                if (atSentenceStart) return;
+                var cand = m[2].trim();
+                if (cand.length < 3) return;
+                out.push(cand);
+                var stripped = cand.replace(/[еиуа]$/, '');
+                if (stripped !== cand && stripped.length >= 3) out.push(stripped);
+            });
+            return out;
+        }
+        function prefillPlaceFromGoal() {
+            if (_userMovedMap || !window._createMap) return;
+            var goal = document.getElementById('{{ brief_form.goal.id_for_label }}');
+            if (!goal || !goal.value.trim()) return;
+            if (_prefillFor === goal.value.trim()) return;  // same goal, already aimed
+            _prefillFor = goal.value.trim();
+            var candidates = extractPlaceCandidates(goal.value);
+            (function tryNext(i) {
+                if (i >= candidates.length || _userMovedMap) return;
+                fetch('https://photon.komoot.io/api/?limit=1&q=' + encodeURIComponent(candidates[i]))
+                    .then(function(r){ return r.json(); })
+                    .then(function(data) {
+                        var f = data && data.features && data.features[0];
+                        if (f && f.geometry && !_userMovedMap) {
+                            var t = (f.properties && f.properties.type) || '';
+                            var zoom = t === 'country' ? 6 : (t === 'state' || t === 'county' ? 9 : 12);
+                            window._createMap.setView([f.geometry.coordinates[1], f.geometry.coordinates[0]], zoom);
+                            // Say WHY the map jumped: the resolved name lands in
+                            // the search box, visible and correctable (H1).
+                            var searchInput = document.querySelector('.create-map-search input');
+                            var placeName = (f.properties && f.properties.name) || candidates[i];
+                            if (searchInput && placeName) searchInput.value = placeName;
+                        } else {
+                            tryNext(i + 1);
+                        }
+                    })
+                    .catch(function(){ tryNext(i + 1); });
+            })(0);
+        }
+
+        window.wizardNext = function(p) {
+            path = p;
+            if (p === 'draft') {
+                var goal = document.getElementById('{{ brief_form.goal.id_for_label }}');
+                if (goal && !goal.value.trim()) { goal.focus(); goal.style.borderColor = '#dc2626'; return; }
+            }
+            // The Create button reminds which path was picked on step 1 (H6).
+            var createBtn = document.getElementById('wizard-create-btn');
+            if (createBtn) createBtn.textContent = p === 'draft' ? '✨ Create draft survey' : 'Create empty survey';
+            wizardGoto('map');
+        };
+
+        // Name leaves the flow: derive it from the goal (draft path) or use a
+        // placeholder the creator renames in the editor. Goals come in any
+        // language — validate_url_name is Unicode ("contains a word char"),
+        // max_length 45.
+        function ensureName() {
+            var name = document.getElementById('{{ form.name.id_for_label }}');
+            if (!name || name.value.trim()) return;
+            var goal = document.getElementById('{{ brief_form.goal.id_for_label }}');
+            var base = (path === 'draft' && goal && goal.value.trim()) ? goal.value.trim() : '';
+            if (!/[\p{L}\p{N}]/u.test(base)) base = 'Untitled survey';
+            name.value = base.length > 45 ? base.slice(0, 44) : base;
+        }
+
+        var createBtn = document.getElementById('wizard-create-btn');
+        if (createBtn) createBtn.addEventListener('click', function() {
+            ensureName();
+            if (path === 'draft') {
+                // Generation progress swaps into #generation-slot in the left
+                // column — return there so the poller is visible.
+                wizardGoto('goal');
+                var g = document.getElementById('generate-btn');
+                if (g) g.click();
+                setTimeout(function() {
+                    var slot = document.getElementById('generation-slot');
+                    if (slot) slot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 200);
+            } else {
+                var e = document.getElementById('empty-btn') || document.querySelector('button[value="empty"]');
+                if (e) e.click();
+            }
+        });
+
+        // Desktop merged view uses the original buttons — auto-name there too.
+        var gen = document.getElementById('generate-btn');
+        if (gen) gen.addEventListener('click', function(){ path = 'draft'; ensureName(); }, true);
+        var emp = document.getElementById('empty-btn') || document.querySelector('button[value="empty"]');
+        if (emp) emp.addEventListener('click', function(){ path = 'empty'; ensureName(); }, true);
+
+        if (wizardMode()) {
+            wizardGoto({% if ai_available %}'goal'{% else %}'map'{% endif %});
+            {% if not ai_available %}path = 'empty';{% endif %}
+        }
+    })();
+    </script>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

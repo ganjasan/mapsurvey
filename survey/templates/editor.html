@@ -188,6 +188,70 @@
     @media (max-width: 480px) {
         .card-cover, .card-cover-placeholder { height: 90px; }
     }
+    /* ── Variant A adaptive header (openspec: mobile-adaptive-refactor) ──
+       Double-gated: body.mobile-nav-enabled (MOBILE_EDITOR_NAV) + max-width
+       queries. ≥1024px this block changes nothing. */
+    body.mobile-nav-enabled .dash-search-btn,
+    body.mobile-nav-enabled .dash-count { display: none; }
+
+    /* ⋯ overflow lives on every width — P4 items (Import, Show Archived)
+       never earn toolbar space (owner review of the desktop header). */
+    body.mobile-nav-enabled .dash-overflow > a {
+        width: 40px; height: 40px; display: grid; place-items: center;
+        border: 1px solid var(--border-color); border-radius: 8px; color: #6b7280;
+    }
+    /* Row above the collection — holds the count label (mobile title). */
+    body.mobile-nav-enabled .list-controls {
+        display: flex; align-items: center; margin: -0.5rem 0 0.75rem;
+    }
+
+    @media (max-width: 1023.98px) {
+        /* 768–1023: one row — search field · New Survey · ⋯ */
+        body.mobile-nav-enabled .dashboard-title,
+        body.mobile-nav-enabled .dashboard-header .spacer { display: none; }
+        body.mobile-nav-enabled .dashboard-search { flex: 1; }
+        body.mobile-nav-enabled .btn-new-survey,
+        body.mobile-nav-enabled .dash-overflow > a {
+            min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
+        }
+        body.mobile-nav-enabled .dash-overflow > a { width: 44px; height: 44px; display: grid; }
+    }
+
+    @media (max-width: 767.98px) {
+        /* <768: 🔍-icon · New Survey (grows) · ⋯ ; count label; list default */
+        body.mobile-nav-enabled .dashboard-header { position: relative; flex-wrap: nowrap; }
+        body.mobile-nav-enabled .dash-search-btn {
+            display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 auto;
+            border: 1px solid var(--border-color); border-radius: 8px;
+            background: #fff; color: #6b7280;
+        }
+        body.mobile-nav-enabled .btn-new-survey { flex: 1; justify-content: center; }
+        /* Search becomes a full-row overlay, shown by the icon (map-search pattern) */
+        body.mobile-nav-enabled .dashboard-search { display: none; position: absolute; left: 0; right: 0; top: 0; z-index: 5; min-width: 0; }
+        body.mobile-nav-enabled .dashboard-header.search-active .dashboard-search { display: inline-flex; }
+        body.mobile-nav-enabled .dashboard-header.search-active .dash-search-btn,
+        body.mobile-nav-enabled .dashboard-header.search-active .btn-new-survey,
+        body.mobile-nav-enabled .dashboard-header.search-active .dash-overflow { visibility: hidden; }
+        body.mobile-nav-enabled .dashboard-search input { min-height: 44px; font-size: 16px; }
+        body.mobile-nav-enabled .dash-count {
+            display: block; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+            color: #9ca3af; font-weight: 600;
+        }
+        /* Compact list rows: no wrap, no per-row action strip, one KPI */
+        body.mobile-nav-enabled .survey-row { flex-wrap: nowrap; }
+        body.mobile-nav-enabled .survey-row .row-actions { display: none; }
+        body.mobile-nav-enabled .survey-row .row-kpi {
+            width: auto; order: 0; font-size: 0.72rem; gap: 0.4rem; flex: 0 0 auto;
+        }
+        body.mobile-nav-enabled .survey-row .row-kpi span:nth-child(2),
+        body.mobile-nav-enabled .survey-row .row-kpi span:nth-child(3) { display: none; }
+        body.mobile-nav-enabled .survey-row .row-info { min-width: 0; }
+        body.mobile-nav-enabled .survey-row .row-name {
+            display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        body.mobile-nav-enabled .survey-row .row-meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    }
+
     .badge-beta {
         font-size: 0.6rem;
         font-weight: 600;
@@ -208,8 +272,13 @@
 {% block content %}
 <div class="dashboard">
     <!-- Header -->
-    <div class="dashboard-header">
+    <div class="dashboard-header" id="dashboardHeader">
         <h1 class="dashboard-title">My Surveys</h1>
+        {% if MOBILE_EDITOR_NAV %}
+        <button type="button" class="dash-search-btn" onclick="dashSearchToggle(true)" aria-label="Search surveys">
+            <i class="fas fa-search"></i>
+        </button>
+        {% endif %}
         <div class="dashboard-search">
             <i class="fas fa-search"></i>
             <input type="search" id="surveySearch" placeholder="Search surveys…"
@@ -217,22 +286,59 @@
         </div>
         <span class="spacer"></span>
 
+        {% if not MOBILE_EDITOR_NAV %}
+        {% comment %}Legacy header (flag off): Show Archived / toggle / Import
+        inline. With the flag on these move to the ⋯ overflow (P4) and the
+        toggle relocates next to the list it controls.{% endcomment %}
         {% if show_archived %}
-        <a href="?show_archived=0" class="btn btn-sm btn-outline-secondary">Hide Archived</a>
+        <a href="?show_archived=0" class="btn btn-sm btn-outline-secondary btn-archived">Hide Archived</a>
         {% else %}
-        <a href="?show_archived=1" class="btn btn-sm btn-outline-secondary">Show Archived</a>
+        <a href="?show_archived=1" class="btn btn-sm btn-outline-secondary btn-archived">Show Archived</a>
         {% endif %}
 
         <div class="view-toggle">
             <button onclick="setView('grid')" id="btn-grid" title="Cards"><i class="fas fa-th-large"></i></button>
             <button onclick="setView('list')" id="btn-list" title="List"><i class="fas fa-list"></i></button>
         </div>
+        {% endif %}
 
         {% if org_role != 'viewer' %}
-        <a href="{% url 'editor_survey_create' %}" class="btn btn-sm btn-primary"><i class="fas fa-plus mr-1"></i>New Survey</a>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#importModal">Import</button>
+        <a href="{% url 'editor_survey_create' %}" class="btn btn-sm btn-primary btn-new-survey"><i class="fas fa-plus mr-1"></i>New Survey</a>
+        {% if not MOBILE_EDITOR_NAV %}
+        <button type="button" class="btn btn-sm btn-outline-secondary btn-import" data-toggle="modal" data-target="#importModal">Import</button>
+        {% endif %}
+        {% endif %}
+
+        {% if MOBILE_EDITOR_NAV %}
+        {% comment %}⋯ absorbs the P4–P5 items below 1024px (variant A of the
+        dashboard mockup): Show Archived, Import, grid/list toggle.{% endcomment %}
+        <div class="dropdown dash-overflow">
+            <a href="#" role="button" data-toggle="dropdown" aria-label="More actions"><i class="fas fa-ellipsis-h"></i></a>
+            <div class="dropdown-menu dropdown-menu-right">
+                {% if show_archived %}
+                <a class="dropdown-item" href="?show_archived=0"><i class="fas fa-box-open" style="margin-right:6px;"></i>Hide Archived</a>
+                {% else %}
+                <a class="dropdown-item" href="?show_archived=1"><i class="fas fa-box-open" style="margin-right:6px;"></i>Show Archived</a>
+                {% endif %}
+                {% if org_role != 'viewer' %}
+                <button class="dropdown-item" type="button" data-toggle="modal" data-target="#importModal"><i class="fas fa-file-import" style="margin-right:6px;"></i>Import…</button>
+                {% endif %}
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item" type="button" onclick="setView('list')"><i class="fas fa-list" style="margin-right:6px;"></i>List view</button>
+                <button class="dropdown-item" type="button" onclick="setView('grid')"><i class="fas fa-th-large" style="margin-right:6px;"></i>Card view</button>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:6px;"></i>Help &amp; support</a>
+            </div>
+        </div>
         {% endif %}
     </div>
+    {% if MOBILE_EDITOR_NAV %}
+    {% comment %}Count label doubles as the mobile title. The grid/list toggle
+    lives only in the ⋯ menu (owner review) — no inline copy.{% endcomment %}
+    <div class="list-controls">
+        <div class="dash-count">My Surveys · {{ survey_headers|length }}</div>
+    </div>
+    {% endif %}
 
     {% if messages %}
     <div class="mb-3">
@@ -451,29 +557,53 @@
 function setView(mode) {
     var grid = document.getElementById('view-grid');
     var list = document.getElementById('view-list');
+    // With the flag on the header toggle is gone (⋯ menu only) — null-safe.
     var btnGrid = document.getElementById('btn-grid');
     var btnList = document.getElementById('btn-list');
     if (mode === 'list') {
         grid.classList.add('hidden');
         list.classList.remove('hidden');
-        btnGrid.classList.remove('active');
-        btnList.classList.add('active');
+        if (btnGrid) btnGrid.classList.remove('active');
+        if (btnList) btnList.classList.add('active');
     } else {
         list.classList.add('hidden');
         grid.classList.remove('hidden');
-        btnList.classList.remove('active');
-        btnGrid.classList.add('active');
+        if (btnList) btnList.classList.remove('active');
+        if (btnGrid) btnGrid.classList.add('active');
     }
     try { localStorage.setItem('dashboard_view', mode); } catch(e) {}
 }
-// Restore saved view
+// Restore saved view. On a phone with the mobile chrome enabled the default
+// is the list view (variant A decision) — an explicit user choice still wins.
 (function() {
+    var mobileDefault = document.body.classList.contains('mobile-nav-enabled')
+        && window.matchMedia('(max-width: 767.98px)').matches ? 'list' : 'grid';
     try {
         var saved = localStorage.getItem('dashboard_view');
-        if (saved === 'list') setView('list');
-        else setView('grid');
-    } catch(e) { setView('grid'); }
+        setView(saved === 'list' || saved === 'grid' ? saved : mobileDefault);
+    } catch(e) { setView(mobileDefault); }
 })();
+
+{% if MOBILE_EDITOR_NAV %}
+// Collapsed-search toggle (<768px): the icon expands the field over the row;
+// Escape or emptying-and-blurring collapses it back.
+function dashSearchToggle(show) {
+    var header = document.getElementById('dashboardHeader');
+    header.classList.toggle('search-active', show);
+    var input = document.getElementById('surveySearch');
+    if (show && input) { input.focus(); }
+}
+(function() {
+    var input = document.getElementById('surveySearch');
+    if (!input) return;
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') { input.value = ''; input.dispatchEvent(new Event('input')); dashSearchToggle(false); }
+    });
+    input.addEventListener('blur', function() {
+        if (!input.value) dashSearchToggle(false);
+    });
+})();
+{% endif %}
 
 // Instant client-side search over both card and list views (by name + status)
 (function() {

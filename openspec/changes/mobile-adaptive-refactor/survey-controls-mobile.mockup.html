@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Survey tab controls on mobile (3 variants)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #10241f; --paper: #f2efe6; --accent: #0e8f76; --annot: #8a4b12;
+    --p-indigo: #4f46e5; --p-indigo-soft: #eef2ff; --p-bg: #f8f9fb;
+    --p-border: #e5e7eb; --p-text: #1f2937; --p-muted: #6b7280; --p-chip: #f3f4f6;
+    --p-green: #198754;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    background-image: radial-gradient(rgba(16,36,31,.06) 1px, transparent 1px);
+    background-size: 22px 22px;
+    color: var(--ink); font-family: "IBM Plex Sans", sans-serif; padding: 48px 32px 80px;
+  }
+  header.pagehead { max-width: 1400px; margin: 0 auto 8px; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  h1 { font-family: "Fraunces", serif; font-size: clamp(28px, 4vw, 42px); line-height: 1.08; max-width: 780px; margin-bottom: 14px; }
+  .lede { max-width: 700px; color: #47554f; font-size: 15px; line-height: 1.55; }
+  .lede b { color: var(--ink); }
+
+  .stage { max-width: 1400px; margin: 40px auto 0; display: flex; gap: 44px; align-items: flex-start; flex-wrap: wrap; }
+  .exhibit { flex: 0 0 auto; width: 350px; }
+  .exhibit-label { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; font-family: "IBM Plex Mono", monospace; }
+  .exhibit-label .num { font-family: "Fraunces", serif; font-size: 28px; color: var(--accent); }
+  .exhibit-label .name { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+
+  .phone {
+    width: 350px; height: 680px; background: #0d1117; border-radius: 32px; padding: 9px;
+    box-shadow: 0 24px 48px -20px rgba(16,36,31,.45), 0 4px 12px rgba(16,36,31,.15); position: relative;
+  }
+  .screen { background: var(--p-bg); border-radius: 24px; height: 100%; overflow: hidden; display: flex; flex-direction: column; font-size: 13.5px; color: var(--p-text); }
+
+  .topbar { background: #fff; border-bottom: 1px solid var(--p-border); padding: 10px 12px 8px; display: grid; grid-template-columns: auto minmax(0,1fr) auto auto; align-items: center; gap: 8px; }
+  .topbar .back { font-size: 17px; padding-right: 2px; }
+  .topbar .t { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip { font-size: 12px; background: var(--p-chip); border: 1px solid var(--p-border); border-radius: 999px; padding: 4px 10px; color: var(--p-muted); white-space: nowrap; }
+  .chip.publish-combo { background: #e8f5ee; border-color: #b7e0c8; color: var(--p-green); font-weight: 600; }
+  .iconbtn { width: 38px; height: 38px; border-radius: 9px; border: 1px solid var(--p-border); background: #fff; display: grid; place-items: center; color: var(--p-muted); font-size: 15px; }
+  .strip { grid-column: 1 / -1; display: flex; gap: 2px; margin: 8px -12px 0; padding: 0 8px; border-top: 1px solid var(--p-border); overflow-x: auto; }
+  .strip span { padding: 8px 10px; font-size: 12.5px; color: var(--p-muted); font-weight: 500; border-bottom: 2px solid transparent; white-space: nowrap; }
+  .strip span.on { color: var(--p-indigo); border-bottom-color: var(--p-indigo); }
+  .strip .beta { font-size: 9px; background: #fef3c7; color: #92400e; border-radius: 4px; padding: 1px 4px; vertical-align: 2px; margin-left: 3px; font-weight: 600; }
+
+  .body { flex: 1; overflow: hidden; padding: 12px; display: flex; flex-direction: column; gap: 9px; }
+  .row-card { background: #fff; border: 1px solid var(--p-border); border-radius: 12px; padding: 11px 13px; display: flex; align-items: center; gap: 10px; }
+  .row-card .grow { flex: 1; min-width: 0; }
+  .row-card .name { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-card .meta { font-size: 11.5px; color: var(--p-muted); margin-top: 1px; }
+  .handle { color: #c3c8d1; font-size: 14px; }
+  .chev { color: #c3c8d1; }
+  .head-chip { font-size: 9.5px; font-weight: 700; background: #d1f5ec; color: #0d8a70; border-radius: 5px; padding: 2px 6px; }
+  .sec-label { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .12em; color: var(--p-muted); text-transform: uppercase; margin: 2px 2px 0; }
+  .add-btn { border: 1.5px dashed #cfd4dd; border-radius: 12px; padding: 12px; text-align: center; color: var(--p-muted); font-weight: 500; background: transparent; font-size: 13.5px; }
+
+  .publish-dock {
+    flex: 0 0 auto; padding: 8px 12px; background: #fff; border-top: 1px solid var(--p-border);
+    display: flex; gap: 8px; align-items: center;
+  }
+  .publish-dock .btn-publish { flex: 1; background: var(--p-green); color: #fff; border: none; border-radius: 10px; min-height: 44px; font-weight: 600; font-size: 14px; }
+
+  .actionbar {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+    background: #fff; border-bottom: 1px solid var(--p-border); padding: 8px 12px;
+  }
+  .actionbar .status { font-size: 12.5px; color: var(--p-muted); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .actionbar .btn-publish-sm { background: var(--p-green); color: #fff; border: none; border-radius: 9px; min-height: 40px; padding: 0 14px; font-weight: 600; font-size: 13px; }
+
+  .tabs { flex: 0 0 auto; background: #fff; border-top: 1px solid var(--p-border); display: grid; grid-template-columns: repeat(3,1fr); padding: 4px 6px 8px; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 46px; padding: 4px 0; border-radius: 10px; font-size: 10.5px; color: var(--p-muted); }
+  .tab i { font-style: normal; font-size: 15px; }
+  .tab.on { color: var(--p-indigo); background: var(--p-indigo-soft); }
+
+  .menu-pop {
+    position: absolute; right: 16px; top: 64px; z-index: 10; background: #fff; border: 1px solid var(--p-border);
+    border-radius: 12px; box-shadow: 0 14px 30px -12px rgba(16,36,31,.4); padding: 6px 0; width: 210px; font-size: 13.5px;
+  }
+  .menu-pop .mi { padding: 10px 14px; display: flex; gap: 9px; align-items: center; color: var(--p-text); }
+  .menu-pop .mi.danger { color: #dc2626; }
+  .menu-pop .sep { height: 1px; background: var(--p-border); margin: 5px 0; }
+
+  .notes { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .note { display: flex; gap: 9px; font-size: 13px; line-height: 1.45; color: #47554f; }
+  .note .txt { flex: 1; }
+  .note .tag { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; background: var(--annot); color: #fff; font-family: "IBM Plex Mono", monospace; font-size: 11px; display: grid; place-items: center; margin-top: 1px; }
+
+  footer.decisions { max-width: 900px; margin: 64px auto 0; border-top: 2px solid var(--ink); padding-top: 24px; }
+  footer.decisions h2 { font-family: "Fraunces", serif; font-size: 24px; margin-bottom: 14px; }
+  footer.decisions ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  footer.decisions li { font-size: 14px; line-height: 1.5; color: #33413b; padding-left: 18px; position: relative; }
+  footer.decisions li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="pagehead">
+  <div class="kicker">mobile-adaptive-refactor · mockup · survey tab controls &lt;768px</div>
+  <h1>Where do Publish, Discard and Share live?</h1>
+  <p class="lede">Today's ctx-bar wraps into two ragged rows and duplicates everything: Publish
+  is already in the version chip's menu, Preview is a bottom-bar pane, Discard is a rare
+  destructive action. All three variants below <b>remove the ctx-bar</b>, add the missing
+  <b>Share</b> to the ⋯ menu (audit: unreachable on phones today) and differ only in how loud
+  the primary lifecycle action (Publish) is.</p>
+</header>
+
+<div class="stage">
+
+  <!-- A: everything in menus -->
+  <section class="exhibit">
+    <div class="exhibit-label"><span class="num">A</span><span class="name">Тихий — всё в меню</span></div>
+    <div class="phone"><div class="screen">
+      <div class="topbar">
+        <span class="back">‹</span><span class="t">Лучшие места в го…</span>
+        <span class="chip">Draft · v1 ▾</span>
+        <span class="iconbtn">⋯</span>
+        <div class="strip"><span class="on">Survey</span><span>Responses</span><span>Public results<span class="beta">BETA</span></span></div>
+      </div>
+      <div class="menu-pop">
+        <div class="mi">🔗 Share…</div>
+        <div class="mi">⬆ Import / Export</div>
+        <div class="sep"></div>
+        <div class="mi">🏢 Organization · admin</div>
+        <div class="mi">💬 Help &amp; support</div>
+        <div class="sep"></div>
+        <div class="mi danger">🗑 Discard survey</div>
+        <div class="mi">⎋ Logout</div>
+      </div>
+      <div class="body">
+        <div class="row-card"><span style="color:var(--p-muted)">⚙</span><div class="grow"><div class="name">Survey settings</div></div><span class="chev">›</span></div>
+        <div class="sec-label">Sections</div>
+        <div class="row-card"><span class="handle">⠿</span><div class="grow"><div class="name">Отдых и любимые уголки Биш…</div><div class="meta">4 вопроса</div></div><span class="chev">›</span></div>
+        <div class="row-card" style="border-color: var(--p-indigo); background: var(--p-indigo-soft);"><span class="handle">⠿</span><div class="grow"><div class="name">Карта лучших мест Бишкека</div><div class="meta">2 вопроса · гео</div></div><span class="chev">›</span></div>
+        <div class="row-card"><span class="handle">⠿</span><div class="grow"><div class="name">Сохранение и развитие город…</div><div class="meta">3 вопроса</div></div><span class="chev">›</span></div>
+        <div class="add-btn">＋ New Section</div>
+      </div>
+      <div class="tabs"><div class="tab on"><i>☰</i>Structure</div><div class="tab"><i>✎</i>Edit</div><div class="tab"><i>◉</i>Preview</div></div>
+    </div></div>
+    <div class="notes">
+      <div class="note"><span class="tag">1</span><span class="txt">Publish живёт ТОЛЬКО в меню чипа «Draft·v1 ▾» (там же Testing/Close). Экран целиком отдан структуре — максимум места, ноль дублей. Риск: publish-CTA не видна — слабее толкает к публикации.</span></div>
+      <div class="note"><span class="tag">2</span><span class="txt">⋯-меню (показано открытым): Share, Import/Export, организация, Help, Discard (danger-зона), Logout. Share наконец достижим с телефона.</span></div>
+    </div>
+  </section>
+
+  <!-- B: docked publish above tabbar -->
+  <section class="exhibit">
+    <div class="exhibit-label"><span class="num">B</span><span class="name">Громкий — докнутый Publish</span></div>
+    <div class="phone"><div class="screen">
+      <div class="topbar">
+        <span class="back">‹</span><span class="t">Лучшие места в го…</span>
+        <span class="chip">Draft · v1 ▾</span>
+        <span class="iconbtn">⋯</span>
+        <div class="strip"><span class="on">Survey</span><span>Responses</span><span>Public results<span class="beta">BETA</span></span></div>
+      </div>
+      <div class="body">
+        <div class="row-card"><span style="color:var(--p-muted)">⚙</span><div class="grow"><div class="name">Survey settings</div></div><span class="chev">›</span></div>
+        <div class="sec-label">Sections</div>
+        <div class="row-card"><span class="handle">⠿</span><div class="grow"><div class="name">Отдых и любимые уголки Биш…</div><div class="meta">4 вопроса</div></div><span class="chev">›</span></div>
+        <div class="row-card"><span class="handle">⠿</span><div class="grow"><div class="name">Карта лучших мест Бишкека</div><div class="meta">2 вопроса · гео</div></div><span class="chev">›</span></div>
+        <div class="row-card"><span class="handle">⠿</span><div class="grow"><div class="name">Сохранение и развитие город…</div><div class="meta">3 вопроса</div></div><span class="chev">›</span></div>
+        <div class="add-btn">＋ New Section</div>
+      </div>
+      <div class="publish-dock"><button class="btn-publish">🌐 Publish — open for responses</button></div>
+      <div class="tabs"><div class="tab on"><i>☰</i>Structure</div><div class="tab"><i>✎</i>Edit</div><div class="tab"><i>◉</i>Preview</div></div>
+    </div></div>
+    <div class="notes">
+      <div class="note"><span class="tag">3</span><span class="txt">Publish — полноширинная зелёная кнопка, докнутая над таб-баром, ТОЛЬКО пока опрос draft/testing. После публикации док исчезает — место возвращается контенту. Активация — слабое место воронки, громкая CTA работает на неё.</span></div>
+      <div class="note"><span class="tag">4</span><span class="txt">⋯ — как в A (Share, Discard и пр.). Чип «Draft·v1 ▾» сохраняет полное lifecycle-меню для нестандартных переходов.</span></div>
+    </div>
+  </section>
+
+  <!-- C: slim status bar -->
+  <section class="exhibit">
+    <div class="exhibit-label"><span class="num">C</span><span class="name">Средний — статус-строка</span></div>
+    <div class="phone"><div class="screen">
+      <div class="topbar">
+        <span class="back">‹</span><span class="t">Лучшие места в го…</span>
+        <span class="chip">Draft · v1 ▾</span>
+        <span class="iconbtn">⋯</span>
+        <div class="strip"><span class="on">Survey</span><span>Responses</span><span>Public results<span class="beta">BETA</span></span></div>
+      </div>
+      <div class="actionbar">
+        <span class="status">Черновик — не собирает ответы</span>
+        <button class="btn-publish-sm">🌐 Publish</button>
+      </div>
+      <div class="body">
+        <div class="row-card"><span style="color:var(--p-muted)">⚙</span><div class="grow"><div class="name">Survey settings</div></div><span class="chev">›</span></div>
+        <div class="sec-label">Sections</div>
+        <div class="row-card"><span class="handle">⠿</span><div class="grow"><div class="name">Отдых и любимые уголки Биш…</div><div class="meta">4 вопроса</div></div><span class="chev">›</span></div>
+        <div class="row-card"><span class="handle">⠿</span><div class="grow"><div class="name">Карта лучших мест Бишкека</div><div class="meta">2 вопроса · гео</div></div><span class="chev">›</span></div>
+        <div class="row-card"><span class="handle">⠿</span><div class="grow"><div class="name">Сохранение и развитие город…</div><div class="meta">3 вопроса</div></div><span class="chev">›</span></div>
+        <div class="add-btn">＋ New Section</div>
+      </div>
+      <div class="tabs"><div class="tab on"><i>☰</i>Structure</div><div class="tab"><i>✎</i>Edit</div><div class="tab"><i>◉</i>Preview</div></div>
+    </div></div>
+    <div class="notes">
+      <div class="note"><span class="tag">5</span><span class="txt">Одна 56px строка вместо двухэтажного ctx-бара: слева — человеческий статус («Черновик — не собирает ответы»), справа — одна компактная Publish. Никогда не переносится: статус ellipsis, кнопка фиксирована. После публикации строка показывает «Открыт · 65 ответов» без кнопки.</span></div>
+      <div class="note"><span class="tag">6</span><span class="txt">Компромисс между A и B: CTA видна, но не ест 60px дока; статус двигает и понимание (что происходит с опросом), а не только действие.</span></div>
+    </div>
+  </section>
+
+</div>
+
+
+<!-- ================= CHOSEN: C — statuses × scales ================= -->
+<div style="max-width:1400px;margin:64px auto 0;">
+  <h2 style="font-family:'Fraunces',serif;font-size:26px;margin-bottom:10px;"><span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-right:10px;">Chosen: C</span>Status line × survey status × scale</h2>
+  <p class="lede" style="margin-bottom:26px;">PostHog (90d, editor pages): <b>Share ≈ 26 clicks</b> (top action) ·
+  Publish ≈ 21 · new-version cycle ≈ 19 · Discard 10 (one person) · <b>Move to Testing 2</b> · Close 4.
+  So the status line's button follows the status: <b>draft/testing → Publish</b>, <b>published → Share</b>
+  (the data's №1, unreachable on phones today). Testing, Close, Discard stay in menus.</p>
+
+  <div class="stage" style="margin-top:0;">
+
+    <section class="exhibit">
+      <div class="exhibit-label"><span class="num">1</span><span class="name">Draft</span></div>
+      <div class="phone" style="height:300px;"><div class="screen">
+        <div class="topbar">
+          <span class="back">‹</span><span class="t">Лучшие места в го…</span>
+          <span class="chip">Draft · v1 ▾</span>
+          <span class="iconbtn">⋯</span>
+          <div class="strip"><span class="on">Survey</span><span>Responses</span><span>Public results<span class="beta">BETA</span></span></div>
+        </div>
+        <div class="actionbar">
+          <span class="status">Черновик — не собирает ответы</span>
+          <button class="btn-publish-sm">🌐 Publish</button>
+        </div>
+        <div class="body"><div class="sec-label">Sections…</div></div>
+      </div></div>
+      <div class="notes"><div class="note"><span class="tag">D</span><span class="txt">Primary = Publish. Move to Testing — в меню чипа (2 клика за всё время не заслуживают кнопки).</span></div></div>
+    </section>
+
+    <section class="exhibit">
+      <div class="exhibit-label"><span class="num">2</span><span class="name">Testing</span></div>
+      <div class="phone" style="height:300px;"><div class="screen">
+        <div class="topbar">
+          <span class="back">‹</span><span class="t">Лучшие места в го…</span>
+          <span class="chip" style="background:#fef3c7;border-color:#fcd34d;color:#92400e;">Testing · v1 ▾</span>
+          <span class="iconbtn">⋯</span>
+          <div class="strip"><span class="on">Survey</span><span>Responses</span><span>Public results<span class="beta">BETA</span></span></div>
+        </div>
+        <div class="actionbar">
+          <span class="status">Тест — доступ по ссылке-приглашению</span>
+          <button class="btn-publish-sm" style="background:#b45309;">🔗 Share test link</button>
+        </div>
+        <div class="body"><div class="sec-label">Sections…</div></div>
+      </div></div>
+      <div class="notes"><div class="note"><span class="tag">E</span><span class="txt">Testing = «дать ссылку избранным» (owner): primary копирует ссылку с ?token=… Publish и «Back to draft» — в чипе. ⚠ Найдено в коде: без пароля testing-опрос открыт по голому URL — токен ничего не гейтит; кандидат в отдельный фикс (token-only доступ).</span></div></div>
+    </section>
+
+    <section class="exhibit">
+      <div class="exhibit-label"><span class="num">3</span><span class="name">Published</span></div>
+      <div class="phone" style="height:300px;"><div class="screen">
+        <div class="topbar">
+          <span class="back">‹</span><span class="t">Лучшие места в го…</span>
+          <span class="chip" style="background:#e8f5ee;border-color:#b7e0c8;color:var(--p-green);">Open · v1 ▾</span>
+          <span class="iconbtn">⋯</span>
+          <div class="strip"><span class="on">Survey</span><span>Responses</span><span>Public results<span class="beta">BETA</span></span></div>
+        </div>
+        <div class="actionbar">
+          <span class="status">Открыт · 65 ответов</span>
+          <button class="btn-publish-sm" style="background:#fff;color:#374151;border:1px solid var(--p-border);">✎ Редактировать</button>
+          <button class="btn-publish-sm" style="background:var(--p-indigo);">🔗 Share</button>
+        </div>
+        <div class="body"><div class="sec-label">Sections… (read-only, «Draft new version» в чипе)</div></div>
+      </div></div>
+      <div class="notes"><div class="note"><span class="tag">F</span><span class="txt">Кнопка названа по интенту — «✎ Редактировать», не «Draft new version» (механизм объясняет подсказка, см. экран 4). Если черновик v2 уже существует: статус «…· есть черновик v2», кнопка «✎ Продолжить правку» ведёт прямо в него — это и есть «как вернуться к редактированию».</span></div></div>
+    </section>
+  </div>
+
+    <section class="exhibit">
+      <div class="exhibit-label"><span class="num">4</span><span class="name">Перехват правки</span></div>
+      <div class="phone" style="height:300px;"><div class="screen" style="position:relative;">
+        <div class="topbar">
+          <span class="back">‹</span><span class="t">Лучшие места в го…</span>
+          <span class="chip" style="background:#e8f5ee;border-color:#b7e0c8;color:var(--p-green);">Open · v1 ▾</span>
+          <span class="iconbtn">⋯</span>
+          <div class="strip"><span class="on">Survey</span><span>Responses</span><span>Public results<span class="beta">BETA</span></span></div>
+        </div>
+        <div class="body" style="opacity:.35;"><div class="sec-label">Sections…</div></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -10px 28px rgba(0,0,0,.18);padding:16px 16px 18px;">
+          <div style="font-weight:600;font-size:14.5px;margin-bottom:6px;">Опрос опубликован и собирает ответы</div>
+          <div style="font-size:12.5px;color:var(--p-muted);line-height:1.45;margin-bottom:12px;">Правки делаются в новой версии. Текущая версия продолжит собирать ответы, пока вы не опубликуете обновление.</div>
+          <button class="btn-publish-sm" style="background:var(--p-indigo);width:100%;min-height:44px;margin-bottom:6px;">Открыть новую версию</button>
+          <button class="btn-publish-sm" style="background:none;color:var(--p-muted);width:100%;">Отмена</button>
+        </div>
+      </div></div>
+      <div class="notes"><div class="note"><span class="tag">G</span><span class="txt">Любой тап с интентом правки (секция, вопрос, ＋, «✎ Редактировать») в published-опросе открывает этот лист — подсказка приходит в момент попытки, а не живёт баннером. «Открыть новую версию» = существующий editor_create_draft; повторные тапы при живом черновике ведут сразу в него.</span></div></div>
+    </section>
+  </div>
+
+  <div class="stage" style="margin-top:0;">
+  </div>
+
+    <section class="exhibit">
+      <div class="exhibit-label"><span class="num">5</span><span class="name">Тест-режим — окно управления</span></div>
+      <div class="phone" style="height:460px;"><div class="screen" style="position:relative;">
+        <div class="topbar">
+          <span class="back">‹</span><span class="t">Лучшие места в го…</span>
+          <span class="chip" style="background:#fef3c7;border-color:#fcd34d;color:#92400e;">Testing · v1 ▾</span>
+          <span class="iconbtn">⋯</span>
+          <div class="strip"><span class="on">Survey</span><span>Responses</span><span>Public results<span class="beta">BETA</span></span></div>
+        </div>
+        <div class="body" style="opacity:.3;"><div class="sec-label">Sections…</div></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -10px 28px rgba(0,0,0,.18);padding:14px 16px 16px;">
+          <div style="font-weight:600;font-size:14.5px;margin-bottom:10px;">Тест-режим</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <span style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--p-text);background:var(--p-chip);border-radius:8px;padding:10px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">mapsurvey.org/surveys/405…?token=8f2c</span>
+            <button class="btn-publish-sm" style="background:var(--p-indigo);flex:0 0 auto;">Copy</button>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:11.5px;font-weight:600;color:var(--p-muted);display:block;margin-bottom:4px;">Пароль доступа</label>
+            <input style="width:100%;border:1px solid var(--p-border);border-radius:8px;padding:9px 11px;font:inherit;font-size:13px;" placeholder="Не задан — ссылка открыта любому">
+          </div>
+          <div style="font-size:12px;color:var(--p-muted);line-height:1.45;margin-bottom:12px;">
+            Пройдите опрос сами и дайте ссылку коллегам — до публикации.
+            Тестовые ответы можно удалить одним переключателем при публикации.
+          </div>
+          <button class="btn-publish-sm" style="background:var(--p-green);width:100%;min-height:44px;">🌐 Publish — открыть для всех</button>
+        </div>
+      </div></div>
+      <div class="notes"><div class="note"><span class="tag">H</span><span class="txt">Открывается тапом по «Share test link» (и по статус-тексту). Порядок по частоте интента: копирование ссылки — сверху; пароль — вторым (без него ссылка открыта любому — честная подпись в placeholder); объяснение режима; внизу — <b>переход Test → Publish</b> прямо отсюда (плюс он остаётся в меню чипа). Публикация ведёт в существующий publish-диалог с опцией «удалить тестовые ответы».</span></div></div>
+    </section>
+
+  <div class="ladder-block" style="margin-top:34px;">
+    <div class="ladder-cap">768–1023 · планшет — та же строка, просторнее; статус длиннее не переносится</div>
+    <div class="browser" style="width:740px;">
+      <div class="browser-bar"><span></span><span></span><span></span></div>
+      <div style="display:flex;align-items:center;gap:10px;background:#fff;padding:10px 16px;">
+        <span style="font-size:13px;color:var(--p-muted);flex:1;">Открыт · 65 ответов · завершаемость 98% · обновлено 2 ч назад</span>
+        <button class="btn-publish-sm" style="background:#fff;color:#374151;border:1px solid var(--p-border);">✎ Редактировать</button>
+        <button class="btn-publish-sm" style="background:var(--p-indigo);">🔗 Share</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ladder-block">
+    <div class="ladder-cap">≥1024 · десктоп — ctx-бар остаётся (решение «desktop не трогаем»), но статус-текст C заимствуется в его левую часть</div>
+    <div class="browser" style="width:1000px;">
+      <div class="browser-bar"><span></span><span></span><span></span></div>
+      <div style="display:flex;align-items:center;gap:12px;background:#fff;padding:12px 18px;">
+        <span style="width:30px;height:30px;border-radius:7px;background:var(--p-indigo-soft);color:var(--p-indigo);display:grid;place-items:center;">⚒</span>
+        <div style="flex:1;"><div style="font-weight:600;font-size:14px;">Survey</div><div style="font-size:12px;color:var(--p-muted);">Открыт · 65 ответов · 98%</div></div>
+        <button class="btn-publish-sm" style="background:var(--p-indigo);">🔗 Share</button>
+        <button class="btn-publish-sm" style="background:#fff;color:#374151;border:1px solid var(--p-border);">↗ Preview</button>
+        <span class="iconbtn">⋯</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .ladder-block { margin-top: 26px; }
+  .ladder-cap { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .browser { max-width: 100%; border-radius: 14px; overflow: hidden; border: 1px solid rgba(16,36,31,.15); box-shadow: 0 14px 32px -18px rgba(16,36,31,.4); background: #fff; }
+  .browser-bar { display: flex; gap: 6px; padding: 10px 12px; background: #eceae2; border-bottom: 1px solid rgba(16,36,31,.08); }
+  .browser-bar span { width: 10px; height: 10px; border-radius: 50%; background: #cfc9b8; }
+</style>
+
+
+<!-- ================= FULL TABLET & DESKTOP ================= -->
+<div style="max-width:1400px;margin:64px auto 0;">
+  <h2 style="font-family:'Fraunces',serif;font-size:26px;margin-bottom:10px;">Полные макеты: планшет и десктоп</h2>
+  <p class="lede" style="margin-bottom:26px;">Published-состояние как самое насыщенное. Планшет
+  (768–1023): двухколонник Structure+Edit, превью — свёрнутая вкладка у правого края, статус-строка C
+  во всю ширину. Десктоп (≥1024): привычный трёхпанельник; ctx-бар заменён той же статус-строкой —
+  иконка и заголовок слева, статус живой, действия справа.</p>
+
+  <div class="ladder-cap">768 × 1000 · планшет (портрет)</div>
+  <div class="browser" style="width:768px;margin-bottom:40px;">
+    <div class="browser-bar"><span></span><span></span><span></span></div>
+    <div style="background:var(--p-bg);display:flex;flex-direction:column;height:940px;">
+      <div style="background:#fff;border-bottom:1px solid var(--p-border);padding:10px 16px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:17px;">‹</span>
+        <span style="font-weight:600;font-size:15px;">Лучшие места в городе Бишкек</span>
+        <span class="chip" style="background:#e8f5ee;border-color:#b7e0c8;color:var(--p-green);">Open · v1 ▾</span>
+        <span style="flex:1;"></span>
+        <span class="iconbtn">⋯</span>
+      </div>
+      <div style="background:#fff;border-bottom:1px solid var(--p-border);display:flex;gap:4px;padding:0 12px;">
+        <span style="padding:9px 12px;font-size:13px;color:var(--p-indigo);font-weight:600;border-bottom:2px solid var(--p-indigo);">Survey</span>
+        <span style="padding:9px 12px;font-size:13px;color:var(--p-muted);">Responses</span>
+        <span style="padding:9px 12px;font-size:13px;color:var(--p-muted);">Public results <span class="beta" style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 4px;font-weight:600;">BETA</span></span>
+      </div>
+      <div class="actionbar" style="border-bottom:1px solid var(--p-border);">
+        <span class="status">Открыт · 65 ответов · завершаемость 98% · обновлено 2 ч назад</span>
+        <button class="btn-publish-sm" style="background:#fff;color:#374151;border:1px solid var(--p-border);">✎ Редактировать</button>
+        <button class="btn-publish-sm" style="background:var(--p-indigo);">🔗 Share</button>
+      </div>
+      <div style="flex:1;display:flex;min-height:0;">
+        <div style="width:250px;background:#fff;border-right:1px solid var(--p-border);display:flex;flex-direction:column;">
+          <div class="row-card" style="border:none;border-bottom:1px solid var(--p-border);border-radius:0;"><span style="color:var(--p-muted)">⚙</span><div class="grow"><div class="name">Survey settings</div></div><span class="chev">›</span></div>
+          <div class="sec-label" style="padding:10px 14px 4px;">Sections</div>
+          <div class="row-card" style="border:none;border-radius:0;background:var(--p-indigo-soft);"><span class="handle">⠿</span><div class="grow"><div class="name">Отдых и любимые угол…</div><div class="meta">4 вопроса</div></div></div>
+          <div class="row-card" style="border:none;border-radius:0;"><span class="handle">⠿</span><div class="grow"><div class="name">Карта лучших мест</div><div class="meta">2 вопроса · гео</div></div></div>
+          <div class="row-card" style="border:none;border-radius:0;"><span class="handle">⠿</span><div class="grow"><div class="name">Сохранение и развити…</div><div class="meta">3 вопроса</div></div></div>
+          <div style="flex:1;"></div>
+          <div class="add-btn" style="margin:10px;">＋ New Section</div>
+        </div>
+        <div style="flex:1;padding:16px;overflow:hidden;">
+          <div style="background:#fff;border:1px solid var(--p-border);border-radius:12px;padding:14px;margin-bottom:12px;">
+            <div style="font-weight:600;font-size:13.5px;margin-bottom:8px;">Section: Отдых и любимые уголки Бишкека</div>
+            <div style="font-size:12px;color:var(--p-muted);">Title · Subheading · Code — read-only (v1 опубликована)</div>
+          </div>
+          <div class="sec-label" style="margin-bottom:6px;">Questions</div>
+          <div class="row-card" style="margin-bottom:8px;"><div class="grow"><div class="name">Как часто вы проводите время…</div><div class="meta">choice · required</div></div><span class="chev">›</span></div>
+          <div class="row-card" style="margin-bottom:8px;"><div class="grow"><div class="name">Как вы обычно добираетесь…</div><div class="meta">multichoice</div></div><span class="chev">›</span></div>
+          <div class="row-card"><div class="grow"><div class="name">Что делает город уютным?</div><div class="meta">text</div></div><span class="chev">›</span></div>
+        </div>
+        <div style="width:34px;background:#fff;border-left:1px solid var(--p-border);display:flex;align-items:center;justify-content:center;">
+          <span style="writing-mode:vertical-rl;font-size:11px;color:var(--p-muted);letter-spacing:.08em;">‹ PREVIEW</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ladder-cap">1280 × 800 · десктоп</div>
+  <div class="browser" style="width:1280px;">
+    <div class="browser-bar"><span></span><span></span><span></span></div>
+    <div style="background:var(--p-bg);display:flex;flex-direction:column;height:740px;">
+      <div style="background:#fff;border-bottom:1px solid var(--p-border);padding:10px 18px;display:flex;align-items:center;gap:14px;">
+        <span style="color:var(--p-muted);font-size:13px;">← Dashboard</span>
+        <span style="font-weight:700;font-size:15px;">Лучшие места в городе Бишкек</span>
+        <span class="chip" style="background:#e8f5ee;border-color:#b7e0c8;color:var(--p-green);">Open · v1 ▾</span>
+        <div style="display:flex;gap:4px;margin-left:10px;">
+          <span style="padding:6px 12px;font-size:13px;color:var(--p-indigo);font-weight:600;border-bottom:2px solid var(--p-indigo);">Survey</span>
+          <span style="padding:6px 12px;font-size:13px;color:var(--p-muted);">Responses</span>
+          <span style="padding:6px 12px;font-size:13px;color:var(--p-muted);">Public results</span>
+        </div>
+        <span style="flex:1;"></span>
+        <span style="font-size:13px;color:var(--p-muted);">🏢 Mapsurvey ▾</span>
+        <span style="font-size:13px;color:#9ca3af;">admin</span>
+        <span style="font-size:13px;color:var(--p-muted);">Logout</span>
+      </div>
+      <div style="background:#fff;border-bottom:1px solid var(--p-border);padding:10px 18px;display:flex;align-items:center;gap:12px;">
+        <span style="width:30px;height:30px;border-radius:7px;background:var(--p-indigo-soft);color:var(--p-indigo);display:grid;place-items:center;">⚒</span>
+        <div style="flex:1;"><div style="font-weight:600;font-size:14px;">Survey</div><div style="font-size:12px;color:var(--p-muted);">Открыт · 65 ответов · завершаемость 98% · обновлено 2 ч назад</div></div>
+        <button class="btn-publish-sm" style="background:#fff;color:#374151;border:1px solid var(--p-border);">✎ Редактировать</button>
+        <button class="btn-publish-sm" style="background:var(--p-indigo);">🔗 Share</button>
+        <button class="btn-publish-sm" style="background:#fff;color:#374151;border:1px solid var(--p-border);">↗ Preview</button>
+        <span class="iconbtn" style="width:34px;height:34px;">⋯</span>
+      </div>
+      <div style="flex:1;display:flex;min-height:0;">
+        <div style="width:250px;background:#fff;border-right:1px solid var(--p-border);display:flex;flex-direction:column;">
+          <div class="row-card" style="border:none;border-bottom:1px solid var(--p-border);border-radius:0;"><span style="color:var(--p-muted)">⚙</span><div class="grow"><div class="name">Survey settings</div></div><span class="chev">›</span></div>
+          <div class="sec-label" style="padding:10px 14px 4px;">Sections</div>
+          <div class="row-card" style="border:none;border-radius:0;background:var(--p-indigo-soft);"><span class="handle">⠿</span><div class="grow"><div class="name">Отдых и любимые угол…</div><div class="meta">4 вопроса</div></div></div>
+          <div class="row-card" style="border:none;border-radius:0;"><span class="handle">⠿</span><div class="grow"><div class="name">Карта лучших мест</div><div class="meta">2 вопроса · гео</div></div></div>
+          <div class="row-card" style="border:none;border-radius:0;"><span class="handle">⠿</span><div class="grow"><div class="name">Сохранение и развити…</div><div class="meta">3 вопроса</div></div></div>
+          <div style="flex:1;"></div>
+          <div class="add-btn" style="margin:10px;">＋ New Section</div>
+        </div>
+        <div style="flex:1;padding:18px;overflow:hidden;">
+          <div style="background:#fff;border:1px solid var(--p-border);border-radius:12px;padding:14px;margin-bottom:12px;">
+            <div style="font-weight:600;font-size:13.5px;margin-bottom:8px;">Section: Отдых и любимые уголки Бишкека</div>
+            <div style="font-size:12px;color:var(--p-muted);">Title · Subheading · Code — read-only (v1 опубликована; правки → «✎ Редактировать»)</div>
+          </div>
+          <div class="sec-label" style="margin-bottom:6px;">Questions</div>
+          <div class="row-card" style="margin-bottom:8px;"><div class="grow"><div class="name">Как часто вы проводите время в общественных пространствах?</div><div class="meta">choice · required</div></div><span class="chev">›</span></div>
+          <div class="row-card" style="margin-bottom:8px;"><div class="grow"><div class="name">Как вы обычно добираетесь до любимых мест?</div><div class="meta">multichoice</div></div><span class="chev">›</span></div>
+          <div class="row-card"><div class="grow"><div class="name">Что делает город уютным?</div><div class="meta">text</div></div><span class="chev">›</span></div>
+        </div>
+        <div style="width:330px;background:#fff;border-left:1px solid var(--p-border);display:flex;flex-direction:column;">
+          <div style="padding:8px 12px;border-bottom:1px solid var(--p-border);font-size:11px;font-weight:600;color:var(--p-muted);letter-spacing:.05em;display:flex;justify-content:space-between;"><span>PREVIEW</span><span>RU ▾ · »</span></div>
+          <div style="flex:1;position:relative;background:linear-gradient(115deg,transparent 46%,#cfe3cd 46%,#cfe3cd 54%,transparent 54%),linear-gradient(0deg,#eceae4,#f1efe9);">
+            <div style="position:absolute;left:8%;right:8%;bottom:0;top:38%;background:#fff;border-radius:10px 10px 0 0;box-shadow:0 -6px 18px rgba(0,0,0,.12);padding:12px;">
+              <div style="font-weight:700;font-size:13px;">Отдых и любимые уголки Бишкека</div>
+              <div style="font-size:10px;color:var(--p-muted);text-align:center;margin:4px 0;">1 / 3</div>
+              <div style="font-size:11px;color:var(--p-text);">Расскажите, как вы проводите время в городе…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="decisions">
+  <h2>Общее для всех вариантов</h2>
+  <ul>
+    <li><b>Ctx-бар на мобильном умирает</b> — его заголовок дублирует активную вкладку, подпись дублирует контент, кнопки дублируют чип/панели.</li>
+    <li><b>Share появляется в ⋯-меню</b> (аудит: сейчас с телефона поделиться опросом невозможно — P0 этого мокапа). Там же: Import/Export, организация, Help &amp; support, Discard (danger-зона внизу), Logout.</li>
+    <li><b>Discard — только в ⋯</b> и с существующей confirm-модалкой: деструктив не заслуживает постоянной красной кнопки на экране.</li>
+    <li><b>Чип версии остаётся полным lifecycle-меню</b> (Draft→Testing→Publish→Close) во всех вариантах — различие только в том, есть ли дополнительная громкая Publish-CTA.</li>
+    <li>Карточки секций получают счётчики вопросов (аудит, бонус узнавания).</li>
+    <li>Desktop не трогаем: ctx-бар там остаётся как есть.</li>
+  </ul>
+</footer>
+
+</body>
+</html>
