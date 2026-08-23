@@ -6552,6 +6552,7 @@ class EditorPermissionTest(TestCase):
         self.assertEqual(survey.organization, self.org)
         self.assertEqual(survey.created_by, self.editor)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_viewer_sees_read_only_badge(self):
         """
         GIVEN an org viewer and a published survey
@@ -6766,6 +6767,7 @@ class EditorPermissionTest(TestCase):
         self.assertNotIn('title="Editor"', content)
         self.assertNotIn('badge-moved', content)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_publishing_widget_renders_on_all_spaces(self):
         """
         GIVEN an owner
@@ -20915,6 +20917,7 @@ class PublicResultsEditorTest(TestCase):
         self.assertEqual(r.status_code, 302)
         self.assertIn(f"?block={block.id}", r.url)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_settings_preview_button_works_before_page_is_live(self):
         """
         GIVEN a results page that is not yet published
@@ -21549,6 +21552,7 @@ class SurveyPrimaryActionTest(TestCase):
         self.assertContains(r, "doTransition('published')")
         self.assertContains(r, "Publish")
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_testing_surfaces_open_for_responses(self):
         """
         GIVEN a survey in testing
@@ -21561,6 +21565,7 @@ class SurveyPrimaryActionTest(TestCase):
         # bar too, so it must now appear at least twice (chip + bar).
         self.assertContains(r, "Publish — open for responses", count=2)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_published_shows_open_state_and_close(self):
         """
         GIVEN a published (open) survey
@@ -25248,6 +25253,7 @@ class AISurveyCreateViewTest(TestCase):
         self.assertNotContains(response, 'Generate draft')
 
     @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_panel_is_present_when_provider_configured(self):
         """
         GIVEN configured provider credentials
@@ -28234,6 +28240,7 @@ class MobileEditorNavTest(TestCase):
         self.assertIn('editor-mobile', html)
         self.assertIn('data-active-pane="structure"', html)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_flag_off_serves_legacy_layout(self):
         """
         GIVEN the MOBILE_EDITOR_NAV flag is off (default)
@@ -28344,9 +28351,10 @@ class EditorAutosaveTest(TestCase):
         self.assertIn('>Create</button>', html)
         self.assertNotIn('data-autosave', html)
 
+    @override_settings(EDITOR_AUTOSAVE=False)
     def test_flag_off_keeps_legacy_save_buttons(self):
         """
-        GIVEN the autosave flag off (default)
+        GIVEN the autosave flag explicitly off
         WHEN an existing question's form modal renders
         THEN the legacy Save and Apply buttons are present, no indicator
         """
@@ -28500,6 +28508,7 @@ class MobileContextualPaneBarTest(TestCase):
         self.assertIn('data-active-pane="structure"', html)
         self.assertNotIn('data-pane="charts"', html)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_flag_off_no_bars_anywhere(self):
         """
         GIVEN the mobile nav flag off
@@ -28539,9 +28548,10 @@ class DashboardVariantATest(TestCase):
         self.assertIn('List view', html)
         self.assertIn('Show Archived', html)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_flag_off_serves_legacy_header(self):
         """
-        GIVEN the flag off (default)
+        GIVEN the flag explicitly off
         WHEN the dashboard renders
         THEN none of the variant-A chrome is emitted
         """
@@ -28581,9 +28591,10 @@ class CreateSurveyWizardTest(TestCase):
         self.assertIn('Start with an empty survey', html)
         self.assertNotIn('>Create empty</button>', html)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_flag_off_serves_legacy_page(self):
         """
-        GIVEN the flag off (default)
+        GIVEN the flag explicitly off
         WHEN the create page renders
         THEN no wizard chrome or copy is emitted and the legacy buttons remain
         """
@@ -28724,9 +28735,10 @@ class SurveyStatusLineTest(TestCase):
         self.assertNotIn('>HEAD<', html)
         self.assertIn('section-qcount', html)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_flag_off_keeps_ctx_bar_only(self):
         """
-        GIVEN the flag off (default)
+        GIVEN the flag explicitly off
         WHEN the editor renders
         THEN no status line or sheets are emitted and the legacy ctx-bar remains
         """
@@ -28821,9 +28833,10 @@ class PublicResultsStatusLineTest(TestCase):
         self.assertIn('tabdot td-off', html)
         self.assertIn('section-qcount', html)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_flag_off_keeps_legacy_ctxbar(self):
         """
-        GIVEN the flag off (default)
+        GIVEN the flag explicitly off
         WHEN the PR tab renders
         THEN no status line is emitted and the scattered ctx-bar controls stay
         """

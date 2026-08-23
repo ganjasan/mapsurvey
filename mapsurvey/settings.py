@@ -457,14 +457,15 @@ GITHUB_REPO_URL = os.environ.get('GITHUB_REPO_URL', 'https://github.com/ganjasan
 DEMO_SURVEY_URL = os.environ.get('DEMO_SURVEY_URL', '')
 DISCORD_INVITE_URL = os.environ.get('DISCORD_INVITE_URL', 'https://discord.gg/v6YYw3zjKH')
 
-# Mobile-adaptive rollout kill switches (openspec: mobile-adaptive-refactor).
-# Unset/False serves the pre-change layout on all viewports, so a bad rollout is
-# reverted by flipping the env var -- no deploy rollback needed.
-MOBILE_EDITOR_NAV = os.environ.get('MOBILE_EDITOR_NAV', 'False').lower() in ('true', '1')
+# Mobile-adaptive layout kill switches (openspec: mobile-adaptive-refactor).
+# ON by default (owner decision at PR time). Setting the env var to False
+# serves the pre-change layout on all viewports, so a bad rollout is reverted
+# by flipping the env var -- no deploy rollback needed.
+MOBILE_EDITOR_NAV = os.environ.get('MOBILE_EDITOR_NAV', 'True').lower() in ('true', '1')
 # Autosave replaces the explicit Save button on question edit forms (all viewports —
 # the one intentional desktop change of the refactor). Separate switch so desktop
 # autosave can be rolled back without touching the mobile navigation.
-EDITOR_AUTOSAVE = os.environ.get('EDITOR_AUTOSAVE', 'False').lower() in ('true', '1')
+EDITOR_AUTOSAVE = os.environ.get('EDITOR_AUTOSAVE', 'True').lower() in ('true', '1')
 
 # Public results sharing
 # Creators share results by copying the editor URL out of the address bar, which is the

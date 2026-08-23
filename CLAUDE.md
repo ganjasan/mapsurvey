@@ -124,7 +124,8 @@ pane is a full-screen overlay with a back button). `EDITOR_AUTOSAVE` replaces Sa
 question EDIT forms with debounced autosave + a loud saved/saving/error indicator on ALL
 viewports (autosave POSTs carry `autosave=1`, validation errors return 422 JSON so the
 typed-in form is never re-rendered); new-question forms keep an explicit Create button.
-Both default off; unset = pre-change layout, which is the rollback story. The RESPONDENT
+Both default ON since PR #108 (owner decision); setting the env var to
+False serves the pre-change layout, which is the rollback story. The RESPONDENT
 survey page was deliberately left as-is: a bottom-sheet variant was built, reviewed and
 REMOVED (2026-08-23) — the owner kept the legacy panel/crosshair flow; do not reintroduce
 a sheet without an explicitly approved respondent-flow mockup. Touch reorder uses
