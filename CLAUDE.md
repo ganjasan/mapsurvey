@@ -97,7 +97,7 @@ creator and stored XSS on every respondent.
 Use `coerce_creator_html`, not `sanitize_creator_html`, anywhere a value might not be from an
 editor. These fields hold plain text from before the editors existed (old rows, old ZIPs, AI
 drafts), and `nh3` would read "takes <5 minutes" as an unknown tag and delete it; `coerce_` escapes
-what carries no creator markup and sanitizes what does. Migration `0055` did the same one-off pass
+what carries no creator markup and sanitizes what does. Migration `0056` did the same one-off pass
 over the rows already in the database.
 
 The **Formatted Text block (`html`)** is the extreme case: it collects nothing and its `subtext` IS

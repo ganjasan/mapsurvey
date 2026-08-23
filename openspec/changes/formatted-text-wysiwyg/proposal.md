@@ -56,7 +56,7 @@ The survey already has a working rich-text editor for exactly this job — the T
 
 - Affected specs: `formatted-text-block` (ADDED)
 - Affected code: `survey/models.py` (`subtext` and `subheading` → `TextField`) + migrations
-  `0053`–`0055` (the last one escapes legacy plain text), `survey/html_sanitize.py` (new home
+  `0054`–`0056` (the last one escapes legacy plain text), `survey/html_sanitize.py` (new home
   of the allow-list, plus `coerce_creator_html`), `survey/views.py` (keeps the thanks-era
   names as aliases), `survey/editor_forms.py` (sanitize on save for question and section),
   `survey/editor_views.py` (translations, live preview), `survey/serialization.py` (ZIP
@@ -64,4 +64,4 @@ The survey already has a working rich-text editor for exactly this job — the T
   panel gain editors; `survey_section_partial.html`, `question_preview_frame.html`,
   `leaflet_draw_button.html`, `show_image.html` render subtext as markup, and
   `base_survey_template.html` restores a geo subtitle with `.html()` rather than `.text()`.
-- Respondents see existing content unchanged — that is what migration `0055` is for.
+- Respondents see existing content unchanged — that is what migration `0056` is for.

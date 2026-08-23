@@ -56,7 +56,7 @@ def noop_reverse(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('survey', '0054_section_subheading_unbounded'),
+        ('survey', '0055_section_subheading_unbounded'),
     ]
 
     operations = [

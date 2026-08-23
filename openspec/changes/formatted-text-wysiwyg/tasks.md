@@ -3,7 +3,7 @@
 ## 1. Storage
 
 - [x] 1.1 `Question.subtext` and `QuestionTranslation.subtext`: `CharField(max_length=512)`
-      → `TextField(null=True, blank=True)`; migration `0053_formatted_text_body_unbounded`
+      → `TextField(null=True, blank=True)`; migration `0054_formatted_text_body_unbounded`
       (Postgres varchar→text is a metadata-only change, no table rewrite)
 - [x] 1.2 `QuestionForm.Meta.widgets['subtext']` keeps the one-line `TextInput` for every
       type; the WYSIWYG replaces it client-side for `html` only
@@ -37,10 +37,10 @@
 ## 4. Rich subtext and subheading
 
 - [x] 4.1 `SurveySection.subheading` / `SurveySectionTranslation.subheading` → `TextField`
-      (migration `0054`)
+      (migration `0055`)
 - [x] 4.2 `coerce_creator_html` in `html_sanitize.py`: sanitize what carries creator markup,
       escape what doesn't (old rows, old ZIPs, AI drafts)
-- [x] 4.3 Data migration `0055` escapes legacy plain-text subtext, skipping `html` blocks and
+- [x] 4.3 Data migration `0056` escapes legacy plain-text subtext, skipping `html` blocks and
       anything already rich — so "takes <5 minutes" survives the switch to `|safe`
 - [x] 4.4 Every write path coerced: `QuestionForm.clean`, `SurveySectionForm.clean_subheading`,
       question and section translations, ZIP import (the AI path writes through it), live preview
