@@ -16,7 +16,15 @@
         display: flex; flex-direction: column;
         background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px;
     }
-    @media (max-width: 991.98px) { .qtp-preview-col { display: none; } }
+    @media (max-width: 991.98px) {
+        .qtp-preview-col { display: none; }
+        /* Flag on: the preview + tips stack below the form instead of
+           disappearing — on a phone this is the only "how will it look". */
+        body.mobile-nav-enabled .qtp-body-cols { flex-direction: column; }
+        body.mobile-nav-enabled .qtp-preview-col {
+            display: flex; position: static; flex: 1 1 auto; width: 100%;
+        }
+    }
     .qtp-pv-title {
         font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
         text-transform: uppercase; color: #6b7280; margin-bottom: 8px;
