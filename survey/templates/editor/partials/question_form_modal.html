@@ -122,7 +122,7 @@
             <label style="font-weight:600;">Display as</label>
             <div style="display:flex;gap:8px;">
                 {% for radio in form.display_style %}
-                <label class="ds-option" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;">
+                <label class="ds-option" data-types="{% if radio.data.value == 'default' %}rating choice{% elif radio.data.value == 'dropdown' %}choice{% else %}rating{% endif %}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;">
                     {{ radio.tag }}
                     {% if radio.data.value == 'default' %}
                     <span class="ds-thumb" style="display:flex;align-items:center;justify-content:center;width:74px;height:22px;border:1px dashed #9aa0a6;border-radius:4px;color:#9aa0a6;">
@@ -135,6 +135,10 @@
                     {% elif radio.data.value == 'stars' %}
                     <span class="ds-thumb" style="display:flex;gap:2px;color:#f5b301;font-size:13px;">
                         <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star" style="color:#d5d8dc;"></i><i class="fas fa-star" style="color:#d5d8dc;"></i>
+                    </span>
+                    {% elif radio.data.value == 'dropdown' %}
+                    <span class="ds-thumb" style="display:flex;align-items:center;justify-content:space-between;width:74px;height:22px;border:1px solid #9aa0a6;border-radius:4px;color:#9aa0a6;padding:0 6px;">
+                        <i class="fas fa-search" style="font-size:10px;"></i><i class="fas fa-caret-down"></i>
                     </span>
                     {% else %}
                     <span class="ds-thumb" style="display:flex;flex-direction:column;gap:3px;">
@@ -369,7 +373,7 @@
 
     // Types whose rendering the creator can pick. Mirrors
     // SurveySectionAnswerForm.DISPLAY_STYLE_TYPES — keep the two in step.
-    var DISPLAY_STYLE_TYPES = ['rating'];
+    var DISPLAY_STYLE_TYPES = ['rating', 'choice'];
 
     // Beyond this many options the scale strip is under ~25px per cell on a
     // 320px screen. Measured, not guessed: nine options give 20.5px.
@@ -434,7 +438,19 @@
 
     function toggleDisplayStyleFields() {
         var el = document.getElementById('display-style-fields');
-        if (el) el.style.display = (inputTypeSelect && DISPLAY_STYLE_TYPES.indexOf(inputTypeSelect.value) !== -1) ? 'block' : 'none';
+        var t = inputTypeSelect ? inputTypeSelect.value : '';
+        if (el) el.style.display = (DISPLAY_STYLE_TYPES.indexOf(t) !== -1) ? 'block' : 'none';
+        // Each style option belongs to specific question types (data-types);
+        // hide the rest and drop a selection that just became invalid.
+        var defaultRadio = null;
+        document.querySelectorAll('#display-style-fields .ds-option').forEach(function(lbl) {
+            var radio = lbl.querySelector('input[name="display_style"]');
+            var forTypes = (lbl.dataset.types || '').split(' ');
+            var visible = forTypes.indexOf(t) !== -1;
+            lbl.style.display = visible ? '' : 'none';
+            if (radio && radio.value === 'default') defaultRadio = radio;
+            if (!visible && radio && radio.checked && defaultRadio) defaultRadio.checked = true;
+        });
         toggleStripWidthHint();
     }
 

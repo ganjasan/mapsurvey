@@ -592,7 +592,11 @@ def _create_question(
         )
 
     display_style = question_data.get("display_style")
-    if display_style not in ("default", "scale_strip", "list_pips"):
+    allowed_styles = (
+        ("default", "dropdown") if input_type == "choice"
+        else ("default", "scale_strip", "list_pips")
+    )
+    if display_style not in allowed_styles:
         display_style = "default"
 
     question = Question.objects.create(
