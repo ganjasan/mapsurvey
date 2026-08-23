@@ -7,6 +7,8 @@
 
 body.mobile-nav-enabled .mobile-tabbar { display: none; }
 body.mobile-nav-enabled .navbar-overflow { display: none; }
+body.mobile-nav-enabled .mobile-statusbar { display: none; }
+body.mobile-nav-enabled .mobile-sheet { display: none; }
 
 @media (max-width: 767.98px) {
 
@@ -234,6 +236,60 @@ body.mobile-nav-enabled .navbar-overflow { display: none; }
     body.mobile-nav-enabled .editor-modal .modal-content {
         border-radius: 0;
         min-height: 100vh;
+    }
+
+    /* Variant C: the ctx-bar dies on phones — the status line replaces it. */
+    body.mobile-nav-enabled .build-ctxbar { display: none; }
+    body.mobile-nav-enabled .mobile-statusbar {
+        display: flex; align-items: center; gap: 8px;
+        background: #fff; border-bottom: 1px solid var(--border-color);
+        padding: 8px 12px;
+    }
+    body.mobile-nav-enabled .msb-status {
+        flex: 1; min-width: 0; font-size: 12.5px; color: #6b7280;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    body.mobile-nav-enabled .msb-btn {
+        border: none; border-radius: 9px; min-height: 40px; padding: 0 13px;
+        font-weight: 600; font-size: 13px; flex: 0 0 auto; cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center;
+        text-decoration: none; white-space: nowrap;
+    }
+    body.mobile-nav-enabled .msb-green { background: #198754; color: #fff; }
+    body.mobile-nav-enabled .msb-amber { background: #b45309; color: #fff; }
+    body.mobile-nav-enabled .msb-indigo { background: var(--accent); color: #fff; }
+    body.mobile-nav-enabled .msb-outline { background: #fff; color: #374151; border: 1px solid var(--border-color); }
+    body.mobile-nav-enabled .msb-ghost { background: none; color: #6b7280; }
+    body.mobile-nav-enabled .msb-full { width: 100%; min-height: 44px; margin-top: 6px; }
+
+    /* Bottom sheets (test mode / edit intercept) */
+    body.mobile-nav-enabled .mobile-sheet:not([hidden]) { display: block; }
+    body.mobile-nav-enabled .mobile-sheet { position: fixed; inset: 0; z-index: 800; }
+    body.mobile-nav-enabled .mobile-sheet-backdrop { position: absolute; inset: 0; background: rgba(17,24,39,.45); }
+    body.mobile-nav-enabled .mobile-sheet-panel {
+        position: absolute; left: 0; right: 0; bottom: 0; background: #fff;
+        border-radius: 16px 16px 0 0; box-shadow: 0 -10px 28px rgba(0,0,0,.18);
+        padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+    }
+    body.mobile-nav-enabled .mobile-sheet-title { font-weight: 600; font-size: 14.5px; margin-bottom: 8px; }
+    body.mobile-nav-enabled .mobile-sheet-help { font-size: 12.5px; color: #6b7280; line-height: 1.45; margin: 10px 0 12px; }
+    body.mobile-nav-enabled .msb-linkrow { display: flex; gap: 8px; margin-bottom: 10px; }
+    body.mobile-nav-enabled .msb-linkrow input {
+        flex: 1; min-width: 0; font-family: monospace; font-size: 11px;
+        background: var(--bg-muted); border: 1px solid var(--border-color);
+        border-radius: 8px; padding: 9px 10px;
+    }
+    body.mobile-nav-enabled .msb-passrow label { font-size: 11.5px; font-weight: 600; color: #6b7280; display: block; margin-bottom: 4px; }
+    body.mobile-nav-enabled .msb-passline { display: flex; gap: 8px; }
+    body.mobile-nav-enabled .msb-passline input {
+        flex: 1; min-width: 0; border: 1px solid var(--border-color);
+        border-radius: 8px; padding: 9px 11px; font-size: 16px;
+    }
+
+    /* Section question-count pill */
+    body.mobile-nav-enabled .section-qcount {
+        font-size: 11px; color: #9ca3af; background: var(--bg-muted);
+        border-radius: 8px; padding: 1px 7px; flex: 0 0 auto;
     }
 
     /* Context bar / read-only banner: stack instead of a squeezed row, so the

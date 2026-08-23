@@ -109,3 +109,19 @@
 - [x] 9.8 Polish from review: Cancel removed with wizard on (navbar back covers it),
       sparkles emoji instead of the FA6-only icon, map-step catch-all hide (inline
       display:block label leak), frame-hint pill on the map step
+
+## 10. Survey status line & controls (variant C mockup, approved)
+
+- [x] 10.1 Mobile status line replaces the ctx-bar (<768, flagged): per-status text +
+      per-status primary action (draft->Publish, testing->Share test link,
+      published->Edit+Share, closed->Edit); response count live
+- [x] 10.2 Test-mode sheet: copy tokenized link on top, access password, explainer,
+      Publish at the bottom
+- [x] 10.3 Edit-intercept on published surveys (mobile): any edit-intent tap opens the
+      "opros opublikovan" sheet -> Otkryt novuyu versiyu (editor_create_draft) or
+      Prodolzhit pravku (existing draft)
+- [x] 10.4 ... menu on survey pages gains Share... and Discard (danger); HEAD badge
+      removed; section cards get question counts
+- [x] 10.5 Desktop: ctx-bar subtitle becomes the live status text (minimal desktop change)
+- [x] 10.6 Tests: status line per status, intercept sheet markup, share menu item,
+      counts (GIVEN/WHEN/THEN)

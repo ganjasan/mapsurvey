@@ -828,6 +828,18 @@
                     <i class="fas fa-ellipsis-h"></i>
                 </a>
                 <div class="dropdown-menu dropdown-menu-right">
+                    {% if survey %}
+                    {% comment %}Survey-scoped items first (audit: Share was
+                    unreachable on phones). Discard reuses the state-appropriate
+                    modal already present on the page.{% endcomment %}
+                    <a class="dropdown-item" href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-share-alt" style="margin-right:4px;"></i>Share…</a>
+                    {% if show_draft_actions %}
+                    <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftModal"><i class="fas fa-trash" style="margin-right:4px;"></i>Discard draft</a>
+                    {% elif is_owner and survey.status == 'draft' and not survey.is_draft_copy %}
+                    <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftSurveyModal"><i class="fas fa-trash" style="margin-right:4px;"></i>Discard survey</a>
+                    {% endif %}
+                    <div class="dropdown-divider"></div>
+                    {% endif %}
                     <h6 class="dropdown-header">{{ user.get_username }} · {{ active_org.name|default:"No organization" }}</h6>
                     {% if active_org %}
                     <a class="dropdown-item" href="{% url 'org_settings' active_org.slug %}"><i class="fas fa-cog" style="margin-right:4px;"></i>Organization settings</a>

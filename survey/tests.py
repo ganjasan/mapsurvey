@@ -28638,3 +28638,91 @@ class CreateSurveyWizardTest(TestCase):
         self.assertNotIn('available_languages', wrapper.group(0))
         self.assertIn('Available languages', html)
 
+
+
+class SurveyStatusLineTest(TestCase):
+    """Variant C status line, sheets and menus behind MOBILE_EDITOR_NAV."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Status Org")
+        self.user = User.objects.create_user('status_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="status_survey", organization=self.org)
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='S1', is_head=True,
+        )
+        Question.objects.create(survey_section=self.section, name='Q1', input_type='text')
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.client.force_login(self.user)
+
+    def _page(self):
+        return self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_draft_status_line(self):
+        """
+        GIVEN a draft survey and the flag on
+        WHEN the editor renders
+        THEN the status line says the draft collects nothing and offers Publish
+        """
+        html = self._page()
+        self.assertIn('Draft — not collecting responses', html)
+        self.assertIn('mobile-statusbar', html)
+        self.assertIn("doTransition('published')", html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_testing_status_has_share_link_sheet(self):
+        """
+        GIVEN a testing survey
+        WHEN the editor renders
+        THEN the status line offers the test link and the sheet carries the
+             tokenized URL, the password form and the Publish exit
+        """
+        self.survey.status = 'testing'
+        self.survey.save(update_fields=['status'])
+        html = self._page()
+        self.assertIn('Testing — invite-link access', html)
+        self.assertIn('Share test link', html)
+        self.assertIn(f'token={self.survey.test_token}', html)
+        self.assertIn('editor_survey_password'.replace('editor_survey_password', f'/editor/surveys/{self.survey.uuid}/password/'), html)
+        self.assertIn('Publish — open for everyone', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_published_status_edit_and_share(self):
+        """
+        GIVEN a published survey
+        WHEN the editor renders
+        THEN the status line shows the live count with Edit + Share, the edit
+             intercept sheet exists, and the ctx-bar Preview duplicate stays out
+        """
+        self.survey.status = 'published'
+        self.survey.save(update_fields=['status'])
+        html = self._page()
+        self.assertIn('Open · 0 responses', html)
+        self.assertIn('✎ Edit', html)
+        self.assertIn('editIntercept', html)
+        self.assertIn(f'/editor/surveys/{self.survey.uuid}/share/', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_overflow_menu_has_share_and_sections_have_counts(self):
+        """
+        GIVEN the flag on
+        WHEN the editor renders
+        THEN the overflow menu offers Share…, the HEAD badge is gone and the
+             section rows carry question counts
+        """
+        html = self._page()
+        self.assertIn('Share…', html)
+        self.assertNotIn('>HEAD<', html)
+        self.assertIn('section-qcount', html)
+
+    def test_flag_off_keeps_ctx_bar_only(self):
+        """
+        GIVEN the flag off (default)
+        WHEN the editor renders
+        THEN no status line or sheets are emitted and the legacy ctx-bar remains
+        """
+        html = self._page()
+        self.assertNotIn('mobile-statusbar', html)
+        self.assertNotIn('testSheet', html)
+        self.assertIn('build-ctxbar', html)

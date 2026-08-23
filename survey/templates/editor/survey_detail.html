@@ -57,7 +57,7 @@ when the published survey is read-only the bar goes amber and carries the
     <span class="ico"><i class="fas fa-hammer"></i></span>
     <div>
         <div class="t">Survey</div>
-        <div class="s">Sections, questions &amp; survey settings</div>
+        <div class="s">{% if survey.status == 'draft' %}Draft — not collecting responses{% elif survey.status == 'testing' %}Testing — invite-link access{% elif survey.status == 'published' %}Open · {{ session_count }} response{{ session_count|pluralize }}{% elif survey.status == 'closed' %}Closed · {{ session_count }} response{{ session_count|pluralize }}{% else %}Sections, questions &amp; survey settings{% endif %}</div>
     </div>
     <span style="flex:1;"></span>
     <a class="btn btn-sm btn-outline-secondary ctx-preview-btn" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">
@@ -80,6 +80,99 @@ when the published survey is read-only the bar goes amber and carries the
     {% include "editor/partials/_survey_primary_action.html" %}
     {% endif %}
 </div>
+{% endif %}
+
+{% if MOBILE_EDITOR_NAV %}
+{% comment %}Status line (variant C, approved mockup): replaces the ctx-bar
+below 768px. Text explains the state; the primary action follows the status —
+draft/testing lead to publish/test-sharing, published leads to Share (the top
+action in PostHog data) and an intent-named Edit that runs the new-version
+flow.{% endcomment %}
+<div class="mobile-statusbar" style="flex-shrink:0;">
+    <span class="msb-status">
+        {% if survey.is_draft_copy %}Draft of v{{ survey.published_version.version_number|add:1 }} — edit freely, then publish
+        {% elif survey.status == 'draft' %}Draft — not collecting responses
+        {% elif survey.status == 'testing' %}Testing — invite-link access
+        {% elif survey.status == 'published' %}Open · {{ session_count }} response{{ session_count|pluralize }}
+        {% elif survey.status == 'closed' %}Closed · {{ session_count }} response{{ session_count|pluralize }}
+        {% endif %}
+    </span>
+    {% if survey.is_draft_copy %}
+    <button class="msb-btn msb-green" onclick="checkAndPublishDraft()">🌐 Publish</button>
+    {% elif survey.status == 'draft' %}
+    <button class="msb-btn msb-green" onclick="doTransition('published')">🌐 Publish</button>
+    {% elif survey.status == 'testing' %}
+    <button class="msb-btn msb-amber" onclick="openTestSheet()">🔗 Share test link</button>
+    {% elif survey.status == 'published' or survey.status == 'closed' %}
+    <button class="msb-btn msb-outline" onclick="openEditIntercept()">✎ Edit</button>
+    <a class="msb-btn msb-indigo" href="{% url 'editor_survey_share' survey.uuid %}">🔗 Share</a>
+    {% endif %}
+</div>
+
+{% if survey.status == 'testing' %}
+<div class="mobile-sheet" id="testSheet" hidden>
+  <div class="mobile-sheet-backdrop" onclick="closeMobileSheet('testSheet')"></div>
+  <div class="mobile-sheet-panel">
+    <div class="mobile-sheet-title">Test mode</div>
+    <div class="msb-linkrow">
+      <input readonly id="testLinkInput" value="{{ request.scheme }}://{{ request.get_host }}{% url 'survey' survey_slug=survey.uuid %}?token={{ survey.test_token }}">
+      <button class="msb-btn msb-indigo" onclick="copyTestLink(this)">Copy</button>
+    </div>
+    <form class="msb-passrow"
+          hx-post="{% url 'editor_survey_password' survey.uuid %}"
+          hx-vals='{"action": "set"}'
+          hx-swap="none"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+      <label>Access password</label>
+      <div class="msb-passline">
+        <input name="password" type="text" autocomplete="off"
+               placeholder="{% if survey.has_password %}Set — link is protected{% else %}Not set — anyone with the link can open it{% endif %}">
+        <button type="submit" class="msb-btn msb-outline">Save</button>
+      </div>
+    </form>
+    <div class="mobile-sheet-help">
+      Take the survey yourself and send the link to colleagues — before going
+      public. Test responses can be cleared with one switch when you publish.
+    </div>
+    <button class="msb-btn msb-green msb-full" onclick="closeMobileSheet('testSheet'); showPublishConfirm()">🌐 Publish — open for everyone</button>
+  </div>
+</div>
+{% endif %}
+
+{% if is_read_only and not survey.is_draft_copy %}
+<div class="mobile-sheet" id="editIntercept" hidden>
+  <div class="mobile-sheet-backdrop" onclick="closeMobileSheet('editIntercept')"></div>
+  <div class="mobile-sheet-panel">
+    <div class="mobile-sheet-title">This survey is live and collecting responses</div>
+    <div class="mobile-sheet-help" style="margin-top:0;">
+      Edits are made in a new version. The current version keeps collecting
+      until you publish the update.
+    </div>
+    {% if draft_copy %}
+    <a class="msb-btn msb-indigo msb-full" href="{% url 'editor_survey_detail' draft_copy.uuid %}">Continue editing the draft →</a>
+    {% elif show_back_to_draft %}
+    <button class="msb-btn msb-indigo msb-full" onclick="doTransition('draft')">Back to editing</button>
+    {% elif show_edit_published %}
+    <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" style="margin:0;">
+        {% csrf_token %}
+        <button type="submit" class="msb-btn msb-indigo msb-full">Open a new version</button>
+    </form>
+    {% endif %}
+    <button class="msb-btn msb-ghost msb-full" onclick="closeMobileSheet('editIntercept')">Cancel</button>
+  </div>
+</div>
+{% endif %}
+
+<script>
+function openTestSheet() { var el = document.getElementById('testSheet'); if (el) el.hidden = false; }
+function openEditIntercept() { var el = document.getElementById('editIntercept'); if (el) el.hidden = false; }
+function closeMobileSheet(id) { var el = document.getElementById(id); if (el) el.hidden = true; }
+function copyTestLink(btn) {
+    var inp = document.getElementById('testLinkInput');
+    if (navigator.clipboard) navigator.clipboard.writeText(inp.value); else { inp.select(); document.execCommand('copy'); }
+    var old = btn.textContent; btn.textContent = '✓'; setTimeout(function(){ btn.textContent = old; }, 1200);
+}
+</script>
 {% endif %}
 
 <div class="editor-container" style="flex:1;min-height:0;" data-active-pane="structure">
