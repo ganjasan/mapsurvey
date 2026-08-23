@@ -25,6 +25,7 @@ lifecycle actions, always visible across section editing and the settings
 panel (moved out of the top navbar). The read-only banner is folded in:
 when the published survey is read-only the bar goes amber and carries the
 "edit a draft" action.{% endcomment %}
+{% if not MOBILE_EDITOR_NAV %}
 {% if is_read_only and not survey.is_draft_copy %}
 <div class="pr-ctxbar build-ctxbar" style="flex-shrink:0;">
     <div style="flex:1;display:flex;align-items:center;gap:.6rem;min-width:0;">
@@ -81,6 +82,7 @@ when the published survey is read-only the bar goes amber and carries the
     {% endif %}
 </div>
 {% endif %}
+{% endif %}
 
 {% if MOBILE_EDITOR_NAV %}
 {% comment %}Status line (variant C, approved mockup): replaces the ctx-bar
@@ -89,6 +91,8 @@ draft/testing lead to publish/test-sharing, published leads to Share (the top
 action in PostHog data) and an intent-named Edit that runs the new-version
 flow.{% endcomment %}
 <div class="mobile-statusbar" style="flex-shrink:0;">
+    <span class="msb-ico"><i class="fas fa-hammer"></i></span>
+    <div class="msb-titleblock"><div class="msb-title">Survey</div></div>
     <span class="msb-status">
         {% if survey.is_draft_copy %}Draft of v{{ survey.published_version.version_number|add:1 }} — edit freely, then publish
         {% elif survey.status == 'draft' %}Draft — not collecting responses
@@ -106,6 +110,21 @@ flow.{% endcomment %}
     {% elif survey.status == 'published' or survey.status == 'closed' %}
     <button class="msb-btn msb-outline" onclick="openEditIntercept()">✎ Edit</button>
     <a class="msb-btn msb-indigo" href="{% url 'editor_survey_share' survey.uuid %}">🔗 Share</a>
+    {% endif %}
+    <a class="msb-btn msb-outline msb-desktop" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Open the survey as a respondent">↗ Preview</a>
+    {% if is_owner %}
+    <div class="dropdown msb-desktop" style="flex:0 0 auto;">
+        <button class="msb-btn msb-outline" data-toggle="dropdown" aria-label="More survey actions">⋯</button>
+        <div class="dropdown-menu dropdown-menu-right">
+            {% if show_draft_actions %}
+            <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftModal"><i class="fas fa-trash" style="margin-right:4px;"></i>Discard draft</a>
+            {% elif survey.status == 'draft' and not survey.is_draft_copy %}
+            <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftSurveyModal"><i class="fas fa-trash" style="margin-right:4px;"></i>Discard survey</a>
+            {% else %}
+            <span class="dropdown-item text-muted" style="pointer-events:none;">No extra actions</span>
+            {% endif %}
+        </div>
+    </div>
     {% endif %}
 </div>
 
