@@ -150,3 +150,9 @@
 - [x] 11.7 Tests: PublicResultsStatusLineTest (per-state chip+primary, dots,
       badges, flag off), SurveyStatusLineTest updated for the chip move
       (GIVEN/WHEN/THEN)
+- [x] 11.8 Post-review polish: chip menu above resize handles (z-index),
+      soft-amber Share-test-link, geo picker wash removed, HEAD badge JS
+      re-injection dropped, settings panels full-width, mobile panes ignore
+      saved desktop drag widths, full-width question dialog with touch
+      reorder (touch-action), question preview+Tips stacked on phones,
+      dashboard view toggle only in the ... menu; master merged (0053-0056)
