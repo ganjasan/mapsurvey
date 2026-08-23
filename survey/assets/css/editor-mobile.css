@@ -371,16 +371,9 @@ body.mobile-nav-enabled .pr-container { height: auto; flex: 1; min-height: 0; }
     body.mobile-nav-enabled .pr-ctxbar .ctx-preview-btn { display: none; }
 
     /* Question type picker inside the (full-screen) question dialog: larger
-       touch targets, map types highlighted as the product's identity group
-       (mockup screen 3). */
+       touch targets. (A purple wash on the geo group was tried and removed —
+       it read as "selected", clashing with the actual selection outline.) */
     body.mobile-nav-enabled .qtp-card { min-height: 72px; padding: 10px 6px; }
-    body.mobile-nav-enabled .qtp-grid-geo .qtp-card {
-        background: var(--accent-light);
-        border-color: #c7d2fe;
-    }
-    body.mobile-nav-enabled .qtp-grid-geo .qtp-card .qtp-icon,
-    body.mobile-nav-enabled .qtp-grid-geo .qtp-card .qtp-name { color: var(--accent); }
-    body.mobile-nav-enabled .qtp-group-geo { color: var(--accent); font-weight: 600; }
 
     /* Touch targets */
     body.mobile-nav-enabled .section-item,

@@ -5,8 +5,8 @@ select keeps working. Rendered by the question_type_picker tag.
 {% endcomment %}
 <div class="qtp-picker" id="qtp-picker">
     {% for group_label, types in groups %}
-    <div class="qtp-group-caption{% if group_label == "Map questions" %} qtp-group-geo{% endif %}">{{ group_label }}</div>
-    <div class="qtp-grid{% if group_label == "Map questions" %} qtp-grid-geo{% endif %}">
+    <div class="qtp-group-caption">{{ group_label }}</div>
+    <div class="qtp-grid">
         {% for t in types %}
         <div class="qtp-card{% if t.value == current %} selected{% endif %}"
              data-qtp-value="{{ t.value }}" data-qtp-hint="{{ t.hint }}"

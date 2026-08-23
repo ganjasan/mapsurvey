@@ -28246,11 +28246,12 @@ class MobileEditorNavTest(TestCase):
         self.assertNotIn('mobile-tabbar', html)
         self.assertNotIn('editor-mobile', html)
 
-    def test_type_picker_marks_geo_group(self):
+    def test_type_picker_has_no_geo_highlight(self):
         """
         GIVEN the grouped question type picker
         WHEN the picker partial renders
-        THEN the map-questions group carries the geo classes the mobile styles highlight
+        THEN the map-questions group is NOT specially highlighted — the purple
+             wash was removed (it read as a selected state)
         """
         from django.template.loader import render_to_string
         from survey.question_types import picker_groups_for
@@ -28260,8 +28261,8 @@ class MobileEditorNavTest(TestCase):
             'editor/partials/question_type_picker.html',
             {'groups': groups, 'current': 'text'},
         )
-        self.assertIn('qtp-grid-geo', html)
-        self.assertIn('qtp-group-geo', html)
+        self.assertNotIn('qtp-grid-geo', html)
+        self.assertNotIn('qtp-group-geo', html)
 
 
 class EditorAutosaveTest(TestCase):
