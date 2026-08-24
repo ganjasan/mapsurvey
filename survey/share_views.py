@@ -3,8 +3,9 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 
-from .models import TrackedLink
+from .models import TrackedLink, PublicResultsPage
 from .permissions import survey_permission_required
+from .versioning import canonical_of
 
 
 class TrackedLinkForm(forms.ModelForm):
@@ -59,6 +60,9 @@ def share_page(request, survey_uuid):
     is_shareable = survey.status == 'published'
     can_publish, publish_blocked_reason = survey.can_transition_to('published')
 
+    # The results page (auto-drafted at publish time) lives on the canonical row.
+    results_page = PublicResultsPage.objects.filter(survey=canonical_of(survey)).first()
+
     return render(request, 'editor/survey_share.html', {
         'survey': survey,
         'form': form,
@@ -67,6 +71,7 @@ def share_page(request, survey_uuid):
         'is_shareable': is_shareable,
         'can_publish': can_publish,
         'publish_blocked_reason': publish_blocked_reason,
+        'results_page': results_page,
     })
 
 

@@ -232,6 +232,9 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
         {% if not can_publish %}
         <div class="pr-banner"><i class="fas fa-exclamation-triangle"></i> This survey is a draft. Publish the survey before publishing its results page.</div>
         {% endif %}
+        {% if page.scaffolded_at and not page.is_published %}
+        <div class="pr-banner" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af;"><i class="fas fa-magic"></i> We drafted this page from your questions — review the blocks, then hit <strong>Publish page</strong>.</div>
+        {% endif %}
         <form method="post" id="prPageForm" data-autosave action="{% url 'editor_public_results_save' survey.uuid %}">
           {% csrf_token %}
           <div class="pr-card">

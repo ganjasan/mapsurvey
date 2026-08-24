@@ -1341,6 +1341,10 @@ class PublicResultsPage(models.Model):
     k_anonymity_threshold = models.PositiveIntegerField(
         default=3, help_text=_('Mask buckets with 0 < count < K as "<K". Set to 1 to disable.')
     )
+    scaffolded_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text=_('When default blocks were auto-drafted. Set once; blocks the creator deletes are never re-created.')
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

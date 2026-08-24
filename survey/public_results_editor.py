@@ -6,7 +6,6 @@ The page is lazily created on first visit.
 """
 
 import json
-import uuid as uuid_module
 
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
@@ -25,33 +24,17 @@ from .models import (
 from .permissions import (
     survey_permission_required, get_effective_survey_role, _check_survey_role,
 )
-from .public_results import freeze_page, unfreeze_page, bump_page_version
-
-# Map a question input type to the block type it renders as on the page.
-CHART_INPUT_TYPES = ('choice', 'multichoice', 'rating', 'number', 'range')
-MAP_INPUT_TYPES = ('point', 'line', 'polygon')
-TEXT_INPUT_TYPES = ('text', 'text_line')
-
-
-def _block_type_for_question(question):
-    if question.input_type in MAP_INPUT_TYPES:
-        return 'map'
-    if question.input_type in CHART_INPUT_TYPES:
-        return 'chart'
-    return None  # text/unknown — not publishable
+from .public_results import (
+    freeze_page, unfreeze_page, bump_page_version, scaffold_page,
+    get_or_create_page as _get_or_create_page,
+    block_type_for_question as _block_type_for_question,
+    TEXT_INPUT_TYPES,
+)
 
 
 def _is_ajax(request):
     """True for fetch/XHR autosave requests (vs a plain form submit)."""
     return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-
-
-def _unique_slug(survey):
-    base = slugify(survey.name)[:48] or 'results'
-    candidate = base
-    if PublicResultsPage.objects.filter(slug=candidate).exists():
-        candidate = '{}-{}'.format(base, uuid_module.uuid4().hex[:6])
-    return candidate
 
 
 def _may_edit(request, survey):
@@ -91,13 +74,6 @@ def _preview_denied(request, survey):
     raise Http404
 
 
-def _get_or_create_page(survey):
-    page = PublicResultsPage.objects.filter(survey=survey).first()
-    if page is None:
-        page = PublicResultsPage.objects.create(survey=survey, slug=_unique_slug(survey))
-    return page
-
-
 def _survey_questions(survey):
     """Questions in the survey, flagged publishable (text types are not)."""
     questions = (
@@ -122,7 +98,13 @@ def _survey_questions(survey):
 def public_results_config(request, survey_uuid):
     """Main config page. ?block=<id> shows that block's config in the center."""
     survey = request.survey
-    page = _get_or_create_page(survey)
+    if survey.status != 'draft':
+        # Covers surveys published outside the editor transition view (e.g.
+        # Django admin): however the survey became published, the first look
+        # at this tab shows the drafted blocks. No-op once scaffolded_at set.
+        page = scaffold_page(survey)
+    else:
+        page = _get_or_create_page(survey)
 
     selected_block = None
     block_id = request.GET.get('block')

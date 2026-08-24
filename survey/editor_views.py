@@ -1,4 +1,6 @@
 import json
+import logging
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.gis.geos import Point
@@ -39,6 +41,9 @@ from .versioning import (
     IncompatibleDraftError, family_ids,
 )
 from .audit import audit
+from .public_results import scaffold_page
+
+logger = logging.getLogger(__name__)
 
 
 def _guard_choice_codes(question, new_choices):
@@ -1634,6 +1639,12 @@ def editor_survey_transition(request, survey_uuid):
             'survey_id': str(survey.id),
             'creation_method': pe.creation_method_for(survey.id),
         })
+        # A failed scaffold must never block the publish itself — worst case
+        # is today's behavior (no draft), and the config tab retries later.
+        try:
+            scaffold_page(survey)
+        except Exception:
+            logger.exception('public results scaffold failed for survey %s', survey.id)
 
     if request.headers.get('HX-Request'):
         return HttpResponse(status=204, headers={'HX-Trigger': 'statusChanged'})

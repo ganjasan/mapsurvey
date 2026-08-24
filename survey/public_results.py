@@ -13,12 +13,15 @@ snapshot, so one template renders both modes.
 
 import json
 import statistics
+import uuid as uuid_module
 
 from django.core.cache import cache
 from django.utils import timezone
+from django.utils.text import slugify
 
 from .models import (
-    SurveySession, Answer,
+    SurveySession, Answer, Question,
+    PublicResultsPage, PublicResultsBlock,
     PUBLIC_RESULTS_SNAPSHOT_VERSION,
 )
 from .analytics import _compute_histogram
@@ -34,6 +37,18 @@ EXCLUDED_VALIDATION_STATUSES = ('not_approved', 'on_hold')
 TEXT_INPUT_TYPES = ('text', 'text_line')
 
 GEO_INPUT_TYPES = ('point', 'line', 'polygon')
+
+# Question types that aggregate into a chart block on the public page.
+CHART_INPUT_TYPES = ('choice', 'multichoice', 'rating', 'number', 'range')
+
+
+def block_type_for_question(question):
+    """Map a question's input type to its public-page block type (or None)."""
+    if question.input_type in GEO_INPUT_TYPES:
+        return 'map'
+    if question.input_type in CHART_INPUT_TYPES:
+        return 'chart'
+    return None  # text/datetime/html/... — not publishable
 
 
 def canonical_survey(survey):
@@ -348,6 +363,72 @@ def _live_cache_key(page, lang):
     # TTL window and don't hammer the DB under viral traffic.
     version = page.updated_at.timestamp() if page.updated_at else 0
     return 'pubresults:{}:{}:{}:{}'.format(page.slug, lang, page.mode, version)
+
+
+def unique_page_slug(survey):
+    base = slugify(survey.name)[:48] or 'results'
+    candidate = base
+    if PublicResultsPage.objects.filter(slug=candidate).exists():
+        candidate = '{}-{}'.format(base, uuid_module.uuid4().hex[:6])
+    return candidate
+
+
+def get_or_create_page(survey, **defaults):
+    """Return the survey's results page, creating an empty one if missing."""
+    page = PublicResultsPage.objects.filter(survey=survey).first()
+    if page is None:
+        page = PublicResultsPage.objects.create(
+            survey=survey, slug=unique_page_slug(survey), **defaults
+        )
+    return page
+
+
+def scaffold_page(survey):
+    """Ensure a draft results page exists and populate default blocks, once.
+
+    One block per publishable top-level question in survey order (map for geo
+    questions, chart for choice/rating/number/range). Runs only while
+    `scaffolded_at` is unset AND the page has no blocks — so a page the
+    creator already built by hand is left untouched, and blocks the creator
+    deletes are never re-created on a later publish. Pages created here start
+    unlisted; `is_published` stays False either way, so nothing becomes
+    publicly reachable.
+    """
+    canonical = canonical_of(survey)
+    page = get_or_create_page(canonical, visibility='unlisted')
+    if page.scaffolded_at is not None:
+        return page
+    update_fields = ['scaffolded_at', 'updated_at']
+    if not page.blocks.exists():
+        # A page lazily created by the config tab predates the scaffold and
+        # carries the model's `public` default; a scaffolded draft must stay
+        # unlisted until the creator reviews it. Hand-built pages (non-empty)
+        # never reach this branch, so their visibility is never overridden.
+        if page.visibility != 'unlisted':
+            page.visibility = 'unlisted'
+            update_fields.append('visibility')
+        questions = (
+            Question.objects
+            .filter(survey_section__survey_header=canonical,
+                    parent_question_id__isnull=True)
+            .order_by('survey_section__id', 'order_number')
+        )
+        blocks = []
+        for question in questions:
+            block_type = block_type_for_question(question)
+            if block_type is None:
+                continue
+            blocks.append(PublicResultsBlock(
+                page=page, question=question,
+                block_type=block_type, order=len(blocks),
+            ))
+        PublicResultsBlock.objects.bulk_create(blocks)
+    # Stamped even when blocks already existed (hand-built page): the page is
+    # "resolved" either way and must never be re-checked or re-populated.
+    # updated_at doubles as the live-cache version stamp (see bump_page_version).
+    page.scaffolded_at = timezone.now()
+    page.save(update_fields=update_fields)
+    return page
 
 
 def bump_page_version(page):
