@@ -82,6 +82,8 @@ def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
             "subheading": section.subheading,
             "code": section.code,
             "is_head": section.is_head,
+            "layout": section.layout,
+            "next_label": section.next_label,
             "start_map_position": section.start_map_postion.wkt if section.start_map_postion else None,
             "start_map_zoom": section.start_map_zoom,
             "use_geolocation": section.use_geolocation,
@@ -89,7 +91,8 @@ def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
             "next_section_name": section.next_section.name if section.next_section else None,
             "prev_section_name": section.prev_section.name if section.prev_section else None,
             "translations": [
-                {"language": t.language, "title": t.title, "subheading": t.subheading}
+                {"language": t.language, "title": t.title, "subheading": t.subheading,
+                 "next_label": t.next_label}
                 for t in section.translations.all()
             ],
             "questions": serialize_questions(section),
@@ -484,11 +487,15 @@ def create_survey_header(
 
 def _clean_style_settings(value):
     """Keep only known style keys with valid values; anything else is dropped."""
+    import re as re_module
     if not isinstance(value, dict):
         return {}
     cleaned = {}
     if value.get("rating_display_style") in ("scale_strip", "list_pips"):
         cleaned["rating_display_style"] = value["rating_display_style"]
+    accent = value.get("accent_color")
+    if isinstance(accent, str) and re_module.fullmatch(r"#[0-9a-fA-F]{6}", accent):
+        cleaned["accent_color"] = accent
     return cleaned
 
 
@@ -518,6 +525,8 @@ def create_sections(
             subheading=_import_rich_text(section_data.get("subheading")),
             code=section_data.get("code", "")[:8],
             is_head=section_data.get("is_head", False),
+            layout=section_data.get("layout") if section_data.get("layout") in ("map", "form") else "map",
+            next_label=(section_data.get("next_label") or None) and str(section_data.get("next_label"))[:30],
             start_map_postion=start_map_position,
             start_map_zoom=section_data.get("start_map_zoom"),
             use_geolocation=section_data.get("use_geolocation", False),
@@ -532,6 +541,7 @@ def create_sections(
                 language=trans_data["language"],
                 title=trans_data.get("title"),
                 subheading=_import_rich_text(trans_data.get("subheading")),
+                next_label=(trans_data.get("next_label") or None) and str(trans_data.get("next_label"))[:30],
             )
 
         result[section.name] = section

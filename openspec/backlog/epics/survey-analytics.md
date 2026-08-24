@@ -53,3 +53,5 @@ Lyon transit survey (bisqunours): 562 sessions, 98 completed, 83% abandon rate. 
 - feature-number-field-min-max-validation.md (related)
 - feature-results-dashboard.md (related — response data viz)
 - feature-public-results-map.md (related)
+- improvement-responses-map-read-observations.md (#146 — reading markings and their comments
+  without GIS software; municipal customer, 2026-08-24)
