@@ -334,7 +334,7 @@ The import SHALL extract image files and link them to questions/answers.
 - **THEN** system SHALL set field to null and output warning "Upload '<filename>' not found in archive for answer"
 
 ### Requirement: Display style serialization
-Question objects in `survey.json` SHALL include the `display_style` key, and the survey object SHALL include the `style_settings` key. Import SHALL accept archives without these keys (or with unknown values) by falling back to `display_style = "default"` and `style_settings = {}` — preserving prior rendering behavior.
+Question objects in `survey.json` SHALL include the `display_style` key, and the survey object SHALL include the `style_settings` key. Import SHALL accept archives without these keys (or with unknown values) by falling back to `display_style = "default"` and `style_settings = {}` — preserving prior rendering behavior. For `choice` questions, `dropdown` SHALL be a known `display_style` value that survives export→import unchanged; on non-choice questions `dropdown` SHALL be treated as unknown and fall back to `default`.
 
 #### Scenario: Export includes display style and style settings
 - **WHEN** a survey with `style_settings.rating_display_style = "list_pips"` containing a rating question with `display_style = "scale_strip"` is exported
@@ -351,6 +351,14 @@ Question objects in `survey.json` SHALL include the `display_style` key, and the
 #### Scenario: Round-trip preserves the style
 - **WHEN** a survey with a `list_pips` rating question and a `list_pips` survey default is exported and re-imported
 - **THEN** the re-imported question keeps `display_style = "list_pips"` and the survey keeps `style_settings.rating_display_style = "list_pips"`
+
+#### Scenario: Dropdown style round-trips on a choice question
+- **WHEN** a survey containing a choice question with `display_style = "dropdown"` is exported and re-imported
+- **THEN** the imported choice question has `display_style = "dropdown"`
+
+#### Scenario: Dropdown on a non-choice question falls back
+- **WHEN** an archive contains a text question with `display_style = "dropdown"`
+- **THEN** the imported question gets `display_style = "default"`
 
 ### Requirement: Section layout serialization
 Section objects in `survey.json` SHALL include the `layout` key. Import SHALL accept
