@@ -1,9 +1,10 @@
-{% load hash i18n question_utils l10n %}
+{% load hash i18n question_utils l10n survey_filters %}
 
 <div id="section-data"
      data-map-lat="{{ section.start_map_postion.y|default:''|unlocalize }}"
      data-map-lng="{{ section.start_map_postion.x|default:''|unlocalize }}"
      data-map-zoom="{{ section.start_map_zoom|default:''|unlocalize }}"
+     data-layout="{{ section.layout }}"
      data-use-geolocation="{{ section.use_geolocation|yesno:'true,false' }}"
      data-map-basemap="{{ section.override_basemap|default:'' }}"
      data-session-id="{{ request.session.survey_session_id|default:'' }}"
@@ -90,18 +91,22 @@
                     {% endif %}
                 </div>
                 <div class="col align-self-end">
+                    {# The creator may name the forward action per section ("Start" on a welcome page); empty = Next/Finish defaults. #}
+                    {% trans "Next" as default_next %}{% trans "Finish" as default_finish %}
+                    {% with custom_label=section|section_next_label:selected_language %}
                     {% if section.next_section %}
                         {% if preview %}
                             <a class="btn btn-primary next_button" style="width: 80%"
-                               href="{% url 'editor_section_preview' survey.uuid section.next_section.name %}{% if selected_language %}?lang={{ selected_language }}{% endif %}">{% trans "Next" %}</a>
+                               href="{% url 'editor_section_preview' survey.uuid section.next_section.name %}{% if selected_language %}?lang={{ selected_language }}{% endif %}">{{ custom_label|default:default_next }}</a>
                         {% else %}
-                            <input type="submit" class="btn btn-primary next_button" style="width: 80%" form="section_question_form" value="{% trans "Next" %}">
+                            <input type="submit" class="btn btn-primary next_button" style="width: 80%" form="section_question_form" value="{{ custom_label|default:default_next }}">
                         {% endif %}
                     {% elif not preview %}
-                        <input type="submit" class="btn btn-primary next_button" style="width: 80%" form="section_question_form" value="{% trans "Finish" %}">
+                        <input type="submit" class="btn btn-primary next_button" style="width: 80%" form="section_question_form" value="{{ custom_label|default:default_finish }}">
                     {% else %}
-                        <button type="button" class="btn btn-primary next_button" style="width: 80%" disabled title="{% trans 'This is the last section — respondents finish here' %}">{% trans "Finish" %}</button>
+                        <button type="button" class="btn btn-primary next_button" style="width: 80%" disabled title="{% trans 'This is the last section — respondents finish here' %}">{{ custom_label|default:default_finish }}</button>
                     {% endif %}
+                    {% endwith %}
                 </div>
             </div>
         </div>

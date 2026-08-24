@@ -1405,3 +1405,43 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
 .choice-dropdown .cd-option:hover,
 .choice-dropdown .cd-option.cd-active { background: #eef0ff; }
 .choice-dropdown .cd-option[aria-selected="true"] { font-weight: 600; }
+
+/* ---- Form-layout sections (survey-form-layout on <body>) ----
+   A section with layout="form" renders as a classic full-width form: the panel
+   becomes the page, the map and every piece of map chrome disappears. The hide
+   list must include anything absolutely-positioned over the map — see
+   openspec/changes/mapless-sections/design.md before adding map chrome. */
+body.survey-form-layout #map,
+body.survey-form-layout #drawbar,
+body.survey-form-layout #crosshair-overlay,
+body.survey-form-layout #showButton,
+body.survey-form-layout #closeButton {
+  display: none !important;
+}
+/* Google-Forms-style page: tinted background, the survey is a white card. */
+body.survey-form-layout {
+  background: #f0ebf8;
+  background: linear-gradient(180deg, #eef1f6 0%, #e9edf3 100%);
+  min-height: 100vh;
+}
+body.survey-form-layout #info_page {
+  position: relative;
+  transform: none;
+  width: calc(100% - 32px);
+  max-width: 720px;
+  margin: 40px auto;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  border: 1px solid #e2e6ee;
+  border-right: 1px solid #e2e6ee;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(30, 41, 59, 0.08);
+  overflow: visible;
+}
+@media (max-width: 768px) {
+  body.survey-form-layout #info_page {
+    margin: 16px auto;
+    width: calc(100% - 20px);
+  }
+}

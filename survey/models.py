@@ -13,6 +13,7 @@ from django.core.validators import RegexValidator, BaseValidator
 from django.utils.text import slugify
 from django.contrib.auth.hashers import make_password, check_password as django_check_password
 import random
+import re as re_module
 
 
 ORG_ROLE_CHOICES = (
@@ -371,6 +372,16 @@ class SurveyHeader(models.Model):
         base_url = reverse('survey_header', kwargs={'survey_slug': str(self.uuid)})
         return request.build_absolute_uri(f'{base_url}?token={self.test_token}')
 
+    def get_accent_color(self):
+        """The survey's custom accent color, or None.
+
+        Validated at render time as well as at save/import: style_settings can
+        arrive from a ZIP, and this value is interpolated into a <style> block.
+        Anything but a plain #RRGGBB never leaves this method.
+        """
+        value = (self.style_settings or {}).get('accent_color') or ''
+        return value if re_module.fullmatch(r'#[0-9a-fA-F]{6}', value) else None
+
     def get_default_rating_display_style(self):
         value = (self.style_settings or {}).get('rating_display_style')
         return value if value in ('scale_strip', 'list_pips', 'stars') else 'scale_strip'
@@ -505,10 +516,18 @@ class SurveyCollaborator(models.Model):
         return f"{self.user.username} - {self.survey.name} ({self.role})"
 
 
+SECTION_LAYOUT_CHOICES = (
+    ("map", _("Map")),
+    ("form", _("Form")),
+)
+
+
 #survey sections
 class SurveySection(models.Model):
     is_head = models.BooleanField(default=False)
 
+    layout = models.CharField(max_length=8, choices=SECTION_LAYOUT_CHOICES, default="map", help_text=_('"map" renders the panel beside the map; "form" renders a classic full-width form with no map'))
+    next_label = models.CharField(max_length=30, null=True, blank=True, help_text=_('Custom label for the forward button, e.g. "Start" on a welcome section. Empty = the default Next/Finish.'))
     survey_header = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE)
     name = models.CharField(max_length=45, default="survey_description", validators=[validate_url_name]) #section_a
     title = models.CharField(max_length=256, null=True, blank=True) #Your Home Area
@@ -562,6 +581,15 @@ class SurveySection(models.Model):
         except SurveySectionTranslation.DoesNotExist:
             return self.subheading
 
+    def get_translated_next_label(self, lang):
+        if not lang:
+            return self.next_label
+        try:
+            translation = self.translations.get(language=lang)
+            return translation.next_label if translation.next_label else self.next_label
+        except SurveySectionTranslation.DoesNotExist:
+            return self.next_label
+
 
 class SurveySectionTranslation(models.Model):
     section = models.ForeignKey("SurveySection", on_delete=models.CASCADE, related_name='translations')
@@ -569,6 +597,8 @@ class SurveySectionTranslation(models.Model):
     title = models.CharField(max_length=256, null=True, blank=True)
     # Mirrors SurveySection.subheading.
     subheading = models.TextField(null=True, blank=True)
+    # Mirrors SurveySection.next_label.
+    next_label = models.CharField(max_length=30, null=True, blank=True)
 
     class Meta:
         app_label = 'survey'
