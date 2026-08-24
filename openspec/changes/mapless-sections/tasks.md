@@ -50,5 +50,5 @@
 
 - [x] 5.1 Full suite `./run_tests.sh survey`; verify on the worktree dev stand (walk
       intro→count→conditions as a respondent, both directions).
-- [ ] 5.2 PR referencing this change; after deploy flip the Olney demo's `intro` section
+- [x] 5.2 PR referencing this change; after deploy flip the Olney demo's `intro` section
       to `form` and verify the live test link on phone + desktop.
