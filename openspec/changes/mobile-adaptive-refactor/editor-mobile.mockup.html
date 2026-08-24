@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Mobile editor (contextual two-level navigation)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* presentation chrome */
+    --ink: #10241f;
+    --paper: #f2efe6;
+    --accent: #0e8f76;          /* mapsurvey teal */
+    --annot: #8a4b12;
+    /* product palette (faithful to current editor) */
+    --p-indigo: #4f46e5;
+    --p-indigo-soft: #eef2ff;
+    --p-bg: #f8f9fb;
+    --p-border: #e5e7eb;
+    --p-text: #1f2937;
+    --p-muted: #6b7280;
+    --p-green: #198754;
+    --p-chip: #f3f4f6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    background-image: radial-gradient(rgba(16,36,31,.06) 1px, transparent 1px);
+    background-size: 22px 22px;
+    color: var(--ink);
+    font-family: "IBM Plex Sans", sans-serif;
+    padding: 48px 32px 80px;
+  }
+  header.pagehead { max-width: 1400px; margin: 0 auto 8px; }
+  .kicker {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 10px;
+  }
+  h1 {
+    font-family: "Fraunces", serif; font-size: clamp(28px, 4vw, 44px);
+    line-height: 1.08; max-width: 780px; margin-bottom: 14px;
+  }
+  .lede { max-width: 680px; color: #47554f; font-size: 15px; line-height: 1.55; }
+  .lede b { color: var(--ink); }
+
+  .stage {
+    max-width: 1400px; margin: 40px auto 0;
+    display: flex; gap: 44px; align-items: flex-start; flex-wrap: wrap;
+  }
+  .exhibit { flex: 0 0 auto; width: 360px; }
+  .exhibit-label {
+    display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .exhibit-label .num {
+    font-family: "Fraunces", serif; font-size: 30px; color: var(--accent);
+  }
+  .exhibit-label .name { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+
+  /* ---------- phone frame ---------- */
+  .phone {
+    width: 360px; height: 720px; background: #0d1117; border-radius: 34px; padding: 10px;
+    box-shadow: 0 24px 48px -20px rgba(16,36,31,.45), 0 4px 12px rgba(16,36,31,.15);
+    position: relative;
+  }
+  .screen {
+    background: var(--p-bg); border-radius: 26px; height: 100%; overflow: hidden;
+    display: flex; flex-direction: column;
+    font-size: 14px; color: var(--p-text);
+  }
+
+  /* product top bar */
+  .topbar {
+    background: #fff; border-bottom: 1px solid var(--p-border);
+    padding: 12px 14px 10px; display: flex; align-items: center; gap: 8px; flex: 0 0 auto;
+  }
+  .topbar .back { color: var(--p-text); font-size: 18px; line-height: 1; padding: 6px 8px 6px 2px; }
+  .topbar .title { font-weight: 600; font-size: 16px; flex: 0 1 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip {
+    font-size: 12px; background: var(--p-chip); border: 1px solid var(--p-border);
+    border-radius: 999px; padding: 3px 10px; color: var(--p-muted); white-space: nowrap;
+  }
+  .topbar .spacer, .spacer { flex: 1; }
+  .kebab {
+    width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--p-border);
+    background: #fff; display: grid; place-items: center; color: var(--p-muted);
+    font-size: 16px; letter-spacing: 1px;
+  }
+
+  /* level 1: page tabs strip */
+  .topstrip {
+    background: #fff; border-bottom: 1px solid var(--p-border);
+    display: flex; gap: 4px; padding: 0 10px; flex: 0 0 auto;
+  }
+  .topstrip span {
+    padding: 9px 10px 8px; font-size: 13px; color: var(--p-muted); font-weight: 500;
+    border-bottom: 2px solid transparent; white-space: nowrap;
+  }
+  .topstrip span.active { color: var(--p-indigo); border-bottom-color: var(--p-indigo); }
+  .topstrip .beta {
+    font-size: 9px; background: #fef3c7; color: #92400e; border-radius: 4px;
+    padding: 1px 4px; vertical-align: 2px; margin-left: 3px; font-weight: 600;
+  }
+
+  .subbar {
+    background: #fff; border-bottom: 1px solid var(--p-border);
+    padding: 8px 14px; display: flex; align-items: center; gap: 8px; flex: 0 0 auto;
+    color: var(--p-muted); font-size: 13px;
+  }
+  .subbar .crumb-back { color: var(--p-indigo); font-weight: 500; }
+
+  .body { flex: 1 1 auto; overflow: hidden; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+  .card {
+    background: #fff; border: 1px solid var(--p-border); border-radius: 12px; padding: 12px 14px;
+  }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .handle { color: #c3c8d1; font-size: 15px; cursor: grab; padding: 4px 2px; }
+  .grow { flex: 1; min-width: 0; }
+  .item-title { font-weight: 600; font-size: 14px; }
+  .item-meta { color: var(--p-muted); font-size: 12px; margin-top: 2px; }
+  .geo-badge {
+    font-size: 11px; color: var(--p-indigo); background: var(--p-indigo-soft);
+    border-radius: 6px; padding: 2px 7px; font-weight: 500;
+  }
+  .chev { color: #c3c8d1; font-size: 16px; }
+
+  .add-btn {
+    border: 1.5px dashed #cfd4dd; border-radius: 12px; padding: 13px; text-align: center;
+    color: var(--p-muted); font-weight: 500; background: transparent; font-size: 14px;
+  }
+
+  .settings-row { display: flex; align-items: center; gap: 10px; color: var(--p-text); }
+  .settings-row .ico { color: var(--p-muted); }
+
+  .sec-label {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .12em;
+    color: var(--p-muted); text-transform: uppercase; margin: 4px 2px 0;
+  }
+
+  /* form controls (edit screen) */
+  label.f { font-size: 12px; font-weight: 600; color: var(--p-muted); display: block; margin-bottom: 6px; }
+  .input, textarea.input {
+    width: 100%; border: 1px solid var(--p-border); border-radius: 10px; padding: 10px 12px;
+    font: inherit; font-size: 14px; color: var(--p-text); background: #fff; resize: none;
+  }
+  .choice-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .choice-row .input { flex: 1; padding: 8px 12px; }
+  .x {
+    width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--p-border);
+    background: #fff; color: var(--p-muted); font-size: 14px; flex: 0 0 auto;
+  }
+  .switchline { display: flex; align-items: center; justify-content: space-between; }
+  .switch {
+    width: 42px; height: 24px; border-radius: 999px; background: var(--p-indigo); position: relative; flex: 0 0 auto;
+  }
+  .switch::after {
+    content: ""; position: absolute; top: 3px; right: 3px; width: 18px; height: 18px;
+    border-radius: 50%; background: #fff;
+  }
+  .autosave { font-size: 12px; color: var(--p-muted); text-align: center; }
+  .autosave .dot { color: var(--p-green); }
+
+  /* question type picker */
+  .typegrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .type {
+    background: #fff; border: 1px solid var(--p-border); border-radius: 12px;
+    padding: 12px 6px 10px; text-align: center; font-size: 12px; color: var(--p-text); font-weight: 500;
+  }
+  .type .ti { display: block; font-size: 19px; margin-bottom: 5px; color: var(--p-muted); font-style: normal; }
+  .type.geo { background: var(--p-indigo-soft); border-color: #c7d2fe; color: var(--p-indigo); }
+  .type.geo .ti { color: var(--p-indigo); }
+
+  /* responses screen */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { background: #fff; border: 1px solid var(--p-border); border-radius: 12px; padding: 10px 8px; text-align: center; }
+  .stat .v { font-size: 20px; font-weight: 600; color: var(--p-indigo); }
+  .stat .k { font-size: 11px; color: var(--p-muted); margin-top: 2px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 12px; }
+  .bar-row .lbl { flex: 0 0 82px; color: var(--p-muted); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-row .bar { height: 16px; background: var(--p-indigo); border-radius: 4px; opacity: .85; }
+  .bar-row .n { color: var(--p-muted); }
+
+  /* public results screen */
+  .status-card { display: flex; flex-direction: column; gap: 8px; }
+  .live-chip {
+    font-size: 12px; color: var(--p-green); background: #e8f5ee; border-radius: 999px;
+    padding: 3px 10px; font-weight: 600;
+  }
+  .url-row {
+    display: flex; align-items: center; gap: 8px; font-family: "IBM Plex Mono", monospace;
+    font-size: 12px; color: var(--p-text); background: var(--p-chip); border-radius: 8px; padding: 8px 10px;
+  }
+
+  /* bottom tab bar (contextual, level 2) */
+  .tabs {
+    flex: 0 0 auto; background: #fff; border-top: 1px solid var(--p-border);
+    display: grid; grid-template-columns: repeat(3, 1fr); padding: 6px 8px 10px;
+  }
+  .tabs.four { grid-template-columns: repeat(4, 1fr); }
+  .tab {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-size: 11px; color: var(--p-muted); padding: 5px 0; border-radius: 10px;
+  }
+  .tab svg { width: 21px; height: 21px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .tab.active { color: var(--p-indigo); background: var(--p-indigo-soft); }
+
+  /* preview screen */
+  .preview-note {
+    background: var(--p-indigo-soft); color: var(--p-indigo); font-size: 12px;
+    padding: 7px 12px; display: flex; justify-content: space-between; align-items: center; flex: 0 0 auto;
+  }
+  .lang { background: #fff; border: 1px solid var(--p-border); border-radius: 6px; padding: 2px 8px; font-size: 12px; }
+  .map {
+    flex: 1; position: relative; overflow: hidden;
+    background:
+      linear-gradient(115deg, transparent 46%, #cfe3cd 46%, #cfe3cd 54%, transparent 54%),
+      linear-gradient(25deg, transparent 30%, #dce8f5 30%, #dce8f5 34%, transparent 34%),
+      linear-gradient(0deg, #eceae4, #f1efe9);
+  }
+  .map .street { position: absolute; background: #fff; }
+  .map .street.h1 { left: 0; right: 0; top: 34%; height: 8px; }
+  .map .street.h2 { left: 0; right: 0; top: 62%; height: 5px; }
+  .map .street.v1 { top: 0; bottom: 0; left: 28%; width: 6px; }
+  .map .street.v2 { top: 0; bottom: 0; left: 70%; width: 9px; }
+  .pin {
+    position: absolute; left: 48%; top: 40%; width: 30px; height: 30px;
+    background: #e74c3c; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+    box-shadow: 0 4px 8px rgba(0,0,0,.25);
+  }
+  .pin::after {
+    content: "♥"; color: #fff; position: absolute; inset: 0; display: grid; place-items: center;
+    transform: rotate(45deg); font-size: 13px;
+  }
+  .zoom {
+    position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column;
+    border: 1px solid var(--p-border); border-radius: 8px; overflow: hidden; background: #fff;
+  }
+  .zoom span { width: 32px; height: 32px; display: grid; place-items: center; font-weight: 600; color: var(--p-text); }
+  .zoom span + span { border-top: 1px solid var(--p-border); }
+  .sheet {
+    background: #fff; border-radius: 16px 16px 0 0; box-shadow: 0 -8px 24px rgba(0,0,0,.12);
+    padding: 8px 16px 14px; flex: 0 0 auto;
+  }
+  .grab { width: 40px; height: 4px; border-radius: 2px; background: #d6d9df; margin: 0 auto 10px; }
+  .sheet h3 { font-size: 15px; margin-bottom: 2px; }
+  .sheet .prog { font-size: 12px; color: var(--p-muted); margin-bottom: 8px; }
+  .sheet .q { font-size: 13px; color: var(--p-text); margin-bottom: 10px; }
+  .btn-primary {
+    background: var(--p-indigo); color: #fff; border: none; border-radius: 10px;
+    padding: 11px; width: 100%; font-weight: 600; font-size: 14px;
+  }
+
+  /* annotations */
+  .notes { margin-top: 18px; display: flex; flex-direction: column; gap: 9px; }
+  .note { display: flex; gap: 9px; font-size: 13px; line-height: 1.45; color: #47554f; }
+  .note .txt { flex: 1; }
+  .note .tag {
+    flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; background: var(--annot);
+    color: #fff; font-family: "IBM Plex Mono", monospace; font-size: 11px;
+    display: grid; place-items: center; margin-top: 1px;
+  }
+  .callout {
+    position: absolute; z-index: 5; background: var(--annot); color: #fff;
+    width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+    font-family: "IBM Plex Mono", monospace; font-size: 12px;
+    box-shadow: 0 0 0 4px rgba(138,75,18,.22);
+  }
+
+  footer.decisions {
+    max-width: 900px; margin: 72px auto 0; border-top: 2px solid var(--ink); padding-top: 24px;
+  }
+  footer.decisions h2 { font-family: "Fraunces", serif; font-size: 24px; margin-bottom: 14px; }
+  footer.decisions ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  footer.decisions li { font-size: 14px; line-height: 1.5; color: #33413b; padding-left: 18px; position: relative; }
+  footer.decisions li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="pagehead">
+  <div class="kicker">mobile-adaptive-refactor · mockup · v2 · &lt;768px</div>
+  <h1>Editor on a phone: two-level contextual navigation</h1>
+  <p class="lede"><b>Level 1</b> — a top strip with the page tabs that exist today:
+  <b>Survey · Responses · Public results</b>. <b>Level 2</b> — a bottom tab bar that is
+  <b>contextual to the active level-1 tab</b>: Survey and Public results share the same pane
+  vocabulary <b>Structure / Edit / Preview</b>; Responses gets its own
+  <b>Table / Map / Charts / Performance</b>. The 4-row desktop toolbar collapses into one bar:
+  back · title · version chip · ⋯ overflow.</p>
+</header>
+
+<div class="stage">
+
+  <!-- ============ 1. SURVEY · STRUCTURE ============ -->
+  <section class="exhibit">
+    <div class="exhibit-label"><span class="num">1</span><span class="name">Survey · Structure</span></div>
+    <div class="phone">
+      <div class="callout" style="top: 22px; right: -11px;">A</div>
+      <div class="callout" style="top: 64px; right: -11px;">B</div>
+      <div class="callout" style="top: 356px; right: -11px;">C</div>
+      <div class="screen">
+        <div class="topbar">
+          <span class="back">‹</span>
+          <span class="title">citypulse</span>
+          <span class="chip">Open · v1</span>
+          <span class="spacer"></span>
+          <span class="kebab">⋯</span>
+        </div>
+        <div class="topstrip">
+          <span class="active">Survey</span>
+          <span>Responses</span>
+          <span>Public results<span class="beta">BETA</span></span>
+        </div>
+        <div class="body">
+          <div class="card settings-row">
+            <span class="ico">⚙</span>
+            <span class="grow">Survey settings</span>
+            <span class="chev">›</span>
+          </div>
+          <div class="sec-label">Sections</div>
+          <div class="card row">
+            <span class="handle">⠿</span>
+            <div class="grow">
+              <div class="item-title">Getting around</div>
+              <div class="item-meta">2 questions</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+          <div class="card row" style="border-color: var(--p-indigo); background: var(--p-indigo-soft);">
+            <span class="handle">⠿</span>
+            <div class="grow">
+              <div class="item-title">Favorite places</div>
+              <div class="item-meta">3 questions · <span class="geo-badge">geo</span></div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+          <div class="card row">
+            <span class="handle">⠿</span>
+            <div class="grow">
+              <div class="item-title">About you</div>
+              <div class="item-meta">3 questions</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+          <button class="add-btn">＋ New section</button>
+        </div>
+        <nav class="tabs">
+          <div class="tab active">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            Structure
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24"><path d="M16 3l5 5L8 21H3v-5L16 3z"/></svg>
+            Edit
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            Preview
+          </div>
+        </nav>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note"><span class="tag">A</span>One-row header replaces the desktop 4-row toolbar. Share, Settings, Versions, Publish, account — all in the ⋯ overflow sheet.</div>
+      <div class="note"><span class="tag">B</span>Level 1 = today's page tabs as a top strip. The bottom bar below is contextual to whichever strip tab is active.</div>
+      <div class="note"><span class="tag">C</span>Reordering by ⠿ long-press drag only — no ▲▼ clutter. Tapping a section drills into its question list (same list pattern, one level down).</div>
+    </div>
+  </section>
+
+  <!-- ============ 2. SURVEY · EDIT ============ -->
+  <section class="exhibit">
+    <div class="exhibit-label"><span class="num">2</span><span class="name">Survey · Edit</span></div>
+    <div class="phone">
+      <div class="callout" style="top: 112px; right: -11px;">D</div>
+      <div class="callout" style="bottom: 128px; right: -11px;">E</div>
+      <div class="screen">
+        <div class="topbar">
+          <span class="back">‹</span>
+          <span class="title">citypulse</span>
+          <span class="chip">Open · v1</span>
+          <span class="spacer"></span>
+          <span class="kebab">⋯</span>
+        </div>
+        <div class="topstrip">
+          <span class="active">Survey</span>
+          <span>Responses</span>
+          <span>Public results<span class="beta">BETA</span></span>
+        </div>
+        <div class="subbar">
+          <span class="crumb-back">‹ Getting around</span>
+          <span class="spacer"></span>
+          <span class="chip">choice</span>
+        </div>
+        <div class="body" style="overflow-y: auto;">
+          <div class="card">
+            <label class="f">Question text</label>
+            <textarea class="input" rows="2">How do you usually get around the city?</textarea>
+          </div>
+          <div class="card switchline">
+            <span style="font-size:14px; font-weight:500;">Required</span>
+            <span class="switch"></span>
+          </div>
+          <div class="card">
+            <label class="f">Choices</label>
+            <div class="choice-row"><input class="input" value="Walking"><button class="x">✕</button></div>
+            <div class="choice-row"><input class="input" value="Cycling"><button class="x">✕</button></div>
+            <div class="choice-row"><input class="input" value="Public transit"><button class="x">✕</button></div>
+            <button class="add-btn" style="padding: 9px;">＋ Add choice</button>
+          </div>
+          <div class="card row">
+            <div class="grow">
+              <div class="item-title" style="font-size:13px;">Sub-questions</div>
+              <div class="item-meta">None</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+          <div class="autosave"><span class="dot">●</span> All changes saved</div>
+        </div>
+        <nav class="tabs">
+          <div class="tab">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            Structure
+          </div>
+          <div class="tab active">
+            <svg viewBox="0 0 24 24"><path d="M16 3l5 5L8 21H3v-5L16 3z"/></svg>
+            Edit
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            Preview
+          </div>
+        </nav>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note"><span class="tag">D</span>Context crumb: back to the section's question list without losing the Edit tab. Edit always reopens the last-touched question; empty state says "pick a question in Structure".</div>
+      <div class="note"><span class="tag">E</span><span class="txt">Autosave line instead of a Save button — <b>and this pattern ports back to desktop</b> (decision, not mobile-only). All inputs ≥16px font (no iOS zoom), touch targets ≥44px.</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 3. SURVEY · NEW QUESTION ============ -->
+  <section class="exhibit">
+    <div class="exhibit-label"><span class="num">3</span><span class="name">Survey · New question</span></div>
+    <div class="phone">
+      <div class="callout" style="top: 152px; right: -11px;">F</div>
+      <div class="callout" style="bottom: 236px; right: -11px;">G</div>
+      <div class="screen">
+        <div class="topbar">
+          <span class="back">‹</span>
+          <span class="title">citypulse</span>
+          <span class="chip">Open · v1</span>
+          <span class="spacer"></span>
+          <span class="kebab">⋯</span>
+        </div>
+        <div class="topstrip">
+          <span class="active">Survey</span>
+          <span>Responses</span>
+          <span>Public results<span class="beta">BETA</span></span>
+        </div>
+        <div class="subbar">
+          <span class="crumb-back">‹ Getting around</span>
+          <span class="spacer"></span>
+          <span style="font-weight:600; color: var(--p-text);">New question</span>
+        </div>
+        <div class="body" style="overflow-y: auto;">
+          <div class="sec-label">Choose a type</div>
+          <div class="typegrid">
+            <div class="type"><i class="ti">◉</i>Choice</div>
+            <div class="type"><i class="ti">☑</i>Multi choice</div>
+            <div class="type"><i class="ti">★</i>Rating</div>
+            <div class="type"><i class="ti">¶</i>Text</div>
+            <div class="type"><i class="ti">―</i>Text line</div>
+            <div class="type"><i class="ti">#</i>Number</div>
+            <div class="type"><i class="ti">↔</i>Range</div>
+            <div class="type"><i class="ti">🗓</i>Date / time</div>
+            <div class="type"><i class="ti">🖼</i>Image</div>
+          </div>
+          <div class="sec-label">On the map</div>
+          <div class="typegrid">
+            <div class="type geo"><i class="ti">📍</i>Point</div>
+            <div class="type geo"><i class="ti">〰</i>Line</div>
+            <div class="type geo"><i class="ti">⬠</i>Area</div>
+          </div>
+          <div class="sec-label">Content</div>
+          <div class="typegrid">
+            <div class="type"><i class="ti">&lt;/&gt;</i>HTML block</div>
+          </div>
+        </div>
+        <nav class="tabs">
+          <div class="tab active">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            Structure
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24"><path d="M16 3l5 5L8 21H3v-5L16 3z"/></svg>
+            Edit
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            Preview
+          </div>
+        </nav>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note"><span class="tag">F</span>"＋ Add question" in a section's list opens a full-screen type picker. Most-used types first; the three map types get their own indigo group — they're the product's identity, not an afterthought in a 13-item dropdown.</div>
+      <div class="note"><span class="tag">G</span>Tapping a type creates the question and lands in Edit with sensible defaults — no intermediate "configure then create" form.</div>
+    </div>
+  </section>
+
+  <!-- ============ 4. SURVEY · PREVIEW ============ -->
+  <section class="exhibit">
+    <div class="exhibit-label"><span class="num">4</span><span class="name">Survey · Preview</span></div>
+    <div class="phone">
+      <div class="callout" style="top: 106px; right: -11px;">H</div>
+      <div class="callout" style="bottom: 210px; right: -11px;">I</div>
+      <div class="screen">
+        <div class="topbar">
+          <span class="back">‹</span>
+          <span class="title">citypulse</span>
+          <span class="chip">Open · v1</span>
+          <span class="spacer"></span>
+          <span class="kebab">⋯</span>
+        </div>
+        <div class="topstrip">
+          <span class="active">Survey</span>
+          <span>Responses</span>
+          <span>Public results<span class="beta">BETA</span></span>
+        </div>
+        <div class="preview-note">
+          <span>Live preview — what respondents see</span>
+          <span class="lang">EN ▾</span>
+        </div>
+        <div class="map">
+          <div class="street h1"></div><div class="street h2"></div>
+          <div class="street v1"></div><div class="street v2"></div>
+          <div class="pin"></div>
+          <div class="zoom"><span>＋</span><span>−</span></div>
+        </div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h3>Your Favorite Place</h3>
+          <div class="prog">1 / 4</div>
+          <div class="q">Mark a place you enjoy on the map</div>
+          <button class="btn-primary">Next</button>
+        </div>
+        <nav class="tabs">
+          <div class="tab">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            Structure
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24"><path d="M16 3l5 5L8 21H3v-5L16 3z"/></svg>
+            Edit
+          </div>
+          <div class="tab active">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            Preview
+          </div>
+        </nav>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note"><span class="tag">H</span>Preview embeds the real respondent page — after respondent surfaces go adaptive, the phone preview is pixel-true; no separate "mobile preview" mode to maintain.</div>
+      <div class="note"><span class="tag">I</span>The respondent page itself moves to a bottom-sheet pattern (drag handle, map always visible above) — replacing today's full-screen panel with the 17px collapse chevron.</div>
+    </div>
+  </section>
+
+  <!-- ============ 5. RESPONSES · CHARTS ============ -->
+  <section class="exhibit">
+    <div class="exhibit-label"><span class="num">5</span><span class="name">Responses · Charts</span></div>
+    <div class="phone">
+      <div class="callout" style="top: 112px; right: -11px;">J</div>
+      <div class="callout" style="bottom: 40px; right: -11px;">K</div>
+      <div class="screen">
+        <div class="topbar">
+          <span class="back">‹</span>
+          <span class="title">citypulse</span>
+          <span class="chip">Open · v1</span>
+          <span class="spacer"></span>
+          <span class="kebab">⋯</span>
+        </div>
+        <div class="topstrip">
+          <span>Survey</span>
+          <span class="active">Responses</span>
+          <span>Public results<span class="beta">BETA</span></span>
+        </div>
+        <div class="subbar">
+          <span class="chip">All versions ▾</span>
+          <span class="spacer"></span>
+          <span class="crumb-back">⬇ Download</span>
+        </div>
+        <div class="body" style="overflow-y: auto;">
+          <div class="stats">
+            <div class="stat"><div class="v">65</div><div class="k">Sessions</div></div>
+            <div class="stat"><div class="v">64</div><div class="k">Completed</div></div>
+            <div class="stat"><div class="v">98%</div><div class="k">Rate</div></div>
+          </div>
+          <div class="card">
+            <div class="item-title" style="margin-bottom: 10px;">How do you usually get around the city?</div>
+            <div class="bar-row"><span class="lbl">Walking</span><span class="bar" style="width: 96px;"></span><span class="n">24</span></div>
+            <div class="bar-row"><span class="lbl">Cycling</span><span class="bar" style="width: 72px;"></span><span class="n">18</span></div>
+            <div class="bar-row"><span class="lbl">Transit</span><span class="bar" style="width: 48px;"></span><span class="n">12</span></div>
+            <div class="bar-row"><span class="lbl">Car</span><span class="bar" style="width: 32px;"></span><span class="n">8</span></div>
+            <div class="bar-row"><span class="lbl">Scooter</span><span class="bar" style="width: 12px;"></span><span class="n">3</span></div>
+          </div>
+          <div class="card">
+            <div class="item-title" style="margin-bottom: 10px;">Satisfaction with public spaces</div>
+            <div class="bar-row"><span class="lbl">★ 4</span><span class="bar" style="width: 88px;"></span><span class="n">22</span></div>
+            <div class="bar-row"><span class="lbl">★ 3</span><span class="bar" style="width: 64px;"></span><span class="n">16</span></div>
+            <div class="bar-row"><span class="lbl">★ 5</span><span class="bar" style="width: 56px;"></span><span class="n">14</span></div>
+          </div>
+        </div>
+        <nav class="tabs four">
+          <div class="tab">
+            <svg viewBox="0 0 24 24"><path d="M3 5h18M3 10h18M3 15h18M3 20h18"/></svg>
+            Table
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            Map
+          </div>
+          <div class="tab active">
+            <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>
+            Charts
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/></svg>
+            Perf
+          </div>
+        </nav>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note"><span class="tag">J</span>Responses' bottom bar is its own context: Table / Map / Charts / Performance. Mobile default is Charts, not Table — the desktop grid answers "inspect a record", mobile answers "how is my survey doing".</div>
+      <div class="note"><span class="tag">K</span>Table on mobile becomes one card per session (tap to expand), not a squeezed grid. The full data grid stays a desktop feature — first iteration ships stats + charts + map.</div>
+    </div>
+  </section>
+
+  <!-- ============ 6. PUBLIC RESULTS · STRUCTURE ============ -->
+  <section class="exhibit">
+    <div class="exhibit-label"><span class="num">6</span><span class="name">Public results · Structure</span></div>
+    <div class="phone">
+      <div class="callout" style="top: 156px; right: -11px;">L</div>
+      <div class="callout" style="bottom: 40px; right: -11px;">M</div>
+      <div class="screen">
+        <div class="topbar">
+          <span class="back">‹</span>
+          <span class="title">citypulse</span>
+          <span class="chip">Open · v1</span>
+          <span class="spacer"></span>
+          <span class="kebab">⋯</span>
+        </div>
+        <div class="topstrip">
+          <span>Survey</span>
+          <span>Responses</span>
+          <span class="active">Public results<span class="beta">BETA</span></span>
+        </div>
+        <div class="body" style="overflow-y: auto;">
+          <div class="card status-card">
+            <div class="row">
+              <span class="live-chip">● Published · Live</span>
+              <span class="spacer"></span>
+              <span class="chip">Unlisted ▾</span>
+            </div>
+            <div class="url-row">
+              <span class="grow">mapsurvey.org/r/citypulse</span>
+              <span style="color: var(--p-indigo); font-family: 'IBM Plex Sans', sans-serif; font-weight: 500;">Open ↗</span>
+            </div>
+          </div>
+          <div class="sec-label">Blocks</div>
+          <div class="card row">
+            <span class="handle">⠿</span>
+            <div class="grow">
+              <div class="item-title">Response map</div>
+              <div class="item-meta">All geo questions · <span class="geo-badge">geo</span></div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+          <div class="card row">
+            <span class="handle">⠿</span>
+            <div class="grow">
+              <div class="item-title">Getting around — chart</div>
+              <div class="item-meta">Choice question</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+          <div class="card row">
+            <span class="handle">⠿</span>
+            <div class="grow">
+              <div class="item-title">Satisfaction — chart</div>
+              <div class="item-meta">Rating question</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+          <button class="add-btn">＋ Add block</button>
+        </div>
+        <nav class="tabs">
+          <div class="tab active">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            Structure
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24"><path d="M16 3l5 5L8 21H3v-5L16 3z"/></svg>
+            Edit
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            Preview
+          </div>
+        </nav>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note"><span class="tag">L</span><span class="txt">Same pane vocabulary as Survey: <b>Structure</b> = ordered block list (same card + drag pattern as sections), <b>Edit</b> = selected block's config, <b>Preview</b> = the live public page. One mental model, learned once.</span></div>
+      <div class="note"><span class="tag">M</span>Page-level state (publish/unpublish, live vs frozen, visibility) sits in the status card up top; freeze/unfreeze actions live in the ⋯ overflow.</div>
+    </div>
+  </section>
+
+</div>
+
+<footer class="decisions">
+  <h2>Decisions this mockup encodes (for design.md)</h2>
+  <ul>
+    <li><b>Two navigation levels, both contextual.</b> Top strip = today's page tabs (Survey · Responses · Public results). Bottom tab bar = panes of the active page: Survey → Structure/Edit/Preview, Responses → Table/Map/Charts/Performance, Public results → Structure/Edit/Preview. Desktop layout stays untouched.</li>
+    <li><b>One pane vocabulary.</b> Survey and Public results both use Structure / Edit / Preview — list of ordered things, editor of the selected thing, live result. Learned once, applied twice.</li>
+    <li><b>Drill-down inside Structure:</b> sections list → section's questions → question opens in Edit. Two levels, breadcrumb back, no nested scrolling.</li>
+    <li><b>Reorder by long-press drag on the ⠿ handle only</b> — no ▲▼ button clutter (review decision, v2).</li>
+    <li><b>Autosave replaces the Save button — on desktop too</b> (review decision, v2): "● All changes saved" line, no sticky save control fighting the keyboard.</li>
+    <li><b>New question = full-screen type picker</b> grouped with map types as a first-class indigo group; picking a type creates the question and opens Edit.</li>
+    <li><b>One-row header + ⋯ overflow</b> absorbs Share / Settings / Versions / Publish / account (today: 4 wrapped rows).</li>
+    <li><b>Preview = real respondent page</b>, which adopts the bottom-sheet map pattern (also fixes audit P1 findings #5–#8).</li>
+    <li><b>Responses on mobile leads with Charts</b>; Table becomes per-session cards; the full data grid remains desktop-only in the first iteration.</li>
+  </ul>
+</footer>
+
+</body>
+</html>

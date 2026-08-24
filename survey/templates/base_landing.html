@@ -76,6 +76,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+    <script>
+    // Scroll-reveal is opt-in: sections are visible by default and only start
+    // hidden when animation is actually possible and wanted. Runs in <head> so
+    // the class lands before first paint (no flash of hidden content).
+    if ('IntersectionObserver' in window
+            && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('js-reveal');
+    }
+    </script>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="landing-body">

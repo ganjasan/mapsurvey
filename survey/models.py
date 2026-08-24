@@ -53,9 +53,14 @@ class ChoicesValidator(BaseValidator):
         return False
 
 #VALIDATORS
+# Unicode on purpose: creators name surveys in their own language (Cyrillic,
+# CJK, accents — production already holds names with spaces and diacritics).
+# The check is "contains at least one word character" — Python 3 \w is
+# Unicode-aware. Kept inside the validate_url_name wrapper so the field
+# definition (and therefore migrations) stay untouched.
 url_name_validator = RegexValidator(
-    regex = r'[a-zA-Z0-9_]',
-    message=_('Only alphanumeric character and "_" sign'),
+    regex = r'\w',
+    message=_('The name must contain at least one letter or digit'),
     code='invalid',
 )
 
@@ -1365,6 +1370,10 @@ class PublicResultsPage(models.Model):
     )
     k_anonymity_threshold = models.PositiveIntegerField(
         default=3, help_text=_('Mask buckets with 0 < count < K as "<K". Set to 1 to disable.')
+    )
+    scaffolded_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text=_('When default blocks were auto-drafted. Set once; blocks the creator deletes are never re-created.')
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

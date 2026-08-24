@@ -3,7 +3,7 @@
     data-section-name="{{ section.name }}">
     <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
     <span class="section-title">{{ section.title|default:section.name }}</span>
-    {% if section.is_head %}<span class="badge badge-info" style="font-size:0.65rem;">HEAD</span>{% endif %}
+    {% if section.question_count is not None %}<span class="section-qcount" title="Questions in this section">{{ section.question_count }}</span>{% endif %}
     <button class="section-action" title="Duplicate"
             hx-post="{% url 'editor_section_duplicate' survey.uuid section.id %}"
             hx-target="closest .section-item"

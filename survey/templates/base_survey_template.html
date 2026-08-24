@@ -1,5 +1,10 @@
 {% load static i18n i18n_extras l10n %}
+{% comment %}lang reflects the survey content language the respondent chose
+(survey-page-metadata spec); single-language surveys fall back to the UI
+locale.{% endcomment %}
+<html lang="{% if selected_language %}{{ selected_language }}{% else %}{{ LANGUAGE_CODE|default:'en' }}{% endif %}">
 <head>
+    <title>{% block page_title %}{% if survey %}{{ survey.name }} — {% endif %}Mapsurvey{% endblock %}</title>
     {% include "partials/_analytics.html" %}
 
     <link rel="icon" href="{% static 'favicon.ico' %}" sizes="any">
@@ -236,6 +241,18 @@
     L.Draw.Polygon.prototype._onTouch = L.Util.falseFn;
 
     //l18n
+    // Coarse pointers get "tap" phrasing — "click" instructions describe an
+    // interaction touch devices don't have (openspec: mobile-adaptive-refactor).
+    var _coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    var _t = {
+        marker: _coarse ? i18n.tapToPlaceMarker : i18n.clickToPlaceMarker,
+        shapeStart: _coarse ? i18n.tapToStartShape : i18n.clickToStartShape,
+        shapeCont: _coarse ? i18n.tapToContinueShape : i18n.clickToContinueShape,
+        shapeEnd: _coarse ? i18n.tapFirstPointToClose : i18n.clickFirstPointToClose,
+        lineStart: _coarse ? i18n.tapToStartLine : i18n.clickToStartLine,
+        lineCont: _coarse ? i18n.tapToContinueLine : i18n.clickToContinueLine,
+        lineEnd: _coarse ? i18n.tapLastPointToFinish : i18n.clickLastPointToFinish
+    };
     L.drawLocal = {
         draw: {
             toolbar: {
@@ -251,9 +268,9 @@
             handlers: {
                 circle: { tooltip: { start: 'Click and drag to draw circle.' }, radius: 'Radius' },
                 circlemarker: { tooltip: { start: 'Click map to place circle marker.' } },
-                marker: { tooltip: { start: i18n.clickToPlaceMarker } },
-                polygon: { tooltip: { start: i18n.clickToStartShape, cont: i18n.clickToContinueShape, end: i18n.clickFirstPointToClose } },
-                polyline: { error: i18n.shapeEdgesCannotIntersect, tooltip: { start: i18n.clickToStartLine, cont: i18n.clickToContinueLine, end: i18n.clickLastPointToFinish } },
+                marker: { tooltip: { start: _t.marker } },
+                polygon: { tooltip: { start: _t.shapeStart, cont: _t.shapeCont, end: _t.shapeEnd } },
+                polyline: { error: i18n.shapeEdgesCannotIntersect, tooltip: { start: _t.lineStart, cont: _t.lineCont, end: _t.lineEnd } },
                 rectangle: { tooltip: { start: 'Click and drag to draw rectangle.' } },
                 simpleshape: { tooltip: { end: 'Release mouse to finish drawing.' } }
             }
@@ -275,6 +292,7 @@
     };
 
     var editableLayers = new L.FeatureGroup();
+
     var currentQ = null;
     var currentDrawFeature = null;
     var currentEditLayer = null;

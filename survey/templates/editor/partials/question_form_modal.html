@@ -16,7 +16,17 @@
         display: flex; flex-direction: column;
         background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px;
     }
-    @media (max-width: 991.98px) { .qtp-preview-col { display: none; } }
+    @media (max-width: 991.98px) {
+        .qtp-preview-col { display: none; }
+        /* Flag on: the preview + tips stack below the form instead of
+           disappearing — on a phone this is the only "how will it look".
+           align-items must flip to stretch: the row layout's flex-start
+           becomes horizontal shrink-to-content once the axis is vertical. */
+        body.mobile-nav-enabled .qtp-body-cols { flex-direction: column; align-items: stretch; }
+        body.mobile-nav-enabled .qtp-preview-col {
+            display: flex; position: static; flex: 1 1 auto; width: 100%;
+        }
+    }
     .qtp-pv-title {
         font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
         text-transform: uppercase; color: #6b7280; margin-bottom: 8px;
@@ -80,6 +90,7 @@
         hx-swap="beforeend"
       {% endif %}
       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      {% if EDITOR_AUTOSAVE and question %}data-autosave{% endif %}
       enctype="multipart/form-data">
     {% csrf_token %}
     <div class="modal-body qtp-body-cols">
@@ -396,13 +407,25 @@
         </div>
     </div>
     <div class="modal-footer">
+        {% if EDITOR_AUTOSAVE and question %}
+        {% comment %}Autosave (editor-autosave spec): the indicator replaces both
+        Save and Apply on edit forms. It doubles as the retry control in the
+        error state — editor_autosave.js drives data-state.{% endcomment %}
+        <span class="autosave-indicator" data-state="saved" role="status" aria-live="polite">
+            <i class="fas fa-circle autosave-dot"></i>
+            <span class="autosave-label">All changes saved</span>
+        </span>
+        <span style="flex:1;"></span>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        {% else %}
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
         {% if question %}
         <button type="button" class="btn btn-outline-primary" id="apply-question-btn" onclick="serializeChoices(); applyQuestion();">
             <i class="fas fa-eye"></i> Apply
         </button>
         {% endif %}
-        <button type="submit" class="btn btn-primary" onclick="serializeChoices()">Save</button>
+        <button type="submit" class="btn btn-primary" onclick="serializeChoices()">{% if question %}Save{% else %}Create{% endif %}</button>
+        {% endif %}
     </div>
 </form>
 

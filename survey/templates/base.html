@@ -350,7 +350,7 @@
         </style>
         {% block extra_head %}{% endblock %}
     </head>
-    <body>
+    <body{% if MOBILE_EDITOR_NAV %} class="mobile-nav-enabled"{% endif %}>
     	<div class="header">
             {% block header %}
                 <nav class="site-navbar">
@@ -382,6 +382,10 @@
                               {% if active_org %}
                               <a class="dropdown-item" href="{% url 'org_settings' active_org.slug %}"><i class="fas fa-cog" style="margin-right:4px;"></i>Settings</a>
                               <a class="dropdown-item" href="{% url 'org_members' active_org.slug %}"><i class="fas fa-users" style="margin-right:4px;"></i>Members</a>
+                              {% endif %}
+                              {% if MOBILE_EDITOR_NAV %}
+                              <div class="dropdown-divider"></div>
+                              <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>Help &amp; support</a>
                               {% endif %}
                           </div>
                       </div>
@@ -441,6 +445,31 @@
     <script type="text/javascript">
     var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
     Tawk_API.onLoad = function(){ Tawk_API.minimize(); };
+    {% if MOBILE_EDITOR_NAV %}
+    // No floating bubble on working surfaces (owner decision): support opens
+    // via "Help & support" in the account/⋯ menus. autoStart=false keeps the
+    // widget from rendering (and connecting) at all until asked — hiding it
+    // in onLoad instead produced a visible bubble flash a few seconds after
+    // page load, because onLoad fires after the bubble is already painted.
+    Tawk_API.autoStart = false;
+    Tawk_API.onLoad = function(){ if (!window._tawkWanted) Tawk_API.hideWidget(); };
+    Tawk_API.onChatMinimized = function(){ Tawk_API.hideWidget(); };
+    window.openSupportChat = function(e){
+        if (e) e.preventDefault();
+        window._tawkWanted = true;
+        function reveal() {
+            if (window.Tawk_API && Tawk_API.showWidget && Tawk_API.maximize) {
+                Tawk_API.showWidget(); Tawk_API.maximize(); return true;
+            }
+            return false;
+        }
+        if (window.Tawk_API && Tawk_API.start) { try { Tawk_API.start(); } catch (err) {} }
+        if (!reveal()) {
+            var t = setInterval(function(){ if (reveal()) clearInterval(t); }, 300);
+            setTimeout(function(){ clearInterval(t); }, 10000);
+        }
+    };
+    {% endif %}
     (function(){
     var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
     s1.async=true;

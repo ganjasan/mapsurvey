@@ -1,0 +1,34 @@
+{% comment %}
+Contextual bottom tab bar — level 2 of the mobile editor navigation
+(openspec: mobile-adaptive-refactor, design D2). Rendered only when the
+MOBILE_EDITOR_NAV kill switch is on; hidden ≥768px by editor-mobile.css.
+
+`pane_context` picks the item set for the active level-1 page tab:
+  "survey" (default) — Structure / Edit / Preview over the three IDE panes
+  "responses"        — Table / Map / Charts / Performance (wired in task 5.1)
+  "public-results"   — Structure / Edit / Preview over blocks/config/preview
+                       (wired in task 5.2)
+Buttons carry data-pane consumed by editor_mobile_nav.js.
+{% endcomment %}
+{% if MOBILE_EDITOR_NAV %}
+<nav class="mobile-tabbar" aria-label="Editor panes">
+    {% if pane_context == "responses" %}
+    <button type="button" data-pane="table"><i class="fas fa-table"></i> Table</button>
+    <button type="button" data-pane="map"><i class="fas fa-map-marker-alt"></i> Map</button>
+    <button type="button" data-pane="charts" class="active"><i class="fas fa-chart-bar"></i> Charts</button>
+    <button type="button" data-pane="performance"><i class="fas fa-chart-line"></i> Perf</button>
+    {% elif pane_context == "public-results" %}
+    {% with ap=active_pane|default:"structure" %}
+    <button type="button" data-pane="structure" class="{% if ap == 'structure' %}active{% endif %}"><i class="fas fa-list"></i> Structure</button>
+    <button type="button" data-pane="edit" class="{% if ap == 'edit' %}active{% endif %}"><i class="fas fa-pen"></i> Edit</button>
+    <button type="button" data-pane="preview" class="{% if ap == 'preview' %}active{% endif %}"><i class="fas fa-globe"></i> Preview</button>
+    {% endwith %}
+    {% else %}
+    {% with ap=active_pane|default:"structure" %}
+    <button type="button" data-pane="structure" class="{% if ap == 'structure' %}active{% endif %}"><i class="fas fa-list"></i> Structure</button>
+    <button type="button" data-pane="edit" class="{% if ap == 'edit' %}active{% endif %}"><i class="fas fa-pen"></i> Edit</button>
+    <button type="button" data-pane="preview" class="{% if ap == 'preview' %}active{% endif %}"><i class="fas fa-eye"></i> Preview</button>
+    {% endwith %}
+    {% endif %}
+</nav>
+{% endif %}

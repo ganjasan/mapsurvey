@@ -6552,6 +6552,7 @@ class EditorPermissionTest(TestCase):
         self.assertEqual(survey.organization, self.org)
         self.assertEqual(survey.created_by, self.editor)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_viewer_sees_read_only_badge(self):
         """
         GIVEN an org viewer and a published survey
@@ -6766,6 +6767,7 @@ class EditorPermissionTest(TestCase):
         self.assertNotIn('title="Editor"', content)
         self.assertNotIn('badge-moved', content)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_publishing_widget_renders_on_all_spaces(self):
         """
         GIVEN an owner
@@ -20915,6 +20917,7 @@ class PublicResultsEditorTest(TestCase):
         self.assertEqual(r.status_code, 302)
         self.assertIn(f"?block={block.id}", r.url)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_settings_preview_button_works_before_page_is_live(self):
         """
         GIVEN a results page that is not yet published
@@ -21039,7 +21042,9 @@ class PublicResultsEditorTest(TestCase):
         """
         from .public_results import render_page_data
         self._login()
-        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        # Create the page directly: opening the config tab of this published
+        # survey would auto-scaffold question blocks and skew the count.
+        page = PublicResultsPage.objects.create(survey=self.survey, slug="pre-live")
         block = PublicResultsBlock.objects.create(page=page, block_type="text", order=0)
         self.assertEqual(len(render_page_data(page)["blocks"]), 1)  # prime cache
         self.client.post(self.base + "blocks/{}/delete/".format(block.id))
@@ -21549,6 +21554,7 @@ class SurveyPrimaryActionTest(TestCase):
         self.assertContains(r, "doTransition('published')")
         self.assertContains(r, "Publish")
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_testing_surfaces_open_for_responses(self):
         """
         GIVEN a survey in testing
@@ -21561,6 +21567,7 @@ class SurveyPrimaryActionTest(TestCase):
         # bar too, so it must now appear at least twice (chip + bar).
         self.assertContains(r, "Publish — open for responses", count=2)
 
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_published_shows_open_state_and_close(self):
         """
         GIVEN a published (open) survey
@@ -25248,6 +25255,7 @@ class AISurveyCreateViewTest(TestCase):
         self.assertNotContains(response, 'Generate draft')
 
     @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    @override_settings(MOBILE_EDITOR_NAV=False)
     def test_panel_is_present_when_provider_configured(self):
         """
         GIVEN configured provider credentials
@@ -28197,6 +28205,912 @@ class TranslationCompletenessTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn('es, en', response.content.decode())
+
+
+
+class PublicResultsScaffoldTest(TestCase):
+    """Tests for auto-drafting the public results page at publish time."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.client = Client()
+        self.org = _make_org('ScaffoldOrg')
+        self.owner = User.objects.create_user(username='scaffold_owner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='scaffold_test', organization=self.org, created_by=self.owner,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.point_q = Question.objects.create(
+            survey_section=self.section, code='Q_PT', name='Mark spot',
+            input_type='point', order_number=1,
+        )
+        self.choice_q = Question.objects.create(
+            survey_section=self.section, code='Q_CH', name='Rate',
+            input_type='choice', choices=[{'code': 1, 'name': 'Yes'}], order_number=2,
+        )
+        self.text_q = Question.objects.create(
+            survey_section=self.section, code='Q_TX', name='Comment',
+            input_type='text', order_number=3,
+        )
+        self.config_url = f'/editor/surveys/{self.survey.uuid}/public-results/'
+
+    def _publish(self):
+        self.client.login(username='scaffold_owner', password='pass')
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/transition/',
+            {'status': 'published'}, HTTP_HX_REQUEST='true',
+        )
+        self.assertEqual(response.status_code, 204)
+
+    def test_first_publish_scaffolds_draft(self):
+        """
+        GIVEN a draft survey with a point, a choice and a text question
+        WHEN the owner publishes it
+        THEN a draft results page appears with a map and a chart block in
+             survey order, unlisted, unpublished, with anonymous geo popups
+        """
+        self._publish()
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        self.assertIsNotNone(page.scaffolded_at)
+        self.assertFalse(page.is_published)
+        self.assertEqual(page.visibility, 'unlisted')
+        blocks = list(page.blocks.all())
+        self.assertEqual(
+            [(b.block_type, b.question_id) for b in blocks],
+            [('map', self.point_q.id), ('chart', self.choice_q.id)],
+        )
+        self.assertEqual(blocks[0].geo_label_fields, [])
+
+    def test_lazily_created_empty_page_is_populated(self):
+        """
+        GIVEN a page row that exists with zero blocks (config tab was opened
+              while the survey was a draft)
+        WHEN the survey is published
+        THEN the existing page is populated and stamped
+        """
+        page = PublicResultsPage.objects.create(survey=self.survey, slug='lazy-page')
+        self._publish()
+        page.refresh_from_db()
+        self.assertIsNotNone(page.scaffolded_at)
+        self.assertEqual(page.blocks.count(), 2)
+        # The lazily created row carried the model's `public` default; the
+        # scaffold must pull it back to unlisted-until-reviewed.
+        self.assertEqual(page.visibility, 'unlisted')
+
+    def test_deleted_blocks_are_not_resurrected(self):
+        """
+        GIVEN a scaffolded page whose blocks the creator deleted
+        WHEN the survey is closed and published again
+        THEN no blocks are recreated
+        """
+        self._publish()
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        page.blocks.all().delete()
+        for status in ('closed', 'published'):
+            response = self.client.post(
+                f'/editor/surveys/{self.survey.uuid}/transition/',
+                {'status': status}, HTTP_HX_REQUEST='true',
+            )
+            self.assertEqual(response.status_code, 204)
+        self.assertEqual(page.blocks.count(), 0)
+
+    def test_hand_built_page_is_untouched(self):
+        """
+        GIVEN a page with creator-built blocks and no scaffold stamp
+        WHEN the survey is published
+        THEN the existing blocks are unchanged and no defaults are added
+        """
+        page = PublicResultsPage.objects.create(survey=self.survey, slug='hand-built')
+        manual = PublicResultsBlock.objects.create(
+            page=page, question=self.choice_q, block_type='chart', viz='pie',
+        )
+        self._publish()
+        page.refresh_from_db()
+        self.assertEqual(list(page.blocks.values_list('id', flat=True)), [manual.id])
+        self.assertIsNotNone(page.scaffolded_at)
+
+    def test_public_url_stays_gated_after_scaffold(self):
+        """
+        GIVEN a freshly scaffolded (unpublished) results page
+        WHEN a visitor requests /r/<slug>/
+        THEN it 404s until the creator publishes the page
+        """
+        self._publish()
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        response = self.client.get(f'/r/{page.slug}/')
+        self.assertEqual(response.status_code, 404)
+
+    def test_scaffold_failure_does_not_block_transition(self):
+        """
+        GIVEN the scaffold raising an unexpected error
+        WHEN the owner publishes the survey
+        THEN the transition still succeeds
+        """
+        with patch('survey.editor_views.scaffold_page', side_effect=RuntimeError('boom')):
+            self._publish()
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.status, 'published')
+        self.assertFalse(PublicResultsPage.objects.filter(survey=self.survey).exists())
+
+    def test_admin_published_survey_scaffolds_on_config_open(self):
+        """
+        GIVEN a survey whose status was set to published outside the editor
+              (e.g. Django admin), so no scaffold ran
+        WHEN the creator opens the public-results config tab
+        THEN the page renders with scaffolded blocks and the draft banner
+        """
+        SurveyHeader.objects.filter(pk=self.survey.pk).update(status='published')
+        self.client.login(username='scaffold_owner', password='pass')
+        response = self.client.get(self.config_url)
+        self.assertEqual(response.status_code, 200)
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        self.assertEqual(page.blocks.count(), 2)
+        self.assertIn('We drafted this page from your questions', response.content.decode())
+
+    def test_banner_disappears_after_page_publish(self):
+        """
+        GIVEN a scaffolded page the creator then publishes
+        WHEN the config tab renders
+        THEN the draft banner is no longer shown
+        """
+        self._publish()
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        page.is_published = True
+        page.save()
+        response = self.client.get(self.config_url)
+        self.assertNotIn('We drafted this page from your questions', response.content.decode())
+
+    def test_config_tab_on_draft_survey_does_not_scaffold(self):
+        """
+        GIVEN a draft survey
+        WHEN the creator opens the config tab
+        THEN a page row is lazily created but no blocks are drafted
+        """
+        self.client.login(username='scaffold_owner', password='pass')
+        response = self.client.get(self.config_url)
+        self.assertEqual(response.status_code, 200)
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        self.assertIsNone(page.scaffolded_at)
+        self.assertEqual(page.blocks.count(), 0)
+
+
+class ShareResultsPageLinkTest(TestCase):
+    """Tests for the results-page section on the Share page."""
+
+    def setUp(self):
+        self.org = _make_org('ShareResOrg')
+        self.owner = User.objects.create_user(username='shareres_owner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='shareres_test', organization=self.org,
+            created_by=self.owner, status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.page = PublicResultsPage.objects.create(
+            survey=self.survey, slug='shareres', scaffolded_at=timezone.now(),
+        )
+        self.share_url = f'/editor/surveys/{self.survey.uuid}/share/'
+        self.client.login(username='shareres_owner', password='pass')
+
+    def test_share_links_to_config_while_draft(self):
+        """
+        GIVEN a published survey with an unpublished results-page draft
+        WHEN the Share page renders
+        THEN it links to the public-results config tab
+        """
+        content = self.client.get(self.share_url).content.decode()
+        self.assertIn('Review &amp; publish the results page', content)
+        self.assertIn(f'/editor/surveys/{self.survey.uuid}/public-results/', content)
+        # The copyable public link appears only once the page is published
+        # (the nav publishing widget may mention the slug regardless).
+        self.assertNotIn('id="results-link"', content)
+
+    def test_share_links_to_public_url_once_published(self):
+        """
+        GIVEN the results page is published
+        WHEN the Share page renders
+        THEN it shows the public /r/<slug>/ link instead of the config link
+        """
+        self.page.is_published = True
+        self.page.save()
+        content = self.client.get(self.share_url).content.decode()
+        self.assertIn('id="results-link"', content)
+        self.assertIn('/r/shareres/', content)
+        self.assertNotIn('Review &amp; publish the results page', content)
+
+
+class ScaffoldPublicResultsCommandTest(TestCase):
+    """Tests for the scaffold_public_results backfill command."""
+
+    def setUp(self):
+        self.org = _make_org('ScaffoldCmdOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='cmd_test', organization=self.org, status='published',
+        )
+        section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        Question.objects.create(
+            survey_section=section, code='Q_CH', name='Rate',
+            input_type='choice', choices=[{'code': 1, 'name': 'Yes'}],
+        )
+
+    def _run(self, *args):
+        from io import StringIO
+        from django.core.management import call_command
+        out = StringIO()
+        call_command('scaffold_public_results', *args, stdout=out)
+        return out.getvalue()
+
+    def test_dry_run_writes_nothing(self):
+        """
+        GIVEN a published survey without a results page
+        WHEN the command runs with --dry-run
+        THEN the survey is listed and nothing is created
+        """
+        output = self._run('--dry-run')
+        self.assertIn('would scaffold: cmd_test', output)
+        self.assertFalse(PublicResultsPage.objects.filter(survey=self.survey).exists())
+
+    def test_live_run_scaffolds_and_rerun_is_noop(self):
+        """
+        GIVEN a published survey without a results page
+        WHEN the command runs live and then a second time
+        THEN the first run scaffolds one block and the second creates nothing
+        """
+        output = self._run()
+        self.assertIn('scaffolded: cmd_test', output)
+        page = PublicResultsPage.objects.get(survey=self.survey)
+        self.assertEqual(page.blocks.count(), 1)
+        output = self._run()
+        self.assertIn('Nothing to scaffold', output)
+        self.assertEqual(page.blocks.count(), 1)
+
+
+class MobileEditorNavTest(TestCase):
+    """Mobile editor chrome behind the MOBILE_EDITOR_NAV kill switch.
+
+    Markup-level assertions only: layout properties (no horizontal overflow,
+    one-row toolbar) need a rendering engine and are covered by the device
+    pass on a PR preview, not by the test client.
+    """
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Mobile Org")
+        self.user = User.objects.create_user('mobile_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="mobile_nav_survey", organization=self.org)
+        self.client.force_login(self.user)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_flag_on_renders_mobile_chrome(self):
+        """
+        GIVEN the MOBILE_EDITOR_NAV flag is on
+        WHEN the survey editor page renders
+        THEN the mobile chrome (body class, contextual bottom tab bar with the
+             Structure/Edit/Preview panes, overflow menu, mobile stylesheet) is present
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('mobile-nav-enabled', html)
+        self.assertIn('mobile-tabbar', html)
+        self.assertIn('data-pane="structure"', html)
+        self.assertIn('data-pane="edit"', html)
+        self.assertIn('data-pane="preview"', html)
+        self.assertIn('navbar-overflow', html)
+        self.assertIn('editor-mobile', html)
+        self.assertIn('data-active-pane="structure"', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=False)
+    def test_flag_off_serves_legacy_layout(self):
+        """
+        GIVEN the MOBILE_EDITOR_NAV flag is off (default)
+        WHEN the survey editor page renders
+        THEN no mobile chrome markup is emitted on any viewport
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertNotIn('mobile-nav-enabled', html)
+        self.assertNotIn('mobile-tabbar', html)
+        self.assertNotIn('editor-mobile', html)
+
+    def test_type_picker_has_no_geo_highlight(self):
+        """
+        GIVEN the grouped question type picker
+        WHEN the picker partial renders
+        THEN the map-questions group is NOT specially highlighted — the purple
+             wash was removed (it read as a selected state)
+        """
+        from django.template.loader import render_to_string
+        from survey.question_types import picker_groups_for
+        from survey.models import INPUT_TYPE_CHOICES
+        groups = picker_groups_for(INPUT_TYPE_CHOICES)
+        html = render_to_string(
+            'editor/partials/question_type_picker.html',
+            {'groups': groups, 'current': 'text'},
+        )
+        self.assertNotIn('qtp-grid-geo', html)
+        self.assertNotIn('qtp-group-geo', html)
+
+
+class EditorAutosaveTest(TestCase):
+    """Autosave on question edit forms behind the EDITOR_AUTOSAVE kill switch."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Autosave Org")
+        self.user = User.objects.create_user('autosave_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="autosave_survey", organization=self.org)
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='Section 1',
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, name='Old name', input_type='text',
+        )
+        self.client.force_login(self.user)
+
+    @override_settings(EDITOR_AUTOSAVE=True)
+    def test_autosave_post_persists_change(self):
+        """
+        GIVEN an existing text question and the autosave flag on
+        WHEN the form is POSTed with the autosave marker and a new name
+        THEN the change is persisted and the response is not a form re-render
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/',
+            {'name': 'New name', 'input_type': 'text', 'color': '#e74c3c', 'autosave': '1'},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.name, 'New name')
+
+    @override_settings(EDITOR_AUTOSAVE=True)
+    def test_autosave_validation_error_returns_422_not_rerender(self):
+        """
+        GIVEN an autosave POST with invalid data (missing required input_type)
+        WHEN the form fails validation
+        THEN the view answers 422 JSON and never replaces the typed-in form,
+             and the stored question is unchanged
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/',
+            {'name': 'Half-typed', 'autosave': '1'},
+        )
+        self.assertEqual(response.status_code, 422)
+        self.assertIn('errors', response.json())
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.name, 'Old name')
+
+    @override_settings(EDITOR_AUTOSAVE=True)
+    def test_edit_form_renders_indicator_instead_of_save(self):
+        """
+        GIVEN the autosave flag on
+        WHEN an existing question's form modal renders
+        THEN the saved-state indicator is present and Save/Apply buttons are not
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/',
+        )
+        html = response.content.decode()
+        self.assertIn('autosave-indicator', html)
+        self.assertIn('data-autosave', html)
+        self.assertNotIn('id="apply-question-btn"', html)
+        self.assertNotIn('>Save</button>', html)
+
+    @override_settings(EDITOR_AUTOSAVE=True)
+    def test_new_question_form_keeps_create_button(self):
+        """
+        GIVEN the autosave flag on
+        WHEN the new-question form renders
+        THEN it still carries an explicit Create button and no autosave marker
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+        )
+        html = response.content.decode()
+        self.assertIn('>Create</button>', html)
+        self.assertNotIn('data-autosave', html)
+
+    @override_settings(EDITOR_AUTOSAVE=False)
+    def test_flag_off_keeps_legacy_save_buttons(self):
+        """
+        GIVEN the autosave flag explicitly off
+        WHEN an existing question's form modal renders
+        THEN the legacy Save and Apply buttons are present, no indicator
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/',
+        )
+        html = response.content.decode()
+        self.assertIn('>Save</button>', html)
+        self.assertIn('id="apply-question-btn"', html)
+        self.assertNotIn('autosave-indicator', html)
+
+
+class RespondentTouchCopyTest(TestCase):
+    """Touch-phrased instruction copy on the respondent map (kept from the
+    reverted bottom-sheet experiment — accurate copy is flag-independent)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Touch Org")
+        self.survey = SurveyHeader.objects.create(
+            name="touch_survey",
+            organization=self.org,
+            available_languages=[],
+            status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name="section1", title="S1",
+            code="TC1", is_head=True,
+        )
+
+    def test_touch_instruction_strings_served(self):
+        """
+        GIVEN the respondent map page
+        WHEN it renders
+        THEN the i18n payload carries tap-phrased tooltips and the template
+             picks them for coarse pointers
+        """
+        response = self.client.get('/surveys/touch_survey/section1/')
+        html = response.content.decode()
+        self.assertIn('tapToPlaceMarker', html)
+        self.assertIn('pointer: coarse', html)
+
+class LandingRevealProgressiveTest(SimpleTestCase):
+    """Landing scroll-reveal must be progressive enhancement (landing-page spec)."""
+
+    def test_reveal_visible_by_default_in_css(self):
+        """
+        GIVEN the landing stylesheet
+        WHEN the .reveal rules are read
+        THEN the hidden starting state is scoped to html.js-reveal only,
+             so a no-JS render shows every section
+        """
+        import pathlib
+        css = pathlib.Path('survey/assets/css/landing.css').read_text()
+        base_rule = css.split('.reveal {', 1)[1].split('}', 1)[0]
+        self.assertIn('opacity: 1', base_rule)
+        self.assertIn('html.js-reveal .reveal', css)
+
+    def test_head_gate_respects_reduced_motion(self):
+        """
+        GIVEN the landing base template
+        WHEN the head gate script is read
+        THEN it checks IntersectionObserver support and prefers-reduced-motion
+             before enabling the hidden reveal state
+        """
+        import pathlib
+        html = pathlib.Path('survey/templates/base_landing.html').read_text()
+        self.assertIn("classList.add('js-reveal')", html)
+        self.assertIn('prefers-reduced-motion', html)
+        self.assertIn('IntersectionObserver', html)
+
+
+class SurveyPageMetadataTest(TestCase):
+    """Survey pages carry a real <title> and html[lang] (survey-page-metadata)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Meta Org")
+        self.survey = SurveyHeader.objects.create(
+            name="meta_survey",
+            organization=self.org,
+            available_languages=[],
+            status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name="section1", title="S1",
+            code="M1", is_head=True,
+        )
+
+    def test_section_page_title_contains_survey_name(self):
+        """
+        GIVEN a published survey
+        WHEN a respondent opens a section
+        THEN the document title contains the survey name
+        """
+        response = self.client.get('/surveys/meta_survey/section1/')
+        html = response.content.decode()
+        self.assertIn('<title>meta_survey — Mapsurvey</title>', html)
+
+    def test_section_page_declares_language(self):
+        """
+        GIVEN a single-language survey served in the default locale
+        WHEN a respondent opens a section
+        THEN the root html element declares a lang attribute
+        """
+        response = self.client.get('/surveys/meta_survey/section1/')
+        html = response.content.decode()
+        self.assertIn('<html lang="en"', html)
+
+
+class MobileContextualPaneBarTest(TestCase):
+    """The bottom tab bar is contextual to the active level-1 page tab."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Ctx Org")
+        self.user = User.objects.create_user('ctx_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="ctx_survey", organization=self.org)
+        self.client.force_login(self.user)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_responses_bar_has_its_own_panes(self):
+        """
+        GIVEN the mobile nav flag on
+        WHEN the Responses (analytics) page renders
+        THEN the bottom bar carries Table/Map/Charts/Performance, with Charts
+             as the mobile default
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/analytics/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('data-pane="table"', html)
+        self.assertIn('data-pane="map"', html)
+        self.assertIn('data-pane="charts"', html)
+        self.assertIn('data-pane="performance"', html)
+        self.assertIn("mobileAnalyticsPane('charts')", html)
+        self.assertNotIn('data-pane="structure"', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_public_results_bar_shares_pane_vocabulary(self):
+        """
+        GIVEN the mobile nav flag on
+        WHEN the Public results config page renders
+        THEN the bottom bar carries Structure/Edit/Preview and the pane
+             container starts on Structure when no block is selected
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/public-results/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('data-pane="structure"', html)
+        self.assertIn('data-pane="edit"', html)
+        self.assertIn('data-pane="preview"', html)
+        self.assertIn('data-active-pane="structure"', html)
+        self.assertNotIn('data-pane="charts"', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=False)
+    def test_flag_off_no_bars_anywhere(self):
+        """
+        GIVEN the mobile nav flag off
+        WHEN Responses and Public results pages render
+        THEN neither carries a mobile tab bar
+        """
+        for path in (f'/editor/surveys/{self.survey.uuid}/analytics/',
+                     f'/editor/surveys/{self.survey.uuid}/public-results/'):
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 200)
+            self.assertNotIn('mobile-tabbar', response.content.decode())
+
+
+class DashboardVariantATest(TestCase):
+    """Dashboard adaptive top block (variant A) behind MOBILE_EDITOR_NAV."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Dash Org")
+        self.user = User.objects.create_user('dash_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        SurveyHeader.objects.create(name="dash_survey", organization=self.org)
+        self.client.force_login(self.user)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_flag_on_renders_adaptive_header(self):
+        """
+        GIVEN the MOBILE_EDITOR_NAV flag on
+        WHEN the dashboard renders
+        THEN the collapsed-search button, the overflow menu (Import, Show
+             Archived, view toggle) and the count label are present
+        """
+        html = self.client.get('/editor/').content.decode()
+        self.assertIn('mobile-nav-enabled', html)
+        self.assertIn('dash-search-btn', html)
+        self.assertIn('dash-overflow', html)
+        self.assertIn('My Surveys · 1', html)
+        self.assertIn('List view', html)
+        self.assertIn('Show Archived', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=False)
+    def test_flag_off_serves_legacy_header(self):
+        """
+        GIVEN the flag explicitly off
+        WHEN the dashboard renders
+        THEN none of the variant-A chrome is emitted
+        """
+        html = self.client.get('/editor/').content.decode()
+        # CSS selectors naming these classes are always in the <style> block;
+        # what must be absent with the flag off is the MARKUP and JS.
+        self.assertNotIn('<body class="mobile-nav-enabled"', html)
+        self.assertNotIn('dashSearchToggle', html)
+        self.assertNotIn('class="dropdown dash-overflow"', html)
+        self.assertNotIn('dash-count', html.split('</style>')[-1])
+
+
+class CreateSurveyWizardTest(TestCase):
+    """Create-survey wizard (variant A) behind MOBILE_EDITOR_NAV."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Wizard Org")
+        self.user = User.objects.create_user('wizard_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.force_login(self.user)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_flag_on_renders_wizard_chrome(self):
+        """
+        GIVEN the MOBILE_EDITOR_NAV flag on
+        WHEN the create page renders
+        THEN the wizard chrome is present (map topbar, step footers, novalidate),
+             the path buttons carry the approved copy, and the legacy name and
+             language fields are wrapped for hiding
+        """
+        html = self.client.get('/editor/surveys/new/').content.decode()
+        self.assertIn('wizard-map-topbar', html)
+        self.assertIn('wizard-goal-footer', html)
+        self.assertIn('wizard-create-btn', html)
+        self.assertIn('novalidate', html)
+        self.assertIn('create-legacy-fields', html)
+        self.assertIn('Start with an empty survey', html)
+        self.assertNotIn('>Create empty</button>', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=False)
+    def test_flag_off_serves_legacy_page(self):
+        """
+        GIVEN the flag explicitly off
+        WHEN the create page renders
+        THEN no wizard chrome or copy is emitted and the legacy buttons remain
+        """
+        html = self.client.get('/editor/surveys/new/').content.decode()
+        self.assertNotIn('wizard-map-topbar', html)
+        self.assertNotIn('novalidate', html)
+        self.assertIn('>Create empty</button>', html)
+        self.assertNotIn('Start with an empty survey', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_empty_path_creates_untitled_survey(self):
+        """
+        GIVEN the wizard's empty path (JS fills the hidden name with the default)
+        WHEN the form posts the wizard-produced payload
+        THEN the survey is created with the placeholder name and a head section
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'Untitled survey',
+            'available_languages': '[]',
+            'action': 'empty',
+            'map_lat': '52.52', 'map_lng': '13.405', 'map_zoom': '12',
+        })
+        self.assertEqual(response.status_code, 302)
+        survey = SurveyHeader.objects.get(name='Untitled survey', organization=self.org)
+        self.assertTrue(survey.surveysection_set.filter(is_head=True).exists())
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_cyrillic_name_accepted(self):
+        """
+        GIVEN a creator briefing in Russian (any language is supported)
+        WHEN the wizard posts a Cyrillic-derived survey name
+        THEN validate_url_name (now Unicode) accepts it and the survey is created
+        """
+        response = self.client.post('/editor/surveys/new/', {
+            'name': 'Лучшие места в Бишкеке',
+            'available_languages': '["ru"]',
+            'action': 'empty',
+            'map_lat': '42.87', 'map_lng': '74.59', 'map_zoom': '12',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(SurveyHeader.objects.filter(name='Лучшие места в Бишкеке').exists())
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_languages_stay_on_step_one(self):
+        """
+        GIVEN the wizard flag on
+        WHEN the create page renders
+        THEN the language picker is NOT wrapped in the hidden legacy block —
+             languages are chosen up front so drafts generate translations
+        """
+        html = self.client.get('/editor/surveys/new/').content.decode()
+        wrapper = re.search(r'class="create-legacy-fields".*?</div>\s*</div>', html, re.S)
+        self.assertIsNotNone(wrapper)
+        self.assertIn('name="name"', wrapper.group(0))
+        self.assertNotIn('available_languages', wrapper.group(0))
+        self.assertIn('Available languages', html)
+
+
+
+class SurveyStatusLineTest(TestCase):
+    """Variant C status line, sheets and menus behind MOBILE_EDITOR_NAV."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Status Org")
+        self.user = User.objects.create_user('status_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="status_survey", organization=self.org)
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='S1', is_head=True,
+        )
+        Question.objects.create(survey_section=self.section, name='Q1', input_type='text')
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.client.force_login(self.user)
+
+    def _page(self):
+        return self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_draft_status_line(self):
+        """
+        GIVEN a draft survey and the flag on
+        WHEN the editor renders
+        THEN the status line carries the grey Draft chip (lifecycle menu) and
+             offers Publish; the navbar chip is gone
+        """
+        html = self._page()
+        self.assertIn('mobile-statusbar', html)
+        self.assertIn("doTransition('published')", html)
+        # Chip in the status line, colored by status (draft = grey/secondary)
+        self.assertIn('pub-chip badge-secondary', html)
+        statusbar = html.split('mobile-statusbar', 1)[1]
+        self.assertIn('publishing-widget', statusbar)
+        # Tab dots replace the navbar chip
+        self.assertIn('tabdot td-draft', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_testing_status_has_share_link_sheet(self):
+        """
+        GIVEN a testing survey
+        WHEN the editor renders
+        THEN the status line offers the test link and the sheet carries the
+             tokenized URL, the password form and the Publish exit
+        """
+        self.survey.status = 'testing'
+        self.survey.save(update_fields=['status'])
+        html = self._page()
+        self.assertIn('pub-chip badge-warning', html)
+        self.assertIn('Share test link', html)
+        self.assertIn(f'token={self.survey.test_token}', html)
+        self.assertIn('editor_survey_password'.replace('editor_survey_password', f'/editor/surveys/{self.survey.uuid}/password/'), html)
+        self.assertIn('Publish — open for everyone', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_published_status_edit_and_share(self):
+        """
+        GIVEN a published survey
+        WHEN the editor renders
+        THEN the status line shows the live count with Edit + Share, the edit
+             intercept sheet exists, and the ctx-bar Preview duplicate stays out
+        """
+        self.survey.status = 'published'
+        self.survey.save(update_fields=['status'])
+        html = self._page()
+        self.assertIn('pub-chip badge-success', html)
+        self.assertIn('✎ Edit', html)
+        self.assertIn('editIntercept', html)
+        self.assertIn(f'/editor/surveys/{self.survey.uuid}/share/', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_overflow_menu_has_share_and_sections_have_counts(self):
+        """
+        GIVEN the flag on
+        WHEN the editor renders
+        THEN the overflow menu offers Share…, the HEAD badge is gone and the
+             section rows carry question counts
+        """
+        html = self._page()
+        self.assertIn('Share…', html)
+        self.assertNotIn('>HEAD<', html)
+        self.assertIn('section-qcount', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=False)
+    def test_flag_off_keeps_ctx_bar_only(self):
+        """
+        GIVEN the flag explicitly off
+        WHEN the editor renders
+        THEN no status line or sheets are emitted and the legacy ctx-bar remains
+        """
+        html = self._page()
+        self.assertNotIn('mobile-statusbar', html)
+        self.assertNotIn('testSheet', html)
+        self.assertIn('build-ctxbar', html)
+
+
+class PublicResultsStatusLineTest(TestCase):
+    """Survey↔Public-results parity: the PR tab gets the same status-line
+    anatomy (colored chip with lifecycle menu + primary action per state)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="PR Status Org")
+        self.user = User.objects.create_user('pr_status_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="pr_status_survey", organization=self.org, status='published',
+        )
+        self.page = PublicResultsPage.objects.create(survey=self.survey, slug='pr-status')
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.client.force_login(self.user)
+
+    def _page(self):
+        return self.client.get(f'/editor/surveys/{self.survey.uuid}/public-results/').content.decode()
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_not_published_state(self):
+        """
+        GIVEN an unpublished results page and the flag on
+        WHEN the PR tab renders
+        THEN the status line shows the grey Not published chip and the green
+             Publish page primary, and the legacy ctx-bar buttons stay out
+        """
+        html = self._page()
+        self.assertIn('mobile-statusbar', html)
+        self.assertIn('Not published', html)
+        self.assertIn('pub-chip badge-secondary', html)
+        self.assertIn('Publish page', html)
+        self.assertNotIn('Copy public link', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_live_state_share_freeze_visitor(self):
+        """
+        GIVEN a live results page
+        WHEN the PR tab renders
+        THEN the chip is green Live and the line offers Share (copies /r/),
+             Freeze snapshot and Open as visitor on the real public URL
+        """
+        self.page.is_published = True
+        self.page.save(update_fields=['is_published'])
+        html = self._page()
+        self.assertIn('pub-chip badge-success', html)
+        self.assertIn('Live', html)
+        self.assertIn('prCopyPublicLink(this)', html)
+        self.assertIn('Freeze snapshot', html)
+        self.assertIn('Open as visitor', html)
+        self.assertIn('/r/pr-status/', html)
+        self.assertIn('Unpublish', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_frozen_state_update_snapshot(self):
+        """
+        GIVEN a live page in frozen mode
+        WHEN the PR tab renders
+        THEN the chip is the sky Frozen one with its date and the primary
+             action becomes Update snapshot
+        """
+        from django.utils import timezone
+        self.page.is_published = True
+        self.page.mode = 'frozen'
+        self.page.frozen_at = timezone.now()
+        self.page.save(update_fields=['is_published', 'mode', 'frozen_at'])
+        html = self._page()
+        self.assertIn('pub-chip badge-info', html)
+        self.assertIn('Frozen ·', html)
+        self.assertIn('Update snapshot', html)
+        self.assertIn('Back to live data', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_tab_dots_and_block_type_badges(self):
+        """
+        GIVEN the flag on
+        WHEN the PR tab renders with a block
+        THEN the navbar tabs carry status dots instead of the survey chip and
+             block rows show their type badge
+        """
+        PublicResultsBlock.objects.create(page=self.page, block_type='text', order=1)
+        html = self._page()
+        self.assertIn('tabdot td-published', html)
+        self.assertIn('tabdot td-off', html)
+        self.assertIn('section-qcount', html)
+
+    @override_settings(MOBILE_EDITOR_NAV=False)
+    def test_flag_off_keeps_legacy_ctxbar(self):
+        """
+        GIVEN the flag explicitly off
+        WHEN the PR tab renders
+        THEN no status line is emitted and the scattered ctx-bar controls stay
+        """
+        html = self._page()
+        self.assertNotIn('mobile-statusbar', html)
+        self.assertIn('Publish page', html)
 
 
 class GeoMultiFeatureTest(TestCase):

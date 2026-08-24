@@ -1,9 +1,11 @@
 import json
+import logging
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.gis.geos import Point
 from django.db import transaction
-from django.db.models import Q, Max
+from django.db.models import Q, Max, Count
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -39,6 +41,9 @@ from .versioning import (
     IncompatibleDraftError, family_ids,
 )
 from .audit import audit
+from .public_results import scaffold_page
+
+logger = logging.getLogger(__name__)
 
 
 def _guard_choice_codes(question, new_choices):
@@ -148,10 +153,18 @@ def _is_ajax(request):
 
 
 def _get_sections_ordered(survey):
-    """Return sections in linked-list order."""
+    """Return sections in linked-list order, each carrying .question_count."""
     sections = list(SurveySection.objects.filter(survey_header=survey))
     if not sections:
         return []
+
+    counts = {
+        row['survey_section']: row['n']
+        for row in Question.objects.filter(survey_section__in=sections)
+        .values('survey_section').annotate(n=Count('id'))
+    }
+    for s in sections:
+        s.question_count = counts.get(s.id, 0)
 
     by_id = {s.id: s for s in sections}
     head = None
@@ -453,6 +466,7 @@ def editor_survey_detail(request, survey_uuid):
             feedback_trace_id = pe.llm_trace_id(draft_event.pk)
 
     return render(request, 'editor/survey_detail.html', {
+        'session_count': survey.surveysession_set.count(),
         'ai_feedback_trace_id': feedback_trace_id,
         'survey': survey,
         'sections': sections,
@@ -922,6 +936,11 @@ def editor_question_edit(request, survey_uuid, question_id):
             })
             response['HX-Trigger'] = 'questionSaved'
             return response
+        if request.POST.get('autosave'):
+            # Autosave must never replace the form the creator is typing in —
+            # report the errors and let the client show the indicator instead
+            # (openspec: mobile-adaptive-refactor, editor-autosave).
+            return JsonResponse({'ok': False, 'errors': form.errors}, status=422)
         return render(request, 'editor/partials/question_form_modal.html', {
             'form': form,
             'survey': survey,
@@ -1622,6 +1641,12 @@ def editor_survey_transition(request, survey_uuid):
             'survey_id': str(survey.id),
             'creation_method': pe.creation_method_for(survey.id),
         })
+        # A failed scaffold must never block the publish itself — worst case
+        # is today's behavior (no draft), and the config tab retries later.
+        try:
+            scaffold_page(survey)
+        except Exception:
+            logger.exception('public results scaffold failed for survey %s', survey.id)
 
     if request.headers.get('HX-Request'):
         return HttpResponse(status=204, headers={'HX-Trigger': 'statusChanged'})

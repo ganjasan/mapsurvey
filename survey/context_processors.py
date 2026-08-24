@@ -24,6 +24,13 @@ def contact(request):
     }
 
 
+def mobile_adaptive(request):
+    return {
+        'MOBILE_EDITOR_NAV': getattr(settings, 'MOBILE_EDITOR_NAV', False),
+        'EDITOR_AUTOSAVE': getattr(settings, 'EDITOR_AUTOSAVE', False),
+    }
+
+
 def analytics(request):
     return {
         'PLAUSIBLE_SCRIPT_URL': getattr(settings, 'PLAUSIBLE_SCRIPT_URL', ''),

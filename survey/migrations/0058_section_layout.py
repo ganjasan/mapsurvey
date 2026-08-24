@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('survey', '0056_escape_legacy_plain_text_subtext'),
+        ('survey', '0057_public_results_scaffolded_at'),
     ]
 
     operations = [
