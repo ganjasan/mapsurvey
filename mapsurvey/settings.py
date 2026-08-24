@@ -466,6 +466,11 @@ MOBILE_EDITOR_NAV = os.environ.get('MOBILE_EDITOR_NAV', 'True').lower() in ('tru
 # the one intentional desktop change of the refactor). Separate switch so desktop
 # autosave can be rolled back without touching the mobile navigation.
 EDITOR_AUTOSAVE = os.environ.get('EDITOR_AUTOSAVE', 'True').lower() in ('true', '1')
+# Steer creators toward the AI draft on the create page (openspec:
+# steer-to-ai-generation): single-field brief, empty-path intercept, wizard empty
+# path skipping the map step. One switch for the whole bet — False restores the
+# pre-change create page without a deploy.
+CREATE_STEER_AI = os.environ.get('CREATE_STEER_AI', 'True').lower() in ('true', '1')
 
 # Public results sharing
 # Creators share results by copying the editor URL out of the address bar, which is the

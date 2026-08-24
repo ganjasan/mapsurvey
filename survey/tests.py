@@ -19577,8 +19577,7 @@ class DomainRuleLoadingTest(TestCase):
 
 # =============================================================================
 # Acquisition funnel: the stages before registration
-# =============================================================================
-
+# ======================================================================
 import datetime as _dt
 from unittest.mock import patch
 
@@ -28856,7 +28855,7 @@ class CreateSurveyWizardTest(TestCase):
         self.assertIn('wizard-create-btn', html)
         self.assertIn('novalidate', html)
         self.assertIn('create-legacy-fields', html)
-        self.assertIn('Start with an empty survey', html)
+        self.assertIn('Skip and start from scratch', html)
         self.assertNotIn('>Create empty</button>', html)
 
     @override_settings(MOBILE_EDITOR_NAV=False)
@@ -28870,7 +28869,7 @@ class CreateSurveyWizardTest(TestCase):
         self.assertNotIn('wizard-map-topbar', html)
         self.assertNotIn('novalidate', html)
         self.assertIn('>Create empty</button>', html)
-        self.assertNotIn('Start with an empty survey', html)
+        self.assertNotIn('Skip and start from scratch', html)
 
     @override_settings(MOBILE_EDITOR_NAV=True)
     def test_empty_path_creates_untitled_survey(self):
@@ -29816,6 +29815,100 @@ class RichSubtextAndSubheadingTest(TestCase):
 
         self.assertIn('id="subtext-quill"', dialog)
         self.assertIn('id="section-subheading-quill"', panel)
+
+
+
+class CreateSteerAITest(TestCase):
+    """Create-page steering toward the AI draft (openspec: steer-to-ai-generation).
+
+    Everything here is markup-level on purpose: the intercept and the wizard
+    skip live in JS the test client cannot execute, so these tests pin what the
+    server ships to the browser, and the browser-driven pass covers behavior.
+    """
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Steer Org")
+        self.user = User.objects.create_user('steer_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.force_login(self.user)
+
+    def _page(self):
+        return self.client.get('/editor/surveys/new/').content.decode()
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test',
+                       MOBILE_EDITOR_NAV=True, CREATE_STEER_AI=False)
+    def test_flag_off_restores_the_flat_panel(self):
+        """
+        GIVEN CREATE_STEER_AI off (the kill switch)
+        WHEN the create page renders
+        THEN no disclosure, no autofocus, no intercept container, and no
+             wizard skip branch -- the pre-change markup exactly
+        """
+        html = self._page()
+        self.assertNotIn('<details class="ai-more"', html)
+        self.assertNotIn('id="ai-intercept"', html)
+        self.assertNotIn('id="example-chips"', html)
+        self.assertNotIn("if (p === 'empty')", html)
+        goal_tag = re.search(r'<[^>]*id="id_goal"[^>]*>', html)
+        self.assertNotIn('autofocus', goal_tag.group(0))
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test',
+                       MOBILE_EDITOR_NAV=True, CREATE_STEER_AI=True)
+    def test_flag_on_collapses_the_brief_to_one_field(self):
+        """
+        GIVEN CREATE_STEER_AI on and an untouched brief
+        WHEN the create page renders
+        THEN the steering fields sit in a closed "Add details" disclosure, the
+             goal takes autofocus, and the intercept container is shipped hidden
+        """
+        html = self._page()
+        details = re.search(r'<details class="ai-more"[^>]*>', html)
+        self.assertIsNotNone(details)
+        self.assertNotIn(' open', details.group(0))
+        self.assertIn('Add details (optional)', html)
+        self.assertIn('id="ai-intercept"', html)
+        self.assertIn('id="example-chips"', html)
+        self.assertIn('Try an example:', html)
+        self.assertIn("if (p === 'empty')", html)
+        goal_tag = re.search(r'<[^>]*id="id_goal"[^>]*>', html)
+        self.assertIn('autofocus', goal_tag.group(0))
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test',
+                       MOBILE_EDITOR_NAV=False, CREATE_STEER_AI=True)
+    def test_no_autofocus_while_the_name_field_is_visible(self):
+        """
+        GIVEN the wizard flag off, so the name input keeps first position
+        WHEN the create page renders with steering on
+        THEN the goal does NOT carry autofocus (focus stays uncontested)
+        """
+        goal_tag = re.search(r'<[^>]*id="id_goal"[^>]*>', self._page())
+        self.assertNotIn('autofocus', goal_tag.group(0))
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test',
+                       MOBILE_EDITOR_NAV=True, CREATE_STEER_AI=True)
+    def test_disclosure_reopens_for_dirty_fields(self):
+        """
+        GIVEN an invalid manual POST that carried an audience value
+        WHEN the page re-renders
+        THEN the disclosure is rendered open and the typed value survives
+        """
+        html = self.client.post('/editor/surveys/new/', {
+            'name': '', 'available_languages': '["en"]', 'action': 'empty',
+            'goal': 'Parks in Berlin', 'audience': 'Residents of Pankow',
+        }).content.decode()
+        details = re.search(r'<details class="ai-more"[^>]*>', html)
+        self.assertIn(' open', details.group(0))
+        self.assertIn('Residents of Pankow', html)
+        self.assertIn('Parks in Berlin', html)
+
+    @override_settings(AI_PROVIDER='', MOBILE_EDITOR_NAV=True, CREATE_STEER_AI=True)
+    def test_no_provider_means_no_intercept(self):
+        """
+        GIVEN no configured LLM provider
+        WHEN the create page renders with steering on
+        THEN the intercept container is not shipped -- there is nothing to offer
+        """
+        self.assertNotIn('id="ai-intercept"', self._page())
 
 
 class MaplessSectionRenderingTest(TestCase):
