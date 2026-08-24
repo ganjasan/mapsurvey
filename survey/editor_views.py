@@ -1,6 +1,7 @@
 import json
 import logging
 
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.gis.geos import Point
@@ -208,6 +209,16 @@ def editor_survey_create(request):
         form = SurveyCreateForm(request.POST)
         if request.POST.get('action') == 'generate':
             return _start_survey_generation(request, form)
+        # Re-render after an invalid manual POST keeps the typed brief visible
+        # (initial=, not data=: binding would demand a goal the creator is
+        # explicitly declining to use). The collapsed "Add details" disclosure
+        # reads these values to decide whether to render open.
+        brief_form = SurveyBriefForm(initial={
+            'goal': request.POST.get('goal', ''),
+            'audience': request.POST.get('audience', ''),
+            'map_target': request.POST.get('map_target', ''),
+            'use_case': request.POST.get('use_case') or 'urban_planning',
+        })
         if form.is_valid():
             survey = form.save(commit=False)
             survey.organization = request.active_org
@@ -251,6 +262,11 @@ def editor_survey_create(request):
             return redirect('editor_survey_detail', survey_uuid=survey.uuid)
     else:
         form = SurveyCreateForm()
+    if settings.CREATE_STEER_AI and settings.MOBILE_EDITOR_NAV:
+        # Single-field brief: the goal is the whole visible brief, so it takes
+        # focus. Only when the wizard flag hides the name field — with the flat
+        # layout the name input keeps first position and focus stays contested.
+        brief_form.fields['goal'].widget.attrs['autofocus'] = True
     return render(request, 'editor/survey_create.html', {
         'form': form,
         'brief_form': brief_form,

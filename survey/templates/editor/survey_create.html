@@ -107,11 +107,15 @@
     .create-grid { grid-template-columns: 1fr; gap: 1.25rem; }
     .create-map { height: 320px; }
   }
-  /* AI brief panel */
+  /* AI brief panel — a softly tinted card so the whole AI zone (goal → Draft
+     button) reads as one thing, distinct from the manual path below it. */
   .ai-panel {
-    margin-top: 0.7rem; padding-top: 0.7rem;
-    border-top: 1px solid var(--border-color);
+    margin-top: 0.7rem; padding: 0.75rem 0.85rem;
+    background: color-mix(in srgb, var(--accent) 5%, #fff);
+    border: 1px solid color-mix(in srgb, var(--accent) 22%, #fff);
+    border-radius: var(--radius);
   }
+  .ai-panel .btn-block-row { width: 100%; justify-content: center; margin-top: 0.55rem; }
   .ai-panel h6 { font-size: 0.92rem; margin-bottom: 0.15rem; display: flex; align-items: center; gap: 0.4rem; }
   .ai-panel h6 .ai-badge {
     font-size: 0.62rem; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;
@@ -137,6 +141,45 @@
   .create-actions-secondary .btn { flex: 1; text-align: center; }
   .ai-privacy { font-size: 0.7rem; color: #9ca3af; margin-top: 0.5rem; line-height: 1.3; }
   .skip-dashboard { font-size: 0.82rem; }
+  /* "Add details (optional)" disclosure — a quiet link-like row; the fields
+     inside keep their normal styling. */
+  /* Example brief chips — one click fills the goal with a ready-made brief. */
+  .example-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; margin: 0.15rem 0 0.35rem; }
+  .example-chips-label { font-size: 0.74rem; color: #9ca3af; margin-right: 0.1rem; }
+  .example-chip {
+    font-size: 0.76rem; padding: 0.2rem 0.55rem; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--border-color); background: #fff; color: #374151;
+  }
+  .example-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .example-chip.chip-on {
+    background: var(--accent-light); border-color: var(--accent); color: var(--accent); font-weight: 500;
+  }
+  .example-chip-clear { color: #9ca3af; border-style: dashed; }
+  .example-chip-clear:hover { color: #dc2626; border-color: #dc2626; }
+  .example-chip-clear[hidden] { display: none; }
+  .ai-more { margin-bottom: 0.55rem; }
+  .ai-more > summary {
+    font-size: 0.82rem; color: var(--accent); cursor: pointer; user-select: none;
+    padding: 0.15rem 0; list-style-position: inside;
+  }
+  .ai-more[open] > summary { margin-bottom: 0.45rem; }
+  /* Empty-path intercept — inline offer, revealed on the first qualifying
+     "Create empty" click. */
+  .ai-intercept {
+    margin-top: 0.6rem; padding: 0.7rem 0.8rem;
+    border: 1px solid var(--accent); border-radius: var(--radius);
+    background: var(--accent-light);
+  }
+  .ai-intercept[hidden] { display: none; }
+  .ai-intercept-text { font-size: 0.85rem; color: #374151; margin-bottom: 0.55rem; }
+  .ai-intercept-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .ai-intercept-actions .btn { flex: 1; white-space: nowrap; }
+  @media (max-width: 1023.98px) {
+    /* Stacked with a clear gap on touch layouts — the two answers must not
+       be thumb-adjacent. */
+    .ai-intercept-actions { flex-direction: column; gap: 0.65rem; }
+    .ai-intercept-actions .btn { flex: none; min-height: 44px; }
+  }
 </style>
 {% endblock %}
 
@@ -186,9 +229,44 @@
 
             <div class="pr-field">
               <label for="{{ brief_form.goal.id_for_label }}">{{ brief_form.goal.label }}</label>
+              {% if CREATE_STEER_AI %}
+              {% comment %}Example brief chips (openspec: steer-to-ai-generation):
+              one click shows what a complete brief looks like — the cheapest
+              cure for the blank-page cost. Static copy; a click fills every
+              brief field and opens the details disclosure so nothing is filled
+              invisibly. Clear resets the whole brief.{% endcomment %}
+              <div class="example-chips" id="example-chips">
+                <span class="example-chips-label">Try an example:</span>
+                <button type="button" class="example-chip"
+                        data-goal="Where do cyclists feel unsafe in our city, and which routes need protected bike lanes"
+                        data-audience="Residents who cycle or would like to start, all ages"
+                        data-map-target="Unsafe spots, dangerous crossings, routes that need protected lanes"
+                        data-use-case="urban_planning">Bike lane feedback</button>
+                <button type="button" class="example-chip"
+                        data-goal="How many white (albino) squirrels live in our town, where are they spotted during the annual count, and how does their population compare to gray squirrels and to cats — their main predator"
+                        data-audience="Local residents and count volunteers, all ages"
+                        data-map-target="Each sighting — white squirrel, gray squirrel, or cat — with the number seen at that spot"
+                        data-use-case="citizen_science">White squirrel count</button>
+                <button type="button" class="example-chip"
+                        data-goal="Where does summer heat feel most unbearable in our city, and which places do people avoid or use as cool refuges during heatwaves"
+                        data-audience="Residents who spend time outdoors in summer, including older people and parents with children"
+                        data-map-target="Spots that feel dangerously hot and the cool places used to escape the heat"
+                        data-use-case="urban_planning">Heatwave map</button>
+                <button type="button" class="example-chip example-chip-clear" id="example-clear" hidden>× Clear</button>
+              </div>
+              {% endif %}
               {{ brief_form.goal }}
               {% for error in brief_form.goal.errors %}<div class="text-danger" style="font-size:0.85rem;">{{ error }}</div>{% endfor %}
             </div>
+            {% if CREATE_STEER_AI %}
+            {% comment %}Single-field brief (openspec: steer-to-ai-generation):
+            the goal is the whole visible brief; the steering fields live behind
+            a native disclosure. `open` is server-rendered whenever a collapsed
+            field already carries a value or an error, so a re-render never
+            hides what the creator typed.{% endcomment %}
+            <details class="ai-more"{% if brief_form.audience.value or brief_form.map_target.value or brief_form.audience.errors or brief_form.map_target.errors %} open{% endif %}>
+              <summary>Add details (optional)</summary>
+            {% endif %}
             <div class="pr-field">
               <label for="{{ brief_form.audience.id_for_label }}">{{ brief_form.audience.label }}</label>
               {{ brief_form.audience }}
@@ -208,17 +286,15 @@
               </div>
               <div class="pr-help">Steers the draft toward question sets that work for this scenario.</div>
             </div>
-          </div>
-          {% endif %}
+            {% if CREATE_STEER_AI %}
+            </details>
+            {% endif %}
 
-          {% comment %}
-          The primary action gets its own row so it reads as the intended path;
-          the manual fallback and the way out share the row beneath it.
-          {% endcomment %}
-          <div class="create-actions">
-            {% if ai_available %}
             {# HTMX rather than a plain submit: generation is async, so the page #}
             {# stays put and swaps in the poller instead of navigating away.     #}
+            {# Lives inside .ai-panel so the tinted AI zone runs from the goal   #}
+            {# down to this button; hidden on the mobile wizard, whose draft     #}
+            {# path goes through the map step via the footer button.             #}
             <button type="button" id="generate-btn" class="btn btn-primary btn-block-row"
                     hx-post="{% url 'editor_survey_create' %}"
                     hx-include="#create-form"
@@ -228,8 +304,43 @@
                     hx-disabled-elt="#generate-btn, #empty-btn">
               {% if MOBILE_EDITOR_NAV %}✨ Draft my survey{% else %}<i class="fas fa-wand-magic-sparkles"></i> Generate draft{% endif %}
             </button>
+            {% if MOBILE_EDITOR_NAV %}
+            {% comment %}The wizard's draft button, inside the tinted AI zone.
+            Only rendered by CSS below 1024px, where it replaces #generate-btn:
+            the wizard's draft path continues to the map step rather than
+            submitting straight away.{% endcomment %}
+            <button type="button" class="btn btn-primary btn-block-row wizard-draft-next" onclick="wizardNext('draft')">✨ Draft my survey</button>
+            {% endif %}
+            <div class="ai-privacy">
+              Your description is processed by an AI provider to build the draft.
+              Survey answers are never sent to AI providers.
+            </div>
+          </div>
+          {% endif %}
+
+          {% if CREATE_STEER_AI and ai_available %}
+          {% comment %}Empty-path intercept (openspec: steer-to-ai-generation):
+          revealed by JS on the first empty-action click when the goal is
+          non-empty. Inline and dismissible — never a modal. Lives in
+          .create-left so it is visible on the wizard goal step too, where
+          .create-actions is hidden.{% endcomment %}
+          <div id="ai-intercept" class="ai-intercept" hidden>
+            <div class="ai-intercept-text">You already described your project — draft it with AI (~10&nbsp;s)?</div>
+            <div class="ai-intercept-actions">
+              <button type="button" id="ai-intercept-accept" class="btn btn-primary">✨ Generate draft</button>
+              <button type="button" id="ai-intercept-decline" class="btn btn-outline-secondary">Create empty anyway</button>
+            </div>
+          </div>
+          {% endif %}
+
+          {% comment %}
+          The primary action gets its own row so it reads as the intended path;
+          the manual fallback and the way out share the row beneath it.
+          {% endcomment %}
+          <div class="create-actions">
+            {% if ai_available %}
             <div class="create-actions-secondary">
-              <button type="submit" name="action" value="empty" id="empty-btn" class="btn btn-outline-secondary{% if MOBILE_EDITOR_NAV %} btn-block-row{% endif %}">{% if MOBILE_EDITOR_NAV %}Start with an empty survey{% else %}Create empty{% endif %}</button>
+              <button type="submit" name="action" value="empty" id="empty-btn" class="btn btn-outline-secondary{% if MOBILE_EDITOR_NAV %} btn-block-row{% endif %}">{% if MOBILE_EDITOR_NAV %}Skip and start from scratch{% else %}Create empty{% endif %}</button>
               {% if not MOBILE_EDITOR_NAV %}
               {% comment %}With the wizard chrome the navbar's "‹ Dashboard" is the
               way out — a third button here just wraps the row.{% endcomment %}
@@ -243,13 +354,6 @@
             </div>
             {% endif %}
           </div>
-
-          {% if ai_available %}
-          <div class="ai-privacy">
-            Your description is processed by an AI provider to build the draft.
-            Survey answers are never sent to AI providers.
-          </div>
-          {% endif %}
 
           <!-- Generation status (spinner / error) is swapped in here by HTMX. -->
           <div id="generation-slot"></div>
@@ -310,8 +414,9 @@
       step, where one Create button dispatches to the chosen path.{% endcomment %}
       <div class="wizard-goal-footer">
         {% if ai_available %}
-        <button type="button" class="btn btn-primary btn-block-row" onclick="wizardNext('draft')">Next — choose the place</button>
-        <button type="button" class="btn btn-link wizard-ghost" onclick="wizardNext('empty')">Start with an empty survey</button>
+        {% comment %}The draft button lives inside the AI panel (tinted zone);
+        the footer keeps only the way out of it.{% endcomment %}
+        <button type="button" class="btn btn-outline-secondary btn-block-row wizard-ghost" onclick="wizardNext('empty')">Skip and start from scratch</button>
         {% else %}
         <button type="button" class="btn btn-primary btn-block-row" onclick="wizardNext('empty')">Next — choose the place</button>
         {% endif %}
@@ -489,6 +594,108 @@
     })();
     </script>
 
+    {% if CREATE_STEER_AI and ai_available %}
+    <script>
+    // Empty-path intercept (openspec: steer-to-ai-generation). Capture-phase
+    // guard on the empty submit: with a written goal, the first empty click
+    // per page load shows the inline offer instead of submitting. The wizard's
+    // empty path routes through #empty-btn.click() too, so one guard covers
+    // both surfaces. Analytics: one event, outcome × surface, never the brief
+    // text itself.
+    (function() {
+        var goalEl = document.getElementById('{{ brief_form.goal.id_for_label }}');
+        var emptyBtn = document.getElementById('empty-btn');
+        var box = document.getElementById('ai-intercept');
+        if (!goalEl || !emptyBtn || !box) return;
+        var shown = false;
+
+        function surface() {
+            return (document.body.classList.contains('mobile-nav-enabled') &&
+                    window.matchMedia('(max-width: 1023.98px)').matches) ? 'wizard' : 'desktop';
+        }
+        function capture(outcome) {
+            if (window.posthog && posthog.capture) {
+                posthog.capture('ai_empty_intercept', { outcome: outcome, surface: surface() });
+            }
+        }
+
+        emptyBtn.addEventListener('click', function(e) {
+            if (shown || !goalEl.value.trim()) return;   // latched or blank goal: fall through
+            shown = true;
+            e.preventDefault();
+            e.stopPropagation();
+            box.hidden = false;
+            box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            capture('shown');
+        }, true);
+
+        document.getElementById('ai-intercept-accept').addEventListener('click', function() {
+            capture('accepted');
+            box.hidden = true;
+            if (surface() === 'wizard' && typeof window.wizardNext === 'function') {
+                window.wizardNext('draft');   // draft path keeps the map step
+            } else {
+                var g = document.getElementById('generate-btn');
+                if (g) g.click();
+            }
+        });
+
+        document.getElementById('ai-intercept-decline').addEventListener('click', function() {
+            capture('declined');
+            box.hidden = true;
+            emptyBtn.click();   // guard latched — proceeds as the original empty flow
+        });
+
+        // Example brief chips: a click fills the WHOLE brief (goal, audience,
+        // map target, use case) with the prewritten example and opens the
+        // details disclosure so nothing is filled invisibly. Clear resets it
+        // all. The creator edits from there.
+        var chips = document.getElementById('example-chips');
+        var clearChip = document.getElementById('example-clear');
+        var audienceEl = document.getElementById('{{ brief_form.audience.id_for_label }}');
+        var mapTargetEl = document.getElementById('{{ brief_form.map_target.id_for_label }}');
+        var moreEl = document.querySelector('.ai-more');
+        function setUseCase(value) {
+            var radios = document.querySelectorAll('#usecase-chips input');
+            radios.forEach(function(r) { r.checked = (r.value === value); });
+            var wrap = document.getElementById('usecase-chips');
+            if (wrap) wrap.dispatchEvent(new Event('change'));  // re-sync chip styling
+        }
+        function markActive(chip) {
+            chips.querySelectorAll('.example-chip').forEach(function(c) {
+                if (c !== clearChip) c.classList.toggle('chip-on', c === chip);
+            });
+            clearChip.hidden = !chip;
+        }
+        if (chips) chips.addEventListener('click', function(e) {
+            var chip = e.target.closest('.example-chip');
+            if (!chip) return;
+            if (chip === clearChip) {
+                goalEl.value = '';
+                if (audienceEl) audienceEl.value = '';
+                if (mapTargetEl) mapTargetEl.value = '';
+                setUseCase('urban_planning');   // the form's initial
+                if (moreEl) moreEl.open = false;
+                markActive(null);
+                goalEl.focus();
+                return;
+            }
+            goalEl.value = chip.getAttribute('data-goal');
+            if (audienceEl) audienceEl.value = chip.getAttribute('data-audience') || '';
+            if (mapTargetEl) mapTargetEl.value = chip.getAttribute('data-map-target') || '';
+            setUseCase(chip.getAttribute('data-use-case') || 'urban_planning');
+            if (moreEl) moreEl.open = true;
+            markActive(chip);
+            goalEl.focus();
+            if (window.posthog && posthog.capture) {
+                // Static label of our own copy — never creator text.
+                posthog.capture('ai_example_chip', { chip: chip.textContent.trim() });
+            }
+        });
+    })();
+    </script>
+    {% endif %}
+
     <style>
     /* Contain the collapsed map-search icon: .map-search relies on a positioned
        ancestor; without one the absolute icon anchored to the page card and
@@ -505,13 +712,25 @@
        merged two-column, wizard chrome hidden. */
     body.mobile-nav-enabled .create-legacy-fields { display: none; }
     body.mobile-nav-enabled .ai-panel-intro { display: none; }
-    body.mobile-nav-enabled .ai-panel { border-top: none; margin-top: 0; padding-top: 0; }
+    body.mobile-nav-enabled .ai-panel { margin-top: 0; }
+    /* The in-panel wizard draft button exists only below 1024px; the merged
+       desktop view uses #generate-btn (direct HTMX submit) instead. */
+    .wizard-draft-next { display: none; }
     body.mobile-nav-enabled .wizard-goal-footer,
     body.mobile-nav-enabled .wizard-map-topbar,
     body.mobile-nav-enabled .wizard-map-footer { display: none; }
+    /* Desktop merged view: same clear button-height gap between the draft and
+       empty paths as the wizard footer gets — adjacent primary/secondary reads
+       as one control block and invites mis-clicks. */
+    body.mobile-nav-enabled .create-actions-secondary { margin-top: 40px; }
 
     @media (max-width: 1023.98px) {
         body.mobile-nav-enabled .create-actions { display: none; }
+        /* Below 1024px the draft path goes through the map step: the in-panel
+           wizard button takes over and #generate-btn (direct HTMX submit)
+           stays for programmatic clicks only. */
+        body.mobile-nav-enabled .ai-panel #generate-btn { display: none; }
+        body.mobile-nav-enabled .wizard-draft-next { display: block; }
 
         /* No inner form scroll on mobile (owner review): the page scrolls as a
            whole; the desktop own-scroll column only makes sense beside a fixed
@@ -523,7 +742,11 @@
         body.mobile-nav-enabled .create-card[data-step="goal"] .wizard-goal-footer {
             display: flex; flex-direction: column; gap: 6px; margin-top: 0.9rem;
         }
-        body.mobile-nav-enabled .wizard-ghost { color: #6b7280; font-size: 0.85rem; text-decoration: none; }
+        /* One button-height of clear space above the empty path: on a phone
+           the two paths must not be thumb-adjacent — a mis-tap here either
+           costs the creator their brief or starts an unwanted generation.
+           A real outlined button (owner decision), not a text link. */
+        body.mobile-nav-enabled .wizard-ghost { font-size: 0.9rem; margin-top: 46px; min-height: 44px; width: 100%; }
 
         /* step: map — the pane owns the viewport */
         body.mobile-nav-enabled .create-card[data-step="map"] .create-left { display: none; }
@@ -652,6 +875,19 @@
                 var goal = document.getElementById('{{ brief_form.goal.id_for_label }}');
                 if (goal && !goal.value.trim()) { goal.focus(); goal.style.borderColor = '#dc2626'; return; }
             }
+            {% if CREATE_STEER_AI %}
+            {% comment %}The empty path skips the "Where?" step (openspec:
+            steer-to-ai-generation): the hidden map fields are live-synced from
+            page init, so the default framing is already valid. The click runs
+            through the intercept guard — with a written goal the offer shows
+            here on the goal step instead of submitting.{% endcomment %}
+            if (p === 'empty') {
+                ensureName();
+                var e = document.getElementById('empty-btn') || document.querySelector('button[value="empty"]');
+                if (e) e.click();
+                return;
+            }
+            {% endif %}
             // The Create button reminds which path was picked on step 1 (H6).
             var createBtn = document.getElementById('wizard-create-btn');
             if (createBtn) createBtn.textContent = p === 'draft' ? '✨ Create draft survey' : 'Create empty survey';
