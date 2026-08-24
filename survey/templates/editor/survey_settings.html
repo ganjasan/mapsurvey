@@ -26,7 +26,7 @@
         <form method="post" action="{% url 'editor_survey_settings' survey.uuid %}" enctype="multipart/form-data">
             {% csrf_token %}
             {% for field in form %}
-            {% if field.name != 'default_rating_display_style' %}
+            {% if field.name != 'default_rating_display_style' and field.name != 'use_accent_color' and field.name != 'accent_color' %}
             <div class="form-group">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {% if field.name == 'available_languages' %}
@@ -86,6 +86,26 @@
                     {% endfor %}
                 </div>
                 <small class="form-text text-muted">Default look for rating questions. Individual questions can override this in the question editor.</small>
+            </div>
+
+            <div class="form-group">
+                <div class="form-check">
+                    {{ form.use_accent_color }}
+                    <label class="form-check-label" for="id_use_accent_color">{{ form.use_accent_color.label }}</label>
+                </div>
+                <div id="accent-color-row" style="margin-top:0.4rem;max-width:120px;">
+                    {{ form.accent_color }}
+                </div>
+                <small class="form-text text-muted">Colors the survey's buttons and the form-page background tint. Off = platform default.</small>
+                {% for error in form.accent_color.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+                <script>
+                (function(){
+                    var cb = document.getElementById('id_use_accent_color');
+                    var row = document.getElementById('accent-color-row');
+                    function sync(){ if (cb && row) row.style.display = cb.checked ? '' : 'none'; }
+                    if (cb) { cb.addEventListener('change', sync); sync(); }
+                })();
+                </script>
             </div>
 
             <button type="submit" class="btn btn-primary btn-sm">Save Settings</button>

@@ -734,10 +734,12 @@ def _save_section_translations(request, section, survey):
         title = request.POST.get(f'translation_{lang}_title', '').strip()
         subheading = coerce_creator_html(
             request.POST.get(f'translation_{lang}_subheading', '')).strip()
-        if title or subheading:
+        next_label = request.POST.get(f'translation_{lang}_next_label', '').strip()[:30]
+        if title or subheading or next_label:
             SurveySectionTranslation.objects.update_or_create(
                 section=section, language=lang,
-                defaults={'title': title or None, 'subheading': subheading or None},
+                defaults={'title': title or None, 'subheading': subheading or None,
+                          'next_label': next_label or None},
             )
         else:
             SurveySectionTranslation.objects.filter(section=section, language=lang).delete()
@@ -823,7 +825,7 @@ def editor_question_create(request, survey_uuid, section_id):
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
     if request.method == 'POST':
-        form = QuestionForm(request.POST, request.FILES)
+        form = QuestionForm(request.POST, request.FILES, section=section)
         if form.is_valid():
             question = form.save(commit=False)
             question.survey_section = section
@@ -860,7 +862,7 @@ def editor_question_create(request, survey_uuid, section_id):
             'section': section,
         })
     else:
-        form = QuestionForm()
+        form = QuestionForm(section=section)
     return render(request, 'editor/partials/question_form_modal.html', {
         'form': form,
         'survey': survey,
@@ -878,7 +880,7 @@ def editor_question_edit(request, survey_uuid, question_id):
     is_subquestion = question.parent_question_id_id is not None
 
     if request.method == 'POST':
-        form = QuestionForm(request.POST, request.FILES, instance=question, is_subquestion=is_subquestion)
+        form = QuestionForm(request.POST, request.FILES, instance=question, is_subquestion=is_subquestion, section=question.survey_section)
         if form.is_valid():
             q = form.save(commit=False)
             choices_json = request.POST.get('choices_json', '').strip()
@@ -946,7 +948,7 @@ def editor_question_edit(request, survey_uuid, question_id):
             'question': question,
         })
     else:
-        form = QuestionForm(instance=question, is_subquestion=is_subquestion)
+        form = QuestionForm(instance=question, is_subquestion=is_subquestion, section=question.survey_section)
     return render(request, 'editor/partials/question_form_modal.html', {
         'form': form,
         'survey': survey,

@@ -80,8 +80,21 @@ locale.{% endcomment %}
      .required-summary i { opacity: .85; }
    </style>
 
+{% if survey %}{% with accent=survey.get_accent_color %}{% if accent %}
+{# get_accent_color returns only a validated #RRGGBB — nothing else can reach this block. #}
+<style>
+  #info_page .btn-primary { background-color: {{ accent }}; border-color: {{ accent }}; }
+  #info_page .btn-outline-primary { color: {{ accent }}; border-color: {{ accent }}; }
+  #info_page .btn-outline-primary:hover { background-color: {{ accent }}; color: #fff; }
+  .choice-dropdown .cd-option:hover,
+  .choice-dropdown .cd-option.cd-active { background: {{ accent }}1a; }
+  body.survey-form-layout { background: {{ accent }}12; }
+</style>
+{% endif %}{% endwith %}{% endif %}
 </head>
 
+{# Server-rendered so a direct form-section load never flashes the map; initSection() keeps it in step across HTMX swaps. #}
+<body{% if section.layout == 'form' %} class="survey-form-layout"{% endif %}>
 
 <button id="showButton" onclick="toggleInfo(true)" style="visibility: hidden;">
         <i class="fas fa-angle-double-right" style="font-size:28px; width:28px; height:28px;"></i>
@@ -922,6 +935,16 @@ locale.{% endcomment %}
         var dataEl = document.getElementById('section-data');
         if (!dataEl) return;
 
+        // 0. Layout mode: a "form" section hides the map entirely (CSS keyed on
+        // the body class). The map instance stays alive; when a map section
+        // returns, invalidateSize repairs the dimensions Leaflet measured while
+        // the container was display:none.
+        var isFormLayout = dataEl.dataset.layout === 'form';
+        document.body.classList.toggle('survey-form-layout', isFormLayout);
+        if (!isFormLayout && typeof map !== 'undefined') {
+            setTimeout(function () { map.invalidateSize(); }, 0);
+        }
+
         // 1. Clear map state from previous section
         editableLayers.clearLayers();
         if (currentDrawFeature) { currentDrawFeature.disable(); currentDrawFeature = null; }
@@ -944,8 +967,12 @@ locale.{% endcomment %}
         var basemap = dataEl.dataset.mapBasemap;
         if (basemap) { switchBasemap(basemap); }
 
-        // 4. Geolocation: survey-level on first load, per-section on subsequent
-        if (isFirstLoad && _initialMapState.useGeolocation) {
+        // 4. Geolocation: survey-level on first load, per-section on subsequent.
+        // Never on a form section — a welcome page must not open with a
+        // permission prompt for a map the respondent cannot see.
+        if (isFormLayout) {
+            // skip
+        } else if (isFirstLoad && _initialMapState.useGeolocation) {
             locateUser();
         } else if (!isFirstLoad && dataEl.dataset.useGeolocation === 'true') {
             locateUser();

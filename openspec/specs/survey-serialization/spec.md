@@ -352,3 +352,15 @@ Question objects in `survey.json` SHALL include the `display_style` key, and the
 - **WHEN** a survey with a `list_pips` rating question and a `list_pips` survey default is exported and re-imported
 - **THEN** the re-imported question keeps `display_style = "list_pips"` and the survey keeps `style_settings.rating_display_style = "list_pips"`
 
+### Requirement: Section layout serialization
+Section objects in `survey.json` SHALL include the `layout` key. Import SHALL accept
+archives without the key (or with an unrecognized value) by falling back to
+`layout = "map"`, preserving prior rendering behavior.
+
+#### Scenario: Layout round-trips
+- **WHEN** a survey whose head section has `layout = "form"` is exported and re-imported
+- **THEN** the imported head section has `layout = "form"`
+
+#### Scenario: Legacy archive defaults to map
+- **WHEN** a `survey.json` produced before this change (no `layout` key) is imported
+- **THEN** every imported section gets `layout = "map"`

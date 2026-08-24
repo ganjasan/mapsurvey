@@ -1,6 +1,8 @@
 from django import forms
+from django.core.validators import RegexValidator
 from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP_CHOICES
 from .html_sanitize import coerce_creator_html
+from .question_types import GEO_TYPES
 
 SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon')
 
@@ -90,6 +92,18 @@ class SurveyHeaderForm(forms.ModelForm):
         widget=forms.RadioSelect(),
         label='Rating questions',
     )
+    # Theming lives in style_settings, not on the model. The checkbox exists
+    # because <input type=color> cannot be empty — unchecked means "no custom
+    # accent", whatever the color input happens to hold.
+    use_accent_color = forms.BooleanField(
+        required=False, label='Custom accent color',
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'id': 'id_use_accent_color'}),
+    )
+    accent_color = forms.CharField(
+        required=False, label='Accent color',
+        validators=[RegexValidator(r'^#[0-9a-fA-F]{6}$', 'Use a hex color like #7a1f2b.')],
+        widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'color', 'id': 'id_accent_color'}),
+    )
 
     class Meta:
         model = SurveyHeader
@@ -118,8 +132,12 @@ class SurveyHeaderForm(forms.ModelForm):
         self.fields['default_basemap'].choices = list(BASEMAP_CHOICES)
         if self.instance and self.instance.pk:
             self.fields['default_rating_display_style'].initial = self.instance.get_default_rating_display_style()
+            accent = self.instance.get_accent_color()
+            self.fields['use_accent_color'].initial = bool(accent)
+            self.fields['accent_color'].initial = accent or '#2f5cff'
         else:
             self.fields['default_rating_display_style'].initial = 'scale_strip'
+            self.fields['accent_color'].initial = '#2f5cff'
 
     def clean_basemaps(self):
         VALID = {slug for slug, _ in BASEMAP_CHOICES}
@@ -145,6 +163,11 @@ class SurveyHeaderForm(forms.ModelForm):
         style = self.cleaned_data.get('default_rating_display_style') or 'scale_strip'
         settings = dict(obj.style_settings or {})
         settings['rating_display_style'] = style
+        accent = self.cleaned_data.get('accent_color')
+        if self.cleaned_data.get('use_accent_color') and accent:
+            settings['accent_color'] = accent
+        else:
+            settings.pop('accent_color', None)
         obj.style_settings = settings
         if commit:
             obj.save()
@@ -155,17 +178,51 @@ class SurveyHeaderForm(forms.ModelForm):
 class SurveySectionForm(forms.ModelForm):
     class Meta:
         model = SurveySection
-        fields = ['title', 'subheading', 'code']
+        fields = ['title', 'subheading', 'code', 'layout', 'next_label']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'subheading': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'code': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 8}),
+            'layout': forms.Select(attrs={'class': 'form-control', 'id': 'id_section_layout'}),
+            'next_label': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 30, 'placeholder': 'Next'}),
         }
+        labels = {
+            'layout': 'Layout',
+            'next_label': 'Button label',
+        }
+        help_texts = {
+            'layout': 'Map: questions beside the map. Form: a classic full-width form — no map, so geo questions are unavailable.',
+            'next_label': 'Label of this section\'s forward button, e.g. "Start" on a welcome section. Empty = Next / Finish.',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # A POST without the field (older open forms, tests) keeps the stored
+        # layout instead of failing validation or silently flipping to map.
+        self.fields['layout'].required = False
 
     def clean_subheading(self):
         # Rendered |safe on the section page — and was already, before it had an
         # editor, which is the hole this closes.
         return coerce_creator_html(self.cleaned_data.get('subheading'))
+
+    def clean_layout(self):
+        layout = self.cleaned_data.get('layout')
+        if not layout:
+            layout = self.instance.layout if self.instance.pk else 'map'
+        if layout == 'form' and self.instance.pk:
+            geo_questions = Question.objects.filter(
+                survey_section=self.instance, input_type__in=GEO_TYPES,
+            ).order_by('order_number')
+            if geo_questions.exists():
+                names = ', '.join(
+                    (q.name or q.code) for q in geo_questions
+                )
+                raise forms.ValidationError(
+                    f'A form section cannot hold map questions. '
+                    f'Move or delete first: {names}.'
+                )
+        return layout
 
 
 class QuestionForm(forms.ModelForm):
@@ -185,7 +242,7 @@ class QuestionForm(forms.ModelForm):
             'icon_class': '<a href="https://fontawesome.com/v5/search" target="_blank" rel="noopener">Font Awesome</a> class',
         }
 
-    def __init__(self, *args, is_subquestion=False, **kwargs):
+    def __init__(self, *args, is_subquestion=False, section=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['display_style'].required = False
         # A new question starts on a concrete type instead of the "---------"
@@ -193,6 +250,16 @@ class QuestionForm(forms.ModelForm):
         # selection to agree on from the first render.
         if not self.instance.pk:
             self.initial.setdefault('input_type', 'text')
+        if section is not None and section.layout == 'form':
+            # A form section has no map — filtering the field's choices both
+            # removes the geo group from the type picker (picker_groups_for
+            # builds groups from these choices) and rejects a geo input_type
+            # server-side as an invalid choice.
+            field = self.fields['input_type']
+            field.choices = [
+                (value, label) for value, label in field.choices
+                if value not in GEO_TYPES
+            ]
         if is_subquestion:
             field = self.fields['input_type']
             field.choices = [

@@ -87,3 +87,12 @@ def input_type_label(question):
     from survey.question_types import PICKER_TYPES
     meta = PICKER_TYPES.get(question.input_type) or {}
     return meta.get('label') or question.get_input_type_display()
+
+
+@register.filter
+def section_next_label(section, language=None):
+    """The creator's custom forward-button label for a section, translated.
+
+    Empty/None means "use the default Next/Finish" — the template decides which.
+    """
+    return section.get_translated_next_label(language) or ''
