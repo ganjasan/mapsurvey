@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('survey', '0052_fold_primary_language_translations'),
+        ('survey', '0056_escape_legacy_plain_text_subtext'),
     ]
 
     operations = [
