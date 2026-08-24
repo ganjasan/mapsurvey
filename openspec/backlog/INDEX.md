@@ -2,6 +2,7 @@
 
 | # | Type | Title | Priority | Area | Epic | Created |
 |---|------|-------|----------|------|------|---------|
+| 146 | improvement | [Reading the observations off the Responses map without GIS software](improvement-responses-map-read-observations.md) | high | frontend | survey-analytics | 2026-08-24 |
 | 125 | bug | [Http404 is reported to PostHog error tracking as if it were a defect](bug-http404-reported-as-error.md) | medium | infra | — | 2026-08-17 |
 | ~~123~~ | ~~bug~~ | ~~[Subtext is offered on every question type and rendered on four](bug-subtext-not-rendered-on-most-types.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-08-15~~ |
 | 103 | improvement | [One geo question already accepts many features, and nobody knows it](improvement-multi-geometry-discoverability.md) | **very high** | frontend | — | 2026-08-05 |
