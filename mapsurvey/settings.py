@@ -466,6 +466,10 @@ MOBILE_EDITOR_NAV = os.environ.get('MOBILE_EDITOR_NAV', 'True').lower() in ('tru
 # the one intentional desktop change of the refactor). Separate switch so desktop
 # autosave can be rolled back without touching the mobile navigation.
 EDITOR_AUTOSAVE = os.environ.get('EDITOR_AUTOSAVE', 'True').lower() in ('true', '1')
+# Reference overlay layers on the respondent map (openspec: reference-overlay-layers).
+# Off: editor UI and section checklist disappear, layer endpoints 404, respondent
+# pages get no layer metadata. Stored layers are untouched — the flag gates surfaces.
+MAP_REFERENCE_LAYERS = os.environ.get('MAP_REFERENCE_LAYERS', 'True').lower() in ('true', '1')
 # Steer creators toward the AI draft on the create page (openspec:
 # steer-to-ai-generation): single-field brief, empty-path intercept, wizard empty
 # path skipping the map step. One switch for the whole bet — False restores the

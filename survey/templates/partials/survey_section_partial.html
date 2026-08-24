@@ -7,6 +7,7 @@
      data-layout="{{ section.layout }}"
      data-use-geolocation="{{ section.use_geolocation|yesno:'true,false' }}"
      data-map-basemap="{{ section.override_basemap|default:'' }}"
+     data-hidden-layers="{{ hidden_layers_json|default:'[]' }}"
      data-session-id="{{ request.session.survey_session_id|default:'' }}"
      data-section-name="{{ section.name|escapejs }}"
      data-section-current="{{ section_current }}"

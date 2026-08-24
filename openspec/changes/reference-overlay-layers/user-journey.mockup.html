@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FD-1 Reference overlay layers — User Journey</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #f4f5f7; color: #212529; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: #6c757d; font-size: 14px; margin-bottom: 28px; }
+  h2 { font-size: 17px; margin: 42px 0 4px; padding-top: 18px; border-top: 2px solid #dee2e6; }
+  .persona { color: #6c757d; font-size: 13px; margin-bottom: 18px; }
+  .step { display: flex; gap: 22px; margin-bottom: 34px; align-items: flex-start; }
+  .step-txt { width: 330px; flex: none; }
+  .num { display: inline-flex; width: 26px; height: 26px; border-radius: 50%; background: #2c7be5; color: #fff; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin-right: 8px; }
+  .step-txt b { font-size: 14.5px; }
+  .step-txt p { font-size: 13.5px; color: #495057; margin: 8px 0 0; line-height: 1.5; }
+  .step-txt .где { margin-top: 8px; font-size: 12.5px; background: #fff8e6; border: 1px solid #ffe3a3; border-radius: 6px; padding: 7px 10px; }
+  .step-txt .где b { font-size: 12.5px; }
+  .shot { flex: 1; min-width: 0; }
+  .shot img { width: 100%; border: 1px solid #ced4da; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+  .shot.mobile img { max-width: 300px; }
+  .cap { font-size: 12px; color: #6c757d; margin-top: 6px; }
+  .real { background: #d4edda; color: #155724; border-radius: 4px; padding: 1px 7px; font-size: 11px; vertical-align: 2px; }
+  .mock { background: #e7e1ff; color: #4527a0; border-radius: 4px; padding: 1px 7px; font-size: 11px; vertical-align: 2px; }
+  @media (max-width: 900px) { .step { flex-direction: column; } .step-txt { width: auto; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>FD-1 · Reference overlay layers — User Journey</h1>
+  <div class="sub">Скриншоты — живой dev-стенд с импортированным Olney-опросом. <span class="real">РЕАЛЬНЫЙ UI</span> — существующий интерфейс без изменений; <span class="mock">НОВОЕ</span> — элементы фичи, вживлённые в реальную страницу.</div>
+
+  <h2>Journey A — Создатель (Kelsie, City Clerk, без ГИС-навыков)</h2>
+  <div class="persona">Цель: волонтёры должны видеть свои зоны подсчёта прямо на карте, а не на бумажке.</div>
+
+  <div class="step">
+    <div class="step-txt">
+      <span class="num">1</span><b>Открывает настройки опроса</b> <span class="real">РЕАЛЬНЫЙ UI</span>
+      <p>Страница Survey → «Survey settings» в левом рейле. Центр — карточки настроек (Basics, Languages, Respondent map…), справа Live Preview.</p>
+      <div class="где"><b>Где встаёт фича:</b> новая карточка «Reference layers» — сразу после карточки «Respondent map», в той же автосейв-форме. Никаких новых вкладок и страниц.</div>
+    </div>
+    <div class="shot"><img src="mockups/step2-settings-current.png" alt="Survey settings сегодня"><div class="cap">Сегодняшняя панель Survey settings — карточка слоёв встанет ниже «Respondent map».</div></div>
+  </div>
+
+  <div class="step">
+    <div class="step-txt">
+      <span class="num">2</span><b>Загружает GeoJSON и настраивает слой</b> <span class="mock">НОВОЕ</span>
+      <p>Перетаскивает <code>zones.geojson</code> в дроп-зону. Файл валидируется (WGS84, ≤10 MB), появляется карточка слоя: цвет (фолбэк — simplestyle из файла главнее), поле подписи, поле-ключ, тумблер инфо-попапов.</p>
+      <div class="где"><b>Поле-ключ</b> — задел под FD-14 («карта следует за ответом»): маппинг фич на коды choice-вопроса. В FD-1 UI-связки нет, только сохранение.</div>
+    </div>
+    <div class="shot"><img src="mockups/step3-settings-layers-card.png" alt="Карточка Reference layers"><div class="cap">Карточка «Reference layers», вживлённая в реальную панель настроек (после «Respondent map», перед «Cover image»). Автосейв «Changes save automatically» распространяется и на неё.</div></div>
+  </div>
+
+  <div class="step">
+    <div class="step-txt">
+      <span class="num">3</span><b>Выбирает слои для секции</b> <span class="mock">НОВОЕ</span>
+      <p>Открывает секцию в левом рейле. В форме секции — чек-лист «Reference layers» между «Layout» и «Button label»: какие из слоёв опроса видны на карте этой секции. По умолчанию все включены; здесь intro показывает обе подложки, а секция наблюдений — только зоны.</p>
+      <div class="где"><b>Аналог в коде:</b> тот же паттерн, что override basemap у секции — настройка уровня опроса, переопределяемая на секции. На form-секциях (без карты) блок не показывается.</div>
+    </div>
+    <div class="shot"><img src="mockups/step2b-section-layers.png" alt="Чек-лист слоёв в секции"><div class="cap">Реальная форма секции «Record your observations»: чек-лист слоёв с цветом и числом фич; «Study area boundary» здесь выключен.</div></div>
+  </div>
+
+  <h2>Journey B — Волонтёр (телефон/десктоп, без аккаунта)</h2>
+  <div class="persona">Цель: найти свою зону, пройти маршрут, отметить животных.</div>
+
+  <div class="step">
+    <div class="step-txt">
+      <span class="num">4</span><b>До фичи: пустая карта</b> <span class="real">РЕАЛЬНЫЙ UI</span>
+      <p>Сегодня волонтёр видит просто карту города. Где его зона — надо смотреть в бумажную карту рядом (пункт, из-за которого Olney получил письменный отказ).</p>
+    </div>
+    <div class="shot"><img src="mockups/step4-respondent-before.png" alt="До: карта без зон"><div class="cap">Секция 1/2 (intro): дропдаун зоны уже с поиском (choice-dropdown-display), но карта пуста.</div></div>
+  </div>
+
+  <div class="step">
+    <div class="step-txt">
+      <span class="num">5</span><b>С фичей: зоны на карте</b> <span class="mock">НОВОЕ</span>
+      <p>Оверлей «Counting zones» рендерится под ответами: заливка цветом слоя, подписи из поля «name». Тумблер слоя — стандартный Leaflet-контрол справа сверху (сегодня там же живёт переключатель basemap). Клики по зонам «прозрачны» — тап всегда ставит точку ответа, зону выбрать/сдвинуть нельзя.</p>
+    </div>
+    <div class="shot"><img src="mockups/step5-respondent-overlay.png" alt="Зоны на карте"><div class="cap">Intro-секция с оверлеем: 35 зон, подписи, контрол «Counting zones» с чекбоксом. Area 13 выделена — так будет выглядеть FD-14, в FD-1 все зоны ровные.</div></div>
+  </div>
+
+  <div class="step">
+    <div class="step-txt">
+      <span class="num">6</span><b>Считает в своей зоне</b> <span class="mock">НОВОЕ</span>
+      <p>Перешёл к секции наблюдений (HTMX-своп панели) — карта и оверлей <b>переживают навигацию</b> (persistent map). Маркеры наблюдений ложатся поверх подложки; зона всё время в поле зрения.</p>
+    </div>
+    <div class="shot"><img src="mockups/step6-respondent-observing.png" alt="Наблюдения в зоне"><div class="cap">Секция 2/2: кнопки видов слева (реальный multi-feature флоу), три отметки внутри Area 13 поверх оверлея.</div></div>
+  </div>
+
+  <div class="step">
+    <div class="step-txt">
+      <span class="num">7</span><b>Мобильный флоу не меняется</b> <span class="real">РЕАЛЬНЫЙ UI</span>
+      <p>На телефоне тот же легаси-флоу панель→crosshair (утверждённый владельцем): тап по виду скрывает панель и открывает карту — уже с оверлеем. Фича ничего не добавляет в панель, только слой на карте и тумблер в существующем контроле.</p>
+    </div>
+    <div class="shot mobile"><img src="mockups/step7-respondent-mobile.png" alt="Мобильная панель"><div class="cap">390×844: панель наблюдений; оверлей виден в просветах и на полной карте после тапа по виду.</div></div>
+  </div>
+
+  <h2>За кадром (в design.md)</h2>
+  <div class="persona" style="margin-bottom:8px">Решения, не видимые в UI:</div>
+  <ul style="font-size:13.5px;color:#495057;line-height:1.7">
+    <li>Отдача GeoJSON: отдельный GET-эндпоинт с кэшем/ETag, не инлайн в шаблон и не публичный S3-URL.</li>
+    <li>Пер-секционная видимость: чек-лист слоёв в настройках секции (аналог override basemap) — в панели секции, не в карточке опроса.</li>
+    <li>ZIP round-trip: <code>survey.json → layers[]</code> + файлы <code>layers/*.geojson</code>; чтение через <code>.open()/.read()</code> (S3-совместимо).</li>
+    <li>Кап 10 MB + валидация GeoJSON на входе; упрощение геометрии — вне MVP.</li>
+  </ul>
+</div>
+</body>
+</html>

@@ -30318,3 +30318,524 @@ class SectionNextLabelSerializationTest(TestCase):
         section = SurveySection.objects.get(survey_header=imported)
         self.assertEqual(section.next_label, 'Start')
         self.assertEqual(section.translations.get(language='de').next_label, 'Los')
+
+
+# =============================================================================
+# Reference overlay layers (openspec: reference-overlay-layers)
+# =============================================================================
+
+def _zones_geojson(count=3, projected=False):
+    """A small FeatureCollection shaped like a real zone file."""
+    features = []
+    for i in range(count):
+        lng = (2000000 + i) if projected else (-88.10 + i * 0.01)
+        lat = (5000000 + i) if projected else (38.72 + i * 0.01)
+        features.append({
+            "type": "Feature",
+            "properties": {"name": f"Area {i + 1}", "zone_id": i + 1},
+            "geometry": {"type": "Polygon", "coordinates": [[
+                [lng, lat], [lng + 0.004, lat], [lng + 0.004, lat + 0.004], [lng, lat + 0.004], [lng, lat],
+            ]]},
+        })
+    return json.dumps({"type": "FeatureCollection", "features": features})
+
+
+class LayerValidationTest(SimpleTestCase):
+    """validate_layer_upload — the single gate every stored layer passes."""
+
+    def test_valid_collection_is_accepted(self):
+        """
+        GIVEN a well-formed WGS84 FeatureCollection of three zones
+        WHEN it is validated
+        THEN it is accepted with the feature count and the union of property names
+        """
+        from .layers import validate_layer_upload
+        geojson, count, props = validate_layer_upload(_zones_geojson().encode())
+        self.assertEqual(count, 3)
+        self.assertEqual(props, ['name', 'zone_id'])
+        self.assertEqual(json.loads(geojson)['type'], 'FeatureCollection')
+
+    def test_projected_coordinates_are_rejected(self):
+        """
+        GIVEN a file whose coordinates are metres in a projected CRS
+        WHEN it is validated
+        THEN it is rejected with a message naming the coordinate system
+        """
+        from .layers import validate_layer_upload, LayerValidationError
+        with self.assertRaises(LayerValidationError) as ctx:
+            validate_layer_upload(_zones_geojson(projected=True).encode())
+        self.assertIn('coordinate system', str(ctx.exception))
+
+    def test_oversize_file_is_rejected(self):
+        """
+        GIVEN an upload larger than the 10 MB cap
+        WHEN it is validated
+        THEN it is rejected on size before any parsing
+        """
+        from .layers import validate_layer_upload, LayerValidationError, MAX_LAYER_BYTES
+        with self.assertRaises(LayerValidationError) as ctx:
+            validate_layer_upload(b'x' * (MAX_LAYER_BYTES + 1))
+        self.assertIn('larger than', str(ctx.exception))
+
+    def test_bare_geometry_is_normalized(self):
+        """
+        GIVEN a file holding a bare geometry instead of a FeatureCollection
+        WHEN it is validated
+        THEN it is normalized into a single-feature FeatureCollection
+        """
+        from .layers import validate_layer_upload
+        raw = json.dumps({"type": "Point", "coordinates": [13.4, 52.5]}).encode()
+        geojson, count, props = validate_layer_upload(raw)
+        self.assertEqual(count, 1)
+        self.assertEqual(json.loads(geojson)['type'], 'FeatureCollection')
+
+    def test_stored_value_is_a_reparse_not_the_raw_bytes(self):
+        """
+        GIVEN an upload carrying a BOM and sloppy whitespace
+        WHEN it is validated
+        THEN the stored text is the re-serialized parse, not the original bytes
+        """
+        from .layers import validate_layer_upload
+        raw = ('﻿' + '  ' + _zones_geojson(1)).encode('utf-8')
+        geojson, _, _ = validate_layer_upload(raw)
+        self.assertFalse(geojson.startswith('﻿'))
+        self.assertEqual(json.loads(geojson)['features'][0]['properties']['name'], 'Area 1')
+
+    def test_invalid_json_is_rejected(self):
+        """
+        GIVEN a file that is not JSON at all
+        WHEN it is validated
+        THEN it is rejected as not being a .geojson file
+        """
+        from .layers import validate_layer_upload, LayerValidationError
+        with self.assertRaises(LayerValidationError):
+            validate_layer_upload(b'<?xml version="1.0"?><kml/>')
+
+
+class LayerEndpointTest(TestCase):
+    """The gated GeoJSON endpoint."""
+
+    def setUp(self):
+        from .models import SurveyMapLayer
+        from .layers import validate_layer_upload
+        self.org = Organization.objects.create(name="Layer Endpoint Org")
+        self.survey = SurveyHeader.objects.create(
+            name="layer_endpoint_survey", organization=self.org, redirect_url="/thanks/",
+            status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        self.layer = SurveyMapLayer.objects.create(
+            survey=self.survey, name="Zones", geojson=geojson, feature_count=count,
+            size_bytes=len(geojson),
+        )
+        self.url = reverse('survey_layer_geojson', kwargs={
+            'survey_slug': str(self.survey.uuid), 'layer_id': self.layer.pk,
+        })
+
+    def test_published_survey_serves_the_layer(self):
+        """
+        GIVEN a published survey with a reference layer
+        WHEN an anonymous visitor fetches the layer URL
+        THEN the GeoJSON is returned with an ETag and private caching
+        """
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['features']), 3)
+        self.assertTrue(response['ETag'])
+        self.assertIn('private', response['Cache-Control'])
+
+    def test_draft_survey_layer_is_a_bare_404(self):
+        """
+        GIVEN the survey is still a draft
+        WHEN an anonymous visitor fetches the layer URL
+        THEN the response is 404, exactly as the survey's own pages are
+        """
+        self.survey.status = 'draft'
+        self.survey.save()
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+
+    def test_matching_etag_revalidates_without_a_body(self):
+        """
+        GIVEN a client that already holds the layer
+        WHEN it re-requests with the matching If-None-Match
+        THEN the endpoint answers 304 with no body
+        """
+        etag = self.client.get(self.url)['ETag']
+        response = self.client.get(self.url, HTTP_IF_NONE_MATCH=etag)
+        self.assertEqual(response.status_code, 304)
+        self.assertEqual(response.content, b'')
+
+    def test_layer_of_another_survey_is_not_reachable(self):
+        """
+        GIVEN a layer belonging to a different survey
+        WHEN it is requested under this survey's URL
+        THEN the response is 404
+        """
+        other = SurveyHeader.objects.create(
+            name="layer_other_survey", organization=self.org, redirect_url="/thanks/",
+            status='published',
+        )
+        url = reverse('survey_layer_geojson', kwargs={
+            'survey_slug': str(other.uuid), 'layer_id': self.layer.pk,
+        })
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    @override_settings(MAP_REFERENCE_LAYERS=False)
+    def test_kill_switch_closes_the_endpoint(self):
+        """
+        GIVEN the reference-layers kill switch is off
+        WHEN the layer URL is fetched
+        THEN the endpoint 404s while the layer row itself survives
+        """
+        from .models import SurveyMapLayer
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+        self.assertTrue(SurveyMapLayer.objects.filter(pk=self.layer.pk).exists())
+
+
+class LayerRespondentRenderingTest(TestCase):
+    """Layer metadata reaching the respondent shell."""
+
+    def setUp(self):
+        from .models import SurveyMapLayer
+        from .layers import validate_layer_upload
+        self.org = Organization.objects.create(name="Layer Render Org")
+        self.survey = SurveyHeader.objects.create(
+            name="layer_render_survey", organization=self.org, redirect_url="/thanks/",
+            status='published', available_languages=['en'],
+        )
+        self.head = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        Question.objects.create(
+            survey_section=self.head, code="LR001", name="Q", input_type="text", order_number=1,
+        )
+        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        self.layer = SurveyMapLayer.objects.create(
+            survey=self.survey, name="Zones", color="#e8971e", label_field="name",
+            geojson=geojson, feature_count=count, size_bytes=len(geojson),
+        )
+        self.url = reverse('section', kwargs={
+            'survey_slug': str(self.survey.uuid), 'section_name': self.head.name,
+        })
+
+    def test_layer_config_reaches_the_page_but_geometry_does_not(self):
+        """
+        GIVEN a survey with a reference layer
+        WHEN a respondent opens a map section
+        THEN the page carries the layer's config and endpoint URL, not its geometry
+        """
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('ref-layers-data', html)
+        self.assertIn('#e8971e', html)
+        self.assertIn('layers/%d.geojson' % self.layer.pk, html)
+        self.assertNotIn('"Area 1"', html)
+
+    def test_section_hidden_layers_reach_the_page(self):
+        """
+        GIVEN a section that hides the layer
+        WHEN a respondent opens it
+        THEN the section element carries that layer id in data-hidden-layers
+        """
+        self.head.hidden_layers = [self.layer.pk]
+        self.head.save()
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('data-hidden-layers="[%d]"' % self.layer.pk, html)
+
+    @override_settings(MAP_REFERENCE_LAYERS=False)
+    def test_kill_switch_removes_layer_metadata(self):
+        """
+        GIVEN the kill switch is off
+        WHEN a respondent opens a map section
+        THEN no layer config is emitted
+        """
+        html = self.client.get(self.url).content.decode()
+        self.assertNotIn('#e8971e', html)
+        self.assertNotIn('layers/%d.geojson' % self.layer.pk, html)
+
+
+class LayerEditorTest(TestCase):
+    """Editor endpoints and the per-section checklist."""
+
+    def setUp(self):
+        from .models import SurveyMapLayer
+        from .layers import validate_layer_upload
+        self.org = Organization.objects.create(name="Layer Editor Org")
+        self.owner = User.objects.create_user(username='layerowner', password='pw12345678')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="layer_editor_survey", organization=self.org, redirect_url="/thanks/",
+            created_by=self.owner,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        self.layer = SurveyMapLayer.objects.create(
+            survey=self.survey, name="Zones", geojson=geojson, feature_count=count,
+            size_bytes=len(geojson),
+        )
+        self.client.login(username='layerowner', password='pw12345678')
+
+    def _upload(self, content=None, name='zones.geojson'):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        payload = SimpleUploadedFile(
+            name, (content or _zones_geojson()).encode(), content_type='application/geo+json')
+        return self.client.post(
+            reverse('editor_survey_layer_create', args=[self.survey.uuid]), {'layer': payload})
+
+    def test_upload_creates_a_layer_and_returns_property_names(self):
+        """
+        GIVEN an owner uploading a valid GeoJSON
+        WHEN the create endpoint receives it
+        THEN a layer is stored and the response lists its property names
+        """
+        from .models import SurveyMapLayer
+        response = self._upload()
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertEqual(data['feature_count'], 3)
+        self.assertEqual(data['properties'], ['name', 'zone_id'])
+        self.assertEqual(SurveyMapLayer.objects.filter(survey=self.survey).count(), 2)
+
+    def test_invalid_upload_is_refused_with_a_readable_reason(self):
+        """
+        GIVEN an upload that is not GeoJSON
+        WHEN the create endpoint receives it
+        THEN it answers 400 with a creator-facing message and stores nothing
+        """
+        from .models import SurveyMapLayer
+        response = self._upload(content='not json at all')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('geojson', response.json()['error'].lower())
+        self.assertEqual(SurveyMapLayer.objects.filter(survey=self.survey).count(), 1)
+
+    def test_config_update_persists(self):
+        """
+        GIVEN an existing layer
+        WHEN its config is posted to the update endpoint
+        THEN name, color, label field and popup flag are stored
+        """
+        response = self.client.post(
+            reverse('editor_survey_layer_update', args=[self.survey.uuid, self.layer.pk]),
+            {'name': 'Counting zones', 'color': '#e8971e', 'label_field': 'name', 'show_popups': '1'},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.layer.refresh_from_db()
+        self.assertEqual(self.layer.name, 'Counting zones')
+        self.assertEqual(self.layer.color, '#e8971e')
+        self.assertEqual(self.layer.label_field, 'name')
+        self.assertTrue(self.layer.show_popups)
+
+    def test_unknown_label_field_is_refused(self):
+        """
+        GIVEN a label field that is not a property of the uploaded file
+        WHEN it is saved
+        THEN the endpoint refuses it instead of silently rendering no labels
+        """
+        response = self.client.post(
+            reverse('editor_survey_layer_update', args=[self.survey.uuid, self.layer.pk]),
+            {'label_field': 'nonexistent'},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.layer.refresh_from_db()
+        self.assertEqual(self.layer.label_field, '')
+
+    def test_invalid_color_is_refused(self):
+        """
+        GIVEN a color that is not #RRGGBB
+        WHEN it is saved
+        THEN the endpoint refuses it and the stored color is unchanged
+        """
+        response = self.client.post(
+            reverse('editor_survey_layer_update', args=[self.survey.uuid, self.layer.pk]),
+            {'color': 'red'},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.layer.refresh_from_db()
+        self.assertEqual(self.layer.color, '#2c7be5')
+
+    def test_delete_removes_the_layer(self):
+        """
+        GIVEN an existing layer
+        WHEN the delete endpoint is called
+        THEN the layer is gone
+        """
+        from .models import SurveyMapLayer
+        response = self.client.post(
+            reverse('editor_survey_layer_delete', args=[self.survey.uuid, self.layer.pk]))
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(SurveyMapLayer.objects.filter(pk=self.layer.pk).exists())
+
+    def test_non_owner_cannot_manage_layers(self):
+        """
+        GIVEN a user who is not an owner of the survey
+        WHEN they post to a layer endpoint
+        THEN the request is refused and nothing is created
+        """
+        from .models import SurveyMapLayer
+        User.objects.create_user(username='stranger', password='pw12345678')
+        self.client.logout()
+        self.client.login(username='stranger', password='pw12345678')
+        response = self._upload()
+        self.assertNotIn(response.status_code, (200, 201))
+        self.assertEqual(SurveyMapLayer.objects.filter(survey=self.survey).count(), 1)
+
+    def test_section_save_stores_hidden_layers_and_drops_unknown_ids(self):
+        """
+        GIVEN a section form posting visible layers plus a foreign layer id
+        WHEN the section is saved
+        THEN hidden_layers holds only this survey's unchecked layers
+        """
+        response = self.client.post(
+            reverse('editor_section_detail', args=[self.survey.uuid, self.section.id]),
+            {
+                'title': 'S1', 'subheading': '', 'code': 'S1', 'layout': 'map', 'next_label': '',
+                'reference_layers_submitted': '1', 'visible_layers': ['999999'],
+            },
+        )
+        self.assertIn(response.status_code, (200, 204, 302))
+        self.section.refresh_from_db()
+        self.assertEqual(self.section.hidden_layers, [self.layer.pk])
+
+    def test_section_form_without_the_checklist_keeps_stored_visibility(self):
+        """
+        GIVEN a section POST that carries no reference-layer checklist
+        WHEN the section is saved
+        THEN the stored hidden_layers are left alone rather than cleared
+        """
+        self.section.hidden_layers = [self.layer.pk]
+        self.section.save()
+        self.client.post(
+            reverse('editor_section_detail', args=[self.survey.uuid, self.section.id]),
+            {'title': 'S1', 'subheading': '', 'code': 'S1', 'layout': 'map', 'next_label': ''},
+        )
+        self.section.refresh_from_db()
+        self.assertEqual(self.section.hidden_layers, [self.layer.pk])
+
+    @override_settings(MAP_REFERENCE_LAYERS=False)
+    def test_kill_switch_closes_editor_endpoints(self):
+        """
+        GIVEN the kill switch is off
+        WHEN an owner posts to the create endpoint
+        THEN it 404s
+        """
+        self.assertEqual(self._upload().status_code, 404)
+
+
+class LayerSerializationTest(TestCase):
+    """Layers through export → import."""
+
+    def setUp(self):
+        from .models import SurveyMapLayer
+        from .layers import validate_layer_upload
+        self.org = Organization.objects.create(name="Layer Ser Org")
+        self.survey = SurveyHeader.objects.create(
+            name="layer_ser_survey", organization=self.org, redirect_url="/thanks/",
+        )
+        self.first = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        Question.objects.create(
+            survey_section=self.first, code="LS001", name="Q", input_type="text", order_number=1,
+        )
+        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        self.layer = SurveyMapLayer.objects.create(
+            survey=self.survey, name="Counting zones", color="#e8971e", label_field="name",
+            key_field="zone_id", show_popups=True, geojson=geojson, feature_count=count,
+            size_bytes=len(geojson), position=0,
+        )
+        self.first.hidden_layers = [self.layer.pk]
+        self.first.save()
+
+    def _export(self):
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, 'structure')
+        buf.seek(0)
+        return buf
+
+    def test_layers_round_trip_with_section_visibility(self):
+        """
+        GIVEN a survey whose section hides its configured layer
+        WHEN it is exported and re-imported
+        THEN the layer arrives with its config and the section still hides it by the new id
+        """
+        buf = self._export()
+        self.survey.name = 'layer_ser_survey_old'
+        self.survey.save()
+        imported, warnings = import_survey_from_zip(buf)
+        layer = imported.map_layers.get()
+        self.assertEqual(
+            (layer.name, layer.color, layer.label_field, layer.key_field, layer.show_popups, layer.feature_count),
+            ('Counting zones', '#e8971e', 'name', 'zone_id', True, 3),
+        )
+        section = SurveySection.objects.get(survey_header=imported, name='s1')
+        self.assertEqual(section.hidden_layers, [layer.pk])
+        self.assertEqual(warnings, [])
+
+    def test_archive_carries_geometry_as_its_own_entry(self):
+        """
+        GIVEN a survey with a reference layer
+        WHEN it is exported
+        THEN geometry lives in layers/0.geojson and survey.json holds only config
+        """
+        buf = self._export()
+        with zipfile.ZipFile(buf) as zf:
+            self.assertIn('layers/0.geojson', zf.namelist())
+            data = json.loads(zf.read('survey.json'))
+            self.assertEqual(data['survey']['layers'][0]['name'], 'Counting zones')
+            self.assertNotIn('geojson', data['survey']['layers'][0])
+            self.assertEqual(data['survey']['sections'][0]['hidden_layers'], [0])
+
+    def test_legacy_archive_without_layers_imports_cleanly(self):
+        """
+        GIVEN an archive produced before this change
+        WHEN it is imported
+        THEN the survey arrives with no layers and no layer warnings
+        """
+        buf = self._export()
+        out = BytesIO()
+        with zipfile.ZipFile(buf) as src, zipfile.ZipFile(out, 'w') as dst:
+            for item in src.namelist():
+                if item.startswith('layers/'):
+                    continue
+                if item == 'survey.json':
+                    data = json.loads(src.read(item))
+                    data['survey'].pop('layers', None)
+                    for section in data['survey']['sections']:
+                        section.pop('hidden_layers', None)
+                    data['survey']['name'] = 'legacy_layer_survey'
+                    dst.writestr(item, json.dumps(data))
+                else:
+                    dst.writestr(item, src.read(item))
+        out.seek(0)
+        imported, warnings = import_survey_from_zip(out)
+        self.assertEqual(imported.map_layers.count(), 0)
+        self.assertEqual([w for w in warnings if 'layer' in w.lower()], [])
+
+    def test_missing_layer_entry_degrades_to_a_warning(self):
+        """
+        GIVEN an archive listing a layer whose geojson entry is missing
+        WHEN it is imported
+        THEN the survey imports without that layer and a warning names it
+        """
+        buf = self._export()
+        out = BytesIO()
+        with zipfile.ZipFile(buf) as src, zipfile.ZipFile(out, 'w') as dst:
+            for item in src.namelist():
+                if item == 'layers/0.geojson':
+                    continue
+                if item == 'survey.json':
+                    data = json.loads(src.read(item))
+                    data['survey']['name'] = 'broken_layer_survey'
+                    dst.writestr(item, json.dumps(data))
+                else:
+                    dst.writestr(item, src.read(item))
+        out.seek(0)
+        imported, warnings = import_survey_from_zip(out)
+        self.assertEqual(imported.map_layers.count(), 0)
+        self.assertTrue(any('Counting zones' in w for w in warnings))
+        section = SurveySection.objects.get(survey_header=imported, name='s1')
+        self.assertEqual(section.hidden_layers, [])

@@ -109,6 +109,82 @@
         <span id="survey-map-saved" style="display:none;color:#10b981;font-size:0.85rem;margin-left:0.5rem;">Saved!</span>
       </div>
 
+      {% if layers_enabled %}
+      {% comment %}
+      Reference layers card. Its controls carry no name= on purpose: they sit
+      inside the autosaving settings form but save through their own endpoints,
+      so a nameless input keeps the file and the per-layer config out of every
+      autosave POST without nesting a second <form>.
+      {% endcomment %}
+      <div class="pr-card" id="ref-layers-card"
+           data-create-url="{% url 'editor_survey_layer_create' survey.uuid %}"
+           data-update-url="{% url 'editor_survey_layer_update' survey.uuid 0 %}"
+           data-delete-url="{% url 'editor_survey_layer_delete' survey.uuid 0 %}">
+        <h6>Reference layers</h6>
+        <div class="pr-help" style="margin-top:0;margin-bottom:.75rem;">
+          Non-editable layers respondents see under the map: counting zones, boundaries, routes.
+          Sections can hide each layer individually.
+        </div>
+
+        <div id="ref-layers-list">
+          {% for item in map_layers %}
+          <div class="ref-layer" data-layer-id="{{ item.layer.pk }}">
+            <div class="ref-layer-head">
+              <span class="ref-layer-swatch" style="background:{{ item.layer.color }}"></span>
+              <b class="ref-layer-name">{{ item.layer.name }}</b>
+              <span class="pr-help ref-layer-meta">{{ item.layer.feature_count }} features · {{ item.layer.size_bytes|filesizeformat }}</span>
+              <button type="button" class="ref-layer-toggle" title="Edit"><i class="fas fa-pen"></i></button>
+              <button type="button" class="ref-layer-delete" title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="ref-layer-body" hidden>
+              <div class="pr-field">
+                <label>Name</label>
+                <input type="text" data-field="name" value="{{ item.layer.name }}" maxlength="100">
+              </div>
+              <div class="pr-field">
+                <label>Color</label>
+                <input type="color" data-field="color" value="{{ item.layer.color }}">
+                <div class="pr-help">Fallback — style properties inside the file win.</div>
+              </div>
+              <div class="pr-field">
+                <label>Label field</label>
+                <select data-field="label_field">
+                  <option value="">— none —</option>
+                  {% for prop in item.properties %}
+                  <option value="{{ prop }}" {% if prop == item.layer.label_field %}selected{% endif %}>{{ prop }}</option>
+                  {% endfor %}
+                </select>
+                <div class="pr-help">Feature property shown as a map label.</div>
+              </div>
+              <div class="pr-field">
+                <label>Key field</label>
+                <select data-field="key_field">
+                  <option value="">— none —</option>
+                  {% for prop in item.properties %}
+                  <option value="{{ prop }}" {% if prop == item.layer.key_field %}selected{% endif %}>{{ prop }}</option>
+                  {% endfor %}
+                </select>
+                <div class="pr-help">Makes features addressable — reserved for answer-driven map context.</div>
+              </div>
+              <label class="pr-switch">
+                <span>Info popups <small class="pr-help">tap a feature to see its name and description</small></span>
+                <input type="checkbox" data-field="show_popups" {% if item.layer.show_popups %}checked{% endif %}>
+              </label>
+              <div class="ref-layer-status pr-help"></div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <label class="ref-layers-drop" id="ref-layers-drop">
+          <i class="fas fa-upload"></i> Drop a <b>.geojson</b> here or <span class="ref-layers-choose">choose a file</span>
+          <div class="pr-help">GeoJSON (WGS84), up to 10 MB, max 5 layers per survey.</div>
+          <input type="file" accept=".geojson,.json,application/geo+json,application/json" hidden id="ref-layers-file">
+        </label>
+        <div class="ref-layers-error text-danger" id="ref-layers-error" style="font-size:.8rem;margin-top:.4rem;"></div>
+      </div>
+      {% endif %}
+
       <div class="pr-card">
         <h6>Cover image</h6>
         <div class="pr-field">
@@ -250,6 +326,9 @@
 
     form.querySelectorAll('input, select, textarea').forEach(function(field){
         if (field.name === 'csrfmiddlewaretoken') return;
+        // Reference-layer controls live inside this form for layout only; they
+        // save through their own endpoints and must not trigger a settings POST.
+        if (field.closest('#ref-layers-card')) return;
         var tag = field.tagName, t = field.type;
         if (tag === 'SELECT' || t === 'checkbox' || t === 'radio' || t === 'file') { field.addEventListener('change', save); }
         else { field.addEventListener('input', dsave); field.addEventListener('change', save); }
@@ -259,3 +338,97 @@
     document.querySelectorAll('.basemap-cb').forEach(function(cb){ cb.addEventListener('change', save); });
 })();
 </script>
+
+{% if layers_enabled %}
+<style>
+  #ref-layers-card .ref-layer { border:1px solid var(--border-color); border-radius:8px; margin-bottom:.6rem; }
+  #ref-layers-card .ref-layer-head { display:flex; align-items:center; gap:.6rem; padding:.55rem .7rem; }
+  #ref-layers-card .ref-layer-swatch { width:14px; height:14px; border-radius:4px; flex:none; }
+  #ref-layers-card .ref-layer-name { font-size:.85rem; }
+  #ref-layers-card .ref-layer-meta { margin:0 0 0 auto; }
+  #ref-layers-card .ref-layer-head button { border:none; background:none; color:#9ca3af; cursor:pointer; font-size:.78rem; padding:.15rem .3rem; }
+  #ref-layers-card .ref-layer-head button:hover { color:#4b5563; }
+  #ref-layers-card .ref-layer-body { border-top:1px solid var(--border-color); padding:.65rem .7rem; }
+  #ref-layers-card .ref-layer-body .pr-field { margin-bottom:.55rem; }
+  #ref-layers-card .ref-layer-body input[type=text], #ref-layers-card .ref-layer-body select { width:100%; }
+  #ref-layers-card .ref-layers-drop { display:block; border:2px dashed var(--border-color); border-radius:8px;
+      padding:.9rem; text-align:center; font-size:.82rem; color:#6b7280; cursor:pointer; margin:0; }
+  #ref-layers-card .ref-layers-drop.dragover { border-color:#4f46e5; background:#eef2ff; }
+  #ref-layers-card .ref-layers-choose { color:#4f46e5; font-weight:600; }
+</style>
+<script>
+(function() {
+    var card = document.getElementById('ref-layers-card');
+    if (!card || card.dataset.bound) return;
+    card.dataset.bound = '1';
+
+    var csrf = document.querySelector('#surveySettingsGeneralForm [name=csrfmiddlewaretoken]').value;
+    var list = document.getElementById('ref-layers-list');
+    var drop = document.getElementById('ref-layers-drop');
+    var fileInput = document.getElementById('ref-layers-file');
+    var errorBox = document.getElementById('ref-layers-error');
+
+    function post(url, body) {
+        return fetch(url, {method:'POST', headers:{'X-CSRFToken': csrf}, body: body})
+            .then(function(r) {
+                if (r.status === 204) return null;
+                return r.json().then(function(d) { if (!r.ok) throw new Error(d.error || 'Request failed'); return d; });
+            });
+    }
+    function urlFor(kind, id) {
+        // The reversed URLs carry a 0 placeholder for the layer id.
+        return card.dataset[kind + 'Url'].replace(/\/0\//, '/' + id + '/');
+    }
+
+    function bindLayer(el) {
+        var id = el.dataset.layerId;
+        el.querySelector('.ref-layer-toggle').addEventListener('click', function() {
+            var body = el.querySelector('.ref-layer-body');
+            body.hidden = !body.hidden;
+        });
+        el.querySelector('.ref-layer-delete').addEventListener('click', function() {
+            post(urlFor('delete', id)).then(function() { el.remove(); })
+                .catch(function(e) { errorBox.textContent = e.message; });
+        });
+        var status = el.querySelector('.ref-layer-status');
+        el.querySelectorAll('[data-field]').forEach(function(field) {
+            var handler = function() {
+                var fd = new FormData();
+                var value = field.type === 'checkbox' ? (field.checked ? '1' : '0') : field.value;
+                fd.append(field.dataset.field, value);
+                status.textContent = 'Saving…';
+                post(urlFor('update', id), fd).then(function(data) {
+                    status.textContent = 'Saved';
+                    el.querySelector('.ref-layer-swatch').style.background = data.color;
+                    el.querySelector('.ref-layer-name').textContent = data.name;
+                }).catch(function(e) { status.textContent = e.message; });
+            };
+            field.addEventListener('change', handler);
+        });
+    }
+    list.querySelectorAll('.ref-layer').forEach(bindLayer);
+
+    function upload(file) {
+        errorBox.textContent = '';
+        var fd = new FormData();
+        fd.append('layer', file);
+        post(card.dataset.createUrl, fd).then(function() {
+            // Re-render through the panel itself so the new card is identical to
+            // a server-rendered one (field pickers included).
+            if (window.htmx) { htmx.trigger(document.body, 'refreshSettingsPanel'); }
+            location.reload();
+        }).catch(function(e) { errorBox.textContent = e.message; });
+    }
+    fileInput.addEventListener('change', function() { if (fileInput.files[0]) upload(fileInput.files[0]); });
+    ['dragenter','dragover'].forEach(function(evt) {
+        drop.addEventListener(evt, function(e) { e.preventDefault(); drop.classList.add('dragover'); });
+    });
+    ['dragleave','drop'].forEach(function(evt) {
+        drop.addEventListener(evt, function(e) { e.preventDefault(); drop.classList.remove('dragover'); });
+    });
+    drop.addEventListener('drop', function(e) {
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) upload(e.dataTransfer.files[0]);
+    });
+})();
+</script>
+{% endif %}
