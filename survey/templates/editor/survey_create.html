@@ -216,8 +216,10 @@
                     hx-disabled-elt="#generate-btn, #empty-btn">
               <i class="fas fa-wand-magic-sparkles"></i> Generate draft
             </button>
+            {# `empty_skip`, not `empty`: this button skips the map picker too, so the #}
+            {# survey opens on the model default instead of wherever the picker drifted. #}
             <div class="create-actions-secondary">
-              <button type="submit" name="action" value="empty" id="empty-btn" class="btn btn-outline-secondary">Create empty</button>
+              <button type="submit" name="action" value="empty_skip" id="empty-btn" class="btn btn-outline-secondary">Skip and Create Empty Survey</button>
               <a href="{% url 'editor' %}?dashboard=1" class="btn btn-outline-secondary">Cancel</a>
             </div>
             {% else %}
@@ -438,6 +440,53 @@
         sync();
     })();
     </script>
+
+    {% if ai_available %}
+    <script>
+    // Skipping throws the brief away, so a creator who typed one gets asked first.
+    // The use-case chip is deliberately NOT part of the test: it ships preselected,
+    // so counting it would prompt everyone who never opened the panel.
+    (function() {
+        var btn = document.getElementById('empty-btn');
+        var form = document.getElementById('create-form');
+        if (!btn || !form) return;
+
+        function briefIsFilled() {
+            return ['id_goal', 'id_audience', 'id_map_target'].some(function(id) {
+                var el = document.getElementById(id);
+                return !!(el && el.value.trim());
+            });
+        }
+
+        btn.addEventListener('click', function(evt) {
+            if (!briefIsFilled()) return;              // nothing to lose — submit as usual
+            evt.preventDefault();
+            // Run the browser's own validation first, so a missing survey name is
+            // reported the way it always is instead of behind a confirmation.
+            if (form.reportValidity && !form.reportValidity()) return;
+            Dialog.confirm(
+                "Your AI brief won't be used and the map you framed won't be saved — " +
+                "you'll start from an empty survey and can set both later.",
+                { title: 'Create an empty survey?', okLabel: 'Create empty survey' }
+            ).then(function(ok) {
+                if (!ok) return;
+                // requestSubmit(btn) keeps the button's name/value in the POST;
+                // plain submit() would drop `action=empty_skip`.
+                if (form.requestSubmit) {
+                    form.requestSubmit(btn);
+                } else {
+                    var hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = btn.name;
+                    hidden.value = btn.value;
+                    form.appendChild(hidden);
+                    form.submit();
+                }
+            });
+        });
+    })();
+    </script>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

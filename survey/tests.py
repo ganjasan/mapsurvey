@@ -25408,6 +25408,96 @@ class AISurveyCreateViewTest(TestCase):
         self.assertFalse(AIGenerationEvent.objects.exists())
 
 
+class SkipAndCreateEmptySurveyTest(TestCase):
+    """"Skip and Create Empty Survey" skips the map picker, not only the AI draft."""
+
+    MAP_POST = {
+        'map_lat': '48.8566', 'map_lng': '2.3522', 'map_zoom': '14',
+        'default_basemap': 'satellite',
+    }
+
+    def setUp(self):
+        self.org = _make_org('SkipCreateOrg')
+        self.user = User.objects.create_user('skipcreateuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='skipcreateuser', password='pass')
+
+    def test_skip_ignores_the_framed_map(self):
+        """
+        GIVEN the picker posted a centre, a zoom and a base map, as it always does
+        WHEN the skip action is submitted
+        THEN the survey keeps the model defaults for all three -- the creator never
+             chose that frame, so it must not become their survey's start position
+        """
+        payload = {'name': 'skipped', 'available_languages': '["en"]',
+                   'action': 'empty_skip'}
+        payload.update(self.MAP_POST)
+
+        response = self.client.post(reverse('editor_survey_create'), payload)
+
+        survey = SurveyHeader.objects.get(name='skipped')
+        self.assertIsNone(survey.start_map_postion)
+        self.assertIsNone(survey.start_map_zoom)
+        self.assertIsNone(survey.default_basemap)
+        self.assertRedirects(
+            response, reverse('editor_survey_detail', kwargs={'survey_uuid': survey.uuid}),
+        )
+        self.assertEqual(
+            SurveySection.objects.filter(survey_header=survey, is_head=True).count(), 1,
+        )
+
+    def test_plain_empty_action_still_applies_the_map(self):
+        """
+        GIVEN the same POST under the pre-existing action
+        WHEN it is submitted
+        THEN the map is stored exactly as before -- `action=empty` is the button
+             rendered without the AI panel, where the picker is the only reason
+             the page has a map at all
+        """
+        payload = {'name': 'framed', 'available_languages': '["en"]', 'action': 'empty'}
+        payload.update(self.MAP_POST)
+
+        self.client.post(reverse('editor_survey_create'), payload)
+
+        survey = SurveyHeader.objects.get(name='framed')
+        self.assertAlmostEqual(survey.start_map_postion.y, 48.8566, places=4)
+        self.assertAlmostEqual(survey.start_map_postion.x, 2.3522, places=4)
+        self.assertEqual(survey.start_map_zoom, 14)
+        self.assertEqual(survey.default_basemap, 'satellite')
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_ai_panel_renders_the_skip_button(self):
+        """
+        GIVEN a configured provider
+        WHEN the create page is rendered
+        THEN the manual button is labelled as a skip and posts `empty_skip`,
+             because only the markup can prove which action the click sends
+        """
+        html = self.client.get(reverse('editor_survey_create')).content.decode()
+
+        button = re.search(r'<button[^>]*id="empty-btn"[^>]*>[^<]*', html)
+        self.assertIsNotNone(button, 'the manual button is not rendered')
+        self.assertIn('value="empty_skip"', button.group(0))
+        self.assertIn('Skip and Create Empty Survey', button.group(0))
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='', GEMINI_API_KEY='')
+    def test_without_the_ai_panel_the_button_keeps_the_map(self):
+        """
+        GIVEN no provider credentials, so there is no AI draft to skip
+        WHEN the create page is rendered
+        THEN the single button still posts `action=empty`, the action that applies
+             the map -- otherwise the picker on that page would do nothing
+        """
+        html = self.client.get(reverse('editor_survey_create')).content.decode()
+
+        buttons = re.findall(r'<button[^>]*name="action"[^>]*>', html)
+        self.assertEqual(len(buttons), 1, 'expected exactly one manual submit')
+        self.assertIn('value="empty"', buttons[0])
+        # And the confirmation script is not shipped to a page that has no brief
+        # to confirm away.
+        self.assertNotIn('empty-btn', html)
+
+
 class AIGenerationStatusViewTest(TestCase):
     """The polled status endpoint."""
 

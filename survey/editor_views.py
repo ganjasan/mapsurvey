@@ -192,8 +192,17 @@ def editor_survey_create(request):
     brief_form = SurveyBriefForm()
     if request.method == 'POST':
         form = SurveyCreateForm(request.POST)
-        if request.POST.get('action') == 'generate':
+        action = request.POST.get('action')
+        if action == 'generate':
             return _start_survey_generation(request, form)
+        # "Skip and Create Empty Survey" skips the whole wizard, not only the AI
+        # draft: the picker syncs a centre on every `moveend`, so a creator who
+        # never framed anything would otherwise be handed whatever it happened
+        # to be showing as their survey's start position. `action=empty` (the
+        # button rendered without the AI panel, plus legacy and action-less
+        # POSTs) keeps applying the map -- there the picker is the only reason
+        # the page has a right-hand column.
+        skips_map = action == 'empty_skip'
         if form.is_valid():
             survey = form.save(commit=False)
             survey.organization = request.active_org
@@ -202,15 +211,15 @@ def editor_survey_create(request):
             map_lat = request.POST.get('map_lat')
             map_lng = request.POST.get('map_lng')
             map_zoom = request.POST.get('map_zoom')
-            if map_lat and map_lng:
+            if not skips_map and map_lat and map_lng:
                 survey.start_map_postion = Point(float(map_lng), float(map_lat))
-            if map_zoom:
+            if not skips_map and map_zoom:
                 survey.start_map_zoom = int(map_zoom)
             survey.use_geolocation = request.POST.get('use_geolocation') == '1'
             # Default base map (all basemaps stay enabled via the model default)
             valid_basemaps = {slug for slug, _ in BASEMAP_CHOICES}
             chosen_basemap = request.POST.get('default_basemap')
-            if chosen_basemap in valid_basemaps:
+            if not skips_map and chosen_basemap in valid_basemaps:
                 survey.default_basemap = chosen_basemap
             survey.save()
             # `creation_method` is what makes the AI generator measurable: every
