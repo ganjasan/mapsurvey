@@ -56,4 +56,4 @@
 - [x] 6.1 Full `./run_tests.sh survey`; template guard; check migration leaf vs master.
 - [x] 6.2 Set up the Olney demo survey with the real 35-zone layer on the dev stand;
       manual desktop + mobile pass of the volunteer journey.
-- [ ] 6.3 PR referencing this change; deploy behind flag (default on).
+- [x] 6.3 PR referencing this change; deploy behind flag (default on).
