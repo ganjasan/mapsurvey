@@ -23,7 +23,10 @@
     var defaultLayer = window._basemapLayers[_defaultSlug] || window._basemapLayers[_enabled[0]];
     if (defaultLayer) defaultLayer.addTo(map);
 
+    // Shared with reference_layers.html: overlays join the same control, and
+    // the control exists when there is anything to switch (bases OR overlays).
+    window._layersControl = null;
     if (Object.keys(_baseMaps).length > 1) {
-        L.control.layers(_baseMaps, null, { position: 'topright', collapsed: true }).addTo(map);
+        window._layersControl = L.control.layers(_baseMaps, null, { position: 'topright', collapsed: true }).addTo(map);
     }
 })();

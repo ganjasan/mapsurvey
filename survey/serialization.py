@@ -20,7 +20,7 @@ from .models import (
     Organization, SurveyHeader, SurveySection, Question,
     SurveySession, Answer,
     INPUT_TYPE_CHOICES, SurveySectionTranslation,
-    QuestionTranslation, default_basemaps,
+    QuestionTranslation, default_basemaps, SurveyMapLayer,
 )
 from .html_sanitize import coerce_creator_html
 from .question_types import CHOICE_TYPES
@@ -67,14 +67,46 @@ def serialize_survey_to_dict(survey: SurveyHeader) -> Dict[str, Any]:
         "use_geolocation": survey.use_geolocation,
         "show_branding": survey.show_branding,
         "style_settings": survey.style_settings or {},
+        "layers": serialize_layers(survey),
         "sections": serialize_sections(survey),
     }
+
+
+def serialize_layers(survey: SurveyHeader) -> List[Dict[str, Any]]:
+    """Reference-layer config, ordered. Geometry travels as separate archive
+    entries (see collect_layer_files); sections reference layers by their index
+    here, not by database id, so an import can remap them."""
+    return [
+        {
+            "name": layer.name,
+            "color": layer.color,
+            "label_field": layer.label_field,
+            "key_field": layer.key_field,
+            "show_popups": layer.show_popups,
+        }
+        for layer in survey.map_layers.all()
+    ]
+
+
+def collect_layer_files(survey: SurveyHeader) -> List[Tuple[str, str]]:
+    """(archive_path, geojson_text) per layer.
+
+    Text, not a filesystem path: layers live in the database precisely so they
+    are not public objects in the media bucket, which also spares this path the
+    `.path`-on-S3 trap that collect_structure_images() still has."""
+    return [
+        (f"layers/{index}.geojson", layer.geojson)
+        for index, layer in enumerate(survey.map_layers.all())
+    ]
 
 
 def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
     """Serialize all sections with geo WKT and questions."""
     sections = SurveySection.objects.filter(survey_header=survey)
     result = []
+    # Layer ids mean nothing in another database; export the position within
+    # the exported `layers` array instead.
+    layer_index = {layer.pk: i for i, layer in enumerate(survey.map_layers.all())}
 
     for section in sections:
         result.append({
@@ -89,6 +121,10 @@ def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
             "start_map_zoom": section.start_map_zoom,
             "use_geolocation": section.use_geolocation,
             "override_basemap": section.override_basemap,
+            "hidden_layers": sorted(
+                layer_index[i] for i in (section.hidden_layers or [])
+                if i in layer_index
+            ),
             "next_section_name": section.next_section.name if section.next_section else None,
             "prev_section_name": section.prev_section.name if section.prev_section else None,
             "translations": [
@@ -275,6 +311,10 @@ def export_survey_to_zip(
             for archive_path, filesystem_path in images:
                 zf.write(filesystem_path, archive_path)
 
+            # Reference layers: geometry written straight from the row
+            for archive_path, geojson_text in collect_layer_files(survey):
+                zf.writestr(archive_path, geojson_text)
+
         # Export data (responses.json + upload images)
         if mode in ("data", "full"):
             responses_data = {
@@ -402,9 +442,14 @@ def import_structure_from_archive(
     # Create survey header
     survey = create_survey_header(survey_data, org, created_by=created_by)
 
+    # Create reference layers before sections: a section's hidden_layers holds
+    # indexes into the exported layers array and needs the new ids to remap.
+    layer_ids, layer_warnings = extract_layers(zip_file, survey, survey_data.get("layers") or [])
+    warnings.extend(layer_warnings)
+
     # Create sections
     sections_data = survey_data.get("sections", [])
-    sections = create_sections(survey, sections_data)
+    sections = create_sections(survey, sections_data, layer_ids)
 
     # Create questions for each section
     for section_data in sections_data:
@@ -502,9 +547,16 @@ def _clean_style_settings(value):
 
 def create_sections(
     survey: SurveyHeader,
-    sections_data: List[Dict[str, Any]]
+    sections_data: List[Dict[str, Any]],
+    layer_ids: Optional[List[int]] = None,
 ) -> Dict[str, SurveySection]:
-    """Create sections without next/prev links, returns name->object mapping."""
+    """Create sections without next/prev links, returns name->object mapping.
+
+    layer_ids maps an exported layer's position to the id it got on import; an
+    index with no id (a layer that failed to import) simply drops out, leaving
+    that layer visible rather than referencing a row that does not exist.
+    """
+    layer_ids = layer_ids or []
     result = {}
 
     for section_data in sections_data:
@@ -532,6 +584,10 @@ def create_sections(
             start_map_zoom=section_data.get("start_map_zoom"),
             use_geolocation=section_data.get("use_geolocation", False),
             override_basemap=section_data.get("override_basemap"),
+            hidden_layers=[
+                layer_ids[i] for i in (section_data.get("hidden_layers") or [])
+                if isinstance(i, int) and 0 <= i < len(layer_ids) and layer_ids[i] is not None
+            ],
             # next_section and prev_section are resolved later
         )
 
@@ -710,6 +766,73 @@ def resolve_section_links(
         section.save()
 
     return warnings
+
+
+def _clean_layer_config(cfg: Dict[str, Any], index: int) -> Dict[str, Any]:
+    """Whitelist a layer's config from an archive — same posture as
+    _clean_style_settings: unknown keys dropped, bad values replaced."""
+    import re as re_module
+    name = cfg.get("name")
+    name = str(name)[:100] if isinstance(name, str) and name.strip() else f"Layer {index + 1}"
+    color = cfg.get("color")
+    if not (isinstance(color, str) and re_module.fullmatch(r"#[0-9a-fA-F]{6}", color)):
+        color = "#2c7be5"
+    out = {"name": name, "color": color, "show_popups": bool(cfg.get("show_popups"))}
+    for field in ("label_field", "key_field"):
+        value = cfg.get(field)
+        out[field] = str(value)[:100] if isinstance(value, str) else ""
+    return out
+
+
+def extract_layers(
+    zip_file: zipfile.ZipFile,
+    survey: SurveyHeader,
+    layers_data: List[Dict[str, Any]],
+) -> Tuple[List[Optional[int]], List[str]]:
+    """Recreate reference layers from the archive.
+
+    Geometry goes through the same validation as an interactive upload, so a
+    hand-edited or AI-written archive cannot store something the editor would
+    have refused. A missing or invalid entry is a warning that skips one layer,
+    never a failed import — the survey itself is still worth having.
+    """
+    from .layers import validate_layer_upload, LayerValidationError, MAX_LAYERS_PER_SURVEY
+
+    ids: List[Optional[int]] = []
+    warnings: List[str] = []
+    if not isinstance(layers_data, list):
+        return ids, warnings
+
+    for index, cfg in enumerate(layers_data):
+        if len(ids) >= MAX_LAYERS_PER_SURVEY:
+            warnings.append(
+                f"Archive holds more than {MAX_LAYERS_PER_SURVEY} reference layers; the rest were skipped."
+            )
+            break
+        if not isinstance(cfg, dict):
+            ids.append(None)
+            continue
+        clean = _clean_layer_config(cfg, index)
+        archive_path = f"layers/{index}.geojson"
+        try:
+            raw = zip_file.read(archive_path)
+        except KeyError:
+            ids.append(None)
+            warnings.append(f"Reference layer '{clean['name']}' is missing '{archive_path}' — layer skipped.")
+            continue
+        try:
+            geojson_str, count, _ = validate_layer_upload(raw)
+        except LayerValidationError as exc:
+            ids.append(None)
+            warnings.append(f"Reference layer '{clean['name']}' was skipped: {exc}")
+            continue
+        layer = SurveyMapLayer.objects.create(
+            survey=survey, geojson=geojson_str, feature_count=count,
+            size_bytes=len(geojson_str.encode("utf-8")), position=index, **clean,
+        )
+        ids.append(layer.pk)
+
+    return ids, warnings
 
 
 def extract_structure_images(

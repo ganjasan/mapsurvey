@@ -9,7 +9,7 @@ from django.db.models import Q, Prefetch, Count
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import translation
 from django.utils.translation import override as lang_override
-from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator
+from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator, SurveyMapLayer
 from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role, get_org_membership, SURVEY_ROLE_RANK,
@@ -850,7 +850,29 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 		'selected_language': selected_language,
 		'section_current': section_current,
 		'section_total': section_total,
+		'hidden_layers_json': json.dumps([i for i in (section.hidden_layers or []) if isinstance(i, int)]),
 	}
+
+
+def _build_map_layers_metadata(survey):
+	"""Layer list for the respondent shell — config only, geometry stays behind
+	the gated endpoint. Empty when the kill switch is off."""
+	from django.conf import settings as django_settings
+	if not django_settings.MAP_REFERENCE_LAYERS:
+		return []
+	return [
+		{
+			'id': layer.pk,
+			'name': layer.name,
+			'color': layer.color,
+			'label_field': layer.label_field,
+			'show_popups': layer.show_popups,
+			'url': reverse('survey_layer_geojson', kwargs={
+				'survey_slug': str(survey.uuid), 'layer_id': layer.pk,
+			}),
+		}
+		for layer in survey.map_layers.all()
+	]
 
 
 def survey_section(request, survey_slug, section_name):
@@ -1115,6 +1137,7 @@ def survey_section(request, survey_slug, section_name):
 			ctx['initial_map_zoom'] = 12
 
 		ctx['initial_use_geolocation'] = survey.use_geolocation
+		ctx['map_layers'] = _build_map_layers_metadata(survey)
 
 		return render(request, 'survey_section.html', ctx)
 
@@ -1633,6 +1656,33 @@ def survey_password_gate(request, survey_slug):
 		'survey': survey,
 		'error': error,
 	})
+
+
+def survey_layer_geojson(request, survey_slug, layer_id):
+	"""Serve a reference layer's GeoJSON under the survey's own access rules.
+
+	Never a raw storage URL: the S3 media bucket is public-read, and a draft
+	survey's layer must be as invisible as the draft itself. Any access denial
+	collapses to 404 — a fetch() consumer can't follow the password/closed
+	redirects the page views return, and a bare 404 keeps drafts
+	indistinguishable from nonexistent surveys.
+	"""
+	from django.conf import settings as django_settings
+	if not django_settings.MAP_REFERENCE_LAYERS:
+		raise Http404
+	survey = resolve_survey(survey_slug)
+	if check_survey_access(request, survey) is not None:
+		raise Http404
+	layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=survey)
+
+	etag = '"layer-%s-%s"' % (layer.pk, layer.updated_at.strftime('%Y%m%d%H%M%S%f'))
+	if request.headers.get('If-None-Match') == etag:
+		response = HttpResponse(status=304)
+	else:
+		response = HttpResponse(layer.geojson, content_type='application/geo+json')
+	response['ETag'] = etag
+	response['Cache-Control'] = 'private, max-age=300'
+	return response
 
 
 def survey_thanks(request, survey_slug):

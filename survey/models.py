@@ -521,6 +521,31 @@ class SurveyCollaborator(models.Model):
         return f"{self.user.username} - {self.survey.name} ({self.role})"
 
 
+class SurveyMapLayer(models.Model):
+    """A creator-uploaded reference overlay (zones, boundaries, a plan) rendered
+    read-only under the respondent map. GeoJSON lives in the row, not in media
+    storage: the S3 bucket is public-read, and a layer must obey the survey's
+    access rules, so it is served only through the gated layer endpoint."""
+    survey = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE, related_name='map_layers')
+    name = models.CharField(max_length=100)
+    color = models.CharField(max_length=7, default='#2c7be5', help_text=_('Fallback style; simplestyle properties inside the file win.'))
+    label_field = models.CharField(max_length=100, blank=True, default='', help_text=_('Feature property rendered as a permanent map label. Empty = no labels.'))
+    key_field = models.CharField(max_length=100, blank=True, default='', help_text=_('Feature property that makes features addressable (reserved for answer-driven map context). No UI consumer yet.'))
+    show_popups = models.BooleanField(default=False, help_text=_('Tap a feature shows a read-only popup of its name/description properties.'))
+    geojson = models.TextField(help_text=_('Re-serialized FeatureCollection — never the raw uploaded bytes.'))
+    feature_count = models.PositiveIntegerField(default=0)
+    size_bytes = models.PositiveIntegerField(default=0)
+    position = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['position', 'id']
+
+    def __str__(self):
+        return f"{self.survey.name} / {self.name}"
+
+
 SECTION_LAYOUT_CHOICES = (
     ("map", _("Map")),
     ("form", _("Form")),
@@ -544,6 +569,7 @@ class SurveySection(models.Model):
     start_map_zoom = models.IntegerField(null=True, blank=True, help_text=_('Override map zoom for this section. Null = keep current zoom.'))
     use_geolocation = models.BooleanField(default=False, help_text=_('If true, fly to respondent location when entering this section.'))
     override_basemap = models.CharField(max_length=20, null=True, blank=True, choices=BASEMAP_CHOICES, help_text=_('Override basemap for this section. Null = keep current basemap.'))
+    hidden_layers = models.JSONField(default=list, blank=True, help_text=_('IDs of SurveyMapLayer rows hidden on this section. Empty = all layers visible. Stale IDs are ignored at render time.'))
 
     next_section = models.ForeignKey("SurveySection", null=True, blank=True, on_delete=models.SET_NULL, related_name='survey_next_section')
     prev_section = models.ForeignKey("SurveySection", null=True, blank=True, on_delete=models.SET_NULL, related_name='survey_prev_section')

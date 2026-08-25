@@ -224,6 +224,30 @@ class SurveySectionForm(forms.ModelForm):
                 )
         return layout
 
+    def save(self, commit=True):
+        """Fold the reference-layer checklist into the model.
+
+        The checklist stores what is *hidden*, so a layer added later shows up
+        everywhere without touching any section. Only IDs belonging to this
+        survey survive — a stale or forged one would otherwise sit in the JSON
+        forever.
+        """
+        section = super().save(commit=False)
+        if self.data and 'reference_layers_submitted' in self.data:
+            survey = section.survey_header or (self.instance.survey_header if self.instance.pk else None)
+            if survey is not None:
+                valid_ids = set(survey.map_layers.values_list('id', flat=True))
+                shown = set()
+                for raw in self.data.getlist('visible_layers'):
+                    try:
+                        shown.add(int(raw))
+                    except (TypeError, ValueError):
+                        continue
+                section.hidden_layers = sorted(valid_ids - shown)
+        if commit:
+            section.save()
+        return section
+
 
 class QuestionForm(forms.ModelForm):
     class Meta:

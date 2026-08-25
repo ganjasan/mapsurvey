@@ -1,13 +1,16 @@
 import json
 import logging
+import os
+import re
 
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.gis.geos import Point
 from django.db import transaction
+from django.db import models
 from django.db.models import Q, Max, Count
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, Http404, JsonResponse
 from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.utils import timezone, translation
@@ -17,7 +20,11 @@ from .models import (
     SurveyHeader, SurveySession, SurveySection, SurveySectionTranslation,
     Question, QuestionTranslation, SurveyCollaborator, Answer,
     Membership, SURVEY_ROLE_CHOICES, BASEMAP_CHOICES,
-    INPUT_TYPE_CHOICES, DISPLAY_STYLE_CHOICES,
+    INPUT_TYPE_CHOICES, DISPLAY_STYLE_CHOICES, SurveyMapLayer,
+)
+from .layers import (
+    validate_layer_upload, LayerValidationError,
+    MAX_LAYER_BYTES, MAX_LAYERS_PER_SURVEY,
 )
 from . import product_events as pe
 from .question_types import CHOICE_TYPES
@@ -519,6 +526,8 @@ def editor_survey_settings(request, survey_uuid):
         'form': form,
         'effective_role': request.effective_survey_role,
         'basemap_choices': BASEMAP_CHOICES,
+        'map_layers': _editor_layers(survey),
+        'layers_enabled': settings.MAP_REFERENCE_LAYERS,
     })
 
 
@@ -547,6 +556,8 @@ def editor_survey_settings_panel(request, survey_uuid):
         'form': form,
         'effective_role': request.effective_survey_role,
         'basemap_choices': BASEMAP_CHOICES,
+        'map_layers': _editor_layers(survey),
+        'layers_enabled': settings.MAP_REFERENCE_LAYERS,
     })
 
 
@@ -632,6 +643,127 @@ def editor_survey_thanks_image(request, survey_uuid):
     ext = (os.path.splitext(f.name)[1] or '.png')[:8]
     name = default_storage.save('thanks_images/{}{}'.format(_uuid.uuid4().hex, ext), f)
     return JsonResponse({'url': default_storage.url(name)})
+
+
+# ─── Reference overlay layers ────────────────────────────────────────────────
+
+def _editor_layers(survey):
+    """Layers with their property names, for the settings card's field pickers."""
+    if not settings.MAP_REFERENCE_LAYERS:
+        return []
+    return [
+        {'layer': layer, 'properties': _layer_property_names(layer)}
+        for layer in survey.map_layers.all()
+    ]
+
+
+def _layer_payload(layer, properties=None):
+    data = {
+        'id': layer.pk,
+        'name': layer.name,
+        'color': layer.color,
+        'label_field': layer.label_field,
+        'key_field': layer.key_field,
+        'show_popups': layer.show_popups,
+        'feature_count': layer.feature_count,
+        'size_bytes': layer.size_bytes,
+    }
+    if properties is not None:
+        data['properties'] = properties
+    return data
+
+
+def _layers_enabled_or_404():
+    if not settings.MAP_REFERENCE_LAYERS:
+        raise Http404
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_survey_layer_create(request, survey_uuid):
+    """Upload a GeoJSON reference layer.
+
+    Validation lives in survey.layers so an interactive upload, a ZIP import and
+    an AI-written draft cannot diverge on what a stored layer may contain.
+    """
+    _layers_enabled_or_404()
+    survey = request.survey
+    f = request.FILES.get('layer')
+    if not f:
+        return JsonResponse({'error': 'No file'}, status=400)
+    if survey.map_layers.count() >= MAX_LAYERS_PER_SURVEY:
+        return JsonResponse({'error': f'A survey can hold {MAX_LAYERS_PER_SURVEY} reference layers.'}, status=400)
+    if f.size > MAX_LAYER_BYTES:
+        return JsonResponse({'error': f'File is larger than {MAX_LAYER_BYTES // (1024 * 1024)} MB.'}, status=400)
+    try:
+        geojson_str, count, properties = validate_layer_upload(f.read())
+    except LayerValidationError as exc:
+        return JsonResponse({'error': str(exc)}, status=400)
+
+    name = (os.path.splitext(f.name)[0] or 'Layer')[:100]
+    position = (survey.map_layers.aggregate(m=models.Max('position'))['m'] or 0) + 1
+    layer = SurveyMapLayer.objects.create(
+        survey=survey, name=name, geojson=geojson_str,
+        feature_count=count, size_bytes=len(geojson_str.encode('utf-8')),
+        position=position,
+    )
+    return JsonResponse(_layer_payload(layer, properties), status=201)
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_survey_layer_update(request, survey_uuid, layer_id):
+    """Update a layer's presentation config (never its geometry)."""
+    _layers_enabled_or_404()
+    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=request.survey)
+
+    name = (request.POST.get('name') or '').strip()
+    if name:
+        layer.name = name[:100]
+    color = (request.POST.get('color') or '').strip()
+    if color:
+        if not re.match(r'^#[0-9a-fA-F]{6}$', color):
+            return JsonResponse({'error': 'Color must be #RRGGBB.'}, status=400)
+        layer.color = color
+
+    # Field names are only meaningful if they exist in the file; an unknown one
+    # would silently render no labels, so refuse it instead.
+    known = _layer_property_names(layer)
+    for field in ('label_field', 'key_field'):
+        if field in request.POST:
+            value = (request.POST.get(field) or '').strip()[:100]
+            if value and value not in known:
+                return JsonResponse({'error': f'"{value}" is not a property of this layer.'}, status=400)
+            setattr(layer, field, value)
+
+    if 'show_popups' in request.POST:
+        layer.show_popups = request.POST.get('show_popups') in ('1', 'true', 'on')
+
+    layer.save()
+    return JsonResponse(_layer_payload(layer, known))
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_survey_layer_delete(request, survey_uuid, layer_id):
+    _layers_enabled_or_404()
+    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=request.survey)
+    layer.delete()
+    return HttpResponse(status=204)
+
+
+def _layer_property_names(layer):
+    """Property names present in a stored layer, for the field pickers."""
+    try:
+        parsed = json.loads(layer.geojson)
+    except ValueError:
+        return []
+    names = set()
+    for feature in parsed.get('features') or []:
+        props = feature.get('properties')
+        if isinstance(props, dict):
+            names.update(k for k in props if isinstance(k, str))
+    return sorted(names)
 
 
 # ─── Survey map position ─────────────────────────────────────────────────────
@@ -724,6 +856,7 @@ def editor_section_detail(request, survey_uuid, section_id):
         ).order_by('order_number')
     )
 
+    hidden_ids = set(i for i in (section.hidden_layers or []) if isinstance(i, int))
     return render(request, 'editor/partials/section_detail_form.html', {
         'survey': survey,
         'section': section,
@@ -731,6 +864,11 @@ def editor_section_detail(request, survey_uuid, section_id):
         'translations': translations,
         'questions': questions,
         'is_read_only': survey.status in ('published', 'closed'),
+        'layers_enabled': settings.MAP_REFERENCE_LAYERS,
+        'section_layers': [
+            {'layer': layer, 'visible': layer.pk not in hidden_ids}
+            for layer in survey.map_layers.all()
+        ] if settings.MAP_REFERENCE_LAYERS else [],
     })
 
 

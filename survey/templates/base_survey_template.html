@@ -78,6 +78,17 @@ locale.{% endcomment %}
          font-size: .88rem;
      }
      .required-summary i { opacity: .85; }
+
+     /* Reference overlay layer labels — quiet enough not to compete with answers. */
+     .ref-layer-label {
+         background: rgba(255, 255, 255, .8);
+         border: none;
+         box-shadow: none;
+         font-weight: 700;
+         font-size: 11px;
+         padding: 0 4px;
+         border-radius: 3px;
+     }
    </style>
 
 {% if survey %}{% with accent=survey.get_accent_color %}{% if accent %}
@@ -125,6 +136,9 @@ locale.{% endcomment %}
 </div>
 
 <div id="map"></div>
+
+{# Reference layer config (geometry stays behind the gated endpoint) #}
+{{ map_layers|json_script:"ref-layers-data" }}
 
 <script type="text/javascript">
     // Load i18n translations
@@ -175,6 +189,9 @@ locale.{% endcomment %}
 
     // Basemap layers — also populates window._basemapLayers
     {% include "partials/basemap_layers.html" %}
+
+    // Reference overlay layers — fetched once, live across section swaps
+    {% include "partials/reference_layers.html" %}
 
     // Geolocation
     var geoMarker = null;
@@ -966,6 +983,11 @@ locale.{% endcomment %}
         // 3. Basemap override
         var basemap = dataEl.dataset.mapBasemap;
         if (basemap) { switchBasemap(basemap); }
+
+        // 3b. Reference layers hidden on this section
+        var hiddenLayers = [];
+        try { hiddenLayers = JSON.parse(dataEl.dataset.hiddenLayers || '[]'); } catch (e) {}
+        window.applyRefLayerVisibility(hiddenLayers);
 
         // 4. Geolocation: survey-level on first load, per-section on subsequent.
         // Never on a form section — a welcome page must not open with a

@@ -35,6 +35,28 @@
             {% if field.name == 'subheading' %}<div id="section-subheading-quill"></div>{% endif %}
             {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
         </div>
+        {% comment %}Reference-layer visibility sits right after Layout: it is a
+        property of this section's map, and it disappears with the map when the
+        layout is "form". The checklist posts what stays VISIBLE; the form turns
+        that into the stored hidden list, so a layer added later needs no visit
+        to any section.{% endcomment %}
+        {% if field.name == 'layout' and layers_enabled and section_layers %}
+        <div class="form-group section-ref-layers" {% if section.layout == 'form' %}hidden{% endif %}>
+            <label>Reference layers</label>
+            <input type="hidden" name="reference_layers_submitted" value="1">
+            <div style="border:1px solid var(--border-color);border-radius:8px;padding:.55rem .7rem;display:flex;flex-direction:column;gap:.4rem;">
+                {% for item in section_layers %}
+                <label style="display:flex;align-items:center;gap:.5rem;margin:0;font-weight:400;font-size:.86rem;cursor:pointer;">
+                    <input type="checkbox" name="visible_layers" value="{{ item.layer.pk }}" {% if item.visible %}checked{% endif %}>
+                    <span style="width:12px;height:12px;border-radius:3px;flex:none;background:{{ item.layer.color }}"></span>
+                    {{ item.layer.name }}
+                    <span class="text-muted" style="font-size:.75rem;margin-left:auto;">{{ item.layer.feature_count }} features</span>
+                </label>
+                {% endfor %}
+            </div>
+            <small class="form-text text-muted">Which reference layers respondents see on this section's map. Layers are added in Survey settings.</small>
+        </div>
+        {% endif %}
         {% endfor %}
 
         {% if survey.available_languages|length > 1 %}
@@ -77,8 +99,13 @@
     // the stored position survives for a switch back to the map layout.
     var sel = document.getElementById('id_section_layout');
     var btn = document.getElementById('section-map-position-btn');
+    var refLayers = document.querySelector('.section-ref-layers');
     function syncLayoutControls() {
-        if (btn && sel) btn.style.display = (sel.value === 'form') ? 'none' : '';
+        if (!sel) return;
+        var isForm = sel.value === 'form';
+        if (btn) btn.style.display = isForm ? 'none' : '';
+        // Same reasoning as the map-position button: no map, no layers to choose.
+        if (refLayers) refLayers.hidden = isForm;
     }
     if (sel) { sel.addEventListener('change', syncLayoutControls); syncLayoutControls(); }
 })();
