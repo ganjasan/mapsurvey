@@ -962,6 +962,10 @@ def survey_section(request, survey_slug, section_name):
 
 		for question in section_questions:
 			result = request.POST.getlist(question.code)
+			# An unanswered control still posts its name with an empty value —
+			# the dropdown's placeholder option is the case that surfaced this.
+			# Without the filter a blank ride-along becomes a stored answer.
+			result = [v for v in result if v != '']
 
 			if (result != []):
 				# Storage dispatches on input_type ONLY. It used to branch on
