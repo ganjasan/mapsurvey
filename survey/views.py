@@ -876,8 +876,23 @@ def survey_section(request, survey_slug, section_name):
 	if selected_language:
 		translation.activate(selected_language)
 
-	#если сессия на задана, то создать запись сессии
-	if  not request.session.get('survey_session_id'):
+	# The session cookie is one site-wide value, so it may name a session from a
+	# *different* survey (respondent moved between surveys via direct section
+	# links — the entry view that clears it is easy to bypass), a session the
+	# creator soft-deleted, or a hard-deleted row. Honour it only when the
+	# session is usable for this survey; anything else falls back to the
+	# first-visit path. Trusting it blindly made the section lookup below raise
+	# an unhandled DoesNotExist — a 500 on a respondent URL.
+	survey_session = None
+	cookie_session_id = request.session.get('survey_session_id')
+	if cookie_session_id:
+		candidate = SurveySession.objects.select_related('survey').filter(pk=cookie_session_id).first()
+		if candidate is not None and not candidate.is_deleted and (
+			candidate.survey_id == survey.id
+			or candidate.survey.canonical_survey_id == survey.id
+		):
+			survey_session = candidate
+	if survey_session is None:
 		survey_session = SurveySession(survey=survey, language=selected_language)
 		survey_session.save()
 		request.session['survey_session_id'] = survey_session.id
@@ -886,20 +901,15 @@ def survey_section(request, survey_slug, section_name):
 
 	# Version routing: use the session's survey for section lookup
 	# (may be an archived version if respondent started before a new version was published)
-	session_survey = survey
-	if request.session.get('survey_session_id'):
-		try:
-			existing_session = SurveySession.objects.get(pk=request.session['survey_session_id'])
-			session_survey = existing_session.survey
-		except SurveySession.DoesNotExist:
-			# Session was deleted — create a new one against canonical
-			survey_session = SurveySession(survey=survey, language=selected_language)
-			survey_session.save()
-			request.session['survey_session_id'] = survey_session.id
-			emit_event(survey_session, 'session_start', build_session_start_metadata(request))
-			record_demo_open(survey_session, request)
+	session_survey = survey_session.survey
 
-	section = SurveySection.objects.get(Q(survey_header=session_survey) & Q(name=section_name))
+	section = SurveySection.objects.filter(survey_header=session_survey, name=section_name).first()
+	if section is None:
+		# A stale or hand-edited link — the session is already scoped to this
+		# survey, so the name simply doesn't exist here. Restart at the entry
+		# point (which resolves the real head section) instead of a 500.
+		request.session.pop('survey_session_id', None)
+		return redirect('survey', survey_slug=str(survey.uuid))
 
 	# Compute progress: current section index (1-based) and total sections
 	section_current = 1
