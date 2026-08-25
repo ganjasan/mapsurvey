@@ -2,6 +2,10 @@
 
 | # | Type | Title | Priority | Area | Epic | Created |
 |---|------|-------|----------|------|------|---------|
+| 150 | improvement | [Editor guidance: attributes of a mapped object belong in sub-questions](improvement-subquestion-guidance-in-editor.md) | medium | frontend | community-engagement | 2026-08-25 |
+| 149 | feature | [AI brief: "incident reporting / watch map" use case](feature-ai-brief-incident-reporting-use-case.md) | medium | backend | community-engagement | 2026-08-25 |
+| 148 | feature | [Draw a reference overlay layer directly in the editor](feature-draw-overlay-layer-in-editor.md) | medium | frontend | field-data-collection | 2026-08-25 |
+| 147 | feature | [Georeferenced image overlay — a plan drawing on top of the real map](feature-georeferenced-image-overlay.md) | medium | frontend | community-engagement | 2026-08-25 |
 | 146 | improvement | [Reading the observations off the Responses map without GIS software](improvement-responses-map-read-observations.md) | high | frontend | survey-analytics | 2026-08-24 |
 | 125 | bug | [Http404 is reported to PostHog error tracking as if it were a defect](bug-http404-reported-as-error.md) | medium | infra | — | 2026-08-17 |
 | ~~123~~ | ~~bug~~ | ~~[Subtext is offered on every question type and rendered on four](bug-subtext-not-rendered-on-most-types.md)~~ | ~~high~~ | ~~frontend~~ | ~~—~~ | ~~2026-08-15~~ |
