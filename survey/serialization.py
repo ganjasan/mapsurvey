@@ -23,6 +23,7 @@ from .models import (
     QuestionTranslation, default_basemaps,
 )
 from .html_sanitize import coerce_creator_html
+from .question_types import CHOICE_TYPES
 
 # Format version for compatibility checking
 FORMAT_VERSION = "1.0"
@@ -613,6 +614,11 @@ def _create_question(
         raise ImportError(
             f"Question '{original_code}': input_type '{input_type}' requires choices"
         )
+    # A non-choice type must not import a choices list: a poisoned export
+    # (geo question with leftover choices) would otherwise recreate the state
+    # the editor and migration 0060 clean up.
+    if input_type not in CHOICE_TYPES:
+        choices = None
 
     display_style = question_data.get("display_style")
     allowed_styles = (

@@ -58,6 +58,12 @@ GEO_TYPES = ("point", "line", "polygon")
 # Types that render content but collect no answer, so cannot be required.
 DISPLAY_BLOCK_TYPES = ("image", "html")
 
+# Types whose `choices` JSON is meaningful. Every other type must persist with
+# choices=None; the editor, ZIP import and migration 0060 all enforce this
+# together, because stale choices on e.g. a point question once rerouted its
+# GeoJSON payload into the choice parser (int()) — a 500 on every submit.
+CHOICE_TYPES = ("choice", "multichoice", "range", "rating", "ranking")
+
 
 def picker_groups_for(choices):
     """Group `choices` (an input_type choices iterable, e.g. the form field's —
