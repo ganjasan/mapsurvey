@@ -23,6 +23,6 @@
 
 ## 4. Ship
 
-- [ ] 4.1 PR referencing this change.
+- [x] 4.1 PR referencing this change.
 - [ ] 4.2 After deploy: re-check the live Olney demo, and clean the phantom `[1]` answers
       from its demo sessions.
