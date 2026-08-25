@@ -11527,6 +11527,182 @@ class AnalyticsViewTest(TestCase):
         self.assertContains(response, 'Hello')
 
 
+class GeoSubanswerVisibilityTest(TestCase):
+    """Sub-answers (mapped-object attributes) in the editor Responses screen."""
+
+    def setUp(self):
+        from .analytics import SurveyAnalyticsService
+        self.SurveyAnalyticsService = SurveyAnalyticsService
+
+        self.org = _make_org('GeoSubOrg')
+        self.user = User.objects.create_user('geosubowner', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='geosubowner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+        self.survey = SurveyHeader.objects.create(
+            name='geosub_test', organization=self.org,
+            created_by=self.user, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.q_point = Question.objects.create(
+            survey_section=self.section, name='Tree', code='q1',
+            input_type='point', order_number=1,
+        )
+        self.sub_species = Question.objects.create(
+            survey_section=self.section, name='Species', code='q1a',
+            input_type='choice', order_number=1, parent_question_id=self.q_point,
+            choices=[{'code': 1, 'name': 'Oak'}, {'code': 2, 'name': 'Pine'}],
+        )
+        self.sub_height = Question.objects.create(
+            survey_section=self.section, name='Height', code='q1b',
+            input_type='number', order_number=2, parent_question_id=self.q_point,
+        )
+        self.sub_notes = Question.objects.create(
+            survey_section=self.section, name='Notes', code='q1c',
+            input_type='text', order_number=3, parent_question_id=self.q_point,
+        )
+
+    def _add_object(self, session, point, species=None, height=None, notes=None):
+        """Helper: create one geo answer with optional sub-answers."""
+        geo = Answer.objects.create(
+            survey_session=session, question=self.q_point, point=point,
+        )
+        if species is not None:
+            Answer.objects.create(
+                survey_session=session, question=self.sub_species,
+                parent_answer_id=geo, selected_choices=[species],
+            )
+        if height is not None:
+            Answer.objects.create(
+                survey_session=session, question=self.sub_height,
+                parent_answer_id=geo, numeric=height,
+            )
+        if notes is not None:
+            Answer.objects.create(
+                survey_session=session, question=self.sub_notes,
+                parent_answer_id=geo, text=notes,
+            )
+        return geo
+
+    def test_feature_collection_includes_ordered_attributes(self):
+        """
+        GIVEN a point answer with choice, number and text sub-answers
+        WHEN get_geo_feature_collection is called
+        THEN the feature carries attributes in sub-question order with
+             type-appropriate display values
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        self._add_object(session, Point(30.5, 60.0), species=1, height=12, notes='old tree')
+
+        fc = self.SurveyAnalyticsService(self.survey).get_geo_feature_collection()
+
+        self.assertEqual(len(fc['features']), 1)
+        self.assertEqual(fc['features'][0]['properties']['attributes'], [
+            {'name': 'Species', 'value': 'Oak'},
+            {'name': 'Height', 'value': '12.0'},
+            {'name': 'Notes', 'value': 'old tree'},
+        ])
+
+    def test_feature_without_subanswers_has_empty_attributes(self):
+        """
+        GIVEN a point answer with no child answers
+        WHEN get_geo_feature_collection is called
+        THEN its feature has an empty attributes list and keeps existing keys
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        self._add_object(session, Point(30.5, 60.0))
+
+        fc = self.SurveyAnalyticsService(self.survey).get_geo_feature_collection()
+
+        props = fc['features'][0]['properties']
+        self.assertEqual(props['attributes'], [])
+        self.assertEqual(props['question'], 'Tree')
+        self.assertEqual(props['type'], 'point')
+        self.assertEqual(props['session_id'], session.id)
+
+    def test_feature_collection_query_count_is_bounded(self):
+        """
+        GIVEN many geo objects with sub-answers
+        WHEN get_geo_feature_collection is called
+        THEN the number of queries does not grow with the number of objects
+        """
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        session = SurveySession.objects.create(survey=self.survey)
+        self._add_object(session, Point(30.5, 60.0), species=1, height=1)
+        with CaptureQueriesContext(connection) as small:
+            self.SurveyAnalyticsService(self.survey).get_geo_feature_collection()
+
+        for i in range(5):
+            self._add_object(session, Point(30.5 + i, 60.0), species=2, height=i)
+        with CaptureQueriesContext(connection) as large:
+            self.SurveyAnalyticsService(self.survey).get_geo_feature_collection()
+
+        self.assertEqual(len(small), len(large))
+
+    def test_session_answers_number_multiple_objects(self):
+        """
+        GIVEN a session with two points for one geo question
+        WHEN format_session_answers is called
+        THEN each object row is numbered and carries its own attributes
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        self._add_object(session, Point(30.5, 60.0), species=1)
+        self._add_object(session, Point(31.5, 61.0), species=2)
+
+        rows, features = self.SurveyAnalyticsService(self.survey).format_session_answers(session)
+
+        geo_rows = [r for r in rows if r['input_type'] == 'point']
+        self.assertEqual([r['value'] for r in geo_rows], ['point feature 1', 'point feature 2'])
+        self.assertEqual(geo_rows[0]['attributes'], [{'name': 'Species', 'value': 'Oak'}])
+        self.assertEqual(geo_rows[1]['attributes'], [{'name': 'Species', 'value': 'Pine'}])
+        self.assertEqual(features[0]['properties']['attributes'], geo_rows[0]['attributes'])
+        self.assertEqual(features[1]['properties']['attributes'], geo_rows[1]['attributes'])
+
+    def test_session_answers_single_object_keeps_plain_value(self):
+        """
+        GIVEN a session with one geo object and no sub-answers
+        WHEN format_session_answers is called
+        THEN the row value stays un-numbered and attributes are empty
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        self._add_object(session, Point(30.5, 60.0))
+
+        rows, _ = self.SurveyAnalyticsService(self.survey).format_session_answers(session)
+
+        geo_row = next(r for r in rows if r['input_type'] == 'point')
+        self.assertEqual(geo_row['value'], 'point feature')
+        self.assertEqual(geo_row['attributes'], [])
+
+    def test_session_detail_markup_shows_and_escapes_subanswers(self):
+        """
+        GIVEN a geo object whose text sub-answer contains markup
+        WHEN the session detail modal is rendered
+        THEN the attribute name and value appear and the markup is escaped
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        self._add_object(
+            session, Point(30.5, 60.0), species=1,
+            notes='<script>alert(1)</script>',
+        )
+
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/analytics/sessions/{session.id}/'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Species')
+        self.assertContains(response, 'Oak')
+        self.assertContains(response, '&lt;script&gt;alert(1)&lt;/script&gt;')
+        self.assertNotContains(response, '<script>alert(1)</script>')
+
+
 class CrossFilteringServiceTest(TestCase):
     """Tests for cross-filtering analytics features."""
 
@@ -30839,3 +31015,416 @@ class LayerSerializationTest(TestCase):
         self.assertTrue(any('Counting zones' in w for w in warnings))
         section = SurveySection.objects.get(survey_header=imported, name='s1')
         self.assertEqual(section.hidden_layers, [])
+class RespondentSessionRoutingTest(TestCase):
+    """A stale survey_session_id cookie must never 500 a respondent URL.
+
+    The cookie is one site-wide value; a respondent who finishes survey A and
+    opens survey B by direct section link used to hit an unhandled
+    SurveySection.DoesNotExist (support report, 2026-08-25).
+    """
+
+    def setUp(self):
+        self.client = Client()
+        self.org = Organization.objects.create(name="Session Routing Org")
+        self.survey_a = SurveyHeader.objects.create(
+            name="routing_a", organization=self.org, status='published',
+        )
+        self.section_a = SurveySection.objects.create(
+            survey_header=self.survey_a, name="section_1", title="A one",
+            code="RA1", is_head=True,
+        )
+        self.survey_b = SurveyHeader.objects.create(
+            name="routing_b", organization=self.org, status='published',
+        )
+        self.section_b = SurveySection.objects.create(
+            survey_header=self.survey_b, name="section_2", title="B one",
+            code="RB1", is_head=True,
+        )
+        self.text_q = Question.objects.create(
+            survey_section=self.section_b, name="Comment",
+            input_type="text", order_number=1,
+        )
+
+    def _set_cookie_session(self, survey_session):
+        s = self.client.session
+        s['survey_session_id'] = survey_session.id
+        s.save()
+
+    def test_foreign_session_is_replaced_on_get(self):
+        """
+        GIVEN a cookie naming a session that belongs to survey A
+        WHEN the respondent opens a section of survey B by direct link
+        THEN the section renders with 200 and a fresh session for B is created
+        """
+        foreign = SurveySession.objects.create(survey=self.survey_a)
+        self._set_cookie_session(foreign)
+
+        response = self.client.get(f'/surveys/{self.survey_b.uuid}/section_2/')
+
+        self.assertEqual(response.status_code, 200)
+        new_id = self.client.session['survey_session_id']
+        self.assertNotEqual(new_id, foreign.id)
+        self.assertEqual(SurveySession.objects.get(pk=new_id).survey_id, self.survey_b.id)
+
+    def test_foreign_session_post_lands_in_new_session(self):
+        """
+        GIVEN a cookie naming a session that belongs to survey A
+        WHEN the respondent submits survey B's section
+        THEN the answers are saved into a session of survey B, not a 500
+        """
+        foreign = SurveySession.objects.create(survey=self.survey_a)
+        self._set_cookie_session(foreign)
+
+        response = self.client.post(
+            f'/surveys/{self.survey_b.uuid}/section_2/',
+            {self.text_q.code: 'hello from B'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        answer = Answer.objects.get(question=self.text_q)
+        self.assertEqual(answer.survey_session.survey_id, self.survey_b.id)
+        self.assertNotEqual(answer.survey_session_id, foreign.id)
+
+    def test_soft_deleted_session_is_not_continued(self):
+        """
+        GIVEN a cookie naming a session the creator soft-deleted
+        WHEN the respondent opens a section of the same survey
+        THEN a fresh session is created instead of writing into the trash
+        """
+        trashed = SurveySession.objects.create(survey=self.survey_b, is_deleted=True)
+        self._set_cookie_session(trashed)
+
+        response = self.client.get(f'/surveys/{self.survey_b.uuid}/section_2/')
+
+        self.assertEqual(response.status_code, 200)
+        new_id = self.client.session['survey_session_id']
+        self.assertNotEqual(new_id, trashed.id)
+        self.assertFalse(SurveySession.objects.get(pk=new_id).is_deleted)
+
+    def test_archived_version_session_keeps_version_routing(self):
+        """
+        GIVEN a session pinned to an archived version of the survey
+        WHEN the respondent opens a section that exists in that version
+        THEN the archived version's section is served under the same session
+        """
+        archived = SurveyHeader.objects.create(
+            name="routing_b", organization=self.org, status='closed',
+            is_canonical=False, canonical_survey=self.survey_b, version_number=1,
+        )
+        SurveySection.objects.create(
+            survey_header=archived, name="old_section", title="Old",
+            code="RBV1", is_head=True,
+        )
+        pinned = SurveySession.objects.create(survey=archived)
+        self._set_cookie_session(pinned)
+
+        response = self.client.get(f'/surveys/{self.survey_b.uuid}/old_section/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.session['survey_session_id'], pinned.id)
+
+    def test_unknown_section_redirects_to_entry(self):
+        """
+        GIVEN a valid session for the survey
+        WHEN the respondent opens a section name that does not exist in it
+        THEN they are redirected to the survey entry point, not a 500
+        """
+        own = SurveySession.objects.create(survey=self.survey_b)
+        self._set_cookie_session(own)
+
+        response = self.client.get(f'/surveys/{self.survey_b.uuid}/no_such_section/')
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, f'/surveys/{self.survey_b.uuid}/')
+
+    def test_hard_deleted_session_row_starts_fresh(self):
+        """
+        GIVEN a cookie naming a session row that no longer exists
+        WHEN the respondent opens a section
+        THEN a fresh session is created and the section renders
+        """
+        ghost = SurveySession.objects.create(survey=self.survey_b)
+        self._set_cookie_session(ghost)
+        Answer.objects.filter(survey_session=ghost).delete()
+        SurveySession.objects.filter(pk=ghost.id).delete()
+
+        response = self.client.get(f'/surveys/{self.survey_b.uuid}/section_2/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            SurveySession.objects.filter(pk=self.client.session['survey_session_id']).exists()
+        )
+
+
+class AnswerBranchByInputTypeTest(TestCase):
+    """Answer storage dispatches on input_type, never on stale `choices`.
+
+    A point question that kept a choices list from a type switch used to route
+    its GeoJSON into int() — a 500 on every submit (prod incident 2026-08-24,
+    question Q_7633107523).
+    """
+
+    STALE_CHOICES = [{"code": 1, "name": "Trespassing"}, {"code": 2, "name": "Dumping"}]
+
+    def setUp(self):
+        self.org = _make_org('BranchOrg')
+        self.user = User.objects.create_user(username='branchuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='branch_survey', organization=self.org,
+            redirect_url='/thanks/', status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section One',
+            code='BR1', is_head=True,
+        )
+        self.point_q = Question.objects.create(
+            survey_section=self.section, name='Where?', input_type='point',
+            order_number=1, choices=self.STALE_CHOICES,
+        )
+        self.text_sub = Question.objects.create(
+            survey_section=self.section, name='Details', input_type='text',
+            order_number=1, parent_question_id=self.point_q,
+            choices=self.STALE_CHOICES,
+        )
+        self.dt_sub = Question.objects.create(
+            survey_section=self.section, name='When?', input_type='datetime',
+            order_number=2, parent_question_id=self.point_q,
+        )
+        self.dt_q = Question.objects.create(
+            survey_section=self.section, name='Top when?', input_type='datetime',
+            order_number=3,
+        )
+
+    def _feature(self, props=None):
+        properties = {'question_id': self.point_q.code}
+        properties.update(props or {})
+        return json.dumps({
+            'type': 'Feature',
+            'properties': properties,
+            'geometry': {'type': 'Point', 'coordinates': [-119.4, 49.9]},
+        })
+
+    def _session_id(self):
+        return self.client.session['survey_session_id']
+
+    def test_point_with_stale_choices_saves_geometry(self):
+        """
+        GIVEN a point question whose choices holds a stale non-empty list
+        WHEN a respondent submits the section with a drawn point
+        THEN the geometry is saved and the submit succeeds (was ValueError/500)
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        response = self.client.post(
+            f'/surveys/{self.survey.uuid}/sec1/',
+            {self.point_q.code: self._feature() + '|'},
+        )
+        self.assertEqual(response.status_code, 302)
+        answer = Answer.objects.get(question=self.point_q, survey_session_id=self._session_id())
+        self.assertIsNotNone(answer.point)
+
+    def test_text_subquestion_with_stale_choices_saves_text(self):
+        """
+        GIVEN a text sub-question of a geo question with stale choices
+        WHEN the feature properties carry a text value
+        THEN it is stored in `text`, not parsed as a choice code
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        feature = self._feature({self.text_sub.code: ['broken window']})
+        self.client.post(f'/surveys/{self.survey.uuid}/sec1/', {self.point_q.code: feature + '|'})
+        sub = Answer.objects.get(question=self.text_sub, survey_session_id=self._session_id())
+        self.assertEqual(sub.text, 'broken window')
+        self.assertIsNone(sub.selected_choices)
+
+    def test_datetime_subquestion_value_persists(self):
+        """
+        GIVEN a datetime sub-question of a geo question
+        WHEN the feature properties carry a datetime value
+        THEN the sub-answer stores it in `text` (it used to save an empty row)
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        feature = self._feature({self.dt_sub.code: ['2026-08-24T21:15']})
+        self.client.post(f'/surveys/{self.survey.uuid}/sec1/', {self.point_q.code: feature + '|'})
+        sub = Answer.objects.get(question=self.dt_sub, survey_session_id=self._session_id())
+        self.assertEqual(sub.text, '2026-08-24T21:15')
+
+    def test_top_level_datetime_round_trips(self):
+        """
+        GIVEN a top-level datetime question
+        WHEN a respondent submits a value and revisits the section
+        THEN the value is stored in `text` and prepopulates the field
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.client.post(
+            f'/surveys/{self.survey.uuid}/sec1/',
+            {self.dt_q.code: '2026-08-24T21:15'},
+        )
+        answer = Answer.objects.get(question=self.dt_q, survey_session_id=self._session_id())
+        self.assertEqual(answer.text, '2026-08-24T21:15')
+        revisit = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.assertContains(revisit, '2026-08-24T21:15')
+
+    def test_choice_questions_unaffected(self):
+        """
+        GIVEN choice and number questions
+        WHEN a respondent submits them
+        THEN storage matches the pre-change behavior
+        """
+        choice_q = Question.objects.create(
+            survey_section=self.section, name='Pick', input_type='choice',
+            choices=self.STALE_CHOICES, order_number=4,
+        )
+        number_q = Question.objects.create(
+            survey_section=self.section, name='How many', input_type='number',
+            order_number=5,
+        )
+        self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.client.post(
+            f'/surveys/{self.survey.uuid}/sec1/',
+            {choice_q.code: '2', number_q.code: '7'},
+        )
+        sid = self._session_id()
+        self.assertEqual(Answer.objects.get(question=choice_q, survey_session_id=sid).selected_choices, [2])
+        self.assertEqual(Answer.objects.get(question=number_q, survey_session_id=sid).numeric, 7.0)
+
+
+class ChoicesClearedOnNonChoiceTypesTest(TestCase):
+    """Every write path forces choices=None for types that do not use them."""
+
+    STALE_JSON = '[{"code": 1, "name": "Old option"}]'
+
+    def setUp(self):
+        self.org = _make_org('ClearOrg')
+        self.user = User.objects.create_user(username='clearuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='clear_survey', organization=self.org, status='draft',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='S', code='CL1', is_head=True,
+        )
+        self.client.login(username='clearuser', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+    def test_edit_type_switch_to_point_clears_choices(self):
+        """
+        GIVEN a choice question with options
+        WHEN the creator switches its type to point while the form still posts
+             the old choices_json
+        THEN the saved question has choices=None
+        """
+        q = Question.objects.create(
+            survey_section=self.section, name='Pick', input_type='choice',
+            choices=[{"code": 1, "name": "Old option"}], order_number=1,
+        )
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{q.id}/edit/',
+            {'name': 'Pick', 'input_type': 'point', 'color': '#000000',
+             'choices_json': self.STALE_JSON},
+        )
+        self.assertEqual(response.status_code, 200)
+        q.refresh_from_db()
+        self.assertEqual(q.input_type, 'point')
+        self.assertIsNone(q.choices)
+
+    def test_create_geo_question_ignores_posted_choices(self):
+        """
+        GIVEN the question create form
+        WHEN a point question is created with choices_json posted
+        THEN the created question has choices=None
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+            {'name': 'Spot', 'input_type': 'point', 'color': '#000000',
+             'choices_json': self.STALE_JSON},
+        )
+        self.assertEqual(response.status_code, 200)
+        q = Question.objects.get(survey_section=self.section, name='Spot')
+        self.assertIsNone(q.choices)
+
+    def test_create_subquestion_ignores_posted_choices(self):
+        """
+        GIVEN a geo parent question
+        WHEN a text sub-question is created with choices_json posted
+        THEN the created sub-question has choices=None
+        """
+        parent = Question.objects.create(
+            survey_section=self.section, name='Where', input_type='point', order_number=1,
+        )
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{parent.id}/subquestions/new/',
+            {'name': 'Detail', 'input_type': 'text', 'color': '#000000',
+             'choices_json': self.STALE_JSON},
+        )
+        self.assertEqual(response.status_code, 200)
+        q = Question.objects.get(survey_section=self.section, name='Detail')
+        self.assertIsNone(q.choices)
+
+    def test_import_normalizes_choices_on_point_question(self):
+        """
+        GIVEN an exported survey whose point question carries a choices list
+        WHEN the ZIP is imported
+        THEN the created question has choices=None
+        """
+        Question.objects.create(
+            survey_section=self.section, code='CLPT01', name='Spot',
+            input_type='point', order_number=1,
+        )
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+        output.seek(0)
+        with zipfile.ZipFile(output, 'r') as zf:
+            survey_json = json.loads(zf.read("survey.json"))
+        survey_json["survey"]["name"] = "clear_imported"
+        for sec in survey_json["survey"]["sections"]:
+            for qd in sec["questions"]:
+                qd["choices"] = [{"code": 1, "name": "Poison"}]
+        buf = BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zf:
+            zf.writestr("survey.json", json.dumps(survey_json))
+        buf.seek(0)
+
+        imported, _ = import_survey_from_zip(buf)
+
+        q = Question.objects.get(survey_section__survey_header=imported, name='Spot')
+        self.assertIsNone(q.choices)
+
+    def test_migration_clears_only_nonchoice_types(self):
+        """
+        GIVEN poisoned geo/text questions and a legitimate choice question
+        WHEN the 0060 data migration function runs
+        THEN only the non-choice types lose their choices
+        """
+        from importlib import import_module
+        mig = import_module('survey.migrations.0060_clear_choices_on_nonchoice_types')
+
+        poisoned_geo = Question.objects.create(
+            survey_section=self.section, name='Geo', input_type='point',
+            choices=[{"code": 1, "name": "Stale"}], order_number=1,
+        )
+        poisoned_text = Question.objects.create(
+            survey_section=self.section, name='Free', input_type='text',
+            choices=[{"code": 1, "name": "Stale"}], order_number=2,
+        )
+        legit_choice = Question.objects.create(
+            survey_section=self.section, name='Pick', input_type='choice',
+            choices=[{"code": 1, "name": "Keep"}], order_number=3,
+        )
+        legit_ranking = Question.objects.create(
+            survey_section=self.section, name='Order', input_type='ranking',
+            choices=[{"code": 1, "name": "Keep"}], order_number=4,
+        )
+
+        from django.apps import apps as django_apps
+        mig.clear_stale_choices(django_apps, None)
+
+        poisoned_geo.refresh_from_db()
+        poisoned_text.refresh_from_db()
+        legit_choice.refresh_from_db()
+        legit_ranking.refresh_from_db()
+        self.assertIsNone(poisoned_geo.choices)
+        self.assertIsNone(poisoned_text.choices)
+        self.assertEqual(legit_choice.choices, [{"code": 1, "name": "Keep"}])
+        self.assertEqual(legit_ranking.choices, [{"code": 1, "name": "Keep"}])

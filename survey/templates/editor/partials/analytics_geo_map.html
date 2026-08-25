@@ -49,6 +49,33 @@ document.addEventListener('DOMContentLoaded', function() {
         return name;
     };
 
+    // Attribute (sub-answer) popup: content is built with textContent only —
+    // values are respondent input and must never be inserted as markup.
+    function buildAttributePopupContent(props) {
+        var root = document.createElement('div');
+        root.className = 'geo-attr-popup';
+        var title = document.createElement('strong');
+        title.textContent = props.question;
+        root.appendChild(title);
+        (props.attributes || []).forEach(function(attr) {
+            var row = document.createElement('div');
+            var name = document.createElement('span');
+            name.className = 'text-muted';
+            name.textContent = attr.name + ': ';
+            row.appendChild(name);
+            row.appendChild(document.createTextNode(attr.value));
+            root.appendChild(row);
+        });
+        return root;
+    }
+
+    function openAttributePopup(map, feature, latlng) {
+        L.popup({ maxWidth: 280 })
+            .setLatLng(latlng)
+            .setContent(buildAttributePopupContent(feature.properties))
+            .openOn(map);
+    }
+
     LayerManager.prototype.init = function(map, geoData, colors) {
         this._map = map;
 
@@ -108,6 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 window.selectionManager.setSelection([sid]);
                             }
                         }
+                        openAttributePopup(map, f, e.latlng);
                     } else if (mode === 'details') {
                         openSessionDetailModal(sid);
                     }

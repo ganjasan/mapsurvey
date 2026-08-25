@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('survey', '0059_section_next_label'),
+        ('survey', '0060_clear_choices_on_nonchoice_types'),
     ]
 
     operations = [

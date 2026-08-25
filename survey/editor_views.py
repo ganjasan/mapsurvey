@@ -27,6 +27,7 @@ from .layers import (
     MAX_LAYER_BYTES, MAX_LAYERS_PER_SURVEY,
 )
 from . import product_events as pe
+from .question_types import CHOICE_TYPES
 from .cloning import clone_question, clone_section
 from .html_sanitize import coerce_creator_html
 from .translation_gaps import survey_translation_gaps
@@ -988,9 +989,13 @@ def editor_question_create(request, survey_uuid, section_id):
                 survey_section=section, parent_question_id__isnull=True
             ).aggregate(Max('order_number'))['order_number__max']
             question.order_number = (max_order or 0) + 1
-            # Handle choices
+            # Handle choices. Non-choice types must never keep a choices
+            # list (the widget still posts choices_json across a type switch);
+            # stale choices used to reroute answer storage — see CHOICE_TYPES.
             choices_json = request.POST.get('choices_json', '').strip()
-            if choices_json:
+            if question.input_type not in CHOICE_TYPES:
+                question.choices = None
+            elif choices_json:
                 question.choices = _guard_choice_codes(question, json.loads(choices_json))
             question.save()
             # Funnel stage, so it fires only for a survey's *first* question --
@@ -1038,10 +1043,12 @@ def editor_question_edit(request, survey_uuid, question_id):
         if form.is_valid():
             q = form.save(commit=False)
             choices_json = request.POST.get('choices_json', '').strip()
-            if choices_json:
-                q.choices = _guard_choice_codes(question, json.loads(choices_json))
-            elif q.input_type not in ('choice', 'multichoice', 'range', 'rating', 'ranking'):
+            if q.input_type not in CHOICE_TYPES:
+                # The choices widget keeps choices_json populated across a type
+                # switch, so the type decides — not the posted field.
                 q.choices = None
+            elif choices_json:
+                q.choices = _guard_choice_codes(question, json.loads(choices_json))
             # Validation settings per question type
             vs = {}
             if q.input_type in ('number', 'range'):
@@ -1303,7 +1310,9 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
             ).aggregate(Max('order_number'))['order_number__max']
             question.order_number = (max_order or 0) + 1
             choices_json = request.POST.get('choices_json', '').strip()
-            if choices_json:
+            if question.input_type not in CHOICE_TYPES:
+                question.choices = None
+            elif choices_json:
                 question.choices = _guard_choice_codes(question, json.loads(choices_json))
             question.save()
             _save_question_translations(request, question, survey)
