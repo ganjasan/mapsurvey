@@ -30833,6 +30833,75 @@ class LayerRespondentRenderingTest(TestCase):
         self.assertNotIn('layers/%d.geojson' % self.layer.pk, html)
 
 
+class LayerPreviewTest(TestCase):
+    """The editor preview renders the same layers the respondent page does.
+
+    Both surfaces render survey_section.html from separately hand-built
+    contexts, so a key added to one silently vanishes from the other — which is
+    how the preview shipped showing an empty map over an uploaded layer.
+    """
+
+    def setUp(self):
+        from .models import SurveyMapLayer
+        from .layers import validate_layer_upload
+        self.org = Organization.objects.create(name="Layer Preview Org")
+        self.owner = User.objects.create_user(username='previewowner', password='pw12345678')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="layer_preview_survey", organization=self.org,
+            redirect_url="/thanks/", created_by=self.owner, available_languages=['en'],
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        Question.objects.create(
+            survey_section=self.section, code="LP001", name="Q", input_type="text", order_number=1,
+        )
+        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        self.layer = SurveyMapLayer.objects.create(
+            survey=self.survey, name="Zones", color="#e8971e", label_field="name",
+            geojson=geojson, feature_count=count, size_bytes=len(geojson),
+        )
+        self.client.login(username='previewowner', password='pw12345678')
+        self.url = reverse('editor_section_preview', args=[self.survey.uuid, self.section.name])
+
+    def test_preview_carries_the_layer_config(self):
+        """
+        GIVEN a survey with a reference layer
+        WHEN the creator opens the editor preview of a map section
+        THEN the preview page carries that layer's config and geometry URL
+        """
+        html = self.client.get(self.url).content.decode()
+
+        self.assertIn('ref-layers-data', html)
+        self.assertIn('#e8971e', html)
+        self.assertIn('layers/%d.geojson' % self.layer.pk, html)
+
+    def test_preview_honours_per_section_visibility(self):
+        """
+        GIVEN a section that hides the layer
+        WHEN its preview is rendered
+        THEN the preview marks the layer hidden, as the respondent page would
+        """
+        self.section.hidden_layers = [self.layer.pk]
+        self.section.save()
+
+        html = self.client.get(self.url).content.decode()
+
+        self.assertIn('data-hidden-layers="[%d]"' % self.layer.pk, html)
+
+    @override_settings(MAP_REFERENCE_LAYERS=False)
+    def test_kill_switch_empties_the_preview_too(self):
+        """
+        GIVEN the reference-layers kill switch is off
+        WHEN the preview is rendered
+        THEN it carries no layer config
+        """
+        html = self.client.get(self.url).content.decode()
+
+        self.assertNotIn('layers/%d.geojson' % self.layer.pk, html)
+
+
 class LayerEditorTest(TestCase):
     """Editor endpoints and the per-section checklist."""
 
