@@ -942,67 +942,65 @@ def survey_section(request, survey_slug, section_name):
 			result = request.POST.getlist(question.code)
 
 			if (result != []):
-				if not question.choices:
-					result = result[0]
-					if (question.input_type in ['point', 'line', 'polygon']):
-						geostr_list = [g for g in result.split('|') if g != '']
-						# The UI enforces max_features; this clamp only keeps a
-						# tampered or scripted POST within bounds. The section
-						# POST has no error-render path (required is client-side
-						# too), so excess features are discarded, not rejected.
-						max_features = (question.validation_settings or {}).get('max_features')
-						if isinstance(max_features, int) and max_features > 0:
-							geostr_list = geostr_list[:max_features]
-						for geostr in geostr_list:
-							if geostr != '':
-								answer = Answer(survey_session=survey_session, question=question)
+				# Storage dispatches on input_type ONLY. It used to branch on
+				# whether `choices` was non-empty first, so a stale choices list
+				# left over from a type switch routed a point question's GeoJSON
+				# into int() — an unhandled 500 on every submit of the section.
+				if question.input_type in ('point', 'line', 'polygon'):
+					geostr_list = [g for g in result[0].split('|') if g != '']
+					# The UI enforces max_features; this clamp only keeps a
+					# tampered or scripted POST within bounds. The section
+					# POST has no error-render path (required is client-side
+					# too), so excess features are discarded, not rejected.
+					max_features = (question.validation_settings or {}).get('max_features')
+					if isinstance(max_features, int) and max_features > 0:
+						geostr_list = geostr_list[:max_features]
+					for geostr in geostr_list:
+						if geostr != '':
+							answer = Answer(survey_session=survey_session, question=question)
 
-								gj = geojson.loads(geostr)
-								geometry = geojson.dumps(gj['geometry'])
-								resultToSave = GEOSGeometry(geometry)
+							gj = geojson.loads(geostr)
+							geometry = geojson.dumps(gj['geometry'])
+							resultToSave = GEOSGeometry(geometry)
 
-								if question.input_type == "point":
-									answer.point = resultToSave
-								elif question.input_type == "line":
-									answer.line = resultToSave
-								elif question.input_type == "polygon":
-									answer.polygon = resultToSave
+							if question.input_type == "point":
+								answer.point = resultToSave
+							elif question.input_type == "line":
+								answer.line = resultToSave
+							elif question.input_type == "polygon":
+								answer.polygon = resultToSave
 
-								answer.save()
+							answer.save()
 
-								#сохранить properties как ответы наследники
-								properties = gj['properties'];
-								for key, value in properties.items():
-									if key != 'question_id':
-										sub_question = Question.objects.get(Q(survey_section=section) & Q(code=key))
-										sub_answer = Answer(survey_session=survey_session, question=sub_question, parent_answer_id = answer)
-										if not sub_question.choices:
-											if (sub_question.input_type == 'text' or sub_question.input_type == 'text_line') and value and value[0]:
-												sub_answer.text = value[0]
-											elif sub_question.input_type == 'number' and value and value[0]:
-												sub_answer.numeric = float(value[0])
-											else:
-												pass
-										else:
-											if sub_question.input_type in ('number', 'range') and value and value[0]:
-												sub_answer.numeric = float(value[0])
-											else:
-												sub_answer.selected_choices = [int(v) for v in value if v]
-										sub_answer.save()
+							#сохранить properties как ответы наследники
+							properties = gj['properties'];
+							for key, value in properties.items():
+								if key != 'question_id':
+									sub_question = Question.objects.get(Q(survey_section=section) & Q(code=key))
+									sub_answer = Answer(survey_session=survey_session, question=sub_question, parent_answer_id = answer)
+									first = value[0] if value else None
+									if sub_question.input_type in ('text', 'text_line', 'datetime'):
+										if first:
+											sub_answer.text = first
+									elif sub_question.input_type in ('number', 'range'):
+										if first:
+											sub_answer.numeric = float(first)
+									elif sub_question.input_type in ('choice', 'multichoice', 'rating'):
+										sub_answer.selected_choices = [int(v) for v in value if v]
+									sub_answer.save()
 
+				elif question.input_type in ('text', 'text_line', 'datetime'):
+					# datetime keeps its raw datetime-local string; that is the
+					# form prepopulation and analytics read back from `text`.
+					answer = Answer(survey_session=survey_session, question=question)
+					answer.text = result[0]
+					answer.save()
 
-					else:
-						answer = Answer(survey_session=survey_session, question=question)
-
-						if (question.input_type == "text" or question.input_type == "text_line"):
-							answer.text = result
-						elif question.input_type == "number":
-							if result:
-								answer.numeric = float(result)
-						else:
-							pass
-
-						answer.save()
+				elif question.input_type in ('number', 'range'):
+					answer = Answer(survey_session=survey_session, question=question)
+					if result[0]:
+						answer.numeric = float(result[0])
+					answer.save()
 
 				elif question.input_type == 'ranking':
 					# The submitted order is the DOM order of the widget's hidden
@@ -1018,14 +1016,12 @@ def survey_section(request, survey_slug, section_name):
 						answer.selected_choices = [int(r) for r in submitted]
 						answer.save()
 
-				else:
+				elif question.input_type in ('choice', 'multichoice', 'rating'):
 					answer = Answer(survey_session=survey_session, question=question)
-					if question.input_type in ("number", "range"):
-						answer.numeric = float(result[0])
-					else:
-						answer.selected_choices = [int(r) for r in result if r]
-
+					answer.selected_choices = [int(r) for r in result if r]
 					answer.save()
+
+				# html/image collect nothing; any other type stores nothing.
 
 		emit_event(survey_session, 'section_submit', {
 			'section_name': section.name, 'section_index': section_current,
