@@ -11527,6 +11527,182 @@ class AnalyticsViewTest(TestCase):
         self.assertContains(response, 'Hello')
 
 
+class GeoSubanswerVisibilityTest(TestCase):
+    """Sub-answers (mapped-object attributes) in the editor Responses screen."""
+
+    def setUp(self):
+        from .analytics import SurveyAnalyticsService
+        self.SurveyAnalyticsService = SurveyAnalyticsService
+
+        self.org = _make_org('GeoSubOrg')
+        self.user = User.objects.create_user('geosubowner', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='geosubowner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+        self.survey = SurveyHeader.objects.create(
+            name='geosub_test', organization=self.org,
+            created_by=self.user, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.q_point = Question.objects.create(
+            survey_section=self.section, name='Tree', code='q1',
+            input_type='point', order_number=1,
+        )
+        self.sub_species = Question.objects.create(
+            survey_section=self.section, name='Species', code='q1a',
+            input_type='choice', order_number=1, parent_question_id=self.q_point,
+            choices=[{'code': 1, 'name': 'Oak'}, {'code': 2, 'name': 'Pine'}],
+        )
+        self.sub_height = Question.objects.create(
+            survey_section=self.section, name='Height', code='q1b',
+            input_type='number', order_number=2, parent_question_id=self.q_point,
+        )
+        self.sub_notes = Question.objects.create(
+            survey_section=self.section, name='Notes', code='q1c',
+            input_type='text', order_number=3, parent_question_id=self.q_point,
+        )
+
+    def _add_object(self, session, point, species=None, height=None, notes=None):
+        """Helper: create one geo answer with optional sub-answers."""
+        geo = Answer.objects.create(
+            survey_session=session, question=self.q_point, point=point,
+        )
+        if species is not None:
+            Answer.objects.create(
+                survey_session=session, question=self.sub_species,
+                parent_answer_id=geo, selected_choices=[species],
+            )
+        if height is not None:
+            Answer.objects.create(
+                survey_session=session, question=self.sub_height,
+                parent_answer_id=geo, numeric=height,
+            )
+        if notes is not None:
+            Answer.objects.create(
+                survey_session=session, question=self.sub_notes,
+                parent_answer_id=geo, text=notes,
+            )
+        return geo
+
+    def test_feature_collection_includes_ordered_attributes(self):
+        """
+        GIVEN a point answer with choice, number and text sub-answers
+        WHEN get_geo_feature_collection is called
+        THEN the feature carries attributes in sub-question order with
+             type-appropriate display values
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        self._add_object(session, Point(30.5, 60.0), species=1, height=12, notes='old tree')
+
+        fc = self.SurveyAnalyticsService(self.survey).get_geo_feature_collection()
+
+        self.assertEqual(len(fc['features']), 1)
+        self.assertEqual(fc['features'][0]['properties']['attributes'], [
+            {'name': 'Species', 'value': 'Oak'},
+            {'name': 'Height', 'value': '12.0'},
+            {'name': 'Notes', 'value': 'old tree'},
+        ])
+
+    def test_feature_without_subanswers_has_empty_attributes(self):
+        """
+        GIVEN a point answer with no child answers
+        WHEN get_geo_feature_collection is called
+        THEN its feature has an empty attributes list and keeps existing keys
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        self._add_object(session, Point(30.5, 60.0))
+
+        fc = self.SurveyAnalyticsService(self.survey).get_geo_feature_collection()
+
+        props = fc['features'][0]['properties']
+        self.assertEqual(props['attributes'], [])
+        self.assertEqual(props['question'], 'Tree')
+        self.assertEqual(props['type'], 'point')
+        self.assertEqual(props['session_id'], session.id)
+
+    def test_feature_collection_query_count_is_bounded(self):
+        """
+        GIVEN many geo objects with sub-answers
+        WHEN get_geo_feature_collection is called
+        THEN the number of queries does not grow with the number of objects
+        """
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        session = SurveySession.objects.create(survey=self.survey)
+        self._add_object(session, Point(30.5, 60.0), species=1, height=1)
+        with CaptureQueriesContext(connection) as small:
+            self.SurveyAnalyticsService(self.survey).get_geo_feature_collection()
+
+        for i in range(5):
+            self._add_object(session, Point(30.5 + i, 60.0), species=2, height=i)
+        with CaptureQueriesContext(connection) as large:
+            self.SurveyAnalyticsService(self.survey).get_geo_feature_collection()
+
+        self.assertEqual(len(small), len(large))
+
+    def test_session_answers_number_multiple_objects(self):
+        """
+        GIVEN a session with two points for one geo question
+        WHEN format_session_answers is called
+        THEN each object row is numbered and carries its own attributes
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        self._add_object(session, Point(30.5, 60.0), species=1)
+        self._add_object(session, Point(31.5, 61.0), species=2)
+
+        rows, features = self.SurveyAnalyticsService(self.survey).format_session_answers(session)
+
+        geo_rows = [r for r in rows if r['input_type'] == 'point']
+        self.assertEqual([r['value'] for r in geo_rows], ['point feature 1', 'point feature 2'])
+        self.assertEqual(geo_rows[0]['attributes'], [{'name': 'Species', 'value': 'Oak'}])
+        self.assertEqual(geo_rows[1]['attributes'], [{'name': 'Species', 'value': 'Pine'}])
+        self.assertEqual(features[0]['properties']['attributes'], geo_rows[0]['attributes'])
+        self.assertEqual(features[1]['properties']['attributes'], geo_rows[1]['attributes'])
+
+    def test_session_answers_single_object_keeps_plain_value(self):
+        """
+        GIVEN a session with one geo object and no sub-answers
+        WHEN format_session_answers is called
+        THEN the row value stays un-numbered and attributes are empty
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        self._add_object(session, Point(30.5, 60.0))
+
+        rows, _ = self.SurveyAnalyticsService(self.survey).format_session_answers(session)
+
+        geo_row = next(r for r in rows if r['input_type'] == 'point')
+        self.assertEqual(geo_row['value'], 'point feature')
+        self.assertEqual(geo_row['attributes'], [])
+
+    def test_session_detail_markup_shows_and_escapes_subanswers(self):
+        """
+        GIVEN a geo object whose text sub-answer contains markup
+        WHEN the session detail modal is rendered
+        THEN the attribute name and value appear and the markup is escaped
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        self._add_object(
+            session, Point(30.5, 60.0), species=1,
+            notes='<script>alert(1)</script>',
+        )
+
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/analytics/sessions/{session.id}/'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Species')
+        self.assertContains(response, 'Oak')
+        self.assertContains(response, '&lt;script&gt;alert(1)&lt;/script&gt;')
+        self.assertNotContains(response, '<script>alert(1)</script>')
+
+
 class CrossFilteringServiceTest(TestCase):
     """Tests for cross-filtering analytics features."""
 

@@ -301,6 +301,41 @@ class SurveyAnalyticsService:
             })
         return result
 
+    @staticmethod
+    def _subanswer_display(answer):
+        """Display value for a sub-answer, or None when there is nothing to show."""
+        input_type = answer.question.input_type
+        if input_type in ('choice', 'multichoice', 'rating'):
+            return ', '.join(answer.get_selected_choice_names()) or None
+        if input_type in ('number', 'range'):
+            return str(answer.numeric) if answer.numeric is not None else None
+        if input_type in ('text', 'text_line', 'datetime'):
+            return answer.text or None
+        return None
+
+    def _subanswers_by_parent(self, parent_ids):
+        """Map parent answer id -> ordered [{'name', 'value'}] in one query.
+
+        Answer.subAnswers() queries per sub-question per answer, which is N+1
+        on a map payload; the callers here batch all geo answers instead.
+        """
+        sub_answers = (
+            Answer.objects
+            .filter(parent_answer_id__in=parent_ids)
+            .select_related('question')
+            .order_by('question__order_number', 'id')
+        )
+        grouped = {}
+        for sub in sub_answers:
+            value = self._subanswer_display(sub)
+            if value is None:
+                continue
+            grouped.setdefault(sub.parent_answer_id_id, []).append({
+                'name': sub.question.name,
+                'value': value,
+            })
+        return grouped
+
     def get_geo_feature_collection(self):
         """Return GeoJSON FeatureCollection with all geo answers in scope."""
         geo_answers = (
@@ -317,6 +352,9 @@ class SurveyAnalyticsService:
         # renders as one layer even when its objects differ across versions.
         rep_by_qid = self._rep_question_by_qid()
 
+        geo_answers = list(geo_answers)
+        attributes_by_parent = self._subanswers_by_parent([a.id for a in geo_answers])
+
         features = []
         for a in geo_answers:
             geom = a.point or a.line or a.polygon
@@ -330,6 +368,7 @@ class SurveyAnalyticsService:
                     'question': rep.name,
                     'type': rep.input_type,
                     'session_id': a.survey_session_id,
+                    'attributes': attributes_by_parent.get(a.id, []),
                 },
             })
 
@@ -678,17 +717,28 @@ class SurveyAnalyticsService:
         Returns (answer_rows, geo_features) where answer_rows is a list of dicts
         and geo_features is a list of GeoJSON Feature dicts.
         """
-        answers = (
+        answers = list(
             Answer.objects
             .filter(survey_session=session, parent_answer_id__isnull=True)
             .select_related('question', 'question__survey_section')
-            .order_by('question__survey_section__id', 'question__order_number')
+            .order_by('question__survey_section__id', 'question__order_number', 'id')
         )
+
+        geo_ids = [a.id for a in answers if a.question.input_type in ('point', 'line', 'polygon')]
+        attributes_by_parent = self._subanswers_by_parent(geo_ids) if geo_ids else {}
+        # One geo Answer is one drawn object; several objects for the same
+        # question are sibling rows, numbered so their attributes read apart.
+        geo_totals = {}
+        for a in answers:
+            if a.id in geo_ids and (a.point or a.line or a.polygon):
+                geo_totals[a.question_id] = geo_totals.get(a.question_id, 0) + 1
+        geo_object_counts = {}
 
         answer_rows = []
         geo_features = []
         for a in answers:
             q = a.question
+            attributes = []
             if q.input_type in ('choice', 'multichoice', 'rating'):
                 value = ', '.join(a.get_selected_choice_names()) or '\u2014'
             elif q.input_type in ('number', 'range'):
@@ -698,12 +748,21 @@ class SurveyAnalyticsService:
             elif q.input_type in ('point', 'line', 'polygon'):
                 geom = a.point or a.line or a.polygon
                 if geom:
+                    attributes = attributes_by_parent.get(a.id, [])
+                    geo_object_counts[q.id] = geo_object_counts.get(q.id, 0) + 1
                     geo_features.append({
                         'type': 'Feature',
                         'geometry': json.loads(geom.geojson),
-                        'properties': {'question': q.name, 'type': q.input_type},
+                        'properties': {
+                            'question': q.name,
+                            'type': q.input_type,
+                            'attributes': attributes,
+                        },
                     })
-                    value = q.input_type + ' feature'
+                    if geo_totals.get(q.id, 0) > 1:
+                        value = '%s feature %d' % (q.input_type, geo_object_counts[q.id])
+                    else:
+                        value = q.input_type + ' feature'
                 else:
                     value = '\u2014'
             else:
@@ -715,6 +774,7 @@ class SurveyAnalyticsService:
                 'section_name': q.survey_section.title or q.survey_section.name,
                 'input_type': q.input_type,
                 'value': value,
+                'attributes': attributes,
                 'editable': q.input_type in ('text', 'text_line', 'number', 'range', 'choice', 'multichoice', 'rating', 'datetime'),
             })
 
