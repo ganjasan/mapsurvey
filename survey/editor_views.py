@@ -1597,6 +1597,10 @@ def editor_section_map_picker(request, survey_uuid, section_id):
 @survey_permission_required('viewer')
 @xframe_options_sameorigin
 def editor_section_preview(request, survey_uuid, section_name):
+    # Local import: views imports editor_forms, so a module-level import here
+    # would close the circle (the two thanks-page helpers above do the same).
+    from .views import _build_map_layers_metadata
+
     survey = request.survey
     section = get_object_or_404(SurveySection, survey_header=survey, name=section_name)
 
@@ -1653,6 +1657,12 @@ def editor_section_preview(request, survey_uuid, section_name):
         'initial_map_lng': section.start_map_postion.x if section.start_map_postion else (survey.start_map_postion.x if survey.start_map_postion else 13.405),
         'initial_map_zoom': section.start_map_zoom if section.start_map_zoom is not None else (survey.start_map_zoom if survey.start_map_zoom is not None else 12),
         'initial_use_geolocation': survey.use_geolocation,
+        # Same helper the respondent view uses: two views render this shell from
+        # two hand-built contexts, and a layer list built twice would drift.
+        'map_layers': _build_map_layers_metadata(survey),
+        'hidden_layers_json': json.dumps(
+            [i for i in (section.hidden_layers or []) if isinstance(i, int)]
+        ),
     })
 
     if selected_language:
