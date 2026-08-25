@@ -4,6 +4,11 @@
            placeholder="Type to search…" value="{{ widget.selected_label }}">
     <select name="{{ widget.name }}" class="cd-select" hidden
             {% for name, value in widget.attrs.items %}{% if value is not False %} {{ name }}{% if value is not True %}="{{ value|stringformat:'s' }}"{% endif %}{% endif %}{% endfor %}>
+        {% comment %}A select with no blank entry is never empty — the browser selects
+        the first option, so an untouched dropdown used to submit choice 1 and pass the
+        required check as if the respondent had picked it. The placeholder is what makes
+        "nothing chosen" a real state; it stays out of the visible list below.{% endcomment %}
+        <option value=""{% if not widget.selected_label %} selected{% endif %}></option>
         {% for group_name, group_choices, group_index in widget.optgroups %}{% for option in group_choices %}
         <option value="{{ option.value|stringformat:'s' }}"{% if option.selected %} selected{% endif %}></option>
         {% endfor %}{% endfor %}

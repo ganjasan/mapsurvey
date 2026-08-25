@@ -29597,6 +29597,107 @@ class ChoiceDropdownDisplayTest(TestCase):
         self.assertEqual(field.clean('3'), '3')
 
 
+class ChoiceDropdownEmptyValueTest(TestCase):
+    """An untouched dropdown must hold no value.
+
+    A <select> with no blank entry is never empty — the browser selects the
+    first option, so the widget used to arrive pre-answered: the required check
+    saw a value and passed the card, and the POST stored choice 1 as if the
+    respondent had picked it (three of four answers on the live Olney demo).
+    """
+
+    AREAS = [{"code": i, "name": f"Area {i}"} for i in range(1, 6)]
+
+    def setUp(self):
+        self.client = Client()
+        self.org = Organization.objects.create(name="Dropdown Empty Org")
+        self.survey = SurveyHeader.objects.create(
+            name="dropdown_empty_survey", organization=self.org,
+            redirect_url="/thanks/", status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="section1", title="S1", code="S1", is_head=True,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, code="CDE001", name="Which counting area?",
+            input_type="choice", choices=self.AREAS, order_number=1,
+            display_style='dropdown', required=True,
+        )
+
+    def _visit(self):
+        return self.client.get('/surveys/dropdown_empty_survey/section1/')
+
+    def test_unanswered_dropdown_selects_the_placeholder(self):
+        """
+        GIVEN a dropdown question with no stored answer
+        WHEN the section is rendered
+        THEN the hidden select carries a selected blank option, so the browser cannot fall back to the first real choice
+        """
+        html = self._visit().content.decode()
+
+        self.assertIn('<option value="" selected>', html)
+        self.assertNotIn('<option value="1" selected>', html)
+
+    def test_placeholder_is_absent_from_the_visible_list(self):
+        """
+        GIVEN a dropdown question
+        WHEN the section is rendered
+        THEN the visible option list holds only real choices
+        """
+        html = self._visit().content.decode()
+
+        options = re.findall(r'<li class="cd-option"[^>]*data-value="([^"]*)"', html)
+        self.assertEqual(options, ['1', '2', '3', '4', '5'])
+
+    def test_stored_answer_selects_its_own_option(self):
+        """
+        GIVEN a session that already answered the dropdown question
+        WHEN the section is rendered again
+        THEN that option is selected and the placeholder is not
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(
+            survey_session=session, question=self.question, selected_choices=[3],
+        )
+        s = self.client.session
+        s['survey_session_id'] = session.id
+        s.save()
+
+        html = self._visit().content.decode()
+
+        self.assertIn('<option value="3" selected>', html)
+        self.assertNotIn('<option value="" selected>', html)
+
+    def test_empty_submission_stores_no_answer(self):
+        """
+        GIVEN a section whose dropdown question was never touched
+        WHEN it is submitted with the placeholder's empty value
+        THEN no answer is stored for that question
+        """
+        self._visit()
+        session_id = self.client.session['survey_session_id']
+
+        self.client.post('/surveys/dropdown_empty_survey/section1/', {'CDE001': ''})
+
+        self.assertFalse(
+            Answer.objects.filter(survey_session_id=session_id, question=self.question).exists()
+        )
+
+    def test_chosen_option_still_stores_its_code(self):
+        """
+        GIVEN a respondent who picked an option
+        WHEN the section is submitted
+        THEN the answer stores that code, unchanged by the placeholder
+        """
+        self._visit()
+        session_id = self.client.session['survey_session_id']
+
+        self.client.post('/surveys/dropdown_empty_survey/section1/', {'CDE001': '3'})
+
+        answer = Answer.objects.get(survey_session_id=session_id, question=self.question)
+        self.assertEqual(answer.selected_choices, [3])
+
+
 class ChoiceDropdownSerializationTest(TestCase):
     """display_style 'dropdown' in export/import round-trip."""
 
