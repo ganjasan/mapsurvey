@@ -14,6 +14,8 @@ import os
 from pathlib import Path
 from urllib.parse import urlparse
 
+from mapsurvey.media_prefixes import media_locations, namespace_from_env
+
 try:
     from dotenv import load_dotenv
 except ImportError:
@@ -220,37 +222,82 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
 
-#STATIC FILES 
+# STATIC FILES
+#
+# Static never moves to object storage. Manifest storage fingerprints filenames
+# with a content hash, so WhiteNoise serves hashed assets with far-future
+# immutable Cache-Control and Cloudflare's edge can cache them for a year.
+# Deploys bust caches by hash. Side effect: collectstatic fails on dangling
+# static references (surfaces at deploy, not at runtime).
+STATIC_URL = '/staticfiles/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+_STATICFILES_BACKEND = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# MEDIA FILES
+#
+# Uploaded media does have to leave the instance filesystem: a Render disk
+# attaches to one instance at a time, which is what rules out zero-downtime
+# deploys and pins the web service to a single instance.
 USE_S3 = os.getenv('USE_S3') == 'TRUE'
 
 if USE_S3:
-    # aws settings
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-    AWS_DEFAULT_ACL = 'public-read'
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'ap-southeast-2')
+
+    # Buckets created since April 2023 default to Object Ownership =
+    # BucketOwnerEnforced, which disables ACLs outright — sending one fails the
+    # upload with AccessControlListNotSupported. Public read comes from the
+    # bucket policy instead, so no object may carry an ACL.
+    AWS_DEFAULT_ACL = None
+
+    # The domain must carry the Region. The legacy global form
+    # ({bucket}.s3.amazonaws.com) answers 307 for a bucket outside us-east-1:
+    # browsers follow the redirect, boto3 does not for every verb, and every
+    # viewer pays an extra round trip to Virginia first.
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
     AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
-    # s3 static settings
-    AWS_LOCATION = 'static'
-    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
-    STATICFILES_STORAGE = 'survey.storage_backends.StaticStorage'
-    # s3 media settings
-    PUBLIC_MEDIA_LOCATION = 'media'
+
+    # Sign with SigV4 against the bucket's own Region. Without both of these,
+    # boto3 falls back to the deprecated SigV2 scheme on the legacy global
+    # endpoint — which is the same region-less host that answers 307, only now
+    # on the URLs that respondents' private files depend on.
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_S3_ADDRESSING_STYLE = 'virtual'
+
+    # Lifetime of a signed link to a private object. Short enough that a leaked
+    # URL stops working quickly, long enough to survive a slow page load.
+    AWS_QUERYSTRING_EXPIRE = int(os.getenv('AWS_QUERYSTRING_EXPIRE', '900'))
+
+    # Each environment writes under its own namespace, so a PR preview cannot
+    # address — let alone overwrite — a production key. Production keeps the
+    # bare prefixes, which is where the relative paths already in the database
+    # resolve, so the move needs no data rewrite.
+    MEDIA_S3_NAMESPACE = namespace_from_env(os.environ)
+
+    # Two tiers, and the split matters. Creator artwork is public — it is
+    # already on display on every survey and public results page. Respondent
+    # submissions are private and reachable only through a signed URL: a link
+    # is not an access control, and links leak into logs, Referer headers,
+    # exported archives and screenshots.
+    PUBLIC_MEDIA_LOCATION, PRIVATE_MEDIA_LOCATION = media_locations(MEDIA_S3_NAMESPACE)
+
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/'
-    DEFAULT_FILE_STORAGE = 'survey.storage_backends.PublicMediaStorage'
+
+    STORAGES = {
+        'default': {'BACKEND': 'survey.storage_backends.PublicMediaStorage'},
+        'staticfiles': {'BACKEND': _STATICFILES_BACKEND},
+    }
 
 else:
-    STATIC_URL = '/staticfiles/'
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-    # Manifest storage fingerprints filenames with a content hash, so WhiteNoise
-    # serves hashed assets with far-future immutable Cache-Control and Cloudflare's
-    # edge can cache them for a year. Deploys bust caches by hash. Side effect:
-    # collectstatic fails on dangling static references (surfaces at deploy, not
-    # at runtime).
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
     MEDIA_URL = '/mediafiles/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
+
+    STORAGES = {
+        'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+        'staticfiles': {'BACKEND': _STATICFILES_BACKEND},
+    }
 
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'survey/assets'),)
 
