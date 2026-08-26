@@ -4,6 +4,16 @@
         <span class="q-name">{{ question.name|default:"(unnamed)" }}</span>
         <span class="badge badge-secondary">{{ question|input_type_label }}</span>
         {% if question.required %}<span class="badge badge-danger">Required</span>{% endif %}
+        {% load question_utils %}{% with vis=question|visibility_info:survey %}{% if vis %}
+        {% if vis.broken %}
+        <span class="badge badge-warning" title="{{ vis.reason }}. Shown to everyone until fixed."><i class="fas fa-exclamation-triangle"></i> broken rule</span>
+        {% else %}
+        <span class="badge badge-info" title="{{ vis.label }}" style="background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe;"><i class="fas fa-code-branch"></i> {{ vis.label|truncatechars:40 }}</span>
+        {% endif %}
+        {% endif %}{% endwith %}
+        {% with dep_count=question|visibility_dependents:survey %}{% if dep_count %}
+        <span class="badge badge-light" title="{{ dep_count }} visibility rule{{ dep_count|pluralize }} depend{{ dep_count|pluralize:'s,' }} on this question's answer" style="border:1px solid #b6d4fe;color:#0b5ed7;"><i class="fas fa-code-branch"></i> {{ dep_count }}</span>
+        {% endif %}{% endwith %}
         {% with missing=question|question_missing_langs:survey %}{% if missing %}
         <span class="badge badge-warning" title="Missing translations — respondents in these languages will see {{ survey.available_languages.0|language_name }} text">
             <i class="fas fa-language"></i> {{ missing|join:", " }}</span>

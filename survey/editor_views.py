@@ -294,14 +294,30 @@ def _start_survey_generation(request, form):
         # small div inside the form the creator is still looking at, so
         # re-rendering survey_create.html here would duplicate every id and
         # re-run the page's Leaflet setup against an initialised map.
+        # Two shapes of the same errors: the flat list keeps the card readable
+        # without JS, `field_errors` lets the page mark each offending input in
+        # place (the card is then hidden client-side when nothing is left
+        # unanchored — errors belong next to their source, not below the fold).
         errors = []
+        field_errors = []
+        unanchored_count = 0
         for field_form in (form, brief_form):
             for field_name, messages in field_form.errors.items():
-                label = field_form.fields[field_name].label or field_name.replace('_', ' ')
-                errors.extend('%s: %s' % (label, message) for message in messages)
+                if field_name in field_form.fields:
+                    label = field_form.fields[field_name].label or field_name.replace('_', ' ')
+                    errors.extend('%s: %s' % (label, message) for message in messages)
+                    field_errors.append({
+                        'field_id': field_form[field_name].auto_id,
+                        'messages': [str(message) for message in messages],
+                    })
+                else:
+                    errors.extend(str(message) for message in messages)
+                    unanchored_count += len(messages)
         return render(request, 'editor/partials/generation_invalid.html', {
             'message': 'Check the form before generating a draft.',
             'errors': errors,
+            'field_errors': field_errors,
+            'unanchored_count': unanchored_count,
         })
 
     languages = form.cleaned_data.get('available_languages') or ['en']
@@ -489,7 +505,27 @@ def editor_survey_detail(request, survey_uuid):
         if draft_event is not None:
             feedback_trace_id = pe.llm_trace_id(draft_event.pk)
 
+    # Uncovered-option lint: options of a fanned-out controller that show no
+    # section. Human-readable hints; the underlying data comes from the same
+    # module the runtime fails open on.
+    visibility_lint_hints = []
+    if getattr(settings, 'CONDITIONAL_VISIBILITY', False):
+        from .visibility import lint_rules
+        lint = lint_rules(survey)
+        controllers = {q.id: q for s in sections for q in s.questions()}
+        for controller_id, missing in lint['uncovered'].items():
+            controller = controllers.get(controller_id)
+            if controller is None:
+                continue
+            names = ', '.join(f'“{controller.get_choice_name(c)}”' for c in missing)
+            visibility_lint_hints.append(
+                f'Answer{"s" if len(missing) > 1 else ""} {names} of '
+                f'“{controller.name or controller.code}” do'
+                f'{"" if len(missing) > 1 else "es"} not show any section.'
+            )
+
     return render(request, 'editor/survey_detail.html', {
+        'visibility_lint_hints': visibility_lint_hints,
         'session_count': survey.surveysession_set.count(),
         'ai_feedback_trace_id': feedback_trace_id,
         'survey': survey,
@@ -828,6 +864,53 @@ def editor_section_create(request, survey_uuid):
     })
 
 
+def _parse_visibility_rule(request):
+    """Read the Visibility block's POST fields.
+
+    Returns (present, rule_or_None, error_or_None). ``present`` False = the
+    block wasn't posted (kill switch off, stale form) — leave the stored rule
+    untouched. Mode 'always' clears the rule; 'conditional' requires a
+    controller and at least one option code.
+    """
+    if not getattr(settings, 'CONDITIONAL_VISIBILITY', False):
+        return False, None, None
+    mode = request.POST.get('visibility_mode')
+    if mode is None:
+        return False, None, None
+    if mode != 'conditional':
+        return True, None, None
+    code = request.POST.get('visibility_question', '').strip()
+    codes = []
+    for raw in request.POST.getlist('visibility_choices'):
+        try:
+            codes.append(int(raw))
+        except (TypeError, ValueError):
+            continue
+    if not code or not codes:
+        return True, None, 'Pick a controlling question and at least one of its answers.'
+    return True, {'question_code': code, 'choice_codes': codes}, None
+
+
+def _visibility_block_context(survey, host_section, host_kind, host=None):
+    """Context for editor/partials/_visibility_block.html."""
+    if not getattr(settings, 'CONDITIONAL_VISIBILITY', False):
+        return {'visibility_enabled': False}
+    from .visibility import controller_options
+    groups = controller_options(
+        survey, host_section, host_kind,
+        host_question=host if host_kind == 'question' else None,
+    )
+    rule = getattr(host, 'visibility_rule', None) if host is not None else None
+    rule = rule if isinstance(rule, dict) else None
+    return {
+        'visibility_enabled': True,
+        'visibility_groups': groups,
+        'visibility_rule': rule,
+        'visibility_rule_codes': (rule or {}).get('choice_codes', []),
+        'visibility_rule_question': (rule or {}).get('question_code'),
+    }
+
+
 @survey_permission_required('editor')
 def editor_section_detail(request, survey_uuid, section_id):
     survey = request.survey
@@ -840,6 +923,12 @@ def editor_section_detail(request, survey_uuid, section_id):
         form = SurveySectionForm(request.POST, instance=section)
         if form.is_valid():
             form.save()
+            vis_present, vis_rule, vis_error = _parse_visibility_rule(request)
+            if vis_error:
+                return JsonResponse({'ok': False, 'errors': {'visibility': [vis_error]}}, status=422)
+            if vis_present:
+                section.visibility_rule = vis_rule
+                section.save(update_fields=['visibility_rule'])
             # Save translations
             _save_section_translations(request, section, survey)
             if request.headers.get('HX-Request'):
@@ -858,6 +947,7 @@ def editor_section_detail(request, survey_uuid, section_id):
 
     hidden_ids = set(i for i in (section.hidden_layers or []) if isinstance(i, int))
     return render(request, 'editor/partials/section_detail_form.html', {
+        **_visibility_block_context(survey, section, 'section', host=section),
         'survey': survey,
         'section': section,
         'form': form,
@@ -997,6 +1087,17 @@ def editor_question_create(request, survey_uuid, section_id):
                 question.choices = None
             elif choices_json:
                 question.choices = _guard_choice_codes(question, json.loads(choices_json))
+            vis_present, vis_rule, vis_error = _parse_visibility_rule(request)
+            if vis_error:
+                form.add_error(None, vis_error)
+                return render(request, 'editor/partials/question_form_modal.html', {
+                    **_visibility_block_context(survey, section, 'question'),
+                    'form': form,
+                    'survey': survey,
+                    'section': section,
+                })
+            if vis_present:
+                question.visibility_rule = vis_rule
             question.save()
             # Funnel stage, so it fires only for a survey's *first* question --
             # emitting per question would make the step count questions rather
@@ -1016,6 +1117,7 @@ def editor_question_create(request, survey_uuid, section_id):
             return response
         # Form invalid — re-render modal with errors
         return render(request, 'editor/partials/question_form_modal.html', {
+            **_visibility_block_context(survey, section, 'question'),
             'form': form,
             'survey': survey,
             'section': section,
@@ -1023,6 +1125,7 @@ def editor_question_create(request, survey_uuid, section_id):
     else:
         form = QuestionForm(section=section)
     return render(request, 'editor/partials/question_form_modal.html', {
+        **_visibility_block_context(survey, section, 'question'),
         'form': form,
         'survey': survey,
         'section': section,
@@ -1088,6 +1191,20 @@ def editor_question_edit(request, survey_uuid, question_id):
                         'question': question,
                     })
             q.validation_settings = vs
+            vis_present, vis_rule, vis_error = _parse_visibility_rule(request)
+            if vis_error:
+                if request.POST.get('autosave'):
+                    return JsonResponse({'ok': False, 'errors': {'visibility': [vis_error]}}, status=422)
+                form.add_error(None, vis_error)
+                return render(request, 'editor/partials/question_form_modal.html', {
+                    **_visibility_block_context(survey, question.survey_section, 'question', host=question),
+                    'form': form,
+                    'survey': survey,
+                    'section': question.survey_section,
+                    'question': question,
+                })
+            if vis_present:
+                q.visibility_rule = vis_rule
             q.save()
             _save_question_translations(request, q, survey)
             response = render(request, 'editor/partials/question_list_item.html', {
@@ -1103,6 +1220,7 @@ def editor_question_edit(request, survey_uuid, question_id):
             # (openspec: mobile-adaptive-refactor, editor-autosave).
             return JsonResponse({'ok': False, 'errors': form.errors}, status=422)
         return render(request, 'editor/partials/question_form_modal.html', {
+            **_visibility_block_context(survey, question.survey_section, 'question', host=question),
             'form': form,
             'survey': survey,
             'section': question.survey_section,
@@ -1111,6 +1229,8 @@ def editor_question_edit(request, survey_uuid, question_id):
     else:
         form = QuestionForm(instance=question, is_subquestion=is_subquestion, section=question.survey_section)
     return render(request, 'editor/partials/question_form_modal.html', {
+        # Sub-questions live inside a geo popup and never carry rules of their own.
+        **({} if is_subquestion else _visibility_block_context(survey, question.survey_section, 'question', host=question)),
         'form': form,
         'survey': survey,
         'section': question.survey_section,
@@ -1314,6 +1434,17 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
                 question.choices = None
             elif choices_json:
                 question.choices = _guard_choice_codes(question, json.loads(choices_json))
+            vis_present, vis_rule, vis_error = _parse_visibility_rule(request)
+            if vis_error:
+                form.add_error(None, vis_error)
+                return render(request, 'editor/partials/question_form_modal.html', {
+                    **_visibility_block_context(survey, section, 'question'),
+                    'form': form,
+                    'survey': survey,
+                    'section': section,
+                })
+            if vis_present:
+                question.visibility_rule = vis_rule
             question.save()
             _save_question_translations(request, question, survey)
             # Return the parent question item (includes sub-questions)
@@ -1663,6 +1794,18 @@ def editor_section_preview(request, survey_uuid, section_name):
         'hidden_layers_json': json.dumps(
             [i for i in (section.hidden_layers or []) if isinstance(i, int)]
         ),
+        # Same-section rules so the preview plays both branches live, exactly
+        # like the respondent page (conditional_visibility.js reads this).
+        'visibility_rules_json': json.dumps({
+            q.code: {
+                'question_code': q.visibility_rule.get('question_code'),
+                'choice_codes': q.visibility_rule.get('choice_codes') or [],
+            }
+            for q in section.questions()
+            if getattr(settings, 'CONDITIONAL_VISIBILITY', False)
+            and isinstance(q.visibility_rule, dict)
+            and q.visibility_rule.get('question_code') in {qq.code for qq in section.questions()}
+        }),
     })
 
     if selected_language:

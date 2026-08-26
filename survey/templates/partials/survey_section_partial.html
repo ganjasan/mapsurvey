@@ -12,6 +12,7 @@
      data-section-name="{{ section.name|escapejs }}"
      data-section-current="{{ section_current }}"
      data-section-total="{{ section_total }}"
+     data-visibility-rules="{{ visibility_rules_json|default:'{}' }}"
      data-survey-name="{{ survey.name|escapejs }}">
 
     <div class="header">

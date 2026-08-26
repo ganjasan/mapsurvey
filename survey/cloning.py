@@ -51,6 +51,10 @@ def clone_question(
     if name_suffix:
         new_name = f"{question.name or ''}{name_suffix}"
 
+    # A visibility rule references a controller by code within the same survey.
+    # Cloning within the survey keeps it (the controller still exists there);
+    # pasting into another survey drops it — the controller does not travel.
+    same_survey = target_section.survey_header_id == question.survey_section.survey_header_id
     new_question = Question.objects.create(
         survey_section=target_section,
         parent_question_id=parent,
@@ -66,6 +70,7 @@ def clone_question(
         icon_class=question.icon_class,
         image=question.image,
         display_style=question.display_style,
+        visibility_rule=question.visibility_rule if same_survey else None,
     )
 
     for trans in QuestionTranslation.objects.filter(question=question):
@@ -139,6 +144,7 @@ def clone_section(
         survey_header=target_survey
     ).exists()
 
+    same_survey = target_survey.id == section.survey_header_id
     new_section = SurveySection.objects.create(
         survey_header=target_survey,
         is_head=is_head,
@@ -150,6 +156,9 @@ def clone_section(
         start_map_zoom=section.start_map_zoom,
         use_geolocation=section.use_geolocation,
         override_basemap=section.override_basemap,
+        # A section rule's controller lives in an EARLIER section, which stays
+        # behind on a cross-survey paste — so the rule only survives in-survey.
+        visibility_rule=section.visibility_rule if same_survey else None,
     )
 
     for trans in SurveySectionTranslation.objects.filter(section=section):
@@ -160,10 +169,12 @@ def clone_section(
             subheading=trans.subheading,
         )
 
+    pairs = []
+    code_map = {}
     for question in Question.objects.filter(
         survey_section=section, parent_question_id__isnull=True
     ).order_by('order_number'):
-        clone_question(
+        clone = clone_question(
             question,
             target_section=new_section,
             parent=None,
@@ -171,6 +182,18 @@ def clone_section(
             name_suffix=None,
             copy_sub_questions=True,
         )
+        pairs.append((question, clone))
+        code_map[question.code] = clone.code
+
+    # Intra-section rules must follow their cloned controller, not keep pointing
+    # at the source section's question. Restored from the SOURCE rule, because
+    # clone_question drops rules on cross-survey pastes — where an intra-section
+    # controller travels with the section and the rule is still meaningful.
+    for source_q, clone in pairs:
+        rule = source_q.visibility_rule
+        if isinstance(rule, dict) and rule.get('question_code') in code_map:
+            clone.visibility_rule = {**rule, 'question_code': code_map[rule['question_code']]}
+            clone.save(update_fields=['visibility_rule'])
 
     _splice_into_linked_list(new_section, target_survey, insert_after)
 
