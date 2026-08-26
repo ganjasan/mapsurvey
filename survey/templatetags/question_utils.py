@@ -1,4 +1,5 @@
 from django import template
+from django.conf import settings
 
 register = template.Library()
 
@@ -103,3 +104,42 @@ def question_subtext(field):
     if getattr(field.field.widget, 'question_type', None) not in SUBTEXT_IN_TEMPLATE_TYPES:
         return ''
     return getattr(field.field.widget, 'question_subtext', '') or ''
+
+
+@register.filter
+def choice_label(question, choice):
+    """Primary-language label of one inline choice dict (name may be a dict)."""
+    try:
+        return question.get_choice_name(choice.get("code"))
+    except Exception:
+        return str(choice.get("code", ""))
+
+
+@register.filter
+def visibility_info(item, survey):
+    """Badge info for a conditioned question/section in the structure pane.
+
+    None when the item carries no rule; {'label','broken','reason'} otherwise.
+    Walks the survey per call — editor-render scale only.
+    """
+    if not getattr(settings, 'CONDITIONAL_VISIBILITY', False):
+        return None
+    from survey.visibility import describe_rule
+    kind = 'question' if hasattr(item, 'input_type') else 'section'
+    return describe_rule(kind, item, survey)
+
+
+@register.filter
+def visibility_dependents(question, survey):
+    """How many rules across the survey depend on this question's answer."""
+    if not getattr(settings, 'CONDITIONAL_VISIBILITY', False):
+        return 0
+    if question.input_type not in ('choice', 'multichoice'):
+        return 0
+    from survey.models import Question as Q_, SurveySection as S_
+    return (
+        Q_.objects.filter(survey_section__survey_header=survey.id,
+                          visibility_rule__question_code=question.code).count()
+        + S_.objects.filter(survey_header=survey.id,
+                            visibility_rule__question_code=question.code).count()
+    )

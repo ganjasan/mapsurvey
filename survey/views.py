@@ -750,9 +750,46 @@ def survey_header(request, survey_slug):
 	#return render(request, 'survey_header.html', context)
 
 
-def _build_section_context(request, survey, session_survey, section, selected_language, section_current, section_total):
+def _session_visibility(session_survey, survey_session_id):
+	"""Visibility map for a session's current stored answers."""
+	from .visibility import compute_visibility, answers_by_code_for_session
+	session = SurveySession.objects.filter(pk=survey_session_id).first()
+	answers = answers_by_code_for_session(session) if session else {}
+	return compute_visibility(session_survey, answers)
+
+
+def _visible_chain_position(vmap, section):
+	"""(section_current, section_total) over the visible chain; None if hidden."""
+	chain_ids = [s.id for s in vmap.visible_sections]
+	if section.id not in chain_ids:
+		return None, len(chain_ids)
+	return chain_ids.index(section.id) + 1, len(chain_ids)
+
+
+def _build_section_context(request, survey, session_survey, section, selected_language, section_current, section_total, vmap=None):
 	"""Build template context for a survey section (used by both GET and POST→next)."""
-	questions = section.questions()
+	if vmap is None:
+		vmap = _session_visibility(session_survey, request.session.get('survey_session_id'))
+
+	# Questions conditioned on a controller in THIS section stay in the DOM (the
+	# client shows/hides them live); questions hidden by anything else — an
+	# earlier section's answer, a hidden controller — are excluded server-side
+	# and materialise on the next render if answers change (design D5).
+	all_questions = list(section.questions())
+	same_section_codes = {q.code for q in all_questions}
+	client_rules = {}
+	questions = []
+	for q in all_questions:
+		rule = q.visibility_rule if isinstance(q.visibility_rule, dict) else None
+		same_section_rule = bool(rule) and rule.get('question_code') in same_section_codes
+		if same_section_rule and ('question', q.id) not in vmap.broken:
+			client_rules[q.code] = {
+				'question_code': rule.get('question_code'),
+				'choice_codes': [c for c in (rule.get('choice_codes') or [])],
+			}
+			questions.append(q)
+		elif vmap.is_question_visible(q.id):
+			questions.append(q)
 
 	# Query existing answers for this session and section
 	existing_answers = Answer.objects.filter(
@@ -830,7 +867,7 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 					else:
 						initial[question.code] = int(answer.numeric)
 
-	form = SurveySectionAnswerForm(initial=initial, section=section, question=None, survey_session_id=request.session['survey_session_id'], language=selected_language)
+	form = SurveySectionAnswerForm(initial=initial, section=section, question=None, survey_session_id=request.session['survey_session_id'], language=selected_language, questions_override=questions)
 
 	subquestions_forms = {}
 	for question in questions:
@@ -851,6 +888,7 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 		'section_current': section_current,
 		'section_total': section_total,
 		'hidden_layers_json': json.dumps([i for i in (section.hidden_layers or []) if isinstance(i, int)]),
+		'visibility_rules_json': json.dumps(client_rules),
 	}
 
 
@@ -933,17 +971,19 @@ def survey_section(request, survey_slug, section_name):
 		request.session.pop('survey_session_id', None)
 		return redirect('survey', survey_slug=str(survey.uuid))
 
-	# Compute progress: current section index (1-based) and total sections
-	section_current = 1
-	s = section
-	while s.prev_section:
-		s = s.prev_section
-		section_current += 1
-	section_total = section_current
-	s = section
-	while s.next_section:
-		s = s.next_section
-		section_total += 1
+	# Visibility for this session's stored answers; progress counts the visible
+	# chain only (kill switch off → the chain is the full linked list).
+	vmap = _session_visibility(session_survey, survey_session.id)
+
+	# A hidden section must not render, even by direct URL — same exit as an
+	# unknown section name, but the session survives (only the URL was wrong).
+	if request.method != 'POST' and not vmap.is_section_visible(section.id):
+		return redirect('survey', survey_slug=str(survey.uuid))
+
+	section_current, section_total = _visible_chain_position(vmap, section)
+	if section_current is None:
+		# POST to a hidden section (stale tab): treat like the direct-URL case.
+		return redirect('survey', survey_slug=str(survey.uuid))
 
 	if request.method == 'POST':
 		form = SurveySectionAnswerForm(initial=request.POST, section=section, question=None, survey_session_id=request.session['survey_session_id'], language=selected_language)
@@ -951,6 +991,21 @@ def survey_section(request, survey_slug, section_name):
 		#save data to answers
 		section_questions = section.questions()
 		survey_session = SurveySession.objects.get(pk=request.session['survey_session_id'])
+
+		# Visibility under the SUBMITTED state: stored answers overlaid with the
+		# controller values in this POST. A value posted for a question hidden
+		# under this state (stale DOM, back-navigation, tampering) is discarded
+		# below — the server never trusts the client's idea of what was visible.
+		from .visibility import compute_visibility, answers_by_code_for_session, CONTROLLER_TYPES
+		submitted_answers = answers_by_code_for_session(survey_session)
+		for q in section_questions:
+			if q.input_type in CONTROLLER_TYPES:
+				posted = [int(v) for v in request.POST.getlist(q.code) if v != '']
+				if posted:
+					submitted_answers[q.code] = posted
+				else:
+					submitted_answers.pop(q.code, None)
+		vmap_post = compute_visibility(session_survey, submitted_answers)
 
 		# Delete existing answers for this session and section before saving new ones
 		section_question_ids = [q.id for q in section_questions]
@@ -961,6 +1016,8 @@ def survey_section(request, survey_slug, section_name):
 		).delete()
 
 		for question in section_questions:
+			if not vmap_post.is_question_visible(question.id):
+				continue
 			result = request.POST.getlist(question.code)
 			# An unanswered control still posts its name with an empty value —
 			# the dropdown's placeholder option is the case that surfaced this.
@@ -1049,35 +1106,64 @@ def survey_section(request, survey_slug, section_name):
 
 				# html/image collect nothing; any other type stores nothing.
 
+		# Abandoned-branch cleanup: with the new answers stored, purge answers to
+		# questions now hidden anywhere in the survey (changing "Area 7" to
+		# "Area 4" removes what was collected inside the Area 7 section). Geo
+		# parents cascade to their sub-answers.
+		vmap_final = compute_visibility(session_survey, answers_by_code_for_session(survey_session))
+		hidden_question_ids = [qid for qid, visible in vmap_final.question_visible.items() if not visible]
+		if hidden_question_ids:
+			Answer.objects.filter(
+				survey_session=survey_session,
+				question_id__in=hidden_question_ids,
+				parent_answer_id__isnull=True,
+			).delete()
+
 		emit_event(survey_session, 'section_submit', {
 			'section_name': section.name, 'section_index': section_current,
 		})
+
+		# Navigation walks the visible chain under the just-saved answers.
+		chain = vmap_final.visible_sections
+		chain_ids = [s.id for s in chain]
+		if section.id in chain_ids:
+			pos = chain_ids.index(section.id)
+		else:
+			# The just-submitted section went hidden (its own controller changed
+			# on this very submit). Fall back to the nearest visible ancestor.
+			pos = 0
+			s = section
+			while s.prev_section:
+				s = s.prev_section
+				if s.id in chain_ids:
+					pos = chain_ids.index(s.id)
+					break
+		next_visible = chain[pos + 1] if pos + 1 < len(chain) else None
+		prev_visible = chain[pos - 1] if pos > 0 else None
+		section_total = len(chain)
 
 		nav_direction = request.POST.get('nav_direction', 'forward')
 		is_htmx = request.headers.get('HX-Request') == 'true'
 
 		if is_htmx:
-			if nav_direction == 'back' and section.prev_section:
-				prev_sec = section.prev_section
-				prev_current = section_current - 1
+			if nav_direction == 'back' and prev_visible:
+				prev_current = chain_ids.index(prev_visible.id) + 1
 				# HTMX swaps the partial without a GET, so emit the view here —
 				# otherwise only the head section (initial GET) ever records a view.
 				emit_event(survey_session, 'section_view', {
-					'section_name': prev_sec.name, 'section_index': prev_current,
+					'section_name': prev_visible.name, 'section_index': prev_current,
 				})
-				prev_ctx = _build_section_context(request, survey, session_survey, prev_sec, selected_language, prev_current, section_total)
+				prev_ctx = _build_section_context(request, survey, session_survey, prev_visible, selected_language, prev_current, section_total, vmap=vmap_final)
 				return render(request, 'partials/survey_section_partial.html', prev_ctx)
 
-			if section.next_section:
-				next_sec = section.next_section
-				# Recompute progress for next section
-				next_current = section_current + 1
+			if next_visible:
+				next_current = chain_ids.index(next_visible.id) + 1
 				# HTMX swaps the partial without a GET — emit the view for the
 				# section actually shown, so downstream sections aren't stuck at 0 views.
 				emit_event(survey_session, 'section_view', {
-					'section_name': next_sec.name, 'section_index': next_current,
+					'section_name': next_visible.name, 'section_index': next_current,
 				})
-				next_ctx = _build_section_context(request, survey, session_survey, next_sec, selected_language, next_current, section_total)
+				next_ctx = _build_section_context(request, survey, session_survey, next_visible, selected_language, next_current, section_total, vmap=vmap_final)
 				return render(request, 'partials/survey_section_partial.html', next_ctx)
 			else:
 				if survey.redirect_url == "#":
@@ -1088,11 +1174,11 @@ def survey_section(request, survey_slug, section_name):
 				response['HX-Redirect'] = redirect_target
 				return response
 
-		if nav_direction == 'back' and section.prev_section:
-			return HttpResponseRedirect("../" + section.prev_section.name)
+		if nav_direction == 'back' and prev_visible:
+			return HttpResponseRedirect("../" + prev_visible.name)
 
-		if section.next_section:
-			next_page = "../" + section.next_section.name
+		if next_visible:
+			next_page = "../" + next_visible.name
 		elif survey.redirect_url == "#":
 			next_page = reverse('survey_thanks', args=[str(survey.uuid)])
 		else:
@@ -1111,7 +1197,7 @@ def survey_section(request, survey_slug, section_name):
 		except SurveySession.DoesNotExist:
 			pass
 
-		ctx = _build_section_context(request, survey, session_survey, section, selected_language, section_current, section_total)
+		ctx = _build_section_context(request, survey, session_survey, section, selected_language, section_current, section_total, vmap=vmap)
 
 		if is_htmx:
 			return render(request, 'partials/survey_section_partial.html', ctx)

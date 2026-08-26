@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Conditional visibility — user journeys &amp; mockups</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* Mimics the editor's Bootstrap-4-era look: #f8f9fa cards, #e9ecef borders,
+     FontAwesome glyphs replaced by unicode. */
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background:#eef0f2; margin:0; padding:24px; color:#343a40; }
+  .doc { max-width:980px; margin:0 auto; }
+  h1 { font-size: 1.25rem; margin: 0 0 4px; }
+  h2 { font-size: 1rem; margin: 34px 0 8px; padding-top:18px; border-top:2px solid #dee2e6; }
+  h2 .uj { color:#0b5ed7; }
+  .note { font-size:.8rem; color:#6c757d; margin-bottom:10px; }
+  p, li { font-size:.87rem; line-height:1.5; }
+  .persona { font-size:.8rem; color:#6c757d; font-style:italic; margin:2px 0 8px; }
+  .edge { background:#fff8e6; border:1px solid #ffeeba; border-radius:8px; padding:9px 12px; font-size:.82rem; margin:10px 0; }
+  .edge b:first-child { color:#856404; }
+  .win { background:#e8f5e9; border:1px solid #c8e6c9; border-radius:8px; padding:9px 12px; font-size:.82rem; margin:10px 0; }
+  code { background:#e9ecef; border-radius:3px; padding:1px 5px; font-size:.8em; }
+
+  .screen { background:#fff; border:1px solid #dee2e6; border-radius:10px; margin:14px 0 8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,.06); }
+  .screen-caption { background:#343a40; color:#fff; font-size:.78rem; padding:7px 14px; letter-spacing:.04em; }
+  .screen-caption b { color:#ffd54f; }
+  .pad { padding:18px; }
+  label { font-weight:600; font-size:.85rem; display:block; margin-bottom:4px; }
+  .form-control { width:100%; padding:.375rem .6rem; font-size:.86rem; border:1px solid #ced4da; border-radius:4px; background:#fff; }
+  .form-group { margin-bottom:14px; }
+  .text-muted { color:#6c757d; } small { font-size:.75rem; }
+  .badge { display:inline-block; font-size:.68rem; font-weight:700; padding:.22em .5em; border-radius:.25rem; vertical-align:middle; }
+  .badge-secondary { background:#6c757d; color:#fff; }
+  .badge-danger { background:#dc3545; color:#fff; }
+  .badge-branch { background:#e7f1ff; color:#0b5ed7; border:1px solid #b6d4fe; font-weight:600; }
+  .badge-warn { background:#fff3cd; color:#856404; border:1px solid #ffeeba; font-weight:600; }
+  .btn { display:inline-block; border-radius:4px; font-size:.82rem; padding:.32rem .8rem; border:1px solid transparent; cursor:pointer; }
+  .btn-primary { background:#007bff; color:#fff; }
+  .btn-outline { background:#fff; color:#495057; border-color:#ced4da; }
+  .btn-sm { font-size:.75rem; padding:.2rem .55rem; }
+
+  /* Visibility block (the new control) */
+  .vis-block { border:1px solid #e9ecef; border-left:3px solid #0b5ed7; border-radius:8px; background:#f8f9fa; padding:12px 14px; }
+  .vis-title { font-size:.7rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#6b7280; margin-bottom:8px; }
+  .vis-radio { font-weight:400; font-size:.86rem; display:flex; gap:.45rem; align-items:center; margin-bottom:6px; cursor:pointer; }
+  .vis-controls { margin:10px 0 0 24px; }
+  .vis-answers { border:1px solid #dee2e6; border-radius:6px; background:#fff; padding:8px 10px; display:flex; flex-direction:column; gap:5px; max-height:170px; overflow-y:auto; }
+  .vis-answers label { font-weight:400; font-size:.84rem; display:flex; gap:.5rem; align-items:center; margin:0; cursor:pointer; }
+  .vis-chip { margin-top:10px; font-size:.78rem; background:#e7f1ff; border:1px solid #b6d4fe; color:#0b5ed7; border-radius:14px; padding:3px 10px; display:inline-block; }
+  .fanout { margin-top:12px; border-top:1px dashed #dee2e6; padding-top:10px; }
+
+  /* Modal chrome */
+  .modal-header { display:flex; justify-content:space-between; padding:12px 16px; border-bottom:1px solid #dee2e6; font-weight:600; font-size:.95rem; }
+  .cols { display:flex; gap:18px; padding:16px; }
+  .col-form { flex:1 1 auto; min-width:0; }
+  .col-preview { flex:0 0 280px; }
+  .pv-card { background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px; padding:12px; margin-bottom:10px; }
+  .pv-title { font-size:.68rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#6b7280; margin-bottom:8px; }
+
+  /* Structure pane */
+  .split { display:flex; min-height:380px; }
+  .pane-sections { flex:0 0 300px; border-right:1px solid #dee2e6; background:#fafbfc; padding:10px; }
+  .pane-detail { flex:1; padding:14px; }
+  .section-item { display:flex; align-items:center; gap:7px; padding:7px 9px; border-radius:6px; font-size:.85rem; }
+  .section-item.active { background:#e7f1ff; }
+  .section-item .grip { color:#adb5bd; cursor:grab; font-size:.8rem; }
+  .section-item .qcount { margin-left:auto; font-size:.7rem; color:#868e96; background:#e9ecef; border-radius:9px; padding:1px 7px; }
+  .indent { margin-left:14px; border-left:2px solid #e9ecef; padding-left:8px; }
+  .lint { margin:10px 6px 2px; font-size:.75rem; color:#856404; background:#fff3cd; border:1px solid #ffeeba; border-radius:6px; padding:7px 9px; }
+  .q-item { display:flex; align-items:center; gap:7px; padding:6px 8px; border:1px solid #e9ecef; border-radius:6px; margin-bottom:6px; font-size:.85rem; background:#fff; }
+
+  /* Respondent panel */
+  .resp-wrap { display:flex; }
+  .resp-map { flex:1; background:linear-gradient(135deg,#dce8dc 25%,#cfe0cf 25%,#cfe0cf 50%,#dce8dc 50%,#dce8dc 75%,#cfe0cf 75%); background-size:28px 28px; display:flex; align-items:center; justify-content:center; color:#6c757d; font-size:.85rem; }
+  .resp-title { font-weight:700; font-size:1.02rem; margin-bottom:2px; }
+  .resp-progress { font-size:.74rem; color:#868e96; margin-bottom:14px; }
+  .q-card { border:1px solid #e9ecef; border-radius:8px; padding:11px 13px; margin-bottom:12px; }
+  .q-card label { font-weight:600; font-size:.88rem; margin-bottom:8px; }
+  .q-card .opt { font-weight:400; font-size:.86rem; display:flex; gap:.5rem; align-items:center; margin-bottom:5px; cursor:pointer; }
+  .reveal { border-color:#b6d4fe; background:#f5faff; animation:pop .25s ease; }
+  @keyframes pop { from { opacity:0; transform:translateY(-4px);} to {opacity:1; transform:none;} }
+  .nav-row { display:flex; justify-content:space-between; margin-top:16px; }
+  .state-label { font-size:.7rem; font-weight:700; color:#fff; background:#6c757d; border-radius:3px; padding:2px 7px; display:inline-block; margin-bottom:8px; }
+  .two-states { display:flex; gap:0; }
+  .two-states > div { flex:1; }
+  .two-states > div + div { border-left:1px dashed #dee2e6; }
+  .reqs { background:#fff; border:1px solid #dee2e6; border-radius:10px; padding:16px 20px; margin-top:14px; }
+</style>
+</head>
+<body>
+<div class="doc">
+
+<h1>Conditional visibility — user journeys &amp; mockups</h1>
+<div class="note">Companion to <code>proposal.md</code> / <code>research.md</code>. Two grounding cases: <b>Sodankylä</b> (hand-written "Mikäli…" conditions, nine-neighbourhood grid) and <b>Olney</b> (one zone choice → one of ~10 zone sections). Styling mimics the current editor/respondent UI.</div>
+
+<!-- ============================================================ UJ-1 -->
+<h2><span class="uj">UJ-1</span> — Creator adds a question-level rule (Sodankylä "Mikäli…")</h2>
+<div class="persona">Maria, municipality employee; 41-question survey; writes conditions into question text because the product can't express them.</div>
+<ol>
+  <li>Opens the editor, section 7, clicks ✏️ on <i>"Mikäli toimit matkailualan yrittäjänä, mitä palveluita…"</i> → question modal.</li>
+  <li>Sees the new <b>Visibility</b> block below Required: <code>● Always shown ○ Shown conditionally</code>.</li>
+  <li>Picks "Shown conditionally": a <b>Question</b> dropdown (only <code>choice</code>/<code>multichoice</code> questions <i>earlier</i> in survey order, grouped by section) and <b>Answers</b> checkboxes. She picks <i>"Toimitko matkailualan yrittäjänä?"</i> = <i>Kyllä</i>.</li>
+  <li>The live-preview column shows the condition chip: <code>⑂ Shown when: Toimitko… = Kyllä</code>.</li>
+  <li>Autosave. The question card in the structure list gets a branch badge (see UJ-3/UJ-4 screen).</li>
+  <li>She deletes "Mikäli toimit matkailualan yrittäjänä, " from the question text — the condition now lives in the product, not the prose.</li>
+</ol>
+<div class="win"><b>Success:</b> respondents answering "En" never see the question; the 11-empty-rows artifact stops accumulating.</div>
+<div class="edge"><b>Edge:</b> the survey is <i>published and live</i>. Saving a rule must not touch collected answers — it only changes who sees the question from now on.</div>
+
+<div class="screen">
+  <div class="screen-caption"><b>Screen A</b> — Question modal · new “Visibility” block</div>
+  <div class="modal-header"><span>Edit Question</span><span style="color:#adb5bd;">&times;</span></div>
+  <div class="cols">
+    <div class="col-form">
+      <div class="form-group">
+        <label>Question</label>
+        <input class="form-control" value="Mitä palveluita yrityksesi tarjoaa?">
+      </div>
+      <div class="form-group">
+        <label style="font-weight:400;"><input type="checkbox"> Required</label>
+      </div>
+      <div class="vis-block">
+        <div class="vis-title">Visibility</div>
+        <label class="vis-radio"><input type="radio" name="visA"> Always shown</label>
+        <label class="vis-radio"><input type="radio" name="visA" checked> Shown conditionally</label>
+        <div class="vis-controls">
+          <div class="form-group">
+            <label>When the answer to</label>
+            <select class="form-control">
+              <option>Section 7 · Toimitko matkailualan yrittäjänä?</option>
+              <option>Section 1 · Missä asut?</option>
+              <option>Section 3 · Oletko huomannut muutoksia?</option>
+            </select>
+            <small class="text-muted">Only choice questions that come before this one can be selected.</small>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>is any of</label>
+            <div class="vis-answers">
+              <label><input type="checkbox" checked> Kyllä</label>
+              <label><input type="checkbox"> En</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-preview">
+      <div class="pv-card">
+        <div class="pv-title">Live preview</div>
+        <div style="font-size:.84rem; font-weight:600;">Mitä palveluita yrityksesi tarjoaa?</div>
+        <input class="form-control" style="margin-top:6px;" placeholder="">
+        <div class="vis-chip">⑂ Shown when: Toimitko… = Kyllä</div>
+      </div>
+      <div class="pv-card">
+        <div class="pv-title">Tips</div>
+        <div style="font-size:.76rem; color:#495057;">Respondents who answer differently will never see this question, and it won’t count as required for them.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ UJ-2 -->
+<h2><span class="uj">UJ-2</span> — Creator hides a whole section (Sodankylä neighbourhood grid)</h2>
+<ol>
+  <li>Selects section 5 <i>"Arvioi asuinalueita"</i> (nine required neighbourhood ratings); the section detail form opens.</li>
+  <li>Below Layout — the <b>same Visibility block</b>, identical rule shape: <i>"Missä asut?"</i> = the eight "I live here" options (any-of), leaving <i>"Asun muualla"</i> unticked.</li>
+  <li>Saves; the section row gets a branch badge; hover shows the condition.</li>
+  <li>Editor live preview as a respondent answering "Asun muualla": section 5 doesn’t appear between 4 and 6; progress shows the shrunken count.</li>
+</ol>
+<div class="win"><b>Success:</b> the 40%-“don’t know” matrix stops; the funnel stops losing respondents at the grid (the only mid-survey drop-off step). <b>And:</b> she has used the same rule UI twice — question, then section. Nothing new to learn.</div>
+
+<!-- ============================================================ UJ-3 -->
+<h2><span class="uj">UJ-3</span> — Creator builds the Olney fan-out (1 choice → 10 zone sections)</h2>
+<div class="persona">City Clerk digitizing the squirrel count. "Which counting area are you assigned to?" (10 options); each area has its own instructions + map extent → its own section. Exactly one of ten must show.</div>
+<ol>
+  <li>Creates section 2 "Your area" with the <code>choice</code> question <b>Area</b> (10 options), and section 3 "Area 1 count" with area-specific content.</li>
+  <li>In section 3's Visibility block: Question = <i>Area</i>, Answers = ☑ <i>Area 1</i>.</li>
+  <li><b>The repetition problem</b> — 9 more sections differing only in the ticked option. Two affordances:
+    <ul>
+      <li><b>Duplicate carries the rule</b>: duplicating "Area 1 count" copies the visibility rule; she re-ticks one checkbox per copy.</li>
+      <li><b>Fan-out helper</b> (screen B, bottom): when a section rule selects exactly one option and the controlling question has ≥3 options, the editor offers <i>"Create one section like this per remaining answer (9)"</i> — one click scaffolds Area 2…10, each pre-wired. <i>(Design decision: v1 nice-to-have; if cut, cut the button, not rule-copy-on-duplicate.)</i></li>
+    </ul>
+  </li>
+  <li>The structure pane (screen C) reads as a visible branch: ten sections badged <code>⑂ Area = N</code>. The badge is what keeps a 12-section list with a fan-out legible.</li>
+</ol>
+<div class="win"><b>Success:</b> a volunteer picking Area 7 sees exactly one zone section; progress counts 3 sections for them, not 12.</div>
+<div class="edge"><b>Edge — no rule matched:</b> a respondent whose answer matches <i>no</i> section (creator forgot Area 10) flows past the fan to the next unconditional section — visibility semantics make "no match" safe, where jump semantics would dead-end. The editor still lints uncovered options (screen C, footer).</div>
+<div class="edge"><b>Edge — progress:</b> <code>section_current / section_total</code> is computed over the sections visible <i>for this session</i>, recomputed when the controlling answer changes.</div>
+
+<div class="screen">
+  <div class="screen-caption"><b>Screen B</b> — Section detail form · same block on a section + fan-out helper</div>
+  <div class="pad" style="max-width:560px;">
+    <div style="font-weight:700; font-size:.92rem; margin-bottom:12px;">▦ Section: Area 1 count</div>
+    <div class="form-group"><label>Title</label><input class="form-control" value="Area 1 count"></div>
+    <div class="form-group"><label>Layout</label><select class="form-control"><option>Map + questions</option></select></div>
+    <div class="vis-block">
+      <div class="vis-title">Visibility</div>
+      <label class="vis-radio"><input type="radio" name="visB"> Always shown</label>
+      <label class="vis-radio"><input type="radio" name="visB" checked> Shown conditionally</label>
+      <div class="vis-controls">
+        <div class="form-group">
+          <label>When the answer to</label>
+          <select class="form-control"><option>Section 2 · Which counting area are you assigned to?</option></select>
+        </div>
+        <div class="form-group">
+          <label>is any of</label>
+          <div class="vis-answers" style="max-height:130px;">
+            <label><input type="checkbox" checked> Area 1</label>
+            <label><input type="checkbox"> Area 2</label>
+            <label><input type="checkbox"> Area 3</label>
+            <label><input type="checkbox"> Area 4</label>
+            <label><input type="checkbox"> … (10 total)</label>
+          </div>
+        </div>
+        <div class="fanout">
+          <button class="btn btn-outline btn-sm">⧉ Create one section like this per remaining answer (9)</button>
+          <div><small class="text-muted">Duplicates this section for Area 2 … Area 10, each shown only for its answer.</small></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:14px;"><button class="btn btn-primary btn-sm">Save</button></div>
+  </div>
+</div>
+
+<!-- ============================================================ UJ-4 -->
+<h2><span class="uj">UJ-4</span> — Creator breaks a rule and is told (orphaned rules)</h2>
+<p>The MS-Forms failure class: edits silently breaking logic.</p>
+<ol>
+  <li>She deletes option "Area 3" (or the controlling question; or drags the controller <i>below</i> a dependent; or moves the dependent to an earlier section).</li>
+  <li>The dependent's badge flips to warning: <code>⚠ broken rule</code>. The item is <b>treated as always shown</b> until fixed (fail-open — hiding content silently is worse than showing it), and the tooltip says so.</li>
+  <li>Clicking the badge opens the Visibility block with the broken part highlighted.</li>
+  <li>Same surface covers ZIP import: a rule referencing a missing question imports dropped + one report line, never a silent half-rule.</li>
+</ol>
+
+<div class="screen">
+  <div class="screen-caption"><b>Screen C</b> — Structure pane · branch badges, fan-out legibility, orphaned rule, uncovered-option lint</div>
+  <div class="split">
+    <div class="pane-sections">
+      <div class="section-item"><span class="grip">⠿</span> Welcome <span class="qcount">2</span></div>
+      <div class="section-item active"><span class="grip">⠿</span> Your area <span class="qcount">1</span></div>
+      <div class="indent">
+        <div class="section-item"><span class="grip">⠿</span> Area 1 count <span class="badge badge-branch">⑂ Area = 1</span> <span class="qcount">4</span></div>
+        <div class="section-item"><span class="grip">⠿</span> Area 2 count <span class="badge badge-branch">⑂ Area = 2</span> <span class="qcount">4</span></div>
+        <div class="section-item"><span class="grip">⠿</span> Area 3 count <span class="badge badge-warn" title="The rule references a removed answer. Shown to everyone until fixed.">⚠ broken rule</span> <span class="qcount">4</span></div>
+        <div class="section-item"><span class="grip">⠿</span> Area 4 count <span class="badge badge-branch">⑂ Area = 4</span> <span class="qcount">4</span></div>
+        <div class="section-item" style="color:#868e96;"><span class="grip">⠿</span> … Area 10 count</div>
+      </div>
+      <div class="section-item"><span class="grip">⠿</span> Thanks &amp; contact <span class="qcount">3</span></div>
+      <div class="lint">⚠ Answer “Area 10” of <b>Which counting area…</b> doesn’t show any section.</div>
+    </div>
+    <div class="pane-detail">
+      <div style="font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; color:#6b7280; font-weight:700; margin-bottom:10px;">Questions · Your area</div>
+      <div class="q-item"><span class="grip" style="color:#adb5bd;">⠿</span> Which counting area are you assigned to?
+        <span class="badge badge-secondary">Choice</span>
+        <span class="badge badge-danger">Required</span>
+        <span class="badge badge-branch" title="10 sections depend on this question">⑂ 10 rules depend on this</span>
+        <span style="margin-left:auto; color:#adb5bd;">✎ ⧉ ⎘ 🗑</span>
+      </div>
+      <div class="q-item"><span class="grip" style="color:#adb5bd;">⠿</span> Did you spot any albino squirrels?
+        <span class="badge badge-secondary">Choice</span>
+        <span style="margin-left:auto; color:#adb5bd;">✎ ⧉ ⎘ 🗑</span>
+      </div>
+      <div class="q-item" style="margin-left:22px; border-left:3px solid #b6d4fe;">
+        <span class="grip" style="color:#adb5bd;">⠿</span> How many, and where exactly?
+        <span class="badge badge-secondary">Text</span>
+        <span class="badge badge-branch">⑂ if Albino = Yes</span>
+        <span style="margin-left:auto; color:#adb5bd;">✎ ⧉ ⎘ 🗑</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ UJ-5 -->
+<h2><span class="uj">UJ-5</span> — Respondent: live show/hide within a section</h2>
+<ol>
+  <li>Section "About your count": <i>"Did you spot any albino squirrels?"</i> (<code>○ Yes ○ No</code>).</li>
+  <li>The dependent <i>"How many, and where exactly?"</i> is <b>absent</b> — not greyed out, absent (state 1).</li>
+  <li>Tap "Yes" → the card appears in place with a soft reveal (state 2). Back to "No" removes it.</li>
+  <li>Answered "Yes" + filled the follow-up, switched to "No", hit Next: the client drops the hidden field; the <b>server independently discards</b> any answer invisible under the submitted answers — the Google-Forms back-button leak, closed at both layers.</li>
+  <li>Required per consensus: a hidden question's <code>required</code> never blocks Next; the required-summary strip counts only visible questions.</li>
+</ol>
+
+<!-- ============================================================ UJ-6 -->
+<h2><span class="uj">UJ-6</span> — Respondent: section skip and Back</h2>
+<ol>
+  <li>After picking Area 7, Next goes straight to "Area 7 count" — the other zone sections never render. Progress reads the <i>visible</i> chain as bare numbers (owner decision): <code>2 / 3</code> on the area section, <code>3 / 3</code> on Area 7 — no “for you” hint.</li>
+  <li><b>Back</b> from "Area 7 count" returns to "Your area" (prev walks the same visible chain).</li>
+  <li>Changing the answer to Area 4 + Next → "Area 4 count" (fresh); answers previously given inside "Area 7 count" are discarded server-side (no ghosts in export). v1 accepts silent discard on the abandoned branch — matching every researched platform; a "you'll lose answers" confirm is possible polish, not v1.</li>
+</ol>
+
+<div class="screen">
+  <div class="screen-caption"><b>Screen D</b> — Respondent panel · live reveal (two states) + visible-chain progress</div>
+  <div class="resp-wrap">
+    <div class="two-states" style="flex:0 0 640px; border-right:1px solid #dee2e6;">
+      <div style="padding:16px;">
+        <span class="state-label">STATE 1 — “No” (or untouched)</span>
+        <div class="resp-title">About your count</div>
+        <div class="resp-progress">2 / 3</div>
+        <div class="q-card">
+          <label>Did you spot any albino squirrels?</label>
+          <label class="opt"><input type="radio" name="alb1"> Yes</label>
+          <label class="opt"><input type="radio" name="alb1" checked> No</label>
+        </div>
+        <!-- dependent question ABSENT, not greyed -->
+        <div class="q-card">
+          <label>Weather during your count</label>
+          <select class="form-control"><option>Clear</option></select>
+        </div>
+        <div class="nav-row"><button class="btn btn-outline btn-sm">Back</button><button class="btn btn-primary btn-sm">Next</button></div>
+      </div>
+      <div style="padding:16px;">
+        <span class="state-label" style="background:#0b5ed7;">STATE 2 — switched to “Yes”</span>
+        <div class="resp-title">About your count</div>
+        <div class="resp-progress">2 / 3</div>
+        <div class="q-card">
+          <label>Did you spot any albino squirrels?</label>
+          <label class="opt"><input type="radio" name="alb2" checked> Yes</label>
+          <label class="opt"><input type="radio" name="alb2"> No</label>
+        </div>
+        <div class="q-card reveal">
+          <label>How many, and where exactly?</label>
+          <input class="form-control" placeholder="e.g. 2, near the water tower">
+        </div>
+        <div class="q-card">
+          <label>Weather during your count</label>
+          <select class="form-control"><option>Clear</option></select>
+        </div>
+        <div class="nav-row"><button class="btn btn-outline btn-sm">Back</button><button class="btn btn-primary btn-sm">Next</button></div>
+      </div>
+    </div>
+    <div class="resp-map">Leaflet map (Area 7 extent)</div>
+  </div>
+</div>
+
+<!-- ============================================================ requirements -->
+<h2>Journey-derived requirements not already in proposal.md</h2>
+<div class="reqs">
+<ol>
+  <li><b>Rule badges in the structure pane</b> (question cards + section rows) — the fan-out is illegible without them (UJ-3).</li>
+  <li><b>Duplicate carries the visibility rule</b> — section and question duplicate (UJ-3).</li>
+  <li><b>Fan-out helper</b> — optional scaffold "one section per remaining answer" (UJ-3; design decision, may be cut from v1).</li>
+  <li><b>Fail-open on broken rules</b> + warning badge + import report line (UJ-4).</li>
+  <li><b>Controlling-question picker constraints</b>: only earlier-in-order <code>choice</code>/<code>multichoice</code>; moving/reordering re-validates (UJ-1, UJ-4).</li>
+  <li><b>Lint for uncovered options</b> on a fanned-out controlling question (UJ-3).</li>
+  <li><b>Progress = visible chain</b>, recomputed on controlling-answer change (UJ-3, UJ-6).</li>
+  <li><b>Live preview respects rules</b> and lets the creator play both branches (UJ-2).</li>
+</ol>
+</div>
+
+</div>
+</body>
+</html>

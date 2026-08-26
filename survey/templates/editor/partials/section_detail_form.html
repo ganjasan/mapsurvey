@@ -59,6 +59,8 @@
         {% endif %}
         {% endfor %}
 
+        {% include "editor/partials/_visibility_block.html" %}
+
         {% if survey.available_languages|length > 1 %}
         <div class="translations-section">
             <button type="button" class="translations-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">

@@ -243,6 +243,8 @@
         {% endif %}
         {% endfor %}
 
+        {% include "editor/partials/_visibility_block.html" %}
+
         <!-- Choices editor -->
         <div class="choices-editor" id="choices-editor" style="display:none;">
             <label style="font-weight:600;">Choices</label>
@@ -364,6 +366,11 @@
                         style="flex:1;border:1px solid #e5e7eb;border-radius:6px;width:100%;min-height:260px;background:#fff;">
                 </iframe>
                 <div class="qtp-pv-note">Updates as you edit — the real respondent-side rendering.</div>
+                {% if visibility_enabled and question %}{% load question_utils %}{% with vis=question|visibility_info:survey %}{% if vis and not vis.broken %}
+                <div style="margin-top:8px;font-size:.72rem;background:#e7f1ff;border:1px solid #b6d4fe;color:#0b5ed7;border-radius:14px;padding:3px 10px;display:inline-block;">
+                    <i class="fas fa-code-branch"></i> Shown when: {{ vis.label|slice:"3:" }}
+                </div>
+                {% endif %}{% endwith %}{% endif %}
             </div>
 
             <div class="qtp-pv-card qtp-flyout" id="qtp-flyout" hidden>

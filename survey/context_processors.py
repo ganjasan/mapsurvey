@@ -29,6 +29,7 @@ def mobile_adaptive(request):
         'MOBILE_EDITOR_NAV': getattr(settings, 'MOBILE_EDITOR_NAV', False),
         'EDITOR_AUTOSAVE': getattr(settings, 'EDITOR_AUTOSAVE', False),
         'CREATE_STEER_AI': getattr(settings, 'CREATE_STEER_AI', False),
+        'CONDITIONAL_VISIBILITY': getattr(settings, 'CONDITIONAL_VISIBILITY', False),
     }
 
 

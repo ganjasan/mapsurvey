@@ -31598,3 +31598,755 @@ class ChoicesClearedOnNonChoiceTypesTest(TestCase):
         self.assertIsNone(poisoned_text.choices)
         self.assertEqual(legit_choice.choices, [{"code": 1, "name": "Keep"}])
         self.assertEqual(legit_ranking.choices, [{"code": 1, "name": "Keep"}])
+
+
+class VisibilityEngineTest(TestCase):
+    """Tests for survey/visibility.py — the conditional-visibility engine."""
+
+    def _survey(self):
+        org = Organization.objects.create(name="Vis Org")
+        return SurveyHeader.objects.create(name="vis_survey", organization=org, redirect_url="#")
+
+    def _section(self, survey, name, prev=None, is_head=False, rule=None):
+        section = SurveySection.objects.create(
+            survey_header=survey, name=name, title=name, code=name[:8],
+            is_head=is_head, visibility_rule=rule,
+        )
+        if prev is not None:
+            prev.next_section = section
+            prev.save()
+            section.prev_section = prev
+            section.save()
+        return section
+
+    def _choice_q(self, section, code, order=1, input_type='choice', n_options=2, rule=None):
+        return Question.objects.create(
+            survey_section=section, code=code, order_number=order, name=code,
+            input_type=input_type,
+            choices=[{"code": i, "name": f"Opt {i}"} for i in range(1, n_options + 1)],
+            visibility_rule=rule,
+        )
+
+    def setUp(self):
+        from survey.visibility import compute_visibility
+        self.compute = compute_visibility
+        self.survey = self._survey()
+        self.s1 = self._section(self.survey, 'intro', is_head=True)
+        self.controller = self._choice_q(self.s1, 'CTRL', order=1)
+
+    def test_no_rule_always_visible(self):
+        """
+        GIVEN a question and section without rules
+        WHEN visibility is computed with no answers
+        THEN both are visible
+        """
+        q = self._choice_q(self.s1, 'PLAIN', order=2)
+        vmap = self.compute(self.survey, {}, enabled=True)
+        self.assertTrue(vmap.is_question_visible(q.id))
+        self.assertTrue(vmap.is_section_visible(self.s1.id))
+
+    def test_question_rule_any_of_match(self):
+        """
+        GIVEN a question shown when CTRL is any of [1, 2]
+        WHEN the answer includes code 2
+        THEN the question is visible
+        """
+        q = self._choice_q(self.s1, 'DEP', order=2,
+                           rule={"question_code": "CTRL", "choice_codes": [1, 2]})
+        vmap = self.compute(self.survey, {"CTRL": [2]}, enabled=True)
+        self.assertTrue(vmap.is_question_visible(q.id))
+
+    def test_question_rule_no_match_and_unanswered(self):
+        """
+        GIVEN a question shown when CTRL = 1
+        WHEN CTRL is answered 2, or not answered at all
+        THEN the question is hidden
+        """
+        q = self._choice_q(self.s1, 'DEP', order=2,
+                           rule={"question_code": "CTRL", "choice_codes": [1]})
+        self.assertFalse(self.compute(self.survey, {"CTRL": [2]}, enabled=True).is_question_visible(q.id))
+        self.assertFalse(self.compute(self.survey, {}, enabled=True).is_question_visible(q.id))
+
+    def test_multichoice_controller_intersection(self):
+        """
+        GIVEN a multichoice controller and a rule on codes [3]
+        WHEN the respondent selected [1, 3]
+        THEN the dependent is visible
+        """
+        multi = self._choice_q(self.s1, 'MULTI', order=2, input_type='multichoice', n_options=3)
+        q = self._choice_q(self.s1, 'DEP', order=3,
+                           rule={"question_code": "MULTI", "choice_codes": [3]})
+        vmap = self.compute(self.survey, {"MULTI": [1, 3]}, enabled=True)
+        self.assertTrue(vmap.is_question_visible(q.id))
+
+    def test_section_rule_hides_section_and_its_questions(self):
+        """
+        GIVEN a second section shown when CTRL = 1
+        WHEN CTRL is answered 2
+        THEN the section, its questions, and the visible chain exclude it
+        """
+        s2 = self._section(self.survey, 'branch', prev=self.s1,
+                           rule={"question_code": "CTRL", "choice_codes": [1]})
+        inner = self._choice_q(s2, 'INNER', order=1)
+        vmap = self.compute(self.survey, {"CTRL": [2]}, enabled=True)
+        self.assertFalse(vmap.is_section_visible(s2.id))
+        self.assertFalse(vmap.is_question_visible(inner.id))
+        self.assertEqual([s.id for s in vmap.visible_sections], [self.s1.id])
+
+    def test_section_rule_and_question_rule_are_anded(self):
+        """
+        GIVEN a visible section containing a question whose own rule fails
+        WHEN visibility is computed
+        THEN the question is hidden while its section stays visible
+        """
+        s2 = self._section(self.survey, 'branch', prev=self.s1,
+                           rule={"question_code": "CTRL", "choice_codes": [1]})
+        inner = self._choice_q(s2, 'INNER', order=1,
+                               rule={"question_code": "CTRL", "choice_codes": [2]})
+        vmap = self.compute(self.survey, {"CTRL": [1]}, enabled=True)
+        self.assertTrue(vmap.is_section_visible(s2.id))
+        self.assertFalse(vmap.is_question_visible(inner.id))
+
+    def test_cascade_through_hidden_controller(self):
+        """
+        GIVEN C shown when B = 1, and B shown when A(CTRL) = 1
+        WHEN CTRL is answered 2 but a stale B answer of 1 exists
+        THEN both B and C are hidden
+        """
+        b = self._choice_q(self.s1, 'B', order=2,
+                           rule={"question_code": "CTRL", "choice_codes": [1]})
+        c = self._choice_q(self.s1, 'C', order=3,
+                           rule={"question_code": "B", "choice_codes": [1]})
+        vmap = self.compute(self.survey, {"CTRL": [2], "B": [1]}, enabled=True)
+        self.assertFalse(vmap.is_question_visible(b.id))
+        self.assertFalse(vmap.is_question_visible(c.id))
+
+    def test_broken_rule_fails_open(self):
+        """
+        GIVEN rules referencing a missing question, a non-choice controller,
+              a later question, and fully removed option codes
+        WHEN visibility is computed
+        THEN every broken host is visible and reported in vmap.broken
+        """
+        text_q = Question.objects.create(
+            survey_section=self.s1, code='TXT', order_number=2, name='TXT', input_type='text')
+        later = self._choice_q(self.s1, 'LATER', order=10)
+        cases = [
+            {"question_code": "GONE", "choice_codes": [1]},
+            {"question_code": "TXT", "choice_codes": [1]},
+            {"question_code": "LATER", "choice_codes": [1]},
+            {"question_code": "CTRL", "choice_codes": [99]},
+        ]
+        hosts = []
+        for i, rule in enumerate(cases):
+            hosts.append(self._choice_q(self.s1, f'BRK{i}', order=3 + i, rule=rule))
+        vmap = self.compute(self.survey, {}, enabled=True)
+        for host in hosts:
+            self.assertTrue(vmap.is_question_visible(host.id), host.code)
+            self.assertIn(("question", host.id), vmap.broken)
+
+    def test_partially_removed_codes_keep_matching(self):
+        """
+        GIVEN a rule on codes [1, 99] where 99 no longer exists
+        WHEN CTRL is answered 1
+        THEN the dependent is visible (remaining code still matches)
+        """
+        q = self._choice_q(self.s1, 'DEP', order=2,
+                           rule={"question_code": "CTRL", "choice_codes": [1, 99]})
+        vmap = self.compute(self.survey, {"CTRL": [1]}, enabled=True)
+        self.assertTrue(vmap.is_question_visible(q.id))
+        self.assertNotIn(("question", q.id), vmap.broken)
+
+    def test_section_rule_may_not_reference_own_section(self):
+        """
+        GIVEN a section whose rule references a question inside itself
+        WHEN visibility is computed
+        THEN the rule is broken and the section fails open
+        """
+        s2 = self._section(self.survey, 'selfref', prev=self.s1,
+                           rule={"question_code": "SELF", "choice_codes": [1]})
+        self._choice_q(s2, 'SELF', order=1)
+        vmap = self.compute(self.survey, {}, enabled=True)
+        self.assertTrue(vmap.is_section_visible(s2.id))
+        self.assertIn(("section", s2.id), vmap.broken)
+
+    def test_kill_switch_returns_all_visible(self):
+        """
+        GIVEN satisfied-to-hide rules on a question and a section
+        WHEN visibility is computed with enabled=False
+        THEN everything is visible
+        """
+        q = self._choice_q(self.s1, 'DEP', order=2,
+                           rule={"question_code": "CTRL", "choice_codes": [1]})
+        s2 = self._section(self.survey, 'branch', prev=self.s1,
+                           rule={"question_code": "CTRL", "choice_codes": [1]})
+        vmap = self.compute(self.survey, {}, enabled=False)
+        self.assertTrue(vmap.is_question_visible(q.id))
+        self.assertTrue(vmap.is_section_visible(s2.id))
+
+    def test_lint_reports_dependents_and_uncovered(self):
+        """
+        GIVEN two sections covering options 1 of a 3-option controller
+        WHEN lint_rules runs
+        THEN the controller has 1 dependent and options 2,3 are uncovered
+        """
+        from survey.visibility import lint_rules
+        wide = self._choice_q(self.s1, 'WIDE', order=2, n_options=3)
+        self._section(self.survey, 'fan1', prev=self.s1,
+                      rule={"question_code": "WIDE", "choice_codes": [1]})
+        report = lint_rules(self.survey)
+        self.assertEqual(report['dependents'].get(wide.id), 1)
+        self.assertEqual(report['uncovered'].get(wide.id), [2, 3])
+
+
+class ConditionalVisibilityRespondentTest(TestCase):
+    """Server-side contract: discard, purge, navigation, progress (openspec:
+    conditional-question-visibility)."""
+
+    def setUp(self):
+        self.client = Client()
+        self.org = Organization.objects.create(name="CondVis Org")
+        self.survey = SurveyHeader.objects.create(
+            name="condvis", organization=self.org, status='published',
+            available_languages=[], redirect_url="#",
+        )
+        # Section 1: zone choice (3 zones) + albino yes/no + dependent question.
+        self.s1 = SurveySection.objects.create(
+            survey_header=self.survey, name="pick", title="Your area", code="S1",
+            is_head=True,
+        )
+        self.zone = Question.objects.create(
+            survey_section=self.s1, code="ZONE", order_number=1, name="Zone?",
+            input_type="choice",
+            choices=[{"code": i, "name": f"Area {i}"} for i in (1, 2, 3)],
+        )
+        self.albino = Question.objects.create(
+            survey_section=self.s1, code="ALB", order_number=2, name="Albino?",
+            input_type="choice",
+            choices=[{"code": 1, "name": "Yes"}, {"code": 0, "name": "No"}],
+        )
+        self.howmany = Question.objects.create(
+            survey_section=self.s1, code="HOW", order_number=3, name="How many?",
+            input_type="text_line", required=True,
+            visibility_rule={"question_code": "ALB", "choice_codes": [1]},
+        )
+        # Sections 2 and 3: fan over zones 1 and 2 (zone 3 uncovered).
+        self.area1 = SurveySection.objects.create(
+            survey_header=self.survey, name="area1", title="Area 1", code="S2",
+            visibility_rule={"question_code": "ZONE", "choice_codes": [1]},
+        )
+        self.a1_notes = Question.objects.create(
+            survey_section=self.area1, code="A1N", order_number=1, name="Area 1 notes",
+            input_type="text_line",
+        )
+        self.area2 = SurveySection.objects.create(
+            survey_header=self.survey, name="area2", title="Area 2", code="S3",
+            visibility_rule={"question_code": "ZONE", "choice_codes": [2]},
+        )
+        self.a2_notes = Question.objects.create(
+            survey_section=self.area2, code="A2N", order_number=1, name="Area 2 notes",
+            input_type="text_line",
+        )
+        # Final unconditional section.
+        self.s_final = SurveySection.objects.create(
+            survey_header=self.survey, name="final", title="Thanks", code="S4",
+        )
+        Question.objects.create(
+            survey_section=self.s_final, code="FIN", order_number=1, name="Weather",
+            input_type="text_line",
+        )
+        # Linked list: pick -> area1 -> area2 -> final
+        self.s1.next_section = self.area1; self.s1.save()
+        self.area1.prev_section = self.s1; self.area1.next_section = self.area2; self.area1.save()
+        self.area2.prev_section = self.area1; self.area2.next_section = self.s_final; self.area2.save()
+        self.s_final.prev_section = self.area2; self.s_final.save()
+
+    def _session(self):
+        return SurveySession.objects.get(pk=self.client.session['survey_session_id'])
+
+    def _answers(self, question):
+        return Answer.objects.filter(
+            survey_session=self._session(), question=question, parent_answer_id__isnull=True)
+
+    def test_tampered_answer_to_hidden_question_is_discarded(self):
+        """
+        GIVEN HOW is shown only when ALB = Yes
+        WHEN the POST answers ALB = No but still carries a HOW value
+        THEN no Answer row is stored for HOW
+        """
+        self.client.get('/surveys/condvis/pick/')
+        self.client.post('/surveys/condvis/pick/', {'ZONE': '1', 'ALB': '0', 'HOW': 'ghost'})
+        self.assertEqual(self._answers(self.howmany).count(), 0)
+        self.assertEqual(self._answers(self.albino).count(), 1)
+
+    def test_cascade_filled_then_controller_flipped_purges_whole_chain(self):
+        """
+        GIVEN a filled cascade (ALB=Yes + HOW answered, stored in the DB)
+        WHEN the respondent re-submits the section with ALB=No while the POST
+             still carries the stale HOW value (exact stale-DOM shape)
+        THEN only the flipped controller survives; the whole chain is purged
+        """
+        self.client.get('/surveys/condvis/pick/')
+        self.client.post('/surveys/condvis/pick/', {'ZONE': '1', 'ALB': '1', 'HOW': 'two by the tower'})
+        self.assertEqual(self._answers(self.howmany).count(), 1)
+        # Flip to No; a stale DOM still posts the old dependent value.
+        self.client.post('/surveys/condvis/pick/', {'ZONE': '1', 'ALB': '0', 'HOW': 'two by the tower'})
+        self.assertEqual(self._answers(self.howmany).count(), 0)
+        alb = self._answers(self.albino).get()
+        self.assertEqual(alb.selected_choices, [0])
+
+    def test_visible_dependent_answer_is_stored(self):
+        """
+        GIVEN HOW is shown only when ALB = Yes
+        WHEN the POST answers ALB = Yes with a HOW value
+        THEN the HOW answer is stored
+        """
+        self.client.get('/surveys/condvis/pick/')
+        self.client.post('/surveys/condvis/pick/', {'ZONE': '1', 'ALB': '1', 'HOW': 'two'})
+        self.assertEqual(self._answers(self.howmany).count(), 1)
+
+    def test_forward_navigation_skips_hidden_sections(self):
+        """
+        GIVEN zone sections conditioned on ZONE
+        WHEN a respondent picks zone 2 and submits
+        THEN the redirect goes to area2, past the hidden area1
+        """
+        self.client.get('/surveys/condvis/pick/')
+        response = self.client.post('/surveys/condvis/pick/', {'ZONE': '2', 'ALB': '0'})
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.endswith('/area2'), response.url)
+
+    def test_uncovered_option_flows_past_the_fan(self):
+        """
+        GIVEN zone 3 shows no zone section
+        WHEN a respondent picks zone 3 and submits
+        THEN the redirect goes straight to the final section
+        """
+        self.client.get('/surveys/condvis/pick/')
+        response = self.client.post('/surveys/condvis/pick/', {'ZONE': '3', 'ALB': '0'})
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.endswith('/final'), response.url)
+
+    def test_changing_zone_purges_abandoned_branch(self):
+        """
+        GIVEN answers collected inside area1 under ZONE = 1
+        WHEN the respondent re-submits the pick section with ZONE = 2
+        THEN area1's stored answers are deleted
+        """
+        self.client.get('/surveys/condvis/pick/')
+        self.client.post('/surveys/condvis/pick/', {'ZONE': '1', 'ALB': '0'})
+        self.client.post('/surveys/condvis/area1/', {'A1N': 'lots of squirrels'})
+        self.assertEqual(self._answers(self.a1_notes).count(), 1)
+        self.client.post('/surveys/condvis/pick/', {'ZONE': '2', 'ALB': '0'})
+        self.assertEqual(self._answers(self.a1_notes).count(), 0)
+
+    def test_back_navigation_skips_hidden_sections(self):
+        """
+        GIVEN a respondent on the final section with ZONE = 2
+        WHEN they navigate back
+        THEN they land on area2, not area1
+        """
+        self.client.get('/surveys/condvis/pick/')
+        self.client.post('/surveys/condvis/pick/', {'ZONE': '2', 'ALB': '0'})
+        response = self.client.post('/surveys/condvis/final/',
+                                    {'FIN': 'x', 'nav_direction': 'back'})
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.endswith('/area2'), response.url)
+
+    def test_direct_url_to_hidden_section_redirects(self):
+        """
+        GIVEN ZONE = 2 hides area1
+        WHEN the respondent opens area1 by direct URL
+        THEN they are redirected to the survey entry, not shown the section
+        """
+        self.client.get('/surveys/condvis/pick/')
+        self.client.post('/surveys/condvis/pick/', {'ZONE': '2', 'ALB': '0'})
+        response = self.client.get('/surveys/condvis/area1/')
+        self.assertEqual(response.status_code, 302)
+
+    def test_progress_counts_visible_chain(self):
+        """
+        GIVEN ZONE = 2 hides area1 (4 sections, 3 visible)
+        WHEN the respondent renders area2
+        THEN progress is 2 / 3
+        """
+        self.client.get('/surveys/condvis/pick/')
+        self.client.post('/surveys/condvis/pick/', {'ZONE': '2', 'ALB': '0'})
+        response = self.client.get('/surveys/condvis/area2/')
+        self.assertEqual(response.context['section_current'], 2)
+        self.assertEqual(response.context['section_total'], 3)
+
+    def test_hidden_required_question_does_not_block_completion(self):
+        """
+        GIVEN required HOW hidden by ALB = No
+        WHEN the respondent submits every visible section
+        THEN the flow reaches the finish without a HOW answer
+        """
+        self.client.get('/surveys/condvis/pick/')
+        self.client.post('/surveys/condvis/pick/', {'ZONE': '3', 'ALB': '0'})
+        response = self.client.post('/surveys/condvis/final/', {'FIN': 'clear'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self._answers(self.howmany).count(), 0)
+
+    def test_kill_switch_restores_full_chain(self):
+        """
+        GIVEN CONDITIONAL_VISIBILITY off
+        WHEN a respondent picks zone 2 and submits
+        THEN navigation is the raw linked list (area1 next) and nothing is purged
+        """
+        with self.settings(CONDITIONAL_VISIBILITY=False):
+            self.client.get('/surveys/condvis/pick/')
+            response = self.client.post('/surveys/condvis/pick/',
+                                        {'ZONE': '2', 'ALB': '0', 'HOW': 'kept'})
+            self.assertTrue(response.url.endswith('/area1'), response.url)
+            self.assertEqual(self._answers(self.howmany).count(), 1)
+
+    def test_same_section_dependent_stays_in_dom_with_rules_json(self):
+        """
+        GIVEN HOW conditioned on same-section ALB
+        WHEN the pick section renders with no answers yet
+        THEN HOW is present in the form and the rules JSON carries its rule
+        """
+        response = self.client.get('/surveys/condvis/pick/')
+        html = response.content.decode()
+        self.assertIn('name="HOW"', html)
+        import json as _json
+        rules = _json.loads(response.context['visibility_rules_json'])
+        self.assertEqual(rules['HOW']['question_code'], 'ALB')
+
+    def test_cross_section_hidden_question_excluded_from_form(self):
+        """
+        GIVEN a question in final conditioned on ZONE (earlier section) = 1
+        WHEN ZONE = 2 and final renders
+        THEN the conditioned question is not in the form at all
+        """
+        dep = Question.objects.create(
+            survey_section=self.s_final, code="XDEP", order_number=2, name="Only zone 1",
+            input_type="text_line",
+            visibility_rule={"question_code": "ZONE", "choice_codes": [1]},
+        )
+        self.client.get('/surveys/condvis/pick/')
+        self.client.post('/surveys/condvis/pick/', {'ZONE': '2', 'ALB': '0'})
+        response = self.client.get('/surveys/condvis/final/')
+        html = response.content.decode()
+        self.assertNotIn('name="XDEP"', html)
+        self.assertIn('name="FIN"', html)
+
+
+class ConditionalVisibilityEditorTest(TestCase):
+    """Editor side: Visibility block save/load, picker constraints, duplication,
+    badges and lint (openspec: conditional-question-visibility)."""
+
+    def setUp(self):
+        self.org = _make_org("CondVisEd")
+        self.user = User.objects.create_user(username="cv_owner", password="pass")
+        Membership.objects.create(user=self.user, organization=self.org, role="owner")
+        self.survey = SurveyHeader.objects.create(
+            name="cv_editor", organization=self.org, status="draft",
+        )
+        self.s1 = SurveySection.objects.create(
+            name="s1", title="Intro", survey_header=self.survey, is_head=True, code="S1")
+        self.s2 = SurveySection.objects.create(
+            name="s2", title="Branch", survey_header=self.survey, code="S2",
+            prev_section=self.s1)
+        self.s1.next_section = self.s2
+        self.s1.save()
+        self.ctrl = Question.objects.create(
+            survey_section=self.s1, code="CTRL", order_number=1, name="Controller",
+            input_type="choice",
+            choices=[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}])
+        self.dep = Question.objects.create(
+            survey_section=self.s1, code="DEP", order_number=2, name="Dependent",
+            input_type="text_line")
+        self.client.login(username="cv_owner", password="pass")
+
+    def _edit_question(self, question, extra):
+        payload = {
+            'name': question.name, 'input_type': question.input_type,
+            'subtext': '', 'color': '#000000', 'icon_class': '',
+        }
+        payload.update(extra)
+        return self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{question.id}/edit/', payload)
+
+    def test_rule_saved_via_question_edit(self):
+        """
+        GIVEN the Visibility block posted in conditional mode
+        WHEN the question edit POST is processed
+        THEN the rule lands on Question.visibility_rule
+        """
+        r = self._edit_question(self.dep, {
+            'visibility_mode': 'conditional',
+            'visibility_question': 'CTRL',
+            'visibility_choices': ['1'],
+        })
+        self.assertEqual(r.status_code, 200)
+        self.dep.refresh_from_db()
+        self.assertEqual(self.dep.visibility_rule,
+                         {'question_code': 'CTRL', 'choice_codes': [1]})
+
+    def test_always_mode_clears_rule(self):
+        """
+        GIVEN a question with a stored rule
+        WHEN the block posts mode=always
+        THEN the rule is cleared
+        """
+        self.dep.visibility_rule = {'question_code': 'CTRL', 'choice_codes': [1]}
+        self.dep.save()
+        self._edit_question(self.dep, {'visibility_mode': 'always'})
+        self.dep.refresh_from_db()
+        self.assertIsNone(self.dep.visibility_rule)
+
+    def test_conditional_without_choices_is_422_on_autosave(self):
+        """
+        GIVEN an autosave POST with conditional mode but no options ticked
+        WHEN it is processed
+        THEN the save returns 422 and the stored rule is untouched
+        """
+        r = self._edit_question(self.dep, {
+            'visibility_mode': 'conditional',
+            'visibility_question': 'CTRL',
+            'autosave': '1',
+        })
+        self.assertEqual(r.status_code, 422)
+        self.dep.refresh_from_db()
+        self.assertIsNone(self.dep.visibility_rule)
+
+    def test_absent_block_leaves_rule_untouched(self):
+        """
+        GIVEN a stored rule and a POST without visibility_mode (stale form)
+        WHEN the edit is processed
+        THEN the rule survives
+        """
+        self.dep.visibility_rule = {'question_code': 'CTRL', 'choice_codes': [1]}
+        self.dep.save()
+        self._edit_question(self.dep, {})
+        self.dep.refresh_from_db()
+        self.assertIsNotNone(self.dep.visibility_rule)
+
+    def test_section_rule_saved_via_section_detail(self):
+        """
+        GIVEN the block posted on the section detail form
+        WHEN the section POST is processed
+        THEN the rule lands on SurveySection.visibility_rule
+        """
+        r = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.s2.id}/', {
+                'name': self.s2.name, 'title': self.s2.title, 'code': self.s2.code,
+                'subheading': '', 'layout': 'map', 'next_label': '',
+                'visibility_mode': 'conditional',
+                'visibility_question': 'CTRL',
+                'visibility_choices': ['2'],
+            })
+        self.assertIn(r.status_code, (204, 302))
+        self.s2.refresh_from_db()
+        self.assertEqual(self.s2.visibility_rule,
+                         {'question_code': 'CTRL', 'choice_codes': [2]})
+
+    def test_modal_picker_excludes_later_and_nonchoice(self):
+        """
+        GIVEN a controller before and a text question after the edited question
+        WHEN the edit modal renders
+        THEN the picker offers only the earlier choice question
+        """
+        Question.objects.create(
+            survey_section=self.s1, code="LATERQ", order_number=5, name="Later choice",
+            input_type="choice", choices=[{"code": 1, "name": "x"}])
+        r = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.dep.id}/edit/')
+        html = r.content.decode()
+        self.assertIn('value="CTRL"', html)
+        self.assertNotIn('value="LATERQ"', html)
+        self.assertNotIn('value="DEP"', html)
+
+    def test_duplicate_question_carries_rule(self):
+        """
+        GIVEN a conditioned question
+        WHEN it is duplicated in the editor
+        THEN the copy carries the same rule
+        """
+        self.dep.visibility_rule = {'question_code': 'CTRL', 'choice_codes': [1]}
+        self.dep.save()
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.dep.id}/duplicate/')
+        copy = Question.objects.filter(name__endswith='(copy)').first()
+        self.assertIsNotNone(copy)
+        self.assertEqual(copy.visibility_rule, self.dep.visibility_rule)
+
+    def test_duplicate_section_remaps_intra_section_rule(self):
+        """
+        GIVEN a section whose question depends on a same-section controller
+        WHEN the section is duplicated
+        THEN the copy's rule points at the copied controller, not the source
+        """
+        self.dep.visibility_rule = {'question_code': 'CTRL', 'choice_codes': [1]}
+        self.dep.save()
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.s1.id}/duplicate/')
+        new_section = SurveySection.objects.filter(
+            survey_header=self.survey, title__endswith='(copy)').first()
+        self.assertIsNotNone(new_section)
+        new_ctrl = Question.objects.get(survey_section=new_section, name="Controller")
+        new_dep = Question.objects.get(survey_section=new_section, name="Dependent")
+        self.assertEqual(new_dep.visibility_rule['question_code'], new_ctrl.code)
+        self.assertNotEqual(new_ctrl.code, 'CTRL')
+
+    def test_cross_survey_paste_drops_rule(self):
+        """
+        GIVEN a conditioned question copied to another survey
+        WHEN clone_question targets the other survey's section
+        THEN the pasted question has no rule
+        """
+        from survey.cloning import clone_question
+        other = SurveyHeader.objects.create(
+            name="cv_other", organization=self.org, status="draft")
+        other_section = SurveySection.objects.create(
+            name="os1", survey_header=other, is_head=True, code="OS1")
+        self.dep.visibility_rule = {'question_code': 'CTRL', 'choice_codes': [1]}
+        self.dep.save()
+        clone = clone_question(self.dep, target_section=other_section)
+        self.assertIsNone(clone.visibility_rule)
+
+    def test_broken_badge_and_condition_badge_render(self):
+        """
+        GIVEN one valid rule and one rule referencing a removed option
+        WHEN the survey structure page renders
+        THEN the condition badge and the broken badge both appear
+        """
+        self.dep.visibility_rule = {'question_code': 'CTRL', 'choice_codes': [1]}
+        self.dep.save()
+        Question.objects.create(
+            survey_section=self.s1, code="BRK", order_number=3, name="Broken dep",
+            input_type="text_line",
+            visibility_rule={'question_code': 'CTRL', 'choice_codes': [99]})
+        r = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.s1.id}/')
+        html = r.content.decode()
+        self.assertIn('broken rule', html)
+        self.assertIn('if Controller = Yes', html)
+
+    def test_uncovered_option_lint_renders(self):
+        """
+        GIVEN a section rule covering only option 1 of a 2-option controller
+        WHEN the structure page renders
+        THEN the lint hint names the uncovered option
+        """
+        self.s2.visibility_rule = {'question_code': 'CTRL', 'choice_codes': [1]}
+        self.s2.save()
+        r = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertIn('does not show any section', r.content.decode())
+
+    def test_kill_switch_hides_block(self):
+        """
+        GIVEN CONDITIONAL_VISIBILITY off
+        WHEN the question modal renders
+        THEN the Visibility block is absent and rules are not saved
+        """
+        with self.settings(CONDITIONAL_VISIBILITY=False):
+            r = self.client.get(
+                f'/editor/surveys/{self.survey.uuid}/questions/{self.dep.id}/edit/')
+            self.assertNotIn('visibility_mode', r.content.decode())
+            self._edit_question(self.dep, {
+                'visibility_mode': 'conditional',
+                'visibility_question': 'CTRL',
+                'visibility_choices': ['1'],
+            })
+            self.dep.refresh_from_db()
+            self.assertIsNone(self.dep.visibility_rule)
+
+
+class ConditionalVisibilitySerializationTest(TestCase):
+    """ZIP round-trip of visibility rules (openspec: conditional-question-visibility)."""
+
+    def _export_import(self, survey):
+        import io
+        buf = io.BytesIO()
+        export_survey_to_zip(survey, buf, mode='structure')
+        buf.seek(0)
+        new_survey, warnings = import_survey_from_zip(buf, mode='structure')
+        return {'survey': new_survey, 'warnings': warnings}
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="CondVis Ser")
+        self.survey = SurveyHeader.objects.create(
+            name="cv_ser", organization=self.org, redirect_url="#")
+        self.s1 = SurveySection.objects.create(
+            survey_header=self.survey, name="pick", code="P1", is_head=True)
+        self.ctrl = Question.objects.create(
+            survey_section=self.s1, code="SER_CTRL", order_number=1, name="Zone",
+            input_type="choice",
+            choices=[{"code": 1, "name": "Area 1"}, {"code": 2, "name": "Area 2"}])
+        self.s2 = SurveySection.objects.create(
+            survey_header=self.survey, name="area1", code="A1",
+            prev_section=self.s1,
+            visibility_rule={"question_code": "SER_CTRL", "choice_codes": [1]})
+        self.s1.next_section = self.s2
+        self.s1.save()
+        self.dep = Question.objects.create(
+            survey_section=self.s1, code="SER_DEP", order_number=2, name="Dep",
+            input_type="text_line",
+            visibility_rule={"question_code": "SER_CTRL", "choice_codes": [2]})
+
+    def test_round_trip_preserves_rules(self):
+        """
+        GIVEN a survey with a section rule and a question rule
+        WHEN it is exported and imported (codes collide, so they are remapped)
+        THEN both rules point at the remapped controller with the same codes
+        """
+        result = self._export_import(self.survey)
+        new_survey = result['survey']
+        new_ctrl = Question.objects.get(
+            survey_section__survey_header=new_survey, name="Zone")
+        new_dep = Question.objects.get(
+            survey_section__survey_header=new_survey, name="Dep")
+        new_s2 = SurveySection.objects.get(survey_header=new_survey, name="area1")
+        self.assertEqual(new_dep.visibility_rule,
+                         {"question_code": new_ctrl.code, "choice_codes": [2]})
+        self.assertEqual(new_s2.visibility_rule,
+                         {"question_code": new_ctrl.code, "choice_codes": [1]})
+        self.assertNotEqual(new_ctrl.code, "SER_CTRL")
+
+    def test_unresolvable_rule_dropped_with_report(self):
+        """
+        GIVEN an archive whose rule references a question absent from it
+        WHEN the archive is imported
+        THEN the item imports without a rule and a warning names the drop
+        """
+        self.dep.visibility_rule = {"question_code": "NO_SUCH", "choice_codes": [1]}
+        self.dep.save()
+        result = self._export_import(self.survey)
+        new_dep = Question.objects.get(
+            survey_section__survey_header=result['survey'], name="Dep")
+        self.assertIsNone(new_dep.visibility_rule)
+        self.assertTrue(any('visibility rule' in w for w in result.get('warnings', [])),
+                        result.get('warnings'))
+
+    def test_legacy_archive_imports_unchanged(self):
+        """
+        GIVEN an archive produced before visibility rules existed
+        WHEN it is imported
+        THEN every question and section has no rule
+        """
+        import io, json as _json, zipfile as _zipfile
+        buf = io.BytesIO()
+        export_survey_to_zip(self.survey, buf, mode='structure')
+        buf.seek(0)
+        with _zipfile.ZipFile(buf) as zf:
+            data = _json.loads(zf.read('survey.json'))
+        def strip(obj):
+            if isinstance(obj, dict):
+                obj.pop('visibility_rule', None)
+                for v in obj.values(): strip(v)
+            elif isinstance(obj, list):
+                for v in obj: strip(v)
+        strip(data)
+        out = io.BytesIO()
+        with _zipfile.ZipFile(out, 'w') as zf:
+            zf.writestr('survey.json', _json.dumps(data))
+        out.seek(0)
+        new_survey, _warnings = import_survey_from_zip(out, mode='structure')
+        self.assertFalse(Question.objects.filter(
+            survey_section__survey_header=new_survey,
+            visibility_rule__isnull=False).exists())
+        self.assertFalse(SurveySection.objects.filter(
+            survey_header=new_survey, visibility_rule__isnull=False).exists())

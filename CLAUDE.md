@@ -106,6 +106,18 @@ editor-only label that never reaches the respondent (see the `question-subtext` 
 
 **Hierarchical Questions/Answers**: Both Question and Answer models support self-referential parent relationships via `parent_question_id` and `parent_answer_id` for conditional sub-questions.
 
+**Conditional visibility (`CONDITIONAL_VISIBILITY` kill switch, default ON)**: a
+`visibility_rule` JSONField on `Question` and `SurveySection` (`{"question_code", "choice_codes"}`,
+any-of match on an earlier `choice`/`multichoice` answer) drives who sees what. One engine —
+`survey/visibility.py` — feeds the respondent form, POST discard/purge, section navigation,
+progress, and the editor badges/lint, so runtime and editor can never disagree. Hidden ⇒ never
+required, submitted answers discarded, abandoned branches purged server-side. Broken rules fail
+OPEN (shown to everyone) and are badged in the editor. Rules ride ZIP export/import
+(`_apply_visibility_rules` drops unresolvable ones with a report line) and duplication
+(`cloning.py` remaps intra-section controllers; cross-survey paste drops the rule). Do NOT reuse
+`parent_question_id` for visibility — that relation means "geo popup sub-question". Env var off ⇒
+rules stored but inert, editor hides the Visibility block.
+
 **Session Management**: Survey sessions are created on first section view and tracked via `request.session['survey_session_id']`.
 
 **Data Export** (`download_data` view): Exports survey responses as ZIP containing:
