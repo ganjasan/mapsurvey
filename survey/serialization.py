@@ -127,6 +127,7 @@ def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
             ),
             "next_section_name": section.next_section.name if section.next_section else None,
             "prev_section_name": section.prev_section.name if section.prev_section else None,
+            "visibility_rule": section.visibility_rule,
             "translations": [
                 {"language": t.language, "title": t.title, "subheading": t.subheading,
                  "next_label": t.next_label}
@@ -148,6 +149,7 @@ def _serialize_question(question: Question) -> Dict[str, Any]:
         "input_type": question.input_type,
         "choices": question.choices,
         "required": question.required,
+        "visibility_rule": question.visibility_rule,
         "color": question.color,
         "icon_class": question.icon_class,
         "display_style": question.display_style,
@@ -409,6 +411,70 @@ def validate_archive(zip_file: zipfile.ZipFile) -> Dict[str, Any]:
 # IMPORT - Structure
 # =============================================================================
 
+def _apply_visibility_rules(
+    sections: Dict[str, SurveySection],
+    sections_data: List[Dict[str, Any]],
+    code_remap: Dict[str, str],
+) -> List[str]:
+    """Attach exported visibility rules to imported sections and questions.
+
+    The controlling question is referenced by its exported code; ``code_remap``
+    translates codes that collided on import. A rule whose controller or every
+    referenced option code cannot be resolved is dropped with a warning — never
+    imported broken, never fatal to the import.
+    """
+    warnings = []
+    controllers = {}
+    for section in sections.values():
+        for question in Question.objects.filter(
+            survey_section=section, parent_question_id__isnull=True
+        ):
+            controllers[question.code] = question
+
+    def resolve(rule, host_label):
+        if not isinstance(rule, dict):
+            return None
+        code = code_remap.get(rule.get("question_code"), rule.get("question_code"))
+        controller = controllers.get(code)
+        if controller is None:
+            warnings.append(
+                f"Dropped visibility rule on {host_label}: controlling question not found"
+            )
+            return None
+        defined = {c.get("code") for c in (controller.choices or []) if isinstance(c, dict)}
+        codes = [c for c in (rule.get("choice_codes") or []) if c in defined]
+        if not codes:
+            warnings.append(
+                f"Dropped visibility rule on {host_label}: no referenced answer option exists"
+            )
+            return None
+        return {"question_code": code, "choice_codes": codes}
+
+    for section_data in sections_data:
+        section = sections.get(section_data["name"])
+        if section is None:
+            continue
+        section_rule = resolve(
+            section_data.get("visibility_rule"), f"section '{section.name}'"
+        )
+        if section_rule:
+            section.visibility_rule = section_rule
+            section.save(update_fields=["visibility_rule"])
+        for question_data in section_data.get("questions", []):
+            rule = question_data.get("visibility_rule")
+            if not isinstance(rule, dict):
+                continue
+            q_code = code_remap.get(question_data["code"], question_data["code"])
+            question = controllers.get(q_code)
+            if question is None:
+                continue
+            resolved = resolve(rule, f"question '{question.name or q_code}'")
+            if resolved:
+                question.visibility_rule = resolved
+                question.save(update_fields=["visibility_rule"])
+    return warnings
+
+
 def import_structure_from_archive(
     zip_file: zipfile.ZipFile,
     data: Dict[str, Any],
@@ -457,6 +523,12 @@ def import_structure_from_archive(
         if section:
             questions_data = section_data.get("questions", [])
             create_questions(section, questions_data, legacy_option_groups, code_remap)
+
+    # Apply visibility rules once every question exists (a rule's controller is
+    # earlier in survey order, but a post-pass is immune to creation order and
+    # lets an unresolvable rule become one report line instead of a half-rule).
+    rule_warnings = _apply_visibility_rules(sections, sections_data, code_remap)
+    warnings.extend(rule_warnings)
 
     # Resolve section links
     link_warnings = resolve_section_links(sections, sections_data)

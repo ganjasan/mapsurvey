@@ -400,7 +400,7 @@ class SurveySectionAnswerForm(forms.Form):
         form.fields[question.code] = field
         return form
 
-    def __init__(self, initial, section, question, survey_session_id, language=None, *args, **kwargs):
+    def __init__(self, initial, section, question, survey_session_id, language=None, questions_override=None, *args, **kwargs):
         super().__init__(*args, initial=initial, **kwargs)
 
         section = section
@@ -408,7 +408,9 @@ class SurveySectionAnswerForm(forms.Form):
         self.language = language
 
         if question == None:
-            questions = section.questions()
+            # The view may pass the visibility-filtered subset; None keeps the
+            # section's full list (single-question/sub-question paths, editor).
+            questions = section.questions() if questions_override is None else questions_override
         else:
             questions = question.subQuestions()
 

@@ -3,6 +3,13 @@
     data-section-name="{{ section.name }}">
     <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
     <span class="section-title">{{ section.title|default:section.name }}</span>
+    {% load question_utils %}{% with vis=section|visibility_info:survey %}{% if vis %}
+    {% if vis.broken %}
+    <span class="badge badge-warning" title="{{ vis.reason }}. Shown to everyone until fixed."><i class="fas fa-exclamation-triangle"></i></span>
+    {% else %}
+    <span class="badge" title="{{ vis.label }}" style="background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe;"><i class="fas fa-code-branch"></i></span>
+    {% endif %}
+    {% endif %}{% endwith %}
     {% if section.question_count is not None %}<span class="section-qcount" title="Questions in this section">{{ section.question_count }}</span>{% endif %}
     <button class="section-action" title="Duplicate"
             hx-post="{% url 'editor_section_duplicate' survey.uuid section.id %}"

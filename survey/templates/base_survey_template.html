@@ -17,6 +17,7 @@ locale.{% endcomment %}
 
     <!-- js util -->
     <script type="text/javascript" src="{% static 'js/util.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/conditional_visibility.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/components/map_place_search.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/components/ranking.js' %}"></script>
 
@@ -800,7 +801,9 @@ locale.{% endcomment %}
             $('#required-summary').hide();
 
             // 1) required card questions (text / choice / rating / range / datetime …)
-            $('#section_question_form .question-card[data-required="true"]').each(function() {
+            // :not([hidden]) — a question hidden by a visibility rule is not
+            // applicable and must never block Next.
+            $('#section_question_form .question-card[data-required="true"]:not([hidden])').each(function() {
                 var card = this, filled = false;
                 $(card).find('input, textarea, select').each(function() {
                     var t = (this.type || '').toLowerCase();
@@ -818,6 +821,7 @@ locale.{% endcomment %}
 
             // 2) required geo questions (point / line / polygon draw buttons)
             $('.geo-inp[data-required="true"]').each(function() {
+                if (this.disabled) { return; } // hidden by a visibility rule
                 if (!$(this).val()) {
                     var btn = $('button.drawbutton[name="' + $(this).attr('name') + '"]');
                     btn.addClass('is-required-invalid');

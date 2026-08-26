@@ -470,6 +470,10 @@ EDITOR_AUTOSAVE = os.environ.get('EDITOR_AUTOSAVE', 'True').lower() in ('true', 
 # Off: editor UI and section checklist disappear, layer endpoints 404, respondent
 # pages get no layer metadata. Stored layers are untouched — the flag gates surfaces.
 MAP_REFERENCE_LAYERS = os.environ.get('MAP_REFERENCE_LAYERS', 'True').lower() in ('true', '1')
+# Conditional visibility rules (openspec: conditional-question-visibility).
+# Off: stored rules become inert — every question/section renders for every
+# respondent, no visibility purging, and the editor hides the Visibility block.
+CONDITIONAL_VISIBILITY = os.environ.get('CONDITIONAL_VISIBILITY', 'True').lower() in ('true', '1')
 # Steer creators toward the AI draft on the create page (openspec:
 # steer-to-ai-generation): single-field brief, empty-path intercept, wizard empty
 # path skipping the map step. One switch for the whole bet — False restores the

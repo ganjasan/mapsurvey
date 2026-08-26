@@ -1,0 +1,89 @@
+{% load question_utils %}{% if visibility_enabled %}
+{% comment %}Shared Visibility block (openspec: conditional-question-visibility).
+Included by question_form_modal.html and section_detail_form.html inside their
+<form>, so the fields ride every save/autosave POST. visibility_groups comes
+from editor_views._visibility_block_context; empty groups = nothing can control
+this item yet, and the block says so instead of rendering a dead picker.{% endcomment %}
+<div class="form-group" id="fg-visibility">
+    <label>Visibility</label>
+    <div style="border:1px solid var(--border-color, #e9ecef);border-left:3px solid #0b5ed7;border-radius:8px;padding:.65rem .8rem;background:#f8f9fa;">
+        <label style="display:flex;align-items:center;gap:.45rem;font-weight:400;margin:0 0 .3rem;{% if is_read_only %}opacity:.65;{% endif %}">
+            <input type="radio" name="visibility_mode" value="always"
+                   {% if not visibility_rule %}checked{% endif %}
+                   {% if is_read_only %}disabled{% endif %}> Always shown
+        </label>
+        <label style="display:flex;align-items:center;gap:.45rem;font-weight:400;margin:0;{% if is_read_only %}opacity:.65;{% endif %}">
+            <input type="radio" name="visibility_mode" value="conditional"
+                   {% if visibility_rule %}checked{% endif %}
+                   {% if is_read_only or not visibility_groups %}disabled{% endif %}> Shown conditionally
+        </label>
+        {% if not visibility_groups %}
+        <small class="form-text text-muted" style="margin-left:1.4rem;">No earlier choice question to depend on yet.</small>
+        {% else %}
+        <div id="visibility-controls" style="margin:.6rem 0 0 1.4rem;{% if not visibility_rule %}display:none;{% endif %}">
+            <div class="form-group" style="margin-bottom:.6rem;">
+                <label style="font-size:.8rem;">When the answer to</label>
+                <select name="visibility_question" class="form-control form-control-sm"
+                        {% if is_read_only %}disabled{% endif %}>
+                    {% for group_section, group_questions in visibility_groups %}
+                    <optgroup label="{{ group_section.title|default:group_section.name }}">
+                        {% for gq in group_questions %}
+                        <option value="{{ gq.code }}" {% if gq.code == visibility_rule_question %}selected{% endif %}>{{ gq.name|default:gq.code }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted">Only choice questions that come before this one can be selected.</small>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:.8rem;">is any of</label>
+                {% for group_section, group_questions in visibility_groups %}{% for gq in group_questions %}
+                <div class="visibility-choices" data-controller="{{ gq.code }}"
+                     style="border:1px solid #dee2e6;border-radius:6px;background:#fff;padding:.5rem .65rem;max-height:170px;overflow-y:auto;{% if gq.code != visibility_rule_question %}display:none;{% endif %}">
+                    {% for choice in gq.choices %}
+                    <label style="display:flex;align-items:center;gap:.5rem;font-weight:400;margin:0 0 .25rem;font-size:.85rem;">
+                        <input type="checkbox" name="visibility_choices" value="{{ choice.code }}"
+                               {% if gq.code == visibility_rule_question and choice.code in visibility_rule_codes %}checked{% endif %}
+                               {% if is_read_only %}disabled{% endif %}
+                               {% if gq.code != visibility_rule_question %}disabled data-vis-inactive="1"{% endif %}>
+                        {{ gq|choice_label:choice }}
+                    </label>
+                    {% endfor %}
+                </div>
+                {% endfor %}{% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% if is_read_only %}
+        <small class="form-text text-muted" style="margin-left:1.4rem;">Create a draft to edit visibility.</small>
+        {% endif %}
+    </div>
+</div>
+<script>
+(function () {
+    var block = document.getElementById('fg-visibility');
+    if (!block || block.dataset.visBound) return;
+    block.dataset.visBound = '1';
+    var controls = block.querySelector('#visibility-controls');
+    var select = block.querySelector('select[name="visibility_question"]');
+    function syncChoices() {
+        if (!select) return;
+        block.querySelectorAll('.visibility-choices').forEach(function (box) {
+            var active = box.getAttribute('data-controller') === select.value;
+            box.style.display = active ? '' : 'none';
+            box.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+                if (active) { cb.disabled = {% if is_read_only %}true{% else %}false{% endif %}; cb.removeAttribute('data-vis-inactive'); }
+                else { cb.disabled = true; cb.setAttribute('data-vis-inactive', '1'); }
+            });
+        });
+    }
+    block.querySelectorAll('input[name="visibility_mode"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+            if (controls) controls.style.display = (radio.value === 'conditional' && radio.checked) ? '' : 'none';
+            if (radio.value === 'conditional' && radio.checked) syncChoices();
+        });
+    });
+    if (select) select.addEventListener('change', syncChoices);
+})();
+</script>
+{% endif %}
