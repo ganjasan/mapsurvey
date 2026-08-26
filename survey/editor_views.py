@@ -294,14 +294,30 @@ def _start_survey_generation(request, form):
         # small div inside the form the creator is still looking at, so
         # re-rendering survey_create.html here would duplicate every id and
         # re-run the page's Leaflet setup against an initialised map.
+        # Two shapes of the same errors: the flat list keeps the card readable
+        # without JS, `field_errors` lets the page mark each offending input in
+        # place (the card is then hidden client-side when nothing is left
+        # unanchored — errors belong next to their source, not below the fold).
         errors = []
+        field_errors = []
+        unanchored_count = 0
         for field_form in (form, brief_form):
             for field_name, messages in field_form.errors.items():
-                label = field_form.fields[field_name].label or field_name.replace('_', ' ')
-                errors.extend('%s: %s' % (label, message) for message in messages)
+                if field_name in field_form.fields:
+                    label = field_form.fields[field_name].label or field_name.replace('_', ' ')
+                    errors.extend('%s: %s' % (label, message) for message in messages)
+                    field_errors.append({
+                        'field_id': field_form[field_name].auto_id,
+                        'messages': [str(message) for message in messages],
+                    })
+                else:
+                    errors.extend(str(message) for message in messages)
+                    unanchored_count += len(messages)
         return render(request, 'editor/partials/generation_invalid.html', {
             'message': 'Check the form before generating a draft.',
             'errors': errors,
+            'field_errors': field_errors,
+            'unanchored_count': unanchored_count,
         })
 
     languages = form.cleaned_data.get('available_languages') or ['en']

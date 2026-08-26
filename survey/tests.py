@@ -25542,6 +25542,67 @@ class AISurveyCreateViewTest(TestCase):
         self.assertNotContains(response, 'create-map-picker')
         self.assertContains(response, 'Check the form before generating')
 
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_invalid_generate_carries_field_error_payload(self):
+        """
+        GIVEN a generate submission with an empty goal
+        WHEN the invalid fragment is returned
+        THEN it embeds a JSON payload anchoring the error to the goal field's
+             rendered id, and reports zero unanchored errors, so the page
+             script can mark the field in place and hide the detached card
+        """
+        with patch('survey.editor_views.generate_survey_draft_task.delay'):
+            response = self.client.post(reverse('editor_survey_create'), {
+                'name': 'ai_survey', 'available_languages': '["en"]',
+                'action': 'generate', 'goal': '',
+            })
+
+        self.assertContains(response, 'id="gen-field-errors"')
+        payload = re.search(
+            r'<script id="gen-field-errors" type="application/json">(.*?)</script>',
+            response.content.decode(), re.S)
+        self.assertIsNotNone(payload)
+        field_errors = json.loads(payload.group(1))
+        self.assertEqual([fe['field_id'] for fe in field_errors], ['id_goal'])
+        self.assertTrue(field_errors[0]['messages'])
+        self.assertContains(response, 'data-unanchored="0"')
+        # The anchor must match an input the create page actually renders.
+        page = self.client.get(reverse('editor_survey_create')).content.decode()
+        self.assertIn('id="id_goal"', page)
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='')
+    def test_not_configured_card_has_no_field_payload(self):
+        """
+        GIVEN a generate submission while the provider key is empty
+        WHEN the not-configured fragment is returned
+        THEN the plain card renders without a field-error payload
+        """
+        response = self.client.post(reverse('editor_survey_create'), {
+            'name': 'ai_survey', 'available_languages': '["en"]',
+            'action': 'generate', 'goal': 'Where is traffic worst',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'gen-field-errors')
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_wizard_draft_button_signals_a_next_step(self):
+        """
+        GIVEN the create page renders the mobile wizard's step-1 draft button
+        WHEN the markup is inspected
+        THEN the button says a next step follows instead of implying the
+             survey is created immediately
+        """
+        response = self.client.get(reverse('editor_survey_create'))
+        html = response.content.decode()
+
+        # The wizard step-1 button advances to the map step; only the desktop
+        # #generate-btn (which really does submit) may keep "Draft my survey".
+        wizard_btn = re.search(r'<button[^>]*wizard-draft-next[^>]*>(.*?)</button>', html, re.S)
+        self.assertIsNotNone(wizard_btn)
+        self.assertIn('Next — choose the place', wizard_btn.group(1))
+        self.assertNotIn('Draft my survey', wizard_btn.group(1))
+
     # The two tests below guard the same defect from both sides. It is worth
     # saying why the obvious one is not enough: `test_manual_creation_is_unchanged`
     # above passed throughout the whole time "Create empty" was dead in

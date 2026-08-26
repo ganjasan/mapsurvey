@@ -309,7 +309,10 @@
             Only rendered by CSS below 1024px, where it replaces #generate-btn:
             the wizard's draft path continues to the map step rather than
             submitting straight away.{% endcomment %}
-            <button type="button" class="btn btn-primary btn-block-row wizard-draft-next" onclick="wizardNext('draft')">✨ Draft my survey</button>
+            {% comment %}"Next", not "Draft my survey": this button only advances
+            to the map step — the actual submit is the map step's Create button,
+            and copy implying immediate creation misled creators.{% endcomment %}
+            <button type="button" class="btn btn-primary btn-block-row wizard-draft-next" onclick="wizardNext('draft')">✨ Next — choose the place</button>
             {% endif %}
             <div class="ai-privacy">
               Your description is processed by an AI provider to build the draft.
@@ -594,6 +597,74 @@
     })();
     </script>
 
+    {% if ai_available %}
+    <script>
+    // Validation errors at their source (openspec: fix-ai-draft-validation-
+    // proximity). The generate button is HTMX and its invalid response lands
+    // in #generation-slot below the fold; this handler reads the response's
+    // field-error payload, marks each offending input in place (red border +
+    // adjacent message, disclosure forced open, first field focused) and hides
+    // the detached card when nothing stayed unanchored. The wizard's empty-goal
+    // pre-check reuses the same helpers.
+    (function() {
+        function clearFieldErrors() {
+            document.querySelectorAll('.gen-field-error').forEach(function(el) { el.remove(); });
+            document.querySelectorAll('.gen-field-invalid').forEach(function(el) {
+                el.classList.remove('gen-field-invalid');
+                el.style.borderColor = '';
+            });
+        }
+        function markFieldErrors(fieldErrors) {
+            clearFieldErrors();
+            var first = null;
+            (fieldErrors || []).forEach(function(fe) {
+                var input = document.getElementById(fe.field_id);
+                if (!input) return;
+                input.classList.add('gen-field-invalid');
+                input.style.borderColor = '#dc2626';
+                var msg = document.createElement('div');
+                msg.className = 'gen-field-error text-danger';
+                msg.style.fontSize = '0.85rem';
+                msg.style.marginTop = '0.25rem';
+                msg.textContent = (fe.messages || []).join(' ');
+                input.insertAdjacentElement('afterend', msg);
+                var details = input.closest('details');
+                if (details) details.open = true;
+                input.addEventListener('input', function handler() {
+                    input.classList.remove('gen-field-invalid');
+                    input.style.borderColor = '';
+                    if (msg.parentNode) msg.remove();
+                    input.removeEventListener('input', handler);
+                });
+                if (!first) first = input;
+            });
+            if (first) {
+                first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                first.focus({ preventScroll: true });
+            }
+            return !!first;
+        }
+        window._genMarkFieldErrors = markFieldErrors;
+        window._genClearFieldErrors = clearFieldErrors;
+
+        document.body.addEventListener('htmx:beforeRequest', function(e) {
+            var elt = (e.detail && e.detail.elt) || e.target;
+            if (elt && elt.id === 'generate-btn') clearFieldErrors();
+        });
+        document.body.addEventListener('htmx:afterSwap', function(e) {
+            if (!e.target || e.target.id !== 'generation-slot') return;
+            var payload = e.target.querySelector('#gen-field-errors');
+            if (!payload) return;
+            var data;
+            try { data = JSON.parse(payload.textContent); } catch (err) { return; }
+            var anyMarked = markFieldErrors(data);
+            var wrap = e.target.querySelector('.gen-wrap');
+            if (wrap && anyMarked && wrap.getAttribute('data-unanchored') === '0') wrap.hidden = true;
+        });
+    })();
+    </script>
+    {% endif %}
+
     {% if CREATE_STEER_AI and ai_available %}
     <script>
     // Empty-path intercept (openspec: steer-to-ai-generation). Capture-phase
@@ -873,7 +944,14 @@
             path = p;
             if (p === 'draft') {
                 var goal = document.getElementById('{{ brief_form.goal.id_for_label }}');
-                if (goal && !goal.value.trim()) { goal.focus(); goal.style.borderColor = '#dc2626'; return; }
+                if (goal && !goal.value.trim()) {
+                    if (window._genMarkFieldErrors) {
+                        window._genMarkFieldErrors([{ field_id: goal.id, messages: ['This field is required.'] }]);
+                    } else {
+                        goal.focus(); goal.style.borderColor = '#dc2626';
+                    }
+                    return;
+                }
             }
             {% if CREATE_STEER_AI %}
             {% comment %}The empty path skips the "Where?" step (openspec:

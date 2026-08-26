@@ -6,8 +6,13 @@ button that swaps the response into a small slot inside the form. Returning
 the whole page here would inject a second copy of the page's scripts and IDs
 (Leaflet would refuse to re-initialise the map, and the duplicated form ids
 would break every later interaction).
+
+The visible card is the no-JS fallback: when `field_errors` is present the page
+script distributes each error to its input and hides the card unless something
+stayed unanchored (`data-unanchored`).
 {% endcomment %}
-<div class="gen-wrap">
+<div class="gen-wrap" data-unanchored="{{ unanchored_count|default:0 }}">
+  {% if field_errors %}{{ field_errors|json_script:'gen-field-errors' }}{% endif %}
   <div class="gen-card gen-card-error">
     <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
     <div class="gen-copy">
