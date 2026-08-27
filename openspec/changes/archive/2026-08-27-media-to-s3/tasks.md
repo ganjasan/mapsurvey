@@ -53,7 +53,7 @@
 - [x] 7.1 Copied 2026-08-27 via SSH (unblocked by the Dockerfile fix in the same PR: `adduser --system` had left the `app` user with nologin and no `~/.ssh`, which is why every SSH session died after auth). Dry-run → copy → verify: 55/55 files, 72,574,283 bytes, sizes match, disk untouched. One-off jobs were proven NOT to mount the disk (job saw an empty dir while the disk metric read 69 MiB), so SSH was the only path
 - [x] 7.2 `USE_S3=TRUE` + media vars set on web and worker via Render API, deployed 2026-08-27. Not on the acquisition cron — it writes no media
 - [x] 7.3 Verified in production: `settings` resolve to the bucket, an existing cover serves 200 from the bucket host, a fresh editor upload landed in the bucket and rendered on the respondent page from the bucket domain (browser-driven end-to-end), storage round-trip write/read/delete clean, no S3 errors in logs
-- [x] 7.4 `disk:` block removed — this PR. Render deletes the disk and its data on Blueprint sync; the S3 copy (verified) plus bucket versioning is the safety net from here on
+- [x] 7.4 `disk:` block removed from the Blueprint, and the disk itself deleted explicitly via `DELETE /v1/disks/…` (204) on 2026-08-27. The PR text claimed Blueprint sync would delete it — wrong: Render stops managing resources removed from the YAML but does not delete them. Proof of the payoff: the first diskless deploy was probed every 2s end to end — 25 probes, 0 non-200, no 502/503 in the logs — where the last disk-attached deploy threw a 502 at the instance swap. The S3 copy (verified) plus bucket versioning is the safety net from here on
 - [x] 7.5 `deploy-startup` Purpose updated: the window is eliminated, and reintroducing a disk would bring it back
 
 ## 8. Follow-ups (not in this change)
