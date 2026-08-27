@@ -341,9 +341,19 @@ function copyTestLink(btn) {
                 <i class="fas fa-chevron-right"></i>
             </button>
         </div>
-        <iframe class="preview-frame" id="preview-frame"
-                src="{% if thanks_panel_active %}{% url 'editor_survey_thanks_preview' survey.uuid %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}{% elif current_section %}{% url 'editor_section_preview' survey.uuid current_section.name %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}{% else %}about:blank{% endif %}">
-        </iframe>
+        {# Double-buffered preview: navigation happens in the hidden frame and it #}
+        {# becomes visible only once loaded, so the stale preview (not a blank #}
+        {# document) is what shows during slow loads. All src writes go through #}
+        {# loadPreview() below. #}
+        <div class="preview-frame-slot">
+            <iframe class="preview-frame active" id="preview-frame"
+                    src="{% if thanks_panel_active %}{% url 'editor_survey_thanks_preview' survey.uuid %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}{% elif current_section %}{% url 'editor_section_preview' survey.uuid current_section.name %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}{% else %}about:blank{% endif %}">
+            </iframe>
+            <iframe class="preview-frame" id="preview-frame-buffer" src="about:blank"></iframe>
+            <div class="preview-loading" id="preview-loading" aria-hidden="true">
+                <div class="preview-loading-spinner"></div>
+            </div>
+        </div>
     </aside>
 </div>
 </div><!-- /editor-content-wrapper -->
@@ -451,10 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
             swap: 'innerHTML'
         });
         // Update preview
-        var iframe = document.getElementById('preview-frame');
-        if (iframe) {
-            iframe.src = buildPreviewUrl(sectionName);
-        }
+        loadPreview(buildPreviewUrl(sectionName));
     });
 
     // Pinned "Survey settings" entry → swap the center panel without a full
@@ -468,8 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (thanksPinnedItem) thanksPinnedItem.classList.remove('active');
         item.classList.add('active');
         htmx.ajax('GET', url, { target: '#section-content', swap: 'innerHTML' });
-        var iframe = document.getElementById('preview-frame');
-        if (iframe) iframe.src = previewUrl || 'about:blank';
+        loadPreview(previewUrl || 'about:blank');
     }
     if (settingsPinnedItem) {
         settingsPinnedItem.addEventListener('click', function(e) {
@@ -505,20 +511,56 @@ document.addEventListener('DOMContentLoaded', function() {
     // iframe after it autosaves.
     window.refreshBuildPreview = function() { refreshPreview(); };
 
+    // ── Double-buffered preview loader ───────────────────────────────────
+    // Navigations render in the hidden frame and swap in on load, so the
+    // stale preview stays visible (under a spinner) instead of a blank
+    // document. Sequence numbers make concurrent loads latest-wins; the
+    // timeout swaps anyway if `load` never fires, so the panel can't wedge
+    // on stale content with an eternal spinner.
+    var previewFrames = [
+        document.getElementById('preview-frame'),
+        document.getElementById('preview-frame-buffer')
+    ];
+    var previewActive = 0;
+    var previewSeq = 0;
+    var previewSwapTimer = null;
+    var previewLoadingEl = document.getElementById('preview-loading');
+    var previewCurrentUrl = previewFrames[0] ? previewFrames[0].getAttribute('src') : '';
+
+    function loadPreview(url) {
+        if (!previewFrames[0] || !previewFrames[1]) return;
+        previewSeq += 1;
+        var seq = previewSeq;
+        previewCurrentUrl = url;
+        var hidden = previewFrames[1 - previewActive];
+        if (previewLoadingEl) previewLoadingEl.classList.add('visible');
+
+        function swapIn() {
+            if (seq !== previewSeq) return; // superseded by a newer load
+            clearTimeout(previewSwapTimer);
+            hidden.classList.add('active');
+            previewFrames[previewActive].classList.remove('active');
+            previewActive = 1 - previewActive;
+            if (previewLoadingEl) previewLoadingEl.classList.remove('visible');
+        }
+        hidden.onload = function() { hidden.onload = null; swapIn(); };
+        clearTimeout(previewSwapTimer);
+        previewSwapTimer = setTimeout(swapIn, 30000);
+        hidden.src = url;
+    }
+
     // Refresh preview (debounced)
     var previewTimeout;
     function refreshPreview() {
         clearTimeout(previewTimeout);
         previewTimeout = setTimeout(function() {
-            var iframe = document.getElementById('preview-frame');
-            if (iframe && iframe.src) {
-                // Rebuild URL to preserve lang param
-                var url = new URL(iframe.src);
-                var lang = getPreviewLang();
-                if (lang) url.searchParams.set('lang', lang);
-                else url.searchParams.delete('lang');
-                iframe.src = url.toString();
-            }
+            if (!previewCurrentUrl || previewCurrentUrl === 'about:blank') return;
+            // Rebuild URL to preserve lang param
+            var url = new URL(previewCurrentUrl, window.location.origin);
+            var lang = getPreviewLang();
+            if (lang) url.searchParams.set('lang', lang);
+            else url.searchParams.delete('lang');
+            loadPreview(url.pathname + url.search);
         }, 500);
     }
 
@@ -527,8 +569,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.body.addEventListener('htmx:afterSwap', function(evt) {
+        // #section-content swaps accompany section clicks and pinned-item
+        // activation, whose handlers already navigate the preview explicitly —
+        // refreshing here reloaded the same URL a second time (the white-screen
+        // double load). Saves inside the panel refresh via the sectionSaved /
+        // questionSaved events instead.
         if (evt.detail.target.id === 'questionModalBody' ||
-            evt.detail.target.id === 'mapPickerModalBody') return;
+            evt.detail.target.id === 'mapPickerModalBody' ||
+            evt.detail.target.id === 'section-content') return;
         refreshPreview();
     });
 
@@ -599,8 +647,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             document.getElementById('section-content').innerHTML =
                 '<p class="text-muted p-4">No sections yet. Click "New Section" to add one.</p>';
-            var iframe = document.getElementById('preview-frame');
-            if (iframe) iframe.src = 'about:blank';
+            loadPreview('about:blank');
         }
     });
 
