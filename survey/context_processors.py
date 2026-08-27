@@ -75,6 +75,15 @@ def _posthog_key_for(request):
     excluded = getattr(settings, 'POSTHOG_EXCLUDED_PREFIXES', ())
     if any(path.startswith(prefix) for prefix in excluded):
         return ''
+    # Respondent surfaces the prefix test cannot see: the editor's preview iframes serve a real
+    # respondent page from under `/editor/`, where we do want tracking on the page around them.
+    # `resolver_match` is None before URL resolution (an error page rendered by middleware, say);
+    # treat that as not excluded -- tracking a page we meant to track is the recoverable
+    # direction, silently losing the editor is not.
+    match = getattr(request, 'resolver_match', None)
+    excluded_views = getattr(settings, 'POSTHOG_EXCLUDED_VIEW_NAMES', ())
+    if match is not None and match.url_name in excluded_views:
+        return ''
     return key
 
 

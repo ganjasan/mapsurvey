@@ -389,6 +389,18 @@ POSTHOG_SESSION_REPLAY = os.environ.get('POSTHOG_SESSION_REPLAY', 'False').lower
 # of depending on which existing one its author happened to copy.
 POSTHOG_EXCLUDED_PREFIXES = ('/surveys/', '/r/')
 
+# The same boundary, for respondent surfaces the prefix list cannot reach. The editor's Live
+# preview panel frames a real respondent page served from under `/editor/`, so its snippet used
+# to run a second PostHog client in the creator's tab: one session carrying two recorders and
+# two viewports (session replay alternated between the iframe's ~470px and the editor's ~1600px),
+# and every preview refresh counted as an editor page view.
+#
+# Keyed on the resolved view name rather than a path pattern because `preview` is not a reserved
+# segment: `/editor/surveys/<uuid>/public-results/preview/` is a different surface that renders a
+# standalone template and was never affected. Renaming a view here without updating this tuple
+# restores the bug silently -- the tests reverse both URLs by name so that fails the suite.
+POSTHOG_EXCLUDED_VIEW_NAMES = ('editor_section_preview', 'editor_survey_thanks_preview')
+
 # --- Server-side error capture (PosthogContextMiddleware) ---
 # The middleware's process_exception reports view exceptions to PostHog error tracking.
 # Client setup (and the "empty key = disabled" gate) lives in survey.apps.SurveyConfig.

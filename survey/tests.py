@@ -10253,6 +10253,74 @@ class PostHogSnippetTest(TestCase):
             self.assertContains(response, 'posthog.init')
             self.assertContains(response, self.KEY)
 
+    def test_no_snippet_on_editor_section_preview(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured AND a creator is signed in
+        WHEN the editor's Live preview iframe loads a section
+        THEN no PostHog snippet is rendered
+
+        The URL is reversed by name rather than written out: the exclusion is
+        keyed on the view name, so a rename in urls.py that misses
+        POSTHOG_EXCLUDED_VIEW_NAMES has to fail here instead of quietly putting
+        a second recorder back into the creator's tab.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.client.login(username='posthoguser', password='pass')
+            url = reverse(
+                'editor_section_preview',
+                args=[self.survey.uuid, self.section1.name],
+            )
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, self.KEY)
+
+    def test_no_snippet_on_editor_thanks_preview(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured AND a creator is signed in
+        WHEN the editor's Live preview iframe loads the thanks page
+        THEN no PostHog snippet is rendered
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.client.login(username='posthoguser', password='pass')
+            url = reverse('editor_survey_thanks_preview', args=[self.survey.uuid])
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, 'posthog.init')
+            self.assertNotContains(response, self.KEY)
+
+    def test_editor_page_framing_the_preview_is_still_tracked(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured AND a creator is signed in
+        WHEN the editor page that hosts the preview pane is loaded
+        THEN the snippet is rendered
+
+        Guards the other direction: the view-name exclusion must not spread to
+        the page whose usage we are trying to measure.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.client.login(username='posthoguser', password='pass')
+            response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'posthog.init')
+            self.assertContains(response, self.KEY)
+
+    def test_snippet_does_not_initialise_in_a_frame(self):
+        """
+        GIVEN POSTHOG_PROJECT_KEY is configured
+        WHEN a tracked page is rendered
+        THEN the snippet refuses to initialise when the document is framed
+
+        The client-side belt behind POSTHOG_EXCLUDED_VIEW_NAMES: it covers any
+        framed surface added later without the view-name list being updated.
+        Asserted on the rendered markup because a framed document is exactly
+        what the Django test client cannot produce.
+        """
+        with self.settings(POSTHOG_PROJECT_KEY=self.KEY):
+            self.client.login(username='posthoguser', password='pass')
+            response = self.client.get('/editor/')
+            self.assertContains(response, 'window.top !== window.self')
+
     def test_plausible_still_renders_on_excluded_pages(self):
         """
         GIVEN both trackers are configured
