@@ -189,10 +189,21 @@ against a proxy domain — so `array.js` correctly loads from the proxy too.
 
 Two rules that are easy to get wrong:
 
-- **PostHog never loads on respondent surfaces.** `POSTHOG_EXCLUDED_PREFIXES` (`/surveys/`, `/r/`)
-  is enforced in `survey.context_processors.analytics`, *not* by omitting the include from
-  `base_survey_template.html` — an omission would be invisible in review and a new base template
-  would inherit whatever its author happened to copy.
+- **PostHog never loads on respondent surfaces.** Two settings enforce one rule, both read in
+  `survey.context_processors.analytics` — *not* by omitting the include from
+  `base_survey_template.html`, since an omission would be invisible in review and a new base
+  template would inherit whatever its author happened to copy.
+  `POSTHOG_EXCLUDED_PREFIXES` (`/surveys/`, `/r/`) covers respondent URLs.
+  `POSTHOG_EXCLUDED_VIEW_NAMES` (`editor_section_preview`, `editor_survey_thanks_preview`) covers
+  the ones no prefix can express: the editor's Live preview frames a real respondent page served
+  from under `/editor/`, where the surrounding page *is* tracked. That iframe used to run a
+  second PostHog client in the creator's tab — one session with two recorders, so session replay
+  alternated between the iframe's ~470px viewport and the editor's ~1600px one, and 1169 of 1799
+  editor `$pageview`s over seven days were iframe loads rather than people. `_analytics.html` also
+  refuses to `posthog.init()` when `window.top !== window.self`, which catches framed surfaces
+  added after the view-name list. `editor_question_preview_live` and `public_results_preview`
+  render standalone templates that include no analytics partial, which is why they are absent
+  from the list — a new preview view that extends a base template must be added to it.
 - **`SurveyEvent`/`TrackedLink`/`survey/events.py`/`PerformanceAnalyticsService` are a different
   system and must never be folded into PostHog.** They measure our *customers'* respondents on the
   customer's behalf (section funnel, referrer buckets, UTM campaigns, page load) and are a feature we
