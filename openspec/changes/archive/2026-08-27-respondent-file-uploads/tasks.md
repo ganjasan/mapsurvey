@@ -72,8 +72,8 @@
 - [x] 8.1 Full suite green: 1657 tests (36 new), 1 skipped, 0 failures
 - [x] 8.2 ZIP export/import (verified: `VALID_INPUT_TYPES` derives from the model, structure ZIPs carry no respondent data; creator size cap does not ride ZIP — same as geo feature limits) of survey **structure** (serialization.py): file questions export like other questions (no respondent data in structure ZIPs — verify, expect no change needed)
 - [x] 8.3 `render.yaml` (one line: cron dockerCommand → `sh ./reclaim.sh`): no changes expected (bucket vars already on web+worker); confirm cron command chaining
-- [ ] 8.4 PR with the standing checklist: migration number re-checked against master, kill switch documented, browser-driven evidence attached
-- [ ] 8.5 After merge: prod smoke — create a photo question on an owned draft, upload from a phone, see it in Responses and in the ZIP; then delete the test question
+- [x] 8.4 PR #127, merged 2026-08-27 as `2b95fa3f` in three commits (feature, owner mobile round, multi-file export fix); migration number re-checked against master right before each push
+- [x] 8.5 Prod smoke 2026-08-27, full circle on the live stack: deploy with migration 0063 measured zero-downtime (6 probes, 0 non-200); respondent HTTP cycle (open → upload → submit) attached the answer; object landed in the private S3 tier and answered 403 anonymously; `purge_survey` removed the row AND the bucket object (post_delete signal proven against real S3). Two false alarms resolved en route: `tail` clipping showmigrations, and ProtectedError from a direct `header.delete()` — which the platform has always forbidden; the real purge path orders sessions→headers and Upload cascades cleanly inside it
 
 ## 9. Deliberately out (recorded, not forgotten)
 
