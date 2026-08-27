@@ -179,6 +179,34 @@ services:
       # never carry a real key, and a recording posture should not be inherited.
       - key: POSTHOG_SESSION_REPLAY
         sync: false
+      # Media object storage. Unset USE_S3 = uploads go to the disk below, which
+      # is how this ships: the switch is flipped from the dashboard only after
+      # the existing files have been copied into the bucket and verified.
+      #
+      # Previews inherit the bucket and credentials but NOT the key prefix —
+      # MEDIA_S3_NAMESPACE is deliberately absent here, so settings.py derives
+      # previews/<service> from Render's own IS_PULL_REQUEST/RENDER_SERVICE_NAME.
+      # A preview therefore cannot address, overwrite or delete a production key.
+      - key: USE_S3
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: AWS_S3_REGION_NAME
+        value: ap-southeast-2
+      # Credentials belong to a bucket-scoped IAM user and are secrets: this
+      # repository is public, so they are never literals in the Blueprint.
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+    # The disk stays for now. It is the rollback path: until the copy into S3 is
+    # verified in production, unsetting USE_S3 must be enough to go back. Removing
+    # this block is the last, irreversible step of the migration — and the one
+    # that restores zero-downtime deploys, since a disk attaches to one instance.
     disk:
       name: media-storage
       mountPath: /home/app/web/mediafiles
@@ -246,6 +274,25 @@ services:
         previewEnvRenderServiceName: mapsurvey
       - key: NEWSLETTER_SITE_URL
         value: "https://mapsurvey.org"
+      # Media object storage. The worker writes files too — ZIP import and AI
+      # draft generation both save images — so it must resolve storage exactly
+      # like the web service, or an import would write to the disk while the web
+      # service reads from the bucket. Same rule on the namespace: absent here,
+      # derived per environment, so a preview worker cannot touch production keys.
+      - key: USE_S3
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: AWS_S3_REGION_NAME
+        value: ap-southeast-2
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
       # AI survey draft generation runs here — this is the service that talks
       # to the model provider. Keep AI_PROVIDER identical to the web service:
       # the web side gates the panel on it, the worker resolves the client from
@@ -304,3 +351,46 @@ services:
         sync: false
       - key: PLAUSIBLE_SITE_ID
         value: "mapsurvey.org"
+
+  # Reclaims media left behind by destroyed PR previews. Render has no teardown
+  # hook, so this reconciles: it lists the previews/<service>/ prefixes in the
+  # bucket, asks Render which services still exist, and deletes only the orphans.
+  # Converges within a day of a pull request closing.
+  #
+  # An unreadable service listing deletes nothing — a partial answer would make
+  # live previews look dead. Without RENDER_API_KEY the job is a no-op, so an
+  # unconfigured token means objects accumulate, never that they are lost.
+  - type: cron
+    name: mapsurvey-preview-media-reclaim
+    runtime: docker
+    plan: starter
+    previews:
+      generation: off
+    schedule: "30 4 * * *"
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: python manage.py reclaim_preview_media --delete
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mapsurvey-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      # Reads and deletes objects, so it needs the bucket — but it must resolve
+      # production's own prefixes, never a preview namespace.
+      - key: USE_S3
+        sync: false
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false
+      - key: AWS_S3_REGION_NAME
+        value: ap-southeast-2
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: MEDIA_S3_NAMESPACE
+        value: ""
+      # Read-only Render API token, used solely to ask which services exist.
+      - key: RENDER_API_KEY
+        sync: false

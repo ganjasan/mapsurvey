@@ -45,6 +45,21 @@ RUN python manage.py collectstatic --no-input
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME
 
+# Render SSH (and the dashboard Shell tab) exec a shell as `app` inside the
+# running container. `adduser --system` left the user on /usr/sbin/nologin, so
+# the gateway authenticated the key and then had nothing to exec — every
+# session ended with "Connection closed by remote host" before a single
+# command ran. Render's docs also require ~/.ssh (0700, owned by the running
+# user) to exist in the image. Both fixed here; without them the disk-to-S3
+# migration cannot be run at all, since one-off jobs do not mount the disk.
+# usermod -d matters as much as -s: `adduser --system` recorded /nonexistent as
+# the home directory in passwd, and the SSH agent resolves ~/.ssh through
+# passwd, not through the HOME env var that papers over it for the app itself.
+RUN usermod -s /bin/bash -d /home/app app \
+    && mkdir -p /home/app/.ssh \
+    && chmod 700 /home/app/.ssh \
+    && chown app:app /home/app /home/app/.ssh
+
 # change to the app user
 USER app
 
