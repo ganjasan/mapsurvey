@@ -22,6 +22,29 @@ the respondent, usable both as section questions and as sub-questions of geo que
 - **WHEN** a creator opens the question type picker
 - **THEN** no video question type exists
 
+### Requirement: A question may collect several files
+
+A file question SHALL accept up to a creator-set number of files (bounded by a platform maximum),
+and the respondent SHALL be able to inspect what they uploaded before submitting: photos open at
+full size in an in-page lightbox, audio plays inline, documents download; every item is
+individually removable.
+
+#### Scenario: Several photos attach to one question
+
+- **WHEN** a respondent adds three photos to a photo question allowing five
+- **THEN** submitting the section stores three answers for that question, each with its file
+
+#### Scenario: The respondent can inspect and prune before submit
+
+- **WHEN** a respondent has uploaded photos
+- **THEN** each shows as a thumbnail they can open at full size and remove
+- **AND** removing one leaves the others untouched
+
+#### Scenario: The cap is enforced server-side
+
+- **WHEN** a section POST presents more tokens than the question's file limit
+- **THEN** only the first files up to the limit attach
+
 ### Requirement: Voice recording is offered where the browser supports it
 
 An `audio` question SHALL offer in-browser voice recording when the browser provides MediaRecorder

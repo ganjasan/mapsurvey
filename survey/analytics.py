@@ -343,6 +343,10 @@ class SurveyAnalyticsService:
                     row['href'] = sub.upload.file.url
                 except Exception:
                     pass
+                ct = sub.upload.content_type
+                row['kind'] = ('image' if ct.startswith('image/')
+                               else 'audio' if ct.startswith(('audio/', 'video/'))
+                               else 'file')
             grouped.setdefault(sub.parent_answer_id_id, []).append(row)
         return grouped
 
@@ -781,11 +785,16 @@ class SurveyAnalyticsService:
                 value = '\u2014'
 
             row_href = ''
+            row_kind = ''
             if q.input_type in ('photo', 'audio', 'document') and a.upload_id:
                 try:
                     row_href = a.upload.file.url
                 except Exception:
                     row_href = ''
+                ct = a.upload.content_type
+                row_kind = ('image' if ct.startswith('image/')
+                            else 'audio' if ct.startswith(('audio/', 'video/'))
+                            else 'file')
 
             answer_rows.append({
                 'question_id': q.id,
@@ -794,6 +803,7 @@ class SurveyAnalyticsService:
                 'input_type': q.input_type,
                 'value': value,
                 'href': row_href,
+                'kind': row_kind,
                 'attributes': attributes,
                 'editable': q.input_type in ('text', 'text_line', 'number', 'range', 'choice', 'multichoice', 'rating', 'datetime'),
             })
@@ -1256,17 +1266,25 @@ class SurveyAnalyticsService:
         for a in all_answers:
             if a.survey_session_id not in cell_map:
                 cell_map[a.survey_session_id] = {}
-            cell_map[a.survey_session_id][rep_key(a.question_id)] = self._format_cell(a)
-            if a.question.input_type in ('photo', 'audio', 'document') and a.upload_id:
-                # Server-minted signed URL (or a local media path when USE_S3
-                # is off). Expires with AWS_QUERYSTRING_EXPIRE; a page refresh
-                # re-mints. Never derived from respondent-controlled text.
+            key = rep_key(a.question_id)
+            if a.question.input_type in ('photo', 'audio', 'document'):
+                # Several files per question: the cell lists the names, the
+                # links ride separately (server-minted signed URLs — never
+                # derived from respondent-controlled text).
+                if not a.upload_id:
+                    continue
+                cells = cell_map[a.survey_session_id]
+                cells[key] = (cells[key] + ', ' if cells.get(key) else '') + a.upload.original_name
                 try:
                     href = a.upload.file.url
                 except Exception:
                     href = ''
                 if href:
-                    file_link_map.setdefault(a.survey_session_id, {})[rep_key(a.question_id)] = href
+                    (file_link_map.setdefault(a.survey_session_id, {})
+                        .setdefault(key, [])
+                        .append({'name': a.upload.original_name, 'href': href}))
+            else:
+                cell_map[a.survey_session_id][key] = self._format_cell(a)
 
         # Compute session issues and answer lints. Lints run against the full
         # per-version question set (required/validation rules are evaluated

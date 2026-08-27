@@ -1,10 +1,25 @@
 {% load i18n %}
+<style>
+  .fu-take-photo { display: none; }
+  @media (pointer: coarse) { .fu-take-photo { display: inline-flex; } }
+  @keyframes fu-pulse { 50% { opacity: 0.3; } }
+  /* Labels double as buttons here; Bootstrap gives labels a bottom margin and
+     inline flow puts them on the text baseline, which is why the two controls
+     sat askew in the popup. Flex row, one vertical centre, no stray margins. */
+  .fu-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .fu-controls .fu-pick,
+  .fu-controls .fu-record { margin-bottom: 0; display: inline-flex; align-items: center; gap: 6px; }
+  .fu-recording { display: flex; align-items: center; gap: 8px; }
+  .fu-recording[hidden] { display: none; }
+</style>
 {% comment %}
 Respondent file upload widget (openspec: respondent-file-uploads).
-The hidden input is the form's value: the async-upload token, present only in
-the "uploaded" state. Bytes go to widget.upload_url from file_upload.js the
-moment a file is picked or a recording stops. Every filename is rendered as
-text — never markup, never |safe.
+Several files per question: each uploaded file is one .fu-item holding a hidden
+input with the async-upload token (all share the field name, so the POST gets a
+list), a thumbnail for photos (opens full size in a new tab via the signed
+URL), and a remove control. file_upload.js manages the list and enforces
+max_files client-side; the server clamps again on submit. Filenames reach the
+DOM as text only — never markup, never |safe.
 {% endcomment %}
 <div class="file-upload"
      data-file-upload
@@ -12,34 +27,68 @@ text — never markup, never |safe.
      data-upload-url="{{ widget.upload_url }}"
      data-question="{{ widget.name }}"
      data-max-bytes="{{ widget.max_bytes }}"
+     data-max-files="{{ widget.max_files }}"
      {% if widget.recorder %}data-recorder="1"{% endif %}
      {% if widget.required %}data-required="1"{% endif %}>
 
-  <p class="fu-title" style="font-weight:600;margin-bottom:2px;">{{ widget.title }}</p>
-  {% if widget.subtitle %}<p class="fu-subtitle text-muted" style="font-size:0.85rem;">{{ widget.subtitle|safe }}</p>{% endif %}
+  <div class="fu-items" style="display:flex;flex-wrap:wrap;gap:8px;">
+    {% for item in widget.items %}
+    <div class="fu-item" style="position:relative;">
+      <input type="hidden" name="{{ widget.name }}" data-fu-token value="{{ item.token }}">
+      {% if item.is_image and item.href %}
+      {% comment %}Opens in the in-page lightbox (file_upload.js); the href is
+      the no-JS fallback.{% endcomment %}
+      <a href="{{ item.href }}" target="_blank" rel="noopener" title="{{ item.name }}" data-fu-lightbox>
+        <img class="fu-thumb" src="{{ item.href }}" alt="{{ item.name }}"
+             style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #dee2e6;">
+      </a>
+      {% elif item.is_audio and item.href %}
+      <audio controls preload="none" src="{{ item.href }}" title="{{ item.name }}"
+             style="max-width:220px;height:36px;"></audio>
+      {% elif item.href %}
+      <a class="fu-file-chip" href="{{ item.href }}" download="{{ item.name }}"
+         style="display:inline-block;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:8px 12px;border:1px solid #dee2e6;border-radius:8px;font-size:0.8rem;"><i class="fas fa-download"></i> {{ item.name }}</a>
+      {% else %}
+      <span class="fu-file-chip" style="display:inline-block;padding:8px 12px;border:1px solid #dee2e6;border-radius:8px;font-size:0.8rem;">{{ item.name }}</span>
+      {% endif %}
+      <button type="button" class="fu-remove" title="{% trans 'Remove' %}" aria-label="{% trans 'Remove file' %} {{ item.name }}"
+              style="position:absolute;top:-10px;right:-10px;width:28px;height:28px;line-height:1;border-radius:50%;border:1px solid #dee2e6;background:#fff;padding:0;">&times;</button>
+    </div>
+    {% endfor %}
+  </div>
 
-  <input type="hidden" name="{{ widget.name }}" data-fu-token
-         {% if widget.value %}value="{{ widget.value }}"{% endif %}>
-
-  <div class="fu-state fu-empty" {% if widget.upload %}hidden{% endif %}>
-    <label class="btn btn-outline-primary fu-pick">
-      {% if widget.input_type == 'photo' %}<i class="fas fa-camera"></i> {% trans "Add photo" %}
-      {% elif widget.input_type == 'audio' %}<i class="fas fa-file-audio"></i> {% trans "Add audio file" %}
-      {% else %}<i class="fas fa-paperclip"></i> {% trans "Attach file" %}{% endif %}
-      <input type="file" class="fu-input" hidden
-             accept="{{ widget.accept }}"
-             {% if widget.capture %}capture="environment"{% endif %}>
+  <div class="fu-controls" style="margin-top:6px;">
+    {% if widget.input_type == 'photo' %}
+    {% comment %}Two inputs, one intent each: capture forces the camera and
+    would lock a mobile respondent out of their gallery if it were the only
+    button. "Take photo" appears on coarse-pointer devices only (same trick as
+    the Leaflet.draw tap tooltips) — on desktop both would open the same
+    picker.{% endcomment %}
+    <label class="btn btn-outline-primary btn-sm fu-pick fu-take-photo">
+      <i class="fas fa-camera"></i> {% trans "Take photo" %}
+      <input type="file" class="fu-input" hidden accept="{{ widget.accept }}" capture="environment">
     </label>
+    <label class="btn btn-outline-primary btn-sm fu-pick">
+      <i class="fas fa-image"></i> {% trans "Add photo" %}
+      <input type="file" class="fu-input" hidden accept="{{ widget.accept }}">
+    </label>
+    {% else %}
+    <label class="btn btn-outline-primary btn-sm fu-pick">
+      {% if widget.input_type == 'audio' %}<i class="fas fa-file-audio"></i> {% trans "Add audio file" %}
+      {% else %}<i class="fas fa-paperclip"></i> {% trans "Attach file" %}{% endif %}
+      <input type="file" class="fu-input" hidden accept="{{ widget.accept }}">
+    </label>
+    {% endif %}
     {% if widget.recorder %}
-    <button type="button" class="btn btn-outline-primary fu-record" hidden>
+    <button type="button" class="btn btn-outline-primary btn-sm fu-record" hidden>
       <i class="fas fa-microphone"></i> {% trans "Record" %}
     </button>
     {% endif %}
   </div>
 
   {% if widget.recorder %}
-  <div class="fu-state fu-recording" hidden>
-    <span class="fu-rec-dot" aria-hidden="true"></span>
+  <div class="fu-recording" hidden style="margin-top:6px;" aria-live="polite">
+    <span class="fu-rec-dot" aria-hidden="true" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dc3545;animation:fu-pulse 1s infinite;"></span>
     <span class="fu-rec-time">0:00</span>
     <button type="button" class="btn btn-danger btn-sm fu-stop">
       <i class="fas fa-stop"></i> {% trans "Stop" %}
@@ -47,20 +96,12 @@ text — never markup, never |safe.
   </div>
   {% endif %}
 
-  <div class="fu-state fu-uploading" hidden>
-    <div class="progress" style="height: 6px;"><div class="progress-bar fu-progress" style="width: 0%"></div></div>
+  <div class="fu-uploading" hidden style="margin-top:6px;">
+    <div class="progress" style="height: 6px;" role="progressbar" aria-label="{% trans 'Uploading' %}"><div class="progress-bar fu-progress" style="width: 0%"></div></div>
     <button type="button" class="btn btn-link btn-sm fu-cancel">{% trans "Cancel" %}</button>
   </div>
 
-  <div class="fu-state fu-uploaded" {% if not widget.upload %}hidden{% endif %}>
-    {% if widget.upload and widget.input_type == 'photo' %}
-    <img class="fu-thumb" src="{{ widget.upload_href }}" alt="" style="max-width: 120px; max-height: 120px;">
-    {% endif %}
-    <span class="fu-name">{% if widget.upload %}{{ widget.upload.original_name }}{% endif %}</span>
-    <button type="button" class="btn btn-link btn-sm fu-replace" title="{% trans 'Replace' %}">&times;</button>
-  </div>
-
-  <div class="fu-state fu-error" hidden>
+  <div class="fu-error" hidden style="margin-top:6px;">
     <span class="text-danger fu-message"></span>
     <button type="button" class="btn btn-link btn-sm fu-retry">{% trans "Retry" %}</button>
   </div>

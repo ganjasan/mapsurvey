@@ -55,6 +55,18 @@
 - [x] 7.2 Added via `reclaim.sh` wrapper (dockerCommand has no shell — the predeploy lesson — so chaining lives in a script); cron now runs `sh ./reclaim.sh` service command (chain after preview reclamation) — no new Render service
 - [x] 7.3 Tests: old orphan deleted, fresh orphan kept, attached never touched, dry run touches nothing
 
+## 7b. Owner mobile-testing round (2026-08-27, PR preview + screenshots)
+
+- [x] File questions render as cards like every other question; widget-drawn titles removed (they doubled the popup label and printed "None" for unnamed questions)
+- [x] Several files per question: creator-set cap in question settings — saved on CREATE too (create dropped every vs_* field platform-wide; file types now parse them through a shared helper on both paths), label "Max files (1–10)" with a type-default placeholder that follows the picker
+- [x] Photo: "Take photo" (camera, coarse-pointer devices only) + "Add photo" (gallery) — capture alone locked mobile out of the gallery
+- [x] Respondent inspects uploads: photo lightbox, inline audio player, document download (S3 signed URL carries Content-Disposition: attachment — the download attribute is ignored cross-origin)
+- [x] Creator previews everywhere: session modal and Responses-map popup show photo thumbnails and audio players, documents as download links (server-typed `kind`, DOM built from server hrefs + textContent only)
+- [x] Editor Live Preview uploads work: collaborators get a lazily-created session tagged `editor-preview` (visible in Responses); real respondents get "Please reload the survey page and try again"
+- [x] Popup controls aligned (flex row; Bootstrap label margin was skewing the buttons)
+- [x] AI generator taught the file types (owner overruled the earlier exclusion): prompt guidance on when photo/audio/document help, geo-sub-question preference, "never require unless pointless without it"; fixed the old `image (upload)` mislabel
+- [x] A11y from the audit: aria-labels on icon buttons, 28px remove target, progressbar role, aria-live on the recording timer. Known platform-wide issue NOT touched: Bootstrap #007bff on white is 3.98:1 (needs its own theme change)
+
 ## 8. Ship
 
 - [x] 8.1 Full suite green: 1657 tests (36 new), 1 skipped, 0 failures

@@ -139,3 +139,18 @@ def detach_unreferenced(session, question_ids):
         .filter(session=session, question_id__in=question_ids, attached=True)
         .filter(answer__isnull=True)
         .update(attached=False))
+
+
+# How many files one question accepts. Photo defaults to several — "add photos
+# of the place" is the natural ask; audio and documents default to one. The
+# creator can set 1..PLATFORM_MAX_FILES per question.
+PLATFORM_MAX_FILES = 10
+DEFAULT_MAX_FILES = {'photo': 5, 'audio': 1, 'document': 3}
+
+
+def max_files_for(question):
+    vs = question.validation_settings or {}
+    value = vs.get('max_files')
+    if isinstance(value, (int, float)) and value >= 1:
+        return min(int(value), PLATFORM_MAX_FILES)
+    return DEFAULT_MAX_FILES.get(question.input_type, 1)

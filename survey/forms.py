@@ -201,23 +201,64 @@ class FileUploadWidget(widgets.Widget):
     }
 
     def __init__(self, attrs=None, input_type='photo', upload_url='', max_bytes=0,
-                 title='', subtitle=''):
+                 max_files=1, title='', subtitle=''):
         super().__init__(attrs)
         self.input_type = input_type
         self.upload_url = upload_url
         self.max_bytes = max_bytes
+        self.max_files = max_files
         self.title = title
         self.subtitle = subtitle
 
+    def value_from_datadict(self, data, files, name):
+        # Several hidden inputs share the name — the value is the list.
+        try:
+            return data.getlist(name)
+        except AttributeError:
+            return data.get(name)
+
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
-        upload = None
-        if value:
-            # One pk lookup per prepopulated file answer — the uploaded state
-            # needs the human name and a signed link, and only the server can
-            # mint the latter.
+        # Prepopulation hands a list of tokens (several files per question);
+        # a lone string is the same thing with one entry.
+        tokens = value if isinstance(value, (list, tuple)) else ([value] if value else [])
+        items = []
+        if tokens:
             from survey.models import Upload
-            upload = Upload.objects.filter(token=value).first()
+            found = {str(u.token): u for u in Upload.objects.filter(token__in=tokens)}
+            for token in tokens:
+                upload = found.get(str(token))
+                if upload is None:
+                    continue
+                is_image = upload.content_type.startswith('image/')
+                is_audio = (upload.content_type.startswith('audio/')
+                            or upload.content_type.startswith('video/'))
+                try:
+                    if not (is_image or is_audio):
+                        # Documents download rather than render. The download
+                        # attribute is ignored cross-origin, so the disposition
+                        # rides inside the signed URL where S3 honours it.
+                        try:
+                            href = upload.file.storage.url(
+                                upload.file.name,
+                                parameters={'ResponseContentDisposition':
+                                            'attachment'},
+                            )
+                        except TypeError:
+                            # Filesystem storage takes no parameters; same
+                            # origin, the download attribute works there.
+                            href = upload.file.url
+                    else:
+                        href = upload.file.url
+                except Exception:
+                    href = ''
+                items.append({
+                    'token': str(upload.token),
+                    'name': upload.original_name,
+                    'href': href,
+                    'is_image': is_image,
+                    'is_audio': is_audio,
+                })
         context['widget'].update({
             'input_type': self.input_type,
             'accept': self.ACCEPT.get(self.input_type, ''),
@@ -225,8 +266,8 @@ class FileUploadWidget(widgets.Widget):
             'recorder': self.input_type == 'audio',
             'upload_url': self.upload_url,
             'max_bytes': self.max_bytes,
-            'upload': upload,
-            'upload_href': upload.file.url if upload else '',
+            'max_files': self.max_files,
+            'items': items,
             'required': self.is_required,
             'title': self.title,
             'subtitle': self.subtitle,
@@ -234,16 +275,17 @@ class FileUploadWidget(widgets.Widget):
         return context
 
 
-class FileUploadField(forms.CharField):
-    """The form value is the token; presence is the only validation here —
-    everything about the file itself was validated at upload time."""
+class FileUploadField(forms.Field):
+    """The form value is a list of tokens; presence is the only validation
+    here — everything about each file was validated at upload time."""
 
-    def __init__(self, *, input_type, upload_url, max_bytes, title='', subtitle='', **kwargs):
+    def __init__(self, *, input_type, upload_url, max_bytes, max_files=1,
+                 title='', subtitle='', **kwargs):
         kwargs.setdefault('widget', FileUploadWidget(
             input_type=input_type, upload_url=upload_url, max_bytes=max_bytes,
-            title=title, subtitle=subtitle,
+            max_files=max_files, title=title, subtitle=subtitle,
         ))
-        super().__init__(max_length=64, **kwargs)
+        super().__init__(**kwargs)
         self.title = title
         self.subtitle = subtitle
 
@@ -416,9 +458,11 @@ class SurveySectionAnswerForm(forms.Form):
                 'survey_upload',
                 kwargs={'survey_slug': str(question.survey_section.survey_header.uuid)},
             )
+            from .uploads import max_files_for
             return FileUploadField(
                 input_type=input_type, upload_url=upload_url,
                 max_bytes=effective_max_bytes(question),
+                max_files=max_files_for(question),
                 label=label, required=required, title=label, subtitle=sublabel,
             )
 

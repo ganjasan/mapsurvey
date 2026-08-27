@@ -862,10 +862,11 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 				if answer.selected_choices:
 					initial[question.code] = [str(c) for c in answer.selected_choices]
 			elif question.input_type in FILE_INPUT_TYPES:
-				# The token is the form value; the widget resolves it to the
-				# uploaded state (name + signed link) at render time.
-				if answer.upload_id:
-					initial[question.code] = str(answer.upload_id)
+				# All tokens for the question; the widget resolves each to the
+				# uploaded state (thumbnail + signed link) at render time.
+				tokens = [str(x.upload_id) for x in q_answers if x.upload_id]
+				if tokens:
+					initial[question.code] = tokens
 			elif question.input_type == 'range':
 				if answer.numeric is not None:
 					# The slider takes an int; the choice-based styles are radios
@@ -1083,13 +1084,21 @@ def survey_section(request, survey_slug, section_name):
 									elif sub_question.input_type in ('choice', 'multichoice', 'rating'):
 										sub_answer.selected_choices = [int(v) for v in value if v]
 									elif sub_question.input_type in FILE_INPUT_TYPES:
-										# The popup carries the async-upload token as an
-										# ordinary property value; a foreign or stale token
-										# skips this sub-answer, never the feature.
-										upload = attach_upload(survey_session, sub_question, first)
-										if upload is None:
-											continue
-										sub_answer.upload = upload
+										# The popup carries async-upload tokens as ordinary
+										# property values — one per file. Each becomes its
+										# own child Answer; foreign or stale tokens skip
+										# their answer, never the feature.
+										from .uploads import max_files_for as _mff
+										for token in [v for v in value if v][:_mff(sub_question)]:
+											upload = attach_upload(survey_session, sub_question, token)
+											if upload is None:
+												continue
+											extra = Answer(survey_session=survey_session,
+											               question=sub_question,
+											               parent_answer_id=answer,
+											               upload=upload)
+											extra.save()
+										continue
 									sub_answer.save()
 
 				elif question.input_type in ('text', 'text_line', 'datetime'):
@@ -1125,14 +1134,18 @@ def survey_section(request, survey_slug, section_name):
 					answer.save()
 
 				elif question.input_type in FILE_INPUT_TYPES:
-					# The form posts the async-upload token, never bytes. A token
-					# that is not this session's for this question is skipped —
-					# the rest of the section is worth more than a broken ref.
-					upload = attach_upload(survey_session, question, result[0])
-					if upload is not None:
-						answer = Answer(survey_session=survey_session, question=question)
-						answer.upload = upload
-						answer.save()
+					# The form posts async-upload tokens, never bytes — one
+					# hidden input per file, several files per question. Tokens
+					# that are not this session's for this question are skipped;
+					# the creator's per-question cap clamps the rest, like
+					# max_features does for geo.
+					from .uploads import max_files_for
+					for token in result[:max_files_for(question)]:
+						upload = attach_upload(survey_session, question, token)
+						if upload is not None:
+							answer = Answer(survey_session=survey_session, question=question)
+							answer.upload = upload
+							answer.save()
 
 				# html/image collect nothing; any other type stores nothing.
 
@@ -1468,6 +1481,8 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 	if excluded_session_ids is None:
 		excluded_session_ids = set()
 
+	from .models import FILE_INPUT_TYPES as _FILE_TYPES
+
 	#обработка гео вопросов
 	geo_questions = survey.geo_questions()
 
@@ -1562,6 +1577,10 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 			# A ranking answer is several columns, not one cell.
 			if isinstance(cell, dict):
 				properties.update(cell)
+			elif (answer.question.input_type in _FILE_TYPES
+					and properties.get(answer.question.name)):
+				# Several files on one question: one cell listing every path.
+				properties[answer.question.name] += '; ' + cell
 			else:
 				properties[answer.question.name] = cell
 
@@ -1577,7 +1596,6 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 	# Respondent files ride along under files/<session_id>/, read through the
 	# storage API so the same code serves filesystem and S3. Only attached
 	# uploads of non-excluded sessions — orphans and trashed sessions stay out.
-	from .models import FILE_INPUT_TYPES as _FILE_TYPES, Upload as _Upload
 	file_answers = (
 		Answer.objects
 		.filter(
@@ -2119,9 +2137,23 @@ def survey_upload(request, survey_slug):
 	survey_session = SurveySession.objects.filter(
 		id=session_id, survey=survey, is_deleted=False,
 	).first() if session_id else None
+	if survey_session is None and request.user.is_authenticated:
+		# The editor's Live Preview frames the respondent page without a
+		# respondent session — and on mobile the preview IS how creators test.
+		# A collaborator gets one lazily-created session per survey, tagged so
+		# it is visible (and trashable) in Responses like any other row.
+		role = get_effective_survey_role(request.user, survey)
+		if SURVEY_ROLE_RANK.get(role, -1) >= SURVEY_ROLE_RANK['viewer']:
+			survey_session = (
+				SurveySession.objects
+				.filter(survey=survey, is_deleted=False, tags__contains=['editor-preview'])
+				.first()
+			) or SurveySession.objects.create(survey=survey, tags=['editor-preview'])
 	if survey_session is None:
+		# A real respondent lands here when cookies are blocked or the page
+		# outlived its session — "reload" is the action that actually helps.
 		return JsonResponse({'error': 'no_session',
-		                     'message': _('Open the survey before uploading.')}, status=403)
+		                     'message': _('Please reload the survey page and try again.')}, status=403)
 
 	question = Question.objects.filter(
 		survey_section__survey_header=survey,

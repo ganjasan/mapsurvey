@@ -63,9 +63,31 @@ document.addEventListener('DOMContentLoaded', function() {
             name.className = 'text-muted';
             name.textContent = attr.name + ': ';
             row.appendChild(name);
-            if (attr.href) {
-                // File sub-answer: href is server-minted (signed URL), the
-                // filename still goes in as text — never markup.
+            if (attr.kind === 'image' && attr.href) {
+                // Thumbnail inline; click opens full size. href is
+                // server-minted (signed URL) — never respondent text.
+                var imgLink = document.createElement('a');
+                imgLink.href = attr.href;
+                imgLink.target = '_blank';
+                imgLink.rel = 'noopener';
+                imgLink.title = attr.value;
+                var thumb = document.createElement('img');
+                thumb.src = attr.href;
+                thumb.alt = attr.value;
+                thumb.style.cssText = 'max-width:96px;max-height:96px;display:block;margin-top:2px;object-fit:cover;border-radius:6px;border:1px solid #dee2e6;';
+                imgLink.appendChild(thumb);
+                row.appendChild(imgLink);
+            } else if (attr.kind === 'audio' && attr.href) {
+                var player = document.createElement('audio');
+                player.controls = true;
+                player.preload = 'none';
+                player.src = attr.href;
+                player.title = attr.value;
+                player.style.cssText = 'display:block;margin-top:2px;max-width:230px;height:30px;';
+                row.appendChild(player);
+            } else if (attr.href) {
+                // Documents: download link; the filename still goes in as
+                // text — never markup.
                 var link = document.createElement('a');
                 link.href = attr.href;
                 link.target = '_blank';

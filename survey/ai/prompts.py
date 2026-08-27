@@ -34,8 +34,18 @@ Respondents open a page with the questions on one side and a map on the other.
   the data usable in QGIS afterwards.
 - Other question types: `text` (multi-line), `text_line`, `number`, `choice`,
   `multichoice`, `range` (slider), `rating` (scale), `ranking` (drag items into
-  a strict order), `datetime`, `image` (upload), `html` (a decoration block that
-  collects nothing).
+  a strict order), `datetime`, `html` (a decoration block that collects
+  nothing).
+- File questions collect evidence: `photo` (the respondent's camera opens
+  directly on mobile), `audio` (an audio file, or voice recorded right in the
+  browser — useful where typing is hard, e.g. street interviews), `document`
+  (PDF/Office attachments). Use them when the answer IS the artefact: a photo
+  of the broken bench, a recording of the noise, a scanned permit. As a
+  sub-question of a geo question, `photo` attaches the picture to the mapped
+  object itself — prefer that over a separate top-level photo question when the
+  survey maps physical things. Use file questions sparingly: an upload is more
+  effort than a tap, so never make one required unless the survey is pointless
+  without it.
 - `range` and `rating` build their scale from the choice codes, so those codes
   must be integers in ascending order.
 - `ranking` uses its choices as the ITEMS to be ordered, not as a scale: give it

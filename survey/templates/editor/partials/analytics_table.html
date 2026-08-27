@@ -284,7 +284,7 @@
                       {% if cell_lints %}title="{{ cell_lints|lint_tooltip }}" style="background:{% if 'self_intersection' in cell_lints or 'empty_required' in cell_lints or 'out_of_range' in cell_lints %}#fff5f5{% else %}#fffbeb{% endif %};display:inline-flex;align-items:center;gap:3px;padding:0 3px;border-radius:3px;border:1px solid {% if 'self_intersection' in cell_lints or 'empty_required' in cell_lints or 'out_of_range' in cell_lints %}#fecaca{% else %}#fde68a{% endif %};cursor:help;"{% endif %}>
                     {% if cell_lints %}{% if 'self_intersection' in cell_lints or 'empty_required' in cell_lints or 'out_of_range' in cell_lints %}<i class="fas fa-exclamation-circle" style="color:#dc3545;font-size:0.7rem;"></i>{% else %}<i class="fas fa-exclamation-triangle" style="color:#f59e0b;font-size:0.7rem;"></i>{% endif %}{% endif %}
                 {% endwith %}
-                    {% with cell_val=row.cells|hash:col.key file_href=row.file_links|hash:col.key %}{% if file_href %}<a href="{{ file_href }}" target="_blank" rel="noopener">{{ cell_val|default:"—" }}</a>{% else %}{{ cell_val|default:"—" }}{% endif %}{% endwith %}
+                    {% with cell_val=row.cells|hash:col.key file_links=row.file_links|hash:col.key %}{% if file_links %}{% for f in file_links %}<a href="{{ f.href }}" target="_blank" rel="noopener">{{ f.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}{{ cell_val|default:"—" }}{% endif %}{% endwith %}
                 </span>
                 {% endwith %}
             {% endif %}

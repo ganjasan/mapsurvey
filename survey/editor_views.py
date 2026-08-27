@@ -1061,6 +1061,35 @@ def editor_sections_reorder(request, survey_uuid):
 
 # ─── Question CRUD ────────────────────────────────────────────────────────────
 
+def _parse_file_validation_settings(request, question, vs=None):
+    """File-question limits from the modal's Validation block.
+
+    Shared by create and edit: without this, a cap set in the CREATE dialog was
+    silently dropped and only survived a second visit through EDIT. Clamped to
+    the platform ceilings — a creator can lower, never raise.
+    """
+    from survey.uploads import PLATFORM_MAX_BYTES, PLATFORM_MAX_FILES
+
+    vs = dict(vs or {})
+    val = request.POST.get('vs_max_file_mb', '').strip()
+    if val:
+        try:
+            parsed = int(val)
+        except ValueError:
+            parsed = None
+        if parsed and parsed > 0:
+            vs['max_file_bytes'] = min(parsed * 1024 * 1024, PLATFORM_MAX_BYTES)
+    val = request.POST.get('vs_max_files', '').strip()
+    if val:
+        try:
+            parsed = int(val)
+        except ValueError:
+            parsed = None
+        if parsed and parsed >= 1:
+            vs['max_files'] = min(parsed, PLATFORM_MAX_FILES)
+    return vs
+
+
 @survey_permission_required('editor')
 def editor_question_create(request, survey_uuid, section_id):
     survey = request.survey
@@ -1098,6 +1127,8 @@ def editor_question_create(request, survey_uuid, section_id):
                 })
             if vis_present:
                 question.visibility_rule = vis_rule
+            if question.input_type in ('photo', 'audio', 'document'):
+                question.validation_settings = _parse_file_validation_settings(request, question)
             question.save()
             # Funnel stage, so it fires only for a survey's *first* question --
             # emitting per question would make the step count questions rather
@@ -1171,17 +1202,7 @@ def editor_question_edit(request, survey_uuid, question_id):
                     try: vs['area_outlier_factor'] = float(val)
                     except ValueError: pass
             elif q.input_type in ('photo', 'audio', 'document'):
-                # Creator cap in whole MB; stored in bytes, clamped to the
-                # platform ceiling — a creator can lower the limit, never raise.
-                val = request.POST.get('vs_max_file_mb', '').strip()
-                if val:
-                    from survey.uploads import PLATFORM_MAX_BYTES
-                    try:
-                        parsed = int(val)
-                    except ValueError:
-                        parsed = None
-                    if parsed and parsed > 0:
-                        vs['max_file_bytes'] = min(parsed * 1024 * 1024, PLATFORM_MAX_BYTES)
+                vs = _parse_file_validation_settings(request, q, vs)
             # Feature-count limits apply to every geo type (polygon keeps its
             # area factor above as well, hence a separate `if`, not `elif`)
             if q.input_type in ('point', 'line', 'polygon'):

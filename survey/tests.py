@@ -27245,8 +27245,8 @@ class QuestionSubtextRenderingTest(TestCase):
         'html':        (False, True),
         'image':       (False, True),
         'ranking':     (True, True),
-        # File widgets carry their own title/subtext (like geo): the section
-        # template does not render them, the widget template does.
+        # File questions are card questions: the section template renders
+        # name and subtext, the widget renders only the control.
         'photo':       (True, True),
         'audio':       (True, True),
         'document':    (True, True),
@@ -33397,20 +33397,17 @@ class FileQuestionEditorSmokeTest(TestCase):
         """
         from survey.uploads import PLATFORM_MAX_BYTES
 
+        # Лимиты сохраняются уже при СОЗДАНИИ — автор, выставивший их в
+        # диалоге, не обязан открывать вопрос второй раз.
         self.client.post(self.url, {
             'name': 'photo capped', 'input_type': 'photo', 'color': '#000000',
-            'vs_max_file_mb': '100',
-        })
-        # Создание не пишет vs_*: лимит применяется через EDIT (как у гео-полей).
-        question = Question.objects.get(survey_section=self.section)
-        edit_url = f'/editor/surveys/{self.survey.uuid}/questions/{question.id}/edit/'
-        self.client.post(edit_url, {
-            'name': 'photo capped', 'input_type': 'photo', 'color': '#000000',
-            'vs_max_file_mb': '100',
+            'vs_max_file_mb': '100', 'vs_max_files': '99',
         })
 
-        question.refresh_from_db()
+        question = Question.objects.get(survey_section=self.section)
         self.assertEqual(question.validation_settings.get('max_file_bytes'), PLATFORM_MAX_BYTES)
+        from survey.uploads import PLATFORM_MAX_FILES
+        self.assertEqual(question.validation_settings.get('max_files'), PLATFORM_MAX_FILES)
 
 
 class ReclaimOrphanUploadsTest(TestCase):
@@ -33549,17 +33546,38 @@ class FileAnswersCreatorSurfacesTest(TestCase):
         self.assertTrue(re.search(r'<a href="[^"]+"[^>]*>street scene.jpg</a>', content),
                         'filename is not a link')
 
-    def test_session_detail_carries_the_file_link(self):
+    def test_session_detail_previews_by_type(self):
         """
-        GIVEN a submitted file answer
+        GIVEN submitted photo and audio answers
         WHEN the session detail modal renders
-        THEN the value is the filename inside a server-built anchor
+        THEN the photo shows as an inline thumbnail and the audio as a player,
+        both sourced from server-minted URLs
         """
-        response = self.client.get(
-            f'/editor/surveys/{self.survey.uuid}/analytics/sessions/{self.session.id}/')
+        from django.core.files.uploadedfile import SimpleUploadedFile
 
-        self.assertContains(response, 'street scene.jpg')
-        self.assertContains(response, 'rel="noopener"')
+        audio_q = Question.objects.create(
+            survey_section=self.section, name="Voice", code="Q_AU", input_type="audio",
+        )
+        self.client.logout()
+        self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        up = self.client.post(f'/surveys/{self.survey.uuid}/upload/', {
+            'question': 'Q_AU',
+            'file': SimpleUploadedFile('rec.webm', b'\x1aE\xdf\xa3xx', content_type='audio/webm'),
+        })
+        audio_token = up.json()['token']
+        self.client.post(f'/surveys/{self.survey.uuid}/sec1/', {'Q_AU': audio_token})
+        audio_session = SurveySession.objects.exclude(id=self.session.id).latest('id')
+        self.client.login(username='fcreator', password='pass')
+
+        photo_page = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/analytics/sessions/{self.session.id}/')
+        audio_page = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/analytics/sessions/{audio_session.id}/')
+
+        self.assertContains(photo_page, '<img', msg_prefix='photo thumbnail missing')
+        self.assertContains(photo_page, 'street scene.jpg')
+        self.assertContains(audio_page, '<audio', msg_prefix='audio player missing')
+        self.assertContains(audio_page, 'rec.webm')
 
     def test_zip_contains_the_file_and_the_cell_names_it(self):
         """
@@ -33598,3 +33616,122 @@ class FileAnswersCreatorSurfacesTest(TestCase):
         self.assertNotIn('street scene.jpg', blob)
         self.assertNotIn('files/', blob)
         self.assertNotIn('uploads/', blob)
+
+
+@override_settings(FILE_UPLOAD_QUESTIONS=True)
+class MultiFileAndPreviewUploadTest(TestCase):
+    """Several files per question, and uploads from the editor's Live Preview."""
+
+    JPEG = b'\xff\xd8\xff\xe0' + b'0' * 16
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='multi', password='pass')
+        self.org = Organization.objects.create(name="Multi Org")
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="multi_survey", organization=self.org, created_by=self.user,
+            redirect_url="#", status="published",
+        )
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="sec1", code="S1",
+        )
+        self.photo_q = Question.objects.create(
+            survey_section=self.section, name="Photos", code="Q_PH", input_type="photo",
+        )
+        self.section_url = f'/surveys/{self.survey.uuid}/sec1/'
+        self.upload_url = f'/surveys/{self.survey.uuid}/upload/'
+
+    def _upload(self, name):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        response = self.client.post(self.upload_url, {
+            'question': 'Q_PH',
+            'file': SimpleUploadedFile(name, self.JPEG, content_type='image/jpeg'),
+        })
+        self.assertEqual(response.status_code, 200, response.content)
+        return response.json()['token']
+
+    def test_three_photos_become_three_answers(self):
+        """
+        GIVEN three uploaded photos on one question (default photo cap is 5)
+        WHEN the section is submitted with all three tokens
+        THEN three answers exist, each holding its own upload
+        """
+        self.client.get(self.section_url)
+        tokens = [self._upload(f'p{i}.jpg') for i in range(3)]
+
+        self.client.post(self.section_url, {'Q_PH': tokens})
+
+        answers = Answer.objects.filter(question=self.photo_q)
+        self.assertEqual(answers.count(), 3)
+        self.assertEqual({str(a.upload_id) for a in answers}, set(tokens))
+
+    def test_the_cap_clamps_extra_tokens(self):
+        """
+        GIVEN a question capped at 2 files
+        WHEN the section is submitted with three valid tokens
+        THEN only the first two attach
+        """
+        self.photo_q.validation_settings = {'max_files': 2}
+        self.photo_q.save(update_fields=['validation_settings'])
+        self.client.get(self.section_url)
+        tokens = [self._upload(f'p{i}.jpg') for i in range(3)]
+
+        self.client.post(self.section_url, {'Q_PH': tokens})
+
+        answers = Answer.objects.filter(question=self.photo_q)
+        self.assertEqual(answers.count(), 2)
+        self.assertEqual({str(a.upload_id) for a in answers}, set(tokens[:2]))
+
+    def test_prepopulation_returns_every_token(self):
+        """
+        GIVEN two submitted photos
+        WHEN the section re-renders
+        THEN both tokens are present as hidden inputs
+        """
+        self.client.get(self.section_url)
+        tokens = [self._upload(f'p{i}.jpg') for i in range(2)]
+        self.client.post(self.section_url, {'Q_PH': tokens})
+
+        response = self.client.get(self.section_url)
+
+        for token in tokens:
+            self.assertContains(response, token)
+
+    def test_collaborator_uploads_from_preview_without_a_session(self):
+        """
+        GIVEN the editor's Live Preview (no respondent session, authed owner)
+        WHEN a file is uploaded
+        THEN it succeeds against a lazily-created session tagged editor-preview
+
+        On mobile the preview IS how creators test — a 403 here made the
+        feature look broken to its own author.
+        """
+        self.client.login(username='multi', password='pass')
+
+        token = self._upload('preview.jpg')
+
+        from survey.models import Upload
+        upload = Upload.objects.get(token=token)
+        self.assertEqual(upload.session.tags, ['editor-preview'])
+        # повторная загрузка переиспользует ту же сессию
+        self._upload('preview2.jpg')
+        self.assertEqual(
+            SurveySession.objects.filter(survey=self.survey,
+                                         tags__contains=['editor-preview']).count(), 1)
+
+    def test_anonymous_without_session_still_forbidden(self):
+        """
+        GIVEN no session and no authenticated user
+        WHEN a file is uploaded
+        THEN 403 — the abuse posture is unchanged for the world at large
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        response = self.client.post(self.upload_url, {
+            'question': 'Q_PH',
+            'file': SimpleUploadedFile('x.jpg', self.JPEG, content_type='image/jpeg'),
+        })
+
+        self.assertEqual(response.status_code, 403)
