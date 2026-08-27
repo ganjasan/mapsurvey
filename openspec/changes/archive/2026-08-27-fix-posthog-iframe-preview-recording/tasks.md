@@ -24,4 +24,4 @@
 
 - [x] 5.1 `./run_tests.sh survey`: 1604 tests, OK (skipped=1), 869s. Baseline was the same suite minus the 4 tests added here; no pre-existing test changed behaviour.
 - [x] 5.2 Browser check: the top-level document loads `array.js` and initialises PostHog; both nested iframes load no PostHog script and report `__loaded: false`. Run on public pages rather than the editor — the browser extension blocks setting a session cookie and typing a password into a field is out of bounds, so the editor-side exclusion is covered by tasks 3.1-3.3 instead.
-- [ ] 5.3 After deploy, add a PostHog annotation on the deploy date noting that editor `$pageview` counts drop ~3x because iframe loads stopped being counted.
+- [x] 5.3 PostHog annotation 112344 created 2026-08-27, project scope, marker at the merge time (06:59:31Z), noting the ~3x drop in editor `$pageview` counts is measurement error going away.
