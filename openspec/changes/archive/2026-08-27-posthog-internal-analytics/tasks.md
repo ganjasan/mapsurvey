@@ -91,7 +91,11 @@ The signable document was worse than the page, and is what a DPO actually reads.
       listing the open questions: governing law, whether the processor should be a natural person at
       all given personal liability, whether SCCs must be annexed now that §5.5 admits US transfers,
       and whether the breach/DSR timelines are ones a one-person operation can meet.
-- [ ] 4b.11 **Blocked on the user:** legal review before the DPA is offered for signature again.
+- [x] 4b.11 Carried out of this change rather than done here. The DPA template was withdrawn:
+      `survey/assets/dpa/` no longer exists and `/trust/` offers to agree one on request, with a
+      test asserting the page does not distribute it. The legal review that must happen before
+      anything is offered for signature again now lives on backlog #88 (DPA / AVV compliance
+      pack), where the rest of that work already sits.
 
 ## 5. Configuration surfaces
 
@@ -101,7 +105,7 @@ The signable document was worse than the page, and is what a DPO actually reads.
 - [x] 5.2 Add `POSTHOG_PROJECT_KEY` and `POSTHOG_API_HOST` to the `mapsurvey` web service in
       `render.yaml` as `sync: false`. Not on the Celery worker or the acquisition cron — neither
       renders a page. (Stage 3 revisits the worker for server-side error capture.)
-- [ ] 5.3 `CLAUDE.md`: note the tracker next to the acquisition-metrics paragraph — what it covers,
+- [x] 5.3 `CLAUDE.md`: note the tracker next to the acquisition-metrics paragraph — what it covers,
       that respondent pages are deliberately excluded, that Plausible still runs, and above all that
       `SurveyEvent`/Performance/UTM are a *different system* that PostHog must never absorb.
 
@@ -145,12 +149,17 @@ The signable document was worse than the page, and is what a DPO actually reads.
 
 ## 8. Rollout
 
-- [ ] 8.1 Merge with the key unset — safe by construction, nothing is emitted.
-- [ ] 8.2 Set `POSTHOG_PROJECT_KEY` on the `mapsurvey` service in Render only after the `/trust/`
+- [x] 8.1 Merge with the key unset — safe by construction, nothing is emitted.
+- [x] 8.2 Set `POSTHOG_PROJECT_KEY` on the `mapsurvey` service in Render only after the `/trust/`
       wording is signed off (task 4).
-- [ ] 8.3 Confirm events arrive and that **no** event carries a `/surveys/` or `/r/` path.
-- [ ] 8.4 Let it run alongside Plausible; record how the two pageview series relate. That comparison
-      is the entry condition for stage 4.
+- [x] 8.3 Confirm events arrive and that **no** event carries a `/surveys/` or `/r/` path.
+      Verified 2026-08-27 against production: 2938 `$pageview` events over 30 days, none of them
+      on a `/surveys/` or `/r/` path.
+- [x] 8.4 Let it run alongside Plausible; record how the two pageview series relate. That comparison
+      is the entry condition for stage 4. Outcome: the two series are not directly comparable —
+      Plausible's script also loads on `/surveys/`, so roughly half its entries are customers'
+      respondents, while PostHog deliberately excludes them. Stage 4 (`posthog-replaces-plausible`)
+      therefore cannot be a straight swap and stays a separate change; see section 9.
 
 ## 9. Follow-up stages (separate changes — not done here)
 

@@ -52,4 +52,12 @@ protection officer **in writing**.
 - [Frankfurt server migration](improvement-frankfurt-server-migration.md) (#11)
 - [Grant reporting pack](feature-grant-reporting-pack.md) (#94)
 - Existing `/trust/` page (`2026-04-02-trust-page`) is the public-facing entry point
-- **2026-08-10 — partially shipped.** An English Art. 28 DPA exists at `survey/assets/dpa/mapsurvey-dpa.pdf`, linked from `survey/templates/trust.html:142`. Missing for German buyers: the German AVV, SCC / third-country access disclosure, the access register, sub-processor change notification, and a self-serve countersignature flow.
+- **2026-08-10 — partially shipped.** An English Art. 28 DPA existed at `survey/assets/dpa/mapsurvey-dpa.pdf`, linked from `survey/templates/trust.html`. Missing for German buyers: the German AVV, SCC / third-country access disclosure, the access register, sub-processor change notification, and a self-serve countersignature flow.
+- **2026-08-27 — the PDF is gone, and legal review is the blocker.** `survey/assets/dpa/` no
+  longer exists and `/trust/` offers to agree a DPA on request instead of serving a signable
+  file (`trust.html`, section `#dpa`); a test asserts the page does not distribute it. The
+  document was withdrawn pending legal review after the trust-page audit found six false claims
+  (see [[lesson-trust-page-claims]] — it had claimed EU hosting while everything runs in Render
+  Oregon). **Nothing may be offered for signature again until a lawyer has read it.** This
+  carries over task 4b.11 of the archived `posthog-internal-analytics` change, which was blocked
+  on exactly this and is the reason that change's rollout section could not close on its own.
