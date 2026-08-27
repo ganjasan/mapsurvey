@@ -81,4 +81,5 @@
 - [ ] 9.2 EXIF policy (keep for field GPS vs strip for privacy) — own change with a product decision
 - [ ] 9.3 Offline queueing for field collection — belongs to the field epic
 - [ ] 9.4 Image thumbnails/transcoding (HEIC preview on Windows) — revisit on first real complaint
-- [ ] 9.5 AI generation of file questions — deliberately excluded from the schema (`_AI_EXCLUDED_TYPES`): no prompt guidance, no validator rules yet; lift in its own change
+- [ ] 9.5 Streaming responses export — the ZIP builds in a BytesIO (pre-existing pattern); a survey with hundreds of 25 MB audio answers would assemble the whole volume in RAM on a 512 MB instance. Fine at current volume; revisit when file-heavy surveys appear
+- [x] 9.6 AI generation of file questions — DONE in round 7b (owner overruled the exclusion; prompt guidance added)

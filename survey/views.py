@@ -1437,7 +1437,11 @@ def _answer_cell(question, answers):
 	answer = answers[0]
 
 	if input_type in ('photo', 'audio', 'document'):
-		return _upload_archive_path(question, answer) if answer.upload_id else ""
+		# Several files per question: the cell names every archive path. The
+		# geo sub-answer path hands all rows in at once; the CSV loop passes
+		# one at a time and concatenates in the caller — same separator.
+		paths = [_upload_archive_path(question, a) for a in answers if a.upload_id]
+		return '; '.join(paths)
 
 	if input_type in ('text', 'text_line'):
 		return answer.text if answer.text is not None else ""

@@ -33735,3 +33735,80 @@ class MultiFileAndPreviewUploadTest(TestCase):
         })
 
         self.assertEqual(response.status_code, 403)
+
+
+@override_settings(FILE_UPLOAD_QUESTIONS=True)
+class MultiFileExportTest(TestCase):
+    """Export with several files: every path in the cell, every file in the ZIP,
+    including photos attached to a mapped point."""
+
+    JPEG = b'\xff\xd8\xff\xe0' + b'0' * 16
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='mexp', password='pass')
+        org = Organization.objects.create(name="MExp Org")
+        Membership.objects.create(user=self.user, organization=org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="mexp_survey", organization=org, created_by=self.user,
+            redirect_url="#", status="published",
+        )
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="sec1", code="S1",
+        )
+        self.photo_q = Question.objects.create(
+            survey_section=self.section, name="Photos", code="Q_PH", input_type="photo",
+        )
+        self.point_q = Question.objects.create(
+            survey_section=self.section, name="Spot", code="Q_SPOT", input_type="point",
+        )
+        self.sub_photo = Question.objects.create(
+            survey_section=self.section, name="Spot photo", code="Q_SPOT_PH",
+            input_type="photo", parent_question_id=self.point_q,
+        )
+
+    def _upload(self, code, name):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        response = self.client.post(f'/surveys/{self.survey.uuid}/upload/', {
+            'question': code,
+            'file': SimpleUploadedFile(name, self.JPEG, content_type='image/jpeg'),
+        })
+        self.assertEqual(response.status_code, 200, response.content)
+        return response.json()['token']
+
+    def test_multi_file_cells_and_zip_cover_every_file(self):
+        """
+        GIVEN two photos on a section question and two on a point's sub-question
+        WHEN the creator downloads survey data
+        THEN the CSV cell and the GeoJSON property list BOTH paths each,
+        and all four files are present in the archive
+        """
+        section_url = f'/surveys/{self.survey.uuid}/sec1/'
+        self.client.get(section_url)
+        top = [self._upload('Q_PH', f'top{i}.jpg') for i in range(2)]
+        sub = [self._upload('Q_SPOT_PH', f'spot{i}.jpg') for i in range(2)]
+        geojson_str = json.dumps({
+            'type': 'Feature',
+            'geometry': {'type': 'Point', 'coordinates': [74.6, 42.87]},
+            'properties': {'question_id': 'Q_SPOT', 'Q_SPOT_PH': sub},
+        })
+        self.client.post(section_url, {'Q_PH': top, 'Q_SPOT': geojson_str})
+        session = SurveySession.objects.get(survey=self.survey)
+
+        self.client.login(username='mexp', password='pass')
+        response = self.client.get(f'/surveys/{self.survey.uuid}/download')
+        archive = zipfile.ZipFile(BytesIO(response.content))
+        names = archive.namelist()
+
+        file_entries = sorted(n for n in names if n.startswith('files/'))
+        self.assertEqual(len(file_entries), 4, file_entries)
+
+        csv_text = archive.read([n for n in names if n.endswith('.csv')][0]).decode()
+        for i in range(2):
+            self.assertIn(f'files/{session.id}/Q_PH__top{i}.jpg', csv_text)
+
+        geojson_text = archive.read(
+            [n for n in names if n.endswith('.geojson')][0]).decode()
+        for i in range(2):
+            self.assertIn(f'files/{session.id}/Q_SPOT_PH__spot{i}.jpg', geojson_text)
