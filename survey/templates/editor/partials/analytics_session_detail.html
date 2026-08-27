@@ -42,7 +42,7 @@
                     <br><small class="text-muted">{{ row.section_name }}</small>
                 </td>
                 <td>
-                    <span id="detail-val-{{ row.question_id }}">{{ row.value }}</span>
+                    <span id="detail-val-{{ row.question_id }}">{% if row.href %}<a href="{{ row.href }}" target="_blank" rel="noopener">{{ row.value }}</a>{% else %}{{ row.value }}{% endif %}</span>
                     {% if row.editable %}
                     <button class="btn btn-sm btn-link p-0 ml-1" style="font-size:0.75rem;color:#6b7280;"
                             onclick="startDetailEdit({{ session.id }}, {{ row.question_id }}, '{{ row.input_type }}', this)"
@@ -51,7 +51,7 @@
                     {% if row.attributes %}
                     <div class="mt-1" style="font-size:0.8rem;">
                         {% for attr in row.attributes %}
-                        <div><span class="text-muted">{{ attr.name }}:</span> {{ attr.value }}</div>
+                        <div><span class="text-muted">{{ attr.name }}:</span> {% if attr.href %}<a href="{{ attr.href }}" target="_blank" rel="noopener">{{ attr.value }}</a>{% else %}{{ attr.value }}{% endif %}</div>
                         {% endfor %}
                     </div>
                     {% endif %}

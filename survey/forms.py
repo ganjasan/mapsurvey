@@ -184,6 +184,70 @@ class LeafletDrawButtonField(forms.Field):
 
         return attrs
 
+
+class FileUploadWidget(widgets.Widget):
+    """Respondent file input: async upload, hidden token, states driven by
+    file_upload.js. The camera opens on mobile through the capture attribute;
+    audio adds a voice recorder when the browser can (progressive enhancement).
+    The widget's VALUE is the upload token string — bytes never touch the form.
+    """
+    template_name = 'file_upload.html'
+
+    ACCEPT = {
+        'photo': 'image/*',
+        'audio': 'audio/*',
+        'document': ('.pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.txt,.csv,'
+                     'application/pdf'),
+    }
+
+    def __init__(self, attrs=None, input_type='photo', upload_url='', max_bytes=0,
+                 title='', subtitle=''):
+        super().__init__(attrs)
+        self.input_type = input_type
+        self.upload_url = upload_url
+        self.max_bytes = max_bytes
+        self.title = title
+        self.subtitle = subtitle
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        upload = None
+        if value:
+            # One pk lookup per prepopulated file answer — the uploaded state
+            # needs the human name and a signed link, and only the server can
+            # mint the latter.
+            from survey.models import Upload
+            upload = Upload.objects.filter(token=value).first()
+        context['widget'].update({
+            'input_type': self.input_type,
+            'accept': self.ACCEPT.get(self.input_type, ''),
+            'capture': self.input_type == 'photo',
+            'recorder': self.input_type == 'audio',
+            'upload_url': self.upload_url,
+            'max_bytes': self.max_bytes,
+            'upload': upload,
+            'upload_href': upload.file.url if upload else '',
+            'required': self.is_required,
+            'title': self.title,
+            'subtitle': self.subtitle,
+        })
+        return context
+
+
+class FileUploadField(forms.CharField):
+    """The form value is the token; presence is the only validation here —
+    everything about the file itself was validated at upload time."""
+
+    def __init__(self, *, input_type, upload_url, max_bytes, title='', subtitle='', **kwargs):
+        kwargs.setdefault('widget', FileUploadWidget(
+            input_type=input_type, upload_url=upload_url, max_bytes=max_bytes,
+            title=title, subtitle=subtitle,
+        ))
+        super().__init__(max_length=64, **kwargs)
+        self.title = title
+        self.subtitle = subtitle
+
+
 class RankingWidget(widgets.Widget):
     """Drag-to-order list.
 
@@ -340,6 +404,24 @@ class SurveySectionAnswerForm(forms.Form):
             return ShowImageField(widget=ShowImageWidget, label=False, image_source=image_source,
                                   subtitle=sublabel)
 
+        elif input_type in ('photo', 'audio', 'document'):
+            from django.conf import settings as conf_settings
+            from django.urls import reverse
+            from .uploads import effective_max_bytes
+            if not getattr(conf_settings, 'FILE_UPLOAD_QUESTIONS', False):
+                # Kill switch: stored file questions render nothing for the
+                # respondent; the rest of the section works (fail open).
+                return None
+            upload_url = reverse(
+                'survey_upload',
+                kwargs={'survey_slug': str(question.survey_section.survey_header.uuid)},
+            )
+            return FileUploadField(
+                input_type=input_type, upload_url=upload_url,
+                max_bytes=effective_max_bytes(question),
+                label=label, required=required, title=label, subtitle=sublabel,
+            )
+
         elif input_type == 'rating':
             # Stars fall back to five numbered steps when the creator never
             # defined choices — the style is picked far more often than a
@@ -430,7 +512,12 @@ class SurveySectionAnswerForm(forms.Form):
             # decides which kind of field to build.
             resolved_style = self.resolve_display_style(question, survey_rating_style)
 
-            self.fields[field_name] = self._get_form_from_input_type(question.input_type, question.required, question, field_label, field_sublabel, field_color, field_icon_class, image_source, language, display_style=resolved_style)
+            built_field = self._get_form_from_input_type(question.input_type, question.required, question, field_label, field_sublabel, field_color, field_icon_class, image_source, language, display_style=resolved_style)
+            if built_field is None:
+                # A kill-switched type renders nothing; the section must keep
+                # working without it (fail open).
+                continue
+            self.fields[field_name] = built_field
             self.fields[field_name].widget.question_type = question.input_type
             self.fields[field_name].widget.display_style = resolved_style
             self.fields[field_name].widget.question_subtext = field_sublabel

@@ -63,7 +63,18 @@ document.addEventListener('DOMContentLoaded', function() {
             name.className = 'text-muted';
             name.textContent = attr.name + ': ';
             row.appendChild(name);
-            row.appendChild(document.createTextNode(attr.value));
+            if (attr.href) {
+                // File sub-answer: href is server-minted (signed URL), the
+                // filename still goes in as text — never markup.
+                var link = document.createElement('a');
+                link.href = attr.href;
+                link.target = '_blank';
+                link.rel = 'noopener';
+                link.textContent = attr.value;
+                row.appendChild(link);
+            } else {
+                row.appendChild(document.createTextNode(attr.value));
+            }
             root.appendChild(row);
         });
         return root;

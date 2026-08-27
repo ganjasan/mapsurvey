@@ -1,0 +1,67 @@
+{% load i18n %}
+{% comment %}
+Respondent file upload widget (openspec: respondent-file-uploads).
+The hidden input is the form's value: the async-upload token, present only in
+the "uploaded" state. Bytes go to widget.upload_url from file_upload.js the
+moment a file is picked or a recording stops. Every filename is rendered as
+text — never markup, never |safe.
+{% endcomment %}
+<div class="file-upload"
+     data-file-upload
+     data-input-type="{{ widget.input_type }}"
+     data-upload-url="{{ widget.upload_url }}"
+     data-question="{{ widget.name }}"
+     data-max-bytes="{{ widget.max_bytes }}"
+     {% if widget.recorder %}data-recorder="1"{% endif %}
+     {% if widget.required %}data-required="1"{% endif %}>
+
+  <p class="fu-title" style="font-weight:600;margin-bottom:2px;">{{ widget.title }}</p>
+  {% if widget.subtitle %}<p class="fu-subtitle text-muted" style="font-size:0.85rem;">{{ widget.subtitle|safe }}</p>{% endif %}
+
+  <input type="hidden" name="{{ widget.name }}" data-fu-token
+         {% if widget.value %}value="{{ widget.value }}"{% endif %}>
+
+  <div class="fu-state fu-empty" {% if widget.upload %}hidden{% endif %}>
+    <label class="btn btn-outline-primary fu-pick">
+      {% if widget.input_type == 'photo' %}<i class="fas fa-camera"></i> {% trans "Add photo" %}
+      {% elif widget.input_type == 'audio' %}<i class="fas fa-file-audio"></i> {% trans "Add audio file" %}
+      {% else %}<i class="fas fa-paperclip"></i> {% trans "Attach file" %}{% endif %}
+      <input type="file" class="fu-input" hidden
+             accept="{{ widget.accept }}"
+             {% if widget.capture %}capture="environment"{% endif %}>
+    </label>
+    {% if widget.recorder %}
+    <button type="button" class="btn btn-outline-primary fu-record" hidden>
+      <i class="fas fa-microphone"></i> {% trans "Record" %}
+    </button>
+    {% endif %}
+  </div>
+
+  {% if widget.recorder %}
+  <div class="fu-state fu-recording" hidden>
+    <span class="fu-rec-dot" aria-hidden="true"></span>
+    <span class="fu-rec-time">0:00</span>
+    <button type="button" class="btn btn-danger btn-sm fu-stop">
+      <i class="fas fa-stop"></i> {% trans "Stop" %}
+    </button>
+  </div>
+  {% endif %}
+
+  <div class="fu-state fu-uploading" hidden>
+    <div class="progress" style="height: 6px;"><div class="progress-bar fu-progress" style="width: 0%"></div></div>
+    <button type="button" class="btn btn-link btn-sm fu-cancel">{% trans "Cancel" %}</button>
+  </div>
+
+  <div class="fu-state fu-uploaded" {% if not widget.upload %}hidden{% endif %}>
+    {% if widget.upload and widget.input_type == 'photo' %}
+    <img class="fu-thumb" src="{{ widget.upload_href }}" alt="" style="max-width: 120px; max-height: 120px;">
+    {% endif %}
+    <span class="fu-name">{% if widget.upload %}{{ widget.upload.original_name }}{% endif %}</span>
+    <button type="button" class="btn btn-link btn-sm fu-replace" title="{% trans 'Replace' %}">&times;</button>
+  </div>
+
+  <div class="fu-state fu-error" hidden>
+    <span class="text-danger fu-message"></span>
+    <button type="button" class="btn btn-link btn-sm fu-retry">{% trans "Retry" %}</button>
+  </div>
+</div>

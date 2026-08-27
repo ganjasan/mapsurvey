@@ -1,10 +1,10 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils.text import slugify
 from django_registration.signals import user_activated, user_registered
 
 from . import product_events as pe
-from .models import Membership, Organization, SurveySession
+from .models import Membership, Organization, SurveySession, Upload
 
 
 @receiver(user_registered)
@@ -106,3 +106,13 @@ def emit_first_response_event(sender, instance, created, **kwargs):
         # than a join back to survey_created.
         'creation_method': pe.creation_method_for(instance.survey_id),
     })
+
+
+@receiver(post_delete, sender=Upload)
+def delete_upload_object(sender, instance, **kwargs):
+    """The stored file follows its row. Rows go away two ways — orphan
+    reclamation and the session/survey CASCADE — and both must take the
+    object in the bucket (or on disk) with them, or storage grows forever.
+    save=False: the row is already gone, there is nothing to update."""
+    if instance.file:
+        instance.file.delete(save=False)

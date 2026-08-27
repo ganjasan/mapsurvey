@@ -312,6 +312,15 @@
                        placeholder="10">
             </div>
         </div>
+        <div id="vs-file-fields" style="display:none;" class="mt-2">
+            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> Validation</label>
+            <div class="form-group">
+                <label style="font-size:0.75rem;">Max file size, MB (platform cap 25)</label>
+                <input type="number" step="1" min="1" max="25" name="vs_max_file_mb" class="form-control form-control-sm" style="width:100px;"
+                       value="{% if question and question.validation_settings.max_file_bytes %}{% widthratio question.validation_settings.max_file_bytes 1048576 1 %}{% endif %}"
+                       placeholder="25">
+            </div>
+        </div>
         <div id="vs-geo-fields" style="display:none;" class="mt-2">
             <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-map-marker-alt"></i> Places per respondent</label>
             <div class="form-row">
@@ -464,6 +473,8 @@
         if (textEl) textEl.style.display = (t === 'text' || t === 'text_line') ? 'block' : 'none';
         if (polyEl) polyEl.style.display = (t === 'polygon') ? 'block' : 'none';
         if (geoEl) geoEl.style.display = (t === 'point' || t === 'line' || t === 'polygon') ? 'block' : 'none';
+        var fileEl = document.getElementById('vs-file-fields');
+        if (fileEl) fileEl.style.display = (t === 'photo' || t === 'audio' || t === 'document') ? 'block' : 'none';
     }
 
     // Types whose rendering the creator can pick. Mirrors

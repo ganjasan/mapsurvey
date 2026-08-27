@@ -9,7 +9,10 @@ from django.db.models import Q, Prefetch, Count
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import translation
 from django.utils.translation import override as lang_override
+from django.utils.translation import gettext as _
 from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator, SurveyMapLayer
+from .models import FILE_INPUT_TYPES
+from .uploads import attach_upload, detach_unreferenced
 from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role, get_org_membership, SURVEY_ROLE_RANK,
@@ -825,7 +828,11 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 				child_answers = Answer.objects.filter(parent_answer_id=answer).select_related('question')
 				for child in child_answers:
 					sub_q = child.question
-					if child.text is not None:
+					if child.upload_id:
+						# The token round-trips: the popup widget resolves it
+						# back to the uploaded state on revisit.
+						feature['properties'][sub_q.code] = [str(child.upload_id)]
+					elif child.text is not None:
 						feature['properties'][sub_q.code] = [child.text]
 					elif child.numeric is not None:
 						feature['properties'][sub_q.code] = [str(child.numeric)]
@@ -854,6 +861,11 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 				# Order matters here, unlike multichoice: this list is the answer.
 				if answer.selected_choices:
 					initial[question.code] = [str(c) for c in answer.selected_choices]
+			elif question.input_type in FILE_INPUT_TYPES:
+				# The token is the form value; the widget resolves it to the
+				# uploaded state (name + signed link) at render time.
+				if answer.upload_id:
+					initial[question.code] = str(answer.upload_id)
 			elif question.input_type == 'range':
 				if answer.numeric is not None:
 					# The slider takes an int; the choice-based styles are radios
@@ -1070,6 +1082,14 @@ def survey_section(request, survey_slug, section_name):
 											sub_answer.numeric = float(first)
 									elif sub_question.input_type in ('choice', 'multichoice', 'rating'):
 										sub_answer.selected_choices = [int(v) for v in value if v]
+									elif sub_question.input_type in FILE_INPUT_TYPES:
+										# The popup carries the async-upload token as an
+										# ordinary property value; a foreign or stale token
+										# skips this sub-answer, never the feature.
+										upload = attach_upload(survey_session, sub_question, first)
+										if upload is None:
+											continue
+										sub_answer.upload = upload
 									sub_answer.save()
 
 				elif question.input_type in ('text', 'text_line', 'datetime'):
@@ -1104,7 +1124,21 @@ def survey_section(request, survey_slug, section_name):
 					answer.selected_choices = [int(r) for r in result if r]
 					answer.save()
 
+				elif question.input_type in FILE_INPUT_TYPES:
+					# The form posts the async-upload token, never bytes. A token
+					# that is not this session's for this question is skipped —
+					# the rest of the section is worth more than a broken ref.
+					upload = attach_upload(survey_session, question, result[0])
+					if upload is not None:
+						answer = Answer(survey_session=survey_session, question=question)
+						answer.upload = upload
+						answer.save()
+
 				# html/image collect nothing; any other type stores nothing.
+
+		# A replaced or dropped file: its upload no longer has an Answer after the
+		# rewrite above, so it goes back to attached=False for orphan reclamation.
+		detach_unreferenced(survey_session, section_question_ids)
 
 		# Abandoned-branch cleanup: with the new answers stored, purge answers to
 		# questions now hidden anywhere in the survey (changing "Area 7" to
@@ -1324,7 +1358,18 @@ def _sanitize_filename(name):
 EXPORT_VALUE_TYPES = frozenset({
 	'text', 'text_line', 'number', 'range',
 	'choice', 'rating', 'multichoice', 'datetime', 'ranking',
+	'photo', 'audio', 'document',
 })
+
+
+def _upload_archive_path(question, answer):
+	"""Where a file answer lives inside the responses ZIP. The same string is
+	the CSV/GeoJSON cell, so a row names the file sitting next to it."""
+	return 'files/{sid}/{code}__{name}'.format(
+		sid=answer.survey_session_id,
+		code=question.code,
+		name=_sanitize_filename(answer.upload.original_name),
+	)
 
 # Exported as GeoJSON layers in their own right, never as a cell.
 EXPORT_GEOMETRY_TYPES = frozenset({'point', 'line', 'polygon'})
@@ -1377,6 +1422,9 @@ def _answer_cell(question, answers):
 		return ""
 
 	answer = answers[0]
+
+	if input_type in ('photo', 'audio', 'document'):
+		return _upload_archive_path(question, answer) if answer.upload_id else ""
 
 	if input_type in ('text', 'text_line'):
 		return answer.text if answer.text is not None else ""
@@ -1525,6 +1573,30 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 		properties_list.append(properties)
 
 	zip.writestr(prefix + _sanitize_filename(survey.name) + '.csv', pd.DataFrame(properties_list).to_csv())
+
+	# Respondent files ride along under files/<session_id>/, read through the
+	# storage API so the same code serves filesystem and S3. Only attached
+	# uploads of non-excluded sessions — orphans and trashed sessions stay out.
+	from .models import FILE_INPUT_TYPES as _FILE_TYPES, Upload as _Upload
+	file_answers = (
+		Answer.objects
+		.filter(
+			survey_session__survey=survey,
+			question__input_type__in=_FILE_TYPES,
+			upload__isnull=False,
+		)
+		.exclude(survey_session_id__in=excluded_session_ids)
+		.select_related('question', 'upload')
+	)
+	for answer in file_answers:
+		try:
+			with answer.upload.file.open('rb') as stored:
+				zip.writestr(prefix + _upload_archive_path(answer.question, answer), stored.read())
+		except Exception:
+			logger.warning(
+				"Export: upload %s missing from storage; row keeps the path, file absent from ZIP.",
+				answer.upload_id,
+			)
 
 
 @survey_permission_required('viewer')
@@ -2015,3 +2087,76 @@ def sitemap_xml(request):
 		+ "\n</urlset>"
 	)
 	return HttpResponse(xml, content_type="application/xml")
+
+@require_POST
+def survey_upload(request, survey_slug):
+	"""Async respondent file upload — the only route that accepts file bytes.
+
+	Forms and geo-popup properties carry the returned token, never the file;
+	the section POST resolves tokens to Upload rows and attaches them. Bytes
+	must arrive before submit because a popup answer exists client-side long
+	before the section is posted.
+
+	Anonymous by nature, so layered like registration: a real survey_session
+	for THIS survey, the named question must be a file type in it, per-type
+	allow-lists with magic-byte checks, a size cap, per-session count/byte
+	caps, and an IP rate limit (fail-open on Redis outage, the established
+	posture).
+	"""
+	from django.conf import settings as conf_settings
+	from .models import Upload
+	from .uploads import UploadRejected, check_session_caps, validate_upload
+
+	if not getattr(conf_settings, 'FILE_UPLOAD_QUESTIONS', False):
+		raise Http404
+
+	survey = resolve_survey(survey_slug)
+	access_response = check_survey_access(request, survey)
+	if access_response is not None:
+		raise Http404
+
+	session_id = request.session.get('survey_session_id')
+	survey_session = SurveySession.objects.filter(
+		id=session_id, survey=survey, is_deleted=False,
+	).first() if session_id else None
+	if survey_session is None:
+		return JsonResponse({'error': 'no_session',
+		                     'message': _('Open the survey before uploading.')}, status=403)
+
+	question = Question.objects.filter(
+		survey_section__survey_header=survey,
+		code=request.POST.get('question', ''),
+		input_type__in=FILE_INPUT_TYPES,
+	).first()
+	if question is None:
+		return JsonResponse({'error': 'unknown_question',
+		                     'message': _('This question does not accept files.')}, status=400)
+
+	if is_ratelimited(request, group='survey_upload', key='ip',
+	                  rate='60/h', method=['POST'], increment=True):
+		return JsonResponse({'error': 'rate_limited',
+		                     'message': _('Too many uploads, try again later.')}, status=429)
+
+	uploaded = request.FILES.get('file')
+	if uploaded is None:
+		return JsonResponse({'error': 'no_file', 'message': _('No file received.')}, status=400)
+
+	try:
+		check_session_caps(survey_session)
+		content_type = validate_upload(question, uploaded)
+	except UploadRejected as rejection:
+		return JsonResponse({'error': rejection.code, 'message': str(rejection.message)}, status=400)
+
+	# The stored name is sanitized by Django's storage; the original stays on
+	# the row for humans (responses table, ZIP) and is always rendered as text.
+	upload = Upload.objects.create(
+		session=survey_session,
+		question=question,
+		file=uploaded,
+		original_name=uploaded.name[:255],
+		content_type=content_type,
+		size=uploaded.size,
+	)
+	return JsonResponse({'token': str(upload.token),
+	                     'name': upload.original_name,
+	                     'size': upload.size})

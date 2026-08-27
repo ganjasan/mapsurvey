@@ -369,7 +369,7 @@ services:
     schedule: "30 4 * * *"
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    dockerCommand: python manage.py reclaim_preview_media --delete
+    dockerCommand: sh ./reclaim.sh
     envVars:
       - key: DATABASE_URL
         fromDatabase:

@@ -20,6 +20,7 @@ locale.{% endcomment %}
     <script type="text/javascript" src="{% static 'js/conditional_visibility.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/components/map_place_search.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/components/ranking.js' %}"></script>
+    {% if FILE_UPLOAD_QUESTIONS %}<script type="text/javascript" src="{% static 'js/file_upload.js' %}"></script>{% endif %}
 
     <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
@@ -596,6 +597,10 @@ locale.{% endcomment %}
         var $popup = $(tempLayer.getPopup().getElement());
         var $form = $popup.find('form');
 
+        // File widgets render inside the popup after DOMContentLoaded; wire
+        // them up now (idempotent — data-fu-init guards re-entry).
+        if (window.initFileUploads) window.initFileUploads($popup[0]);
+
         var properties = tempLayer.feature.properties;
         for (var key in properties){
             if (key != 'question_id'){
@@ -642,6 +647,11 @@ locale.{% endcomment %}
         })
 
         $popup.find("button.layer-apply").click(function(){
+            // A file still uploading has no token yet — applying now would
+            // save the feature without it. Hold Apply until it settles.
+            if (window.fileUploadsBusy && window.fileUploadsBusy($popup[0])) {
+                return;
+            }
             var subquestion_form_result = $('#' + tempLayer._formId).serializeArray();
             var grouped_by_name_result = subquestion_form_result.groupBy("name");
             for (var prop in grouped_by_name_result) {

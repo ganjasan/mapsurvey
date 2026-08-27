@@ -33,7 +33,12 @@ from ..serialization import VALID_INPUT_TYPES
 
 # 'html' is a decoration block, not an answerable question; the validator
 # additionally requires at least one non-html question in the draft.
-TOP_LEVEL_INPUT_TYPES = [t for t in VALID_INPUT_TYPES if t != 'image']
+# File types are deliberately NOT generatable yet: the prompt has no guidance
+# for when a photo/audio/document question helps, the validator has no rules
+# for them, and a draft that leans on uploads is untested product territory.
+# Lifting this is a small, separate change once drafts with files are wanted.
+_AI_EXCLUDED_TYPES = {'image', 'photo', 'audio', 'document'}
+TOP_LEVEL_INPUT_TYPES = [t for t in VALID_INPUT_TYPES if t not in _AI_EXCLUDED_TYPES]
 SUB_QUESTION_INPUT_TYPES = [
     t for t in TOP_LEVEL_INPUT_TYPES if t not in SUBQUESTION_DISALLOWED_INPUT_TYPES
 ]

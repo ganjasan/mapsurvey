@@ -290,6 +290,18 @@ class QuestionForm(forms.ModelForm):
                 (value, label) for value, label in field.choices
                 if value not in SUBQUESTION_DISALLOWED_INPUT_TYPES
             ]
+        from django.conf import settings as conf_settings
+        if not getattr(conf_settings, 'FILE_UPLOAD_QUESTIONS', False):
+            # Kill switch: filtering the choices both drops the Files group
+            # from the picker (picker_groups_for builds from these choices)
+            # and rejects the types server-side as invalid — same double duty
+            # as the form-layout geo filter above.
+            from survey.models import FILE_INPUT_TYPES
+            field = self.fields['input_type']
+            field.choices = [
+                (value, label) for value, label in field.choices
+                if value not in FILE_INPUT_TYPES
+            ]
 
     def clean_display_style(self):
         return self.cleaned_data.get('display_style') or 'default'

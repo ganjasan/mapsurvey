@@ -1170,6 +1170,18 @@ def editor_question_edit(request, survey_uuid, question_id):
                 if val:
                     try: vs['area_outlier_factor'] = float(val)
                     except ValueError: pass
+            elif q.input_type in ('photo', 'audio', 'document'):
+                # Creator cap in whole MB; stored in bytes, clamped to the
+                # platform ceiling — a creator can lower the limit, never raise.
+                val = request.POST.get('vs_max_file_mb', '').strip()
+                if val:
+                    from survey.uploads import PLATFORM_MAX_BYTES
+                    try:
+                        parsed = int(val)
+                    except ValueError:
+                        parsed = None
+                    if parsed and parsed > 0:
+                        vs['max_file_bytes'] = min(parsed * 1024 * 1024, PLATFORM_MAX_BYTES)
             # Feature-count limits apply to every geo type (polygon keeps its
             # area factor above as well, hence a separate `if`, not `elif`)
             if q.input_type in ('point', 'line', 'polygon'):

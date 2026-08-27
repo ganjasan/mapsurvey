@@ -117,6 +117,8 @@ urlpatterns = [
     path('surveys/<str:survey_slug>/language/', views.survey_language_select, name='survey_language_select'),
     path('surveys/<str:survey_slug>/password/', views.survey_password_gate, name='survey_password_gate'),
     path('surveys/<str:survey_slug>/thanks/', views.survey_thanks, name='survey_thanks'),
+    # Before the <section_name> catch-all, or 'upload' would resolve as a section.
+    path('surveys/<str:survey_slug>/upload/', views.survey_upload, name='survey_upload'),
     path('surveys/<str:survey_slug>/layers/<int:layer_id>.geojson', views.survey_layer_geojson, name='survey_layer_geojson'),
     path('surveys/<str:survey_slug>/<str:section_name>/', views.survey_section, name='section'),
     path('surveys/<str:survey_slug>/download', views.download_data, name='download_data'),

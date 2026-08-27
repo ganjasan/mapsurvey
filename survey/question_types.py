@@ -15,6 +15,7 @@ untouched.
 PICKER_GROUPS = (
     ("plain", "Questions"),
     ("geo", "Map questions"),
+    ("files", "Files"),
     ("display", "Display blocks — collect nothing"),
 )
 
@@ -45,6 +46,12 @@ PICKER_TYPES = {
                     "hint": "Respondent draws a route or line"},
     "polygon":     {"group": "geo", "icon": "fa-draw-polygon",
                     "hint": "Respondent outlines an area"},
+    "photo":       {"group": "files", "icon": "fa-camera",
+                    "hint": "Respondent takes or uploads a photo"},
+    "audio":       {"group": "files", "icon": "fa-microphone",
+                    "hint": "Respondent records their voice or uploads audio"},
+    "document":    {"group": "files", "icon": "fa-file-alt",
+                    "hint": "Respondent attaches a document (PDF, Office)"},
     "image":       {"group": "display", "icon": "fa-image",
                     "hint": "Shows a picture to the respondent — collects nothing"},
     "html":        {"group": "display", "icon": "fa-paragraph",
