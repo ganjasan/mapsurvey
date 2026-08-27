@@ -7,10 +7,11 @@ step runs: build time for anything derived only from the source, pre-deploy for 
 touch the database before the new code goes live, and container start for nothing but the server
 itself.
 
-The window cannot currently be eliminated. The web service mounts a persistent disk, a Render disk
-attaches to one instance at a time, and so Render must stop the old instance before starting the
-new one — zero-downtime deploys are unavailable and the service is pinned to a single instance
-until media moves off the disk.
+The window is eliminated. Media moved off the instance filesystem into S3 (the `media-storage`
+disk was copied into the bucket, verified object-for-object, and removed on 2026-08-27), so no
+disk pins the web service to a single instance: Render starts the new instance alongside the old
+one and switches traffic only after the health check passes. Reintroducing a mounted disk would
+bring the deploy downtime window back with it.
 
 ## Requirements
 ### Requirement: Static assets are built into the image
