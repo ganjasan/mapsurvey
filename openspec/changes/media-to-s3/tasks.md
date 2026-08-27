@@ -50,12 +50,11 @@
 ## 7. Production cutover (owner-run, after the PR merges — each step needs a go-ahead)
 
 - [x] 7.0 Migration tool built and self-tested against the live bucket (dry-run → copy → re-run skips → verify, all four modes correct, test objects removed). `aws s3 sync` turned out to be impossible: **there is no AWS CLI in the image** — only Python and boto3 — so `survey/management/commands/migrate_media_to_s3.py` is the copy path
-- [ ] 7.1 Run it from a Render shell on the web service. **Blocked on shell access**: Render accepts the SSH key but closes the session immediately for non-interactive commands, with and without a PTY, so an agent cannot execute it. Owner-run:
-  - `python manage.py migrate_media_to_s3 --dry-run` (with the bucket env vars exported), then without the flag, then `--verify`
-- [ ] 7.2 Set the media env vars and `USE_S3=TRUE` on web, worker and cron; deploy. The disk stays mounted as an untouched backup
-- [ ] 7.3 Verify in production: an existing survey cover loads from the bucket host, a fresh upload lands in the bucket, a ZIP export still contains images
-- [ ] 7.4 Only then remove the `disk:` block from `render.yaml` — the irreversible step, and the one that restores zero-downtime deploys
-- [ ] 7.5 Update the `deploy-startup` spec's Purpose paragraph, which still states the window cannot be eliminated (a Purpose is not a requirement, so no delta covers it)
+- [x] 7.1 Copied 2026-08-27 via SSH (unblocked by the Dockerfile fix in the same PR: `adduser --system` had left the `app` user with nologin and no `~/.ssh`, which is why every SSH session died after auth). Dry-run → copy → verify: 55/55 files, 72,574,283 bytes, sizes match, disk untouched. One-off jobs were proven NOT to mount the disk (job saw an empty dir while the disk metric read 69 MiB), so SSH was the only path
+- [x] 7.2 `USE_S3=TRUE` + media vars set on web and worker via Render API, deployed 2026-08-27. Not on the acquisition cron — it writes no media
+- [x] 7.3 Verified in production: `settings` resolve to the bucket, an existing cover serves 200 from the bucket host, a fresh editor upload landed in the bucket and rendered on the respondent page from the bucket domain (browser-driven end-to-end), storage round-trip write/read/delete clean, no S3 errors in logs
+- [x] 7.4 `disk:` block removed — this PR. Render deletes the disk and its data on Blueprint sync; the S3 copy (verified) plus bucket versioning is the safety net from here on
+- [x] 7.5 `deploy-startup` Purpose updated: the window is eliminated, and reintroducing a disk would bring it back
 
 ## 8. Follow-ups (not in this change)
 

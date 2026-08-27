@@ -203,14 +203,14 @@ services:
       - key: AWS_SECRET_ACCESS_KEY
         sync: false
         previewEnvRenderServiceName: mapsurvey
-    # The disk stays for now. It is the rollback path: until the copy into S3 is
-    # verified in production, unsetting USE_S3 must be enough to go back. Removing
-    # this block is the last, irreversible step of the migration — and the one
-    # that restores zero-downtime deploys, since a disk attaches to one instance.
-    disk:
-      name: media-storage
-      mountPath: /home/app/web/mediafiles
-      sizeGB: 1
+    # No disk, on purpose — this is what buys zero-downtime deploys. Media lives
+    # in S3 (USE_S3 above); the old media-storage disk was copied there and
+    # verified object-for-object on 2026-08-27 before this block was removed.
+    # With no disk attached, Render starts the new instance alongside the old
+    # one and switches traffic only after the health check passes, so deploys
+    # stop dropping requests and the service is free to scale past one instance.
+    # Do not reintroduce a disk here without understanding that it brings the
+    # deploy 502 window back with it.
     healthCheckPath: /
 
   - type: worker
