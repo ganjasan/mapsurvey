@@ -539,6 +539,13 @@ CONDITIONAL_VISIBILITY = os.environ.get('CONDITIONAL_VISIBILITY', 'True').lower(
 # pre-change create page without a deploy.
 CREATE_STEER_AI = os.environ.get('CREATE_STEER_AI', 'True').lower() in ('true', '1')
 
+# Respondent file uploads (openspec: respondent-file-uploads): photo/audio/document
+# question types, the async upload endpoint, and voice recording. Off: the picker
+# hides the Files group, the upload endpoint answers 404, and stored file questions
+# render nothing for respondents while the rest of the section keeps working.
+# Stored files stay readable to creators either way.
+FILE_UPLOAD_QUESTIONS = os.environ.get('FILE_UPLOAD_QUESTIONS', 'True').lower() in ('true', '1')
+
 # Public results sharing
 # Creators share results by copying the editor URL out of the address bar, which is the
 # editor-only preview URL rather than `/r/<slug>/`. When a visitor without editor rights

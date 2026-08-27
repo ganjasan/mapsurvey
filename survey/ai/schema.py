@@ -33,6 +33,12 @@ from ..serialization import VALID_INPUT_TYPES
 
 # 'html' is a decoration block, not an answerable question; the validator
 # additionally requires at least one non-html question in the draft.
+# `image` is a display block the model has no business generating (it would
+# need an image nobody uploaded). The file types ARE generatable — the prompt
+# below teaches when a photo/audio/document question helps. If the
+# FILE_UPLOAD_QUESTIONS kill switch is ever off, a generated file question
+# renders as nothing for respondents (fail open) — a degraded draft, not a
+# broken one.
 TOP_LEVEL_INPUT_TYPES = [t for t in VALID_INPUT_TYPES if t != 'image']
 SUB_QUESTION_INPUT_TYPES = [
     t for t in TOP_LEVEL_INPUT_TYPES if t not in SUBQUESTION_DISALLOWED_INPUT_TYPES

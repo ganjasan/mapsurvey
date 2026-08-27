@@ -119,7 +119,14 @@ INPUT_TYPE_CHOICES = (
     ("image", _("Image")),
     ("text_line", _("Single Line Text")),
     ("html", _("HTML")),
+    ("photo", _("Photo Upload")),
+    ("audio", _("Audio Upload")),
+    ("document", _("Document Upload")),
 )
+
+# Question types whose answer is a respondent-uploaded file. NOT the `image`
+# type — that is a display block showing the creator's picture; these collect.
+FILE_INPUT_TYPES = ("photo", "audio", "document")
 
 DISPLAY_STYLE_CHOICES = (
     ("default", _("Survey default")),
@@ -798,6 +805,49 @@ class QuestionTranslation(models.Model):
         return f"{self.question.code} ({self.language})"
 
 
+def upload_key(instance, filename):
+    """uploads/<survey_uuid>/<token>/<name> (the private prefix is the storage's
+    location). The token directory guarantees uniqueness without renaming, so the
+    responses ZIP and signed downloads keep human filenames."""
+    return f'{instance.session.survey.uuid}/{instance.token}/{filename}'
+
+
+def _private_media_storage():
+    # Resolved lazily so the test suite and local dev (USE_S3 unset) get the
+    # default filesystem storage without importing boto3 machinery.
+    from django.conf import settings as s
+    if getattr(s, 'USE_S3', False):
+        from survey.storage_backends import PrivateMediaStorage
+        return PrivateMediaStorage()
+    from django.core.files.storage import default_storage
+    return default_storage
+
+
+class Upload(models.Model):
+    """A respondent file between the moment it is uploaded and the moment a
+    submitted Answer claims it. Files upload asynchronously (a popup answer
+    exists before the section is submitted), so something has to own the bytes
+    in between — this row does. `attached=False` past the grace period is the
+    orphan-reclamation query."""
+
+    token = models.UUIDField(primary_key=True, default=uuid_module.uuid4, editable=False)
+    session = models.ForeignKey("SurveySession", on_delete=models.CASCADE, related_name='uploads')
+    question = models.ForeignKey("Question", on_delete=models.PROTECT)
+    file = models.FileField(upload_to=upload_key, storage=_private_media_storage, max_length=500)
+    original_name = models.CharField(max_length=255)
+    content_type = models.CharField(max_length=100)
+    size = models.PositiveIntegerField()
+    created_at = models.DateTimeField(default=timezone.now)
+    attached = models.BooleanField(default=False)
+
+    class Meta:
+        app_label = 'survey'
+        indexes = [models.Index(fields=['attached', 'created_at'])]
+
+    def __str__(self):
+        return f'{self.original_name} ({self.token})'
+
+
 class Answer(models.Model):
     survey_session = models.ForeignKey("SurveySession", on_delete=models.CASCADE)
     question = models.ForeignKey("Question", on_delete=models.CASCADE)
@@ -810,6 +860,10 @@ class Answer(models.Model):
     point = geomodels.PointField(null=True, blank=True)
     line = geomodels.LineStringField(null=True, blank=True)
     polygon = geomodels.PolygonField(null=True, blank=True)
+    # SET_NULL, not CASCADE: reclaiming an orphaned Upload must never take a
+    # submitted answer's row down with it (and an attached upload is never
+    # reclaimed — see reclaim_orphan_uploads).
+    upload = models.ForeignKey("Upload", null=True, blank=True, on_delete=models.SET_NULL)
 
     class Meta:
         app_label = 'survey'

@@ -311,6 +311,8 @@ class SurveyAnalyticsService:
             return str(answer.numeric) if answer.numeric is not None else None
         if input_type in ('text', 'text_line', 'datetime'):
             return answer.text or None
+        if input_type in ('photo', 'audio', 'document'):
+            return answer.upload.original_name if answer.upload_id else None
         return None
 
     def _subanswers_by_parent(self, parent_ids):
@@ -322,7 +324,7 @@ class SurveyAnalyticsService:
         sub_answers = (
             Answer.objects
             .filter(parent_answer_id__in=parent_ids)
-            .select_related('question')
+            .select_related('question', 'upload')
             .order_by('question__order_number', 'id')
         )
         grouped = {}
@@ -330,10 +332,22 @@ class SurveyAnalyticsService:
             value = self._subanswer_display(sub)
             if value is None:
                 continue
-            grouped.setdefault(sub.parent_answer_id_id, []).append({
+            row = {
                 'name': sub.question.name,
                 'value': value,
-            })
+            }
+            if sub.question.input_type in ('photo', 'audio', 'document') and sub.upload_id:
+                # Server-minted signed URL; the popup builds the anchor from
+                # this field only, never from answer text.
+                try:
+                    row['href'] = sub.upload.file.url
+                except Exception:
+                    pass
+                ct = sub.upload.content_type
+                row['kind'] = ('image' if ct.startswith('image/')
+                               else 'audio' if ct.startswith(('audio/', 'video/'))
+                               else 'file')
+            grouped.setdefault(sub.parent_answer_id_id, []).append(row)
         return grouped
 
     def get_geo_feature_collection(self):
@@ -720,7 +734,7 @@ class SurveyAnalyticsService:
         answers = list(
             Answer.objects
             .filter(survey_session=session, parent_answer_id__isnull=True)
-            .select_related('question', 'question__survey_section')
+            .select_related('question', 'question__survey_section', 'upload')
             .order_by('question__survey_section__id', 'question__order_number', 'id')
         )
 
@@ -765,8 +779,22 @@ class SurveyAnalyticsService:
                         value = q.input_type + ' feature'
                 else:
                     value = '\u2014'
+            elif q.input_type in ('photo', 'audio', 'document') and a.upload_id:
+                value = a.upload.original_name
             else:
                 value = '\u2014'
+
+            row_href = ''
+            row_kind = ''
+            if q.input_type in ('photo', 'audio', 'document') and a.upload_id:
+                try:
+                    row_href = a.upload.file.url
+                except Exception:
+                    row_href = ''
+                ct = a.upload.content_type
+                row_kind = ('image' if ct.startswith('image/')
+                            else 'audio' if ct.startswith(('audio/', 'video/'))
+                            else 'file')
 
             answer_rows.append({
                 'question_id': q.id,
@@ -774,6 +802,8 @@ class SurveyAnalyticsService:
                 'section_name': q.survey_section.title or q.survey_section.name,
                 'input_type': q.input_type,
                 'value': value,
+                'href': row_href,
+                'kind': row_kind,
                 'attributes': attributes,
                 'editable': q.input_type in ('text', 'text_line', 'number', 'range', 'choice', 'multichoice', 'rating', 'datetime'),
             })
@@ -1132,6 +1162,11 @@ class SurveyAnalyticsService:
                 return '{} vertices'.format(len(answer.polygon.exterior.coords) - 1)
             except Exception:
                 return 'polygon'
+        elif q.input_type in ('photo', 'audio', 'document') and answer.upload_id:
+            # The display string is the human filename; the signed link rides
+            # separately in file_links so the template never builds markup
+            # from respondent text.
+            return answer.upload.original_name
         return '—'
 
     def get_table_page(self, page=1, page_size=50, session_ids=None,
@@ -1214,7 +1249,7 @@ class SurveyAnalyticsService:
                 parent_answer_id__isnull=True,
                 question_id__in=question_ids,
             )
-            .select_related('question')
+            .select_related('question', 'upload')
         ) if session_pks else Answer.objects.none()
 
         # Materialize answers for pivot + lint
@@ -1227,10 +1262,29 @@ class SurveyAnalyticsService:
         # Pivot: {session_id: {rep_question_key: formatted_value}} — cells key
         # on the lineage representative so one column spans all versions.
         cell_map = {}
+        file_link_map = {}
         for a in all_answers:
             if a.survey_session_id not in cell_map:
                 cell_map[a.survey_session_id] = {}
-            cell_map[a.survey_session_id][rep_key(a.question_id)] = self._format_cell(a)
+            key = rep_key(a.question_id)
+            if a.question.input_type in ('photo', 'audio', 'document'):
+                # Several files per question: the cell lists the names, the
+                # links ride separately (server-minted signed URLs — never
+                # derived from respondent-controlled text).
+                if not a.upload_id:
+                    continue
+                cells = cell_map[a.survey_session_id]
+                cells[key] = (cells[key] + ', ' if cells.get(key) else '') + a.upload.original_name
+                try:
+                    href = a.upload.file.url
+                except Exception:
+                    href = ''
+                if href:
+                    (file_link_map.setdefault(a.survey_session_id, {})
+                        .setdefault(key, [])
+                        .append({'name': a.upload.original_name, 'href': href}))
+            else:
+                cell_map[a.survey_session_id][key] = self._format_cell(a)
 
         # Compute session issues and answer lints. Lints run against the full
         # per-version question set (required/validation rules are evaluated
@@ -1274,6 +1328,7 @@ class SurveyAnalyticsService:
                 'language': s.language or '—',
                 'version': version_label_by_survey.get(s.survey_id, ''),
                 'cells': cells,
+                'file_links': file_link_map.get(s.id, {}),
             }
             rows.append(row)
 
