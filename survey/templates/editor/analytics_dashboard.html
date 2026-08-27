@@ -913,7 +913,10 @@ function startSplitResize(splitId, e) {
 
 /* ── Top-level tab switching ───────────────────────────────────── */
 function switchAnalyticsTab(tab) {
-    document.getElementById('pane-data').style.display = tab === 'data' ? '' : 'none';
+    // 'flex', not '' — #pane-data's flex column lives in its inline style, and
+    // display:'' erases it, collapsing the split tree's height chain to 0 (the
+    // empty-Map-tab bug: on mobile this ran at page load).
+    document.getElementById('pane-data').style.display = tab === 'data' ? 'flex' : 'none';
     document.getElementById('pane-performance').style.display = tab === 'performance' ? '' : 'none';
     document.querySelectorAll('.analytics-tab').forEach(function(btn) {
         var isActive = btn.dataset.tab === tab;
@@ -1643,13 +1646,30 @@ function closeColMenu() {
     if (menu) menu.style.display = 'none';
 }
 
+// iOS Safari has no Element.requestFullscreen (WebKit ships the webkit-prefixed
+// pair on iPad and nothing on iPhone) — calling it unguarded threw a TypeError
+// on every tap of the expand button.
+function _enterFullscreen(el) {
+    var fn = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!fn) return;
+    var p = fn.call(el);
+    if (p && p.catch) p.catch(function() {});
+}
+function _fullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || null;
+}
+function _exitFullscreen() {
+    var fn = document.exitFullscreen || document.webkitExitFullscreen;
+    if (fn) fn.call(document);
+}
+
 function togglePanelFullscreen(panelId) {
     var panel = document.getElementById(panelId);
     if (!panel) return;
-    if (document.fullscreenElement) {
-        document.exitFullscreen();
+    if (_fullscreenElement()) {
+        _exitFullscreen();
     } else {
-        panel.requestFullscreen().catch(function() {});
+        _enterFullscreen(panel);
     }
 }
 // Resize maps on fullscreen change + move modal into fullscreen element
@@ -1671,10 +1691,10 @@ document.addEventListener('fullscreenchange', function() {
 
 function toggleTableFullscreen() {
     var pane = document.getElementById('pane-data');
-    if (document.fullscreenElement) {
-        document.exitFullscreen();
+    if (_fullscreenElement()) {
+        _exitFullscreen();
     } else {
-        pane.requestFullscreen().catch(function() {});
+        _enterFullscreen(pane);
     }
 }
 
