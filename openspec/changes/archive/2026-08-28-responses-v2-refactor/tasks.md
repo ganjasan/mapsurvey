@@ -109,4 +109,4 @@
 - [x] 9.3 Overview aggregate timing on the loadtest seed survey (before default-ON decision)
 - [x] 9.4 Update CLAUDE.md mobile-nav vocabulary (Overview/Map/Responses/Perf); note legacy
       template removal as a future change
-- [ ] 9.5 Flip `RESPONSES_V2` default ON (separate commit, after owner review on PR preview)
+- [x] 9.5 Flip `RESPONSES_V2` default ON (separate commit, after owner review on PR preview)

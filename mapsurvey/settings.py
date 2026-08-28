@@ -547,10 +547,10 @@ CREATE_STEER_AI = os.environ.get('CREATE_STEER_AI', 'True').lower() in ('true', 
 FILE_UPLOAD_QUESTIONS = os.environ.get('FILE_UPLOAD_QUESTIONS', 'True').lower() in ('true', '1')
 
 # Responses v2 (openspec: responses-v2-refactor): flat pane set with an Overview
-# default, detail drawer, global filter pills. Off serves the pre-change Responses
-# template unchanged — the rollback story. Default stays False until the owner
-# reviews the v2 layout on a PR preview (tasks.md 9.5 flips it).
-RESPONSES_V2 = os.environ.get('RESPONSES_V2', 'False').lower() in ('true', '1')
+# default, detail drawer, global filter pills. ON by default (owner decision,
+# 2026-08-28, after six review rounds on the dev stand). Setting the env var to
+# False serves the pre-change Responses template unchanged — the rollback story.
+RESPONSES_V2 = os.environ.get('RESPONSES_V2', 'True').lower() in ('true', '1')
 
 # Public results sharing
 # Creators share results by copying the editor URL out of the address bar, which is the
