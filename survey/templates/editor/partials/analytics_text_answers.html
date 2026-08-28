@@ -1,3 +1,4 @@
+{% load i18n %}
 <div>
 {% if answers %}
     <div class="d-flex align-items-center mb-2" style="gap:0.5rem;">
@@ -28,6 +29,6 @@
         {% endif %}
     </div>
 {% else %}
-    <p class="text-muted mb-0" style="font-size:0.85rem;">No text answers yet.</p>
+    <p class="text-muted mb-0" style="font-size:0.85rem;">{% trans "No text answers yet." %}</p>
 {% endif %}
 </div>

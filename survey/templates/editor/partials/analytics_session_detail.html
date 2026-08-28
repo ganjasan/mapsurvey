@@ -1,3 +1,4 @@
+{% load i18n %}
 <div>
     <div class="d-flex align-items-center mb-3" style="gap:0.75rem;flex-wrap:wrap;">
         <small class="text-muted">
@@ -5,22 +6,22 @@
             {{ session.start_datetime|date:"Y-m-d H:i" }}
         </small>
         <span class="badge badge-secondary">Session #{{ session.id }}</span>
-        {% if session.validation_status == 'approved' %}<span class="badge badge-success">Approved</span>
-        {% elif session.validation_status == 'not_approved' %}<span class="badge badge-danger">Not approved</span>
-        {% elif session.validation_status == 'on_hold' %}<span class="badge badge-warning text-dark">On hold</span>
+        {% if session.validation_status == 'approved' %}<span class="badge badge-success">{% trans "Approved" %}</span>
+        {% elif session.validation_status == 'not_approved' %}<span class="badge badge-danger">{% trans "Not approved" %}</span>
+        {% elif session.validation_status == 'on_hold' %}<span class="badge badge-warning text-dark">{% trans "On hold" %}</span>
         {% endif %}
-        {% if session.is_deleted %}<span class="badge badge-dark">Trashed</span>{% endif %}
+        {% if session.is_deleted %}<span class="badge badge-dark">{% trans "Trashed" %}</span>{% endif %}
         <div class="ml-auto d-flex" style="gap:0.4rem;">
             {% if session.is_deleted %}
             <button class="btn btn-sm btn-outline-success" onclick="restoreSession({{ session.id }}); $('#sessionDetailModal').modal('hide');">
-                <i class="fas fa-undo"></i> Restore
+                <i class="fas fa-undo"></i> {% trans "Restore" %}
             </button>
             <button class="btn btn-sm btn-outline-danger" onclick="hardDeleteSession({{ session.id }}); $('#sessionDetailModal').modal('hide');">
-                <i class="fas fa-times-circle"></i> Delete
+                <i class="fas fa-times-circle"></i> {% trans "Delete" %}
             </button>
             {% else %}
             <button class="btn btn-sm btn-outline-secondary" onclick="trashSession({{ session.id }});">
-                <i class="fas fa-trash-alt"></i> Trash
+                <i class="fas fa-trash-alt"></i> {% trans "Trash" %}
             </button>
             {% endif %}
         </div>
@@ -30,8 +31,8 @@
     <table class="table table-sm table-striped" style="font-size:0.85rem;">
         <thead>
             <tr>
-                <th style="width:30%;">Question</th>
-                <th>Answer</th>
+                <th style="width:30%;">{% trans "Question" %}</th>
+                <th>{% trans "Answer" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -49,7 +50,7 @@
                     {% if row.editable %}
                     <button class="btn btn-sm btn-link p-0 ml-1" style="font-size:0.75rem;color:#6b7280;"
                             onclick="startDetailEdit({{ session.id }}, {{ row.question_id }}, '{{ row.input_type }}', this)"
-                            title="Edit"><i class="fas fa-pencil-alt"></i></button>
+                            title="{% trans 'Edit' %}"><i class="fas fa-pencil-alt"></i></button>
                     {% endif %}
                     {% if row.attributes %}
                     <div class="mt-1" style="font-size:0.8rem;">
@@ -68,26 +69,26 @@
         </tbody>
     </table>
     {% else %}
-    <p class="text-muted">No answers in this session.</p>
+    <p class="text-muted">{% trans "No answers in this session." %}</p>
     {% endif %}
 
     {# Tags & Notes #}
     <div class="mt-3 p-2" style="background:#f8f9fa;border-radius:6px;font-size:0.85rem;">
         <div class="mb-2">
-            <strong style="font-size:0.8rem;"><i class="fas fa-tags"></i> Tags</strong>
+            <strong style="font-size:0.8rem;"><i class="fas fa-tags"></i> {% trans "Tags" %}</strong>
             <div class="d-flex align-items-center mt-1" style="gap:0.25rem;flex-wrap:wrap;">
                 {% for tag in session.tags %}
                 <span class="badge badge-info" style="font-weight:normal;">{{ tag }}</span>
                 {% endfor %}
                 <input type="text" id="session-tag-input" class="form-control form-control-sm d-inline-block"
-                       style="width:120px;font-size:0.8rem;height:24px;" placeholder="Add tag..."
+                       style="width:120px;font-size:0.8rem;height:24px;" placeholder="{% trans 'Add tag...' %}"
                        onkeydown="if(event.key==='Enter'){event.preventDefault();addSessionTag({{ session.id }},this);}">
             </div>
         </div>
         <div>
-            <strong style="font-size:0.8rem;"><i class="fas fa-sticky-note"></i> Notes</strong>
+            <strong style="font-size:0.8rem;"><i class="fas fa-sticky-note"></i> {% trans "Notes" %}</strong>
             <textarea id="session-notes-input" class="form-control form-control-sm mt-1" rows="2"
-                      style="font-size:0.8rem;" placeholder="Add notes..."
+                      style="font-size:0.8rem;" placeholder="{% trans 'Add notes...' %}"
                       onblur="saveSessionNotes({{ session.id }}, this)">{{ session.notes }}</textarea>
         </div>
     </div>

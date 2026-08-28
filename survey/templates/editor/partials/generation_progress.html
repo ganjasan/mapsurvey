@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
 Swapped into the waiting card when streamed counts have actually grown.
 
@@ -13,5 +14,5 @@ percentage or a fill.
 <div id="gen-progress" class="gen-progress" hx-swap-oob="true"
      data-sections="{{ sections }}" data-questions="{{ questions }}">
   {{ questions }} question{{ questions|pluralize }}{% if sections %} ·
-  {{ sections }} section{{ sections|pluralize }}{% endif %} drafted
+  {{ sections }} section{{ sections|pluralize }}{% endif %} {% trans "drafted" %}
 </div>

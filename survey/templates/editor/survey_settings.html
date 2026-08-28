@@ -1,4 +1,5 @@
 {% extends "editor/editor_base.html" %}
+{% load i18n %}
 {% load survey_filters %}
 
 {% block page_title %}Settings – {{ survey.name }}{% endblock %}
@@ -22,7 +23,7 @@
 
     <!-- Survey Settings -->
     <div class="settings-section">
-        <h6><i class="fas fa-sliders-h mr-1"></i> General</h6>
+        <h6><i class="fas fa-sliders-h mr-1"></i> {% trans "General" %}</h6>
         <form method="post" action="{% url 'editor_survey_settings' survey.uuid %}" enctype="multipart/form-data">
             {% csrf_token %}
             {% for field in form %}
@@ -74,7 +75,7 @@
             {% endfor %}
 
             <hr>
-            <h6><i class="fas fa-paint-brush mr-1"></i> Style</h6>
+            <h6><i class="fas fa-paint-brush mr-1"></i> {% trans "Style" %}</h6>
             <div class="form-group">
                 <label>{{ form.default_rating_display_style.label }}</label>
                 <div>
@@ -85,7 +86,7 @@
                     </div>
                     {% endfor %}
                 </div>
-                <small class="form-text text-muted">Default look for rating questions. Individual questions can override this in the question editor.</small>
+                <small class="form-text text-muted">{% trans "Default look for rating questions. Individual questions can override this in the question editor." %}</small>
             </div>
 
             <div class="form-group">
@@ -96,7 +97,7 @@
                 <div id="accent-color-row" style="margin-top:0.4rem;max-width:120px;">
                     {{ form.accent_color }}
                 </div>
-                <small class="form-text text-muted">Colors the survey's buttons and the form-page background tint. Off = platform default.</small>
+                <small class="form-text text-muted">{% trans "Colors the survey's buttons and the form-page background tint. Off = platform default." %}</small>
                 {% for error in form.accent_color.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
                 <script>
                 (function(){
@@ -108,15 +109,15 @@
                 </script>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-sm">Save Settings</button>
+            <button type="submit" class="btn btn-primary btn-sm">{% trans "Save Settings" %}</button>
         </form>
     </div>
 
     <!-- Default Map Position -->
     <div class="settings-section">
-        <h6><i class="fas fa-map-marker-alt mr-1"></i> Default Map Position</h6>
+        <h6><i class="fas fa-map-marker-alt mr-1"></i> {% trans "Default Map Position" %}</h6>
         <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
-            Set the default starting position and zoom for the survey map. Sections can override this individually.
+            {% trans "Set the default starting position and zoom for the survey map. Sections can override this individually." %}
         </p>
         <div id="survey-map-picker" style="height:300px;width:100%;border-radius:var(--radius);border:1px solid var(--border-color);margin-bottom:0.75rem;"></div>
         <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
@@ -136,14 +137,14 @@
             <label class="form-check-label" for="survey-use-geolocation"
                    style="font-size:0.85rem;cursor:pointer;"
                    title="Auto-center the map on the respondent's browser location when they first enter the survey.">
-                Auto-center on respondent's location
+                {% trans "Auto-center on respondent's location" %}
                 <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
             </label>
         </div>
         <button type="button" class="btn btn-primary btn-sm" id="save-survey-map-position">
-            <i class="fas fa-save mr-1"></i> Save Map Position
+            <i class="fas fa-save mr-1"></i> {% trans "Save Map Position" %}
         </button>
-        <span id="survey-map-saved" style="display:none;color:#10b981;font-size:0.85rem;margin-left:0.5rem;">Saved!</span>
+        <span id="survey-map-saved" style="display:none;color:#10b981;font-size:0.85rem;margin-left:0.5rem;">{% trans "Saved!" %}</span>
     </div>
 
     <script>
@@ -216,7 +217,7 @@
 
     <!-- Collaborators -->
     <div class="settings-section">
-        <h6><i class="fas fa-users mr-1"></i> Collaborators</h6>
+        <h6><i class="fas fa-users mr-1"></i> {% trans "Collaborators" %}</h6>
         <div hx-get="{% url 'editor_survey_collaborators' survey.uuid %}"
              hx-trigger="load"
              hx-swap="innerHTML">
@@ -225,7 +226,7 @@
 
     <!-- Password & Test Access -->
     <div class="settings-section">
-        <h6><i class="fas fa-lock mr-1"></i> Password & Test Access</h6>
+        <h6><i class="fas fa-lock mr-1"></i> {% trans "Password & Test Access" %}</h6>
         <div class="password-container">
             {% include "editor/partials/survey_password_modal.html" %}
         </div>

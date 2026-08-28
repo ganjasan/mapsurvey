@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
 Terminal failure. Replaces the poller (no hx-trigger here, so polling stops)
 and keeps the overlay so the outcome cannot be missed — but unlike the loader
@@ -8,8 +9,8 @@ it is dismissible, because the next step is editing the brief underneath.
     <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
     <div class="gen-copy">
       <div class="gen-title">{{ message }}</div>
-      <div class="gen-note">Your brief is still in the form — adjust it and try again.</div>
-      <button type="button" class="btn btn-outline-secondary gen-dismiss">Close</button>
+      <div class="gen-note">{% trans "Your brief is still in the form — adjust it and try again." %}</div>
+      <button type="button" class="btn btn-outline-secondary gen-dismiss">{% trans "Close" %}</button>
     </div>
   </div>
 

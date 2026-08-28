@@ -1,3 +1,4 @@
+{% load i18n %}
 <li class="section-item pr-block{% if selected_block and selected_block.id == b.id %} active{% endif %}" data-id="{{ b.id }}">
     <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
     <i class="icon fas {% if b.block_type == 'map' %}fa-map-marked-alt{% elif b.block_type == 'chart' %}fa-chart-bar{% elif b.block_type == 'image' %}fa-image{% else %}fa-heading{% endif %}"></i>
@@ -8,6 +9,6 @@
     {% if b.is_hidden %}<i class="fas fa-eye-slash" style="color:#d1d5db;font-size:.75rem;"></i>{% endif %}
     <form method="post" action="{% url 'editor_public_results_block_delete' survey.uuid b.id %}" onsubmit="return confirm('Delete this block?');">
         {% csrf_token %}
-        <button class="section-delete" type="submit" title="Delete"><i class="fas fa-times"></i></button>
+        <button class="section-delete" type="submit" title="{% trans 'Delete' %}"><i class="fas fa-times"></i></button>
     </form>
 </li>

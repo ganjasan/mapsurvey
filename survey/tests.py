@@ -16,7 +16,7 @@ from .models import (
     Organization, SurveyHeader, SurveySection, Question,
     SurveySession, Answer, ChoicesValidator, Story,
     Membership, SurveyCollaborator, Invitation,
-    PublicResultsPage, PublicResultsBlock,
+    PublicResultsPage, PublicResultsBlock, CreatorPreferences,
 )
 from .serialization import (
     serialize_survey_to_dict, serialize_sections,
@@ -26803,6 +26803,239 @@ class QuestionPreviewLiveTest(TestCase):
         self.assertNotEqual(response.status_code, 200)
 
 
+from django.conf import settings as dj_settings
+
+
+class CreatorLanguagePreferenceTest(TestCase):
+    """Creator UI language (openspec: creator-ui-localization).
+
+    The severe risk this guards is leakage: a creator's language must never
+    re-language a respondent page, because that page belongs to the survey and
+    is seen by the customer's audience, not by us.
+    """
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Lang Org")
+        self.user = User.objects.create_user('lang_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.force_login(self.user)
+
+    def test_switching_stores_the_preference_and_the_cookie(self):
+        """
+        GIVEN a signed-in creator
+        WHEN they choose Deutsch in the switcher
+        THEN the preference is stored AND the language cookie is set, because
+             LocaleMiddleware runs before request.user exists and can only read
+             the cookie
+        """
+        response = self.client.post(
+            reverse('set_creator_language'), {'language': 'de', 'next': '/editor/'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            CreatorPreferences.objects.get(user=self.user).ui_language, 'de')
+        self.assertEqual(
+            response.cookies[dj_settings.LANGUAGE_COOKIE_NAME].value, 'de')
+
+    def test_unsupported_language_is_refused(self):
+        """
+        GIVEN a language outside the supported set
+        WHEN it is submitted to the switcher
+        THEN nothing is stored -- storing it would resolve to an interface with
+             no catalog behind it
+        """
+        self.client.post(reverse('set_creator_language'), {'language': 'zz'})
+        self.assertFalse(CreatorPreferences.objects.filter(user=self.user).exists())
+
+    def test_next_cannot_leave_the_site(self):
+        """
+        GIVEN an absolute URL passed as `next`
+        WHEN the language is switched
+        THEN the redirect stays on this site, so the switcher is not an open
+             redirect
+        """
+        response = self.client.post(
+            reverse('set_creator_language'),
+            {'language': 'de', 'next': '//evil.example.com/'})
+        self.assertEqual(response.url, reverse('editor'))
+
+    def test_switcher_lists_every_supported_language(self):
+        """
+        GIVEN the editor chrome
+        WHEN it renders for a signed-in creator
+        THEN every configured language is offered, each written in its own
+             language
+        """
+        html = self.client.get('/editor/', follow=True).content.decode()
+        for _, name in dj_settings.LANGUAGES:
+            self.assertIn(name, html)
+
+    def test_login_required(self):
+        """
+        GIVEN an anonymous visitor
+        WHEN they POST to the switcher
+        THEN they are redirected to sign in rather than storing a preference
+        """
+        self.client.logout()
+        response = self.client.post(reverse('set_creator_language'), {'language': 'de'})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(dj_settings.LOGIN_URL, response.url)
+        self.assertFalse(CreatorPreferences.objects.filter(user=self.user).exists())
+
+
+class RespondentLanguageIsolationTest(TestCase):
+    """A creator's UI language must never reach a respondent page.
+
+    `survey/views.py` activates the SURVEY's language inside the view, after all
+    middleware, which is what makes this hold. Nothing stated it before; these
+    tests do.
+    """
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Iso Org")
+        self.user = User.objects.create_user('iso_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='iso-survey', organization=self.org, created_by=self.user,
+            status='published', visibility='public',
+            available_languages=['de'],
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section one', is_head=True)
+
+    def test_survey_language_wins_over_creator_preference(self):
+        """
+        GIVEN a creator whose interface language is Polish
+        WHEN they open their own German survey as a respondent would
+        THEN the respondent chrome renders in German, because the page belongs
+             to the survey and its audience, not to the creator
+        """
+        CreatorPreferences.objects.create(user=self.user, ui_language='pl')
+        self.client.force_login(self.user)
+        self.client.cookies[dj_settings.LANGUAGE_COOKIE_NAME] = 'pl'
+
+        response = self.client.get(f'/surveys/{self.survey.uuid}/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        # "Next" is part of the respondent chrome, translated in every locale.
+        self.assertNotContains(response, 'Dalej')      # the Polish rendering
+        self.assertContains(response, 'Weiter')        # the German one
+
+    def test_no_site_wide_language_session_key_is_written(self):
+        """
+        GIVEN a respondent choosing a language on a multilingual survey
+        WHEN the choice is submitted
+        THEN no site-wide Django language session key is written: Django 4.2
+             never reads it, and leaving one invites a future reader to make the
+             creator and respondent surfaces share a language
+        """
+        self.survey.available_languages = ['de', 'en']
+        self.survey.save(update_fields=['available_languages'])
+        # The picker lives on its own route; posting to the entry URL only
+        # redirects here.
+        self.client.post(
+            f'/surveys/{self.survey.uuid}/language/', {'language': 'de'})
+        self.assertNotIn('_language', self.client.session)
+        self.assertEqual(self.client.session.get('survey_language'), 'de')
+
+
+class TranslationCatalogHygieneTest(SimpleTestCase):
+    """Catch the corruption class that made `ru` render the wrong strings.
+
+    The `ru` catalog shipped `Email address` as «Поиск адреса...» and `Archived`
+    as «Архитектура» -- msgstr values belonging to *other* msgids, the signature
+    of a catalog whose entries slipped out of alignment.
+
+    Scope, deliberately narrow: this detects one msgstr reused across msgids
+    that are not synonyms. It cannot detect a translation that is unique but
+    simply wrong -- `Your responses have been recorded.` rendered as «Ваша
+    учетная запись активирована.» ("your account has been activated") passes
+    every mechanical check there is. Semantic correctness needs a reader.
+    """
+
+    #: Catalogs we maintain (openspec: creator-ui-localization). Wider than
+    #: settings.LANGUAGES on purpose: a catalog is filled here first and only
+    #: joins the offered list when complete.
+    TARGET_LOCALES = ('en', 'ru', 'id', 'de', 'es', 'fr', 'pt', 'pl')
+
+    #: Source strings that may legitimately share one translation. Keep this
+    #: list short and justified -- every entry is a hole in the check.
+    ALLOWED_COLLISIONS = {
+        # Marketing headings that are genuinely synonymous in most languages.
+        frozenset({'Features', 'Capabilities'}),
+        # The same CTA written twice in the source, differing only by "the".
+        # The real fix is one string in the templates; until then a shared
+        # translation is correct rather than a symptom.
+        frozenset({'Try Demo Survey', 'Try the Demo Survey'}),
+    }
+
+    @staticmethod
+    def _same_but_for_case(msgids):
+        """Source strings that differ only in capitalisation.
+
+        "Check Your Email" and "Check your email" both exist in the templates --
+        one as a heading, one as body text. They mean the same thing and SHOULD
+        share a translation, so flagging them teaches the reader to ignore this
+        test. Enumerating each pair in ALLOWED_COLLISIONS would do the same
+        damage more slowly. The real fix is one string in the source; this rule
+        stops the duplication from masking the corruption the test is for.
+        """
+        return len({m.casefold() for m in msgids}) == 1
+
+    @staticmethod
+    def _pairs(text):
+        found = re.findall(r'^msgid "(.*)"\n(?:"[^"]*"\n)*msgstr "(.*)"', text, re.M)
+        return [(msgid, msgstr) for msgid, msgstr in found if msgid and msgstr]
+
+    def test_no_translation_is_reused_across_different_sources(self):
+        """
+        GIVEN the catalogs for every language we ship a creator interface in
+        WHEN each catalog's filled entries are grouped by their translation
+        THEN no translation serves two source strings that are not synonyms,
+             because that is how `Testing` came to read as «Рейтинг»
+        """
+        import collections
+        import pathlib
+
+        locales = pathlib.Path(__file__).resolve().parent / 'locale'
+        offenders = []
+        for code in self.TARGET_LOCALES:
+            catalog = locales / code / 'LC_MESSAGES' / 'django.po'
+            if not catalog.exists():
+                continue
+            by_translation = collections.defaultdict(list)
+            for msgid, msgstr in self._pairs(catalog.read_text(encoding='utf-8')):
+                by_translation[msgstr].append(msgid)
+            for msgstr, msgids in by_translation.items():
+                if (len(msgids) < 2
+                        or frozenset(msgids) in self.ALLOWED_COLLISIONS
+                        or self._same_but_for_case(msgids)):
+                    continue
+                offenders.append(f'{code}: {msgstr!r} translates {sorted(msgids)}')
+
+        self.assertEqual(
+            offenders, [],
+            'One translation is serving several source strings, which is how a '
+            'shifted catalog looks. Fix the entries or, if they are genuinely '
+            'synonymous, add them to ALLOWED_COLLISIONS:\n  '
+            + '\n  '.join(offenders),
+        )
+
+    def test_every_shipped_language_has_a_catalog(self):
+        """
+        GIVEN a language offered in the creator interface
+        WHEN the locale directory is checked
+        THEN a catalog exists for it, so the language cannot be advertised
+             while silently falling back to English
+        """
+        import pathlib
+
+        locales = pathlib.Path(__file__).resolve().parent / 'locale'
+        missing = [
+            code for code in self.TARGET_LOCALES
+            if not (locales / code / 'LC_MESSAGES' / 'django.po').exists()
+        ]
+        self.assertEqual(missing, [], f'No catalog for: {missing}')
+
+
 class TemplateCommentSyntaxTest(SimpleTestCase):
     """Django's {# #} comment is single-line; a multi-line one renders as page text."""
 
@@ -26825,6 +27058,32 @@ class TemplateCommentSyntaxTest(SimpleTestCase):
             offenders, [],
             'Multi-line {# #} comments render as visible text — use '
             '{% comment %}/{% endcomment %} instead: ' + ', '.join(offenders),
+        )
+
+    def test_no_translation_tag_contains_a_newline(self):
+        """
+        GIVEN every template shipped with the survey app
+        WHEN each {% trans %} / {% blocktrans %} opening tag is checked
+        THEN none contains a newline, because Django does not parse such a tag
+             and prints it to the page verbatim -- creators saw the literal
+             `{% trans "Write this in whatever language…" %}` on the create page
+        """
+        import pathlib
+
+        root = pathlib.Path(__file__).resolve().parent / 'templates'
+        offenders = []
+        for path in root.rglob('*.html'):
+            text = path.read_text(encoding='utf-8')
+            for match in re.finditer(
+                    r'\{%\s*(?:trans|blocktrans)\b[^%]*?\n[^%]*?%\}', text):
+                line = text[:match.start()].count('\n') + 1
+                offenders.append(f'{path.relative_to(root)}:{line}')
+
+        self.assertEqual(
+            offenders, [],
+            'A translation tag spanning several lines renders as visible text '
+            'rather than being translated — keep the tag on one line: '
+            + ', '.join(offenders),
         )
 
     def test_comment_text_does_not_reach_a_rendered_page(self):
@@ -27867,7 +28126,10 @@ class SurveyNotFoundPageTest(TestCase):
         survey = self._make_draft()
         response = self.client.get(f'/surveys/{survey.uuid}/')
         self.assertEqual(response.status_code, 404)
-        self.assertContains(response, "isn't available", status_code=404)
+        # Typographic apostrophe: 404.html and survey_unavailable.html carried
+        # the same sentence with different apostrophes, which bought two catalog
+        # entries for one string. They were unified on the typographic one.
+        self.assertContains(response, 'isn’t available', status_code=404)
 
     def test_the_page_does_not_name_the_survey(self):
         """
@@ -29117,7 +29379,7 @@ class DashboardVariantATest(TestCase):
         THEN the collapsed-search button, the overflow menu (Import, Show
              Archived, view toggle) and the count label are present
         """
-        html = self.client.get('/editor/').content.decode()
+        html = self.client.get('/editor/', follow=True).content.decode()
         self.assertIn('mobile-nav-enabled', html)
         self.assertIn('dash-search-btn', html)
         self.assertIn('dash-overflow', html)
@@ -29132,7 +29394,7 @@ class DashboardVariantATest(TestCase):
         WHEN the dashboard renders
         THEN none of the variant-A chrome is emitted
         """
-        html = self.client.get('/editor/').content.decode()
+        html = self.client.get('/editor/', follow=True).content.decode()
         # CSS selectors naming these classes are always in the <style> block;
         # what must be absent with the flag off is the MARKUP and JS.
         self.assertNotIn('<body class="mobile-nav-enabled"', html)
@@ -30320,6 +30582,91 @@ class CreateSteerAITest(TestCase):
         THEN the intercept container is not shipped -- there is nothing to offer
         """
         self.assertNotIn('id="ai-intercept"', self._page())
+
+
+class BriefLanguageHintTest(TestCase):
+    """The brief may be written in any language (openspec: creator-ui-localization).
+
+    Markup-level like CreateSteerAITest above: the create page is English-only,
+    and nothing told a non-English creator the brief itself need not be. These
+    pin what the server ships; the browser pass covers that it is visible.
+    """
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Hint Org")
+        self.user = User.objects.create_user('hint_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.force_login(self.user)
+
+    #: The rendered element. The bare class name also matches the stylesheet,
+    #: which ships regardless of whether a provider is configured.
+    HINT = 'class="pr-help ai-lang-hint"'
+
+    def _page(self):
+        return self.client.get('/editor/surveys/new/').content.decode()
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test',
+                       MOBILE_EDITOR_NAV=True, CREATE_STEER_AI=True)
+    def test_hint_is_shipped_with_the_brief(self):
+        """
+        GIVEN a configured provider
+        WHEN the create page renders
+        THEN the goal field carries a hint that the brief may be written in any
+             language, naming languages a non-English reader recognises
+        """
+        html = self._page()
+        self.assertIn(self.HINT, html)
+        self.assertIn('whatever language you think in', html)
+        self.assertIn('Bahasa Indonesia', html)
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test',
+                       MOBILE_EDITOR_NAV=True, CREATE_STEER_AI=False)
+    def test_hint_survives_the_steering_kill_switch(self):
+        """
+        GIVEN CREATE_STEER_AI off
+        WHEN the create page renders
+        THEN the hint is still shipped -- it is not part of the steering
+             experiment and must not disappear with it
+        """
+        self.assertIn(self.HINT, self._page())
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test',
+                       MOBILE_EDITOR_NAV=True, CREATE_STEER_AI=True)
+    def test_hint_sits_outside_the_panel_intro(self):
+        """
+        GIVEN the mobile wizard hides .ai-panel-intro by CSS
+        WHEN the create page renders
+        THEN the hint sits after the goal input, which is below that intro --
+             so the wizard's goal step still shows it
+        """
+        html = self._page()
+        # The class name alone also matches the stylesheet in <head>, which is
+        # not gated on a provider; assert on the element instead.
+        self.assertGreater(html.index(self.HINT), html.index('id="id_goal"'))
+        self.assertLess(html.index('ai-panel-intro'), html.index('id="id_goal"'))
+
+    @override_settings(AI_PROVIDER='', MOBILE_EDITOR_NAV=True, CREATE_STEER_AI=True)
+    def test_no_provider_means_no_hint(self):
+        """
+        GIVEN no configured LLM provider
+        WHEN the create page renders
+        THEN no hint element is shipped -- there is no brief to write in any
+             language. The stylesheet may still ship; it styles nothing.
+        """
+        self.assertNotIn(self.HINT, self._page())
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test',
+                       MOBILE_EDITOR_NAV=True, CREATE_STEER_AI=True)
+    def test_blank_goal_path_is_instrumented(self):
+        """
+        GIVEN the intercept only fires for a non-empty goal
+        WHEN the create page renders
+        THEN the blank-goal path still reports an outcome, so "opened the page,
+             wrote nothing, created empty" stops being invisible
+        """
+        html = self._page()
+        self.assertIn("capture('blank_goal')", html)
+        self.assertIn('blankReported', html)
 
 
 class MaplessSectionRenderingTest(TestCase):

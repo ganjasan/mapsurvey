@@ -1,5 +1,6 @@
 {% extends "editor/editor_base.html" %}
 
+{% load i18n %}
 {% block page_title %}Results – {{ survey.name }}{% endblock %}
 
 {% load static %}
@@ -363,8 +364,7 @@
         Test responses collected while previewing this draft. They are deleted when the draft is
         published or discarded.
         {% else %}
-        Responses of the published survey. This draft's own preview responses are under
-        <strong>Draft (test)</strong> in the version picker.
+        {% blocktrans %}Responses of the published survey. This draft's own preview responses are under <strong>Draft (test)</strong> in the version picker.{% endblocktrans %}
         {% endif %}
     </div>
 </div>
@@ -375,12 +375,12 @@
         <button class="analytics-tab active" data-tab="data"
                 onclick="switchAnalyticsTab('data')"
                 style="padding:0.5rem 1.25rem;border:none;background:none;border-bottom:3px solid var(--accent);margin-bottom:-2px;font-weight:600;cursor:pointer;color:var(--accent);font-size:0.9rem;">
-            Data
+            {% trans "Data" %}
         </button>
         <button class="analytics-tab" data-tab="performance"
                 onclick="switchAnalyticsTab('performance')"
                 style="padding:0.5rem 1.25rem;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;color:#6b7280;font-size:0.9rem;">
-            Performance
+            {% trans "Performance" %}
         </button>
         {% if version_choices %}
         <select id="version-scope-select" title="Which survey version's responses to show"
@@ -393,8 +393,8 @@
         </select>
         {% endif %}
         <a href="/surveys/{{ survey.uuid }}/download?version={{ current_version }}" class="btn btn-sm btn-outline-secondary"
-           style="{% if not version_choices %}margin-left:auto;{% else %}margin-left:0.5rem;{% endif %}margin-bottom:0.25rem;font-size:0.8rem;" title="Download clean responses (CSV + GeoJSON)">
-            <i class="fas fa-download"></i> Download data
+           style="{% if not version_choices %}margin-left:auto;{% else %}margin-left:0.5rem;{% endif %}margin-bottom:0.25rem;font-size:0.8rem;" title="{% trans 'Download clean responses (CSV + GeoJSON)' %}">
+            <i class="fas fa-download"></i> {% trans "Download data" %}
         </a>
     </div>
 </div>
@@ -404,7 +404,7 @@
     {# Hidden indicator — shows when sessions are hidden via SelectionManager #}
     <div id="hidden-indicator" style="display:none;padding:0.15rem 1.5rem;flex-shrink:0;">
         <button class="btn btn-sm btn-link p-0" style="font-size:0.78rem;color:#6b7280;" onclick="filterManager.showAll()">
-            <i class="fas fa-eye"></i> <span id="hidden-count">0</span> hidden — Show all
+            <i class="fas fa-eye"></i> <span id="hidden-count">0</span> {% trans "hidden — Show all" %}
         </button>
     </div>
 
@@ -419,21 +419,21 @@
     <div id="data-panel-table" class="data-panel">
         <div id="pane-table" style="position:relative;display:flex;gap:0;height:100%;">
             <div id="pane-table-content" style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
-                <div class="text-center text-muted py-5"><i class="fas fa-table mr-2"></i>Loading table...</div>
+                <div class="text-center text-muted py-5"><i class="fas fa-table mr-2"></i>{% trans "Loading table..." %}</div>
             </div>
             {# Collapsed strip #}
-            <div id="anomalies-strip" style="display:none;width:28px;flex-shrink:0;border-left:1px solid #e5e7eb;cursor:pointer;background:#f8f9fa;position:relative;" onclick="expandAnomaliesSidebar()" title="Expand Violations panel">
+            <div id="anomalies-strip" style="display:none;width:28px;flex-shrink:0;border-left:1px solid #e5e7eb;cursor:pointer;background:#f8f9fa;position:relative;" onclick="expandAnomaliesSidebar()" title="{% trans 'Expand Violations panel' %}">
                 <div style="writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);padding:12px 4px;font-size:0.75rem;font-weight:600;color:#6b7280;white-space:nowrap;display:flex;align-items:center;gap:6px;">
                     <i class="fas fa-exclamation-triangle" style="color:#d97706;"></i>
-                    <span>Violations</span>
+                    <span>{% trans "Violations" %}</span>
                     <span id="anomalies-strip-count" class="badge badge-warning" style="font-size:0.65rem;"></span>
                 </div>
             </div>
             {# Expanded sidebar #}
             <div id="anomalies-sidebar" style="display:none;width:220px;flex-shrink:0;border-left:1px solid #e5e7eb;padding:0.75rem;font-size:0.82rem;overflow-y:auto;background:#f9fafb;box-shadow:-2px 0 6px rgba(0,0,0,0.04);">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <strong style="font-size:0.85rem;"><i class="fas fa-exclamation-triangle" style="color:#d97706;margin-right:4px;"></i>Violations</strong>
-                    <button class="btn btn-sm btn-link p-0" onclick="collapseAnomaliesSidebar()" title="Collapse"><i class="fas fa-chevron-right" style="color:#9ca3af;"></i></button>
+                    <strong style="font-size:0.85rem;"><i class="fas fa-exclamation-triangle" style="color:#d97706;margin-right:4px;"></i>{% trans "Violations" %}</strong>
+                    <button class="btn btn-sm btn-link p-0" onclick="collapseAnomaliesSidebar()" title="{% trans 'Collapse' %}"><i class="fas fa-chevron-right" style="color:#9ca3af;"></i></button>
                 </div>
                 <div id="anomalies-errors"></div>
                 <div id="anomalies-warnings" class="mt-2"></div>
@@ -445,17 +445,17 @@
         <div class="panel-selection-bar" style="display:none;padding:0.25rem 0.75rem;background:#e8f0fe;border-radius:4px;margin:0.25rem;flex-shrink:0;font-size:0.8rem;">
             <div style="display:flex;align-items:center;gap:0.5rem;">
                 <button class="btn btn-sm btn-link p-0" onclick="selectionManager.clear()" style="color:#1a56db;"><i class="fas fa-times"></i></button>
-                <span class="panel-sel-count" style="font-weight:600;">0 selected</span>
+                <span class="panel-sel-count" style="font-weight:600;">{% trans "0 selected" %}</span>
                 <span style="border-left:1px solid #bfdbfe;height:16px;"></span>
-                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.hideSelected()"><i class="fas fa-eye-slash"></i> Hide</button>
-                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.keepOnlySelected()"><i class="fas fa-filter"></i> Keep only</button>
-                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> Invert</button>
+                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.hideSelected()"><i class="fas fa-eye-slash"></i> {% trans "Hide" %}</button>
+                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.keepOnlySelected()"><i class="fas fa-filter"></i> {% trans "Keep only" %}</button>
+                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> {% trans "Invert" %}</button>
             </div>
         </div>
         {% if geo_features_count %}
         {% include "editor/partials/analytics_geo_map.html" %}
         {% else %}
-        <div class="text-center text-muted py-5"><i class="fas fa-map mr-2"></i>No geo questions in this survey</div>
+        <div class="text-center text-muted py-5"><i class="fas fa-map mr-2"></i>{% trans "No geo questions in this survey" %}</div>
         {% endif %}
     </div>
     {# Charts sub-panel #}
@@ -463,20 +463,20 @@
         <div class="panel-selection-bar" style="display:none;padding:0.25rem 0.75rem;background:#e8f0fe;border-radius:4px;margin:0.25rem;flex-shrink:0;font-size:0.8rem;">
             <div style="display:flex;align-items:center;gap:0.5rem;">
                 <button class="btn btn-sm btn-link p-0" onclick="selectionManager.clear()" style="color:#1a56db;"><i class="fas fa-times"></i></button>
-                <span class="panel-sel-count" style="font-weight:600;">0 selected</span>
+                <span class="panel-sel-count" style="font-weight:600;">{% trans "0 selected" %}</span>
                 <span style="border-left:1px solid #bfdbfe;height:16px;"></span>
-                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.hideSelected()"><i class="fas fa-eye-slash"></i> Hide</button>
-                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.keepOnlySelected()"><i class="fas fa-filter"></i> Keep only</button>
-                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> Invert</button>
+                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.hideSelected()"><i class="fas fa-eye-slash"></i> {% trans "Hide" %}</button>
+                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.keepOnlySelected()"><i class="fas fa-filter"></i> {% trans "Keep only" %}</button>
+                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> {% trans "Invert" %}</button>
             </div>
         </div>
         <div style="text-align:right;padding:0.25rem 0.5rem;">
-            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="togglePanelFullscreen('data-panel-charts')" title="Toggle fullscreen">
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="togglePanelFullscreen('data-panel-charts')" title="{% trans 'Toggle fullscreen' %}">
                 <i class="fas fa-expand"></i>
             </button>
         </div>
         <div class="analytics-main">
-            <div class="analytics-section-label">Overview</div>
+            <div class="analytics-section-label">{% trans "Overview" %}</div>
             {% include "editor/partials/analytics_overview.html" %}
             <hr class="analytics-divider">
             <div class="analytics-section-label">Questions &amp; Responses</div>
@@ -499,8 +499,8 @@
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header py-2">
-                <h6 class="modal-title mb-0 font-weight-bold">Session Details</h6>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h6 class="modal-title mb-0 font-weight-bold">{% trans "Session Details" %}</h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body" id="sessionDetailModalBody">
                 <div class="text-center text-muted py-4">Loading...</div>
@@ -514,24 +514,24 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-cog"></i> Validation Settings</h5>
+                <h5 class="modal-title"><i class="fas fa-cog"></i> {% trans "Validation Settings" %}</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label style="font-size:0.85rem;font-weight:600;">Fast completion threshold (seconds)</label>
+                    <label style="font-size:0.85rem;font-weight:600;">{% trans "Fast completion threshold (seconds)" %}</label>
                     <input type="number" id="vs-fast-threshold" class="form-control form-control-sm" value="30" min="1" step="1">
-                    <small class="text-muted">Sessions completed faster than this are flagged</small>
+                    <small class="text-muted">{% trans "Sessions completed faster than this are flagged" %}</small>
                 </div>
                 <div class="form-group">
-                    <label style="font-size:0.85rem;font-weight:600;">Duplicate detection window (hours)</label>
+                    <label style="font-size:0.85rem;font-weight:600;">{% trans "Duplicate detection window (hours)" %}</label>
                     <input type="number" id="vs-dup-window" class="form-control form-control-sm" value="1" min="0.1" step="0.5">
-                    <small class="text-muted">Sessions from same browser within this window are flagged</small>
+                    <small class="text-muted">{% trans "Sessions from same browser within this window are flagged" %}</small>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                <button class="btn btn-sm btn-primary" onclick="saveValidationSettings()">Save</button>
+                <button class="btn btn-sm btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button class="btn btn-sm btn-primary" onclick="saveValidationSettings()">{% trans "Save" %}</button>
             </div>
         </div>
     </div>
