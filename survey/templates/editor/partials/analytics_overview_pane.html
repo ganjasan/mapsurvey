@@ -1,0 +1,253 @@
+{% comment %}
+Overview pane (openspec: responses-v2-refactor, capability responses-overview).
+The default Responses pane on every form factor: KPI strip with daily deltas,
+map thumbnail, 7-day trend, per-question mini-charts, needs-review and
+latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
+{% endcomment %}
+{% if total_sessions == 0 %}
+<div class="rv2-empty" data-testid="rv2-empty-state">
+    <div class="rv2-empty-icon"><i class="fas fa-satellite-dish"></i></div>
+    <b>No responses yet</b>
+    <p>Your survey is live. Share the link and responses will appear here in real time.</p>
+    <a class="btn btn-primary btn-sm" href="/editor/surveys/{{ survey.uuid }}/share/">
+        <i class="fas fa-share-alt"></i> Share survey
+    </a>
+    <br>
+    <a class="btn btn-outline-secondary btn-sm mt-2" href="/surveys/{{ survey.uuid }}" target="_blank" rel="noopener">
+        <i class="fas fa-eye"></i> Preview as respondent
+    </a>
+</div>
+{% else %}
+<div class="rv2-kstrip" data-testid="rv2-kpi-strip">
+    <div class="rv2-kpi">
+        <b>{{ total_sessions }}</b><span>responses</span>
+        {% if overview_extras.responses_today %}<span class="rv2-delta">+{{ overview_extras.responses_today }} today</span>{% endif %}
+    </div>
+    <div class="rv2-kpi"><b class="rv2-green">{{ completion_rate }}%</b><span>completion</span></div>
+    {% if overview_extras.median_display %}
+    <div class="rv2-kpi"><b class="rv2-plain">{{ overview_extras.median_display }}</b><span>median time</span></div>
+    {% endif %}
+    {% if geo_features_count %}
+    <div class="rv2-kpi">
+        <b>{{ geo_features_count }}</b><span>map features</span>
+        {% if overview_extras.geo_features_today %}<span class="rv2-delta">+{{ overview_extras.geo_features_today }}</span>{% endif %}
+    </div>
+    {% endif %}
+    {% if flagged_count %}
+    <div class="rv2-kpi rv2-flag"><b>{{ flagged_count }}</b><span>flagged</span></div>
+    {% endif %}
+</div>
+
+<div class="rv2-overview-body">
+    <div class="rv2-ov-main">
+        {% if geo_features_count %}
+        <div class="rv2-card">
+            <h6>Response Map
+                <a class="rv2-lnk" href="#map" onclick="rv2Router.setPane('map');return false;">Open Map ›</a>
+            </h6>
+            <div id="rv2-ov-map"></div>
+        </div>
+        {% endif %}
+        <div class="rv2-ov-two">
+            <div class="rv2-card">
+                <h6>Responses this week</h6>
+                <div class="rv2-card-pad"><canvas id="rv2-ov-trend" height="70"></canvas></div>
+            </div>
+            {% for stat in question_stats %}
+            {% if stat.type == 'choices' and forloop.counter <= 1 %}
+            <div class="rv2-card">
+                <h6>{{ stat.question.name|truncatechars:48 }}
+                    <a class="rv2-lnk" href="#charts" onclick="rv2Router.setPane('charts');return false;">Charts ›</a>
+                </h6>
+                <div class="rv2-card-pad rv2-ov-minibars"
+                     data-labels="{{ stat.choice_labels_json }}"
+                     data-counts="{{ stat.choice_counts_json }}"></div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% comment %} Remaining question mini-charts, two per row {% endcomment %}
+        <div class="rv2-ov-two">
+            {% for stat in question_stats %}
+            {% if stat.type == 'choices' and forloop.counter > 1 %}
+            <div class="rv2-card">
+                <h6>{{ stat.question.name|truncatechars:48 }}
+                    <a class="rv2-lnk" href="#charts" onclick="rv2Router.setPane('charts');return false;">Charts ›</a>
+                </h6>
+                <div class="rv2-card-pad rv2-ov-minibars"
+                     data-labels="{{ stat.choice_labels_json }}"
+                     data-counts="{{ stat.choice_counts_json }}"></div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="rv2-ov-side">
+        {% if overview_extras.needs_review %}
+        <div class="rv2-card" data-testid="rv2-needs-review">
+            <h6>Needs review <span class="rv2-badge">{{ flagged_count }}</span></h6>
+            {% for item in overview_extras.needs_review %}
+            <button type="button" class="rv2-feed-item" onclick="rv2OpenSession({{ item.id }})">
+                <span class="rv2-feed-ava">#{{ item.seq }}</span>
+                <span class="rv2-feed-mid">
+                    <b>{{ item.started|date:"j M H:i" }}{% if item.duration_display %} · {{ item.duration_display }}{% endif %}</b>
+                    <span>{{ item.issues|join:", " }}</span>
+                </span>
+                <span class="rv2-chip-status err">{{ item.issues.0 }}</span>
+            </button>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="rv2-card" data-testid="rv2-latest">
+            <h6>Latest responses
+                <a class="rv2-lnk" href="#responses" onclick="rv2Router.setPane('responses');return false;">All ›</a>
+            </h6>
+            {% for item in overview_extras.latest_feed %}
+            <button type="button" class="rv2-feed-item" onclick="rv2OpenSession({{ item.id }})">
+                <span class="rv2-feed-ava">#{{ item.seq }}</span>
+                <span class="rv2-feed-mid">
+                    <b>{{ item.started|date:"j M H:i" }}{% if item.duration_display %} · {{ item.duration_display }}{% endif %}</b>
+                    <span>{% if item.geo_count %}{{ item.geo_count }} geo · {% endif %}{% if item.text_excerpt %}“{{ item.text_excerpt }}”{% elif not item.geo_count %}no answers{% endif %}</span>
+                </span>
+                {% if item.issues %}
+                <span class="rv2-chip-status err">{{ item.issues.0 }}</span>
+                {% elif item.status == 'on_hold' %}
+                <span class="rv2-chip-status warn">on hold</span>
+                {% elif item.status == 'not_approved' %}
+                <span class="rv2-chip-status err">rejected</span>
+                {% else %}
+                <span class="rv2-chip-status ok">ok</span>
+                {% endif %}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+/* Overview widgets: thumbnail map, 7-day trend, mini bar charts. */
+(function () {
+    'use strict';
+    var initialized = false;
+
+    function initOverview() {
+        if (initialized) return;
+        initialized = true;
+
+        /* Mini bar charts (plain DOM — no Chart.js cost per question) */
+        document.querySelectorAll('.rv2-ov-minibars').forEach(function (el) {
+            var labels = [], counts = [];
+            try {
+                labels = JSON.parse(el.dataset.labels || '[]');
+                counts = JSON.parse(el.dataset.counts || '[]');
+            } catch (e) { return; }
+            var max = Math.max.apply(null, counts.concat([1]));
+            var rows = labels.map(function (label, i) { return [label, counts[i] || 0]; });
+            rows.sort(function (a, b) { return b[1] - a[1]; });
+            rows.slice(0, 5).forEach(function (row) {
+                var line = document.createElement('div');
+                line.className = 'rv2-minibar-row';
+                line.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:6px;font-size:0.72rem;color:#374151;';
+                var lbl = document.createElement('span');
+                lbl.style.cssText = 'width:84px;text-align:right;color:#6b7280;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+                lbl.textContent = row[0];
+                lbl.title = row[0];
+                var bar = document.createElement('div');
+                bar.style.cssText = 'height:14px;background:var(--accent);opacity:.85;border-radius:3px;min-width:3px;width:' +
+                    Math.round(row[1] / max * 100) * 0.7 + '%;';
+                var val = document.createElement('span');
+                val.style.cssText = 'color:#6b7280;font-size:0.68rem;';
+                val.textContent = row[1];
+                line.appendChild(lbl); line.appendChild(bar); line.appendChild(val);
+                el.appendChild(line);
+            });
+        });
+
+        /* 7-day trend from the hourly data the dashboard already ships */
+        var trendEl = document.getElementById('rv2-ov-trend');
+        if (trendEl && window.Chart) {
+            var hourly = [];
+            try { hourly = JSON.parse(document.getElementById('hourly-data-json').textContent); } catch (e) {}
+            var byDay = {};
+            hourly.forEach(function (row) {
+                var day = row.h.slice(0, 10);
+                byDay[day] = (byDay[day] || 0) + row.t;
+            });
+            var days = [], values = [];
+            for (var i = 6; i >= 0; i--) {
+                var d = new Date(); d.setDate(d.getDate() - i);
+                var key = d.toISOString().slice(0, 10);
+                days.push(key.slice(5));
+                values.push(byDay[key] || 0);
+            }
+            new Chart(trendEl, {
+                type: 'line',
+                data: { labels: days, datasets: [{
+                    data: values, borderColor: '#4f46e5', borderWidth: 2.5,
+                    backgroundColor: 'rgba(79,70,229,0.08)', fill: true,
+                    pointRadius: 0, tension: 0.25,
+                }] },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 9 } } },
+                        y: { beginAtZero: true, ticks: { precision: 0, font: { size: 9 } } },
+                    },
+                    maintainAspectRatio: false,
+                },
+            });
+        }
+
+        /* View-only thumbnail map */
+        var mapEl = document.getElementById('rv2-ov-map');
+        if (mapEl && window.L) {
+            var geo = null;
+            try { geo = JSON.parse(document.getElementById('geo-json-data').textContent); } catch (e) {}
+            var m = L.map(mapEl, {
+                zoomControl: false, dragging: false, scrollWheelZoom: false,
+                doubleClickZoom: false, boxZoom: false, keyboard: false,
+                touchZoom: false, attributionControl: false,
+            });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(m);
+            mapEl.style.cursor = 'pointer';
+            mapEl.addEventListener('click', function () { rv2Router.setPane('map'); });
+            if (geo && geo.features && geo.features.length) {
+                var layer = L.geoJSON(geo, {
+                    pointToLayer: function (f, latlng) {
+                        return L.circleMarker(latlng, { radius: 4, color: '#4f46e5', weight: 1.5, fillOpacity: 0.7 });
+                    },
+                    style: { color: '#4f46e5', weight: 2 },
+                }).addTo(m);
+                /* Leaflet measures the container lazily; fitting before the
+                   first layout settles leaves the thumbnail at world zoom. */
+                m.setView([0, 0], 2);
+                setTimeout(function () {
+                    m.invalidateSize();
+                    try { m.fitBounds(layer.getBounds().pad(0.06)); } catch (e) {}
+                }, 150);
+            } else {
+                m.setView([0, 0], 2);
+            }
+            window._rv2OverviewMap = m;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.rv2Router) {
+            rv2Router.onPaneChange(function (pane) {
+                if (pane === 'overview') {
+                    initOverview();
+                    setTimeout(function () {
+                        if (window._rv2OverviewMap) window._rv2OverviewMap.invalidateSize();
+                    }, 120);
+                }
+            });
+            if (rv2Router.currentPane() === 'overview') initOverview();
+        } else {
+            initOverview();
+        }
+    });
+}());
+</script>
+{% endif %}

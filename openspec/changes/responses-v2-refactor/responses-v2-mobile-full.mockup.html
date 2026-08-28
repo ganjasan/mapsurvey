@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>V1 «Лента мониторинга» — полный комплект экранов</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --accent: #4f46e5; --accent-light: #eef2ff;
+    --border: #e5e7eb; --muted: #6b7280; --ink: #111827;
+    --green: #16a34a; --amber: #d97706; --red: #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #f3f4f6; color: var(--ink); padding: 28px 20px 60px; }
+  h1 { font-size: 22px; margin-bottom: 6px; }
+  .sub { color: var(--muted); font-size: 14px; margin-bottom: 26px; max-width: 950px; line-height: 1.5; }
+  .grp { margin: 34px 0 10px; }
+  .grp h2 { font-size: 17px; margin-bottom: 4px; }
+  .grp p { color: var(--muted); font-size: 13.5px; margin-bottom: 16px; max-width: 950px; line-height: 1.5; }
+  .row { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  .phone-wrap { text-align: center; }
+  .phone-cap { font-size: 12px; color: var(--muted); margin-top: 8px; max-width: 390px; }
+  .phone {
+    width: 390px; height: 780px; background: #fff; border-radius: 28px;
+    border: 8px solid #1f2937; overflow: hidden; position: relative;
+    display: flex; flex-direction: column; text-align: left;
+    box-shadow: 0 10px 30px rgba(0,0,0,.12);
+  }
+  /* chrome */
+  .appbar { display:flex; align-items:center; gap:10px; padding: 10px 14px 8px; background:#fff; z-index:3; }
+  .appbar .back { color:#374151; font-size:16px; }
+  .appbar .title { font-weight:700; font-size:16px; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .scroll { flex:1; overflow:hidden; position:relative; background:#fafafa; display:flex; flex-direction:column; }
+  .scrollpad { flex:1; overflow:hidden; padding: 12px 14px; }
+  .tabbar {
+    display:grid; grid-auto-flow:column; grid-auto-columns:1fr;
+    border-top:1px solid var(--border); background:#fff; padding:6px 8px 10px; z-index:3;
+  }
+  .tabbar div { display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10.5px; color:var(--muted); padding:5px 0; border-radius:10px; }
+  .tabbar div.on { color:var(--accent); background:var(--accent-light); }
+  .tabbar .ico { font-size:17px; line-height:1; }
+  .tabbar .bdg { position:relative; }
+  .tabbar .bdg:after { content:"1"; position:absolute; top:-3px; right:24%; background:var(--red); color:#fff; font-size:8.5px; font-weight:700; border-radius:999px; padding:1px 4.5px; }
+  /* atoms */
+  .kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .kpi { background:#fff; border:1px solid var(--border); border-radius:12px; padding:10px 12px; }
+  .kpi b { font-size:22px; color:var(--accent); display:block; line-height:1.15; }
+  .kpi b.g { color:var(--green); }
+  .kpi b.m { color:var(--ink); }
+  .kpi span { font-size:11px; color:var(--muted); }
+  .kpi .delta { font-size:11px; color:var(--green); font-weight:600; }
+  .card { background:#fff; border:1px solid var(--border); border-radius:12px; margin-top:10px; overflow:hidden; }
+  .card.first { margin-top:0; }
+  .card h4 { font-size:13px; padding:10px 12px 0; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .card h4 .lnk { color:var(--accent); font-size:11.5px; font-weight:500; white-space:nowrap; }
+  .card .note { font-size:11px; color:var(--muted); padding:2px 12px 0; }
+  .map-thumb { height:150px; position:relative; margin-top:8px;
+    background:
+      radial-gradient(closest-side, rgba(79,70,229,.25), transparent 60%) 55% 40%/120px 120px no-repeat,
+      radial-gradient(closest-side, rgba(220,38,38,.2), transparent 60%) 25% 65%/90px 90px no-repeat,
+      linear-gradient(#e8ecef 1px, transparent 1px) 0 0/28px 28px,
+      linear-gradient(90deg,#e8ecef 1px, transparent 1px) 0 0/28px 28px, #f1f5f4;
+  }
+  .map-full { position:absolute; inset:0;
+    background:
+      radial-gradient(closest-side, rgba(79,70,229,.28), transparent 60%) 60% 30%/200px 200px no-repeat,
+      radial-gradient(closest-side, rgba(220,38,38,.22), transparent 60%) 25% 60%/150px 150px no-repeat,
+      radial-gradient(closest-side, rgba(22,163,74,.2), transparent 60%) 70% 75%/120px 120px no-repeat,
+      linear-gradient(#e6eaec 1px, transparent 1px) 0 0/34px 34px,
+      linear-gradient(90deg,#e6eaec 1px, transparent 1px) 0 0/34px 34px, #f1f5f4;
+  }
+  .dot { position:absolute; width:9px; height:9px; border-radius:50%; background:var(--accent); border:1.5px solid #fff; box-shadow:0 1px 2px rgba(0,0,0,.3); }
+  .dot.sel { width:14px; height:14px; background:#fff; border:3.5px solid var(--accent); }
+  .lineseg { position:absolute; height:3px; background:#16a34a; border-radius:2px; opacity:.8; }
+  .chip { display:inline-flex; align-items:center; gap:5px; background:#fff; border:1px solid var(--border); border-radius:999px; padding:5px 11px; font-size:11.5px; color:#374151; box-shadow:0 1px 3px rgba(0,0,0,.08); white-space:nowrap; }
+  .chip b { color:var(--accent); }
+  .chip.sel { border-color:var(--accent); color:var(--accent); background:var(--accent-light); }
+  .barchart { padding: 8px 12px 12px; }
+  .brow { display:flex; align-items:center; gap:8px; margin-top:7px; font-size:11px; color:#374151; }
+  .brow .lbl { width:74px; text-align:right; color:var(--muted); flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .brow .bar { height:16px; background:var(--accent); border-radius:3px; opacity:.85; min-width:3px; }
+  .brow .bar.dim { opacity:.25; }
+  .brow .val { color:var(--muted); font-size:10.5px; }
+  .spark { padding: 6px 12px 12px; }
+  .spark svg { width:100%; height:56px; display:block; }
+  .resp-item { display:flex; gap:10px; padding:10px 12px; border-top:1px solid #f1f2f4; align-items:center; }
+  .resp-item:first-of-type { border-top:none; }
+  .resp-ava { width:34px; height:34px; border-radius:9px; background:var(--accent-light); color:var(--accent); display:grid; place-items:center; font-size:12px; flex-shrink:0; font-weight:600; }
+  .resp-mid { flex:1; min-width:0; }
+  .resp-mid b { font-size:12.5px; display:block; }
+  .resp-mid span { font-size:11px; color:var(--muted); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pill { font-size:9.5px; padding:2px 7px; border-radius:999px; font-weight:600; flex-shrink:0; }
+  .pill.ok { background:#e8f5ee; color:var(--green); }
+  .pill.warn { background:#fef3c7; color:var(--amber); }
+  .pill.err { background:#fee2e2; color:var(--red); }
+  .pill.mut { background:#f3f4f6; color:var(--muted); }
+  .toolrow { display:flex; gap:8px; padding: 10px 14px 2px; align-items:center; overflow:hidden; flex-shrink:0; }
+  .sheet { position:absolute; left:0; right:0; bottom:0; background:#fff; border-radius:16px 16px 0 0; box-shadow:0 -6px 24px rgba(0,0,0,.14); z-index:6; }
+  .sheet .grab { width:38px; height:4px; border-radius:2px; background:#d1d5db; margin:8px auto 4px; }
+  .sheet h5 { font-size:14px; padding: 4px 16px 10px; }
+  .shrow { display:flex; align-items:center; gap:10px; padding:12px 16px; border-top:1px solid #f1f2f4; font-size:13.5px; }
+  .shrow .ic { width:22px; text-align:center; color:var(--muted); }
+  .shrow.on { color:var(--accent); font-weight:600; }
+  .shrow .end { margin-left:auto; color:var(--muted); font-size:12px; }
+  .backdrop { position:absolute; inset:0; background:rgba(17,24,39,.35); z-index:5; }
+  .fab-note { position:absolute; z-index:8; background:#111827; color:#fff; font-size:10.5px; padding:5px 9px; border-radius:7px; opacity:.92; max-width:200px; line-height:1.35; }
+  .fab-note:after { content:""; position:absolute; width:8px; height:8px; background:#111827; transform:rotate(45deg); }
+  .n-left:after { left:-4px; top:calc(50% - 4px); }
+  .n-up:after { top:-4px; left:16px; }
+  .n-down:after { bottom:-4px; left:16px; }
+  .empty { text-align:center; padding: 60px 30px; color:var(--muted); }
+  .empty .big { font-size:40px; margin-bottom:12px; }
+  .empty b { display:block; color:var(--ink); font-size:15px; margin-bottom:6px; }
+  .empty p { font-size:12.5px; line-height:1.5; }
+  .btn { display:inline-flex; align-items:center; gap:7px; background:var(--accent); color:#fff; border-radius:10px; padding:11px 18px; font-size:13px; font-weight:600; margin-top:14px; }
+  .btn.ghost { background:#fff; color:#374151; border:1px solid var(--border); }
+  .btn.danger { background:#fee2e2; color:var(--red); }
+  .funrow { padding: 10px 12px 4px; }
+  .funrow .fr { margin-bottom:10px; }
+  .funrow .frl { display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:4px; }
+  .funrow .frl b { font-weight:600; }
+  .funrow .frl .drop { color:var(--red); font-weight:600; }
+  .funbar { height:14px; border-radius:4px; background:linear-gradient(90deg, var(--accent) var(--v), #fca5a5 var(--v)); opacity:.8; }
+  .srcrow { display:flex; align-items:center; gap:8px; padding:7px 12px; font-size:12px; border-top:1px solid #f1f2f4; }
+  .srcrow:first-of-type { border-top:none; }
+  .srcrow .nm { flex:1; }
+  .srcrow .ct { color:var(--muted); font-size:11px; }
+  .srcrow .pc { width:90px; height:8px; background:#f1f2f4; border-radius:4px; overflow:hidden; }
+  .srcrow .pc i { display:block; height:100%; background:var(--accent); opacity:.75; }
+  .selbar { position:absolute; left:10px; right:10px; bottom:12px; background:#111827; color:#fff; border-radius:14px; display:flex; align-items:center; padding:10px 14px; gap:14px; font-size:12px; z-index:6; box-shadow:0 6px 20px rgba(0,0,0,.3); }
+  .selbar .cnt { font-weight:700; font-size:13px; }
+  .selbar .act { display:flex; flex-direction:column; align-items:center; gap:2px; color:#d1d5db; font-size:10px; }
+  .selbar .act .i { font-size:15px; }
+  .selbar .x { margin-left:auto; color:#9ca3af; }
+  .cb { width:20px; height:20px; border-radius:6px; border:1.5px solid #d1d5db; flex-shrink:0; }
+  .cb.on { background:var(--accent); border-color:var(--accent); position:relative; }
+  .cb.on:after { content:"✓"; color:#fff; position:absolute; inset:0; display:grid; place-items:center; font-size:12px; }
+  .ans { padding: 10px 14px; border-top:1px solid #f1f2f4; }
+  .ans .q { font-size:11px; color:var(--muted); margin-bottom:3px; }
+  .ans .a { font-size:13px; }
+  .kv { display:flex; gap:14px; padding: 0 14px 10px; flex-wrap:wrap; }
+  .kv div { font-size:11px; color:var(--muted); }
+  .kv b { display:block; font-size:13px; color:var(--ink); font-weight:600; }
+  .statusrow { display:flex; gap:8px; padding: 10px 14px; }
+  .filterbar { display:flex; align-items:center; gap:8px; margin: 0 14px 10px; padding: 7px 12px; background:var(--accent-light); border:1px solid #d0d0ff; border-radius:10px; font-size:11.5px; color:var(--accent); flex-shrink:0; }
+  .filterbar .x { margin-left:auto; font-weight:700; }
+  .banner { margin: 0 14px 10px; padding: 8px 12px; background:var(--accent-light); border-radius:10px; font-size:11.5px; color:#374151; line-height:1.45; flex-shrink:0; }
+  .toggle { width:36px; height:21px; border-radius:999px; background:#d1d5db; margin-left:auto; position:relative; flex-shrink:0; }
+  .toggle:after { content:""; position:absolute; width:17px; height:17px; border-radius:50%; background:#fff; top:2px; left:2px; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+  .toggle.on { background:var(--accent); }
+  .toggle.on:after { left:17px; }
+  .sw { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+</style>
+</head>
+<body>
+<h1>V1 «Лента мониторинга» — полный комплект экранов</h1>
+<p class="sub">Развёртка варианта 1 на все табы и состояния. Нижний бар: <b>Pulse / Map / Responses / Perf</b>. Charts как отдельная панель исчезает — графики живут в ленте Pulse, полный график вопроса открывается тапом по карточке. Чип «All ▾» в аппбаре всюду один и тот же — шит с версиями и Download. Бейдж на Responses = непросмотренные violations. Desktop не меняется: всё под MOBILE_EDITOR_NAV и &lt;768px.</p>
+
+<!-- ═══════════ GROUP 1: PULSE ═══════════ -->
+<div class="grp">
+  <h2>1 · Pulse — домашний экран</h2>
+  <p>Отвечает на «как идёт опрос» без единого тапа: KPI с дельтами → карта-миниатюра → тренд → все вопросы (в порядке опроса) → последние ответы. Тап по карточке вопроса — полный график с фильтрацией; выбор сегмента фильтрует всю ленту (паритет с desktop FilterManager). Пустой стейт продаёт следующий шаг — поделиться ссылкой.</p>
+  <div class="row">
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">‹</span><span class="title">citypulse</span><span class="chip" style="padding:4px 9px;">All ▾</span></div>
+        <div class="scroll"><div class="scrollpad">
+          <div class="kpi-grid">
+            <div class="kpi"><b>65</b><span>Responses</span> <span class="delta">+7 today</span></div>
+            <div class="kpi"><b class="g">98%</b><span>Completion</span></div>
+            <div class="kpi"><b class="m">4:12</b><span>Median time</span></div>
+            <div class="kpi"><b>129</b><span>Map features</span> <span class="delta">+11</span></div>
+          </div>
+          <div class="card">
+            <h4>Response Map <span class="lnk">Open ›</span></h4>
+            <div class="map-thumb">
+              <div class="dot" style="left:52%;top:34%"></div><div class="dot" style="left:60%;top:46%"></div>
+              <div class="dot" style="left:28%;top:60%"></div><div class="dot" style="left:44%;top:70%"></div>
+              <div class="dot" style="left:70%;top:28%"></div>
+            </div>
+          </div>
+          <div class="card">
+            <h4>Responses this week</h4>
+            <div class="spark"><svg viewBox="0 0 340 56" preserveAspectRatio="none">
+              <polyline points="0,46 40,42 80,44 120,30 160,34 200,18 240,24 280,10 340,14" fill="none" stroke="#4f46e5" stroke-width="2.5"/>
+              <polygon points="0,46 40,42 80,44 120,30 160,34 200,18 240,24 280,10 340,14 340,56 0,56" fill="#4f46e5" opacity=".08"/>
+            </svg></div>
+          </div>
+          <div class="card">
+            <h4>How do you usually get around? <span class="pill ok">64</span></h4>
+            <div class="note">Getting around · choice</div>
+            <div class="barchart">
+              <div class="brow"><span class="lbl">Walking</span><div class="bar" style="width:64%"></div><span class="val">20</span></div>
+              <div class="brow"><span class="lbl">Bus</span><div class="bar" style="width:48%"></div><span class="val">15</span></div>
+              <div class="brow"><span class="lbl">Car</span><div class="bar" style="width:38%"></div><span class="val">12</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <h4>Latest responses <span class="lnk">All ›</span></h4>
+            <div class="resp-item"><div class="resp-ava">#65</div><div class="resp-mid"><b>Today 14:02 · 3:40</b><span>2 points · “More bike lanes on Chuy…”</span></div><span class="pill ok">complete</span></div>
+            <div class="resp-item"><div class="resp-ava">#64</div><div class="resp-mid"><b>Today 11:38 · 0:24</b><span>no answers</span></div><span class="pill err">empty</span></div>
+          </div>
+        </div></div>
+        <div class="tabbar">
+          <div class="on"><span class="ico">◉</span>Pulse</div>
+          <div><span class="ico">🗺</span>Map</div>
+          <div class="bdg"><span class="ico">☰</span>Responses</div>
+          <div><span class="ico">📈</span>Perf</div>
+        </div>
+      </div>
+      <div class="phone-cap">1a · Pulse: базовый кейс. Бейдж на Responses — 1 violation</div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">‹</span><span class="title">waermeplanung_quedlinburg</span><span class="chip" style="padding:4px 9px;">All ▾</span></div>
+        <div class="scroll">
+          <div class="empty" style="padding-top:110px;">
+            <div class="big">📡</div>
+            <b>No responses yet</b>
+            <p>Your survey is live. Share the link and responses will appear here in real time.</p>
+            <span class="btn">🔗 Share survey</span><br>
+            <span class="btn ghost" style="margin-top:8px;">👁 Preview as respondent</span>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="on"><span class="ico">◉</span>Pulse</div>
+          <div><span class="ico">🗺</span>Map</div>
+          <div><span class="ico">☰</span>Responses</div>
+          <div><span class="ico">📈</span>Perf</div>
+        </div>
+      </div>
+      <div class="phone-cap">1b · Pulse: пустой стейт (0 ответов) — CTA на шаринг</div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">‹</span><span class="title">citypulse</span><span class="chip sel" style="padding:4px 9px;">All ▾</span></div>
+        <div class="scroll"><div class="scrollpad" style="filter:blur(1px);opacity:.6;">
+          <div class="kpi-grid">
+            <div class="kpi"><b>65</b><span>Responses</span></div>
+            <div class="kpi"><b class="g">98%</b><span>Completion</span></div>
+          </div>
+        </div>
+        <div class="backdrop"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h5>Version scope</h5>
+          <div class="shrow on"><span class="ic">✓</span>All versions <span class="end">65 responses</span></div>
+          <div class="shrow"><span class="ic"></span>v3 (current) <span class="end">41</span></div>
+          <div class="shrow"><span class="ic"></span>v2 <span class="end">18</span></div>
+          <div class="shrow"><span class="ic"></span>v1 <span class="end">6</span></div>
+          <div class="shrow" style="border-top:2px solid var(--border);"><span class="ic"></span>Draft (test) <span class="end">3</span></div>
+          <div class="shrow" style="border-top:2px solid var(--border);color:var(--accent);font-weight:600;"><span class="ic">⬇</span>Download data (CSV + GeoJSON)</div>
+        </div>
+        </div>
+      </div>
+      <div class="phone-cap">1c · Шит версий и экспорта — заменяет селект + Download из тулбара; одинаков на всех табах</div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">‹</span><span class="title">How do you usually get around?</span></div>
+        <div class="scroll">
+          <div class="filterbar">◈ Filter: Walking <span class="x">✕</span></div>
+          <div class="scrollpad" style="padding-top:0;">
+          <div class="card first">
+            <h4>Answers <span class="pill ok">20 of 64</span></h4>
+            <div class="barchart">
+              <div class="brow"><span class="lbl">Walking</span><div class="bar" style="width:64%"></div><span class="val">20</span></div>
+              <div class="brow"><span class="lbl">Bus</span><div class="bar dim" style="width:48%"></div><span class="val">15</span></div>
+              <div class="brow"><span class="lbl">Car</span><div class="bar dim" style="width:38%"></div><span class="val">12</span></div>
+              <div class="brow"><span class="lbl">Bicycle</span><div class="bar dim" style="width:28%"></div><span class="val">9</span></div>
+              <div class="brow"><span class="lbl">Other</span><div class="bar dim" style="width:18%"></div><span class="val">8</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <h4>Walking · on the map</h4>
+            <div class="map-thumb">
+              <div class="dot" style="left:40%;top:30%"></div><div class="dot" style="left:55%;top:52%"></div>
+              <div class="dot" style="left:30%;top:64%"></div>
+            </div>
+          </div>
+          <div class="card">
+            <h4>Walking · responses <span class="lnk">Open list ›</span></h4>
+            <div class="resp-item"><div class="resp-ava">#61</div><div class="resp-mid"><b>Yesterday 18:20</b><span>“The park at the riverfront needs…”</span></div><span class="pill ok">complete</span></div>
+            <div class="resp-item"><div class="resp-ava">#58</div><div class="resp-mid"><b>Mon 16:44</b><span>2 points</span></div><span class="pill ok">complete</span></div>
+          </div>
+          <div class="fab-note n-up" style="right:16px; top:118px;">тап по сегменту = фильтр (паритет с desktop-крестомфильтрацией)</div>
+        </div></div>
+        <div class="tabbar">
+          <div class="on"><span class="ico">◉</span>Pulse</div>
+          <div><span class="ico">🗺</span>Map</div>
+          <div><span class="ico">☰</span>Responses</div>
+          <div><span class="ico">📈</span>Perf</div>
+        </div>
+      </div>
+      <div class="phone-cap">1d · Детали вопроса: тап по сегменту «Walking» фильтрует карту и список; фильтр-пилюля сверху, снимается крестиком</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ GROUP 2: MAP ═══════════ -->
+<div class="grp">
+  <h2>2 · Map — полноэкранная карта</h2>
+  <p>Карта занимает всё между аппбаром и таббаром. Поверх — счётчик и чипы Layers/Heat. Тап по объекту — мини-шит с атрибутами (sub-questions) вместо Leaflet-попапа; «Open response» ведёт на детали ответа. Шит Layers повторяет desktop-легенду: чекбоксы слоёв, heat-настройки. Для опроса без гео-вопросов таб Map остаётся, но объясняет, как их добавить.</p>
+  <div class="row">
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">‹</span><span class="title">citypulse</span><span class="chip" style="padding:4px 9px;">All ▾</span></div>
+        <div class="scroll">
+          <div class="map-full">
+            <div class="lineseg" style="left:30%;top:40%;width:90px;transform:rotate(24deg);"></div>
+            <div class="dot" style="left:56%;top:26%"></div><div class="dot" style="left:63%;top:34%"></div>
+            <div class="dot" style="left:30%;top:52%"></div><div class="dot" style="left:42%;top:64%"></div>
+            <div class="dot" style="left:68%;top:70%"></div><div class="dot" style="left:24%;top:38%"></div>
+          </div>
+          <div style="position:absolute;top:10px;left:10px;right:10px;display:flex;gap:6px;overflow:hidden;z-index:4;">
+            <span class="chip"><b>129</b> features</span><span class="chip">Layers ▾</span><span class="chip">🔥 Heat</span>
+          </div>
+          <div style="position:absolute;right:10px;bottom:14px;display:flex;flex-direction:column;gap:6px;z-index:4;">
+            <span class="chip" style="padding:8px 10px;">⌖</span>
+            <span class="chip" style="padding:8px 10px;">▣</span>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div><span class="ico">◉</span>Pulse</div>
+          <div class="on"><span class="ico">🗺</span>Map</div>
+          <div><span class="ico">☰</span>Responses</div>
+          <div><span class="ico">📈</span>Perf</div>
+        </div>
+      </div>
+      <div class="phone-cap">2a · Map: просмотр. Справа — fit-to-data и выбор рамкой (lasso → режим выделения)</div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">‹</span><span class="title">citypulse</span><span class="chip" style="padding:4px 9px;">All ▾</span></div>
+        <div class="scroll">
+          <div class="map-full">
+            <div class="dot" style="left:56%;top:22%"></div><div class="dot" style="left:30%;top:38%"></div>
+            <div class="dot sel" style="left:47%;top:44%"></div>
+          </div>
+          <div class="sheet">
+            <div class="grab"></div>
+            <div class="resp-item"><div class="resp-ava">📍</div><div class="resp-mid"><b>Point · Where should the city improve?</b><span>Response #63 · Today 09:15</span></div><span class="pill ok">complete</span></div>
+            <div class="ans"><div class="q">What is the problem here?</div><div class="a">“Crosswalk near the school is dangerous, cars don't stop.”</div></div>
+            <div class="ans"><div class="q">How urgent is it?</div><div class="a">Very urgent</div></div>
+            <div class="statusrow">
+              <span class="btn ghost" style="margin:0;flex:1;justify-content:center;">Open response ›</span>
+              <span class="btn ghost" style="margin:0;">‹ 2 / 5 ›</span>
+            </div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div><span class="ico">◉</span>Pulse</div>
+          <div class="on"><span class="ico">🗺</span>Map</div>
+          <div><span class="ico">☰</span>Responses</div>
+          <div><span class="ico">📈</span>Perf</div>
+        </div>
+      </div>
+      <div class="phone-cap">2b · Тап по объекту: мини-шит с атрибутами (sub-questions) + листание «2/5» по объектам рядом</div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">‹</span><span class="title">citypulse</span><span class="chip" style="padding:4px 9px;">All ▾</span></div>
+        <div class="scroll">
+          <div class="map-full" style="filter:brightness(.85);"></div>
+          <div class="backdrop"></div>
+          <div class="sheet">
+            <div class="grab"></div>
+            <h5>Layers</h5>
+            <div class="shrow"><span class="sw" style="background:#4f46e5;"></span>Where should the city improve? <span class="end">78</span><span class="toggle on"></span></div>
+            <div class="shrow"><span class="sw" style="background:#16a34a;"></span>Your daily route <span class="end">34</span><span class="toggle on"></span></div>
+            <div class="shrow"><span class="sw" style="background:#d97706;"></span>Favourite places <span class="end">17</span><span class="toggle"></span></div>
+            <div class="shrow" style="border-top:2px solid var(--border);"><span class="ic">🔥</span>Heatmap <span class="toggle on"></span></div>
+            <div class="shrow" style="font-size:12px;color:var(--muted);">Radius <input type="range" style="flex:1;accent-color:var(--accent);"> Intensity <input type="range" style="width:70px;accent-color:var(--accent);"></div>
+            <div class="shrow"><span class="ic">🗂</span>Base map <span class="end">OSM ›</span></div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div><span class="ico">◉</span>Pulse</div>
+          <div class="on"><span class="ico">🗺</span>Map</div>
+          <div><span class="ico">☰</span>Responses</div>
+          <div><span class="ico">📈</span>Perf</div>
+        </div>
+      </div>
+      <div class="phone-cap">2c · Шит Layers = desktop-легенда: слои по гео-вопросам, heat-настройки, подложка</div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">‹</span><span class="title">quick_feedback</span><span class="chip" style="padding:4px 9px;">All ▾</span></div>
+        <div class="scroll">
+          <div class="empty" style="padding-top:120px;">
+            <div class="big">🗺</div>
+            <b>No geo questions in this survey</b>
+            <p>Add a point, line or polygon question in the Survey tab — responses will appear here on a live map.</p>
+            <span class="btn ghost">＋ Add a map question</span>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div><span class="ico">◉</span>Pulse</div>
+          <div class="on"><span class="ico">🗺</span>Map</div>
+          <div><span class="ico">☰</span>Responses</div>
+          <div><span class="ico">📈</span>Perf</div>
+        </div>
+      </div>
+      <div class="phone-cap">2d · Map: опрос без гео-вопросов — объясняем и ведём в редактор</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ GROUP 3: RESPONSES ═══════════ -->
+<div class="grp">
+  <h2>3 · Responses — карточки вместо таблицы</h2>
+  <p>Таблица заменяется списком карточек: время, длительность, первый текстовый ответ, гео-сводка, статус. Чипы-фильтры сверху = колоночные фильтры + Violations + Trash. Свайп влево — быстрые действия; долгий тап — режим выделения с нижним action-баром (bulk status/trash — паритет с desktop). Тап — полноэкранные детали ответа (существующий Session Details + управление статусом).</p>
+  <div class="row">
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">‹</span><span class="title">citypulse</span><span class="chip" style="padding:4px 9px;">All ▾</span></div>
+        <div class="scroll">
+          <div class="toolrow">
+            <span class="chip sel">All 65</span><span class="chip">Complete 64</span><span class="chip">Issues <b style="color:var(--red)">1</b></span><span class="chip">🗑 3</span><span class="chip">⇅</span>
+          </div>
+          <div class="scrollpad" style="padding-top:8px;">
+            <div class="card first">
+              <div class="resp-item"><div class="resp-ava">#65</div><div class="resp-mid"><b>Today 14:02 · 3:40</b><span>Walking · 2 points · “More bike lanes…”</span></div><span class="pill ok">complete</span></div>
+              <div class="resp-item"><div class="resp-ava">#64</div><div class="resp-mid"><b>Today 11:38 · 0:24</b><span>no answers</span></div><span class="pill err">empty</span></div>
+              <div class="resp-item"><div class="resp-ava">#63</div><div class="resp-mid"><b>Today 09:15 · 5:02</b><span>Bus · 1 point · “Crosswalk near school…”</span></div><span class="pill ok">complete</span></div>
+              <div class="resp-item"><div class="resp-ava">#62</div><div class="resp-mid"><b>Yesterday 19:44 · 0:41</b><span>Car · 3 points</span></div><span class="pill warn">fast</span></div>
+              <div class="resp-item"><div class="resp-ava">#61</div><div class="resp-mid"><b>Yesterday 18:20 · 6:15</b><span>Walking · 2 polygons · “The park at…”</span></div><span class="pill ok">complete</span></div>
+              <div class="resp-item"><div class="resp-ava">#60</div><div class="resp-mid"><b>Yesterday 15:07 · 2:58</b><span>Bicycle · 1 line</span></div><span class="pill ok">complete</span></div>
+            </div>
+          </div>
+          <div class="fab-note n-left" style="right:10px; top:150px;">свайп влево = Trash / статус; долгий тап = выделение</div>
+        </div>
+        <div class="tabbar">
+          <div><span class="ico">◉</span>Pulse</div>
+          <div><span class="ico">🗺</span>Map</div>
+          <div class="on"><span class="ico">☰</span>Responses</div>
+          <div><span class="ico">📈</span>Perf</div>
+        </div>
+      </div>
+      <div class="phone-cap">3a · Список: чипы-фильтры (⇅ — сортировка), карточка = строка таблицы</div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">‹</span><span class="title">citypulse</span><span class="chip" style="padding:4px 9px;">All ▾</span></div>
+        <div class="scroll">
+          <div class="toolrow">
+            <span class="chip sel">Issues <b style="color:var(--red)">1</b></span><span class="chip">Errors 1</span><span class="chip">Warnings 0</span>
+          </div>
+          <div class="scrollpad" style="padding-top:8px;">
+            <div class="card first">
+              <div class="resp-item"><div class="resp-ava">#64</div><div class="resp-mid"><b>Today 11:38 · 0:24</b><span>⃠ Empty session — no answers given</span></div><span class="pill err">empty</span></div>
+            </div>
+            <div class="card">
+              <h4>Validation settings <span class="lnk">Edit ›</span></h4>
+              <div class="note" style="padding-bottom:12px;">Fast &lt; 30s · Duplicate window 1h</div>
+            </div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div><span class="ico">◉</span>Pulse</div>
+          <div><span class="ico">🗺</span>Map</div>
+          <div class="on"><span class="ico">☰</span>Responses</div>
+          <div><span class="ico">📈</span>Perf</div>
+        </div>
+      </div>
+      <div class="phone-cap">3b · Фильтр Issues: сайдбар Violations стал чипами; настройки валидации — карточкой</div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">✕</span><span class="title">3 selected</span><span class="chip" style="padding:4px 9px;">Select all</span></div>
+        <div class="scroll">
+          <div class="scrollpad" style="padding-top:10px;">
+            <div class="card first">
+              <div class="resp-item"><span class="cb on"></span><div class="resp-mid"><b>#65 · Today 14:02</b><span>Walking · 2 points</span></div><span class="pill ok">complete</span></div>
+              <div class="resp-item"><span class="cb on"></span><div class="resp-mid"><b>#64 · Today 11:38</b><span>no answers</span></div><span class="pill err">empty</span></div>
+              <div class="resp-item"><span class="cb on"></span><div class="resp-mid"><b>#62 · Yesterday 19:44</b><span>Car · 3 points</span></div><span class="pill warn">fast</span></div>
+              <div class="resp-item"><span class="cb"></span><div class="resp-mid"><b>#61 · Yesterday 18:20</b><span>Walking · 2 polygons</span></div><span class="pill ok">complete</span></div>
+              <div class="resp-item"><span class="cb"></span><div class="resp-mid"><b>#60 · Yesterday 15:07</b><span>Bicycle · 1 line</span></div><span class="pill ok">complete</span></div>
+            </div>
+          </div>
+          <div class="selbar">
+            <span class="cnt">3</span>
+            <span class="act"><span class="i">✓</span>Approve</span>
+            <span class="act"><span class="i">⏸</span>Hold</span>
+            <span class="act"><span class="i">🗑</span>Trash</span>
+            <span class="act"><span class="i">👁</span>Hide</span>
+            <span class="x">✕</span>
+          </div>
+        </div>
+      </div>
+      <div class="phone-cap">3c · Режим выделения: bulk-статусы и Trash из desktop-таблицы; попадают сюда и лассо-выделения с карты</div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">‹</span><span class="title">Response #63</span><span class="chip" style="padding:4px 9px;">⋯</span></div>
+        <div class="scroll"><div class="scrollpad">
+          <div class="card first">
+            <div class="kv" style="padding-top:12px;">
+              <div><b>Today 09:15</b>started</div>
+              <div><b>5:02</b>duration</div>
+              <div><b>v3</b>version</div>
+              <div><b>complete</b>status</div>
+            </div>
+            <div class="statusrow" style="border-top:1px solid #f1f2f4;">
+              <span class="chip sel">✓ Approved</span><span class="chip">⏸ On hold</span><span class="chip">✕ Not approved</span>
+            </div>
+          </div>
+          <div class="card">
+            <h4>Getting around</h4>
+            <div class="ans"><div class="q">How do you usually get around the city?</div><div class="a">Bus</div></div>
+            <div class="ans"><div class="q">How often do you travel downtown?</div><div class="a">Daily</div></div>
+          </div>
+          <div class="card">
+            <h4>Show us on the map</h4>
+            <div class="map-thumb" style="margin:8px 12px 0;border-radius:8px;">
+              <div class="dot sel" style="left:47%;top:44%"></div>
+            </div>
+            <div class="ans"><div class="q">What is the problem here?</div><div class="a">“Crosswalk near the school is dangerous, cars don't stop.”</div></div>
+            <div class="ans"><div class="q">How urgent is it?</div><div class="a">Very urgent</div></div>
+          </div>
+          <div class="statusrow" style="padding:12px 0 0;">
+            <span class="btn danger" style="margin:0;flex:1;justify-content:center;">🗑 Move to trash</span>
+          </div>
+        </div></div>
+      </div>
+      <div class="phone-cap">3d · Детали ответа (полный экран): статус-чипы, ответы по секциям, гео с мини-картой; ⋯ = hard delete и пр.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ GROUP 4: PERF + особые случаи ═══════════ -->
+<div class="grp">
+  <h2>4 · Perf и особые случаи</h2>
+  <p>Perf — компактная вертикаль: KPI 2×2 → воронка секций → источники → скорость загрузки. Плюс два сквозных случая: черновик (баннер о тестовых ответах — сегодняшний draft-notice) и активный фильтр, который следует за пользователем по всем табам.</p>
+  <div class="row">
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">‹</span><span class="title">citypulse</span><span class="chip" style="padding:4px 9px;">All ▾</span></div>
+        <div class="scroll"><div class="scrollpad">
+          <div class="kpi-grid">
+            <div class="kpi"><b>82</b><span>Sessions started</span></div>
+            <div class="kpi"><b>64</b><span>Completed</span></div>
+            <div class="kpi"><b class="g">78%</b><span>Start → finish</span></div>
+            <div class="kpi"><b class="m">1.9s</b><span>Median page load</span></div>
+          </div>
+          <div class="card">
+            <h4>Section funnel</h4>
+            <div class="funrow">
+              <div class="fr"><div class="frl"><b>Getting around</b><span>82 → 71 <span class="drop">−13%</span></span></div><div class="funbar" style="--v:87%;"></div></div>
+              <div class="fr"><div class="frl"><b>Show us on the map</b><span>71 → 64 <span class="drop">−10%</span></span></div><div class="funbar" style="--v:78%;"></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <h4>Traffic sources</h4>
+            <div class="srcrow"><span class="nm">Direct / link</span><span class="pc"><i style="width:64%"></i></span><span class="ct">42</span></div>
+            <div class="srcrow"><span class="nm">Facebook</span><span class="pc"><i style="width:30%"></i></span><span class="ct">19</span></div>
+            <div class="srcrow"><span class="nm">QR poster <span class="pill mut">utm</span></span><span class="pc"><i style="width:18%"></i></span><span class="ct">12</span></div>
+            <div class="srcrow"><span class="nm">Search</span><span class="pc"><i style="width:14%"></i></span><span class="ct">9</span></div>
+          </div>
+          <div class="card">
+            <h4>Tracked links <span class="lnk">Manage ›</span></h4>
+            <div class="srcrow"><span class="nm">poster-downtown</span><span class="ct">12 opens · 9 responses</span></div>
+          </div>
+        </div></div>
+        <div class="tabbar">
+          <div><span class="ico">◉</span>Pulse</div>
+          <div><span class="ico">🗺</span>Map</div>
+          <div><span class="ico">☰</span>Responses</div>
+          <div class="on"><span class="ico">📈</span>Perf</div>
+        </div>
+      </div>
+      <div class="phone-cap">4a · Perf: воронка секций с drop-rate, источники, tracked links</div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">‹</span><span class="title">citypulse (draft)</span><span class="chip" style="padding:4px 9px;">Draft ▾</span></div>
+        <div class="scroll">
+          <div class="banner" style="margin-top:10px;">ℹ️ Test responses collected while previewing this draft. Deleted when the draft is published or discarded.</div>
+          <div class="scrollpad" style="padding-top:0;">
+            <div class="kpi-grid">
+              <div class="kpi"><b>3</b><span>Test responses</span></div>
+              <div class="kpi"><b class="m">—</b><span>Completion</span></div>
+            </div>
+            <div class="card">
+              <h4>Latest responses</h4>
+              <div class="resp-item"><div class="resp-ava">#3</div><div class="resp-mid"><b>Today 12:10 · 1:12</b><span>1 point</span></div><span class="pill mut">test</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="on"><span class="ico">◉</span>Pulse</div>
+          <div><span class="ico">🗺</span>Map</div>
+          <div><span class="ico">☰</span>Responses</div>
+          <div><span class="ico">📈</span>Perf</div>
+        </div>
+      </div>
+      <div class="phone-cap">4b · Черновик: баннер про тестовые ответы, скоуп «Draft» в чипе версий</div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="appbar"><span class="back">‹</span><span class="title">citypulse</span><span class="chip" style="padding:4px 9px;">All ▾</span></div>
+        <div class="scroll">
+          <div class="filterbar">◈ Walking · 20 of 65 shown <span class="x">✕</span></div>
+          <div class="map-full" style="top:44px;">
+            <div class="dot" style="left:40%;top:30%"></div><div class="dot" style="left:55%;top:52%"></div>
+            <div class="dot" style="left:30%;top:64%"></div>
+          </div>
+          <div style="position:absolute;top:54px;left:10px;z-index:4;"><span class="chip"><b>41</b> features</span></div>
+        </div>
+        <div class="tabbar">
+          <div><span class="ico">◉</span>Pulse</div>
+          <div class="on"><span class="ico">🗺</span>Map</div>
+          <div><span class="ico">☰</span>Responses</div>
+          <div><span class="ico">📈</span>Perf</div>
+        </div>
+      </div>
+      <div class="phone-cap">4c · Сквозной фильтр: пилюля из 1d висит над любым табом (здесь — Map), один тап её снимает</div>
+    </div>
+  </div>
+</div>
+
+<p class="sub" style="margin-top:20px;">Что осталось за кадром сознательно: split-panes (десктоп-фича, на телефоне не нужна), полноценная таблица (карточки покрывают мобильные задачи; «полная таблица» доступна на планшете ≥768px как сейчас), редактирование validation settings (модалка остаётся, полноэкранная). Все действия деструктивного типа (trash, hard delete) — через confirm-шит, не браузерный confirm().</p>
+</body>
+</html>

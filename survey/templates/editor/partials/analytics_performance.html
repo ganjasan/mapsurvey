@@ -8,17 +8,23 @@
 
 <!-- Summary cards -->
 <div class="stat-cards">
+    {% comment %}
+    v2 labels the session KPIs as tracked-visit metrics (openspec:
+    responses-v2-refactor, audit D2): these count SurveyEvent-tracked sessions,
+    a different denominator than the response counts one pane away — unlabeled
+    they read as the product contradicting itself.
+    {% endcomment %}
     <div class="stat-card">
         <div class="stat-value">{{ event_summary.session_starts }}</div>
-        <div class="stat-label">Sessions Started</div>
+        <div class="stat-label">{% if RESPONSES_V2 %}Sessions started <span class="perf-tracked-note">(tracked visits)</span>{% else %}Sessions Started{% endif %}</div>
     </div>
     <div class="stat-card">
         <div class="stat-value">{{ event_summary.completions }}</div>
-        <div class="stat-label">Completed</div>
+        <div class="stat-label">{% if RESPONSES_V2 %}Completed <span class="perf-tracked-note">(tracked)</span>{% else %}Completed{% endif %}</div>
     </div>
     <div class="stat-card">
         <div class="stat-value">{{ event_summary.completion_rate }}%</div>
-        <div class="stat-label">Completion Rate</div>
+        <div class="stat-label">{% if RESPONSES_V2 %}Completion <span class="perf-tracked-note">(of tracked)</span>{% else %}Completion Rate{% endif %}</div>
     </div>
     <div class="stat-card">
         <div class="stat-value">
@@ -34,6 +40,18 @@
     <h6>Section Funnel</h6>
     <p style="font-size:0.8rem;color:#9ca3af;margin-bottom:1rem;">Views vs. submissions per section. Drop rate shows the percentage of respondents who viewed but did not submit.</p>
 
+    {% comment %}
+    Small-sample guard (v2 only): below 20 tracked sessions a −100% drop is
+    one person closing a tab, not a funnel problem — say so instead of alarming.
+    {% endcomment %}
+    {% if RESPONSES_V2 and event_summary.session_starts < 20 %}
+    <div class="perf-small-sample" style="background:#f3f4f6;border-radius:6px;padding:0.5rem 0.75rem;font-size:0.8rem;color:#6b7280;margin-bottom:1rem;">
+        <i class="fas fa-info-circle mr-1"></i>
+        Sample too small for drop rates — only {{ event_summary.session_starts }} tracked
+        session{{ event_summary.session_starts|pluralize }} so far. Rates appear from 20.
+    </div>
+    {% endif %}
+
     {% for step in funnel %}
     <div style="margin-bottom:1rem;">
         <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.3rem;">
@@ -43,7 +61,11 @@
                 &rarr;
                 <span style="color:#059669;font-weight:600;">{{ step.submits }}</span> submits
                 {% if step.drop_rate > 0 %}
+                {% if RESPONSES_V2 and event_summary.session_starts < 20 %}
+                {# suppressed: sample below threshold, see notice above #}
+                {% else %}
                 <span style="color:#ef4444;font-size:0.8rem;margin-left:0.5rem;">&minus;{{ step.drop_rate }}%</span>
+                {% endif %}
                 {% endif %}
             </span>
         </div>

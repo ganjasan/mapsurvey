@@ -546,6 +546,12 @@ CREATE_STEER_AI = os.environ.get('CREATE_STEER_AI', 'True').lower() in ('true', 
 # Stored files stay readable to creators either way.
 FILE_UPLOAD_QUESTIONS = os.environ.get('FILE_UPLOAD_QUESTIONS', 'True').lower() in ('true', '1')
 
+# Responses v2 (openspec: responses-v2-refactor): flat pane set with an Overview
+# default, detail drawer, global filter pills. Off serves the pre-change Responses
+# template unchanged — the rollback story. Default stays False until the owner
+# reviews the v2 layout on a PR preview (tasks.md 9.5 flips it).
+RESPONSES_V2 = os.environ.get('RESPONSES_V2', 'False').lower() in ('true', '1')
+
 # Public results sharing
 # Creators share results by copying the editor URL out of the address bar, which is the
 # editor-only preview URL rather than `/r/<slug>/`. When a visitor without editor rights

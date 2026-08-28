@@ -6,17 +6,97 @@
 .attr-th-filter { cursor: pointer; padding: 0 2px; }
 .attr-th-filter:hover i { opacity: 0.8 !important; }
 .attr-th-filter.active i { opacity: 1 !important; color: #1a56db !important; }
-/* Freeze checkbox and actions columns */
+/* Freeze checkbox (and, legacy only, actions) columns */
 .attr-table th:nth-child(1), .attr-table td:nth-child(1) { position: sticky; left: 0; z-index: 2; background: #fff; }
+.attr-table thead th:nth-child(1) { z-index: 3; }
+.table-secondary td:nth-child(1) { background: #e2e3e5 !important; }
+{% if not RESPONSES_V2 %}
 .attr-table th:nth-child(2), .attr-table td:nth-child(2) { position: sticky; left: 28px; z-index: 2; background: #fff; }
-.attr-table thead th:nth-child(1), .attr-table thead th:nth-child(2) { z-index: 3; }
-.table-secondary td:nth-child(1), .table-secondary td:nth-child(2) { background: #e2e3e5 !important; }
+.attr-table thead th:nth-child(2) { z-index: 3; }
+.table-secondary td:nth-child(2) { background: #e2e3e5 !important; }
+{% endif %}
 </style>
 <script type="application/json" id="anomaly-counts-data">{{ anomaly_counts_json|safe }}</script>
 <script type="application/json" id="unique-values-data">{{ unique_values_json|safe }}</script>
 <script type="application/json" id="col-filters-data">{{ col_filters_json|safe }}</script>
 <script type="text/plain" id="active-issues-filter">{{ issues_filter }}</script>
 
+{% if RESPONSES_V2 %}
+<script type="application/json" id="default-hidden-cols">{{ default_hidden_json|safe }}</script>
+<script type="application/json" id="filtered-session-ids">{{ filtered_ids_json|safe }}</script>
+<script type="application/json" id="table-columns-data">{{ columns_meta_json|safe }}</script>
+{% comment %}
+v2 toolbar — filter chips replace the Violations sidebar, issues select and
+the action-styled Trash button (openspec: responses-v2-refactor, 4.3).
+{% endcomment %}
+<div class="attr-table-toolbar" id="toolbar-normal">
+    <div class="attr-table-toolbar-left" style="flex-wrap:wrap;row-gap:4px;">
+        <button type="button" class="rv2-chip {% if not issues_filter and not show_trash %}active{% endif %}" onclick="rv2Chip('all')" data-testid="rv2-chip-all">
+            All {{ v2_counts.all }}
+        </button>
+        <button type="button" class="rv2-chip {% if issues_filter == 'complete' %}active{% endif %}" onclick="rv2Chip('complete')" data-testid="rv2-chip-complete">
+            Complete {{ v2_counts.complete }}
+        </button>
+        {% comment %}
+        Issues is a multi-select menu, not a binary chip: the Violations sidebar
+        it replaced let creators pick individual violation types with counts,
+        and losing that was a regression (owner review). The menu writes a
+        comma-separated `issues` param, which the view already parses as a list.
+        {% endcomment %}
+        <button type="button" class="rv2-chip {% if issues_filter_list %}active{% endif %}"
+                onclick="rv2IssuesMenu(event, this)" data-testid="rv2-chip-issues">
+            Issues {% if v2_counts.issues %}<b>{{ v2_counts.issues }}</b>{% else %}0{% endif %}
+            {% if issues_filter_list %}· {{ issues_filter_list|length }} selected{% endif %} ▾
+        </button>
+        {% if is_editor %}
+        <button type="button" class="rv2-chip {% if show_trash %}active{% endif %}" onclick="rv2Chip('trash')" data-testid="rv2-chip-trash">
+            <i class="fas fa-trash-alt"></i> {{ trash_count }}
+        </button>
+        {% endif %}
+        <span class="text-muted ml-2" style="font-size:0.85rem;">
+            {{ total }} shown
+        </span>
+        <button type="button" id="show-all-rows-btn" class="btn btn-sm btn-link p-0 ml-2" style="font-size:0.75rem;color:#6b7280;display:none;" onclick="filterManager.showAll()">
+            <i class="fas fa-eye"></i> Show hidden
+        </button>
+    </div>
+    <div class="attr-table-toolbar-right">
+        <span class="rv2-search">
+            <i class="fas fa-search"></i>
+            <input type="search" id="rv2-search-input" placeholder="Search all columns"
+                   value="{{ search_query }}" oninput="rv2SearchDebounced(this.value, 'rv2-search-input')"
+                   data-testid="rv2-search">
+        </span>
+        <button type="button" class="rv2-chip" onclick="toggleHideFieldsPopover()" title="Show/hide columns">
+            <i class="fas fa-columns"></i> Columns ▾
+        </button>
+        {% if is_editor %}
+        <button type="button" class="rv2-chip" onclick="openValidationSettings()" title="Validation settings">
+            <i class="fas fa-cog"></i>
+        </button>
+        {% endif %}
+    </div>
+</div>
+{% comment %}
+Phone toolbar (owner review): the chip row scrolls off-screen and sorting has
+no mobile surface at all (it lived in the table headers the card list hides).
+Below 768px this compact bar replaces the chips: search stays visible, every
+filter and the sort order move into the bottom sheet.
+{% endcomment %}
+<div id="rv2-m-toolbar"
+     data-all="{{ v2_counts.all }}" data-complete="{{ v2_counts.complete }}"
+     data-issues="{{ v2_counts.issues }}" data-trash="{{ trash_count }}">
+    <span class="rv2-search rv2-m-search">
+        <i class="fas fa-search"></i>
+        <input type="search" id="rv2-m-search-input" placeholder="Search responses"
+               value="{{ search_query }}" oninput="rv2SearchDebounced(this.value, 'rv2-m-search-input')">
+    </span>
+    <button type="button" class="rv2-chip {% if issues_filter or show_trash %}active{% endif %}"
+            onclick="rv2OpenMobileSheet()" data-testid="rv2-m-filters">
+        <i class="fas fa-sliders-h"></i> Filters &amp; sort
+    </button>
+</div>
+{% else %}
 {# Normal toolbar — visible when no rows selected #}
 <div class="attr-table-toolbar" id="toolbar-normal">
     <div class="attr-table-toolbar-left">
@@ -70,6 +150,7 @@
         </button>
     </div>
 </div>
+{% endif %}
 {# Bulk toolbar — visible when rows are selected #}
 {% if is_editor %}
 <div class="attr-table-toolbar" id="toolbar-bulk" style="display:none;background:#e8f0fe;border-radius:4px;">
@@ -124,6 +205,7 @@
     <input type="hidden" name="page_size" value="{{ page_size }}">
     <input type="hidden" name="trash" value="{% if show_trash %}1{% else %}0{% endif %}">
     <input type="hidden" name="issues" value="{{ issues_filter }}">
+    <input type="hidden" name="q" value="{{ search_query }}">
     {% for key, val in col_search.items %}
     <input type="hidden" name="search_{{ key }}" value="{{ val }}">
     {% endfor %}
@@ -162,7 +244,7 @@
             <input type="checkbox" id="select-all-cb" title="Select / deselect all"
                    onchange="toggleSelectAll(this.checked)">
         </th>
-        <th class="attr-th-actions" style="width:56px;"></th>
+        {% if not RESPONSES_V2 %}<th class="attr-th-actions" style="width:56px;"></th>{% endif %}
         {% for col in columns %}
         <th data-col="{{ col.key }}" class="attr-th">
             <div class="attr-th-content">
@@ -202,7 +284,7 @@
     {# Filter indicator row #}
     <tr class="attr-filter-row" style="font-size:0.7rem;">
         <td></td>
-        <td></td>
+        {% if not RESPONSES_V2 %}<td></td>{% endif %}
         {% for col in columns %}
         <td data-col="{{ col.key }}" class="attr-filter-indicator" data-filter-col="{{ col.key }}"
             style="padding:1px 4px;color:#6b7280;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
@@ -213,10 +295,12 @@
 </thead>
 <tbody>
     {% for row in rows %}
-    <tr {% if row.is_deleted %}class="table-secondary"{% endif %}>
+    <tr class="{% if RESPONSES_V2 %}rv2-row {% endif %}{% if row.is_deleted %}table-secondary{% endif %}"
+        {% if RESPONSES_V2 %}data-session-id="{{ row.session_id }}" onclick="rv2RowOpen(event, {{ row.session_id }})" style="cursor:pointer;"{% endif %}>
         <td style="text-align:center;width:28px;">
             <input type="checkbox" class="row-select-cb" data-session-id="{{ row.session_id }}">
         </td>
+        {% if not RESPONSES_V2 %}
         <td class="attr-td-actions">
             <button type="button" class="btn btn-sm btn-link p-0" onclick="loadSessionDetail({{ row.session_id }})" title="View details">
                 <i class="fas fa-eye" style="color:var(--accent);"></i>
@@ -236,11 +320,22 @@
             {% endif %}
             {% endif %}
         </td>
+        {% endif %}
         {% for col in columns %}
         <td data-col="{{ col.key }}">
-            {% if col.key == 'id' %}#{{ row.id }}
+            {% if col.key == 'id' %}{% if RESPONSES_V2 %}#{{ row.seq|default:row.id }}{% else %}#{{ row.id }}{% endif %}
+            {% elif col.key == 'duration' %}{{ row.duration_display|default:"—" }}
             {% elif col.key == 'validation_status' %}
-                {% if is_editor and not row.is_deleted %}
+                {% if RESPONSES_V2 %}
+                <button type="button" class="rv2-status-chip rv2-st-{{ row.validation_status|default:'none' }}"
+                        data-session-id="{{ row.session_id }}"
+                        {% if is_editor and not row.is_deleted %}onclick="rv2StatusMenu(event, this, {{ row.session_id }}, '{{ row.validation_status }}')"{% else %}disabled{% endif %}>
+                    {% if row.validation_status == 'approved' %}✓ Approved
+                    {% elif row.validation_status == 'not_approved' %}✕ Rejected
+                    {% elif row.validation_status == 'on_hold' %}⏸ On hold
+                    {% else %}—{% endif %}
+                </button>
+                {% elif is_editor and not row.is_deleted %}
                 <select class="form-control form-control-sm validation-select"
                         data-session-id="{{ row.session_id }}"
                         style="font-size:0.75rem;padding:1px 4px;height:24px;width:auto;min-width:90px;{% if row.validation_status == 'approved' %}border-color:#28a745;color:#28a745;{% elif row.validation_status == 'not_approved' %}border-color:#dc3545;color:#dc3545;{% elif row.validation_status == 'on_hold' %}border-color:#fd7e14;color:#fd7e14;{% endif %}"
@@ -293,7 +388,7 @@
     </tr>
     {% empty %}
     <tr>
-        <td colspan="{{ columns|length|add:2 }}" class="text-center text-muted py-4">
+        <td colspan="{% if RESPONSES_V2 %}{{ columns|length|add:1 }}{% else %}{{ columns|length|add:2 }}{% endif %}" class="text-center text-muted py-4">
             {% if show_trash %}No trashed sessions{% elif col_search %}No responses matching your search{% else %}No responses{% endif %}
         </td>
     </tr>
@@ -301,6 +396,36 @@
 </tbody>
 </table>
 </div>
+
+{% if RESPONSES_V2 %}
+{% comment %}
+Phone card list (openspec: responses-v2-refactor, 8.2): below 768px the grid
+is unreadable, so the same rows render as cards — CSS swaps which of the two
+is displayed; only one is ever visible.
+{% endcomment %}
+<div class="rv2-mcards">
+    {% for row in rows %}
+    <button type="button" class="rv2-feed-item rv2-mcard" onclick="rv2OpenSession({{ row.session_id }})">
+        <span class="rv2-feed-ava">#{{ row.seq|default:row.id }}</span>
+        <span class="rv2-feed-mid">
+            <b>{{ row.start_datetime|date:"j M H:i" }}{% if row.duration_display %} · {{ row.duration_display }}{% endif %}</b>
+            <span>{% if row.m_geo %}{{ row.m_geo }} geo · {% endif %}{% if row.m_excerpt %}“{{ row.m_excerpt }}”{% elif not row.m_geo %}no answers{% endif %}</span>
+        </span>
+        {% if row.issues %}
+        <span class="rv2-chip-status err">{{ row.issues.0 }}</span>
+        {% elif row.validation_status == 'on_hold' %}
+        <span class="rv2-chip-status warn">on hold</span>
+        {% elif row.validation_status == 'not_approved' %}
+        <span class="rv2-chip-status err">rejected</span>
+        {% else %}
+        <span class="rv2-chip-status ok">ok</span>
+        {% endif %}
+    </button>
+    {% empty %}
+    <div class="text-center text-muted py-4">No responses</div>
+    {% endfor %}
+</div>
+{% endif %}
 
 {# Pagination #}
 <div class="attr-pagination" style="flex-shrink:0;padding-right:70px;">
