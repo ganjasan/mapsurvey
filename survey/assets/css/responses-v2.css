@@ -296,6 +296,100 @@
     font-weight: 600;
 }
 
+/* ── Pills-bar selection actions (one bar, no per-panel duplicate) ───── */
+.rv2-pills-action {
+    border: 1px solid var(--accent);
+    background: #fff;
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 0.12rem 0.6rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.rv2-pills-action:hover { background: var(--accent-light); }
+
+/* ── Geocoder control (on-map place/street/POI search) ────────────────── */
+.rv2-geocoder {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 5px 10px;
+}
+.rv2-geocoder-icon { color: #9ca3af; font-size: 0.8rem; }
+.rv2-geocoder-input {
+    border: none;
+    outline: none;
+    font-size: 0.8rem;
+    width: 130px;
+    transition: width 0.15s ease;
+    background: transparent;
+    color: #374151;
+}
+.rv2-geocoder-input:focus { width: 230px; }
+.rv2-geocoder-results {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 270px;
+    max-width: 340px;
+    max-height: 260px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+}
+.rv2-geocoder-item {
+    padding: 7px 11px;
+    cursor: pointer;
+    border-top: 1px solid #f1f2f4;
+    font-size: 0.78rem;
+}
+.rv2-geocoder-item:first-child { border-top: none; }
+.rv2-geocoder-item:hover { background: var(--accent-light); }
+.rv2-geocoder-item b { display: block; font-size: 0.8rem; }
+.rv2-geocoder-item span {
+    display: block;
+    color: #6b7280;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rv2-geocoder-none { color: #9ca3af; cursor: default; }
+.rv2-geocoder-none:hover { background: none; }
+
+/* ── Image lightbox ───────────────────────────────────────────────────── */
+.rv2-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    background: rgba(17, 24, 39, 0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: zoom-out;
+    padding: 24px;
+}
+.rv2-lightbox img {
+    max-width: 92vw;
+    max-height: 84vh;
+    border-radius: 10px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    background: #fff;
+}
+.rv2-lightbox-caption { color: #e5e7eb; font-size: 0.85rem; }
+.rv2-lightbox-caption a { color: #a5b4fc; }
+
 /* ── Status chip (Responses table) ────────────────────────────────────── */
 .rv2-status-chip {
     border: 1px solid var(--border-color);
@@ -393,6 +487,44 @@
     align-items: center;
 }
 #rv2-map-wrap .geo-toolbar-label { font-size: 0.72rem; font-weight: 600; }
+#rv2-map-wrap .geo-toolbar-selwrap { position: relative; }
+#rv2-map-wrap .geo-toolbar-caret {
+    padding: 0 3px 0 5px;
+    margin-left: 2px;
+    border-left: 1px solid rgba(0, 0, 0, 0.12);
+    font-size: 0.7rem;
+    color: inherit;
+}
+#rv2-map-wrap .geo-toolbar-btn.active .geo-toolbar-caret { border-left-color: rgba(255, 255, 255, 0.4); }
+#rv2-map-wrap .geo-toolbar-submenu {
+    position: absolute;
+    top: 0;
+    right: calc(100% + 6px);
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    min-width: 130px;
+    padding: 4px;
+    z-index: 1000;
+}
+#rv2-map-wrap .geo-toolbar-subitem {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 6px 9px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: #374151;
+    text-align: left;
+}
+#rv2-map-wrap .geo-toolbar-subitem i { width: 14px; font-size: 0.7rem; }
+#rv2-map-wrap .geo-toolbar-subitem:hover { background: var(--accent-light); color: var(--accent); }
+#rv2-map-wrap .geo-toolbar-subitem.active { color: var(--accent); font-weight: 700; }
 
 /* ── Tablet: 768–1199 ─────────────────────────────────────────────────── */
 @media (max-width: 1199.98px) {
@@ -462,7 +594,73 @@
     }
 }
 
-/* Desktop/tablet: the phone card list never renders */
+/* Desktop/tablet: the phone card list and mobile toolbar never render */
 @media (min-width: 768px) {
     .rv2-mcards { display: none; }
+    #rv2-m-toolbar { display: none; }
+}
+
+/* ── Mobile toolbar + filter/sort bottom sheet ────────────────────────── */
+#rv2-m-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.25rem 0 0.5rem;
+}
+#rv2-m-toolbar .rv2-m-search { flex: 1; }
+#rv2-m-toolbar .rv2-m-search input { width: 100%; }
+@media (max-width: 767.98px) {
+    /* The chip toolbar is replaced by the compact bar + sheet on phones. */
+    #rv2-pane-responses #toolbar-normal { display: none; }
+}
+.rv2-m-sheet { position: fixed; inset: 0; z-index: 900; }
+.rv2-m-sheet[hidden] { display: none; }
+.rv2-m-sheet-backdrop { position: absolute; inset: 0; background: rgba(17, 24, 39, 0.45); }
+.rv2-m-sheet-panel {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: #fff;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.18);
+    padding: 6px 16px calc(14px + env(safe-area-inset-bottom));
+    max-height: 75vh;
+    overflow-y: auto;
+}
+.rv2-m-sheet-grab {
+    width: 38px; height: 4px;
+    border-radius: 2px;
+    background: #d1d5db;
+    margin: 6px auto 4px;
+}
+.rv2-ms-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9ca3af;
+    font-weight: 700;
+    margin: 12px 0 6px;
+}
+.rv2-ms-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.rv2-ms-row .rv2-chip { min-height: 38px; }
+.rv2-ms-none { font-size: 0.8rem; color: #9ca3af; }
+.rv2-ms-select {
+    flex: 1;
+    min-width: 140px;
+    min-height: 38px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0 0.6rem;
+    font-size: 0.82rem;
+    color: #374151;
+    background: #fff;
+}
+.rv2-ms-editor { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+.rv2-ms-editor .rv2-chip { min-height: 38px; }
+.rv2-ms-input {
+    min-height: 38px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0 0.6rem;
+    font-size: 0.82rem;
+    width: 110px;
 }

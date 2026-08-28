@@ -23,6 +23,8 @@
 
 {% if RESPONSES_V2 %}
 <script type="application/json" id="default-hidden-cols">{{ default_hidden_json|safe }}</script>
+<script type="application/json" id="filtered-session-ids">{{ filtered_ids_json|safe }}</script>
+<script type="application/json" id="table-columns-data">{{ columns_meta_json|safe }}</script>
 {% comment %}
 v2 toolbar — filter chips replace the Violations sidebar, issues select and
 the action-styled Trash button (openspec: responses-v2-refactor, 4.3).
@@ -62,7 +64,7 @@ the action-styled Trash button (openspec: responses-v2-refactor, 4.3).
         <span class="rv2-search">
             <i class="fas fa-search"></i>
             <input type="search" id="rv2-search-input" placeholder="Search all columns"
-                   value="{{ search_query }}" oninput="rv2SearchDebounced(this.value)"
+                   value="{{ search_query }}" oninput="rv2SearchDebounced(this.value, 'rv2-search-input')"
                    data-testid="rv2-search">
         </span>
         <button type="button" class="rv2-chip" onclick="toggleHideFieldsPopover()" title="Show/hide columns">
@@ -74,6 +76,25 @@ the action-styled Trash button (openspec: responses-v2-refactor, 4.3).
         </button>
         {% endif %}
     </div>
+</div>
+{% comment %}
+Phone toolbar (owner review): the chip row scrolls off-screen and sorting has
+no mobile surface at all (it lived in the table headers the card list hides).
+Below 768px this compact bar replaces the chips: search stays visible, every
+filter and the sort order move into the bottom sheet.
+{% endcomment %}
+<div id="rv2-m-toolbar"
+     data-all="{{ v2_counts.all }}" data-complete="{{ v2_counts.complete }}"
+     data-issues="{{ v2_counts.issues }}" data-trash="{{ trash_count }}">
+    <span class="rv2-search rv2-m-search">
+        <i class="fas fa-search"></i>
+        <input type="search" id="rv2-m-search-input" placeholder="Search responses"
+               value="{{ search_query }}" oninput="rv2SearchDebounced(this.value, 'rv2-m-search-input')">
+    </span>
+    <button type="button" class="rv2-chip {% if issues_filter or show_trash %}active{% endif %}"
+            onclick="rv2OpenMobileSheet()" data-testid="rv2-m-filters">
+        <i class="fas fa-sliders-h"></i> Filters &amp; sort
+    </button>
 </div>
 {% else %}
 {# Normal toolbar — visible when no rows selected #}

@@ -95,16 +95,7 @@
 
         <section id="rv2-pane-map" class="rv2-pane" data-pane-content="map" hidden>
             {% if geo_features_count %}
-            <div class="panel-selection-bar" style="display:none;padding:0.25rem 0.75rem;background:#e8f0fe;border-radius:4px;margin:0.25rem 1.5rem 0;flex-shrink:0;font-size:0.8rem;">
-                <div style="display:flex;align-items:center;gap:0.5rem;">
-                    <button class="btn btn-sm btn-link p-0" onclick="selectionManager.clear()" style="color:#1a56db;"><i class="fas fa-times"></i></button>
-                    <span class="panel-sel-count" style="font-weight:600;">0 selected</span>
-                    <span style="border-left:1px solid #bfdbfe;height:16px;"></span>
-                    <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.hideSelected()"><i class="fas fa-eye-slash"></i> Hide</button>
-                    <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.keepOnlySelected()"><i class="fas fa-filter"></i> Keep only</button>
-                    <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> Invert</button>
-                </div>
-            </div>
+            {# Selection actions live in the global pills bar — no per-panel bar in v2. #}
             <div id="rv2-map-wrap">
                 {% include "editor/partials/analytics_geo_map.html" %}
             </div>
@@ -175,6 +166,16 @@
                 <div class="text-center text-muted py-4">Loading...</div>
             </div>
         </aside>
+    </div>
+</div>
+
+{# Mobile filter & sort bottom sheet (populated by _rv2RenderMobileSheet) #}
+<div id="rv2-m-sheet" class="rv2-m-sheet" hidden>
+    <div class="rv2-m-sheet-backdrop" onclick="rv2CloseMobileSheet()"></div>
+    <div class="rv2-m-sheet-panel">
+        <div class="rv2-m-sheet-grab"></div>
+        <div id="rv2-m-sheet-body"></div>
+        <button type="button" class="btn btn-sm btn-outline-secondary btn-block mt-2" onclick="rv2CloseMobileSheet()">Done</button>
     </div>
 </div>
 
@@ -461,13 +462,13 @@ function rv2IssuesMenu(event, trigger) {
 
 /* ── Free-text search across all columns ───────────────────────────────── */
 var _rv2SearchTimer = null;
-function rv2SearchDebounced(value) {
+function rv2SearchDebounced(value, focusId) {
     clearTimeout(_rv2SearchTimer);
     _rv2SearchTimer = setTimeout(function () {
         var form = document.getElementById('table-state-form');
         if (!form) return;
         form.querySelector('[name=q]').value = value;
-        window._rv2SearchFocus = true;
+        window._rv2SearchFocus = focusId || 'rv2-search-input';
         loadTable({page: '1'});
     }, 350);
 }
@@ -475,13 +476,278 @@ document.addEventListener('htmx:afterSwap', function (evt) {
     /* The whole partial is swapped, so the input is a new node — put the
        caret back or every keystroke after the debounce would be lost. */
     if (evt.detail.target && evt.detail.target.id === 'pane-table-content' && window._rv2SearchFocus) {
-        window._rv2SearchFocus = false;
-        var input = document.getElementById('rv2-search-input');
+        var input = document.getElementById(window._rv2SearchFocus);
+        window._rv2SearchFocus = null;
         if (input) {
             input.focus();
             var v = input.value;
             input.setSelectionRange(v.length, v.length);
         }
+    }
+});
+
+/* ── Mobile filter & sort sheet (owner review: chips scroll off-screen on a
+   phone and sorting had no mobile surface at all) ─────────────────────── */
+function rv2CloseMobileSheet() {
+    var sheet = document.getElementById('rv2-m-sheet');
+    if (sheet) sheet.hidden = true;
+}
+
+function _rv2SheetState() {
+    var form = document.getElementById('table-state-form');
+    var issues = form ? (form.querySelector('[name=issues]') || {}).value || '' : '';
+    return {
+        form: form,
+        trash: form ? (form.querySelector('[name=trash]') || {}).value === '1' : false,
+        issues: issues.split(',').filter(Boolean),
+        sort: form ? (form.querySelector('[name=sort]') || {}).value : 'start_datetime',
+        dir: form ? (form.querySelector('[name=dir]') || {}).value : 'desc',
+    };
+}
+
+function _rv2RenderMobileSheet() {
+    var body = document.getElementById('rv2-m-sheet-body');
+    if (!body) return;
+    while (body.firstChild) body.removeChild(body.firstChild);
+    var state = _rv2SheetState();
+    var bar = document.getElementById('rv2-m-toolbar');
+    var counts = bar ? bar.dataset : {};
+
+    function section(title) {
+        var h = document.createElement('div');
+        h.className = 'rv2-ms-title';
+        h.textContent = title;
+        body.appendChild(h);
+        var wrap = document.createElement('div');
+        wrap.className = 'rv2-ms-row';
+        body.appendChild(wrap);
+        return wrap;
+    }
+
+    /* Show: All / Complete / Trash */
+    var show = section('Show');
+    [
+        ['all', 'All ' + (counts.all || ''), !state.trash && state.issues.indexOf('complete') === -1],
+        ['complete', 'Complete ' + (counts.complete || ''), state.issues.indexOf('complete') !== -1],
+        ['trash', 'Trash ' + (counts.trash || ''), state.trash],
+    ].forEach(function (def) {
+        var chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'rv2-chip' + (def[2] ? ' active' : '');
+        chip.textContent = def[1];
+        chip.addEventListener('click', function () { rv2Chip(def[0]); });
+        show.appendChild(chip);
+    });
+
+    /* Violations: per-type multi-select with counts (parity with desktop) */
+    var anomalyCounts = {};
+    try { anomalyCounts = JSON.parse(document.getElementById('anomaly-counts-data').textContent); } catch (e) {}
+    var haveAny = false;
+    var vio = section('Violations');
+    [['Errors', window._ANOMALY_ERRORS || {}], ['Warnings', window._ANOMALY_WARNINGS || {}]].forEach(function (group) {
+        Object.keys(group[1]).forEach(function (key) {
+            if (!(anomalyCounts[key] > 0)) return;
+            haveAny = true;
+            var def = group[1][key];
+            var chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'rv2-chip' + (state.issues.indexOf(key) !== -1 ? ' active' : '');
+            chip.textContent = def.label + ' ' + anomalyCounts[key];
+            chip.addEventListener('click', function () {
+                var next = state.issues.filter(function (k) { return k !== 'complete'; });
+                var at = next.indexOf(key);
+                if (at === -1) next.push(key); else next.splice(at, 1);
+                if (state.form) {
+                    state.form.querySelector('[name=issues]').value = next.join(',');
+                    state.form.querySelector('[name=trash]').value = '0';
+                }
+                loadTable({page: '1'});
+            });
+            vio.appendChild(chip);
+        });
+    });
+    if (!haveAny) {
+        var none = document.createElement('span');
+        none.className = 'rv2-ms-none';
+        none.textContent = 'No violations in this survey';
+        vio.appendChild(none);
+    }
+
+    /* Column metadata (ships with the table partial) drives sort + filters —
+       every column the desktop headers offer is offerable here. */
+    var columns = [];
+    try { columns = JSON.parse(document.getElementById('table-columns-data').textContent) || []; } catch (e) {}
+    var uniqueValues = {};
+    try { uniqueValues = JSON.parse(document.getElementById('unique-values-data').textContent) || {}; } catch (e) {}
+
+    function _colFilterKind(col) {
+        if (col.key === 'start_datetime') return 'date_range';
+        if (col.input_type === 'number' || col.input_type === 'range') return 'range';
+        if (uniqueValues[col.key]) return 'values';
+        return 'text';
+    }
+
+    /* Sort: any column + direction (parity with the desktop headers). */
+    var sort = section('Sort by');
+    var sortSel = document.createElement('select');
+    sortSel.className = 'rv2-ms-select';
+    columns.forEach(function (col) {
+        var opt = document.createElement('option');
+        opt.value = col.key;
+        opt.textContent = col.label;
+        if (col.key === state.sort) opt.selected = true;
+        sortSel.appendChild(opt);
+    });
+    sortSel.addEventListener('change', function () { tableSort(sortSel.value, state.dir); });
+    sort.appendChild(sortSel);
+    [['asc', '↑ Asc'], ['desc', '↓ Desc']].forEach(function (def) {
+        var chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'rv2-chip' + (state.dir === def[0] ? ' active' : '');
+        chip.textContent = def[1];
+        chip.addEventListener('click', function () { tableSort(sortSel.value, def[0]); });
+        sort.appendChild(chip);
+    });
+
+    /* Column filters: the desktop header funnels (cf_ params), phone-sized.
+       Active ones list with ×; "+ field" opens a per-type editor. */
+    var filters = section('Filter by field');
+    var labelByKey = {};
+    columns.forEach(function (c) { labelByKey[c.key] = c.label; });
+    if (state.form) {
+        state.form.querySelectorAll('input[name^="cf_"]').forEach(function (inp) {
+            if (!inp.value) return;
+            var key = inp.name.slice(3);
+            var chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'rv2-chip active';
+            var summary = inp.value.replace(/^v:/, '').replace(/^r:/, '').replace(/^d:/, '').replace(/^t:/, '').replace(/\|/g, ' – ');
+            chip.textContent = (labelByKey[key] || key) + ': ' + (summary.length > 22 ? summary.slice(0, 22) + '…' : summary) + ' ✕';
+            chip.addEventListener('click', function () {
+                inp.remove();
+                loadTable({page: '1'});
+            });
+            filters.appendChild(chip);
+        });
+    }
+    var fieldSel = document.createElement('select');
+    fieldSel.className = 'rv2-ms-select';
+    var ph = document.createElement('option');
+    ph.value = '';
+    ph.textContent = '+ Add filter…';
+    fieldSel.appendChild(ph);
+    columns.forEach(function (col) {
+        var opt = document.createElement('option');
+        opt.value = col.key;
+        opt.textContent = col.label;
+        fieldSel.appendChild(opt);
+    });
+    filters.appendChild(fieldSel);
+    var editor = document.createElement('div');
+    editor.className = 'rv2-ms-editor';
+    body.appendChild(editor);
+
+    function _applyColFilter(key, value) {
+        if (!state.form) return;
+        var existing = state.form.querySelector('input[name="cf_' + key + '"]');
+        if (!existing) {
+            existing = document.createElement('input');
+            existing.type = 'hidden';
+            existing.name = 'cf_' + key;
+            state.form.appendChild(existing);
+        }
+        existing.value = value;
+        loadTable({page: '1'});
+    }
+
+    fieldSel.addEventListener('change', function () {
+        while (editor.firstChild) editor.removeChild(editor.firstChild);
+        var key = fieldSel.value;
+        /* Remember the open editor: the sheet re-renders after every apply
+           and multi-picking values must survive it. */
+        window._rv2SheetOpenField = key || null;
+        if (!key) return;
+        var col = null;
+        columns.forEach(function (c) { if (c.key === key) col = c; });
+        var kind = _colFilterKind(col);
+
+        if (kind === 'values') {
+            var current = [];
+            if (state.form) {
+                var inp = state.form.querySelector('input[name="cf_' + key + '"]');
+                if (inp && inp.value.indexOf('v:') === 0) current = inp.value.slice(2).split('|');
+            }
+            (uniqueValues[key] || []).slice(0, 30).forEach(function (val) {
+                var chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'rv2-chip' + (current.indexOf(val) !== -1 ? ' active' : '');
+                chip.dataset.val = val;
+                chip.textContent = val === '' ? '(empty)' : val;
+                chip.addEventListener('click', function () {
+                    chip.classList.toggle('active');
+                    var picked = [];
+                    editor.querySelectorAll('.rv2-chip.active').forEach(function (c) {
+                        picked.push(c.dataset.val);
+                    });
+                    if (picked.length) _applyColFilter(key, 'v:' + picked.join('|'));
+                });
+                editor.appendChild(chip);
+            });
+        } else {
+            var isRange = kind === 'range' || kind === 'date_range';
+            var a = document.createElement('input');
+            a.className = 'rv2-ms-input';
+            var b = null;
+            if (isRange) {
+                a.type = kind === 'range' ? 'number' : 'date';
+                a.placeholder = 'from';
+                b = document.createElement('input');
+                b.type = a.type;
+                b.className = 'rv2-ms-input';
+                b.placeholder = 'to';
+            } else {
+                a.type = 'text';
+                a.placeholder = 'contains…';
+            }
+            var apply = document.createElement('button');
+            apply.type = 'button';
+            apply.className = 'rv2-chip active';
+            apply.textContent = 'Apply';
+            apply.addEventListener('click', function () {
+                if (isRange) {
+                    if (!a.value && !b.value) return;
+                    _applyColFilter(key, (kind === 'range' ? 'r:' : 'd:') + a.value + '|' + b.value);
+                } else {
+                    if (!a.value.trim()) return;
+                    _applyColFilter(key, 't:' + a.value.trim());
+                }
+            });
+            editor.appendChild(a);
+            if (b) editor.appendChild(b);
+            editor.appendChild(apply);
+        }
+    });
+
+    /* Restore the editor that was open before this re-render. */
+    if (window._rv2SheetOpenField && labelByKey[window._rv2SheetOpenField]) {
+        fieldSel.value = window._rv2SheetOpenField;
+        fieldSel.dispatchEvent(new Event('change'));
+    }
+}
+
+function rv2OpenMobileSheet() {
+    var sheet = document.getElementById('rv2-m-sheet');
+    if (!sheet) return;
+    sheet.hidden = false;
+    _rv2RenderMobileSheet();
+}
+
+document.addEventListener('htmx:afterSettle', function (evt) {
+    /* Instant-apply: the sheet stays open across table reloads, so its chips
+       must re-render with fresh counts and active states. */
+    if (evt.detail.target && evt.detail.target.id === 'pane-table-content') {
+        var sheet = document.getElementById('rv2-m-sheet');
+        if (sheet && !sheet.hidden) _rv2RenderMobileSheet();
     }
 });
 
@@ -543,6 +809,177 @@ function rv2StatusMenu(event, trigger, sid, current) {
     }, 0);
 }
 
+/* QGIS-style selection highlight on the map (owner request): the shared
+   engine reads this flag and paints selected features canonical yellow. */
+window.RV2_QGIS_SELECTION = true;
+
+/* ── Image lightbox: uploaded photos open full-size in-page ─────────────
+   The detail partial links thumbnails with target=_blank (legacy behavior);
+   v2 intercepts those clicks and shows the image in an overlay instead
+   (owner request). Capture phase so the anchor never navigates. */
+function rv2Lightbox(src, alt) {
+    var old = document.getElementById('rv2-lightbox');
+    if (old) old.remove();
+    var overlay = document.createElement('div');
+    overlay.id = 'rv2-lightbox';
+    overlay.className = 'rv2-lightbox';
+    var img = document.createElement('img');
+    img.src = src;
+    img.alt = alt || '';
+    var caption = document.createElement('div');
+    caption.className = 'rv2-lightbox-caption';
+    if (alt) caption.appendChild(document.createTextNode(alt + ' · '));
+    var orig = document.createElement('a');
+    orig.href = src;
+    orig.target = '_blank';
+    orig.rel = 'noopener';
+    orig.textContent = 'Open original';
+    orig.addEventListener('click', function (e) { e.stopPropagation(); });
+    caption.appendChild(orig);
+    overlay.appendChild(img);
+    overlay.appendChild(caption);
+    function close() {
+        overlay.remove();
+        document.removeEventListener('keydown', onKey);
+    }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    overlay.addEventListener('click', close);
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(overlay);
+}
+
+document.addEventListener('click', function (e) {
+    var img = e.target.closest ? e.target.closest('img') : null;
+    if (!img) return;
+    if (!img.closest('#rv2-drawer-body, .leaflet-popup')) return;
+    var a = img.closest('a');
+    e.preventDefault();
+    e.stopPropagation();
+    rv2Lightbox((a && a.href) || img.src, img.alt || img.title || '');
+}, true);
+
+/* ── Geocoder control on the map: streets, POI, places (Nominatim) ──────
+   Owner request: search the base map, not the survey features. A Leaflet
+   control on the map itself — magnifier expands into an input, results
+   drop down, picking one flies the map there and drops a temporary pin. */
+(function () {
+    'use strict';
+    var _timer = null;
+    var _pin = null;
+
+    function _fly(map, hit) {
+        if (_pin) { map.removeLayer(_pin); _pin = null; }
+        var lat = parseFloat(hit.lat), lon = parseFloat(hit.lon);
+        if (hit.boundingbox) {
+            var b = hit.boundingbox.map(parseFloat); // [s, n, w, e]
+            map.flyToBounds([[b[0], b[2]], [b[1], b[3]]], { maxZoom: 17, duration: 0.8 });
+        } else {
+            map.flyTo([lat, lon], 15, { duration: 0.8 });
+        }
+        _pin = L.marker([lat, lon]).addTo(map)
+            .bindPopup(hit.display_name, { maxWidth: 260 });
+        setTimeout(function () { if (_pin) _pin.openPopup(); }, 900);
+    }
+
+    function _install() {
+        var map = window.analyticsMap;
+        if (!map || map._rv2Geocoder) return;
+        map._rv2Geocoder = true;
+
+        var Geocoder = L.Control.extend({
+            options: { position: 'topleft' },
+            onAdd: function () {
+                var div = L.DomUtil.create('div', 'rv2-geocoder');
+                L.DomEvent.disableClickPropagation(div);
+                L.DomEvent.disableScrollPropagation(div);
+
+                var icon = document.createElement('i');
+                icon.className = 'fas fa-search rv2-geocoder-icon';
+                var input = document.createElement('input');
+                input.type = 'search';
+                input.placeholder = 'Search places, streets, POI';
+                input.className = 'rv2-geocoder-input';
+                input.id = 'rv2-geocoder-input';
+                var list = document.createElement('div');
+                list.className = 'rv2-geocoder-results';
+                list.style.display = 'none';
+
+                function clearResults() {
+                    while (list.firstChild) list.removeChild(list.firstChild);
+                    list.style.display = 'none';
+                }
+
+                input.addEventListener('input', function () {
+                    clearTimeout(_timer);
+                    var q = input.value.trim();
+                    if (!q) { clearResults(); return; }
+                    _timer = setTimeout(function () {
+                        /* Bias results toward the current view. */
+                        var b = map.getBounds();
+                        var url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6'
+                            + '&q=' + encodeURIComponent(q)
+                            + '&viewbox=' + [b.getWest(), b.getNorth(), b.getEast(), b.getSouth()].join(',');
+                        fetch(url, { headers: { 'Accept-Language': navigator.language || 'en' } })
+                            .then(function (r) { return r.json(); })
+                            .then(function (hits) {
+                                clearResults();
+                                if (!hits.length) {
+                                    var none = document.createElement('div');
+                                    none.className = 'rv2-geocoder-item rv2-geocoder-none';
+                                    none.textContent = 'Nothing found';
+                                    list.appendChild(none);
+                                } else {
+                                    hits.forEach(function (hit) {
+                                        var item = document.createElement('div');
+                                        item.className = 'rv2-geocoder-item';
+                                        var name = document.createElement('b');
+                                        name.textContent = hit.name || hit.display_name.split(',')[0];
+                                        var detail = document.createElement('span');
+                                        detail.textContent = hit.display_name;
+                                        item.appendChild(name);
+                                        item.appendChild(detail);
+                                        item.addEventListener('click', function () {
+                                            clearResults();
+                                            input.value = hit.name || hit.display_name.split(',')[0];
+                                            _fly(map, hit);
+                                        });
+                                        list.appendChild(item);
+                                    });
+                                }
+                                list.style.display = '';
+                            })
+                            .catch(function () {});
+                    }, 450);
+                });
+                input.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape') { clearResults(); input.blur(); }
+                    if (e.key === 'Enter') {
+                        var first = list.querySelector('.rv2-geocoder-item:not(.rv2-geocoder-none)');
+                        if (first) first.click();
+                    }
+                });
+
+                div.appendChild(icon);
+                div.appendChild(input);
+                div.appendChild(list);
+                return div;
+            },
+        });
+        new Geocoder().addTo(map);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        /* The map initializes on its own DOMContentLoaded listener — install
+           after it, and again on pane entry in case the pane loads lazily. */
+        setTimeout(_install, 300);
+        if (window.rv2Router) {
+            rv2Router.onPaneChange(function (pane) {
+                if (pane === 'map') setTimeout(_install, 200);
+            });
+        }
+    });
+}());
+
 /* ── Detail drawer (design D-D): same endpoint as the old modal ────────── */
 var _rv2DrawerSid = null;
 var _rv2DrawerSnapshot = [];
@@ -579,6 +1016,11 @@ function rv2OpenDrawer(sid) {
         idx === -1 || idx >= _rv2DrawerSnapshot.length - 1;
     var url = '{% url "analytics_session_detail" survey.uuid 0 %}'.replace(/\/0\/$/, '/' + sid + '/');
     htmx.ajax('GET', url, { target: '#rv2-drawer-body', swap: 'innerHTML' });
+    /* Repaint the map: the open response renders brown (distinct from the
+       yellow selection). */
+    if (window.filterManager && !window.filterManager._applying) {
+        window.filterManager._renderSelection();
+    }
 }
 
 function rv2DrawerStep(delta) {
@@ -596,6 +1038,9 @@ function rv2CloseDrawer() {
     document.querySelectorAll('#pane-table-content tr.rv2-row-open').forEach(function (tr) {
         tr.classList.remove('rv2-row-open');
     });
+    if (window.filterManager && !window.filterManager._applying) {
+        window.filterManager._renderSelection();
+    }
 }
 
 document.addEventListener('htmx:afterSwap', function (evt) {
@@ -665,7 +1110,55 @@ window._bulkAction = function (url, body, confirmMsg) {
     if (confirmMsg) rv2Confirm(confirmMsg, run); else run();
 };
 
+/* ── Select all = the whole filtered set ────────────────────────────────
+   The header checkbox selects every session matching the current filters,
+   not just the rendered page — the full id list ships with the table
+   partial. (A Gmail-style "select all N matching" prompt was tried and
+   rejected in owner review.) The partial redefines toggleSelectAll on every
+   HTMX swap, so this is re-applied after each settle. */
+function rv2WrapSelectAll() {
+    var fn = function (checked) {
+        if (!window.selectionManager) return;
+        if (!checked) { selectionManager.clear(); return; }
+        var allIds = [];
+        try { allIds = JSON.parse(document.getElementById('filtered-session-ids').textContent) || []; } catch (e) {}
+        if (!allIds.length) {
+            document.querySelectorAll('.row-select-cb').forEach(function (cb) {
+                allIds.push(parseInt(cb.dataset.sessionId, 10));
+            });
+        }
+        selectionManager.setSelection(allIds);
+    };
+    fn._rv2 = true;
+    if (!window.toggleSelectAll || !window.toggleSelectAll._rv2) {
+        window.toggleSelectAll = fn;
+    }
+}
+/* The partial's inline scripts run in htmx's settle phase — re-wrap after
+   settle, a tick later. */
+document.addEventListener('DOMContentLoaded', function () { setTimeout(rv2WrapSelectAll, 0); });
+document.addEventListener('htmx:afterSettle', function (evt) {
+    if (evt.detail.target && evt.detail.target.id === 'pane-table-content') {
+        setTimeout(rv2WrapSelectAll, 0);
+    }
+});
+
 /* ── Pane lifecycle glue: lazy table load, map/chart resize on reveal ──── */
+function rv2FitMap(delay) {
+    setTimeout(function () {
+        var m = window.analyticsMap;
+        if (!m) return;
+        m.invalidateSize();
+        var featureLayers = [];
+        m.eachLayer(function (l) {
+            if (l.feature && (l.getBounds || l.getLatLng)) featureLayers.push(l);
+        });
+        if (featureLayers.length) {
+            try { m.fitBounds(L.featureGroup(featureLayers).getBounds().pad(0.06)); } catch (e) {}
+        }
+    }, delay || 150);
+}
+
 (function () {
     'use strict';
     window.rv2OpenSession = function (sid) { loadSessionDetail(sid); };
@@ -697,21 +1190,7 @@ window._bulkAction = function (url, body, confirmMsg) {
                 _tableLoaded = true;
                 loadTable();
             }
-            if (pane === 'map') {
-                setTimeout(function () {
-                    var m = window.analyticsMap;
-                    if (m) {
-                        m.invalidateSize();
-                        var allLayers = [];
-                        m.eachLayer(function (l) {
-                            if (l.getBounds || l.getLatLng) allLayers.push(l);
-                        });
-                        if (allLayers.length > 1) {
-                            try { m.fitBounds(L.featureGroup(allLayers).getBounds().pad(0.02)); } catch (e) {}
-                        }
-                    }
-                }, 150);
-            }
+            if (pane === 'map') rv2FitMap(150);
             if (pane === 'charts' || pane === 'performance') {
                 setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 50);
             }
@@ -721,6 +1200,9 @@ window._bulkAction = function (url, body, confirmMsg) {
             _tableLoaded = true;
             loadTable();
         }
+        /* Deep link straight onto Map: the partial's own fitBounds fires
+           before the pane has its final size and leaves the world view. */
+        if (rv2Router.currentPane() === 'map') rv2FitMap(600);
 
         /* First-time cross-filter hint: gone forever after the first filter. */
         var hint = document.getElementById('rv2-filter-hint');

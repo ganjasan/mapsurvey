@@ -492,6 +492,27 @@ FilterManager.prototype._updatePills = function() {
         cnt.className = 'rv2-pills-count';
         cnt.textContent = visCount + ' of ' + this._allSessionIds.size + ' shown';
         bar.appendChild(cnt);
+
+        // Selection actions live HERE in v2 — one bar for filters and
+        // selection alike; the per-panel selection bar duplicated this row
+        // (owner review) and is gone from the v2 panes.
+        if (hasSel) {
+            [
+                ['fa-eye-slash', 'Hide', function() { self.hideSelected(); }],
+                ['fa-filter', 'Keep only', function() { self.keepOnlySelected(); }],
+                ['fa-exchange-alt', 'Invert', function() { window.selectionManager.invert(); }],
+            ].forEach(function(def) {
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'rv2-pills-action';
+                var ic = document.createElement('i');
+                ic.className = 'fas ' + def[0];
+                b.appendChild(ic);
+                b.appendChild(document.createTextNode(' ' + def[1]));
+                b.addEventListener('click', def[2]);
+                bar.appendChild(b);
+            });
+        }
     }
 
     var clearBtn = document.createElement('button');
@@ -597,8 +618,37 @@ FilterManager.prototype._renderSelection = function() {
             var sid = layer.feature.properties ? layer.feature.properties.session_id : null;
             if (!sid) return;
             var selected = sm ? sm.isSelected(sid) : false;
-            if (count > 0 && selected) {
+            // v2 opts into QGIS-style selection: the canonical bright-yellow
+            // fill GIS users read instantly. The layer's own color is stashed
+            // on first highlight so deselection can restore it. Legacy (flag
+            // absent) keeps the old enlarge-only styling.
+            var qgis = !!window.RV2_QGIS_SELECTION;
+            if (qgis && !layer._rv2BaseStyle) {
+                layer._rv2BaseStyle = {
+                    color: layer.options.color,
+                    fillColor: layer.options.fillColor,
+                };
+            }
+            // Open ≠ selected (owner request): the response currently open in
+            // the drawer paints brown, selection paints QGIS yellow. Open wins
+            // when both apply — it is the thing the creator is looking at.
+            var openSid = qgis ? (window._rv2DrawerSid || null) : null;
+            if (openSid !== null && openSid === sid) {
                 if (layer.setRadius) {
+                    layer.setStyle({color: '#5c3317', fillColor: '#a0522d', opacity: 1, fillOpacity: 1, weight: 2});
+                    layer.setRadius(8);
+                } else if (layer.setStyle) {
+                    layer.setStyle({color: '#a0522d', opacity: 1, fillOpacity: 0.5, weight: 4});
+                }
+            } else if (count > 0 && selected) {
+                if (qgis) {
+                    if (layer.setRadius) {
+                        layer.setStyle({color: '#8f7a00', fillColor: '#ffff00', opacity: 1, fillOpacity: 1, weight: 2});
+                        layer.setRadius(7);
+                    } else if (layer.setStyle) {
+                        layer.setStyle({color: '#ffff00', opacity: 1, fillOpacity: 0.5, weight: 4});
+                    }
+                } else if (layer.setRadius) {
                     layer.setStyle({opacity: 1, fillOpacity: 0.8, weight: 2});
                     layer.setRadius(7);
                 } else if (layer.setStyle) {
@@ -606,11 +656,16 @@ FilterManager.prototype._renderSelection = function() {
                 }
             } else {
                 // Default / unselected: restore initial style
+                var base = qgis && layer._rv2BaseStyle ? layer._rv2BaseStyle : null;
                 if (layer.setRadius) {
-                    layer.setStyle({opacity: 1, fillOpacity: 0.7, weight: 1});
+                    layer.setStyle(base
+                        ? {color: base.color, fillColor: base.fillColor, opacity: 1, fillOpacity: 0.7, weight: 1}
+                        : {opacity: 1, fillOpacity: 0.7, weight: 1});
                     layer.setRadius(5);
                 } else if (layer.setStyle) {
-                    layer.setStyle({opacity: 1, fillOpacity: 0.2, weight: 2});
+                    layer.setStyle(base
+                        ? {color: base.color, fillColor: base.fillColor, opacity: 1, fillOpacity: 0.2, weight: 2}
+                        : {opacity: 1, fillOpacity: 0.2, weight: 2});
                 }
             }
         });

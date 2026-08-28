@@ -1729,6 +1729,12 @@ class SurveyAnalyticsService:
                 reverse=reverse,
             )
 
+        # v2: full filtered id list (this sort order, before pagination) so
+        # "Select all N matching" can outreach the visible page (Gmail
+        # pattern — the page checkbox alone silently caps selection at
+        # page_size, which reads as "selected everything" when it didn't).
+        filtered_ids = [r['session_id'] for r in rows] if v2 else None
+
         # Paginate
         total = len(rows)
         total_pages = max(1, (total + page_size - 1) // page_size)
@@ -1749,6 +1755,7 @@ class SurveyAnalyticsService:
             'anomaly_counts': anomaly_counts,
             'unique_values': unique_values,
             'v2_counts': v2_counts,
+            'filtered_ids': filtered_ids,
         }
 
 

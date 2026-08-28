@@ -81,6 +81,10 @@
       enter/leave (spec scenario)
 - [x] 7.3 Tests: split enter/close/reset; height retained (extend analytics-data-workspace guard
       tests to v2)
+- [x] 7.4 Owner review rounds: QGIS-style map toolbar (Select with shape submenu + Identify),
+      QGIS-yellow selection + brown open-response colors, image lightbox, on-map geocoder
+      (Nominatim), selection actions merged into the global pills bar, select-all = whole
+      filtered set, SelectionManager repaint rewired, seq-sort fix
 
 ## 8. Mobile tier
 
@@ -93,13 +97,16 @@
 - [x] 8.4 No document-level horizontal scroll at 390px across all panes (automated check via
       rendered-markup width probes + manual browser pass, per HTML5-validation lesson)
 - [x] 8.5 Tests: bottom-bar item set; card-list branch; scrollWidth guard where assertable
+- [x] 8.6 Mobile toolbar: always-visible search + "Filters & sort" bottom sheet — Show chips,
+      per-type violations, sort by ANY column (field picker + asc/desc), typed per-column
+      filters (values/range/date/text) with instant apply (owner review rounds)
 
 ## 9. Verification and rollout
 
 - [x] 9.1 Template-comment guard test run over all new/edited templates
-- [ ] 9.2 Browser pass on dev stand at 390/900/1440 (both switch states), screenshots into the
+- [x] 9.2 Browser pass on dev stand at 390/900/1440 (both switch states), screenshots into the
       change folder
-- [ ] 9.3 Overview aggregate timing on the loadtest seed survey (before default-ON decision)
-- [ ] 9.4 Update CLAUDE.md mobile-nav vocabulary (Overview/Map/Responses/Perf); note legacy
+- [x] 9.3 Overview aggregate timing on the loadtest seed survey (before default-ON decision)
+- [x] 9.4 Update CLAUDE.md mobile-nav vocabulary (Overview/Map/Responses/Perf); note legacy
       template removal as a future change
 - [ ] 9.5 Flip `RESPONSES_V2` default ON (separate commit, after owner review on PR preview)

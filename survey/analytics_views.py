@@ -292,6 +292,12 @@ def analytics_table(request, survey_uuid):
         'issues_filter': ','.join(issues_filter) if issues_filter else '',
         'issues_filter_list': issues_filter or [],
         'search_query': request.GET.get('q', '').strip(),
+        'filtered_ids_json': json.dumps(result.pop('filtered_ids', None) or []),
+        # Column metadata for the mobile sort/filter sheet: key, label, type.
+        'columns_meta_json': json.dumps([
+            {'key': c['key'], 'label': c['label'], 'input_type': c['input_type']}
+            for c in result['columns']
+        ]),
         'default_hidden_json': json.dumps(
             [c['key'] for c in result['columns'] if c.get('default_hidden')]
         ),

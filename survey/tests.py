@@ -12053,6 +12053,23 @@ class ResponsesV2TableTest(TestCase):
         seqs_desc = [int(m) for m in re.findall(r'#(\d+)\n', desc.content.decode())]
         self.assertEqual(seqs_desc, sorted(seqs_desc, reverse=True))
 
+    @override_settings(RESPONSES_V2=True)
+    def test_filtered_ids_ship_for_select_all_matching(self):
+        """
+        GIVEN a filtered set larger than one page
+        WHEN GET the table partial with a small page size
+        THEN the full filtered id list ships so "Select all N matching" can
+             outreach the visible page
+        """
+        response = self.client.get(self.url + '?page_size=10')
+        self.assertContains(response, 'filtered-session-ids')
+        content = response.content.decode()
+        import json as _json, re as _re
+        m = _re.search(r'id="filtered-session-ids">(\[[^<]*\])<', content)
+        self.assertIsNotNone(m)
+        ids = _json.loads(m.group(1))
+        self.assertEqual(len(ids), 2)  # both sessions, beyond any single page
+
     @override_settings(RESPONSES_V2=False)
     def test_legacy_table_unchanged(self):
         """
