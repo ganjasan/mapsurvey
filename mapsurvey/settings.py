@@ -80,6 +80,11 @@ MIDDLEWARE = [
     # inert when POSTHOG_PROJECT_KEY is unset -- see survey.apps.SurveyConfig.
     'posthog.integrations.django.PosthogContextMiddleware',
     'survey.middleware.LastActivityMiddleware',
+    # After auth (it needs request.user) and deliberately not before Locale:
+    # it writes the language COOKIE, which LocaleMiddleware reads on the NEXT
+    # request. Reading the preference in time for this request is impossible --
+    # LocaleMiddleware resolves the language before request.user exists.
+    'survey.middleware.CreatorLanguageCookieMiddleware',
     # Applies the noindex flag survey.access_control sets. Must sit outside the
     # view so it also reaches the redirects survey_header returns.
     'survey.middleware.SurveyIndexingMiddleware',
@@ -186,9 +191,31 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en'
 
+# Creator interface languages (openspec: creator-ui-localization). Chosen from
+# creator counts in production rather than market size: en 66, id 30, es 15,
+# fr 12, de 9, pt 7, pl 6 — ~97% of real creators. `id` stays despite arriving
+# as a single May-2026 course cohort, because cohort channels recur.
+#
+# This is NOT the survey-content language list: creators pick from 75 languages
+# for their own question text, which is a separate system entirely (see
+# survey-content-translation). Each name is written in its own language — it is
+# read by someone who may not be reading English comfortably.
+#
+# A language listed here with an empty catalog falls back to English per string,
+# which is why the marketing pages (deferred) stay English while the editor is
+# translated.
+# A language is listed here only once its catalog is COMPLETE. A half-filled
+# catalog falls back per string, so offering it would hand the creator an
+# English interface sprinkled with their own language — worse than English,
+# and worse than not offering it. Catalogs for ru/es/fr/pt/pl/id exist in the
+# repo and are being filled; each joins this list when it is done.
+#
+# Narrowing this list does NOT affect respondents: their chrome is activated
+# per survey with `translation.activate()`, which resolves against the catalog
+# on disk and ignores LANGUAGES entirely — verified across all 75 locales.
 LANGUAGES = [
     ('en', 'English'),
-    ('ru', 'Русский'),
+    ('de', 'Deutsch'),
 ]
 
 TIME_ZONE = 'UTC'

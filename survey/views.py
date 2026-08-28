@@ -686,9 +686,15 @@ def survey_language_select(request, survey_slug):
 	if request.method == 'POST':
 		selected_language = request.POST.get('language')
 		if selected_language and selected_language in survey.available_languages:
-			# Activate Django i18n language
+			# Activate Django i18n language. Deliberately NOT written to a
+			# site-wide Django language key: since Django 4.0 the session is not
+			# consulted at all (`get_language_from_request` reads URL prefix,
+			# LANGUAGE_COOKIE_NAME, then Accept-Language), so the old
+			# `session['_language']` write did nothing -- and once a real
+			# language cookie exists for creators, a respondent picking a survey
+			# language must not reach across and re-language the editor.
+			# `session['survey_language']` below is ours and IS read, further down.
 			translation.activate(selected_language)
-			request.session['_language'] = selected_language
 
 			# Create or update survey session with selected language
 			if request.session.get('survey_session_id'):

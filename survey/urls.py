@@ -28,6 +28,11 @@ urlpatterns = [
     re_path(r'^org/(?P<slug>[-.\w]+)/invite/$', org_views.org_send_invitation, name='org_send_invitation'),
     path('invitations/<uuid:token>/accept/', org_views.accept_invitation, name='accept_invitation'),
 
+    # Creator UI language. Deliberately NOT inside any i18n_patterns block: the
+    # creator's language comes from their stored preference, never from the URL,
+    # and editor URLs must stay stable.
+    path('editor/language/', editor_views.set_creator_language, name='set_creator_language'),
+
     # WYSIWYG survey editor
     path('editor/surveys/new/', editor_views.editor_survey_create, name='editor_survey_create'),
     path('editor/generation/<int:event_id>/', editor_views.editor_generation_status, name='editor_generation_status'),
