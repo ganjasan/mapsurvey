@@ -4,7 +4,9 @@
             <i class="fas fa-clock"></i>
             {{ session.start_datetime|date:"Y-m-d H:i" }}
         </small>
+        {% if not RESPONSES_V2 %}{# v2 drawer titles by per-survey sequence; the raw pk would contradict it #}
         <span class="badge badge-secondary">Session #{{ session.id }}</span>
+        {% endif %}
         {% if session.validation_status == 'approved' %}<span class="badge badge-success">Approved</span>
         {% elif session.validation_status == 'not_approved' %}<span class="badge badge-danger">Not approved</span>
         {% elif session.validation_status == 'on_hold' %}<span class="badge badge-warning text-dark">On hold</span>
@@ -25,6 +27,28 @@
             {% endif %}
         </div>
     </div>
+
+    {% if RESPONSES_V2 and is_editor and not session.is_deleted %}
+    {% comment %}
+    v2 drawer: the status control lives in the detail surface (spec
+    responses-detail-drawer) — chips apply via the existing endpoint without
+    closing the surface.
+    {% endcomment %}
+    <div class="rv2-detail-status mb-3" style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button type="button" class="rv2-chip {% if session.validation_status == 'approved' %}active{% endif %}"
+                onclick="rv2SetStatus({{ session.id }}, '{% if session.validation_status == 'approved' %}{% else %}approved{% endif %}')">
+            ✓ Approved
+        </button>
+        <button type="button" class="rv2-chip {% if session.validation_status == 'on_hold' %}active{% endif %}"
+                onclick="rv2SetStatus({{ session.id }}, '{% if session.validation_status == 'on_hold' %}{% else %}on_hold{% endif %}')">
+            ⏸ On hold
+        </button>
+        <button type="button" class="rv2-chip {% if session.validation_status == 'not_approved' %}active{% endif %}"
+                onclick="rv2SetStatus({{ session.id }}, '{% if session.validation_status == 'not_approved' %}{% else %}not_approved{% endif %}')">
+            ✕ Rejected
+        </button>
+    </div>
+    {% endif %}
 
     {% if answer_rows %}
     <table class="table table-sm table-striped" style="font-size:0.85rem;">

@@ -1,0 +1,34 @@
+/* ── SelectionManager ─────────────────────────────────────────── */
+window.selectionManager = (function() {
+    var _selected = new Set();
+    var _allSessionIds = new Set();
+    var _listeners = [];
+
+    function _notify() { _listeners.forEach(function(fn) { fn(); }); }
+
+    return {
+        init: function(allIds) { _allSessionIds = new Set(allIds); },
+        onChange: function(fn) { _listeners.push(fn); },
+
+        select: function(ids) { ids.forEach(function(id) { _selected.add(id); }); _notify(); },
+        deselect: function(ids) { ids.forEach(function(id) { _selected.delete(id); }); _notify(); },
+        toggle: function(id) { if (_selected.has(id)) _selected.delete(id); else _selected.add(id); _notify(); },
+        clear: function() { _selected.clear(); _notify(); },
+        setSelection: function(ids) { _selected = new Set(ids); _notify(); },
+
+        invert: function() {
+            var universe = window.filterManager ? window.filterManager.getVisibleSids() : _allSessionIds;
+            if (universe === null) universe = _allSessionIds;
+            var newSel = new Set();
+            universe.forEach(function(id) { if (!_selected.has(id)) newSel.add(id); });
+            _selected = newSel; _notify();
+        },
+
+        isSelected: function(id) { return _selected.has(id); },
+        getSelected: function() { return _selected; },
+        count: function() { return _selected.size; },
+        hasSelection: function() { return _selected.size > 0; },
+    };
+})();
+
+var _tableLoaded = false;

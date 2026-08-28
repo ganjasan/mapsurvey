@@ -441,10 +441,10 @@ document.addEventListener('DOMContentLoaded', function() {
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
             [
-                { name: 'pointer',   icon: 'fa-mouse-pointer', title: 'Select (click, Ctrl+click to add)' },
-                { name: 'rectangle', icon: 'fa-vector-square',  title: 'Rectangle select' },
-                { name: 'polygon',   icon: 'fa-draw-polygon',   title: 'Polygon select' },
-                { name: 'details',   icon: 'fa-info-circle',    title: 'Session details' },
+                { name: 'pointer',   icon: 'fa-mouse-pointer', title: 'Select (click, Ctrl+click to add)', label: 'Select' },
+                { name: 'rectangle', icon: 'fa-vector-square',  title: 'Rectangle select', label: 'Box' },
+                { name: 'polygon',   icon: 'fa-draw-polygon',   title: 'Polygon select', label: 'Lasso' },
+                { name: 'details',   icon: 'fa-info-circle',    title: 'Session details', label: 'Details' },
             ].forEach(function(t) {
                 var btn = document.createElement('button');
                 btn.className = 'geo-toolbar-btn';
@@ -454,6 +454,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 var icon = document.createElement('i');
                 icon.className = 'fas ' + t.icon;
                 btn.appendChild(icon);
+                {% if RESPONSES_V2 %}
+                // v2 (audit D6): the selection tools are labeled controls, not
+                // icon-only buttons no one discovers.
+                var lbl = document.createElement('span');
+                lbl.className = 'geo-toolbar-label';
+                lbl.textContent = t.label;
+                btn.appendChild(lbl);
+                {% endif %}
                 btn.addEventListener('click', function() { window.setGeoTool(t.name); });
                 div.appendChild(btn);
             });

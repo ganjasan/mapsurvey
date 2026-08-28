@@ -1,0 +1,742 @@
+{% extends "editor/editor_base.html" %}
+
+{% block page_title %}Results – {{ survey.name }}{% endblock %}
+
+{% load static %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/range-slider.js' %}"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin="anonymous"></script>
+{% include "editor/partials/_analytics_styles.html" %}
+{# v2 sheet loads after the shared styles so its overrides win. #}
+<link rel="stylesheet" href="{% static 'css/responses-v2.css' %}">
+{% endblock %}
+
+{% block navbar_content %}
+<span class="survey-name">{{ survey.name }}</span>
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="results" %}
+{% endblock %}
+
+{% block content %}
+<div id="responses-v2" class="rv2">
+    {% if survey.is_draft_copy %}
+    <div class="rv2-draft-note">
+        <i class="fas fa-info-circle mr-1"></i>
+        {% if current_version == 'draft' %}
+        Test responses collected while previewing this draft. They are deleted when the draft is
+        published or discarded.
+        {% else %}
+        Responses of the published survey. This draft's own preview responses are under
+        <strong>Draft (test)</strong> in the version picker.
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {# ── Pane row: the single pane-selection level ─────────────────────── #}
+    <div class="rv2-panerow" role="tablist" aria-label="Responses panes">
+        <button type="button" class="rv2-pane-tab" data-pane="overview" role="tab">
+            <i class="fas fa-circle-notch"></i> Overview
+        </button>
+        <button type="button" class="rv2-pane-tab" data-pane="map" role="tab">
+            <i class="fas fa-map"></i> Map
+        </button>
+        <button type="button" class="rv2-pane-tab" data-pane="responses" role="tab">
+            <i class="fas fa-list"></i> Responses
+            {% if flagged_count %}<span class="rv2-badge" id="rv2-responses-badge">{{ flagged_count }}</span>{% endif %}
+        </button>
+        <button type="button" class="rv2-pane-tab" data-pane="charts" role="tab">
+            <i class="fas fa-chart-bar"></i> Charts
+        </button>
+        <button type="button" class="rv2-pane-tab" data-pane="performance" role="tab">
+            <i class="fas fa-chart-line"></i> Performance
+        </button>
+        <div class="rv2-panerow-end">
+            <button type="button" id="rv2-split-btn" class="rv2-chip rv2-split-control"
+                    onclick="rv2ToggleSplit()" title="Show two panes side by side">
+                <i class="fas fa-columns"></i> Split view
+            </button>
+            <button type="button" id="rv2-split-reset" class="rv2-chip rv2-split-control"
+                    onclick="rv2ResetSplit()" style="display:none;" title="Back to a single pane">
+                ✕ Reset layout
+            </button>
+            {% if version_choices %}
+            <select id="version-scope-select" class="rv2-version-select"
+                    title="Which survey version's responses to show"
+                    onchange="location.search = this.value === 'all' ? '' : ('?version=' + this.value);">
+                {% for c in version_choices %}
+                {% if c.value == 'draft' %}<option disabled>──────────</option>{% endif %}
+                <option value="{{ c.value }}" {% if c.value == current_version %}selected{% endif %}>{{ c.label }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
+            <a href="/surveys/{{ survey.uuid }}/download?version={{ current_version }}"
+               class="btn btn-sm btn-outline-secondary rv2-download"
+               title="Download clean responses (CSV + GeoJSON)">
+                <i class="fas fa-download"></i> Download
+            </a>
+        </div>
+    </div>
+
+    {# ── Global filter pills — the shared engine's _updatePills renders here. #}
+    <div id="filter-pills-bar" class="rv2-filter-pills" style="display:none;"></div>
+    <div id="hidden-indicator" style="display:none;padding:0.15rem 1.5rem;flex-shrink:0;">
+        <button class="btn btn-sm btn-link p-0" style="font-size:0.78rem;color:#6b7280;" onclick="filterManager.showAll()">
+            <i class="fas fa-eye"></i> <span id="hidden-count">0</span> hidden — Show all
+        </button>
+    </div>
+
+    {# ── Pane containers ─────────────────────────────────────────────────── #}
+    <div class="rv2-panes">
+        <section id="rv2-pane-overview" class="rv2-pane" data-pane-content="overview" hidden>
+            {% include "editor/partials/analytics_overview_pane.html" %}
+        </section>
+
+        <section id="rv2-pane-map" class="rv2-pane" data-pane-content="map" hidden>
+            {% if geo_features_count %}
+            <div class="panel-selection-bar" style="display:none;padding:0.25rem 0.75rem;background:#e8f0fe;border-radius:4px;margin:0.25rem 1.5rem 0;flex-shrink:0;font-size:0.8rem;">
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                    <button class="btn btn-sm btn-link p-0" onclick="selectionManager.clear()" style="color:#1a56db;"><i class="fas fa-times"></i></button>
+                    <span class="panel-sel-count" style="font-weight:600;">0 selected</span>
+                    <span style="border-left:1px solid #bfdbfe;height:16px;"></span>
+                    <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.hideSelected()"><i class="fas fa-eye-slash"></i> Hide</button>
+                    <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="filterManager.keepOnlySelected()"><i class="fas fa-filter"></i> Keep only</button>
+                    <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> Invert</button>
+                </div>
+            </div>
+            <div id="rv2-map-wrap">
+                {% include "editor/partials/analytics_geo_map.html" %}
+            </div>
+            {% else %}
+            <div class="rv2-empty" data-testid="rv2-map-empty">
+                <div class="rv2-empty-icon"><i class="fas fa-map"></i></div>
+                <b>No geo questions in this survey</b>
+                <p>Add a point, line or polygon question in the Survey tab — responses will appear
+                here on a live map.</p>
+                <a class="btn btn-outline-secondary btn-sm" href="/editor/surveys/{{ survey.uuid }}/">
+                    <i class="fas fa-plus"></i> Add a map question
+                </a>
+            </div>
+            {% endif %}
+        </section>
+
+        <section id="rv2-pane-responses" class="rv2-pane" data-pane-content="responses" hidden>
+            <div id="pane-table" style="position:relative;display:flex;gap:0;height:100%;flex:1;min-height:0;">
+                <div id="pane-table-content" style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
+                    <div class="text-center text-muted py-5"><i class="fas fa-table mr-2"></i>Loading table...</div>
+                </div>
+                {# Violations live in the toolbar chips (Issues N) — no sidebar in v2. #}
+            </div>
+        </section>
+
+        <section id="rv2-pane-charts" class="rv2-pane" data-pane-content="charts" hidden>
+            <div style="flex:1;min-height:0;overflow-y:auto;">
+                <div class="analytics-main">
+                    <div id="rv2-filter-hint" class="rv2-filter-hint">
+                        <i class="fas fa-hand-pointer"></i>
+                        Click a chart bar to filter — Map, Responses and Charts stay in sync.
+                    </div>
+                    <div class="analytics-section-label">Questions &amp; Responses</div>
+                    {% include "editor/partials/analytics_daily_chart.html" %}
+                    {% include "editor/partials/analytics_question_stats.html" %}
+                </div>
+            </div>
+        </section>
+
+        <section id="rv2-pane-performance" class="rv2-pane" data-pane-content="performance" hidden>
+            <div style="flex:1;min-height:0;overflow-y:auto;">
+                <div class="analytics-main">
+                    {% include "editor/partials/analytics_performance.html" %}
+                </div>
+            </div>
+        </section>
+
+        {% comment %}
+        Detail drawer (openspec: responses-v2-refactor, responses-detail-drawer).
+        A flex sibling of the pane sections: desktop — side panel beside the
+        active pane; tablet — overlay; phone — full screen (CSS tiers). Fed by
+        the same analytics_session_detail endpoint the modal used.
+        {% endcomment %}
+        <aside id="rv2-drawer" class="rv2-drawer" hidden aria-label="Response details">
+            <div class="rv2-drawer-head">
+                <span id="rv2-drawer-title">Response</span>
+                <div class="rv2-drawer-nav">
+                    <span id="rv2-drawer-changed" style="display:none;color:#d97706;" title="The list changed since this was opened">
+                        <i class="fas fa-exclamation-triangle"></i> list changed
+                    </span>
+                    <button type="button" id="rv2-drawer-prev" onclick="rv2DrawerStep(-1)" title="Previous">‹</button>
+                    <button type="button" id="rv2-drawer-next" onclick="rv2DrawerStep(1)" title="Next">›</button>
+                    <button type="button" onclick="rv2CloseDrawer()" title="Close">✕</button>
+                </div>
+            </div>
+            <div id="rv2-drawer-confirm" style="display:none;"></div>
+            <div class="rv2-drawer-body" id="rv2-drawer-body">
+                <div class="text-center text-muted py-4">Loading...</div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+{# Validation Settings Modal #}
+<div class="modal fade" id="validationSettingsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-cog"></i> Validation Settings</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label style="font-size:0.85rem;font-weight:600;">Fast completion threshold (seconds)</label>
+                    <input type="number" id="vs-fast-threshold" class="form-control form-control-sm" value="30" min="1" step="1">
+                    <small class="text-muted">Sessions completed faster than this are flagged</small>
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.85rem;font-weight:600;">Duplicate detection window (hours)</label>
+                    <input type="number" id="vs-dup-window" class="form-control form-control-sm" value="1" min="0.1" step="0.5">
+                    <small class="text-muted">Sessions from same browser within this window are flagged</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                <button class="btn btn-sm btn-primary" onclick="saveValidationSettings()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include "editor/partials/_lifecycle_scripts.html" %}
+
+{# ── Shared engines (also included by the legacy template) ─────────────── #}
+<script>
+{% include "editor/partials/_analytics_selection_manager.html" %}
+{% include "editor/partials/_analytics_table_engine.html" %}
+</script>
+
+<script type="application/json" id="answer-matrix-data">{{ answer_matrix_json|safe }}</script>
+<script type="application/json" id="session-hours-data">{{ session_hours_json|safe }}</script>
+<script type="application/json" id="hourly-data-json">{{ hourly_data_json|safe }}</script>
+<script type="application/json" id="geo-json-data">{{ geo_json|safe }}</script>
+
+<script>
+{% include "editor/partials/_analytics_filter_engine.html" %}
+</script>
+
+<script>
+/* ── Pane router (openspec: responses-v2-refactor, design D-F) ────────────
+   One hash-addressable router shared by the pane row and the mobile bottom
+   bar. `#overview` … `#performance` select panes; legacy deep-link anchors
+   inside a pane (e.g. #traffic-sources from Share) resolve to their owning
+   pane and then scroll. */
+(function () {
+    'use strict';
+    var PANES = ['overview', 'map', 'responses', 'charts', 'performance'];
+    var ANCHOR_PANES = { 'traffic-sources': 'performance' };
+    var _listeners = [];
+    var _splitKey = 'rv2Split_{{ survey.uuid }}';
+    /* Split view (spec: analytics-data-workspace "explicit labeled mode"):
+       a simple two-pane layout — the active pane on the left, the last
+       differently-selected pane on the right. Desktop only; persisted per
+       survey; reset restores the single pane and clears the store. */
+    var split = { on: false, right: null };
+
+    function _isDesktop() {
+        return window.matchMedia('(min-width: 1200px)').matches;
+    }
+
+    function currentPane() {
+        var h = (location.hash || '').replace('#', '');
+        if (PANES.indexOf(h) !== -1) return h;
+        if (ANCHOR_PANES[h]) return ANCHOR_PANES[h];
+        return 'overview';
+    }
+
+    function _saveSplit() {
+        try {
+            if (split.on) localStorage.setItem(_splitKey, JSON.stringify(split));
+            else localStorage.removeItem(_splitKey);
+        } catch (e) {}
+    }
+
+    function _renderPanes(active) {
+        var showSplit = split.on && _isDesktop() && split.right && split.right !== active;
+        document.querySelectorAll('[data-pane-content]').forEach(function (el) {
+            var pane = el.getAttribute('data-pane-content');
+            el.hidden = !(pane === active || (showSplit && pane === split.right));
+        });
+        document.querySelectorAll('.rv2-pane-tab[data-pane], .mobile-tabbar button[data-pane]').forEach(function (btn) {
+            var pane = btn.getAttribute('data-pane');
+            btn.classList.toggle('active', pane === active);
+            btn.classList.toggle('active-secondary', !!showSplit && pane === split.right);
+        });
+        var btn = document.getElementById('rv2-split-btn');
+        var reset = document.getElementById('rv2-split-reset');
+        if (btn) btn.classList.toggle('active', split.on);
+        if (reset) reset.style.display = split.on ? '' : 'none';
+        /* Leaflet must re-measure whenever pane geometry changes. */
+        setTimeout(function () {
+            if (window.analyticsMap) window.analyticsMap.invalidateSize();
+            if (window._rv2OverviewMap) window._rv2OverviewMap.invalidateSize();
+            window.dispatchEvent(new Event('resize'));
+        }, 120);
+    }
+
+    function setPane(name, opts) {
+        if (PANES.indexOf(name) === -1) name = 'overview';
+        if (split.on && _isDesktop()) {
+            /* Selecting the right pane's tab swaps the sides; any other tab
+               replaces the left (active) pane and keeps the companion. */
+            var prev = currentPane();
+            if (name === split.right) split.right = prev;
+        }
+        _renderPanes(name);
+        if (!opts || !opts.fromHash) {
+            if (('#' + name) !== location.hash) {
+                history.replaceState(null, '', '#' + name);
+            }
+        }
+        _saveSplit();
+        _listeners.forEach(function (fn) { fn(name); });
+    }
+
+    window.rv2ToggleSplit = function () {
+        if (!_isDesktop()) return;
+        if (split.on) { window.rv2ResetSplit(); return; }
+        split.on = true;
+        var active = currentPane();
+        /* Default companion: the next pane in the row that isn't active. */
+        split.right = PANES.filter(function (p) { return p !== active; })[0];
+        _renderPanes(active);
+        _saveSplit();
+        _listeners.forEach(function (fn) { fn(active); });
+    };
+
+    window.rv2ResetSplit = function () {
+        split = { on: false, right: null };
+        _renderPanes(currentPane());
+        _saveSplit();
+    };
+
+    function applyHash() {
+        var h = (location.hash || '').replace('#', '');
+        setPane(currentPane(), { fromHash: true });
+        if (ANCHOR_PANES[h]) {
+            setTimeout(function () {
+                var el = document.getElementById(h);
+                if (el) {
+                    var y = el.getBoundingClientRect().top + window.pageYOffset - 70;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+            }, 150);
+        }
+    }
+
+    window.rv2Router = {
+        setPane: setPane,
+        currentPane: currentPane,
+        onPaneChange: function (fn) { _listeners.push(fn); },
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.rv2-pane-tab[data-pane]').forEach(function (btn) {
+            btn.addEventListener('click', function () { setPane(btn.getAttribute('data-pane')); });
+        });
+        try {
+            var saved = JSON.parse(localStorage.getItem(_splitKey));
+            if (saved && saved.on && _isDesktop() && PANES.indexOf(saved.right) !== -1) {
+                split = { on: true, right: saved.right };
+            }
+        } catch (e) {}
+        applyHash();
+    });
+    window.addEventListener('hashchange', applyHash);
+}());
+
+/* ── v2 table helpers: chip filters, row activation, status chip menu ──── */
+function rv2Chip(kind) {
+    var form = document.getElementById('table-state-form');
+    if (!form) return;
+    form.querySelector('[name=trash]').value = kind === 'trash' ? '1' : '0';
+    form.querySelector('[name=issues]').value = kind === 'complete' ? 'complete' : '';
+    loadTable({page: '1'});
+}
+
+/* ── Issues menu: per-type multi-select with counts ────────────────────
+   Restores what the Violations sidebar did (owner review): individual
+   violation types, grouped errors/warnings, with counts — as a menu instead
+   of a 230px panel. Writes the comma-separated `issues` param. */
+function rv2IssuesMenu(event, trigger) {
+    event.stopPropagation();
+    var open = document.getElementById('rv2-issues-menu');
+    if (open) { open.remove(); return; }
+
+    var counts = {};
+    var el = document.getElementById('anomaly-counts-data');
+    if (el) { try { counts = JSON.parse(el.textContent); } catch (e) {} }
+    var form = document.getElementById('table-state-form');
+    var activeRaw = form ? (form.querySelector('[name=issues]') || {}).value || '' : '';
+    var active = new Set(activeRaw.split(',').filter(function (v) { return v && v !== 'complete'; }));
+
+    var menu = document.createElement('div');
+    menu.id = 'rv2-issues-menu';
+    menu.className = 'attr-col-menu-dropdown rv2-issues-menu';
+    var rect = trigger.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.left = rect.left + 'px';
+    menu.style.top = (rect.bottom + 4) + 'px';
+    menu.addEventListener('click', function (e) { e.stopPropagation(); });
+
+    function apply() {
+        var picked = [];
+        menu.querySelectorAll('input[data-issue]:checked').forEach(function (cb) {
+            picked.push(cb.dataset.issue);
+        });
+        if (form) {
+            form.querySelector('[name=issues]').value = picked.join(',');
+            form.querySelector('[name=trash]').value = '0';
+        }
+        loadTable({page: '1'});
+    }
+
+    function group(title, defs) {
+        var keys = Object.keys(defs).filter(function (k) { return (counts[k] || 0) > 0; });
+        if (!keys.length) return;
+        var head = document.createElement('div');
+        head.className = 'rv2-issues-group';
+        head.textContent = title;
+        menu.appendChild(head);
+        keys.forEach(function (key) {
+            var row = document.createElement('label');
+            row.className = 'attr-col-menu-item rv2-issues-item';
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.dataset.issue = key;
+            cb.checked = active.has(key);
+            cb.addEventListener('change', apply);
+            var icon = document.createElement('i');
+            icon.className = defs[key].icon;
+            icon.style.color = defs[key].color;
+            var label = document.createElement('span');
+            label.textContent = defs[key].label;
+            var badge = document.createElement('span');
+            badge.className = 'rv2-issues-count';
+            badge.textContent = counts[key];
+            row.appendChild(cb); row.appendChild(icon);
+            row.appendChild(label); row.appendChild(badge);
+            menu.appendChild(row);
+        });
+    }
+
+    group('Errors', _ANOMALY_ERRORS);
+    group('Warnings', _ANOMALY_WARNINGS);
+
+    if (!menu.childNodes.length) {
+        var none = document.createElement('div');
+        none.className = 'attr-col-menu-item';
+        none.style.color = '#6b7280';
+        none.textContent = 'No violations in this survey';
+        menu.appendChild(none);
+    } else {
+        var clear = document.createElement('div');
+        clear.className = 'attr-col-menu-item rv2-issues-clear';
+        clear.textContent = 'Clear violation filters';
+        clear.addEventListener('click', function () {
+            menu.querySelectorAll('input[data-issue]').forEach(function (cb) { cb.checked = false; });
+            apply();
+            menu.remove();
+        });
+        menu.appendChild(clear);
+    }
+
+    document.body.appendChild(menu);
+    setTimeout(function () {
+        document.addEventListener('click', function close() {
+            var m = document.getElementById('rv2-issues-menu');
+            if (m) m.remove();
+            document.removeEventListener('click', close);
+        }, { once: true });
+    }, 0);
+}
+
+/* ── Free-text search across all columns ───────────────────────────────── */
+var _rv2SearchTimer = null;
+function rv2SearchDebounced(value) {
+    clearTimeout(_rv2SearchTimer);
+    _rv2SearchTimer = setTimeout(function () {
+        var form = document.getElementById('table-state-form');
+        if (!form) return;
+        form.querySelector('[name=q]').value = value;
+        window._rv2SearchFocus = true;
+        loadTable({page: '1'});
+    }, 350);
+}
+document.addEventListener('htmx:afterSwap', function (evt) {
+    /* The whole partial is swapped, so the input is a new node — put the
+       caret back or every keystroke after the debounce would be lost. */
+    if (evt.detail.target && evt.detail.target.id === 'pane-table-content' && window._rv2SearchFocus) {
+        window._rv2SearchFocus = false;
+        var input = document.getElementById('rv2-search-input');
+        if (input) {
+            input.focus();
+            var v = input.value;
+            input.setSelectionRange(v.length, v.length);
+        }
+    }
+});
+
+function rv2RowOpen(event, sid) {
+    /* The row is the click target; interactive children keep their own clicks.
+       Answer cells stay clickable — their edit affordance is DOUBLE click. */
+    if (event.target.closest('input, button, select, a, label')) return;
+    rv2OpenSession(sid);
+}
+
+function rv2SetStatus(sid, value) {
+    var url = '{% url "analytics_set_status" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': _getCsrfToken(),
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'validation_status=' + encodeURIComponent(value),
+    }).then(function (resp) {
+        if (!resp.ok) return;
+        loadTable();
+        /* Drawer stays open across a status change (spec) — refresh it. */
+        if (typeof _rv2DrawerSid !== 'undefined' && _rv2DrawerSid === sid) {
+            rv2OpenDrawer(sid);
+        }
+    });
+}
+
+function rv2StatusMenu(event, trigger, sid, current) {
+    event.stopPropagation();
+    var existing = document.getElementById('rv2-status-menu');
+    if (existing) { existing.remove(); if (existing._sid === sid) return; }
+    var menu = document.createElement('div');
+    menu.id = 'rv2-status-menu';
+    menu._sid = sid;
+    menu.className = 'attr-col-menu-dropdown';
+    var rect = trigger.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.left = rect.left + 'px';
+    menu.style.top = (rect.bottom + 2) + 'px';
+    [['', '— No status'], ['approved', '✓ Approved'], ['on_hold', '⏸ On hold'], ['not_approved', '✕ Rejected']]
+        .forEach(function (opt) {
+            var item = document.createElement('div');
+            item.className = 'attr-col-menu-item';
+            item.textContent = opt[1] + (opt[0] === current ? ' •' : '');
+            item.addEventListener('click', function () {
+                menu.remove();
+                rv2SetStatus(sid, opt[0]);
+            });
+            menu.appendChild(item);
+        });
+    document.body.appendChild(menu);
+    setTimeout(function () {
+        document.addEventListener('click', function close() {
+            menu.remove();
+            document.removeEventListener('click', close);
+        }, { once: true });
+    }, 0);
+}
+
+/* ── Detail drawer (design D-D): same endpoint as the old modal ────────── */
+var _rv2DrawerSid = null;
+var _rv2DrawerSnapshot = [];
+
+function rv2CurrentIds() {
+    return Array.prototype.map.call(
+        document.querySelectorAll('#pane-table-content tr[data-session-id]'),
+        function (tr) { return parseInt(tr.dataset.sessionId, 10); }
+    );
+}
+
+function rv2OpenDrawer(sid) {
+    var drawer = document.getElementById('rv2-drawer');
+    if (!drawer) return;
+    drawer.hidden = false;
+    _rv2DrawerSid = sid;
+    if (!_rv2DrawerSnapshot.length) {
+        /* Snapshot of the list as filtered+sorted at open — prev/next iterate
+           this even when a refresh changes the table underneath (spec). */
+        _rv2DrawerSnapshot = rv2CurrentIds();
+        document.getElementById('rv2-drawer-changed').style.display = 'none';
+    }
+    document.querySelectorAll('#pane-table-content tr.rv2-row-open').forEach(function (tr) {
+        tr.classList.remove('rv2-row-open');
+    });
+    var row = document.querySelector('#pane-table-content tr[data-session-id="' + sid + '"]');
+    if (row) row.classList.add('rv2-row-open');
+    var seqCell = row ? row.querySelector('td[data-col="id"]') : null;
+    document.getElementById('rv2-drawer-title').textContent =
+        'Response ' + (seqCell ? seqCell.textContent.trim() : '#' + sid);
+    var idx = _rv2DrawerSnapshot.indexOf(sid);
+    document.getElementById('rv2-drawer-prev').disabled = idx <= 0;
+    document.getElementById('rv2-drawer-next').disabled =
+        idx === -1 || idx >= _rv2DrawerSnapshot.length - 1;
+    var url = '{% url "analytics_session_detail" survey.uuid 0 %}'.replace(/\/0\/$/, '/' + sid + '/');
+    htmx.ajax('GET', url, { target: '#rv2-drawer-body', swap: 'innerHTML' });
+}
+
+function rv2DrawerStep(delta) {
+    var idx = _rv2DrawerSnapshot.indexOf(_rv2DrawerSid);
+    if (idx === -1) return;
+    var next = _rv2DrawerSnapshot[idx + delta];
+    if (next !== undefined) rv2OpenDrawer(next);
+}
+
+function rv2CloseDrawer() {
+    var drawer = document.getElementById('rv2-drawer');
+    if (drawer) drawer.hidden = true;
+    _rv2DrawerSid = null;
+    _rv2DrawerSnapshot = [];
+    document.querySelectorAll('#pane-table-content tr.rv2-row-open').forEach(function (tr) {
+        tr.classList.remove('rv2-row-open');
+    });
+}
+
+document.addEventListener('htmx:afterSwap', function (evt) {
+    /* The table is lazy in v2: rows arrive after a selection may already exist
+       (e.g. made on the map). Repaint so the new rows carry it. */
+    if (evt.detail.target && evt.detail.target.id === 'pane-table-content'
+        && window.filterManager && !window.filterManager._applying) {
+        window.filterManager._renderSelection();
+    }
+    if (evt.detail.target && evt.detail.target.id === 'pane-table-content' && _rv2DrawerSid) {
+        var row = document.querySelector('#pane-table-content tr[data-session-id="' + _rv2DrawerSid + '"]');
+        if (row) row.classList.add('rv2-row-open');
+        var now = rv2CurrentIds();
+        var changed = now.length !== _rv2DrawerSnapshot.length ||
+            now.some(function (id, i) { return _rv2DrawerSnapshot[i] !== id; });
+        document.getElementById('rv2-drawer-changed').style.display = changed ? '' : 'none';
+    }
+});
+
+/* ── In-page confirmation (no window.confirm on the v2 path) ───────────── */
+function rv2Confirm(message, onOk) {
+    var old = document.getElementById('rv2-confirm-bar');
+    if (old) old.remove();
+    var bar = document.createElement('div');
+    bar.id = 'rv2-confirm-bar';
+    bar.className = 'rv2-confirm-bar';
+    var text = document.createElement('span');
+    text.textContent = message;
+    var ok = document.createElement('button');
+    ok.className = 'btn btn-sm btn-danger';
+    ok.textContent = 'Confirm';
+    ok.addEventListener('click', function () { bar.remove(); onOk(); });
+    var cancel = document.createElement('button');
+    cancel.className = 'btn btn-sm btn-outline-secondary';
+    cancel.textContent = 'Cancel';
+    cancel.addEventListener('click', function () { bar.remove(); });
+    bar.appendChild(text); bar.appendChild(ok); bar.appendChild(cancel);
+    document.body.appendChild(bar);
+}
+
+/* Overrides of the shared engine's destructive + modal paths. Defined after
+   the engine include, so these win. */
+window.loadSessionDetail = rv2OpenDrawer;
+window.trashSession = function (sid) {
+    rv2Confirm('Move response to trash?', function () {
+        var url = '{% url "analytics_session_trash" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+        _sessionAction(url, function () { rv2CloseDrawer(); });
+    });
+};
+window.hardDeleteSession = function (sid) {
+    rv2Confirm('Permanently delete this response? This cannot be undone.', function () {
+        var url = '{% url "analytics_session_hard_delete" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+        _sessionAction(url, function () { rv2CloseDrawer(); });
+    });
+};
+window._bulkAction = function (url, body, confirmMsg) {
+    var run = function () {
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': _getCsrfToken(),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+        }).then(function (resp) { if (resp.ok) loadTable(); });
+    };
+    if (confirmMsg) rv2Confirm(confirmMsg, run); else run();
+};
+
+/* ── Pane lifecycle glue: lazy table load, map/chart resize on reveal ──── */
+(function () {
+    'use strict';
+    window.rv2OpenSession = function (sid) { loadSessionDetail(sid); };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        /* SelectionManager → repaint every surface. Without this subscription
+           selecting on the map changes state but nothing redraws: no selection
+           bar, no highlighted table rows, no chart overlay — i.e. cross-pane
+           selection looks broken (owner review). The legacy template wired this
+           inside its own split-tree bootstrap, which v2 does not use. */
+        if (window.selectionManager) {
+            selectionManager.onChange(function () {
+                if (window.filterManager && !window.filterManager._applying) {
+                    window.filterManager._renderSelection();
+                }
+            });
+        }
+
+        /* Mobile bottom bar feeds the same router as the desktop pane row. */
+        var mbar = document.querySelector('.mobile-tabbar');
+        if (mbar) {
+            mbar.addEventListener('click', function (e) {
+                var btn = e.target.closest('button[data-pane]');
+                if (btn) rv2Router.setPane(btn.getAttribute('data-pane'));
+            });
+        }
+        rv2Router.onPaneChange(function (pane) {
+            if (pane === 'responses' && !_tableLoaded) {
+                _tableLoaded = true;
+                loadTable();
+            }
+            if (pane === 'map') {
+                setTimeout(function () {
+                    var m = window.analyticsMap;
+                    if (m) {
+                        m.invalidateSize();
+                        var allLayers = [];
+                        m.eachLayer(function (l) {
+                            if (l.getBounds || l.getLatLng) allLayers.push(l);
+                        });
+                        if (allLayers.length > 1) {
+                            try { m.fitBounds(L.featureGroup(allLayers).getBounds().pad(0.02)); } catch (e) {}
+                        }
+                    }
+                }, 150);
+            }
+            if (pane === 'charts' || pane === 'performance') {
+                setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 50);
+            }
+        });
+        /* If a deep link lands straight on Responses, load the table now. */
+        if (rv2Router.currentPane() === 'responses' && !_tableLoaded) {
+            _tableLoaded = true;
+            loadTable();
+        }
+
+        /* First-time cross-filter hint: gone forever after the first filter. */
+        var hint = document.getElementById('rv2-filter-hint');
+        if (hint && localStorage.getItem('rv2FilterHintSeen')) hint.remove();
+        if (window.filterManager) {
+            filterManager.registerComponent(function () {
+                if (this.filters.size || this.numericRanges.size || this.timeRange) {
+                    localStorage.setItem('rv2FilterHintSeen', '1');
+                    var h = document.getElementById('rv2-filter-hint');
+                    if (h) h.remove();
+                }
+            });
+        }
+    });
+}());
+</script>
+
+{% include "editor/partials/_mobile_nav.html" with pane_context="responses" %}
+{% endblock %}

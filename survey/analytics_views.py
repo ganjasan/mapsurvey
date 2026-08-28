@@ -103,7 +103,22 @@ def analytics_dashboard(request, survey_uuid):
     perf_service = PerformanceAnalyticsService(survey, version=version)
     funnel = perf_service.get_funnel()
 
-    return render(request, 'editor/analytics_dashboard.html', {
+    # Responses v2 (openspec: responses-v2-refactor): a separate template file, not
+    # in-template conditionals, so the legacy path stays byte-identical and can be
+    # deleted in one commit later.
+    responses_v2 = getattr(settings, 'RESPONSES_V2', False)
+    template_name = (
+        'editor/analytics_dashboard_v2.html'
+        if responses_v2
+        else 'editor/analytics_dashboard.html'
+    )
+
+    # Overview-pane aggregates are v2-only: the legacy template has no Overview
+    # and must not pay for its queries.
+    overview_extras = service.get_overview_extras() if responses_v2 else None
+
+    return render(request, template_name, {
+        'overview_extras': overview_extras,
         'survey': survey,
         'effective_role': request.effective_survey_role,
         'version_choices': version_choices(survey),
@@ -186,6 +201,7 @@ def analytics_session_detail(request, survey_uuid, session_id):
     return render(request, 'editor/partials/analytics_session_detail.html', {
         'survey': survey,
         'session': session,
+        'is_editor': request.effective_survey_role in ('editor', 'owner'),
         'answer_rows': answer_rows,
         'geo_json': json.dumps({'type': 'FeatureCollection', 'features': geo_features}),
         'has_geo': bool(geo_features),
@@ -250,20 +266,35 @@ def analytics_table(request, survey_uuid):
             elif val.startswith('t:'):
                 col_filters[col_key] = {'type': 'text', 'query': val[2:]}
 
+    responses_v2 = getattr(settings, 'RESPONSES_V2', False)
     result = service.get_table_page(
         page=page, page_size=page_size, session_ids=session_ids,
         sort_col=sort_col, sort_dir=sort_dir, col_search=col_search,
         show_trash=show_trash, issues_filter=issues_filter,
-        col_filters=col_filters,
+        col_filters=col_filters, v2=responses_v2,
+        query=request.GET.get('q', '').strip(),
     )
+
+    trash_count = 0
+    if responses_v2:
+        trash_count = (
+            SurveySession.objects.deleted()
+            .filter(survey_id__in=service.scope_ids)
+            .count()
+        )
 
     return render(request, 'editor/partials/analytics_table.html', {
         'survey': survey,
         'show_trash': show_trash,
+        'trash_count': trash_count,
         'is_editor': request.effective_survey_role in ('editor', 'owner'),
         'page_size_options': [10, 25, 50, 100, 250, 500],
         'issues_filter': ','.join(issues_filter) if issues_filter else '',
         'issues_filter_list': issues_filter or [],
+        'search_query': request.GET.get('q', '').strip(),
+        'default_hidden_json': json.dumps(
+            [c['key'] for c in result['columns'] if c.get('default_hidden')]
+        ),
         'anomaly_counts_json': json.dumps(result.pop('anomaly_counts', {})),
         'unique_values_json': json.dumps(result.pop('unique_values', {})),
         'col_filters_json': json.dumps(col_filters),

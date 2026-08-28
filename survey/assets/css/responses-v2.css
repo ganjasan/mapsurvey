@@ -1,0 +1,468 @@
+/* Responses v2 (openspec: responses-v2-refactor).
+ *
+ * One DOM, three media tiers (design D-A):
+ *   ≥1200px  desktop — pane row + split view
+ *   768–1199 tablet  — pane row, no split, drawer becomes overlay
+ *   <768     phone   — bottom bar (via _mobile_nav.html), Charts folds into Overview
+ * Loaded only by analytics_dashboard_v2.html, which renders only when the
+ * RESPONSES_V2 kill switch is on — the legacy template never links this file. */
+
+.rv2 { display: flex; flex-direction: column; min-height: calc(100vh - 56px); }
+
+.rv2-draft-note {
+    margin: 0.6rem 1.5rem 0;
+    background: var(--accent-light);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    color: #374151;
+}
+
+/* ── Pane row ─────────────────────────────────────────────────────────── */
+.rv2-panerow {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0.5rem 1.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+    background: #fff;
+    flex-shrink: 0;
+}
+.rv2-pane-tab {
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0.5rem 1rem 0.65rem;
+    font-size: 0.88rem;
+    color: #6b7280;
+    border-bottom: 2.5px solid transparent;
+    margin-bottom: -1px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.rv2-pane-tab:hover { color: var(--accent); }
+.rv2-pane-tab.active { color: var(--accent); font-weight: 600; border-bottom-color: var(--accent); }
+.rv2-badge {
+    background: #dc2626;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 1px 6px;
+    line-height: 1.4;
+}
+.rv2-panerow-end {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding-bottom: 6px;
+    min-width: 0;
+}
+.rv2-version-select {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: #374151;
+    background: #fff;
+    max-width: 160px;
+}
+.rv2-download { font-size: 0.8rem; white-space: nowrap; }
+
+/* ── Global filter pills ─────────────────────────────────────────────── */
+.rv2-filter-pills {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.45rem 1.5rem;
+    background: var(--accent-light);
+    border-bottom: 1px solid #d0d0ff;
+    font-size: 0.8rem;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+.rv2-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.6rem;
+    background: #fff;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.rv2-pill .rv2-pill-x { font-weight: 700; }
+.rv2-pills-count { color: #4b5563; }
+.rv2-pills-clear { margin-left: auto; cursor: pointer; font-weight: 600; }
+
+/* ── Panes ────────────────────────────────────────────────────────────── */
+.rv2-panes { flex: 1; min-height: 0; display: flex; flex-direction: row; position: relative; }
+.rv2-pane { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+.rv2-pane[hidden] { display: none; }
+/* Split view: two visible panes share the row, divided by a border. */
+.rv2-pane:not([hidden]) + .rv2-pane:not([hidden]) { border-left: 1px solid var(--border-color); }
+.rv2-pane-tab.active-secondary {
+    color: #6366f1;
+    border-bottom-color: #a5b4fc;
+}
+.rv2-chip.active { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+/* ── KPI strip (Overview + shared) ────────────────────────────────────── */
+.rv2-kstrip {
+    display: flex;
+    gap: 10px;
+    padding: 0.75rem 1.5rem;
+    background: #fafafa;
+    border-bottom: 1px solid var(--border-color);
+    align-items: stretch;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+.rv2-kpi {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.45rem 1rem;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+.rv2-kpi b { font-size: 1.25rem; color: var(--accent); }
+.rv2-kpi b.rv2-green { color: #16a34a; }
+.rv2-kpi b.rv2-plain { color: #111827; }
+.rv2-kpi span { font-size: 0.72rem; color: #6b7280; }
+.rv2-kpi .rv2-delta { font-size: 0.72rem; color: #16a34a; font-weight: 600; }
+.rv2-kpi.rv2-flag { border-color: #fcd34d; background: #fffbeb; }
+.rv2-kpi.rv2-flag b { color: #d97706; }
+
+/* ── Overview layout ──────────────────────────────────────────────────── */
+.rv2-overview-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0.9rem 1.5rem 1.5rem;
+    display: grid;
+    grid-template-columns: 2.1fr 1fr;
+    gap: 0.9rem;
+    align-items: start;
+}
+.rv2-ov-main, .rv2-ov-side { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.rv2-card {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.rv2-card > h6 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.7rem 0.9rem 0;
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+.rv2-card > h6 .rv2-lnk { color: var(--accent); font-size: 0.75rem; font-weight: 500; white-space: nowrap; }
+.rv2-card-pad { padding: 0.6rem 0.9rem 0.9rem; }
+#rv2-ov-map { height: 300px; margin-top: 8px; }
+.rv2-ov-two { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+/* Feed entries (needs review / latest responses) */
+.rv2-feed-item {
+    display: flex;
+    gap: 10px;
+    padding: 0.55rem 0.9rem;
+    border-top: 1px solid #f1f2f4;
+    align-items: center;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    background: none;
+    border-left: none; border-right: none; border-bottom: none;
+}
+.rv2-feed-item:first-of-type { border-top: none; }
+.rv2-feed-item:hover { background: #f8f8fb; }
+.rv2-feed-ava {
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    background: var(--accent-light);
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+.rv2-feed-mid { flex: 1; min-width: 0; }
+.rv2-feed-mid b { font-size: 0.78rem; display: block; }
+.rv2-feed-mid span {
+    font-size: 0.7rem; color: #6b7280; display: block;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rv2-chip-status {
+    font-size: 0.62rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+.rv2-chip-status.ok { background: #e8f5ee; color: #16a34a; }
+.rv2-chip-status.warn { background: #fef3c7; color: #d97706; }
+.rv2-chip-status.err { background: #fee2e2; color: #dc2626; }
+.rv2-chip-status.mut { background: #f3f4f6; color: #6b7280; }
+
+/* Empty state */
+.rv2-empty { text-align: center; padding: 4.5rem 2rem; color: #6b7280; margin: auto; }
+.rv2-empty .rv2-empty-icon { font-size: 2.4rem; margin-bottom: 0.8rem; color: #9ca3af; }
+.rv2-empty b { display: block; color: #111827; font-size: 1rem; margin-bottom: 0.4rem; }
+.rv2-empty p { font-size: 0.85rem; max-width: 360px; margin: 0 auto 1rem; }
+
+/* ── Toolbar chips (Responses pane etc.) ──────────────────────────────── */
+.rv2-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.78rem;
+    color: #374151;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.rv2-chip:hover { border-color: var(--accent); color: var(--accent); }
+.rv2-chip.active { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.rv2-chip b { color: #dc2626; }
+
+/* ── Toolbar search ───────────────────────────────────────────────────── */
+.rv2-search {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 0.2rem 0.7rem;
+    background: #fff;
+    color: #9ca3af;
+}
+.rv2-search:focus-within { border-color: var(--accent); color: var(--accent); }
+.rv2-search input {
+    border: none;
+    outline: none;
+    font-size: 0.78rem;
+    width: 170px;
+    color: #374151;
+    background: transparent;
+}
+
+/* ── Issues menu (replaces the Violations sidebar) ────────────────────── */
+.rv2-issues-menu { min-width: 235px; max-height: 60vh; overflow-y: auto; }
+.rv2-issues-group {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9ca3af;
+    font-weight: 700;
+    padding: 8px 12px 2px;
+}
+.rv2-issues-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-weight: normal;
+    cursor: pointer;
+}
+.rv2-issues-item i { width: 16px; font-size: 0.75rem; }
+.rv2-issues-item span:not(.rv2-issues-count) { flex: 1; }
+.rv2-issues-count {
+    font-size: 0.68rem;
+    color: #6b7280;
+    background: #f3f4f6;
+    border-radius: 999px;
+    padding: 1px 7px;
+}
+.rv2-issues-clear {
+    border-top: 1px solid var(--border-color);
+    margin-top: 4px;
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* ── Status chip (Responses table) ────────────────────────────────────── */
+.rv2-status-chip {
+    border: 1px solid var(--border-color);
+    background: #fff;
+    border-radius: 999px;
+    padding: 1px 9px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.rv2-status-chip:disabled { cursor: default; }
+.rv2-status-chip.rv2-st-approved { background: #e8f5ee; color: #16a34a; border-color: #b7e0c8; }
+.rv2-status-chip.rv2-st-on_hold { background: #fef3c7; color: #d97706; border-color: #fcd34d; }
+.rv2-status-chip.rv2-st-not_approved { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
+
+/* v2 table area spacing */
+#rv2-pane-responses #pane-table-content { padding: 0.5rem 1.5rem 0; }
+.rv2-row:hover td { background: #f8f8fb; }
+
+/* ── Detail drawer ────────────────────────────────────────────────────── */
+.rv2-drawer {
+    width: 380px;
+    flex-shrink: 0;
+    background: #fff;
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.rv2-drawer[hidden] { display: none; }
+.rv2-drawer-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+.rv2-drawer-nav { margin-left: auto; display: flex; gap: 8px; align-items: center; color: #6b7280; font-size: 0.78rem; }
+.rv2-drawer-nav button {
+    border: 1px solid var(--border-color); background: #fff; border-radius: 6px;
+    cursor: pointer; padding: 2px 8px; color: #374151; font-size: 0.78rem;
+}
+.rv2-drawer-nav button:disabled { opacity: 0.35; cursor: default; }
+.rv2-drawer-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0.75rem 1rem; }
+.rv2-row-open td { background: var(--accent-light) !important; }
+
+/* In-page confirmation bar (replaces window.confirm on the v2 path) */
+.rv2-confirm-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    z-index: 1100;
+    background: #111827;
+    color: #fff;
+    border-radius: 12px;
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Map pane: the shared geo-map partial fills the pane ─────────────── */
+#rv2-map-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0.5rem 1.5rem 1rem; }
+#rv2-map-wrap .analytics-section {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column;
+    margin-bottom: 0; padding: 0.75rem;
+}
+#rv2-map-wrap #analytics-map { flex: 1; min-height: 0; height: auto; }
+
+/* ── Discoverability (audit D6) ───────────────────────────────────────── */
+#rv2-pane-charts canvas, #rv2-pane-overview canvas { cursor: pointer; }
+.rv2-filter-hint {
+    background: var(--accent-light);
+    border: 1px dashed #c7d2fe;
+    border-radius: 10px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    color: var(--accent);
+    margin-bottom: 0.9rem;
+}
+#rv2-map-wrap .geo-toolbar-btn {
+    width: auto;
+    padding: 0 9px;
+    gap: 5px;
+    display: flex;
+    align-items: center;
+}
+#rv2-map-wrap .geo-toolbar-label { font-size: 0.72rem; font-weight: 600; }
+
+/* ── Tablet: 768–1199 ─────────────────────────────────────────────────── */
+@media (max-width: 1199.98px) {
+    .rv2-split-control { display: none !important; }
+    .rv2-overview-body { grid-template-columns: 1fr; }
+    /* Drawer becomes an overlay over the table */
+    .rv2-drawer {
+        position: absolute;
+        top: 0; right: 0; bottom: 0;
+        width: clamp(320px, 52%, 560px);
+        box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+        z-index: 40;
+    }
+}
+
+/* ── Phone: <768 ──────────────────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+    .rv2 { padding-bottom: 58px; /* fixed bottom tab bar */ }
+    .rv2-panerow { display: none; }           /* bottom bar drives panes */
+    .rv2-filter-pills { padding: 0.45rem 0.9rem; }
+    .rv2-kstrip {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 0.75rem 0.9rem;
+        background: none;
+        border-bottom: none;
+    }
+    .rv2-kpi { display: block; padding: 0.6rem 0.75rem; }
+    .rv2-kpi b { font-size: 1.3rem; display: block; line-height: 1.15; }
+    .rv2-overview-body { padding: 0 0.9rem 1rem; gap: 0.6rem; }
+    #rv2-ov-map { height: 150px; }
+    .rv2-ov-two { grid-template-columns: 1fr; }
+    /* Drawer goes full-screen */
+    .rv2-drawer {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        z-index: 700;
+    }
+    /* Wide content scrolls inside its container, never the document */
+    .rv2-pane { overflow-x: hidden; }
+
+    /* Responses: cards replace the grid; toolbar chips scroll inside their row */
+    #rv2-pane-responses .attr-table-wrapper { display: none; }
+    #rv2-pane-responses .attr-table-toolbar { overflow-x: auto; flex-wrap: nowrap; }
+    #rv2-pane-responses .attr-table-toolbar .attr-table-toolbar-left { flex-wrap: nowrap !important; }
+    #rv2-pane-responses #pane-table-content { padding: 0.5rem 0.9rem 0; }
+    .rv2-mcards { display: block; flex: 1; min-height: 0; overflow-y: auto; }
+    .rv2-mcard {
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        background: #fff;
+        margin-bottom: 8px;
+    }
+
+    /* Map: edge-to-edge, legend as a bottom sheet above the tab bar */
+    #rv2-map-wrap { padding: 0; }
+    #rv2-map-wrap .analytics-section { padding: 0; border: none; border-radius: 0; }
+    #rv2-map-wrap .geo-legend {
+        position: fixed;
+        left: 8px; right: 8px;
+        bottom: 66px;
+        max-width: none;
+        z-index: 500;
+        border-radius: 14px;
+    }
+}
+
+/* Desktop/tablet: the phone card list never renders */
+@media (min-width: 768px) {
+    .rv2-mcards { display: none; }
+}

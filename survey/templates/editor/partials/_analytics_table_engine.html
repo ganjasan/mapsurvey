@@ -1,0 +1,713 @@
+/* ── Attribute table functions ──────────────────────────────────── */
+
+var _tableUrl = '{% url "analytics_table" survey.uuid %}';
+// Version scope for cross-version analytics ('all' or 'vN') — set by the
+// version filter; threaded into the table (and any future partial) requests.
+var _versionScope = '{{ current_version|default:"all"|escapejs }}';
+
+function loadTable(extraParams) {
+    var fm = window.filterManager;
+    var filters = fm ? fm.getFilterParam() : '';
+    var form = document.getElementById('table-state-form');
+    var sort = 'start_datetime', dir = 'desc', page = '1';
+    var searchParams = '';
+    if (form) {
+        sort = form.querySelector('[name=sort]').value || 'start_datetime';
+        dir = form.querySelector('[name=dir]').value || 'desc';
+        page = '1';
+        form.querySelectorAll('input[name^="search_"]').forEach(function(inp) {
+            if (inp.value) searchParams += '&' + inp.name + '=' + encodeURIComponent(inp.value);
+        });
+    }
+    if (extraParams) {
+        if (extraParams.sort) sort = extraParams.sort;
+        if (extraParams.dir) dir = extraParams.dir;
+        if (extraParams.page) page = extraParams.page;
+    }
+    var trash = form ? (form.querySelector('[name=trash]') || {}).value : '0';
+    var pageSize = form ? (form.querySelector('[name=page_size]') || {}).value : '';
+    var issuesVal = form ? (form.querySelector('[name=issues]') || {}).value : '';
+    // Free-text search across every column (v2 toolbar). Empty on the legacy
+    // path, which has no such field.
+    var qVal = form ? (form.querySelector('[name=q]') || {}).value : '';
+    // Collect cf_ column filter params
+    var cfParams = '';
+    if (form) {
+        form.querySelectorAll('input[name^="cf_"]').forEach(function(inp) {
+            if (inp.value) cfParams += '&' + inp.name + '=' + encodeURIComponent(inp.value);
+        });
+    }
+    var url = _tableUrl + '?sort=' + sort + '&dir=' + dir + '&page=' + page
+              + (pageSize ? '&page_size=' + pageSize : '')
+              + (filters ? '&filters=' + encodeURIComponent(filters) : '')
+              + (trash === '1' ? '&trash=1' : '')
+              + (issuesVal ? '&issues=' + encodeURIComponent(issuesVal) : '')
+              + (qVal ? '&q=' + encodeURIComponent(qVal) : '')
+              + (_versionScope !== 'all' ? '&version=' + encodeURIComponent(_versionScope) : '')
+              + cfParams
+              + searchParams;
+    htmx.ajax('GET', url, {target: '#pane-table-content', swap: 'innerHTML'});
+}
+
+function tableSort(colKey, forceDir) {
+    var form = document.getElementById('table-state-form');
+    var currentSort = form ? form.querySelector('[name=sort]').value : '';
+    var currentDir = form ? form.querySelector('[name=dir]').value : 'desc';
+    var newDir = forceDir || (colKey === currentSort && currentDir === 'asc' ? 'desc' : 'asc');
+    loadTable({sort: colKey, dir: newDir, page: '1'});
+    closeColMenu();
+}
+
+var _searchTimer = null;
+function tableSearchDebounced() {
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(function() {
+        var form = document.getElementById('table-state-form');
+        document.querySelectorAll('.attr-search-input').forEach(function(inp) {
+            var existing = form.querySelector('[name="' + inp.name + '"]');
+            if (existing) { existing.value = inp.value; }
+            else {
+                var hidden = document.createElement('input');
+                hidden.type = 'hidden'; hidden.name = inp.name; hidden.value = inp.value;
+                form.appendChild(hidden);
+            }
+        });
+        loadTable({page: '1'});
+    }, 500);
+}
+
+function tablePage(p) {
+    loadTable({page: String(p)});
+}
+
+/* Session detail modal */
+function loadSessionDetail(sid) {
+    var body = document.getElementById('sessionDetailModalBody');
+    body.textContent = '';
+    var spinner = document.createElement('div');
+    spinner.className = 'text-center text-muted py-4';
+    var icon = document.createElement('i');
+    icon.className = 'fas fa-spinner fa-spin';
+    spinner.appendChild(icon);
+    spinner.appendChild(document.createTextNode(' Loading...'));
+    body.appendChild(spinner);
+    if (window._sessionMiniMap) { window._sessionMiniMap.remove(); window._sessionMiniMap = null; }
+    $('#sessionDetailModal').modal('show');
+    var url = '{% url "analytics_session_detail" survey.uuid 0 %}'.replace(/\/0\/$/, '/' + sid + '/');
+    htmx.ajax('GET', url, { target: '#sessionDetailModalBody', swap: 'innerHTML' });
+}
+
+/* Session validation actions */
+function _getCsrfToken() {
+    var m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+}
+function _sessionAction(url, callback) {
+    fetch(url, {
+        method: 'POST',
+        headers: {'X-CSRFToken': _getCsrfToken()},
+    }).then(function(resp) {
+        if (resp.ok) { loadTable(); if (callback) callback(); }
+    });
+}
+function setSessionStatus(sel, sid) {
+    var url = '{% url "analytics_set_status" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': _getCsrfToken(),
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'validation_status=' + encodeURIComponent(sel.value),
+    });
+}
+function trashSession(sid) {
+    if (!confirm('Move session #' + sid + ' to trash?')) return;
+    var url = '{% url "analytics_session_trash" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+    _sessionAction(url, function() { $('#sessionDetailModal').modal('hide'); });
+}
+function restoreSession(sid) {
+    var url = '{% url "analytics_session_restore" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+    _sessionAction(url, function() { $('#sessionDetailModal').modal('hide'); });
+}
+function hardDeleteSession(sid) {
+    if (!confirm('Permanently delete session #' + sid + '? This cannot be undone.')) return;
+    var url = '{% url "analytics_session_hard_delete" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+    _sessionAction(url, function() { $('#sessionDetailModal').modal('hide'); });
+}
+
+/* Bulk operations */
+function _bulkAction(url, body, confirmMsg) {
+    if (confirmMsg && !confirm(confirmMsg)) return;
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': _getCsrfToken(),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+    }).then(function(resp) {
+        if (resp.ok) loadTable();
+    });
+}
+function bulkSetStatus(status) {
+    var ids = getSelectedIds();
+    if (!ids.length) return;
+    _bulkAction(
+        '{% url "analytics_bulk_set_status" survey.uuid %}',
+        {session_ids: ids, status: status}
+    );
+}
+function bulkTrash() {
+    var ids = getSelectedIds();
+    if (!ids.length) return;
+    _bulkAction(
+        '{% url "analytics_bulk_trash" survey.uuid %}',
+        {session_ids: ids},
+        'Move ' + ids.length + ' session(s) to trash?'
+    );
+}
+function bulkRestore() {
+    var ids = getSelectedIds();
+    if (!ids.length) return;
+    _bulkAction(
+        '{% url "analytics_bulk_restore" survey.uuid %}',
+        {session_ids: ids}
+    );
+}
+function bulkHardDelete() {
+    var ids = getSelectedIds();
+    if (!ids.length) return;
+    _bulkAction(
+        '{% url "analytics_bulk_hard_delete" survey.uuid %}',
+        {session_ids: ids},
+        'Permanently delete ' + ids.length + ' session(s)? This cannot be undone.'
+    );
+}
+
+/* Anomalies sidebar */
+var _ANOMALY_ERRORS = {
+    'empty': {label: 'Empty sessions', icon: 'fas fa-ban', color: '#374151'},
+    'incomplete': {label: 'Incomplete', icon: 'fas fa-exclamation-triangle', color: '#d97706'},
+    'missing_required': {label: 'Missing required', icon: 'fas fa-asterisk', color: '#dc2626'},
+    'duplicate': {label: 'Duplicate', icon: 'fas fa-copy', color: '#6b7280'},
+    'self_intersection': {label: 'Self-intersection', icon: 'fas fa-draw-polygon', color: '#dc2626'},
+    'empty_required': {label: 'Empty required field', icon: 'fas fa-exclamation-circle', color: '#dc2626'},
+    'out_of_range': {label: 'Out of range', icon: 'fas fa-arrow-up', color: '#dc2626'},
+};
+var _ANOMALY_WARNINGS = {
+    'fast': {label: 'Fast completion', icon: 'fas fa-bolt', color: '#2563eb'},
+    'numeric_outlier': {label: 'Numeric outlier', icon: 'fas fa-chart-line', color: '#d97706'},
+    'short_text': {label: 'Short text', icon: 'fas fa-font', color: '#d97706'},
+    'area_outlier': {label: 'Area outlier', icon: 'fas fa-expand-arrows-alt', color: '#d97706'},
+};
+function _buildAnomalyItem(key, def, count, isActive) {
+    var row = document.createElement('label');
+    row.className = 'd-flex align-items-center py-1';
+    row.style.cssText = 'cursor:pointer;border-radius:3px;padding:2px 4px 2px 20px;margin:0;font-weight:normal;';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'violation-cb';
+    cb.dataset.violationKey = key;
+    cb.checked = isActive;
+    cb.style.marginRight = '6px';
+    cb.addEventListener('change', function() { applyViolationCheckboxes(); });
+    var icon = document.createElement('i');
+    icon.className = def.icon;
+    icon.style.cssText = 'color:' + def.color + ';width:16px;font-size:0.75rem;';
+    var label = document.createElement('span');
+    label.style.cssText = 'flex:1;margin-left:4px;';
+    label.textContent = def.label;
+    var badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.style.cssText = 'background:' + def.color + ';color:#fff;font-size:0.7rem;';
+    badge.textContent = count;
+    row.appendChild(cb);
+    row.appendChild(icon);
+    row.appendChild(label);
+    row.appendChild(badge);
+    return row;
+}
+function _buildGroupCheckbox(labelText, groupKeys, activeSet, container, groupTotal) {
+    var row = document.createElement('label');
+    row.className = 'd-flex align-items-center';
+    row.style.cssText = 'font-weight:600;font-size:0.75rem;text-transform:uppercase;color:#6b7280;margin:0;padding:2px 0;cursor:pointer;';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.style.marginRight = '6px';
+    var activeKeys = groupKeys.filter(function(k) { return activeSet.has(k); });
+    cb.checked = activeKeys.length === groupKeys.length && groupKeys.length > 0;
+    cb.indeterminate = activeKeys.length > 0 && activeKeys.length < groupKeys.length;
+    cb.addEventListener('change', function() {
+        container.querySelectorAll('.violation-cb').forEach(function(c) { c.checked = cb.checked; });
+        applyViolationCheckboxes();
+    });
+    cb.className = 'violation-group-cb';
+    var text = document.createElement('span');
+    text.style.flex = '1';
+    text.textContent = labelText;
+    row.appendChild(cb);
+    row.appendChild(text);
+    if (groupTotal > 0) {
+        var badgeColor = (labelText.toLowerCase().indexOf('error') !== -1) ? '#dc3545' : '#d97706';
+        var badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.style.cssText = 'font-size:0.65rem;background:' + badgeColor + ';color:#fff;margin-left:auto;';
+        badge.textContent = groupTotal;
+        row.appendChild(badge);
+    }
+    return row;
+}
+function applyViolationCheckboxes() {
+    var keys = new Set();
+    document.querySelectorAll('.violation-cb:checked').forEach(function(cb) {
+        keys.add(cb.dataset.violationKey);
+    });
+    if (keys.size === 0) {
+        if (window.selectionManager) selectionManager.clear();
+        return;
+    }
+    // Find session IDs matching any checked violation by reading DOM
+    var matchIds = [];
+    document.querySelectorAll('.row-select-cb').forEach(function(cb) {
+        var row = cb.closest('tr');
+        var match = false;
+        row.querySelectorAll('.badge').forEach(function(badge) {
+            var text = badge.textContent.trim().toLowerCase();
+            var badgeMap = {
+                'empty': 'empty', 'incomplete': 'incomplete', 'missing req.': 'missing_required',
+                'fast': 'fast', 'duplicate': 'duplicate',
+            };
+            var key = badgeMap[text];
+            if (key && keys.has(key)) match = true;
+        });
+        row.querySelectorAll('[title]').forEach(function(el) {
+            var title = el.getAttribute('title') || '';
+            if (title.indexOf('self-intersecting') !== -1 && keys.has('self_intersection')) match = true;
+            if (title.indexOf('not answered') !== -1 && keys.has('empty_required')) match = true;
+            if (title.indexOf('outside') !== -1 && keys.has('out_of_range')) match = true;
+            if (title.indexOf('outlier') !== -1 && (keys.has('numeric_outlier') || keys.has('area_outlier'))) match = true;
+            if (title.indexOf('short') !== -1 && keys.has('short_text')) match = true;
+        });
+        if (match) matchIds.push(parseInt(cb.dataset.sessionId));
+    });
+    if (window.selectionManager) selectionManager.setSelection(matchIds);
+}
+function updateAnomaliesSidebar() {
+    var dataEl = document.getElementById('anomaly-counts-data');
+    if (!dataEl) return;
+    var counts = {};
+    try { counts = JSON.parse(dataEl.textContent); } catch(e) { return; }
+    var sidebar = document.getElementById('anomalies-sidebar');
+    var strip = document.getElementById('anomalies-strip');
+    var total = Object.values(counts).reduce(function(a, b) { return a + b; }, 0);
+    if (total === 0) {
+        if (sidebar) sidebar.style.display = 'none';
+        if (strip) strip.style.display = 'none';
+        return;
+    }
+    // Count errors vs warnings
+    var errorCount = 0, warnCount = 0;
+    for (var k in _ANOMALY_ERRORS) { errorCount += (counts[k] || 0); }
+    for (var k in _ANOMALY_WARNINGS) { warnCount += (counts[k] || 0); }
+    // Update strip badge
+    var stripCount = document.getElementById('anomalies-strip-count');
+    if (stripCount) {
+        stripCount.textContent = total;
+        stripCount.className = 'badge ' + (errorCount > 0 ? 'badge-danger' : 'badge-warning');
+    }
+    // Show sidebar or strip based on state
+    if (_anomaliesSidebarExpanded) {
+        if (sidebar) sidebar.style.display = '';
+        if (strip) strip.style.display = 'none';
+    } else {
+        if (sidebar) sidebar.style.display = 'none';
+        if (strip) strip.style.display = '';
+    }
+    var activeFilters = new Set();
+    var filterEl = document.getElementById('active-issues-filter');
+    if (filterEl) {
+        filterEl.textContent.trim().split(',').forEach(function(f) { if (f) activeFilters.add(f); });
+    }
+    function renderGroup(containerId, defs, groupLabel) {
+        var container = document.getElementById(containerId);
+        if (!container) return; // v2: toolbar chips replaced the sidebar
+        container.textContent = '';
+        var visibleKeys = [];
+        var groupTotal = 0;
+        for (var key in defs) {
+            var c = counts[key] || 0;
+            if (c > 0) visibleKeys.push(key);
+            groupTotal += c;
+        }
+        container.appendChild(_buildGroupCheckbox(groupLabel, visibleKeys, activeFilters, container, groupTotal));
+        var hasAny = false;
+        for (var key in defs) {
+            var c = counts[key] || 0;
+            if (c === 0) continue;
+            hasAny = true;
+            container.appendChild(_buildAnomalyItem(key, defs[key], c, activeFilters.has(key)));
+        }
+        if (!hasAny) {
+            var none = document.createElement('div');
+            none.className = 'text-muted';
+            none.style.fontSize = '0.75rem';
+            none.textContent = 'None';
+            container.appendChild(none);
+        }
+    }
+    renderGroup('anomalies-errors', _ANOMALY_ERRORS, 'Errors');
+    renderGroup('anomalies-warnings', _ANOMALY_WARNINGS, 'Warnings');
+}
+var _anomaliesSidebarExpanded = true;
+function collapseAnomaliesSidebar() {
+    _anomaliesSidebarExpanded = false;
+    document.getElementById('anomalies-sidebar').style.display = 'none';
+    document.getElementById('anomalies-strip').style.display = '';
+}
+function expandAnomaliesSidebar() {
+    _anomaliesSidebarExpanded = true;
+    document.getElementById('anomalies-sidebar').style.display = '';
+    document.getElementById('anomalies-strip').style.display = 'none';
+}
+function selectAllFlagged() {
+    // Select rows that have issue badges or lint error/warning icons
+    document.querySelectorAll('.row-select-cb').forEach(function(cb) {
+        var row = cb.closest('tr');
+        var hasBadge = row.querySelector('.badge-dark, .badge-warning, .badge-danger, .badge-info, .badge-secondary');
+        var hasLint = row.querySelector('.fa-exclamation-circle, .fa-exclamation-triangle');
+        cb.checked = !!(hasBadge || hasLint);
+    });
+    updateBulkToolbar();
+}
+
+/* Validation Settings */
+function openValidationSettings() {
+    var url = '{% url "analytics_validation_settings" survey.uuid %}';
+    fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+        document.getElementById('vs-fast-threshold').value = data.fast_threshold_seconds || 30;
+        document.getElementById('vs-dup-window').value = data.duplicate_window_hours || 1;
+        $('#validationSettingsModal').modal('show');
+    });
+}
+function saveValidationSettings() {
+    var url = '{% url "analytics_validation_settings" survey.uuid %}';
+    var data = {
+        fast_threshold_seconds: parseFloat(document.getElementById('vs-fast-threshold').value) || 30,
+        duplicate_window_hours: parseFloat(document.getElementById('vs-dup-window').value) || 1,
+    };
+    fetch(url, {
+        method: 'POST',
+        headers: {'X-CSRFToken': _getCsrfToken(), 'Content-Type': 'application/json'},
+        body: JSON.stringify(data),
+    }).then(function(r) {
+        if (r.ok) { $('#validationSettingsModal').modal('hide'); loadTable(); }
+    });
+}
+
+/* Detail modal inline edit */
+function startDetailEdit(sid, qid, inputType, btn) {
+    var valSpan = document.getElementById('detail-val-' + qid);
+    if (!valSpan) return;
+    var current = valSpan.textContent.trim();
+    if (current === '\u2014') current = '';
+    var input = document.createElement('input');
+    input.type = (inputType === 'number' || inputType === 'range') ? 'number' : 'text';
+    input.value = current;
+    input.className = 'form-control form-control-sm d-inline-block';
+    input.style.cssText = 'width:70%;font-size:0.8rem;height:24px;';
+    valSpan.textContent = '';
+    valSpan.appendChild(input);
+    btn.style.display = 'none';
+    input.focus();
+    input.addEventListener('blur', function() {
+        var val = input.value;
+        if (inputType === 'number' || inputType === 'range') val = val === '' ? null : parseFloat(val);
+        var url = '{% url "analytics_answer_edit" survey.uuid 0 0 %}'.replace('/0/answers/0/', '/' + sid + '/answers/' + qid + '/');
+        fetch(url, {
+            method: 'POST',
+            headers: {'X-CSRFToken': _getCsrfToken(), 'Content-Type': 'application/json'},
+            body: JSON.stringify({value: val}),
+        }).then(function(resp) {
+            if (resp.ok) { loadSessionDetail(sid); loadTable(); }
+        });
+    });
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    });
+}
+
+/* Tags & Notes */
+function addSessionTag(sid, input) {
+    var tag = input.value.trim();
+    if (!tag) return;
+    var container = input.parentElement;
+    var existing = [];
+    container.querySelectorAll('.badge').forEach(function(b) { existing.push(b.textContent.trim()); });
+    existing.push(tag);
+    var url = '{% url "analytics_session_update_tags" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+    fetch(url, {
+        method: 'POST',
+        headers: {'X-CSRFToken': _getCsrfToken(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({tags: existing}),
+    }).then(function(resp) {
+        if (resp.ok) {
+            var badge = document.createElement('span');
+            badge.className = 'badge badge-info';
+            badge.style.fontWeight = 'normal';
+            badge.textContent = tag;
+            container.insertBefore(badge, input);
+            input.value = '';
+            loadTable();
+        }
+    });
+}
+function saveSessionNotes(sid, textarea) {
+    var url = '{% url "analytics_session_update_tags" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
+    fetch(url, {
+        method: 'POST',
+        headers: {'X-CSRFToken': _getCsrfToken(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({notes: textarea.value}),
+    });
+}
+
+/* Column hide/freeze (localStorage) */
+var _colStateKey = 'attrTable_{{ survey.uuid }}';
+
+function _getColState() {
+    // First visit (nothing stored): seed from server-declared defaults when the
+    // page ships them (v2 hides language/version until enabled). The legacy
+    // template renders no #default-hidden-cols, so its behavior is unchanged.
+    try {
+        var stored = JSON.parse(localStorage.getItem(_colStateKey));
+        if (stored) return stored;
+    } catch(e) {}
+    var defaults = {hidden: [], frozen: []};
+    var defEl = document.getElementById('default-hidden-cols');
+    if (defEl) {
+        try { defaults.hidden = JSON.parse(defEl.textContent) || []; } catch(e) {}
+    }
+    return defaults;
+}
+function _saveColState(state) {
+    localStorage.setItem(_colStateKey, JSON.stringify(state));
+}
+
+function applyColState() {
+    var state = _getColState();
+    // Apply column order (reorder DOM)
+    if (state.colOrder && state.colOrder.length) {
+        var table = document.querySelector('.attr-table');
+        if (table) {
+            var rows = table.querySelectorAll('tr');
+            rows.forEach(function(row) {
+                var cells = Array.from(row.querySelectorAll('[data-col]'));
+                if (!cells.length) return;
+                // Build map of col_key → cell
+                var cellMap = {};
+                cells.forEach(function(c) { cellMap[c.dataset.col] = c; });
+                // Server order of keys (default)
+                var serverOrder = cells.map(function(c) { return c.dataset.col; });
+                // Saved order: only keys that still exist
+                var savedSet = new Set();
+                state.colOrder.forEach(function(k) { savedSet.add(k); });
+                // New columns = in server order but not in saved order
+                // Insert them at their server position
+                var merged = [];
+                var savedIdx = 0;
+                var savedKeys = state.colOrder.filter(function(k) { return cellMap[k]; });
+                // Start with saved order, splice in new cols at server-relative positions
+                var newCols = serverOrder.filter(function(k) { return !savedSet.has(k); });
+                // Simple approach: saved order first, new cols inserted at their server index
+                var result = savedKeys.slice();
+                newCols.forEach(function(key) {
+                    var serverPos = serverOrder.indexOf(key);
+                    // Find insertion point: after the last result item whose server index < serverPos
+                    var insertAt = 0;
+                    for (var i = 0; i < result.length; i++) {
+                        if (serverOrder.indexOf(result[i]) < serverPos) insertAt = i + 1;
+                    }
+                    result.splice(insertAt, 0, key);
+                });
+                // Re-append in order
+                result.forEach(function(key) {
+                    if (cellMap[key]) row.appendChild(cellMap[key]);
+                });
+            });
+        }
+    }
+    // Apply hidden/frozen
+    document.querySelectorAll('[data-col]').forEach(function(el) {
+        el.classList.remove('col-hidden', 'col-frozen');
+    });
+    (state.hidden || []).forEach(function(key) {
+        document.querySelectorAll('[data-col="' + key + '"]').forEach(function(el) {
+            el.classList.add('col-hidden');
+        });
+    });
+    (state.frozen || []).forEach(function(key) {
+        document.querySelectorAll('[data-col="' + key + '"]').forEach(function(el) {
+            el.classList.add('col-frozen');
+        });
+    });
+    document.querySelectorAll('[data-hide-col]').forEach(function(cb) {
+        cb.checked = !(state.hidden || []).includes(cb.dataset.hideCol);
+    });
+    // Init SortableJS on header row
+    _initColSortable();
+}
+
+function _initColSortable() {
+    var headerRow = document.querySelector('.attr-table thead tr:first-child');
+    if (!headerRow || headerRow._sortableInit) return;
+    headerRow._sortableInit = true;
+    new Sortable(headerRow, {
+        animation: 150,
+        draggable: '.attr-th',
+        handle: '.attr-th-grip',
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        onEnd: function() {
+            // Read new order from header
+            var ths = headerRow.querySelectorAll('.attr-th[data-col]');
+            var newOrder = Array.from(ths).map(function(th) { return th.dataset.col; });
+            // Reorder body rows to match
+            var table = document.querySelector('.attr-table');
+            var bodyRows = table.querySelectorAll('tbody tr');
+            bodyRows.forEach(function(row) {
+                var cells = Array.from(row.querySelectorAll('[data-col]'));
+                var cellMap = {};
+                cells.forEach(function(c) { cellMap[c.dataset.col] = c; });
+                newOrder.forEach(function(key) {
+                    if (cellMap[key]) row.appendChild(cellMap[key]);
+                });
+            });
+            // Also reorder search row
+            var searchRow = table.querySelector('.attr-search-row');
+            if (searchRow) {
+                var sCells = Array.from(searchRow.querySelectorAll('[data-col]'));
+                var sMap = {};
+                sCells.forEach(function(c) { sMap[c.dataset.col] = c; });
+                newOrder.forEach(function(key) {
+                    if (sMap[key]) searchRow.appendChild(sMap[key]);
+                });
+            }
+            // Save to localStorage
+            var state = _getColState();
+            state.colOrder = newOrder;
+            _saveColState(state);
+        }
+    });
+}
+
+function setColHidden(key, hidden) {
+    var state = _getColState();
+    state.hidden = state.hidden || [];
+    if (hidden && !state.hidden.includes(key)) state.hidden.push(key);
+    else if (!hidden) state.hidden = state.hidden.filter(function(k) { return k !== key; });
+    _saveColState(state);
+    applyColState();
+}
+
+function toggleColFrozen(key) {
+    var state = _getColState();
+    state.frozen = state.frozen || [];
+    if (state.frozen.includes(key)) state.frozen = state.frozen.filter(function(k) { return k !== key; });
+    else state.frozen.push(key);
+    _saveColState(state);
+    applyColState();
+}
+
+function toggleHideFieldsPopover() {
+    var pop = document.getElementById('hide-fields-popover');
+    pop.style.display = pop.style.display === 'none' ? '' : 'none';
+}
+
+/* Column header menu */
+function toggleColMenu(trigger, colKey) {
+    var menu = document.getElementById('attr-col-menu');
+    if (menu.style.display !== 'none' && window._menuCol === colKey) {
+        closeColMenu(); return;
+    }
+    window._menuCol = colKey;
+    var rect = trigger.getBoundingClientRect();
+    var container = document.getElementById('pane-table-content');
+    var cRect = container.getBoundingClientRect();
+    menu.style.left = (rect.left - cRect.left) + 'px';
+    menu.style.top = (rect.bottom - cRect.top + 2) + 'px';
+    menu.style.display = '';
+}
+function closeColMenu() {
+    var menu = document.getElementById('attr-col-menu');
+    if (menu) menu.style.display = 'none';
+}
+
+// iOS Safari has no Element.requestFullscreen (WebKit ships the webkit-prefixed
+// pair on iPad and nothing on iPhone) — calling it unguarded threw a TypeError
+// on every tap of the expand button.
+function _enterFullscreen(el) {
+    var fn = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!fn) return;
+    var p = fn.call(el);
+    if (p && p.catch) p.catch(function() {});
+}
+function _fullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || null;
+}
+function _exitFullscreen() {
+    var fn = document.exitFullscreen || document.webkitExitFullscreen;
+    if (fn) fn.call(document);
+}
+
+function togglePanelFullscreen(panelId) {
+    var panel = document.getElementById(panelId);
+    if (!panel) return;
+    if (_fullscreenElement()) {
+        _exitFullscreen();
+    } else {
+        _enterFullscreen(panel);
+    }
+}
+// Resize maps on fullscreen change + move modal into fullscreen element
+document.addEventListener('fullscreenchange', function() {
+    var modal = document.getElementById('sessionDetailModal');
+    if (!modal) return;
+    if (document.fullscreenElement) {
+        // Move modal inside fullscreen element so it's visible
+        document.fullscreenElement.appendChild(modal);
+    } else {
+        // Move modal back to body
+        document.body.appendChild(modal);
+    }
+    setTimeout(function() {
+        var m = window.analyticsMap || window._geoMap;
+        if (m) m.invalidateSize();
+    }, 200);
+});
+
+function toggleTableFullscreen() {
+    var pane = document.getElementById('pane-data');
+    if (_fullscreenElement()) {
+        _exitFullscreen();
+    } else {
+        _enterFullscreen(pane);
+    }
+}
+
+/* Re-apply column state after every HTMX swap of the table */
+document.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target && evt.detail.target.id === 'pane-table-content') {
+        applyColState();
+        closeColMenu();
+        updateAnomaliesSidebar();
+    }
+});
+
+/* Click outside to close menus */
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.attr-th-menu') && !e.target.closest('#attr-col-menu')) closeColMenu();
+    if (!e.target.closest('.attr-hide-popover') && !e.target.closest('[onclick*="toggleHideFieldsPopover"]')) {
+        var pop = document.getElementById('hide-fields-popover');
+        if (pop) pop.style.display = 'none';
+    }
+});
