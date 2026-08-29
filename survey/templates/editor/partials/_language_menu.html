@@ -1,0 +1,29 @@
+{% load i18n %}
+{% load i18n_extras %}
+{% comment %}Header language control (openspec: creator-ui-localization).
+
+A control of its own in the top bar, not a section inside the account menu.
+Two reasons, both reported by the owner:
+
+  * In the EDITOR the switcher lived only in the ⋯ overflow menu, which
+    `editor-mobile.css` shows below 768px — so on a desktop the editor had no
+    way to change language at all. Only the survey list had one.
+  * Buried under Organization → Language, it is three clicks away from the
+    person least able to read the labels on the way there.
+
+The trigger says the current language in that language («Deutsch», not
+"German"): whoever needs this control cannot necessarily read the interface
+it sits in.
+
+`nav-desktop` (editor) / `d-none d-md-inline-block` (site navbar) keep it off
+phones, where the same list is already one tap away in the overflow menu and
+the top bar has no room.{% endcomment %}
+<a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown"
+   aria-haspopup="true" aria-expanded="false"
+   title="{% trans 'Language' %}" aria-label="{% trans 'Language' %}"
+   style="color:#6b7280;font-size:0.85rem;text-decoration:none;">
+    <i class="fas fa-globe" style="margin-right:4px;"></i>{% creator_language_name %}
+</a>
+<div class="dropdown-menu dropdown-menu-right">
+    {% include "editor/partials/_language_switcher.html" %}
+</div>

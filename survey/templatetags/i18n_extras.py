@@ -85,3 +85,23 @@ def creator_languages():
     """
     from django.conf import settings as dj_settings
     return list(dj_settings.LANGUAGES)
+
+
+@register.simple_tag
+def creator_language_name():
+    """The active language's name, written in that language.
+
+    The header control has to say which language you are in without opening
+    anything, and it must say it in that language — «Deutsch», not "German".
+    Falls back to the bare code so a language that is active but not offered
+    (a respondent locale reached through the survey view) still renders a
+    label instead of an empty control.
+    """
+    from django.conf import settings as dj_settings
+    from django.utils import translation
+
+    active = translation.get_language() or dj_settings.LANGUAGE_CODE
+    for code, name in dj_settings.LANGUAGES:
+        if code == active:
+            return name
+    return active.upper()

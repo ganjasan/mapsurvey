@@ -27687,6 +27687,68 @@ class CreatorLanguagePreferenceTest(TestCase):
             self.assertIn(name, html)
         self.assertNotIn('Anglais', html)
 
+    def test_the_survey_editor_offers_the_language_switcher(self):
+        """
+        GIVEN a creator inside a survey, on a desktop-width screen
+        WHEN the editor chrome renders
+        THEN the switcher is on the page
+
+        It was not. The editor included it only in the ⋯ overflow menu, which
+        `editor-mobile.css` reveals below 768px, so the language could be
+        changed on the survey LIST and nowhere else — reported by the owner.
+
+        Asserting merely that the form is on the page would NOT have caught
+        that: the overflow menu is in the HTML at every width and hidden in
+        CSS. So this looks for the control that survives on a desktop — the
+        one marked `nav-desktop`, which `editor-mobile.css` hides on phones.
+        """
+        survey = SurveyHeader.objects.create(
+            name='lang-editor-survey', organization=self.org,
+            created_by=self.user, status='draft')
+        html = self.client.get(
+            reverse('editor_survey_detail', args=[survey.uuid])).content.decode()
+        self.assertIn(reverse('set_creator_language'), html)
+        self.assertRegex(
+            html,
+            r'nav-desktop"[^>]*>\s*<a class="dropdown-toggle"[^>]*>\s*'
+            r'<i class="fas fa-globe')
+        for _code, name in dj_settings.LANGUAGES:
+            self.assertIn(name, html)
+
+    def test_the_header_names_the_current_language_without_opening_a_menu(self):
+        """
+        GIVEN a creator whose interface is Deutsch
+        WHEN the chrome renders
+        THEN «Deutsch» is on the control itself, not only inside its menu
+
+        The control exists for someone who cannot read the interface around it,
+        so which language they are in has to be legible without clicking.
+        """
+        self.client.post(reverse('set_creator_language'),
+                         {'language': 'de', 'next': '/editor/'})
+        html = self.client.get('/editor/', follow=True).content.decode()
+        # The trigger, not a position in the document: the ⋯ overflow menu is
+        # emitted earlier in the DOM, so "before the first menu" would be a
+        # test of markup order rather than of what a creator can read.
+        self.assertRegex(html, r'fa-globe[^>]*></i>\s*Deutsch')
+
+    def test_the_active_language_row_is_not_styled_invisible(self):
+        """
+        GIVEN the switcher rendered for a creator
+        WHEN the entry for their CURRENT language is inspected
+        THEN it carries no inline background override
+
+        Bootstrap's `.dropdown-item.active` is white text on blue. An inline
+        `background:none` removed the blue and kept the white, so the current
+        language rendered as a blank row — the one entry a creator looks for
+        first (owner screenshot, 2026-08-29).
+        """
+        html = self.client.get('/editor/', follow=True).content.decode()
+        active = re.search(
+            r'<button[^>]*class="dropdown-item active"[^>]*>', html)
+        self.assertIsNotNone(active, 'no active language entry rendered')
+        self.assertNotIn('background', active.group(0))
+
     def test_login_required(self):
         """
         GIVEN an anonymous visitor
