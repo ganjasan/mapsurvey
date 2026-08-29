@@ -1658,3 +1658,46 @@ class AIGenerationEvent(models.Model):
 
     def __str__(self):
         return f"{self.kind} {self.outcome} by {self.user_id or 'unknown'} at {self.created_at:%Y-%m-%d %H:%M}"
+
+
+class ProInterest(models.Model):
+    """One answer to the `/pro/` questionnaire: what a visitor would pay for.
+
+    Research data and a contact list at once. The event in PostHog makes the
+    answers countable; this row is what we read back when calling someone, and
+    what survives an analytics outage.
+
+    `capabilities` holds keys from `survey.pro_interest.CAPABILITY_KEYS`. An
+    empty list is a real answer -- "none of this matters to me" is as useful as
+    a full sheet -- so it is a valid saved state, not a rejected submission.
+
+    `missing_text` is the field we care about most. Creators route around gaps
+    without reporting them, so what they type here is generally not visible
+    anywhere else in the database.
+    """
+
+    created_at = models.DateTimeField(default=timezone.now, db_index=True)
+    email = models.EmailField()
+    organisation = models.CharField(max_length=200, blank=True, default='')
+    segment = models.CharField(max_length=32, blank=True, default='', db_index=True)
+    capabilities = models.JSONField(default=list, blank=True)
+    missing_text = models.TextField(blank=True, default='')
+    budget_shape = models.CharField(max_length=32, blank=True, default='')
+    # Set for a signed-in creator, null for the visitor who never registered --
+    # and that visitor is precisely the answer we would otherwise never hear,
+    # which is why the page has no login wall.
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='pro_interests',
+    )
+    # When the consent box was actually ticked. Stored as a timestamp rather
+    # than a boolean because "they agreed" is worth little without "when".
+    consent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('-created_at',)
+
+    def __str__(self):
+        who = self.organisation or self.email
+        return f"{who} ({self.segment or 'unknown'}) at {self.created_at:%Y-%m-%d %H:%M}"

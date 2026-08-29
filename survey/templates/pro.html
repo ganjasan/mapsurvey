@@ -1,0 +1,203 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Pro — early access | Mapsurvey" %}{% endblock %}
+{% block meta_description %}{% trans "We are deciding what a paid Mapsurvey tier should do. Tell us which capabilities would matter on a real project — your own domain, moderated public results, EU hosting, reports. Everything free today stays free." %}{% endblock %}
+{% block meta_keywords %}{% trans "map survey pro, participatory mapping features, public consultation software, white label mapping survey, EU hosting survey tool" %}{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/pro/{% endblock %}
+{% block og_url %}https://mapsurvey.org/pro/{% endblock %}
+{% block og_title %}{% trans "Mapsurvey Pro — tell us what it has to do" %}{% endblock %}
+
+{% block content %}
+<section class="hero" id="hero">
+  <div class="hero__content pro-lead">
+    <h1 class="hero__headline">{% trans "We are building Pro. Tell us what it has to do." %}</h1>
+    <p class="hero__description">
+      {% trans "Mapsurvey is free and open source, and the free plan is not going anywhere. But some projects need things the free plan will never have — your own domain, moderation before results go public, paperwork your legal department can sign. We are deciding what to build first, and we would rather ask than guess." %}
+    </p>
+    <p class="pro-keep">{% trans "Everything free today stays free. Pro only ever adds what does not exist yet." %}</p>
+  </div>
+</section>
+
+<section class="showcase pro-form-section">
+  <div class="landing-inner">
+
+    {% if submitted %}
+      <div class="pro-thanks" role="status">
+        <h2>{% trans "Thank you — that is exactly what we needed." %}</h2>
+        <p>{% trans "We read every one of these ourselves. We will write back once, with what we are actually building and when. We will not add you to a mailing list." %}</p>
+        <p>
+          {% blocktrans trimmed %}
+            If you need something now rather than later, several of these we already do by hand,
+            per project.
+          {% endblocktrans %}
+          <a href="{% url 'services' %}">{% trans "That is the project service." %}</a>
+        </p>
+      </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'pro_early_access' %}" class="pro-card" novalidate>
+      {% csrf_token %}
+
+      {% if form.errors %}
+        <div class="pro-errors" role="alert">
+          <strong>{% trans "We could not save that." %}</strong>
+          <ul>
+            {% for field in form %}
+              {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      {% comment %}
+        Step 1 — segment. A field on the answer, never a router: every group
+        below is shown to everyone, so that a city ticking an agency capability
+        stays visible instead of being designed away.
+      {% endcomment %}
+      <div class="pro-step">
+        <div class="pro-step__n">{% trans "Step 1" %}</div>
+        <div class="pro-step__q">{% trans "What kind of work do you do?" %}</div>
+        <div class="pro-step__hint">{% trans "So we know whose answer this is. Pick the closest one." %}</div>
+        <div class="pro-pills">
+          {% for value, label in segment_choices %}
+            <label class="pro-pill{% if form.segment.value == value %} is-on{% endif %}">
+              <input type="radio" name="segment" value="{{ value }}"
+                     {% if form.segment.value == value %}checked{% endif %}>
+              <span>{{ label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="pro-step">
+        <div class="pro-step__n">{% trans "Step 2" %}</div>
+        <div class="pro-step__q">{% trans "Which of these would actually matter to you?" %}</div>
+        <div class="pro-step__hint">{% trans "Tick only what you would genuinely use on a real project. Blank is a useful answer too." %}</div>
+
+        {% for group in capability_groups %}
+          <div class="pro-group">
+            <div class="pro-group__label">{{ group.label }}</div>
+            <div class="pro-opts">
+              {% for key, label, hint in group.options %}
+                <label class="pro-opt{% if key in selected_capabilities %} is-on{% endif %}">
+                  <input type="checkbox" name="capabilities" value="{{ key }}"
+                         {% if key in selected_capabilities %}checked{% endif %}>
+                  <span>{{ label }}<small>{{ hint }}</small></span>
+                </label>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="pro-step">
+        <div class="pro-step__n">{% trans "Step 3" %}</div>
+        <div class="pro-step__q">{% trans "What did we miss?" %}</div>
+        <div class="pro-step__hint">{% trans "The thing you had to work around last time. This is the answer we want most." %}</div>
+        <textarea name="missing_text" rows="3"
+                  placeholder="{% trans 'Last time we needed…' %}">{{ form.missing_text.value|default:'' }}</textarea>
+      </div>
+
+      {% comment %}
+        Step 4 asks for the SHAPE of a price, never a number. "How much would
+        you pay" is answered with silence or a lie; this one is answered, and
+        it is what settles per-project vs per-year.
+      {% endcomment %}
+      <div class="pro-step">
+        <div class="pro-step__n">{% trans "Step 4" %}</div>
+        <div class="pro-step__q">{% trans "If you paid for this, where would the money come from?" %}</div>
+        <div class="pro-step__hint">{% trans "We are not asking for a number. We are asking what shape a price has to have to be payable at all." %}</div>
+        <div class="pro-pills">
+          {% for value, label in budget_shape_choices %}
+            <label class="pro-pill{% if form.budget_shape.value == value %} is-on{% endif %}">
+              <input type="radio" name="budget_shape" value="{{ value }}"
+                     {% if form.budget_shape.value == value %}checked{% endif %}>
+              <span>{{ label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="pro-fields">
+        <label class="pro-field">
+          <span>{% trans "Your email" %}</span>
+          <input type="email" name="email" value="{{ form.email.value|default:'' }}"
+                 placeholder="{% trans 'you@example.org' %}" required>
+        </label>
+        <label class="pro-field">
+          <span>{% trans "Organisation (optional)" %}</span>
+          <input type="text" name="organisation" value="{{ form.organisation.value|default:'' }}">
+        </label>
+      </div>
+
+      {% comment %}
+        The page argues we are a vendor who can sign a DPA while collecting an
+        email and an organisation. Shipping it without an explicit, un-ticked
+        consent box hands the first data protection officer who reads it the
+        exact objection we claim to solve.
+      {% endcomment %}
+      <label class="pro-consent">
+        <input type="checkbox" name="consent" value="1" required>
+        <span>
+          {% blocktrans trimmed %}
+            You may store this answer and email me about it once. Nothing else, and no mailing list.
+          {% endblocktrans %}
+          <a href="{% url 'trust_page' %}#data-privacy">{% trans "How we handle data" %}</a>
+        </span>
+      </label>
+
+      <div class="pro-submit">
+        <button type="submit" class="btn-primary-landing">{% trans "Send this" %}</button>
+        <a href="{% url 'services' %}" class="btn-secondary-landing">{% trans "Or book a 20-minute call" %}</a>
+        <p class="pro-submit__note">{% trans "We will not add you to a mailing list. We write back once, with what we are actually building and when — and we ask nothing else of you." %}</p>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="showcase pro-promise">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "While we build it" %}</p>
+    <h2 class="section-heading">{% trans "Nothing changes for you" %}</h2>
+    <div class="pro-promise__grid">
+      <div class="pro-promise__item">
+        <h3>{% trans "Free stays free" %}</h3>
+        <p>{% trans "Unlimited surveys and responses, all question types, 75 languages, public results page, CSV and GeoJSON export. None of it moves behind a paywall — ever." %}</p>
+      </div>
+      <div class="pro-promise__item">
+        <h3>{% trans "Still open source" %}</h3>
+        <p>{% trans "AGPL, self-hostable, the whole thing. Pro is hosting plus the parts that only make sense when we run it for you." %}</p>
+      </div>
+      <div class="pro-promise__item">
+        <h3>{% trans "Need it now, not later?" %}</h3>
+        <p>
+          {% blocktrans trimmed %}
+            Several of these we already do by hand, per project. Ask and we will tell you plainly
+            what is possible today.
+          {% endblocktrans %}
+          <a href="{% url 'services' %}">{% trans "See the project service" %}</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  {# Purely cosmetic: mirrors the checked state onto the label so the whole card highlights. #}
+  document.querySelectorAll('.pro-opt input, .pro-pill input').forEach(function (input) {
+    input.addEventListener('change', function () {
+      if (input.type === 'radio') {
+        document.querySelectorAll('input[name="' + input.name + '"]').forEach(function (sibling) {
+          sibling.closest('.pro-pill').classList.toggle('is-on', sibling.checked);
+        });
+      } else {
+        input.closest('.pro-opt').classList.toggle('is-on', input.checked);
+      }
+    });
+  });
+</script>
+{% endblock %}

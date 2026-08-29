@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Mapsurvey Pro, early access (discovery)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+/* Tokens copied from survey/assets/css/landing.css so the mockup renders standalone */
+:root{
+  --color-primary:#1B2A4A; --color-accent:#0FA58E; --color-accent-hover:#0D8F7A;
+  --color-accent-light:rgba(15,165,142,.12);
+  --color-bg:#F7F5F0; --color-bg-warm:#EFECE5; --color-bg-elevated:#FFF;
+  --color-text:#1B2A4A; --color-text-secondary:#5A6680; --color-text-tertiary:#8A94A8;
+  --color-border:#D4CFC6; --color-border-light:#E4E0D8;
+  --font-display:'Instrument Sans',system-ui,-apple-system,sans-serif;
+  --font-body:'Source Serif 4',Georgia,serif;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:12px;
+  --section-inner-max:1160px;
+  --transition-fast:.18s cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-text);-webkit-font-smoothing:antialiased}
+.inner{max-width:860px;margin:0 auto;padding:0 2rem}
+.eyebrow{font-family:var(--font-display);font-size:.75rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--color-accent);margin-bottom:.75rem}
+
+.mock-bar{background:#1A1E2E;color:#C8D6F0;font-family:var(--font-display);font-size:.8125rem;padding:.7rem 2rem;position:sticky;top:0;z-index:20}
+.mock-bar strong{color:#fff;font-weight:600;margin-right:.6rem}
+
+/* hero */
+.hero{padding:4.5rem 0 2.5rem;text-align:center}
+.hero h1{font-family:var(--font-display);font-size:2.75rem;font-weight:700;line-height:1.12;max-width:17ch;margin:0 auto 1.15rem}
+.hero p{font-size:1.125rem;color:var(--color-text-secondary);max-width:58ch;margin:0 auto 1rem;line-height:1.65}
+.hero .keep{display:inline-block;font-family:var(--font-display);font-size:.8125rem;font-weight:600;color:var(--color-accent);background:var(--color-accent-light);border-radius:99px;padding:.4rem 1rem;margin-top:.5rem}
+
+/* form card */
+.form-wrap{padding:1rem 0 5rem}
+.card{background:var(--color-bg-elevated);border:1px solid var(--color-border-light);border-radius:var(--radius-lg);padding:2.5rem 2.5rem 2rem;box-shadow:0 12px 40px rgba(27,42,74,.06)}
+.step{margin-bottom:2.5rem}
+.step:last-of-type{margin-bottom:1.5rem}
+.step__n{font-family:var(--font-display);font-size:.6875rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-text-tertiary);margin-bottom:.4rem}
+.step__q{font-family:var(--font-display);font-size:1.25rem;font-weight:600;margin-bottom:.35rem;line-height:1.3}
+.step__hint{font-family:var(--font-display);font-size:.875rem;color:var(--color-text-tertiary);margin-bottom:1.1rem;line-height:1.5}
+
+/* segmented pills */
+.pills{display:flex;flex-wrap:wrap;gap:.5rem}
+.pill{font-family:var(--font-display);font-size:.875rem;font-weight:500;border:1px solid var(--color-border);background:transparent;color:var(--color-text-secondary);border-radius:99px;padding:.55rem 1.05rem;cursor:pointer;transition:var(--transition-fast)}
+.pill:hover{border-color:var(--color-primary)}
+.pill[aria-pressed="true"]{background:var(--color-primary);border-color:var(--color-primary);color:#fff;font-weight:600}
+
+/* checkbox groups */
+.group{margin-bottom:1.5rem}
+.group__label{font-family:var(--font-display);font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-tertiary);margin-bottom:.6rem;padding-bottom:.4rem;border-bottom:1px solid var(--color-border-light)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.opt{display:flex;gap:.65rem;align-items:flex-start;border:1px solid var(--color-border-light);border-radius:var(--radius-sm);padding:.7rem .85rem;cursor:pointer;transition:var(--transition-fast);background:var(--color-bg)}
+.opt:hover{border-color:var(--color-border)}
+.opt input{margin-top:.15rem;accent-color:var(--color-accent);width:1rem;height:1rem;flex:none}
+.opt span{font-family:var(--font-display);font-size:.875rem;line-height:1.4;color:var(--color-text)}
+.opt small{display:block;font-size:.75rem;color:var(--color-text-tertiary);margin-top:.15rem;line-height:1.35}
+.opt.checked{border-color:var(--color-accent);background:var(--color-accent-light)}
+
+/* inputs */
+textarea,input[type=email],input[type=text]{width:100%;font-family:var(--font-display);font-size:.9375rem;color:var(--color-text);background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:.8rem .9rem;resize:vertical}
+textarea:focus,input:focus{outline:none;border-color:var(--color-accent);box-shadow:0 0 0 3px var(--color-accent-light)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+
+.submit{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;border-top:1px solid var(--color-border-light);padding-top:1.5rem}
+.btn{font-family:var(--font-display);font-size:.9375rem;font-weight:600;border-radius:var(--radius-sm);padding:.85rem 1.6rem;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:var(--transition-fast)}
+.btn--primary{background:var(--color-accent);color:#06231E}
+.btn--primary:hover{background:var(--color-accent-hover)}
+.btn--ghost{background:transparent;color:var(--color-text);border-color:var(--color-border)}
+.btn--ghost:hover{border-color:var(--color-primary)}
+.submit__note{font-family:var(--font-display);font-size:.8125rem;color:var(--color-text-tertiary);line-height:1.5;flex:1;min-width:220px}
+.counter{font-family:var(--font-display);font-size:.8125rem;color:var(--color-text-secondary);margin-bottom:.9rem}
+.counter b{color:var(--color-accent)}
+
+/* promise strip */
+.promise{background:var(--color-bg-warm);border-top:1px solid var(--color-border-light);padding:4rem 0}
+.promise__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:1.5rem}
+.promise__item{background:var(--color-bg-elevated);border:1px solid var(--color-border-light);border-radius:var(--radius-md);padding:1.4rem 1.5rem}
+.promise__item h4{font-family:var(--font-display);font-size:.9375rem;margin-bottom:.4rem}
+.promise__item p{font-family:var(--font-display);font-size:.8125rem;color:var(--color-text-secondary);line-height:1.55}
+.promise h2{font-family:var(--font-display);font-size:1.75rem;font-weight:700}
+
+/* notes */
+.notes{background:#141C2E;color:#B7C2D8;padding:4rem 0;font-family:var(--font-display);font-size:.9rem;line-height:1.7}
+.notes .inner{max-width:900px}
+.notes h2{color:#fff;font-size:1.35rem;margin-bottom:.4rem}
+.notes .sub{color:#7C89A6;margin-bottom:2rem;font-size:.85rem}
+.notes ol{padding-left:1.2rem}
+.notes li{margin-bottom:1rem}
+.notes strong{color:#fff}
+.notes code{background:#222B42;border-radius:3px;padding:.1rem .35rem;font-size:.85em}
+.notes .warn{border-left:3px solid #E0A83A;padding-left:1rem;margin-top:1.5rem}
+
+@media (max-width:760px){
+  .opts{grid-template-columns:1fr}
+  .field-row{grid-template-columns:1fr}
+  .promise__grid{grid-template-columns:1fr}
+  .hero h1{font-size:2rem}
+  .card{padding:1.75rem 1.25rem 1.5rem}
+}
+</style>
+</head>
+<body>
+
+<div class="mock-bar"><strong>MOCKUP</strong> /pro/ — discovery, без цен. Чекбоксы кликабельны, счётчик внизу живой.</div>
+
+<section class="hero">
+  <div class="inner">
+    <h1>We are building Pro. Tell us what it has to do.</h1>
+    <p>Mapsurvey is free and open source, and the free plan is not going anywhere. But some projects need things the free plan will never have — your own domain, moderation before results go public, paperwork your legal department can sign. We are deciding what to build first, and we would rather ask than guess.</p>
+    <span class="keep">Everything free today stays free. Pro only ever adds what does not exist yet.</span>
+  </div>
+</section>
+
+<section class="form-wrap">
+  <div class="inner">
+    <div class="card">
+
+      <div class="step">
+        <div class="step__n">Step 1</div>
+        <div class="step__q">What kind of work do you do?</div>
+        <div class="step__hint">So we know whose answer this is. Pick the closest one.</div>
+        <div class="pills" id="who">
+          <button class="pill" aria-pressed="false">City, district or public body</button>
+          <button class="pill" aria-pressed="false">Consultancy or agency</button>
+          <button class="pill" aria-pressed="false">NGO or community group</button>
+          <button class="pill" aria-pressed="false">University or research</button>
+          <button class="pill" aria-pressed="false">Something else</button>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step__n">Step 2</div>
+        <div class="step__q">Which of these would actually matter to you?</div>
+        <div class="step__hint">Tick only what you would genuinely use on a real project. Blank is a useful answer too.</div>
+
+        <div class="group">
+          <div class="group__label">Make it yours</div>
+          <div class="opts">
+            <label class="opt"><input type="checkbox"><span>Your own domain and branding<small>The survey looks like yours, not ours</small></span></label>
+            <label class="opt"><input type="checkbox"><span>Remove Mapsurvey from the page entirely<small>White-label, nothing points back to us</small></span></label>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group__label">Show results in public</div>
+          <div class="opts">
+            <label class="opt"><input type="checkbox"><span>Live public map of what people submitted<small>Updates as responses come in</small></span></label>
+            <label class="opt"><input type="checkbox"><span>Moderation before anything appears<small>You approve each contribution</small></span></label>
+            <label class="opt"><input type="checkbox"><span>People vote on each other's points<small>Agree / disagree, or a simple upvote</small></span></label>
+            <label class="opt"><input type="checkbox"><span>Comments and discussion on the map<small>Replies under a marked place</small></span></label>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group__label">Get people to answer</div>
+          <div class="opts">
+            <label class="opt"><input type="checkbox"><span>Print-ready QR posters and flyers<small>For noticeboards, events, site visits</small></span></label>
+            <label class="opt"><input type="checkbox"><span>A tracked link per channel<small>See which channel actually worked</small></span></label>
+            <label class="opt"><input type="checkbox"><span>Where people dropped off<small>Which question loses them</small></span></label>
+            <label class="opt"><input type="checkbox"><span>Help planning the outreach itself<small>Not software — us, working with you</small></span></label>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group__label">Hand over the result</div>
+          <div class="opts">
+            <label class="opt"><input type="checkbox"><span>A report you can give a council or funder<small>Map, charts and a written summary</small></span></label>
+            <label class="opt"><input type="checkbox"><span>Shapefile and QGIS export<small>On top of GeoJSON and CSV</small></span></label>
+            <label class="opt"><input type="checkbox"><span>Analysis done by us<small>You get conclusions, not a spreadsheet</small></span></label>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group__label">Run more than one project</div>
+          <div class="opts">
+            <label class="opt"><input type="checkbox"><span>Several clients or areas in one account<small>Kept apart, with their own access</small></span></label>
+            <label class="opt"><input type="checkbox"><span>Reusable templates<small>Start the next one from the last one</small></span></label>
+            <label class="opt"><input type="checkbox"><span>Colleagues on the same project, with roles<small>Who can edit, who can only read</small></span></label>
+            <label class="opt"><input type="checkbox"><span>Resell it to your own clients<small>Under your name, on your terms</small></span></label>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group__label">Satisfy the paperwork</div>
+          <div class="opts">
+            <label class="opt"><input type="checkbox"><span>Choose EU or US hosting<small>Decided per project</small></span></label>
+            <label class="opt"><input type="checkbox"><span>Signed DPA / AVV<small>With sub-processors documented</small></span></label>
+            <label class="opt"><input type="checkbox"><span>Accessibility statement (BITV / WCAG)<small>For the survey your audience uses</small></span></label>
+            <label class="opt"><input type="checkbox"><span>Run it on your own servers<small>Self-hosted, with us keeping it running</small></span></label>
+            <label class="opt"><input type="checkbox"><span>An invoice, not a card payment<small>PO, bank transfer, VAT ID</small></span></label>
+            <label class="opt"><input type="checkbox"><span>Answers to a security questionnaire<small>For your IT department</small></span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step__n">Step 3</div>
+        <div class="step__q">What did we miss?</div>
+        <div class="step__hint">The thing you had to work around last time. This is the answer we want most.</div>
+        <textarea rows="3" placeholder="Last time we needed…"></textarea>
+      </div>
+
+      <div class="step">
+        <div class="step__n">Step 4</div>
+        <div class="step__q">If you paid for this, where would the money come from?</div>
+        <div class="step__hint">We are not asking for a number. We are asking what shape a price has to have to be payable at all.</div>
+        <div class="pills" id="budget">
+          <button class="pill" aria-pressed="false">A project or grant budget</button>
+          <button class="pill" aria-pressed="false">An annual software budget</button>
+          <button class="pill" aria-pressed="false">Billed on to our client</button>
+          <button class="pill" aria-pressed="false">There is no budget</button>
+          <button class="pill" aria-pressed="false">No idea yet</button>
+        </div>
+      </div>
+
+      <div class="counter" id="counter">Nothing ticked yet.</div>
+
+      <div class="field-row" style="margin-bottom:1.25rem">
+        <input type="email" placeholder="Your email">
+        <input type="text" placeholder="Organisation (optional)">
+      </div>
+
+      <div class="submit">
+        <button class="btn btn--primary">Send this</button>
+        <a class="btn btn--ghost" href="/services/">Or book a 20-minute call</a>
+        <div class="submit__note">We will not add you to a mailing list. We write back once, with what we are actually building and when — and we ask nothing else of you.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="promise">
+  <div class="inner">
+    <p class="eyebrow">While we build it</p>
+    <h2>Nothing changes for you</h2>
+    <div class="promise__grid">
+      <div class="promise__item"><h4>Free stays free</h4><p>Unlimited surveys and responses, all question types, 75 languages, public results page, CSV and GeoJSON export. None of it moves behind a paywall — ever.</p></div>
+      <div class="promise__item"><h4>Still open source</h4><p>AGPL, self-hostable, the whole thing. Pro is hosting plus the parts that only make sense when we run it for you.</p></div>
+      <div class="promise__item"><h4>Need it now, not later?</h4><p>Several of these we already do by hand, per project. That is what <a href="/services/">the project service</a> is. Ask and we will tell you plainly what is possible today.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="notes">
+  <div class="inner">
+    <h2>Notes for the mockup — не часть страницы</h2>
+    <p class="sub">Почему это выглядит так, а не как прайс-таблица.</p>
+    <ol>
+      <li><strong>Страница не продаёт — она спрашивает.</strong> Ты сказал: сначала поговорить с покупателями, цену не называть. Прайс-таблица закрывает разговор (человек либо жмёт, либо уходит), а этот формат его открывает и оставляет след в базе. Цена появится, когда наберётся 10–15 ответов, и будет основана на них, а не на угадывании.</li>
+      <li><strong>Аудитории не разделены на двери — они разделены на группы возможностей.</strong> Мэрия узнаёт себя в «Satisfy the paperwork», агентство — в «Run more than one project» (несколько клиентов, шаблоны, перепродажа), НКО — в «Get people to answer». Никто не теряется, никто не читает чужой комплаенс как обязательный. И, что важнее, ты увидишь пересечения: если мэрии массово тикают «resell», значит модель другая, чем мы думаем.</li>
+      <li><strong>Шаг 4 — про форму цены, а не про число.</strong> «Откуда придут деньги» отвечают охотно, «сколько готовы заплатить» — врут или молчат. Ответ «project budget» против «annual software budget» решает главный вопрос: за проект или подписка. Это и есть тот выбор, из-за которого я в прошлом мокапе поставил переключатель наугад.</li>
+      <li><strong>Шаг 3 — самое ценное поле.</strong> «Что вы обошли руками в прошлый раз». Из проектной памяти: авторы молча обходят дыры (12 скопированных блоков и 9 версий за день, никто не пожаловался). Этот вопрос — единственный способ узнать про такое до того, как ты сам полезешь в базу.</li>
+      <li><strong>Обещание «free stays free» стоит трижды</strong> — в шапке, плашкой и отдельным блоком. Оно снимает конфликт с текущим текстом на лэндинге и <code>/services/</code>, где написано «not a paywall on Mapsurvey». Без него страница читается как анонс платной стены.</li>
+      <li><strong>Третий блок ведёт на существующий <code>/services/</code></strong> — тот, кому нужно уже сейчас, не уходит ни с чем. Часть галочек мы и правда делаем руками; это готовая продажа сегодня, пока Pro не существует.</li>
+      <li><strong>Что меряем.</strong> Отправка формы — событие в PostHog с массивом отмеченных пунктов, сегментом из шага 1 и ответом шага 4. Через две недели у тебя вместо гипотез частотная таблица «кто что тикает», и прайс собирается из верхних пунктов. Плюс каждый отправивший — тёплый контакт для звонка, а не анонимный клик.</li>
+    </ol>
+    <div class="warn">
+      <strong>Одно, что надо решить до публикации.</strong> Форма собирает email и организацию — это персональные данные, и на странице, которая продаёт DSGVO-совместимость, нужна ссылка на политику и чекбокс согласия. Иначе первый же Datenschutzbeauftragte, который на неё зайдёт, увидит ровно ту проблему, которую мы предлагаем ему решить.
+    </div>
+  </div>
+</section>
+
+<script>
+document.querySelectorAll('.pills').forEach(function(gr){
+  gr.querySelectorAll('.pill').forEach(function(p){
+    p.onclick=function(){
+      gr.querySelectorAll('.pill').forEach(function(o){o.setAttribute('aria-pressed','false')});
+      p.setAttribute('aria-pressed','true');
+    };
+  });
+});
+
+var counter=document.getElementById('counter');
+var boxes=document.querySelectorAll('.opt input');
+function refresh(){
+  var n=0;
+  boxes.forEach(function(b){
+    b.closest('.opt').classList.toggle('checked',b.checked);
+    if(b.checked) n++;
+  });
+  counter.textContent = n===0
+    ? 'Nothing ticked yet.'
+    : n + (n===1?' thing':' things') + ' ticked — that is exactly the kind of answer we need.';
+}
+boxes.forEach(function(b){b.addEventListener('change',refresh)});
+refresh();
+</script>
+</body>
+</html>

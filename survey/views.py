@@ -2056,12 +2056,62 @@ def services(request):
 	return render(request, 'services.html')
 
 
+def pro_early_access(request):
+	"""`/pro/` — asks which paid capabilities matter, and never quotes a price.
+
+	This is a research instrument wearing a product page. A price table would
+	close the conversation (click or leave, and we learn nothing about why),
+	which is the opposite of what we need before deciding what Pro even is.
+
+	Deliberately open to anonymous visitors: a municipality that arrived on
+	`for_government` from search and never registered is exactly the answer a
+	login wall would drop, and it is the one we are missing most.
+	"""
+	from .pro_interest import (
+		BUDGET_SHAPE_CHOICES, CAPABILITY_GROUPS, SEGMENT_CHOICES,
+		ProInterestForm, emit_pro_interest,
+	)
+
+	capture_signup_source(request)
+	submitted = False
+	if request.method == 'POST':
+		form = ProInterestForm(request.POST)
+		if form.is_valid():
+			interest = form.save(user=request.user)
+			# After the row is safely stored: analytics that can lose an answer
+			# is worse than no analytics. emit_pro_interest never raises.
+			emit_pro_interest(request, interest)
+			submitted = True
+			form = ProInterestForm(initial=_pro_initial(request))
+	else:
+		form = ProInterestForm(initial=_pro_initial(request))
+	return render(request, 'pro.html', {
+		'form': form,
+		'submitted': submitted,
+		'capability_groups': CAPABILITY_GROUPS,
+		'segment_choices': SEGMENT_CHOICES,
+		'budget_shape_choices': BUDGET_SHAPE_CHOICES,
+		# Resolved here rather than in the template: an unbound form's value()
+		# is None, and `{% if key in None %}` raises rather than rendering
+		# false, which would take the whole page down on a plain GET.
+		'selected_capabilities': list(form['capabilities'].value() or []),
+	})
+
+
+def _pro_initial(request):
+	"""Pre-fill what we already know. A named answer beats an anonymous one."""
+	if request.user.is_authenticated and request.user.email:
+		return {'email': request.user.email}
+	return {}
+
+
 def robots_txt(request):
 	lines = [
 		"User-agent: *",
 		"Allow: /surveys/",
 		"Allow: /stories/",
 		"Allow: /services/",
+		"Allow: /pro/",
 		"Allow: /r/",
 	]
 	# SEO landing pages — derived from the single-source registry
@@ -2085,6 +2135,7 @@ def sitemap_xml(request):
 	surveys = publicly_visible_surveys()
 	urls = [f"  <url><loc>{base}/</loc></url>"]
 	urls.append(f"  <url><loc>{base}/services/</loc></url>")
+	urls.append(f"  <url><loc>{base}/pro/</loc></url>")
 	# SEO landing pages with crawl hints — from the single-source registry.
 	for landing in SEO_LANDINGS:
 		urls.append(
