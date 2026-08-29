@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% load survey_filters %}
 
 {% block extra_head %}
@@ -96,6 +97,11 @@
     .card-actions {
         display: flex; align-items: center; gap: 0.35rem;
         padding: 0.5rem 1rem 0.75rem; border-top: 1px solid #f3f4f6;
+        /* Wrap rather than squeeze. This row was sized for English labels;
+           German ones ("Veröffentlichen") are far wider, and flex was shrinking
+           each item below its own text so the label spilled into the next —
+           "Aufbauen" and "Ergebnisse" rendered as one word. */
+        flex-wrap: wrap; row-gap: 0.4rem;
     }
     .card-actions a, .card-actions button {
         font-size: 0.78rem; padding: 0.25rem 0.55rem; border-radius: 4px;
@@ -106,6 +112,7 @@
     .card-actions > a {
         display: flex; flex-direction: column; align-items: center; gap: 3px;
         text-align: center; min-width: 46px;
+        flex-shrink: 0;   /* never narrower than its own label — see above */
     }
     .card-actions > a i { font-size: 0.9rem; }
     .card-actions a:hover, .card-actions button:hover { background: var(--accent-light); color: var(--accent); }
@@ -273,16 +280,16 @@
 <div class="dashboard">
     <!-- Header -->
     <div class="dashboard-header" id="dashboardHeader">
-        <h1 class="dashboard-title">My Surveys</h1>
+        <h1 class="dashboard-title">{% trans "My Surveys" %}</h1>
         {% if MOBILE_EDITOR_NAV %}
-        <button type="button" class="dash-search-btn" onclick="dashSearchToggle(true)" aria-label="Search surveys">
+        <button type="button" class="dash-search-btn" onclick="dashSearchToggle(true)" aria-label="{% trans 'Search surveys' %}">
             <i class="fas fa-search"></i>
         </button>
         {% endif %}
         <div class="dashboard-search">
             <i class="fas fa-search"></i>
-            <input type="search" id="surveySearch" placeholder="Search surveys…"
-                   autocomplete="off" aria-label="Search surveys by name">
+            <input type="search" id="surveySearch" placeholder="{% trans 'Search surveys…' %}"
+                   autocomplete="off" aria-label="{% trans 'Search surveys by name' %}">
         </div>
         <span class="spacer"></span>
 
@@ -291,21 +298,21 @@
         inline. With the flag on these move to the ⋯ overflow (P4) and the
         toggle relocates next to the list it controls.{% endcomment %}
         {% if show_archived %}
-        <a href="?show_archived=0" class="btn btn-sm btn-outline-secondary btn-archived">Hide Archived</a>
+        <a href="?show_archived=0" class="btn btn-sm btn-outline-secondary btn-archived">{% trans "Hide Archived" %}</a>
         {% else %}
-        <a href="?show_archived=1" class="btn btn-sm btn-outline-secondary btn-archived">Show Archived</a>
+        <a href="?show_archived=1" class="btn btn-sm btn-outline-secondary btn-archived">{% trans "Show Archived" %}</a>
         {% endif %}
 
         <div class="view-toggle">
-            <button onclick="setView('grid')" id="btn-grid" title="Cards"><i class="fas fa-th-large"></i></button>
-            <button onclick="setView('list')" id="btn-list" title="List"><i class="fas fa-list"></i></button>
+            <button onclick="setView('grid')" id="btn-grid" title="{% trans 'Cards' %}"><i class="fas fa-th-large"></i></button>
+            <button onclick="setView('list')" id="btn-list" title="{% trans 'List' %}"><i class="fas fa-list"></i></button>
         </div>
         {% endif %}
 
         {% if org_role != 'viewer' %}
-        <a href="{% url 'editor_survey_create' %}" class="btn btn-sm btn-primary btn-new-survey"><i class="fas fa-plus mr-1"></i>New Survey</a>
+        <a href="{% url 'editor_survey_create' %}" class="btn btn-sm btn-primary btn-new-survey"><i class="fas fa-plus mr-1"></i>{% trans "New Survey" %}</a>
         {% if not MOBILE_EDITOR_NAV %}
-        <button type="button" class="btn btn-sm btn-outline-secondary btn-import" data-toggle="modal" data-target="#importModal">Import</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary btn-import" data-toggle="modal" data-target="#importModal">{% trans "Import" %}</button>
         {% endif %}
         {% endif %}
 
@@ -313,19 +320,19 @@
         {% comment %}⋯ absorbs the P4–P5 items below 1024px (variant A of the
         dashboard mockup): Show Archived, Import, grid/list toggle.{% endcomment %}
         <div class="dropdown dash-overflow">
-            <a href="#" role="button" data-toggle="dropdown" aria-label="More actions"><i class="fas fa-ellipsis-h"></i></a>
+            <a href="#" role="button" data-toggle="dropdown" aria-label="{% trans 'More actions' %}"><i class="fas fa-ellipsis-h"></i></a>
             <div class="dropdown-menu dropdown-menu-right">
                 {% if show_archived %}
-                <a class="dropdown-item" href="?show_archived=0"><i class="fas fa-box-open" style="margin-right:6px;"></i>Hide Archived</a>
+                <a class="dropdown-item" href="?show_archived=0"><i class="fas fa-box-open" style="margin-right:6px;"></i>{% trans "Hide Archived" %}</a>
                 {% else %}
-                <a class="dropdown-item" href="?show_archived=1"><i class="fas fa-box-open" style="margin-right:6px;"></i>Show Archived</a>
+                <a class="dropdown-item" href="?show_archived=1"><i class="fas fa-box-open" style="margin-right:6px;"></i>{% trans "Show Archived" %}</a>
                 {% endif %}
                 {% if org_role != 'viewer' %}
-                <button class="dropdown-item" type="button" data-toggle="modal" data-target="#importModal"><i class="fas fa-file-import" style="margin-right:6px;"></i>Import…</button>
+                <button class="dropdown-item" type="button" data-toggle="modal" data-target="#importModal"><i class="fas fa-file-import" style="margin-right:6px;"></i>{% trans "Import…" %}</button>
                 {% endif %}
                 <div class="dropdown-divider"></div>
-                <button class="dropdown-item" type="button" onclick="setView('list')"><i class="fas fa-list" style="margin-right:6px;"></i>List view</button>
-                <button class="dropdown-item" type="button" onclick="setView('grid')"><i class="fas fa-th-large" style="margin-right:6px;"></i>Card view</button>
+                <button class="dropdown-item" type="button" onclick="setView('list')"><i class="fas fa-list" style="margin-right:6px;"></i>{% trans "List view" %}</button>
+                <button class="dropdown-item" type="button" onclick="setView('grid')"><i class="fas fa-th-large" style="margin-right:6px;"></i>{% trans "Card view" %}</button>
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:6px;"></i>Help &amp; support</a>
             </div>
@@ -370,26 +377,26 @@
                             {% if survey.version_number > 1 %}<span style="font-size:0.65rem;color:#9ca3af;font-weight:400;"> v{{ survey.version_number }}</span>{% endif %}
                         </span>
                         <span class="status-pill badge badge-{{ survey.status|status_badge_class }}">{{ survey.get_status_display }}</span>
-                        {% if survey.public_results_page.is_published %}<span class="status-pill badge badge-primary" title="Results page is live">Results live</span>{% endif %}
+                        {% if survey.public_results_page.is_published %}<span class="status-pill badge badge-primary" title="{% trans 'Results page is live' %}">{% trans "Results live" %}</span>{% endif %}
                     </div>
                     <div class="card-kpi">
-                        <span><span class="kpi-value">{{ survey.session_count }}</span> started</span>
-                        <span><span class="kpi-value">{{ survey.completed_count }}</span> completed</span>
-                        <span><span class="kpi-value">{{ survey.completion_rate }}%</span> rate</span>
+                        <span><span class="kpi-value">{{ survey.session_count }}</span> {% trans "started" %}</span>
+                        <span><span class="kpi-value">{{ survey.completed_count }}</span> {% trans "completed" %}</span>
+                        <span><span class="kpi-value">{{ survey.completion_rate }}%</span> {% trans "rate" %}</span>
                     </div>
                     {% if survey.updated_at %}
-                    <div class="card-date">Updated {{ survey.updated_at|timesince }} ago</div>
+                    <div class="card-date">{% blocktrans with ago=survey.updated_at|timesince %}Updated {{ ago }} ago{% endblocktrans %}</div>
                     {% endif %}
                     <div style="margin-top:0.4rem;">
-                        <a href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" class="preview-btn" onclick="event.stopPropagation();"><i class="fas fa-external-link-alt"></i> Preview</a>
+                        <a href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" class="preview-btn" onclick="event.stopPropagation();"><i class="fas fa-external-link-alt"></i> {% trans "Preview" %}</a>
                     </div>
                 </div>
             </a>
             <div class="card-actions">
-                <a href="{% url 'editor_survey_detail' survey.uuid %}"><i class="fas fa-hammer"></i><span>Build</span></a>
-                <a href="{% url 'editor_survey_analytics' survey.uuid %}"><i class="fas fa-chart-bar"></i><span>Results</span></a>
-                <a href="{% url 'editor_survey_public_results' survey.uuid %}"><i class="fas fa-globe"></i><span>Publish <span class="badge-beta">beta</span></span></a>
-                <a href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-share-alt"></i><span>Share</span></a>
+                <a href="{% url 'editor_survey_detail' survey.uuid %}"><i class="fas fa-hammer"></i><span>{% trans "Build" %}</span></a>
+                <a href="{% url 'editor_survey_analytics' survey.uuid %}"><i class="fas fa-chart-bar"></i><span>{% trans "Results" %}</span></a>
+                <a href="{% url 'editor_survey_public_results' survey.uuid %}"><i class="fas fa-globe"></i><span>{% trans "Publish" %} <span class="badge-beta">{% trans "beta" %}</span></span></a>
+                <a href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-share-alt"></i><span>{% trans "Share" %}</span></a>
                 <span class="spacer"></span>
                 {% include "editor/_survey_more_menu.html" %}
             </div>
@@ -418,21 +425,21 @@
                     <span class="row-name">{{ survey.name }}{% if survey.version_number > 1 %}<span style="font-size:0.65rem;color:#9ca3af;font-weight:400;"> v{{ survey.version_number }}</span>{% endif %}</span>
                     <div class="row-meta">
                         <span class="status-pill badge badge-{{ survey.status|status_badge_class }}">{{ survey.get_status_display }}</span>
-                        {% if survey.updated_at %}&middot; {{ survey.updated_at|timesince }} ago{% endif %}
+                        {% if survey.updated_at %}&middot; {% blocktrans with ago=survey.updated_at|timesince %}{{ ago }} ago{% endblocktrans %}{% endif %}
                     </div>
                 </div>
                 <div class="row-kpi">
-                    <span><span class="kpi-value">{{ survey.session_count }}</span> started</span>
-                    <span><span class="kpi-value">{{ survey.completed_count }}</span> completed</span>
-                    <span><span class="kpi-value">{{ survey.completion_rate }}%</span> rate</span>
+                    <span><span class="kpi-value">{{ survey.session_count }}</span> {% trans "started" %}</span>
+                    <span><span class="kpi-value">{{ survey.completed_count }}</span> {% trans "completed" %}</span>
+                    <span><span class="kpi-value">{{ survey.completion_rate }}%</span> {% trans "rate" %}</span>
                 </div>
             </a>
             <div class="row-actions">
-                <a href="{% url 'editor_survey_detail' survey.uuid %}" title="Build"><i class="fas fa-hammer"></i></a>
-                <a href="{% url 'editor_survey_analytics' survey.uuid %}" title="Results"><i class="fas fa-chart-bar"></i></a>
-                <a href="{% url 'editor_survey_public_results' survey.uuid %}" title="Publish"><i class="fas fa-globe"></i></a>
-                <a href="{% url 'editor_survey_share' survey.uuid %}" title="Share"><i class="fas fa-share-alt"></i></a>
-                <a href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="Preview" class="preview-btn"><i class="fas fa-external-link-alt"></i> Preview</a>
+                <a href="{% url 'editor_survey_detail' survey.uuid %}" title="{% trans 'Build' %}"><i class="fas fa-hammer"></i></a>
+                <a href="{% url 'editor_survey_analytics' survey.uuid %}" title="{% trans 'Results' %}"><i class="fas fa-chart-bar"></i></a>
+                <a href="{% url 'editor_survey_public_results' survey.uuid %}" title="{% trans 'Publish' %}"><i class="fas fa-globe"></i></a>
+                <a href="{% url 'editor_survey_share' survey.uuid %}" title="{% trans 'Share' %}"><i class="fas fa-share-alt"></i></a>
+                <a href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="{% trans 'Preview' %}" class="preview-btn"><i class="fas fa-external-link-alt"></i> {% trans "Preview" %}</a>
                 {% include "editor/_survey_more_menu.html" %}
             </div>
         </div>
@@ -462,12 +469,12 @@
             <div style="flex:1;min-width:0;">
                 <span style="font-weight:600;font-size:0.85rem;color:#4b5563;">{{ survey.name }}</span>
                 <div style="font-size:0.72rem;color:#9ca3af;">
-                    Trashed {{ survey.deleted_at|timesince }} ago &middot; purges in {{ survey.purge_after|timeuntil }}
+                    {% blocktrans with ago=survey.deleted_at|timesince left=survey.purge_after|timeuntil %}Trashed {{ ago }} ago &middot; purges in {{ left }}{% endblocktrans %}
                 </div>
             </div>
             <form method="post" action="{% url 'restore_survey' survey.uuid %}" class="mb-0 mr-2">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="fas fa-trash-restore mr-1"></i>Restore</button>
+                <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="fas fa-trash-restore mr-1"></i>{% trans "Restore" %}</button>
             </form>
             <button type="button" class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#purgeModal"
                     data-survey-name="{{ survey.name }}" data-survey-uuid="{{ survey.uuid }}">
@@ -484,18 +491,18 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Delete Forever</h5>
+                <h5 class="modal-title">{% trans "Delete permanently" %}</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form id="purgeForm" method="post" action="">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <p>Permanently delete survey '<strong id="purgeSurveyName"></strong>'?</p>
-                    <p class="text-danger"><small>This action cannot be undone. All survey data including sessions and answers will be permanently deleted.</small></p>
+                    <p>{% blocktrans %}Permanently delete survey '<strong id="purgeSurveyName"></strong>'?{% endblocktrans %}</p>
+                    <p class="text-danger"><small>{% trans "This action cannot be undone. All survey data including sessions and answers will be permanently deleted." %}</small></p>
                 </div>
                 <div class="modal-footer d-flex align-items-center">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Delete forever</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-danger">{% trans "Delete permanently" %}</button>
                 </div>
             </form>
         </div>
@@ -507,18 +514,18 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Move to Trash</h5>
+                <h5 class="modal-title">{% trans "Move to Trash" %}</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form id="deleteForm" method="post" action="">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <p>Move survey '<strong id="deleteSurveyName"></strong>' to Trash?</p>
-                    <p class="text-muted"><small>The survey will be hidden from respondents. You can restore it from Trash within 30 days; after that it is deleted forever.</small></p>
+                    <p>{% blocktrans %}Move survey '<strong id="deleteSurveyName"></strong>' to Trash?{% endblocktrans %}</p>
+                    <p class="text-muted"><small>{% trans "The survey will be hidden from respondents. You can restore it from Trash within 30 days; after that it is deleted forever." %}</small></p>
                 </div>
                 <div class="modal-footer d-flex align-items-center">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Delete</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-danger">{% trans "Delete" %}</button>
                 </div>
             </form>
         </div>
@@ -530,21 +537,21 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Import Survey</h5>
+                <h5 class="modal-title">{% trans "Import Survey" %}</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form method="post" action="{% url 'import_survey' %}" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="importFile" class="form-label">Select ZIP archive</label>
+                        <label for="importFile" class="form-label">{% trans "Select ZIP archive" %}</label>
                         <input class="form-control" type="file" id="importFile" name="file" accept=".zip" required>
                     </div>
-                    <p class="text-muted small">Upload a ZIP archive exported from this system.</p>
+                    <p class="text-muted small">{% trans "Upload a ZIP archive exported from this system." %}</p>
                 </div>
                 <div class="modal-footer d-flex align-items-center">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Import</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans "Import" %}</button>
                 </div>
             </form>
         </div>

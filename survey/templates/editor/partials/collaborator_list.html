@@ -1,10 +1,11 @@
+{% load i18n %}
 <div id="collaborator-list">
-    <h6>Collaborators</h6>
+    <h6>{% trans "Collaborators" %}</h6>
     <table class="table table-sm table-striped mb-2">
         <thead>
             <tr>
-                <th>User</th>
-                <th>Role</th>
+                <th>{% trans "User" %}</th>
+                <th>{% trans "Role" %}</th>
                 <th></th>
             </tr>
         </thead>
@@ -28,12 +29,12 @@
                           hx-target="#collaborator-list" hx-swap="outerHTML"
                           hx-confirm="Remove {{ collab.user.username }}?"
                           hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-                        <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                        <button type="submit" class="btn btn-outline-danger btn-sm">{% trans "Remove" %}</button>
                     </form>
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="3" class="text-muted">No collaborators yet.</td></tr>
+            <tr><td colspan="3" class="text-muted">{% trans "No collaborators yet." %}</td></tr>
             {% endfor %}
         </tbody>
     </table>
@@ -54,7 +55,7 @@
                 <option value="{{ r }}">{{ r }}</option>
             {% endfor %}
         </select>
-        <button type="submit" class="btn btn-outline-primary btn-sm">Add</button>
+        <button type="submit" class="btn btn-outline-primary btn-sm">{% trans "Add" %}</button>
     </form>
     {% endif %}
 </div>

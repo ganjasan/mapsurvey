@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load static question_utils survey_filters %}
 <style>
     /* Wide two-pane question dialog. The id selector outranks .modal-lg. */
@@ -124,7 +125,7 @@
             {% comment %}image and html never render their name to respondents (see the
             question-subtext spec) — say so instead of letting "Name" read as a heading.{% endcomment %}
             <small class="form-text text-muted" id="name-internal-hint" style="display:none;">
-                Editor-only label — respondents don't see it.
+                {% trans "Editor-only label — respondents don't see it." %}
             </small>
             {% endif %}
             {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text|safe }}</small>{% endif %}
@@ -139,14 +140,14 @@
         The value still submits from the `subtext` input above, which is hidden for this
         type.{% endcomment %}
         <div class="form-group" id="html-body-editor" style="display:none;">
-            <label id="html-body-label" style="font-weight:600;">Content{% if survey.available_languages|length > 1 %} ({{ survey.available_languages.0|language_name }}){% endif %}</label>
+            <label id="html-body-label" style="font-weight:600;">{% trans "Content" %}{% if survey.available_languages|length > 1 %} ({{ survey.available_languages.0|language_name }}){% endif %}</label>
             <div id="html-body-quill"></div>
-            <small class="form-text text-muted">Respondents see exactly this — it collects no answer.</small>
+            <small class="form-text text-muted">{% trans "Respondents see exactly this — it collects no answer." %}</small>
         </div>
 
         <!-- Display style (see DISPLAY_STYLE_TYPES below) -->
         <div id="display-style-fields" style="display:none;" class="mb-3">
-            <label style="font-weight:600;">Display as</label>
+            <label style="font-weight:600;">{% trans "Display as" %}</label>
             {% comment %}Only concrete styles get cards. "Inherit the survey default" is not a
             style a creator thinks in — the survey-default card carries a corner "Default"
             ribbon instead, and its radio submits the stored value 'default' so the inherit
@@ -155,13 +156,13 @@
             <div style="display:flex;gap:8px;">
                 <label class="ds-option" data-types="choice" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;position:relative;overflow:hidden;">
                     <input type="radio" name="display_style" value="default"{% if not form.display_style.value or form.display_style.value == 'default' %} checked{% endif %}>
-                    <span class="ds-default-ribbon">Default</span>
+                    <span class="ds-default-ribbon">{% trans "Default" %}</span>
                     <span class="ds-thumb" style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
                         <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:1px solid #9aa0a6;border-radius:50%;"></i><i style="width:56px;height:6px;background:#e5e7eb;border-radius:3px;"></i></i>
                         <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:2px solid #4f46e5;border-radius:50%;"></i><i style="width:44px;height:6px;background:#e5e7eb;border-radius:3px;"></i></i>
                         <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:1px solid #9aa0a6;border-radius:50%;"></i><i style="width:50px;height:6px;background:#e5e7eb;border-radius:3px;"></i></i>
                     </span>
-                    <span>List</span>
+                    <span>{% trans "List" %}</span>
                 </label>
                 {% for radio in form.display_style %}
                 {% if radio.data.value != 'default' %}
@@ -169,7 +170,7 @@
                     {% if radio.data.value == sdef %}
                     {# The survey's own default rating style: submits 'default' (inherit), wears the ribbon. #}
                     <input type="radio" name="display_style" value="default"{% if not form.display_style.value or form.display_style.value == 'default' or form.display_style.value == sdef %} checked{% endif %}>
-                    <span class="ds-default-ribbon">Default</span>
+                    <span class="ds-default-ribbon">{% trans "Default" %}</span>
                     {% else %}
                     {{ radio.tag }}
                     {% endif %}
@@ -197,19 +198,16 @@
             </div>
             {% endwith %}
             <div id="star-count-field" style="display:none;margin-top:10px;">
-                <label style="font-weight:600;font-size:0.85rem;">Number of stars</label>
+                <label style="font-weight:600;font-size:0.85rem;">{% trans "Number of stars" %}</label>
                 <input type="number" min="2" max="10" value="5" id="star-count-input"
                        class="form-control form-control-sm" style="max-width:90px;">
                 <small class="form-text text-muted">
-                    Writes the choices below for you. Edit them directly if you want names on
-                    each step.
+                    {% trans "Writes the choices below for you. Edit them directly if you want names on each step." %}
                 </small>
             </div>
             <small id="scale-strip-width-hint" class="form-text text-muted" style="display:none;">
                 <i class="fas fa-info-circle"></i>
-                With this many options the strip gets cramped on a phone — measured at roughly 20px
-                per option on a 320px screen, which is hard to tap. The labelled list stays readable
-                at any length.
+                {% trans "With this many options the strip gets cramped on a phone — measured at roughly 20px per option on a 320px screen, which is hard to tap. The labelled list stays readable at any length." %}
             </small>
         </div>
         <style>
@@ -247,18 +245,18 @@
 
         <!-- Choices editor -->
         <div class="choices-editor" id="choices-editor" style="display:none;">
-            <label style="font-weight:600;">Choices</label>
+            <label style="font-weight:600;">{% trans "Choices" %}</label>
             <table class="table table-sm">
                 <thead>
                     <tr>
-                        <th style="width:80px;">Code</th>
+                        <th style="width:80px;">{% trans "Code" %}</th>
                         {% if survey.available_languages|length > 1 %}
                             {# One column per language; the first is the primary and doubles as the base text. No separate "default" column — it silently lost edits. #}
                             {% for lang in survey.available_languages %}
-                            <th {% if forloop.first %}title="Primary language"{% endif %}>{{ lang|upper }}{% if forloop.first %} ({{ lang|language_name }}){% endif %}</th>
+                            <th {% if forloop.first %}title="{% trans 'Primary language' %}"{% endif %}>{{ lang|upper }}{% if forloop.first %} ({{ lang|language_name }}){% endif %}</th>
                             {% endfor %}
                         {% else %}
-                        <th>Name</th>
+                        <th>{% trans "Name" %}</th>
                         {% endif %}
                         <th style="width:40px;"></th>
                     </tr>
@@ -267,22 +265,22 @@
                 </tbody>
             </table>
             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addChoiceRow()">
-                <i class="fas fa-plus"></i> Add Choice
+                <i class="fas fa-plus"></i> {% trans "Add Choice" %}
             </button>
         </div>
         <input type="hidden" name="choices_json" id="choices-json-input">
 
         {# Validation settings per question type #}
         <div id="vs-number-fields" style="display:none;" class="mt-2 p-2" style="background:#f8f9fa;border-radius:4px;">
-            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> Validation</label>
+            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> {% trans "Validation" %}</label>
             <div class="form-row">
                 <div class="form-group col-4">
-                    <label style="font-size:0.75rem;">Min value</label>
+                    <label style="font-size:0.75rem;">{% trans "Min value" %}</label>
                     <input type="number" step="any" name="vs_min_value" class="form-control form-control-sm"
                            value="{% if question and question.validation_settings %}{{ question.validation_settings.min_value|default:'' }}{% endif %}">
                 </div>
                 <div class="form-group col-4">
-                    <label style="font-size:0.75rem;">Max value</label>
+                    <label style="font-size:0.75rem;">{% trans "Max value" %}</label>
                     <input type="number" step="any" name="vs_max_value" class="form-control form-control-sm"
                            value="{% if question and question.validation_settings %}{{ question.validation_settings.max_value|default:'' }}{% endif %}">
                 </div>
@@ -295,60 +293,60 @@
             </div>
         </div>
         <div id="vs-text-fields" style="display:none;" class="mt-2">
-            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> Validation</label>
+            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> {% trans "Validation" %}</label>
             <div class="form-group">
-                <label style="font-size:0.75rem;">Min text length</label>
+                <label style="font-size:0.75rem;">{% trans "Min text length" %}</label>
                 <input type="number" min="0" name="vs_min_length" class="form-control form-control-sm" style="width:100px;"
                        value="{% if question and question.validation_settings %}{{ question.validation_settings.min_length|default:'3' }}{% else %}3{% endif %}"
                        placeholder="3">
             </div>
         </div>
         <div id="vs-polygon-fields" style="display:none;" class="mt-2">
-            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> Validation</label>
+            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> {% trans "Validation" %}</label>
             <div class="form-group">
-                <label style="font-size:0.75rem;">Area outlier factor</label>
+                <label style="font-size:0.75rem;">{% trans "Area outlier factor" %}</label>
                 <input type="number" step="1" min="2" name="vs_area_outlier_factor" class="form-control form-control-sm" style="width:100px;"
                        value="{% if question and question.validation_settings %}{{ question.validation_settings.area_outlier_factor|default:'10' }}{% else %}10{% endif %}"
                        placeholder="10">
             </div>
         </div>
         <div id="vs-file-fields" style="display:none;" class="mt-2">
-            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> Validation</label>
+            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> {% trans "Validation" %}</label>
             <div class="form-group">
-                <label style="font-size:0.75rem;">Max files (1–10)</label>
+                <label style="font-size:0.75rem;">{% trans "Max files (1–10)" %}</label>
                 {% comment %}Empty = the type's default; the placeholder states it and
                 follows the selected type (toggleValidationFields updates it).{% endcomment %}
                 <input type="number" step="1" min="1" max="10" name="vs_max_files" id="vs-max-files-input" class="form-control form-control-sm" style="width:100px;"
                        value="{% if question and question.validation_settings.max_files %}{{ question.validation_settings.max_files }}{% endif %}">
             </div>
             <div class="form-group">
-                <label style="font-size:0.75rem;">Max file size, MB (platform cap 25)</label>
+                <label style="font-size:0.75rem;">{% trans "Max file size, MB (platform cap 25)" %}</label>
                 <input type="number" step="1" min="1" max="25" name="vs_max_file_mb" class="form-control form-control-sm" style="width:100px;"
                        value="{% if question and question.validation_settings.max_file_bytes %}{% widthratio question.validation_settings.max_file_bytes 1048576 1 %}{% endif %}"
                        placeholder="25">
             </div>
         </div>
         <div id="vs-geo-fields" style="display:none;" class="mt-2">
-            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-map-marker-alt"></i> Places per respondent</label>
+            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-map-marker-alt"></i> {% trans "Places per respondent" %}</label>
             <div class="form-row">
                 <div class="form-group col-4">
-                    <label style="font-size:0.75rem;">Min</label>
+                    <label style="font-size:0.75rem;">{% trans "Min" %}</label>
                     <input type="number" step="1" min="0" name="vs_min_features" class="form-control form-control-sm"
                            value="{% if question and question.validation_settings %}{{ question.validation_settings.min_features|default:'' }}{% endif %}">
                 </div>
                 <div class="form-group col-4">
-                    <label style="font-size:0.75rem;">Max</label>
+                    <label style="font-size:0.75rem;">{% trans "Max" %}</label>
                     <input type="number" step="1" min="1" name="vs_max_features" class="form-control form-control-sm"
                            value="{% if question and question.validation_settings %}{{ question.validation_settings.max_features|default:'' }}{% endif %}">
                 </div>
             </div>
-            <small class="text-muted" style="font-size:0.72rem;">Respondents can add several places to one map question. Leave max empty for unlimited; the export stays a single layer either way.</small>
+            <small class="text-muted" style="font-size:0.72rem;">{% trans "Respondents can add several places to one map question. Leave max empty for unlimited; the export stays a single layer either way." %}</small>
         </div>
 
         {% if survey.available_languages|length > 1 %}
         <div class="translations-section">
             <button type="button" class="translations-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
-                <i class="fas fa-chevron-right"></i> Translations
+                <i class="fas fa-chevron-right"></i> {% trans "Translations" %}
             </button>
             <div class="translations-body">
                 {% for lang in survey.available_languages|slice:"1:" %}
@@ -376,12 +374,12 @@
 
         <div class="question-preview-panel qtp-preview-col">
             <div class="qtp-pv-card">
-                <div class="qtp-pv-title"><i class="fas fa-eye"></i> Respondent sees</div>
+                <div class="qtp-pv-title"><i class="fas fa-eye"></i> {% trans "Respondent sees" %}</div>
                 <iframe id="question-preview-frame"
                         {% if question %}src="{% url 'editor_question_preview' survey.uuid question.id %}"{% endif %}
                         style="flex:1;border:1px solid #e5e7eb;border-radius:6px;width:100%;min-height:260px;background:#fff;">
                 </iframe>
-                <div class="qtp-pv-note">Updates as you edit — the real respondent-side rendering.</div>
+                <div class="qtp-pv-note">{% trans "Updates as you edit — the real respondent-side rendering." %}</div>
                 {% if visibility_enabled and question %}{% load question_utils %}{% with vis=question|visibility_info:survey %}{% if vis and not vis.broken %}
                 <div style="margin-top:8px;font-size:.72rem;background:#e7f1ff;border:1px solid #b6d4fe;color:#0b5ed7;border-radius:14px;padding:3px 10px;display:inline-block;">
                     <i class="fas fa-code-branch"></i> Shown when: {{ vis.label|slice:"3:" }}
@@ -390,7 +388,7 @@
             </div>
 
             <div class="qtp-pv-card qtp-flyout" id="qtp-flyout" hidden>
-                <div class="qtp-pv-title" style="margin-bottom:4px;">Type example</div>
+                <div class="qtp-pv-title" style="margin-bottom:4px;">{% trans "Type example" %}</div>
                 <div class="qtp-flyout-hint"></div>
                 <iframe class="qtp-example-frame"></iframe>
             </div>
@@ -399,32 +397,27 @@
             has none. This is where creators decide to clone a geo question instead of using
             sub-questions + limits — the geo tips exist to prevent exactly that.{% endcomment %}
             <div class="qtp-pv-card qtp-tips" id="qtp-tips" hidden>
-                <div class="qtp-pv-title"><i class="far fa-lightbulb"></i> Tips</div>
+                <div class="qtp-pv-title"><i class="far fa-lightbulb"></i> {% trans "Tips" %}</div>
                 <ul class="qtp-tips-list" data-tip-for="point line polygon">
-                    <li><b>One map question collects many places.</b> Respondents keep adding
+                    <li><b>{% trans "One map question collects many places." %}</b> Respondents keep adding
                         marks to the same question — never create "Mark the 1st / 2nd location"
-                        copies. Use <b>Places per respondent</b> below to ask for, say, 1&ndash;5.</li>
-                    <li><b>Describe each place with sub-questions.</b> They pop up on every
-                        placed mark, and each becomes a column of your GeoJSON layer in QGIS.
-                        Without them the map collects dots with no meaning.</li>
-                    <li><b>Points get answered about twice as often</b> as polygons — draw
-                        requests cost respondents real effort. When in doubt, ask for a point.</li>
+                        copies. Use <b>{% trans "Places per respondent" %}</b> below to ask for, say, 1&ndash;5.</li>
+                    <li><b>{% trans "Describe each place with sub-questions." %}</b> {% trans "They pop up on every placed mark, and each becomes a column of your GeoJSON layer in QGIS. Without them the map collects dots with no meaning." %}</li>
+                    <li><b>{% trans "Points get answered about twice as often" %}</b> {% trans "as polygons — draw requests cost respondents real effort. When in doubt, ask for a point." %}</li>
                 </ul>
                 <ul class="qtp-tips-list" data-tip-for="range rating">
-                    <li><b>The scale is built from your choice codes</b> — keep them integers in
+                    <li><b>{% trans "The scale is built from your choice codes" %}</b> — keep them integers in
                         ascending order (1, 2, 3&hellip;).</li>
                     <li>Label at least the endpoints ("Not at all" &hellip; "Very much") so the
                         scale reads the same for everyone.</li>
                 </ul>
                 <ul class="qtp-tips-list" data-tip-for="ranking">
-                    <li><b>Choices are the items to be ordered</b>, not a scale. Give 3&ndash;6
+                    <li><b>{% trans "Choices are the items to be ordered" %}</b>, not a scale. Give 3&ndash;6
                         short, comparable items.</li>
-                    <li>Respondents must place <i>every</i> item and no two can share a rank —
-                        use Rating instead when independent scores are enough.</li>
+                    <li>{% trans "Respondents must place" %} <i>{% trans "every" %}</i> {% trans "item and no two can share a rank — use Rating instead when independent scores are enough." %}</li>
                 </ul>
                 <ul class="qtp-tips-list" data-tip-for="choice multichoice">
-                    <li>Codes end up in your data export; names are what respondents see.
-                        Keep codes stable once responses start arriving.</li>
+                    <li>{% trans "Codes end up in your data export; names are what respondents see. Keep codes stable once responses start arriving." %}</li>
                 </ul>
             </div>
         </div>
@@ -436,15 +429,15 @@
         error state — editor_autosave.js drives data-state.{% endcomment %}
         <span class="autosave-indicator" data-state="saved" role="status" aria-live="polite">
             <i class="fas fa-circle autosave-dot"></i>
-            <span class="autosave-label">All changes saved</span>
+            <span class="autosave-label">{% trans "All changes saved" %}</span>
         </span>
         <span style="flex:1;"></span>
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Close" %}</button>
         {% else %}
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
         {% if question %}
         <button type="button" class="btn btn-outline-primary" id="apply-question-btn" onclick="serializeChoices(); applyQuestion();">
-            <i class="fas fa-eye"></i> Apply
+            <i class="fas fa-eye"></i> {% trans "Apply" %}
         </button>
         {% endif %}
         <button type="submit" class="btn btn-primary" onclick="serializeChoices()">{% if question %}Save{% else %}Create{% endif %}</button>

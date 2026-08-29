@@ -15,12 +15,14 @@ from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.utils import timezone, translation
 from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 
 from .models import (
     SurveyHeader, SurveySession, SurveySection, SurveySectionTranslation,
     Question, QuestionTranslation, SurveyCollaborator, Answer,
     Membership, SURVEY_ROLE_CHOICES, BASEMAP_CHOICES,
     INPUT_TYPE_CHOICES, DISPLAY_STYLE_CHOICES, SurveyMapLayer,
+    CreatorPreferences,
 )
 from .layers import (
     validate_layer_upload, LayerValidationError,
@@ -2169,3 +2171,43 @@ def editor_check_compatibility(request, survey_uuid):
 
     issues = check_draft_compatibility(survey, survey.published_version)
     return JsonResponse({'issues': issues})
+
+
+@require_POST
+@login_required
+def set_creator_language(request):
+    """Switch the creator's interface language and remember it.
+
+    Writes both the stored preference (survives a new device) and Django's
+    language cookie (what `LocaleMiddleware` actually reads — it runs before
+    `request.user` exists, so the preference alone cannot reach it in time).
+
+    Only affects creator surfaces. Respondent pages activate the SURVEY's
+    language inside the view, after all middleware, so a creator's choice can
+    never re-language someone else's survey.
+    """
+    language = request.POST.get('language', '')
+    if language not in dict(settings.LANGUAGES):
+        # Unknown or unsupported: fall back rather than error, and do not store
+        # a value that would later resolve to a half-translated interface.
+        return redirect(request.POST.get('next') or 'editor')
+
+    CreatorPreferences.objects.update_or_create(
+        user=request.user, defaults={'ui_language': language},
+    )
+    translation.activate(language)
+
+    # Only same-origin paths, so the switcher cannot be turned into an open
+    # redirect by a crafted `next`.
+    target = request.POST.get('next') or reverse('editor')
+    if not target.startswith('/') or target.startswith('//'):
+        target = reverse('editor')
+
+    response = redirect(target)
+    response.set_cookie(
+        settings.LANGUAGE_COOKIE_NAME, language,
+        max_age=settings.LANGUAGE_COOKIE_AGE,
+        path=settings.LANGUAGE_COOKIE_PATH,
+        samesite=settings.LANGUAGE_COOKIE_SAMESITE,
+    )
+    return response

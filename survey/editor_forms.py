@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
 from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP_CHOICES
 from .html_sanitize import coerce_creator_html
@@ -26,6 +27,10 @@ class SurveyCreateForm(forms.ModelForm):
     class Meta:
         model = SurveyHeader
         fields = ['name', 'available_languages']
+        labels = {
+            'name': _('Survey name'),
+            'available_languages': _('Available languages'),
+        }
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Park improvements'}),
             'available_languages': forms.HiddenInput(attrs={'id': 'id_available_languages'}),
@@ -55,7 +60,7 @@ class SurveyBriefForm(forms.Form):
     use_required_attribute = False
 
     goal = forms.CharField(
-        label='What do you want to find out?',
+        label=_('What do you want to find out?'),
         widget=forms.Textarea(attrs={
             'class': 'form-control', 'rows': 3,
             'placeholder': 'e.g. Where traffic congestion is worst in Treviglio and why',
@@ -63,14 +68,14 @@ class SurveyBriefForm(forms.Form):
     )
     audience = forms.CharField(
         required=False,
-        label='Who will answer?',
+        label=_('Who will answer?'),
         widget=forms.TextInput(attrs={
             'class': 'form-control', 'placeholder': 'e.g. Residents of Treviglio, all ages',
         }),
     )
     map_target = forms.CharField(
         required=False,
-        label='What should they mark on the map?',
+        label=_('What should they mark on the map?'),
         widget=forms.TextInput(attrs={
             'class': 'form-control', 'placeholder': 'e.g. Congestion spots, dangerous crossings',
         }),
@@ -90,17 +95,17 @@ class SurveyHeaderForm(forms.ModelForm):
                  ('stars', 'Stars')),
         required=False,
         widget=forms.RadioSelect(),
-        label='Rating questions',
+        label=_('Rating questions'),
     )
     # Theming lives in style_settings, not on the model. The checkbox exists
     # because <input type=color> cannot be empty — unchecked means "no custom
     # accent", whatever the color input happens to hold.
     use_accent_color = forms.BooleanField(
-        required=False, label='Custom accent color',
+        required=False, label=_('Custom accent color'),
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'id': 'id_use_accent_color'}),
     )
     accent_color = forms.CharField(
-        required=False, label='Accent color',
+        required=False, label=_('Accent color'),
         validators=[RegexValidator(r'^#[0-9a-fA-F]{6}$', 'Use a hex color like #7a1f2b.')],
         widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'color', 'id': 'id_accent_color'}),
     )
@@ -110,6 +115,15 @@ class SurveyHeaderForm(forms.ModelForm):
         # thanks_html now has its own WYSIWYG editor panel; show_branding is a
         # future paid-tier flag on the model, not a creator-facing field.
         fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'cover_image', 'basemaps', 'default_basemap']
+        labels = {
+            'name': _('Name'),
+            'redirect_url': _('Redirect URL'),
+            'available_languages': _('Available languages'),
+            'visibility': _('Visibility'),
+            'cover_image': _('Cover image'),
+            'basemaps': _('Base maps'),
+            'default_basemap': _('Default base map'),
+        }
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'survey_name'}),
             'redirect_url': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '#'}),
@@ -186,13 +200,23 @@ class SurveySectionForm(forms.ModelForm):
             'layout': forms.Select(attrs={'class': 'form-control', 'id': 'id_section_layout'}),
             'next_label': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 30, 'placeholder': 'Next'}),
         }
+        # ONE labels dict. There were two assignments here; the second silently
+        # replaced the first, so only the fields it named had labels and the
+        # rest fell back to Django's field-name derivation — reaching the
+        # creator in English whatever their interface language.
+        #
+        # Set here rather than as model verbose_name: a verbose_name change
+        # generates a migration for no schema benefit.
         labels = {
-            'layout': 'Layout',
-            'next_label': 'Button label',
+            'title': _('Title'),
+            'subheading': _('Subheading'),
+            'code': _('Code'),
+            'layout': _('Layout'),
+            'next_label': _('Button label'),
         }
         help_texts = {
-            'layout': 'Map: questions beside the map. Form: a classic full-width form — no map, so geo questions are unavailable.',
-            'next_label': 'Label of this section\'s forward button, e.g. "Start" on a welcome section. Empty = Next / Finish.',
+            'layout': _('Map: questions beside the map. Form: a classic full-width form — no map, so geo questions are unavailable.'),
+            'next_label': _('Label of this section\'s forward button, e.g. "Start" on a welcome section. Empty = Next / Finish.'),
         }
 
     def __init__(self, *args, **kwargs):
@@ -253,6 +277,16 @@ class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
         fields = ['name', 'subtext', 'input_type', 'required', 'color', 'icon_class', 'image', 'display_style']
+        labels = {
+            'name': _('Name'),
+            'subtext': _('Subtext'),
+            'input_type': _('Input type'),
+            'required': _('Required'),
+            'color': _('Color'),
+            'icon_class': _('Icon class'),
+            'image': _('Image'),
+            'display_style': _('Display style'),
+        }
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'subtext': forms.TextInput(attrs={'class': 'form-control'}),

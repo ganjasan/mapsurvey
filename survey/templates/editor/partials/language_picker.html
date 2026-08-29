@@ -1,6 +1,7 @@
+{% load i18n %}
 <div class="lang-select-wrapper" id="lang-select-wrapper">
     <div class="lang-select-box" id="lang-select-box">
-        <input type="text" class="lang-select-input" id="lang-search" placeholder="Search languages..." autocomplete="off">
+        <input type="text" class="lang-select-input" id="lang-search" placeholder="{% trans 'Search languages...' %}" autocomplete="off">
     </div>
     <div class="lang-dropdown" id="lang-dropdown"></div>
 </div>

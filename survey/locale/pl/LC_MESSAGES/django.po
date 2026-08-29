@@ -3,204 +3,819 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: Mapsurvey 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-13 07:47+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"POT-Creation-Date: 2026-08-29 08:25+0000\n"
+"PO-Revision-Date: 2026-08-28 17:52+0000\n"
+"Last-Translator: \n"
+"Language-Team: Polish\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=(n==1 ? 0 : (n%10>=2 && n%10<=4) && (n%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || (n%10>=5 && n%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 
-#: survey/models.py:19 survey/models.py:26
-msgid "Owner"
+#: survey/abuse.py:261
+msgid "Letters, digits and @ . + - _ only. No spaces."
 msgstr ""
 
-#: survey/models.py:20
-msgid "Admin"
+#: survey/editor_forms.py:31 survey/templates/editor/survey_create.html:214
+msgid "Survey name"
 msgstr ""
 
-#: survey/models.py:21 survey/models.py:27
-msgid "Editor"
+#: survey/editor_forms.py:32 survey/editor_forms.py:121
+#: survey/templates/editor/survey_create.html:221
+msgid "Available languages"
 msgstr ""
 
-#: survey/models.py:22 survey/models.py:28
-msgid "Viewer"
+#: survey/editor_forms.py:63
+msgid "What do you want to find out?"
 msgstr ""
 
-#: survey/models.py:57
-msgid "Only alphanumeric character and \"_\" sign"
+#: survey/editor_forms.py:71
+msgid "Who will answer?"
 msgstr ""
 
-#: survey/models.py:66
-msgid "Draft"
+#: survey/editor_forms.py:78
+msgid "What should they mark on the map?"
 msgstr ""
 
-#: survey/models.py:67
-msgid "Testing"
+#: survey/editor_forms.py:98
+msgid "Rating questions"
 msgstr ""
 
-#: survey/models.py:68
-msgid "Published"
+#: survey/editor_forms.py:104
+msgid "Custom accent color"
 msgstr ""
 
-#: survey/models.py:69
-msgid "Closed"
+#: survey/editor_forms.py:108
+msgid "Accent color"
 msgstr ""
 
-#: survey/models.py:70
-msgid "Archived"
+#: survey/editor_forms.py:119 survey/editor_forms.py:281
+#: survey/templates/editor/partials/question_form_modal.html:263
+#: survey/templates/editor/partials/survey_settings_panel.html:143
+#: survey/templates/org/org_settings.html:22
+msgid "Name"
 msgstr ""
 
-#: survey/models.py:82
-msgid "Private"
+#: survey/editor_forms.py:120
+msgid "Redirect URL"
 msgstr ""
 
-#: survey/models.py:83 survey/templates/base_landing.html:69
-#: survey/templates/base_landing.html:116
-msgid "Demo"
+#: survey/editor_forms.py:122
+#: survey/templates/editor/partials/_visibility_block.html:10
+#: survey/templates/editor/public_results.html:247
+msgid "Visibility"
 msgstr ""
 
-#: survey/models.py:84
-msgid "Public"
+#: survey/editor_forms.py:123
+#: survey/templates/editor/partials/survey_settings_panel.html:195
+msgid "Cover image"
 msgstr ""
 
-#: survey/models.py:88
-msgid "Text"
+#: survey/editor_forms.py:124
+msgid "Base maps"
 msgstr ""
 
-#: survey/models.py:89
-msgid "Number"
+#: survey/editor_forms.py:125
+msgid "Default base map"
 msgstr ""
 
-#: survey/models.py:90
-msgid "Choices"
+#: survey/editor_forms.py:211 survey/templates/editor/public_results.html:268
+msgid "Title"
 msgstr ""
 
-#: survey/models.py:91
-msgid "Multiple Choices"
+#: survey/editor_forms.py:212
+msgid "Subheading"
 msgstr ""
 
-#: survey/models.py:92
-msgid "Range"
+#: survey/editor_forms.py:213
+#: survey/templates/editor/partials/question_form_modal.html:256
+msgid "Code"
 msgstr ""
 
-#: survey/models.py:93
-msgid "Rating"
+#: survey/editor_forms.py:214
+msgid "Layout"
 msgstr ""
 
-#: survey/models.py:94
-msgid "Date/Time"
+#: survey/editor_forms.py:215
+msgid "Button label"
 msgstr ""
 
-#: survey/models.py:95
-msgid "Geo Point"
+#: survey/editor_forms.py:218
+msgid ""
+"Map: questions beside the map. Form: a classic full-width form — no map, so "
+"geo questions are unavailable."
 msgstr ""
 
-#: survey/models.py:96
-msgid "Geo Line"
+#: survey/editor_forms.py:219
+msgid ""
+"Label of this section's forward button, e.g. \"Start\" on a welcome section."
+" Empty = Next / Finish."
 msgstr ""
 
-#: survey/models.py:97
-msgid "Geo Polygon"
+#: survey/editor_forms.py:282
+msgid "Subtext"
 msgstr ""
 
-#: survey/models.py:98
+#: survey/editor_forms.py:283
+msgid "Input type"
+msgstr ""
+
+#: survey/editor_forms.py:284
+#: survey/templates/editor/partials/question_list_item.html:7
+msgid "Required"
+msgstr ""
+
+#: survey/editor_forms.py:285 survey/models.py:675
+#: survey/templates/editor/partials/survey_settings_panel.html:147
+msgid "Color"
+msgstr ""
+
+#: survey/editor_forms.py:286
+msgid "Icon class"
+msgstr ""
+
+#: survey/editor_forms.py:287 survey/models.py:119 survey/models.py:1452
+#: survey/templates/editor/public_results.html:187
 msgid "Image"
 msgstr ""
 
-#: survey/models.py:99
+#: survey/editor_forms.py:288
+msgid "Display style"
+msgstr ""
+
+#: survey/models.py:20 survey/models.py:27
+msgid "Owner"
+msgstr ""
+
+#: survey/models.py:21
+msgid "Admin"
+msgstr ""
+
+#: survey/models.py:22 survey/models.py:28
+msgid "Editor"
+msgstr ""
+
+#: survey/models.py:23 survey/models.py:29
+msgid "Viewer"
+msgstr ""
+
+#: survey/models.py:63
+msgid "The name must contain at least one letter or digit"
+msgstr ""
+
+#: survey/models.py:72
+msgid "Draft"
+msgstr ""
+
+#: survey/models.py:73
+msgid "Testing"
+msgstr ""
+
+#: survey/models.py:74
+msgid "Published"
+msgstr ""
+
+#: survey/models.py:75
+#: survey/templates/editor/partials/_survey_primary_action.html:26
+msgid "Closed"
+msgstr ""
+
+#: survey/models.py:76
+msgid "Archived"
+msgstr ""
+
+#: survey/models.py:84
+msgid "Streets"
+msgstr ""
+
+#: survey/models.py:85
+msgid "Satellite"
+msgstr ""
+
+#: survey/models.py:86
+msgid "Topo"
+msgstr ""
+
+#: survey/models.py:102
+msgid "Private"
+msgstr ""
+
+#: survey/models.py:103 survey/templates/base_landing.html:103
+#: survey/templates/base_landing.html:165
+msgid "Demo"
+msgstr ""
+
+#: survey/models.py:104 survey/models.py:1441
+msgid "Public"
+msgstr ""
+
+#: survey/models.py:108 survey/models.py:1451
+#: survey/templates/editor/public_results.html:182
+msgid "Text"
+msgstr ""
+
+#: survey/models.py:109
+msgid "Number"
+msgstr ""
+
+#: survey/models.py:110
+#: survey/templates/editor/partials/question_form_modal.html:252
+msgid "Choices"
+msgstr ""
+
+#: survey/models.py:111
+msgid "Multiple Choices"
+msgstr ""
+
+#: survey/models.py:112
+msgid "Range"
+msgstr ""
+
+#: survey/models.py:113
+msgid "Rating"
+msgstr ""
+
+#: survey/models.py:114
+msgid "Ranking"
+msgstr ""
+
+#: survey/models.py:115
+msgid "Date/Time"
+msgstr ""
+
+#: survey/models.py:116
+msgid "Geo Point"
+msgstr ""
+
+#: survey/models.py:117
+msgid "Geo Line"
+msgstr ""
+
+#: survey/models.py:118
+msgid "Geo Polygon"
+msgstr ""
+
+#: survey/models.py:120
 msgid "Single Line Text"
 msgstr ""
 
-#: survey/models.py:100
+#: survey/models.py:121
 msgid "HTML"
 msgstr ""
 
+#: survey/models.py:122
+msgid "Photo Upload"
+msgstr ""
+
 #: survey/models.py:123
+msgid "Audio Upload"
+msgstr ""
+
+#: survey/models.py:124
+msgid "Document Upload"
+msgstr ""
+
+#: survey/models.py:132
+msgid "Survey default"
+msgstr ""
+
+#: survey/models.py:133
+msgid "Compact scale"
+msgstr ""
+
+#: survey/models.py:134
+msgid "Labeled list"
+msgstr ""
+
+#: survey/models.py:135
+msgid "Stars"
+msgstr ""
+
+#: survey/models.py:136
+msgid "Dropdown with search"
+msgstr ""
+
+#: survey/models.py:171
 msgid "Selected language code (ISO 639-1)"
 msgstr ""
 
-#: survey/models.py:273
+#: survey/models.py:321
 msgid ""
 "URL to redirect after survey completion. E.g.: /thanks/ or "
 "https://example.com"
 msgstr ""
 
-#: survey/models.py:274
+#: survey/models.py:322
 msgid "List of ISO 639-1 language codes, e.g. [\"en\", \"ru\", \"de\"]"
 msgstr ""
 
-#: survey/models.py:275
+#: survey/models.py:323
 msgid "Controls whether survey appears on the landing page"
 msgstr ""
 
-#: survey/models.py:276
+#: survey/models.py:324
 msgid "Marks completed surveys whose results can be shown"
 msgstr ""
 
-#: survey/models.py:277
+#: survey/models.py:325
 msgid ""
 "Custom HTML for thanks page. Dict keyed by language: {\"en\": "
 "\"<h1>Thanks!</h1>\", \"ru\": \"<h1>Спасибо!</h1>\"} or a plain string."
 msgstr ""
 
-#: survey/models.py:282
+#: survey/models.py:330
 msgid ""
 "Survey-level validation thresholds: {fast_threshold_seconds, "
 "duplicate_window_hours}"
 msgstr ""
 
-#: survey/models.py:290
+#: survey/models.py:331
+msgid ""
+"Enabled basemaps for respondent map. List from: [\"streets\", \"satellite\","
+" \"topo\"]"
+msgstr ""
+
+#: survey/models.py:332
+msgid ""
+"Default basemap shown to respondents. If null, first from basemaps list."
+msgstr ""
+
+#: survey/models.py:333
+msgid ""
+"Default map position for the survey. Sections inherit this if not "
+"overridden."
+msgstr ""
+
+#: survey/models.py:334
+msgid ""
+"Default map zoom for the survey. Sections inherit this if not overridden."
+msgstr ""
+
+#: survey/models.py:335
+msgid "Auto-center map on respondent location when entering the survey."
+msgstr ""
+
+#: survey/models.py:336
+msgid ""
+"Show a \"Made with Mapsurvey\" link on the public survey and thanks pages (a"
+" free-tier acquisition loop). Turn off for a clean, unbranded look."
+msgstr ""
+
+#: survey/models.py:337
+#, python-brace-format
+msgid "Survey-wide style defaults: {rating_display_style}"
+msgstr ""
+
+#: survey/models.py:340
+msgid ""
+"Set when the survey is moved to trash; purged permanently after the "
+"retention window."
+msgstr ""
+
+#: survey/models.py:346
 msgid "For archived versions, points to the canonical survey"
 msgstr ""
 
-#: survey/models.py:297
+#: survey/models.py:353
 msgid "For draft copies, points to the canonical survey being edited"
 msgstr ""
 
-#: survey/models.py:474 survey/models.py:559
+#: survey/models.py:538
+msgid "Fallback style; simplestyle properties inside the file win."
+msgstr ""
+
+#: survey/models.py:539
+msgid "Feature property rendered as a permanent map label. Empty = no labels."
+msgstr ""
+
+#: survey/models.py:540
+msgid ""
+"Feature property that makes features addressable (reserved for answer-driven"
+" map context). No UI consumer yet."
+msgstr ""
+
+#: survey/models.py:541
+msgid ""
+"Tap a feature shows a read-only popup of its name/description properties."
+msgstr ""
+
+#: survey/models.py:542
+msgid "Re-serialized FeatureCollection — never the raw uploaded bytes."
+msgstr ""
+
+#: survey/models.py:557 survey/models.py:886 survey/models.py:1454
+#: survey/templates/editor/partials/_mobile_nav.html:24
+#: survey/templates/editor/partials/_mobile_nav.html:29
+msgid "Map"
+msgstr ""
+
+#: survey/models.py:558
+msgid "Form"
+msgstr ""
+
+#: survey/models.py:566
+msgid ""
+"\"map\" renders the panel beside the map; \"form\" renders a classic full-"
+"width form with no map"
+msgstr ""
+
+#: survey/models.py:567
+msgid ""
+"Custom label for the forward button, e.g. \"Start\" on a welcome section. "
+"Empty = the default Next/Finish."
+msgstr ""
+
+#: survey/models.py:575
+msgid ""
+"Override map position for this section. Null = keep current map position."
+msgstr ""
+
+#: survey/models.py:576
+msgid "Override map zoom for this section. Null = keep current zoom."
+msgstr ""
+
+#: survey/models.py:577
+msgid "If true, fly to respondent location when entering this section."
+msgstr ""
+
+#: survey/models.py:578
+msgid "Override basemap for this section. Null = keep current basemap."
+msgstr ""
+
+#: survey/models.py:579
+msgid ""
+"IDs of SurveyMapLayer rows hidden on this section. Empty = all layers "
+"visible. Stale IDs are ignored at render time."
+msgstr ""
+
+#: survey/models.py:587
+msgid ""
+"Show this section only when the referenced choice question's answer includes"
+" any of the referenced option codes. Null = always shown."
+msgstr ""
+
+#: survey/models.py:639 survey/models.py:795
 msgid "ISO 639-1 language code"
 msgstr ""
 
-#: survey/models.py:504
+#: survey/models.py:674
 msgid ""
 "Per-question validation: {min_value, max_value, outlier_sigma, min_length, "
 "area_outlier_factor}"
 msgstr ""
 
-#: survey/models.py:505
-msgid "Color"
-msgstr ""
-
-#: survey/models.py:505
+#: survey/models.py:675
 msgid "HEX color, as #RRGGBB"
 msgstr ""
 
-#: survey/models.py:506
+#: survey/models.py:676
 msgid "Must be Font-Awesome class"
 msgstr ""
 
-#: survey/models.py:602
-msgid "Map"
+#: survey/models.py:678
+msgid ""
+"Rendering style: rating styles (\"default\" inherits the survey-wide style) "
+"or \"dropdown\" for choice questions"
 msgstr ""
 
-#: survey/models.py:603
+#: survey/models.py:681
+msgid ""
+"Show this question only when the referenced choice question's answer "
+"includes any of the referenced option codes. Null = always shown."
+msgstr ""
+
+#: survey/models.py:887
 msgid "Open Data"
 msgstr ""
 
-#: survey/models.py:604
+#: survey/models.py:888 survey/templates/editor.html:400
+#: survey/templates/editor.html:442
 msgid "Results"
 msgstr ""
 
-#: survey/models.py:605
+#: survey/models.py:889
 msgid "Article"
+msgstr ""
+
+#: survey/models.py:1054
+msgid "Automatic rule"
+msgstr ""
+
+#: survey/models.py:1055
+msgid "Staff assignment"
+msgstr ""
+
+#: survey/models.py:1092
+msgid "Hex colour used on the funnel dashboard, e.g. #3b82f6."
+msgstr ""
+
+#: survey/models.py:1182
+msgid "Research"
+msgstr ""
+
+#: survey/models.py:1183 survey/templates/base_landing.html:199
+#: survey/templates/org/org_members.html:34
+#: survey/templates/org/org_members.html:112
+msgid "Email"
+msgstr ""
+
+#: survey/models.py:1184
+msgid "Call"
+msgstr ""
+
+#: survey/models.py:1185
+msgid "Signal"
+msgstr ""
+
+#: survey/models.py:1212
+msgid "Short markdown summary: who this is, in a few lines."
+msgstr ""
+
+#: survey/models.py:1248
+msgid "Creator interface language. Empty = follow the browser."
+msgstr ""
+
+#: survey/models.py:1283
+msgid "Repo-relative path this note was imported from, if any."
+msgstr ""
+
+#: survey/models.py:1337
+msgid "Slice within the source; meaning depends on the source."
+msgstr ""
+
+#: survey/models.py:1427
+msgid "Set when the demo was opened by a signed-in user; NULL = anonymous."
+msgstr ""
+
+#: survey/models.py:1442
+msgid "Unlisted"
+msgstr ""
+
+#: survey/models.py:1446
+msgid "Live"
+msgstr ""
+
+#: survey/models.py:1447
+msgid "Frozen"
+msgstr ""
+
+#: survey/models.py:1453
+msgid "Chart"
+msgstr ""
+
+#: survey/models.py:1477
+msgid ""
+"Public is indexable and listable; unlisted is reachable by direct link only."
+msgstr ""
+
+#: survey/models.py:1482
+msgid ""
+"Multilingual intro: {\"title\": {\"en\": ...}, \"body\": {\"en\": ...}} or "
+"plain strings."
+msgstr ""
+
+#: survey/models.py:1485
+msgid "Frozen per-block payloads."
+msgstr ""
+
+#: survey/models.py:1491
+msgid ""
+"Show a \"See the results\" button on the survey's thanks page (only while "
+"published)."
+msgstr ""
+
+#: survey/models.py:1494
+msgid "Show a card in the public stories listing (public visibility only)."
+msgstr ""
+
+#: survey/models.py:1497
+msgid "Mask buckets with 0 < count < K as \"<K\". Set to 1 to disable."
+msgstr ""
+
+#: survey/models.py:1501
+msgid ""
+"When default blocks were auto-drafted. Set once; blocks the creator deletes "
+"are never re-created."
+msgstr ""
+
+#: survey/models.py:1528
+msgid "Bound question for chart/map blocks; null for text/image."
+msgstr ""
+
+#: survey/models.py:1533
+msgid "Visualization override: auto, bar, pie, donut, table, heatmap, ..."
+msgstr ""
+
+#: survey/models.py:1536
+msgid "Optional multilingual title override."
+msgstr ""
+
+#: survey/models.py:1540
+msgid ""
+"Multilingual body for standalone text blocks, or caption for image blocks: "
+"{\"en\": \"...\", \"ru\": \"...\"}."
+msgstr ""
+
+#: survey/models.py:1544
+msgid "Image for standalone image blocks."
+msgstr ""
+
+#: survey/models.py:1548
+msgid ""
+"Question codes whose values appear in geo popups. Empty = anonymous geometry"
+" only."
+msgstr ""
+
+#: survey/models.py:1552
+msgid "Tile basemap for map blocks (streets/satellite/topo)."
+msgstr ""
+
+#: survey/models.py:1567
+msgid "Survey draft generation"
+msgstr ""
+
+#: survey/models.py:1573
+msgid "Pending"
+msgstr ""
+
+#: survey/models.py:1574
+msgid "Success"
+msgstr ""
+
+#: survey/models.py:1575
+msgid "Provider not configured"
+msgstr ""
+
+#: survey/models.py:1576
+msgid "Provider error"
+msgstr ""
+
+#: survey/models.py:1577
+msgid "Invalid draft"
+msgstr ""
+
+#: survey/models.py:1578
+msgid "Unexpected error"
+msgstr ""
+
+#: survey/password_rules.py:35
+#, python-format
+msgid "At least %(min_length)d characters"
+msgstr ""
+
+#: survey/password_rules.py:40
+msgid "Not entirely numbers"
+msgstr ""
+
+#: survey/password_rules.py:45
+msgid "Not a commonly used password"
+msgstr ""
+
+#: survey/password_rules.py:50
+msgid "Not too similar to your email or username"
+msgstr ""
+
+#: survey/password_rules.py:62
+msgid "Avoid a commonly used password"
+msgstr ""
+
+#: survey/password_rules.py:68
+msgid "Avoid reusing your email or username"
+msgstr ""
+
+#: survey/password_rules.py:74
+msgid "Avoid a password of only numbers"
+msgstr ""
+
+#: survey/templates/404.html:16 survey/templates/404.html:74
+msgid "Page not found"
+msgstr ""
+
+#: survey/templates/404.html:65 survey/templates/survey_unavailable.html:20
+msgid "This survey isn’t available"
+msgstr ""
+
+#: survey/templates/404.html:66
+msgid ""
+"We couldn’t open the survey at this link. That usually means one of these:"
+msgstr ""
+
+#: survey/templates/404.html:68
+msgid "It hasn’t been published yet — the creator is still working on it."
+msgstr ""
+
+#: survey/templates/404.html:69
+msgid "It was removed by its creator."
+msgstr ""
+
+#: survey/templates/404.html:70
+msgid "The link is incomplete or mistyped."
+msgstr ""
+
+#: survey/templates/404.html:72
+msgid ""
+"If someone shared this link with you, ask them to send the public link "
+"again."
+msgstr ""
+
+#: survey/templates/404.html:75
+msgid "The page you were looking for doesn’t exist, or has moved."
+msgstr ""
+
+#: survey/templates/404.html:80
+msgid "Go to your dashboard"
+msgstr ""
+
+#: survey/templates/404.html:81 survey/templates/404.html:83
+msgid "Browse public surveys"
+msgstr ""
+
+#: survey/templates/404.html:89 survey/templates/survey_closed.html:11
+#: survey/templates/survey_unavailable.html:22
+msgid "Back to Home"
+msgstr "Wróć na stronę główną"
+
+#: survey/templates/admin/assign_cohort.html:6
+#: survey/templates/admin/funnel_dashboard.html:6
+msgid "Home"
+msgstr ""
+
+#: survey/templates/admin/assign_cohort.html:7
+msgid "Users"
+msgstr ""
+
+#: survey/templates/admin/assign_cohort.html:34
+msgid "Assign cohort"
+msgstr ""
+
+#: survey/templates/admin/assign_cohort.html:35
+#: survey/templates/base_survey_template.html:124
+#: survey/templates/base_survey_template.html:136
+#: survey/templates/editor.html:507 survey/templates/editor.html:530
+#: survey/templates/editor.html:556
+#: survey/templates/editor/analytics_dashboard.html:197
+#: survey/templates/editor/analytics_dashboard_v2.html:205
+#: survey/templates/editor/editor_base.html:983
+#: survey/templates/editor/partials/_lifecycle_scripts.html:24
+#: survey/templates/editor/partials/_lifecycle_scripts.html:46
+#: survey/templates/editor/partials/_lifecycle_scripts.html:57
+#: survey/templates/editor/partials/_lifecycle_scripts.html:67
+#: survey/templates/editor/partials/pr_add_block_modal.html:54
+#: survey/templates/editor/partials/question_form_modal.html:445
+#: survey/templates/editor/partials/section_map_picker.html:54
+#: survey/templates/editor/survey_create.html:377
+#: survey/templates/editor/survey_create.html:383
+#: survey/templates/editor/survey_detail.html:192
+#: survey/templates/editor/survey_detail.html:394
+#: survey/templates/editor/survey_settings_modal.html:27
+#: survey/templates/file_upload.html:103 survey/templatetags/i18n_extras.py:20
+msgid "Cancel"
+msgstr "Anuluj"
+
+#: survey/templates/base.html:363 survey/templates/editor/editor_base.html:885
+msgid "Copied:"
+msgstr ""
+
+#: survey/templates/base.html:365 survey/templates/editor/editor_base.html:887
+msgid "Clear clipboard (Esc)"
+msgstr ""
+
+#: survey/templates/base.html:365 survey/templates/editor/editor_base.html:887
+msgid "Clear clipboard"
+msgstr ""
+
+#: survey/templates/base.html:382 survey/templates/editor/editor_base.html:941
+#: survey/templates/org/org_new.html:4 survey/templates/org/org_new.html:10
+msgid "New Organization"
+msgstr ""
+
+#: survey/templates/base.html:384 survey/templates/editor/editor_base.html:943
+#: survey/templates/org/org_members.html:14
+#: survey/templates/org/org_settings.html:4
+msgid "Settings"
+msgstr ""
+
+#: survey/templates/base.html:385 survey/templates/editor/editor_base.html:918
+#: survey/templates/editor/editor_base.html:944
+#: survey/templates/org/org_members.html:4
+#: survey/templates/org/org_settings.html:34
+msgid "Members"
+msgstr ""
+
+#: survey/templates/base.html:396 survey/templates/base_landing.html:145
+#: survey/templates/editor/editor_base.html:924
+#: survey/templates/editor/editor_base.html:953
+msgid "Logout"
+msgstr ""
+
+#: survey/templates/base.html:398
+#: survey/templates/registration/rate_limited.html:32
+msgid "Sign in"
 msgstr ""
 
 #: survey/templates/base_landing.html:7
@@ -208,109 +823,503 @@ msgid ""
 "Mapsurvey — Open-Source Participatory Mapping Platform | Free PPGIS Tool"
 msgstr ""
 
-#: survey/templates/base_landing.html:16
+#: survey/templates/base_landing.html:17
 msgid ""
 "Create map-based surveys where people mark places, draw routes, and outline "
 "areas. Free to start, open source, self-hostable. The open-source "
 "alternative to Maptionnaire."
 msgstr ""
 
-#: survey/templates/base_landing.html:23 survey/templates/base_landing.html:27
+#: survey/templates/base_landing.html:24 survey/templates/base_landing.html:28
 msgid "Mapsurvey — Open-Source Participatory Mapping"
 msgstr ""
 
-#: survey/templates/base_landing.html:24 survey/templates/base_landing.html:28
+#: survey/templates/base_landing.html:25 survey/templates/base_landing.html:29
 msgid ""
 "Create map-based surveys where people mark places, draw routes, and outline "
 "areas. Free & open source."
 msgstr ""
 
-#: survey/templates/base_landing.html:63
+#: survey/templates/base_landing.html:97
 msgid "Toggle navigation"
 msgstr ""
 
-#: survey/templates/base_landing.html:68
-#: survey/templates/base_landing.html:115
+#: survey/templates/base_landing.html:102
+#: survey/templates/base_landing.html:164
 msgid "Features"
 msgstr ""
 
-#: survey/templates/base_landing.html:70
+#: survey/templates/base_landing.html:107
+msgid "Solutions"
+msgstr ""
+
+#: survey/templates/base_landing.html:112
+#: survey/templates/base_landing.html:167
+msgid "For Urban Planners"
+msgstr ""
+
+#: survey/templates/base_landing.html:113
+#: survey/templates/base_landing.html:168
+msgid "For Local Government"
+msgstr ""
+
+#: survey/templates/base_landing.html:114
+#: survey/templates/base_landing.html:169
+msgid "For Researchers"
+msgstr ""
+
+#: survey/templates/base_landing.html:115
+#: survey/templates/base_landing.html:170
+msgid "For Educators"
+msgstr ""
+
+#: survey/templates/base_landing.html:116
+#: survey/templates/base_landing.html:171
+msgid "For Consultants"
+msgstr ""
+
+#: survey/templates/base_landing.html:119
 msgid "Trust"
 msgstr ""
 
-#: survey/templates/base_landing.html:95
+#: survey/templates/base_landing.html:144
+#: survey/templates/editor/editor_base.html:879
 #: survey/templates/org/org_members.html:15
 msgid "Dashboard"
 msgstr ""
 
-#: survey/templates/base_landing.html:96
-msgid "Logout"
-msgstr ""
-
-#: survey/templates/base_landing.html:98
+#: survey/templates/base_landing.html:147
 #: survey/templates/django_registration/activation_complete.html:13
 #: survey/templates/org/invitation_landing.html:17
 #: survey/templates/registration/login.html:10
-#: survey/templates/registration/login.html:40
+#: survey/templates/registration/login.html:53
 #: survey/templates/registration/password_reset_complete.html:13
 msgid "Sign In"
 msgstr ""
 
-#: survey/templates/base_landing.html:99
+#: survey/templates/base_landing.html:148
 msgid "Sign Up Free"
 msgstr ""
 
-#: survey/templates/base_landing.html:110
+#: survey/templates/base_landing.html:159
 msgid "Open-source platform for participatory mapping"
 msgstr ""
 
-#: survey/templates/base_landing.html:113
+#: survey/templates/base_landing.html:162
 msgid "Product"
 msgstr ""
 
-#: survey/templates/base_landing.html:121 survey/templates/landing.html:28
+#: survey/templates/base_landing.html:166
+#: survey/templates/stories_index.html:18
+msgid "Stories"
+msgstr ""
+
+#: survey/templates/base_landing.html:172
+#: survey/templates/civic_engagement.html:89
+#: survey/templates/community_engagement_platform.html:33
+msgid "Community Engagement Platform"
+msgstr ""
+
+#: survey/templates/base_landing.html:173
+#: survey/templates/civic_engagement.html:90
+#: survey/templates/public_consultation_software.html:29
+msgid "Public Consultation Software"
+msgstr ""
+
+#: survey/templates/base_landing.html:174
+msgid "Civic Engagement"
+msgstr ""
+
+#: survey/templates/base_landing.html:175
+#: survey/templates/civic_engagement.html:91
+msgid "Participatory Budgeting"
+msgstr ""
+
+#: survey/templates/base_landing.html:176
+msgid "Maptionnaire alternative"
+msgstr ""
+
+#: survey/templates/base_landing.html:177
+msgid "Social Pinpoint alternative"
+msgstr ""
+
+#: survey/templates/base_landing.html:178
+msgid "MetroQuest alternative"
+msgstr ""
+
+#: survey/templates/base_landing.html:183 survey/templates/landing.html:33
 msgid "Open Source"
 msgstr ""
 
-#: survey/templates/base_landing.html:128
+#: survey/templates/base_landing.html:190
 msgid "Legal"
 msgstr ""
 
-#: survey/templates/base_landing.html:130
+#: survey/templates/base_landing.html:192
 msgid "Trust & Security"
 msgstr ""
 
-#: survey/templates/base_landing.html:134
+#: survey/templates/base_landing.html:196
 msgid "Connect"
 msgstr ""
 
-#: survey/templates/base_landing.html:137
-#: survey/templates/org/org_members.html:34
-#: survey/templates/org/org_members.html:112
-msgid "Email"
-msgstr ""
-
-#: survey/templates/base_landing.html:148
+#: survey/templates/base_landing.html:213
 msgid ""
 "Mapsurvey is open-source software licensed under <a "
 "href=\"https://www.gnu.org/licenses/agpl-3.0.html\" target=\"_blank\" "
 "rel=\"noopener\">AGPLv3</a>"
 msgstr ""
 
-#: survey/templates/base_survey_template.html:66
-#: survey/templates/base_survey_template.html:78
-#: survey/templatetags/i18n_extras.py:20
-msgid "Cancel"
-msgstr "Anuluj"
-
-#: survey/templates/base_survey_template.html:67
+#: survey/templates/base_survey_template.html:125
 #: survey/templatetags/i18n_extras.py:18
 msgid "Finish drawing"
 msgstr "Zakończ rysowanie"
 
-#: survey/templates/base_survey_template.html:79
+#: survey/templates/base_survey_template.html:137
+#: survey/templates/editor/partials/analytics_table.html:467
+#: survey/templates/editor/partials/question_form_modal.html:448
+#: survey/templates/editor/public_results.html:259
 msgid "Apply"
 msgstr "Zastosuj"
+
+#: survey/templates/civic_engagement.html:4
+msgid "Civic Engagement on a Map — Methods, Tools & Platform | Mapsurvey"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:5
+msgid ""
+"Make civic engagement spatial: residents pin places, draw routes, and "
+"outline areas instead of writing vague comments. Open-source civic "
+"engagement tools for consultations, participatory budgeting, and "
+"neighbourhood planning — GIS-ready results you own."
+msgstr ""
+
+#: survey/templates/civic_engagement.html:6
+msgid ""
+"civic engagement, civic involvement, civic participation, civic engagement "
+"platform, civic engagement tools, citizen participation, community "
+"involvement, map-based engagement"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:9
+msgid "Civic engagement on a map — open-source tools"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:33
+msgid "Civic engagement that happens on the map"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:35
+msgid ""
+"Civic engagement works when residents can say precisely where something "
+"matters — not just that it does. Mapsurvey turns civic participation into "
+"spatial input: people pin places, draw routes, and outline areas, and your "
+"team gets GIS-ready evidence instead of a pile of free-text comments. Open "
+"source, free to start, and self-hostable."
+msgstr ""
+
+#: survey/templates/civic_engagement.html:38
+#: survey/templates/community_engagement_platform.html:38
+msgid "Start free"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:40
+#: survey/templates/community_engagement_platform.html:40
+#: survey/templates/for_consultants.html:36
+#: survey/templates/participatory_budgeting.html:36
+#: survey/templates/public_consultation_software.html:36
+msgid "Try a live demo"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:44
+#: survey/templates/community_engagement_platform.html:44
+#: survey/templates/for_government.html:40
+#: survey/templates/for_planners.html:43
+#: survey/templates/participatory_budgeting.html:40
+#: survey/templates/public_consultation_software.html:40
+msgid "Free & open source"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:45
+msgid "Point / line / polygon input"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:46
+#: survey/templates/community_engagement_platform.html:46
+#: survey/templates/participatory_budgeting.html:42
+msgid "GeoJSON + CSV export"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:47
+#: survey/templates/public_consultation_software.html:43
+msgid "GDPR / self-hostable"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:54
+msgid "Why spatial"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:55
+msgid "Civic participation is about places"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:58
+msgid "Precise, not vague"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:59
+#: survey/templates/for_government.html:82
+#: survey/templates/for_planners.html:58
+msgid "\\"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:62
+msgid "Wider reach than meetings"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:63
+msgid ""
+"An online map reaches residents who never attend a town hall — parents, "
+"shift workers, young people. A link is all they need."
+msgstr ""
+
+#: survey/templates/civic_engagement.html:66
+msgid "Evidence you can defend"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:67
+msgid ""
+"Every contribution is a data point with coordinates. Aggregate, filter, and "
+"map the input — then show your community you actually used it."
+msgstr ""
+
+#: survey/templates/civic_engagement.html:70
+msgid "Owned, not rented"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:71
+msgid ""
+"Open source (AGPLv3) with GeoJSON + CSV export. Your community's input stays"
+" yours — self-host it if your policies require."
+msgstr ""
+
+#: survey/templates/civic_engagement.html:79
+msgid "Methods"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:80
+msgid "Civic engagement methods that work on a map"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:82
+msgid ""
+"Public consultation — comments and objections pinned to the exact site or "
+"route."
+msgstr ""
+
+#: survey/templates/civic_engagement.html:83
+msgid ""
+"Participatory budgeting — residents mark where investment is needed most."
+msgstr ""
+
+#: survey/templates/civic_engagement.html:84
+msgid ""
+"Neighbourhood & local plans — what to keep, fix, or change, street by "
+"street."
+msgstr ""
+
+#: survey/templates/civic_engagement.html:85
+msgid ""
+"Mobility & safety audits — dangerous crossings, missing links, desire lines."
+msgstr ""
+
+#: survey/templates/civic_engagement.html:86
+msgid ""
+"Youth and school engagement — civic participation projects in the classroom."
+msgstr ""
+
+#: survey/templates/civic_engagement.html:89
+msgid "The product behind it — features, hosting, and data ownership."
+msgstr ""
+
+#: survey/templates/civic_engagement.html:90
+msgid "Running statutory and planning consultations on the map."
+msgstr ""
+
+#: survey/templates/civic_engagement.html:91
+msgid "Map-based input for PB programmes."
+msgstr ""
+
+#: survey/templates/civic_engagement.html:94
+msgid "Run your first engagement — free"
+msgstr ""
+
+#: survey/templates/civic_engagement.html:95
+msgid "Talk to us about your project"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:4
+msgid "Community Engagement Platform — Open Source & Map-Based | Mapsurvey"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:5
+msgid ""
+"Mapsurvey is a free, open-source community engagement platform. Residents "
+"pin places, draw routes, and outline areas on a map — you get GIS-ready "
+"results and full data ownership. Self-hostable, GDPR-friendly, no per-"
+"project fees."
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:6
+msgid ""
+"community engagement platform, citizen engagement platform, citizen "
+"engagement software, public engagement software, participatory mapping "
+"platform, open source engagement platform, map-based engagement, civic "
+"engagement tool"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:9
+msgid "The open-source, map-based community engagement platform"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:35
+msgid ""
+"Mapsurvey is an open-source community engagement platform built around the "
+"map. Instead of a form full of vague text, people pin the places, draw the "
+"routes, and outline the areas that matter to them — and you get GIS-ready "
+"results you fully own. Free to start, self-hostable, and GDPR-friendly, with"
+" no per-project or per-response fees."
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:45
+msgid "Map-based input"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:47
+msgid "Self-host or EU-hosted"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:54
+#: survey/templates/public_consultation_software.html:50
+msgid "Why teams choose it"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:55
+msgid "An engagement platform that speaks in places, not just text"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:58
+msgid "Location-specific input"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:59
+msgid ""
+"Participants respond exactly where the issue is — a junction, a route, a "
+"parcel — so the feedback is actionable, not anecdotal."
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:62
+#: survey/templates/for_government.html:58 survey/templates/services.html:39
+msgid "You own the data"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:63
+msgid ""
+"Self-host on your own infrastructure or use the EU-hosted version. Export "
+"everything as GeoJSON + CSV, anytime — no lock-in."
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:66
+#: survey/templates/for_consultants.html:42
+#: survey/templates/for_researchers.html:39
+#: survey/templates/maptionnaire_alternative.html:53
+#: survey/templates/maptionnaire_alternative.html:70
+#: survey/templates/social_pinpoint_alternative.html:53
+msgid "Open source (AGPLv3)"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:67
+msgid ""
+"Auditable and adaptable — procurement-friendly, and no black box between you"
+" and your community's input."
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:70
+#: survey/templates/for_consultants.html:40
+#: survey/templates/for_government.html:43
+#: survey/templates/participatory_budgeting.html:43
+msgid "No per-project fees"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:71
+msgid ""
+"Run as many engagements as you need. Pricing that fits a public or non-"
+"profit budget, not enterprise licensing."
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:79
+msgid "Who runs engagement on it"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:80
+msgid "One platform, every audience"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:81
+msgid ""
+"Community engagement means something different to each team. Mapsurvey "
+"adapts to the workflow — and we keep a dedicated page for the segments we "
+"serve most:"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:83
+msgid "Local government"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:83
+msgid "Statutory consultation, participatory budgeting, ward engagement."
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:84
+msgid "Urban planners"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:84
+msgid "Participatory planning and place-based public input."
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:85
+msgid "Researchers"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:85
+msgid "PPGIS, participatory research, and citizen science."
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:88
+msgid "Neighbourhood plans — what to keep, fix, or change, pinned to the map."
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:89
+msgid "Mobility & active travel — routes, barriers, and desire lines."
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:90
+#: survey/templates/for_government.html:79
+msgid "Participatory budgeting — where residents want investment."
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:91
+msgid "Public-space and greening projects — location-specific priorities."
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:94
+msgid "Create your first engagement — free"
+msgstr ""
+
+#: survey/templates/community_engagement_platform.html:95
+msgid "Compare to Maptionnaire"
+msgstr ""
 
 #: survey/templates/django_registration/activation_complete.html:4
 #: survey/templates/django_registration/activation_complete.html:11
@@ -320,6 +1329,21 @@ msgstr ""
 #: survey/templates/django_registration/activation_complete.html:12
 #, python-format
 msgid "Welcome, %(account)s! Your account is now active."
+msgstr ""
+
+#: survey/templates/django_registration/activation_confirm.html:4
+#: survey/templates/django_registration/activation_confirm.html:11
+msgid "Confirm Your Email"
+msgstr ""
+
+#: survey/templates/django_registration/activation_confirm.html:12
+msgid ""
+"One click left: confirm your email address to activate your account. You'll "
+"be signed in right away."
+msgstr ""
+
+#: survey/templates/django_registration/activation_confirm.html:23
+msgid "Confirm my email"
 msgstr ""
 
 #: survey/templates/django_registration/activation_email_body.txt:1
@@ -347,8 +1371,14 @@ msgstr ""
 msgid "Activation Failed"
 msgstr ""
 
-#: survey/templates/django_registration/activation_failed.html:14
-msgid "Try registering again"
+#: survey/templates/django_registration/activation_failed.html:13
+msgid ""
+"This activation link may have expired or been used already. You can request "
+"a new one."
+msgstr ""
+
+#: survey/templates/django_registration/activation_failed.html:20
+msgid "Send me a new activation link"
 msgstr ""
 
 #: survey/templates/django_registration/activation_form.html:4
@@ -405,221 +1435,4121 @@ msgstr ""
 msgid "Sign up to create and manage geo-surveys."
 msgstr ""
 
-#: survey/templates/django_registration/registration_form.html:31
+#: survey/templates/django_registration/registration_form.html:76
 #: survey/templates/registration/registration_form.html:31
 msgid "Register"
 msgstr ""
 
-#: survey/templates/django_registration/registration_form.html:43
+#: survey/templates/django_registration/registration_form.html:80
+msgid "This form is protected by Cloudflare Turnstile."
+msgstr ""
+
+#: survey/templates/django_registration/registration_form.html:81
+msgid "Privacy"
+msgstr ""
+
+#: survey/templates/django_registration/registration_form.html:99
 #: survey/templates/registration/registration_form.html:35
 msgid "Already have an account? Sign in"
 msgstr ""
 
-#: survey/templates/landing.html:10
-msgid "Collect spatial feedback from your community"
+#: survey/templates/django_registration/resend_activation_done.html:4
+#: survey/templates/django_registration/resend_activation_done.html:11
+msgid "Check Your Inbox"
 msgstr ""
 
-#: survey/templates/landing.html:12
+#: survey/templates/django_registration/resend_activation_done.html:18
 msgid ""
-"Create map-based surveys where people mark places, draw routes, and outline "
-"areas. Free to start. No coding required."
+"If that address belongs to an account that hasn't been activated yet, an "
+"activation link is on its way. It's valid for 7 days."
 msgstr ""
 
-#: survey/templates/landing.html:16 survey/templates/landing.html:214
+#: survey/templates/django_registration/resend_activation_done.html:19
+msgid ""
+"Nothing arrived? Check your spam folder, and make sure you used the address "
+"you signed up with."
+msgstr ""
+
+#: survey/templates/django_registration/resend_activation_done.html:21
+#: survey/templates/django_registration/resend_activation_form.html:34
+#: survey/templates/registration/password_reset_done.html:14
+#: survey/templates/registration/password_reset_form.html:28
+msgid "Back to sign in"
+msgstr ""
+
+#: survey/templates/django_registration/resend_activation_form.html:4
+#: survey/templates/django_registration/resend_activation_form.html:10
+msgid "Resend Activation Email"
+msgstr ""
+
+#: survey/templates/django_registration/resend_activation_form.html:11
+msgid ""
+"Enter the email address you signed up with and we'll send a fresh activation"
+" link."
+msgstr ""
+
+#: survey/templates/django_registration/resend_activation_form.html:30
+msgid "Send activation link"
+msgstr ""
+
+#: survey/templates/editor.html:283
+msgid "My Surveys"
+msgstr ""
+
+#: survey/templates/editor.html:285
+msgid "Search surveys"
+msgstr ""
+
+#: survey/templates/editor.html:291
+msgid "Search surveys…"
+msgstr ""
+
+#: survey/templates/editor.html:292
+msgid "Search surveys by name"
+msgstr ""
+
+#: survey/templates/editor.html:302 survey/templates/editor.html:328
+msgid "Hide Archived"
+msgstr ""
+
+#: survey/templates/editor.html:304 survey/templates/editor.html:330
+msgid "Show Archived"
+msgstr ""
+
+#: survey/templates/editor.html:308
+msgid "Cards"
+msgstr ""
+
+#: survey/templates/editor.html:309
+#: survey/templates/editor/partials/question_form_modal.html:169
+msgid "List"
+msgstr ""
+
+#: survey/templates/editor.html:314
+#: survey/templates/editor/survey_create.html:8
+msgid "New Survey"
+msgstr ""
+
+#: survey/templates/editor.html:316 survey/templates/editor.html:557
+msgid "Import"
+msgstr ""
+
+#: survey/templates/editor.html:325
+#: survey/templates/editor/_survey_more_menu.html:7
+#: survey/templates/editor/editor_base.html:897
+msgid "More actions"
+msgstr ""
+
+#: survey/templates/editor.html:333
+msgid "Import…"
+msgstr ""
+
+#: survey/templates/editor.html:336
+msgid "List view"
+msgstr ""
+
+#: survey/templates/editor.html:337
+msgid "Card view"
+msgstr ""
+
+#: survey/templates/editor.html:383
+msgid "Results page is live"
+msgstr ""
+
+#: survey/templates/editor.html:383
+msgid "Results live"
+msgstr ""
+
+#: survey/templates/editor.html:386 survey/templates/editor.html:435
+msgid "started"
+msgstr ""
+
+#: survey/templates/editor.html:387 survey/templates/editor.html:436
+msgid "completed"
+msgstr ""
+
+#: survey/templates/editor.html:388 survey/templates/editor.html:437
+msgid "rate"
+msgstr ""
+
+#: survey/templates/editor.html:391
+#, python-format
+msgid "Updated %(ago)s ago"
+msgstr ""
+
+#: survey/templates/editor.html:394 survey/templates/editor.html:445
+#: survey/templates/editor/partials/_mobile_nav.html:36
+#: survey/templates/editor/partials/_mobile_nav.html:42
+#: survey/templates/editor/partials/_survey_nav_tabs.html:64
+#: survey/templates/editor/partials/thanks_panel.html:8
+#: survey/templates/editor/public_results.html:222
+#: survey/templates/editor/survey_detail.html:53
+#: survey/templates/editor/survey_detail.html:67
+#: survey/templates/editor/survey_detail.html:330
+msgid "Preview"
+msgstr ""
+
+#: survey/templates/editor.html:399 survey/templates/editor.html:441
+msgid "Build"
+msgstr ""
+
+#: survey/templates/editor.html:401 survey/templates/editor.html:443
+#: survey/templates/editor/partials/_lifecycle_scripts.html:25
+#: survey/templates/editor/partials/_lifecycle_scripts.html:47
+#: survey/templates/editor/partials/_survey_primary_action.html:14
+msgid "Publish"
+msgstr ""
+
+#: survey/templates/editor.html:401
+#: survey/templates/editor/partials/_survey_nav_tabs.html:36
+msgid "beta"
+msgstr ""
+
+#: survey/templates/editor.html:402 survey/templates/editor.html:444
+#: survey/templates/editor/partials/_survey_nav_tabs.html:48
+msgid "Share"
+msgstr ""
+
+#: survey/templates/editor.html:431
+#, python-format
+msgid "%(ago)s ago"
+msgstr ""
+
+#: survey/templates/editor.html:475
+#, python-format
+msgid "Trashed %(ago)s ago &middot; purges in %(left)s"
+msgstr ""
+
+#: survey/templates/editor.html:480
+#: survey/templates/editor/partials/analytics_session_detail.html:19
+#: survey/templates/editor/partials/analytics_table.html:312
+msgid "Restore"
+msgstr ""
+
+#: survey/templates/editor.html:497 survey/templates/editor.html:508
+#: survey/templates/editor/partials/analytics_table.html:315
+msgid "Delete permanently"
+msgstr ""
+
+#: survey/templates/editor.html:503
+msgid "Permanently delete survey '<strong id=\"purgeSurveyName\"></strong>'?"
+msgstr ""
+
+#: survey/templates/editor.html:504
+msgid ""
+"This action cannot be undone. All survey data including sessions and answers"
+" will be permanently deleted."
+msgstr ""
+
+#: survey/templates/editor.html:520
+msgid "Move to Trash"
+msgstr ""
+
+#: survey/templates/editor.html:526
+msgid "Move survey '<strong id=\"deleteSurveyName\"></strong>' to Trash?"
+msgstr ""
+
+#: survey/templates/editor.html:527
+msgid ""
+"The survey will be hidden from respondents. You can restore it from Trash "
+"within 30 days; after that it is deleted forever."
+msgstr ""
+
+#: survey/templates/editor.html:531
+#: survey/templates/editor/_survey_more_menu.html:34
+#: survey/templates/editor/partials/analytics_session_detail.html:22
+#: survey/templates/editor/partials/pr_block_list_item.html:12
+#: survey/templates/editor/partials/survey_settings_panel.html:139
+#: survey/templates/editor/survey_share.html:222
+#: survey/templatetags/i18n_extras.py:21
+msgid "Delete"
+msgstr "Usuń"
+
+#: survey/templates/editor.html:543
+msgid "Import Survey"
+msgstr ""
+
+#: survey/templates/editor.html:550
+msgid "Select ZIP archive"
+msgstr ""
+
+#: survey/templates/editor.html:553
+msgid "Upload a ZIP archive exported from this system."
+msgstr ""
+
+#: survey/templates/editor/_survey_more_menu.html:12
+msgid "Download Clean Data"
+msgstr ""
+
+#: survey/templates/editor/_survey_more_menu.html:13
+#: survey/templates/editor/_survey_more_menu.html:19
+msgid "All Versions"
+msgstr ""
+
+#: survey/templates/editor/_survey_more_menu.html:18
+msgid "Download All (incl. excluded)"
+msgstr ""
+
+#: survey/templates/editor/_survey_more_menu.html:22
+msgid "Download Data"
+msgstr ""
+
+#: survey/templates/editor/_survey_more_menu.html:23
+msgid "All (incl. excluded)"
+msgstr ""
+
+#: survey/templates/editor/_survey_more_menu.html:26
+msgid "Export"
+msgstr ""
+
+#: survey/templates/editor/_survey_more_menu.html:27
+msgid "Structure Only"
+msgstr ""
+
+#: survey/templates/editor/_survey_more_menu.html:28
+msgid "Data Only"
+msgstr ""
+
+#: survey/templates/editor/_survey_more_menu.html:29
+msgid "Full Backup"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:31
+msgid ""
+"Responses of the published survey. This draft's own preview responses are "
+"under <strong>Draft (test)</strong> in the version picker."
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:42
+#: survey/templates/editor/public_results.html:60
+msgid "Data"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:47
+msgid "Performance"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:60
+#: survey/templates/editor/analytics_dashboard_v2.html:77
+msgid "Download clean responses (CSV + GeoJSON)"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:61
+msgid "Download data"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:71
+msgid "hidden — Show all"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:86
+#: survey/templates/editor/analytics_dashboard_v2.html:119
+msgid "Loading table..."
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:89
+msgid "Expand Violations panel"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:92
+#: survey/templates/editor/analytics_dashboard.html:99
+msgid "Violations"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:100
+msgid "Collapse"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:112
+#: survey/templates/editor/analytics_dashboard.html:130
+#: survey/templates/editor/partials/analytics_table.html:163
+msgid "0 selected"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:114
+#: survey/templates/editor/analytics_dashboard.html:132
+msgid "Hide"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:115
+#: survey/templates/editor/analytics_dashboard.html:133
+msgid "Keep only"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:116
+#: survey/templates/editor/analytics_dashboard.html:134
+msgid "Invert"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:122
+#: survey/templates/editor/analytics_dashboard_v2.html:106
+msgid "No geo questions in this survey"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:138
+#: survey/templates/editor/partials/analytics_table.html:150
+msgid "Toggle fullscreen"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:143
+#: survey/templates/editor/partials/_mobile_nav.html:23
+msgid "Overview"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:146
+msgid "Questions & Responses"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:166
+msgid "Session Details"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:167
+#: survey/templates/editor/analytics_dashboard_v2.html:163
+#: survey/templates/editor/editor_base.html:977
+#: survey/templates/editor/partials/_survey_primary_action.html:23
+#: survey/templates/editor/partials/generation_failed.html:13
+#: survey/templates/editor/partials/question_form_modal.html:443
+#: survey/templates/editor/survey_share.html:256
+#: survey/templates/landing.html:95
+msgid "Close"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:170
+msgid "Loading..."
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:181
+#: survey/templates/editor/analytics_dashboard_v2.html:189
+msgid "Validation Settings"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:186
+#: survey/templates/editor/analytics_dashboard_v2.html:194
+msgid "Fast completion threshold (seconds)"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:188
+#: survey/templates/editor/analytics_dashboard_v2.html:196
+msgid "Sessions completed faster than this are flagged"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:191
+#: survey/templates/editor/analytics_dashboard_v2.html:199
+msgid "Duplicate detection window (hours)"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:193
+#: survey/templates/editor/analytics_dashboard_v2.html:201
+msgid "Sessions from same browser within this window are flagged"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard.html:198
+#: survey/templates/editor/analytics_dashboard_v2.html:206
+#: survey/templates/editor/partials/thanks_panel.html:30
+#: survey/templates/editor/survey_detail.html:163
+#: survey/templates/org/org_settings.html:30
+msgid "Save"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard_v2.html:33
+msgid "Draft (test)"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard_v2.html:39
+msgid "Responses panes"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard_v2.html:58
+msgid "Show two panes side by side"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard_v2.html:62
+msgid "Back to a single pane"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard_v2.html:154
+msgid "Response details"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard_v2.html:156
+msgid "Response"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard_v2.html:158
+msgid "The list changed since this was opened"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard_v2.html:161
+msgid "Previous"
+msgstr ""
+
+#: survey/templates/editor/analytics_dashboard_v2.html:162
+#: survey/templates/partials/survey_section_partial.html:97
+#: survey/templates/survey_section_block.html:20
+msgid "Next"
+msgstr "Dalej"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:180
+msgid "Done"
+msgstr ""
+
+#: survey/templates/editor/editor_base.html:5
+msgid "– Mapsurvey"
+msgstr ""
+
+#: survey/templates/editor/editor_base.html:906
+msgid "Share…"
+msgstr ""
+
+#: survey/templates/editor/editor_base.html:907
+msgid "Open as respondent"
+msgstr ""
+
+#: survey/templates/editor/editor_base.html:909
+#: survey/templates/editor/survey_detail.html:134
+#: survey/templates/editor/survey_detail.html:391
+#: survey/templates/editor/survey_detail.html:396
+msgid "Discard draft"
+msgstr ""
+
+#: survey/templates/editor/editor_base.html:911
+#: survey/templates/editor/survey_detail.html:136
+msgid "Discard survey"
+msgstr ""
+
+#: survey/templates/editor/editor_base.html:917
+msgid "Organization settings"
+msgstr ""
+
+#: survey/templates/editor/editor_base.html:976
+msgid "Confirm"
+msgstr ""
+
+#: survey/templates/editor/partials/_ai_feedback_strip.html:20
+msgid "How is the AI draft?"
+msgstr ""
+
+#: survey/templates/editor/partials/_ai_feedback_strip.html:22
+msgid "Good starting point"
+msgstr ""
+
+#: survey/templates/editor/partials/_ai_feedback_strip.html:24
+msgid "Not useful"
+msgstr ""
+
+#: survey/templates/editor/partials/_ai_feedback_strip.html:26
+msgid "Anything to add? (optional)"
+msgstr ""
+
+#: survey/templates/editor/partials/_ai_feedback_strip.html:27
+msgid "Dismiss"
+msgstr ""
+
+#: survey/templates/editor/partials/_language_switcher.html:18
+#: survey/templates/editor/partials/analytics_performance.html:164
+msgid "Language"
+msgstr ""
+
+#: survey/templates/editor/partials/_lifecycle_scripts.html:13
+msgid "Publish Survey"
+msgstr ""
+
+#: survey/templates/editor/partials/_lifecycle_scripts.html:17
+msgid ""
+"You are about to publish this survey and make it available to respondents."
+msgstr ""
+
+#: survey/templates/editor/partials/_lifecycle_scripts.html:20
+msgid "Delete all test responses (recommended)"
+msgstr ""
+
+#: survey/templates/editor/partials/_lifecycle_scripts.html:35
+#: survey/templates/editor/survey_detail.html:71
+msgid "Publish Version"
+msgstr ""
+
+#: survey/templates/editor/partials/_lifecycle_scripts.html:37
+#, python-format
+msgid "Publish this draft as v%(version)s?"
+msgstr ""
+
+#: survey/templates/editor/partials/_lifecycle_scripts.html:38
+msgid "Active respondents will continue on the current version."
+msgstr ""
+
+#: survey/templates/editor/partials/_lifecycle_scripts.html:43
+msgid ""
+"Nothing disappears: all existing responses stay visible in Responses and on "
+"the public results page under <strong>All versions</strong>."
+msgstr ""
+
+#: survey/templates/editor/partials/_lifecycle_scripts.html:53
+msgid "Compatibility Issues Found"
+msgstr ""
+
+#: survey/templates/editor/partials/_lifecycle_scripts.html:54
+msgid "The following breaking changes were detected:"
+msgstr ""
+
+#: survey/templates/editor/partials/_lifecycle_scripts.html:55
+msgid ""
+"Force-publishing keeps every old answer: changed or removed questions move "
+"to the <strong>Archived questions</strong> group in Responses → All "
+"versions, so nothing is lost — the old and new answers just report "
+"separately."
+msgstr ""
+
+#: survey/templates/editor/partials/_lifecycle_scripts.html:58
+msgid "Force Publish"
+msgstr ""
+
+#: survey/templates/editor/partials/_lifecycle_scripts.html:64
+msgid "Discard Draft"
+msgstr ""
+
+#: survey/templates/editor/partials/_lifecycle_scripts.html:65
+msgid "Discard this draft? All changes will be lost."
+msgstr ""
+
+#: survey/templates/editor/partials/_lifecycle_scripts.html:69
+#: survey/templates/editor/survey_detail.html:74
+#: survey/templates/editor/survey_detail.html:79
+msgid "Discard"
+msgstr ""
+
+#: survey/templates/editor/partials/_mobile_nav.html:15
+msgid "Editor panes"
+msgstr ""
+
+#: survey/templates/editor/partials/_mobile_nav.html:25
+#: survey/templates/editor/partials/_survey_nav_tabs.html:32
+msgid "Responses"
+msgstr ""
+
+#: survey/templates/editor/partials/_mobile_nav.html:26
+#: survey/templates/editor/partials/_mobile_nav.html:31
+msgid "Perf"
+msgstr ""
+
+#: survey/templates/editor/partials/_mobile_nav.html:28
+msgid "Table"
+msgstr ""
+
+#: survey/templates/editor/partials/_mobile_nav.html:30
+msgid "Charts"
+msgstr ""
+
+#: survey/templates/editor/partials/_mobile_nav.html:34
+#: survey/templates/editor/partials/_mobile_nav.html:40
+msgid "Structure"
+msgstr ""
+
+#: survey/templates/editor/partials/_mobile_nav.html:35
+#: survey/templates/editor/partials/_mobile_nav.html:41
+#: survey/templates/editor/partials/analytics_session_detail.html:78
+#: survey/templates/editor/partials/survey_settings_panel.html:138
+msgid "Edit"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:28
+msgid "Collection"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:30
+msgid "Move to Testing"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:31
+#: survey/templates/editor/partials/_publishing_widget.html:33
+#: survey/templates/editor/partials/_survey_primary_action.html:18
+#: survey/templates/editor/survey_share.html:96
+msgid "Publish — open for responses"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:34
+#: survey/templates/editor/partials/_publishing_widget.html:39
+#: survey/templates/editor/partials/_publishing_widget.html:45
+msgid "Back to Draft"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:36
+#: survey/templates/editor/partials/_survey_primary_action.html:21
+msgid "Accepting responses"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:36
+msgid "respondents can submit the survey"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:37
+msgid "Close survey"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:39
+#: survey/templates/editor/partials/_publishing_widget.html:45
+msgid "nothing collected yet, so publishing can be undone"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:42
+msgid "Closed to responses"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:42
+msgid "reopen to accept submissions again"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:43
+msgid "Reopen survey"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:47
+msgid "Archive"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:51
+msgid "Discovery"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:52
+msgid "Listed in public gallery"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:52
+msgid "shown on the landing page"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:56
+#: survey/templates/editor/partials/_survey_nav_tabs.html:54
+#: survey/templates/editor/partials/_survey_nav_tabs.html:73
+#: survey/templates/editor/survey_share.html:136
+msgid "Results page"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:59
+msgid "manage in the Public results space"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:60
+#: survey/templates/editor/partials/_publishing_widget.html:63
+#: survey/templates/editor/partials/_survey_primary_action.html:21
+msgid "Open"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:62
+msgid "Draft — not live yet"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:65
+msgid "Set up a results page…"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:70
+msgid "Version"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:75
+msgid "Create a draft to edit"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:82
+msgid "responses stay visible under All versions"
+msgstr ""
+
+#: survey/templates/editor/partials/_publishing_widget.html:87
+msgid "Restore…"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html:27
+msgid "Build the survey — sections, questions & settings"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html:28
+#: survey/templates/editor/partials/_survey_nav_tabs.html:50
+#: survey/templates/editor/survey_detail.html:35
+#: survey/templates/editor/survey_detail.html:62
+#: survey/templates/editor/survey_detail.html:99
+#: survey/templates/editor/survey_share.html:101
+msgid "Survey"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html:31
+msgid "Responses & analysis"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html:35
+msgid "Public results page — a shareable page of aggregated responses"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html:36
+#: survey/templates/editor/public_results.html:46
+msgid "Public results"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html:55
+msgid "Copy results link"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html:55
+#: survey/templates/editor/public_results.html:233
+msgid "live"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html:66
+msgid "Survey — as respondent"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html:73
+#: survey/templates/editor/public_results.html:222
+msgid "private"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html:82
+#: survey/templates/editor/partials/survey_settings_panel.html:8
+#: survey/templates/editor/survey_detail.html:238
+msgid "Survey settings"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_primary_action.html:13
+#: survey/templates/editor/partials/_survey_primary_action.html:17
+msgid "Open the survey for responses"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_primary_action.html:22
+msgid "Stop accepting responses"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_primary_action.html:26
+msgid "Not accepting responses"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_primary_action.html:27
+msgid "Accept responses again"
+msgstr ""
+
+#: survey/templates/editor/partials/_survey_primary_action.html:28
+msgid "Reopen"
+msgstr ""
+
+#: survey/templates/editor/partials/_visibility_block.html:15
+msgid "Always shown"
+msgstr ""
+
+#: survey/templates/editor/partials/_visibility_block.html:20
+msgid "Shown conditionally"
+msgstr ""
+
+#: survey/templates/editor/partials/_visibility_block.html:23
+msgid "No earlier choice question to depend on yet."
+msgstr ""
+
+#: survey/templates/editor/partials/_visibility_block.html:27
+msgid "When the answer to"
+msgstr ""
+
+#: survey/templates/editor/partials/_visibility_block.html:38
+msgid "Only choice questions that come before this one can be selected."
+msgstr ""
+
+#: survey/templates/editor/partials/_visibility_block.html:41
+msgid "is any of"
+msgstr ""
+
+#: survey/templates/editor/partials/_visibility_block.html:60
+msgid "Create a draft to edit visibility."
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_daily_chart.html:4
+msgid "Response Timeline"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_geo_map.html:4
+msgid "Response Map"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview.html:5
+msgid "Total Sessions"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview.html:9
+#: survey/templates/editor/partials/analytics_performance.html:29
+#: survey/templates/editor/partials/analytics_performance.html:228
+#: survey/templates/editor/partials/analytics_performance.html:312
+msgid "Completed"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview.html:13
+#: survey/templates/editor/partials/analytics_performance.html:33
+msgid "Completion Rate"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview.html:18
+msgid "Flagged"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:11
+msgid "No responses yet"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:12
+msgid ""
+"Your survey is live. Share the link and responses will appear here in real "
+"time."
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:24
+#: survey/templates/public_results.html:83
+msgid "responses"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:27
+msgid "completion"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:29
+msgid "median time"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:33
+msgid "map features"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:38
+msgid "flagged"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:47
+msgid "Open Map ›"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:54
+msgid "Responses this week"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:61
+#: survey/templates/editor/partials/analytics_overview_pane.html:77
+msgid "Charts ›"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:91
+msgid "Needs review"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:106
+msgid "All ›"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:118
+#: survey/templates/editor/partials/analytics_table.html:419
+msgid "on hold"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:120
+#: survey/templates/editor/partials/analytics_table.html:421
+msgid "rejected"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:4
+msgid "No event data yet"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:5
+msgid ""
+"Performance events are recorded once respondents start filling out the "
+"survey."
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:6
+msgid ""
+"Events will appear here after the first respondent visits a published "
+"survey."
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:25
+msgid "Sessions started <span class=\"perf-tracked-note\">(tracked visits)</span>"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:25
+msgid "Sessions Started"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:29
+msgid "Completed <span class=\"perf-tracked-note\">(tracked)</span>"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:33
+msgid "Completion <span class=\"perf-tracked-note\">(of tracked)</span>"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:39
+msgid "Median Page Load"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:46
+msgid "Section Funnel"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:47
+msgid ""
+"Views vs. submissions per section. Drop rate shows the percentage of "
+"respondents who viewed but did not submit."
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:69
+msgid "submits"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:81
+msgid "Submitted"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:82
+msgid "Dropped"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:123
+msgid "Traffic Sources"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:127
+#: survey/templates/editor/partials/analytics_performance.html:226
+#: survey/templates/editor/partials/analytics_performance.html:308
+#: survey/templates/editor/survey_share.html:197
+msgid "Source"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:128
+#: survey/templates/editor/partials/analytics_performance.html:165
+msgid "Sessions"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:136
+msgid "Direct / Unknown"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:160
+#: survey/templates/editor/partials/survey_settings_panel.html:43
+#: survey/templates/metroquest_alternative.html:100
+msgid "Languages"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:183
+msgid "Devices, OS & Browsers"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:187
+msgid "Platform"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:207
+msgid "Browser"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:222
+msgid "Completion Rate by Source"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:227
+#: survey/templates/editor/partials/analytics_performance.html:311
+msgid "Started"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:229
+#: survey/templates/editor/partials/analytics_performance.html:313
+msgid "Rate"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:249
+msgid "Time on Section"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:253
+#: survey/templates/editor/partials/analytics_performance.html:280
+msgid "Section"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:254
+#: survey/templates/editor/partials/analytics_performance.html:281
+msgid "Avg"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:255
+#: survey/templates/editor/partials/analytics_performance.html:282
+#: survey/templates/editor/partials/analytics_question_stats.html:97
+msgid "Median"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:256
+#: survey/templates/editor/partials/analytics_performance.html:283
+msgid "Samples"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:276
+msgid "Page Load Time by Section"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:303
+msgid "Campaign Breakdown"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:304
+#, python-format
+msgid ""
+"Sessions from tracked UTM links. Create links on the <a "
+"href=\"%(share_url)s\">Share</a> page."
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:309
+#: survey/templates/editor/survey_share.html:198
+msgid "Medium"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_performance.html:310
+#: survey/templates/editor/survey_share.html:199
+msgid "Campaign"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_question_stats.html:4
+msgid "Question Statistics"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_question_stats.html:11
+msgid "This question was removed in a newer version — historical answers only"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_question_stats.html:89
+msgid "Answers"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_question_stats.html:93
+msgid "Average"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_question_stats.html:101
+#: survey/templates/editor/partials/question_form_modal.html:338
+msgid "Min"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_question_stats.html:105
+#: survey/templates/editor/partials/question_form_modal.html:343
+msgid "Max"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_question_stats.html:111
+msgid "Step:"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_question_stats.html:254
+msgid "No questions in this survey."
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_session_detail.html:11
+#: survey/templates/editor/partials/analytics_table.html:170
+#: survey/templates/editor/partials/analytics_table.html:346
+#: survey/templates/editor/partials/analytics_table.html:351
+msgid "Approved"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_session_detail.html:12
+#: survey/templates/editor/partials/analytics_table.html:171
+#: survey/templates/editor/partials/analytics_table.html:347
+#: survey/templates/editor/partials/analytics_table.html:352
+msgid "Not approved"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_session_detail.html:13
+#: survey/templates/editor/partials/analytics_table.html:172
+#: survey/templates/editor/partials/analytics_table.html:348
+#: survey/templates/editor/partials/analytics_table.html:353
+msgid "On hold"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_session_detail.html:15
+msgid "Trashed"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_session_detail.html:26
+msgid "Trash"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_session_detail.html:59
+#: survey/templates/editor/partials/pr_add_block_modal.html:21
+msgid "Question"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_session_detail.html:60
+msgid "Answer"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_session_detail.html:97
+msgid "No answers in this session."
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_session_detail.html:103
+msgid "Tags"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_session_detail.html:109
+msgid "Add tag..."
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_session_detail.html:114
+msgid "Notes"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_session_detail.html:116
+msgid "Add notes..."
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:68
+msgid "Search all columns"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:72
+#: survey/templates/editor/partials/analytics_table.html:105
+msgid "Show/hide columns"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:76
+#: survey/templates/editor/partials/analytics_table.html:146
+msgid "Validation settings"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:93
+msgid "Search responses"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:111
+msgid "Show/hide trash"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:118
+msgid "All sessions"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:119
+#: survey/templates/editor/partials/analytics_table.html:358
+msgid "Empty"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:120
+#: survey/templates/editor/partials/analytics_table.html:359
+msgid "Incomplete"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:121
+msgid "Missing required"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:122
+msgid "Fast completion"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:123
+#: survey/templates/editor/partials/analytics_table.html:362
+#: survey/templates/editor/partials/section_list_item.html:15
+msgid "Duplicate"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:124
+msgid "Has answer errors"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:125
+msgid "Has answer warnings"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:134
+msgid "Remove filter"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:138
+msgid "Clear all"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:160
+msgid "Deselect all"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:169
+msgid "— No status"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:188
+msgid "Hide selected rows"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:191
+msgid "Keep only selected, hide rest"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:194
+msgid "Invert selection"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:221
+msgid "Visible columns"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:246
+msgid "Select / deselect all"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:253
+msgid "Drag to reorder"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:267
+msgid "Sort"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:276
+#: survey/templates/editor/partials/analytics_table.html:462
+msgid "Filter"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:279
+msgid "Column options"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:307
+msgid "View details"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:319
+msgid "Move to trash"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:358
+msgid "Session has 0 answers"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:359
+msgid "Session did not reach the last section"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:360
+msgid "Required question was skipped in a visited section"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:360
+msgid "Missing req."
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:361
+msgid "Session completed suspiciously fast"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:361
+msgid "Fast"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:362
+msgid "Same browser submitted multiple sessions within the detection window"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:427
+msgid "No responses"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:468
+msgid "Clear"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:474
+msgid "Sort A→Z"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:475
+msgid "Sort Z→A"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:477
+msgid "Hide field"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_table.html:478
+msgid "Freeze field"
+msgstr ""
+
+#: survey/templates/editor/partials/analytics_text_answers.html:32
+msgid "No text answers yet."
+msgstr ""
+
+#: survey/templates/editor/partials/collaborator_list.html:3
+#: survey/templates/editor/partials/survey_settings_panel.html:281
+#: survey/templates/editor/survey_settings.html:220
+msgid "Collaborators"
+msgstr ""
+
+#: survey/templates/editor/partials/collaborator_list.html:7
+#: survey/templates/org/org_members.html:33
+msgid "User"
+msgstr ""
+
+#: survey/templates/editor/partials/collaborator_list.html:8
+#: survey/templates/org/org_members.html:35
+#: survey/templates/org/org_members.html:112
+msgid "Role"
+msgstr ""
+
+#: survey/templates/editor/partials/collaborator_list.html:32
+#: survey/templates/file_upload.html:55
+#: survey/templates/org/org_members.html:68
+#: survey/templates/org/org_members.html:70
+msgid "Remove"
+msgstr ""
+
+#: survey/templates/editor/partials/collaborator_list.html:37
+msgid "No collaborators yet."
+msgstr ""
+
+#: survey/templates/editor/partials/collaborator_list.html:58
+msgid "Add"
+msgstr ""
+
+#: survey/templates/editor/partials/generation_failed.html:12
+msgid "Your brief is still in the form — adjust it and try again."
+msgstr ""
+
+#: survey/templates/editor/partials/generation_progress.html:17
+msgid "drafted"
+msgstr ""
+
+#: survey/templates/editor/partials/generation_status.html:42
+msgid "Building your survey…"
+msgstr ""
+
+#: survey/templates/editor/partials/generation_status.html:44
+msgid "Unfolding the map…"
+msgstr ""
+
+#: survey/templates/editor/partials/generation_status.html:51
+msgid ""
+"This usually takes under a minute. You can leave this page — the draft will "
+"be waiting on your dashboard."
+msgstr ""
+
+#: survey/templates/editor/partials/language_picker.html:4
+msgid "Search languages..."
+msgstr ""
+
+#: survey/templates/editor/partials/pr_add_block_modal.html:6
+#: survey/templates/editor/partials/pr_add_block_modal.html:55
+#: survey/templates/editor/public_results.html:114
+msgid "Add block"
+msgstr ""
+
+#: survey/templates/editor/partials/pr_add_block_modal.html:13
+msgid "Block type"
+msgstr ""
+
+#: survey/templates/editor/partials/pr_add_block_modal.html:22
+msgid ""
+"stays the source of truth for form submission (disabled options = not "
+"publishable); a custom listbox on top renders long question text on multiple"
+" lines with the type/count on their own muted line, and adds a search box — "
+"none of which a native"
+msgstr ""
+
+#: survey/templates/editor/partials/pr_add_block_modal.html:30
+msgid "Search by name or type…"
+msgstr ""
+
+#: survey/templates/editor/partials/pr_add_block_modal.html:33
+msgid "No matching questions."
+msgstr ""
+
+#: survey/templates/editor/partials/pr_add_block_modal.html:46
+msgid ""
+"Text questions are not available for publication — individual answers are "
+"never shown publicly."
+msgstr ""
+
+#: survey/templates/editor/partials/pr_add_block_modal.html:49
+msgid "Image file"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:130
+msgid "Editor-only label — respondents don't see it."
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:146
+msgid "Content"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:148
+msgid "Respondents see exactly this — it collects no answer."
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:153
+msgid "Display as"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:163
+#: survey/templates/editor/partials/question_form_modal.html:177
+msgid "Default"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:205
+msgid "Number of stars"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:209
+msgid ""
+"Writes the choices below for you. Edit them directly if you want names on "
+"each step."
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:214
+msgid ""
+"With this many options the strip gets cramped on a phone — measured at "
+"roughly 20px per option on a 320px screen, which is hard to tap. The "
+"labelled list stays readable at any length."
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:260
+msgid "Primary language"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:272
+msgid "Add Choice"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:279
+#: survey/templates/editor/partials/question_form_modal.html:300
+#: survey/templates/editor/partials/question_form_modal.html:309
+#: survey/templates/editor/partials/question_form_modal.html:318
+msgid "Validation"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:282
+msgid "Min value"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:287
+msgid "Max value"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:302
+msgid "Min text length"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:311
+msgid "Area outlier factor"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:320
+msgid "Max files (1–10)"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:328
+msgid "Max file size, MB (platform cap 25)"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:335
+#: survey/templates/editor/partials/question_form_modal.html:411
+msgid "Places per respondent"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:348
+msgid ""
+"Respondents can add several places to one map question. Leave max empty for "
+"unlimited; the export stays a single layer either way."
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:354
+#: survey/templates/editor/partials/section_detail_form.html:70
+msgid "Translations"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:383
+msgid "Respondent sees"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:388
+msgid "Updates as you edit — the real respondent-side rendering."
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:397
+msgid "Type example"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:407
+msgid "Tips"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:409
+msgid "One map question collects many places."
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:412
+msgid "Describe each place with sub-questions."
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:412
+msgid ""
+"They pop up on every placed mark, and each becomes a column of your GeoJSON "
+"layer in QGIS. Without them the map collects dots with no meaning."
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:413
+msgid "Points get answered about twice as often"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:413
+msgid ""
+"as polygons — draw requests cost respondents real effort. When in doubt, ask"
+" for a point."
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:416
+msgid "The scale is built from your choice codes"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:422
+msgid "Choices are the items to be ordered"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:424
+msgid "Respondents must place"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:424
+msgid "every"
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:424
+msgid ""
+"item and no two can share a rank — use Rating instead when independent "
+"scores are enough."
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:427
+msgid ""
+"Codes end up in your data export; names are what respondents see. Keep codes"
+" stable once responses start arriving."
+msgstr ""
+
+#: survey/templates/editor/partials/question_form_modal.html:440
+msgid "All changes saved"
+msgstr ""
+
+#: survey/templates/editor/partials/question_list_item.html:10
+msgid "broken rule"
+msgstr ""
+
+#: survey/templates/editor/partials/question_list_item.html:82
+msgid "Add Sub-question"
+msgstr ""
+
+#: survey/templates/editor/partials/question_list_item.html:91
+msgid "Paste as sub-question"
+msgstr ""
+
+#: survey/templates/editor/partials/section_detail_form.html:19
+msgid "Map Position"
+msgstr ""
+
+#: survey/templates/editor/partials/section_detail_form.html:48
+#: survey/templates/editor/partials/survey_settings_panel.html:126
+msgid "Reference layers"
+msgstr ""
+
+#: survey/templates/editor/partials/section_detail_form.html:60
+msgid ""
+"Which reference layers respondents see on this section's map. Layers are "
+"added in Survey settings."
+msgstr ""
+
+#: survey/templates/editor/partials/section_detail_form.html:122
+msgid "Questions"
+msgstr ""
+
+#: survey/templates/editor/partials/section_detail_form.html:139
+msgid "New Question"
+msgstr ""
+
+#: survey/templates/editor/partials/section_detail_form.html:148
+msgid "Paste question here"
+msgstr ""
+
+#: survey/templates/editor/partials/section_list_item.html:14
+msgid "Questions in this section"
+msgstr ""
+
+#: survey/templates/editor/partials/section_list_item.html:22
+#: survey/templates/editor/survey_detail.html:152
+msgid "Copy"
+msgstr ""
+
+#: survey/templates/editor/partials/section_map_picker.html:9
+msgid "Click on the map to set the starting position. Adjust zoom as needed."
+msgstr ""
+
+#: survey/templates/editor/partials/section_map_picker.html:28
+msgid "Inherit position (don't override)"
+msgstr ""
+
+#: survey/templates/editor/partials/section_map_picker.html:38
+msgid "Fly to respondent's geolocation"
+msgstr ""
+
+#: survey/templates/editor/partials/section_map_picker.html:43
+msgid "Override basemap"
+msgstr ""
+
+#: survey/templates/editor/partials/section_map_picker.html:55
+msgid "Save Position"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_password_modal.html:3
+msgid "Password Status:"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_password_modal.html:5
+msgid "Password is set"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_password_modal.html:7
+msgid "No password set"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_password_modal.html:16
+msgid "Password"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_password_modal.html:18
+msgid "Enter password (min 4 chars)"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_password_modal.html:34
+msgid "Remove Password"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_password_modal.html:41
+msgid "Test Link"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_password_modal.html:57
+msgid "Regenerate Token"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:8
+msgid "Applies to the whole survey"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:21
+msgid "Basics"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:53
+msgid "Respondent map"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:54
+msgid ""
+"The base map, starting position, and zoom respondents open on. Sections can "
+"override the position individually."
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:90
+msgid "Default position"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:105
+#: survey/templates/editor/survey_settings.html:140
+msgid "Auto-center on respondent's location"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:105
+msgid "uses the visitor's browser geolocation on entry"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:109
+msgid "Save map position"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:111
+#: survey/templates/editor/survey_settings.html:147
+msgid "Saved!"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:128
+msgid ""
+"Non-editable layers respondents see under the map: counting zones, "
+"boundaries, routes. Sections can hide each layer individually."
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:149
+msgid "Fallback — style properties inside the file win."
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:152
+msgid "Label field"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:159
+msgid "Feature property shown as a map label."
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:162
+msgid "Key field"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:169
+msgid "Makes features addressable — reserved for answer-driven map context."
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:172
+msgid "Info popups"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:172
+msgid "tap a feature to see its name and description"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:186
+msgid ""
+"Drop a <b>.geojson</b> here or <span class=\"ref-layers-choose\">choose a "
+"file</span>"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:187
+msgid "GeoJSON (WGS84), up to 10 MB, max 5 layers per survey."
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:208
+#: survey/templates/editor/partials/thanks_panel.html:29
+#: survey/templates/editor/public_results.html:201
+#: survey/templates/editor/public_results.html:289
+msgid "Changes save automatically"
+msgstr ""
+
+#: survey/templates/editor/partials/survey_settings_panel.html:209
+#: survey/templates/editor/survey_settings.html:112
+#: survey/templates/editor/survey_settings_modal.html:28
+msgid "Save Settings"
+msgstr ""
+
+#: survey/templates/editor/partials/thanks_panel.html:6
+#: survey/templates/editor/survey_detail.html:285
+msgid "Thanks page"
+msgstr ""
+
+#: survey/templates/editor/partials/thanks_panel.html:6
+msgid "The last screen respondents see after they submit"
+msgstr ""
+
+#: survey/templates/editor/partials/thanks_panel.html:16
+msgid "Message"
+msgstr ""
+
+#: survey/templates/editor/partials/thanks_panel.html:17
+msgid "Written just how respondents will see it — no HTML needed."
+msgstr ""
+
+#: survey/templates/editor/partials/thanks_panel.html:35
+msgid "Results link"
+msgstr ""
+
+#: survey/templates/editor/partials/thanks_panel.html:38
+msgid "Show a “See the results” button"
+msgstr ""
+
+#: survey/templates/editor/partials/thanks_panel.html:47
+msgid "Always shown below your message"
+msgstr ""
+
+#: survey/templates/editor/partials/thanks_panel.html:50
+msgid "Share this survey"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:53
+msgid "Page"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:55
+#: survey/templates/editor/public_results.html:226
+msgid "Unpublish"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:57
+#: survey/templates/editor/public_results.html:228
+#: survey/templates/editor/public_results.html:240
+msgid "Publish page"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:57
+msgid "publish the survey first"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:63
+msgid "show a fixed snapshot instead of live data"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:68
+msgid "Back to live data"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:78
+msgid "Refresh the frozen snapshot with the data collected since"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:78
+msgid "⟳ Update snapshot"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:80
+#: survey/templates/editor/public_results.html:82
+#: survey/templates/editor/survey_detail.html:126
+msgid "🔗 Share"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:85
+msgid ""
+"Show visitors a fixed snapshot instead of live data — useful before a public"
+" announcement"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:85
+msgid "❄ Freeze snapshot"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:88
+msgid "The live page exactly as visitors see it"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:88
+#: survey/templates/editor/public_results.html:91
+msgid "↗ Open as visitor"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:90
+#: survey/templates/editor/public_results.html:228
+msgid "Publish the survey first"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:90
+msgid "🌐 Publish page"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:91
+#: survey/templates/editor/public_results.html:222
+msgid "Private preview — only you can open this URL"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:103
+#: survey/templates/editor/public_results.html:210
+msgid "Page settings"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:106
+msgid "Content blocks"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:136
+msgid "Block settings"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:138
+msgid "Custom title (optional)"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:143
+#: survey/templates/editor/public_results.html:152
+msgid "Visualization"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:160
+msgid "Basemap"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:168
+msgid "Point popup fields"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:169
+msgid ""
+"Attributes shown when a point is clicked — the sub-questions this respondent"
+" answered"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:169
+msgid "for that point"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:169
+msgid ". Empty = anonymous geometry only. Free-text answers can't be shown."
+msgstr ""
+
+#: survey/templates/editor/public_results.html:177
+msgid ""
+"This map question has no sub-questions, so points are shown as anonymous "
+"geometry."
+msgstr ""
+
+#: survey/templates/editor/public_results.html:195
+msgid "Caption (optional)"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:199
+msgid "Hidden"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:199
+msgid "keep but don't show publicly"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:202
+msgid "Save block"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:210
+msgid "Applies to the whole public results page"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:224
+msgid "Copy public link"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:225
+msgid "The page as visitors see it"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:225
+msgid "Live page"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:233
+msgid "This results page is"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:237
+msgid ""
+"This survey is a draft. Publish the survey before publishing its results "
+"page."
+msgstr ""
+
+#: survey/templates/editor/public_results.html:240
+msgid "We drafted this page from your questions — review the blocks, then hit"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:253
+msgid ""
+"Public is indexable and listable. Unlisted is reachable by direct link only "
+"and not indexed."
+msgstr ""
+
+#: survey/templates/editor/public_results.html:256
+msgid "Page address"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:256
+msgid "changes the public URL — applied explicitly"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:261
+msgid "Public URL:"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:263
+msgid ""
+"Use the <strong>Publish page</strong> button above to make this page live."
+msgstr ""
+
+#: survey/templates/editor/public_results.html:267
+msgid "Intro"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:270
+msgid "Body"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:276
+msgid "Show response counter"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:278
+msgid "Show “Take the survey” CTA"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:278
+msgid "only while the survey is open"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:280
+msgid "Link from the thanks page"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:280
+msgid "a “See the results” button after respondents submit"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:282
+msgid "Feature in public stories listing"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:284
+msgid "k-anonymity threshold"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:290
+msgid "Save page settings"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:294
+msgid "Data mode"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:295
+msgid "Current:"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:297
+msgid "Freeze snapshot"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:301
+msgid "Back to live"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:314
+#: survey/templates/editor/survey_detail.html:336
+msgid "Live preview"
+msgstr ""
+
+#: survey/templates/editor/public_results.html:315
+msgid "Refresh preview"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:195
+msgid "Create New Survey"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:224
+msgid ""
+"The languages respondents can take this survey in. You can add more later."
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:231
+msgid "Let AI draft it"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:231
+msgid "optional"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:233
+msgid ""
+"Describe your project and we'll generate sections, questions and "
+"translations — then you edit whatever you like."
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:247
+msgid "Try an example:"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:252
+msgid "Bike lane feedback"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:257
+msgid "White squirrel count"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:262
+msgid "Heatwave map"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:263
+msgid "× Clear"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:279
+msgid ""
+"Write this in whatever language you think in — Deutsch, Español, Polski, "
+"Bahasa Indonesia. The draft comes out in the languages you picked above."
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:291
+msgid "Add details (optional)"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:302
+msgid "Kind of project"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:310
+msgid "Steers the draft toward question sets that work for this scenario."
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:328
+msgid "Generate draft"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:340
+msgid "✨ Next — choose the place"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:343
+msgid ""
+"Your description is processed by an AI provider to build the draft. Survey "
+"answers are never sent to AI providers."
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:358
+msgid "✨ Generate draft"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:359
+msgid "Create empty anyway"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:381
+msgid "Create Survey"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:393
+msgid ""
+"Languages, thanks page, visibility, and other options — later in "
+"<strong>Survey settings</strong>."
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:398
+msgid "Skip to dashboard →"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:407
+#: survey/templates/partials/survey_section_partial.html:87
+#: survey/templates/partials/survey_section_partial.html:91
+#: survey/templates/survey_section_block.html:14
+msgid "Back"
+msgstr "Wstecz"
+
+#: survey/templates/editor/survey_create.html:408
+msgid "Where?"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:412
+msgid "The map people will see"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:413
+msgid "This is"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:413
+msgid "exactly"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:413
+msgid ""
+"what respondents see when they open the survey. Drag, zoom, search, or pick "
+"a base map (top-right) to frame it — the pin marks the centre they'll land "
+"on."
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:434
+msgid "Respondents will open the map exactly like this"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:435
+msgid "Create survey"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:452
+msgid "Skip and start from scratch"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:454
+msgid "Next — choose the place"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:35
+msgid "read-only"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:41
+#: survey/templates/editor/survey_detail.html:185
+msgid "Back to editing"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:47
+msgid "Draft new version"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:52
+#: survey/templates/editor/survey_detail.html:66
+msgid "Open the survey as a respondent"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:107
+#: survey/templates/editor/survey_detail.html:109
+msgid "🌐 Publish"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:111
+msgid "🔗 Share test link"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:117
+#: survey/templates/editor/survey_detail.html:119
+#: survey/templates/editor/survey_detail.html:123
+msgid "✎ Edit"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:128
+msgid ""
+"Take the survey the way a respondent will — real page, real map, real submit"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:128
+msgid "↗ Open as respondent"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:131
+msgid "More survey actions"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:138
+msgid "No extra actions"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:149
+msgid "Test mode"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:159
+msgid "Access password"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:167
+msgid ""
+"Take the survey yourself and send the link to colleagues — before going "
+"public. Test responses can be cleared with one switch when you publish."
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:169
+msgid "🌐 Publish — open for everyone"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:178
+msgid "This survey is live and collecting responses"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:180
+msgid ""
+"Edits are made in a new version. The current version keeps collecting until "
+"you publish the update."
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:183
+msgid "Continue editing the draft →"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:189
+msgid "Open a new version"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:227
+msgid "Show sections"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:228
+#: survey/templates/editor/survey_detail.html:243
+msgid "Sections"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:244
+msgid "Hide sidebar"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:267
+msgid "New Section"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:276
+msgid "Paste section"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:320
+msgid "No sections yet. Create one to get started."
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:329
+msgid "Show preview"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:344
+msgid "Hide preview"
+msgstr ""
+
+#: survey/templates/editor/survey_detail.html:392
+msgid "Delete this draft survey and everything in it? This can't be undone."
+msgstr ""
+
+#: survey/templates/editor/survey_settings.html:26
+msgid "General"
+msgstr ""
+
+#: survey/templates/editor/survey_settings.html:78
+msgid "Style"
+msgstr ""
+
+#: survey/templates/editor/survey_settings.html:89
+msgid ""
+"Default look for rating questions. Individual questions can override this in"
+" the question editor."
+msgstr ""
+
+#: survey/templates/editor/survey_settings.html:100
+msgid ""
+"Colors the survey's buttons and the form-page background tint. Off = "
+"platform default."
+msgstr ""
+
+#: survey/templates/editor/survey_settings.html:118
+msgid "Default Map Position"
+msgstr ""
+
+#: survey/templates/editor/survey_settings.html:120
+msgid ""
+"Set the default starting position and zoom for the survey map. Sections can "
+"override this individually."
+msgstr ""
+
+#: survey/templates/editor/survey_settings.html:145
+msgid "Save Map Position"
+msgstr ""
+
+#: survey/templates/editor/survey_settings.html:229
+#: survey/templates/editor/survey_settings_modal.html:37
+msgid "Password & Test Access"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:81
+msgid "This survey is still a Draft"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:82
+msgid ""
+"Only you can open it, in Preview. Anyone else who opens the link will get a "
+"<strong>404</strong> page. Publish it before you share the link."
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:84
+msgid "This survey is in Testing"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:85
+msgid ""
+"The public link isn't live yet — it only works through your private test "
+"link. Publish to open the survey for responses."
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:87
+msgid "This survey is Closed"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:88
+msgid ""
+"It's no longer accepting responses, so a shared link won't collect anything."
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:90
+msgid "This survey isn't published"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:91
+msgid "The public link won't work until the survey is published."
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:101
+msgid "before you can publish."
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:103
+msgid "Ask the survey owner to publish it."
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:111
+msgid "Share your survey"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:112
+msgid ""
+"Grab the direct link below, or create tracking links to see which channels "
+"bring the most responses."
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:117
+msgid "Survey link"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:119
+msgid ""
+"Anyone with this link can open your survey. Copy it, or show it as a QR "
+"code."
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:124
+#: survey/templates/editor/survey_share.html:144
+msgid "Copy link"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:127
+msgid "QR code"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:139
+msgid ""
+"Your public results page is live — share it so respondents can see what "
+"others said."
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:150
+msgid ""
+"We drafted a public results page from your questions. Review it and publish "
+"to give your audience a live view of the answers."
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:161
+msgid "Track where responses come from"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:163
+msgid ""
+"Make a separate link per channel — newsletter, Instagram, a printed poster. "
+"Every response that arrives through it is tagged with its source, so you can"
+" compare channels in"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:185
+msgid "Create Link"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:192
+msgid "Your Tracking Links"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:200
+msgid "Actions"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:210
+msgid "Copy URL"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:213
+msgid "QR Code"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:240
+msgid ""
+"See how each link performs — started, completed and completion rate per "
+"source — in"
+msgstr ""
+
+#: survey/templates/editor/survey_share.html:244
+#, python-format
+msgid ""
+"No tracking links yet. Create one above, then watch each source's "
+"performance in <a href=\"%(analytics_url)s#traffic-"
+"sources\">Responses&nbsp;→&nbsp;Traffic&nbsp;Sources</a>."
+msgstr ""
+
+#: survey/templates/file_upload.html:55
+msgid "Remove file"
+msgstr ""
+
+#: survey/templates/file_upload.html:70
+msgid "Take photo"
+msgstr ""
+
+#: survey/templates/file_upload.html:74
+msgid "Add photo"
+msgstr ""
+
+#: survey/templates/file_upload.html:79
+msgid "Add audio file"
+msgstr ""
+
+#: survey/templates/file_upload.html:80
+msgid "Attach file"
+msgstr ""
+
+#: survey/templates/file_upload.html:86
+msgid "Record"
+msgstr ""
+
+#: survey/templates/file_upload.html:96
+msgid "Stop"
+msgstr ""
+
+#: survey/templates/file_upload.html:102
+msgid "Uploading"
+msgstr ""
+
+#: survey/templates/file_upload.html:108
+msgid "Retry"
+msgstr ""
+
+#: survey/templates/for_consultants.html:4
+msgid ""
+"Mapsurvey for Engagement & Planning Consultants | Map-Based Client "
+"Engagements"
+msgstr ""
+
+#: survey/templates/for_consultants.html:5
+msgid ""
+"Run map-based public engagement for your clients without per-project "
+"licences eating your margin. Open-source platform: point/line/polygon input,"
+" GeoJSON deliverables for the client's GIS, self-hostable under your own "
+"instance."
+msgstr ""
+
+#: survey/templates/for_consultants.html:6
+msgid ""
+"engagement consultant, community engagement consultant, planning consultancy"
+" tools, public engagement software for consultants, participatory planning, "
+"client engagement platform, GIS deliverables"
+msgstr ""
+
+#: survey/templates/for_consultants.html:9
+#: survey/templates/for_consultants.html:29
+msgid "Mapsurvey for engagement & planning consultants"
+msgstr ""
+
+#: survey/templates/for_consultants.html:31
+msgid ""
+"You run engagements for clients — every project needs a map survey, and "
+"every per-project licence eats your margin. Mapsurvey is free and open "
+"source: spin up a map-based engagement per client, deliver GeoJSON straight "
+"into their GIS, and keep the tooling cost at zero whether you run one "
+"project a year or twenty."
+msgstr ""
+
+#: survey/templates/for_consultants.html:34
+msgid "Start free — set up a client project"
+msgstr ""
+
+#: survey/templates/for_consultants.html:41
+msgid "GeoJSON deliverables"
+msgstr ""
+
+#: survey/templates/for_consultants.html:43
+msgid "Self-host your instance"
+msgstr ""
+
+#: survey/templates/for_consultants.html:50
+msgid "Why consultancies use it"
+msgstr ""
+
+#: survey/templates/for_consultants.html:51
+msgid "Tooling that protects your margin"
+msgstr ""
+
+#: survey/templates/for_consultants.html:54
+msgid "Zero licence cost per project"
+msgstr ""
+
+#: survey/templates/for_consultants.html:55
+msgid ""
+"Enterprise engagement suites price per project or per year — a cost you "
+"either absorb or pass on. Mapsurvey removes that line from the budget."
+msgstr ""
+
+#: survey/templates/for_consultants.html:58
+msgid "Deliverables clients can use"
+msgstr ""
+
+#: survey/templates/for_consultants.html:59
+msgid ""
+"Hand over GeoJSON + CSV that drops into the client's QGIS/ArcGIS. Your "
+"analysis stays in the report; the raw data stays theirs."
+msgstr ""
+
+#: survey/templates/for_consultants.html:62
+msgid "Fast project spin-up"
+msgstr ""
+
+#: survey/templates/for_consultants.html:63
+msgid ""
+"Build a consultation in an afternoon, not a procurement cycle. Duplicate a "
+"past survey as the starting point for the next client."
+msgstr ""
+
+#: survey/templates/for_consultants.html:66
+msgid "Run it as your own"
+msgstr ""
+
+#: survey/templates/for_consultants.html:67
+msgid ""
+"Open source means you can self-host an instance on your own domain and "
+"infrastructure — your practice's engagement stack, not a vendor's."
+msgstr ""
+
+#: survey/templates/for_consultants.html:75
+msgid "Typical client work"
+msgstr ""
+
+#: survey/templates/for_consultants.html:76
+msgid "What consultancies run on Mapsurvey"
+msgstr ""
+
+#: survey/templates/for_consultants.html:78
+msgid "Statutory consultation support for council and agency clients."
+msgstr ""
+
+#: survey/templates/for_consultants.html:79
+msgid ""
+"Corridor & mobility studies — routes, barriers, and desire lines from the "
+"public."
+msgstr ""
+
+#: survey/templates/for_consultants.html:80
+msgid ""
+"Site & masterplan engagement for developers — comments pinned to the plan."
+msgstr ""
+
+#: survey/templates/for_consultants.html:81
+msgid "Neighbourhood planning with community groups."
+msgstr ""
+
+#: survey/templates/for_consultants.html:82
+msgid ""
+"Post-project evaluation — did the intervention change how people use the "
+"place?"
+msgstr ""
+
+#: survey/templates/for_consultants.html:85
+msgid ""
+"Comparing platforms for a client proposal? See how Mapsurvey stacks up "
+"against the enterprise engagement suites — and where they genuinely fit "
+"better."
+msgstr ""
+
+#: survey/templates/for_consultants.html:86
+msgid "vs Maptionnaire"
+msgstr ""
+
+#: survey/templates/for_consultants.html:87
+msgid "vs Social Pinpoint"
+msgstr ""
+
+#: survey/templates/for_consultants.html:88
+msgid "vs MetroQuest"
+msgstr ""
+
+#: survey/templates/for_consultants.html:91
+msgid "Set up your first client project — free"
+msgstr ""
+
+#: survey/templates/for_consultants.html:92
+msgid "Talk to us about your practice"
+msgstr ""
+
+#: survey/templates/for_educators.html:4
+msgid ""
+"Mapsurvey for Classrooms — Free Map Survey Tool for Teaching | Participatory"
+" Mapping Assignments"
+msgstr ""
+
+#: survey/templates/for_educators.html:5
+msgid ""
+"Free map-based survey tool for classrooms. Students collect geographic data "
+"on their phones — walkability audits, accessibility mapping, pedestrian-"
+"safety field studies. No GIS skills needed, works in the browser. Free for "
+"education."
+msgstr ""
+
+#: survey/templates/for_educators.html:6
+msgid ""
+"map survey for students, participatory mapping assignment, geo survey "
+"classroom, walkability survey tool, urban planning coursework, PPGIS "
+"teaching, field study app for students, free map survey education, GIS "
+"classroom tool"
+msgstr ""
+
+#: survey/templates/for_educators.html:9
+msgid "Mapsurvey for Classrooms — Free Map Surveys for Student Fieldwork"
+msgstr ""
+
+#: survey/templates/for_educators.html:32
+msgid "Mapsurvey for classrooms"
+msgstr ""
+
+#: survey/templates/for_educators.html:34
+msgid ""
+"Free map-based surveys for student fieldwork. Your class collects geographic"
+" data right in the browser — dropping pins, drawing routes, outlining areas "
+"— no GIS software and no coding. It's Google Forms for geodata: perfect for "
+"a walkability audit, an accessibility study, or any participatory-mapping "
+"assignment."
+msgstr ""
+
+#: survey/templates/for_educators.html:37
+msgid "Start free — for your class"
+msgstr ""
+
+#: survey/templates/for_educators.html:41 survey/templates/landing.html:22
+#: survey/templates/landing.html:256
+msgid "Join our Discord"
+msgstr ""
+
+#: survey/templates/for_educators.html:45
+#: survey/templates/for_government.html:36
+#: survey/templates/for_planners.html:39
+#: survey/templates/for_researchers.html:35
+#: survey/templates/maptionnaire_alternative.html:48
+#: survey/templates/maptionnaire_alternative.html:132
+#: survey/templates/metroquest_alternative.html:48
+#: survey/templates/social_pinpoint_alternative.html:48
+msgid "Try a live demo survey"
+msgstr ""
+
+#: survey/templates/for_educators.html:49
+msgid "Free for education"
+msgstr ""
+
+#: survey/templates/for_educators.html:50
+msgid "No GIS skills needed"
+msgstr ""
+
+#: survey/templates/for_educators.html:51
+msgid "Works on any phone"
+msgstr ""
+
+#: survey/templates/for_educators.html:52
+#: survey/templates/maptionnaire_alternative.html:97
+#: survey/templates/social_pinpoint_alternative.html:98
+msgid "Open source"
+msgstr ""
+
+#: survey/templates/for_educators.html:59
+msgid "Why it fits a course"
+msgstr ""
+
+#: survey/templates/for_educators.html:60
+msgid "Built for a class of fieldworkers, not a GIS lab"
+msgstr ""
+
+#: survey/templates/for_educators.html:63
+msgid "Zero setup for students"
+msgstr ""
+
+#: survey/templates/for_educators.html:64
+msgid ""
+"Students open a link, mark places on a map, and submit. Nothing to install, "
+"works on the phone they already have."
+msgstr ""
+
+#: survey/templates/for_educators.html:67
+msgid "Every student is a maker"
+msgstr ""
+
+#: survey/templates/for_educators.html:68
+msgid ""
+"Each student builds their own survey and gathers real responses — so they "
+"learn survey design and spatial data, not just how to answer a form."
+msgstr ""
+
+#: survey/templates/for_educators.html:71
+msgid "Real geodata out"
+msgstr ""
+
+#: survey/templates/for_educators.html:72
+msgid ""
+"Export points, lines, and polygons as GeoJSON plus a CSV — ready for QGIS or"
+" a report, straight from the browser."
+msgstr ""
+
+#: survey/templates/for_educators.html:75
+msgid "Free and open"
+msgstr ""
+
+#: survey/templates/for_educators.html:76
+msgid ""
+"Free to use for classroom projects, open-source, and self-hostable if your "
+"department prefers."
+msgstr ""
+
+#: survey/templates/for_educators.html:84
+msgid "In the classroom"
+msgstr ""
+
+#: survey/templates/for_educators.html:85
+msgid "A planning department ran a whole field study on it"
+msgstr ""
+
+#: survey/templates/for_educators.html:88
+msgid ""
+"In a recent term, an urban-planning department used Mapsurvey for a semester"
+" field-study assignment. Student groups each designed their own map survey —"
+" walkability, sidewalk accessibility, pedestrian safety, campus \\"
+msgstr ""
+
+#: survey/templates/for_educators.html:91
+msgid "student creators"
+msgstr ""
+
+#: survey/templates/for_educators.html:92
+msgid "responses collected"
+msgstr ""
+
+#: survey/templates/for_educators.html:93
+msgid "GIS installs needed"
+msgstr ""
+
+#: survey/templates/for_educators.html:101
+msgid "Assignment ideas"
+msgstr ""
+
+#: survey/templates/for_educators.html:102
+msgid "Ready-made prompts for geography, planning & environmental courses"
+msgstr ""
+
+#: survey/templates/for_educators.html:104
+msgid ""
+"Walkability audit — students map the routes they walk and rate the segments."
+msgstr ""
+
+#: survey/templates/for_educators.html:105
+msgid ""
+"Sidewalk accessibility — outline areas that are hard to navigate for "
+"wheelchairs or strollers."
+msgstr ""
+
+#: survey/templates/for_educators.html:106
+msgid ""
+"Pedestrian safety / blind spots — drop pins on unsafe crossings and "
+"intersections."
+msgstr ""
+
+#: survey/templates/for_educators.html:107
+msgid ""
+"Community asset mapping — mark the places people value in a neighborhood."
+msgstr ""
+
+#: survey/templates/for_educators.html:108
+msgid ""
+"Citizen science — record sightings or field observations with a location."
+msgstr ""
+
+#: survey/templates/for_educators.html:111
+msgid "Create your first class survey — free"
+msgstr ""
+
+#: survey/templates/for_educators.html:112
+msgid "Teaching a course? Tell us what you need"
+msgstr ""
+
+#: survey/templates/for_government.html:4
+msgid ""
+"Open-Source Community Engagement Platform for Local Government | Mapsurvey"
+msgstr ""
+
+#: survey/templates/for_government.html:5
+msgid ""
+"A free, open-source community engagement platform for councils and public "
+"agencies. Run map-based public consultation — residents pin, draw, and "
+"outline their input — and keep full ownership of the data (self-hostable, "
+"GDPR)."
+msgstr ""
+
+#: survey/templates/for_government.html:6
+msgid ""
+"community engagement platform, public engagement software, public "
+"consultation software, citizen engagement platform, participatory planning, "
+"open source engagement platform, local government, GDPR"
+msgstr ""
+
+#: survey/templates/for_government.html:9
+msgid "The open-source community engagement platform for local government"
+msgstr ""
+
+#: survey/templates/for_government.html:29
+msgid "The open-source community engagement platform"
+msgstr ""
+
+#: survey/templates/for_government.html:31
+msgid ""
+"Built for councils and public agencies that want map-based public "
+"consultation without enterprise lock-in. Residents pin the places, draw the "
+"routes, and outline the areas that matter to them — you get GIS-ready "
+"results and full ownership of the data. Free, open source, GDPR-friendly, "
+"and self-hostable on your own infrastructure."
+msgstr ""
+
+#: survey/templates/for_government.html:34
+#: survey/templates/public_consultation_software.html:34
+msgid "Start free — run a consultation"
+msgstr ""
+
+#: survey/templates/for_government.html:41
+msgid "GDPR / EU-hosted"
+msgstr ""
+
+#: survey/templates/for_government.html:42
+msgid "Self-host on your infra"
+msgstr ""
+
+#: survey/templates/for_government.html:50
+msgid "Why councils choose it"
+msgstr ""
+
+#: survey/templates/for_government.html:51
+msgid "Public engagement on a map, without the lock-in"
+msgstr ""
+
+#: survey/templates/for_government.html:54
+msgid "Map-based public consultation"
+msgstr ""
+
+#: survey/templates/for_government.html:55
+msgid ""
+"Residents give location-specific input — exactly where the issue is — "
+"instead of vague text. Wider, more diverse reach than a meeting."
+msgstr ""
+
+#: survey/templates/for_government.html:59
+msgid ""
+"Self-host on your own infrastructure, or use the EU-hosted version. GDPR-"
+"friendly, with your data where your policies require."
+msgstr ""
+
+#: survey/templates/for_government.html:62
+msgid "No vendor lock-in"
+msgstr ""
+
+#: survey/templates/for_government.html:63
+msgid ""
+"Open source (AGPLv3) — auditable, adaptable, and procurement-friendly. "
+"Export everything as GeoJSON + CSV, anytime."
+msgstr ""
+
+#: survey/templates/for_government.html:66
+msgid "Fits a public budget"
+msgstr ""
+
+#: survey/templates/for_government.html:67
+msgid ""
+"Free to run — no per-project or per-response licensing that stretches a "
+"small council's engagement budget."
+msgstr ""
+
+#: survey/templates/for_government.html:75
+msgid "Engagement use cases"
+msgstr ""
+
+#: survey/templates/for_government.html:76
+msgid "What agencies run on it"
+msgstr ""
+
+#: survey/templates/for_government.html:78
+msgid ""
+"Statutory planning & local-plan consultation — comments pinned to the map."
+msgstr ""
+
+#: survey/templates/for_government.html:80
+msgid "Mobility & active-travel plans — routes, barriers, and desire lines."
+msgstr ""
+
+#: survey/templates/for_government.html:81
+msgid "Ward / neighbourhood engagement — what to keep, fix, or change."
+msgstr ""
+
+#: survey/templates/for_government.html:85
+msgid ""
+"Comparing engagement platforms? Mapsurvey trades a big vendor's bundled "
+"services for open-source transparency, self-hosting, and no per-project "
+"fees. If you need a fully managed enterprise suite, a commercial platform "
+"may fit better — we keep that honest."
+msgstr ""
+
+#: survey/templates/for_government.html:86
+msgid "See how we compare to Maptionnaire →"
+msgstr ""
+
+#: survey/templates/for_government.html:89
+#: survey/templates/for_planners.html:105
+msgid "Create your first consultation — free"
+msgstr ""
+
+#: survey/templates/for_government.html:90
+msgid "Talk to us about your council"
+msgstr ""
+
+#: survey/templates/for_planners.html:4
+msgid "Mapsurvey for Urban Planners — Free Map-Based Community Engagement"
+msgstr ""
+
+#: survey/templates/for_planners.html:5
+msgid ""
+"Gather public input on a map: residents pin problems, draw the routes they "
+"walk, and outline areas for change. A free, open-source community-engagement"
+" and public-consultation tool for planners — export to QGIS."
+msgstr ""
+
+#: survey/templates/for_planners.html:6
+msgid ""
+"community engagement mapping, public consultation map survey, participatory "
+"planning tool, map-based public input, PPGIS planning, urban planning "
+"survey, Maptionnaire alternative"
+msgstr ""
+
+#: survey/templates/for_planners.html:9
+msgid "Mapsurvey for Urban Planners — map-based public input, free"
+msgstr ""
+
+#: survey/templates/for_planners.html:32
+msgid "Mapsurvey for urban planners"
+msgstr ""
+
+#: survey/templates/for_planners.html:34
+msgid ""
+"Collect public input where it actually lives — on the map. Residents pin the"
+" problem intersections, draw the routes they walk, and outline the areas "
+"they want changed, alongside normal survey questions. It's map-based "
+"community engagement without the enterprise price tag: free, open-source, "
+"EU-hosted, and it exports straight to QGIS."
+msgstr ""
+
+#: survey/templates/for_planners.html:37
+msgid "Start free — build a consultation"
+msgstr ""
+
+#: survey/templates/for_planners.html:44
+msgid "EU-hosted / GDPR"
+msgstr ""
+
+#: survey/templates/for_planners.html:45
+msgid "Exports to QGIS"
+msgstr ""
+
+#: survey/templates/for_planners.html:46
+msgid "No per-survey fees"
+msgstr ""
+
+#: survey/templates/for_planners.html:53
+msgid "Why planners use it"
+msgstr ""
+
+#: survey/templates/for_planners.html:54
+msgid "See not just how a city is drawn, but how it's lived"
+msgstr ""
+
+#: survey/templates/for_planners.html:57
+msgid "Spatial input, not vague text"
+msgstr ""
+
+#: survey/templates/for_planners.html:61
+msgid "Reach beyond the town hall"
+msgstr ""
+
+#: survey/templates/for_planners.html:62
+msgid ""
+"Residents answer in any browser on their phone — wider, more diverse reach "
+"than a meeting or a paper form."
+msgstr ""
+
+#: survey/templates/for_planners.html:65
+msgid "Straight into your GIS"
+msgstr ""
+
+#: survey/templates/for_planners.html:66
+msgid ""
+"Export points, lines, and polygons as GeoJSON + CSV — open in QGIS or ArcGIS"
+" with no conversion."
+msgstr ""
+
+#: survey/templates/for_planners.html:69
+msgid "Budget-friendly"
+msgstr ""
+
+#: survey/templates/for_planners.html:70
+msgid ""
+"Free to run, open source (AGPLv3), self-hostable — no per-survey licensing "
+"that stretches a small municipality's budget."
+msgstr ""
+
+#: survey/templates/for_planners.html:78
+msgid "In the field"
+msgstr ""
+
+#: survey/templates/for_planners.html:79
+msgid "Built for real consultations, at real scale"
+msgstr ""
+
+#: survey/templates/for_planners.html:82
+msgid ""
+"A transit-accessibility consultation run on Mapsurvey drew hundreds of "
+"residents mapping the stops, routes, and barriers they experience — the kind"
+" of spatial evidence that a text survey simply can't capture. Planning teams"
+" have used it for mobility, walkability, and neighbourhood-change "
+"consultations across several European cities."
+msgstr ""
+
+#: survey/templates/for_planners.html:85
+msgid "responses in one survey"
+msgstr ""
+
+#: survey/templates/for_planners.html:86
+msgid "in licensing"
+msgstr ""
+
+#: survey/templates/for_planners.html:87
+msgid "ready for QGIS"
+msgstr ""
+
+#: survey/templates/for_planners.html:95
+msgid "Consultation ideas"
+msgstr ""
+
+#: survey/templates/for_planners.html:96
+msgid "What planners map with it"
+msgstr ""
+
+#: survey/templates/for_planners.html:98
+msgid "Mobility & transit — where people travel, and the barriers on the way."
+msgstr ""
+
+#: survey/templates/for_planners.html:99
+msgid "Walkability & pedestrian safety — unsafe crossings, missing sidewalks."
+msgstr ""
+
+#: survey/templates/for_planners.html:100
+msgid "Neighbourhood planning — what residents value and what should change."
+msgstr ""
+
+#: survey/templates/for_planners.html:101
+msgid "Green space & public realm — how spaces are used, and gaps to fill."
+msgstr ""
+
+#: survey/templates/for_planners.html:102
+msgid ""
+"Participatory input for a plan — location-specific comments on proposals."
+msgstr ""
+
+#: survey/templates/for_planners.html:106
+msgid "Compare with Maptionnaire"
+msgstr ""
+
+#: survey/templates/for_researchers.html:4
+msgid ""
+"Mapsurvey for Researchers — Participatory Mapping & Citizen-Science Surveys"
+msgstr ""
+
+#: survey/templates/for_researchers.html:5
+msgid ""
+"Run PPGIS and participatory-mapping studies without enterprise costs. "
+"Participants pin locations, draw routes, and outline areas; export "
+"GeoJSON/CSV for QGIS, R, or Python. Free, open-source, reproducible."
+msgstr ""
+
+#: survey/templates/for_researchers.html:6
+msgid ""
+"participatory mapping research, PPGIS research tool, spatial survey for "
+"research, citizen science mapping platform, VGI, open source survey tool, "
+"geospatial research, field study app"
+msgstr ""
+
+#: survey/templates/for_researchers.html:9
+msgid "Mapsurvey for Researchers — participatory mapping & citizen science"
+msgstr ""
+
+#: survey/templates/for_researchers.html:28
+msgid "Mapsurvey for researchers"
+msgstr ""
+
+#: survey/templates/for_researchers.html:30
+msgid ""
+"Run participatory-mapping (PPGIS) and citizen-science studies without "
+"enterprise costs. Participants pin locations, draw routes, and outline areas"
+" alongside structured questions; you get clean GeoJSON + CSV for QGIS, R, or"
+" Python. It's open source, so your instrument and pipeline are transparent "
+"and reproducible — and free, so a grant isn't a prerequisite."
+msgstr ""
+
+#: survey/templates/for_researchers.html:33
+msgid "Start free — build a study"
+msgstr ""
+
+#: survey/templates/for_researchers.html:40
+msgid "GeoJSON / CSV → QGIS, R"
+msgstr ""
+
+#: survey/templates/for_researchers.html:41
+msgid "Free, no grant needed"
+msgstr ""
+
+#: survey/templates/for_researchers.html:42
+msgid "EU-hosted / self-host"
+msgstr ""
+
+#: survey/templates/for_researchers.html:49
+msgid "Why researchers use it"
+msgstr ""
+
+#: survey/templates/for_researchers.html:50
+msgid "Rigorous spatial data collection, openly"
+msgstr ""
+
+#: survey/templates/for_researchers.html:53
+msgid "Transparent & reproducible"
+msgstr ""
+
+#: survey/templates/for_researchers.html:54
+msgid ""
+"Open-source code (AGPLv3) means the instrument and processing are auditable "
+"— good for methods sections, ethics review, and replication."
+msgstr ""
+
+#: survey/templates/for_researchers.html:57
+msgid "Analysis-ready output"
+msgstr ""
+
+#: survey/templates/for_researchers.html:58
+msgid ""
+"Points, lines, and polygons export as GeoJSON + CSV — straight into QGIS, R "
+"(sf), or Python (geopandas), no conversion."
+msgstr ""
+
+#: survey/templates/for_researchers.html:61
+msgid "No budget barrier"
+msgstr ""
+
+#: survey/templates/for_researchers.html:62
+msgid ""
+"Free to use and self-hostable — a fit for student projects, unfunded pilots,"
+" and NGOs in the Global South priced out of commercial PPGIS."
+msgstr ""
+
+#: survey/templates/for_researchers.html:65
+msgid "Data sovereignty"
+msgstr ""
+
+#: survey/templates/for_researchers.html:66
+msgid ""
+"Host it yourself with Docker, or use the EU-hosted version — keep sensitive "
+"fieldwork data where your IRB/DPA requires."
+msgstr ""
+
+#: survey/templates/for_researchers.html:74
+msgid "Study types"
+msgstr ""
+
+#: survey/templates/for_researchers.html:75
+msgid "From PPGIS to citizen science"
+msgstr ""
+
+#: survey/templates/for_researchers.html:77
+msgid ""
+"PPGIS / participatory mapping — residents' place-based knowledge and values."
+msgstr ""
+
+#: survey/templates/for_researchers.html:78
+msgid ""
+"Citizen science — species sightings, phenology, environmental observations "
+"with a location."
+msgstr ""
+
+#: survey/templates/for_researchers.html:79
+msgid "Walkability, accessibility & perceived-safety studies."
+msgstr ""
+
+#: survey/templates/for_researchers.html:80
+msgid ""
+"Community-based & field research — structured spatial data from "
+"participants."
+msgstr ""
+
+#: survey/templates/for_researchers.html:81
+msgid "Volunteered geographic information (VGI) collection."
+msgstr ""
+
+#: survey/templates/for_researchers.html:84
+msgid "Create your first study — free"
+msgstr ""
+
+#: survey/templates/for_researchers.html:86
+msgid "Read the source on GitHub"
+msgstr ""
+
+#: survey/templates/landing.html:9
+msgid "The easiest way to collect geographic data"
+msgstr ""
+
+#: survey/templates/landing.html:11
+msgid ""
+"Think Google Forms — but people answer by drawing points, lines, and areas "
+"on a map. Free to start, no coding required."
+msgstr ""
+
+#: survey/templates/landing.html:15 survey/templates/landing.html:251
 msgid "Go to Dashboard"
 msgstr ""
 
-#: survey/templates/landing.html:18 survey/templates/landing.html:200
-#: survey/templates/landing.html:202 survey/templates/landing.html:216
+#: survey/templates/landing.html:17 survey/templates/landing.html:237
+#: survey/templates/landing.html:239
 msgid "Create Your Mapsurvey"
 msgstr ""
 
-#: survey/templates/landing.html:23
+#: survey/templates/landing.html:28
 msgid "Try Demo Survey"
 msgstr ""
 
-#: survey/templates/landing.html:29
+#: survey/templates/landing.html:34
 msgid "Free to Start"
 msgstr ""
 
-#: survey/templates/landing.html:30
+#: survey/templates/landing.html:35
 msgid "No Coding Required"
 msgstr ""
 
-#: survey/templates/landing.html:31
+#: survey/templates/landing.html:36
 msgid "GDPR-Friendly"
 msgstr ""
 
-#: survey/templates/landing.html:66
-msgid "Point"
+#: survey/templates/landing.html:44
+msgid "See it in action"
 msgstr ""
 
-#: survey/templates/landing.html:69
-msgid "Line"
+#: survey/templates/landing.html:45
+msgid "From a blank map to shareable insight"
+msgstr ""
+
+#: survey/templates/landing.html:49 survey/templates/landing.html:64
+#: survey/templates/landing.html:79
+msgid "Enlarge screenshot"
+msgstr ""
+
+#: survey/templates/landing.html:51
+msgid ""
+"Mapsurvey question editor: question types, including map questions, with a "
+"live preview"
+msgstr ""
+
+#: survey/templates/landing.html:56
+msgid "BUILD"
+msgstr ""
+
+#: survey/templates/landing.html:57
+msgid "AI drafts it, you edit visually"
+msgstr ""
+
+#: survey/templates/landing.html:58
+msgid ""
+"Describe your project and AI writes the sections, questions and translations"
+" for you. Then change anything in the drag-and-drop editor with a live "
+"preview — text, choice and rating questions, plus points, lines and areas on"
+" the map. No code."
+msgstr ""
+
+#: survey/templates/landing.html:66
+msgid "Respondents answer on an interactive map"
+msgstr ""
+
+#: survey/templates/landing.html:71
+msgid "COLLECT"
 msgstr ""
 
 #: survey/templates/landing.html:72
-msgid "Polygon"
+msgid "Collect on a map"
 msgstr ""
 
-#: survey/templates/landing.html:85
-msgid "Who it's for"
+#: survey/templates/landing.html:73
+msgid ""
+"Respondents mark places, draw routes, and outline areas directly on the map "
+"— mobile-friendly and multilingual."
+msgstr ""
+
+#: survey/templates/landing.html:81
+msgid "Mapsurvey analytics dashboard"
 msgstr ""
 
 #: survey/templates/landing.html:86
+msgid "ANALYZE"
+msgstr ""
+
+#: survey/templates/landing.html:87
+msgid "Analyze & share"
+msgstr ""
+
+#: survey/templates/landing.html:88
+msgid ""
+"Response maps, charts, and a completion funnel in one dashboard. Publish a "
+"public results page or export GeoJSON + CSV."
+msgstr ""
+
+#: survey/templates/landing.html:122
+msgid "Who it's for"
+msgstr ""
+
+#: survey/templates/landing.html:123
 msgid "Built for people who shape places"
 msgstr ""
 
-#: survey/templates/landing.html:92
+#: survey/templates/landing.html:129
 msgid "Urban Planners"
 msgstr ""
 
-#: survey/templates/landing.html:93
+#: survey/templates/landing.html:130
 msgid ""
 "Ask residents where they need bike lanes, where crossings feel dangerous, "
 "where parks are missing. People draw routes and outline neighborhoods — not "
 "just drop pins."
 msgstr ""
 
-#: survey/templates/landing.html:99
+#: survey/templates/landing.html:136
 msgid "Researchers & Students"
 msgstr ""
 
-#: survey/templates/landing.html:100
+#: survey/templates/landing.html:137
 msgid ""
 "Run spatial studies without expensive platforms. Download GeoJSON + CSV, "
 "analyze in QGIS, R, or Python. Cite the open-source tool in your papers."
 msgstr ""
 
-#: survey/templates/landing.html:106
+#: survey/templates/landing.html:143
 msgid "Community Organizations"
 msgstr ""
 
-#: survey/templates/landing.html:107
+#: survey/templates/landing.html:144
 msgid ""
 "Engage your community in mapping what matters. Multilingual, mobile-"
 "friendly, easy to share. Perfect for participatory budgeting and public "
 "space assessments."
 msgstr ""
 
-#: survey/templates/landing.html:113
+#: survey/templates/landing.html:150
 msgid "Municipalities & Government"
 msgstr ""
 
-#: survey/templates/landing.html:114
+#: survey/templates/landing.html:151
 msgid ""
 "Citizen data stays on your infrastructure. No vendor lock-in, no annual "
 "subscription. Compliant with data sovereignty and GDPR requirements."
 msgstr ""
 
-#: survey/templates/landing.html:123
+#: survey/templates/landing.html:160
 msgid "Try it"
 msgstr ""
 
-#: survey/templates/landing.html:124
+#: survey/templates/landing.html:161
 msgid "See how a Mapsurvey works"
 msgstr ""
 
-#: survey/templates/landing.html:125
+#: survey/templates/landing.html:162
 msgid ""
 "Take a 2-minute demo survey — mark places, draw routes, answer questions on "
 "the map."
 msgstr ""
 
-#: survey/templates/landing.html:128
+#: survey/templates/landing.html:165
 msgid "Try the Demo Survey"
 msgstr ""
 
-#: survey/templates/landing.html:133
+#: survey/templates/landing.html:170
 msgid "Create your first survey"
 msgstr ""
 
-#: survey/templates/landing.html:135
+#: survey/templates/landing.html:172
 msgid "Sign up to try it free"
 msgstr ""
 
-#: survey/templates/landing.html:145
+#: survey/templates/landing.html:182
 msgid "Capabilities"
 msgstr ""
 
-#: survey/templates/landing.html:146
+#: survey/templates/landing.html:183
 msgid "Everything you need for spatial surveys"
 msgstr ""
 
-#: survey/templates/landing.html:152
+#: survey/templates/landing.html:189
 msgid "Interactive map surveys"
 msgstr ""
 
-#: survey/templates/landing.html:153
+#: survey/templates/landing.html:190
 msgid ""
 "Respondents mark places, draw routes, and outline areas directly on the map."
 " Mobile-friendly with crosshair mode for precise input."
 msgstr ""
 
-#: survey/templates/landing.html:159
+#: survey/templates/landing.html:196
 msgid "Visual survey editor"
 msgstr ""
 
-#: survey/templates/landing.html:160
+#: survey/templates/landing.html:197
 msgid ""
 "Drag-and-drop editor with live preview. 13 question types including text, "
 "choice, rating, image, and three map types. Sub-questions, sections, "
 "translations — no coding required."
 msgstr ""
 
-#: survey/templates/landing.html:166
+#: survey/templates/landing.html:203
+#: survey/templates/maptionnaire_alternative.html:100
 msgid "Multilingual surveys"
 msgstr ""
 
-#: survey/templates/landing.html:167
+#: survey/templates/landing.html:204
 msgid ""
 "One survey, multiple languages. Questions, choices, and the thank-you page "
 "all support translation. Respondents pick their language on entry."
 msgstr ""
 
-#: survey/templates/landing.html:173
+#: survey/templates/landing.html:210
 msgid "Built-in analytics"
 msgstr ""
 
-#: survey/templates/landing.html:174
+#: survey/templates/landing.html:211
 msgid ""
 "Response maps, charts, completion funnel, device breakdown, and time-on-"
 "section — all in one dashboard. Track campaigns with UTM links and shareable"
 " pages."
 msgstr ""
 
-#: survey/templates/landing.html:180
+#: survey/templates/landing.html:217
 msgid "Team collaboration"
 msgstr ""
 
-#: survey/templates/landing.html:181
+#: survey/templates/landing.html:218
 msgid ""
 "Create organizations, invite team members with roles, and collaborate on "
 "surveys. Survey versioning keeps your published data safe while you edit the"
 " next draft."
 msgstr ""
 
-#: survey/templates/landing.html:187
+#: survey/templates/landing.html:224
 msgid "Export to GIS"
 msgstr ""
 
-#: survey/templates/landing.html:188
+#: survey/templates/landing.html:225
 msgid ""
 "Download responses as GeoJSON + CSV in a single ZIP — ready for QGIS, "
 "ArcGIS, R, or Python. Export by version. Import and reuse survey structures "
 "across projects."
 msgstr ""
 
-#: survey/templates/landing.html:197
+#: survey/templates/landing.html:234
 msgid "Ready to create your own?"
 msgstr ""
 
-#: survey/templates/landing.html:211
+#: survey/templates/landing.html:248
 msgid "Free to use. Open source. Start in minutes."
 msgstr ""
 
-#: survey/templates/landing.html:221
+#: survey/templates/landing.html:262
 msgid "View on GitHub"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:4
+msgid "Free, Open-Source Maptionnaire Alternative — Mapsurvey"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:5
+msgid ""
+"Mapsurvey is a free, open-source alternative to Maptionnaire for map-based "
+"surveys — point, line, and polygon input, GeoJSON/CSV export, EU-hosted or "
+"self-hostable. No per-survey fees, no free-tier gate."
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:6
+msgid ""
+"Maptionnaire alternative, open source Maptionnaire, free Maptionnaire "
+"alternative, Maptionnaire vs Mapsurvey, participatory mapping software, "
+"PPGIS tool"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:9
+msgid "A free, open-source Maptionnaire alternative — Mapsurvey"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:41
+msgid "A free, open-source Maptionnaire alternative"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:43
+msgid ""
+"Mapsurvey does the same core job as Maptionnaire — map-based surveys where "
+"people mark places, draw routes, and outline areas — with different "
+"economics: free to use, open source (AGPLv3), EU-hosted, and self-hostable. "
+"No per-survey fees, no free-tier gate on your first real project."
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:46
+#: survey/templates/maptionnaire_alternative.html:130
+#: survey/templates/social_pinpoint_alternative.html:46
+#: survey/templates/social_pinpoint_alternative.html:130
+msgid "Create your Mapsurvey — free"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:52
+#: survey/templates/social_pinpoint_alternative.html:52
+msgid "Free"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:54
+msgid "Self-hostable"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:55
+msgid "EU-hosted"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:62
+msgid "Why teams switch"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:63
+msgid "Same participatory-mapping job, without the licensing"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:66
+msgid "Free to start"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:67
+msgid ""
+"No per-survey fees, no seat licensing, no tier that gates your first real "
+"project. Run one survey or many at the same cost: zero."
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:71
+msgid ""
+"Read the code, fork it, or run it yourself. No proprietary lock-in — useful "
+"for audits and academic publication."
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:74
+msgid "Self-host or EU cloud"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:75
+msgid ""
+"Use the hosted version (EU, Frankfurt) or self-host with Docker on your own "
+"infrastructure for full data sovereignty."
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:78
+msgid "Standard data out"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:79
+msgid ""
+"GeoJSON + CSV export built in — open in QGIS, ArcGIS, R, or Python with no "
+"conversion."
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:87
+#: survey/templates/metroquest_alternative.html:87
+#: survey/templates/social_pinpoint_alternative.html:87
+msgid "Side by side"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:88
+msgid "Mapsurvey vs Maptionnaire"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:95
+msgid "Free tier for real projects"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:95
+msgid "Yes — unlimited, free"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:95
+msgid "No free tier"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:96
+msgid "Pricing model"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:96
+#: survey/templates/metroquest_alternative.html:102
+#: survey/templates/social_pinpoint_alternative.html:97
+msgid "Free hosted; free self-hosted"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:96
+msgid "Subscription — Collect tier listed at €150/mo, 12-month minimum"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:97
+#: survey/templates/social_pinpoint_alternative.html:98
+msgid "Yes — AGPLv3, code on GitHub"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:97
+#: survey/templates/social_pinpoint_alternative.html:98
+msgid "No — proprietary"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:98
+#: survey/templates/social_pinpoint_alternative.html:99
+msgid "Self-hosting"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:98
+#: survey/templates/social_pinpoint_alternative.html:99
+msgid "Yes — Docker, your infrastructure"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:98
+#: survey/templates/social_pinpoint_alternative.html:99
+msgid "No — SaaS only"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:99
+msgid "Map input (point / line / polygon)"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:99
+#: survey/templates/maptionnaire_alternative.html:100
+#: survey/templates/maptionnaire_alternative.html:101
+msgid "Yes"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:100
+msgid "Yes — per-question translations"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:101
+msgid "Data export"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:101
+#: survey/templates/social_pinpoint_alternative.html:96
+msgid "GeoJSON + CSV, built in"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:102
+msgid "EU data residency"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:102
+msgid "Frankfurt, or self-host anywhere"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:102
+msgid "Finland"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:106
+msgid ""
+"Maptionnaire details reflect their published product and pricing pages as of"
+" July 2026; verify current specifics on maptionnaire.com. Both platforms are"
+" GDPR-oriented and support point, line, and polygon input."
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:112
+#: survey/templates/metroquest_alternative.html:112
+#: survey/templates/social_pinpoint_alternative.html:111
+msgid "Being fair"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:113
+msgid "When Maptionnaire may be the better fit"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:116
+msgid ""
+"You want a mature commercial vendor with a long track record in "
+"participatory planning and formal EU procurement."
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:117
+msgid ""
+"You need a feature that's on Mapsurvey's roadmap today (e.g. custom WMS/WFS "
+"basemaps, Shapefile export)."
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:118
+msgid ""
+"You're already running on Maptionnaire and the switching cost outweighs the "
+"savings."
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:121
+msgid ""
+"We keep this honest on purpose. If Mapsurvey isn't the right fit, we'd "
+"rather you know now — and the fastest way to tell is to build a survey and "
+"see."
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:124
+#: survey/templates/social_pinpoint_alternative.html:124
+msgid "Comparing tools? Talk to the person who builds it"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:125
+#: survey/templates/social_pinpoint_alternative.html:125
+msgid ""
+"Mapsurvey is independent and founder-led — no sales team, no funnel. Email "
+"me directly with a migration, self-hosting, DPA, or \\"
+msgstr ""
+
+#: survey/templates/maptionnaire_alternative.html:126
+#: survey/templates/metroquest_alternative.html:126
+#: survey/templates/social_pinpoint_alternative.html:126
+msgid "Email me — I answer personally"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:4
+msgid "MetroQuest Alternative — Open-Source Map Surveys | Mapsurvey"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:5
+msgid ""
+"MetroQuest has been absorbed into Open Point — metroquest.com now redirects "
+"there. If you're looking for a replacement for map-based public input, "
+"Mapsurvey is free, open source, self-serve, and editable any time. GeoJSON "
+"export included."
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:6
+msgid ""
+"MetroQuest alternative, MetroQuest replacement, MetroQuest sunset, "
+"transportation planning survey, public involvement software, map survey "
+"tool, open source engagement"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:9
+msgid "Looking for a MetroQuest alternative? — Mapsurvey"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:41
+msgid "Looking for a MetroQuest alternative?"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:43
+msgid ""
+"MetroQuest was acquired in 2023 and absorbed into Open Point — "
+"metroquest.com now redirects there, and the classic 5-screen survey is being"
+" rebuilt inside their platform. If what your team needs is map-based public "
+"input for transportation and planning projects, Mapsurvey is a self-serve "
+"replacement: free, open source, editable any time after launch, with points,"
+" lines, and polygons — and GeoJSON export for your GIS."
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:46
+#: survey/templates/metroquest_alternative.html:130
+msgid "Build your survey — free"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:52
+msgid "Self-serve — no lead time"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:53
+msgid "Edit after launch"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:54
+msgid "75 languages"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:55
+#: survey/templates/social_pinpoint_alternative.html:55
+msgid "GeoJSON export"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:62
+msgid "What changes for you"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:63
+msgid "From a managed 5-screen build to a survey you own"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:66
+msgid "Launch today, not in weeks"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:67
+msgid ""
+"MetroQuest builds typically ran on a multi-week lead time with the vendor. "
+"Mapsurvey is self-serve — draft, preview, and publish the same day."
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:70
+msgid "Fix typos after launch"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:71
+msgid ""
+"The classic MetroQuest format didn't allow post-launch edits. Mapsurvey has "
+"draft-and-publish versioning — revise safely while responses keep flowing."
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:74
+msgid "Real map input"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:75
+msgid ""
+"Beyond dragging markers: respondents draw routes and outline areas — the "
+"input transportation and corridor studies actually need."
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:78
+msgid "More than 2 languages"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:79
+msgid ""
+"MetroQuest surveys supported two languages. Mapsurvey ships content "
+"translation for 75 — for the communities your projects actually serve."
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:88
+msgid "Mapsurvey vs classic MetroQuest"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:95
+msgid "Status"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:95
+msgid "Active, open source"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:95
+msgid ""
+"Absorbed into Open Point; metroquest.com redirects there; format rebuilt as "
+"Flex Forms"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:96
+msgid "Setup"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:96
+msgid "Self-serve, same day"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:96
+msgid "Vendor-built; multi-week lead time reported (TxDOT factsheet)"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:97
+msgid "Post-launch edits"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:97
+msgid "Yes — draft & publish versioning"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:97
+msgid "No"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:98
+msgid "Survey structure"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:98
+msgid "Unlimited sections & questions"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:98
+msgid "Max 5 screens, 14 templates"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:99
+msgid "Map input"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:99
+#: survey/templates/social_pinpoint_alternative.html:95
+msgid "Points, lines, polygons"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:99
+msgid "Drag-and-drop markers"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:100
+msgid "75, included"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:100
+msgid "2 max"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:101
+msgid "Geo export"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:101
+msgid "GeoJSON + CSV"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:101
+msgid "Via vendor reporting"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:102
+msgid "Price"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:102
+msgid "Commercial licence (statewide deals existed, e.g. NCDOT)"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:106
+msgid ""
+"MetroQuest details reflect the classic product's public documentation (incl."
+" the TxDOT 2022 factsheet) and its post-acquisition status as of July 2026. "
+"For its successor inside Open Point, see our Social Pinpoint comparison."
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:113
+msgid "What MetroQuest did that we don't"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:116
+msgid ""
+"The drag-coins Budget Allocation and Visual Preference screens were unique —"
+" Mapsurvey has no direct equivalent (and neither does the migration path "
+"into Flex Forms, per Open Point's own guide)."
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:117
+msgid ""
+"The gamified 5-screen swipe format drove famously high completion rates for "
+"quick trade-off exercises."
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:118
+msgid ""
+"If you want a managed, vendor-built survey with support hours included, an "
+"enterprise suite fits that model better than a self-serve tool."
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:121
+msgid ""
+"We keep this honest on purpose. If your process depends on those screens, "
+"evaluate Open Point's Flex Forms first — then compare what the map input and"
+" the export give you here."
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:124
+msgid "Migrating a MetroQuest programme? Ask the builder"
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:125
+msgid ""
+"Mapsurvey is independent and founder-led. Email me what your MetroQuest "
+"surveys did, and I'll tell you honestly what maps over, what doesn't, and "
+"how I'd rebuild it."
+msgstr ""
+
+#: survey/templates/metroquest_alternative.html:131
+msgid "See the Social Pinpoint comparison"
 msgstr ""
 
 #: survey/templates/org/invitation_landing.html:4
@@ -650,27 +5580,8 @@ msgstr ""
 msgid "This invitation expires in 7 days."
 msgstr ""
 
-#: survey/templates/org/org_members.html:4
-#: survey/templates/org/org_settings.html:34
-msgid "Members"
-msgstr ""
-
 #: survey/templates/org/org_members.html:11
 msgid "Members & Invitations"
-msgstr ""
-
-#: survey/templates/org/org_members.html:14
-#: survey/templates/org/org_settings.html:4
-msgid "Settings"
-msgstr ""
-
-#: survey/templates/org/org_members.html:33
-msgid "User"
-msgstr ""
-
-#: survey/templates/org/org_members.html:35
-#: survey/templates/org/org_members.html:112
-msgid "Role"
 msgstr ""
 
 #: survey/templates/org/org_members.html:36
@@ -679,11 +5590,6 @@ msgstr ""
 
 #: survey/templates/org/org_members.html:43
 msgid "you"
-msgstr ""
-
-#: survey/templates/org/org_members.html:68
-#: survey/templates/org/org_members.html:70
-msgid "Remove"
 msgstr ""
 
 #: survey/templates/org/org_members.html:85
@@ -700,10 +5606,6 @@ msgstr ""
 
 #: survey/templates/org/org_members.html:112
 msgid "Sent"
-msgstr ""
-
-#: survey/templates/org/org_new.html:4 survey/templates/org/org_new.html:10
-msgid "New Organization"
 msgstr ""
 
 #: survey/templates/org/org_new.html:11
@@ -727,10 +5629,6 @@ msgstr ""
 msgid "Organization Settings"
 msgstr ""
 
-#: survey/templates/org/org_settings.html:22
-msgid "Name"
-msgstr ""
-
 #: survey/templates/org/org_settings.html:26
 msgid "Slug"
 msgstr ""
@@ -739,21 +5637,333 @@ msgstr ""
 msgid "URL identifier:"
 msgstr ""
 
-#: survey/templates/org/org_settings.html:30
-msgid "Save"
+#: survey/templates/partials/_faq_section.html:10
+msgid "FAQ"
 msgstr ""
 
-#: survey/templates/registration/logged_out.html:4
-#: survey/templates/registration/logged_out.html:11
-msgid "Signed Out"
+#: survey/templates/partials/_faq_section.html:11
+msgid "Frequently asked questions"
 msgstr ""
 
-#: survey/templates/registration/logged_out.html:12
-msgid "You have been signed out successfully."
+#: survey/templates/partials/_made_with_mapsurvey.html:16
+#: survey/templates/public_results.html:121
+msgid "Made with"
 msgstr ""
 
-#: survey/templates/registration/logged_out.html:13
-msgid "Sign In Again"
+#: survey/templates/partials/_made_with_mapsurvey.html:17
+msgid "create your own free map survey"
+msgstr ""
+
+#: survey/templates/partials/survey_section_partial.html:36
+msgid "A few required questions still need an answer."
+msgstr ""
+
+#: survey/templates/partials/survey_section_partial.html:39
+msgid "This question is required"
+msgstr ""
+
+#: survey/templates/partials/survey_section_partial.html:97
+#: survey/templates/survey_section_block.html:22
+msgid "Finish"
+msgstr "Zakończ"
+
+#: survey/templates/partials/survey_section_partial.html:109
+msgid "This is the last section — respondents finish here"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:4
+msgid "Participatory Budgeting on a Map — Open-Source Tool | Mapsurvey"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:5
+msgid ""
+"Run the spatial side of participatory budgeting: residents pin exactly where"
+" investment is needed — playgrounds, crossings, lighting, greening. Open-"
+"source, free to start, GIS-ready results for your PB programme."
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:6
+msgid ""
+"participatory budgeting, participatory budgeting software, participatory "
+"budgeting tool, PB programme, community budgeting, map-based budgeting, "
+"where to invest, civic engagement"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:9
+msgid "Participatory budgeting on a map — open source"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:29
+msgid "Participatory budgeting, grounded in place"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:31
+msgid ""
+"The hardest question in participatory budgeting isn't how much — it's where."
+" Mapsurvey collects the spatial half of your PB programme: residents pin the"
+" playground that needs repair, the dark street that needs lighting, the "
+"corner that needs greening. You get a prioritised, mappable picture of "
+"demand — free, open source, and exportable to GIS."
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:34
+msgid "Start your PB map — free"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:41
+msgid "Pin, draw, outline"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:50
+msgid "How it fits your PB cycle"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:51
+msgid "From idea collection to a funded map"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:53
+msgid ""
+"Idea collection — residents pin proposals where they belong, with photos and"
+" descriptions."
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:54
+msgid ""
+"Shortlisting — export the map, cluster demand by neighbourhood, and "
+"shortlist with your committee."
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:55
+msgid ""
+"Voting round — run a second map survey where residents support shortlisted "
+"locations."
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:56
+msgid ""
+"Show the results — publish what got funded, exactly where people asked for "
+"it."
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:60
+msgid "Demand you can see"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:61
+msgid ""
+"Clusters of pins tell you which street, park, or block the community "
+"actually cares about — before a single euro is allocated."
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:64
+msgid "Fair by design"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:65
+msgid ""
+"A public link reaches beyond the usual meeting crowd, and every "
+"neighbourhood's input lands on the same map."
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:68
+msgid "Budget-friendly, literally"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:69
+msgid ""
+"PB budgets should fund projects, not software licences. Mapsurvey is free to"
+" run — no per-project or per-response fees."
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:72
+msgid "GIS-ready output"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:73
+msgid ""
+"GeoJSON + CSV export drops straight into QGIS or ArcGIS for analysis, "
+"costing, and the final report."
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:77
+msgid ""
+"Honest scope: Mapsurvey handles the spatial side of PB — collecting and "
+"prioritising locations. It is not a coin-allocation or budget-simulation "
+"module; if your process centres on residents distributing a virtual budget "
+"across fixed projects, a dedicated PB suite may fit that step better. Many "
+"programmes combine both: Mapsurvey for the \\"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:78
+msgid "More civic engagement methods →"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:81
+msgid "Create your PB survey — free"
+msgstr ""
+
+#: survey/templates/participatory_budgeting.html:82
+msgid "Talk to us about your PB programme"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:4
+msgid "Public Consultation Software — Map-Based & Open Source | Mapsurvey"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:5
+msgid ""
+"Run map-based public consultation with Mapsurvey — open-source software for "
+"statutory consultation, planning applications, and infrastructure schemes. "
+"Stakeholders comment on the map; you export GIS-ready evidence. Self-"
+"hostable, GDPR-friendly."
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:6
+msgid ""
+"public consultation software, online consultation software, online "
+"consultation, statutory consultation tool, planning consultation software, "
+"map-based consultation, community consultation platform, open source "
+"consultation"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:9
+msgid "Open-source, map-based public consultation software"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:31
+msgid ""
+"Mapsurvey is open-source public consultation software built around the map. "
+"Run statutory consultations, planning applications, and infrastructure "
+"schemes where stakeholders comment exactly on the location in question — "
+"then export GIS-ready evidence for your report. Free to start, self-"
+"hostable, and GDPR-friendly."
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:41
+msgid "Map-based comments"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:42
+msgid "Exportable evidence"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:51
+msgid "Consultation that produces evidence, not just comments"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:54
+msgid "Comments on the map"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:55
+msgid ""
+"Stakeholders respond where the proposal is — a route, a site boundary, a "
+"junction — so responses are precise and easy to act on."
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:58
+msgid "Report-ready output"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:59
+msgid ""
+"Export every response as GeoJSON + CSV for your consultation report, GIS "
+"analysis, or committee evidence pack."
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:62
+msgid "Defensible & transparent"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:63
+msgid ""
+"Open source (AGPLv3) and self-hostable — auditable process, data under your "
+"control, GDPR-friendly by design."
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:66
+msgid "Fits any budget"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:67
+msgid ""
+"No per-project or per-response licensing. Run one consultation or a whole "
+"programme on the same free platform."
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:75
+msgid "How a consultation runs"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:76
+msgid "From proposal to evidence in four steps"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:78
+msgid ""
+"Build the consultation — questions plus a map where people pin, draw, or "
+"outline."
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:79
+msgid "Share the link — no app or account needed for respondents."
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:80
+msgid "Collect location-specific responses from residents and stakeholders."
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:81
+msgid "Export GIS-ready data for your consultation report and analysis."
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:84
+msgid ""
+"Used by councils, consultancies, developers, and infrastructure teams. If "
+"you need a specific fit, we keep dedicated pages for local government and "
+"the broader engagement platform."
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:85
+msgid "See the community engagement platform →"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:88
+msgid "Run your first consultation — free"
+msgstr ""
+
+#: survey/templates/public_consultation_software.html:89
+msgid "Talk to us about your consultation"
+msgstr ""
+
+#: survey/templates/public_results.html:7
+#: survey/templates/public_results.html:77
+msgid "Survey results"
+msgstr ""
+
+#: survey/templates/public_results.html:72
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+
+#: survey/templates/public_results.html:86
+msgid "Take the survey"
+msgstr ""
+
+#: survey/templates/public_results.html:90
+msgid "Data as of"
+msgstr ""
+
+#: survey/templates/public_results.html:95
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr ""
+
+#: survey/templates/public_results.html:97
+msgid "No results to show yet."
+msgstr ""
+
+#: survey/templates/public_results.html:111
+msgid "Small groups are masked to protect privacy."
 msgstr ""
 
 #: survey/templates/registration/login.html:14
@@ -774,15 +5984,22 @@ msgstr ""
 msgid "Invalid username/email or password. Please try again."
 msgstr ""
 
-#: survey/templates/registration/login.html:32
-msgid "Username or Email"
+#: survey/templates/registration/login.html:29
+#, python-format
+msgid ""
+"Haven't activated your account yet? <a href=\"%(resend_url)s\">Resend the "
+"activation email</a>."
 msgstr ""
 
 #: survey/templates/registration/login.html:44
+msgid "Username or Email"
+msgstr ""
+
+#: survey/templates/registration/login.html:57
 msgid "Forgot password?"
 msgstr ""
 
-#: survey/templates/registration/login.html:46
+#: survey/templates/registration/login.html:59
 msgid "Create an account"
 msgstr ""
 
@@ -838,11 +6055,6 @@ msgid ""
 "receive it in a few minutes, check your spam folder."
 msgstr ""
 
-#: survey/templates/registration/password_reset_done.html:14
-#: survey/templates/registration/password_reset_form.html:28
-msgid "Back to sign in"
-msgstr ""
-
 #: survey/templates/registration/password_reset_form.html:4
 #: survey/templates/registration/password_reset_form.html:10
 msgid "Reset Password"
@@ -861,6 +6073,380 @@ msgstr ""
 msgid "Send Reset Link"
 msgstr ""
 
+#: survey/templates/registration/rate_limited.html:12
+#: survey/templates/registration/rate_limited.html:18
+msgid "Too many attempts"
+msgstr ""
+
+#: survey/templates/registration/rate_limited.html:20
+msgid ""
+"We've had a lot of sign-up attempts from your connection, so we've paused "
+"new ones for a short while."
+msgstr ""
+
+#: survey/templates/registration/rate_limited.html:24
+#, python-format
+msgid "Please try again in about a minute."
+msgid_plural "Please try again in about %(minutes)s minutes."
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+msgstr[3] ""
+
+#: survey/templates/registration/rate_limited.html:28
+msgid ""
+"If you already have a Mapsurvey account, you can sign in instead — or reset "
+"your password if you don't remember it."
+msgstr ""
+
+#: survey/templates/registration/rate_limited.html:34
+msgid "Reset password"
+msgstr ""
+
+#: survey/templates/services.html:4
+msgid "Expert help with your map survey | Mapsurvey"
+msgstr ""
+
+#: survey/templates/services.html:5
+msgid ""
+"Optional paid help on top of the free Mapsurvey platform: we help you design"
+" your map survey and actually get real responses. Fixed scope, quoted per "
+"project. The platform stays free and open source."
+msgstr ""
+
+#: survey/templates/services.html:6
+msgid ""
+"map survey help, participatory mapping service, community engagement "
+"service, survey design help, get survey responses, done-with-you engagement"
+msgstr ""
+
+#: survey/templates/services.html:9
+msgid "Expert help getting real responses on your map survey"
+msgstr ""
+
+#: survey/templates/services.html:29
+msgid "Expert help getting real responses"
+msgstr ""
+
+#: survey/templates/services.html:31
+msgid ""
+"Mapsurvey is free and open source, and it stays that way. When you want a "
+"hand, we help you design your map survey and actually get responses — as an "
+"optional paid service. Most teams can build a survey; the hard part is "
+"getting enough of the right people to answer. That is what we help with."
+msgstr ""
+
+#: survey/templates/services.html:34 survey/templates/services.html:80
+msgid "Book a short call"
+msgstr ""
+
+#: survey/templates/services.html:35
+msgid "Or start free on your own"
+msgstr ""
+
+#: survey/templates/services.html:38
+msgid "Platform stays free"
+msgstr ""
+
+#: survey/templates/services.html:40
+msgid "Fixed scope, quoted per project"
+msgstr ""
+
+#: survey/templates/services.html:47
+msgid "How we help"
+msgstr ""
+
+#: survey/templates/services.html:48
+msgid "Two ways to work together"
+msgstr ""
+
+#: survey/templates/services.html:51
+msgid "Launch help"
+msgstr ""
+
+#: survey/templates/services.html:52
+msgid "For teams who can run their own outreach"
+msgstr ""
+
+#: survey/templates/services.html:53
+msgid ""
+"We help you design the survey properly — the right map question types, "
+"sensible sections, geolocation, and multilingual setup — then get it live "
+"with shareable and QR links so you can put it in front of people. You leave "
+"with a survey that is built to be answered."
+msgstr ""
+
+#: survey/templates/services.html:56
+msgid "Done-with-you engagement"
+msgstr ""
+
+#: survey/templates/services.html:57
+msgid "For a real project where responses matter"
+msgstr ""
+
+#: survey/templates/services.html:58
+msgid ""
+"Everything in Launch help, plus we help you plan and drive distribution "
+"toward a response target, watch where people drop off, and hand you clean "
+"GeoJSON and a summary at the end. A partner accountable to the outcome, not "
+"just the setup."
+msgstr ""
+
+#: survey/templates/services.html:62
+msgid ""
+"Run engagement for your own clients? We work as your production partner "
+"behind the scenes — we make the tool sing and help you hit response targets,"
+" and you keep the client relationship. We do not do outreach in your name or"
+" compete for your work."
+msgstr ""
+
+#: survey/templates/services.html:69
+msgid "How it works"
+msgstr ""
+
+#: survey/templates/services.html:70
+msgid "Simple, fixed-scope, no lock-in"
+msgstr ""
+
+#: survey/templates/services.html:72
+msgid ""
+"Book a short call so we understand your project, audience, and timeline."
+msgstr ""
+
+#: survey/templates/services.html:73
+msgid "We scope the work and send a fixed quote — no surprises, no retainer."
+msgstr ""
+
+#: survey/templates/services.html:74
+msgid ""
+"We do the work; you keep full ownership of the survey and every response."
+msgstr ""
+
+#: survey/templates/services.html:77
+msgid ""
+"The platform stays free and open source either way. This is optional help "
+"for teams that want a hand — not a paywall on Mapsurvey."
+msgstr ""
+
+#: survey/templates/services.html:81
+msgid "See the platform for engagement"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:4
+msgid "Open-Source Social Pinpoint Alternative — Mapsurvey"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:5
+msgid ""
+"Mapsurvey is a free, open-source alternative to Social Pinpoint (now Social "
+"Point / Open Point) for map-based engagement — respondents draw points, "
+"lines, and polygons; you export GeoJSON + CSV. No quote-gated pricing, self-"
+"hostable, GDPR-friendly."
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:6
+msgid ""
+"Social Pinpoint alternative, Social Point alternative, Open Point "
+"alternative, open source engagement platform, map-based engagement, Social "
+"Pinpoint vs Mapsurvey, participatory mapping software"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:9
+msgid "A free, open-source Social Pinpoint alternative — Mapsurvey"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:41
+msgid "A free, open-source Social Pinpoint alternative"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:43
+msgid ""
+"Social Pinpoint (now Social Point, under the Open Point umbrella) is a full "
+"engagement hub. If what you actually need is the map — residents marking "
+"places, drawing routes, outlining areas, and your team exporting GIS-ready "
+"data — Mapsurvey does that job with different economics: free, open source "
+"(AGPLv3), and self-hostable, with no quote-gated pricing."
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:54
+msgid "Lines & polygons, not just pins"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:62
+msgid "Why teams look for an alternative"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:63
+msgid "The map is the point — so it should be a full map"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:66
+msgid "Draw, don't just drop pins"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:67
+msgid ""
+"The current-generation Social Map limits respondents to point markers. In "
+"Mapsurvey, people also draw routes and outline areas — essential for "
+"mobility, greenways, and land-use input."
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:70
+msgid "GeoJSON out of the box"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:71
+msgid ""
+"Open Point's current platform exports XLSX/CSV/PDF; there's no GeoJSON "
+"export. Mapsurvey exports GeoJSON + CSV that opens directly in QGIS or "
+"ArcGIS."
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:74
+msgid "Public pricing: zero"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:75
+msgid ""
+"No quotes, no tiers gating the geo tools. Reported enterprise budgets for "
+"engagement hubs run $15–40K/yr — Mapsurvey is free hosted or self-hosted."
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:78
+#: survey/templates/social_pinpoint_alternative.html:100
+msgid "75 languages, included"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:79
+msgid ""
+"Multilingual engagement is a paid add-on there (up to 15 languages). "
+"Mapsurvey ships survey-content translation for 75 languages, free."
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:88
+msgid "Mapsurvey vs Social Pinpoint (Social Point)"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:95
+msgid "Respondent map input"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:95
+msgid ""
+"Point markers on the current-gen Social Map (drawing was a legacy-Classic "
+"feature)"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:96
+msgid "Geo data export"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:96
+msgid "XLSX / CSV / PDF; no GeoJSON (shapefile in legacy Classic only)"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:97
+msgid "Pricing"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:97
+msgid "Quote-gated; buyer budgets reported at US$15–40K/yr"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:100
+msgid "Multilingual"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:100
+msgid "Paid add-on, up to 15 languages"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:101
+msgid "Engagement-hub extras (forums, voting, budgeting)"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:101
+msgid "No — focused on map surveys"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:101
+msgid "Yes — 40+ tools incl. Fund It, Gather, Q&A"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:105
+msgid ""
+"Social Pinpoint / Open Point details reflect their public documentation and "
+"live-platform behaviour as of July 2026 and may change; verify current "
+"specifics with the vendor. \\"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:112
+msgid "When Social Pinpoint may be the better fit"
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:115
+msgid ""
+"You need a full engagement hub — forums, Q&A, idea walls, newsletters — not "
+"just map surveys."
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:116
+msgid ""
+"Voting and reactions on other residents' pins matter to your process (they "
+"offer five modes; we don't have this yet)."
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:117
+msgid ""
+"You want their Fund It participatory-budgeting allocation module or bundled "
+"AI text analysis."
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:118
+msgid ""
+"Formal accessibility procurement: their new surveys target WCAG 2.2 / "
+"Section 508 compliance."
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:121
+msgid ""
+"We keep this honest on purpose. If you need the full hub, buy the hub — if "
+"you need the map, try the map."
+msgstr ""
+
+#: survey/templates/social_pinpoint_alternative.html:131
+msgid "Coming from MetroQuest?"
+msgstr ""
+
+#: survey/templates/stories_index.html:4
+msgid "Stories — participatory-mapping projects & results | Mapsurvey"
+msgstr ""
+
+#: survey/templates/stories_index.html:5
+msgid ""
+"Real participatory-mapping projects built with Mapsurvey: community "
+"engagement, public consultation, and open-data stories with maps and "
+"results."
+msgstr ""
+
+#: survey/templates/stories_index.html:8
+msgid "Mapsurvey Stories"
+msgstr ""
+
+#: survey/templates/stories_index.html:20
+msgid ""
+"Participatory-mapping projects built with Mapsurvey — community engagement, "
+"public consultation, and the open data behind them."
+msgstr ""
+
+#: survey/templates/stories_index.html:35
+msgid "No stories published yet — check back soon."
+msgstr ""
+
+#: survey/templates/stories_index.html:36
+msgid "Start your own map survey"
+msgstr ""
+
 #: survey/templates/survey_closed.html:4
 msgid "Survey Closed"
 msgstr "Ankieta zamknięta"
@@ -869,33 +6455,9 @@ msgstr "Ankieta zamknięta"
 msgid "This survey is no longer accepting responses."
 msgstr "Ta ankieta nie przyjmuje już odpowiedzi."
 
-#: survey/templates/survey_closed.html:11
-msgid "Back to Home"
-msgstr "Wróć na stronę główną"
-
 #: survey/templates/survey_header.html:21
 msgid "Start"
 msgstr "Rozpocznij"
-
-#: survey/templates/survey_header_template.html:19
-#: survey/templates/survey_section.html:44
-#: survey/templates/survey_section_block.html:14
-msgid "Back"
-msgstr "Wstecz"
-
-#: survey/templates/survey_header_template.html:25
-#: survey/templates/survey_header_template.html:26
-#: survey/templates/survey_section.html:49
-#: survey/templates/survey_section_block.html:20
-msgid "Next"
-msgstr "Dalej"
-
-#: survey/templates/survey_header_template.html:28
-#: survey/templates/survey_header_template.html:29
-#: survey/templates/survey_section.html:51
-#: survey/templates/survey_section_block.html:22
-msgid "Finish"
-msgstr "Zakończ"
 
 #: survey/templates/survey_language_select.html:7
 msgid "Select Language"
@@ -921,13 +6483,27 @@ msgstr "Wprowadź hasło"
 msgid "Continue"
 msgstr "Kontynuuj"
 
-#: survey/templates/survey_thanks.html:21
+#: survey/templates/survey_thanks.html:29
 msgid "Thank you!"
 msgstr "Dziękujemy!"
 
-#: survey/templates/survey_thanks.html:22
+#: survey/templates/survey_thanks.html:30
 msgid "Your responses have been recorded."
 msgstr "Twoje odpowiedzi zostały zapisane."
+
+#: survey/templates/survey_thanks.html:38
+msgid "See the results"
+msgstr ""
+
+#: survey/templates/survey_unavailable.html:11
+msgid "Survey unavailable"
+msgstr ""
+
+#: survey/templates/survey_unavailable.html:21
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
 
 #: survey/templatetags/i18n_extras.py:17
 msgid "Start drawing"
@@ -936,10 +6512,6 @@ msgstr "Zacznij rysować"
 #: survey/templatetags/i18n_extras.py:19
 msgid "Finish editing"
 msgstr "Zakończ edycję"
-
-#: survey/templatetags/i18n_extras.py:21
-msgid "Delete"
-msgstr "Usuń"
 
 #: survey/templatetags/i18n_extras.py:24
 msgid "Click on the map to place a marker."
@@ -969,14 +6541,116 @@ msgstr "Kliknij, aby kontynuować rysowanie linii."
 msgid "Click the last point to finish the line."
 msgstr "Kliknij ostatni punkt, aby zakończyć linię."
 
-#: survey/templatetags/i18n_extras.py:37
+#: survey/templatetags/i18n_extras.py:39
+msgid "Move the map to position the pin, then press Apply."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:40
+msgid "Tap to add the shape’s corners."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:41
+msgid "Tap to add the next corner."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:42
+msgid "Tap the first point to close the shape."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:43
+msgid "Tap to start the line."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:44
+msgid "Tap to add the next point."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:45
+msgid "Tap the last point to finish the line."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:49
 msgid "<strong>Error:</strong> Shape edges cannot intersect!"
 msgstr "<strong>Błąd:</strong> Krawędzie kształtu nie mogą się przecinać!"
 
-#: survey/templatetags/i18n_extras.py:40
+#: survey/templatetags/i18n_extras.py:52
 msgid "Search address..."
 msgstr "Szukaj adresu..."
 
-#: survey/templatetags/i18n_extras.py:41
+#: survey/templatetags/i18n_extras.py:53
 msgid "No results found"
 msgstr "Brak wyników"
+
+#: survey/templatetags/i18n_extras.py:54
+msgid "Search failed — check your connection and try again."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:57
+msgid "Add another"
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:58
+#, python-brace-format
+msgid "up to {n} more"
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:59
+msgid "Maximum reached — remove one below to change it."
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:60
+#, python-brace-format
+msgid "{n} marked"
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:61
+#, python-brace-format
+msgid "{n} of {m} marked"
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:62
+#, python-brace-format
+msgid "at least {n} required"
+msgstr ""
+
+#: survey/templatetags/i18n_extras.py:63
+#, python-brace-format
+msgid "All {m} marked — thank you!"
+msgstr ""
+
+#: survey/uploads.py:80 survey/views.py:2175
+msgid "This question does not accept files."
+msgstr ""
+
+#: survey/uploads.py:84
+msgid "This file type is not accepted here."
+msgstr ""
+
+#: survey/uploads.py:89
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr ""
+
+#: survey/uploads.py:96 survey/uploads.py:98
+msgid "The file does not match its declared type."
+msgstr ""
+
+#: survey/uploads.py:109
+msgid "Too many files in this response."
+msgstr ""
+
+#: survey/uploads.py:111
+msgid "The files in this response are too large overall."
+msgstr ""
+
+#: survey/views.py:2166
+msgid "Please reload the survey page and try again."
+msgstr ""
+
+#: survey/views.py:2180
+msgid "Too many uploads, try again later."
+msgstr ""
+
+#: survey/views.py:2184
+msgid "No file received."
+msgstr ""

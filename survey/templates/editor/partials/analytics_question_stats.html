@@ -1,13 +1,14 @@
+{% load i18n %}
 {% load survey_filters %}
 
-<h6 style="font-weight:700; margin-bottom:0.75rem;">Question Statistics</h6>
+<h6 style="font-weight:700; margin-bottom:0.75rem;">{% trans "Question Statistics" %}</h6>
 
 {% for stat in question_stats %}
 <div class="analytics-section">
     <div class="q-stat-header">
         <div>
             <strong style="font-size:0.95rem;">{{ stat.question.name }}</strong>
-            {% if stat.archived %}<span class="badge badge-light" style="border:1px solid #e5e7eb;color:#92700c;background:#fdf7ea;" title="This question was removed in a newer version — historical answers only">archived · {{ stat.versions }}</span>{% endif %}
+            {% if stat.archived %}<span class="badge badge-light" style="border:1px solid #e5e7eb;color:#92700c;background:#fdf7ea;" title="{% trans 'This question was removed in a newer version — historical answers only' %}">archived · {{ stat.versions }}</span>{% endif %}
             <br><small class="text-muted">{{ stat.section.title|default:stat.section.name }}</small>
         </div>
         <div style="display:flex;align-items:center;gap:0.4rem;">
@@ -85,29 +86,29 @@
     <div class="number-stats" data-num-stats="{{ stat.question.id }}">
         <div class="ns-item">
             <div class="ns-value" data-ns="count">{{ stat.count }}</div>
-            <div class="ns-label">Answers</div>
+            <div class="ns-label">{% trans "Answers" %}</div>
         </div>
         <div class="ns-item">
             <div class="ns-value" data-ns="avg">{{ stat.avg|default:"–" }}</div>
-            <div class="ns-label">Average</div>
+            <div class="ns-label">{% trans "Average" %}</div>
         </div>
         <div class="ns-item">
             <div class="ns-value" data-ns="median">{{ stat.median|default:"–" }}</div>
-            <div class="ns-label">Median</div>
+            <div class="ns-label">{% trans "Median" %}</div>
         </div>
         <div class="ns-item">
             <div class="ns-value" data-ns="min">{{ stat.min_val|default:"–" }}</div>
-            <div class="ns-label">Min</div>
+            <div class="ns-label">{% trans "Min" %}</div>
         </div>
         <div class="ns-item">
             <div class="ns-value" data-ns="max">{{ stat.max_val|default:"–" }}</div>
-            <div class="ns-label">Max</div>
+            <div class="ns-label">{% trans "Max" %}</div>
         </div>
     </div>
     {% if stat.hist_labels_json %}
     <div class="q-filter-pills" data-qid="num-{{ stat.question.id }}" style="display:none;flex-wrap:wrap;gap:0.3rem;margin-top:0.5rem;"></div>
     <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;">
-        <label style="font-size:0.75rem;color:#9ca3af;margin:0;">Step:</label>
+        <label style="font-size:0.75rem;color:#9ca3af;margin:0;">{% trans "Step:" %}</label>
         <input type="number" id="bin-step-{{ stat.question.id }}" class="form-control form-control-sm"
                style="width:70px;font-size:0.78rem;" min="0.1" step="any">
     </div>
@@ -250,5 +251,5 @@
     {% endif %}
 </div>
 {% empty %}
-<p class="text-muted">No questions in this survey.</p>
+<p class="text-muted">{% trans "No questions in this survey." %}</p>
 {% endfor %}

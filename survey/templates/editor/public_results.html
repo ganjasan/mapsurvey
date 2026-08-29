@@ -1,4 +1,5 @@
 {% extends "editor/editor_base.html" %}
+{% load i18n %}
 {% load survey_filters %}
 
 {% block page_title %}Public results – {{ survey.name }}{% endblock %}
@@ -41,29 +42,29 @@ public /r/ link (the editor URL in the address bar is a private preview that
 visitors cannot open), Freeze snapshots before a public announcement.{% endcomment %}
 <div class="mobile-statusbar" style="flex-shrink:0;">
     <span class="msb-ico"><i class="fas fa-globe"></i></span>
-    <div class="msb-titleblock"><div class="msb-title">Public results</div></div>
+    <div class="msb-titleblock"><div class="msb-title">{% trans "Public results" %}</div></div>
     <div class="nav-action">
         <button class="pub-chip {% if page.is_published and page.mode == 'frozen' %}badge-info{% elif page.is_published %}badge-success{% else %}badge-secondary{% endif %}" onclick="navMenuToggle(this,event)">
             {% if page.is_published and page.mode == 'frozen' %}Frozen · {{ page.frozen_at|date:"j M" }}{% elif page.is_published %}Live{% else %}Not published{% endif %}
             <i class="fas fa-angle-down caret"></i>
         </button>
         <div class="nav-menu left" style="min-width:260px;">
-            <div class="nm-head">Page</div>
+            <div class="nm-head">{% trans "Page" %}</div>
             {% if page.is_published %}
-            <button class="nm-item" onclick="prSetPublished(false)"><i class="fas fa-eye-slash lead"></i> Unpublish<span class="sub">/r/{{ page.slug }}/ stops opening for visitors</span></button>
+            <button class="nm-item" onclick="prSetPublished(false)"><i class="fas fa-eye-slash lead"></i> {% trans "Unpublish" %}<span class="sub">/r/{{ page.slug }}/ stops opening for visitors</span></button>
             {% else %}
-            <button class="nm-item" onclick="prSetPublished(true)" {% if not can_publish %}disabled{% endif %}><i class="fas fa-globe lead"></i> Publish page{% if not can_publish %}<span class="sub">publish the survey first</span>{% endif %}</button>
+            <button class="nm-item" onclick="prSetPublished(true)" {% if not can_publish %}disabled{% endif %}><i class="fas fa-globe lead"></i> {% trans "Publish page" %}{% if not can_publish %}<span class="sub">{% trans "publish the survey first" %}</span>{% endif %}</button>
             {% endif %}
             <div class="nm-sep"></div>
-            <div class="nm-head">Data</div>
+            <div class="nm-head">{% trans "Data" %}</div>
             <form method="post" action="{% url 'editor_public_results_freeze' survey.uuid %}" style="margin:0;">
                 {% csrf_token %}
-                <button type="submit" class="nm-item"><i class="fas fa-snowflake lead"></i> {% if page.mode == 'frozen' %}Update snapshot{% else %}Freeze snapshot{% endif %}<span class="sub">show a fixed snapshot instead of live data</span></button>
+                <button type="submit" class="nm-item"><i class="fas fa-snowflake lead"></i> {% if page.mode == 'frozen' %}Update snapshot{% else %}Freeze snapshot{% endif %}<span class="sub">{% trans "show a fixed snapshot instead of live data" %}</span></button>
             </form>
             {% if page.mode == 'frozen' %}
             <form method="post" action="{% url 'editor_public_results_unfreeze' survey.uuid %}" style="margin:0;">
                 {% csrf_token %}
-                <button type="submit" class="nm-item"><i class="fas fa-bolt lead"></i> Back to live data</button>
+                <button type="submit" class="nm-item"><i class="fas fa-bolt lead"></i> {% trans "Back to live data" %}</button>
             </form>
             {% endif %}
         </div>
@@ -73,20 +74,20 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
         {% if page.mode == 'frozen' %}
         <form method="post" action="{% url 'editor_public_results_freeze' survey.uuid %}" style="display:contents;">
             {% csrf_token %}
-            <button type="submit" class="msb-btn msb-green" title="Refresh the frozen snapshot with the data collected since">⟳ Update snapshot</button>
+            <button type="submit" class="msb-btn msb-green" title="{% trans 'Refresh the frozen snapshot with the data collected since' %}">{% trans "⟳ Update snapshot" %}</button>
         </form>
-        <button class="msb-btn msb-indigo" onclick="prCopyPublicLink(this)" title="{{ public_url }}">🔗 Share</button>
+        <button class="msb-btn msb-indigo" onclick="prCopyPublicLink(this)" title="{{ public_url }}">{% trans "🔗 Share" %}</button>
         {% else %}
-        <button class="msb-btn msb-indigo" onclick="prCopyPublicLink(this)" title="{{ public_url }}">🔗 Share</button>
+        <button class="msb-btn msb-indigo" onclick="prCopyPublicLink(this)" title="{{ public_url }}">{% trans "🔗 Share" %}</button>
         <form method="post" action="{% url 'editor_public_results_freeze' survey.uuid %}" style="display:contents;">
             {% csrf_token %}
-            <button type="submit" class="msb-btn msb-outline msb-desktop" title="Show visitors a fixed snapshot instead of live data — useful before a public announcement">❄ Freeze snapshot</button>
+            <button type="submit" class="msb-btn msb-outline msb-desktop" title="{% trans 'Show visitors a fixed snapshot instead of live data — useful before a public announcement' %}">{% trans "❄ Freeze snapshot" %}</button>
         </form>
         {% endif %}
-        <a class="msb-btn msb-outline msb-desktop" href="{{ public_url }}" target="_blank" title="The live page exactly as visitors see it">↗ Open as visitor</a>
+        <a class="msb-btn msb-outline msb-desktop" href="{{ public_url }}" target="_blank" title="{% trans 'The live page exactly as visitors see it' %}">{% trans "↗ Open as visitor" %}</a>
     {% else %}
-        <button class="msb-btn msb-green" onclick="prSetPublished(true)" {% if not can_publish %}disabled title="Publish the survey first"{% endif %}>🌐 Publish page</button>
-        <a class="msb-btn msb-outline msb-desktop" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank" title="Private preview — only you can open this URL">↗ Open as visitor</a>
+        <button class="msb-btn msb-green" onclick="prSetPublished(true)" {% if not can_publish %}disabled title="{% trans 'Publish the survey first' %}"{% endif %}>{% trans "🌐 Publish page" %}</button>
+        <a class="msb-btn msb-outline msb-desktop" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank" title="{% trans 'Private preview — only you can open this URL' %}">{% trans "↗ Open as visitor" %}</a>
     {% endif %}
 </div>
 {% endif %}
@@ -98,10 +99,10 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
     <div class="sidebar-pinned">
       <a class="sidebar-pinned-item {% if not selected_block %}active{% endif %}"
          href="{% url 'editor_survey_public_results' survey.uuid %}">
-        <i class="fas fa-sliders-h"></i> <span>Page settings</span> <i class="fas fa-chevron-right chev"></i>
+        <i class="fas fa-sliders-h"></i> <span>{% trans "Page settings" %}</span> <i class="fas fa-chevron-right chev"></i>
       </a>
     </div>
-    <div class="sidebar-header"><span>Content blocks</span></div>
+    <div class="sidebar-header"><span>{% trans "Content blocks" %}</span></div>
     <ul class="section-list" id="prBlocks">
       {% for b in blocks %}
         {% include "editor/partials/pr_block_list_item.html" with b=b %}
@@ -109,7 +110,7 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
     </ul>
     <div class="sidebar-footer">
       <button type="button" class="add-question-btn" data-toggle="modal" data-target="#addBlockModal">
-        <i class="fas fa-plus"></i> Add block
+        <i class="fas fa-plus"></i> {% trans "Add block" %}
       </button>
     </div>
   </div>
@@ -131,14 +132,14 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
         <form method="post" id="prBlockForm" data-autosave enctype="multipart/form-data" action="{% url 'editor_public_results_block_edit' survey.uuid selected_block.id %}">
           {% csrf_token %}
           <div class="pr-card">
-            <h6>Block settings</h6>
+            <h6>{% trans "Block settings" %}</h6>
             <div class="pr-field">
-              <label>Custom title (optional)</label>
+              <label>{% trans "Custom title (optional)" %}</label>
               <input class="form-control" name="custom_title" value="{{ selected_block.custom_title.en|default:'' }}">
             </div>
             {% if selected_block.block_type == 'chart' %}
             <div class="pr-field">
-              <label>Visualization</label>
+              <label>{% trans "Visualization" %}</label>
               <select class="form-control" name="viz">
                 {% for val, label in chart_viz_options %}
                 <option value="{{ val }}" {% if selected_block.viz == val %}selected{% endif %}>{{ label }}</option>
@@ -147,7 +148,7 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
             </div>
             {% elif selected_block.block_type == 'map' %}
             <div class="pr-field">
-              <label>Visualization</label>
+              <label>{% trans "Visualization" %}</label>
               <select class="form-control" name="viz">
                 {% for val, label in map_viz_options %}
                 <option value="{{ val }}" {% if selected_block.viz == val %}selected{% endif %}>{{ label }}</option>
@@ -155,7 +156,7 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
               </select>
             </div>
             <div class="pr-field">
-              <label>Basemap</label>
+              <label>{% trans "Basemap" %}</label>
               <select class="form-control" name="basemap">
                 {% for val, label in basemap_choices %}
                 <option value="{{ val }}" {% if selected_block.basemap == val %}selected{% endif %}>{{ label }}</option>
@@ -163,8 +164,8 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
               </select>
             </div>
             <div class="pr-field">
-              <label>Point popup fields</label>
-              <div class="pr-help" style="margin-top:0;margin-bottom:.4rem;">Attributes shown when a point is clicked — the sub-questions this respondent answered <em>for that point</em>. Empty = anonymous geometry only. Free-text answers can't be shown.</div>
+              <label>{% trans "Point popup fields" %}</label>
+              <div class="pr-help" style="margin-top:0;margin-bottom:.4rem;">{% trans "Attributes shown when a point is clicked — the sub-questions this respondent answered" %} <em>{% trans "for that point" %}</em>{% trans ". Empty = anonymous geometry only. Free-text answers can't be shown." %}</div>
               {% for sq in geo_subquestions %}
               <label style="font-weight:400;display:flex;gap:.5rem;align-items:center;">
                 <input type="checkbox" name="geo_label_fields" value="{{ sq.code }}"
@@ -172,17 +173,17 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
                 {{ sq.name }}
               </label>
               {% empty %}
-              <div class="pr-help" style="margin-top:0;"><i class="fas fa-info-circle"></i> This map question has no sub-questions, so points are shown as anonymous geometry.</div>
+              <div class="pr-help" style="margin-top:0;"><i class="fas fa-info-circle"></i> {% trans "This map question has no sub-questions, so points are shown as anonymous geometry." %}</div>
               {% endfor %}
             </div>
             {% elif selected_block.block_type == 'text' %}
             <div class="pr-field">
-              <label>Text</label>
+              <label>{% trans "Text" %}</label>
               <textarea class="form-control" name="content" rows="4">{{ selected_block.content.en|default:'' }}</textarea>
             </div>
             {% elif selected_block.block_type == 'image' %}
             <div class="pr-field">
-              <label>Image</label>
+              <label>{% trans "Image" %}</label>
               {% if selected_block.image %}
               <div class="mb-2"><img src="{{ selected_block.image.url }}" style="max-width:100%;max-height:180px;border-radius:6px;border:1px solid var(--border-color);"></div>
               {% endif %}
@@ -190,14 +191,14 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
               <div class="pr-help">{% if selected_block.image %}Choose a new file to replace the current image.{% endif %}</div>
             </div>
             <div class="pr-field">
-              <label>Caption (optional)</label>
+              <label>{% trans "Caption (optional)" %}</label>
               <textarea class="form-control" name="content" rows="2">{{ selected_block.content.en|default:'' }}</textarea>
             </div>
             {% endif %}
-            <label class="pr-switch"><span>Hidden <small class="pr-help">keep but don't show publicly</small></span>
+            <label class="pr-switch"><span>{% trans "Hidden" %} <small class="pr-help">{% trans "keep but don't show publicly" %}</small></span>
               <input type="checkbox" name="is_hidden" {% if selected_block.is_hidden %}checked{% endif %}></label>
-            <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
-            <noscript><button class="btn btn-primary mt-2" type="submit"><i class="fas fa-check"></i> Save block</button></noscript>
+            <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>{% trans "Changes save automatically" %}</span></div>
+            <noscript><button class="btn btn-primary mt-2" type="submit"><i class="fas fa-check"></i> {% trans "Save block" %}</button></noscript>
           </div>
         </form>
       </div>
@@ -205,7 +206,7 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
       {# ---- page settings ---- #}
       <div class="pr-ctxbar">
         <span class="ico"><i class="fas fa-sliders-h"></i></span>
-        <div><div class="t">Page settings</div><div class="s">Applies to the whole public results page</div></div>
+        <div><div class="t">{% trans "Page settings" %}</div><div class="s">{% trans "Applies to the whole public results page" %}</div></div>
         <span style="flex:1;"></span>
         {% if not MOBILE_EDITOR_NAV %}
         {% comment %}Flag on: these actions live in the status line above.{% endcomment %}
@@ -215,86 +216,86 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
         were sharing this URL by copying it from the address bar; the copy button below is the
         one that yields a link visitors can actually open.
         {% endcomment %}
-        <a class="btn btn-sm btn-outline-primary" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank" title="Private preview — only you can open this URL"><i class="fas fa-eye"></i> Preview <small>private</small></a>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank" title="{% trans 'Private preview — only you can open this URL' %}"><i class="fas fa-eye"></i> {% trans "Preview" %} <small>{% trans "private" %}</small></a>
         {% if page.is_published %}
-        <button type="button" class="btn btn-sm btn-outline-success" id="prCopyPublicLink" onclick="prCopyPublicLink(this)" title="{{ public_url }}"><i class="fas fa-link"></i> Copy public link</button>
-        <a class="btn btn-sm btn-outline-secondary" href="{{ public_url }}" target="_blank" title="The page as visitors see it"><i class="fas fa-globe"></i> Live page</a>
-        <button type="button" class="btn btn-sm btn-outline-danger" onclick="prSetPublished(false)"><i class="fas fa-eye-slash"></i> Unpublish</button>
+        <button type="button" class="btn btn-sm btn-outline-success" id="prCopyPublicLink" onclick="prCopyPublicLink(this)" title="{{ public_url }}"><i class="fas fa-link"></i> {% trans "Copy public link" %}</button>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ public_url }}" target="_blank" title="{% trans 'The page as visitors see it' %}"><i class="fas fa-globe"></i> {% trans "Live page" %}</a>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="prSetPublished(false)"><i class="fas fa-eye-slash"></i> {% trans "Unpublish" %}</button>
         {% else %}
-        <button type="button" class="btn btn-sm btn-success" onclick="prSetPublished(true)" {% if not can_publish %}disabled title="Publish the survey first"{% endif %}><i class="fas fa-globe"></i> Publish page</button>
+        <button type="button" class="btn btn-sm btn-success" onclick="prSetPublished(true)" {% if not can_publish %}disabled title="{% trans 'Publish the survey first' %}"{% endif %}><i class="fas fa-globe"></i> {% trans "Publish page" %}</button>
         {% endif %}
         {% endif %}
       </div>
       {% if page.is_published and not MOBILE_EDITOR_NAV %}
-      <div class="pr-scroll" style="padding-bottom:0;"><div class="pr-banner" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46;"><i class="fas fa-circle" style="font-size:8px;"></i> This results page is <strong>live</strong> at <span class="pr-url" style="color:inherit;">/r/{{ page.slug }}/</span></div></div>
+      <div class="pr-scroll" style="padding-bottom:0;"><div class="pr-banner" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46;"><i class="fas fa-circle" style="font-size:8px;"></i> {% trans "This results page is" %} <strong>{% trans "live" %}</strong> at <span class="pr-url" style="color:inherit;">/r/{{ page.slug }}/</span></div></div>
       {% endif %}
       <div class="pr-scroll">
         {% if not can_publish %}
-        <div class="pr-banner"><i class="fas fa-exclamation-triangle"></i> This survey is a draft. Publish the survey before publishing its results page.</div>
+        <div class="pr-banner"><i class="fas fa-exclamation-triangle"></i> {% trans "This survey is a draft. Publish the survey before publishing its results page." %}</div>
         {% endif %}
         {% if page.scaffolded_at and not page.is_published %}
-        <div class="pr-banner" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af;"><i class="fas fa-magic"></i> We drafted this page from your questions — review the blocks, then hit <strong>Publish page</strong>.</div>
+        <div class="pr-banner" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af;"><i class="fas fa-magic"></i> {% trans "We drafted this page from your questions — review the blocks, then hit" %} <strong>{% trans "Publish page" %}</strong>.</div>
         {% endif %}
         <form method="post" id="prPageForm" data-autosave action="{% url 'editor_public_results_save' survey.uuid %}">
           {% csrf_token %}
           <div class="pr-card">
             <h6>Visibility &amp; address</h6>
             <div class="pr-field">
-              <label>Visibility</label>
+              <label>{% trans "Visibility" %}</label>
               <select class="form-control" name="visibility">
                 {% for val, label in visibility_choices %}
                 <option value="{{ val }}" {% if page.visibility == val %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
-              <div class="pr-help">Public is indexable and listable. Unlisted is reachable by direct link only and not indexed.</div>
+              <div class="pr-help">{% trans "Public is indexable and listable. Unlisted is reachable by direct link only and not indexed." %}</div>
             </div>
             <div class="pr-field">
-              <label>Page address <small class="pr-help">changes the public URL — applied explicitly</small></label>
+              <label>{% trans "Page address" %} <small class="pr-help">{% trans "changes the public URL — applied explicitly" %}</small></label>
               <div style="display:flex;gap:.4rem;align-items:center;">
                 <input class="form-control" name="slug" data-no-autosave value="{{ page.slug }}">
-                <button type="button" class="btn btn-sm btn-outline-primary" id="prSlugApply" style="white-space:nowrap;">Apply</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="prSlugApply" style="white-space:nowrap;">{% trans "Apply" %}</button>
               </div>
-              <div class="pr-help">Public URL: <span class="pr-url">/r/{{ page.slug }}/</span> <span class="pr-slug-msg"></span></div>
+              <div class="pr-help">{% trans "Public URL:" %} <span class="pr-url">/r/{{ page.slug }}/</span> <span class="pr-slug-msg"></span></div>
             </div>
-            <div class="pr-help" style="margin-top:.2rem;"><i class="fas fa-info-circle"></i> Use the <strong>Publish page</strong> button above to make this page live.</div>
+            <div class="pr-help" style="margin-top:.2rem;"><i class="fas fa-info-circle"></i> {% blocktrans %}Use the <strong>Publish page</strong> button above to make this page live.{% endblocktrans %}</div>
           </div>
 
           <div class="pr-card">
-            <h6>Intro</h6>
-            <div class="pr-field"><label>Title</label>
+            <h6>{% trans "Intro" %}</h6>
+            <div class="pr-field"><label>{% trans "Title" %}</label>
               <input class="form-control" name="intro_title" value="{{ page.intro.title.en|default:'' }}"></div>
-            <div class="pr-field"><label>Body</label>
+            <div class="pr-field"><label>{% trans "Body" %}</label>
               <textarea class="form-control" name="intro_body" rows="3">{{ page.intro.body.en|default:'' }}</textarea></div>
           </div>
 
           <div class="pr-card">
             <h6>Display &amp; privacy</h6>
-            <label class="pr-switch"><span>Show response counter</span>
+            <label class="pr-switch"><span>{% trans "Show response counter" %}</span>
               <input type="checkbox" name="show_response_count" {% if page.show_response_count %}checked{% endif %}></label>
-            <label class="pr-switch"><span>Show “Take the survey” CTA <small class="pr-help">only while the survey is open</small></span>
+            <label class="pr-switch"><span>{% trans "Show “Take the survey” CTA" %} <small class="pr-help">{% trans "only while the survey is open" %}</small></span>
               <input type="checkbox" name="show_participate_cta" {% if page.show_participate_cta %}checked{% endif %}></label>
-            <label class="pr-switch"><span>Link from the thanks page <small class="pr-help">a “See the results” button after respondents submit</small></span>
+            <label class="pr-switch"><span>{% trans "Link from the thanks page" %} <small class="pr-help">{% trans "a “See the results” button after respondents submit" %}</small></span>
               <input type="checkbox" name="show_on_thanks" {% if page.show_on_thanks %}checked{% endif %}></label>
-            <label class="pr-switch"><span>Feature in public stories listing</span>
+            <label class="pr-switch"><span>{% trans "Feature in public stories listing" %}</span>
               <input type="checkbox" name="feature_in_listing" {% if page.feature_in_listing %}checked{% endif %}></label>
-            <div class="pr-field" style="margin-top:.6rem;"><label>k-anonymity threshold</label>
+            <div class="pr-field" style="margin-top:.6rem;"><label>{% trans "k-anonymity threshold" %}</label>
               <input class="form-control" style="max-width:120px;" type="number" min="1" name="k_anonymity_threshold" value="{{ page.k_anonymity_threshold }}">
               <div class="pr-help">Mask buckets smaller than K as “&lt;K”. Set to 1 to disable.</div></div>
           </div>
 
-          <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
-          <noscript><button class="btn btn-primary" type="submit"><i class="fas fa-check"></i> Save page settings</button></noscript>
+          <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>{% trans "Changes save automatically" %}</span></div>
+          <noscript><button class="btn btn-primary" type="submit"><i class="fas fa-check"></i> {% trans "Save page settings" %}</button></noscript>
         </form>
 
         <div class="pr-card" style="margin-top:1.1rem;">
-          <h6>Data mode</h6>
-          <p class="pr-help" style="margin-top:0;">Current: <strong>{{ page.get_mode_display }}</strong>{% if page.frozen_at %} · frozen {{ page.frozen_at|date:"j M Y H:i" }}{% endif %}</p>
+          <h6>{% trans "Data mode" %}</h6>
+          <p class="pr-help" style="margin-top:0;">{% trans "Current:" %} <strong>{{ page.get_mode_display }}</strong>{% if page.frozen_at %} · frozen {{ page.frozen_at|date:"j M Y H:i" }}{% endif %}</p>
           <form method="post" action="{% url 'editor_public_results_freeze' survey.uuid %}" style="display:inline;">
-            {% csrf_token %}<button class="btn btn-sm btn-outline-secondary" type="submit"><i class="fas fa-snowflake"></i> Freeze snapshot</button>
+            {% csrf_token %}<button class="btn btn-sm btn-outline-secondary" type="submit"><i class="fas fa-snowflake"></i> {% trans "Freeze snapshot" %}</button>
           </form>
           {% if page.mode == 'frozen' %}
           <form method="post" action="{% url 'editor_public_results_unfreeze' survey.uuid %}" style="display:inline;">
-            {% csrf_token %}<button class="btn btn-sm btn-outline-secondary" type="submit"><i class="fas fa-bolt"></i> Back to live</button>
+            {% csrf_token %}<button class="btn btn-sm btn-outline-secondary" type="submit"><i class="fas fa-bolt"></i> {% trans "Back to live" %}</button>
           </form>
           {% endif %}
         </div>
@@ -307,8 +308,8 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
   <!-- RIGHT: live preview -->
   <div class="pr-preview">
     <div class="pr-preview-head">
-      <span>Live preview</span>
-      <button type="button" id="prPreviewRefresh" title="Refresh preview"><i class="fas fa-sync-alt"></i></button>
+      <span>{% trans "Live preview" %}</span>
+      <button type="button" id="prPreviewRefresh" title="{% trans 'Refresh preview' %}"><i class="fas fa-sync-alt"></i></button>
     </div>
     <iframe id="prPreviewFrame" src="{% url 'editor_public_results_preview' survey.uuid %}"></iframe>
   </div>

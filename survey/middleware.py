@@ -180,3 +180,50 @@ class ActiveOrgMiddleware:
         invitation.save(update_fields=['accepted_at'])
         request.session['active_org_id'] = invitation.organization_id
         messages.success(request, f"You've joined '{invitation.organization.name}'.")
+
+
+class CreatorLanguageCookieMiddleware:
+    """Mirror a creator's stored UI language into Django's language cookie.
+
+    Why a cookie rather than reading the preference directly: `LocaleMiddleware`
+    runs BEFORE `AuthenticationMiddleware` (see MIDDLEWARE order), so there is no
+    `request.user` at the moment the language is resolved. Django 4.2 resolves
+    from URL prefix → LANGUAGE_COOKIE_NAME → Accept-Language, and the cookie is
+    the only one of those we can set from a preference.
+
+    The DB is touched only when the cookie is ABSENT — a new browser or device —
+    not on every request. Once written, the cookie carries the choice and this
+    middleware costs nothing.
+
+    Respondent pages are unaffected: they call `translation.activate()` for the
+    SURVEY's language inside the view, after all middleware, so the survey's
+    language always wins over the viewer's preference.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        user = getattr(request, 'user', None)
+        if user is None or not user.is_authenticated:
+            return response
+        if request.COOKIES.get(settings.LANGUAGE_COOKIE_NAME):
+            return response
+
+        try:
+            language = user.preferences.ui_language
+        except Exception:
+            # No preferences row, or the table is mid-migration. A missing
+            # preference is not an error: Accept-Language decides instead.
+            return response
+
+        if language and language in dict(settings.LANGUAGES):
+            response.set_cookie(
+                settings.LANGUAGE_COOKIE_NAME, language,
+                max_age=settings.LANGUAGE_COOKIE_AGE,
+                path=settings.LANGUAGE_COOKIE_PATH,
+                samesite=settings.LANGUAGE_COOKIE_SAMESITE,
+            )
+        return response

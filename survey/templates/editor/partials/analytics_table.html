@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load tz hash survey_filters %}
 {# HTMX-swappable partial: attribute table with toolbar, sort, search, pagination #}
 <style>
@@ -63,15 +64,15 @@ the action-styled Trash button (openspec: responses-v2-refactor, 4.3).
     <div class="attr-table-toolbar-right">
         <span class="rv2-search">
             <i class="fas fa-search"></i>
-            <input type="search" id="rv2-search-input" placeholder="Search all columns"
+            <input type="search" id="rv2-search-input" placeholder="{% trans 'Search all columns' %}"
                    value="{{ search_query }}" oninput="rv2SearchDebounced(this.value, 'rv2-search-input')"
                    data-testid="rv2-search">
         </span>
-        <button type="button" class="rv2-chip" onclick="toggleHideFieldsPopover()" title="Show/hide columns">
+        <button type="button" class="rv2-chip" onclick="toggleHideFieldsPopover()" title="{% trans 'Show/hide columns' %}">
             <i class="fas fa-columns"></i> Columns ▾
         </button>
         {% if is_editor %}
-        <button type="button" class="rv2-chip" onclick="openValidationSettings()" title="Validation settings">
+        <button type="button" class="rv2-chip" onclick="openValidationSettings()" title="{% trans 'Validation settings' %}">
             <i class="fas fa-cog"></i>
         </button>
         {% endif %}
@@ -88,7 +89,7 @@ filter and the sort order move into the bottom sheet.
      data-issues="{{ v2_counts.issues }}" data-trash="{{ trash_count }}">
     <span class="rv2-search rv2-m-search">
         <i class="fas fa-search"></i>
-        <input type="search" id="rv2-m-search-input" placeholder="Search responses"
+        <input type="search" id="rv2-m-search-input" placeholder="{% trans 'Search responses' %}"
                value="{{ search_query }}" oninput="rv2SearchDebounced(this.value, 'rv2-m-search-input')">
     </span>
     <button type="button" class="rv2-chip {% if issues_filter or show_trash %}active{% endif %}"
@@ -100,27 +101,27 @@ filter and the sort order move into the bottom sheet.
 {# Normal toolbar — visible when no rows selected #}
 <div class="attr-table-toolbar" id="toolbar-normal">
     <div class="attr-table-toolbar-left">
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleHideFieldsPopover()" title="Show/hide columns">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleHideFieldsPopover()" title="{% trans 'Show/hide columns' %}">
             <i class="fas fa-columns"></i> Hide fields
         </button>
         {% if is_editor %}
         <button type="button" id="trash-toggle-btn"
                 class="btn btn-sm {% if show_trash %}btn-warning{% else %}btn-outline-secondary{% endif %}"
-                onclick="toggleShowTrash()" title="Show/hide trash">
+                onclick="toggleShowTrash()" title="{% trans 'Show/hide trash' %}">
             <i class="fas fa-trash-alt"></i> Trash
         </button>
         {% endif %}
         <select class="form-control form-control-sm d-inline-block ml-2"
                 style="width:auto;font-size:0.82rem;height:28px;"
                 onchange="changeIssuesFilter(this.value)">
-            <option value="" {% if not issues_filter %}selected{% endif %}>All sessions</option>
-            <option value="empty" {% if issues_filter == 'empty' %}selected{% endif %}>Empty</option>
-            <option value="incomplete" {% if issues_filter == 'incomplete' %}selected{% endif %}>Incomplete</option>
-            <option value="missing_required" {% if issues_filter == 'missing_required' %}selected{% endif %}>Missing required</option>
-            <option value="fast" {% if issues_filter == 'fast' %}selected{% endif %}>Fast completion</option>
-            <option value="duplicate" {% if issues_filter == 'duplicate' %}selected{% endif %}>Duplicate</option>
-            <option value="has_errors" {% if issues_filter == 'has_errors' %}selected{% endif %}>Has answer errors</option>
-            <option value="has_warnings" {% if issues_filter == 'has_warnings' %}selected{% endif %}>Has answer warnings</option>
+            <option value="" {% if not issues_filter %}selected{% endif %}>{% trans "All sessions" %}</option>
+            <option value="empty" {% if issues_filter == 'empty' %}selected{% endif %}>{% trans "Empty" %}</option>
+            <option value="incomplete" {% if issues_filter == 'incomplete' %}selected{% endif %}>{% trans "Incomplete" %}</option>
+            <option value="missing_required" {% if issues_filter == 'missing_required' %}selected{% endif %}>{% trans "Missing required" %}</option>
+            <option value="fast" {% if issues_filter == 'fast' %}selected{% endif %}>{% trans "Fast completion" %}</option>
+            <option value="duplicate" {% if issues_filter == 'duplicate' %}selected{% endif %}>{% trans "Duplicate" %}</option>
+            <option value="has_errors" {% if issues_filter == 'has_errors' %}selected{% endif %}>{% trans "Has answer errors" %}</option>
+            <option value="has_warnings" {% if issues_filter == 'has_warnings' %}selected{% endif %}>{% trans "Has answer warnings" %}</option>
         </select>
         <span class="text-muted ml-2" style="font-size:0.85rem;">
             {{ total }} {% if show_trash %}trashed{% else %}result{{ total|pluralize }}{% endif %}
@@ -129,11 +130,11 @@ filter and the sort order move into the bottom sheet.
         <span class="badge badge-pill" style="background:#e8f0fe;color:#1a56db;font-size:0.78rem;font-weight:500;margin-left:0.25rem;">
             {{ f }}
             <button type="button" style="border:none;background:none;color:#1a56db;font-size:0.85rem;padding:0 0 0 4px;cursor:pointer;line-height:1;"
-                    onclick="toggleIssueFilter('{{ f }}')" title="Remove filter">&times;</button>
+                    onclick="toggleIssueFilter('{{ f }}')" title="{% trans 'Remove filter' %}">&times;</button>
         </span>
         {% endfor %}
         {% if issues_filter_list %}
-        <button type="button" class="btn btn-sm btn-link p-0 ml-1" style="font-size:0.75rem;color:#6b7280;" onclick="changeIssuesFilter('')">Clear all</button>
+        <button type="button" class="btn btn-sm btn-link p-0 ml-1" style="font-size:0.75rem;color:#6b7280;" onclick="changeIssuesFilter('')">{% trans "Clear all" %}</button>
         {% endif %}
         <button type="button" id="show-all-rows-btn" class="btn btn-sm btn-link p-0 ml-2" style="font-size:0.75rem;color:#6b7280;display:none;" onclick="filterManager.showAll()">
             <i class="fas fa-eye"></i> Show hidden
@@ -141,11 +142,11 @@ filter and the sort order move into the bottom sheet.
     </div>
     <div class="attr-table-toolbar-right">
         {% if is_editor %}
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openValidationSettings()" title="Validation settings">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openValidationSettings()" title="{% trans 'Validation settings' %}">
             <i class="fas fa-cog"></i>
         </button>
         {% endif %}
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleTableFullscreen()" title="Toggle fullscreen">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleTableFullscreen()" title="{% trans 'Toggle fullscreen' %}">
             <i class="fas fa-expand"></i>
         </button>
     </div>
@@ -155,19 +156,19 @@ filter and the sort order move into the bottom sheet.
 {% if is_editor %}
 <div class="attr-table-toolbar" id="toolbar-bulk" style="display:none;background:#e8f0fe;border-radius:4px;">
     <div class="attr-table-toolbar-left" style="gap:0.5rem;">
-        <button type="button" class="btn btn-sm btn-link" onclick="clearSelection()" title="Deselect all" style="padding:0;">
+        <button type="button" class="btn btn-sm btn-link" onclick="clearSelection()" title="{% trans 'Deselect all' %}" style="padding:0;">
             <i class="fas fa-times"></i>
         </button>
-        <span style="font-size:0.85rem;font-weight:600;" id="bulk-count">0 selected</span>
+        <span style="font-size:0.85rem;font-weight:600;" id="bulk-count">{% trans "0 selected" %}</span>
         <div class="btn-group ml-2">
             <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-toggle="dropdown">
                 <i class="fas fa-check-circle"></i> Status
             </button>
             <div class="dropdown-menu">
-                <a class="dropdown-item" href="#" onclick="bulkSetStatus(''); return false;">— No status</a>
-                <a class="dropdown-item" href="#" onclick="bulkSetStatus('approved'); return false;">Approved</a>
-                <a class="dropdown-item" href="#" onclick="bulkSetStatus('not_approved'); return false;">Not approved</a>
-                <a class="dropdown-item" href="#" onclick="bulkSetStatus('on_hold'); return false;">On hold</a>
+                <a class="dropdown-item" href="#" onclick="bulkSetStatus(''); return false;">{% trans "— No status" %}</a>
+                <a class="dropdown-item" href="#" onclick="bulkSetStatus('approved'); return false;">{% trans "Approved" %}</a>
+                <a class="dropdown-item" href="#" onclick="bulkSetStatus('not_approved'); return false;">{% trans "Not approved" %}</a>
+                <a class="dropdown-item" href="#" onclick="bulkSetStatus('on_hold'); return false;">{% trans "On hold" %}</a>
             </div>
         </div>
         {% if show_trash %}
@@ -183,13 +184,13 @@ filter and the sort order move into the bottom sheet.
         </button>
         {% endif %}
         <span style="border-left:1px solid #bfdbfe;height:20px;margin:0 4px;"></span>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="filterManager.hideSelected()" title="Hide selected rows">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="filterManager.hideSelected()" title="{% trans 'Hide selected rows' %}">
             <i class="fas fa-eye-slash"></i> Hide
         </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="filterManager.keepOnlySelected()" title="Keep only selected, hide rest">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="filterManager.keepOnlySelected()" title="{% trans 'Keep only selected, hide rest' %}">
             <i class="fas fa-filter"></i> Keep only
         </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectionManager.invert()" title="Invert selection">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectionManager.invert()" title="{% trans 'Invert selection' %}">
             <i class="fas fa-exchange-alt"></i> Invert
         </button>
     </div>
@@ -216,7 +217,7 @@ filter and the sort order move into the bottom sheet.
 
 {# Hide fields popover #}
 <div id="hide-fields-popover" style="display:none;" class="attr-hide-popover">
-    <div style="font-weight:600;margin-bottom:0.5rem;font-size:0.85rem;">Visible columns</div>
+    <div style="font-weight:600;margin-bottom:0.5rem;font-size:0.85rem;">{% trans "Visible columns" %}</div>
     {% for col in columns %}
     <label style="display:block;font-size:0.82rem;cursor:pointer;padding:2px 0;">
         <input type="checkbox" checked data-hide-col="{{ col.key }}"
@@ -241,14 +242,14 @@ filter and the sort order move into the bottom sheet.
     {# Header row with column names + sort + menu #}
     <tr>
         <th style="width:28px;text-align:center;background:#f8f9fa;">
-            <input type="checkbox" id="select-all-cb" title="Select / deselect all"
+            <input type="checkbox" id="select-all-cb" title="{% trans 'Select / deselect all' %}"
                    onchange="toggleSelectAll(this.checked)">
         </th>
         {% if not RESPONSES_V2 %}<th class="attr-th-actions" style="width:56px;"></th>{% endif %}
         {% for col in columns %}
         <th data-col="{{ col.key }}" class="attr-th">
             <div class="attr-th-content">
-                <span class="attr-th-grip" title="Drag to reorder"><i class="fas fa-grip-vertical"></i></span>
+                <span class="attr-th-grip" title="{% trans 'Drag to reorder' %}"><i class="fas fa-grip-vertical"></i></span>
                 <span class="attr-th-label">
                     {% if col.input_type == 'point' %}<i class="fas fa-map-marker-alt" style="color:#1E88E5;"></i>
                     {% elif col.input_type == 'line' %}<i class="fas fa-route" style="color:#43A047;"></i>
@@ -262,7 +263,7 @@ filter and the sort order move into the bottom sheet.
                 </span>
                 <span class="attr-th-sort"
                       onclick="tableSort('{{ col.key }}')"
-                      title="Sort">
+                      title="{% trans 'Sort' %}">
                     {% if sort_col == col.key and sort_dir == 'asc' %}
                     <i class="fas fa-sort-up"></i>
                     {% elif sort_col == col.key and sort_dir == 'desc' %}
@@ -271,10 +272,10 @@ filter and the sort order move into the bottom sheet.
                     <i class="fas fa-sort" style="opacity:0.3;"></i>
                     {% endif %}
                 </span>
-                <span class="attr-th-filter" onclick="openColFilter(event, '{{ col.key }}', '{{ col.input_type }}')" title="Filter">
+                <span class="attr-th-filter" onclick="openColFilter(event, '{{ col.key }}', '{{ col.input_type }}')" title="{% trans 'Filter' %}">
                     <i class="fas fa-filter" style="opacity:0.3;font-size:0.65rem;"></i>
                 </span>
-                <span class="attr-th-menu" onclick="toggleColMenu(this, '{{ col.key }}')" title="Column options">
+                <span class="attr-th-menu" onclick="toggleColMenu(this, '{{ col.key }}')" title="{% trans 'Column options' %}">
                     <i class="fas fa-ellipsis-v" style="opacity:0.4;"></i>
                 </span>
             </div>
@@ -302,19 +303,19 @@ filter and the sort order move into the bottom sheet.
         </td>
         {% if not RESPONSES_V2 %}
         <td class="attr-td-actions">
-            <button type="button" class="btn btn-sm btn-link p-0" onclick="loadSessionDetail({{ row.session_id }})" title="View details">
+            <button type="button" class="btn btn-sm btn-link p-0" onclick="loadSessionDetail({{ row.session_id }})" title="{% trans 'View details' %}">
                 <i class="fas fa-eye" style="color:var(--accent);"></i>
             </button>
             {% if is_editor %}
             {% if row.is_deleted %}
-            <button type="button" class="btn btn-sm btn-link p-0" onclick="restoreSession({{ row.session_id }})" title="Restore">
+            <button type="button" class="btn btn-sm btn-link p-0" onclick="restoreSession({{ row.session_id }})" title="{% trans 'Restore' %}">
                 <i class="fas fa-undo" style="color:#28a745;"></i>
             </button>
-            <button type="button" class="btn btn-sm btn-link p-0" onclick="hardDeleteSession({{ row.session_id }})" title="Delete permanently">
+            <button type="button" class="btn btn-sm btn-link p-0" onclick="hardDeleteSession({{ row.session_id }})" title="{% trans 'Delete permanently' %}">
                 <i class="fas fa-times-circle" style="color:#dc3545;"></i>
             </button>
             {% else %}
-            <button type="button" class="btn btn-sm btn-link p-0" onclick="trashSession({{ row.session_id }})" title="Move to trash">
+            <button type="button" class="btn btn-sm btn-link p-0" onclick="trashSession({{ row.session_id }})" title="{% trans 'Move to trash' %}">
                 <i class="fas fa-trash-alt" style="color:#9ca3af;"></i>
             </button>
             {% endif %}
@@ -341,23 +342,23 @@ filter and the sort order move into the bottom sheet.
                         style="font-size:0.75rem;padding:1px 4px;height:24px;width:auto;min-width:90px;{% if row.validation_status == 'approved' %}border-color:#28a745;color:#28a745;{% elif row.validation_status == 'not_approved' %}border-color:#dc3545;color:#dc3545;{% elif row.validation_status == 'on_hold' %}border-color:#fd7e14;color:#fd7e14;{% endif %}"
                         onchange="setSessionStatus(this, {{ row.session_id }})">
                     <option value="" {% if not row.validation_status %}selected{% endif %}>—</option>
-                    <option value="approved" {% if row.validation_status == 'approved' %}selected{% endif %}>Approved</option>
-                    <option value="not_approved" {% if row.validation_status == 'not_approved' %}selected{% endif %}>Not approved</option>
-                    <option value="on_hold" {% if row.validation_status == 'on_hold' %}selected{% endif %}>On hold</option>
+                    <option value="approved" {% if row.validation_status == 'approved' %}selected{% endif %}>{% trans "Approved" %}</option>
+                    <option value="not_approved" {% if row.validation_status == 'not_approved' %}selected{% endif %}>{% trans "Not approved" %}</option>
+                    <option value="on_hold" {% if row.validation_status == 'on_hold' %}selected{% endif %}>{% trans "On hold" %}</option>
                 </select>
                 {% else %}
-                    {% if row.validation_status == 'approved' %}<span class="badge badge-success">Approved</span>
-                    {% elif row.validation_status == 'not_approved' %}<span class="badge badge-danger">Not approved</span>
-                    {% elif row.validation_status == 'on_hold' %}<span class="badge badge-warning">On hold</span>
+                    {% if row.validation_status == 'approved' %}<span class="badge badge-success">{% trans "Approved" %}</span>
+                    {% elif row.validation_status == 'not_approved' %}<span class="badge badge-danger">{% trans "Not approved" %}</span>
+                    {% elif row.validation_status == 'on_hold' %}<span class="badge badge-warning">{% trans "On hold" %}</span>
                     {% else %}—{% endif %}
                 {% endif %}
             {% elif col.key == 'issues' %}
                 {% for issue in row.issues %}
-                    {% if issue == 'empty' %}<span class="badge badge-dark" style="font-size:0.7rem;cursor:help;" title="Session has 0 answers">Empty</span>
-                    {% elif issue == 'incomplete' %}<span class="badge badge-warning text-dark" style="font-size:0.7rem;cursor:help;" title="Session did not reach the last section">Incomplete</span>
-                    {% elif issue == 'missing_required' %}<span class="badge badge-danger" style="font-size:0.7rem;cursor:help;" title="Required question was skipped in a visited section">Missing req.</span>
-                    {% elif issue == 'fast' %}<span class="badge badge-info" style="font-size:0.7rem;cursor:help;" title="Session completed suspiciously fast">Fast</span>
-                    {% elif issue == 'duplicate' %}<span class="badge badge-secondary" style="font-size:0.7rem;cursor:help;" title="Same browser submitted multiple sessions within the detection window">Duplicate</span>
+                    {% if issue == 'empty' %}<span class="badge badge-dark" style="font-size:0.7rem;cursor:help;" title="{% trans 'Session has 0 answers' %}">{% trans "Empty" %}</span>
+                    {% elif issue == 'incomplete' %}<span class="badge badge-warning text-dark" style="font-size:0.7rem;cursor:help;" title="{% trans 'Session did not reach the last section' %}">{% trans "Incomplete" %}</span>
+                    {% elif issue == 'missing_required' %}<span class="badge badge-danger" style="font-size:0.7rem;cursor:help;" title="{% trans 'Required question was skipped in a visited section' %}">{% trans "Missing req." %}</span>
+                    {% elif issue == 'fast' %}<span class="badge badge-info" style="font-size:0.7rem;cursor:help;" title="{% trans 'Session completed suspiciously fast' %}">{% trans "Fast" %}</span>
+                    {% elif issue == 'duplicate' %}<span class="badge badge-secondary" style="font-size:0.7rem;cursor:help;" title="{% trans 'Same browser submitted multiple sessions within the detection window' %}">{% trans "Duplicate" %}</span>
                     {% endif %}
                 {% empty %}
                     <span style="color:#9ca3af;">—</span>
@@ -414,15 +415,15 @@ is displayed; only one is ever visible.
         {% if row.issues %}
         <span class="rv2-chip-status err">{{ row.issues.0 }}</span>
         {% elif row.validation_status == 'on_hold' %}
-        <span class="rv2-chip-status warn">on hold</span>
+        <span class="rv2-chip-status warn">{% trans "on hold" %}</span>
         {% elif row.validation_status == 'not_approved' %}
-        <span class="rv2-chip-status err">rejected</span>
+        <span class="rv2-chip-status err">{% trans "rejected" %}</span>
         {% else %}
         <span class="rv2-chip-status ok">ok</span>
         {% endif %}
     </button>
     {% empty %}
-    <div class="text-center text-muted py-4">No responses</div>
+    <div class="text-center text-muted py-4">{% trans "No responses" %}</div>
     {% endfor %}
 </div>
 {% endif %}
@@ -457,23 +458,23 @@ is displayed; only one is ever visible.
 {# Filter dropdown (hidden, positioned by JS) #}
 <div id="col-filter-dropdown" style="display:none;position:absolute;z-index:100;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.12);padding:8px;min-width:180px;max-width:260px;font-size:0.8rem;">
     <div id="cf-header" style="font-weight:600;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
-        <span id="cf-title">Filter</span>
+        <span id="cf-title">{% trans "Filter" %}</span>
         <button type="button" style="border:none;background:none;cursor:pointer;color:#9ca3af;font-size:0.85rem;" onclick="closeColFilter()">&times;</button>
     </div>
     <div id="cf-body"></div>
     <div style="display:flex;gap:4px;margin-top:8px;">
-        <button class="btn btn-sm btn-primary" style="flex:1;font-size:0.75rem;" onclick="applyColFilter()">Apply</button>
-        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="clearColFilter()">Clear</button>
+        <button class="btn btn-sm btn-primary" style="flex:1;font-size:0.75rem;" onclick="applyColFilter()">{% trans "Apply" %}</button>
+        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="clearColFilter()">{% trans "Clear" %}</button>
     </div>
 </div>
 
 {# Column menu dropdown (hidden, positioned by JS) #}
 <div id="attr-col-menu" style="display:none;" class="attr-col-menu-dropdown">
-    <div class="attr-col-menu-item" onclick="tableSort(window._menuCol, 'asc')"><i class="fas fa-sort-alpha-down"></i> Sort A→Z</div>
-    <div class="attr-col-menu-item" onclick="tableSort(window._menuCol, 'desc')"><i class="fas fa-sort-alpha-up"></i> Sort Z→A</div>
+    <div class="attr-col-menu-item" onclick="tableSort(window._menuCol, 'asc')"><i class="fas fa-sort-alpha-down"></i> {% trans "Sort A→Z" %}</div>
+    <div class="attr-col-menu-item" onclick="tableSort(window._menuCol, 'desc')"><i class="fas fa-sort-alpha-up"></i> {% trans "Sort Z→A" %}</div>
     <hr style="margin:4px 0;">
-    <div class="attr-col-menu-item" onclick="setColHidden(window._menuCol, true); closeColMenu()"><i class="fas fa-eye-slash"></i> Hide field</div>
-    <div class="attr-col-menu-item" onclick="toggleColFrozen(window._menuCol); closeColMenu()"><i class="fas fa-thumbtack"></i> Freeze field</div>
+    <div class="attr-col-menu-item" onclick="setColHidden(window._menuCol, true); closeColMenu()"><i class="fas fa-eye-slash"></i> {% trans "Hide field" %}</div>
+    <div class="attr-col-menu-item" onclick="toggleColFrozen(window._menuCol); closeColMenu()"><i class="fas fa-thumbtack"></i> {% trans "Freeze field" %}</div>
 </div>
 
 <script>

@@ -1,10 +1,11 @@
+{% load i18n %}
 {% load survey_filters %}
 <div class="pr-panel-flush">
 
   <!-- Context bar — mirrors the Publish space's Page settings header -->
   <div class="pr-ctxbar">
     <span class="ico"><i class="fas fa-cog"></i></span>
-    <div><div class="t">Survey settings</div><div class="s">Applies to the whole survey</div></div>
+    <div><div class="t">{% trans "Survey settings" %}</div><div class="s">{% trans "Applies to the whole survey" %}</div></div>
   </div>
 
   <div class="pr-scroll">
@@ -16,7 +17,7 @@
       {% csrf_token %}
 
       <div class="pr-card">
-        <h6>Basics</h6>
+        <h6>{% trans "Basics" %}</h6>
         <div class="pr-field">
           <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
           {{ form.name }}
@@ -38,7 +39,7 @@
       </div>
 
       <div class="pr-card">
-        <h6>Languages</h6>
+        <h6>{% trans "Languages" %}</h6>
         <div class="pr-field">
           <label for="{{ form.available_languages.id_for_label }}">{{ form.available_languages.label }}</label>
           {{ form.available_languages }}
@@ -48,8 +49,8 @@
       </div>
 
       <div class="pr-card">
-        <h6>Respondent map</h6>
-        <div class="pr-help" style="margin-top:0;margin-bottom:.75rem;">The base map, starting position, and zoom respondents open on. Sections can override the position individually.</div>
+        <h6>{% trans "Respondent map" %}</h6>
+        <div class="pr-help" style="margin-top:0;margin-bottom:.75rem;">{% trans "The base map, starting position, and zoom respondents open on. Sections can override the position individually." %}</div>
         <div class="pr-field">
           <label for="{{ form.basemaps.id_for_label }}">{{ form.basemaps.label }}</label>
           {{ form.basemaps }}
@@ -85,7 +86,7 @@
         </div>
 
         <div class="pr-field" style="margin-bottom:.5rem;">
-          <label>Default position</label>
+          <label>{% trans "Default position" %}</label>
           <div id="survey-map-picker" style="height:300px;width:100%;border-radius:var(--radius);border:1px solid var(--border-color);margin-bottom:0.5rem;position:relative;z-index:0;"></div>
           <div class="pr-help" style="margin-top:0;">
             <span id="survey-map-coords">
@@ -100,13 +101,13 @@
           </div>
         </div>
         <label class="pr-switch" title="Auto-center the map on the respondent's browser location when they first enter the survey.">
-          <span>Auto-center on respondent's location <small class="pr-help">uses the visitor's browser geolocation on entry</small></span>
+          <span>{% trans "Auto-center on respondent's location" %} <small class="pr-help">{% trans "uses the visitor's browser geolocation on entry" %}</small></span>
           <input type="checkbox" id="survey-use-geolocation" {% if survey.use_geolocation %}checked{% endif %}>
         </label>
         <button type="button" class="btn btn-primary btn-sm" id="save-survey-map-position" style="margin-top:.75rem;">
-          <i class="fas fa-save mr-1"></i> Save map position
+          <i class="fas fa-save mr-1"></i> {% trans "Save map position" %}
         </button>
-        <span id="survey-map-saved" style="display:none;color:#10b981;font-size:0.85rem;margin-left:0.5rem;">Saved!</span>
+        <span id="survey-map-saved" style="display:none;color:#10b981;font-size:0.85rem;margin-left:0.5rem;">{% trans "Saved!" %}</span>
       </div>
 
       {% if layers_enabled %}
@@ -120,10 +121,9 @@
            data-create-url="{% url 'editor_survey_layer_create' survey.uuid %}"
            data-update-url="{% url 'editor_survey_layer_update' survey.uuid 0 %}"
            data-delete-url="{% url 'editor_survey_layer_delete' survey.uuid 0 %}">
-        <h6>Reference layers</h6>
+        <h6>{% trans "Reference layers" %}</h6>
         <div class="pr-help" style="margin-top:0;margin-bottom:.75rem;">
-          Non-editable layers respondents see under the map: counting zones, boundaries, routes.
-          Sections can hide each layer individually.
+          {% trans "Non-editable layers respondents see under the map: counting zones, boundaries, routes. Sections can hide each layer individually." %}
         </div>
 
         <div id="ref-layers-list">
@@ -133,41 +133,41 @@
               <span class="ref-layer-swatch" style="background:{{ item.layer.color }}"></span>
               <b class="ref-layer-name">{{ item.layer.name }}</b>
               <span class="pr-help ref-layer-meta">{{ item.layer.feature_count }} features · {{ item.layer.size_bytes|filesizeformat }}</span>
-              <button type="button" class="ref-layer-toggle" title="Edit"><i class="fas fa-pen"></i></button>
-              <button type="button" class="ref-layer-delete" title="Delete"><i class="fas fa-trash"></i></button>
+              <button type="button" class="ref-layer-toggle" title="{% trans 'Edit' %}"><i class="fas fa-pen"></i></button>
+              <button type="button" class="ref-layer-delete" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
             </div>
             <div class="ref-layer-body" hidden>
               <div class="pr-field">
-                <label>Name</label>
+                <label>{% trans "Name" %}</label>
                 <input type="text" data-field="name" value="{{ item.layer.name }}" maxlength="100">
               </div>
               <div class="pr-field">
-                <label>Color</label>
+                <label>{% trans "Color" %}</label>
                 <input type="color" data-field="color" value="{{ item.layer.color }}">
-                <div class="pr-help">Fallback — style properties inside the file win.</div>
+                <div class="pr-help">{% trans "Fallback — style properties inside the file win." %}</div>
               </div>
               <div class="pr-field">
-                <label>Label field</label>
+                <label>{% trans "Label field" %}</label>
                 <select data-field="label_field">
                   <option value="">— none —</option>
                   {% for prop in item.properties %}
                   <option value="{{ prop }}" {% if prop == item.layer.label_field %}selected{% endif %}>{{ prop }}</option>
                   {% endfor %}
                 </select>
-                <div class="pr-help">Feature property shown as a map label.</div>
+                <div class="pr-help">{% trans "Feature property shown as a map label." %}</div>
               </div>
               <div class="pr-field">
-                <label>Key field</label>
+                <label>{% trans "Key field" %}</label>
                 <select data-field="key_field">
                   <option value="">— none —</option>
                   {% for prop in item.properties %}
                   <option value="{{ prop }}" {% if prop == item.layer.key_field %}selected{% endif %}>{{ prop }}</option>
                   {% endfor %}
                 </select>
-                <div class="pr-help">Makes features addressable — reserved for answer-driven map context.</div>
+                <div class="pr-help">{% trans "Makes features addressable — reserved for answer-driven map context." %}</div>
               </div>
               <label class="pr-switch">
-                <span>Info popups <small class="pr-help">tap a feature to see its name and description</small></span>
+                <span>{% trans "Info popups" %} <small class="pr-help">{% trans "tap a feature to see its name and description" %}</small></span>
                 <input type="checkbox" data-field="show_popups" {% if item.layer.show_popups %}checked{% endif %}>
               </label>
               <div class="ref-layer-status pr-help"></div>
@@ -177,8 +177,11 @@
         </div>
 
         <label class="ref-layers-drop" id="ref-layers-drop">
-          <i class="fas fa-upload"></i> Drop a <b>.geojson</b> here or <span class="ref-layers-choose">choose a file</span>
-          <div class="pr-help">GeoJSON (WGS84), up to 10 MB, max 5 layers per survey.</div>
+          {% comment %}One blocktrans: split into "Drop a" / "here or" / "choose a file"
+          the sentence cannot be reordered, and those fragments carry no meaning on
+          their own for whoever translates them.{% endcomment %}
+          <i class="fas fa-upload"></i> {% blocktrans %}Drop a <b>.geojson</b> here or <span class="ref-layers-choose">choose a file</span>{% endblocktrans %}
+          <div class="pr-help">{% trans "GeoJSON (WGS84), up to 10 MB, max 5 layers per survey." %}</div>
           <input type="file" accept=".geojson,.json,application/geo+json,application/json" hidden id="ref-layers-file">
         </label>
         <div class="ref-layers-error text-danger" id="ref-layers-error" style="font-size:.8rem;margin-top:.4rem;"></div>
@@ -186,7 +189,7 @@
       {% endif %}
 
       <div class="pr-card">
-        <h6>Cover image</h6>
+        <h6>{% trans "Cover image" %}</h6>
         <div class="pr-field">
           <label for="{{ form.cover_image.id_for_label }}">{{ form.cover_image.label }}</label>
           {% if survey.cover_image %}
@@ -199,8 +202,8 @@
         </div>
       </div>
 
-      <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
-      <noscript><button type="submit" class="btn btn-primary btn-sm">Save Settings</button></noscript>
+      <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>{% trans "Changes save automatically" %}</span></div>
+      <noscript><button type="submit" class="btn btn-primary btn-sm">{% trans "Save Settings" %}</button></noscript>
     </form>
 
     <script>
@@ -272,7 +275,7 @@
 
     <!-- Collaborators -->
     <div class="pr-card">
-      <h6>Collaborators</h6>
+      <h6>{% trans "Collaborators" %}</h6>
       <div hx-get="{% url 'editor_survey_collaborators' survey.uuid %}"
            hx-trigger="load"
            hx-swap="innerHTML">

@@ -81,7 +81,11 @@ any other path gets generic wording. `request` and `user` are available because 
         <a href="{% url 'survey_list' %}">{% trans "Browse public surveys" %}</a>
       {% else %}
         <a href="{% url 'survey_list' %}">{% trans "Browse public surveys" %}</a>
-        <a href="{% url 'index' %}">{% trans "Back to homepage" %}</a>
+        {% comment %}"Back to Home", not "Back to homepage": the same link exists in
+        survey_closed.html and survey_unavailable.html under that wording, and it is
+        already translated in all 75 locales. Two spellings of one string bought two
+        catalog entries and a false collision.{% endcomment %}
+        <a href="{% url 'index' %}">{% trans "Back to Home" %}</a>
       {% endif %}
     </div>
   </main>

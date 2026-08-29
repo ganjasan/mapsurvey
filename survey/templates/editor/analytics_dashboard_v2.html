@@ -1,5 +1,6 @@
 {% extends "editor/editor_base.html" %}
 
+{% load i18n %}
 {% block page_title %}Results – {{ survey.name }}{% endblock %}
 
 {% load static %}
@@ -29,13 +30,13 @@
         published or discarded.
         {% else %}
         Responses of the published survey. This draft's own preview responses are under
-        <strong>Draft (test)</strong> in the version picker.
+        <strong>{% trans "Draft (test)" %}</strong> in the version picker.
         {% endif %}
     </div>
     {% endif %}
 
     {# ── Pane row: the single pane-selection level ─────────────────────── #}
-    <div class="rv2-panerow" role="tablist" aria-label="Responses panes">
+    <div class="rv2-panerow" role="tablist" aria-label="{% trans 'Responses panes' %}">
         <button type="button" class="rv2-pane-tab" data-pane="overview" role="tab">
             <i class="fas fa-circle-notch"></i> Overview
         </button>
@@ -54,11 +55,11 @@
         </button>
         <div class="rv2-panerow-end">
             <button type="button" id="rv2-split-btn" class="rv2-chip rv2-split-control"
-                    onclick="rv2ToggleSplit()" title="Show two panes side by side">
+                    onclick="rv2ToggleSplit()" title="{% trans 'Show two panes side by side' %}">
                 <i class="fas fa-columns"></i> Split view
             </button>
             <button type="button" id="rv2-split-reset" class="rv2-chip rv2-split-control"
-                    onclick="rv2ResetSplit()" style="display:none;" title="Back to a single pane">
+                    onclick="rv2ResetSplit()" style="display:none;" title="{% trans 'Back to a single pane' %}">
                 ✕ Reset layout
             </button>
             {% if version_choices %}
@@ -73,7 +74,7 @@
             {% endif %}
             <a href="/surveys/{{ survey.uuid }}/download?version={{ current_version }}"
                class="btn btn-sm btn-outline-secondary rv2-download"
-               title="Download clean responses (CSV + GeoJSON)">
+               title="{% trans 'Download clean responses (CSV + GeoJSON)' %}">
                 <i class="fas fa-download"></i> Download
             </a>
         </div>
@@ -102,7 +103,7 @@
             {% else %}
             <div class="rv2-empty" data-testid="rv2-map-empty">
                 <div class="rv2-empty-icon"><i class="fas fa-map"></i></div>
-                <b>No geo questions in this survey</b>
+                <b>{% trans "No geo questions in this survey" %}</b>
                 <p>Add a point, line or polygon question in the Survey tab — responses will appear
                 here on a live map.</p>
                 <a class="btn btn-outline-secondary btn-sm" href="/editor/surveys/{{ survey.uuid }}/">
@@ -115,7 +116,7 @@
         <section id="rv2-pane-responses" class="rv2-pane" data-pane-content="responses" hidden>
             <div id="pane-table" style="position:relative;display:flex;gap:0;height:100%;flex:1;min-height:0;">
                 <div id="pane-table-content" style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
-                    <div class="text-center text-muted py-5"><i class="fas fa-table mr-2"></i>Loading table...</div>
+                    <div class="text-center text-muted py-5"><i class="fas fa-table mr-2"></i>{% trans "Loading table..." %}</div>
                 </div>
                 {# Violations live in the toolbar chips (Issues N) — no sidebar in v2. #}
             </div>
@@ -149,16 +150,16 @@
         active pane; tablet — overlay; phone — full screen (CSS tiers). Fed by
         the same analytics_session_detail endpoint the modal used.
         {% endcomment %}
-        <aside id="rv2-drawer" class="rv2-drawer" hidden aria-label="Response details">
+        <aside id="rv2-drawer" class="rv2-drawer" hidden aria-label="{% trans 'Response details' %}">
             <div class="rv2-drawer-head">
-                <span id="rv2-drawer-title">Response</span>
+                <span id="rv2-drawer-title">{% trans "Response" %}</span>
                 <div class="rv2-drawer-nav">
-                    <span id="rv2-drawer-changed" style="display:none;color:#d97706;" title="The list changed since this was opened">
+                    <span id="rv2-drawer-changed" style="display:none;color:#d97706;" title="{% trans 'The list changed since this was opened' %}">
                         <i class="fas fa-exclamation-triangle"></i> list changed
                     </span>
-                    <button type="button" id="rv2-drawer-prev" onclick="rv2DrawerStep(-1)" title="Previous">‹</button>
-                    <button type="button" id="rv2-drawer-next" onclick="rv2DrawerStep(1)" title="Next">›</button>
-                    <button type="button" onclick="rv2CloseDrawer()" title="Close">✕</button>
+                    <button type="button" id="rv2-drawer-prev" onclick="rv2DrawerStep(-1)" title="{% trans 'Previous' %}">‹</button>
+                    <button type="button" id="rv2-drawer-next" onclick="rv2DrawerStep(1)" title="{% trans 'Next' %}">›</button>
+                    <button type="button" onclick="rv2CloseDrawer()" title="{% trans 'Close' %}">✕</button>
                 </div>
             </div>
             <div id="rv2-drawer-confirm" style="display:none;"></div>
@@ -175,7 +176,7 @@
     <div class="rv2-m-sheet-panel">
         <div class="rv2-m-sheet-grab"></div>
         <div id="rv2-m-sheet-body"></div>
-        <button type="button" class="btn btn-sm btn-outline-secondary btn-block mt-2" onclick="rv2CloseMobileSheet()">Done</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary btn-block mt-2" onclick="rv2CloseMobileSheet()">{% trans "Done" %}</button>
     </div>
 </div>
 
@@ -184,24 +185,24 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-cog"></i> Validation Settings</h5>
+                <h5 class="modal-title"><i class="fas fa-cog"></i> {% trans "Validation Settings" %}</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label style="font-size:0.85rem;font-weight:600;">Fast completion threshold (seconds)</label>
+                    <label style="font-size:0.85rem;font-weight:600;">{% trans "Fast completion threshold (seconds)" %}</label>
                     <input type="number" id="vs-fast-threshold" class="form-control form-control-sm" value="30" min="1" step="1">
-                    <small class="text-muted">Sessions completed faster than this are flagged</small>
+                    <small class="text-muted">{% trans "Sessions completed faster than this are flagged" %}</small>
                 </div>
                 <div class="form-group">
-                    <label style="font-size:0.85rem;font-weight:600;">Duplicate detection window (hours)</label>
+                    <label style="font-size:0.85rem;font-weight:600;">{% trans "Duplicate detection window (hours)" %}</label>
                     <input type="number" id="vs-dup-window" class="form-control form-control-sm" value="1" min="0.1" step="0.5">
-                    <small class="text-muted">Sessions from same browser within this window are flagged</small>
+                    <small class="text-muted">{% trans "Sessions from same browser within this window are flagged" %}</small>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                <button class="btn btn-sm btn-primary" onclick="saveValidationSettings()">Save</button>
+                <button class="btn btn-sm btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button class="btn btn-sm btn-primary" onclick="saveValidationSettings()">{% trans "Save" %}</button>
             </div>
         </div>
     </div>

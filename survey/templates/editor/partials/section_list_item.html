@@ -1,3 +1,4 @@
+{% load i18n %}
 <li class="section-item{% if is_current %} active{% endif %}"
     data-section-id="{{ section.id }}"
     data-section-name="{{ section.name }}">
@@ -10,15 +11,15 @@
     <span class="badge" title="{{ vis.label }}" style="background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe;"><i class="fas fa-code-branch"></i></span>
     {% endif %}
     {% endif %}{% endwith %}
-    {% if section.question_count is not None %}<span class="section-qcount" title="Questions in this section">{{ section.question_count }}</span>{% endif %}
-    <button class="section-action" title="Duplicate"
+    {% if section.question_count is not None %}<span class="section-qcount" title="{% trans 'Questions in this section' %}">{{ section.question_count }}</span>{% endif %}
+    <button class="section-action" title="{% trans 'Duplicate' %}"
             hx-post="{% url 'editor_section_duplicate' survey.uuid section.id %}"
             hx-target="closest .section-item"
             hx-swap="afterend"
             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
         <i class="fas fa-copy"></i>
     </button>
-    <button class="section-action copy-section-btn" title="Copy"
+    <button class="section-action copy-section-btn" title="{% trans 'Copy' %}"
             data-survey-uuid="{{ survey.uuid }}"
             data-section-id="{{ section.id }}"
             data-section-title="{{ section.title|default:section.name }}">

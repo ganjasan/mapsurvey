@@ -1,10 +1,11 @@
 {% extends "editor/editor_base.html" %}
+{% load i18n %}
 {% load static %}
 
 {% block page_title %}New Survey{% endblock %}
 
 {% block navbar_content %}
-<span class="survey-name">New Survey</span>
+<span class="survey-name">{% trans "New Survey" %}</span>
 {% endblock %}
 
 {% block extra_head %}
@@ -140,6 +141,11 @@
   .create-actions-secondary { display: flex; gap: 0.5rem; }
   .create-actions-secondary .btn { flex: 1; text-align: center; }
   .ai-privacy { font-size: 0.7rem; color: #9ca3af; margin-top: 0.5rem; line-height: 1.3; }
+  /* Brief-language hint — sits directly under the goal input, inside the tinted
+     AI zone. Quiet by default; the globe icon carries the meaning at a glance
+     for someone who is not reading English comfortably in the first place. */
+  .ai-lang-hint { margin-top: 0.3rem; display: flex; gap: 0.35rem; align-items: baseline; }
+  .ai-lang-hint i { color: var(--accent); font-size: 0.72rem; flex: 0 0 auto; }
   .skip-dashboard { font-size: 0.82rem; }
   /* "Add details (optional)" disclosure — a quiet link-like row; the fields
      inside keep their normal styling. */
@@ -186,7 +192,7 @@
 {% block content %}
 <div class="create-wrap">
   <div class="pr-card create-card">
-    <h6 style="font-size:1.05rem;">Create New Survey</h6>
+    <h6 style="font-size:1.05rem;">{% trans "Create New Survey" %}</h6>
     {% comment %}novalidate with the wizard: the required name input is hidden
     (JS fills it), and a hidden required control would make the browser refuse
     the submit with an un-focusable-control error.{% endcomment %}
@@ -203,27 +209,26 @@
           the draft generate its translations immediately.{% endcomment %}
           <div class="create-legacy-fields">
           <div class="pr-field">
-            <label for="{{ form.name.id_for_label }}">Survey name</label>
+            <label for="{{ form.name.id_for_label }}">{% trans "Survey name" %}</label>
             {{ form.name }}
             {% for error in form.name.errors %}<div class="text-danger" style="font-size:0.85rem;">{{ error }}</div>{% endfor %}
           </div>
           </div>
 
           <div class="pr-field">
-            <label for="{{ form.available_languages.id_for_label }}">Available languages</label>
+            <label for="{{ form.available_languages.id_for_label }}">{% trans "Available languages" %}</label>
             {{ form.available_languages }}
             {% include "editor/partials/language_picker.html" %}
-            <div class="pr-help">The languages respondents can take this survey in. You can add more later.</div>
+            <div class="pr-help">{% trans "The languages respondents can take this survey in. You can add more later." %}</div>
           </div>
 
           {% if ai_available %}
           <div class="ai-panel">
             <div class="ai-panel-intro">
             <h6><i class="fas fa-wand-magic-sparkles" style="color:var(--accent)"></i>
-              Let AI draft it <span class="ai-badge">optional</span></h6>
+              {% trans "Let AI draft it" %} <span class="ai-badge">{% trans "optional" %}</span></h6>
             <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">
-              Describe your project and we'll generate sections, questions and translations —
-              then you edit whatever you like.
+              {% trans "Describe your project and we'll generate sections, questions and translations — then you edit whatever you like." %}
             </div>
             </div>
 
@@ -236,26 +241,39 @@
               brief field and opens the details disclosure so nothing is filled
               invisibly. Clear resets the whole brief.{% endcomment %}
               <div class="example-chips" id="example-chips">
-                <span class="example-chips-label">Try an example:</span>
+                <span class="example-chips-label">{% trans "Try an example:" %}</span>
                 <button type="button" class="example-chip"
                         data-goal="Where do cyclists feel unsafe in our city, and which routes need protected bike lanes"
                         data-audience="Residents who cycle or would like to start, all ages"
                         data-map-target="Unsafe spots, dangerous crossings, routes that need protected lanes"
-                        data-use-case="urban_planning">Bike lane feedback</button>
+                        data-use-case="urban_planning">{% trans "Bike lane feedback" %}</button>
                 <button type="button" class="example-chip"
                         data-goal="How many white (albino) squirrels live in our town, where are they spotted during the annual count, and how does their population compare to gray squirrels and to cats — their main predator"
                         data-audience="Local residents and count volunteers, all ages"
                         data-map-target="Each sighting — white squirrel, gray squirrel, or cat — with the number seen at that spot"
-                        data-use-case="citizen_science">White squirrel count</button>
+                        data-use-case="citizen_science">{% trans "White squirrel count" %}</button>
                 <button type="button" class="example-chip"
                         data-goal="Where does summer heat feel most unbearable in our city, and which places do people avoid or use as cool refuges during heatwaves"
                         data-audience="Residents who spend time outdoors in summer, including older people and parents with children"
                         data-map-target="Spots that feel dangerously hot and the cool places used to escape the heat"
-                        data-use-case="urban_planning">Heatwave map</button>
-                <button type="button" class="example-chip example-chip-clear" id="example-clear" hidden>× Clear</button>
+                        data-use-case="urban_planning">{% trans "Heatwave map" %}</button>
+                <button type="button" class="example-chip example-chip-clear" id="example-clear" hidden>{% trans "× Clear" %}</button>
               </div>
               {% endif %}
               {{ brief_form.goal }}
+              {% comment %}Brief-language hint (openspec: creator-ui-localization,
+              slice 1). The whole create page is English, and nothing told a
+              creator the brief itself may be written in any language — a
+              plausible share of the creators who skip the draft. The model
+              already reads briefs in any language and emits the languages
+              picked above (survey/ai/prompts.py:164 passes them explicitly);
+              prod briefs in ru/es/pt all generated successfully. Deliberately
+              placed under the input rather than in .ai-panel-intro, which the
+              mobile wizard hides.{% endcomment %}
+              <div class="pr-help ai-lang-hint">
+                <i class="fas fa-globe"></i>
+                {% trans "Write this in whatever language you think in — Deutsch, Español, Polski, Bahasa Indonesia. The draft comes out in the languages you picked above." %}
+              </div>
               {% for error in brief_form.goal.errors %}<div class="text-danger" style="font-size:0.85rem;">{{ error }}</div>{% endfor %}
             </div>
             {% if CREATE_STEER_AI %}
@@ -265,7 +283,7 @@
             field already carries a value or an error, so a re-render never
             hides what the creator typed.{% endcomment %}
             <details class="ai-more"{% if brief_form.audience.value or brief_form.map_target.value or brief_form.audience.errors or brief_form.map_target.errors %} open{% endif %}>
-              <summary>Add details (optional)</summary>
+              <summary>{% trans "Add details (optional)" %}</summary>
             {% endif %}
             <div class="pr-field">
               <label for="{{ brief_form.audience.id_for_label }}">{{ brief_form.audience.label }}</label>
@@ -276,7 +294,7 @@
               {{ brief_form.map_target }}
             </div>
             <div class="pr-field">
-              <label>Kind of project</label>
+              <label>{% trans "Kind of project" %}</label>
               <div class="usecase-chips" id="usecase-chips">
                 {% for radio in brief_form.use_case %}
                   <label class="{% if radio.data.selected %}chip-on{% endif %}">
@@ -284,7 +302,7 @@
                   </label>
                 {% endfor %}
               </div>
-              <div class="pr-help">Steers the draft toward question sets that work for this scenario.</div>
+              <div class="pr-help">{% trans "Steers the draft toward question sets that work for this scenario." %}</div>
             </div>
             {% if CREATE_STEER_AI %}
             </details>
@@ -302,7 +320,7 @@
                     hx-target="#generation-slot"
                     hx-swap="innerHTML"
                     hx-disabled-elt="#generate-btn, #empty-btn">
-              {% if MOBILE_EDITOR_NAV %}✨ Draft my survey{% else %}<i class="fas fa-wand-magic-sparkles"></i> Generate draft{% endif %}
+              {% if MOBILE_EDITOR_NAV %}✨ Draft my survey{% else %}<i class="fas fa-wand-magic-sparkles"></i> {% trans "Generate draft" %}{% endif %}
             </button>
             {% if MOBILE_EDITOR_NAV %}
             {% comment %}The wizard's draft button, inside the tinted AI zone.
@@ -312,11 +330,10 @@
             {% comment %}"Next", not "Draft my survey": this button only advances
             to the map step — the actual submit is the map step's Create button,
             and copy implying immediate creation misled creators.{% endcomment %}
-            <button type="button" class="btn btn-primary btn-block-row wizard-draft-next" onclick="wizardNext('draft')">✨ Next — choose the place</button>
+            <button type="button" class="btn btn-primary btn-block-row wizard-draft-next" onclick="wizardNext('draft')">{% trans "✨ Next — choose the place" %}</button>
             {% endif %}
             <div class="ai-privacy">
-              Your description is processed by an AI provider to build the draft.
-              Survey answers are never sent to AI providers.
+              {% trans "Your description is processed by an AI provider to build the draft. Survey answers are never sent to AI providers." %}
             </div>
           </div>
           {% endif %}
@@ -330,8 +347,8 @@
           <div id="ai-intercept" class="ai-intercept" hidden>
             <div class="ai-intercept-text">You already described your project — draft it with AI (~10&nbsp;s)?</div>
             <div class="ai-intercept-actions">
-              <button type="button" id="ai-intercept-accept" class="btn btn-primary">✨ Generate draft</button>
-              <button type="button" id="ai-intercept-decline" class="btn btn-outline-secondary">Create empty anyway</button>
+              <button type="button" id="ai-intercept-accept" class="btn btn-primary">{% trans "✨ Generate draft" %}</button>
+              <button type="button" id="ai-intercept-decline" class="btn btn-outline-secondary">{% trans "Create empty anyway" %}</button>
             </div>
           </div>
           {% endif %}
@@ -347,13 +364,13 @@
               {% if not MOBILE_EDITOR_NAV %}
               {% comment %}With the wizard chrome the navbar's "‹ Dashboard" is the
               way out — a third button here just wraps the row.{% endcomment %}
-              <a href="{% url 'editor' %}?dashboard=1" class="btn btn-outline-secondary">Cancel</a>
+              <a href="{% url 'editor' %}?dashboard=1" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
               {% endif %}
             </div>
             {% else %}
-            <button type="submit" name="action" value="empty" class="btn btn-primary btn-block-row">Create Survey</button>
+            <button type="submit" name="action" value="empty" class="btn btn-primary btn-block-row">{% trans "Create Survey" %}</button>
             <div class="create-actions-secondary">
-              <a href="{% url 'editor' %}?dashboard=1" class="btn btn-outline-secondary">Cancel</a>
+              <a href="{% url 'editor' %}?dashboard=1" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
             </div>
             {% endif %}
           </div>
@@ -363,12 +380,12 @@
 
           <div class="pr-help" style="margin-top:1rem;">
             <i class="fas fa-info-circle"></i>
-            Languages, thanks page, visibility, and other options — later in <strong>Survey settings</strong>.
+            {% blocktrans %}Languages, thanks page, visibility, and other options — later in <strong>Survey settings</strong>.{% endblocktrans %}
           </div>
 
           {% if request.GET.welcome %}
           <div style="margin-top:0.75rem;">
-            <a class="skip-dashboard" href="{% url 'editor' %}?dashboard=1">Skip to dashboard →</a>
+            <a class="skip-dashboard" href="{% url 'editor' %}?dashboard=1">{% trans "Skip to dashboard →" %}</a>
           </div>
           {% endif %}
         </div>
@@ -377,13 +394,13 @@
         <div class="create-right">
           {% if MOBILE_EDITOR_NAV %}
           <div class="wizard-map-topbar">
-            <button type="button" class="wizard-back" onclick="wizardGoto('goal')" aria-label="Back"><i class="fas fa-chevron-left"></i></button>
-            <span class="wizard-map-title">Where?</span>
+            <button type="button" class="wizard-back" onclick="wizardGoto('goal')" aria-label="{% trans 'Back' %}"><i class="fas fa-chevron-left"></i></button>
+            <span class="wizard-map-title">{% trans "Where?" %}</span>
             <span class="wizard-dots"><span class="on"></span><span class="on"></span><span></span></span>
           </div>
           {% endif %}
-          <label style="display:block;font-size:.82rem;font-weight:500;color:#374151;margin-bottom:.15rem;">The map people will see</label>
-          <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">This is <strong>exactly</strong> what respondents see when they open the survey. Drag, zoom, search, or pick a base map (top-right) to frame it — the pin marks the centre they'll land on.</div>
+          <label style="display:block;font-size:.82rem;font-weight:500;color:#374151;margin-bottom:.15rem;">{% trans "The map people will see" %}</label>
+          <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">{% trans "This is" %} <strong>{% trans "exactly" %}</strong> {% trans "what respondents see when they open the survey. Drag, zoom, search, or pick a base map (top-right) to frame it — the pin marks the centre they'll land on." %}</div>
           <input type="hidden" name="default_basemap" id="create-default-basemap" value="streets">
 
           <div class="create-map-search" id="create-map-search"></div>
@@ -403,8 +420,8 @@
             {% comment %}Permanent caption, not a timed overlay: every corner of
             the map belongs to a control, and a disappearing hint kept colliding
             with them (usability review, H8/H10).{% endcomment %}
-            <div class="wizard-frame-caption">Respondents will open the map exactly like this</div>
-            <button type="button" id="wizard-create-btn" class="btn btn-primary btn-block-row">Create survey</button>
+            <div class="wizard-frame-caption">{% trans "Respondents will open the map exactly like this" %}</div>
+            <button type="button" id="wizard-create-btn" class="btn btn-primary btn-block-row">{% trans "Create survey" %}</button>
           </div>
           {% endif %}
         </div>
@@ -419,9 +436,9 @@
         {% if ai_available %}
         {% comment %}The draft button lives inside the AI panel (tinted zone);
         the footer keeps only the way out of it.{% endcomment %}
-        <button type="button" class="btn btn-outline-secondary btn-block-row wizard-ghost" onclick="wizardNext('empty')">Skip and start from scratch</button>
+        <button type="button" class="btn btn-outline-secondary btn-block-row wizard-ghost" onclick="wizardNext('empty')">{% trans "Skip and start from scratch" %}</button>
         {% else %}
-        <button type="button" class="btn btn-primary btn-block-row" onclick="wizardNext('empty')">Next — choose the place</button>
+        <button type="button" class="btn btn-primary btn-block-row" onclick="wizardNext('empty')">{% trans "Next — choose the place" %}</button>
         {% endif %}
       </div>
       {% endif %}
@@ -690,8 +707,20 @@
             }
         }
 
+        // A blank goal never reaches the intercept, so until now the likeliest
+        // path through this page — open it, write nothing, click Create empty —
+        // emitted no event at all, and "how many creators skip the draft
+        // outright" could not be answered. Reported as an outcome of the same
+        // event so one query totals every Create-empty click. Latched
+        // separately from `shown`: the two paths are mutually exclusive per
+        // load, but a creator may click twice, and that must not double-count.
+        var blankReported = false;
         emptyBtn.addEventListener('click', function(e) {
-            if (shown || !goalEl.value.trim()) return;   // latched or blank goal: fall through
+            if (shown) return;                          // latched: fall through
+            if (!goalEl.value.trim()) {                 // blank goal: fall through, but record it
+                if (!blankReported) { blankReported = true; capture('blank_goal'); }
+                return;
+            }
             shown = true;
             e.preventDefault();
             e.stopPropagation();

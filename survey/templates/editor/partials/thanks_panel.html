@@ -3,9 +3,9 @@
 
   <div class="pr-ctxbar">
     <span class="ico"><i class="fas fa-heart"></i></span>
-    <div><div class="t">Thanks page</div><div class="s">The last screen respondents see after they submit</div></div>
+    <div><div class="t">{% trans "Thanks page" %}</div><div class="s">{% trans "The last screen respondents see after they submit" %}</div></div>
     <span style="flex:1;"></span>
-    <a class="btn btn-sm btn-outline-primary" href="{% url 'survey_thanks' survey.uuid %}" target="_blank"><i class="fas fa-external-link-alt"></i> Preview</a>
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'survey_thanks' survey.uuid %}" target="_blank"><i class="fas fa-external-link-alt"></i> {% trans "Preview" %}</a>
   </div>
 
   <div class="pr-scroll">
@@ -13,8 +13,8 @@
     <form id="thanksForm" method="post" action="{% url 'editor_survey_thanks_panel' survey.uuid %}">
       {% csrf_token %}
       <div class="pr-card">
-        <h6>Message</h6>
-        <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">Written just how respondents will see it — no HTML needed.</div>
+        <h6>{% trans "Message" %}</h6>
+        <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">{% trans "Written just how respondents will see it — no HTML needed." %}</div>
         {% if langs|length > 1 %}
         <div class="thanks-lang-tabs" style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.6rem;">
           {% for lang in langs %}
@@ -26,16 +26,16 @@
         {% for lang in langs %}
         <input type="hidden" name="thanks_{{ lang }}" id="thanks-input-{{ lang }}">
         {% endfor %}
-        <div class="autosave-status" data-autosave-status style="margin-top:.6rem;"><i class="fas fa-check"></i> <span>Changes save automatically</span></div>
-        <noscript><button type="submit" class="btn btn-primary btn-sm mt-2">Save</button></noscript>
+        <div class="autosave-status" data-autosave-status style="margin-top:.6rem;"><i class="fas fa-check"></i> <span>{% trans "Changes save automatically" %}</span></div>
+        <noscript><button type="submit" class="btn btn-primary btn-sm mt-2">{% trans "Save" %}</button></noscript>
       </div>
 
       {% if results_page %}
       <div class="pr-card">
-        <h6>Results link</h6>
+        <h6>{% trans "Results link" %}</h6>
         <input type="hidden" name="has_results_toggle" value="1">
         <label class="pr-switch" style="border-bottom:none;">
-          <span>Show a “See the results” button
+          <span>{% trans "Show a “See the results” button" %}
             <small class="pr-help">{% if results_page.is_published %}links respondents to your public results page{% else %}appears once your results page is published (Publish tab){% endif %}</small></span>
           <input type="checkbox" name="show_on_thanks" id="thanks-show-results" {% if results_page.show_on_thanks %}checked{% endif %}>
         </label>
@@ -44,10 +44,10 @@
     </form>
 
     <div class="pr-card">
-      <h6>Always shown below your message</h6>
+      <h6>{% trans "Always shown below your message" %}</h6>
       <div class="pr-help" style="margin-top:0;margin-bottom:.8rem;">Every thanks page ends with a share action and the "Made with Mapsurvey" link — these are fixed and can't be removed.</div>
       <div style="text-align:center;opacity:.7;">
-        <span class="btn btn-outline-primary btn-sm" style="pointer-events:none;"><i class="fas fa-share-alt mr-1"></i> Share this survey</span>
+        <span class="btn btn-outline-primary btn-sm" style="pointer-events:none;"><i class="fas fa-share-alt mr-1"></i> {% trans "Share this survey" %}</span>
       </div>
       {% include "partials/_made_with_mapsurvey.html" with medium="thanks" %}
     </div>

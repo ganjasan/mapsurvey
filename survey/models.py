@@ -1221,6 +1221,43 @@ class CreatorProfile(models.Model):
         return f"{self.user_id}: {self.organization or '—'}"
 
 
+class CreatorPreferences(models.Model):
+    """Settings a creator chooses for themselves, starting with UI language.
+
+    Deliberately NOT a field on `CreatorProfile`: that model holds staff-authored
+    CRM notes handed over verbatim under a GDPR subject access request, so a
+    value the user sets for themselves would read there as something we observed
+    about them. Its "absent means nothing recorded yet" semantics do not fit
+    either — every creator has a language, even when it is the default.
+
+    `ui_language` is the CREATOR's language and drives editor chrome only.
+    Respondent pages activate the SURVEY's language per request (see
+    `survey/views.py`), and that must keep winning: a Polish creator opening
+    their own German survey has to see German, and so does everyone else.
+
+    Empty string means "not chosen", which is distinct from choosing English —
+    it lets `Accept-Language` decide instead.
+    """
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='preferences',
+    )
+    ui_language = models.CharField(
+        max_length=10, blank=True, default='',
+        help_text=_('Creator interface language. Empty = follow the browser.'),
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'survey'
+        verbose_name_plural = 'Creator preferences'
+
+    def __str__(self):
+        return f"{self.user_id}: {self.ui_language or 'auto'}"
+
+
 class CreatorNote(models.Model):
     """One dated entry in a creator's timeline: research, an email, a call.
 

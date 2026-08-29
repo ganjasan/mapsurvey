@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load static survey_filters %}
 <div class="section-form-card">
     <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -15,7 +16,7 @@
                 hx-swap="innerHTML"
                 data-toggle="modal" data-target="#mapPickerModal"
                 {% else %}disabled{% endif %}>
-            <i class="fas fa-map-marker-alt"></i> Map Position
+            <i class="fas fa-map-marker-alt"></i> {% trans "Map Position" %}
         </button>
     </div>
     <form id="section-form"
@@ -42,7 +43,7 @@
         to any section.{% endcomment %}
         {% if field.name == 'layout' and layers_enabled and section_layers %}
         <div class="form-group section-ref-layers" {% if section.layout == 'form' %}hidden{% endif %}>
-            <label>Reference layers</label>
+            <label>{% trans "Reference layers" %}</label>
             <input type="hidden" name="reference_layers_submitted" value="1">
             <div style="border:1px solid var(--border-color);border-radius:8px;padding:.55rem .7rem;display:flex;flex-direction:column;gap:.4rem;">
                 {% for item in section_layers %}
@@ -54,7 +55,7 @@
                 </label>
                 {% endfor %}
             </div>
-            <small class="form-text text-muted">Which reference layers respondents see on this section's map. Layers are added in Survey settings.</small>
+            <small class="form-text text-muted">{% trans "Which reference layers respondents see on this section's map. Layers are added in Survey settings." %}</small>
         </div>
         {% endif %}
         {% endfor %}
@@ -64,7 +65,7 @@
         {% if survey.available_languages|length > 1 %}
         <div class="translations-section">
             <button type="button" class="translations-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
-                <i class="fas fa-chevron-right"></i> Translations
+                <i class="fas fa-chevron-right"></i> {% trans "Translations" %}
             </button>
             <div class="translations-body">
                 {% for lang in survey.available_languages|slice:"1:" %}
@@ -116,7 +117,7 @@
 <!-- Questions -->
 <div style="margin-top:1.25rem;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
-        <h6 style="margin:0;font-weight:600;"><i class="fas fa-list"></i> Questions</h6>
+        <h6 style="margin:0;font-weight:600;"><i class="fas fa-list"></i> {% trans "Questions" %}</h6>
     </div>
 
     <ul class="question-list" id="questions-list">
@@ -133,7 +134,7 @@
             hx-swap="innerHTML"
             data-toggle="modal" data-target="#questionModal"
             {% else %}disabled{% endif %}>
-        <i class="fas fa-plus"></i> New Question
+        <i class="fas fa-plus"></i> {% trans "New Question" %}
     </button>
     {% if not is_read_only %}
     <button class="paste-question-btn"
@@ -142,7 +143,7 @@
             hx-target="#questions-list"
             hx-swap="beforeend"
             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-        <i class="fas fa-paste"></i> Paste question here
+        <i class="fas fa-paste"></i> {% trans "Paste question here" %}
     </button>
     {% endif %}
 </div>

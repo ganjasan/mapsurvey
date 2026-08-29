@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
 Overview pane (openspec: responses-v2-refactor, capability responses-overview).
 The default Responses pane on every form factor: KPI strip with daily deltas,
@@ -7,8 +8,8 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
 {% if total_sessions == 0 %}
 <div class="rv2-empty" data-testid="rv2-empty-state">
     <div class="rv2-empty-icon"><i class="fas fa-satellite-dish"></i></div>
-    <b>No responses yet</b>
-    <p>Your survey is live. Share the link and responses will appear here in real time.</p>
+    <b>{% trans "No responses yet" %}</b>
+    <p>{% trans "Your survey is live. Share the link and responses will appear here in real time." %}</p>
     <a class="btn btn-primary btn-sm" href="/editor/surveys/{{ survey.uuid }}/share/">
         <i class="fas fa-share-alt"></i> Share survey
     </a>
@@ -20,21 +21,21 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
 {% else %}
 <div class="rv2-kstrip" data-testid="rv2-kpi-strip">
     <div class="rv2-kpi">
-        <b>{{ total_sessions }}</b><span>responses</span>
+        <b>{{ total_sessions }}</b><span>{% trans "responses" %}</span>
         {% if overview_extras.responses_today %}<span class="rv2-delta">+{{ overview_extras.responses_today }} today</span>{% endif %}
     </div>
-    <div class="rv2-kpi"><b class="rv2-green">{{ completion_rate }}%</b><span>completion</span></div>
+    <div class="rv2-kpi"><b class="rv2-green">{{ completion_rate }}%</b><span>{% trans "completion" %}</span></div>
     {% if overview_extras.median_display %}
-    <div class="rv2-kpi"><b class="rv2-plain">{{ overview_extras.median_display }}</b><span>median time</span></div>
+    <div class="rv2-kpi"><b class="rv2-plain">{{ overview_extras.median_display }}</b><span>{% trans "median time" %}</span></div>
     {% endif %}
     {% if geo_features_count %}
     <div class="rv2-kpi">
-        <b>{{ geo_features_count }}</b><span>map features</span>
+        <b>{{ geo_features_count }}</b><span>{% trans "map features" %}</span>
         {% if overview_extras.geo_features_today %}<span class="rv2-delta">+{{ overview_extras.geo_features_today }}</span>{% endif %}
     </div>
     {% endif %}
     {% if flagged_count %}
-    <div class="rv2-kpi rv2-flag"><b>{{ flagged_count }}</b><span>flagged</span></div>
+    <div class="rv2-kpi rv2-flag"><b>{{ flagged_count }}</b><span>{% trans "flagged" %}</span></div>
     {% endif %}
 </div>
 
@@ -43,21 +44,21 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
         {% if geo_features_count %}
         <div class="rv2-card">
             <h6>Response Map
-                <a class="rv2-lnk" href="#map" onclick="rv2Router.setPane('map');return false;">Open Map ›</a>
+                <a class="rv2-lnk" href="#map" onclick="rv2Router.setPane('map');return false;">{% trans "Open Map ›" %}</a>
             </h6>
             <div id="rv2-ov-map"></div>
         </div>
         {% endif %}
         <div class="rv2-ov-two">
             <div class="rv2-card">
-                <h6>Responses this week</h6>
+                <h6>{% trans "Responses this week" %}</h6>
                 <div class="rv2-card-pad"><canvas id="rv2-ov-trend" height="70"></canvas></div>
             </div>
             {% for stat in question_stats %}
             {% if stat.type == 'choices' and forloop.counter <= 1 %}
             <div class="rv2-card">
                 <h6>{{ stat.question.name|truncatechars:48 }}
-                    <a class="rv2-lnk" href="#charts" onclick="rv2Router.setPane('charts');return false;">Charts ›</a>
+                    <a class="rv2-lnk" href="#charts" onclick="rv2Router.setPane('charts');return false;">{% trans "Charts ›" %}</a>
                 </h6>
                 <div class="rv2-card-pad rv2-ov-minibars"
                      data-labels="{{ stat.choice_labels_json }}"
@@ -72,7 +73,7 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
             {% if stat.type == 'choices' and forloop.counter > 1 %}
             <div class="rv2-card">
                 <h6>{{ stat.question.name|truncatechars:48 }}
-                    <a class="rv2-lnk" href="#charts" onclick="rv2Router.setPane('charts');return false;">Charts ›</a>
+                    <a class="rv2-lnk" href="#charts" onclick="rv2Router.setPane('charts');return false;">{% trans "Charts ›" %}</a>
                 </h6>
                 <div class="rv2-card-pad rv2-ov-minibars"
                      data-labels="{{ stat.choice_labels_json }}"
@@ -86,7 +87,7 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
     <div class="rv2-ov-side">
         {% if overview_extras.needs_review %}
         <div class="rv2-card" data-testid="rv2-needs-review">
-            <h6>Needs review <span class="rv2-badge">{{ flagged_count }}</span></h6>
+            <h6>{% trans "Needs review" %} <span class="rv2-badge">{{ flagged_count }}</span></h6>
             {% for item in overview_extras.needs_review %}
             <button type="button" class="rv2-feed-item" onclick="rv2OpenSession({{ item.id }})">
                 <span class="rv2-feed-ava">#{{ item.seq }}</span>
@@ -101,7 +102,7 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
         {% endif %}
         <div class="rv2-card" data-testid="rv2-latest">
             <h6>Latest responses
-                <a class="rv2-lnk" href="#responses" onclick="rv2Router.setPane('responses');return false;">All ›</a>
+                <a class="rv2-lnk" href="#responses" onclick="rv2Router.setPane('responses');return false;">{% trans "All ›" %}</a>
             </h6>
             {% for item in overview_extras.latest_feed %}
             <button type="button" class="rv2-feed-item" onclick="rv2OpenSession({{ item.id }})">
@@ -113,9 +114,9 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
                 {% if item.issues %}
                 <span class="rv2-chip-status err">{{ item.issues.0 }}</span>
                 {% elif item.status == 'on_hold' %}
-                <span class="rv2-chip-status warn">on hold</span>
+                <span class="rv2-chip-status warn">{% trans "on hold" %}</span>
                 {% elif item.status == 'not_approved' %}
-                <span class="rv2-chip-status err">rejected</span>
+                <span class="rv2-chip-status err">{% trans "rejected" %}</span>
                 {% else %}
                 <span class="rv2-chip-status ok">ok</span>
                 {% endif %}

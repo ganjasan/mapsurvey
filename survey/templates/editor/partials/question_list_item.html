@@ -1,12 +1,13 @@
+{% load i18n %}
 {% load survey_filters %}<li class="question-item" data-question-id="{{ question.id }}" data-input-type="{{ question.input_type }}">
     <div class="question-item-row">
         <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
         <span class="q-name">{{ question.name|default:"(unnamed)" }}</span>
         <span class="badge badge-secondary">{{ question|input_type_label }}</span>
-        {% if question.required %}<span class="badge badge-danger">Required</span>{% endif %}
+        {% if question.required %}<span class="badge badge-danger">{% trans "Required" %}</span>{% endif %}
         {% load question_utils %}{% with vis=question|visibility_info:survey %}{% if vis %}
         {% if vis.broken %}
-        <span class="badge badge-warning" title="{{ vis.reason }}. Shown to everyone until fixed."><i class="fas fa-exclamation-triangle"></i> broken rule</span>
+        <span class="badge badge-warning" title="{{ vis.reason }}. Shown to everyone until fixed."><i class="fas fa-exclamation-triangle"></i> {% trans "broken rule" %}</span>
         {% else %}
         <span class="badge badge-info" title="{{ vis.label }}" style="background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe;"><i class="fas fa-code-branch"></i> {{ vis.label|truncatechars:40 }}</span>
         {% endif %}
@@ -78,7 +79,7 @@
                 hx-swap="innerHTML"
                 data-toggle="modal" data-target="#questionModal"
                 {% else %}disabled{% endif %}>
-            <i class="fas fa-plus"></i> Add Sub-question
+            <i class="fas fa-plus"></i> {% trans "Add Sub-question" %}
         </button>
         {% if not is_read_only %}
         <button class="paste-as-subquestion-btn"
@@ -87,7 +88,7 @@
                 hx-target="closest .question-item"
                 hx-swap="outerHTML"
                 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-            <i class="fas fa-paste"></i> Paste as sub-question
+            <i class="fas fa-paste"></i> {% trans "Paste as sub-question" %}
         </button>
         {% endif %}
     </div>
