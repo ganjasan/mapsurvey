@@ -205,6 +205,32 @@
     </div>
 </div>
 
+{% comment %}
+Full-size map of ONE response: every geo object it holds, across all of its geo
+questions. Built from the payload the detail surface already carries, so opening
+it costs no request. Read-only — no draw or edit controls.
+{% endcomment %}
+<div class="modal fade" id="sessionGeoMapModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0 font-weight-bold">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span id="session-geo-modal-title">{% trans "Response on the map" %}</span>
+                </h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body p-0" style="position:relative;">
+                <div id="session-geo-modal-map" style="height:70vh;min-height:360px;"></div>
+                <div id="session-geo-modal-legend"
+                     style="position:absolute;bottom:12px;left:12px;z-index:900;background:rgba(255,255,255,0.94);
+                            border-radius:6px;padding:8px 10px;font-size:0.8rem;box-shadow:0 1px 4px rgba(0,0,0,0.25);
+                            max-width:45%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% include "editor/partials/_lifecycle_scripts.html" %}
 
 {# ── Shared engines (also included by the legacy template) ─────────────── #}
@@ -1078,6 +1104,144 @@ function rv2Confirm(message, onOk) {
     bar.appendChild(text); bar.appendChild(ok); bar.appendChild(cancel);
     document.body.appendChild(bar);
 }
+
+/* ── Full-size map of one response ─────────────────────────────────────────
+   Reads the payload the detail surface already rendered, so opening costs no
+   request. A own tile layer rather than the basemap_layers include: that
+   include writes window._basemapLayers / _layersControl, which belong to the
+   Map pane — sharing them would break its layer switcher. */
+var _sessionGeoMap = null;
+var SESSION_GEO_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+function sessionGeoData() {
+    var el = document.getElementById('session-geo-data');
+    if (!el) return null;
+    try { return JSON.parse(el.textContent); } catch (e) { return null; }
+}
+
+/* Built through the DOM, never innerHTML: these values are respondent text. */
+function sessionGeoPopup(props) {
+    var root = document.createElement('div');
+    var title = document.createElement('strong');
+    title.textContent = props.question;
+    root.appendChild(title);
+    if (props.label) {
+        var sub = document.createElement('div');
+        sub.className = 'text-muted';
+        sub.style.fontSize = '0.78rem';
+        sub.textContent = props.label;
+        root.appendChild(sub);
+    }
+    (props.attributes || []).forEach(function (attr) {
+        var row = document.createElement('div');
+        row.style.fontSize = '0.82rem';
+        var name = document.createElement('span');
+        name.className = 'text-muted';
+        name.textContent = attr.name + ': ';
+        row.appendChild(name);
+        row.appendChild(document.createTextNode(attr.value));
+        root.appendChild(row);
+    });
+    return root;
+}
+
+function sessionGeoDestroy() {
+    if (_sessionGeoMap) {
+        _sessionGeoMap.remove();
+        _sessionGeoMap = null;
+    }
+}
+
+/* objectId optional: given, the map opens on that one object; omitted, it fits
+   every object of the response. */
+function sessionGeoOpenMap(objectId) {
+    var geoData = sessionGeoData();
+    if (!geoData || !geoData.features || !geoData.features.length) return;
+
+    var titleEl = document.getElementById('session-geo-modal-title');
+    var drawerTitle = document.getElementById('rv2-drawer-title');
+    if (titleEl && drawerTitle) titleEl.textContent = drawerTitle.textContent;
+
+    $('#sessionGeoMapModal').modal('show');
+
+    $('#sessionGeoMapModal').one('shown.bs.modal', function () {
+        sessionGeoDestroy();
+        var map = L.map('session-geo-modal-map', { zoomControl: true });
+        _sessionGeoMap = map;
+        L.tileLayer('{{ MAPBOX_URL }}', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
+            maxZoom: 23,
+            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
+        }).addTo(map);
+
+        var qNames = [];
+        geoData.features.forEach(function (f) {
+            if (qNames.indexOf(f.properties.question) === -1) qNames.push(f.properties.question);
+        });
+
+        var target = null;
+        geoData.features.forEach(function (f) {
+            var color = SESSION_GEO_COLORS[qNames.indexOf(f.properties.question) % SESSION_GEO_COLORS.length];
+            var layer;
+            if (f.geometry.type === 'Point') {
+                var c = f.geometry.coordinates;
+                layer = L.circleMarker(L.latLng(c[1], c[0]), {
+                    radius: 8, color: color, fillColor: color, fillOpacity: 0.85, weight: 2,
+                });
+            } else {
+                layer = L.geoJSON(f, { style: function () {
+                    return { color: color, weight: 3, fillOpacity: 0.25 };
+                }});
+            }
+            layer.bindPopup(sessionGeoPopup(f.properties), { maxWidth: 280 });
+            layer.addTo(map);
+            if (objectId && String(f.properties.object_id) === String(objectId)) target = layer;
+        });
+
+        /* Legend: which colour is which question. */
+        var legend = document.getElementById('session-geo-modal-legend');
+        legend.textContent = '';
+        qNames.forEach(function (q, i) {
+            var row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:center;gap:6px;';
+            var swatch = document.createElement('span');
+            swatch.style.cssText = 'width:12px;height:12px;border-radius:3px;flex:none;background:' +
+                SESSION_GEO_COLORS[i % SESSION_GEO_COLORS.length];
+            var label = document.createElement('span');
+            label.textContent = q;
+            row.appendChild(swatch); row.appendChild(label);
+            legend.appendChild(row);
+        });
+
+        /* Leaflet measured a hidden container while the modal was animating. */
+        map.invalidateSize();
+
+        if (target) {
+            var b = target.getBounds ? target.getBounds() : L.latLngBounds([target.getLatLng()]);
+            map.fitBounds(b.pad(0.4), { maxZoom: 17 });
+            target.openPopup();
+        } else {
+            var all = L.geoJSON(geoData).getBounds();
+            if (all.isValid()) map.fitBounds(all.pad(0.15));
+        }
+    });
+}
+
+/* Dispose on close: prev/next triage reopens this repeatedly, and a kept
+   instance would leave detached maps behind. */
+$(document).on('hidden.bs.modal', '#sessionGeoMapModal', sessionGeoDestroy);
+
+/* Both entry points, delegated so they survive every drawer swap. */
+document.addEventListener('click', function (evt) {
+    var btn = evt.target.closest('.session-geo-open');
+    if (btn) {
+        evt.preventDefault();
+        sessionGeoOpenMap(btn.getAttribute('data-geo-object-id'));
+        return;
+    }
+    var preview = evt.target.closest('#session-mini-map');
+    if (preview) sessionGeoOpenMap(null);
+});
 
 /* Overrides of the shared engine's destructive + modal paths. Defined after
    the engine include, so these win. */

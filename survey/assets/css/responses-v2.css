@@ -7,7 +7,13 @@
  * Loaded only by analytics_dashboard_v2.html, which renders only when the
  * RESPONSES_V2 kill switch is on — the legacy template never links this file. */
 
-.rv2 { display: flex; flex-direction: column; min-height: calc(100vh - 56px); }
+/* height, not min-height: under min-height the workspace grows with its own
+   content, so every `flex: 1; min-height: 0` below it constrains nothing — the
+   drawer's `overflow-y: auto` never triggers (it scrolls with the page), and
+   the table's pagination is pushed past the viewport. A fixed height makes the
+   panes and the drawer scroll internally, which their overflow rules already
+   assume. Below 1200px the drawer is an overlay and sets its own height. */
+.rv2 { display: flex; flex-direction: column; height: calc(100vh - 56px); }
 
 .rv2-draft-note {
     margin: 0.6rem 1.5rem 0;
