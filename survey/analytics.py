@@ -868,6 +868,8 @@ class SurveyAnalyticsService:
         for a in answers:
             q = a.question
             attributes = []
+            geo_object_id = None
+            geo_label = ''
             if q.input_type in ('choice', 'multichoice', 'rating'):
                 value = ', '.join(a.get_selected_choice_names()) or '\u2014'
             elif q.input_type in ('number', 'range'):
@@ -879,6 +881,13 @@ class SurveyAnalyticsService:
                 if geom:
                     attributes = attributes_by_parent.get(a.id, [])
                     geo_object_counts[q.id] = geo_object_counts.get(q.id, 0) + 1
+                    # The label disambiguates siblings ("point feature 2"); the
+                    # row itself shows coordinates/vertices like the attribute
+                    # table does, so the two surfaces agree on one answer.
+                    if geo_totals.get(q.id, 0) > 1:
+                        label = '%s feature %d' % (q.input_type, geo_object_counts[q.id])
+                    else:
+                        label = q.input_type + ' feature'
                     geo_features.append({
                         'type': 'Feature',
                         'geometry': json.loads(geom.geojson),
@@ -886,12 +895,15 @@ class SurveyAnalyticsService:
                             'question': q.name,
                             'type': q.input_type,
                             'attributes': attributes,
+                            # Answer pk, not a position: filtering or reordering
+                            # must not silently repoint a row at another object.
+                            'object_id': a.id,
+                            'label': label,
                         },
                     })
-                    if geo_totals.get(q.id, 0) > 1:
-                        value = '%s feature %d' % (q.input_type, geo_object_counts[q.id])
-                    else:
-                        value = q.input_type + ' feature'
+                    geo_object_id = a.id
+                    geo_label = label
+                    value = self._format_cell(a)
                 else:
                     value = '\u2014'
             elif q.input_type in ('photo', 'audio', 'document') and a.upload_id:
@@ -921,6 +933,10 @@ class SurveyAnalyticsService:
                 'kind': row_kind,
                 'attributes': attributes,
                 'editable': q.input_type in ('text', 'text_line', 'number', 'range', 'choice', 'multichoice', 'rating', 'datetime'),
+                # Set only for a geo answer that actually holds geometry: the
+                # row is the handle for showing that one object on the map.
+                'geo_object_id': geo_object_id,
+                'geo_label': geo_label,
             })
 
         return answer_rows, geo_features
@@ -1274,7 +1290,11 @@ class SurveyAnalyticsService:
                 return 'line'
         elif q.input_type == 'polygon' and answer.polygon:
             try:
-                return '{} vertices'.format(len(answer.polygon.exterior.coords) - 1)
+                # GEOS Polygon exposes the outer ring as `exterior_ring`; the
+                # `.exterior` this used to read does not exist, so the except
+                # below swallowed an AttributeError on every polygon and the
+                # count was never shown. Closing coordinate is not a vertex.
+                return '{} vertices'.format(answer.polygon.exterior_ring.num_points - 1)
             except Exception:
                 return 'polygon'
         elif q.input_type in ('photo', 'audio', 'document') and answer.upload_id:

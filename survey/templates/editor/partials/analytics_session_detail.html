@@ -71,6 +71,18 @@
                     {% elif row.kind == 'audio' %}<audio controls preload="none" src="{{ row.href }}" title="{{ row.value }}" style="max-width:240px;height:32px;vertical-align:middle;"></audio>
                     {% elif row.href %}<a href="{{ row.href }}" target="_blank" rel="noopener"><i class="fas fa-download"></i> {{ row.value }}</a>
                     {% else %}{{ row.value }}{% endif %}</span>
+                    {% if row.geo_object_id %}
+                    {% comment %}
+                    The row is the handle for "show me this one object" — the
+                    label rides along so the map titles it the same way.
+                    {% endcomment %}
+                    <button type="button" class="btn btn-sm btn-link p-0 ml-1 session-geo-open"
+                            style="font-size:0.75rem;"
+                            data-geo-object-id="{{ row.geo_object_id }}"
+                            title="{% blocktrans with label=row.geo_label %}Show {{ label }} on the map{% endblocktrans %}">
+                        <i class="fas fa-map-marked-alt"></i> {% trans "Map" %}
+                    </button>
+                    {% endif %}
                     {% if row.editable %}
                     <button class="btn btn-sm btn-link p-0 ml-1" style="font-size:0.75rem;color:#6b7280;"
                             onclick="startDetailEdit({{ session.id }}, {{ row.question_id }}, '{{ row.input_type }}', this)"
@@ -118,7 +130,15 @@
     </div>
 
     {% if has_geo %}
-    <div id="session-mini-map" style="height:200px;border-radius:6px;margin-top:0.5rem;"></div>
+    {% comment %}
+    Feature properties carry respondent sub-answer text — never |safe. The
+    payload lives in a json_script block so the map modal in the host page can
+    read the same data without a second request.
+    {% endcomment %}
+    {{ geo_collection|json_script:"session-geo-data" }}
+    <div id="session-mini-map" class="session-geo-preview"
+         style="height:200px;border-radius:6px;margin-top:0.5rem;cursor:pointer;"
+         title="{% trans 'Open the full-size map of this response' %}"></div>
     <script>
     (function() {
         function initMiniMap() {
@@ -165,11 +185,22 @@
             if (allBounds.isValid()) map.fitBounds(allBounds.pad(0.15));
         }
 
+        /* The surface that renders this partial owns the timing: v1 has a modal
+           to wait on, v2 swaps the partial into a drawer that is already
+           visible. Exposing the routine keeps one implementation for both. */
+        window.initSessionMiniMap = initMiniMap;
+
         var modalEl = document.getElementById('sessionDetailModal');
-        if ($(modalEl).hasClass('show')) {
-            setTimeout(initMiniMap, 50);
+        if (modalEl) {
+            if ($(modalEl).hasClass('show')) {
+                setTimeout(initMiniMap, 50);
+            } else {
+                $(modalEl).one('shown.bs.modal', initMiniMap);
+            }
         } else {
-            $('#sessionDetailModal').one('shown.bs.modal', initMiniMap);
+            /* v2: no modal exists. Binding to one used to leave the preview a
+               blank box, since the handler could never fire. */
+            initMiniMap();
         }
     })();
     </script>

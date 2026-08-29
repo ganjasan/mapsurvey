@@ -197,13 +197,18 @@ def analytics_session_detail(request, survey_uuid, session_id):
 
     service = SurveyAnalyticsService(survey)
     answer_rows, geo_features = service.format_session_answers(session)
+    geo_collection = {'type': 'FeatureCollection', 'features': geo_features}
 
     return render(request, 'editor/partials/analytics_session_detail.html', {
         'survey': survey,
         'session': session,
         'is_editor': request.effective_survey_role in ('editor', 'owner'),
         'answer_rows': answer_rows,
-        'geo_json': json.dumps({'type': 'FeatureCollection', 'features': geo_features}),
+        'geo_json': json.dumps(geo_collection),
+        # The same payload as an object, for `json_script` — it escapes the
+        # respondent text these properties carry without `|safe`, which plain
+        # interpolation into a <script> block cannot do.
+        'geo_collection': geo_collection,
         'has_geo': bool(geo_features),
     })
 

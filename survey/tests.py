@@ -12502,7 +12502,7 @@ class GeoSubanswerVisibilityTest(TestCase):
         """
         GIVEN a session with two points for one geo question
         WHEN format_session_answers is called
-        THEN each object row is numbered and carries its own attributes
+        THEN each object carries a numbered label and its own attributes
         """
         session = SurveySession.objects.create(survey=self.survey)
         self._add_object(session, Point(30.5, 60.0), species=1)
@@ -12511,7 +12511,10 @@ class GeoSubanswerVisibilityTest(TestCase):
         rows, features = self.SurveyAnalyticsService(self.survey).format_session_answers(session)
 
         geo_rows = [r for r in rows if r['input_type'] == 'point']
-        self.assertEqual([r['value'] for r in geo_rows], ['point feature 1', 'point feature 2'])
+        # The numbering moved off the row's value and onto the label, which the
+        # map titles objects with; the value now reads like the table's cell.
+        self.assertEqual([r['geo_label'] for r in geo_rows], ['point feature 1', 'point feature 2'])
+        self.assertEqual([r['value'] for r in geo_rows], ['60.00, 30.50', '61.00, 31.50'])
         self.assertEqual(geo_rows[0]['attributes'], [{'name': 'Species', 'value': 'Oak'}])
         self.assertEqual(geo_rows[1]['attributes'], [{'name': 'Species', 'value': 'Pine'}])
         self.assertEqual(features[0]['properties']['attributes'], geo_rows[0]['attributes'])
@@ -12521,7 +12524,7 @@ class GeoSubanswerVisibilityTest(TestCase):
         """
         GIVEN a session with one geo object and no sub-answers
         WHEN format_session_answers is called
-        THEN the row value stays un-numbered and attributes are empty
+        THEN the label stays un-numbered and attributes are empty
         """
         session = SurveySession.objects.create(survey=self.survey)
         self._add_object(session, Point(30.5, 60.0))
@@ -12529,8 +12532,69 @@ class GeoSubanswerVisibilityTest(TestCase):
         rows, _ = self.SurveyAnalyticsService(self.survey).format_session_answers(session)
 
         geo_row = next(r for r in rows if r['input_type'] == 'point')
-        self.assertEqual(geo_row['value'], 'point feature')
+        self.assertEqual(geo_row['geo_label'], 'point feature')
+        self.assertEqual(geo_row['value'], '60.00, 30.50')
         self.assertEqual(geo_row['attributes'], [])
+
+    def test_session_answers_carry_object_id_and_label(self):
+        """
+        GIVEN a session with two objects for one geo question
+        WHEN format_session_answers is called
+        THEN every feature carries the geo answer's pk and its own label,
+             and the previously specified properties are untouched
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        self._add_object(session, Point(30.5, 60.0), species=1)
+        self._add_object(session, Point(31.5, 61.0), species=2)
+
+        rows, features = self.SurveyAnalyticsService(self.survey).format_session_answers(session)
+
+        object_ids = [f['properties']['object_id'] for f in features]
+        self.assertEqual(len(set(object_ids)), len(object_ids))
+        self.assertEqual(
+            sorted(object_ids),
+            sorted(Answer.objects.filter(
+                survey_session=session, point__isnull=False,
+                parent_answer_id__isnull=True,
+            ).values_list('id', flat=True)),
+        )
+        self.assertEqual(
+            [f['properties']['label'] for f in features],
+            ['point feature 1', 'point feature 2'],
+        )
+        # Rows point at the same objects, which is what makes "show this one
+        # on the map" resolvable.
+        self.assertEqual(
+            [r['geo_object_id'] for r in rows if r['input_type'] == 'point'],
+            object_ids,
+        )
+        for f in features:
+            self.assertIn('question', f['properties'])
+            self.assertIn('type', f['properties'])
+            self.assertIn('attributes', f['properties'])
+
+    def test_polygon_cell_reports_vertex_count(self):
+        """
+        GIVEN a polygon answer
+        WHEN its display value is formatted
+        THEN the vertex count is shown, not the bare type name
+
+        Regression: the formatter read `.exterior`, which GEOS polygons do not
+        have, and a blanket except turned every polygon into "polygon".
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        polygon_q = Question.objects.create(
+            survey_section=self.section, name='Area', input_type='polygon', order_number=90,
+        )
+        Answer.objects.create(
+            survey_session=session, question=polygon_q,
+            polygon=Polygon(((0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0))),
+        )
+
+        rows, _ = self.SurveyAnalyticsService(self.survey).format_session_answers(session)
+
+        geo_row = next(r for r in rows if r['input_type'] == 'polygon')
+        self.assertEqual(geo_row['value'], '4 vertices')
 
     def test_session_detail_markup_shows_and_escapes_subanswers(self):
         """
@@ -12553,6 +12617,68 @@ class GeoSubanswerVisibilityTest(TestCase):
         self.assertContains(response, 'Oak')
         self.assertContains(response, '&lt;script&gt;alert(1)&lt;/script&gt;')
         self.assertNotContains(response, '<script>alert(1)</script>')
+
+    def test_detail_partial_renders_geo_preview_and_map_entry_points(self):
+        """
+        GIVEN a session holding a geo object
+        WHEN the detail partial is rendered
+        THEN it carries the preview container, the geo payload and a control
+             for opening the object on the full-size map
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        self._add_object(session, Point(30.5, 60.0), species=1)
+
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/analytics/sessions/{session.id}/'
+        )
+
+        self.assertContains(response, 'id="session-mini-map"')
+        self.assertContains(response, 'id="session-geo-data"')
+        self.assertContains(response, 'session-geo-open')
+        self.assertContains(response, 'data-geo-object-id=')
+
+    def test_detail_partial_without_geo_has_no_preview(self):
+        """
+        GIVEN a session with no geo answers
+        WHEN the detail partial is rendered
+        THEN no preview container and no map entry point are emitted
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/analytics/sessions/{session.id}/'
+        )
+
+        self.assertNotContains(response, 'id="session-mini-map"')
+        self.assertNotContains(response, 'session-geo-open')
+
+    def test_dashboard_provides_the_container_the_partial_binds_to(self):
+        """
+        GIVEN the dashboard template rendered for the active RESPONSES_V2 state
+        WHEN the session detail partial's geo wiring is considered
+        THEN the containers it targets exist in the dashboard
+
+        Regression guard: the v1→v2 move carried the mini-map markup over but
+        left its initialiser bound to `#sessionDetailModal`, a node v2 does not
+        render. The handler could never fire, so the preview stayed an empty
+        box — and no Django test noticed, because the break was pure client
+        wiring. This asserts the contract between the two templates instead.
+        """
+        from django.conf import settings as django_settings
+
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/analytics/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+
+        if getattr(django_settings, 'RESPONSES_V2', False):
+            # The partial is swapped into the drawer body and initialises
+            # itself there; the map modal it opens must exist in the host page.
+            self.assertIn('id="rv2-drawer-body"', html)
+            self.assertIn('id="sessionGeoMapModal"', html)
+            self.assertIn('id="session-geo-modal-map"', html)
+            self.assertNotIn('id="sessionDetailModal"', html)
+        else:
+            self.assertIn('id="sessionDetailModal"', html)
 
 
 class CrossFilteringServiceTest(TestCase):
