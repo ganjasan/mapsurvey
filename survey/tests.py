@@ -27667,6 +27667,26 @@ class CreatorLanguagePreferenceTest(TestCase):
         for _, name in dj_settings.LANGUAGES:
             self.assertIn(name, html)
 
+    def test_language_names_do_not_change_with_the_active_language(self):
+        """
+        GIVEN a creator whose interface is NOT the default language
+        WHEN the switcher renders
+        THEN each language still reads in its own language
+
+        Django's {% get_available_languages %} runs every name through gettext,
+        and Django ships translations for language names, so "English" rendered
+        as "Anglais" for a French creator. The test above misses this because it
+        renders under English, where that translation is a no-op. The switcher
+        exists for the person who cannot read the current interface, so the one
+        entry they came to find must not be relabelled.
+        """
+        self.client.post(reverse('set_creator_language'),
+                         {'language': 'fr', 'next': '/editor/'})
+        html = self.client.get('/editor/', follow=True).content.decode()
+        for _, name in dj_settings.LANGUAGES:
+            self.assertIn(name, html)
+        self.assertNotIn('Anglais', html)
+
     def test_login_required(self):
         """
         GIVEN an anonymous visitor
