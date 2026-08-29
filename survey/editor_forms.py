@@ -32,7 +32,7 @@ class SurveyCreateForm(forms.ModelForm):
             'available_languages': _('Available languages'),
         }
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Park improvements'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. Park improvements')}),
             'available_languages': forms.HiddenInput(attrs={'id': 'id_available_languages'}),
         }
 
@@ -63,21 +63,21 @@ class SurveyBriefForm(forms.Form):
         label=_('What do you want to find out?'),
         widget=forms.Textarea(attrs={
             'class': 'form-control', 'rows': 3,
-            'placeholder': 'e.g. Where traffic congestion is worst in Treviglio and why',
+            'placeholder': _('e.g. Where traffic congestion is worst in Treviglio and why'),
         }),
     )
     audience = forms.CharField(
         required=False,
         label=_('Who will answer?'),
         widget=forms.TextInput(attrs={
-            'class': 'form-control', 'placeholder': 'e.g. Residents of Treviglio, all ages',
+            'class': 'form-control', 'placeholder': _('e.g. Residents of Treviglio, all ages'),
         }),
     )
     map_target = forms.CharField(
         required=False,
         label=_('What should they mark on the map?'),
         widget=forms.TextInput(attrs={
-            'class': 'form-control', 'placeholder': 'e.g. Congestion spots, dangerous crossings',
+            'class': 'form-control', 'placeholder': _('e.g. Congestion spots, dangerous crossings'),
         }),
     )
     use_case = forms.ChoiceField(
@@ -198,7 +198,7 @@ class SurveySectionForm(forms.ModelForm):
             'subheading': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'code': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 8}),
             'layout': forms.Select(attrs={'class': 'form-control', 'id': 'id_section_layout'}),
-            'next_label': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 30, 'placeholder': 'Next'}),
+            'next_label': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 30, 'placeholder': _('Next')}),
         }
         # ONE labels dict. There were two assignments here; the second silently
         # replaced the first, so only the fields it named had labels and the

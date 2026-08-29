@@ -27883,6 +27883,54 @@ class TemplateCommentSyntaxTest(SimpleTestCase):
         self.assertEqual(offenders, [], 'Templates that will not parse:\n  '
                          + '\n  '.join(offenders))
 
+    #: Bare form strings that are format examples or CSS, not prose. Kept as an
+    #: explicit list rather than a heuristic: 'fas fa-map-marker-alt' contains
+    #: spaces, so "has a space therefore prose" would misfire on it.
+    UNTRANSLATED_FORM_LITERALS = {'survey_name', '#', 'fas fa-map-marker-alt'}
+
+    def test_creator_facing_form_strings_are_translatable(self):
+        """
+        GIVEN the form modules
+        WHEN every label, help_text and placeholder is inspected
+        THEN each is wrapped for translation, because these reach the creator
+             but live in Python — the template sweep never touched them, and a
+             German creator saw an English placeholder on the create page until
+             it was reported from a phone
+        """
+        import ast
+        import pathlib
+
+        keys = {'placeholder', 'label', 'help_text', 'labels', 'help_texts'}
+        offenders = []
+        app = pathlib.Path(__file__).resolve().parent
+        for module in ('editor_forms.py', 'forms.py'):
+            tree = ast.parse((app / module).read_text(encoding='utf-8'))
+            for node in ast.walk(tree):
+                found = []
+                # label='...' / placeholder='...' passed as a keyword
+                if (isinstance(node, ast.keyword) and node.arg in keys
+                        and isinstance(node.value, ast.Constant)
+                        and isinstance(node.value.value, str)):
+                    found.append((node.value.lineno, node.arg, node.value.value))
+                # {'placeholder': '...'} inside a widget's attrs, or Meta dicts
+                if isinstance(node, ast.Dict):
+                    for key, value in zip(node.keys, node.values):
+                        if (isinstance(key, ast.Constant) and key.value in keys
+                                and isinstance(value, ast.Constant)
+                                and isinstance(value.value, str)):
+                            found.append((value.lineno, key.value, value.value))
+                for line, key, value in found:
+                    if value in self.UNTRANSLATED_FORM_LITERALS or not value.strip():
+                        continue
+                    offenders.append(f'{module}:{line} {key}={value[:50]!r}')
+
+        self.assertEqual(
+            offenders, [],
+            'Creator-facing form string is not wrapped for translation. Use '
+            'gettext_lazy as _, or add it to UNTRANSLATED_FORM_LITERALS if it '
+            'is a format example rather than prose:\n  ' + '\n  '.join(offenders),
+        )
+
     def test_no_form_meta_assigns_the_same_key_twice(self):
         """
         GIVEN the form modules
