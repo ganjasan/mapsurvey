@@ -14,6 +14,7 @@ from .models import (
     CreatorNote, CreatorProfile,
     PublicResultsPage, PublicResultsBlock,
     AIGenerationEvent,
+    ProInterest,
 )
 from .funnel import dashboard_context
 from leaflet.admin import LeafletGeoAdmin
@@ -352,6 +353,39 @@ class AIGenerationEventAdmin(admin.ModelAdmin):
     list_filter = ('kind', 'outcome', 'provider')
     search_fields = ('user__username', 'organization__name', 'error_detail')
     date_hierarchy = 'created_at'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ProInterest)
+class ProInterestAdmin(admin.ModelAdmin):
+    """Read-only viewer for `/pro/` answers.
+
+    Read as a research table, not an inbox: the capability list is rendered in
+    full because "which boxes did public bodies tick" is the question the page
+    exists to answer, and a truncated JSON blob would hide it.
+    """
+
+    list_display = ('created_at', 'email', 'organisation', 'segment',
+                    'budget_shape', 'capability_count', 'ticked', 'user')
+    list_filter = ('segment', 'budget_shape')
+    search_fields = ('email', 'organisation', 'missing_text')
+    date_hierarchy = 'created_at'
+
+    @admin.display(description='#')
+    def capability_count(self, obj):
+        return len(obj.capabilities or [])
+
+    @admin.display(description='Capabilities ticked')
+    def ticked(self, obj):
+        return ', '.join(obj.capabilities or []) or '—'
 
     def has_add_permission(self, request):
         return False

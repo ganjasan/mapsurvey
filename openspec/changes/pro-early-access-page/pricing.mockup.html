@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Mapsurvey Pricing (municipalities first)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+/* Tokens copied from survey/assets/css/landing.css so the mockup renders standalone */
+:root{
+  --color-primary:#1B2A4A; --color-accent:#0FA58E; --color-accent-hover:#0D8F7A;
+  --color-accent-light:rgba(15,165,142,.12);
+  --color-bg:#F7F5F0; --color-bg-warm:#EFECE5; --color-bg-elevated:#FFF;
+  --color-text:#1B2A4A; --color-text-secondary:#5A6680; --color-text-tertiary:#8A94A8;
+  --color-border:#D4CFC6; --color-border-light:#E4E0D8;
+  --font-display:'Instrument Sans',system-ui,-apple-system,sans-serif;
+  --font-body:'Source Serif 4',Georgia,serif;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:12px;
+  --section-inner-max:1160px;
+  --transition-fast:.18s cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-text);-webkit-font-smoothing:antialiased}
+.landing-inner{max-width:var(--section-inner-max);margin:0 auto;padding:0 2rem}
+.section-eyebrow{font-family:var(--font-display);font-size:.75rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--color-accent);margin-bottom:.75rem;text-align:center}
+.section-heading{font-family:var(--font-display);font-size:2.25rem;font-weight:700;line-height:1.15;text-align:center;max-width:22ch;margin:0 auto 1rem}
+.section-sub{font-size:1.0625rem;color:var(--color-text-secondary);text-align:center;max-width:62ch;margin:0 auto 3rem;line-height:1.6}
+
+/* ---- mockup chrome (not part of the real page) ---- */
+.mock-bar{background:#1A1E2E;color:#C8D6F0;font-family:var(--font-display);font-size:.8125rem;padding:.7rem 2rem;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:20}
+.mock-bar strong{color:#fff;font-weight:600;margin-right:.6rem}
+.mock-bar button{font:inherit;background:transparent;border:1px solid #3A4560;color:#C8D6F0;border-radius:99px;padding:.25rem .8rem;cursor:pointer}
+.mock-bar button[aria-pressed="true"]{background:var(--color-accent);border-color:var(--color-accent);color:#08201C;font-weight:600}
+.mock-bar .spacer{flex:1}
+
+/* ---- hero ---- */
+.ph{padding:4.5rem 0 3rem;text-align:center}
+.ph h1{font-family:var(--font-display);font-size:2.9rem;font-weight:700;line-height:1.1;max-width:18ch;margin:0 auto 1.1rem}
+.ph p{font-size:1.125rem;color:var(--color-text-secondary);max-width:60ch;margin:0 auto;line-height:1.65}
+.ph .badges{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:1.6rem}
+.badge{font-family:var(--font-display);font-size:.75rem;font-weight:500;color:var(--color-text-secondary);background:var(--color-bg-elevated);border:1px solid var(--color-border-light);border-radius:99px;padding:.35rem .8rem}
+
+/* ---- billing toggle ---- */
+.billing{display:flex;justify-content:center;margin:2rem 0 2.5rem}
+.billing__inner{display:inline-flex;background:var(--color-bg-elevated);border:1px solid var(--color-border-light);border-radius:99px;padding:.25rem}
+.billing button{font-family:var(--font-display);font-size:.8125rem;font-weight:600;border:0;background:transparent;color:var(--color-text-secondary);padding:.5rem 1.1rem;border-radius:99px;cursor:pointer;transition:var(--transition-fast)}
+.billing button[aria-pressed="true"]{background:var(--color-primary);color:#fff}
+.billing__hint{font-family:var(--font-display);font-size:.75rem;color:var(--color-text-tertiary);text-align:center;margin-top:.6rem}
+
+/* ---- pricing grid (classes mirror landing.css .pricing*) ---- */
+.pricing{padding:1rem 0 6rem;background:var(--color-bg-warm);border-top:1px solid var(--color-border-light)}
+.pricing__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:1060px;margin:0 auto;align-items:start}
+.pricing-card{border:1px solid var(--color-border-light);border-radius:var(--radius-md);background:var(--color-bg-elevated);padding:2rem;display:flex;flex-direction:column;transition:var(--transition-fast);position:relative}
+.pricing-card:hover{border-color:var(--color-accent);transform:translateY(-2px)}
+.pricing-card--featured{border-color:var(--color-accent);border-width:2px;box-shadow:0 12px 40px rgba(27,42,74,.10)}
+.pricing-card__flag{position:absolute;top:-.75rem;left:50%;transform:translateX(-50%);background:var(--color-accent);color:#08201C;font-family:var(--font-display);font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.3rem .8rem;border-radius:99px;white-space:nowrap}
+.pricing-card__header{text-align:center;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--color-border-light)}
+.pricing-card__name{font-family:var(--font-display);font-size:1rem;font-weight:600;margin-bottom:.35rem}
+.pricing-card__for{font-family:var(--font-display);font-size:.8125rem;color:var(--color-text-tertiary);margin-bottom:1.1rem;min-height:3.6em;line-height:1.4}
+.pricing-card__price{font-family:var(--font-display);font-size:2.5rem;font-weight:700;line-height:1;margin-bottom:.3rem}
+.pricing-card__price .sm{font-size:1.25rem;font-weight:600;color:var(--color-text-secondary)}
+.pricing-card__period{font-family:var(--font-display);font-size:.8125rem;color:var(--color-text-tertiary);min-height:2.4em;display:block;line-height:1.4}
+.pricing-card__lead{font-family:var(--font-display);font-size:.8125rem;font-weight:600;color:var(--color-text-secondary);margin-bottom:.85rem}
+.pricing-card__features{list-style:none;display:flex;flex-direction:column;gap:.625rem;margin-bottom:2rem;flex:1}
+.pricing-card__features li{font-family:var(--font-display);font-size:.875rem;color:var(--color-text-secondary);padding-left:1.4rem;position:relative;line-height:1.45}
+.pricing-card__features li::before{content:'✓';position:absolute;left:0;color:var(--color-accent);font-weight:700}
+.pricing-card__features li.soon::before{content:'○';color:var(--color-text-tertiary)}
+.tag-soon{font-family:var(--font-display);font-size:.625rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-tertiary);border:1px solid var(--color-border);border-radius:3px;padding:.05rem .3rem;margin-left:.3rem;vertical-align:1px}
+.btn{display:block;text-align:center;font-family:var(--font-display);font-size:.9375rem;font-weight:600;border-radius:var(--radius-sm);padding:.85rem 1rem;text-decoration:none;transition:var(--transition-fast);cursor:pointer;border:1px solid transparent}
+.btn--primary{background:var(--color-accent);color:#06231E}
+.btn--primary:hover{background:var(--color-accent-hover)}
+.btn--dark{background:var(--color-primary);color:#fff}
+.btn--ghost{background:transparent;color:var(--color-text);border-color:var(--color-border)}
+.btn--ghost:hover{border-color:var(--color-primary)}
+.pricing-card__note{font-family:var(--font-display);font-size:.75rem;color:var(--color-text-tertiary);text-align:center;margin-top:.7rem;line-height:1.45}
+
+/* ---- procurement strip ---- */
+.proc{padding:4.5rem 0;background:var(--color-bg)}
+.proc__grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;max-width:1060px;margin:2.5rem auto 0}
+.proc__item{background:var(--color-bg-elevated);border:1px solid var(--color-border-light);border-radius:var(--radius-md);padding:1.4rem 1.5rem}
+.proc__item h4{font-family:var(--font-display);font-size:.9375rem;margin-bottom:.4rem}
+.proc__item p{font-family:var(--font-display);font-size:.8125rem;color:var(--color-text-secondary);line-height:1.55}
+
+/* ---- comparison ---- */
+.compare{padding:5rem 0;background:var(--color-bg-warm)}
+table{width:100%;border-collapse:collapse;max-width:960px;margin:0 auto;font-family:var(--font-display);font-size:.875rem;background:var(--color-bg-elevated);border:1px solid var(--color-border-light);border-radius:var(--radius-md);overflow:hidden}
+th,td{padding:.85rem 1rem;text-align:left;border-bottom:1px solid var(--color-border-light)}
+thead th{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--color-text-tertiary);font-weight:600}
+tbody th{font-weight:500;color:var(--color-text);width:44%}
+td{text-align:center;color:var(--color-text-secondary)}
+td.yes{color:var(--color-accent);font-weight:700}
+td.no{color:var(--color-text-tertiary)}
+tr.group th{background:var(--color-bg-warm);font-family:var(--font-display);font-size:.6875rem;text-transform:uppercase;letter-spacing:.1em;color:var(--color-text-tertiary);font-weight:700}
+tr.group td{background:var(--color-bg-warm)}
+
+/* ---- honesty + faq ---- */
+.honest{max-width:820px;margin:0 auto;background:var(--color-bg-elevated);border:1px solid var(--color-border-light);border-left:3px solid var(--color-accent);border-radius:var(--radius-md);padding:1.5rem 1.75rem;font-size:1rem;line-height:1.65;color:var(--color-text-secondary)}
+.faq{padding:5rem 0;background:var(--color-bg)}
+.faq__list{max-width:760px;margin:2.5rem auto 0}
+.faq details{border-bottom:1px solid var(--color-border-light);padding:1.1rem 0}
+.faq summary{font-family:var(--font-display);font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:1rem}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:'+';color:var(--color-accent);font-weight:700}
+.faq details[open] summary::after{content:'–'}
+.faq p{margin-top:.7rem;color:var(--color-text-secondary);line-height:1.65;font-size:.9875rem}
+
+/* ---- annotations ---- */
+.notes{background:#141C2E;color:#B7C2D8;padding:4rem 0;font-family:var(--font-display);font-size:.9rem;line-height:1.7}
+.notes h2{color:#fff;font-size:1.35rem;margin-bottom:.4rem}
+.notes .sub{color:#7C89A6;margin-bottom:2rem;font-size:.85rem}
+.notes ol{max-width:900px;margin:0 auto;padding-left:1.2rem}
+.notes li{margin-bottom:1rem}
+.notes strong{color:#fff}
+.notes code{background:#222B42;border-radius:3px;padding:.1rem .35rem;font-size:.85em}
+.notes .warn{border-left:3px solid #E0A83A;padding-left:1rem;margin:1.5rem auto 0;max-width:900px}
+
+@media (max-width:900px){
+  .pricing__grid{grid-template-columns:1fr;max-width:460px}
+  .proc__grid{grid-template-columns:1fr 1fr}
+  .ph h1{font-size:2.1rem}
+  .section-heading{font-size:1.7rem}
+  table{font-size:.8125rem}
+  th,td{padding:.65rem .5rem}
+  tbody th{width:40%}
+}
+</style>
+</head>
+<body>
+
+<div class="mock-bar">
+  <strong>MOCKUP</strong> /pricing/ · audience: municipalities
+  <span class="spacer"></span>
+  <span>Pro price:</span>
+  <button id="tgl-price" aria-pressed="true">показана</button>
+  <button id="tgl-noprice" aria-pressed="false">«Request a quote»</button>
+</div>
+
+<section class="ph">
+  <div class="landing-inner">
+    <h1>Free to build. Paid when the public is watching.</h1>
+    <p>Mapsurvey is free and open source, and it stays that way — build the survey, publish it, collect responses without paying anything. Pro exists for the moment a map survey carries your municipality's name: your domain, moderated results in public, an accessibility statement, and a report the council can read.</p>
+    <div class="badges">
+      <span class="badge">Open source, AGPL</span>
+      <span class="badge">You own every response</span>
+      <span class="badge">Self-host any time</span>
+      <span class="badge">Invoice, not a credit card</span>
+    </div>
+  </div>
+</section>
+
+<section class="pricing">
+  <div class="landing-inner">
+
+    <div class="billing">
+      <div>
+        <div class="billing__inner">
+          <button id="bill-project" aria-pressed="true">Per consultation</button>
+          <button id="bill-month" aria-pressed="false">Yearly</button>
+        </div>
+        <div class="billing__hint" id="bill-hint">One consultation, one budget line. Priced the way your project is funded.</div>
+      </div>
+    </div>
+
+    <div class="pricing__grid">
+
+      <!-- FREE -->
+      <div class="pricing-card">
+        <div class="pricing-card__header">
+          <div class="pricing-card__name">Free</div>
+          <div class="pricing-card__for">A pilot, an internal test, a department trying the idea before asking for budget</div>
+          <div class="pricing-card__price">€0</div>
+          <span class="pricing-card__period">forever, no card</span>
+        </div>
+        <div class="pricing-card__lead">Everything you have today</div>
+        <ul class="pricing-card__features">
+          <li>Unlimited surveys and responses</li>
+          <li>Points, routes, areas + 12 question types</li>
+          <li>Respondents answer in 75 languages</li>
+          <li>Conditional questions and sections</li>
+          <li>Public results page on our domain</li>
+          <li>CSV and GeoJSON export</li>
+          <li>Community support on GitHub</li>
+        </ul>
+        <a class="btn btn--ghost" href="#">Start free</a>
+        <div class="pricing-card__note">Nothing on this list ever moves behind a paywall.</div>
+      </div>
+
+      <!-- PRO -->
+      <div class="pricing-card pricing-card--featured">
+        <div class="pricing-card__flag">For a public consultation</div>
+        <div class="pricing-card__header">
+          <div class="pricing-card__name">Pro</div>
+          <div class="pricing-card__for">Cities, districts and public bodies running a consultation residents will see</div>
+          <div class="pricing-card__price" id="pro-price">€390</div>
+          <span class="pricing-card__period" id="pro-period">per consultation · up to 6 months of collection</span>
+        </div>
+        <div class="pricing-card__lead">Everything in Free, plus</div>
+        <ul class="pricing-card__features">
+          <li>Your domain and your branding — residents see the city's page, not ours</li>
+          <li>Choose where the data lives — EU or US hosting, decided per consultation</li>
+          <li>Signed DPA (AVV) with documented sub-processors</li>
+          <li>Accessibility statement, BITV&nbsp;2.0 / WCAG&nbsp;2.1&nbsp;AA <span class="tag-soon">on request</span></li>
+          <li>Live public map of what residents submitted, with moderation before anything appears</li>
+          <li>Let residents vote on each other's points and comments</li>
+          <li>Print-ready QR posters and a tracked link per channel</li>
+          <li>Who reached the survey, from where, and where they gave up</li>
+          <li>Consultation report — map, charts and summary for the council file</li>
+          <li>Shapefile and QGIS export on top of GeoJSON</li>
+          <li>Colleagues on the same consultation, with roles</li>
+          <li>Email support, answered within one working day</li>
+        </ul>
+        <a class="btn btn--primary" href="#" id="pro-cta">Start Pro</a>
+        <div class="pricing-card__note" id="pro-note">Fixed price, quoted in writing before you commit. We invoice — no card needed.</div>
+      </div>
+
+      <!-- SERVICE -->
+      <div class="pricing-card">
+        <div class="pricing-card__header">
+          <div class="pricing-card__name">Project service</div>
+          <div class="pricing-card__for">When the consultation is statutory, the deadline is fixed, and turnout is the deliverable</div>
+          <div class="pricing-card__price"><span class="sm">Let's talk</span></div>
+          <span class="pricing-card__period">fixed scope, quoted per project</span>
+        </div>
+        <div class="pricing-card__lead">Everything in Pro, done with you</div>
+        <ul class="pricing-card__features">
+          <li>Any hosting arrangement — a region we do not offer yet, or self-hosted on your own infrastructure with us running it</li>
+          <li>We design the survey — questions and wording that survive legal and political review</li>
+          <li>We plan and drive outreach toward a response target</li>
+          <li>Analysis and a written report for the council or the funding body</li>
+          <li>Migration from Ideenkarte, Citizen Space, Maptionnaire or MetroQuest</li>
+          <li>Procurement support: security questionnaires, DPA, documentation for your IT</li>
+          <li>Training so your staff run the next consultation alone</li>
+          <li>White-label work behind your agency — you keep the client</li>
+        </ul>
+        <a class="btn btn--dark" href="/services/">Book a short call</a>
+        <div class="pricing-card__note">No retainer. We scope it, quote it, you decide.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="proc">
+  <div class="landing-inner">
+    <p class="section-eyebrow">For the people who have to sign it off</p>
+    <h2 class="section-heading">Built to survive your procurement</h2>
+    <p class="section-sub">Most of what stops a consultation tool is not the tool. It is the form your colleague in legal, IT or the accessibility office has to fill in.</p>
+    <div class="proc__grid">
+      <div class="proc__item"><h4>Invoice, not a card</h4><p>Purchase order, IBAN transfer, VAT ID on the invoice. Payable by a public accounting department.</p></div>
+      <div class="proc__item"><h4>Data protection</h4><p>EU or US hosting, your choice. Signed DPA / AVV, documented sub-processors, a written answer to your DSFA questions.</p></div>
+      <div class="proc__item"><h4>Accessibility</h4><p>BITV 2.0 / WCAG 2.1 AA statement for the survey your residents will use.</p></div>
+      <div class="proc__item"><h4>No lock-in to defend</h4><p>AGPL source, self-hostable, full export. Easy to justify to an IT department that has been burned before.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="compare">
+  <div class="landing-inner">
+    <p class="section-eyebrow">Side by side</p>
+    <h2 class="section-heading">What actually changes</h2>
+    <p class="section-sub">The free plan is not a trial. It is the platform. Pro adds what a consultation carrying a public body's name needs.</p>
+    <table>
+      <thead>
+        <tr><th>&nbsp;</th><th style="text-align:center">Free</th><th style="text-align:center">Pro</th><th style="text-align:center">Service</th></tr>
+      </thead>
+      <tbody>
+        <tr class="group"><th colspan="4">Building the consultation</th></tr>
+        <tr><th>Map questions: points, routes, areas</th><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><th>Surveys and responses</th><td>Unlimited</td><td>Unlimited</td><td>Unlimited</td></tr>
+        <tr><th>Respondent languages</th><td>75</td><td>75</td><td>75</td></tr>
+        <tr><th>Survey designed for you</th><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+
+        <tr class="group"><th colspan="4">Carrying your name</th></tr>
+        <tr><th>Your domain and branding</th><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><th>Where the data is hosted</th><td>US</td><td>EU or US</td><td>Any, or your own servers</td></tr>
+        <tr><th>Signed DPA (AVV)</th><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><th>Accessibility statement (BITV / WCAG)</th><td class="no">—</td><td>On request</td><td>On request</td></tr>
+        <tr><th>Security questionnaires, procurement docs</th><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+
+        <tr class="group"><th colspan="4">Showing it to residents</th></tr>
+        <tr><th>Public results page</th><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><th>Live map with a moderation queue</th><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><th>Residents vote on each other's points</th><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+
+        <tr class="group"><th colspan="4">Getting turnout</th></tr>
+        <tr><th>Shareable link</th><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><th>QR posters and a tracked link per channel</th><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><th>Where people came from and dropped off</th><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><th>Outreach planned and driven to a target</th><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+
+        <tr class="group"><th colspan="4">Reporting and handover</th></tr>
+        <tr><th>CSV + GeoJSON export</th><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><th>Shapefile / QGIS export</th><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><th>Report for the council file</th><td class="no">—</td><td>Generated</td><td>Written by us</td></tr>
+        <tr><th>Support</th><td>GitHub</td><td>Email, 1 working day</td><td>Named contact</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="proc" style="padding-top:0">
+  <div class="landing-inner" style="padding-top:4rem">
+    <div class="honest">
+      <strong>One promise worth putting in writing.</strong> Nothing that is free today becomes paid tomorrow. Paid plans only ever add what does not exist yet — your survey, your responses and your public results page stay exactly where they are, on whichever plan you are on.
+    </div>
+  </div>
+</section>
+
+<section class="faq">
+  <div class="landing-inner">
+    <p class="section-eyebrow">Before you ask</p>
+    <h2 class="section-heading">Questions from public bodies</h2>
+    <div class="faq__list">
+      <details open><summary>Is the free plan a trial?</summary><p>No. No time limit, no response cap, no watermark. If you never need your own domain, moderation or an accessibility statement, you never need to pay.</p></details>
+      <details><summary>Why per consultation and not per seat?</summary><p>Because that is how the work is funded. A consultation is a line in a project or grant budget, runs for a few months and ends. Paying per consultation fits a budget that is already approved. A yearly plan exists for authorities running several a year.</p></details>
+      <details><summary>Can you invoice us? We cannot pay by card.</summary><p>Yes. Purchase order, bank transfer, VAT ID on the invoice, payment terms your accounting department is used to.</p></details>
+      <details><summary>Where is the data stored, and who processes it?</summary><p>On Pro you choose EU or US hosting when the consultation is set up, and we sign a DPA (AVV) naming the sub-processors involved. The free plan runs on our US infrastructure. If you need a region we do not offer, or the whole thing on your own servers, that is the project service.</p></details>
+      <details><summary>Our accessibility office needs a statement.</summary><p>We produce one for the respondent-facing survey against BITV 2.0 / WCAG 2.1 AA as part of Pro, on request.</p></details>
+      <details><summary>What happens to the data if we stop paying?</summary><p>The survey keeps working on the free plan and you keep every response. Pro features switch off; your data never does. You can also export everything, or self-host the whole thing.</p></details>
+      <details><summary>We already use Ideenkarte / Citizen Space.</summary><p>Migration is part of the project service: we bring the existing consultation across, keep the URLs working where we can, and train your team.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="notes">
+  <div class="landing-inner">
+    <h2>Notes for the mockup — не часть страницы</h2>
+    <p class="sub">Почему сделано именно так, и что здесь надо решить.</p>
+    <ol>
+      <li><strong>Аудитория — муниципалитеты</strong>, как ты попросил. Отсюда порядок в Pro: сначала свой домен, доступность и данные (то, без чего сделка не начинается), и только потом модерация, QR и отчёт. Отсюда же блок «Built to survive your procurement» и FAQ про счёт-фактуру, DSFA и BITV — половина возражений в B2G приходит не от покупателя, а от его коллег в юридическом и IT.</li>
+      <li><strong>Единица продажи — консультация, не место в команде.</strong> Платят строкой бюджета проекта. Переключатель стоит в положении «Per consultation» по умолчанию, годовой тариф — вторичен, для тех, кто проводит несколько в год.</li>
+      <li><strong>Цена — заглушка.</strong> €390 / €1 490 в год поставлены, чтобы страница выглядела настоящей и чтобы было о чём спорить на звонке. Кнопка в верхней панели переключает Pro в «Request a quote» — версия для периода, пока ты не хочешь называть число. Обе годятся как A/B.</li>
+      <li><strong>Ничего бесплатного не отбирается.</strong> Публичная страница результатов <code>/r/&lt;slug&gt;/</code> остаётся во Free; платным становится только то, чего сейчас нет: свой домен, модерация, голосование, QR-наборы, Shapefile, отчёт. Иначе поломаем действующих пользователей и репутацию разом.</li>
+      <li><strong>Хостинг разложен по грейдам:</strong> Free — US, Pro — выбор EU или US на консультацию, Service — любой регион или self-host на серверах заказчика. Это оффер, а не описание текущего состояния прода (он в Oregon), поэтому формулировка «choose where the data lives» — обещание, которое надо будет выполнить: EU-инстанс придётся реально поднять к первой продаже. Это единственный пункт в Pro, за которым стоит невыполненная инженерная работа, — остальное либо есть, либо дёшево.</li>
+      <li><strong>BITV/WCAG остался «on request».</strong> Заявление о доступности — это документ с проведённым аудитом; поставить его галочкой означает утверждать, что аудит уже сделан. «On request» здесь не мешает: в B2G это нормальный ответ, а на звонке он превращается в скоуп.</li>
+      <li><strong>Верстать почти нечего.</strong> В <code>survey/assets/css/landing.css</code> уже лежит готовый и никем не используемый блок <code>.pricing</code> / <code>.pricing-card*</code>. Классы здесь совпадают с ним; новое — только флаг «For a public consultation», переключатель периода, таблица и блок procurement.</li>
+      <li><strong>Третья колонка ведёт на существующий <code>/services/</code></strong>, а не дублирует его.</li>
+      <li><strong>Что меряем.</strong> Все CTA несут <code>?plan=free|pro|service</code> и <code>utm_source=pricing</code>. PostHog покажет распределение кликов по грейдам ещё до первого звонка — это первый ответ на «за что готовы платить», и он приходит бесплатно.</li>
+    </ol>
+    <div class="warn">
+      <strong>Конфликт сообщений, который надо снять до публикации.</strong> Сейчас <code>/services/</code> и лэндинг говорят «the platform stays free and open source — not a paywall on Mapsurvey». Колонка Pro с ценой это не отменяет, но требует одной общей формулировки в обоих местах: бесплатное остаётся бесплатным, платное — только новое. Иначе постоянный читатель увидит противоречие раньше, чем оффер.
+    </div>
+  </div>
+</section>
+
+<script>
+var price=document.getElementById('pro-price'),period=document.getElementById('pro-period'),
+    cta=document.getElementById('pro-cta'),note=document.getElementById('pro-note'),
+    hint=document.getElementById('bill-hint');
+var showPrice=true, yearly=false;
+
+function render(){
+  price.textContent='';
+  if(!showPrice){
+    var span=document.createElement('span');
+    span.className='sm';
+    span.textContent='Request a quote';
+    price.appendChild(span);
+    period.textContent='we scope it with you first';
+    cta.textContent='Talk to us about Pro';
+    note.textContent='Fixed price, quoted in writing before you commit. We invoice — no card needed.';
+  } else if(yearly){
+    price.textContent='€1,490';
+    period.textContent='per year · unlimited consultations';
+    cta.textContent='Start Pro';
+    note.textContent='For authorities running several consultations a year.';
+  } else {
+    price.textContent='€390';
+    period.textContent='per consultation · up to 6 months of collection';
+    cta.textContent='Start Pro';
+    note.textContent='Fixed price, quoted in writing before you commit. We invoice — no card needed.';
+  }
+  hint.textContent = yearly
+    ? 'Better if your authority runs consultations back to back all year.'
+    : 'One consultation, one budget line. Priced the way your project is funded.';
+}
+function setBilling(y){yearly=y;
+  document.getElementById('bill-project').setAttribute('aria-pressed',String(!y));
+  document.getElementById('bill-month').setAttribute('aria-pressed',String(y));render();}
+function setPriceMode(s){showPrice=s;
+  document.getElementById('tgl-price').setAttribute('aria-pressed',String(s));
+  document.getElementById('tgl-noprice').setAttribute('aria-pressed',String(!s));render();}
+
+document.getElementById('bill-project').onclick=function(){setBilling(false)};
+document.getElementById('bill-month').onclick=function(){setBilling(true)};
+document.getElementById('tgl-price').onclick=function(){setPriceMode(true)};
+document.getElementById('tgl-noprice').onclick=function(){setPriceMode(false)};
+render();
+</script>
+</body>
+</html>

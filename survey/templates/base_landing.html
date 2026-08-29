@@ -115,6 +115,8 @@
                     <li><a href="{% url 'for_consultants' %}">{% trans "For Consultants" %}</a></li>
                 </ul>
             </li>
+            <li><a href="{% url 'pro_early_access' %}">{% trans "Pro" %}</a></li>
+            <li><a href="{% url 'services' %}">{% trans "Services" %}</a></li>
             <li><a href="{% url 'trust_page' %}">{% trans "Trust" %}</a></li>
             {% if GITHUB_REPO_URL %}
             <li><a href="{{ GITHUB_REPO_URL }}" target="_blank" rel="noopener" class="landing-nav__github">
@@ -162,6 +164,8 @@
                 <ul class="landing-footer__links">
                     <li><a href="/#features">{% trans "Features" %}</a></li>
                     <li><a href="/#demo">{% trans "Demo" %}</a></li>
+                    <li><a href="{% url 'pro_early_access' %}">{% trans "Pro — early access" %}</a></li>
+                    <li><a href="{% url 'services' %}">{% trans "Project service" %}</a></li>
                     <li><a href="{% url 'stories_index' %}">{% trans "Stories" %}</a></li>
                     <li><a href="{% url 'for_planners' %}">{% trans "For Urban Planners" %}</a></li>
                     <li><a href="{% url 'for_government' %}">{% trans "For Local Government" %}</a></li>
