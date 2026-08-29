@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load i18n_extras %}
 {% comment %}Creator UI language switcher (openspec: creator-ui-localization).
 
 Included by BOTH base.html and editor/editor_base.html: the dashboard and the
@@ -11,12 +12,18 @@ be reading English comfortably, so "German" would be the wrong label for the
 person who needs it. POST because it changes stored state; `next` returns the
 creator to the page they were on.
 
+`creator_languages` rather than Django's `{% get_available_languages %}`: that
+tag runs every name through gettext, and Django ships translations for language
+names, so "English" rendered as "Anglais" for a French creator. "Deutsch" and
+"Français" escaped only because Django names those languages in English and has
+no msgid matching ours — the right entries were protected by accident.
+
 Only creator chrome is affected. Respondent pages activate the SURVEY's language
 inside the view, after all middleware, so this can never re-language someone
 else's survey.{% endcomment %}
 <h6 class="dropdown-header">{% trans "Language" %}</h6>
 {% get_current_language as CURRENT_LANGUAGE %}
-{% get_available_languages as AVAILABLE_LANGUAGES %}
+{% creator_languages as AVAILABLE_LANGUAGES %}
 <form method="post" action="{% url 'set_creator_language' %}" style="margin:0;">
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ request.get_full_path }}">

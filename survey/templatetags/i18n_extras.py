@@ -63,3 +63,25 @@ def i18n_json():
         'allMarkedThanks': _('All {m} marked — thank you!'),
     }
     return mark_safe(json.dumps(translations, ensure_ascii=False))
+
+
+@register.simple_tag
+def creator_languages():
+    """settings.LANGUAGES with the names left exactly as configured.
+
+    Django's own {% get_available_languages %} does NOT hand back the setting
+    untouched — it runs each name through gettext:
+
+        [(k, translation.gettext(v)) for k, v in settings.LANGUAGES]
+
+    Django ships translations for language names, so "English" became "Anglais"
+    for a French creator and "Englisch" for a German one. "Deutsch" and
+    "Français" survived only because Django names those languages in English
+    ("German", "French") and has no msgid matching ours — the correct entries
+    were protected by accident.
+
+    Every name must read in its own language: the person who needs the switcher
+    is the one who cannot read the current interface.
+    """
+    from django.conf import settings as dj_settings
+    return list(dj_settings.LANGUAGES)
