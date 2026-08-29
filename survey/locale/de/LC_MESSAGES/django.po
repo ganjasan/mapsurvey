@@ -6433,8 +6433,8 @@ msgstr ""
 #, python-format
 msgid "Please try again in about a minute."
 msgid_plural "Please try again in about %(minutes)s minutes."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Bitte versuchen Sie es in etwa einer Minute erneut."
+msgstr[1] "Bitte versuchen Sie es in etwa %(minutes)s Minuten erneut."
 
 #: survey/templates/registration/rate_limited.html:28
 msgid ""
