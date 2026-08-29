@@ -27833,6 +27833,45 @@ class TranslationCatalogHygieneTest(SimpleTestCase):
         ]
         self.assertEqual(missing, [], f'No catalog for: {missing}')
 
+    def test_offered_languages_have_their_plural_forms_filled(self):
+        """
+        GIVEN a language offered in settings.LANGUAGES
+        WHEN its plural entries are inspected
+        THEN every form is filled, because a plural keeps its values in
+             msgstr_plural and an empty one falls back to English mid-sentence
+             — writing to msgstr on such an entry is silently ignored, so this
+             string survived several rounds of "fixing" it
+        """
+        import pathlib
+
+        from django.conf import settings as dj_conf
+
+        # Parsed with a regex rather than polib: polib is available only as a
+        # transitive dependency, and a test must not rest on that.
+        block = re.compile(
+            r'^msgid "(?P<id>[^"]*)"\n'
+            r'msgid_plural "[^"]*"\n'
+            r'(?P<forms>(?:msgstr\[\d+\] "[^"]*"\n)+)', re.M)
+
+        locales = pathlib.Path(__file__).resolve().parent / 'locale'
+        offenders = []
+        for code, _name in dj_conf.LANGUAGES:
+            if code == dj_conf.LANGUAGE_CODE:
+                continue
+            catalog = locales / code / 'LC_MESSAGES' / 'django.po'
+            if not catalog.exists():
+                continue
+            for match in block.finditer(catalog.read_text(encoding='utf-8')):
+                blank = [i for i, value in enumerate(
+                    re.findall(r'msgstr\[\d+\] "([^"]*)"', match.group('forms')))
+                    if not value]
+                if blank:
+                    offenders.append(
+                        f"{code}: {match.group('id')[:45]!r} forms {blank} empty")
+
+        self.assertEqual(offenders, [], 'Unfilled plural form:\n  '
+                         + '\n  '.join(offenders))
+
 
 class TemplateCommentSyntaxTest(SimpleTestCase):
     """Django's {# #} comment is single-line; a multi-line one renders as page text."""
