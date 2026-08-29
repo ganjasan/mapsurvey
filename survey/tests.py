@@ -27799,6 +27799,25 @@ class TranslationCatalogHygieneTest(SimpleTestCase):
         return len({m.casefold() for m in msgids}) == 1
 
     @staticmethod
+    def _same_but_for_plural(msgids):
+        """Source strings that are one word set, singular vs plural.
+
+        Indonesian marks no plural: `Section` and `Sections` are both
+        «Bagian», and so are Question/Questions, Answer/Answers,
+        Session/Sessions, User/Users -- thirteen pairs in one catalog. That is
+        the language, not a shifted catalog, and the same will happen for any
+        other language without plural inflection. The rule is deliberately
+        narrow: identical once case, spaces and a trailing `s` are removed, so
+        `Base maps`/`Basemap` passes while `Delete`/`Remove` (a real bug this
+        test caught in the Indonesian draft) still fails.
+        """
+        def stem(msgid):
+            word = msgid.casefold().replace(' ', '')
+            return word[:-1] if word.endswith('s') else word
+
+        return len({stem(m) for m in msgids}) == 1
+
+    @staticmethod
     def _pairs(text):
         found = re.findall(r'^msgid "(.*)"\n(?:"[^"]*"\n)*msgstr "(.*)"', text, re.M)
         return [(msgid, msgstr) for msgid, msgstr in found if msgid and msgstr]
@@ -27825,7 +27844,8 @@ class TranslationCatalogHygieneTest(SimpleTestCase):
             for msgstr, msgids in by_translation.items():
                 if (len(msgids) < 2
                         or frozenset(msgids) in self.ALLOWED_COLLISIONS
-                        or self._same_but_for_case(msgids)):
+                        or self._same_but_for_case(msgids)
+                        or self._same_but_for_plural(msgids)):
                     continue
                 offenders.append(f'{code}: {msgstr!r} translates {sorted(msgids)}')
 
