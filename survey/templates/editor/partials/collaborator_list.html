@@ -45,7 +45,7 @@
           hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
           class="form-inline mb-2">
         <select name="user_id" class="form-control form-control-sm mr-1" required>
-            <option value="">Select member...</option>
+            <option value="">{% trans "Select member…" %}</option>
             {% for member in available_members %}
                 <option value="{{ member.user_id }}">{{ member.user.username }}</option>
             {% endfor %}

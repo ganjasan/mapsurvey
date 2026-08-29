@@ -7,7 +7,7 @@
 {% block navbar_content %}
 <span class="survey-name">
     {% if survey.is_draft_copy %}
-        Draft of {{ survey.published_version.name }}
+        {% blocktrans with name=survey.published_version.name %}Draft of {{ name }}{% endblocktrans %}
     {% else %}
         {{ survey.name }}
     {% endif %}
@@ -35,11 +35,11 @@ when the published survey is read-only the bar goes amber and carries the
     </div>
     <div style="display:flex;align-items:center;gap:.6rem;flex-shrink:0;">
         <span class="build-ro-msg"><i class="fas fa-lock"></i>
-          {% if show_back_to_draft %}Nothing has been collected yet, so this can go back to editing{% else %}Published and closed surveys can't be edited{% endif %}</span>
+          {% if show_back_to_draft %}{% trans "Nothing has been collected yet, so this can go back to editing" %}{% else %}{% trans "Published and closed surveys cannot be edited" %}{% endif %}</span>
         {% if show_back_to_draft %}
         <button class="btn btn-sm btn-primary" onclick="doTransition('draft')">{% trans "Back to editing" %}</button>
         {% elif draft_copy %}
-        <a class="btn btn-sm btn-primary" href="{% url 'editor_survey_detail' draft_copy.uuid %}">Go to draft &rarr;</a>
+        <a class="btn btn-sm btn-primary" href="{% url 'editor_survey_detail' draft_copy.uuid %}">{% trans "Go to draft" %} &rarr;</a>
         {% elif show_edit_published %}
         <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" style="margin:0;">
             {% csrf_token %}
@@ -59,7 +59,7 @@ when the published survey is read-only the bar goes amber and carries the
     <span class="ico"><i class="fas fa-hammer"></i></span>
     <div>
         <div class="t">{% trans "Survey" %}</div>
-        <div class="s">{% if survey.status == 'draft' %}Draft — not collecting responses{% elif survey.status == 'testing' %}Testing — invite-link access{% elif survey.status == 'published' %}Open · {{ session_count }} response{{ session_count|pluralize }}{% elif survey.status == 'closed' %}Closed · {{ session_count }} response{{ session_count|pluralize }}{% else %}Sections, questions &amp; survey settings{% endif %}</div>
+        <div class="s">{% if survey.status == 'draft' %}{% trans "Draft — not collecting responses" %}{% elif survey.status == 'testing' %}{% trans "Testing — invite-link access" %}{% elif survey.status == 'published' %}{% trans "Open" %} · {% blocktrans count counter=session_count %}{{ counter }} response{% plural %}{{ counter }} responses{% endblocktrans %}{% elif survey.status == 'closed' %}{% trans "Closed" %} · {% blocktrans count counter=session_count %}{{ counter }} response{% plural %}{{ counter }} responses{% endblocktrans %}{% else %}{% trans "Sections, questions & survey settings" %}{% endif %}</div>
     </div>
     <span style="flex:1;"></span>
     <a class="btn btn-sm btn-outline-secondary ctx-preview-btn" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="{% trans 'Open the survey as a respondent' %}">
@@ -293,21 +293,21 @@ function copyTestLink(btn) {
              hx-get="{% url 'editor_survey_settings_panel' survey.uuid %}"
              hx-trigger="load"
              hx-swap="innerHTML">
-            <div style="text-align:center;padding:2rem;color:#9ca3af;">Loading...</div>
+            <div style="text-align:center;padding:2rem;color:#9ca3af;">{% trans "Loading..." %}</div>
         </div>
         {% elif thanks_panel_active %}
         <div id="section-content"
              hx-get="{% url 'editor_survey_thanks_panel' survey.uuid %}"
              hx-trigger="load"
              hx-swap="innerHTML">
-            <div style="text-align:center;padding:2rem;color:#9ca3af;">Loading...</div>
+            <div style="text-align:center;padding:2rem;color:#9ca3af;">{% trans "Loading..." %}</div>
         </div>
         {% elif current_section %}
         <div id="section-content"
              hx-get="{% url 'editor_section_detail' survey.uuid current_section.id %}"
              hx-trigger="load"
              hx-swap="innerHTML">
-            <div style="text-align:center;padding:2rem;color:#9ca3af;">Loading...</div>
+            <div style="text-align:center;padding:2rem;color:#9ca3af;">{% trans "Loading..." %}</div>
         </div>
         {% else %}
         <div style="text-align:center;padding:3rem;color:#9ca3af;">
@@ -645,7 +645,7 @@ document.addEventListener('DOMContentLoaded', function() {
             first.click();
         } else {
             document.getElementById('section-content').innerHTML =
-                '<p class="text-muted p-4">No sections yet. Click "New Section" to add one.</p>';
+                '<p class="text-muted p-4">{% trans 'No sections yet. Click “New Section” to add one.' %}</p>';
             loadPreview('about:blank');
         }
     });

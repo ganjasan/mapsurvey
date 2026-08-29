@@ -1,7 +1,7 @@
 {% extends "editor/editor_base.html" %}
 
 {% load i18n %}
-{% block page_title %}Share – {{ survey.name }}{% endblock %}
+{% block page_title %}{% trans "Share" %} – {{ survey.name }}{% endblock %}
 
 {% block extra_head %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" crossorigin="anonymous"></script>
@@ -97,7 +97,7 @@
             </button>
             {% elif effective_role == 'owner' and survey.status == 'draft' %}
             <p class="share-gate-hint"><i class="fas fa-info-circle"></i>
-                {{ publish_blocked_reason }} — finish it in
+                {{ publish_blocked_reason }} — {% trans "finish it in" %}
                 <a href="{% url 'editor_survey_detail' survey.uuid %}">{% trans "Survey" %}</a> {% trans "before you can publish." %}</p>
             {% elif effective_role != 'owner' %}
             <p class="share-gate-hint"><i class="fas fa-info-circle"></i> {% trans "Ask the survey owner to publish it." %}</p>
@@ -150,7 +150,7 @@
             {% trans "We drafted a public results page from your questions. Review it and publish to give your audience a live view of the answers." %}
         </p>
         <a class="btn btn-sm btn-outline-primary" href="{% url 'editor_survey_public_results' survey.uuid %}">
-            <i class="fas fa-chart-bar"></i> Review &amp; publish the results page
+            <i class="fas fa-chart-bar"></i> {% trans "Review & publish the results page" %}
         </a>
         {% endif %}
     </div>
@@ -160,7 +160,7 @@
     <div class="share-section">
         <h6>{% trans "Track where responses come from" %}</h6>
         <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem;">
-            {% trans "Make a separate link per channel — newsletter, Instagram, a printed poster. Every response that arrives through it is tagged with its source, so you can compare channels in" %} <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">Responses&nbsp;→&nbsp;Traffic&nbsp;Sources</a>.
+            {% trans "Make a separate link per channel — newsletter, Instagram, a printed poster. Every response that arrives through it is tagged with its source, so you can compare channels in" %} <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">{% trans "Responses" %}&nbsp;→&nbsp;{% trans "Traffic Sources" %}</a>.
         </p>
         <form method="post">
             {% csrf_token %}
@@ -237,7 +237,7 @@
         </table>
         <div class="share-monitor">
             <i class="fas fa-chart-line"></i>
-            <div>{% trans "See how each link performs — started, completed and completion rate per source — in" %} <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">Responses&nbsp;→&nbsp;Traffic&nbsp;Sources</a>.</div>
+            <div>{% trans "See how each link performs — started, completed and completion rate per source — in" %} <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">{% trans "Responses" %}&nbsp;→&nbsp;{% trans "Traffic Sources" %}</a>.</div>
         </div>
         {% else %}
         <p style="color:#9ca3af;font-size:0.9rem;text-align:center;padding:2rem 0;">

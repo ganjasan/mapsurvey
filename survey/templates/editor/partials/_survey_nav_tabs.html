@@ -46,7 +46,7 @@ Responses tab has no status line, so it keeps the navbar menus.{% endcomment %}
     <button onclick="navMenuToggle(this,event)"><i class="fas fa-share-alt"></i> {% trans "Share" %} <i class="fas fa-angle-down caret"></i></button>
     <div class="nav-menu">
         <div class="nm-head">{% trans "Survey" %}</div>
-        <a class="nm-item" href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-link lead"></i> Share link &amp; tracking…</a>
+        <a class="nm-item" href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-link lead"></i> {% trans "Share link & tracking…" %}</a>
         {% if page and page.is_published %}
         <div class="nm-sep"></div>
         <div class="nm-head">{% trans "Results page" %}</div>

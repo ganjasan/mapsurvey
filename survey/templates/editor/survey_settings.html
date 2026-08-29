@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load survey_filters %}
 
-{% block page_title %}Settings – {{ survey.name }}{% endblock %}
+{% block page_title %}{% trans "Settings" %} – {{ survey.name }}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -127,7 +127,7 @@
                     Lng: {{ survey.start_map_postion.x|floatformat:5 }},
                     Zoom: {{ survey.start_map_zoom|default:"12" }}
                 {% else %}
-                    Click the map to set position
+                    {% trans "Click the map to set position" %}
                 {% endif %}
             </span>
         </div>
@@ -136,7 +136,7 @@
                    {% if survey.use_geolocation %}checked{% endif %}>
             <label class="form-check-label" for="survey-use-geolocation"
                    style="font-size:0.85rem;cursor:pointer;"
-                   title="Auto-center the map on the respondent's browser location when they first enter the survey.">
+                   title="{% trans 'Auto-center the map on the respondent’s browser location when they first enter the survey.' %}">
                 {% trans "Auto-center on respondent's location" %}
                 <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
             </label>

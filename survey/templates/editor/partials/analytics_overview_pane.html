@@ -11,18 +11,18 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
     <b>{% trans "No responses yet" %}</b>
     <p>{% trans "Your survey is live. Share the link and responses will appear here in real time." %}</p>
     <a class="btn btn-primary btn-sm" href="/editor/surveys/{{ survey.uuid }}/share/">
-        <i class="fas fa-share-alt"></i> Share survey
+        <i class="fas fa-share-alt"></i> {% trans "Share survey" %}
     </a>
     <br>
     <a class="btn btn-outline-secondary btn-sm mt-2" href="/surveys/{{ survey.uuid }}" target="_blank" rel="noopener">
-        <i class="fas fa-eye"></i> Preview as respondent
+        <i class="fas fa-eye"></i> {% trans "Preview as respondent" %}
     </a>
 </div>
 {% else %}
 <div class="rv2-kstrip" data-testid="rv2-kpi-strip">
     <div class="rv2-kpi">
         <b>{{ total_sessions }}</b><span>{% trans "responses" %}</span>
-        {% if overview_extras.responses_today %}<span class="rv2-delta">+{{ overview_extras.responses_today }} today</span>{% endif %}
+        {% if overview_extras.responses_today %}<span class="rv2-delta">+{{ overview_extras.responses_today }} {% trans "today" %}</span>{% endif %}
     </div>
     <div class="rv2-kpi"><b class="rv2-green">{{ completion_rate }}%</b><span>{% trans "completion" %}</span></div>
     {% if overview_extras.median_display %}
@@ -43,7 +43,7 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
     <div class="rv2-ov-main">
         {% if geo_features_count %}
         <div class="rv2-card">
-            <h6>Response Map
+            <h6>{% trans "Response Map" %}
                 <a class="rv2-lnk" href="#map" onclick="rv2Router.setPane('map');return false;">{% trans "Open Map ›" %}</a>
             </h6>
             <div id="rv2-ov-map"></div>
@@ -101,7 +101,7 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
         </div>
         {% endif %}
         <div class="rv2-card" data-testid="rv2-latest">
-            <h6>Latest responses
+            <h6>{% trans "Latest responses" %}
                 <a class="rv2-lnk" href="#responses" onclick="rv2Router.setPane('responses');return false;">{% trans "All ›" %}</a>
             </h6>
             {% for item in overview_extras.latest_feed %}
@@ -109,7 +109,7 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
                 <span class="rv2-feed-ava">#{{ item.seq }}</span>
                 <span class="rv2-feed-mid">
                     <b>{{ item.started|date:"j M H:i" }}{% if item.duration_display %} · {{ item.duration_display }}{% endif %}</b>
-                    <span>{% if item.geo_count %}{{ item.geo_count }} geo · {% endif %}{% if item.text_excerpt %}“{{ item.text_excerpt }}”{% elif not item.geo_count %}no answers{% endif %}</span>
+                    <span>{% if item.geo_count %}{{ item.geo_count }} {% trans "geo" %} · {% endif %}{% if item.text_excerpt %}“{{ item.text_excerpt }}”{% elif not item.geo_count %}{% trans "no answers" %}{% endif %}</span>
                 </span>
                 {% if item.issues %}
                 <span class="rv2-chip-status err">{{ item.issues.0 }}</span>
@@ -118,7 +118,7 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
                 {% elif item.status == 'not_approved' %}
                 <span class="rv2-chip-status err">{% trans "rejected" %}</span>
                 {% else %}
-                <span class="rv2-chip-status ok">ok</span>
+                <span class="rv2-chip-status ok">{% trans "ok" %}</span>
                 {% endif %}
             </button>
             {% endfor %}

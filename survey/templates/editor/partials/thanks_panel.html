@@ -36,7 +36,7 @@
         <input type="hidden" name="has_results_toggle" value="1">
         <label class="pr-switch" style="border-bottom:none;">
           <span>{% trans "Show a “See the results” button" %}
-            <small class="pr-help">{% if results_page.is_published %}links respondents to your public results page{% else %}appears once your results page is published (Publish tab){% endif %}</small></span>
+            <small class="pr-help">{% if results_page.is_published %}{% trans "links respondents to your public results page" %}{% else %}{% trans "appears once your results page is published (Publish tab)" %}{% endif %}</small></span>
           <input type="checkbox" name="show_on_thanks" id="thanks-show-results" {% if results_page.show_on_thanks %}checked{% endif %}>
         </label>
       </div>
@@ -45,7 +45,7 @@
 
     <div class="pr-card">
       <h6>{% trans "Always shown below your message" %}</h6>
-      <div class="pr-help" style="margin-top:0;margin-bottom:.8rem;">Every thanks page ends with a share action and the "Made with Mapsurvey" link — these are fixed and can't be removed.</div>
+      <div class="pr-help" style="margin-top:0;margin-bottom:.8rem;">{% trans 'Every thanks page ends with a share action and the “Made with Mapsurvey” link — these are fixed and cannot be removed.' %}</div>
       <div style="text-align:center;opacity:.7;">
         <span class="btn btn-outline-primary btn-sm" style="pointer-events:none;"><i class="fas fa-share-alt mr-1"></i> {% trans "Share this survey" %}</span>
       </div>
@@ -99,7 +99,7 @@
 
       var quill = new Quill('#thanks-quill', {
           theme: 'snow',
-          placeholder: 'Thank you! Your responses have been recorded…',
+          placeholder: '{% trans "Thank you! Your responses have been recorded…" %}',
           modules: { toolbar: {
               container: [
                   [{ header: [1, 2, 3, false] }],
@@ -117,7 +117,7 @@
       // Shown (and editable) when a language has no saved content yet — the same
       // default respondents get, but formatted in the editor instead of a
       // placeholder. It is only persisted once the creator actually edits it.
-      var DEFAULT_HTML = '<h2 style="text-align: center;">Thank you!</h2><p style="text-align: center;">Your responses have been recorded.</p>';
+      var DEFAULT_HTML = '<h2 style="text-align: center;">{% trans "Thank you!" %}</h2><p style="text-align: center;">{% trans "Your responses have been recorded." %}</p>';
       var dirty = {};
 
       function currentHtml() {

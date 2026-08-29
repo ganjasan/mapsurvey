@@ -2,12 +2,12 @@
 <div>
 {% if answers %}
     <div class="d-flex align-items-center mb-2" style="gap:0.5rem;">
-        <small class="text-muted">{{ total }} answer{{ total|pluralize }}, page {{ page }} of {{ total_pages }}</small>
+        <small class="text-muted">{% blocktrans count n=total %}{{ n }} answer{% plural %}{{ n }} answers{% endblocktrans %}{% blocktrans with page=page total=total_pages %}, page {{ page }} of {{ total }}{% endblocktrans %}</small>
         <select class="form-control form-control-sm d-inline-block ml-auto" style="width:auto;font-size:0.8rem;"
                 onchange="loadTextAnswers({{ question.id }}, 1, this.value)">
-            <option value="10" {% if page_size == 10 %}selected{% endif %}>10 / page</option>
-            <option value="20" {% if page_size == 20 %}selected{% endif %}>20 / page</option>
-            <option value="50" {% if page_size == 50 %}selected{% endif %}>50 / page</option>
+            <option value="10" {% if page_size == 10 %}selected{% endif %}>10 / {% trans "page" %}</option>
+            <option value="20" {% if page_size == 20 %}selected{% endif %}>20 / {% trans "page" %}</option>
+            <option value="50" {% if page_size == 50 %}selected{% endif %}>50 / {% trans "page" %}</option>
         </select>
     </div>
     <ul class="list-unstyled mb-2" style="font-size:0.875rem;">
@@ -21,11 +21,11 @@
     <div class="d-flex" style="gap:0.5rem;">
         {% if page > 1 %}
         <button class="btn btn-sm btn-outline-secondary"
-                onclick="loadTextAnswers({{ question.id }}, {{ page|add:'-1' }}, {{ page_size }})">&laquo; Prev</button>
+                onclick="loadTextAnswers({{ question.id }}, {{ page|add:'-1' }}, {{ page_size }})">&laquo; {% trans "Previous" %}</button>
         {% endif %}
         {% if page < total_pages %}
         <button class="btn btn-sm btn-outline-secondary"
-                onclick="loadTextAnswers({{ question.id }}, {{ page|add:'1' }}, {{ page_size }})">Next &raquo;</button>
+                onclick="loadTextAnswers({{ question.id }}, {{ page|add:'1' }}, {{ page_size }})">{% trans "Next" %} &raquo;</button>
         {% endif %}
     </div>
 {% else %}

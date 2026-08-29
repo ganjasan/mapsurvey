@@ -2,14 +2,14 @@
 {% load static survey_filters %}
 <div class="section-form-card">
     <div style="display:flex;align-items:center;justify-content:space-between;">
-        <h6><i class="fas fa-layer-group"></i> Section: {{ section.title|default:section.name }}
+        <h6><i class="fas fa-layer-group"></i> {% trans "Section" %}: {{ section.title|default:section.name }}
             {% with missing=section|section_missing_langs:survey %}{% if missing %}
-            <span class="badge badge-warning" title="Missing translations — respondents in these languages will see {{ survey.available_languages.0|language_name }} text">
+            <span class="badge badge-warning" title="{% with primary=survey.available_languages.0|language_name %}{% blocktrans %}Missing translations — respondents in these languages will see {{ primary }} text{% endblocktrans %}{% endwith %}">
                 <i class="fas fa-language"></i> {{ missing|join:", " }}</span>
             {% endif %}{% endwith %}
         </h6>
         <button class="btn btn-sm btn-outline-secondary" id="section-map-position-btn"
-                title="{% if is_read_only %}Create a draft to edit{% endif %}"
+                title="{% if is_read_only %}{% trans "Create a draft to edit" %}{% endif %}"
                 {% if not is_read_only %}
                 hx-get="{% url 'editor_section_map_picker' survey.uuid section.id %}"
                 hx-target="#mapPickerModalBody"
@@ -51,7 +51,7 @@
                     <input type="checkbox" name="visible_layers" value="{{ item.layer.pk }}" {% if item.visible %}checked{% endif %}>
                     <span style="width:12px;height:12px;border-radius:3px;flex:none;background:{{ item.layer.color }}"></span>
                     {{ item.layer.name }}
-                    <span class="text-muted" style="font-size:.75rem;margin-left:auto;">{{ item.layer.feature_count }} features</span>
+                    <span class="text-muted" style="font-size:.75rem;margin-left:auto;">{{ item.layer.feature_count }} {% trans "features" %}</span>
                 </label>
                 {% endfor %}
             </div>
@@ -72,18 +72,18 @@
                 <fieldset style="margin-bottom:0.5rem;">
                     <legend style="font-size:0.8rem;font-weight:600;color:var(--accent);">{{ lang|upper }}</legend>
                     <div class="form-group">
-                        <label style="font-size:0.8rem;">Title ({{ lang }})</label>
+                        <label style="font-size:0.8rem;">{% trans "Title" %} ({{ lang }})</label>
                         <input type="text" name="translation_{{ lang }}_title" class="form-control form-control-sm"
                                value="{% for t_lang, t in translations.items %}{% if t_lang == lang %}{{ t.title|default:'' }}{% endif %}{% endfor %}">
                     </div>
                     <div class="form-group">
-                        <label style="font-size:0.8rem;">Subheading ({{ lang }})</label>
+                        <label style="font-size:0.8rem;">{% trans "Subheading" %} ({{ lang }})</label>
                         <input type="text" name="translation_{{ lang }}_subheading" class="form-control form-control-sm"
                                value="{% for t_lang, t in translations.items %}{% if t_lang == lang %}{{ t.subheading|default:'' }}{% endif %}{% endfor %}">
                         <div class="subheading-quill-wrap" data-subheading-quill="{{ lang }}"></div>
                     </div>
                     <div class="form-group">
-                        <label style="font-size:0.8rem;">Button label ({{ lang }})</label>
+                        <label style="font-size:0.8rem;">{% trans "Button label" %} ({{ lang }})</label>
                         <input type="text" name="translation_{{ lang }}_next_label" class="form-control form-control-sm" maxlength="30"
                                value="{% for t_lang, t in translations.items %}{% if t_lang == lang %}{{ t.next_label|default:'' }}{% endif %}{% endfor %}">
                     </div>
@@ -127,7 +127,7 @@
     </ul>
 
     <button class="add-question-btn"
-            title="{% if is_read_only %}Create a draft to edit{% endif %}"
+            title="{% if is_read_only %}{% trans "Create a draft to edit" %}{% endif %}"
             {% if not is_read_only %}
             hx-get="{% url 'editor_question_create' survey.uuid section.id %}"
             hx-target="#questionModalBody"
@@ -198,7 +198,7 @@
     function mountSubheadingQuill(mount, field) {
         var q = new Quill(mount, {
             theme: 'snow',
-            placeholder: 'Optional text under the section title',
+            placeholder: '{% trans "Optional text under the section title" %}',
             modules: { toolbar: SUBHEADING_TOOLBAR }
         });
         q.setContents(q.clipboard.convert({ html: field.value || '' }), 'silent');

@@ -27892,6 +27892,96 @@ class TranslationCatalogHygieneTest(SimpleTestCase):
         self.assertEqual(offenders, [], 'Unfilled plural form:\n  '
                          + '\n  '.join(offenders))
 
+    #: Template directories whose strings a creator reads. Marketing pages
+    #: (`survey/templates/*.html` at the top level) are deliberately absent:
+    #: their translation is a separate, later piece of work.
+    CREATOR_TEMPLATE_DIRS = (
+        '/editor/', '/partials/', '/org/',
+        '/registration/', '/django_registration/',
+    )
+
+    def test_creator_facing_strings_are_translated_in_offered_languages(self):
+        """
+        GIVEN a language offered in settings.LANGUAGES
+        WHEN every msgid that appears in a creator-facing template is checked
+        THEN each one is filled, because "the catalog is as complete as the
+             German one" is not the same claim: `Sign In`, `Close`, `Logout`,
+             `Dashboard`, `Email` and `Languages` occur on BOTH a marketing
+             page and an editor screen, so counting against another catalog
+             let six English words sit inside a finished German editor
+        """
+        import pathlib
+
+        from django.conf import settings as dj_conf
+
+        entry = re.compile(
+            r'((?:^#: [^\n]*\n)+)'          # occurrence comments
+            r'(?:^#[,.] [^\n]*\n)*'         # flags / extracted comments
+            r'^msgid "(?P<id>(?:[^"\\]|\\.)*)"\n'
+            r'(?P<body>(?:"(?:[^"\\]|\\.)*"\n)*)'
+            r'^msgstr "(?P<str>(?:[^"\\]|\\.)*)"\n'
+            r'(?P<cont>(?:"(?:[^"\\]|\\.)*"\n)*)', re.M)
+
+        locales = pathlib.Path(__file__).resolve().parent / 'locale'
+        offenders = []
+        for code, _name in dj_conf.LANGUAGES:
+            if code == dj_conf.LANGUAGE_CODE:
+                continue
+            catalog = locales / code / 'LC_MESSAGES' / 'django.po'
+            if not catalog.exists():
+                continue
+            for match in entry.finditer(catalog.read_text(encoding='utf-8')):
+                if not any(d in match.group(1)
+                           for d in self.CREATOR_TEMPLATE_DIRS):
+                    continue
+                if match.group('str') or match.group('cont').strip('"\n '):
+                    continue
+                if not match.group('id') and not match.group('body'):
+                    continue        # the header entry
+                offenders.append(f"{code}: {match.group('id')[:60]!r}")
+
+        self.assertEqual(
+            offenders, [],
+            'A creator-facing string is English in a language we offer:\n  '
+            + '\n  '.join(offenders))
+
+    def test_offered_languages_carry_no_fuzzy_translations(self):
+        """
+        GIVEN a language offered in settings.LANGUAGES
+        WHEN its entries are checked for the `fuzzy` flag
+        THEN none carries it, because `makemessages` guesses a translation
+             from a similar msgid and marks it fuzzy: gettext then IGNORES it
+             at runtime while every "is it filled?" check reads it as done —
+             `Respondents open here — centre` was handed the translation of
+             `Respondents will open the map exactly like this` this way
+        """
+        import pathlib
+
+        from django.conf import settings as dj_conf
+
+        # The header entry legitimately carries `#, fuzzy` — it is msgid "".
+        fuzzy = re.compile(
+            r'^#, [^\n]*fuzzy[^\n]*\n(?:^#[^\n]*\n)*^msgid "(?P<id>[^"]+)"',
+            re.M)
+
+        locales = pathlib.Path(__file__).resolve().parent / 'locale'
+        offenders = []
+        for code, _name in dj_conf.LANGUAGES:
+            if code == dj_conf.LANGUAGE_CODE:
+                continue
+            catalog = locales / code / 'LC_MESSAGES' / 'django.po'
+            if not catalog.exists():
+                continue
+            offenders += [
+                f'{code}: {match.group("id")[:60]!r}'
+                for match in fuzzy.finditer(
+                    catalog.read_text(encoding='utf-8'))]
+
+        self.assertEqual(
+            offenders, [],
+            'Fuzzy entry — review the guess and drop the flag:\n  '
+            + '\n  '.join(offenders))
+
 
 class TemplateCommentSyntaxTest(SimpleTestCase):
     """Django's {# #} comment is single-line; a multi-line one renders as page text."""
@@ -29981,7 +30071,10 @@ class ShareResultsPageLinkTest(TestCase):
         THEN it links to the public-results config tab
         """
         content = self.client.get(self.share_url).content.decode()
-        self.assertIn('Review &amp; publish the results page', content)
+        # `&`, not `&amp;`: the label is a msgid now, and gettext output is
+        # inserted verbatim — an entity there would ship literally to every
+        # other language (see TranslationCatalogHygieneTest).
+        self.assertIn('Review & publish the results page', content)
         self.assertIn(f'/editor/surveys/{self.survey.uuid}/public-results/', content)
         # The copyable public link appears only once the page is published
         # (the nav publishing widget may mention the slug regardless).

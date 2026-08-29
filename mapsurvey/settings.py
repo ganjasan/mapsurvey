@@ -208,7 +208,10 @@ LANGUAGE_CODE = 'en'
 # catalog falls back per string, so offering it would hand the creator an
 # English interface sprinkled with their own language — worse than English,
 # and worse than not offering it. Catalogs for ru/es/fr/pt/pl/id exist in the
-# repo and are being filled; each joins this list when it is done.
+# repo and are being filled; each joins this list when it is done. `pt` is
+# European Portuguese (inquérito / utilizador / ficheiro / ecrã): the traffic
+# is Portuguese, not Brazilian. A Brazilian audience would get its own `pt-BR`
+# catalog rather than edits to this one.
 #
 # Narrowing this list does NOT affect respondents: their chrome is activated
 # per survey with `translation.activate()`, which resolves against the catalog
@@ -218,6 +221,7 @@ LANGUAGES = [
     ('de', 'Deutsch'),
     ('fr', 'Français'),
     ('es', 'Español'),
+    ('pt', 'Português'),
 ]
 
 TIME_ZONE = 'UTC'

@@ -8,7 +8,7 @@
     <div class="q-stat-header">
         <div>
             <strong style="font-size:0.95rem;">{{ stat.question.name }}</strong>
-            {% if stat.archived %}<span class="badge badge-light" style="border:1px solid #e5e7eb;color:#92700c;background:#fdf7ea;" title="{% trans 'This question was removed in a newer version — historical answers only' %}">archived · {{ stat.versions }}</span>{% endif %}
+            {% if stat.archived %}<span class="badge badge-light" style="border:1px solid #e5e7eb;color:#92700c;background:#fdf7ea;" title="{% trans 'This question was removed in a newer version — historical answers only' %}">{% trans "archived" %} · {{ stat.versions }}</span>{% endif %}
             <br><small class="text-muted">{{ stat.section.title|default:stat.section.name }}</small>
         </div>
         <div style="display:flex;align-items:center;gap:0.4rem;">
@@ -19,7 +19,7 @@
 
     {% if stat.type == 'choices' %}
     <div class="q-filter-pills" data-qid="{{ stat.question.id }}" style="display:none;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.4rem;"></div>
-    <p class="mb-1"><small class="text-muted">{{ stat.total_answers }} answer{{ stat.total_answers|pluralize }}</small></p>
+    <p class="mb-1"><small class="text-muted">{% blocktrans count n=stat.total_answers %}{{ n }} answer{% plural %}{{ n }} answers{% endblocktrans %}</small></p>
     <canvas id="chart-q-{{ stat.question.id }}" height="50" style="cursor:pointer;"></canvas>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -235,19 +235,19 @@
     {% endif %}
 
     {% elif stat.type == 'text' %}
-    <p class="mb-1"><small class="text-muted">{{ stat.total_answers }} text answer{{ stat.total_answers|pluralize }}</small></p>
+    <p class="mb-1"><small class="text-muted">{% blocktrans count n=stat.total_answers %}{{ n }} text answer{% plural %}{{ n }} text answers{% endblocktrans %}</small></p>
     <div id="text-answers-{{ stat.question.id }}"
          hx-get="{% url 'analytics_text_answers' survey.uuid stat.question.id %}"
          hx-trigger="revealed"
          hx-swap="innerHTML">
-        <span class="text-muted" style="font-size:0.85rem;">Loading...</span>
+        <span class="text-muted" style="font-size:0.85rem;">{% trans "Loading..." %}</span>
     </div>
 
     {% elif stat.type == 'geo' %}
-    <p class="mb-1"><small class="text-muted">{{ stat.total_answers }} geo feature{{ stat.total_answers|pluralize }} — see map above</small></p>
+    <p class="mb-1"><small class="text-muted">{% blocktrans count n=stat.total_answers %}{{ n }} geo feature — see map above{% plural %}{{ n }} geo features — see map above{% endblocktrans %}</small></p>
 
     {% else %}
-    <p class="mb-1"><small class="text-muted">{{ stat.total_answers }} answer{{ stat.total_answers|pluralize }}</small></p>
+    <p class="mb-1"><small class="text-muted">{% blocktrans count n=stat.total_answers %}{{ n }} answer{% plural %}{{ n }} answers{% endblocktrans %}</small></p>
     {% endif %}
 </div>
 {% empty %}
