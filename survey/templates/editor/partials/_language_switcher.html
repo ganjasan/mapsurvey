@@ -28,9 +28,13 @@ else's survey.{% endcomment %}
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ request.get_full_path }}">
     {% for code, name in AVAILABLE_LANGUAGES %}
+    {% comment %}No inline `background:none` here. Bootstrap's `.dropdown-item`
+    is already transparent, borderless and full width; overriding the background
+    killed the BLUE of `.active` while leaving its white text, so the language
+    you were currently in rendered as an empty row — white on white, and it is
+    the one entry a creator looks for first.{% endcomment %}
     <button type="submit" name="language" value="{{ code }}"
-            class="dropdown-item{% if code == CURRENT_LANGUAGE %} active{% endif %}"
-            style="border:0;background:none;width:100%;text-align:left;">
+            class="dropdown-item{% if code == CURRENT_LANGUAGE %} active{% endif %}">
         {% if code == CURRENT_LANGUAGE %}<i class="fas fa-check" style="margin-right:4px;"></i>{% else %}<span style="display:inline-block;width:18px;"></span>{% endif %}{{ name }}
     </button>
     {% endfor %}

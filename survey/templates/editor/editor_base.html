@@ -923,6 +923,9 @@
             </div>
             {% endif %}
             <div class="dropdown d-inline nav-desktop">
+                {% include "editor/partials/_language_menu.html" %}
+            </div>
+            <div class="dropdown d-inline nav-desktop">
                 <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" style="color:#6b7280;font-size:0.85rem;text-decoration:none;">
                     <i class="fas fa-building" style="margin-right:4px;"></i>{{ active_org.name|default:"No organization" }}
                 </a>
