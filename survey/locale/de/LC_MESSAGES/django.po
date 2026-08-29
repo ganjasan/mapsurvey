@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mapsurvey 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 18:15+0000\n"
+"POT-Creation-Date: 2026-08-29 07:41+0000\n"
 "PO-Revision-Date: 2026-08-28 17:52+0000\n"
 "Last-Translator: \n"
 "Language-Team: German\n"
@@ -315,7 +315,8 @@ msgid "Re-serialized FeatureCollection — never the raw uploaded bytes."
 msgstr "Neu serialisierte FeatureCollection — nie die hochgeladenen Rohdaten."
 
 #: survey/models.py:557 survey/models.py:886 survey/models.py:1454
-#: survey/templates/editor/partials/_mobile_nav.html:18
+#: survey/templates/editor/partials/_mobile_nav.html:24
+#: survey/templates/editor/partials/_mobile_nav.html:29
 msgid "Map"
 msgstr "Karte"
 
@@ -714,7 +715,8 @@ msgstr "Kohorte zuweisen"
 #: survey/templates/admin/assign_cohort.html:35
 #: survey/templates/base_survey_template.html:124
 #: survey/templates/base_survey_template.html:136
-#: survey/templates/editor/analytics_dashboard.html:533
+#: survey/templates/editor/analytics_dashboard.html:197
+#: survey/templates/editor/analytics_dashboard_v2.html:205
 #: survey/templates/editor/editor_base.html:1004
 #: survey/templates/editor/partials/_lifecycle_scripts.html:24
 #: survey/templates/editor/partials/_lifecycle_scripts.html:46
@@ -896,7 +898,7 @@ msgid "Finish drawing"
 msgstr "Zeichnung abschließen"
 
 #: survey/templates/base_survey_template.html:137
-#: survey/templates/editor/partials/analytics_table.html:341
+#: survey/templates/editor/partials/analytics_table.html:467
 #: survey/templates/editor/partials/question_form_modal.html:448
 #: survey/templates/editor/public_results.html:259
 msgid "Apply"
@@ -1467,7 +1469,7 @@ msgid "Full Backup"
 msgstr "Vollständige Sicherung"
 
 #: survey/templates/editor/_survey_more_menu.html:34
-#: survey/templates/editor/partials/analytics_session_detail.html:20
+#: survey/templates/editor/partials/analytics_session_detail.html:22
 #: survey/templates/editor/partials/pr_block_list_item.html:12
 #: survey/templates/editor/partials/survey_settings_panel.html:139
 #: survey/templates/editor/survey_share.html:222
@@ -1475,7 +1477,7 @@ msgstr "Vollständige Sicherung"
 msgid "Delete"
 msgstr "Löschen"
 
-#: survey/templates/editor/analytics_dashboard.html:367
+#: survey/templates/editor/analytics_dashboard.html:31
 msgid ""
 "Responses of the published survey. This draft's own preview responses are "
 "under <strong>Draft (test)</strong> in the version picker."
@@ -1484,86 +1486,95 @@ msgstr ""
 "Entwurfs finden Sie unter <strong>Entwurf (Test)</strong> in der "
 "Versionsauswahl."
 
-#: survey/templates/editor/analytics_dashboard.html:378
+#: survey/templates/editor/analytics_dashboard.html:42
 #: survey/templates/editor/public_results.html:60
 msgid "Data"
 msgstr "Daten"
 
-#: survey/templates/editor/analytics_dashboard.html:383
+#: survey/templates/editor/analytics_dashboard.html:47
 msgid "Performance"
 msgstr "Performance"
 
-#: survey/templates/editor/analytics_dashboard.html:396
+#: survey/templates/editor/analytics_dashboard.html:60
+#: survey/templates/editor/analytics_dashboard_v2.html:77
 msgid "Download clean responses (CSV + GeoJSON)"
 msgstr "Bereinigte Antworten herunterladen (CSV + GeoJSON)"
 
-#: survey/templates/editor/analytics_dashboard.html:397
+#: survey/templates/editor/analytics_dashboard.html:61
 msgid "Download data"
 msgstr "Daten herunterladen"
 
-#: survey/templates/editor/analytics_dashboard.html:407
+#: survey/templates/editor/analytics_dashboard.html:71
 msgid "hidden — Show all"
 msgstr "ausgeblendet — Alle anzeigen"
 
-#: survey/templates/editor/analytics_dashboard.html:422
+#: survey/templates/editor/analytics_dashboard.html:86
+#: survey/templates/editor/analytics_dashboard_v2.html:119
 msgid "Loading table..."
 msgstr "Tabelle wird geladen …"
 
-#: survey/templates/editor/analytics_dashboard.html:425
+#: survey/templates/editor/analytics_dashboard.html:89
 msgid "Expand Violations panel"
 msgstr "Panel „Verstöße“ ausklappen"
 
-#: survey/templates/editor/analytics_dashboard.html:428
-#: survey/templates/editor/analytics_dashboard.html:435
+#: survey/templates/editor/analytics_dashboard.html:92
+#: survey/templates/editor/analytics_dashboard.html:99
 msgid "Violations"
 msgstr "Verstöße"
 
-#: survey/templates/editor/analytics_dashboard.html:436
+#: survey/templates/editor/analytics_dashboard.html:100
 msgid "Collapse"
 msgstr "Einklappen"
 
-#: survey/templates/editor/analytics_dashboard.html:448
-#: survey/templates/editor/analytics_dashboard.html:466
-#: survey/templates/editor/partials/analytics_table.html:81
+#: survey/templates/editor/analytics_dashboard.html:112
+#: survey/templates/editor/analytics_dashboard.html:130
+#: survey/templates/editor/partials/analytics_table.html:163
 msgid "0 selected"
 msgstr "0 ausgewählt"
 
-#: survey/templates/editor/analytics_dashboard.html:450
-#: survey/templates/editor/analytics_dashboard.html:468
-#: survey/templates/editor/partials/analytics_table.html:107
+#: survey/templates/editor/analytics_dashboard.html:114
+#: survey/templates/editor/analytics_dashboard.html:132
+#: survey/templates/editor/partials/analytics_table.html:189
 msgid "Hide"
 msgstr "Ausblenden"
 
-#: survey/templates/editor/analytics_dashboard.html:451
-#: survey/templates/editor/analytics_dashboard.html:469
-#: survey/templates/editor/partials/analytics_table.html:110
+#: survey/templates/editor/analytics_dashboard.html:115
+#: survey/templates/editor/analytics_dashboard.html:133
+#: survey/templates/editor/partials/analytics_table.html:192
 msgid "Keep only"
 msgstr "Nur diese behalten"
 
-#: survey/templates/editor/analytics_dashboard.html:452
-#: survey/templates/editor/analytics_dashboard.html:470
-#: survey/templates/editor/partials/analytics_table.html:113
+#: survey/templates/editor/analytics_dashboard.html:116
+#: survey/templates/editor/analytics_dashboard.html:134
+#: survey/templates/editor/partials/analytics_table.html:195
 msgid "Invert"
 msgstr "Umkehren"
 
-#: survey/templates/editor/analytics_dashboard.html:458
+#: survey/templates/editor/analytics_dashboard.html:122
+#: survey/templates/editor/analytics_dashboard_v2.html:106
 msgid "No geo questions in this survey"
 msgstr "Keine Geo-Fragen in dieser Umfrage"
 
-#: survey/templates/editor/analytics_dashboard.html:474
-#: survey/templates/editor/partials/analytics_table.html:69
+#: survey/templates/editor/analytics_dashboard.html:138
+#: survey/templates/editor/partials/analytics_table.html:150
 msgid "Toggle fullscreen"
 msgstr "Vollbild umschalten"
 
-#: survey/templates/editor/analytics_dashboard.html:479
+#: survey/templates/editor/analytics_dashboard.html:143
+#: survey/templates/editor/partials/_mobile_nav.html:23
 msgid "Overview"
 msgstr "Überblick"
 
-#: survey/templates/editor/analytics_dashboard.html:502
+#: survey/templates/editor/analytics_dashboard.html:146
+msgid "Questions &amp; Responses"
+msgstr "Fragen und Antworten"
+
+#: survey/templates/editor/analytics_dashboard.html:166
 msgid "Session Details"
 msgstr "Sitzungsdetails"
 
-#: survey/templates/editor/analytics_dashboard.html:503
+#: survey/templates/editor/analytics_dashboard.html:167
+#: survey/templates/editor/analytics_dashboard_v2.html:163
 #: survey/templates/editor/editor_base.html:998
 #: survey/templates/editor/partials/_survey_primary_action.html:23
 #: survey/templates/editor/partials/generation_failed.html:13
@@ -1573,32 +1584,93 @@ msgstr "Sitzungsdetails"
 msgid "Close"
 msgstr ""
 
-#: survey/templates/editor/analytics_dashboard.html:517
+#: survey/templates/editor/analytics_dashboard.html:170
+#| msgid "Loading table..."
+msgid "Loading..."
+msgstr "Wird geladen …"
+
+#: survey/templates/editor/analytics_dashboard.html:181
+#: survey/templates/editor/analytics_dashboard_v2.html:189
 msgid "Validation Settings"
 msgstr "Prüfeinstellungen"
 
-#: survey/templates/editor/analytics_dashboard.html:522
+#: survey/templates/editor/analytics_dashboard.html:186
+#: survey/templates/editor/analytics_dashboard_v2.html:194
 msgid "Fast completion threshold (seconds)"
 msgstr "Schwelle für schnelles Ausfüllen (Sekunden)"
 
-#: survey/templates/editor/analytics_dashboard.html:524
+#: survey/templates/editor/analytics_dashboard.html:188
+#: survey/templates/editor/analytics_dashboard_v2.html:196
 msgid "Sessions completed faster than this are flagged"
 msgstr "Sitzungen, die schneller abgeschlossen werden, werden markiert"
 
-#: survey/templates/editor/analytics_dashboard.html:527
+#: survey/templates/editor/analytics_dashboard.html:191
+#: survey/templates/editor/analytics_dashboard_v2.html:199
 msgid "Duplicate detection window (hours)"
 msgstr "Zeitfenster für Dublettenerkennung (Stunden)"
 
-#: survey/templates/editor/analytics_dashboard.html:529
+#: survey/templates/editor/analytics_dashboard.html:193
+#: survey/templates/editor/analytics_dashboard_v2.html:201
 msgid "Sessions from same browser within this window are flagged"
 msgstr "Sitzungen desselben Browsers in diesem Zeitfenster werden markiert"
 
-#: survey/templates/editor/analytics_dashboard.html:534
+#: survey/templates/editor/analytics_dashboard.html:198
+#: survey/templates/editor/analytics_dashboard_v2.html:206
 #: survey/templates/editor/partials/thanks_panel.html:30
 #: survey/templates/editor/survey_detail.html:163
 #: survey/templates/org/org_settings.html:30
 msgid "Save"
 msgstr "Speichern"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:33
+msgid "Draft (test)"
+msgstr "Entwurf (Test)"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:39
+#| msgid "Responses"
+msgid "Responses panes"
+msgstr "Antwort-Bereiche"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:58
+msgid "Show two panes side by side"
+msgstr "Zwei Bereiche nebeneinander zeigen"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:62
+#| msgid "Back to sign in"
+msgid "Back to a single pane"
+msgstr "Zurück zu einem Bereich"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:154
+#| msgid "Responses"
+msgid "Response details"
+msgstr "Antwortdetails"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:156
+#| msgid "Responses"
+msgid "Response"
+msgstr "Antwort"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:158
+msgid "The list changed since this was opened"
+msgstr "Die Liste hat sich geändert, seit dies geöffnet wurde"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:161
+#| msgid "Preview"
+msgid "Previous"
+msgstr "Vorherige"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:162
+#: survey/templates/editor/partials/analytics_table.html:444
+#: survey/templates/partials/survey_section_partial.html:97
+#: survey/templates/survey_header_template.html:25
+#: survey/templates/survey_header_template.html:26
+#: survey/templates/survey_section_block.html:20
+msgid "Next"
+msgstr "Weiter"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:180
+msgid "Done"
+msgstr "Übernehmen"
 
 #: survey/templates/editor/editor_base.html:5
 msgid "– Mapsurvey"
@@ -1648,7 +1720,7 @@ msgid "Members"
 msgstr "Mitglieder"
 
 #: survey/templates/editor/editor_base.html:929
-#: survey/templates/editor/partials/analytics_performance.html:136
+#: survey/templates/editor/partials/analytics_performance.html:164
 msgid "Language"
 msgstr "Sprache"
 
@@ -1774,32 +1846,38 @@ msgstr "Verwerfen"
 msgid "Editor panes"
 msgstr "Editor-Bereiche"
 
-#: survey/templates/editor/partials/_mobile_nav.html:17
-msgid "Table"
-msgstr "Tabelle"
+#: survey/templates/editor/partials/_mobile_nav.html:25
+#: survey/templates/editor/partials/_survey_nav_tabs.html:32
+msgid "Responses"
+msgstr "Antworten"
 
-#: survey/templates/editor/partials/_mobile_nav.html:19
-msgid "Charts"
-msgstr "Diagramme"
-
-#: survey/templates/editor/partials/_mobile_nav.html:20
+#: survey/templates/editor/partials/_mobile_nav.html:26
+#: survey/templates/editor/partials/_mobile_nav.html:31
 msgid "Perf"
 msgstr "Perf"
 
-#: survey/templates/editor/partials/_mobile_nav.html:23
-#: survey/templates/editor/partials/_mobile_nav.html:29
+#: survey/templates/editor/partials/_mobile_nav.html:28
+msgid "Table"
+msgstr "Tabelle"
+
+#: survey/templates/editor/partials/_mobile_nav.html:30
+msgid "Charts"
+msgstr "Diagramme"
+
+#: survey/templates/editor/partials/_mobile_nav.html:34
+#: survey/templates/editor/partials/_mobile_nav.html:40
 msgid "Structure"
 msgstr "Struktur"
 
-#: survey/templates/editor/partials/_mobile_nav.html:24
-#: survey/templates/editor/partials/_mobile_nav.html:30
-#: survey/templates/editor/partials/analytics_session_detail.html:53
+#: survey/templates/editor/partials/_mobile_nav.html:35
+#: survey/templates/editor/partials/_mobile_nav.html:41
+#: survey/templates/editor/partials/analytics_session_detail.html:78
 #: survey/templates/editor/partials/survey_settings_panel.html:138
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: survey/templates/editor/partials/_mobile_nav.html:25
-#: survey/templates/editor/partials/_mobile_nav.html:31
+#: survey/templates/editor/partials/_mobile_nav.html:36
+#: survey/templates/editor/partials/_mobile_nav.html:42
 #: survey/templates/editor/partials/_survey_nav_tabs.html:64
 #: survey/templates/editor/partials/thanks_panel.html:8
 #: survey/templates/editor/public_results.html:222
@@ -1934,10 +2012,6 @@ msgstr "Umfrage"
 msgid "Responses & analysis"
 msgstr "Antworten und Auswertung"
 
-#: survey/templates/editor/partials/_survey_nav_tabs.html:32
-msgid "Responses"
-msgstr "Antworten"
-
 #: survey/templates/editor/partials/_survey_nav_tabs.html:35
 msgid "Public results page — a shareable page of aggregated responses"
 msgstr ""
@@ -2050,20 +2124,92 @@ msgid "Total Sessions"
 msgstr "Sitzungen gesamt"
 
 #: survey/templates/editor/partials/analytics_overview.html:9
-#: survey/templates/editor/partials/analytics_performance.html:18
-#: survey/templates/editor/partials/analytics_performance.html:200
-#: survey/templates/editor/partials/analytics_performance.html:284
+#: survey/templates/editor/partials/analytics_performance.html:29
+#: survey/templates/editor/partials/analytics_performance.html:228
+#: survey/templates/editor/partials/analytics_performance.html:312
 msgid "Completed"
 msgstr "Abgeschlossen"
 
 #: survey/templates/editor/partials/analytics_overview.html:13
-#: survey/templates/editor/partials/analytics_performance.html:22
+#: survey/templates/editor/partials/analytics_performance.html:33
 msgid "Completion Rate"
 msgstr "Abschlussquote"
 
 #: survey/templates/editor/partials/analytics_overview.html:18
 msgid "Flagged"
 msgstr "Markiert"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:11
+#| msgid "responses"
+msgid "No responses yet"
+msgstr "Noch keine Antworten"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:12
+msgid ""
+"Your survey is live. Share the link and responses will appear here in real "
+"time."
+msgstr ""
+"Ihre Umfrage ist live. Teilen Sie den Link, dann erscheinen die Antworten "
+"hier in Echtzeit."
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:24
+#: survey/templates/public_results.html:83
+msgid "responses"
+msgstr "Antworten"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:27
+#| msgid "Completion Rate"
+msgid "completion"
+msgstr "Abschluss"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:29
+msgid "median time"
+msgstr "mittlere Dauer"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:33
+msgid "map features"
+msgstr "Kartenobjekte"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:38
+#| msgid "Flagged"
+msgid "flagged"
+msgstr "markiert"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:47
+msgid "Open Map ›"
+msgstr "Karte öffnen ›"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:54
+#| msgid "Response Timeline"
+msgid "Responses this week"
+msgstr "Antworten diese Woche"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:61
+#: survey/templates/editor/partials/analytics_overview_pane.html:77
+#| msgid "Charts"
+msgid "Charts ›"
+msgstr "Diagramme ›"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:91
+#| msgid "Refresh preview"
+msgid "Needs review"
+msgstr "Prüfung nötig"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:106
+msgid "All ›"
+msgstr "Alle ›"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:118
+#: survey/templates/editor/partials/analytics_table.html:419
+#| msgid "On hold"
+msgid "on hold"
+msgstr "zurückgestellt"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:120
+#: survey/templates/editor/partials/analytics_table.html:421
+#| msgid "0 selected"
+msgid "rejected"
+msgstr "abgelehnt"
 
 #: survey/templates/editor/partials/analytics_performance.html:4
 msgid "No event data yet"
@@ -2085,19 +2231,33 @@ msgstr ""
 "Ereignisse erscheinen hier, sobald die erste teilnehmende Person eine "
 "veröffentlichte Umfrage aufruft."
 
-#: survey/templates/editor/partials/analytics_performance.html:14
+#: survey/templates/editor/partials/analytics_performance.html:25
+msgid "Sessions started <span class=\"perf-tracked-note\">(tracked visits)</span>"
+msgstr ""
+"Begonnene Sitzungen <span class=\"perf-tracked-note\">(erfasste "
+"Besuche)</span>"
+
+#: survey/templates/editor/partials/analytics_performance.html:25
 msgid "Sessions Started"
 msgstr "Begonnene Sitzungen"
 
-#: survey/templates/editor/partials/analytics_performance.html:28
+#: survey/templates/editor/partials/analytics_performance.html:29
+msgid "Completed <span class=\"perf-tracked-note\">(tracked)</span>"
+msgstr "Abgeschlossen <span class=\"perf-tracked-note\">(erfasst)</span>"
+
+#: survey/templates/editor/partials/analytics_performance.html:33
+msgid "Completion <span class=\"perf-tracked-note\">(of tracked)</span>"
+msgstr "Abschlussquote <span class=\"perf-tracked-note\">(der erfassten)</span>"
+
+#: survey/templates/editor/partials/analytics_performance.html:39
 msgid "Median Page Load"
 msgstr "Medianer Seitenaufbau"
 
-#: survey/templates/editor/partials/analytics_performance.html:35
+#: survey/templates/editor/partials/analytics_performance.html:46
 msgid "Section Funnel"
 msgstr "Abschnitts-Funnel"
 
-#: survey/templates/editor/partials/analytics_performance.html:36
+#: survey/templates/editor/partials/analytics_performance.html:47
 msgid ""
 "Views vs. submissions per section. Drop rate shows the percentage of "
 "respondents who viewed but did not submit."
@@ -2106,100 +2266,104 @@ msgstr ""
 " Anteil der Teilnehmenden, die den Abschnitt gesehen, aber nicht abgesendet "
 "haben."
 
-#: survey/templates/editor/partials/analytics_performance.html:45
+#: survey/templates/editor/partials/analytics_performance.html:69
 msgid "submits"
 msgstr "Absendungen"
 
-#: survey/templates/editor/partials/analytics_performance.html:53
+#: survey/templates/editor/partials/analytics_performance.html:81
 msgid "Submitted"
 msgstr "Abgesendet"
 
-#: survey/templates/editor/partials/analytics_performance.html:54
+#: survey/templates/editor/partials/analytics_performance.html:82
 msgid "Dropped"
 msgstr "Abgebrochen"
 
-#: survey/templates/editor/partials/analytics_performance.html:95
+#: survey/templates/editor/partials/analytics_performance.html:123
 msgid "Traffic Sources"
 msgstr "Zugriffsquellen"
 
-#: survey/templates/editor/partials/analytics_performance.html:99
-#: survey/templates/editor/partials/analytics_performance.html:198
-#: survey/templates/editor/partials/analytics_performance.html:280
+#: survey/templates/editor/partials/analytics_performance.html:127
+#: survey/templates/editor/partials/analytics_performance.html:226
+#: survey/templates/editor/partials/analytics_performance.html:308
 #: survey/templates/editor/survey_share.html:197
 msgid "Source"
 msgstr "Quelle"
 
-#: survey/templates/editor/partials/analytics_performance.html:100
-#: survey/templates/editor/partials/analytics_performance.html:137
+#: survey/templates/editor/partials/analytics_performance.html:128
+#: survey/templates/editor/partials/analytics_performance.html:165
 msgid "Sessions"
 msgstr "Sitzungen"
 
-#: survey/templates/editor/partials/analytics_performance.html:108
+#: survey/templates/editor/partials/analytics_performance.html:136
 msgid "Direct / Unknown"
 msgstr "Direkt / Unbekannt"
 
-#: survey/templates/editor/partials/analytics_performance.html:132
+#: survey/templates/editor/partials/analytics_performance.html:160
 #: survey/templates/editor/partials/survey_settings_panel.html:43
 #: survey/templates/metroquest_alternative.html:100
 msgid "Languages"
 msgstr ""
 
-#: survey/templates/editor/partials/analytics_performance.html:159
+#: survey/templates/editor/partials/analytics_performance.html:183
+msgid "Devices, OS &amp; Browsers"
+msgstr "Geräte, Betriebssysteme und Browser"
+
+#: survey/templates/editor/partials/analytics_performance.html:187
 msgid "Platform"
 msgstr "Plattform"
 
-#: survey/templates/editor/partials/analytics_performance.html:179
+#: survey/templates/editor/partials/analytics_performance.html:207
 msgid "Browser"
 msgstr "Browser"
 
-#: survey/templates/editor/partials/analytics_performance.html:194
+#: survey/templates/editor/partials/analytics_performance.html:222
 msgid "Completion Rate by Source"
 msgstr "Abschlussquote nach Quelle"
 
-#: survey/templates/editor/partials/analytics_performance.html:199
-#: survey/templates/editor/partials/analytics_performance.html:283
+#: survey/templates/editor/partials/analytics_performance.html:227
+#: survey/templates/editor/partials/analytics_performance.html:311
 msgid "Started"
 msgstr "Begonnen"
 
-#: survey/templates/editor/partials/analytics_performance.html:201
-#: survey/templates/editor/partials/analytics_performance.html:285
+#: survey/templates/editor/partials/analytics_performance.html:229
+#: survey/templates/editor/partials/analytics_performance.html:313
 msgid "Rate"
 msgstr "Quote"
 
-#: survey/templates/editor/partials/analytics_performance.html:221
+#: survey/templates/editor/partials/analytics_performance.html:249
 msgid "Time on Section"
 msgstr "Verweildauer im Abschnitt"
 
-#: survey/templates/editor/partials/analytics_performance.html:225
-#: survey/templates/editor/partials/analytics_performance.html:252
+#: survey/templates/editor/partials/analytics_performance.html:253
+#: survey/templates/editor/partials/analytics_performance.html:280
 msgid "Section"
 msgstr "Abschnitt"
 
-#: survey/templates/editor/partials/analytics_performance.html:226
-#: survey/templates/editor/partials/analytics_performance.html:253
+#: survey/templates/editor/partials/analytics_performance.html:254
+#: survey/templates/editor/partials/analytics_performance.html:281
 msgid "Avg"
 msgstr "Ø"
 
-#: survey/templates/editor/partials/analytics_performance.html:227
-#: survey/templates/editor/partials/analytics_performance.html:254
+#: survey/templates/editor/partials/analytics_performance.html:255
+#: survey/templates/editor/partials/analytics_performance.html:282
 #: survey/templates/editor/partials/analytics_question_stats.html:97
 msgid "Median"
 msgstr "Median"
 
-#: survey/templates/editor/partials/analytics_performance.html:228
-#: survey/templates/editor/partials/analytics_performance.html:255
+#: survey/templates/editor/partials/analytics_performance.html:256
+#: survey/templates/editor/partials/analytics_performance.html:283
 msgid "Samples"
 msgstr "Stichproben"
 
-#: survey/templates/editor/partials/analytics_performance.html:248
+#: survey/templates/editor/partials/analytics_performance.html:276
 msgid "Page Load Time by Section"
 msgstr "Ladezeit je Abschnitt"
 
-#: survey/templates/editor/partials/analytics_performance.html:275
+#: survey/templates/editor/partials/analytics_performance.html:303
 msgid "Campaign Breakdown"
 msgstr "Aufschlüsselung nach Kampagne"
 
-#: survey/templates/editor/partials/analytics_performance.html:276
+#: survey/templates/editor/partials/analytics_performance.html:304
 #, python-format
 msgid ""
 "Sessions from tracked UTM links. Create links on the <a "
@@ -2208,12 +2372,12 @@ msgstr ""
 "Sitzungen aus getrackten UTM-Links. Links erstellen Sie auf der Seite <a "
 "href=\"%(share_url)s\">Teilen</a>."
 
-#: survey/templates/editor/partials/analytics_performance.html:281
+#: survey/templates/editor/partials/analytics_performance.html:309
 #: survey/templates/editor/survey_share.html:198
 msgid "Medium"
 msgstr "Medium"
 
-#: survey/templates/editor/partials/analytics_performance.html:282
+#: survey/templates/editor/partials/analytics_performance.html:310
 #: survey/templates/editor/survey_share.html:199
 msgid "Campaign"
 msgstr "Kampagne"
@@ -2254,236 +2418,273 @@ msgstr "Schritt:"
 msgid "No questions in this survey."
 msgstr "Keine Fragen in dieser Umfrage."
 
-#: survey/templates/editor/partials/analytics_session_detail.html:9
-#: survey/templates/editor/partials/analytics_table.html:88
-#: survey/templates/editor/partials/analytics_table.html:255
+#: survey/templates/editor/partials/analytics_session_detail.html:11
+#: survey/templates/editor/partials/analytics_table.html:170
+#: survey/templates/editor/partials/analytics_table.html:346
+#: survey/templates/editor/partials/analytics_table.html:351
 msgid "Approved"
 msgstr "Freigegeben"
 
-#: survey/templates/editor/partials/analytics_session_detail.html:10
-#: survey/templates/editor/partials/analytics_table.html:89
-#: survey/templates/editor/partials/analytics_table.html:256
+#: survey/templates/editor/partials/analytics_session_detail.html:12
+#: survey/templates/editor/partials/analytics_table.html:171
+#: survey/templates/editor/partials/analytics_table.html:347
+#: survey/templates/editor/partials/analytics_table.html:352
 msgid "Not approved"
 msgstr "Nicht freigegeben"
 
-#: survey/templates/editor/partials/analytics_session_detail.html:11
-#: survey/templates/editor/partials/analytics_table.html:90
-#: survey/templates/editor/partials/analytics_table.html:257
+#: survey/templates/editor/partials/analytics_session_detail.html:13
+#: survey/templates/editor/partials/analytics_table.html:172
+#: survey/templates/editor/partials/analytics_table.html:348
+#: survey/templates/editor/partials/analytics_table.html:353
 msgid "On hold"
 msgstr "Zurückgestellt"
 
-#: survey/templates/editor/partials/analytics_session_detail.html:13
+#: survey/templates/editor/partials/analytics_session_detail.html:15
 msgid "Trashed"
 msgstr "Im Papierkorb"
 
-#: survey/templates/editor/partials/analytics_session_detail.html:17
-#: survey/templates/editor/partials/analytics_table.html:95
-#: survey/templates/editor/partials/analytics_table.html:227
+#: survey/templates/editor/partials/analytics_session_detail.html:19
+#: survey/templates/editor/partials/analytics_table.html:177
+#: survey/templates/editor/partials/analytics_table.html:312
 msgid "Restore"
 msgstr "Wiederherstellen"
 
-#: survey/templates/editor/partials/analytics_session_detail.html:24
-#: survey/templates/editor/partials/analytics_table.html:31
-#: survey/templates/editor/partials/analytics_table.html:102
+#: survey/templates/editor/partials/analytics_session_detail.html:26
+#: survey/templates/editor/partials/analytics_table.html:112
+#: survey/templates/editor/partials/analytics_table.html:184
 msgid "Trash"
 msgstr "Papierkorb"
 
-#: survey/templates/editor/partials/analytics_session_detail.html:34
+#: survey/templates/editor/partials/analytics_session_detail.html:59
 #: survey/templates/editor/partials/pr_add_block_modal.html:21
 msgid "Question"
 msgstr "Frage"
 
-#: survey/templates/editor/partials/analytics_session_detail.html:35
+#: survey/templates/editor/partials/analytics_session_detail.html:60
 msgid "Answer"
-msgstr "Antwort"
+msgstr "Einzelantwort"
 
-#: survey/templates/editor/partials/analytics_session_detail.html:72
+#: survey/templates/editor/partials/analytics_session_detail.html:97
 msgid "No answers in this session."
 msgstr "Keine Antworten in dieser Sitzung."
 
-#: survey/templates/editor/partials/analytics_session_detail.html:78
+#: survey/templates/editor/partials/analytics_session_detail.html:103
 msgid "Tags"
 msgstr "Tags"
 
-#: survey/templates/editor/partials/analytics_session_detail.html:84
+#: survey/templates/editor/partials/analytics_session_detail.html:109
 msgid "Add tag..."
 msgstr "Tag hinzufügen …"
 
-#: survey/templates/editor/partials/analytics_session_detail.html:89
+#: survey/templates/editor/partials/analytics_session_detail.html:114
 msgid "Notes"
 msgstr "Notizen"
 
-#: survey/templates/editor/partials/analytics_session_detail.html:91
+#: survey/templates/editor/partials/analytics_session_detail.html:116
 msgid "Add notes..."
 msgstr "Notizen hinzufügen …"
 
-#: survey/templates/editor/partials/analytics_table.html:24
+#: survey/templates/editor/partials/analytics_table.html:68
+msgid "Search all columns"
+msgstr "Alle Spalten durchsuchen"
+
+#: survey/templates/editor/partials/analytics_table.html:72
+#: survey/templates/editor/partials/analytics_table.html:105
 msgid "Show/hide columns"
 msgstr "Spalten ein-/ausblenden"
 
-#: survey/templates/editor/partials/analytics_table.html:25
-msgid "Hide fields"
-msgstr "Felder ausblenden"
-
-#: survey/templates/editor/partials/analytics_table.html:30
-msgid "Show/hide trash"
-msgstr "Papierkorb ein-/ausblenden"
-
-#: survey/templates/editor/partials/analytics_table.html:53
-msgid "Remove filter"
-msgstr "Filter entfernen"
-
-#: survey/templates/editor/partials/analytics_table.html:57
-msgid "Clear all"
-msgstr "Alle zurücksetzen"
-
-#: survey/templates/editor/partials/analytics_table.html:60
-msgid "Show hidden"
-msgstr "Ausgeblendete anzeigen"
-
-#: survey/templates/editor/partials/analytics_table.html:65
+#: survey/templates/editor/partials/analytics_table.html:76
+#: survey/templates/editor/partials/analytics_table.html:146
 msgid "Validation settings"
 msgstr "Prüfeinstellungen"
 
-#: survey/templates/editor/partials/analytics_table.html:78
+#: survey/templates/editor/partials/analytics_table.html:93
+#| msgid "responses"
+msgid "Search responses"
+msgstr "Antworten durchsuchen"
+
+#: survey/templates/editor/partials/analytics_table.html:106
+msgid "Hide fields"
+msgstr "Felder ausblenden"
+
+#: survey/templates/editor/partials/analytics_table.html:111
+msgid "Show/hide trash"
+msgstr "Papierkorb ein-/ausblenden"
+
+#: survey/templates/editor/partials/analytics_table.html:118
+#| msgid "All Versions"
+msgid "All sessions"
+msgstr "Alle Sitzungen"
+
+#: survey/templates/editor/partials/analytics_table.html:119
+#: survey/templates/editor/partials/analytics_table.html:358
+msgid "Empty"
+msgstr "Leer"
+
+#: survey/templates/editor/partials/analytics_table.html:120
+#: survey/templates/editor/partials/analytics_table.html:359
+msgid "Incomplete"
+msgstr "Unvollständig"
+
+#: survey/templates/editor/partials/analytics_table.html:121
+#| msgid "Missing req."
+msgid "Missing required"
+msgstr "Pflichtfeld fehlt"
+
+#: survey/templates/editor/partials/analytics_table.html:122
+#| msgid "Paste section"
+msgid "Fast completion"
+msgstr "Schnell abgeschlossen"
+
+#: survey/templates/editor/partials/analytics_table.html:123
+#: survey/templates/editor/partials/analytics_table.html:362
+#: survey/templates/editor/partials/section_list_item.html:15
+msgid "Duplicate"
+msgstr "Dublette"
+
+#: survey/templates/editor/partials/analytics_table.html:124
+msgid "Has answer errors"
+msgstr "Enthält Antwortfehler"
+
+#: survey/templates/editor/partials/analytics_table.html:125
+msgid "Has answer warnings"
+msgstr "Enthält Antwortwarnungen"
+
+#: survey/templates/editor/partials/analytics_table.html:134
+msgid "Remove filter"
+msgstr "Filter entfernen"
+
+#: survey/templates/editor/partials/analytics_table.html:138
+msgid "Clear all"
+msgstr "Alle zurücksetzen"
+
+#: survey/templates/editor/partials/analytics_table.html:141
+msgid "Show hidden"
+msgstr "Ausgeblendete anzeigen"
+
+#: survey/templates/editor/partials/analytics_table.html:160
 msgid "Deselect all"
 msgstr "Auswahl aufheben"
 
-#: survey/templates/editor/partials/analytics_table.html:84
+#: survey/templates/editor/partials/analytics_table.html:166
 #: survey/templates/metroquest_alternative.html:95
 msgid "Status"
 msgstr ""
 
-#: survey/templates/editor/partials/analytics_table.html:87
+#: survey/templates/editor/partials/analytics_table.html:169
 msgid "— No status"
 msgstr "— Kein Status"
 
-#: survey/templates/editor/partials/analytics_table.html:98
-#: survey/templates/editor/partials/analytics_table.html:230
+#: survey/templates/editor/partials/analytics_table.html:180
+#: survey/templates/editor/partials/analytics_table.html:315
 msgid "Delete permanently"
 msgstr "Endgültig löschen"
 
-#: survey/templates/editor/partials/analytics_table.html:106
+#: survey/templates/editor/partials/analytics_table.html:188
 msgid "Hide selected rows"
 msgstr "Ausgewählte Zeilen ausblenden"
 
-#: survey/templates/editor/partials/analytics_table.html:109
+#: survey/templates/editor/partials/analytics_table.html:191
 msgid "Keep only selected, hide rest"
 msgstr "Nur Ausgewählte behalten, Rest ausblenden"
 
-#: survey/templates/editor/partials/analytics_table.html:112
+#: survey/templates/editor/partials/analytics_table.html:194
 msgid "Invert selection"
 msgstr "Auswahl umkehren"
 
-#: survey/templates/editor/partials/analytics_table.html:138
+#: survey/templates/editor/partials/analytics_table.html:221
 msgid "Visible columns"
 msgstr "Sichtbare Spalten"
 
-#: survey/templates/editor/partials/analytics_table.html:163
+#: survey/templates/editor/partials/analytics_table.html:246
 msgid "Select / deselect all"
 msgstr "Alle aus-/abwählen"
 
-#: survey/templates/editor/partials/analytics_table.html:170
+#: survey/templates/editor/partials/analytics_table.html:253
 msgid "Drag to reorder"
 msgstr "Zum Umsortieren ziehen"
 
-#: survey/templates/editor/partials/analytics_table.html:184
+#: survey/templates/editor/partials/analytics_table.html:267
 msgid "Sort"
 msgstr "Sortieren"
 
-#: survey/templates/editor/partials/analytics_table.html:193
-#: survey/templates/editor/partials/analytics_table.html:336
+#: survey/templates/editor/partials/analytics_table.html:276
+#: survey/templates/editor/partials/analytics_table.html:462
 msgid "Filter"
 msgstr "Filtern"
 
-#: survey/templates/editor/partials/analytics_table.html:196
+#: survey/templates/editor/partials/analytics_table.html:279
 msgid "Column options"
 msgstr "Spaltenoptionen"
 
-#: survey/templates/editor/partials/analytics_table.html:222
+#: survey/templates/editor/partials/analytics_table.html:307
 msgid "View details"
 msgstr "Details ansehen"
 
-#: survey/templates/editor/partials/analytics_table.html:234
+#: survey/templates/editor/partials/analytics_table.html:319
 msgid "Move to trash"
 msgstr "In den Papierkorb verschieben"
 
-#: survey/templates/editor/partials/analytics_table.html:262
+#: survey/templates/editor/partials/analytics_table.html:358
 msgid "Session has 0 answers"
 msgstr "Sitzung enthält 0 Antworten"
 
-#: survey/templates/editor/partials/analytics_table.html:262
-msgid "Empty"
-msgstr "Leer"
-
-#: survey/templates/editor/partials/analytics_table.html:263
+#: survey/templates/editor/partials/analytics_table.html:359
 msgid "Session did not reach the last section"
 msgstr "Sitzung hat den letzten Abschnitt nicht erreicht"
 
-#: survey/templates/editor/partials/analytics_table.html:263
-msgid "Incomplete"
-msgstr "Unvollständig"
-
-#: survey/templates/editor/partials/analytics_table.html:264
+#: survey/templates/editor/partials/analytics_table.html:360
 msgid "Required question was skipped in a visited section"
 msgstr "Eine Pflichtfrage wurde in einem besuchten Abschnitt übersprungen"
 
-#: survey/templates/editor/partials/analytics_table.html:264
+#: survey/templates/editor/partials/analytics_table.html:360
 msgid "Missing req."
-msgstr "Pflichtfeld fehlt"
+msgstr "Pflichtf. fehlt"
 
-#: survey/templates/editor/partials/analytics_table.html:265
+#: survey/templates/editor/partials/analytics_table.html:361
 msgid "Session completed suspiciously fast"
 msgstr "Sitzung wurde auffällig schnell abgeschlossen"
 
-#: survey/templates/editor/partials/analytics_table.html:265
+#: survey/templates/editor/partials/analytics_table.html:361
 msgid "Fast"
 msgstr "Schnell"
 
-#: survey/templates/editor/partials/analytics_table.html:266
+#: survey/templates/editor/partials/analytics_table.html:362
 msgid "Same browser submitted multiple sessions within the detection window"
 msgstr ""
 "Derselbe Browser hat mehrere Sitzungen innerhalb des Erkennungsfensters "
 "abgesendet"
 
-#: survey/templates/editor/partials/analytics_table.html:266
-#: survey/templates/editor/partials/section_list_item.html:15
-msgid "Duplicate"
-msgstr "Dublette"
+#: survey/templates/editor/partials/analytics_table.html:427
+#| msgid "responses"
+msgid "No responses"
+msgstr "Keine Antworten"
 
-#: survey/templates/editor/partials/analytics_table.html:312
+#: survey/templates/editor/partials/analytics_table.html:438
 msgid "Prev"
-msgstr "Vorherige"
+msgstr "Vorh."
 
-#: survey/templates/editor/partials/analytics_table.html:318
-#: survey/templates/partials/survey_section_partial.html:97
-#: survey/templates/survey_header_template.html:25
-#: survey/templates/survey_header_template.html:26
-#: survey/templates/survey_section_block.html:20
-msgid "Next"
-msgstr "Weiter"
-
-#: survey/templates/editor/partials/analytics_table.html:322
+#: survey/templates/editor/partials/analytics_table.html:448
 msgid "Rows:"
 msgstr "Zeilen:"
 
-#: survey/templates/editor/partials/analytics_table.html:342
+#: survey/templates/editor/partials/analytics_table.html:468
 msgid "Clear"
 msgstr "Zurücksetzen"
 
-#: survey/templates/editor/partials/analytics_table.html:348
+#: survey/templates/editor/partials/analytics_table.html:474
 msgid "Sort A→Z"
 msgstr "Sortieren A→Z"
 
-#: survey/templates/editor/partials/analytics_table.html:349
+#: survey/templates/editor/partials/analytics_table.html:475
 msgid "Sort Z→A"
 msgstr "Sortieren Z→A"
 
-#: survey/templates/editor/partials/analytics_table.html:351
+#: survey/templates/editor/partials/analytics_table.html:477
 msgid "Hide field"
 msgstr "Feld ausblenden"
 
-#: survey/templates/editor/partials/analytics_table.html:352
+#: survey/templates/editor/partials/analytics_table.html:478
 msgid "Freeze field"
 msgstr "Feld fixieren"
 
@@ -5809,10 +6010,6 @@ msgstr "Umfrageergebnisse"
 msgid "Unlisted — viewable by direct link only, not indexed."
 msgstr ""
 "Nicht gelistet — nur über den direkten Link sichtbar, nicht indexiert."
-
-#: survey/templates/public_results.html:83
-msgid "responses"
-msgstr "Antworten"
 
 #: survey/templates/public_results.html:86
 msgid "Take the survey"

@@ -1,0 +1,929 @@
+window.analyticsCharts = new Map();
+window.analyticsChartCodes = new Map();
+window.analyticsChoiceLabels = new Map();
+window.analyticsQuestionNames = new Map();
+window.analyticsHistBins = new Map();
+window.analyticsHistCharts = new Map();
+
+function _escapeHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.textContent;
+}
+
+function FilterManager(matrix) {
+    this._matrix = matrix;
+    this.filters = new Map();
+    this.numericRanges = new Map();
+    this.timeRange = null;          // {from, to} | null
+    this._hiddenSids = new Set();
+    this.visibleSids = null;        // null = all visible
+    this._choiceNumericSids = null; // before time range (for timeline cross-filter)
+    this.textQuestionIds = [];
+    this._components = [];
+    this._allSessionIds = new Set(matrix.map(function(s) { return s.sid; }));
+}
+
+FilterManager.prototype.toggleFilter = function(qid, code) {
+    qid = String(qid);
+    code = Number(code);
+    if (!this.filters.has(qid)) {
+        this.filters.set(qid, new Set());
+    }
+    var codes = this.filters.get(qid);
+    if (codes.has(code)) {
+        codes.delete(code);
+        if (codes.size === 0) this.filters.delete(qid);
+    } else {
+        codes.add(code);
+    }
+    this._apply();
+};
+
+FilterManager.prototype.setNumericRange = function(qid, min, max) {
+    qid = String(qid);
+    if (min === null || max === null) {
+        this.numericRanges.delete(qid);
+    } else {
+        this.numericRanges.set(qid, { min: min, max: max });
+    }
+    this._apply();
+};
+
+FilterManager.prototype.clearAll = function() {
+    var numQids = Array.from(this.numericRanges.keys());
+    this.filters.clear();
+    this.numericRanges.clear();
+    this.timeRange = null;
+    this._hiddenSids.clear();
+    numQids.forEach(function(qid) {
+        if (window._resetNumericHandles) window._resetNumericHandles(qid);
+    });
+    if (window._resetTimelineHandles) window._resetTimelineHandles();
+    if (window.selectionManager) window.selectionManager.clear();
+    this._apply();
+};
+
+FilterManager.prototype._intersect = function(a, b) {
+    if (a === null && b === null) return null;
+    if (a === null) return new Set(b);
+    if (b === null) return new Set(a);
+    var r = new Set();
+    b.forEach(function(sid) { if (a.has(sid)) r.add(sid); });
+    return r;
+};
+
+FilterManager.prototype.registerComponent = function(fn) {
+    this._components.push(fn);
+};
+
+FilterManager.prototype._apply = function() {
+    this._applying = true;
+    this._recompute();
+    var self = this;
+    this._components.forEach(function(fn) { fn.call(self); });
+    this._applying = false;
+};
+
+FilterManager.prototype.getFilterParam = function() {
+    if (this.filters.size === 0) return '';
+    var parts = [];
+    this.filters.forEach(function(codes, qid) {
+        parts.push(qid + ':' + Array.from(codes).join(','));
+    });
+    return parts.join(';');
+};
+
+FilterManager.prototype.setTimeRange = function(from, to) {
+    this.timeRange = (from || to) ? { from: from, to: to } : null;
+    this._apply();
+};
+
+FilterManager.prototype.hideSelected = function() {
+    var sm = window.selectionManager;
+    if (!sm) return;
+    var sel = sm.getSelected();
+    sel.forEach(function(id) { this._hiddenSids.add(id); }.bind(this));
+    sm.clear();
+    this._apply();
+};
+
+FilterManager.prototype.keepOnlySelected = function() {
+    var sm = window.selectionManager;
+    if (!sm) return;
+    var sel = sm.getSelected();
+    var universe = this.visibleSids || this._allSessionIds;
+    universe.forEach(function(id) {
+        if (!sel.has(id)) this._hiddenSids.add(id);
+    }.bind(this));
+    sm.clear();
+    this._apply();
+};
+
+FilterManager.prototype.showAll = function() {
+    this._hiddenSids.clear();
+    this._apply();
+};
+
+FilterManager.prototype.getVisibleSids = function() {
+    return this.visibleSids;
+};
+
+FilterManager.prototype._visibleMatrix = function() {
+    if (this._hiddenSids.size === 0) return this._matrix;
+    var hidden = this._hiddenSids;
+    return this._matrix.filter(function(s) { return !hidden.has(s.sid); });
+};
+
+FilterManager.prototype._recompute = function() {
+    var hasChoiceOrNumeric = this.filters.size > 0 || this.numericRanges.size > 0;
+    var hasTime = !!this.timeRange;
+    var hasHidden = this._hiddenSids.size > 0;
+    var self = this;
+
+    // Phase 1: choice + numeric filters on visible (non-hidden) matrix
+    var choiceNumericResult = null;
+    if (hasChoiceOrNumeric) {
+        choiceNumericResult = new Set();
+        self._visibleMatrix().forEach(function(session) {
+            var passes = true;
+            self.filters.forEach(function(codes, qid) {
+                if (!passes) return;
+                var sessionCodes = session.a[qid];
+                if (!sessionCodes) { passes = false; return; }
+                var hasMatch = false;
+                codes.forEach(function(c) {
+                    if (sessionCodes.indexOf(c) !== -1) hasMatch = true;
+                });
+                if (!hasMatch) passes = false;
+            });
+            if (passes) {
+                self.numericRanges.forEach(function(range, qid) {
+                    if (!passes) return;
+                    var val = session.n ? session.n[qid] : undefined;
+                    if (val === undefined) { passes = false; return; }
+                    if (val < range.min || val > range.max) passes = false;
+                });
+            }
+            if (passes) choiceNumericResult.add(session.sid);
+        });
+    }
+    this._choiceNumericSids = choiceNumericResult;
+
+    // Phase 2: intersect with time range
+    var result = choiceNumericResult;
+    if (hasTime) {
+        var tr = this.timeRange;
+        var timeSids = new Set();
+        (window._sessionHours || []).forEach(function(entry) {
+            var sid = entry[0], h = entry[1];
+            if (hasHidden && self._hiddenSids.has(sid)) return;
+            if ((!tr.from || h >= tr.from) && (!tr.to || h <= tr.to)) timeSids.add(sid);
+        });
+        result = self._intersect(result, timeSids);
+    }
+
+    // Phase 3: if only hidden active (no filters/time), build visible set
+    if (!hasChoiceOrNumeric && !hasTime && hasHidden) {
+        result = new Set();
+        self._allSessionIds.forEach(function(id) {
+            if (!self._hiddenSids.has(id)) result.add(id);
+        });
+    }
+
+    this.visibleSids = result;
+};
+
+// Compute filtered SID set excluding one specific filter (leave-one-out cross-filter).
+// excludeType: 'choice' or 'numeric', excludeQid: the question to skip.
+// Returns null if no other filters are active (= all sessions pass).
+FilterManager.prototype._crossFilterSids = function(excludeType, excludeQid) {
+    var self = this;
+    var otherChoices = (excludeType === 'choice') ? self.filters.size - 1 : self.filters.size;
+    var otherNumerics = (excludeType === 'numeric') ? self.numericRanges.size - 1 : self.numericRanges.size;
+    if (otherChoices <= 0 && otherNumerics <= 0) return null;
+
+    var result = new Set();
+    self._visibleMatrix().forEach(function(session) {
+        var passes = true;
+        self.filters.forEach(function(codes, fqid) {
+            if (!passes || (excludeType === 'choice' && fqid === excludeQid)) return;
+            var sc = session.a[fqid];
+            if (!sc) { passes = false; return; }
+            var m = false;
+            codes.forEach(function(c) { if (sc.indexOf(c) !== -1) m = true; });
+            if (!m) passes = false;
+        });
+        if (passes) {
+            self.numericRanges.forEach(function(r, rqid) {
+                if (!passes || (excludeType === 'numeric' && rqid === excludeQid)) return;
+                var v = session.n ? session.n[rqid] : undefined;
+                if (v === undefined) { passes = false; return; }
+                if (v < r.min || v > r.max) passes = false;
+            });
+        }
+        if (passes) result.add(session.sid);
+    });
+    return result;
+};
+
+FilterManager.prototype._updateCharts = function() {
+    var self = this;
+    var hasAnyFilter = self.filters.size > 0 || self.numericRanges.size > 0;
+
+    // Bin assignment helper — must match computeBinsFromStep formula
+    function binIndex(val, bins) {
+        var binMin = bins[0][0];
+        var binStep = bins[0][1] - bins[0][0];
+        if (binStep <= 0) return 0;
+        var idx = Math.min(Math.floor((val - binMin) / binStep), bins.length - 1);
+        return idx >= 0 ? idx : -1;
+    }
+
+    // Cross-filter (Power BI):
+    //   Source chart → recompute from all OTHER filters (own filter only highlights)
+    //   Non-source chart → recompute from all filters (visibleSids)
+
+    // --- Choice charts ---
+    window.analyticsCharts.forEach(function(chart, qid) {
+        var chartCodes = window.analyticsChartCodes.get(qid);
+        var qFilters = self.filters.get(qid);
+        var isFilterSource = qFilters && qFilters.size > 0;
+
+        if (isFilterSource) {
+            var crossSids = self._crossFilterSids('choice', qid);
+            chart.data.datasets[0].data = self._computeCountsFrom(qid, crossSids);
+        } else {
+            chart.data.datasets[0].data = self._computeCountsFrom(qid, self.visibleSids);
+        }
+
+        chart.data.datasets[0].backgroundColor = chart.data.datasets[0].data.map(function(_, idx) {
+            if (!chartCodes) return 'rgba(79, 70, 229, 0.7)';
+            if (!hasAnyFilter) return 'rgba(79, 70, 229, 0.7)';
+            var code = chartCodes[idx];
+            if (isFilterSource) {
+                return qFilters.has(code) ? 'rgba(79, 70, 229, 1.0)' : 'rgba(79, 70, 229, 0.35)';
+            }
+            return 'rgba(79, 70, 229, 0.7)';
+        });
+        // Save base state for _renderSelection overlay
+        chart._baseCounts = chart.data.datasets[0].data.slice();
+        chart._baseColors = chart.data.datasets[0].backgroundColor instanceof Array
+            ? chart.data.datasets[0].backgroundColor.slice()
+            : chart.data.datasets[0].backgroundColor;
+        chart.update('none');
+    });
+
+    // --- Histogram charts ---
+    window.analyticsHistCharts.forEach(function(chart, qid) {
+        var bins = window.analyticsHistBins.get(qid);
+        if (!bins) return;
+        var range = self.numericRanges.get(qid);
+        var isSource = !!range;
+
+        var sids = isSource ? self._crossFilterSids('numeric', qid) : self.visibleSids;
+
+        var counts = new Array(bins.length).fill(0);
+        self._visibleMatrix().forEach(function(session) {
+            if (sids !== null && !sids.has(session.sid)) return;
+            var val = session.n ? session.n[qid] : undefined;
+            if (val === undefined) return;
+            var idx = binIndex(val, bins);
+            if (idx >= 0) counts[idx]++;
+        });
+        chart.data.datasets[0].data = counts;
+
+        chart.data.datasets[0].backgroundColor = chart.data.datasets[0].data.map(function(_, idx) {
+            if (range) {
+                var binMid = (bins[idx][0] + bins[idx][1]) / 2;
+                if (binMid >= range.min && binMid <= range.max) return 'rgba(79, 70, 229, 0.8)';
+                return 'rgba(79, 70, 229, 0.15)';
+            }
+            if (!hasAnyFilter) return 'rgba(79, 70, 229, 0.5)';
+            return 'rgba(79, 70, 229, 0.5)';
+        });
+        // Save base state for _renderSelection overlay
+        chart._baseCounts = chart.data.datasets[0].data.slice();
+        chart._baseColors = chart.data.datasets[0].backgroundColor instanceof Array
+            ? chart.data.datasets[0].backgroundColor.slice()
+            : chart.data.datasets[0].backgroundColor;
+        chart.update('none');
+    });
+};
+
+FilterManager.prototype._computeCountsFrom = function(qid, sids) {
+    var codes = window.analyticsChartCodes.get(qid);
+    if (!codes) return [];
+    var tally = {};
+    codes.forEach(function(c) { tally[c] = 0; });
+    this._visibleMatrix().forEach(function(session) {
+        if (sids !== null && !sids.has(session.sid)) return;
+        var sessionCodes = session.a[qid];
+        if (!sessionCodes) return;
+        sessionCodes.forEach(function(c) {
+            if (tally.hasOwnProperty(c)) tally[c]++;
+        });
+    });
+    return codes.map(function(c) { return tally[c] || 0; });
+};
+
+FilterManager.prototype._updateGeoMap = function() {
+    if (window.layerManager) window.layerManager.setFilter(this.visibleSids);
+};
+
+FilterManager.prototype._updateTimeline = function() {
+    if (!window._timelineChart || !window._sessionHours) return;
+    // Timeline cross-filters by choice/numeric only (not by own time range)
+    var sids = this._choiceNumericSids;
+    var hidden = this._hiddenSids;
+    var hasHidden = hidden.size > 0;
+
+    if (sids === null && !hasHidden) {
+        if (typeof window._updateTimelineFromHourly === 'function') {
+            window._updateTimelineFromHourly();
+        }
+        return;
+    }
+
+    var gran = document.getElementById('timeline-granularity');
+    var fromInput = document.getElementById('timeline-from');
+    var toInput = document.getElementById('timeline-to');
+    if (!gran || !fromInput || !toInput) return;
+
+    var from = fromInput.value;
+    var to = toInput.value;
+    var granVal = gran.value;
+
+    var buckets = {};
+    window._sessionHours.forEach(function(entry) {
+        var sid = entry[0], h = entry[1], completed = entry[2];
+        if (hasHidden && hidden.has(sid)) return;
+        if (sids !== null && !sids.has(sid)) return;
+        if ((from && h < from) || (to && h > to)) return;
+        var key = window._timelineBucketKey(h, granVal);
+        if (!buckets[key]) buckets[key] = { total: 0, completed: 0 };
+        buckets[key].total += 1;
+        if (completed) buckets[key].completed += 1;
+    });
+
+    var keys = Object.keys(buckets).sort();
+    window._timelineChart.data.labels = keys.map(function(k) { return window._timelineFormatLabel(k, granVal); });
+    window._timelineChart.data.datasets[0].data = keys.map(function(k) { return buckets[k].total; });
+    window._timelineChart.data.datasets[1].data = keys.map(function(k) { return buckets[k].completed; });
+    window._timelineChart.update('none');
+};
+
+FilterManager.prototype._updateNumericStats = function() {
+    var self = this;
+    document.querySelectorAll('[data-num-stats]').forEach(function(el) {
+        var qid = el.dataset.numStats;
+        var values = [];
+        self._visibleMatrix().forEach(function(session) {
+            if (self.visibleSids !== null && !self.visibleSids.has(session.sid)) return;
+            var val = session.n ? session.n[qid] : undefined;
+            if (val !== undefined) values.push(val);
+        });
+        el.querySelector('[data-ns="count"]').textContent = values.length;
+        if (values.length > 0) {
+            values.sort(function(a, b) { return a - b; });
+            var sum = values.reduce(function(a, b) { return a + b; }, 0);
+            el.querySelector('[data-ns="avg"]').textContent = (sum / values.length).toFixed(1);
+            var mid = Math.floor(values.length / 2);
+            var median = values.length % 2 !== 0 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
+            el.querySelector('[data-ns="median"]').textContent = median.toFixed(1);
+            el.querySelector('[data-ns="min"]').textContent = values[0];
+            el.querySelector('[data-ns="max"]').textContent = values[values.length - 1];
+        } else {
+            ['avg', 'median', 'min', 'max'].forEach(function(k) {
+                el.querySelector('[data-ns="' + k + '"]').textContent = '\u2013';
+            });
+        }
+    });
+};
+
+FilterManager.prototype._updatePills = function() {
+    var bar = document.getElementById('filter-pills-bar');
+    if (!bar) return;
+    var self = this;
+    var hasAnything = this.filters.size > 0 || this.numericRanges.size > 0 || !!this.timeRange || this._hiddenSids.size > 0;
+    var hasSel = window.selectionManager && window.selectionManager.hasSelection();
+
+    if (!hasAnything && !hasSel) {
+        while (bar.firstChild) bar.removeChild(bar.firstChild);
+        bar.style.display = 'none';
+        document.querySelectorAll('.q-filter-pills').forEach(function(c) {
+            while (c.firstChild) c.removeChild(c.firstChild);
+            c.style.display = 'none';
+        });
+        return;
+    }
+    bar.style.display = 'flex';
+    while (bar.firstChild) bar.removeChild(bar.firstChild);
+
+    var label = document.createElement('span');
+    label.style.cssText = 'font-size:0.8rem;color:#6b7280;align-self:center;';
+    label.textContent = 'Filters:';
+    bar.appendChild(label);
+
+    this.filters.forEach(function(codes, qid) {
+        var qName = window.analyticsQuestionNames ? window.analyticsQuestionNames.get(qid) : null;
+        codes.forEach(function(code) {
+            var choiceLabel = window.analyticsChoiceLabels.get(qid + ':' + code) || String(code);
+            var pillText = qName ? qName + ': ' + choiceLabel : choiceLabel;
+            var pill = document.createElement('span');
+            pill.className = 'filter-pill';
+            pill.textContent = pillText + ' \u00d7';
+            pill.addEventListener('click', function() { self.toggleFilter(qid, code); });
+            bar.appendChild(pill);
+        });
+    });
+
+    this.numericRanges.forEach(function(range, qid) {
+        var qName = window.analyticsQuestionNames ? window.analyticsQuestionNames.get(qid) : null;
+        var pillText = (qName ? qName + ': ' : '') + range.min + ' \u2013 ' + range.max;
+        var pill = document.createElement('span');
+        pill.className = 'filter-pill';
+        pill.textContent = pillText + ' \u00d7';
+        pill.addEventListener('click', function() {
+            self.setNumericRange(qid, null, null);
+            if (window._resetNumericHandles) window._resetNumericHandles(qid);
+        });
+        bar.appendChild(pill);
+    });
+
+    // Time range pill
+    if (this.timeRange) {
+        var tr = window._timelineSelectionRange || this.timeRange;
+        var timePill = document.createElement('span');
+        timePill.className = 'filter-pill';
+        timePill.textContent = 'Time: ' + (tr.from || '\u2026') + ' \u2013 ' + (tr.to || '\u2026') + ' \u00d7';
+        timePill.addEventListener('click', function() {
+            self.timeRange = null;
+            if (window._resetTimelineHandles) window._resetTimelineHandles();
+            self._apply();
+        });
+        bar.appendChild(timePill);
+    }
+
+    // Hidden pill
+    if (this._hiddenSids.size > 0) {
+        var hiddenPill = document.createElement('span');
+        hiddenPill.className = 'filter-pill';
+        hiddenPill.textContent = this._hiddenSids.size + ' hidden \u00d7';
+        hiddenPill.addEventListener('click', function() { self.showAll(); });
+        bar.appendChild(hiddenPill);
+    }
+
+    // Selection pill
+    if (hasSel) {
+        var selPill = document.createElement('span');
+        selPill.className = 'filter-pill';
+        selPill.textContent = 'Selected (' + window.selectionManager.count() + ') \u00d7';
+        selPill.addEventListener('click', function() { window.selectionManager.clear(); });
+        bar.appendChild(selPill);
+    }
+
+    // v2 pills bar: filtered-vs-total count (spec: analytics-data-workspace,
+    // "Global filter pills row"). The legacy bar lacks the class — unchanged.
+    if (bar.classList.contains('rv2-filter-pills')) {
+        var visCount = this.visibleSids === null
+            ? this._allSessionIds.size : this.visibleSids.size;
+        var cnt = document.createElement('span');
+        cnt.className = 'rv2-pills-count';
+        cnt.textContent = visCount + ' of ' + this._allSessionIds.size + ' shown';
+        bar.appendChild(cnt);
+
+        // Selection actions live HERE in v2 — one bar for filters and
+        // selection alike; the per-panel selection bar duplicated this row
+        // (owner review) and is gone from the v2 panes.
+        if (hasSel) {
+            [
+                ['fa-eye-slash', 'Hide', function() { self.hideSelected(); }],
+                ['fa-filter', 'Keep only', function() { self.keepOnlySelected(); }],
+                ['fa-exchange-alt', 'Invert', function() { window.selectionManager.invert(); }],
+            ].forEach(function(def) {
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'rv2-pills-action';
+                var ic = document.createElement('i');
+                ic.className = 'fas ' + def[0];
+                b.appendChild(ic);
+                b.appendChild(document.createTextNode(' ' + def[1]));
+                b.addEventListener('click', def[2]);
+                bar.appendChild(b);
+            });
+        }
+    }
+
+    var clearBtn = document.createElement('button');
+    clearBtn.className = 'btn btn-sm btn-link';
+    clearBtn.style.cssText = 'font-size:0.8rem;padding:0 0.5rem;';
+    clearBtn.textContent = 'Clear all';
+    clearBtn.addEventListener('click', function() { self.clearAll(); });
+    bar.appendChild(clearBtn);
+
+    // Per-question pills
+    document.querySelectorAll('.q-filter-pills').forEach(function(container) {
+        var qid = container.dataset.qid;
+        while (container.firstChild) container.removeChild(container.firstChild);
+
+        if (qid === 'geo' || qid === 'timeline') {
+            container.style.display = 'none';
+            return;
+        }
+
+        // Numeric range pills (data-qid="num-<id>")
+        if (qid.indexOf('num-') === 0) {
+            var numQid = qid.slice(4);
+            var range = self.numericRanges.get(numQid);
+            if (!range) { container.style.display = 'none'; return; }
+            container.style.display = 'flex';
+            var rPill = document.createElement('span');
+            rPill.className = 'filter-pill';
+            rPill.style.fontSize = '0.72rem';
+            rPill.textContent = range.min + ' \u2013 ' + range.max + ' \u00d7';
+            rPill.addEventListener('click', function() {
+                self.setNumericRange(numQid, null, null);
+                if (window._resetNumericHandles) window._resetNumericHandles(numQid);
+            });
+            container.appendChild(rPill);
+            return;
+        }
+
+        var qFilters = self.filters.get(qid);
+        if (!qFilters || qFilters.size === 0) { container.style.display = 'none'; return; }
+        container.style.display = 'flex';
+        qFilters.forEach(function(code) {
+            var choiceLabel = window.analyticsChoiceLabels.get(qid + ':' + code) || String(code);
+            var pill = document.createElement('span');
+            pill.className = 'filter-pill';
+            pill.style.fontSize = '0.72rem';
+            pill.textContent = choiceLabel + ' \u00d7';
+            pill.addEventListener('click', function() { self.toggleFilter(qid, code); });
+            container.appendChild(pill);
+        });
+    });
+};
+
+FilterManager.prototype._updateTextAnswers = function() {
+    if (!this.textQuestionIds || !this.textQuestionIds.length) return;
+    this.textQuestionIds.forEach(function(qid) {
+        if (typeof loadTextAnswers === 'function') {
+            loadTextAnswers(qid, 1, 20);
+        }
+    });
+};
+
+FilterManager.prototype._renderSelection = function() {
+    var sm = window.selectionManager;
+    var count = sm ? sm.count() : 0;
+    var hiddenCount = this._hiddenSids.size;
+
+    // Panel selection bars (Map, Charts)
+    document.querySelectorAll('.panel-selection-bar').forEach(function(bar) {
+        bar.style.display = count > 0 ? '' : 'none';
+        var countEl = bar.querySelector('.panel-sel-count');
+        if (countEl) countEl.textContent = count + ' selected';
+    });
+
+    // Hidden indicator
+    var hiddenBar = document.getElementById('hidden-indicator');
+    if (hiddenBar) hiddenBar.style.display = hiddenCount > 0 ? '' : 'none';
+    var hiddenCountEl = document.getElementById('hidden-count');
+    if (hiddenCountEl) hiddenCountEl.textContent = hiddenCount;
+
+    // Table checkboxes + row visibility
+    var hidden = this._hiddenSids;
+    document.querySelectorAll('.row-select-cb').forEach(function(cb) {
+        var sid = parseInt(cb.dataset.sessionId);
+        cb.checked = sm ? sm.isSelected(sid) : false;
+        var tr = cb.closest('tr');
+        if (tr) tr.style.display = hidden.has(sid) ? 'none' : '';
+    });
+    var showAllBtn = document.getElementById('show-all-rows-btn');
+    if (showAllBtn) showAllBtn.style.display = hiddenCount > 0 ? '' : 'none';
+    var selectAll = document.getElementById('select-all-cb');
+    if (selectAll) {
+        var allCbs = document.querySelectorAll('.row-select-cb');
+        var checkedCount = document.querySelectorAll('.row-select-cb:checked').length;
+        selectAll.checked = checkedCount > 0 && checkedCount === allCbs.length;
+        selectAll.indeterminate = checkedCount > 0 && checkedCount < allCbs.length;
+    }
+
+    // Map feature styling
+    var m = window.analyticsMap;
+    if (m && window.layerManager) {
+        m.eachLayer(function(layer) {
+            if (!layer.feature) return;
+            var sid = layer.feature.properties ? layer.feature.properties.session_id : null;
+            if (!sid) return;
+            var selected = sm ? sm.isSelected(sid) : false;
+            // v2 opts into QGIS-style selection: the canonical bright-yellow
+            // fill GIS users read instantly. The layer's own color is stashed
+            // on first highlight so deselection can restore it. Legacy (flag
+            // absent) keeps the old enlarge-only styling.
+            var qgis = !!window.RV2_QGIS_SELECTION;
+            if (qgis && !layer._rv2BaseStyle) {
+                layer._rv2BaseStyle = {
+                    color: layer.options.color,
+                    fillColor: layer.options.fillColor,
+                };
+            }
+            // Open ≠ selected (owner request): the response currently open in
+            // the drawer paints brown, selection paints QGIS yellow. Open wins
+            // when both apply — it is the thing the creator is looking at.
+            var openSid = qgis ? (window._rv2DrawerSid || null) : null;
+            if (openSid !== null && openSid === sid) {
+                if (layer.setRadius) {
+                    layer.setStyle({color: '#5c3317', fillColor: '#a0522d', opacity: 1, fillOpacity: 1, weight: 2});
+                    layer.setRadius(8);
+                } else if (layer.setStyle) {
+                    layer.setStyle({color: '#a0522d', opacity: 1, fillOpacity: 0.5, weight: 4});
+                }
+            } else if (count > 0 && selected) {
+                if (qgis) {
+                    if (layer.setRadius) {
+                        layer.setStyle({color: '#8f7a00', fillColor: '#ffff00', opacity: 1, fillOpacity: 1, weight: 2});
+                        layer.setRadius(7);
+                    } else if (layer.setStyle) {
+                        layer.setStyle({color: '#ffff00', opacity: 1, fillOpacity: 0.5, weight: 4});
+                    }
+                } else if (layer.setRadius) {
+                    layer.setStyle({opacity: 1, fillOpacity: 0.8, weight: 2});
+                    layer.setRadius(7);
+                } else if (layer.setStyle) {
+                    layer.setStyle({opacity: 1, fillOpacity: 0.6, weight: 4});
+                }
+            } else {
+                // Default / unselected: restore initial style
+                var base = qgis && layer._rv2BaseStyle ? layer._rv2BaseStyle : null;
+                if (layer.setRadius) {
+                    layer.setStyle(base
+                        ? {color: base.color, fillColor: base.fillColor, opacity: 1, fillOpacity: 0.7, weight: 1}
+                        : {opacity: 1, fillOpacity: 0.7, weight: 1});
+                    layer.setRadius(5);
+                } else if (layer.setStyle) {
+                    layer.setStyle(base
+                        ? {color: base.color, fillColor: base.fillColor, opacity: 1, fillOpacity: 0.2, weight: 2}
+                        : {opacity: 1, fillOpacity: 0.2, weight: 2});
+                }
+            }
+        });
+    }
+
+    // Chart selection highlighting — stacked overlay showing selected proportion
+    function _setStacked(chart, on) {
+        if (!chart.options.scales.x) chart.options.scales.x = {};
+        if (!chart.options.scales.y) chart.options.scales.y = {};
+        chart.options.scales.x.stacked = on;
+        chart.options.scales.y.stacked = on;
+        chart.options.scales.x.beginAtZero = true;
+    }
+
+    function _ensureBaseCounts(chart) {
+        // Save original totals before first modification
+        if (!chart._baseCounts && chart.data.datasets[0]) {
+            chart._baseCounts = chart.data.datasets[0].data.slice();
+            var bg = chart.data.datasets[0].backgroundColor;
+            chart._baseColors = bg instanceof Array ? bg.slice() : bg;
+        }
+    }
+
+    if (count === 0) {
+        // No selection — restore single dataset with base colors
+        var restoreCharts = [];
+        window.analyticsCharts.forEach(function(c) { restoreCharts.push(c); });
+        window.analyticsHistCharts.forEach(function(c) { restoreCharts.push(c); });
+        restoreCharts.forEach(function(chart) {
+            if (chart.data.datasets.length > 1) chart.data.datasets.splice(1);
+            if (chart._baseCounts) chart.data.datasets[0].data = chart._baseCounts.slice();
+            if (chart._baseColors) {
+                chart.data.datasets[0].backgroundColor = chart._baseColors instanceof Array ? chart._baseColors.slice() : chart._baseColors;
+            }
+            _setStacked(chart, false);
+            chart.update('none');
+        });
+    } else {
+        var matrix = this._visibleMatrix();
+        var selectedSet = sm.getSelected();
+
+        // Choice charts — stacked: selected (bright) + unselected (dim)
+        window.analyticsCharts.forEach(function(chart, qid) {
+            var codes = window.analyticsChartCodes.get(qid);
+            if (!codes) return;
+            _ensureBaseCounts(chart);
+            var totals = chart._baseCounts;
+            var selCounts = new Array(codes.length).fill(0);
+            matrix.forEach(function(session) {
+                if (!selectedSet.has(session.sid)) return;
+                var sc = session.a[qid];
+                if (sc) sc.forEach(function(c) {
+                    var idx = codes.indexOf(c);
+                    if (idx !== -1) selCounts[idx]++;
+                });
+            });
+            var unselCounts = totals.map(function(t, i) { return Math.max(0, t - selCounts[i]); });
+
+            chart.data.datasets[0].data = selCounts;
+            chart.data.datasets[0].backgroundColor = 'rgba(79, 70, 229, 0.9)';
+            chart.data.datasets[0].borderRadius = 0;
+            if (chart.data.datasets.length < 2) {
+                chart.data.datasets.push({ data: unselCounts, backgroundColor: 'rgba(79, 70, 229, 0.15)', borderRadius: 4 });
+            } else {
+                chart.data.datasets[1].data = unselCounts;
+                chart.data.datasets[1].backgroundColor = 'rgba(79, 70, 229, 0.15)';
+            }
+            _setStacked(chart, true);
+            chart.update('none');
+        });
+
+        // Histogram charts — same stacked overlay
+        window.analyticsHistCharts.forEach(function(chart, qid) {
+            var bins = window.analyticsHistBins.get(qid);
+            if (!bins) return;
+            _ensureBaseCounts(chart);
+            var totals = chart._baseCounts;
+            var selCounts = new Array(bins.length).fill(0);
+            matrix.forEach(function(session) {
+                if (!selectedSet.has(session.sid)) return;
+                var val = session.n ? session.n[qid] : undefined;
+                if (val === undefined) return;
+                var binStep = bins[0][1] - bins[0][0];
+                if (binStep <= 0) { selCounts[0]++; return; }
+                var idx = Math.min(Math.floor((val - bins[0][0]) / binStep), bins.length - 1);
+                if (idx >= 0) selCounts[idx]++;
+            });
+            var unselCounts = totals.map(function(t, i) { return Math.max(0, t - selCounts[i]); });
+
+            chart.data.datasets[0].data = selCounts;
+            chart.data.datasets[0].backgroundColor = 'rgba(79, 70, 229, 0.8)';
+            if (chart.data.datasets.length < 2) {
+                chart.data.datasets.push({ data: unselCounts, backgroundColor: 'rgba(79, 70, 229, 0.12)', borderWidth: 1 });
+            } else {
+                chart.data.datasets[1].data = unselCounts;
+                chart.data.datasets[1].backgroundColor = 'rgba(79, 70, 229, 0.12)';
+            }
+            _setStacked(chart, true);
+            chart.update('none');
+        });
+    }
+
+    // Bulk toolbar
+    var bulkToolbar = document.getElementById('toolbar-bulk');
+    var normalToolbar = document.getElementById('toolbar-normal');
+    if (bulkToolbar && normalToolbar) {
+        bulkToolbar.style.display = count > 0 ? '' : 'none';
+        normalToolbar.style.display = count > 0 ? 'none' : '';
+        var bulkCount = document.getElementById('bulk-count');
+        if (bulkCount) bulkCount.textContent = count + ' selected';
+    }
+
+    // Pills (includes selection pill)
+    this._updatePills();
+};
+
+FilterManager.prototype._updateTable = function() {
+    if (!_tableLoaded) return;
+    var pane = document.getElementById('pane-data');
+    if (pane && pane.style.display === 'none') return;
+    loadTable();
+};
+
+/* Focus mode */
+window.focusedSection = null;
+window._focusSavedOrder = [];
+
+function enterFocusMode(sectionEl) {
+    if (window.focusedSection) exitFocusMode();
+    var main = document.querySelector('.analytics-main');
+    var sections = Array.from(main.querySelectorAll(':scope > .analytics-section'));
+
+    // Save original order as indices
+    window._focusSavedOrder = sections.map(function(el, i) {
+        return { el: el, index: i };
+    });
+
+    // Create sidebar wrapper
+    var sidebar = document.createElement('div');
+    sidebar.id = 'analytics-sidebar-wrapper';
+
+    // Move non-focused sections into sidebar
+    sections.forEach(function(s) {
+        if (s !== sectionEl) sidebar.appendChild(s);
+    });
+
+    main.appendChild(sidebar);
+    sectionEl.classList.add('is-focused');
+    main.classList.add('focus-mode');
+    main.classList.add('focus-entering');
+    window.focusedSection = sectionEl;
+
+    // Update expand button to collapse
+    var btn = sectionEl.querySelector('.expand-btn');
+    if (btn) {
+        btn.textContent = '';
+        var icon = document.createElement('i');
+        icon.className = 'fas fa-compress';
+        btn.appendChild(icon);
+        btn.onclick = function() { exitFocusMode(); };
+    }
+
+    _resizeAfterFocus();
+    setTimeout(function() { main.classList.remove('focus-entering'); }, 350);
+}
+
+function exitFocusMode() {
+    var main = document.querySelector('.analytics-main');
+    var sidebar = document.getElementById('analytics-sidebar-wrapper');
+    if (!sidebar) return;
+
+    // Move all children out of sidebar back to main first
+    while (sidebar.firstChild) {
+        main.appendChild(sidebar.firstChild);
+    }
+    sidebar.remove();
+
+    // Re-order sections to original positions
+    var ordered = window._focusSavedOrder.slice().sort(function(a, b) { return a.index - b.index; });
+    // Find the insertion anchor (first non-section element after the divider, or end of main)
+    var allSections = Array.from(main.querySelectorAll(':scope > .analytics-section'));
+    var anchor = null;
+    var children = Array.from(main.children);
+    for (var i = 0; i < children.length; i++) {
+        if (children[i].id === 'filter-pills-bar') {
+            anchor = children[i].nextSibling;
+            break;
+        }
+    }
+    // Re-append in original order after anchor
+    ordered.forEach(function(item) {
+        if (anchor) {
+            main.insertBefore(item.el, anchor);
+            anchor = item.el.nextSibling;
+        } else {
+            main.appendChild(item.el);
+        }
+    });
+
+    main.classList.remove('focus-mode');
+    main.classList.add('focus-exiting');
+    setTimeout(function() { main.classList.remove('focus-exiting'); }, 300);
+
+    if (window.focusedSection) {
+        window.focusedSection.classList.remove('is-focused');
+        var btn = window.focusedSection.querySelector('.expand-btn');
+        if (btn) {
+            btn.textContent = '';
+            var icon = document.createElement('i');
+            icon.className = 'fas fa-expand';
+            btn.appendChild(icon);
+            btn.onclick = function() { enterFocusMode(btn.closest('.analytics-section')); };
+        }
+    }
+    window.focusedSection = null;
+    window._focusSavedOrder = [];
+
+    _resizeAfterFocus();
+}
+
+function _resizeAfterFocus() {
+    requestAnimationFrame(function() {
+        if (window.analyticsCharts) {
+            window.analyticsCharts.forEach(function(chart) { chart.resize(); });
+        }
+        if (window.analyticsHistCharts) {
+            window.analyticsHistCharts.forEach(function(chart) { chart.resize(); });
+        }
+        if (window._timelineChart) {
+            window._timelineChart.resize();
+        }
+        if (window.analyticsMap) {
+            setTimeout(function() { window.analyticsMap.invalidateSize(); }, 50);
+        }
+    });
+}
+
+function loadTextAnswers(qid, page, pageSize) {
+    var filters = window.filterManager ? window.filterManager.getFilterParam() : '';
+    var url = '{% url "analytics_text_answers" survey.uuid 0 %}'.replace('/0/text/', '/' + qid + '/text/')
+              + '?page=' + page + '&page_size=' + pageSize
+              + (filters ? '&filters=' + encodeURIComponent(filters) : '');
+    htmx.ajax('GET', url, {target: '#text-answers-' + qid, swap: 'innerHTML'});
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var matrixEl = document.getElementById('answer-matrix-data');
+    var matrix = JSON.parse(matrixEl.textContent);
+    window.filterManager = new FilterManager(matrix);
+    window.filterManager.textQuestionIds = JSON.parse('{{ text_question_ids_json|escapejs }}');
+
+    // Register components — order matters for UX (charts update before rendering)
+    var fm = window.filterManager;
+    fm.registerComponent(FilterManager.prototype._updateCharts);
+    fm.registerComponent(FilterManager.prototype._updateNumericStats);
+    fm.registerComponent(FilterManager.prototype._updateGeoMap);
+    fm.registerComponent(FilterManager.prototype._updateTimeline);
+    fm.registerComponent(FilterManager.prototype._updateTextAnswers);
+    fm.registerComponent(FilterManager.prototype._updateTable);
+    fm.registerComponent(FilterManager.prototype._renderSelection);
+});

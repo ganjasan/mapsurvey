@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Responses v2 — мобильный · планшет · десктоп</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --accent:#4f46e5; --accent-light:#eef2ff; --border:#e5e7eb;
+    --muted:#6b7280; --ink:#111827; --green:#16a34a; --amber:#d97706; --red:#dc2626;
+  }
+  * { box-sizing:border-box; margin:0; }
+  body { font-family:-apple-system,"Segoe UI",Roboto,sans-serif; background:#eceef1; color:var(--ink); padding:28px 22px 60px; }
+  h1 { font-size:22px; margin-bottom:6px; }
+  .sub { color:var(--muted); font-size:14px; margin-bottom:26px; max-width:980px; line-height:1.5; }
+  .grp { margin:38px 0 10px; }
+  .grp h2 { font-size:17px; margin-bottom:4px; }
+  .grp p { color:var(--muted); font-size:13.5px; margin-bottom:16px; max-width:980px; line-height:1.5; }
+  .row { display:flex; gap:26px; flex-wrap:wrap; align-items:flex-start; }
+  .fw { text-align:center; }
+  .cap { font-size:12px; color:var(--muted); margin-top:8px; max-width:1100px; }
+  /* device frames */
+  .devd { width:1440px; height:880px; transform:scale(.74); transform-origin:top left; }
+  .devd-outer { width:1080px; height:660px; overflow:visible; }
+  .devt { width:900px; height:1080px; transform:scale(.62); transform-origin:top left; }
+  .devt-outer { width:566px; height:678px; overflow:visible; }
+  .devm { width:390px; height:780px; }
+  .frame { background:#fff; border-radius:22px; border:8px solid #1f2937; overflow:hidden; position:relative; display:flex; flex-direction:column; text-align:left; box-shadow:0 10px 30px rgba(0,0,0,.13); height:100%; }
+  /* ── shared chrome ── */
+  .topbar { display:flex; align-items:center; gap:14px; padding:10px 20px; border-bottom:1px solid var(--border); background:#fff; flex-shrink:0; }
+  .topbar .bk { color:#374151; font-size:15px; }
+  .topbar .ttl { font-weight:700; font-size:16px; }
+  .pgtabs { display:flex; gap:4px; background:#f3f4f6; border-radius:10px; padding:3px; font-size:12.5px; }
+  .pgtabs span { padding:6px 14px; border-radius:8px; color:var(--muted); white-space:nowrap; }
+  .pgtabs .on { background:#fff; color:var(--accent); font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,.08); }
+  .topbar .sp { flex:1; }
+  .chip { display:inline-flex; align-items:center; gap:5px; background:#fff; border:1px solid var(--border); border-radius:999px; padding:5px 12px; font-size:12px; color:#374151; white-space:nowrap; }
+  .chip b { color:var(--accent); }
+  .chip.sel { border-color:var(--accent); color:var(--accent); background:var(--accent-light); }
+  .chip.ghosty { border-style:dashed; color:var(--muted); }
+  /* pane row */
+  .panerow { display:flex; align-items:center; gap:2px; padding:8px 20px 0; border-bottom:1px solid var(--border); background:#fff; flex-shrink:0; }
+  .panerow span { padding:8px 16px 10px; font-size:13px; color:var(--muted); border-bottom:2.5px solid transparent; margin-bottom:-1px; white-space:nowrap; }
+  .panerow .on { color:var(--accent); font-weight:600; border-bottom-color:var(--accent); }
+  .panerow .end { margin-left:auto; display:flex; gap:8px; align-items:center; padding:0 0 8px; }
+  /* KPI strip */
+  .kstrip { display:flex; gap:10px; padding:12px 20px; background:#fafafa; border-bottom:1px solid var(--border); flex-shrink:0; align-items:stretch; }
+  .kpi { background:#fff; border:1px solid var(--border); border-radius:12px; padding:8px 16px; display:flex; align-items:baseline; gap:8px; }
+  .kpi b { font-size:20px; color:var(--accent); }
+  .kpi b.g { color:var(--green); }
+  .kpi b.m { color:var(--ink); }
+  .kpi span { font-size:11px; color:var(--muted); }
+  .kpi .delta { font-size:11px; color:var(--green); font-weight:600; }
+  .kpi.flag { border-color:#fcd34d; background:#fffbeb; }
+  .kpi.flag b { color:var(--amber); }
+  .filterpills { display:flex; align-items:center; gap:8px; padding:8px 20px; background:var(--accent-light); border-bottom:1px solid #d0d0ff; font-size:12px; color:var(--accent); flex-shrink:0; }
+  .filterpills .x { font-weight:700; }
+  .filterpills .clear { margin-left:auto; font-weight:600; }
+  .body { flex:1; overflow:hidden; background:#f7f7f9; position:relative; display:flex; }
+  /* cards */
+  .card { background:#fff; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .card h4 { font-size:13px; padding:11px 14px 0; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .card h4 .lnk { color:var(--accent); font-size:11.5px; font-weight:500; white-space:nowrap; }
+  .mapbg { position:relative;
+    background:
+      radial-gradient(closest-side, rgba(79,70,229,.26), transparent 60%) 58% 36%/34% 44% no-repeat,
+      radial-gradient(closest-side, rgba(220,38,38,.2), transparent 60%) 27% 62%/26% 32% no-repeat,
+      radial-gradient(closest-side, rgba(22,163,74,.18), transparent 60%) 72% 72%/22% 26% no-repeat,
+      linear-gradient(#e8ecef 1px, transparent 1px) 0 0/30px 30px,
+      linear-gradient(90deg,#e8ecef 1px, transparent 1px) 0 0/30px 30px, #f1f5f4;
+  }
+  .dot { position:absolute; width:9px; height:9px; border-radius:50%; background:var(--accent); border:1.5px solid #fff; box-shadow:0 1px 2px rgba(0,0,0,.3); }
+  .dot.sel { width:14px; height:14px; background:#fff; border:3.5px solid var(--accent); }
+  .spark svg { width:100%; height:64px; display:block; }
+  .spark { padding:6px 14px 12px; }
+  .barchart { padding:8px 14px 12px; }
+  .brow { display:flex; align-items:center; gap:8px; margin-top:7px; font-size:11px; color:#374151; }
+  .brow .lbl { width:78px; text-align:right; color:var(--muted); flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .brow .bar { height:15px; background:var(--accent); border-radius:3px; opacity:.85; min-width:3px; }
+  .brow .bar.dim { opacity:.25; }
+  .brow .val { color:var(--muted); font-size:10.5px; }
+  .resp-item { display:flex; gap:10px; padding:9px 14px; border-top:1px solid #f1f2f4; align-items:center; }
+  .resp-item:first-of-type { border-top:none; }
+  .resp-ava { width:32px; height:32px; border-radius:9px; background:var(--accent-light); color:var(--accent); display:grid; place-items:center; font-size:11.5px; flex-shrink:0; font-weight:600; }
+  .resp-mid { flex:1; min-width:0; }
+  .resp-mid b { font-size:12px; display:block; }
+  .resp-mid span { font-size:10.5px; color:var(--muted); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pill { font-size:9.5px; padding:2px 8px; border-radius:999px; font-weight:600; flex-shrink:0; }
+  .pill.ok { background:#e8f5ee; color:var(--green); }
+  .pill.warn { background:#fef3c7; color:var(--amber); }
+  .pill.err { background:#fee2e2; color:var(--red); }
+  .pill.mut { background:#f3f4f6; color:var(--muted); }
+  /* table */
+  table.grid { width:100%; border-collapse:collapse; font-size:12px; background:#fff; }
+  .grid th { text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--border); background:#fafafa; white-space:nowrap; }
+  .grid td { padding:8px 10px; border-bottom:1px solid #f1f2f4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px; }
+  .grid tr.hl td { background:var(--accent-light); }
+  .btn { display:inline-flex; align-items:center; gap:7px; background:var(--accent); color:#fff; border-radius:9px; padding:8px 14px; font-size:12px; font-weight:600; }
+  .btn.ghost { background:#fff; color:#374151; border:1px solid var(--border); }
+  .btn.danger { background:#fee2e2; color:var(--red); }
+  .drawer { width:360px; flex-shrink:0; background:#fff; border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+  .drawer .dh { display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:1px solid var(--border); font-weight:700; font-size:14px; }
+  .drawer .dh .nav { margin-left:auto; color:var(--muted); font-size:12px; display:flex; gap:10px; }
+  .ans { padding:9px 16px; border-top:1px solid #f1f2f4; }
+  .ans .q { font-size:10.5px; color:var(--muted); margin-bottom:2px; }
+  .ans .a { font-size:12.5px; }
+  .kv { display:flex; gap:16px; padding:10px 16px; flex-wrap:wrap; border-bottom:1px solid #f1f2f4; }
+  .kv div { font-size:10.5px; color:var(--muted); }
+  .kv b { display:block; font-size:12.5px; color:var(--ink); font-weight:600; }
+  .toolrow { display:flex; gap:8px; padding:10px 16px; align-items:center; flex-shrink:0; }
+  .note { position:absolute; z-index:9; background:#111827; color:#fff; font-size:10.5px; padding:5px 9px; border-radius:7px; opacity:.93; max-width:230px; line-height:1.4; }
+  .note:after { content:""; position:absolute; width:8px; height:8px; background:#111827; transform:rotate(45deg); }
+  .n-up:after { top:-4px; left:18px; }
+  .n-down:after { bottom:-4px; left:18px; }
+  .n-left:after { left:-4px; top:calc(50% - 4px); }
+  /* mobile chrome */
+  .m-appbar { display:flex; align-items:center; gap:10px; padding:10px 14px 8px; background:#fff; z-index:3; }
+  .m-appbar .ttl { font-weight:700; font-size:16px; flex:1; }
+  .m-tabbar { display:grid; grid-auto-flow:column; grid-auto-columns:1fr; border-top:1px solid var(--border); background:#fff; padding:6px 8px 10px; z-index:3; }
+  .m-tabbar div { display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10px; color:var(--muted); padding:5px 0; border-radius:10px; }
+  .m-tabbar div.on { color:var(--accent); background:var(--accent-light); }
+  .m-tabbar .ico { font-size:16px; line-height:1; }
+  .m-scroll { flex:1; overflow:hidden; background:#f7f7f9; position:relative; }
+  .m-pad { padding:12px 14px; }
+  .m-kpi { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .m-kpi .kpi { display:block; padding:10px 12px; }
+  .m-kpi .kpi b { font-size:21px; display:block; line-height:1.15; }
+</style>
+</head>
+<body>
+<h1>Responses v2 — одна система, три форм-фактора</h1>
+<p class="sub">Единая архитектура: плоская линейка панелей <b>Overview · Map · Responses · Charts · Performance</b>, постоянная KPI-полоса с дельтами, глобальные фильтры-пилюли, drawer вместо модалки. Форм-факторы сворачивают её прогрессивно: десктоп — всё сразу + split; планшет — то же без split, drawer поверх; телефон — Charts растворяется в Overview, панели в нижнем баре. Данные — citypulse.</p>
+
+<!-- ═══════════════ DESKTOP ═══════════════ -->
+<div class="grp">
+  <h2>Десктоп ≥1200px (кадры 1440×880, масштаб 74%)</h2>
+  <p>Overview — новый дефолт (D1): отвечает «как идёт опрос» без единого клика. Данные и Performance больше не спорят: KPI-полоса одна на все панели, у Performance — явная пометка «tracked visits» (D2). Split view — явная кнопка, а не серые иконки (D5). Клик по строке таблицы открывает drawer с prev/next (D8).</p>
+
+  <div class="fw">
+    <div class="devd-outer"><div class="devd"><div class="frame">
+      <div class="topbar"><span class="bk">‹</span><span class="ttl">citypulse</span>
+        <div class="pgtabs"><span>⚒ Survey</span><span class="on">📊 Responses</span><span>🌐 Public results</span></div>
+        <span class="sp"></span><span class="chip">All versions ▾</span><span class="chip">⬇ Download</span>
+      </div>
+      <div class="panerow">
+        <span class="on">◉ Overview</span><span>🗺 Map</span><span>☰ Responses <b style="color:var(--red);font-size:10px;">•1</b></span><span>📊 Charts</span><span>📈 Performance</span>
+        <div class="end"><span class="chip ghosty">◫ Split view</span></div>
+      </div>
+      <div class="kstrip">
+        <div class="kpi"><b>65</b><span>responses</span><span class="delta">+7 today</span></div>
+        <div class="kpi"><b class="g">98%</b><span>completion</span></div>
+        <div class="kpi"><b class="m">4:12</b><span>median time</span></div>
+        <div class="kpi"><b>129</b><span>map features</span><span class="delta">+11</span></div>
+        <div class="kpi flag"><b>1</b><span>flagged</span></div>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted);align-self:center;">↻ live · updated 12s ago</span>
+      </div>
+      <div class="body" style="padding:14px 20px; gap:14px;">
+        <div style="flex:2.1;display:flex;flex-direction:column;gap:12px;min-width:0;">
+          <div class="card" style="flex:1.4;display:flex;flex-direction:column;">
+            <h4>Response Map <span class="lnk">Open Map ›</span></h4>
+            <div class="mapbg" style="flex:1;margin-top:8px;">
+              <div class="dot" style="left:52%;top:30%"></div><div class="dot" style="left:60%;top:44%"></div>
+              <div class="dot" style="left:28%;top:58%"></div><div class="dot" style="left:44%;top:68%"></div>
+              <div class="dot" style="left:70%;top:26%"></div><div class="dot" style="left:36%;top:38%"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;">
+            <div class="card" style="flex:1;">
+              <h4>Responses this week</h4>
+              <div class="spark"><svg viewBox="0 0 340 64" preserveAspectRatio="none">
+                <polyline points="0,52 40,47 80,50 120,34 160,38 200,20 240,27 280,11 340,16" fill="none" stroke="#4f46e5" stroke-width="2.5"/>
+                <polygon points="0,52 40,47 80,50 120,34 160,38 200,20 240,27 280,11 340,16 340,64 0,64" fill="#4f46e5" opacity=".08"/>
+              </svg></div>
+            </div>
+            <div class="card" style="flex:1;">
+              <h4>How do you usually get around? <span class="lnk">Charts ›</span></h4>
+              <div class="barchart">
+                <div class="brow"><span class="lbl">Walking</span><div class="bar" style="width:62%"></div><span class="val">20</span></div>
+                <div class="brow"><span class="lbl">Bus</span><div class="bar" style="width:46%"></div><span class="val">15</span></div>
+                <div class="brow"><span class="lbl">Car</span><div class="bar" style="width:37%"></div><span class="val">12</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:12px;min-width:300px;">
+          <div class="card">
+            <h4>Needs review <span class="pill err">1</span></h4>
+            <div class="resp-item"><div class="resp-ava">#64</div><div class="resp-mid"><b>Today 11:38 · 0:24</b><span>Empty session — no answers</span></div><span class="pill err">empty</span></div>
+          </div>
+          <div class="card" style="flex:1;">
+            <h4>Latest responses <span class="lnk">All ›</span></h4>
+            <div class="resp-item"><div class="resp-ava">#65</div><div class="resp-mid"><b>Today 14:02 · 3:40</b><span>Walking · 2 points · “More bike lanes…”</span></div><span class="pill ok">complete</span></div>
+            <div class="resp-item"><div class="resp-ava">#63</div><div class="resp-mid"><b>Today 09:15 · 5:02</b><span>Bus · 1 point · “Crosswalk near school…”</span></div><span class="pill ok">complete</span></div>
+            <div class="resp-item"><div class="resp-ava">#62</div><div class="resp-mid"><b>Yesterday 19:44 · 0:41</b><span>Car · 3 points</span></div><span class="pill warn">fast</span></div>
+            <div class="resp-item"><div class="resp-ava">#61</div><div class="resp-mid"><b>Yesterday 18:20 · 6:15</b><span>Walking · 2 polygons</span></div><span class="pill ok">complete</span></div>
+          </div>
+        </div>
+      </div>
+    </div></div></div>
+    <div class="cap">D-1 · Overview (новый дефолт): KPI-полоса с дельтами и «live», карта + тренд + топ-вопрос, справа — «Needs review» и лента последних ответов. «•1» на Responses — непросмотренные violations.</div>
+  </div>
+
+  <div class="fw" style="margin-top:26px;">
+    <div class="devd-outer"><div class="devd"><div class="frame">
+      <div class="topbar"><span class="bk">‹</span><span class="ttl">citypulse</span>
+        <div class="pgtabs"><span>⚒ Survey</span><span class="on">📊 Responses</span><span>🌐 Public results</span></div>
+        <span class="sp"></span><span class="chip">All versions ▾</span><span class="chip">⬇ Download</span>
+      </div>
+      <div class="panerow">
+        <span>◉ Overview</span><span>🗺 Map</span><span class="on">☰ Responses</span><span>📊 Charts</span><span>📈 Performance</span>
+        <div class="end"><span class="chip ghosty">◫ Split view</span></div>
+      </div>
+      <div class="filterpills">◈ Walking <span class="x">✕</span> <span class="chip sel" style="padding:3px 9px;">20 of 65 shown</span> <span class="clear">Clear all</span></div>
+      <div class="body">
+        <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+          <div class="toolrow" style="border-bottom:1px solid var(--border);background:#fff;">
+            <span class="chip sel">All 65</span><span class="chip">Complete 64</span><span class="chip">Issues <b style="color:var(--red)">1</b></span><span class="chip">🗑 Trash 3</span>
+            <span class="sp" style="flex:1;"></span>
+            <span class="chip">🔍 Search</span><span class="chip">▦ Columns ▾</span><span class="chip">⚙</span>
+          </div>
+          <div style="flex:1;overflow:hidden;">
+            <table class="grid">
+              <tr><th style="width:26px;"><input type="checkbox"></th><th>#</th><th>Started ↓</th><th>Duration</th><th>Status</th><th>How do you get around?</th><th>Travel downtown?</th><th>What is the problem…</th><th>Geo</th></tr>
+              <tr><td><input type="checkbox"></td><td>#65</td><td>Today 14:02</td><td>3:40</td><td><span class="pill ok">complete</span></td><td>Walking</td><td>Daily</td><td>“More bike lanes on Chuy…”</td><td>2 pt</td></tr>
+              <tr class="hl"><td><input type="checkbox" checked></td><td>#63</td><td>Today 09:15</td><td>5:02</td><td><span class="pill ok">complete</span></td><td>Bus</td><td>Daily</td><td>“Crosswalk near school is…”</td><td>1 pt</td></tr>
+              <tr><td><input type="checkbox"></td><td>#61</td><td>Yesterday 18:20</td><td>6:15</td><td><span class="pill ok">complete</span></td><td>Walking</td><td>Weekly</td><td>“The park at the riverfront…”</td><td>2 pg</td></tr>
+              <tr><td><input type="checkbox"></td><td>#58</td><td>Mon 16:44</td><td>2:12</td><td><span class="pill ok">complete</span></td><td>Walking</td><td>Rarely</td><td>—</td><td>2 pt</td></tr>
+              <tr><td><input type="checkbox"></td><td>#55</td><td>Mon 11:30</td><td>4:51</td><td><span class="pill ok">complete</span></td><td>Walking</td><td>Daily</td><td>“Better lighting on the…”</td><td>1 ln</td></tr>
+              <tr><td><input type="checkbox"></td><td>#52</td><td>Sun 19:02</td><td>3:17</td><td><span class="pill warn">fast</span></td><td>Walking</td><td>Weekly</td><td>—</td><td>1 pt</td></tr>
+            </table>
+          </div>
+          <div class="toolrow" style="border-top:1px solid var(--border);background:#fff;font-size:12px;color:var(--muted);">‹ Prev · Page 1 of 1 · Next › <span style="margin-left:auto;">Rows 50 ▾</span></div>
+        </div>
+        <div class="drawer">
+          <div class="dh">Response #63 <span class="nav">‹ prev · next › &nbsp; ✕</span></div>
+          <div class="kv">
+            <div><b>Today 09:15</b>started</div><div><b>5:02</b>duration</div><div><b>v3</b>version</div>
+          </div>
+          <div class="toolrow" style="border-bottom:1px solid #f1f2f4;">
+            <span class="chip sel">✓ Approved</span><span class="chip">⏸ Hold</span><span class="chip">✕ Reject</span><span class="chip">🗑</span>
+          </div>
+          <div class="ans"><div class="q">How do you usually get around the city?</div><div class="a">Bus</div></div>
+          <div class="ans"><div class="q">How often do you travel downtown?</div><div class="a">Daily</div></div>
+          <div class="mapbg" style="height:130px;margin:8px 16px;border-radius:8px;">
+            <div class="dot sel" style="left:47%;top:44%"></div>
+          </div>
+          <div class="ans"><div class="q">What is the problem here?</div><div class="a">“Crosswalk near the school is dangerous, cars don't stop.”</div></div>
+          <div class="ans"><div class="q">How urgent is it?</div><div class="a">Very urgent</div></div>
+        </div>
+        <div class="note n-up" style="right:390px;top:64px;">строка = клик → drawer; глаз/корзина из строк убраны</div>
+      </div>
+    </div></div></div>
+    <div class="cap">D-2 · Responses: пересобранные дефолты (№ по порядку, время, длительность, статус-чип, ответы сразу), чипы Issues/Trash вместо сайдбара, глобальная пилюля фильтра «Walking», drawer с prev/next вместо модалки.</div>
+  </div>
+
+  <div class="fw" style="margin-top:26px;">
+    <div class="devd-outer"><div class="devd"><div class="frame">
+      <div class="topbar"><span class="bk">‹</span><span class="ttl">citypulse</span>
+        <div class="pgtabs"><span>⚒ Survey</span><span class="on">📊 Responses</span><span>🌐 Public results</span></div>
+        <span class="sp"></span><span class="chip">All versions ▾</span><span class="chip">⬇ Download</span>
+      </div>
+      <div class="panerow">
+        <span>◉ Overview</span><span class="on">🗺 Map</span><span>☰ Responses</span><span class="on" style="border-bottom-color:#a5b4fc;color:#6366f1;">📊 Charts</span><span>📈 Performance</span>
+        <div class="end"><span class="chip sel">◫ Split: Map + Charts ✕</span></div>
+      </div>
+      <div class="kstrip">
+        <div class="kpi"><b>65</b><span>responses</span><span class="delta">+7</span></div>
+        <div class="kpi"><b class="g">98%</b><span>completion</span></div>
+        <div class="kpi flag"><b>1</b><span>flagged</span></div>
+      </div>
+      <div class="body" style="gap:0;">
+        <div style="flex:1.4;position:relative;border-right:1px solid var(--border);">
+          <div class="mapbg" style="position:absolute;inset:0;">
+            <div class="dot" style="left:56%;top:26%"></div><div class="dot" style="left:63%;top:34%"></div>
+            <div class="dot" style="left:30%;top:52%"></div><div class="dot" style="left:42%;top:64%"></div>
+            <div class="dot" style="left:68%;top:70%"></div>
+          </div>
+          <div style="position:absolute;top:10px;left:10px;display:flex;gap:6px;">
+            <span class="chip"><b>129</b> features</span><span class="chip">Layers ▾</span><span class="chip">🔥 Heat</span>
+          </div>
+          <div style="position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px;">
+            <span class="chip" title="Select">⌖ Select</span><span class="chip">▭ Box</span><span class="chip">⬠ Lasso</span>
+          </div>
+          <div class="note n-down" style="left:14px;bottom:70px;">инструменты выделения — с подписями (D6)</div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:10px;">
+          <div class="card">
+            <h4>How do you usually get around? <span class="lnk" style="color:var(--muted);">click a bar to filter ⓘ</span></h4>
+            <div class="barchart">
+              <div class="brow"><span class="lbl">Walking</span><div class="bar" style="width:62%"></div><span class="val">20</span></div>
+              <div class="brow"><span class="lbl">Bus</span><div class="bar" style="width:46%"></div><span class="val">15</span></div>
+              <div class="brow"><span class="lbl">Car</span><div class="bar" style="width:37%"></div><span class="val">12</span></div>
+              <div class="brow"><span class="lbl">Bicycle</span><div class="bar" style="width:27%"></div><span class="val">9</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <h4>Response Timeline</h4>
+            <div class="spark"><svg viewBox="0 0 340 64" preserveAspectRatio="none">
+              <polyline points="0,52 40,47 80,50 120,34 160,38 200,20 240,27 280,11 340,16" fill="none" stroke="#4f46e5" stroke-width="2.5"/>
+              <rect x="200" y="4" width="80" height="56" fill="#4f46e5" opacity=".12"/>
+            </svg></div>
+            <div class="note n-up" style="right:20px;top:36px;">один способ задать диапазон — brush (D7)</div>
+          </div>
+        </div>
+      </div>
+    </div></div></div>
+    <div class="cap">D-3 · Split view как явный режим: кнопка в линейке панелей, две активные панели подсвечены; лассо/бокс на карте — подписанные кнопки; подсказка «click a bar to filter» видна до первого использования.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ TABLET ═══════════════ -->
+<div class="grp">
+  <h2>Планшет 768–1199px (кадры 900×1080 портрет, масштаб 62%)</h2>
+  <p>Та же линейка панелей и KPI-полоса. Отличия от десктопа: Split view скрыт, Overview складывается в одну колонку с лентой справа→вниз, drawer деталей становится overlay поверх таблицы (ширины на двоих не хватает). Сегодняшний планшетный опыт — это неадаптированный desktop; здесь он становится первым классом.</p>
+  <div class="row">
+
+    <div class="fw">
+      <div class="devt-outer"><div class="devt"><div class="frame">
+        <div class="topbar"><span class="bk">‹</span><span class="ttl">citypulse</span>
+          <div class="pgtabs"><span>Survey</span><span class="on">Responses</span><span>Public</span></div>
+          <span class="sp"></span><span class="chip">All ▾</span>
+        </div>
+        <div class="panerow">
+          <span class="on">◉ Overview</span><span>🗺 Map</span><span>☰ Responses</span><span>📊 Charts</span><span>📈 Perf</span>
+        </div>
+        <div class="kstrip">
+          <div class="kpi"><b>65</b><span>responses</span><span class="delta">+7</span></div>
+          <div class="kpi"><b class="g">98%</b><span>completion</span></div>
+          <div class="kpi"><b class="m">4:12</b><span>median</span></div>
+          <div class="kpi flag"><b>1</b><span>flagged</span></div>
+        </div>
+        <div class="body" style="display:block;overflow:hidden;padding:14px 18px;">
+          <div class="card">
+            <h4>Response Map <span class="lnk">Open Map ›</span></h4>
+            <div class="mapbg" style="height:250px;margin-top:8px;">
+              <div class="dot" style="left:52%;top:30%"></div><div class="dot" style="left:60%;top:44%"></div>
+              <div class="dot" style="left:28%;top:58%"></div><div class="dot" style="left:70%;top:26%"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:12px;">
+            <div class="card" style="flex:1;">
+              <h4>Responses this week</h4>
+              <div class="spark"><svg viewBox="0 0 340 64" preserveAspectRatio="none">
+                <polyline points="0,52 40,47 80,50 120,34 160,38 200,20 240,27 280,11 340,16" fill="none" stroke="#4f46e5" stroke-width="2.5"/>
+              </svg></div>
+            </div>
+            <div class="card" style="flex:1;">
+              <h4>Get around? <span class="lnk">Charts ›</span></h4>
+              <div class="barchart">
+                <div class="brow"><span class="lbl">Walking</span><div class="bar" style="width:62%"></div><span class="val">20</span></div>
+                <div class="brow"><span class="lbl">Bus</span><div class="bar" style="width:46%"></div><span class="val">15</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:12px;">
+            <h4>Latest responses <span class="lnk">All ›</span></h4>
+            <div class="resp-item"><div class="resp-ava">#65</div><div class="resp-mid"><b>Today 14:02 · 3:40</b><span>Walking · 2 points · “More bike lanes…”</span></div><span class="pill ok">complete</span></div>
+            <div class="resp-item"><div class="resp-ava">#64</div><div class="resp-mid"><b>Today 11:38 · 0:24</b><span>no answers</span></div><span class="pill err">empty</span></div>
+            <div class="resp-item"><div class="resp-ava">#63</div><div class="resp-mid"><b>Today 09:15 · 5:02</b><span>Bus · 1 point · “Crosswalk near…”</span></div><span class="pill ok">complete</span></div>
+          </div>
+        </div>
+      </div></div></div>
+      <div class="cap">T-1 · Overview: одна колонка — карта, тренд+вопрос парой, лента снизу</div>
+    </div>
+
+    <div class="fw">
+      <div class="devt-outer"><div class="devt"><div class="frame">
+        <div class="topbar"><span class="bk">‹</span><span class="ttl">citypulse</span>
+          <div class="pgtabs"><span>Survey</span><span class="on">Responses</span><span>Public</span></div>
+          <span class="sp"></span><span class="chip">All ▾</span>
+        </div>
+        <div class="panerow">
+          <span>◉ Overview</span><span>🗺 Map</span><span class="on">☰ Responses</span><span>📊 Charts</span><span>📈 Perf</span>
+        </div>
+        <div class="body" style="display:block;overflow:hidden;">
+          <div class="toolrow" style="border-bottom:1px solid var(--border);background:#fff;">
+            <span class="chip sel">All 65</span><span class="chip">Complete 64</span><span class="chip">Issues <b style="color:var(--red)">1</b></span><span class="chip">🗑 3</span>
+            <span style="flex:1;"></span><span class="chip">▦ Columns ▾</span>
+          </div>
+          <table class="grid">
+            <tr><th>#</th><th>Started ↓</th><th>Dur.</th><th>Status</th><th>Get around?</th><th>Problem…</th><th>Geo</th></tr>
+            <tr><td>#65</td><td>Today 14:02</td><td>3:40</td><td><span class="pill ok">compl.</span></td><td>Walking</td><td>“More bike lanes…”</td><td>2 pt</td></tr>
+            <tr><td>#64</td><td>Today 11:38</td><td>0:24</td><td><span class="pill err">empty</span></td><td>—</td><td>—</td><td>—</td></tr>
+            <tr class="hl"><td>#63</td><td>Today 09:15</td><td>5:02</td><td><span class="pill ok">compl.</span></td><td>Bus</td><td>“Crosswalk near…”</td><td>1 pt</td></tr>
+            <tr><td>#62</td><td>Yest. 19:44</td><td>0:41</td><td><span class="pill warn">fast</span></td><td>Car</td><td>—</td><td>3 pt</td></tr>
+            <tr><td>#61</td><td>Yest. 18:20</td><td>6:15</td><td><span class="pill ok">compl.</span></td><td>Walking</td><td>“The park at…”</td><td>2 pg</td></tr>
+          </table>
+          <div style="position:absolute;top:0;bottom:0;right:0;width:52%;background:#fff;border-left:1px solid var(--border);box-shadow:-8px 0 24px rgba(0,0,0,.1);display:flex;flex-direction:column;">
+            <div class="dh" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:14px;">Response #63 <span style="margin-left:auto;color:var(--muted);font-size:12px;">‹ prev · next › &nbsp; ✕</span></div>
+            <div class="kv"><div><b>Today 09:15</b>started</div><div><b>5:02</b>duration</div><div><b>v3</b>version</div></div>
+            <div class="toolrow" style="border-bottom:1px solid #f1f2f4;">
+              <span class="chip sel">✓ Approved</span><span class="chip">⏸ Hold</span><span class="chip">🗑</span>
+            </div>
+            <div class="ans"><div class="q">How do you usually get around?</div><div class="a">Bus</div></div>
+            <div class="mapbg" style="height:140px;margin:8px 16px;border-radius:8px;"><div class="dot sel" style="left:47%;top:44%"></div></div>
+            <div class="ans"><div class="q">What is the problem here?</div><div class="a">“Crosswalk near the school is dangerous.”</div></div>
+          </div>
+        </div>
+      </div></div></div>
+      <div class="cap">T-2 · Responses: таблица с урезанным набором колонок, drawer — overlay поверх (52% ширины)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MOBILE ═══════════════ -->
+<div class="grp">
+  <h2>Телефон &lt;768px (кадры 390×780)</h2>
+  <p>V1 из предыдущего мокапа, приведённый к общему словарю: панель называется Overview (не Pulse), нижний бар — Overview / Map / Responses / Perf. Charts живёт внутри Overview (тап по карточке вопроса — полный график), полный комплект из 15 экранов — в mockup-v1-full.html.</p>
+  <div class="row">
+
+    <div class="fw">
+      <div class="devm"><div class="frame">
+        <div class="m-appbar"><span style="color:#374151;">‹</span><span class="ttl">citypulse</span><span class="chip" style="padding:4px 9px;">All ▾</span></div>
+        <div class="m-scroll"><div class="m-pad">
+          <div class="m-kpi">
+            <div class="kpi"><b>65</b><span>Responses</span> <span class="delta">+7 today</span></div>
+            <div class="kpi"><b class="g">98%</b><span>Completion</span></div>
+            <div class="kpi"><b class="m">4:12</b><span>Median time</span></div>
+            <div class="kpi flag"><b>1</b><span>Flagged</span></div>
+          </div>
+          <div class="card" style="margin-top:10px;">
+            <h4>Response Map <span class="lnk">Open ›</span></h4>
+            <div class="mapbg" style="height:140px;margin-top:8px;">
+              <div class="dot" style="left:52%;top:34%"></div><div class="dot" style="left:60%;top:46%"></div>
+              <div class="dot" style="left:28%;top:60%"></div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:10px;">
+            <h4>Responses this week</h4>
+            <div class="spark"><svg viewBox="0 0 340 56" preserveAspectRatio="none">
+              <polyline points="0,46 40,42 80,44 120,30 160,34 200,18 240,24 280,10 340,14" fill="none" stroke="#4f46e5" stroke-width="2.5"/>
+            </svg></div>
+          </div>
+          <div class="card" style="margin-top:10px;">
+            <h4>How do you usually get around? <span class="pill ok">64</span></h4>
+            <div class="barchart">
+              <div class="brow"><span class="lbl">Walking</span><div class="bar" style="width:62%"></div><span class="val">20</span></div>
+              <div class="brow"><span class="lbl">Bus</span><div class="bar" style="width:46%"></div><span class="val">15</span></div>
+            </div>
+          </div>
+        </div></div>
+        <div class="m-tabbar">
+          <div class="on"><span class="ico">◉</span>Overview</div>
+          <div><span class="ico">🗺</span>Map</div>
+          <div><span class="ico">☰</span>Responses</div>
+          <div><span class="ico">📈</span>Perf</div>
+        </div>
+      </div></div>
+      <div class="cap">M-1 · Overview = мобильный Pulse; Flagged-карточка в KPI-сетке</div>
+    </div>
+
+    <div class="fw">
+      <div class="devm"><div class="frame">
+        <div class="m-appbar"><span style="color:#374151;">‹</span><span class="ttl">citypulse</span><span class="chip" style="padding:4px 9px;">All ▾</span></div>
+        <div class="m-scroll">
+          <div class="toolrow" style="padding:10px 14px 2px;">
+            <span class="chip sel">All 65</span><span class="chip">Complete 64</span><span class="chip">Issues <b style="color:var(--red)">1</b></span><span class="chip">🗑 3</span>
+          </div>
+          <div class="m-pad" style="padding-top:8px;">
+            <div class="card">
+              <div class="resp-item"><div class="resp-ava">#65</div><div class="resp-mid"><b>Today 14:02 · 3:40</b><span>Walking · 2 points · “More bike lanes…”</span></div><span class="pill ok">complete</span></div>
+              <div class="resp-item"><div class="resp-ava">#64</div><div class="resp-mid"><b>Today 11:38 · 0:24</b><span>no answers</span></div><span class="pill err">empty</span></div>
+              <div class="resp-item"><div class="resp-ava">#63</div><div class="resp-mid"><b>Today 09:15 · 5:02</b><span>Bus · 1 point · “Crosswalk near school…”</span></div><span class="pill ok">complete</span></div>
+              <div class="resp-item"><div class="resp-ava">#62</div><div class="resp-mid"><b>Yesterday 19:44 · 0:41</b><span>Car · 3 points</span></div><span class="pill warn">fast</span></div>
+              <div class="resp-item"><div class="resp-ava">#61</div><div class="resp-mid"><b>Yesterday 18:20 · 6:15</b><span>Walking · 2 polygons</span></div><span class="pill ok">complete</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="m-tabbar">
+          <div><span class="ico">◉</span>Overview</div>
+          <div><span class="ico">🗺</span>Map</div>
+          <div class="on"><span class="ico">☰</span>Responses</div>
+          <div><span class="ico">📈</span>Perf</div>
+        </div>
+      </div></div>
+      <div class="cap">M-2 · Responses: карточки; тап — полноэкранные детали (экран 3d полного мокапа)</div>
+    </div>
+  </div>
+</div>
+
+<p class="sub" style="margin-top:14px;">Сводная таблица сворачивания: <b>панели</b> — desktop 5 + split · tablet 5 · phone 4 (Charts → внутрь Overview); <b>детали ответа</b> — drawer 360px · overlay 52% · полный экран; <b>KPI</b> — полоса · полоса · сетка 2×2; <b>фильтры</b> — глобальные пилюли на всех трёх, один и тот же FilterManager. Один шаблон, три медиазапроса, никакой отдельной мобильной логики данных.</p>
+</body>
+</html>

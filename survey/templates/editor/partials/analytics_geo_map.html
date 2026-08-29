@@ -441,6 +441,101 @@ document.addEventListener('DOMContentLoaded', function() {
             var div = L.DomUtil.create('div', 'geo-toolbar');
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
+            {% if RESPONSES_V2 %}
+            // v2: QGIS tool model (owner request). ONE Select tool — click
+            // picks a single feature, the area shape (Box / Lasso) lives in
+            // the tool's own submenu, like QGIS's "Select Features by Area or
+            // Single Click". Identify is its own tool, like QGIS's Identify
+            // Features: click a feature → open its details, no selection.
+            var SUBMODES = [
+                { name: 'pointer',   icon: 'fa-mouse-pointer', label: 'Single click' },
+                { name: 'rectangle', icon: 'fa-vector-square', label: 'Box' },
+                { name: 'polygon',   icon: 'fa-draw-polygon',  label: 'Lasso' },
+            ];
+            var _submode = 'pointer';
+            var _selectModes = SUBMODES.map(function(m) { return m.name; });
+
+            var selBtn = document.createElement('button');
+            selBtn.className = 'geo-toolbar-btn active';
+            selBtn.title = 'Select features (click; Box/Lasso via the arrow)';
+            var selIcon = document.createElement('i');
+            selIcon.className = 'fas fa-mouse-pointer';
+            var selLbl = document.createElement('span');
+            selLbl.className = 'geo-toolbar-label';
+            selLbl.textContent = 'Select';
+            var caret = document.createElement('span');
+            caret.className = 'geo-toolbar-caret';
+            caret.textContent = '▾';
+            selBtn.appendChild(selIcon);
+            selBtn.appendChild(selLbl);
+            selBtn.appendChild(caret);
+
+            var menu = document.createElement('div');
+            menu.className = 'geo-toolbar-submenu';
+            menu.style.display = 'none';
+            SUBMODES.forEach(function(m) {
+                var item = document.createElement('button');
+                item.className = 'geo-toolbar-subitem' + (m.name === _submode ? ' active' : '');
+                item.dataset.submode = m.name;
+                var ic = document.createElement('i');
+                ic.className = 'fas ' + m.icon;
+                item.appendChild(ic);
+                item.appendChild(document.createTextNode(' ' + m.label));
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    _submode = m.name;
+                    menu.style.display = 'none';
+                    menu.querySelectorAll('.geo-toolbar-subitem').forEach(function(el) {
+                        el.classList.toggle('active', el.dataset.submode === m.name);
+                    });
+                    selIcon.className = 'fas ' + m.icon;
+                    window.setGeoTool(m.name);
+                });
+                menu.appendChild(item);
+            });
+
+            caret.addEventListener('click', function(e) {
+                e.stopPropagation();
+                menu.style.display = menu.style.display === 'none' ? '' : 'none';
+            });
+            selBtn.addEventListener('click', function(e) {
+                if (e.target === caret) return;
+                menu.style.display = 'none';
+                window.setGeoTool(_submode);
+            });
+            document.addEventListener('click', function() { menu.style.display = 'none'; });
+
+            var idBtn = document.createElement('button');
+            idBtn.className = 'geo-toolbar-btn';
+            idBtn.dataset.tool = 'details';
+            idBtn.title = 'Identify features — click a feature to open its response';
+            var idIcon = document.createElement('i');
+            idIcon.className = 'fas fa-info-circle';
+            var idLbl = document.createElement('span');
+            idLbl.className = 'geo-toolbar-label';
+            idLbl.textContent = 'Identify';
+            idBtn.appendChild(idIcon);
+            idBtn.appendChild(idLbl);
+            idBtn.addEventListener('click', function() { window.setGeoTool('details'); });
+
+            var wrap = document.createElement('div');
+            wrap.className = 'geo-toolbar-selwrap';
+            wrap.appendChild(selBtn);
+            wrap.appendChild(menu);
+            div.appendChild(wrap);
+            div.appendChild(idBtn);
+
+            // Highlight follows the actual mode: Select is active for any of
+            // its submodes; after an area select the engine drops back to
+            // 'pointer' but the remembered shape stays on the button, one
+            // click re-arms it (QGIS keeps the shape too).
+            var _origSetGeoTool = window.setGeoTool;
+            window.setGeoTool = function(name) {
+                _origSetGeoTool(name);
+                selBtn.classList.toggle('active', _selectModes.indexOf(name) !== -1);
+                idBtn.classList.toggle('active', name === 'details');
+            };
+            {% else %}
             [
                 { name: 'pointer',   icon: 'fa-mouse-pointer', title: 'Select (click, Ctrl+click to add)' },
                 { name: 'rectangle', icon: 'fa-vector-square',  title: 'Rectangle select' },
@@ -458,6 +553,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.addEventListener('click', function() { window.setGeoTool(t.name); });
                 div.appendChild(btn);
             });
+            {% endif %}
             return div;
         }
     });

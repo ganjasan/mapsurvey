@@ -129,7 +129,8 @@ rules stored but inert, editor hides the Visibility block.
 **Mobile-adaptive layouts (two kill switches)**: `MOBILE_EDITOR_NAV` gives the editor
 two-level contextual navigation below 768px: top strip = page tabs, bottom bar = panes of
 the active page — Survey and Public results share the Structure/Edit/Preview vocabulary,
-Responses gets Table/Map/Charts/Perf (chrome in `editor/partials/_mobile_nav.html` +
+Responses gets Overview/Map/Responses/Perf under `RESPONSES_V2` (legacy switch-off:
+Table/Map/Charts/Perf) (chrome in `editor/partials/_mobile_nav.html` +
 `css/editor-mobile.css` + `js/editor_mobile_nav.js`; double-gated by the
 `mobile-nav-enabled` body class AND the media query, so desktop is untouched; the Preview
 pane is a full-screen overlay with a back button). `EDITOR_AUTOSAVE` replaces Save/Apply on

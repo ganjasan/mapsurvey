@@ -11595,6 +11595,785 @@ class AnalyticsViewTest(TestCase):
         self.assertContains(response, 'Hello')
 
 
+class ResponsesV2SwitchTest(TestCase):
+    """RESPONSES_V2 kill switch selects between legacy and v2 Responses templates."""
+
+    def setUp(self):
+        self.org = _make_org('RespV2Org')
+        self.owner = User.objects.create_user('respv2owner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.login(username='respv2owner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.survey = SurveyHeader.objects.create(
+            name='respv2_test', organization=self.org,
+            created_by=self.owner, status='published',
+        )
+        section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        Question.objects.create(
+            survey_section=section, name='Q1', code='q1',
+            input_type='text', order_number=1,
+        )
+        self.url = f'/editor/surveys/{self.survey.uuid}/analytics/'
+
+    @override_settings(RESPONSES_V2=False)
+    def test_switch_off_serves_legacy_template(self):
+        """
+        GIVEN RESPONSES_V2 is off
+        WHEN GET the analytics dashboard
+        THEN the legacy template renders with its original navigation markup
+        """
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'editor/analytics_dashboard.html')
+        # Legacy navigation markers: Data/Performance sub-tabs + split-pane engine
+        self.assertContains(response, 'switchAnalyticsTab')
+        self.assertContains(response, 'pane-data')
+        self.assertNotContains(response, 'rv2-panerow')
+
+    @override_settings(RESPONSES_V2=True)
+    def test_switch_on_serves_v2_template(self):
+        """
+        GIVEN RESPONSES_V2 is on
+        WHEN GET the analytics dashboard
+        THEN the v2 template renders the flat pane row and no legacy sub-tab row
+        """
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'editor/analytics_dashboard_v2.html')
+        self.assertContains(response, 'rv2-panerow')
+        # The five flat panes exist as containers
+        for pane in ('overview', 'map', 'responses', 'charts', 'performance'):
+            self.assertContains(response, f'data-pane-content="{pane}"')
+        # The stacked navigation must not come along
+        self.assertNotContains(response, 'switchAnalyticsTab')
+        self.assertNotContains(response, '_renderTree')
+
+
+class ResponsesV2OverviewTest(TestCase):
+    """Overview pane: default pane, KPI deltas, feeds, empty/no-geo branches."""
+
+    def setUp(self):
+        self.org = _make_org('RespV2OvOrg')
+        self.owner = User.objects.create_user('respv2ovowner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.login(username='respv2ovowner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.survey = SurveyHeader.objects.create(
+            name='respv2_ov', organization=self.org,
+            created_by=self.owner, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.q_text = Question.objects.create(
+            survey_section=self.section, name='Comment', code='q1',
+            input_type='text', order_number=1,
+        )
+        self.q_point = Question.objects.create(
+            survey_section=self.section, name='Where', code='q2',
+            input_type='point', order_number=2,
+        )
+        self.url = f'/editor/surveys/{self.survey.uuid}/analytics/'
+
+    def _make_session(self, started, with_geo=False, text=None):
+        sess = SurveySession.objects.create(survey=self.survey, start_datetime=started)
+        if text is not None:
+            Answer.objects.create(survey_session=sess, question=self.q_text, text=text)
+        if with_geo:
+            from django.contrib.gis.geos import Point
+            Answer.objects.create(
+                survey_session=sess, question=self.q_point, point=Point(74.6, 42.9),
+            )
+        return sess
+
+    def test_overview_extras_daily_deltas(self):
+        """
+        GIVEN sessions started yesterday and today (one with a geo answer today)
+        WHEN get_overview_extras runs
+        THEN responses_today and geo_features_today count only today's activity
+        """
+        from datetime import timedelta
+        from django.utils import timezone as dj_tz
+        from .analytics import SurveyAnalyticsService
+        now = dj_tz.localtime()
+        self._make_session(now - timedelta(days=1), with_geo=True, text='old')
+        self._make_session(now, with_geo=True, text='fresh')
+        extras = SurveyAnalyticsService(self.survey).get_overview_extras()
+        self.assertEqual(extras['responses_today'], 1)
+        self.assertEqual(extras['geo_features_today'], 1)
+
+    def test_overview_extras_excludes_deleted_sessions(self):
+        """
+        GIVEN a trashed session from today
+        WHEN get_overview_extras runs
+        THEN it appears in neither delta nor the latest feed
+        """
+        from django.utils import timezone as dj_tz
+        from .analytics import SurveyAnalyticsService
+        now = dj_tz.localtime()
+        live = self._make_session(now, text='live')
+        trashed = self._make_session(now, text='trashed')
+        trashed.is_deleted = True
+        trashed.save()
+        extras = SurveyAnalyticsService(self.survey).get_overview_extras()
+        self.assertEqual(extras['responses_today'], 1)
+        feed_ids = [item['id'] for item in extras['latest_feed']]
+        self.assertIn(live.id, feed_ids)
+        self.assertNotIn(trashed.id, feed_ids)
+
+    def test_latest_feed_sequence_and_excerpt(self):
+        """
+        GIVEN three sessions in start order
+        WHEN get_overview_extras runs
+        THEN the latest feed is newest-first with per-survey sequence numbers
+             and a text excerpt
+        """
+        from datetime import timedelta
+        from django.utils import timezone as dj_tz
+        from .analytics import SurveyAnalyticsService
+        now = dj_tz.localtime()
+        self._make_session(now - timedelta(hours=3), text='first')
+        self._make_session(now - timedelta(hours=2), text='second')
+        self._make_session(now - timedelta(hours=1), text='third')
+        extras = SurveyAnalyticsService(self.survey).get_overview_extras()
+        feed = extras['latest_feed']
+        self.assertEqual([f['seq'] for f in feed], [3, 2, 1])
+        self.assertEqual(feed[0]['text_excerpt'], 'third')
+
+    @override_settings(RESPONSES_V2=True)
+    def test_overview_renders_by_default_with_kpis(self):
+        """
+        GIVEN a survey with responses
+        WHEN GET the v2 dashboard
+        THEN the Overview pane content (KPI strip, latest feed) is rendered
+        """
+        from django.utils import timezone as dj_tz
+        self._make_session(dj_tz.localtime(), with_geo=True, text='hello world')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'rv2-kpi-strip')
+        self.assertContains(response, 'rv2-latest')
+        self.assertContains(response, 'hello world')
+
+    @override_settings(RESPONSES_V2=True)
+    def test_overview_empty_state(self):
+        """
+        GIVEN a survey with zero sessions
+        WHEN GET the v2 dashboard
+        THEN the empty state renders instead of zero-filled KPI cards
+        """
+        response = self.client.get(self.url)
+        self.assertContains(response, 'rv2-empty-state')
+        self.assertContains(response, 'No responses yet')
+        self.assertContains(response, 'Share survey')
+        self.assertNotContains(response, 'rv2-kpi-strip')
+
+    @override_settings(RESPONSES_V2=True)
+    def test_overview_no_geo_branch(self):
+        """
+        GIVEN a survey without geo questions but with a response
+        WHEN GET the v2 dashboard
+        THEN the Overview renders without the map thumbnail block
+        """
+        from django.utils import timezone as dj_tz
+        self.q_point.delete()
+        self._make_session(dj_tz.localtime(), text='no geo here')
+        response = self.client.get(self.url)
+        self.assertContains(response, 'rv2-kpi-strip')
+        self.assertNotContains(response, 'id="rv2-ov-map"')
+
+
+@override_settings(RESPONSES_V2=True)
+class ResponsesV2NavigationTest(TestCase):
+    """Flat pane set: badge, deep links, Performance honesty (tracked labels)."""
+
+    def setUp(self):
+        self.org = _make_org('RespV2NavOrg')
+        self.owner = User.objects.create_user('respv2navowner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.login(username='respv2navowner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.survey = SurveyHeader.objects.create(
+            name='respv2_nav', organization=self.org,
+            created_by=self.owner, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.q = Question.objects.create(
+            survey_section=self.section, name='Q1', code='q1',
+            input_type='text', order_number=1,
+        )
+        self.url = f'/editor/surveys/{self.survey.uuid}/analytics/'
+
+    def test_violations_badge_on_responses_pane_item(self):
+        """
+        GIVEN a survey with one empty (flagged) session
+        WHEN GET the v2 dashboard
+        THEN the Responses pane item carries the violations badge
+        """
+        SurveySession.objects.create(survey=self.survey)  # no answers → 'empty'
+        response = self.client.get(self.url)
+        self.assertContains(response, 'rv2-responses-badge')
+
+    def test_no_badge_without_violations(self):
+        """
+        GIVEN a survey whose only session is clean
+        WHEN GET the v2 dashboard
+        THEN no violations badge renders
+        """
+        sess = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=sess, question=self.q, text='fine')
+        response = self.client.get(self.url)
+        self.assertNotContains(response, 'rv2-responses-badge')
+
+    def test_traffic_sources_deep_link_survives(self):
+        """
+        GIVEN the Share page links to #traffic-sources
+        WHEN the v2 dashboard renders
+        THEN the router maps that anchor to the Performance pane
+        """
+        response = self.client.get(self.url)
+        self.assertContains(response, "'traffic-sources': 'performance'")
+
+    def test_performance_kpis_labeled_as_tracked(self):
+        """
+        GIVEN a survey with one tracked session event
+        WHEN GET the v2 dashboard
+        THEN Performance KPIs are labeled as tracked-visit metrics
+        """
+        sess = SurveySession.objects.create(survey=self.survey)
+        SurveyEvent.objects.create(session=sess, event_type='session_start')
+        response = self.client.get(self.url)
+        self.assertContains(response, 'tracked visits')
+
+    def test_small_sample_funnel_notice(self):
+        """
+        GIVEN fewer than 20 tracked sessions with section views
+        WHEN GET the v2 dashboard
+        THEN the funnel shows the small-sample notice instead of drop alarms
+        """
+        sess = SurveySession.objects.create(survey=self.survey)
+        SurveyEvent.objects.create(session=sess, event_type='session_start')
+        SurveyEvent.objects.create(
+            session=sess, event_type='section_view',
+            metadata={'section_name': self.section.name},
+        )
+        response = self.client.get(self.url)
+        self.assertContains(response, 'perf-small-sample')
+        self.assertContains(response, 'Sample too small')
+
+
+class ResponsesV2TableTest(TestCase):
+    """v2 response table: column defaults, chips, status chip, row activation."""
+
+    def setUp(self):
+        self.org = _make_org('RespV2TblOrg')
+        self.owner = User.objects.create_user('respv2tblowner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.login(username='respv2tblowner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.survey = SurveyHeader.objects.create(
+            name='respv2_tbl', organization=self.org,
+            created_by=self.owner, status='published',
+        )
+        self.s1 = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.q = Question.objects.create(
+            survey_section=self.s1, name='Comment', code='q1',
+            input_type='text', order_number=1,
+        )
+        self.sess_complete = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(
+            survey_session=self.sess_complete, question=self.q, text='done here',
+        )
+        self.sess_empty = SurveySession.objects.create(survey=self.survey)
+        self.url = f'/editor/surveys/{self.survey.uuid}/analytics/table/'
+
+    @override_settings(RESPONSES_V2=True)
+    def test_v2_column_defaults(self):
+        """
+        GIVEN the v2 switch is on
+        WHEN GET the table partial
+        THEN Started/Duration lead the columns and language is default-hidden
+        """
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('Started', content)
+        self.assertIn('Duration', content)
+        # Started column renders before the question column
+        self.assertLess(content.index('Started'), content.index('Comment'))
+        self.assertContains(response, 'default-hidden-cols')
+        self.assertContains(response, '"language"')
+
+    @override_settings(RESPONSES_V2=True)
+    def test_v2_toolbar_chips_replace_sidebar_controls(self):
+        """
+        GIVEN one clean and one empty session
+        WHEN GET the table partial
+        THEN the all/complete/issues/trash chips render with counts and the
+             legacy Hide fields / Trash buttons are gone
+        """
+        response = self.client.get(self.url)
+        self.assertContains(response, 'rv2-chip-all')
+        self.assertContains(response, 'rv2-chip-complete')
+        self.assertContains(response, 'rv2-chip-issues')
+        self.assertContains(response, 'rv2-chip-trash')
+        self.assertContains(response, 'All 2')
+        self.assertContains(response, 'Complete 1')
+        self.assertNotContains(response, 'Hide fields')
+        self.assertNotContains(response, 'trash-toggle-btn')
+
+    @override_settings(RESPONSES_V2=True)
+    def test_v2_complete_filter(self):
+        """
+        GIVEN one completed and one empty session
+        WHEN GET the table with issues=complete
+        THEN only the completed session's row is returned
+        """
+        response = self.client.get(self.url + '?issues=complete')
+        content = response.content.decode()
+        self.assertIn(f'data-session-id="{self.sess_complete.id}"', content)
+        self.assertNotIn(
+            f'onclick="rv2RowOpen(event, {self.sess_empty.id})"', content,
+        )
+
+    @override_settings(RESPONSES_V2=True)
+    def test_v2_row_activation_and_status_chip(self):
+        """
+        GIVEN the v2 switch is on
+        WHEN GET the table partial
+        THEN rows carry the click handler and a status chip, and the per-row
+             eye icon and status select are gone
+        """
+        response = self.client.get(self.url)
+        self.assertContains(response, 'rv2RowOpen(event,')
+        self.assertContains(response, 'rv2-status-chip')
+        self.assertNotContains(response, 'fa-eye" style')
+        self.assertNotContains(response, 'validation-select')
+
+    @override_settings(RESPONSES_V2=True)
+    def test_v2_sequence_numbers(self):
+        """
+        GIVEN two sessions in start order
+        WHEN GET the table partial
+        THEN rows show per-survey sequence numbers, not raw database ids
+        """
+        extra = SurveySession.objects.create(survey=self.survey)
+        self.sess_complete.is_deleted = True
+        self.sess_complete.save()
+        response = self.client.get(self.url)
+        content = response.content.decode()
+        # Two active sessions → sequences 1 and 2; the newest session's raw pk
+        # is greater than any sequence and must not leak into the # column.
+        self.assertIn('#1\n', content)
+        self.assertIn('#2\n', content)
+        self.assertNotIn(f'#{extra.id}\n', content)
+
+    @override_settings(RESPONSES_V2=True)
+    def test_issues_menu_offers_individual_violation_types(self):
+        """
+        GIVEN a survey with an empty session (one violation type)
+        WHEN GET the table partial
+        THEN the Issues chip opens a multi-select menu and per-type counts ship
+             with the partial, so individual violations stay selectable
+        """
+        response = self.client.get(self.url)
+        self.assertContains(response, 'rv2IssuesMenu(event,')
+        self.assertContains(response, 'anomaly-counts-data')
+        content = response.content.decode()
+        self.assertIn('"empty"', content)
+
+    @override_settings(RESPONSES_V2=True)
+    def test_issues_multi_select_filters_rows(self):
+        """
+        GIVEN sessions flagged with different violation types
+        WHEN GET the table with a comma-separated issues param
+        THEN rows matching any selected type are returned and the chip reports
+             how many types are selected
+        """
+        response = self.client.get(self.url + '?issues=empty,fast')
+        self.assertContains(response, '2 selected')
+        content = response.content.decode()
+        self.assertIn(f'data-session-id="{self.sess_empty.id}"', content)
+        self.assertNotIn(f'data-session-id="{self.sess_complete.id}"', content)
+
+    @override_settings(RESPONSES_V2=True)
+    def test_free_text_search_across_columns(self):
+        """
+        GIVEN one session whose answer text is "done here"
+        WHEN GET the table with q=done
+        THEN only that session's row survives, and a non-matching query
+             returns none
+        """
+        response = self.client.get(self.url + '?q=done')
+        content = response.content.decode()
+        self.assertIn(f'data-session-id="{self.sess_complete.id}"', content)
+        self.assertNotIn(f'data-session-id="{self.sess_empty.id}"', content)
+
+        empty_result = self.client.get(self.url + '?q=zzzznotfound')
+        self.assertContains(empty_result, 'No responses')
+
+    @override_settings(RESPONSES_V2=True)
+    def test_search_box_renders_with_current_query(self):
+        """
+        GIVEN an active search
+        WHEN GET the table partial
+        THEN the toolbar search box renders holding that query
+        """
+        response = self.client.get(self.url + '?q=done')
+        self.assertContains(response, 'rv2-search-input')
+        self.assertContains(response, 'value="done"')
+
+    @override_settings(RESPONSES_V2=True)
+    def test_sequence_column_sorts_by_sequence(self):
+        """
+        GIVEN the "#" column displays per-survey sequence numbers
+        WHEN GET the table sorted by that column ascending
+        THEN rows come out in sequence order, not raw-pk order
+        """
+        import re
+        response = self.client.get(self.url + '?sort=id&dir=asc')
+        content = response.content.decode()
+        seqs = [int(m) for m in re.findall(r'#(\d+)\n', content)]
+        self.assertEqual(seqs, sorted(seqs))
+        desc = self.client.get(self.url + '?sort=id&dir=desc')
+        seqs_desc = [int(m) for m in re.findall(r'#(\d+)\n', desc.content.decode())]
+        self.assertEqual(seqs_desc, sorted(seqs_desc, reverse=True))
+
+    @override_settings(RESPONSES_V2=True)
+    def test_filtered_ids_ship_for_select_all_matching(self):
+        """
+        GIVEN a filtered set larger than one page
+        WHEN GET the table partial with a small page size
+        THEN the full filtered id list ships so "Select all N matching" can
+             outreach the visible page
+        """
+        response = self.client.get(self.url + '?page_size=10')
+        self.assertContains(response, 'filtered-session-ids')
+        content = response.content.decode()
+        import json as _json, re as _re
+        m = _re.search(r'id="filtered-session-ids">(\[[^<]*\])<', content)
+        self.assertIsNotNone(m)
+        ids = _json.loads(m.group(1))
+        self.assertEqual(len(ids), 2)  # both sessions, beyond any single page
+
+    @override_settings(RESPONSES_V2=False)
+    def test_legacy_table_unchanged(self):
+        """
+        GIVEN the v2 switch is off
+        WHEN GET the table partial
+        THEN the legacy toolbar renders and no v2 chips appear
+        """
+        response = self.client.get(self.url)
+        self.assertContains(response, 'Hide fields')
+        self.assertContains(response, 'validation-select')
+        self.assertNotContains(response, 'rv2-chip-all')
+        self.assertNotContains(response, 'rv2-status-chip')
+
+
+class ResponsesV2DrawerTest(TestCase):
+    """Detail drawer: replaces the modal, reuses the detail endpoint, in-page confirm."""
+
+    def setUp(self):
+        self.org = _make_org('RespV2DrwOrg')
+        self.owner = User.objects.create_user('respv2drwowner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.login(username='respv2drwowner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.survey = SurveyHeader.objects.create(
+            name='respv2_drw', organization=self.org,
+            created_by=self.owner, status='published',
+        )
+        section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.q = Question.objects.create(
+            survey_section=section, name='Q1', code='q1',
+            input_type='text', order_number=1,
+        )
+        self.sess = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=self.sess, question=self.q, text='drawer body')
+        self.dash_url = f'/editor/surveys/{self.survey.uuid}/analytics/'
+        self.detail_url = (
+            f'/editor/surveys/{self.survey.uuid}/analytics/sessions/{self.sess.id}/'
+        )
+
+    @override_settings(RESPONSES_V2=True)
+    def test_drawer_replaces_modal(self):
+        """
+        GIVEN the v2 switch is on
+        WHEN GET the dashboard
+        THEN the drawer renders, the Session Details modal does not, and the
+             engine's modal opener is overridden to the drawer
+        """
+        response = self.client.get(self.dash_url)
+        self.assertContains(response, 'id="rv2-drawer"')
+        self.assertContains(response, 'rv2-drawer-body')
+        self.assertContains(response, 'rv2-drawer-prev')
+        self.assertContains(response, 'rv2-drawer-next')
+        self.assertNotContains(response, 'id="sessionDetailModal"')
+        self.assertContains(response, 'window.loadSessionDetail = rv2OpenDrawer')
+
+    @override_settings(RESPONSES_V2=True)
+    def test_drawer_uses_inpage_confirm(self):
+        """
+        GIVEN the v2 switch is on
+        WHEN GET the dashboard
+        THEN destructive actions are overridden onto the in-page confirm bar
+        """
+        response = self.client.get(self.dash_url)
+        self.assertContains(response, 'function rv2Confirm')
+        self.assertContains(response, 'window.trashSession = function')
+        self.assertContains(response, 'window.hardDeleteSession = function')
+        self.assertContains(response, 'window._bulkAction = function')
+
+    @override_settings(RESPONSES_V2=True)
+    def test_detail_endpoint_carries_status_chips(self):
+        """
+        GIVEN an editor opens a session's detail partial with v2 on
+        WHEN GET the session detail endpoint the drawer feeds from
+        THEN the answers and the v2 status chips render
+        """
+        response = self.client.get(self.detail_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'drawer body')
+        self.assertContains(response, 'rv2-detail-status')
+        self.assertContains(response, 'rv2SetStatus')
+
+    @override_settings(RESPONSES_V2=False)
+    def test_legacy_detail_has_no_chips(self):
+        """
+        GIVEN the v2 switch is off
+        WHEN GET the session detail endpoint
+        THEN the partial renders without v2 status chips
+        """
+        response = self.client.get(self.detail_url)
+        self.assertContains(response, 'drawer body')
+        self.assertNotContains(response, 'rv2-detail-status')
+
+    def test_status_roundtrip(self):
+        """
+        GIVEN a session with no status
+        WHEN POST the set-status endpoint the chips call
+        THEN the session's validation_status persists
+        """
+        url = (
+            f'/editor/surveys/{self.survey.uuid}/analytics/'
+            f'sessions/{self.sess.id}/status/'
+        )
+        response = self.client.post(url, {'validation_status': 'approved'})
+        self.assertIn(response.status_code, (200, 204))
+        self.sess.refresh_from_db()
+        self.assertEqual(self.sess.validation_status, 'approved')
+
+
+@override_settings(RESPONSES_V2=True)
+class ResponsesV2FilterPillsTest(TestCase):
+    """Global filter pills row and cross-filter discoverability."""
+
+    def setUp(self):
+        self.org = _make_org('RespV2PillOrg')
+        self.owner = User.objects.create_user('respv2pillowner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.login(username='respv2pillowner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.survey = SurveyHeader.objects.create(
+            name='respv2_pill', organization=self.org,
+            created_by=self.owner, status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.url = f'/editor/surveys/{self.survey.uuid}/analytics/'
+
+    def test_pills_bar_is_single_and_global(self):
+        """
+        GIVEN the v2 dashboard
+        WHEN it renders
+        THEN exactly one pills bar exists, above the pane containers, carrying
+             the v2 class the engine's count logic keys on
+        """
+        response = self.client.get(self.url)
+        content = response.content.decode()
+        self.assertEqual(content.count('id="filter-pills-bar"'), 1)
+        self.assertContains(response, 'rv2-filter-pills')
+        # Bar comes before the pane containers (shared across panes)
+        self.assertLess(
+            content.index('id="filter-pills-bar"'),
+            content.index('data-pane-content="overview"'),
+        )
+        # Engine ships the filtered-vs-total count for the v2 bar
+        self.assertContains(response, 'rv2-pills-count')
+        self.assertContains(response, 'of ')
+
+    def test_first_time_filter_hint(self):
+        """
+        GIVEN a creator who never filtered
+        WHEN the Charts pane renders
+        THEN the click-to-filter hint is present with its dismissal wiring
+        """
+        response = self.client.get(self.url)
+        self.assertContains(response, 'rv2-filter-hint')
+        self.assertContains(response, 'rv2FilterHintSeen')
+
+
+@override_settings(RESPONSES_V2=True)
+class ResponsesV2SplitViewTest(TestCase):
+    """Split view v2: explicit labeled mode, persistence, reset, map resize."""
+
+    def setUp(self):
+        self.org = _make_org('RespV2SplitOrg')
+        self.owner = User.objects.create_user('respv2splitowner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.login(username='respv2splitowner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.survey = SurveyHeader.objects.create(
+            name='respv2_split', organization=self.org,
+            created_by=self.owner, status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.url = f'/editor/surveys/{self.survey.uuid}/analytics/'
+
+    def test_split_is_labeled_and_resettable(self):
+        """
+        GIVEN the v2 dashboard
+        WHEN it renders
+        THEN Split view is a labeled control with a visible reset, and the
+             legacy split tree is absent
+        """
+        response = self.client.get(self.url)
+        self.assertContains(response, 'Split view')
+        self.assertContains(response, 'rv2-split-btn')
+        self.assertContains(response, 'Reset layout')
+        self.assertNotContains(response, '_renderTree')
+
+    def test_selection_manager_rewires_cross_pane_repaint(self):
+        """
+        GIVEN the v2 dashboard (which does not run the legacy split-tree bootstrap)
+        WHEN it renders
+        THEN the SelectionManager→FilterManager repaint subscription ships, so a
+             selection made on the map redraws charts, table rows and the
+             selection bar (regression: owner found map/chart selection dead)
+        """
+        response = self.client.get(self.url)
+        self.assertContains(response, 'selectionManager.onChange')
+        self.assertContains(response, '_renderSelection')
+
+    def test_split_persists_per_survey_and_resizes_map(self):
+        """
+        GIVEN the v2 dashboard
+        WHEN it renders
+        THEN split state persists under a survey-scoped key, both active panes
+             are indicated, and pane-geometry changes re-measure the map
+        """
+        response = self.client.get(self.url)
+        self.assertContains(response, f'rv2Split_{self.survey.uuid}')
+        self.assertContains(response, 'active-secondary')
+        self.assertContains(response, 'invalidateSize')
+
+
+class ResponsesV2MobileTest(TestCase):
+    """Mobile tier: bottom bar vocabulary, phone card list."""
+
+    def setUp(self):
+        self.org = _make_org('RespV2MobOrg')
+        self.owner = User.objects.create_user('respv2mobowner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.login(username='respv2mobowner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.survey = SurveyHeader.objects.create(
+            name='respv2_mob', organization=self.org,
+            created_by=self.owner, status='published',
+        )
+        section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        q = Question.objects.create(
+            survey_section=section, name='Q1', code='q1',
+            input_type='text', order_number=1,
+        )
+        sess = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=sess, question=q, text='card text here')
+        self.dash_url = f'/editor/surveys/{self.survey.uuid}/analytics/'
+        self.table_url = f'/editor/surveys/{self.survey.uuid}/analytics/table/'
+
+    @override_settings(RESPONSES_V2=True, MOBILE_EDITOR_NAV=True)
+    def test_v2_bottom_bar_vocabulary(self):
+        """
+        GIVEN the v2 switch and mobile nav are on
+        WHEN GET the dashboard
+        THEN the bottom bar carries Overview/Map/Responses/Perf and no Table
+             or Charts items
+        """
+        response = self.client.get(self.dash_url)
+        content = response.content.decode()
+        bar = content[content.index('mobile-tabbar'):]
+        self.assertIn('data-pane="overview"', bar)
+        self.assertIn('data-pane="responses"', bar)
+        self.assertIn('data-pane="performance"', bar)
+        self.assertNotIn('data-pane="table"', bar)
+        self.assertNotIn('data-pane="charts"', bar)
+
+    @override_settings(RESPONSES_V2=False, MOBILE_EDITOR_NAV=True)
+    def test_legacy_bottom_bar_unchanged(self):
+        """
+        GIVEN the v2 switch is off
+        WHEN GET the dashboard
+        THEN the bottom bar keeps the legacy Table/Map/Charts/Perf items
+        """
+        response = self.client.get(self.dash_url)
+        content = response.content.decode()
+        bar = content[content.index('mobile-tabbar'):]
+        self.assertIn('data-pane="table"', bar)
+        self.assertIn('data-pane="charts"', bar)
+        self.assertNotIn('data-pane="overview"', bar)
+
+    @override_settings(RESPONSES_V2=True)
+    def test_phone_card_list_renders_rows(self):
+        """
+        GIVEN the v2 switch is on
+        WHEN GET the table partial
+        THEN the phone card list renders the same rows as the grid
+        """
+        response = self.client.get(self.table_url)
+        self.assertContains(response, 'rv2-mcards')
+        self.assertContains(response, 'rv2-mcard')
+        self.assertContains(response, 'card text here')
+
+    @override_settings(RESPONSES_V2=False)
+    def test_legacy_table_has_no_card_list(self):
+        """
+        GIVEN the v2 switch is off
+        WHEN GET the table partial
+        THEN no card list markup ships
+        """
+        response = self.client.get(self.table_url)
+        self.assertNotContains(response, 'rv2-mcards')
+
+
 class GeoSubanswerVisibilityTest(TestCase):
     """Sub-answers (mapped-object attributes) in the editor Responses screen."""
 

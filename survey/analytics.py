@@ -1,7 +1,7 @@
 import json
 import statistics
 
-from django.db.models import Count, Avg, Min, Max
+from django.db.models import Count, Avg, Min, Max, Q
 from django.db.models.functions import TruncHour
 
 from django.utils import timezone
@@ -234,6 +234,121 @@ class SurveyAnalyticsService:
             'completed_count': completed,
             'completion_rate': rate,
             'flagged_count': flagged_count,
+        }
+
+    def get_overview_extras(self, issues=None):
+        """Overview-pane aggregates (openspec: responses-v2-refactor).
+
+        Daily deltas use the local calendar day (``timezone.localtime`` — the
+        server timezone is the owner's day boundary we have). Median completion
+        time comes from SurveyEvent session_start/survey_complete pairs and is
+        None when no tracked pair exists: ``end_datetime`` is never written
+        (0 of 4586 production sessions), so wall-clock duration only exists
+        for event-tracked sessions.
+
+        ``issues`` lets the caller pass the map already computed by
+        ``get_overview`` so the needs-review feed doesn't recompute it.
+        """
+        today_start = timezone.localtime().replace(
+            hour=0, minute=0, second=0, microsecond=0,
+        )
+        responses_today = self.base_qs.filter(start_datetime__gte=today_start).count()
+
+        geo_q = (
+            Q(point__isnull=False) | Q(line__isnull=False) | Q(polygon__isnull=False)
+        )
+        geo_answers = Answer.objects.filter(
+            survey_session__in=self.base_qs,
+        ).filter(geo_q)
+        geo_features_today = geo_answers.filter(
+            survey_session__start_datetime__gte=today_start,
+        ).count()
+
+        # Median completion time over tracked start/complete pairs.
+        session_pks = list(self.base_qs.values_list('id', flat=True))
+        starts = dict(
+            SurveyEvent.objects
+            .filter(session_id__in=session_pks, event_type='session_start')
+            .values_list('session_id', 'created_at')
+        )
+        completes = dict(
+            SurveyEvent.objects
+            .filter(session_id__in=session_pks, event_type='survey_complete')
+            .values_list('session_id', 'created_at')
+        )
+        durations = {}
+        for sid, done_at in completes.items():
+            start_at = starts.get(sid)
+            if start_at and done_at > start_at:
+                durations[sid] = (done_at - start_at).total_seconds()
+        median_seconds = (
+            statistics.median(durations.values()) if durations else None
+        )
+        median_display = None
+        if median_seconds is not None:
+            median_display = '%d:%02d' % (
+                int(median_seconds) // 60, int(median_seconds) % 60,
+            )
+
+        if issues is None:
+            issues = self.compute_session_issues(session_pks) if session_pks else {}
+
+        def _fmt_duration(seconds):
+            if seconds is None:
+                return None
+            seconds = int(seconds)
+            return '%d:%02d' % (seconds // 60, seconds % 60)
+
+        def _feed_entry(session, seq):
+            first_text = (
+                Answer.objects
+                .filter(survey_session=session, question__parent_question_id__isnull=True)
+                .exclude(text__isnull=True).exclude(text='')
+                .values_list('text', flat=True)
+                .first()
+            )
+            geo_count = Answer.objects.filter(survey_session=session).filter(geo_q).count()
+            session_issues = issues.get(session.id) or []
+            return {
+                'id': session.id,
+                'seq': seq,
+                'started': session.start_datetime,
+                'duration_seconds': durations.get(session.id),
+                'duration_display': _fmt_duration(durations.get(session.id)),
+                'text_excerpt': (first_text or '')[:80],
+                'geo_count': geo_count,
+                'issues': session_issues,
+                'status': session.validation_status,
+            }
+
+        total = len(session_pks)
+        latest_sessions = list(self.base_qs.order_by('-start_datetime')[:5])
+        # Per-survey sequence number: 1-based position in start order.
+        latest_feed = []
+        for i, session in enumerate(latest_sessions):
+            latest_feed.append(_feed_entry(session, total - i))
+
+        flagged_ids = [sid for sid, v in issues.items() if v]
+        needs_review = []
+        if flagged_ids:
+            seq_by_id = None
+            flagged_sessions = list(
+                self.base_qs.filter(id__in=flagged_ids).order_by('-start_datetime')[:5]
+            )
+            ordered_ids = list(
+                self.base_qs.order_by('start_datetime').values_list('id', flat=True)
+            )
+            seq_by_id = {sid: i + 1 for i, sid in enumerate(ordered_ids)}
+            for session in flagged_sessions:
+                needs_review.append(_feed_entry(session, seq_by_id.get(session.id, 0)))
+
+        return {
+            'responses_today': responses_today,
+            'geo_features_today': geo_features_today,
+            'median_seconds': median_seconds,
+            'median_display': median_display,
+            'latest_feed': latest_feed,
+            'needs_review': needs_review,
         }
 
     def get_daily_sessions(self):
@@ -1171,7 +1286,8 @@ class SurveyAnalyticsService:
 
     def get_table_page(self, page=1, page_size=50, session_ids=None,
                        sort_col=None, sort_dir='asc', col_search=None,
-                       show_trash=False, issues_filter=None, col_filters=None):
+                       show_trash=False, issues_filter=None, col_filters=None,
+                       v2=False, query=None):
         """Return one page of session rows with formatted answer values.
 
         Args:
@@ -1202,17 +1318,38 @@ class SurveyAnalyticsService:
             h.id: f'v{h.version_number}' for h in self._scope_surveys
         }
 
-        # Build columns list
-        system_cols = [
-            {'key': 'id', 'label': '#', 'input_type': None},
-            {'key': 'validation_status', 'label': 'Status', 'input_type': None},
-            {'key': 'issues', 'label': 'Issues', 'input_type': None},
-            {'key': 'tags', 'label': 'Tags', 'input_type': None},
-            {'key': 'start_datetime', 'label': 'Start time', 'input_type': None},
-            {'key': 'language', 'label': 'Language', 'input_type': None},
-        ]
-        if multi_version:
-            system_cols.append({'key': 'version', 'label': 'Version', 'input_type': None})
+        # Build columns list. v2 (openspec: responses-v2-refactor) re-defaults
+        # the order to serve reading — identity/time/status first, answers
+        # right after, admin columns (tags/language/version) at the tail with
+        # language+version hidden until enabled via the columns control.
+        tail_cols = []
+        if v2:
+            system_cols = [
+                {'key': 'id', 'label': '#', 'input_type': None},
+                {'key': 'start_datetime', 'label': 'Started', 'input_type': None},
+                {'key': 'duration', 'label': 'Duration', 'input_type': None},
+                {'key': 'validation_status', 'label': 'Status', 'input_type': None},
+                {'key': 'issues', 'label': 'Issues', 'input_type': None},
+            ]
+            tail_cols = [
+                {'key': 'tags', 'label': 'Tags', 'input_type': None},
+                {'key': 'language', 'label': 'Language', 'input_type': None,
+                 'default_hidden': True},
+            ]
+            if multi_version:
+                tail_cols.append({'key': 'version', 'label': 'Version',
+                                  'input_type': None, 'default_hidden': True})
+        else:
+            system_cols = [
+                {'key': 'id', 'label': '#', 'input_type': None},
+                {'key': 'validation_status', 'label': 'Status', 'input_type': None},
+                {'key': 'issues', 'label': 'Issues', 'input_type': None},
+                {'key': 'tags', 'label': 'Tags', 'input_type': None},
+                {'key': 'start_datetime', 'label': 'Start time', 'input_type': None},
+                {'key': 'language', 'label': 'Language', 'input_type': None},
+            ]
+            if multi_version:
+                system_cols.append({'key': 'version', 'label': 'Version', 'input_type': None})
 
         def _col_label(q):
             entry = self._lineages.get((q.code, q.input_type))
@@ -1227,7 +1364,7 @@ class SurveyAnalyticsService:
             }
             for q in questions
         ]
-        columns = system_cols + question_cols
+        columns = system_cols + question_cols + tail_cols
 
         # Base session queryset
         if show_trash:
@@ -1332,6 +1469,62 @@ class SurveyAnalyticsService:
             }
             rows.append(row)
 
+        # v2 row enrichment: per-survey sequence numbers (stable identity in
+        # start order, independent of the current sort/filter) and wall-clock
+        # duration from tracked event pairs (None for untracked sessions).
+        completed_ids = set()
+        if v2 or (issues_filter and 'complete' in issues_filter):
+            completed_ids = set(
+                self._completed_filter_qs(self.base_qs).values_list('id', flat=True)
+            )
+        if v2:
+            ordered_ids = list(
+                self.base_qs.order_by('start_datetime').values_list('id', flat=True)
+            )
+            seq_by_id = {sid: i + 1 for i, sid in enumerate(ordered_ids)}
+            ev_starts = dict(
+                SurveyEvent.objects
+                .filter(session_id__in=session_pks, event_type='session_start')
+                .values_list('session_id', 'created_at')
+            ) if session_pks else {}
+            ev_completes = dict(
+                SurveyEvent.objects
+                .filter(session_id__in=session_pks, event_type='survey_complete')
+                .values_list('session_id', 'created_at')
+            ) if session_pks else {}
+            text_keys = [
+                c['key'] for c in question_cols
+                if c['input_type'] in ('text', 'text_line')
+            ]
+            geo_keys = [
+                c['key'] for c in question_cols
+                if c['input_type'] in ('point', 'line', 'polygon')
+            ]
+            for row in rows:
+                sid = row['session_id']
+                row['seq'] = seq_by_id.get(sid)
+                secs = None
+                if sid in ev_starts and sid in ev_completes:
+                    delta = (ev_completes[sid] - ev_starts[sid]).total_seconds()
+                    if delta > 0:
+                        secs = int(delta)
+                row['duration_seconds'] = secs
+                row['duration_display'] = (
+                    '%d:%02d' % (secs // 60, secs % 60) if secs is not None else None
+                )
+                # Phone card list: one-line summary (first text answer + geo count)
+                excerpt = ''
+                for key in text_keys:
+                    val = row['cells'].get(key)
+                    if val and val != '—':
+                        excerpt = str(val)[:70]
+                        break
+                row['m_excerpt'] = excerpt
+                row['m_geo'] = sum(
+                    1 for key in geo_keys
+                    if row['cells'].get(key) and row['cells'].get(key) != '—'
+                )
+
         _WARNING_TYPES = {'numeric_outlier', 'short_text', 'area_outlier'}
         _ERROR_TYPES = {'self_intersection', 'empty_required', 'out_of_range'}
 
@@ -1344,13 +1537,26 @@ class SurveyAnalyticsService:
                 for lint in lint_list:
                     anomaly_counts[lint] = anomaly_counts.get(lint, 0) + 1
 
+        # v2 toolbar chip counts — captured before issues/search/column filters
+        # so the chips always show the whole (FilterManager-scoped) universe.
+        v2_counts = None
+        if v2:
+            v2_counts = {
+                'all': len(rows),
+                'complete': sum(1 for r in rows if r['session_id'] in completed_ids),
+                'issues': sum(1 for r in rows if r['issues'] or r['lints']),
+            }
+
         # Issues filter (issues_filter is a list of filter keys, or None)
         if issues_filter:
             filter_set = set(issues_filter)
 
             def _row_matches_filters(r, fset):
                 for f in fset:
-                    if f == 'has_errors':
+                    if f == 'complete':
+                        if r['session_id'] in completed_ids:
+                            return True
+                    elif f == 'has_errors':
                         if any(_ERROR_TYPES & set(ls) for ls in r['lints'].values()):
                             return True
                     elif f == 'has_warnings':
@@ -1366,6 +1572,37 @@ class SurveyAnalyticsService:
                 return False
 
             rows = [r for r in rows if _row_matches_filters(r, filter_set)]
+
+        # Free-text search across every column (v2 toolbar). Runs after the
+        # chip/issues filter and before column filters, so the counts above
+        # keep describing the unsearched universe.
+        if query:
+            needle = query.strip().lower()
+
+            def _row_haystack(r):
+                parts = [
+                    '#%s' % (r.get('seq') or r.get('id')),
+                    str(r.get('language') or ''),
+                    str(r.get('version') or ''),
+                    str(r.get('validation_status') or ''),
+                    ' '.join(r.get('issues') or []),
+                    ' '.join(str(t) for t in (r.get('tags') or [])),
+                    str(r.get('notes') or ''),
+                ]
+                started = r.get('start_datetime')
+                if started is not None:
+                    parts.append(
+                        started.strftime('%Y-%m-%d %H:%M')
+                        if hasattr(started, 'strftime') else str(started)
+                    )
+                for v in r['cells'].values():
+                    if isinstance(v, list):
+                        parts.extend(str(x) for x in v)
+                    elif v:
+                        parts.append(str(v))
+                return ' '.join(parts).lower()
+
+            rows = [r for r in rows if needle in _row_haystack(r)]
 
         # Per-column search filter (legacy text search)
         if col_search:
@@ -1469,6 +1706,20 @@ class SurveyAnalyticsService:
             rows.sort(key=lambda r: len(r.get('issues', [])), reverse=reverse)
         elif sort_col == 'tags':
             rows.sort(key=lambda r: len(r.get('tags', [])), reverse=reverse)
+        elif v2 and sort_col == 'id':
+            # v2's "#" column displays the per-survey sequence — sorting must
+            # follow what the eye sees, not the raw pk behind it. Trashed rows
+            # have no sequence and sink to the end.
+            rows.sort(
+                key=lambda r: (r.get('seq') is None, r.get('seq') or 0),
+                reverse=reverse,
+            )
+        elif sort_col == 'duration':
+            rows.sort(
+                key=lambda r: (r.get('duration_seconds') is None,
+                               r.get('duration_seconds') or 0),
+                reverse=reverse,
+            )
         elif sort_col in ('id', 'validation_status', 'start_datetime', 'language', 'version'):
             rows.sort(key=lambda r: (r.get(sort_col) is None, r.get(sort_col, '')), reverse=reverse)
         else:
@@ -1477,6 +1728,12 @@ class SurveyAnalyticsService:
                 key=lambda r: (r['cells'].get(sort_col, '—') == '—', r['cells'].get(sort_col, '')),
                 reverse=reverse,
             )
+
+        # v2: full filtered id list (this sort order, before pagination) so
+        # "Select all N matching" can outreach the visible page (Gmail
+        # pattern — the page checkbox alone silently caps selection at
+        # page_size, which reads as "selected everything" when it didn't).
+        filtered_ids = [r['session_id'] for r in rows] if v2 else None
 
         # Paginate
         total = len(rows)
@@ -1497,6 +1754,8 @@ class SurveyAnalyticsService:
             'col_search': col_search,
             'anomaly_counts': anomaly_counts,
             'unique_values': unique_values,
+            'v2_counts': v2_counts,
+            'filtered_ids': filtered_ids,
         }
 
 

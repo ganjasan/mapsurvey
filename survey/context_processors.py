@@ -31,6 +31,7 @@ def mobile_adaptive(request):
         'CREATE_STEER_AI': getattr(settings, 'CREATE_STEER_AI', False),
         'CONDITIONAL_VISIBILITY': getattr(settings, 'CONDITIONAL_VISIBILITY', False),
         'FILE_UPLOAD_QUESTIONS': getattr(settings, 'FILE_UPLOAD_QUESTIONS', False),
+        'RESPONSES_V2': getattr(settings, 'RESPONSES_V2', False),
     }
 
 

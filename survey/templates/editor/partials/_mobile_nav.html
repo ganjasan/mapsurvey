@@ -13,7 +13,17 @@ Buttons carry data-pane consumed by editor_mobile_nav.js.
 {% endcomment %}
 {% if MOBILE_EDITOR_NAV %}
 <nav class="mobile-tabbar" aria-label="{% trans 'Editor panes' %}">
-    {% if pane_context == "responses" %}
+    {% if pane_context == "responses" and RESPONSES_V2 %}
+    {% comment %}
+    v2 vocabulary (openspec: responses-v2-refactor): Overview is the default
+    pane on every form factor; Charts content lives inside Overview on phones,
+    so the bar has no Charts item. Buttons feed the shared rv2Router.
+    {% endcomment %}
+    <button type="button" data-pane="overview" class="active"><i class="fas fa-circle-notch"></i> {% trans "Overview" %}</button>
+    <button type="button" data-pane="map"><i class="fas fa-map-marker-alt"></i> {% trans "Map" %}</button>
+    <button type="button" data-pane="responses"><i class="fas fa-list"></i> {% trans "Responses" %}</button>
+    <button type="button" data-pane="performance"><i class="fas fa-chart-line"></i> {% trans "Perf" %}</button>
+    {% elif pane_context == "responses" %}
     <button type="button" data-pane="table"><i class="fas fa-table"></i> {% trans "Table" %}</button>
     <button type="button" data-pane="map"><i class="fas fa-map-marker-alt"></i> {% trans "Map" %}</button>
     <button type="button" data-pane="charts" class="active"><i class="fas fa-chart-bar"></i> {% trans "Charts" %}</button>

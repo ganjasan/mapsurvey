@@ -1,8 +1,7 @@
-# analytics-data-workspace Specification
+# analytics-data-workspace — Delta Specification
 
-## Purpose
-TBD - created by archiving change fix-analytics-map-collapse. Update Purpose after archive.
-## Requirements
+## MODIFIED Requirements
+
 ### Requirement: Data workspace keeps its height through tab switches
 The Responses workspace SHALL retain its flex-column layout (and therefore the full height of its
 pane containers, including any split-pane tree) after any number of pane switches through the flat
@@ -22,15 +21,7 @@ shown, on every form factor, including after entering and leaving split view.
 - **WHEN** the user enables split view with the Map pane visible, then closes the split
 - **THEN** the map container keeps a non-zero height and `invalidateSize` restores full-width tiles
 
-### Requirement: Fullscreen toggles degrade gracefully
-Panel fullscreen controls SHALL use the unprefixed Fullscreen API when present,
-fall back to the webkit-prefixed API, and do nothing (without throwing) when
-neither exists.
-
-#### Scenario: Expand button on iOS Safari
-- **WHEN** the user taps a fullscreen toggle in a browser without
-  `Element.requestFullscreen`
-- **THEN** no exception is thrown
+## ADDED Requirements
 
 ### Requirement: Global filter pills row
 Active FilterManager filters SHALL render as a pills row visible above the workspace on every
@@ -127,4 +118,3 @@ layout SHALL persist per survey and a visible reset SHALL restore the single-pan
 #### Scenario: Reset layout
 - **WHEN** the creator activates the split view reset
 - **THEN** the workspace returns to a single full-width pane and the persisted layout is cleared
-
