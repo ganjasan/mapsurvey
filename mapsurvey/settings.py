@@ -226,6 +226,7 @@ LANGUAGES = [
     ('id', 'Bahasa Indonesia'),
     ('nl', 'Nederlands'),
     ('it', 'Italiano'),
+    ('et', 'Eesti'),
 ]
 
 TIME_ZONE = 'UTC'
