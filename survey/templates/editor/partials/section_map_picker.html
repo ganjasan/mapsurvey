@@ -1,6 +1,6 @@
 {% load i18n %}
 <div class="modal-header">
-    <h5 class="modal-title">Set Map Position — {{ section.title|default:section.name }}</h5>
+    <h5 class="modal-title">{% trans "Set Map Position" %} — {{ section.title|default:section.name }}</h5>
     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
 </div>
 <div class="modal-body" style="padding:0;">
@@ -14,7 +14,7 @@
                 Lng: {{ section.start_map_postion.x|floatformat:5 }},
                 Zoom: {{ section.start_map_zoom|default:"12" }}
             {% else %}
-                No position set (inherits from survey or previous section)
+                {% trans "No position set (inherits from survey or previous section)" %}
             {% endif %}
         </span>
     </div>
@@ -24,7 +24,7 @@
                    {% if not section.start_map_postion %}checked{% endif %}>
             <label class="form-check-label" for="clear-position"
                    style="font-size:0.85rem;cursor:pointer;"
-                   title="When checked, this section inherits map position from the survey default or keeps the respondent's current view.">
+                   title="{% trans 'When checked, this section inherits map position from the survey default or keeps the respondent’s current view.' %}">
                 {% trans "Inherit position (don't override)" %}
                 <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
             </label>
@@ -34,7 +34,7 @@
                    {% if section.use_geolocation %}checked{% endif %}>
             <label class="form-check-label" for="use-geolocation"
                    style="font-size:0.85rem;cursor:pointer;"
-                   title="When enabled, the map will fly to the respondent's browser location on this section.">
+                   title="{% trans 'When enabled, the map will fly to the respondent’s browser location on this section.' %}">
                 {% trans "Fly to respondent's geolocation" %}
                 <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
             </label>
@@ -42,7 +42,7 @@
         <div class="form-group mb-0" style="font-size:0.85rem;">
             <label for="override-basemap" style="margin-bottom:0.25rem;">{% trans "Override basemap" %}</label>
             <select id="override-basemap" class="form-control form-control-sm" style="max-width:200px;">
-                <option value="">— Inherit —</option>
+                <option value="">— {% trans "Inherit" %} —</option>
                 {% for slug, label in basemap_choices %}
                     <option value="{{ slug }}" {% if section.override_basemap == slug %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}

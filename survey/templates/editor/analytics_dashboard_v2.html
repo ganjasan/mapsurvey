@@ -1,7 +1,7 @@
 {% extends "editor/editor_base.html" %}
 
 {% load i18n %}
-{% block page_title %}Results – {{ survey.name }}{% endblock %}
+{% block page_title %}{% trans "Results" %} – {{ survey.name }}{% endblock %}
 
 {% load static %}
 {% block extra_head %}
@@ -26,11 +26,9 @@
     <div class="rv2-draft-note">
         <i class="fas fa-info-circle mr-1"></i>
         {% if current_version == 'draft' %}
-        Test responses collected while previewing this draft. They are deleted when the draft is
-        published or discarded.
+        {% blocktrans %}Test responses collected while previewing this draft. They are deleted when the draft is published or discarded.{% endblocktrans %}
         {% else %}
-        Responses of the published survey. This draft's own preview responses are under
-        <strong>{% trans "Draft (test)" %}</strong> in the version picker.
+        {% blocktrans %}Responses of the published survey. This draft's own preview responses are under <strong>Draft (test)</strong> in the version picker.{% endblocktrans %}
         {% endif %}
     </div>
     {% endif %}
@@ -38,33 +36,33 @@
     {# ── Pane row: the single pane-selection level ─────────────────────── #}
     <div class="rv2-panerow" role="tablist" aria-label="{% trans 'Responses panes' %}">
         <button type="button" class="rv2-pane-tab" data-pane="overview" role="tab">
-            <i class="fas fa-circle-notch"></i> Overview
+            <i class="fas fa-circle-notch"></i> {% trans "Overview" %}
         </button>
         <button type="button" class="rv2-pane-tab" data-pane="map" role="tab">
-            <i class="fas fa-map"></i> Map
+            <i class="fas fa-map"></i> {% trans "Map" %}
         </button>
         <button type="button" class="rv2-pane-tab" data-pane="responses" role="tab">
-            <i class="fas fa-list"></i> Responses
+            <i class="fas fa-list"></i> {% trans "Responses" %}
             {% if flagged_count %}<span class="rv2-badge" id="rv2-responses-badge">{{ flagged_count }}</span>{% endif %}
         </button>
         <button type="button" class="rv2-pane-tab" data-pane="charts" role="tab">
-            <i class="fas fa-chart-bar"></i> Charts
+            <i class="fas fa-chart-bar"></i> {% trans "Charts" %}
         </button>
         <button type="button" class="rv2-pane-tab" data-pane="performance" role="tab">
-            <i class="fas fa-chart-line"></i> Performance
+            <i class="fas fa-chart-line"></i> {% trans "Performance" %}
         </button>
         <div class="rv2-panerow-end">
             <button type="button" id="rv2-split-btn" class="rv2-chip rv2-split-control"
                     onclick="rv2ToggleSplit()" title="{% trans 'Show two panes side by side' %}">
-                <i class="fas fa-columns"></i> Split view
+                <i class="fas fa-columns"></i> {% trans "Split view" %}
             </button>
             <button type="button" id="rv2-split-reset" class="rv2-chip rv2-split-control"
                     onclick="rv2ResetSplit()" style="display:none;" title="{% trans 'Back to a single pane' %}">
-                ✕ Reset layout
+                ✕ {% trans "Reset layout" %}
             </button>
             {% if version_choices %}
             <select id="version-scope-select" class="rv2-version-select"
-                    title="Which survey version's responses to show"
+                    title="{% trans 'Which survey version’s responses to show' %}"
                     onchange="location.search = this.value === 'all' ? '' : ('?version=' + this.value);">
                 {% for c in version_choices %}
                 {% if c.value == 'draft' %}<option disabled>──────────</option>{% endif %}
@@ -75,7 +73,7 @@
             <a href="/surveys/{{ survey.uuid }}/download?version={{ current_version }}"
                class="btn btn-sm btn-outline-secondary rv2-download"
                title="{% trans 'Download clean responses (CSV + GeoJSON)' %}">
-                <i class="fas fa-download"></i> Download
+                <i class="fas fa-download"></i> {% trans "Download" %}
             </a>
         </div>
     </div>
@@ -84,7 +82,7 @@
     <div id="filter-pills-bar" class="rv2-filter-pills" style="display:none;"></div>
     <div id="hidden-indicator" style="display:none;padding:0.15rem 1.5rem;flex-shrink:0;">
         <button class="btn btn-sm btn-link p-0" style="font-size:0.78rem;color:#6b7280;" onclick="filterManager.showAll()">
-            <i class="fas fa-eye"></i> <span id="hidden-count">0</span> hidden — Show all
+            <i class="fas fa-eye"></i> <span id="hidden-count">0</span> {% trans "hidden — Show all" %}
         </button>
     </div>
 
@@ -104,10 +102,9 @@
             <div class="rv2-empty" data-testid="rv2-map-empty">
                 <div class="rv2-empty-icon"><i class="fas fa-map"></i></div>
                 <b>{% trans "No geo questions in this survey" %}</b>
-                <p>Add a point, line or polygon question in the Survey tab — responses will appear
-                here on a live map.</p>
+                <p>{% blocktrans %}Add a point, line or polygon question in the Survey tab — responses will appear here on a live map.{% endblocktrans %}</p>
                 <a class="btn btn-outline-secondary btn-sm" href="/editor/surveys/{{ survey.uuid }}/">
-                    <i class="fas fa-plus"></i> Add a map question
+                    <i class="fas fa-plus"></i> {% trans "Add a map question" %}
                 </a>
             </div>
             {% endif %}
@@ -127,9 +124,9 @@
                 <div class="analytics-main">
                     <div id="rv2-filter-hint" class="rv2-filter-hint">
                         <i class="fas fa-hand-pointer"></i>
-                        Click a chart bar to filter — Map, Responses and Charts stay in sync.
+                        {% trans "Click a chart bar to filter — Map, Responses and Charts stay in sync." %}
                     </div>
-                    <div class="analytics-section-label">Questions &amp; Responses</div>
+                    <div class="analytics-section-label">{% trans "Questions & Responses" %}</div>
                     {% include "editor/partials/analytics_daily_chart.html" %}
                     {% include "editor/partials/analytics_question_stats.html" %}
                 </div>
@@ -155,7 +152,7 @@
                 <span id="rv2-drawer-title">{% trans "Response" %}</span>
                 <div class="rv2-drawer-nav">
                     <span id="rv2-drawer-changed" style="display:none;color:#d97706;" title="{% trans 'The list changed since this was opened' %}">
-                        <i class="fas fa-exclamation-triangle"></i> list changed
+                        <i class="fas fa-exclamation-triangle"></i> {% trans "list changed" %}
                     </span>
                     <button type="button" id="rv2-drawer-prev" onclick="rv2DrawerStep(-1)" title="{% trans 'Previous' %}">‹</button>
                     <button type="button" id="rv2-drawer-next" onclick="rv2DrawerStep(1)" title="{% trans 'Next' %}">›</button>
@@ -164,7 +161,7 @@
             </div>
             <div id="rv2-drawer-confirm" style="display:none;"></div>
             <div class="rv2-drawer-body" id="rv2-drawer-body">
-                <div class="text-center text-muted py-4">Loading...</div>
+                <div class="text-center text-muted py-4">{% trans "Loading..." %}</div>
             </div>
         </aside>
     </div>

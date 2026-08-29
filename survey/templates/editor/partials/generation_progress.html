@@ -13,6 +13,6 @@ percentage or a fill.
 {% endcomment %}
 <div id="gen-progress" class="gen-progress" hx-swap-oob="true"
      data-sections="{{ sections }}" data-questions="{{ questions }}">
-  {{ questions }} question{{ questions|pluralize }}{% if sections %} ·
-  {{ sections }} section{{ sections|pluralize }}{% endif %} {% trans "drafted" %}
+  {% blocktrans count n=questions %}{{ n }} question{% plural %}{{ n }} questions{% endblocktrans %}{% if sections %} ·
+  {% blocktrans count n=sections %}{{ n }} section{% plural %}{{ n }} sections{% endblocktrans %}{% endif %} {% trans "drafted" %}
 </div>

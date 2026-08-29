@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block page_title %}New Survey{% endblock %}
+{% block page_title %}{% trans "New Survey" %}{% endblock %}
 
 {% block navbar_content %}
 <span class="survey-name">{% trans "New Survey" %}</span>
@@ -320,7 +320,7 @@
                     hx-target="#generation-slot"
                     hx-swap="innerHTML"
                     hx-disabled-elt="#generate-btn, #empty-btn">
-              {% if MOBILE_EDITOR_NAV %}✨ Draft my survey{% else %}<i class="fas fa-wand-magic-sparkles"></i> {% trans "Generate draft" %}{% endif %}
+              {% if MOBILE_EDITOR_NAV %}✨ {% trans "Draft my survey" %}{% else %}<i class="fas fa-wand-magic-sparkles"></i> {% trans "Generate draft" %}{% endif %}
             </button>
             {% if MOBILE_EDITOR_NAV %}
             {% comment %}The wizard's draft button, inside the tinted AI zone.
@@ -345,7 +345,7 @@
           .create-left so it is visible on the wizard goal step too, where
           .create-actions is hidden.{% endcomment %}
           <div id="ai-intercept" class="ai-intercept" hidden>
-            <div class="ai-intercept-text">You already described your project — draft it with AI (~10&nbsp;s)?</div>
+            <div class="ai-intercept-text">{% trans "You already described your project — draft it with AI (~10 s)?" %}</div>
             <div class="ai-intercept-actions">
               <button type="button" id="ai-intercept-accept" class="btn btn-primary">{% trans "✨ Generate draft" %}</button>
               <button type="button" id="ai-intercept-decline" class="btn btn-outline-secondary">{% trans "Create empty anyway" %}</button>
@@ -360,7 +360,7 @@
           <div class="create-actions">
             {% if ai_available %}
             <div class="create-actions-secondary">
-              <button type="submit" name="action" value="empty" id="empty-btn" class="btn btn-outline-secondary{% if MOBILE_EDITOR_NAV %} btn-block-row{% endif %}">{% if MOBILE_EDITOR_NAV %}Skip and start from scratch{% else %}Create empty{% endif %}</button>
+              <button type="submit" name="action" value="empty" id="empty-btn" class="btn btn-outline-secondary{% if MOBILE_EDITOR_NAV %} btn-block-row{% endif %}">{% if MOBILE_EDITOR_NAV %}{% trans "Skip and start from scratch" %}{% else %}{% trans "Create empty" %}{% endif %}</button>
               {% if not MOBILE_EDITOR_NAV %}
               {% comment %}With the wizard chrome the navbar's "‹ Dashboard" is the
               way out — a third button here just wraps the row.{% endcomment %}
@@ -533,8 +533,8 @@
             latEl.value = c.lat;
             lngEl.value = c.lng;
             zoomEl.value = map.getZoom();
-            coordsEl.textContent = 'Respondents open here — centre ' +
-                c.lat.toFixed(5) + ', ' + c.lng.toFixed(5) + ' · zoom ' + map.getZoom();
+            coordsEl.textContent = '{% trans "Respondents open here — centre" %} ' +
+                c.lat.toFixed(5) + ', ' + c.lng.toFixed(5) + ' · {% trans "zoom" %} ' + map.getZoom();
         }
         syncFromCentre();
         map.on('moveend', syncFromCentre);
@@ -589,7 +589,7 @@
         MapPlaceSearch.attach(map, {
             accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
             container: document.getElementById('create-map-search'),
-            labels: { placeholder: 'Search for a place — city, address, landmark…' },
+            labels: { placeholder: '{% trans "Search for a place — city, address, landmark…" %}' },
             onSelect: function() { userInteracted = true; }
         });
 

@@ -6,7 +6,7 @@
             {{ session.start_datetime|date:"Y-m-d H:i" }}
         </small>
         {% if not RESPONSES_V2 %}{# v2 drawer titles by per-survey sequence; the raw pk would contradict it #}
-        <span class="badge badge-secondary">Session #{{ session.id }}</span>
+        <span class="badge badge-secondary">{% trans "Session" %} #{{ session.id }}</span>
         {% endif %}
         {% if session.validation_status == 'approved' %}<span class="badge badge-success">{% trans "Approved" %}</span>
         {% elif session.validation_status == 'not_approved' %}<span class="badge badge-danger">{% trans "Not approved" %}</span>
@@ -38,15 +38,15 @@
     <div class="rv2-detail-status mb-3" style="display:flex;gap:6px;flex-wrap:wrap;">
         <button type="button" class="rv2-chip {% if session.validation_status == 'approved' %}active{% endif %}"
                 onclick="rv2SetStatus({{ session.id }}, '{% if session.validation_status == 'approved' %}{% else %}approved{% endif %}')">
-            ✓ Approved
+            ✓ {% trans "Approved" %}
         </button>
         <button type="button" class="rv2-chip {% if session.validation_status == 'on_hold' %}active{% endif %}"
                 onclick="rv2SetStatus({{ session.id }}, '{% if session.validation_status == 'on_hold' %}{% else %}on_hold{% endif %}')">
-            ⏸ On hold
+            ⏸ {% trans "On hold" %}
         </button>
         <button type="button" class="rv2-chip {% if session.validation_status == 'not_approved' %}active{% endif %}"
                 onclick="rv2SetStatus({{ session.id }}, '{% if session.validation_status == 'not_approved' %}{% else %}not_approved{% endif %}')">
-            ✕ Rejected
+            ✕ {% trans "Rejected" %}
         </button>
     </div>
     {% endif %}

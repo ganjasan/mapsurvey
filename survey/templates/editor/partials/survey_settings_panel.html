@@ -95,12 +95,12 @@
                   Lng: {{ survey.start_map_postion.x|floatformat:5 }},
                   Zoom: {{ survey.start_map_zoom|default:"12" }}
               {% else %}
-                  Click the map to set position
+                  {% trans "Click the map to set position" %}
               {% endif %}
             </span>
           </div>
         </div>
-        <label class="pr-switch" title="Auto-center the map on the respondent's browser location when they first enter the survey.">
+        <label class="pr-switch" title="{% trans 'Auto-center the map on the respondent’s browser location when they first enter the survey.' %}">
           <span>{% trans "Auto-center on respondent's location" %} <small class="pr-help">{% trans "uses the visitor's browser geolocation on entry" %}</small></span>
           <input type="checkbox" id="survey-use-geolocation" {% if survey.use_geolocation %}checked{% endif %}>
         </label>
@@ -132,7 +132,7 @@
             <div class="ref-layer-head">
               <span class="ref-layer-swatch" style="background:{{ item.layer.color }}"></span>
               <b class="ref-layer-name">{{ item.layer.name }}</b>
-              <span class="pr-help ref-layer-meta">{{ item.layer.feature_count }} features · {{ item.layer.size_bytes|filesizeformat }}</span>
+              <span class="pr-help ref-layer-meta">{{ item.layer.feature_count }} {% trans "features" %} · {{ item.layer.size_bytes|filesizeformat }}</span>
               <button type="button" class="ref-layer-toggle" title="{% trans 'Edit' %}"><i class="fas fa-pen"></i></button>
               <button type="button" class="ref-layer-delete" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
             </div>
@@ -149,7 +149,7 @@
               <div class="pr-field">
                 <label>{% trans "Label field" %}</label>
                 <select data-field="label_field">
-                  <option value="">— none —</option>
+                  <option value="">— {% trans "none" %} —</option>
                   {% for prop in item.properties %}
                   <option value="{{ prop }}" {% if prop == item.layer.label_field %}selected{% endif %}>{{ prop }}</option>
                   {% endfor %}
@@ -159,7 +159,7 @@
               <div class="pr-field">
                 <label>{% trans "Key field" %}</label>
                 <select data-field="key_field">
-                  <option value="">— none —</option>
+                  <option value="">— {% trans "none" %} —</option>
                   {% for prop in item.properties %}
                   <option value="{{ prop }}" {% if prop == item.layer.key_field %}selected{% endif %}>{{ prop }}</option>
                   {% endfor %}
@@ -284,7 +284,7 @@
 
     <!-- Password & Test Access -->
     <div class="pr-card">
-      <h6>Password &amp; test access</h6>
+      <h6>{% trans "Password & test access" %}</h6>
       <div class="password-container">
         {% include "editor/partials/survey_password_modal.html" %}
       </div>

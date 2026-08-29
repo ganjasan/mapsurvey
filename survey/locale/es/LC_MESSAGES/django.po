@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mapsurvey 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-29 09:43+0000\n"
+"POT-Creation-Date: 2026-08-29 12:12+0000\n"
 "PO-Revision-Date: 2026-08-28 17:52+0000\n"
 "Last-Translator: \n"
 "Language-Team: Spanish\n"
@@ -72,6 +72,7 @@ msgstr "Color de acento"
 
 #: survey/editor_forms.py:119 survey/editor_forms.py:281
 #: survey/templates/editor/partials/question_form_modal.html:263
+#: survey/templates/editor/partials/question_form_modal.html:361
 #: survey/templates/editor/partials/survey_settings_panel.html:143
 #: survey/templates/org/org_settings.html:22
 msgid "Name"
@@ -101,17 +102,21 @@ msgid "Default base map"
 msgstr "Mapa base predeterminado"
 
 #: survey/editor_forms.py:201
-#: survey/templates/editor/analytics_dashboard_v2.html:162
+#: survey/templates/editor/analytics_dashboard_v2.html:159
+#: survey/templates/editor/partials/analytics_text_answers.html:28
 #: survey/templates/partials/survey_section_partial.html:97
 #: survey/templates/survey_section_block.html:20
 msgid "Next"
 msgstr "Siguiente"
 
-#: survey/editor_forms.py:211 survey/templates/editor/public_results.html:268
+#: survey/editor_forms.py:211
+#: survey/templates/editor/partials/section_detail_form.html:77
+#: survey/templates/editor/public_results.html:268
 msgid "Title"
 msgstr "Título"
 
 #: survey/editor_forms.py:212
+#: survey/templates/editor/partials/section_detail_form.html:82
 msgid "Subheading"
 msgstr "Subtítulo"
 
@@ -125,6 +130,7 @@ msgid "Layout"
 msgstr "Diseño"
 
 #: survey/editor_forms.py:215
+#: survey/templates/editor/partials/section_detail_form.html:88
 msgid "Button label"
 msgstr "Texto del botón"
 
@@ -146,6 +152,7 @@ msgstr ""
 "de bienvenida. Vacío = Siguiente / Finalizar."
 
 #: survey/editor_forms.py:282
+#: survey/templates/editor/partials/question_form_modal.html:366
 msgid "Subtext"
 msgstr "Texto complementario"
 
@@ -168,6 +175,7 @@ msgid "Icon class"
 msgstr "Clase de icono"
 
 #: survey/editor_forms.py:287 survey/models.py:119 survey/models.py:1452
+#: survey/templates/editor/partials/pr_add_block_modal.html:16
 #: survey/templates/editor/public_results.html:187
 msgid "Image"
 msgstr "Imagen"
@@ -197,10 +205,13 @@ msgid "The name must contain at least one letter or digit"
 msgstr "El nombre debe contener al menos una letra o un número"
 
 #: survey/models.py:72
+#: survey/templates/editor/partials/_publishing_widget.html:20
+#: survey/templates/editor/partials/_publishing_widget.html:24
 msgid "Draft"
 msgstr "Borrador"
 
 #: survey/models.py:73
+#: survey/templates/editor/partials/_publishing_widget.html:24
 msgid "Testing"
 msgstr "Prueba"
 
@@ -209,7 +220,11 @@ msgid "Published"
 msgstr "Publicada"
 
 #: survey/models.py:75
+#: survey/templates/editor/partials/_publishing_widget.html:24
+#: survey/templates/editor/partials/_publishing_widget.html:82
+#: survey/templates/editor/partials/_publishing_widget.html:93
 #: survey/templates/editor/partials/_survey_primary_action.html:26
+#: survey/templates/editor/survey_detail.html:63
 msgid "Closed"
 msgstr "Cerrada"
 
@@ -467,6 +482,7 @@ msgid "Re-serialized FeatureCollection — never the raw uploaded bytes."
 msgstr "FeatureCollection reserializada, nunca los bytes originales subidos."
 
 #: survey/models.py:557 survey/models.py:886 survey/models.py:1454
+#: survey/templates/editor/analytics_dashboard_v2.html:42
 #: survey/templates/editor/partials/_mobile_nav.html:24
 #: survey/templates/editor/partials/_mobile_nav.html:29
 msgid "Map"
@@ -573,6 +589,8 @@ msgstr "Open Data"
 
 #: survey/models.py:888 survey/templates/editor.html:400
 #: survey/templates/editor.html:442
+#: survey/templates/editor/analytics_dashboard.html:4
+#: survey/templates/editor/analytics_dashboard_v2.html:4
 msgid "Results"
 msgstr "Resultados"
 
@@ -597,10 +615,11 @@ msgid "Research"
 msgstr "Investigación"
 
 #: survey/models.py:1183 survey/templates/base_landing.html:199
+#: survey/templates/editor/partials/analytics_performance.html:143
 #: survey/templates/org/org_members.html:34
 #: survey/templates/org/org_members.html:112
 msgid "Email"
-msgstr ""
+msgstr "Correo"
 
 #: survey/models.py:1184
 msgid "Call"
@@ -638,10 +657,12 @@ msgid "Unlisted"
 msgstr "No listada"
 
 #: survey/models.py:1446
+#: survey/templates/editor/partials/_publishing_widget.html:59
+#: survey/templates/editor/public_results.html:49
 msgid "Live"
 msgstr "En vivo"
 
-#: survey/models.py:1447
+#: survey/models.py:1447 survey/templates/editor/public_results.html:49
 msgid "Frozen"
 msgstr "Congelada"
 
@@ -861,15 +882,15 @@ msgstr "Asignar cohorte"
 #: survey/templates/base_survey_template.html:136
 #: survey/templates/editor.html:507 survey/templates/editor.html:530
 #: survey/templates/editor.html:556
-#: survey/templates/editor/analytics_dashboard.html:197
-#: survey/templates/editor/analytics_dashboard_v2.html:205
+#: survey/templates/editor/analytics_dashboard.html:196
+#: survey/templates/editor/analytics_dashboard_v2.html:202
 #: survey/templates/editor/editor_base.html:983
 #: survey/templates/editor/partials/_lifecycle_scripts.html:24
 #: survey/templates/editor/partials/_lifecycle_scripts.html:46
 #: survey/templates/editor/partials/_lifecycle_scripts.html:57
 #: survey/templates/editor/partials/_lifecycle_scripts.html:67
 #: survey/templates/editor/partials/pr_add_block_modal.html:54
-#: survey/templates/editor/partials/question_form_modal.html:445
+#: survey/templates/editor/partials/question_form_modal.html:441
 #: survey/templates/editor/partials/section_map_picker.html:54
 #: survey/templates/editor/survey_create.html:377
 #: survey/templates/editor/survey_create.html:383
@@ -898,6 +919,7 @@ msgid "New Organization"
 msgstr "Nueva organización"
 
 #: survey/templates/base.html:384 survey/templates/editor/editor_base.html:943
+#: survey/templates/editor/survey_settings.html:5
 #: survey/templates/org/org_members.html:14
 #: survey/templates/org/org_settings.html:4
 msgid "Settings"
@@ -914,9 +936,9 @@ msgstr "Miembros"
 #: survey/templates/editor/editor_base.html:924
 #: survey/templates/editor/editor_base.html:953
 msgid "Logout"
-msgstr ""
+msgstr "Cerrar sesión"
 
-#: survey/templates/base.html:398
+#: survey/templates/base.html:398 survey/templates/registration/login.html:4
 #: survey/templates/registration/rate_limited.html:32
 msgid "Sign in"
 msgstr "Iniciar sesión"
@@ -989,7 +1011,7 @@ msgstr ""
 #: survey/templates/editor/editor_base.html:879
 #: survey/templates/org/org_members.html:15
 msgid "Dashboard"
-msgstr ""
+msgstr "Panel"
 
 #: survey/templates/base_landing.html:147
 #: survey/templates/django_registration/activation_complete.html:13
@@ -998,7 +1020,7 @@ msgstr ""
 #: survey/templates/registration/login.html:53
 #: survey/templates/registration/password_reset_complete.html:13
 msgid "Sign In"
-msgstr ""
+msgstr "Iniciar sesión"
 
 #: survey/templates/base_landing.html:148
 msgid "Sign Up Free"
@@ -1080,7 +1102,7 @@ msgstr "Terminar dibujo"
 
 #: survey/templates/base_survey_template.html:137
 #: survey/templates/editor/partials/analytics_table.html:467
-#: survey/templates/editor/partials/question_form_modal.html:448
+#: survey/templates/editor/partials/question_form_modal.html:444
 #: survey/templates/editor/public_results.html:259
 msgid "Apply"
 msgstr "Aplicar"
@@ -1451,6 +1473,37 @@ msgstr ""
 msgid "Confirm my email"
 msgstr "Confirmar mi correo"
 
+#: survey/templates/django_registration/activation_email.html:21
+#: survey/templates/django_registration/activation_form.html:11
+msgid "Activate your account"
+msgstr "Activa tu cuenta"
+
+#: survey/templates/django_registration/activation_email.html:23
+msgid ""
+"Welcome to Mapsurvey! Click the button below to activate your account and "
+"get started."
+msgstr ""
+"¡Te damos la bienvenida a Mapsurvey! Pulsa el botón de abajo para activar tu"
+" cuenta y empezar."
+
+#: survey/templates/django_registration/activation_email.html:30
+#: survey/templates/django_registration/activation_form.html:4
+msgid "Activate Account"
+msgstr "Activar la cuenta"
+
+#: survey/templates/django_registration/activation_email.html:36
+#: survey/templates/org/invitation_email.html:36
+msgid ""
+"If the button doesn’t work, copy and paste this link into your browser:"
+msgstr "Si el botón no funciona, copia y pega este enlace en tu navegador:"
+
+#: survey/templates/django_registration/activation_email.html:44
+#, python-format
+msgid "This link expires in %(days)s day."
+msgid_plural "This link expires in %(days)s days."
+msgstr[0] "Este enlace caduca en %(days)s día."
+msgstr[1] "Este enlace caduca en %(days)s días."
+
 #: survey/templates/django_registration/activation_email_body.txt:1
 msgid "Welcome to Mapsurvey!"
 msgstr "¡Te damos la bienvenida a Mapsurvey!"
@@ -1487,14 +1540,6 @@ msgstr ""
 #: survey/templates/django_registration/activation_failed.html:20
 msgid "Send me a new activation link"
 msgstr "Enviarme un nuevo enlace de activación"
-
-#: survey/templates/django_registration/activation_form.html:4
-msgid "Activate Account"
-msgstr "Activar la cuenta"
-
-#: survey/templates/django_registration/activation_form.html:11
-msgid "Activate your account"
-msgstr "Activa tu cuenta"
 
 #: survey/templates/django_registration/activation_form.html:25
 msgid "Click the button below to activate your account."
@@ -1641,6 +1686,7 @@ msgid "List"
 msgstr "Lista"
 
 #: survey/templates/editor.html:314
+#: survey/templates/editor/survey_create.html:5
 #: survey/templates/editor/survey_create.html:8
 msgid "New Survey"
 msgstr "Nueva encuesta"
@@ -1722,6 +1768,7 @@ msgstr "beta"
 
 #: survey/templates/editor.html:402 survey/templates/editor.html:444
 #: survey/templates/editor/partials/_survey_nav_tabs.html:48
+#: survey/templates/editor/survey_share.html:4
 msgid "Share"
 msgstr "Compartir"
 
@@ -1809,6 +1856,11 @@ msgstr "Descargar los datos depurados"
 msgid "All Versions"
 msgstr "Todas las versiones"
 
+#: survey/templates/editor/_survey_more_menu.html:14
+#: survey/templates/editor/_survey_more_menu.html:20
+msgid "Current"
+msgstr "Actual"
+
 #: survey/templates/editor/_survey_more_menu.html:18
 msgid "Download All (incl. excluded)"
 msgstr "Descargar todo (incluidas las excluidas)"
@@ -1837,7 +1889,17 @@ msgstr "Solo los datos"
 msgid "Full Backup"
 msgstr "Copia completa"
 
-#: survey/templates/editor/analytics_dashboard.html:31
+#: survey/templates/editor/analytics_dashboard.html:28
+#: survey/templates/editor/analytics_dashboard_v2.html:29
+msgid ""
+"Test responses collected while previewing this draft. They are deleted when "
+"the draft is published or discarded."
+msgstr ""
+"Respuestas de prueba recogidas al previsualizar este borrador. Se eliminan "
+"cuando el borrador se publica o se descarta."
+
+#: survey/templates/editor/analytics_dashboard.html:30
+#: survey/templates/editor/analytics_dashboard_v2.html:31
 msgid ""
 "Responses of the published survey. This draft's own preview responses are "
 "under <strong>Draft (test)</strong> in the version picker."
@@ -1846,173 +1908,237 @@ msgstr ""
 "borrador están en <strong>Borrador (prueba)</strong>, en el selector de "
 "versión."
 
-#: survey/templates/editor/analytics_dashboard.html:42
+#: survey/templates/editor/analytics_dashboard.html:41
 #: survey/templates/editor/public_results.html:60
 msgid "Data"
 msgstr "Datos"
 
-#: survey/templates/editor/analytics_dashboard.html:47
+#: survey/templates/editor/analytics_dashboard.html:46
+#: survey/templates/editor/analytics_dashboard_v2.html:52
 msgid "Performance"
 msgstr "Rendimiento"
 
-#: survey/templates/editor/analytics_dashboard.html:60
-#: survey/templates/editor/analytics_dashboard_v2.html:77
+#: survey/templates/editor/analytics_dashboard.html:49
+#: survey/templates/editor/analytics_dashboard_v2.html:65
+msgid "Which survey version’s responses to show"
+msgstr "De qué versión de la encuesta se muestran las respuestas"
+
+#: survey/templates/editor/analytics_dashboard.html:59
+#: survey/templates/editor/analytics_dashboard_v2.html:75
 msgid "Download clean responses (CSV + GeoJSON)"
 msgstr "Descargar las respuestas depuradas (CSV + GeoJSON)"
 
-#: survey/templates/editor/analytics_dashboard.html:61
+#: survey/templates/editor/analytics_dashboard.html:60
 msgid "Download data"
 msgstr "Descargar los datos"
 
-#: survey/templates/editor/analytics_dashboard.html:71
+#: survey/templates/editor/analytics_dashboard.html:70
+#: survey/templates/editor/analytics_dashboard_v2.html:85
 msgid "hidden — Show all"
 msgstr "ocultas — Mostrar todas"
 
-#: survey/templates/editor/analytics_dashboard.html:86
-#: survey/templates/editor/analytics_dashboard_v2.html:119
+#: survey/templates/editor/analytics_dashboard.html:85
+#: survey/templates/editor/analytics_dashboard_v2.html:116
 msgid "Loading table..."
 msgstr "Cargando la tabla …"
 
-#: survey/templates/editor/analytics_dashboard.html:89
+#: survey/templates/editor/analytics_dashboard.html:88
 msgid "Expand Violations panel"
 msgstr "Desplegar el panel de anomalías"
 
-#: survey/templates/editor/analytics_dashboard.html:92
-#: survey/templates/editor/analytics_dashboard.html:99
+#: survey/templates/editor/analytics_dashboard.html:91
+#: survey/templates/editor/analytics_dashboard.html:98
 msgid "Violations"
 msgstr "Anomalías"
 
-#: survey/templates/editor/analytics_dashboard.html:100
+#: survey/templates/editor/analytics_dashboard.html:99
 msgid "Collapse"
 msgstr "Plegar"
 
-#: survey/templates/editor/analytics_dashboard.html:112
-#: survey/templates/editor/analytics_dashboard.html:130
+#: survey/templates/editor/analytics_dashboard.html:111
+#: survey/templates/editor/analytics_dashboard.html:129
 #: survey/templates/editor/partials/analytics_table.html:163
 msgid "0 selected"
 msgstr "0 seleccionadas"
 
-#: survey/templates/editor/analytics_dashboard.html:114
-#: survey/templates/editor/analytics_dashboard.html:132
+#: survey/templates/editor/analytics_dashboard.html:113
+#: survey/templates/editor/analytics_dashboard.html:131
 msgid "Hide"
 msgstr "Ocultar"
 
-#: survey/templates/editor/analytics_dashboard.html:115
-#: survey/templates/editor/analytics_dashboard.html:133
+#: survey/templates/editor/analytics_dashboard.html:114
+#: survey/templates/editor/analytics_dashboard.html:132
 msgid "Keep only"
 msgstr "Conservar solo estas"
 
-#: survey/templates/editor/analytics_dashboard.html:116
-#: survey/templates/editor/analytics_dashboard.html:134
+#: survey/templates/editor/analytics_dashboard.html:115
+#: survey/templates/editor/analytics_dashboard.html:133
 msgid "Invert"
 msgstr "Invertir"
 
-#: survey/templates/editor/analytics_dashboard.html:122
-#: survey/templates/editor/analytics_dashboard_v2.html:106
+#: survey/templates/editor/analytics_dashboard.html:121
+#: survey/templates/editor/analytics_dashboard_v2.html:104
 msgid "No geo questions in this survey"
 msgstr "Esta encuesta no tiene preguntas geográficas"
 
-#: survey/templates/editor/analytics_dashboard.html:138
+#: survey/templates/editor/analytics_dashboard.html:137
 #: survey/templates/editor/partials/analytics_table.html:150
 msgid "Toggle fullscreen"
 msgstr "Alternar pantalla completa"
 
-#: survey/templates/editor/analytics_dashboard.html:143
+#: survey/templates/editor/analytics_dashboard.html:142
+#: survey/templates/editor/analytics_dashboard_v2.html:39
 #: survey/templates/editor/partials/_mobile_nav.html:23
 msgid "Overview"
 msgstr "Resumen"
 
-#: survey/templates/editor/analytics_dashboard.html:146
+#: survey/templates/editor/analytics_dashboard.html:145
+#: survey/templates/editor/analytics_dashboard_v2.html:129
 msgid "Questions & Responses"
 msgstr "Preguntas y respuestas"
 
-#: survey/templates/editor/analytics_dashboard.html:166
+#: survey/templates/editor/analytics_dashboard.html:165
 msgid "Session Details"
 msgstr "Detalle de la sesión"
 
-#: survey/templates/editor/analytics_dashboard.html:167
-#: survey/templates/editor/analytics_dashboard_v2.html:163
+#: survey/templates/editor/analytics_dashboard.html:166
+#: survey/templates/editor/analytics_dashboard_v2.html:160
 #: survey/templates/editor/editor_base.html:977
+#: survey/templates/editor/partials/_ai_feedback_strip.html:27
 #: survey/templates/editor/partials/_survey_primary_action.html:23
 #: survey/templates/editor/partials/generation_failed.html:13
-#: survey/templates/editor/partials/question_form_modal.html:443
+#: survey/templates/editor/partials/question_form_modal.html:439
 #: survey/templates/editor/survey_share.html:256
 #: survey/templates/landing.html:95
 msgid "Close"
-msgstr ""
+msgstr "Cerrar"
 
-#: survey/templates/editor/analytics_dashboard.html:170
+#: survey/templates/editor/analytics_dashboard.html:169
+#: survey/templates/editor/analytics_dashboard_v2.html:165
+#: survey/templates/editor/partials/analytics_question_stats.html:243
+#: survey/templates/editor/survey_detail.html:301
+#: survey/templates/editor/survey_detail.html:308
+#: survey/templates/editor/survey_detail.html:315
 msgid "Loading..."
 msgstr "Cargando …"
 
-#: survey/templates/editor/analytics_dashboard.html:181
-#: survey/templates/editor/analytics_dashboard_v2.html:189
+#: survey/templates/editor/analytics_dashboard.html:180
+#: survey/templates/editor/analytics_dashboard_v2.html:186
 msgid "Validation Settings"
 msgstr "Ajustes de validación"
 
-#: survey/templates/editor/analytics_dashboard.html:186
-#: survey/templates/editor/analytics_dashboard_v2.html:194
+#: survey/templates/editor/analytics_dashboard.html:185
+#: survey/templates/editor/analytics_dashboard_v2.html:191
 msgid "Fast completion threshold (seconds)"
 msgstr "Umbral de respuesta rápida (segundos)"
 
-#: survey/templates/editor/analytics_dashboard.html:188
-#: survey/templates/editor/analytics_dashboard_v2.html:196
+#: survey/templates/editor/analytics_dashboard.html:187
+#: survey/templates/editor/analytics_dashboard_v2.html:193
 msgid "Sessions completed faster than this are flagged"
 msgstr "Las sesiones completadas más rápido que esto se marcan"
 
-#: survey/templates/editor/analytics_dashboard.html:191
-#: survey/templates/editor/analytics_dashboard_v2.html:199
+#: survey/templates/editor/analytics_dashboard.html:190
+#: survey/templates/editor/analytics_dashboard_v2.html:196
 msgid "Duplicate detection window (hours)"
 msgstr "Ventana de detección de duplicados (horas)"
 
-#: survey/templates/editor/analytics_dashboard.html:193
-#: survey/templates/editor/analytics_dashboard_v2.html:201
+#: survey/templates/editor/analytics_dashboard.html:192
+#: survey/templates/editor/analytics_dashboard_v2.html:198
 msgid "Sessions from same browser within this window are flagged"
 msgstr "Las sesiones del mismo navegador dentro de esta ventana se marcan"
 
-#: survey/templates/editor/analytics_dashboard.html:198
-#: survey/templates/editor/analytics_dashboard_v2.html:206
+#: survey/templates/editor/analytics_dashboard.html:197
+#: survey/templates/editor/analytics_dashboard_v2.html:203
+#: survey/templates/editor/partials/question_form_modal.html:447
 #: survey/templates/editor/partials/thanks_panel.html:30
 #: survey/templates/editor/survey_detail.html:163
 #: survey/templates/org/org_settings.html:30
 msgid "Save"
 msgstr "Guardar"
 
-#: survey/templates/editor/analytics_dashboard_v2.html:33
-msgid "Draft (test)"
-msgstr "Borrador (prueba)"
-
-#: survey/templates/editor/analytics_dashboard_v2.html:39
+#: survey/templates/editor/analytics_dashboard_v2.html:37
 msgid "Responses panes"
 msgstr "Paneles de respuestas"
 
-#: survey/templates/editor/analytics_dashboard_v2.html:58
+#: survey/templates/editor/analytics_dashboard_v2.html:45
+#: survey/templates/editor/partials/_mobile_nav.html:25
+#: survey/templates/editor/partials/_survey_nav_tabs.html:32
+#: survey/templates/editor/survey_share.html:163
+#: survey/templates/editor/survey_share.html:240
+msgid "Responses"
+msgstr "Respuestas"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:49
+#: survey/templates/editor/partials/_mobile_nav.html:30
+msgid "Charts"
+msgstr "Gráficos"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:56
 msgid "Show two panes side by side"
 msgstr "Mostrar dos paneles en paralelo"
 
-#: survey/templates/editor/analytics_dashboard_v2.html:62
+#: survey/templates/editor/analytics_dashboard_v2.html:57
+msgid "Split view"
+msgstr "Vista dividida"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:60
 msgid "Back to a single pane"
 msgstr "Volver a un solo panel"
 
-#: survey/templates/editor/analytics_dashboard_v2.html:154
+#: survey/templates/editor/analytics_dashboard_v2.html:61
+msgid "Reset layout"
+msgstr "Restablecer la disposición"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:76
+msgid "Download"
+msgstr "Descargar"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:105
+msgid ""
+"Add a point, line or polygon question in the Survey tab — responses will "
+"appear here on a live map."
+msgstr ""
+"Añade una pregunta de punto, línea o polígono en la pestaña Encuesta: las "
+"respuestas aparecerán aquí en un mapa en vivo."
+
+#: survey/templates/editor/analytics_dashboard_v2.html:107
+msgid "Add a map question"
+msgstr "Añadir una pregunta de mapa"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:127
+msgid "Click a chart bar to filter — Map, Responses and Charts stay in sync."
+msgstr ""
+"Haz clic en una barra para filtrar: Mapa, Respuestas y Gráficos se mantienen"
+" sincronizados."
+
+#: survey/templates/editor/analytics_dashboard_v2.html:151
 msgid "Response details"
 msgstr "Detalle de la respuesta"
 
-#: survey/templates/editor/analytics_dashboard_v2.html:156
+#: survey/templates/editor/analytics_dashboard_v2.html:153
 msgid "Response"
 msgstr "Respuesta"
 
-#: survey/templates/editor/analytics_dashboard_v2.html:158
+#: survey/templates/editor/analytics_dashboard_v2.html:155
 msgid "The list changed since this was opened"
 msgstr "La lista cambió desde que se abrió"
 
-#: survey/templates/editor/analytics_dashboard_v2.html:161
+#: survey/templates/editor/analytics_dashboard_v2.html:156
+msgid "list changed"
+msgstr "la lista cambió"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:158
+#: survey/templates/editor/partials/analytics_text_answers.html:24
 msgid "Previous"
 msgstr "Anterior"
 
-#: survey/templates/editor/analytics_dashboard_v2.html:180
+#: survey/templates/editor/analytics_dashboard_v2.html:177
 msgid "Done"
 msgstr "Aceptar"
+
+#: survey/templates/editor/editor_base.html:5
+msgid "Survey Editor"
+msgstr "Editor de encuestas"
 
 #: survey/templates/editor/editor_base.html:5
 msgid "– Mapsurvey"
@@ -2042,6 +2168,11 @@ msgstr "Descartar la encuesta"
 msgid "Organization settings"
 msgstr "Configuración de la organización"
 
+#: survey/templates/editor/editor_base.html:923
+#: survey/templates/editor/editor_base.html:948
+msgid "Help & support"
+msgstr "Ayuda y soporte"
+
 #: survey/templates/editor/editor_base.html:976
 msgid "Confirm"
 msgstr "Confirmar"
@@ -2062,12 +2193,8 @@ msgstr "Poco útil"
 msgid "Anything to add? (optional)"
 msgstr "¿Algo que añadir? (opcional)"
 
-#: survey/templates/editor/partials/_ai_feedback_strip.html:27
-msgid "Dismiss"
-msgstr "Cerrar"
-
-#: survey/templates/editor/partials/_language_switcher.html:18
-#: survey/templates/editor/partials/analytics_performance.html:164
+#: survey/templates/editor/partials/_language_switcher.html:25
+#: survey/templates/editor/partials/analytics_performance.html:163
 msgid "Language"
 msgstr "Idioma"
 
@@ -2151,11 +2278,6 @@ msgstr "Descartar"
 msgid "Editor panes"
 msgstr "Paneles del editor"
 
-#: survey/templates/editor/partials/_mobile_nav.html:25
-#: survey/templates/editor/partials/_survey_nav_tabs.html:32
-msgid "Responses"
-msgstr "Respuestas"
-
 #: survey/templates/editor/partials/_mobile_nav.html:26
 #: survey/templates/editor/partials/_mobile_nav.html:31
 msgid "Perf"
@@ -2164,10 +2286,6 @@ msgstr "Rend."
 #: survey/templates/editor/partials/_mobile_nav.html:28
 msgid "Table"
 msgstr "Tabla"
-
-#: survey/templates/editor/partials/_mobile_nav.html:30
-msgid "Charts"
-msgstr "Gráficos"
 
 #: survey/templates/editor/partials/_mobile_nav.html:34
 #: survey/templates/editor/partials/_mobile_nav.html:40
@@ -2180,6 +2298,19 @@ msgstr "Estructura"
 #: survey/templates/editor/partials/survey_settings_panel.html:138
 msgid "Edit"
 msgstr "Editar"
+
+#: survey/templates/editor/partials/_publishing_widget.html:20
+#, python-format
+msgid "Publishing this draft creates v%(next)s"
+msgstr "Al publicar este borrador se crea la v%(next)s"
+
+#: survey/templates/editor/partials/_publishing_widget.html:24
+#: survey/templates/editor/partials/_publishing_widget.html:60
+#: survey/templates/editor/partials/_publishing_widget.html:63
+#: survey/templates/editor/partials/_survey_primary_action.html:21
+#: survey/templates/editor/survey_detail.html:63
+msgid "Open"
+msgstr "Abrir"
 
 #: survey/templates/editor/partials/_publishing_widget.html:28
 msgid "Collection"
@@ -2259,15 +2390,14 @@ msgstr "Página de resultados"
 msgid "manage in the Public results space"
 msgstr "se gestiona en el espacio Resultados públicos"
 
-#: survey/templates/editor/partials/_publishing_widget.html:60
-#: survey/templates/editor/partials/_publishing_widget.html:63
-#: survey/templates/editor/partials/_survey_primary_action.html:21
-msgid "Open"
-msgstr "Abrir"
-
 #: survey/templates/editor/partials/_publishing_widget.html:62
 msgid "Draft — not live yet"
 msgstr "Borrador — aún no está en línea"
+
+#: survey/templates/editor/partials/_publishing_widget.html:62
+#, python-format
+msgid "/r/%(slug)s/ is prepared but unpublished"
+msgstr "/r/%(slug)s/ está preparada pero sin publicar"
 
 #: survey/templates/editor/partials/_publishing_widget.html:65
 msgid "Set up a results page…"
@@ -2278,12 +2408,27 @@ msgid "Version"
 msgstr "Versión"
 
 #: survey/templates/editor/partials/_publishing_widget.html:75
+#: survey/templates/editor/partials/section_detail_form.html:12
+#: survey/templates/editor/partials/section_detail_form.html:132
 msgid "Create a draft to edit"
 msgstr "Crea un borrador para editar"
 
 #: survey/templates/editor/partials/_publishing_widget.html:82
 msgid "responses stay visible under All versions"
 msgstr "las respuestas siguen visibles en Todas las versiones"
+
+#: survey/templates/editor/partials/_publishing_widget.html:84
+#, python-format
+msgid ""
+"Restore v%(old)s as a new draft? Publishing it will create v%(next)s with "
+"the old questionnaire — nothing is deleted."
+msgstr ""
+"¿Restaurar la v%(old)s como un borrador nuevo? Al publicarlo se creará la "
+"v%(next)s con el cuestionario antiguo; no se elimina nada."
+
+#: survey/templates/editor/partials/_publishing_widget.html:87
+msgid "Create a draft with this version’s questionnaire"
+msgstr "Crear un borrador con el cuestionario de esta versión"
 
 #: survey/templates/editor/partials/_publishing_widget.html:87
 msgid "Restore…"
@@ -2313,9 +2458,14 @@ msgstr ""
 "agregadas"
 
 #: survey/templates/editor/partials/_survey_nav_tabs.html:36
+#: survey/templates/editor/public_results.html:5
 #: survey/templates/editor/public_results.html:46
 msgid "Public results"
 msgstr "Resultados públicos"
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html:51
+msgid "Share link & tracking…"
+msgstr "Enlace para compartir y seguimiento …"
 
 #: survey/templates/editor/partials/_survey_nav_tabs.html:55
 msgid "Copy results link"
@@ -2338,6 +2488,7 @@ msgstr "privado"
 #: survey/templates/editor/partials/_survey_nav_tabs.html:82
 #: survey/templates/editor/partials/survey_settings_panel.html:8
 #: survey/templates/editor/survey_detail.html:238
+#: survey/templates/editor/survey_settings_modal.html:3
 msgid "Survey settings"
 msgstr "Configuración de la encuesta"
 
@@ -2394,20 +2545,45 @@ msgstr "Crea un borrador para editar la visibilidad."
 msgid "Response Timeline"
 msgstr "Cronología de las respuestas"
 
-#: survey/templates/editor/partials/analytics_geo_map.html:4
-msgid "Response Map"
-msgstr "Mapa de respuestas"
+#: survey/templates/editor/partials/analytics_daily_chart.html:10
+msgid "Hour"
+msgstr "Hora"
 
+#: survey/templates/editor/partials/analytics_daily_chart.html:11
+msgid "Day"
+msgstr "Día"
+
+#: survey/templates/editor/partials/analytics_daily_chart.html:12
+msgid "Week"
+msgstr "Semana"
+
+#: survey/templates/editor/partials/analytics_daily_chart.html:13
+msgid "Month"
+msgstr "Mes"
+
+#: survey/templates/editor/partials/analytics_daily_chart.html:46
 #: survey/templates/editor/partials/analytics_overview.html:5
 msgid "Total Sessions"
 msgstr "Sesiones totales"
 
+#: survey/templates/editor/partials/analytics_daily_chart.html:54
 #: survey/templates/editor/partials/analytics_overview.html:9
 #: survey/templates/editor/partials/analytics_performance.html:29
-#: survey/templates/editor/partials/analytics_performance.html:228
-#: survey/templates/editor/partials/analytics_performance.html:312
+#: survey/templates/editor/partials/analytics_performance.html:227
+#: survey/templates/editor/partials/analytics_performance.html:311
 msgid "Completed"
 msgstr "Completadas"
+
+#: survey/templates/editor/partials/analytics_geo_map.html:4
+#: survey/templates/editor/partials/analytics_overview_pane.html:46
+msgid "Response Map"
+msgstr "Mapa de respuestas"
+
+#: survey/templates/editor/partials/analytics_geo_map.html:4
+#: survey/templates/editor/partials/section_detail_form.html:56
+#: survey/templates/editor/partials/survey_settings_panel.html:137
+msgid "features"
+msgstr "elementos"
 
 #: survey/templates/editor/partials/analytics_overview.html:13
 #: survey/templates/editor/partials/analytics_performance.html:33
@@ -2430,10 +2606,22 @@ msgstr ""
 "Tu encuesta está en línea. Comparte el enlace y las respuestas aparecerán "
 "aquí en tiempo real."
 
+#: survey/templates/editor/partials/analytics_overview_pane.html:14
+msgid "Share survey"
+msgstr "Compartir la encuesta"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:18
+msgid "Preview as respondent"
+msgstr "Ver como participante"
+
 #: survey/templates/editor/partials/analytics_overview_pane.html:24
 #: survey/templates/public_results.html:83
 msgid "responses"
 msgstr "respuestas"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:25
+msgid "today"
+msgstr "hoy"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:27
 msgid "completion"
@@ -2468,9 +2656,21 @@ msgstr "Gráficos ›"
 msgid "Needs review"
 msgstr "Requiere revisión"
 
+#: survey/templates/editor/partials/analytics_overview_pane.html:105
+msgid "Latest responses"
+msgstr "Últimas respuestas"
+
 #: survey/templates/editor/partials/analytics_overview_pane.html:106
 msgid "All ›"
 msgstr "Todas ›"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:113
+msgid "geo"
+msgstr "geo"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:113
+msgid "no answers"
+msgstr "sin respuestas"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:118
 #: survey/templates/editor/partials/analytics_table.html:419
@@ -2481,6 +2681,10 @@ msgstr "en espera"
 #: survey/templates/editor/partials/analytics_table.html:421
 msgid "rejected"
 msgstr "rechazadas"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:122
+msgid "ok"
+msgstr "ok"
 
 #: survey/templates/editor/partials/analytics_performance.html:4
 msgid "No event data yet"
@@ -2537,104 +2741,138 @@ msgstr ""
 "Visualizaciones frente a envíos por sección. La tasa de abandono indica el "
 "porcentaje de personas que vieron la sección pero no la enviaron."
 
-#: survey/templates/editor/partials/analytics_performance.html:69
+#: survey/templates/editor/partials/analytics_performance.html:57
+#, python-format
+msgid ""
+"Sample too small for drop rates — only %(starts)s tracked session so far. "
+"Rates appear from 20."
+msgid_plural ""
+"Sample too small for drop rates — only %(starts)s tracked sessions so far. "
+"Rates appear from 20."
+msgstr[0] ""
+"Muestra demasiado pequeña para las tasas de abandono: solo %(starts)s sesión"
+" registrada hasta ahora. Las tasas aparecen a partir de 20."
+msgstr[1] ""
+"Muestra demasiado pequeña para las tasas de abandono: solo %(starts)s "
+"sesiones registradas hasta ahora. Las tasas aparecen a partir de 20."
+
+#: survey/templates/editor/partials/analytics_performance.html:68
 msgid "submits"
 msgstr "envíos"
 
-#: survey/templates/editor/partials/analytics_performance.html:81
+#: survey/templates/editor/partials/analytics_performance.html:80
 msgid "Submitted"
 msgstr "Entregada"
 
-#: survey/templates/editor/partials/analytics_performance.html:82
+#: survey/templates/editor/partials/analytics_performance.html:81
 msgid "Dropped"
 msgstr "Abandonada"
 
-#: survey/templates/editor/partials/analytics_performance.html:123
+#: survey/templates/editor/partials/analytics_performance.html:122
+#: survey/templates/editor/survey_share.html:163
+#: survey/templates/editor/survey_share.html:240
 msgid "Traffic Sources"
 msgstr "Fuentes de tráfico"
 
-#: survey/templates/editor/partials/analytics_performance.html:127
-#: survey/templates/editor/partials/analytics_performance.html:226
-#: survey/templates/editor/partials/analytics_performance.html:308
+#: survey/templates/editor/partials/analytics_performance.html:126
+#: survey/templates/editor/partials/analytics_performance.html:225
+#: survey/templates/editor/partials/analytics_performance.html:307
 #: survey/templates/editor/survey_share.html:197
 msgid "Source"
 msgstr "Fuente"
 
-#: survey/templates/editor/partials/analytics_performance.html:128
-#: survey/templates/editor/partials/analytics_performance.html:165
+#: survey/templates/editor/partials/analytics_performance.html:127
+#: survey/templates/editor/partials/analytics_performance.html:164
 msgid "Sessions"
 msgstr "Sesiones"
 
-#: survey/templates/editor/partials/analytics_performance.html:136
+#: survey/templates/editor/partials/analytics_performance.html:135
 msgid "Direct / Unknown"
 msgstr "Directo / Desconocido"
 
-#: survey/templates/editor/partials/analytics_performance.html:160
+#: survey/templates/editor/partials/analytics_performance.html:137
+msgid "Google"
+msgstr "Google"
+
+#: survey/templates/editor/partials/analytics_performance.html:139
+msgid "Bing"
+msgstr "Bing"
+
+#: survey/templates/editor/partials/analytics_performance.html:141
+msgid "Social"
+msgstr "Redes sociales"
+
+#: survey/templates/editor/partials/analytics_performance.html:145
+msgid "Other"
+msgstr "Otro"
+
+#: survey/templates/editor/partials/analytics_performance.html:159
 #: survey/templates/editor/partials/survey_settings_panel.html:43
 #: survey/templates/metroquest_alternative.html:100
 msgid "Languages"
-msgstr ""
+msgstr "Idiomas"
 
-#: survey/templates/editor/partials/analytics_performance.html:183
+#: survey/templates/editor/partials/analytics_performance.html:182
 msgid "Devices, OS & Browsers"
 msgstr "Dispositivos, sistemas y navegadores"
 
-#: survey/templates/editor/partials/analytics_performance.html:187
+#: survey/templates/editor/partials/analytics_performance.html:186
 msgid "Platform"
 msgstr "Plataforma"
 
-#: survey/templates/editor/partials/analytics_performance.html:207
+#: survey/templates/editor/partials/analytics_performance.html:206
 msgid "Browser"
 msgstr "Navegador"
 
-#: survey/templates/editor/partials/analytics_performance.html:222
+#: survey/templates/editor/partials/analytics_performance.html:221
 msgid "Completion Rate by Source"
 msgstr "Tasa de finalización por fuente"
 
-#: survey/templates/editor/partials/analytics_performance.html:227
-#: survey/templates/editor/partials/analytics_performance.html:311
+#: survey/templates/editor/partials/analytics_performance.html:226
+#: survey/templates/editor/partials/analytics_performance.html:310
 msgid "Started"
 msgstr "Iniciadas"
 
-#: survey/templates/editor/partials/analytics_performance.html:229
-#: survey/templates/editor/partials/analytics_performance.html:313
+#: survey/templates/editor/partials/analytics_performance.html:228
+#: survey/templates/editor/partials/analytics_performance.html:312
 msgid "Rate"
 msgstr "Tasa"
 
-#: survey/templates/editor/partials/analytics_performance.html:249
+#: survey/templates/editor/partials/analytics_performance.html:248
 msgid "Time on Section"
 msgstr "Tiempo por sección"
 
-#: survey/templates/editor/partials/analytics_performance.html:253
-#: survey/templates/editor/partials/analytics_performance.html:280
+#: survey/templates/editor/partials/analytics_performance.html:252
+#: survey/templates/editor/partials/analytics_performance.html:279
+#: survey/templates/editor/partials/section_detail_form.html:5
 msgid "Section"
 msgstr "Sección"
 
-#: survey/templates/editor/partials/analytics_performance.html:254
-#: survey/templates/editor/partials/analytics_performance.html:281
+#: survey/templates/editor/partials/analytics_performance.html:253
+#: survey/templates/editor/partials/analytics_performance.html:280
 msgid "Avg"
 msgstr "Prom."
 
-#: survey/templates/editor/partials/analytics_performance.html:255
-#: survey/templates/editor/partials/analytics_performance.html:282
+#: survey/templates/editor/partials/analytics_performance.html:254
+#: survey/templates/editor/partials/analytics_performance.html:281
 #: survey/templates/editor/partials/analytics_question_stats.html:97
 msgid "Median"
 msgstr "Mediana"
 
-#: survey/templates/editor/partials/analytics_performance.html:256
-#: survey/templates/editor/partials/analytics_performance.html:283
+#: survey/templates/editor/partials/analytics_performance.html:255
+#: survey/templates/editor/partials/analytics_performance.html:282
 msgid "Samples"
 msgstr "Muestras"
 
-#: survey/templates/editor/partials/analytics_performance.html:276
+#: survey/templates/editor/partials/analytics_performance.html:275
 msgid "Page Load Time by Section"
 msgstr "Tiempo de carga por sección"
 
-#: survey/templates/editor/partials/analytics_performance.html:303
+#: survey/templates/editor/partials/analytics_performance.html:302
 msgid "Campaign Breakdown"
 msgstr "Desglose por campaña"
 
-#: survey/templates/editor/partials/analytics_performance.html:304
+#: survey/templates/editor/partials/analytics_performance.html:303
 #, python-format
 msgid ""
 "Sessions from tracked UTM links. Create links on the <a "
@@ -2643,12 +2881,12 @@ msgstr ""
 "Sesiones procedentes de enlaces UTM con seguimiento. Crea enlaces en la "
 "página <a href=\"%(share_url)s\">Compartir</a>."
 
-#: survey/templates/editor/partials/analytics_performance.html:309
+#: survey/templates/editor/partials/analytics_performance.html:308
 #: survey/templates/editor/survey_share.html:198
 msgid "Medium"
 msgstr "Medio"
 
-#: survey/templates/editor/partials/analytics_performance.html:310
+#: survey/templates/editor/partials/analytics_performance.html:309
 #: survey/templates/editor/survey_share.html:199
 msgid "Campaign"
 msgstr "Campaña"
@@ -2662,6 +2900,21 @@ msgid "This question was removed in a newer version — historical answers only"
 msgstr ""
 "Esta pregunta se eliminó en una versión más reciente: solo respuestas "
 "históricas"
+
+#: survey/templates/editor/partials/analytics_question_stats.html:11
+#| msgid "Archived"
+msgid "archived"
+msgstr "archivada"
+
+#: survey/templates/editor/partials/analytics_question_stats.html:22
+#: survey/templates/editor/partials/analytics_question_stats.html:250
+#: survey/templates/editor/partials/analytics_text_answers.html:5
+#, python-format
+#| msgid "no answers"
+msgid "%(n)s answer"
+msgid_plural "%(n)s answers"
+msgstr[0] "%(n)s respuesta"
+msgstr[1] "%(n)s respuestas"
 
 #: survey/templates/editor/partials/analytics_question_stats.html:89
 msgid "Answers"
@@ -2685,11 +2938,32 @@ msgstr "Máx"
 msgid "Step:"
 msgstr "Paso:"
 
+#: survey/templates/editor/partials/analytics_question_stats.html:238
+#, python-format
+#| msgid "No text answers yet."
+msgid "%(n)s text answer"
+msgid_plural "%(n)s text answers"
+msgstr[0] "%(n)s respuesta de texto"
+msgstr[1] "%(n)s respuestas de texto"
+
+#: survey/templates/editor/partials/analytics_question_stats.html:247
+#, python-format
+msgid "%(n)s geo feature — see map above"
+msgid_plural "%(n)s geo features — see map above"
+msgstr[0] "%(n)s elemento — mira el mapa de arriba"
+msgstr[1] "%(n)s elementos — mira el mapa de arriba"
+
 #: survey/templates/editor/partials/analytics_question_stats.html:254
 msgid "No questions in this survey."
 msgstr "Esta encuesta no tiene preguntas."
 
+#: survey/templates/editor/partials/analytics_session_detail.html:9
+#| msgid "Sessions"
+msgid "Session"
+msgstr "Sesión"
+
 #: survey/templates/editor/partials/analytics_session_detail.html:11
+#: survey/templates/editor/partials/analytics_session_detail.html:42
 #: survey/templates/editor/partials/analytics_table.html:170
 #: survey/templates/editor/partials/analytics_table.html:346
 #: survey/templates/editor/partials/analytics_table.html:351
@@ -2704,6 +2978,7 @@ msgid "Not approved"
 msgstr "No aprobada"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:13
+#: survey/templates/editor/partials/analytics_session_detail.html:46
 #: survey/templates/editor/partials/analytics_table.html:172
 #: survey/templates/editor/partials/analytics_table.html:348
 #: survey/templates/editor/partials/analytics_table.html:353
@@ -2717,6 +2992,11 @@ msgstr "En la papelera"
 #: survey/templates/editor/partials/analytics_session_detail.html:26
 msgid "Trash"
 msgstr "Papelera"
+
+#: survey/templates/editor/partials/analytics_session_detail.html:50
+#| msgid "rejected"
+msgid "Rejected"
+msgstr "Rechazada"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:59
 #: survey/templates/editor/partials/pr_add_block_modal.html:21
@@ -2919,6 +3199,18 @@ msgstr "Ocultar el campo"
 msgid "Freeze field"
 msgstr "Fijar el campo"
 
+#: survey/templates/editor/partials/analytics_text_answers.html:5
+#, python-format
+msgid ", page %(page)s of %(total)s"
+msgstr ", página %(page)s de %(total)s"
+
+#: survey/templates/editor/partials/analytics_text_answers.html:8
+#: survey/templates/editor/partials/analytics_text_answers.html:9
+#: survey/templates/editor/partials/analytics_text_answers.html:10
+#| msgid "Live page"
+msgid "page"
+msgstr "página"
+
 #: survey/templates/editor/partials/analytics_text_answers.html:32
 msgid "No text answers yet."
 msgstr "Aún no hay respuestas de texto."
@@ -2951,6 +3243,10 @@ msgstr "Quitar"
 msgid "No collaborators yet."
 msgstr "Aún no hay colaboradores."
 
+#: survey/templates/editor/partials/collaborator_list.html:48
+msgid "Select member…"
+msgstr "Elegir un miembro …"
+
 #: survey/templates/editor/partials/collaborator_list.html:58
 msgid "Add"
 msgstr "Añadir"
@@ -2959,6 +3255,22 @@ msgstr "Añadir"
 msgid "Your brief is still in the form — adjust it and try again."
 msgstr ""
 "Tu descripción sigue en el formulario: ajústala y vuelve a intentarlo."
+
+#: survey/templates/editor/partials/generation_progress.html:16
+#, python-format
+#| msgid "Rating questions"
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s pregunta"
+msgstr[1] "%(n)s preguntas"
+
+#: survey/templates/editor/partials/generation_progress.html:17
+#, python-format
+#| msgid "Paste section"
+msgid "%(n)s section"
+msgid_plural "%(n)s sections"
+msgstr[0] "%(n)s sección"
+msgstr[1] "%(n)s secciones"
 
 #: survey/templates/editor/partials/generation_progress.html:17
 msgid "drafted"
@@ -2994,6 +3306,14 @@ msgstr "Añadir un bloque"
 msgid "Block type"
 msgstr "Tipo de bloque"
 
+#: survey/templates/editor/partials/pr_add_block_modal.html:15
+msgid "Question results…"
+msgstr "Resultados de una pregunta …"
+
+#: survey/templates/editor/partials/pr_add_block_modal.html:17
+msgid "Text block"
+msgstr "Bloque de texto"
+
 #: survey/templates/editor/partials/pr_add_block_modal.html:22
 msgid ""
 "stays the source of truth for form submission (disabled options = not "
@@ -3014,6 +3334,22 @@ msgstr "Buscar por nombre o tipo …"
 msgid "No matching questions."
 msgstr "No hay preguntas que coincidan."
 
+#: survey/templates/editor/partials/pr_add_block_modal.html:41
+#: survey/templates/editor/partials/pr_add_block_modal.html:42
+#, python-format
+#| msgid "%(counter)s response"
+#| msgid_plural "%(counter)s responses"
+msgid "%(n)s response"
+msgid_plural "%(n)s responses"
+msgstr[0] "%(n)s respuesta"
+msgstr[1] "%(n)s respuestas"
+
+#: survey/templates/editor/partials/pr_add_block_modal.html:41
+#: survey/templates/editor/partials/pr_add_block_modal.html:42
+#| msgid "Next — choose the place"
+msgid "text — not publishable"
+msgstr "texto: no publicable"
+
 #: survey/templates/editor/partials/pr_add_block_modal.html:46
 msgid ""
 "Text questions are not available for publication — individual answers are "
@@ -3025,6 +3361,20 @@ msgstr ""
 #: survey/templates/editor/partials/pr_add_block_modal.html:49
 msgid "Image file"
 msgstr "Archivo de imagen"
+
+#: survey/templates/editor/partials/question_form_modal.html:73
+#, python-format
+msgid "New Sub-question for “%(name)s”"
+msgstr "Nueva subpregunta de «%(name)s»"
+
+#: survey/templates/editor/partials/question_form_modal.html:74
+msgid "Edit Question"
+msgstr "Editar la pregunta"
+
+#: survey/templates/editor/partials/question_form_modal.html:75
+#: survey/templates/editor/partials/section_detail_form.html:139
+msgid "New Question"
+msgstr "Nueva pregunta"
 
 #: survey/templates/editor/partials/question_form_modal.html:130
 msgid "Editor-only label — respondents don't see it."
@@ -3093,6 +3443,10 @@ msgstr "Valor mínimo"
 msgid "Max value"
 msgstr "Valor máximo"
 
+#: survey/templates/editor/partials/question_form_modal.html:292
+msgid "Outlier"
+msgstr "Atípico"
+
 #: survey/templates/editor/partials/question_form_modal.html:302
 msgid "Min text length"
 msgstr "Longitud mínima del texto"
@@ -3110,7 +3464,7 @@ msgid "Max file size, MB (platform cap 25)"
 msgstr "Tamaño máximo por archivo, MB (límite de la plataforma: 25)"
 
 #: survey/templates/editor/partials/question_form_modal.html:335
-#: survey/templates/editor/partials/question_form_modal.html:411
+#: survey/templates/editor/partials/question_form_modal.html:409
 msgid "Places per respondent"
 msgstr "Lugares por participante"
 
@@ -3138,6 +3492,10 @@ msgstr ""
 "Se actualiza mientras editas: la presentación real del lado del "
 "participante."
 
+#: survey/templates/editor/partials/question_form_modal.html:391
+msgid "Shown when:"
+msgstr "Se muestra cuando:"
+
 #: survey/templates/editor/partials/question_form_modal.html:397
 msgid "Type example"
 msgstr "Ejemplo de este tipo"
@@ -3150,11 +3508,23 @@ msgstr "Consejos"
 msgid "One map question collects many places."
 msgstr "Una sola pregunta de mapa recoge muchos lugares."
 
-#: survey/templates/editor/partials/question_form_modal.html:412
+#: survey/templates/editor/partials/question_form_modal.html:409
+msgid ""
+"Respondents keep adding marks to the same question — never create “Mark the "
+"1st / 2nd location” copies."
+msgstr ""
+"Los participantes van añadiendo marcas a la misma pregunta: nunca crees "
+"copias del tipo «Marca el 1.º / 2.º lugar»."
+
+#: survey/templates/editor/partials/question_form_modal.html:409
+msgid "below to ask for, say, 1–5."
+msgstr "de abajo para pedir, por ejemplo, 1–5."
+
+#: survey/templates/editor/partials/question_form_modal.html:410
 msgid "Describe each place with sub-questions."
 msgstr "Describe cada lugar con subpreguntas."
 
-#: survey/templates/editor/partials/question_form_modal.html:412
+#: survey/templates/editor/partials/question_form_modal.html:410
 msgid ""
 "They pop up on every placed mark, and each becomes a column of your GeoJSON "
 "layer in QGIS. Without them the map collects dots with no meaning."
@@ -3163,11 +3533,11 @@ msgstr ""
 " capa GeoJSON en QGIS. Sin ellas, el mapa solo recoge puntos sin "
 "significado."
 
-#: survey/templates/editor/partials/question_form_modal.html:413
+#: survey/templates/editor/partials/question_form_modal.html:411
 msgid "Points get answered about twice as often"
 msgstr "Los puntos se responden alrededor del doble de veces"
 
-#: survey/templates/editor/partials/question_form_modal.html:413
+#: survey/templates/editor/partials/question_form_modal.html:411
 msgid ""
 "as polygons — draw requests cost respondents real effort. When in doubt, ask"
 " for a point."
@@ -3175,23 +3545,35 @@ msgstr ""
 "que los polígonos: dibujar exige un esfuerzo real a los participantes. Ante "
 "la duda, pide un punto."
 
-#: survey/templates/editor/partials/question_form_modal.html:416
+#: survey/templates/editor/partials/question_form_modal.html:414
 msgid "The scale is built from your choice codes"
 msgstr "La escala se construye a partir de tus códigos de opción"
 
-#: survey/templates/editor/partials/question_form_modal.html:422
+#: survey/templates/editor/partials/question_form_modal.html:414
+msgid "— keep them integers in ascending order (1, 2, 3…)."
+msgstr ": manténlos como enteros en orden ascendente (1, 2, 3 …)."
+
+#: survey/templates/editor/partials/question_form_modal.html:415
+msgid ""
+"Label at least the endpoints (“Not at all” … “Very much”) so the scale reads"
+" the same for everyone."
+msgstr ""
+"Etiqueta al menos los extremos («Nada» … «Mucho») para que la escala se lea "
+"igual para todo el mundo."
+
+#: survey/templates/editor/partials/question_form_modal.html:418
 msgid "Choices are the items to be ordered"
 msgstr "Las opciones son los elementos que hay que ordenar"
 
-#: survey/templates/editor/partials/question_form_modal.html:424
+#: survey/templates/editor/partials/question_form_modal.html:420
 msgid "Respondents must place"
 msgstr "Los participantes deben ordenar"
 
-#: survey/templates/editor/partials/question_form_modal.html:424
+#: survey/templates/editor/partials/question_form_modal.html:420
 msgid "every"
 msgstr "cada"
 
-#: survey/templates/editor/partials/question_form_modal.html:424
+#: survey/templates/editor/partials/question_form_modal.html:420
 msgid ""
 "item and no two can share a rank — use Rating instead when independent "
 "scores are enough."
@@ -3199,7 +3581,7 @@ msgstr ""
 "elemento, y dos elementos no pueden compartir posición. Usa la valoración "
 "cuando basten puntuaciones independientes."
 
-#: survey/templates/editor/partials/question_form_modal.html:427
+#: survey/templates/editor/partials/question_form_modal.html:423
 msgid ""
 "Codes end up in your data export; names are what respondents see. Keep codes"
 " stable once responses start arriving."
@@ -3208,9 +3590,38 @@ msgstr ""
 "los participantes. Mantén los códigos estables en cuanto empiecen a llegar "
 "respuestas."
 
-#: survey/templates/editor/partials/question_form_modal.html:440
+#: survey/templates/editor/partials/question_form_modal.html:436
 msgid "All changes saved"
 msgstr "Todos los cambios se han guardado"
+
+#: survey/templates/editor/partials/question_form_modal.html:447
+#: survey/templates/org/org_new.html:19
+msgid "Create"
+msgstr "Crear"
+
+#: survey/templates/editor/partials/question_form_modal.html:807
+msgid "Where is your fruit market?"
+msgstr "¿Dónde está tu mercado de frutas?"
+
+#: survey/templates/editor/partials/question_form_modal.html:809
+msgid "Place point"
+msgstr "Colocar un punto"
+
+#: survey/templates/editor/partials/question_form_modal.html:811
+msgid "Your route to the market"
+msgstr "Tu ruta hasta el mercado"
+
+#: survey/templates/editor/partials/question_form_modal.html:815
+msgid "Draw line"
+msgstr "Dibujar una línea"
+
+#: survey/templates/editor/partials/question_form_modal.html:817
+msgid "Outline the orchard"
+msgstr "Delimitar el huerto"
+
+#: survey/templates/editor/partials/question_form_modal.html:821
+msgid "Draw area"
+msgstr "Dibujar un área"
 
 #: survey/templates/editor/partials/question_list_item.html:10
 msgid "broken rule"
@@ -3223,6 +3634,15 @@ msgstr "Añadir una subpregunta"
 #: survey/templates/editor/partials/question_list_item.html:91
 msgid "Paste as sub-question"
 msgstr "Pegar como subpregunta"
+
+#: survey/templates/editor/partials/section_detail_form.html:7
+#, python-format
+msgid ""
+"Missing translations — respondents in these languages will see %(primary)s "
+"text"
+msgstr ""
+"Faltan traducciones — los participantes en estos idiomas verán el texto en "
+"%(primary)s"
 
 #: survey/templates/editor/partials/section_detail_form.html:19
 msgid "Map Position"
@@ -3245,13 +3665,13 @@ msgstr ""
 msgid "Questions"
 msgstr "Preguntas"
 
-#: survey/templates/editor/partials/section_detail_form.html:139
-msgid "New Question"
-msgstr "Nueva pregunta"
-
 #: survey/templates/editor/partials/section_detail_form.html:148
 msgid "Paste question here"
 msgstr "Pega aquí la pregunta"
+
+#: survey/templates/editor/partials/section_detail_form.html:203
+msgid "Optional text under the section title"
+msgstr "Texto opcional debajo del título de la sección"
 
 #: survey/templates/editor/partials/section_list_item.html:14
 msgid "Questions in this section"
@@ -3262,15 +3682,40 @@ msgstr "Preguntas de esta sección"
 msgid "Copy"
 msgstr "Copiar"
 
+#: survey/templates/editor/partials/section_map_picker.html:3
+msgid "Set Map Position"
+msgstr "Definir la posición del mapa"
+
 #: survey/templates/editor/partials/section_map_picker.html:9
 msgid "Click on the map to set the starting position. Adjust zoom as needed."
 msgstr ""
 "Haz clic en el mapa para fijar la posición inicial. Ajusta el zoom si hace "
 "falta."
 
+#: survey/templates/editor/partials/section_map_picker.html:17
+msgid "No position set (inherits from survey or previous section)"
+msgstr ""
+"Sin posición definida (se hereda de la encuesta o de la sección anterior)"
+
+#: survey/templates/editor/partials/section_map_picker.html:27
+msgid ""
+"When checked, this section inherits map position from the survey default or "
+"keeps the respondent’s current view."
+msgstr ""
+"Si se marca, la sección hereda la posición del mapa predeterminada de la "
+"encuesta o mantiene la vista actual del participante."
+
 #: survey/templates/editor/partials/section_map_picker.html:28
 msgid "Inherit position (don't override)"
 msgstr "Heredar la posición (no sustituir)"
+
+#: survey/templates/editor/partials/section_map_picker.html:37
+msgid ""
+"When enabled, the map will fly to the respondent’s browser location on this "
+"section."
+msgstr ""
+"Si está activado, desplazarse a la ubicación del participante al entrar en "
+"esta sección."
 
 #: survey/templates/editor/partials/section_map_picker.html:38
 msgid "Fly to respondent's geolocation"
@@ -3279,6 +3724,10 @@ msgstr "Desplazarse a la ubicación del participante"
 #: survey/templates/editor/partials/section_map_picker.html:43
 msgid "Override basemap"
 msgstr "Sustituir el mapa base"
+
+#: survey/templates/editor/partials/section_map_picker.html:45
+msgid "Inherit"
+msgstr "Heredar"
 
 #: survey/templates/editor/partials/section_map_picker.html:55
 msgid "Save Position"
@@ -3295,6 +3744,16 @@ msgstr "Hay una contraseña definida"
 #: survey/templates/editor/partials/survey_password_modal.html:7
 msgid "No password set"
 msgstr "Sin contraseña"
+
+#: survey/templates/editor/partials/survey_password_modal.html:16
+#: survey/templates/editor/partials/survey_password_modal.html:21
+msgid "Change"
+msgstr "Cambiar"
+
+#: survey/templates/editor/partials/survey_password_modal.html:16
+#: survey/templates/editor/partials/survey_password_modal.html:21
+msgid "Set"
+msgstr "Definir"
 
 #: survey/templates/editor/partials/survey_password_modal.html:16
 msgid "Password"
@@ -3340,6 +3799,20 @@ msgstr ""
 msgid "Default position"
 msgstr "Posición predeterminada"
 
+#: survey/templates/editor/partials/survey_settings_panel.html:99
+#: survey/templates/editor/survey_settings.html:130
+msgid "Click the map to set position"
+msgstr "Haz clic en el mapa para fijar la posición"
+
+#: survey/templates/editor/partials/survey_settings_panel.html:104
+#: survey/templates/editor/survey_settings.html:139
+msgid ""
+"Auto-center the map on the respondent’s browser location when they first "
+"enter the survey."
+msgstr ""
+"Centrar el mapa automáticamente en la ubicación del participante al entrar "
+"en la encuesta."
+
 #: survey/templates/editor/partials/survey_settings_panel.html:105
 #: survey/templates/editor/survey_settings.html:140
 msgid "Auto-center on respondent's location"
@@ -3374,6 +3847,11 @@ msgstr ""
 #: survey/templates/editor/partials/survey_settings_panel.html:152
 msgid "Label field"
 msgstr "Campo de etiqueta"
+
+#: survey/templates/editor/partials/survey_settings_panel.html:154
+#: survey/templates/editor/partials/survey_settings_panel.html:164
+msgid "none"
+msgstr "ninguno"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:159
 msgid "Feature property shown as a map label."
@@ -3422,6 +3900,10 @@ msgstr "Los cambios se guardan automáticamente"
 msgid "Save Settings"
 msgstr "Guardar la configuración"
 
+#: survey/templates/editor/partials/survey_settings_panel.html:290
+msgid "Password & test access"
+msgstr "Contraseña y acceso de prueba"
+
 #: survey/templates/editor/partials/thanks_panel.html:6
 #: survey/templates/editor/survey_detail.html:285
 msgid "Thanks page"
@@ -3447,13 +3929,48 @@ msgstr "Enlace a los resultados"
 msgid "Show a “See the results” button"
 msgstr "Mostrar un botón «Ver los resultados»"
 
+#: survey/templates/editor/partials/thanks_panel.html:39
+msgid "links respondents to your public results page"
+msgstr "lleva a los participantes a tu página de resultados pública"
+
+#: survey/templates/editor/partials/thanks_panel.html:39
+msgid "appears once your results page is published (Publish tab)"
+msgstr ""
+"aparece cuando tu página de resultados esté publicada (pestaña Publicar)"
+
 #: survey/templates/editor/partials/thanks_panel.html:47
 msgid "Always shown below your message"
 msgstr "Se muestra siempre debajo de tu mensaje"
 
+#: survey/templates/editor/partials/thanks_panel.html:48
+msgid ""
+"Every thanks page ends with a share action and the “Made with Mapsurvey” "
+"link — these are fixed and cannot be removed."
+msgstr ""
+"Toda página de agradecimiento termina con una acción de compartir y el "
+"enlace «Made with Mapsurvey»: son fijos y no se pueden quitar."
+
 #: survey/templates/editor/partials/thanks_panel.html:50
 msgid "Share this survey"
 msgstr "Compartir esta encuesta"
+
+#: survey/templates/editor/partials/thanks_panel.html:102
+msgid "Thank you! Your responses have been recorded…"
+msgstr "¡Gracias! Tus respuestas se han registrado …"
+
+#: survey/templates/editor/partials/thanks_panel.html:120
+#: survey/templates/survey_thanks.html:29
+msgid "Thank you!"
+msgstr "¡Gracias!"
+
+#: survey/templates/editor/partials/thanks_panel.html:120
+#: survey/templates/survey_thanks.html:30
+msgid "Your responses have been recorded."
+msgstr "Sus respuestas han sido registradas."
+
+#: survey/templates/editor/public_results.html:49
+msgid "Not published"
+msgstr "Sin publicar"
 
 #: survey/templates/editor/public_results.html:53
 msgid "Page"
@@ -3464,6 +3981,11 @@ msgstr "Página"
 msgid "Unpublish"
 msgstr "Retirar de publicación"
 
+#: survey/templates/editor/public_results.html:55
+#, python-format
+msgid "/r/%(slug)s/ stops opening for visitors"
+msgstr "/r/%(slug)s/ deja de abrirse para quienes visiten"
+
 #: survey/templates/editor/public_results.html:57
 #: survey/templates/editor/public_results.html:228
 #: survey/templates/editor/public_results.html:240
@@ -3473,6 +3995,15 @@ msgstr "Publicar la página"
 #: survey/templates/editor/public_results.html:57
 msgid "publish the survey first"
 msgstr "publica primero la encuesta"
+
+#: survey/templates/editor/public_results.html:63
+msgid "Update snapshot"
+msgstr "Actualizar la instantánea"
+
+#: survey/templates/editor/public_results.html:63
+#: survey/templates/editor/public_results.html:297
+msgid "Freeze snapshot"
+msgstr "Congelar la instantánea"
 
 #: survey/templates/editor/public_results.html:63
 msgid "show a fixed snapshot instead of live data"
@@ -3541,6 +4072,10 @@ msgstr "Configuración de la página"
 msgid "Content blocks"
 msgstr "Bloques de contenido"
 
+#: survey/templates/editor/public_results.html:130
+msgid "Block"
+msgstr "Bloque"
+
 #: survey/templates/editor/public_results.html:136
 msgid "Block settings"
 msgstr "Configuración del bloque"
@@ -3587,6 +4122,10 @@ msgid ""
 msgstr ""
 "Esta pregunta de mapa no tiene subpreguntas, así que los puntos se muestran "
 "como geometría anónima."
+
+#: survey/templates/editor/public_results.html:192
+msgid "Choose a new file to replace the current image."
+msgstr "Elige un archivo nuevo para sustituir la imagen actual."
 
 #: survey/templates/editor/public_results.html:195
 msgid "Caption (optional)"
@@ -3638,6 +4177,10 @@ msgstr ""
 "Hemos preparado esta página a partir de tus preguntas: revisa los bloques y "
 "luego pulsa"
 
+#: survey/templates/editor/public_results.html:245
+msgid "Visibility & address"
+msgstr "Visibilidad y dirección"
+
 #: survey/templates/editor/public_results.html:253
 msgid ""
 "Public is indexable and listable. Unlisted is reachable by direct link only "
@@ -3673,6 +4216,10 @@ msgstr "Introducción"
 msgid "Body"
 msgstr "Cuerpo del texto"
 
+#: survey/templates/editor/public_results.html:275
+msgid "Display & privacy"
+msgstr "Presentación y privacidad"
+
 #: survey/templates/editor/public_results.html:276
 msgid "Show response counter"
 msgstr "Mostrar el contador de respuestas"
@@ -3701,6 +4248,11 @@ msgstr "Destacar en el listado público de casos"
 msgid "k-anonymity threshold"
 msgstr "Umbral de k-anonimato"
 
+#: survey/templates/editor/public_results.html:286
+msgid "Mask buckets smaller than K as “<K”. Set to 1 to disable."
+msgstr ""
+"Enmascarar los grupos menores que K como «<K». Pon 1 para desactivarlo."
+
 #: survey/templates/editor/public_results.html:290
 msgid "Save page settings"
 msgstr "Guardar la configuración de la página"
@@ -3713,9 +4265,9 @@ msgstr "Modo de datos"
 msgid "Current:"
 msgstr "Actual:"
 
-#: survey/templates/editor/public_results.html:297
-msgid "Freeze snapshot"
-msgstr "Congelar la instantánea"
+#: survey/templates/editor/public_results.html:295
+msgid "frozen"
+msgstr "congelada"
 
 #: survey/templates/editor/public_results.html:301
 msgid "Back to live"
@@ -3862,6 +4414,10 @@ msgstr ""
 "escenario."
 
 #: survey/templates/editor/survey_create.html:328
+msgid "Draft my survey"
+msgstr "Generar mi encuesta"
+
+#: survey/templates/editor/survey_create.html:328
 msgid "Generate draft"
 msgstr "Generar el borrador"
 
@@ -3877,6 +4433,10 @@ msgstr ""
 "Tu descripción la procesa un proveedor de IA para construir el borrador. Las"
 " respuestas de las encuestas nunca se envían a proveedores de IA."
 
+#: survey/templates/editor/survey_create.html:356
+msgid "You already described your project — draft it with AI (~10 s)?"
+msgstr "Ya has descrito tu proyecto: ¿lo redactamos con IA (~10 s)?"
+
 #: survey/templates/editor/survey_create.html:358
 msgid "✨ Generate draft"
 msgstr "✨ Generar el borrador"
@@ -3884,6 +4444,15 @@ msgstr "✨ Generar el borrador"
 #: survey/templates/editor/survey_create.html:359
 msgid "Create empty anyway"
 msgstr "Crear vacía de todos modos"
+
+#: survey/templates/editor/survey_create.html:372
+#: survey/templates/editor/survey_create.html:452
+msgid "Skip and start from scratch"
+msgstr "Omitir y empezar de cero"
+
+#: survey/templates/editor/survey_create.html:372
+msgid "Create empty"
+msgstr "Crear vacía"
 
 #: survey/templates/editor/survey_create.html:381
 msgid "Create Survey"
@@ -3942,22 +4511,47 @@ msgstr "Los participantes abrirán el mapa exactamente así"
 msgid "Create survey"
 msgstr "Crear la encuesta"
 
-#: survey/templates/editor/survey_create.html:452
-msgid "Skip and start from scratch"
-msgstr "Omitir y empezar de cero"
-
 #: survey/templates/editor/survey_create.html:454
 msgid "Next — choose the place"
 msgstr "Siguiente: elegir el lugar"
+
+#: survey/templates/editor/survey_create.html:549
+msgid "Respondents open here — centre"
+msgstr "Los participantes abren aquí — centro"
+
+#: survey/templates/editor/survey_create.html:550
+msgid "zoom"
+msgstr "zoom"
+
+#: survey/templates/editor/survey_create.html:605
+msgid "Search for a place — city, address, landmark…"
+msgstr "Buscar un lugar — ciudad, dirección, punto de referencia …"
+
+#: survey/templates/editor/survey_detail.html:10
+#, python-format
+msgid "Draft of %(name)s"
+msgstr "Borrador de %(name)s"
 
 #: survey/templates/editor/survey_detail.html:35
 msgid "read-only"
 msgstr "solo lectura"
 
+#: survey/templates/editor/survey_detail.html:39
+msgid "Nothing has been collected yet, so this can go back to editing"
+msgstr "Todavía no se ha recogido nada, así que puede volver a edición"
+
+#: survey/templates/editor/survey_detail.html:39
+msgid "Published and closed surveys cannot be edited"
+msgstr "Las encuestas publicadas y cerradas no se pueden editar"
+
 #: survey/templates/editor/survey_detail.html:41
 #: survey/templates/editor/survey_detail.html:185
 msgid "Back to editing"
 msgstr "Volver a editar"
+
+#: survey/templates/editor/survey_detail.html:43
+msgid "Go to draft"
+msgstr "Ir al borrador"
 
 #: survey/templates/editor/survey_detail.html:47
 msgid "Draft new version"
@@ -3967,6 +4561,25 @@ msgstr "Crear una nueva versión"
 #: survey/templates/editor/survey_detail.html:66
 msgid "Open the survey as a respondent"
 msgstr "Abrir la encuesta como participante"
+
+#: survey/templates/editor/survey_detail.html:63
+msgid "Draft — not collecting responses"
+msgstr "Borrador: no recoge respuestas"
+
+#: survey/templates/editor/survey_detail.html:63
+msgid "Testing — invite-link access"
+msgstr "Prueba: acceso por enlace de invitación"
+
+#: survey/templates/editor/survey_detail.html:63
+#, python-format
+msgid "%(counter)s response"
+msgid_plural "%(counter)s responses"
+msgstr[0] "%(counter)s respuesta"
+msgstr[1] "%(counter)s respuestas"
+
+#: survey/templates/editor/survey_detail.html:63
+msgid "Sections, questions & survey settings"
+msgstr "Secciones, preguntas y configuración de la encuesta"
 
 #: survey/templates/editor/survey_detail.html:107
 #: survey/templates/editor/survey_detail.html:109
@@ -4082,6 +4695,10 @@ msgstr ""
 "¿Eliminar este borrador de encuesta y todo su contenido? No se puede "
 "deshacer."
 
+#: survey/templates/editor/survey_detail.html:653
+msgid "No sections yet. Click “New Section” to add one."
+msgstr "Aún no hay secciones. Pulsa «Nueva sección» para añadir una."
+
 #: survey/templates/editor/survey_settings.html:26
 msgid "General"
 msgstr "General"
@@ -4170,6 +4787,10 @@ msgstr "Esta encuesta no está publicada"
 msgid "The public link won't work until the survey is published."
 msgstr "El enlace público no funcionará hasta que se publique la encuesta."
 
+#: survey/templates/editor/survey_share.html:100
+msgid "finish it in"
+msgstr "termínalo en"
+
 #: survey/templates/editor/survey_share.html:101
 msgid "before you can publish."
 msgstr "antes de poder publicar."
@@ -4227,6 +4848,10 @@ msgstr ""
 "Hemos preparado una página de resultados pública a partir de tus preguntas. "
 "Revísala y publícala para dar a tu público una vista en vivo de las "
 "respuestas."
+
+#: survey/templates/editor/survey_share.html:153
+msgid "Review & publish the results page"
+msgstr "Revisar y publicar la página de resultados"
 
 #: survey/templates/editor/survey_share.html:161
 msgid "Track where responses come from"
@@ -5874,6 +6499,29 @@ msgstr ""
 msgid "See the Social Pinpoint comparison"
 msgstr ""
 
+#: survey/templates/org/invitation_email.html:21
+#: survey/templates/org/invitation_landing.html:24
+msgid "You're Invited!"
+msgstr "¡Te han invitado!"
+
+#: survey/templates/org/invitation_email.html:23
+#, python-format
+msgid ""
+"<strong>%(inviter)s</strong> has invited you to join "
+"<strong>%(org_name)s</strong> as <strong>%(role)s</strong>."
+msgstr ""
+"<strong>%(inviter)s</strong> te ha invitado a unirte a "
+"<strong>%(org_name)s</strong> como <strong>%(role)s</strong>."
+
+#: survey/templates/org/invitation_email.html:30
+msgid "Accept Invitation"
+msgstr "Aceptar la invitación"
+
+#: survey/templates/org/invitation_email.html:44
+#: survey/templates/org/invitation_landing.html:41
+msgid "This invitation expires in 7 days."
+msgstr "Esta invitación caduca en 7 días."
+
 #: survey/templates/org/invitation_landing.html:4
 msgid "Invitation"
 msgstr "Invitación"
@@ -5881,10 +6529,6 @@ msgstr "Invitación"
 #: survey/templates/org/invitation_landing.html:13
 msgid "Invitation Unavailable"
 msgstr "Invitación no disponible"
-
-#: survey/templates/org/invitation_landing.html:24
-msgid "You're Invited!"
-msgstr "¡Te han invitado!"
 
 #: survey/templates/org/invitation_landing.html:27
 msgid "has invited you to join"
@@ -5897,10 +6541,6 @@ msgstr "como"
 #: survey/templates/org/invitation_landing.html:34
 msgid "Sign In to Accept"
 msgstr "Inicia sesión para aceptar"
-
-#: survey/templates/org/invitation_landing.html:41
-msgid "This invitation expires in 7 days."
-msgstr "Esta invitación caduca en 7 días."
 
 #: survey/templates/org/org_members.html:11
 msgid "Members & Invitations"
@@ -5937,10 +6577,6 @@ msgstr "Crea un espacio de trabajo para tu equipo."
 #: survey/templates/org/org_new.html:16
 msgid "Organization Name"
 msgstr "Nombre de la organización"
-
-#: survey/templates/org/org_new.html:19
-msgid "Create"
-msgstr "Crear"
 
 #: survey/templates/org/org_new.html:23
 #: survey/templates/org/org_settings.html:36
@@ -6815,14 +7451,6 @@ msgstr "Introducir contraseña"
 #: survey/templates/survey_password.html:25
 msgid "Continue"
 msgstr "Continuar"
-
-#: survey/templates/survey_thanks.html:29
-msgid "Thank you!"
-msgstr "¡Gracias!"
-
-#: survey/templates/survey_thanks.html:30
-msgid "Your responses have been recorded."
-msgstr "Sus respuestas han sido registradas."
 
 #: survey/templates/survey_thanks.html:38
 msgid "See the results"

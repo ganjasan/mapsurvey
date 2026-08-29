@@ -11,13 +11,13 @@ Requires: survey, org_role
         {% if survey.prefetched_archived_versions %}
         <span class="dropdown-item" style="font-weight:600;font-size:0.85rem;pointer-events:none;">{% trans "Download Clean Data" %}</span>
         <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download?version=all">{% trans "All Versions" %}</a>
-        <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download?version=latest">Current (v{{ survey.version_number }})</a>
+        <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download?version=latest">{% trans "Current" %} (v{{ survey.version_number }})</a>
         {% for archived in survey.prefetched_archived_versions %}
         <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download?version=v{{ archived.version_number }}">v{{ archived.version_number }}</a>
         {% endfor %}
         <span class="dropdown-item" style="font-weight:600;font-size:0.85rem;pointer-events:none;">{% trans "Download All (incl. excluded)" %}</span>
         <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download?version=all&include_all=1"><small class="text-muted">{% trans "All Versions" %}</small></a>
-        <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download?version=latest&include_all=1"><small class="text-muted">Current (v{{ survey.version_number }})</small></a>
+        <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download?version=latest&include_all=1"><small class="text-muted">{% trans "Current" %} (v{{ survey.version_number }})</small></a>
         {% else %}
         <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download"><i class="fas fa-download fa-fw mr-1"></i>{% trans "Download Data" %}</a>
         <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download?include_all=1"><small class="text-muted"><i class="fas fa-download fa-fw mr-1"></i>{% trans "All (incl. excluded)" %}</small></a>

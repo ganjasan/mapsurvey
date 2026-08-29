@@ -1,7 +1,7 @@
 {% extends "editor/editor_base.html" %}
 
 {% load i18n %}
-{% block page_title %}Results – {{ survey.name }}{% endblock %}
+{% block page_title %}{% trans "Results" %} – {{ survey.name }}{% endblock %}
 
 {% load static %}
 {% block extra_head %}
@@ -25,8 +25,7 @@
     <div style="background:var(--accent-light);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.85rem;color:#374151;">
         <i class="fas fa-info-circle mr-1"></i>
         {% if current_version == 'draft' %}
-        Test responses collected while previewing this draft. They are deleted when the draft is
-        published or discarded.
+        {% blocktrans %}Test responses collected while previewing this draft. They are deleted when the draft is published or discarded.{% endblocktrans %}
         {% else %}
         {% blocktrans %}Responses of the published survey. This draft's own preview responses are under <strong>Draft (test)</strong> in the version picker.{% endblocktrans %}
         {% endif %}
@@ -47,7 +46,7 @@
             {% trans "Performance" %}
         </button>
         {% if version_choices %}
-        <select id="version-scope-select" title="Which survey version's responses to show"
+        <select id="version-scope-select" title="{% trans 'Which survey version’s responses to show' %}"
                 onchange="location.search = this.value === 'all' ? '' : ('?version=' + this.value);"
                 style="margin-left:auto;margin-bottom:0.25rem;font-size:0.8rem;padding:0.25rem 0.5rem;border:1px solid var(--border-color);border-radius:6px;color:#374151;background:#fff;">
             {% for c in version_choices %}

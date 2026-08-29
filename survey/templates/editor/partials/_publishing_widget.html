@@ -16,11 +16,11 @@ show_draft_actions, draft_copy, show_edit_published.
   would become — the same number the publish dialog names.
   {% endcomment %}
   <span class="pub-chip badge-secondary"
-        title="Publishing this draft creates v{{ survey.published_version.version_number|add:1 }}">Draft → v{{ survey.published_version.version_number|add:1 }}</span>
+        title="{% blocktrans with next=survey.published_version.version_number|add:1 %}Publishing this draft creates v{{ next }}{% endblocktrans %}">{% trans "Draft" %} → v{{ survey.published_version.version_number|add:1 }}</span>
 {% elif effective_role == 'owner' and survey.status != 'archived' %}
 <div class="nav-action" id="publishing-widget">
   <button class="pub-chip badge-{{ survey.status|status_badge_class }}" onclick="navMenuToggle(this,event)">
-    {% if survey.status == 'published' %}Open{% elif survey.status == 'closed' %}Closed{% elif survey.status == 'testing' %}Testing{% elif survey.status == 'draft' %}Draft{% else %}{{ survey.get_status_display }}{% endif %}
+    {% if survey.status == 'published' %}{% trans "Open" %}{% elif survey.status == 'closed' %}{% trans "Closed" %}{% elif survey.status == 'testing' %}{% trans "Testing" %}{% elif survey.status == 'draft' %}{% trans "Draft" %}{% else %}{{ survey.get_status_display }}{% endif %}
     &middot; v{{ survey.version_number }} <i class="fas fa-angle-down caret"></i>
   </button>
   <div class="nav-menu left" style="min-width:290px;">
@@ -55,10 +55,10 @@ show_draft_actions, draft_copy, show_edit_published.
     <div class="nm-head">{% trans "Results page" %}</div>
     {% with page=survey.public_results_page %}
       {% if page and page.is_published %}
-      <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:#16a34a;font-size:8px;"></i> Live — /r/{{ page.slug }}/<span class="sub">{% trans "manage in the Public results space" %}</span></span>
+      <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:#16a34a;font-size:8px;"></i> {% trans "Live" %} — /r/{{ page.slug }}/<span class="sub">{% trans "manage in the Public results space" %}</span></span>
         <a class="nm-item" style="width:auto;padding:4px 9px;border:1px solid var(--border-color);border-radius:6px;" href="{% url 'editor_survey_public_results' survey.uuid %}">{% trans "Open" %}</a></div>
       {% elif page %}
-      <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:#9ca3af;font-size:8px;"></i> {% trans "Draft — not live yet" %}<span class="sub">/r/{{ page.slug }}/ is prepared but unpublished</span></span>
+      <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:#9ca3af;font-size:8px;"></i> {% trans "Draft — not live yet" %}<span class="sub">{% blocktrans with slug=page.slug %}/r/{{ slug }}/ is prepared but unpublished{% endblocktrans %}</span></span>
         <a class="nm-item" style="width:auto;padding:4px 9px;border:1px solid var(--border-color);border-radius:6px;" href="{% url 'editor_survey_public_results' survey.uuid %}">{% trans "Open" %}</a></div>
       {% else %}
       <a class="nm-item" href="{% url 'editor_survey_public_results' survey.uuid %}"><i class="fas fa-globe lead"></i> {% trans "Set up a results page…" %}</a>
@@ -78,18 +78,18 @@ show_draft_actions, draft_copy, show_edit_published.
     {% if archived_versions %}
       {% if survey.status == 'published' and not survey.has_draft_copy %}
       {% for archived in archived_versions %}
-      <div class="nm-row"><span class="lab">v{{ archived.version_number }} · Closed<span class="sub">{% trans "responses stay visible under All versions" %}</span></span>
+      <div class="nm-row"><span class="lab">v{{ archived.version_number }} · {% trans "Closed" %}<span class="sub">{% trans "responses stay visible under All versions" %}</span></span>
         <form method="post" action="{% url 'editor_restore_version' survey.uuid %}" style="margin:0;"
-              onsubmit="return confirm('Restore v{{ archived.version_number }} as a new draft? Publishing it will create v{{ survey.version_number|add:1 }} with the old questionnaire — nothing is deleted.');">
+              onsubmit="return confirm('{% blocktrans with old=archived.version_number next=survey.version_number|add:1 %}Restore v{{ old }} as a new draft? Publishing it will create v{{ next }} with the old questionnaire — nothing is deleted.{% endblocktrans %}');">
           {% csrf_token %}
           <input type="hidden" name="version" value="v{{ archived.version_number }}">
-          <button type="submit" class="nm-item" style="width:auto;padding:4px 9px;border:1px solid var(--border-color);border-radius:6px;" title="Create a draft with this version's questionnaire"><i class="fas fa-history"></i> {% trans "Restore…" %}</button>
+          <button type="submit" class="nm-item" style="width:auto;padding:4px 9px;border:1px solid var(--border-color);border-radius:6px;" title="{% trans "Create a draft with this version’s questionnaire" %}"><i class="fas fa-history"></i> {% trans "Restore…" %}</button>
         </form>
       </div>
       {% endfor %}
       {% else %}
       {% for archived in archived_versions %}
-      <div class="nm-static">v{{ archived.version_number }} · Closed</div>
+      <div class="nm-static">v{{ archived.version_number }} · {% trans "Closed" %}</div>
       {% endfor %}
       {% endif %}
     {% endif %}

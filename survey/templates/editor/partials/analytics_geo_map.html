@@ -1,7 +1,7 @@
 {% load i18n %}
 <div class="analytics-section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-        <h6 style="margin:0;">{% trans "Response Map" %} <small class="text-muted">({{ geo_features_count }} features)</small></h6>
+        <h6 style="margin:0;">{% trans "Response Map" %} <small class="text-muted">({{ geo_features_count }} {% trans "features" %})</small></h6>
         <button class="expand-btn" onclick="togglePanelFullscreen('data-panel-map')"><i class="fas fa-expand"></i></button>
     </div>
     <div class="q-filter-pills" data-qid="geo" style="display:none;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.4rem;"></div>

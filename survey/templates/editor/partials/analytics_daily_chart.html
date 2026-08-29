@@ -7,10 +7,10 @@
             <span style="color:#9ca3af;font-size:0.78rem;">&ndash;</span>
             <input type="datetime-local" id="timeline-to" class="form-control form-control-sm" style="width:auto;font-size:0.78rem;">
             <select id="timeline-granularity" class="form-control form-control-sm" style="width:auto;font-size:0.78rem;">
-                <option value="hour">Hour</option>
-                <option value="day" selected>Day</option>
-                <option value="week">Week</option>
-                <option value="month">Month</option>
+                <option value="hour">{% trans "Hour" %}</option>
+                <option value="day" selected>{% trans "Day" %}</option>
+                <option value="week">{% trans "Week" %}</option>
+                <option value="month">{% trans "Month" %}</option>
             </select>
             <button class="expand-btn" onclick="enterFocusMode(this.closest('.analytics-section'))"><i class="fas fa-expand"></i></button>
         </div>
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: [],
             datasets: [
                 {
-                    label: 'Total Sessions',
+                    label: '{% trans "Total Sessions" %}',
                     data: [],
                     backgroundColor: 'rgba(79, 70, 229, 0.15)',
                     borderColor: 'rgba(79, 70, 229, 0.6)',
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     order: 2,
                 },
                 {
-                    label: 'Completed',
+                    label: '{% trans "Completed" %}',
                     data: [],
                     backgroundColor: 'rgba(16, 185, 129, 0.7)',
                     borderColor: 'rgba(16, 185, 129, 1)',

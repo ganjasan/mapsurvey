@@ -51,8 +51,7 @@
     {% if RESPONSES_V2 and event_summary.session_starts < 20 %}
     <div class="perf-small-sample" style="background:#f3f4f6;border-radius:6px;padding:0.5rem 0.75rem;font-size:0.8rem;color:#6b7280;margin-bottom:1rem;">
         <i class="fas fa-info-circle mr-1"></i>
-        Sample too small for drop rates — only {{ event_summary.session_starts }} tracked
-        session{{ event_summary.session_starts|pluralize }} so far. Rates appear from 20.
+        {% blocktrans count starts=event_summary.session_starts %}Sample too small for drop rates — only {{ starts }} tracked session so far. Rates appear from 20.{% plural %}Sample too small for drop rates — only {{ starts }} tracked sessions so far. Rates appear from 20.{% endblocktrans %}
     </div>
     {% endif %}
 
@@ -132,15 +131,15 @@
                     {% if row.referrer_type == 'direct' %}
                         <span style="color:#6b7280;">{% trans "Direct / Unknown" %}</span>
                     {% elif row.referrer_type == 'google' %}
-                        Google
+                        {% trans "Google" %}
                     {% elif row.referrer_type == 'bing' %}
-                        Bing
+                        {% trans "Bing" %}
                     {% elif row.referrer_type == 'social' %}
-                        Social
+                        {% trans "Social" %}
                     {% elif row.referrer_type == 'email' %}
-                        Email
+                        {% trans "Email" %}
                     {% else %}
-                        Other
+                        {% trans "Other" %}
                     {% endif %}
                 </td>
                 <td style="padding:0.4rem 0;text-align:right;font-weight:600;">{{ row.count }}</td>

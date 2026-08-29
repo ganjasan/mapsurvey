@@ -2,7 +2,7 @@
 {% load static %}
 <html>
 <head>
-    <title>{% block page_title %}Survey Editor{% endblock %} {% trans "– Mapsurvey" %}</title>
+    <title>{% block page_title %}{% trans "Survey Editor" %}{% endblock %} {% trans "– Mapsurvey" %}</title>
     {% include "partials/_analytics.html" %}
     <link rel="icon" href="{% static 'favicon.ico' %}" sizes="any">
     <link rel="icon" href="{% static 'favicon-32x32.png' %}" type="image/png" sizes="32x32">
@@ -917,7 +917,7 @@
                     <div class="dropdown-divider"></div>
                     {% include "editor/partials/_language_switcher.html" %}
                     <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>Help &amp; support</a>
+                    <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>{% trans "Help & support" %}</a>
                     <a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt" style="margin-right:4px;"></i>{% trans "Logout" %}</a>
                 </div>
             </div>
@@ -942,7 +942,7 @@
                     {% endif %}
                     {% if MOBILE_EDITOR_NAV %}
                     <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>Help &amp; support</a>
+                    <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>{% trans "Help & support" %}</a>
                     {% endif %}
                 </div>
             </div>

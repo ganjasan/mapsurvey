@@ -12,9 +12,9 @@
                     <div class="pr-field">
                         <label>{% trans "Block type" %}</label>
                         <select name="block_type" class="form-control" id="prBlockType" onchange="prToggleAddBlockFields();">
-                            <option value="question">Question results…</option>
-                            <option value="image">Image</option>
-                            <option value="text">Text block</option>
+                            <option value="question">{% trans "Question results…" %}</option>
+                            <option value="image">{% trans "Image" %}</option>
+                            <option value="text">{% trans "Text block" %}</option>
                         </select>
                     </div>
                     <div class="pr-field" id="prQWrap">
@@ -38,8 +38,8 @@
                             <option value="{{ row.question.id }}"
                                     {% if not row.publishable %}disabled{% endif %}
                                     data-qname="{{ row.question.name }}"
-                                    {% if row.publishable %}data-meta="{{ row.input_type_display }} · {{ row.answer_count }} response{{ row.answer_count|pluralize }}"{% else %}data-note="text — not publishable"{% endif %}>
-                                {{ row.question.name }}{% if not row.publishable %} (text — not publishable){% else %} — {{ row.input_type_display }} · {{ row.answer_count }} response{{ row.answer_count|pluralize }}{% endif %}
+                                    {% if row.publishable %}data-meta="{{ row.input_type_display }} · {% blocktrans count n=row.answer_count %}{{ n }} response{% plural %}{{ n }} responses{% endblocktrans %}"{% else %}data-note="{% trans 'text — not publishable' %}"{% endif %}>
+                                {{ row.question.name }}{% if not row.publishable %} ({% trans "text — not publishable" %}){% else %} — {{ row.input_type_display }} · {% blocktrans count n=row.answer_count %}{{ n }} response{% plural %}{{ n }} responses{% endblocktrans %}{% endif %}
                             </option>
                             {% endfor %}
                         </select>
