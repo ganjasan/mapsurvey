@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mapsurvey 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-29 09:43+0000\n"
+"POT-Creation-Date: 2026-08-29 14:11+0000\n"
 "PO-Revision-Date: 2026-08-28 17:52+0000\n"
 "Last-Translator: \n"
 "Language-Team: Indonesian\n"
@@ -19,214 +19,233 @@ msgstr ""
 
 #: survey/abuse.py:261
 msgid "Letters, digits and @ . + - _ only. No spaces."
-msgstr ""
+msgstr "Hanya huruf, angka, dan @ . + - _ — tanpa spasi."
 
 #: survey/editor_forms.py:31 survey/templates/editor/survey_create.html:214
 msgid "Survey name"
-msgstr ""
+msgstr "Nama survei"
 
 #: survey/editor_forms.py:32 survey/editor_forms.py:121
 #: survey/templates/editor/survey_create.html:221
 msgid "Available languages"
-msgstr ""
+msgstr "Bahasa yang tersedia"
 
 #: survey/editor_forms.py:35
 msgid "e.g. Park improvements"
-msgstr ""
+msgstr "mis. Perbaikan taman"
 
 #: survey/editor_forms.py:63
 msgid "What do you want to find out?"
-msgstr ""
+msgstr "Apa yang ingin Anda ketahui?"
 
 #: survey/editor_forms.py:66
 msgid "e.g. Where traffic congestion is worst in Treviglio and why"
-msgstr ""
+msgstr "mis. Di mana kemacetan paling parah di Treviglio dan mengapa"
 
 #: survey/editor_forms.py:71
 msgid "Who will answer?"
-msgstr ""
+msgstr "Siapa yang akan menjawab?"
 
 #: survey/editor_forms.py:73
 msgid "e.g. Residents of Treviglio, all ages"
-msgstr ""
+msgstr "mis. Warga Treviglio, segala usia"
 
 #: survey/editor_forms.py:78
 msgid "What should they mark on the map?"
-msgstr ""
+msgstr "Apa yang harus mereka tandai di peta?"
 
 #: survey/editor_forms.py:80
 msgid "e.g. Congestion spots, dangerous crossings"
-msgstr ""
+msgstr "mis. Titik kemacetan, penyeberangan berbahaya"
 
 #: survey/editor_forms.py:98
 msgid "Rating questions"
-msgstr ""
+msgstr "Pertanyaan penilaian"
 
 #: survey/editor_forms.py:104
 msgid "Custom accent color"
-msgstr ""
+msgstr "Warna aksen khusus"
 
 #: survey/editor_forms.py:108
 msgid "Accent color"
-msgstr ""
+msgstr "Warna aksen"
 
 #: survey/editor_forms.py:119 survey/editor_forms.py:281
 #: survey/templates/editor/partials/question_form_modal.html:263
+#: survey/templates/editor/partials/question_form_modal.html:361
 #: survey/templates/editor/partials/survey_settings_panel.html:143
 #: survey/templates/org/org_settings.html:22
 msgid "Name"
-msgstr ""
+msgstr "Nama"
 
 #: survey/editor_forms.py:120
 msgid "Redirect URL"
-msgstr ""
+msgstr "URL pengalihan"
 
 #: survey/editor_forms.py:122
 #: survey/templates/editor/partials/_visibility_block.html:10
 #: survey/templates/editor/public_results.html:247
 msgid "Visibility"
-msgstr ""
+msgstr "Visibilitas"
 
 #: survey/editor_forms.py:123
 #: survey/templates/editor/partials/survey_settings_panel.html:195
 msgid "Cover image"
-msgstr ""
+msgstr "Gambar sampul"
 
 #: survey/editor_forms.py:124
 msgid "Base maps"
-msgstr ""
+msgstr "Peta dasar"
 
 #: survey/editor_forms.py:125
 msgid "Default base map"
-msgstr ""
+msgstr "Peta dasar bawaan"
 
 #: survey/editor_forms.py:201
-#: survey/templates/editor/analytics_dashboard_v2.html:162
+#: survey/templates/editor/analytics_dashboard_v2.html:159
+#: survey/templates/editor/partials/analytics_text_answers.html:28
 #: survey/templates/partials/survey_section_partial.html:97
 #: survey/templates/survey_section_block.html:20
 msgid "Next"
 msgstr "Berikutnya"
 
-#: survey/editor_forms.py:211 survey/templates/editor/public_results.html:268
+#: survey/editor_forms.py:211
+#: survey/templates/editor/partials/section_detail_form.html:77
+#: survey/templates/editor/public_results.html:268
 msgid "Title"
-msgstr ""
+msgstr "Judul"
 
 #: survey/editor_forms.py:212
+#: survey/templates/editor/partials/section_detail_form.html:82
 msgid "Subheading"
-msgstr ""
+msgstr "Subjudul"
 
 #: survey/editor_forms.py:213
 #: survey/templates/editor/partials/question_form_modal.html:256
 msgid "Code"
-msgstr ""
+msgstr "Kode"
 
 #: survey/editor_forms.py:214
 msgid "Layout"
-msgstr ""
+msgstr "Tata letak"
 
 #: survey/editor_forms.py:215
+#: survey/templates/editor/partials/section_detail_form.html:88
 msgid "Button label"
-msgstr ""
+msgstr "Label tombol"
 
 #: survey/editor_forms.py:218
 msgid ""
 "Map: questions beside the map. Form: a classic full-width form — no map, so "
 "geo questions are unavailable."
 msgstr ""
+"Peta: pertanyaan di samping peta. Formulir: formulir klasik selebar halaman "
+"— tanpa peta, jadi pertanyaan geografis tidak tersedia."
 
 #: survey/editor_forms.py:219
 msgid ""
 "Label of this section's forward button, e.g. \"Start\" on a welcome section."
 " Empty = Next / Finish."
 msgstr ""
+"Label tombol lanjut di bagian ini, mis. „Mulai” pada bagian sambutan. Kosong"
+" = Berikutnya / Selesai."
 
 #: survey/editor_forms.py:282
+#: survey/templates/editor/partials/question_form_modal.html:366
 msgid "Subtext"
-msgstr ""
+msgstr "Teks pendukung"
 
 #: survey/editor_forms.py:283
 msgid "Input type"
-msgstr ""
+msgstr "Jenis isian"
 
 #: survey/editor_forms.py:284
 #: survey/templates/editor/partials/question_list_item.html:7
 msgid "Required"
-msgstr ""
+msgstr "Wajib"
 
 #: survey/editor_forms.py:285 survey/models.py:675
 #: survey/templates/editor/partials/survey_settings_panel.html:147
 msgid "Color"
-msgstr ""
+msgstr "Warna"
 
 #: survey/editor_forms.py:286
 msgid "Icon class"
-msgstr ""
+msgstr "Kelas ikon"
 
 #: survey/editor_forms.py:287 survey/models.py:119 survey/models.py:1452
+#: survey/templates/editor/partials/pr_add_block_modal.html:16
 #: survey/templates/editor/public_results.html:187
 msgid "Image"
-msgstr ""
+msgstr "Gambar"
 
 #: survey/editor_forms.py:288
 msgid "Display style"
-msgstr ""
+msgstr "Gaya tampilan"
 
 #: survey/models.py:20 survey/models.py:27
 msgid "Owner"
-msgstr ""
+msgstr "Pemilik"
 
 #: survey/models.py:21
 msgid "Admin"
-msgstr ""
+msgstr "Admin"
 
 #: survey/models.py:22 survey/models.py:28
 msgid "Editor"
-msgstr ""
+msgstr "Editor"
 
 #: survey/models.py:23 survey/models.py:29
 msgid "Viewer"
-msgstr ""
+msgstr "Pengamat"
 
 #: survey/models.py:63
 msgid "The name must contain at least one letter or digit"
-msgstr ""
+msgstr "Nama harus memuat setidaknya satu huruf atau angka"
 
 #: survey/models.py:72
+#: survey/templates/editor/partials/_publishing_widget.html:20
+#: survey/templates/editor/partials/_publishing_widget.html:24
 msgid "Draft"
-msgstr ""
+msgstr "Draf"
 
 #: survey/models.py:73
+#: survey/templates/editor/partials/_publishing_widget.html:24
 msgid "Testing"
-msgstr ""
+msgstr "Uji coba"
 
 #: survey/models.py:74
 msgid "Published"
-msgstr ""
+msgstr "Terbit"
 
 #: survey/models.py:75
+#: survey/templates/editor/partials/_publishing_widget.html:24
+#: survey/templates/editor/partials/_publishing_widget.html:82
+#: survey/templates/editor/partials/_publishing_widget.html:93
 #: survey/templates/editor/partials/_survey_primary_action.html:26
+#: survey/templates/editor/survey_detail.html:63
 msgid "Closed"
-msgstr ""
+msgstr "Ditutup"
 
 #: survey/models.py:76
 msgid "Archived"
-msgstr ""
+msgstr "Diarsipkan"
 
 #: survey/models.py:84
 msgid "Streets"
-msgstr ""
+msgstr "Jalan"
 
 #: survey/models.py:85
 msgid "Satellite"
-msgstr ""
+msgstr "Satelit"
 
 #: survey/models.py:86
 msgid "Topo"
-msgstr ""
+msgstr "Topografi"
 
 #: survey/models.py:102
 msgid "Private"
-msgstr ""
+msgstr "Pribadi"
 
 #: survey/models.py:103 survey/templates/base_landing.html:103
 #: survey/templates/base_landing.html:165
@@ -235,528 +254,598 @@ msgstr ""
 
 #: survey/models.py:104 survey/models.py:1441
 msgid "Public"
-msgstr ""
+msgstr "Publik"
 
 #: survey/models.py:108 survey/models.py:1451
 #: survey/templates/editor/public_results.html:182
 msgid "Text"
-msgstr ""
+msgstr "Teks"
 
 #: survey/models.py:109
 msgid "Number"
-msgstr ""
+msgstr "Angka"
 
 #: survey/models.py:110
 #: survey/templates/editor/partials/question_form_modal.html:252
 msgid "Choices"
-msgstr ""
+msgstr "Pilihan"
 
 #: survey/models.py:111
 msgid "Multiple Choices"
-msgstr ""
+msgstr "Pilihan ganda"
 
 #: survey/models.py:112
 msgid "Range"
-msgstr ""
+msgstr "Rentang"
 
 #: survey/models.py:113
 msgid "Rating"
-msgstr ""
+msgstr "Penilaian"
 
 #: survey/models.py:114
 msgid "Ranking"
-msgstr ""
+msgstr "Peringkat"
 
 #: survey/models.py:115
 msgid "Date/Time"
-msgstr ""
+msgstr "Tanggal dan waktu"
 
 #: survey/models.py:116
 msgid "Geo Point"
-msgstr ""
+msgstr "Titik di peta"
 
 #: survey/models.py:117
 msgid "Geo Line"
-msgstr ""
+msgstr "Garis di peta"
 
 #: survey/models.py:118
 msgid "Geo Polygon"
-msgstr ""
+msgstr "Area di peta"
 
 #: survey/models.py:120
 msgid "Single Line Text"
-msgstr ""
+msgstr "Teks satu baris"
 
 #: survey/models.py:121
 msgid "HTML"
-msgstr ""
+msgstr "HTML"
 
 #: survey/models.py:122
 msgid "Photo Upload"
-msgstr ""
+msgstr "Unggah foto"
 
 #: survey/models.py:123
 msgid "Audio Upload"
-msgstr ""
+msgstr "Unggah audio"
 
 #: survey/models.py:124
 msgid "Document Upload"
-msgstr ""
+msgstr "Unggah dokumen"
 
 #: survey/models.py:132
 msgid "Survey default"
-msgstr ""
+msgstr "Bawaan survei"
 
 #: survey/models.py:133
 msgid "Compact scale"
-msgstr ""
+msgstr "Skala ringkas"
 
 #: survey/models.py:134
 msgid "Labeled list"
-msgstr ""
+msgstr "Daftar berlabel"
 
 #: survey/models.py:135
 msgid "Stars"
-msgstr ""
+msgstr "Bintang"
 
 #: survey/models.py:136
 msgid "Dropdown with search"
-msgstr ""
+msgstr "Daftar turun dengan pencarian"
 
 #: survey/models.py:171
 msgid "Selected language code (ISO 639-1)"
-msgstr ""
+msgstr "Kode bahasa yang dipilih (ISO 639-1)"
 
 #: survey/models.py:321
 msgid ""
 "URL to redirect after survey completion. E.g.: /thanks/ or "
 "https://example.com"
 msgstr ""
+"URL tujuan pengalihan setelah survei selesai. Mis.: /thanks/ atau "
+"https://example.com"
 
 #: survey/models.py:322
 msgid "List of ISO 639-1 language codes, e.g. [\"en\", \"ru\", \"de\"]"
-msgstr ""
+msgstr "Daftar kode bahasa ISO 639-1, mis. [\"en\", \"ru\", \"de\"]"
 
 #: survey/models.py:323
 msgid "Controls whether survey appears on the landing page"
-msgstr ""
+msgstr "Menentukan apakah survei muncul di halaman utama"
 
 #: survey/models.py:324
 msgid "Marks completed surveys whose results can be shown"
-msgstr ""
+msgstr "Menandai survei selesai yang hasilnya boleh ditampilkan"
 
 #: survey/models.py:325
 msgid ""
 "Custom HTML for thanks page. Dict keyed by language: {\"en\": "
 "\"<h1>Thanks!</h1>\", \"ru\": \"<h1>Спасибо!</h1>\"} or a plain string."
 msgstr ""
+"HTML khusus untuk halaman terima kasih. Kamus dengan kunci bahasa: {\"en\": "
+"\"<h1>Thanks!</h1>\", \"ru\": \"<h1>Спасибо!</h1>\"} atau teks biasa."
 
 #: survey/models.py:330
 msgid ""
 "Survey-level validation thresholds: {fast_threshold_seconds, "
 "duplicate_window_hours}"
 msgstr ""
+"Ambang validasi tingkat survei: {fast_threshold_seconds, "
+"duplicate_window_hours}"
 
 #: survey/models.py:331
 msgid ""
 "Enabled basemaps for respondent map. List from: [\"streets\", \"satellite\","
 " \"topo\"]"
 msgstr ""
+"Peta dasar yang aktif untuk peta responden. Pilih dari: [\"streets\", "
+"\"satellite\", \"topo\"]"
 
 #: survey/models.py:332
 msgid ""
 "Default basemap shown to respondents. If null, first from basemaps list."
 msgstr ""
+"Peta dasar bawaan yang ditampilkan kepada responden. Jika kosong, yang "
+"pertama dari daftar."
 
 #: survey/models.py:333
 msgid ""
 "Default map position for the survey. Sections inherit this if not "
 "overridden."
 msgstr ""
+"Posisi peta bawaan untuk survei. Bagian mewarisinya jika tidak ditimpa."
 
 #: survey/models.py:334
 msgid ""
 "Default map zoom for the survey. Sections inherit this if not overridden."
 msgstr ""
+"Perbesaran peta bawaan untuk survei. Bagian mewarisinya jika tidak ditimpa."
 
 #: survey/models.py:335
 msgid "Auto-center map on respondent location when entering the survey."
-msgstr ""
+msgstr "Pusatkan peta otomatis ke lokasi responden saat masuk ke survei."
 
 #: survey/models.py:336
 msgid ""
 "Show a \"Made with Mapsurvey\" link on the public survey and thanks pages (a"
 " free-tier acquisition loop). Turn off for a clean, unbranded look."
 msgstr ""
+"Tampilkan tautan „Made with Mapsurvey” di halaman survei publik dan halaman "
+"terima kasih (lingkaran akuisisi paket gratis). Matikan untuk tampilan "
+"bersih tanpa merek."
 
 #: survey/models.py:337
 #, python-brace-format
 msgid "Survey-wide style defaults: {rating_display_style}"
-msgstr ""
+msgstr "Gaya bawaan untuk seluruh survei: {rating_display_style}"
 
 #: survey/models.py:340
 msgid ""
 "Set when the survey is moved to trash; purged permanently after the "
 "retention window."
 msgstr ""
+"Diisi saat survei dipindahkan ke tempat sampah; dihapus permanen setelah "
+"masa simpan berakhir."
 
 #: survey/models.py:346
 msgid "For archived versions, points to the canonical survey"
-msgstr ""
+msgstr "Pada versi arsip, menunjuk ke survei kanonis"
 
 #: survey/models.py:353
 msgid "For draft copies, points to the canonical survey being edited"
-msgstr ""
+msgstr "Pada salinan draf, menunjuk ke survei kanonis yang sedang disunting"
 
 #: survey/models.py:538
 msgid "Fallback style; simplestyle properties inside the file win."
-msgstr ""
+msgstr "Gaya cadangan; properti simplestyle di dalam berkas lebih diutamakan."
 
 #: survey/models.py:539
 msgid "Feature property rendered as a permanent map label. Empty = no labels."
 msgstr ""
+"Properti fitur yang ditampilkan sebagai label tetap di peta. Kosong = tanpa "
+"label."
 
 #: survey/models.py:540
 msgid ""
 "Feature property that makes features addressable (reserved for answer-driven"
 " map context). No UI consumer yet."
 msgstr ""
+"Properti yang membuat fitur dapat dialamatkan (disediakan untuk konteks peta"
+" berbasis jawaban). Belum dipakai di antarmuka."
 
 #: survey/models.py:541
 msgid ""
 "Tap a feature shows a read-only popup of its name/description properties."
 msgstr ""
+"Menyentuh fitur akan membuka jendela baca-saja berisi nama dan deskripsinya."
 
 #: survey/models.py:542
 msgid "Re-serialized FeatureCollection — never the raw uploaded bytes."
 msgstr ""
+"FeatureCollection yang diserialkan ulang — bukan berkas mentah yang "
+"diunggah."
 
 #: survey/models.py:557 survey/models.py:886 survey/models.py:1454
+#: survey/templates/editor/analytics_dashboard_v2.html:42
 #: survey/templates/editor/partials/_mobile_nav.html:24
 #: survey/templates/editor/partials/_mobile_nav.html:29
 msgid "Map"
-msgstr ""
+msgstr "Peta"
 
 #: survey/models.py:558
 msgid "Form"
-msgstr ""
+msgstr "Formulir"
 
 #: survey/models.py:566
 msgid ""
 "\"map\" renders the panel beside the map; \"form\" renders a classic full-"
 "width form with no map"
 msgstr ""
+"„map” menampilkan panel di samping peta; „form” menampilkan formulir klasik "
+"selebar halaman tanpa peta"
 
 #: survey/models.py:567
 msgid ""
 "Custom label for the forward button, e.g. \"Start\" on a welcome section. "
 "Empty = the default Next/Finish."
 msgstr ""
+"Label khusus untuk tombol lanjut, mis. „Mulai” pada bagian sambutan. Kosong "
+"= Berikutnya/Selesai bawaan."
 
 #: survey/models.py:575
 msgid ""
 "Override map position for this section. Null = keep current map position."
 msgstr ""
+"Timpa posisi peta untuk bagian ini. Kosong = pertahankan posisi peta saat "
+"ini."
 
 #: survey/models.py:576
 msgid "Override map zoom for this section. Null = keep current zoom."
 msgstr ""
+"Timpa perbesaran peta untuk bagian ini. Kosong = pertahankan perbesaran saat"
+" ini."
 
 #: survey/models.py:577
 msgid "If true, fly to respondent location when entering this section."
 msgstr ""
+"Jika aktif, peta berpindah ke lokasi responden saat masuk ke bagian ini."
 
 #: survey/models.py:578
 msgid "Override basemap for this section. Null = keep current basemap."
 msgstr ""
+"Timpa peta dasar untuk bagian ini. Kosong = pertahankan peta dasar saat ini."
 
 #: survey/models.py:579
 msgid ""
 "IDs of SurveyMapLayer rows hidden on this section. Empty = all layers "
 "visible. Stale IDs are ignored at render time."
 msgstr ""
+"ID baris SurveyMapLayer yang disembunyikan di bagian ini. Kosong = semua "
+"lapisan terlihat. ID usang diabaikan saat penampilan."
 
 #: survey/models.py:587
 msgid ""
 "Show this section only when the referenced choice question's answer includes"
 " any of the referenced option codes. Null = always shown."
 msgstr ""
+"Tampilkan bagian ini hanya jika jawaban pada pertanyaan pilihan yang dirujuk"
+" memuat salah satu kode opsi yang dirujuk. Kosong = selalu tampil."
 
 #: survey/models.py:639 survey/models.py:795
 msgid "ISO 639-1 language code"
-msgstr ""
+msgstr "Kode bahasa ISO 639-1"
 
 #: survey/models.py:674
 msgid ""
 "Per-question validation: {min_value, max_value, outlier_sigma, min_length, "
 "area_outlier_factor}"
 msgstr ""
+"Validasi per pertanyaan: {min_value, max_value, outlier_sigma, min_length, "
+"area_outlier_factor}"
 
 #: survey/models.py:675
 msgid "HEX color, as #RRGGBB"
-msgstr ""
+msgstr "Warna HEX, dalam format #RRGGBB"
 
 #: survey/models.py:676
 msgid "Must be Font-Awesome class"
-msgstr ""
+msgstr "Harus berupa kelas Font Awesome"
 
 #: survey/models.py:678
 msgid ""
 "Rendering style: rating styles (\"default\" inherits the survey-wide style) "
 "or \"dropdown\" for choice questions"
 msgstr ""
+"Gaya tampilan: gaya penilaian („default” mengikuti gaya seluruh survei) atau"
+" „dropdown” untuk pertanyaan pilihan"
 
 #: survey/models.py:681
 msgid ""
 "Show this question only when the referenced choice question's answer "
 "includes any of the referenced option codes. Null = always shown."
 msgstr ""
+"Tampilkan pertanyaan ini hanya jika jawaban pada pertanyaan pilihan yang "
+"dirujuk memuat salah satu kode opsi yang dirujuk. Kosong = selalu tampil."
 
 #: survey/models.py:887
 msgid "Open Data"
-msgstr ""
+msgstr "Data terbuka"
 
 #: survey/models.py:888 survey/templates/editor.html:400
 #: survey/templates/editor.html:442
+#: survey/templates/editor/analytics_dashboard.html:4
+#: survey/templates/editor/analytics_dashboard_v2.html:4
 msgid "Results"
-msgstr ""
+msgstr "Hasil"
 
 #: survey/models.py:889
 msgid "Article"
-msgstr ""
+msgstr "Artikel"
 
 #: survey/models.py:1054
 msgid "Automatic rule"
-msgstr ""
+msgstr "Aturan otomatis"
 
 #: survey/models.py:1055
 msgid "Staff assignment"
-msgstr ""
+msgstr "Penetapan oleh tim"
 
 #: survey/models.py:1092
 msgid "Hex colour used on the funnel dashboard, e.g. #3b82f6."
-msgstr ""
+msgstr "Warna HEX yang dipakai pada dasbor funnel, mis. #3b82f6."
 
 #: survey/models.py:1182
 msgid "Research"
-msgstr ""
+msgstr "Riset"
 
 #: survey/models.py:1183 survey/templates/base_landing.html:199
+#: survey/templates/editor/partials/analytics_performance.html:143
 #: survey/templates/org/org_members.html:34
 #: survey/templates/org/org_members.html:112
 msgid "Email"
-msgstr ""
+msgstr "Email"
 
 #: survey/models.py:1184
 msgid "Call"
-msgstr ""
+msgstr "Panggilan"
 
 #: survey/models.py:1185
 msgid "Signal"
-msgstr ""
+msgstr "Signal"
 
 #: survey/models.py:1212
 msgid "Short markdown summary: who this is, in a few lines."
 msgstr ""
+"Ringkasan singkat dalam markdown: siapa orang ini, dalam beberapa baris."
 
 #: survey/models.py:1248
 msgid "Creator interface language. Empty = follow the browser."
-msgstr ""
+msgstr "Bahasa antarmuka pembuat survei. Kosong = ikuti peramban."
 
 #: survey/models.py:1283
 msgid "Repo-relative path this note was imported from, if any."
-msgstr ""
+msgstr "Jalur relatif repositori asal impor catatan ini, jika ada."
 
 #: survey/models.py:1337
 msgid "Slice within the source; meaning depends on the source."
-msgstr ""
+msgstr "Irisan di dalam sumber; maknanya bergantung pada sumbernya."
 
 #: survey/models.py:1427
 msgid "Set when the demo was opened by a signed-in user; NULL = anonymous."
-msgstr ""
+msgstr "Diisi saat demo dibuka oleh pengguna yang masuk; NULL = anonim."
 
 #: survey/models.py:1442
 msgid "Unlisted"
-msgstr ""
+msgstr "Tak terdaftar"
 
 #: survey/models.py:1446
+#: survey/templates/editor/partials/_publishing_widget.html:59
+#: survey/templates/editor/public_results.html:49
 msgid "Live"
-msgstr ""
+msgstr "Langsung"
 
-#: survey/models.py:1447
+#: survey/models.py:1447 survey/templates/editor/public_results.html:49
 msgid "Frozen"
-msgstr ""
+msgstr "Dibekukan"
 
 #: survey/models.py:1453
 msgid "Chart"
-msgstr ""
+msgstr "Grafik"
 
 #: survey/models.py:1477
 msgid ""
 "Public is indexable and listable; unlisted is reachable by direct link only."
 msgstr ""
+"Publik dapat diindeks dan masuk daftar; tak terdaftar hanya dapat dibuka "
+"lewat tautan langsung."
 
 #: survey/models.py:1482
 msgid ""
 "Multilingual intro: {\"title\": {\"en\": ...}, \"body\": {\"en\": ...}} or "
 "plain strings."
 msgstr ""
+"Pengantar multibahasa: {\"title\": {\"en\": ...}, \"body\": {\"en\": ...}} "
+"atau teks biasa."
 
 #: survey/models.py:1485
 msgid "Frozen per-block payloads."
-msgstr ""
+msgstr "Data beku untuk setiap blok."
 
 #: survey/models.py:1491
 msgid ""
 "Show a \"See the results\" button on the survey's thanks page (only while "
 "published)."
 msgstr ""
+"Tampilkan tombol „Lihat hasil” di halaman terima kasih survei (hanya selama "
+"survei terbit)."
 
 #: survey/models.py:1494
 msgid "Show a card in the public stories listing (public visibility only)."
 msgstr ""
+"Tampilkan kartu di daftar cerita publik (hanya untuk visibilitas publik)."
 
 #: survey/models.py:1497
 msgid "Mask buckets with 0 < count < K as \"<K\". Set to 1 to disable."
 msgstr ""
+"Samarkan kelompok dengan 0 < jumlah < K sebagai „<K”. Setel 1 untuk "
+"menonaktifkan."
 
 #: survey/models.py:1501
 msgid ""
 "When default blocks were auto-drafted. Set once; blocks the creator deletes "
 "are never re-created."
 msgstr ""
+"Kapan blok bawaan dibuat otomatis. Diisi sekali; blok yang dihapus pembuat "
+"survei tidak pernah dibuat ulang."
 
 #: survey/models.py:1528
 msgid "Bound question for chart/map blocks; null for text/image."
-msgstr ""
+msgstr "Pertanyaan terkait untuk blok grafik/peta; kosong untuk teks/gambar."
 
 #: survey/models.py:1533
 msgid "Visualization override: auto, bar, pie, donut, table, heatmap, ..."
-msgstr ""
+msgstr "Penggantian visualisasi: auto, bar, pie, donut, table, heatmap, ..."
 
 #: survey/models.py:1536
 msgid "Optional multilingual title override."
-msgstr ""
+msgstr "Penggantian judul multibahasa (opsional)."
 
 #: survey/models.py:1540
 msgid ""
 "Multilingual body for standalone text blocks, or caption for image blocks: "
 "{\"en\": \"...\", \"ru\": \"...\"}."
 msgstr ""
+"Isi multibahasa untuk blok teks mandiri, atau keterangan untuk blok gambar: "
+"{\"en\": \"...\", \"ru\": \"...\"}."
 
 #: survey/models.py:1544
 msgid "Image for standalone image blocks."
-msgstr ""
+msgstr "Gambar untuk blok gambar mandiri."
 
 #: survey/models.py:1548
 msgid ""
 "Question codes whose values appear in geo popups. Empty = anonymous geometry"
 " only."
 msgstr ""
+"Kode pertanyaan yang nilainya muncul di jendela peta. Kosong = hanya "
+"geometri anonim."
 
 #: survey/models.py:1552
 msgid "Tile basemap for map blocks (streets/satellite/topo)."
-msgstr ""
+msgstr "Peta dasar ubin untuk blok peta (streets/satellite/topo)."
 
 #: survey/models.py:1567
 msgid "Survey draft generation"
-msgstr ""
+msgstr "Pembuatan draf survei"
 
 #: survey/models.py:1573
 msgid "Pending"
-msgstr ""
+msgstr "Menunggu"
 
 #: survey/models.py:1574
 msgid "Success"
-msgstr ""
+msgstr "Berhasil"
 
 #: survey/models.py:1575
 msgid "Provider not configured"
-msgstr ""
+msgstr "Penyedia belum dikonfigurasi"
 
 #: survey/models.py:1576
 msgid "Provider error"
-msgstr ""
+msgstr "Galat penyedia"
 
 #: survey/models.py:1577
 msgid "Invalid draft"
-msgstr ""
+msgstr "Draf tidak valid"
 
 #: survey/models.py:1578
 msgid "Unexpected error"
-msgstr ""
+msgstr "Galat tak terduga"
 
 #: survey/password_rules.py:35
 #, python-format
 msgid "At least %(min_length)d characters"
-msgstr ""
+msgstr "Minimal %(min_length)d karakter"
 
 #: survey/password_rules.py:40
 msgid "Not entirely numbers"
-msgstr ""
+msgstr "Tidak seluruhnya angka"
 
 #: survey/password_rules.py:45
 msgid "Not a commonly used password"
-msgstr ""
+msgstr "Bukan kata sandi yang umum dipakai"
 
 #: survey/password_rules.py:50
 msgid "Not too similar to your email or username"
-msgstr ""
+msgstr "Tidak terlalu mirip dengan email atau nama pengguna Anda"
 
 #: survey/password_rules.py:62
 msgid "Avoid a commonly used password"
-msgstr ""
+msgstr "Hindari kata sandi yang umum dipakai"
 
 #: survey/password_rules.py:68
 msgid "Avoid reusing your email or username"
-msgstr ""
+msgstr "Jangan memakai ulang email atau nama pengguna Anda"
 
 #: survey/password_rules.py:74
 msgid "Avoid a password of only numbers"
-msgstr ""
+msgstr "Hindari kata sandi yang hanya berisi angka"
 
 #: survey/templates/404.html:16 survey/templates/404.html:74
 msgid "Page not found"
-msgstr ""
+msgstr "Halaman tidak ditemukan"
 
 #: survey/templates/404.html:65 survey/templates/survey_unavailable.html:20
 msgid "This survey isn’t available"
-msgstr ""
+msgstr "Survei ini tidak tersedia"
 
 #: survey/templates/404.html:66
 msgid ""
 "We couldn’t open the survey at this link. That usually means one of these:"
 msgstr ""
+"Kami tidak dapat membuka survei dari tautan ini. Biasanya penyebabnya salah "
+"satu berikut:"
 
 #: survey/templates/404.html:68
 msgid "It hasn’t been published yet — the creator is still working on it."
-msgstr ""
+msgstr "Survei belum diterbitkan — pembuatnya masih mengerjakannya."
 
 #: survey/templates/404.html:69
 msgid "It was removed by its creator."
-msgstr ""
+msgstr "Survei dihapus oleh pembuatnya."
 
 #: survey/templates/404.html:70
 msgid "The link is incomplete or mistyped."
-msgstr ""
+msgstr "Tautannya tidak lengkap atau salah ketik."
 
 #: survey/templates/404.html:72
 msgid ""
 "If someone shared this link with you, ask them to send the public link "
 "again."
 msgstr ""
+"Jika seseorang mengirimkan tautan ini kepada Anda, mintalah tautan publiknya"
+" sekali lagi."
 
 #: survey/templates/404.html:75
 msgid "The page you were looking for doesn’t exist, or has moved."
-msgstr ""
+msgstr "Halaman yang Anda cari tidak ada atau telah dipindahkan."
 
 #: survey/templates/404.html:80
 msgid "Go to your dashboard"
-msgstr ""
+msgstr "Buka dasbor Anda"
 
 #: survey/templates/404.html:81 survey/templates/404.html:83
 msgid "Browse public surveys"
-msgstr ""
+msgstr "Jelajahi survei publik"
 
 #: survey/templates/404.html:89 survey/templates/survey_closed.html:11
 #: survey/templates/survey_unavailable.html:22
@@ -766,30 +855,30 @@ msgstr "Kembali ke beranda"
 #: survey/templates/admin/assign_cohort.html:6
 #: survey/templates/admin/funnel_dashboard.html:6
 msgid "Home"
-msgstr ""
+msgstr "Beranda"
 
 #: survey/templates/admin/assign_cohort.html:7
 msgid "Users"
-msgstr ""
+msgstr "Pengguna"
 
 #: survey/templates/admin/assign_cohort.html:34
 msgid "Assign cohort"
-msgstr ""
+msgstr "Tetapkan kohort"
 
 #: survey/templates/admin/assign_cohort.html:35
 #: survey/templates/base_survey_template.html:124
 #: survey/templates/base_survey_template.html:136
 #: survey/templates/editor.html:507 survey/templates/editor.html:530
 #: survey/templates/editor.html:556
-#: survey/templates/editor/analytics_dashboard.html:197
-#: survey/templates/editor/analytics_dashboard_v2.html:205
+#: survey/templates/editor/analytics_dashboard.html:196
+#: survey/templates/editor/analytics_dashboard_v2.html:202
 #: survey/templates/editor/editor_base.html:983
 #: survey/templates/editor/partials/_lifecycle_scripts.html:24
 #: survey/templates/editor/partials/_lifecycle_scripts.html:46
 #: survey/templates/editor/partials/_lifecycle_scripts.html:57
 #: survey/templates/editor/partials/_lifecycle_scripts.html:67
 #: survey/templates/editor/partials/pr_add_block_modal.html:54
-#: survey/templates/editor/partials/question_form_modal.html:445
+#: survey/templates/editor/partials/question_form_modal.html:441
 #: survey/templates/editor/partials/section_map_picker.html:54
 #: survey/templates/editor/survey_create.html:377
 #: survey/templates/editor/survey_create.html:383
@@ -802,44 +891,45 @@ msgstr "Batal"
 
 #: survey/templates/base.html:363 survey/templates/editor/editor_base.html:885
 msgid "Copied:"
-msgstr ""
+msgstr "Disalin:"
 
 #: survey/templates/base.html:365 survey/templates/editor/editor_base.html:887
 msgid "Clear clipboard (Esc)"
-msgstr ""
+msgstr "Kosongkan papan klip (Esc)"
 
 #: survey/templates/base.html:365 survey/templates/editor/editor_base.html:887
 msgid "Clear clipboard"
-msgstr ""
+msgstr "Kosongkan papan klip"
 
 #: survey/templates/base.html:382 survey/templates/editor/editor_base.html:941
 #: survey/templates/org/org_new.html:4 survey/templates/org/org_new.html:10
 msgid "New Organization"
-msgstr ""
+msgstr "Organisasi baru"
 
 #: survey/templates/base.html:384 survey/templates/editor/editor_base.html:943
+#: survey/templates/editor/survey_settings.html:5
 #: survey/templates/org/org_members.html:14
 #: survey/templates/org/org_settings.html:4
 msgid "Settings"
-msgstr ""
+msgstr "Pengaturan"
 
 #: survey/templates/base.html:385 survey/templates/editor/editor_base.html:918
 #: survey/templates/editor/editor_base.html:944
 #: survey/templates/org/org_members.html:4
 #: survey/templates/org/org_settings.html:34
 msgid "Members"
-msgstr ""
+msgstr "Anggota"
 
 #: survey/templates/base.html:396 survey/templates/base_landing.html:145
 #: survey/templates/editor/editor_base.html:924
 #: survey/templates/editor/editor_base.html:953
 msgid "Logout"
-msgstr ""
+msgstr "Keluar"
 
-#: survey/templates/base.html:398
+#: survey/templates/base.html:398 survey/templates/registration/login.html:4
 #: survey/templates/registration/rate_limited.html:32
 msgid "Sign in"
-msgstr ""
+msgstr "Masuk"
 
 #: survey/templates/base_landing.html:7
 msgid ""
@@ -909,7 +999,7 @@ msgstr ""
 #: survey/templates/editor/editor_base.html:879
 #: survey/templates/org/org_members.html:15
 msgid "Dashboard"
-msgstr ""
+msgstr "Dasbor"
 
 #: survey/templates/base_landing.html:147
 #: survey/templates/django_registration/activation_complete.html:13
@@ -918,7 +1008,7 @@ msgstr ""
 #: survey/templates/registration/login.html:53
 #: survey/templates/registration/password_reset_complete.html:13
 msgid "Sign In"
-msgstr ""
+msgstr "Masuk"
 
 #: survey/templates/base_landing.html:148
 msgid "Sign Up Free"
@@ -1000,7 +1090,7 @@ msgstr "Selesai menggambar"
 
 #: survey/templates/base_survey_template.html:137
 #: survey/templates/editor/partials/analytics_table.html:467
-#: survey/templates/editor/partials/question_form_modal.html:448
+#: survey/templates/editor/partials/question_form_modal.html:444
 #: survey/templates/editor/public_results.html:259
 msgid "Apply"
 msgstr "Terapkan"
@@ -1347,102 +1437,132 @@ msgstr ""
 #: survey/templates/django_registration/activation_complete.html:4
 #: survey/templates/django_registration/activation_complete.html:11
 msgid "Account Activated"
-msgstr ""
+msgstr "Akun diaktifkan"
 
 #: survey/templates/django_registration/activation_complete.html:12
 #, python-format
 msgid "Welcome, %(account)s! Your account is now active."
-msgstr ""
+msgstr "Selamat datang, %(account)s! Akun Anda kini aktif."
 
 #: survey/templates/django_registration/activation_confirm.html:4
 #: survey/templates/django_registration/activation_confirm.html:11
 msgid "Confirm Your Email"
-msgstr ""
+msgstr "Konfirmasi email Anda"
 
 #: survey/templates/django_registration/activation_confirm.html:12
 msgid ""
 "One click left: confirm your email address to activate your account. You'll "
 "be signed in right away."
 msgstr ""
+"Tinggal satu klik: konfirmasi alamat email Anda untuk mengaktifkan akun. "
+"Anda akan langsung masuk."
 
 #: survey/templates/django_registration/activation_confirm.html:23
 msgid "Confirm my email"
+msgstr "Konfirmasi email saya"
+
+#: survey/templates/django_registration/activation_email.html:21
+#: survey/templates/django_registration/activation_form.html:11
+msgid "Activate your account"
+msgstr "Aktifkan akun Anda"
+
+#: survey/templates/django_registration/activation_email.html:23
+msgid ""
+"Welcome to Mapsurvey! Click the button below to activate your account and "
+"get started."
 msgstr ""
+"Selamat datang di Mapsurvey! Klik tombol di bawah untuk mengaktifkan akun "
+"dan mulai bekerja."
+
+#: survey/templates/django_registration/activation_email.html:30
+#: survey/templates/django_registration/activation_form.html:4
+msgid "Activate Account"
+msgstr "Aktifkan akun"
+
+#: survey/templates/django_registration/activation_email.html:36
+#: survey/templates/org/invitation_email.html:36
+msgid ""
+"If the button doesn’t work, copy and paste this link into your browser:"
+msgstr ""
+"Jika tombolnya tidak berfungsi, salin dan tempel tautan ini ke peramban "
+"Anda:"
+
+#: survey/templates/django_registration/activation_email.html:44
+#, python-format
+msgid "This link expires in %(days)s day."
+msgid_plural "This link expires in %(days)s days."
+msgstr[0] "Tautan ini kedaluwarsa dalam %(days)s hari."
 
 #: survey/templates/django_registration/activation_email_body.txt:1
 msgid "Welcome to Mapsurvey!"
-msgstr ""
+msgstr "Selamat datang di Mapsurvey!"
 
 #: survey/templates/django_registration/activation_email_body.txt:3
 msgid "To activate your account, follow this link:"
-msgstr ""
+msgstr "Untuk mengaktifkan akun, buka tautan ini:"
 
 #: survey/templates/django_registration/activation_email_body.txt:6
 msgid "This link expires in"
-msgstr ""
+msgstr "Tautan ini kedaluwarsa dalam"
 
 #: survey/templates/django_registration/activation_email_body.txt:6
 msgid "day(s)."
-msgstr ""
+msgstr "hari."
 
 #: survey/templates/django_registration/activation_email_subject.txt:1
 msgid "Account Activation"
-msgstr ""
+msgstr "Aktivasi akun"
 
 #: survey/templates/django_registration/activation_failed.html:4
 #: survey/templates/django_registration/activation_failed.html:11
 msgid "Activation Failed"
-msgstr ""
+msgstr "Aktivasi gagal"
 
 #: survey/templates/django_registration/activation_failed.html:13
 msgid ""
 "This activation link may have expired or been used already. You can request "
 "a new one."
 msgstr ""
+"Tautan aktivasi ini mungkin sudah kedaluwarsa atau pernah dipakai. Anda "
+"dapat meminta yang baru."
 
 #: survey/templates/django_registration/activation_failed.html:20
 msgid "Send me a new activation link"
-msgstr ""
-
-#: survey/templates/django_registration/activation_form.html:4
-msgid "Activate Account"
-msgstr ""
-
-#: survey/templates/django_registration/activation_form.html:11
-msgid "Activate your account"
-msgstr ""
+msgstr "Kirimi saya tautan aktivasi baru"
 
 #: survey/templates/django_registration/activation_form.html:25
 msgid "Click the button below to activate your account."
-msgstr ""
+msgstr "Klik tombol di bawah untuk mengaktifkan akun Anda."
 
 #: survey/templates/django_registration/activation_form.html:29
 msgid "Activate"
-msgstr ""
+msgstr "Aktifkan"
 
 #: survey/templates/django_registration/activation_form.html:34
 #: survey/templates/django_registration/registration_complete.html:15
 msgid "Back to Sign In"
-msgstr ""
+msgstr "Kembali ke halaman masuk"
 
 #: survey/templates/django_registration/registration_complete.html:4
 #: survey/templates/registration/password_reset_done.html:11
 msgid "Check Your Email"
-msgstr ""
+msgstr "Periksa email Anda"
 
 #: survey/templates/django_registration/registration_complete.html:11
 msgid "Check your email"
-msgstr ""
+msgstr "Periksa email Anda"
 
 #: survey/templates/django_registration/registration_complete.html:12
 msgid ""
 "We've sent an activation link to your email address. Please click the link "
 "to activate your account."
 msgstr ""
+"Kami telah mengirim tautan aktivasi ke alamat email Anda. Klik tautan "
+"tersebut untuk mengaktifkan akun."
 
 #: survey/templates/django_registration/registration_complete.html:13
 msgid "The link will expire in 24 hours."
-msgstr ""
+msgstr "Tautan akan kedaluwarsa dalam 24 jam."
 
 #: survey/templates/django_registration/registration_form.html:4
 #: survey/templates/django_registration/registration_form.html:10
@@ -1451,154 +1571,161 @@ msgstr ""
 #: survey/templates/registration/registration_form.html:4
 #: survey/templates/registration/registration_form.html:10
 msgid "Create Account"
-msgstr ""
+msgstr "Buat akun"
 
 #: survey/templates/django_registration/registration_form.html:11
 #: survey/templates/registration/registration_form.html:11
 msgid "Sign up to create and manage geo-surveys."
-msgstr ""
+msgstr "Daftar untuk membuat dan mengelola survei berbasis peta."
 
 #: survey/templates/django_registration/registration_form.html:76
 #: survey/templates/registration/registration_form.html:31
 msgid "Register"
-msgstr ""
+msgstr "Daftar sekarang"
 
 #: survey/templates/django_registration/registration_form.html:80
 msgid "This form is protected by Cloudflare Turnstile."
-msgstr ""
+msgstr "Formulir ini dilindungi oleh Cloudflare Turnstile."
 
 #: survey/templates/django_registration/registration_form.html:81
 msgid "Privacy"
-msgstr ""
+msgstr "Privasi"
 
 #: survey/templates/django_registration/registration_form.html:99
 #: survey/templates/registration/registration_form.html:35
 msgid "Already have an account? Sign in"
-msgstr ""
+msgstr "Sudah punya akun? Masuk"
 
 #: survey/templates/django_registration/resend_activation_done.html:4
 #: survey/templates/django_registration/resend_activation_done.html:11
 msgid "Check Your Inbox"
-msgstr ""
+msgstr "Periksa kotak masuk Anda"
 
 #: survey/templates/django_registration/resend_activation_done.html:18
 msgid ""
 "If that address belongs to an account that hasn't been activated yet, an "
 "activation link is on its way. It's valid for 7 days."
 msgstr ""
+"Jika alamat itu milik akun yang belum diaktifkan, tautan aktivasi sedang "
+"dalam perjalanan. Tautan berlaku 7 hari."
 
 #: survey/templates/django_registration/resend_activation_done.html:19
 msgid ""
 "Nothing arrived? Check your spam folder, and make sure you used the address "
 "you signed up with."
 msgstr ""
+"Tidak ada yang masuk? Periksa folder spam dan pastikan Anda memakai alamat "
+"yang dipakai saat mendaftar."
 
 #: survey/templates/django_registration/resend_activation_done.html:21
 #: survey/templates/django_registration/resend_activation_form.html:34
 #: survey/templates/registration/password_reset_done.html:14
 #: survey/templates/registration/password_reset_form.html:28
 msgid "Back to sign in"
-msgstr ""
+msgstr "Kembali ke halaman masuk"
 
 #: survey/templates/django_registration/resend_activation_form.html:4
 #: survey/templates/django_registration/resend_activation_form.html:10
 msgid "Resend Activation Email"
-msgstr ""
+msgstr "Kirim ulang email aktivasi"
 
 #: survey/templates/django_registration/resend_activation_form.html:11
 msgid ""
 "Enter the email address you signed up with and we'll send a fresh activation"
 " link."
 msgstr ""
+"Masukkan alamat email yang Anda pakai saat mendaftar, dan kami akan mengirim"
+" tautan aktivasi baru."
 
 #: survey/templates/django_registration/resend_activation_form.html:30
 msgid "Send activation link"
-msgstr ""
+msgstr "Kirim tautan aktivasi"
 
 #: survey/templates/editor.html:283
 msgid "My Surveys"
-msgstr ""
+msgstr "Survei saya"
 
 #: survey/templates/editor.html:285
 msgid "Search surveys"
-msgstr ""
+msgstr "Cari survei"
 
 #: survey/templates/editor.html:291
 msgid "Search surveys…"
-msgstr ""
+msgstr "Cari survei …"
 
 #: survey/templates/editor.html:292
 msgid "Search surveys by name"
-msgstr ""
+msgstr "Cari survei berdasarkan nama"
 
 #: survey/templates/editor.html:302 survey/templates/editor.html:328
 msgid "Hide Archived"
-msgstr ""
+msgstr "Sembunyikan yang diarsipkan"
 
 #: survey/templates/editor.html:304 survey/templates/editor.html:330
 msgid "Show Archived"
-msgstr ""
+msgstr "Tampilkan yang diarsipkan"
 
 #: survey/templates/editor.html:308
 msgid "Cards"
-msgstr ""
+msgstr "Kartu"
 
 #: survey/templates/editor.html:309
 #: survey/templates/editor/partials/question_form_modal.html:169
 msgid "List"
-msgstr ""
+msgstr "Daftar"
 
 #: survey/templates/editor.html:314
+#: survey/templates/editor/survey_create.html:5
 #: survey/templates/editor/survey_create.html:8
 msgid "New Survey"
-msgstr ""
+msgstr "Survei baru"
 
 #: survey/templates/editor.html:316 survey/templates/editor.html:557
 msgid "Import"
-msgstr ""
+msgstr "Impor"
 
 #: survey/templates/editor.html:325
 #: survey/templates/editor/_survey_more_menu.html:7
 #: survey/templates/editor/editor_base.html:897
 msgid "More actions"
-msgstr ""
+msgstr "Tindakan lain"
 
 #: survey/templates/editor.html:333
 msgid "Import…"
-msgstr ""
+msgstr "Impor …"
 
 #: survey/templates/editor.html:336
 msgid "List view"
-msgstr ""
+msgstr "Tampilan daftar"
 
 #: survey/templates/editor.html:337
 msgid "Card view"
-msgstr ""
+msgstr "Tampilan kartu"
 
 #: survey/templates/editor.html:383
 msgid "Results page is live"
-msgstr ""
+msgstr "Halaman hasil sudah terbit"
 
 #: survey/templates/editor.html:383
 msgid "Results live"
-msgstr ""
+msgstr "Hasil langsung"
 
 #: survey/templates/editor.html:386 survey/templates/editor.html:435
 msgid "started"
-msgstr ""
+msgstr "dimulai"
 
 #: survey/templates/editor.html:387 survey/templates/editor.html:436
 msgid "completed"
-msgstr ""
+msgstr "selesai"
 
 #: survey/templates/editor.html:388 survey/templates/editor.html:437
 msgid "rate"
-msgstr ""
+msgstr "rasio"
 
 #: survey/templates/editor.html:391
 #, python-format
 msgid "Updated %(ago)s ago"
-msgstr ""
+msgstr "Diperbarui %(ago)s lalu"
 
 #: survey/templates/editor.html:394 survey/templates/editor.html:445
 #: survey/templates/editor/partials/_mobile_nav.html:36
@@ -1610,73 +1737,81 @@ msgstr ""
 #: survey/templates/editor/survey_detail.html:67
 #: survey/templates/editor/survey_detail.html:330
 msgid "Preview"
-msgstr ""
+msgstr "Pratinjau"
 
 #: survey/templates/editor.html:399 survey/templates/editor.html:441
 msgid "Build"
-msgstr ""
+msgstr "Bangun"
 
 #: survey/templates/editor.html:401 survey/templates/editor.html:443
 #: survey/templates/editor/partials/_lifecycle_scripts.html:25
 #: survey/templates/editor/partials/_lifecycle_scripts.html:47
 #: survey/templates/editor/partials/_survey_primary_action.html:14
 msgid "Publish"
-msgstr ""
+msgstr "Terbitkan"
 
 #: survey/templates/editor.html:401
 #: survey/templates/editor/partials/_survey_nav_tabs.html:36
 msgid "beta"
-msgstr ""
+msgstr "beta"
 
 #: survey/templates/editor.html:402 survey/templates/editor.html:444
 #: survey/templates/editor/partials/_survey_nav_tabs.html:48
+#: survey/templates/editor/survey_share.html:4
 msgid "Share"
-msgstr ""
+msgstr "Bagikan"
 
 #: survey/templates/editor.html:431
 #, python-format
 msgid "%(ago)s ago"
-msgstr ""
+msgstr "%(ago)s lalu"
 
 #: survey/templates/editor.html:475
 #, python-format
 msgid "Trashed %(ago)s ago &middot; purges in %(left)s"
 msgstr ""
+"Di tempat sampah sejak %(ago)s lalu &middot; dihapus permanen dalam %(left)s"
 
 #: survey/templates/editor.html:480
 #: survey/templates/editor/partials/analytics_session_detail.html:19
 #: survey/templates/editor/partials/analytics_table.html:312
 msgid "Restore"
-msgstr ""
+msgstr "Pulihkan"
 
 #: survey/templates/editor.html:497 survey/templates/editor.html:508
 #: survey/templates/editor/partials/analytics_table.html:315
 msgid "Delete permanently"
-msgstr ""
+msgstr "Hapus permanen"
 
 #: survey/templates/editor.html:503
 msgid "Permanently delete survey '<strong id=\"purgeSurveyName\"></strong>'?"
-msgstr ""
+msgstr "Hapus permanen survei „<strong id=\"purgeSurveyName\"></strong>”?"
 
 #: survey/templates/editor.html:504
 msgid ""
 "This action cannot be undone. All survey data including sessions and answers"
 " will be permanently deleted."
 msgstr ""
+"Tindakan ini tidak dapat dibatalkan. Seluruh data survei, termasuk sesi dan "
+"jawaban, akan dihapus permanen."
 
 #: survey/templates/editor.html:520
 msgid "Move to Trash"
-msgstr ""
+msgstr "Pindahkan ke tempat sampah"
 
 #: survey/templates/editor.html:526
 msgid "Move survey '<strong id=\"deleteSurveyName\"></strong>' to Trash?"
 msgstr ""
+"Pindahkan survei „<strong id=\"deleteSurveyName\"></strong>” ke tempat "
+"sampah?"
 
 #: survey/templates/editor.html:527
 msgid ""
 "The survey will be hidden from respondents. You can restore it from Trash "
 "within 30 days; after that it is deleted forever."
 msgstr ""
+"Survei akan disembunyikan dari responden. Anda dapat memulihkannya dari "
+"tempat sampah dalam 30 hari; setelah itu survei terhapus selamanya."
 
 #: survey/templates/editor.html:531
 #: survey/templates/editor/_survey_more_menu.html:34
@@ -1690,324 +1825,410 @@ msgstr "Hapus"
 
 #: survey/templates/editor.html:543
 msgid "Import Survey"
-msgstr ""
+msgstr "Impor survei"
 
 #: survey/templates/editor.html:550
 msgid "Select ZIP archive"
-msgstr ""
+msgstr "Pilih arsip ZIP"
 
 #: survey/templates/editor.html:553
 msgid "Upload a ZIP archive exported from this system."
-msgstr ""
+msgstr "Unggah arsip ZIP hasil ekspor dari sistem ini."
 
 #: survey/templates/editor/_survey_more_menu.html:12
 msgid "Download Clean Data"
-msgstr ""
+msgstr "Unduh data bersih"
 
 #: survey/templates/editor/_survey_more_menu.html:13
 #: survey/templates/editor/_survey_more_menu.html:19
 msgid "All Versions"
-msgstr ""
+msgstr "Semua versi"
+
+#: survey/templates/editor/_survey_more_menu.html:14
+#: survey/templates/editor/_survey_more_menu.html:20
+msgid "Current"
+msgstr "Saat ini"
 
 #: survey/templates/editor/_survey_more_menu.html:18
 msgid "Download All (incl. excluded)"
-msgstr ""
+msgstr "Unduh semua (termasuk yang dikecualikan)"
 
 #: survey/templates/editor/_survey_more_menu.html:22
 msgid "Download Data"
-msgstr ""
+msgstr "Unduh data"
 
 #: survey/templates/editor/_survey_more_menu.html:23
 msgid "All (incl. excluded)"
-msgstr ""
+msgstr "Semua (termasuk yang dikecualikan)"
 
 #: survey/templates/editor/_survey_more_menu.html:26
 msgid "Export"
-msgstr ""
+msgstr "Ekspor"
 
 #: survey/templates/editor/_survey_more_menu.html:27
 msgid "Structure Only"
-msgstr ""
+msgstr "Hanya struktur"
 
 #: survey/templates/editor/_survey_more_menu.html:28
 msgid "Data Only"
-msgstr ""
+msgstr "Hanya data"
 
 #: survey/templates/editor/_survey_more_menu.html:29
 msgid "Full Backup"
-msgstr ""
+msgstr "Cadangan lengkap"
 
-#: survey/templates/editor/analytics_dashboard.html:31
+#: survey/templates/editor/analytics_dashboard.html:28
+#: survey/templates/editor/analytics_dashboard_v2.html:29
+msgid ""
+"Test responses collected while previewing this draft. They are deleted when "
+"the draft is published or discarded."
+msgstr ""
+"Tanggapan uji yang terkumpul saat pratinjau draf ini. Semuanya dihapus "
+"ketika draf diterbitkan atau dibuang."
+
+#: survey/templates/editor/analytics_dashboard.html:30
+#: survey/templates/editor/analytics_dashboard_v2.html:31
 msgid ""
 "Responses of the published survey. This draft's own preview responses are "
 "under <strong>Draft (test)</strong> in the version picker."
 msgstr ""
+"Tanggapan dari survei yang sudah terbit. Tanggapan pratinjau milik draf ini "
+"ada di <strong>Draf (uji)</strong> pada pemilih versi."
 
-#: survey/templates/editor/analytics_dashboard.html:42
+#: survey/templates/editor/analytics_dashboard.html:41
 #: survey/templates/editor/public_results.html:60
 msgid "Data"
-msgstr ""
+msgstr "Data"
 
-#: survey/templates/editor/analytics_dashboard.html:47
+#: survey/templates/editor/analytics_dashboard.html:46
+#: survey/templates/editor/analytics_dashboard_v2.html:52
 msgid "Performance"
-msgstr ""
+msgstr "Kinerja"
+
+#: survey/templates/editor/analytics_dashboard.html:49
+#: survey/templates/editor/analytics_dashboard_v2.html:65
+msgid "Which survey version’s responses to show"
+msgstr "Tanggapan dari versi survei mana yang ditampilkan"
+
+#: survey/templates/editor/analytics_dashboard.html:59
+#: survey/templates/editor/analytics_dashboard_v2.html:75
+msgid "Download clean responses (CSV + GeoJSON)"
+msgstr "Unduh tanggapan bersih (CSV + GeoJSON)"
 
 #: survey/templates/editor/analytics_dashboard.html:60
-#: survey/templates/editor/analytics_dashboard_v2.html:77
-msgid "Download clean responses (CSV + GeoJSON)"
-msgstr ""
-
-#: survey/templates/editor/analytics_dashboard.html:61
 msgid "Download data"
-msgstr ""
+msgstr "Unduh data"
 
-#: survey/templates/editor/analytics_dashboard.html:71
+#: survey/templates/editor/analytics_dashboard.html:70
+#: survey/templates/editor/analytics_dashboard_v2.html:85
 msgid "hidden — Show all"
-msgstr ""
+msgstr "tersembunyi — Tampilkan semua"
 
-#: survey/templates/editor/analytics_dashboard.html:86
-#: survey/templates/editor/analytics_dashboard_v2.html:119
+#: survey/templates/editor/analytics_dashboard.html:85
+#: survey/templates/editor/analytics_dashboard_v2.html:116
 msgid "Loading table..."
-msgstr ""
+msgstr "Memuat tabel …"
 
-#: survey/templates/editor/analytics_dashboard.html:89
+#: survey/templates/editor/analytics_dashboard.html:88
 msgid "Expand Violations panel"
-msgstr ""
+msgstr "Buka panel pelanggaran"
 
-#: survey/templates/editor/analytics_dashboard.html:92
-#: survey/templates/editor/analytics_dashboard.html:99
+#: survey/templates/editor/analytics_dashboard.html:91
+#: survey/templates/editor/analytics_dashboard.html:98
 msgid "Violations"
-msgstr ""
+msgstr "Pelanggaran"
 
-#: survey/templates/editor/analytics_dashboard.html:100
+#: survey/templates/editor/analytics_dashboard.html:99
 msgid "Collapse"
-msgstr ""
+msgstr "Ciutkan"
 
-#: survey/templates/editor/analytics_dashboard.html:112
-#: survey/templates/editor/analytics_dashboard.html:130
+#: survey/templates/editor/analytics_dashboard.html:111
+#: survey/templates/editor/analytics_dashboard.html:129
 #: survey/templates/editor/partials/analytics_table.html:163
 msgid "0 selected"
-msgstr ""
+msgstr "0 dipilih"
+
+#: survey/templates/editor/analytics_dashboard.html:113
+#: survey/templates/editor/analytics_dashboard.html:131
+msgid "Hide"
+msgstr "Sembunyikan"
 
 #: survey/templates/editor/analytics_dashboard.html:114
 #: survey/templates/editor/analytics_dashboard.html:132
-msgid "Hide"
-msgstr ""
+msgid "Keep only"
+msgstr "Simpan hanya ini"
 
 #: survey/templates/editor/analytics_dashboard.html:115
 #: survey/templates/editor/analytics_dashboard.html:133
-msgid "Keep only"
-msgstr ""
-
-#: survey/templates/editor/analytics_dashboard.html:116
-#: survey/templates/editor/analytics_dashboard.html:134
 msgid "Invert"
-msgstr ""
+msgstr "Balikkan"
 
-#: survey/templates/editor/analytics_dashboard.html:122
-#: survey/templates/editor/analytics_dashboard_v2.html:106
+#: survey/templates/editor/analytics_dashboard.html:121
+#: survey/templates/editor/analytics_dashboard_v2.html:104
 msgid "No geo questions in this survey"
-msgstr ""
+msgstr "Survei ini tidak punya pertanyaan geografis"
 
-#: survey/templates/editor/analytics_dashboard.html:138
+#: survey/templates/editor/analytics_dashboard.html:137
 #: survey/templates/editor/partials/analytics_table.html:150
 msgid "Toggle fullscreen"
-msgstr ""
+msgstr "Alihkan layar penuh"
 
-#: survey/templates/editor/analytics_dashboard.html:143
+#: survey/templates/editor/analytics_dashboard.html:142
+#: survey/templates/editor/analytics_dashboard_v2.html:39
 #: survey/templates/editor/partials/_mobile_nav.html:23
 msgid "Overview"
-msgstr ""
+msgstr "Ringkasan"
 
-#: survey/templates/editor/analytics_dashboard.html:146
+#: survey/templates/editor/analytics_dashboard.html:145
+#: survey/templates/editor/analytics_dashboard_v2.html:129
 msgid "Questions & Responses"
-msgstr ""
+msgstr "Pertanyaan dan tanggapan"
+
+#: survey/templates/editor/analytics_dashboard.html:165
+msgid "Session Details"
+msgstr "Rincian sesi"
 
 #: survey/templates/editor/analytics_dashboard.html:166
-msgid "Session Details"
-msgstr ""
-
-#: survey/templates/editor/analytics_dashboard.html:167
-#: survey/templates/editor/analytics_dashboard_v2.html:163
+#: survey/templates/editor/analytics_dashboard_v2.html:160
 #: survey/templates/editor/editor_base.html:977
+#: survey/templates/editor/partials/_ai_feedback_strip.html:27
 #: survey/templates/editor/partials/_survey_primary_action.html:23
 #: survey/templates/editor/partials/generation_failed.html:13
-#: survey/templates/editor/partials/question_form_modal.html:443
+#: survey/templates/editor/partials/question_form_modal.html:439
 #: survey/templates/editor/survey_share.html:256
 #: survey/templates/landing.html:95
 msgid "Close"
-msgstr ""
+msgstr "Tutup"
 
-#: survey/templates/editor/analytics_dashboard.html:170
+#: survey/templates/editor/analytics_dashboard.html:169
+#: survey/templates/editor/analytics_dashboard_v2.html:165
+#: survey/templates/editor/partials/analytics_question_stats.html:243
+#: survey/templates/editor/survey_detail.html:301
+#: survey/templates/editor/survey_detail.html:308
+#: survey/templates/editor/survey_detail.html:315
 msgid "Loading..."
-msgstr ""
+msgstr "Memuat …"
 
-#: survey/templates/editor/analytics_dashboard.html:181
-#: survey/templates/editor/analytics_dashboard_v2.html:189
+#: survey/templates/editor/analytics_dashboard.html:180
+#: survey/templates/editor/analytics_dashboard_v2.html:186
 msgid "Validation Settings"
-msgstr ""
+msgstr "Pengaturan validasi"
 
-#: survey/templates/editor/analytics_dashboard.html:186
-#: survey/templates/editor/analytics_dashboard_v2.html:194
+#: survey/templates/editor/analytics_dashboard.html:185
+#: survey/templates/editor/analytics_dashboard_v2.html:191
 msgid "Fast completion threshold (seconds)"
-msgstr ""
+msgstr "Ambang pengisian cepat (detik)"
 
-#: survey/templates/editor/analytics_dashboard.html:188
-#: survey/templates/editor/analytics_dashboard_v2.html:196
+#: survey/templates/editor/analytics_dashboard.html:187
+#: survey/templates/editor/analytics_dashboard_v2.html:193
 msgid "Sessions completed faster than this are flagged"
-msgstr ""
+msgstr "Sesi yang selesai lebih cepat dari ini akan ditandai"
 
-#: survey/templates/editor/analytics_dashboard.html:191
-#: survey/templates/editor/analytics_dashboard_v2.html:199
+#: survey/templates/editor/analytics_dashboard.html:190
+#: survey/templates/editor/analytics_dashboard_v2.html:196
 msgid "Duplicate detection window (hours)"
-msgstr ""
+msgstr "Jendela deteksi duplikat (jam)"
 
-#: survey/templates/editor/analytics_dashboard.html:193
-#: survey/templates/editor/analytics_dashboard_v2.html:201
+#: survey/templates/editor/analytics_dashboard.html:192
+#: survey/templates/editor/analytics_dashboard_v2.html:198
 msgid "Sessions from same browser within this window are flagged"
-msgstr ""
+msgstr "Sesi dari peramban yang sama dalam jendela ini akan ditandai"
 
-#: survey/templates/editor/analytics_dashboard.html:198
-#: survey/templates/editor/analytics_dashboard_v2.html:206
+#: survey/templates/editor/analytics_dashboard.html:197
+#: survey/templates/editor/analytics_dashboard_v2.html:203
+#: survey/templates/editor/partials/question_form_modal.html:447
 #: survey/templates/editor/partials/thanks_panel.html:30
 #: survey/templates/editor/survey_detail.html:163
 #: survey/templates/org/org_settings.html:30
 msgid "Save"
-msgstr ""
+msgstr "Simpan"
 
-#: survey/templates/editor/analytics_dashboard_v2.html:33
-msgid "Draft (test)"
-msgstr ""
-
-#: survey/templates/editor/analytics_dashboard_v2.html:39
+#: survey/templates/editor/analytics_dashboard_v2.html:37
 msgid "Responses panes"
-msgstr ""
+msgstr "Panel tanggapan"
 
-#: survey/templates/editor/analytics_dashboard_v2.html:58
+#: survey/templates/editor/analytics_dashboard_v2.html:45
+#: survey/templates/editor/partials/_mobile_nav.html:25
+#: survey/templates/editor/partials/_survey_nav_tabs.html:32
+#: survey/templates/editor/survey_share.html:163
+#: survey/templates/editor/survey_share.html:240
+msgid "Responses"
+msgstr "Tanggapan"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:49
+#: survey/templates/editor/partials/_mobile_nav.html:30
+msgid "Charts"
+msgstr "Grafik"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:56
 msgid "Show two panes side by side"
-msgstr ""
+msgstr "Tampilkan dua panel berdampingan"
 
-#: survey/templates/editor/analytics_dashboard_v2.html:62
+#: survey/templates/editor/analytics_dashboard_v2.html:57
+msgid "Split view"
+msgstr "Tampilan terbagi"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:60
 msgid "Back to a single pane"
-msgstr ""
+msgstr "Kembali ke satu panel"
 
-#: survey/templates/editor/analytics_dashboard_v2.html:154
-msgid "Response details"
+#: survey/templates/editor/analytics_dashboard_v2.html:61
+msgid "Reset layout"
+msgstr "Setel ulang tata letak"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:76
+msgid "Download"
+msgstr "Unduh"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:105
+msgid ""
+"Add a point, line or polygon question in the Survey tab — responses will "
+"appear here on a live map."
 msgstr ""
+"Tambahkan pertanyaan titik, garis, atau area di tab Survei — tanggapan akan "
+"muncul di sini pada peta langsung."
+
+#: survey/templates/editor/analytics_dashboard_v2.html:107
+msgid "Add a map question"
+msgstr "Tambahkan pertanyaan peta"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:127
+msgid "Click a chart bar to filter — Map, Responses and Charts stay in sync."
+msgstr ""
+"Klik batang grafik untuk menyaring — Peta, Tanggapan, dan Grafik tetap "
+"selaras."
+
+#: survey/templates/editor/analytics_dashboard_v2.html:151
+msgid "Response details"
+msgstr "Rincian tanggapan"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:153
+msgid "Response"
+msgstr "Tanggapan"
+
+#: survey/templates/editor/analytics_dashboard_v2.html:155
+msgid "The list changed since this was opened"
+msgstr "Daftar berubah sejak ini dibuka"
 
 #: survey/templates/editor/analytics_dashboard_v2.html:156
-msgid "Response"
-msgstr ""
+msgid "list changed"
+msgstr "daftar berubah"
 
 #: survey/templates/editor/analytics_dashboard_v2.html:158
-msgid "The list changed since this was opened"
-msgstr ""
-
-#: survey/templates/editor/analytics_dashboard_v2.html:161
+#: survey/templates/editor/partials/analytics_text_answers.html:24
 msgid "Previous"
-msgstr ""
+msgstr "Sebelumnya"
 
-#: survey/templates/editor/analytics_dashboard_v2.html:180
+#: survey/templates/editor/analytics_dashboard_v2.html:177
 msgid "Done"
-msgstr ""
+msgstr "Oke"
+
+#: survey/templates/editor/editor_base.html:5
+#| msgid "Survey Closed"
+msgid "Survey Editor"
+msgstr "Editor survei"
 
 #: survey/templates/editor/editor_base.html:5
 msgid "– Mapsurvey"
-msgstr ""
+msgstr "– Mapsurvey"
 
 #: survey/templates/editor/editor_base.html:906
 msgid "Share…"
-msgstr ""
+msgstr "Bagikan …"
 
 #: survey/templates/editor/editor_base.html:907
 msgid "Open as respondent"
-msgstr ""
+msgstr "Buka sebagai responden"
 
 #: survey/templates/editor/editor_base.html:909
 #: survey/templates/editor/survey_detail.html:134
 #: survey/templates/editor/survey_detail.html:391
 #: survey/templates/editor/survey_detail.html:396
 msgid "Discard draft"
-msgstr ""
+msgstr "Buang draf"
 
 #: survey/templates/editor/editor_base.html:911
 #: survey/templates/editor/survey_detail.html:136
 msgid "Discard survey"
-msgstr ""
+msgstr "Buang survei"
 
 #: survey/templates/editor/editor_base.html:917
 msgid "Organization settings"
-msgstr ""
+msgstr "Pengaturan organisasi"
+
+#: survey/templates/editor/editor_base.html:923
+#: survey/templates/editor/editor_base.html:948
+msgid "Help & support"
+msgstr "Bantuan dan dukungan"
 
 #: survey/templates/editor/editor_base.html:976
 msgid "Confirm"
-msgstr ""
+msgstr "Konfirmasi"
 
 #: survey/templates/editor/partials/_ai_feedback_strip.html:20
 msgid "How is the AI draft?"
-msgstr ""
+msgstr "Bagaimana draf dari AI ini?"
 
 #: survey/templates/editor/partials/_ai_feedback_strip.html:22
 msgid "Good starting point"
-msgstr ""
+msgstr "Titik awal yang bagus"
 
 #: survey/templates/editor/partials/_ai_feedback_strip.html:24
 msgid "Not useful"
-msgstr ""
+msgstr "Kurang berguna"
 
 #: survey/templates/editor/partials/_ai_feedback_strip.html:26
 msgid "Anything to add? (optional)"
-msgstr ""
+msgstr "Ada yang ingin ditambahkan? (opsional)"
 
-#: survey/templates/editor/partials/_ai_feedback_strip.html:27
-msgid "Dismiss"
-msgstr ""
-
-#: survey/templates/editor/partials/_language_switcher.html:18
-#: survey/templates/editor/partials/analytics_performance.html:164
+#: survey/templates/editor/partials/_language_switcher.html:25
+#: survey/templates/editor/partials/analytics_performance.html:163
 msgid "Language"
-msgstr ""
+msgstr "Bahasa"
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:13
 msgid "Publish Survey"
-msgstr ""
+msgstr "Terbitkan survei"
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:17
 msgid ""
 "You are about to publish this survey and make it available to respondents."
-msgstr ""
+msgstr "Anda akan menerbitkan survei ini dan membukanya untuk responden."
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:20
 msgid "Delete all test responses (recommended)"
-msgstr ""
+msgstr "Hapus semua tanggapan uji (disarankan)"
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:35
 #: survey/templates/editor/survey_detail.html:71
 msgid "Publish Version"
-msgstr ""
+msgstr "Terbitkan versi"
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:37
 #, python-format
 msgid "Publish this draft as v%(version)s?"
-msgstr ""
+msgstr "Terbitkan draf ini sebagai v%(version)s?"
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:38
 msgid "Active respondents will continue on the current version."
-msgstr ""
+msgstr "Responden yang sedang mengisi akan tetap pada versi saat ini."
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:43
 msgid ""
 "Nothing disappears: all existing responses stay visible in Responses and on "
 "the public results page under <strong>All versions</strong>."
 msgstr ""
+"Tidak ada yang hilang: seluruh tanggapan yang ada tetap terlihat di "
+"Tanggapan dan di halaman hasil publik pada bagian <strong>Semua "
+"versi</strong>."
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:53
 msgid "Compatibility Issues Found"
-msgstr ""
+msgstr "Ditemukan masalah kompatibilitas"
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:54
 msgid "The following breaking changes were detected:"
-msgstr ""
+msgstr "Terdeteksi perubahan yang merusak kompatibilitas berikut:"
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:55
 msgid ""
@@ -2016,170 +2237,192 @@ msgid ""
 "versions, so nothing is lost — the old and new answers just report "
 "separately."
 msgstr ""
+"Penerbitan paksa tetap menyimpan semua jawaban lama: pertanyaan yang diubah "
+"atau dihapus pindah ke grup <strong>Pertanyaan terarsip</strong> di "
+"Tanggapan → Semua versi, jadi tidak ada yang hilang — jawaban lama dan baru "
+"hanya dilaporkan terpisah."
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:58
 msgid "Force Publish"
-msgstr ""
+msgstr "Terbitkan paksa"
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:64
 msgid "Discard Draft"
-msgstr ""
+msgstr "Buang draf"
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:65
 msgid "Discard this draft? All changes will be lost."
-msgstr ""
+msgstr "Buang draf ini? Semua perubahan akan hilang."
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:69
 #: survey/templates/editor/survey_detail.html:74
 #: survey/templates/editor/survey_detail.html:79
 msgid "Discard"
-msgstr ""
+msgstr "Buang"
 
 #: survey/templates/editor/partials/_mobile_nav.html:15
 msgid "Editor panes"
-msgstr ""
-
-#: survey/templates/editor/partials/_mobile_nav.html:25
-#: survey/templates/editor/partials/_survey_nav_tabs.html:32
-msgid "Responses"
-msgstr ""
+msgstr "Panel editor"
 
 #: survey/templates/editor/partials/_mobile_nav.html:26
 #: survey/templates/editor/partials/_mobile_nav.html:31
 msgid "Perf"
-msgstr ""
+msgstr "Kin."
 
 #: survey/templates/editor/partials/_mobile_nav.html:28
 msgid "Table"
-msgstr ""
-
-#: survey/templates/editor/partials/_mobile_nav.html:30
-msgid "Charts"
-msgstr ""
+msgstr "Tabel"
 
 #: survey/templates/editor/partials/_mobile_nav.html:34
 #: survey/templates/editor/partials/_mobile_nav.html:40
 msgid "Structure"
-msgstr ""
+msgstr "Struktur"
 
 #: survey/templates/editor/partials/_mobile_nav.html:35
 #: survey/templates/editor/partials/_mobile_nav.html:41
 #: survey/templates/editor/partials/analytics_session_detail.html:78
 #: survey/templates/editor/partials/survey_settings_panel.html:138
 msgid "Edit"
-msgstr ""
+msgstr "Sunting"
+
+#: survey/templates/editor/partials/_publishing_widget.html:20
+#, python-format
+msgid "Publishing this draft creates v%(next)s"
+msgstr "Menerbitkan draf ini akan membuat v%(next)s"
+
+#: survey/templates/editor/partials/_publishing_widget.html:24
+#: survey/templates/editor/partials/_publishing_widget.html:60
+#: survey/templates/editor/partials/_publishing_widget.html:63
+#: survey/templates/editor/partials/_survey_primary_action.html:21
+#: survey/templates/editor/survey_detail.html:63
+msgid "Open"
+msgstr "Terbuka"
 
 #: survey/templates/editor/partials/_publishing_widget.html:28
 msgid "Collection"
-msgstr ""
+msgstr "Pengumpulan"
 
 #: survey/templates/editor/partials/_publishing_widget.html:30
 msgid "Move to Testing"
-msgstr ""
+msgstr "Pindahkan ke uji coba"
 
 #: survey/templates/editor/partials/_publishing_widget.html:31
 #: survey/templates/editor/partials/_publishing_widget.html:33
 #: survey/templates/editor/partials/_survey_primary_action.html:18
 #: survey/templates/editor/survey_share.html:96
 msgid "Publish — open for responses"
-msgstr ""
+msgstr "Terbitkan — buka untuk tanggapan"
 
 #: survey/templates/editor/partials/_publishing_widget.html:34
 #: survey/templates/editor/partials/_publishing_widget.html:39
 #: survey/templates/editor/partials/_publishing_widget.html:45
 msgid "Back to Draft"
-msgstr ""
+msgstr "Kembali ke draf"
 
 #: survey/templates/editor/partials/_publishing_widget.html:36
 #: survey/templates/editor/partials/_survey_primary_action.html:21
 msgid "Accepting responses"
-msgstr ""
+msgstr "Menerima tanggapan"
 
 #: survey/templates/editor/partials/_publishing_widget.html:36
 msgid "respondents can submit the survey"
-msgstr ""
+msgstr "responden dapat mengirimkan survei"
 
 #: survey/templates/editor/partials/_publishing_widget.html:37
 msgid "Close survey"
-msgstr ""
+msgstr "Tutup survei"
 
 #: survey/templates/editor/partials/_publishing_widget.html:39
 #: survey/templates/editor/partials/_publishing_widget.html:45
 msgid "nothing collected yet, so publishing can be undone"
-msgstr ""
+msgstr "belum ada yang terkumpul, jadi penerbitan masih bisa dibatalkan"
 
 #: survey/templates/editor/partials/_publishing_widget.html:42
 msgid "Closed to responses"
-msgstr ""
+msgstr "Tertutup untuk tanggapan"
 
 #: survey/templates/editor/partials/_publishing_widget.html:42
 msgid "reopen to accept submissions again"
-msgstr ""
+msgstr "buka lagi untuk kembali menerima kiriman"
 
 #: survey/templates/editor/partials/_publishing_widget.html:43
 msgid "Reopen survey"
-msgstr ""
+msgstr "Buka kembali survei"
 
 #: survey/templates/editor/partials/_publishing_widget.html:47
 msgid "Archive"
-msgstr ""
+msgstr "Arsipkan"
 
 #: survey/templates/editor/partials/_publishing_widget.html:51
 msgid "Discovery"
-msgstr ""
+msgstr "Penemuan"
 
 #: survey/templates/editor/partials/_publishing_widget.html:52
 msgid "Listed in public gallery"
-msgstr ""
+msgstr "Terdaftar di galeri publik"
 
 #: survey/templates/editor/partials/_publishing_widget.html:52
 msgid "shown on the landing page"
-msgstr ""
+msgstr "ditampilkan di halaman utama"
 
 #: survey/templates/editor/partials/_publishing_widget.html:56
 #: survey/templates/editor/partials/_survey_nav_tabs.html:54
 #: survey/templates/editor/partials/_survey_nav_tabs.html:73
 #: survey/templates/editor/survey_share.html:136
 msgid "Results page"
-msgstr ""
+msgstr "Halaman hasil"
 
 #: survey/templates/editor/partials/_publishing_widget.html:59
 msgid "manage in the Public results space"
-msgstr ""
-
-#: survey/templates/editor/partials/_publishing_widget.html:60
-#: survey/templates/editor/partials/_publishing_widget.html:63
-#: survey/templates/editor/partials/_survey_primary_action.html:21
-msgid "Open"
-msgstr ""
+msgstr "dikelola di ruang Hasil publik"
 
 #: survey/templates/editor/partials/_publishing_widget.html:62
 msgid "Draft — not live yet"
-msgstr ""
+msgstr "Draf — belum terbit"
+
+#: survey/templates/editor/partials/_publishing_widget.html:62
+#, python-format
+msgid "/r/%(slug)s/ is prepared but unpublished"
+msgstr "/r/%(slug)s/ sudah disiapkan tetapi belum diterbitkan"
 
 #: survey/templates/editor/partials/_publishing_widget.html:65
 msgid "Set up a results page…"
-msgstr ""
+msgstr "Siapkan halaman hasil …"
 
 #: survey/templates/editor/partials/_publishing_widget.html:70
 msgid "Version"
-msgstr ""
+msgstr "Versi"
 
 #: survey/templates/editor/partials/_publishing_widget.html:75
+#: survey/templates/editor/partials/section_detail_form.html:12
+#: survey/templates/editor/partials/section_detail_form.html:132
 msgid "Create a draft to edit"
-msgstr ""
+msgstr "Buat draf untuk menyunting"
 
 #: survey/templates/editor/partials/_publishing_widget.html:82
 msgid "responses stay visible under All versions"
+msgstr "tanggapan tetap terlihat di bagian Semua versi"
+
+#: survey/templates/editor/partials/_publishing_widget.html:84
+#, python-format
+msgid ""
+"Restore v%(old)s as a new draft? Publishing it will create v%(next)s with "
+"the old questionnaire — nothing is deleted."
 msgstr ""
+"Pulihkan v%(old)s sebagai draf baru? Menerbitkannya akan membuat v%(next)s "
+"dengan kuesioner lama — tidak ada yang dihapus."
+
+#: survey/templates/editor/partials/_publishing_widget.html:87
+msgid "Create a draft with this version’s questionnaire"
+msgstr "Buat draf dengan kuesioner versi ini"
 
 #: survey/templates/editor/partials/_publishing_widget.html:87
 msgid "Restore…"
-msgstr ""
+msgstr "Pulihkan …"
 
 #: survey/templates/editor/partials/_survey_nav_tabs.html:27
 msgid "Build the survey — sections, questions & settings"
-msgstr ""
+msgstr "Bangun survei — bagian, pertanyaan, dan pengaturan"
 
 #: survey/templates/editor/partials/_survey_nav_tabs.html:28
 #: survey/templates/editor/partials/_survey_nav_tabs.html:50
@@ -2188,678 +2431,853 @@ msgstr ""
 #: survey/templates/editor/survey_detail.html:99
 #: survey/templates/editor/survey_share.html:101
 msgid "Survey"
-msgstr ""
+msgstr "Survei"
 
 #: survey/templates/editor/partials/_survey_nav_tabs.html:31
 msgid "Responses & analysis"
-msgstr ""
+msgstr "Tanggapan dan analisis"
 
 #: survey/templates/editor/partials/_survey_nav_tabs.html:35
 msgid "Public results page — a shareable page of aggregated responses"
 msgstr ""
+"Halaman hasil publik — halaman berisi ringkasan tanggapan yang bisa "
+"dibagikan"
 
 #: survey/templates/editor/partials/_survey_nav_tabs.html:36
+#: survey/templates/editor/public_results.html:5
 #: survey/templates/editor/public_results.html:46
 msgid "Public results"
-msgstr ""
+msgstr "Hasil publik"
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html:51
+msgid "Share link & tracking…"
+msgstr "Tautan berbagi dan pelacakan …"
 
 #: survey/templates/editor/partials/_survey_nav_tabs.html:55
 msgid "Copy results link"
-msgstr ""
+msgstr "Salin tautan hasil"
 
 #: survey/templates/editor/partials/_survey_nav_tabs.html:55
 #: survey/templates/editor/public_results.html:233
 msgid "live"
-msgstr ""
+msgstr "terbit"
 
 #: survey/templates/editor/partials/_survey_nav_tabs.html:66
 msgid "Survey — as respondent"
-msgstr ""
+msgstr "Survei — dari sisi responden"
 
 #: survey/templates/editor/partials/_survey_nav_tabs.html:73
 #: survey/templates/editor/public_results.html:222
 msgid "private"
-msgstr ""
+msgstr "pribadi"
 
 #: survey/templates/editor/partials/_survey_nav_tabs.html:82
 #: survey/templates/editor/partials/survey_settings_panel.html:8
 #: survey/templates/editor/survey_detail.html:238
+#: survey/templates/editor/survey_settings_modal.html:3
 msgid "Survey settings"
-msgstr ""
+msgstr "Pengaturan survei"
 
 #: survey/templates/editor/partials/_survey_primary_action.html:13
 #: survey/templates/editor/partials/_survey_primary_action.html:17
 msgid "Open the survey for responses"
-msgstr ""
+msgstr "Buka survei untuk tanggapan"
 
 #: survey/templates/editor/partials/_survey_primary_action.html:22
 msgid "Stop accepting responses"
-msgstr ""
+msgstr "Berhenti menerima tanggapan"
 
 #: survey/templates/editor/partials/_survey_primary_action.html:26
 msgid "Not accepting responses"
-msgstr ""
+msgstr "Tidak menerima tanggapan"
 
 #: survey/templates/editor/partials/_survey_primary_action.html:27
 msgid "Accept responses again"
-msgstr ""
+msgstr "Terima tanggapan lagi"
 
 #: survey/templates/editor/partials/_survey_primary_action.html:28
 msgid "Reopen"
-msgstr ""
+msgstr "Buka kembali"
 
 #: survey/templates/editor/partials/_visibility_block.html:15
 msgid "Always shown"
-msgstr ""
+msgstr "Selalu tampil"
 
 #: survey/templates/editor/partials/_visibility_block.html:20
 msgid "Shown conditionally"
-msgstr ""
+msgstr "Tampil bersyarat"
 
 #: survey/templates/editor/partials/_visibility_block.html:23
 msgid "No earlier choice question to depend on yet."
-msgstr ""
+msgstr "Belum ada pertanyaan pilihan sebelumnya yang bisa dijadikan syarat."
 
 #: survey/templates/editor/partials/_visibility_block.html:27
 msgid "When the answer to"
-msgstr ""
+msgstr "Ketika jawaban pada"
 
 #: survey/templates/editor/partials/_visibility_block.html:38
 msgid "Only choice questions that come before this one can be selected."
-msgstr ""
+msgstr "Hanya pertanyaan pilihan sebelum pertanyaan ini yang dapat dipilih."
 
 #: survey/templates/editor/partials/_visibility_block.html:41
 msgid "is any of"
-msgstr ""
+msgstr "termasuk salah satu dari"
 
 #: survey/templates/editor/partials/_visibility_block.html:60
 msgid "Create a draft to edit visibility."
-msgstr ""
+msgstr "Buat draf untuk menyunting visibilitas."
 
 #: survey/templates/editor/partials/analytics_daily_chart.html:4
 msgid "Response Timeline"
-msgstr ""
+msgstr "Lini masa tanggapan"
 
-#: survey/templates/editor/partials/analytics_geo_map.html:4
-msgid "Response Map"
-msgstr ""
+#: survey/templates/editor/partials/analytics_daily_chart.html:10
+msgid "Hour"
+msgstr "Jam"
 
+#: survey/templates/editor/partials/analytics_daily_chart.html:11
+msgid "Day"
+msgstr "Hari"
+
+#: survey/templates/editor/partials/analytics_daily_chart.html:12
+msgid "Week"
+msgstr "Minggu"
+
+#: survey/templates/editor/partials/analytics_daily_chart.html:13
+msgid "Month"
+msgstr "Bulan"
+
+#: survey/templates/editor/partials/analytics_daily_chart.html:46
 #: survey/templates/editor/partials/analytics_overview.html:5
 msgid "Total Sessions"
-msgstr ""
+msgstr "Total sesi"
 
+#: survey/templates/editor/partials/analytics_daily_chart.html:54
 #: survey/templates/editor/partials/analytics_overview.html:9
 #: survey/templates/editor/partials/analytics_performance.html:29
-#: survey/templates/editor/partials/analytics_performance.html:228
-#: survey/templates/editor/partials/analytics_performance.html:312
+#: survey/templates/editor/partials/analytics_performance.html:227
+#: survey/templates/editor/partials/analytics_performance.html:311
 msgid "Completed"
-msgstr ""
+msgstr "Selesai"
+
+#: survey/templates/editor/partials/analytics_geo_map.html:4
+#: survey/templates/editor/partials/analytics_overview_pane.html:46
+msgid "Response Map"
+msgstr "Peta tanggapan"
+
+#: survey/templates/editor/partials/analytics_geo_map.html:4
+#: survey/templates/editor/partials/section_detail_form.html:56
+#: survey/templates/editor/partials/survey_settings_panel.html:137
+msgid "features"
+msgstr "objek"
 
 #: survey/templates/editor/partials/analytics_overview.html:13
 #: survey/templates/editor/partials/analytics_performance.html:33
 msgid "Completion Rate"
-msgstr ""
+msgstr "Rasio penyelesaian"
 
 #: survey/templates/editor/partials/analytics_overview.html:18
 msgid "Flagged"
-msgstr ""
+msgstr "Ditandai"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:11
 msgid "No responses yet"
-msgstr ""
+msgstr "Belum ada tanggapan"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:12
 msgid ""
 "Your survey is live. Share the link and responses will appear here in real "
 "time."
 msgstr ""
+"Survei Anda sudah terbit. Bagikan tautannya dan tanggapan akan muncul di "
+"sini secara langsung."
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:14
+msgid "Share survey"
+msgstr "Bagikan survei"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:18
+msgid "Preview as respondent"
+msgstr "Lihat sebagai responden"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:24
 #: survey/templates/public_results.html:83
 msgid "responses"
-msgstr ""
+msgstr "tanggapan"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:25
+msgid "today"
+msgstr "hari ini"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:27
 msgid "completion"
-msgstr ""
+msgstr "penyelesaian"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:29
 msgid "median time"
-msgstr ""
+msgstr "median waktu"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:33
 msgid "map features"
-msgstr ""
+msgstr "objek peta"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:38
 msgid "flagged"
-msgstr ""
+msgstr "ditandai"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:47
 msgid "Open Map ›"
-msgstr ""
+msgstr "Buka peta ›"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:54
 msgid "Responses this week"
-msgstr ""
+msgstr "Tanggapan minggu ini"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:61
 #: survey/templates/editor/partials/analytics_overview_pane.html:77
 msgid "Charts ›"
-msgstr ""
+msgstr "Grafik ›"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:91
 msgid "Needs review"
-msgstr ""
+msgstr "Perlu ditinjau"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:105
+msgid "Latest responses"
+msgstr "Tanggapan terbaru"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:106
 msgid "All ›"
-msgstr ""
+msgstr "Semua ›"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:113
+msgid "geo"
+msgstr "geo"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:113
+msgid "no answers"
+msgstr "tanpa jawaban"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:118
 #: survey/templates/editor/partials/analytics_table.html:419
 msgid "on hold"
-msgstr ""
+msgstr "ditangguhkan"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:120
 #: survey/templates/editor/partials/analytics_table.html:421
 msgid "rejected"
-msgstr ""
+msgstr "ditolak"
+
+#: survey/templates/editor/partials/analytics_overview_pane.html:122
+msgid "ok"
+msgstr "ok"
 
 #: survey/templates/editor/partials/analytics_performance.html:4
 msgid "No event data yet"
-msgstr ""
+msgstr "Belum ada data peristiwa"
 
 #: survey/templates/editor/partials/analytics_performance.html:5
 msgid ""
 "Performance events are recorded once respondents start filling out the "
 "survey."
-msgstr ""
+msgstr "Peristiwa kinerja mulai direkam begitu responden mengisi survei."
 
 #: survey/templates/editor/partials/analytics_performance.html:6
 msgid ""
 "Events will appear here after the first respondent visits a published "
 "survey."
 msgstr ""
+"Peristiwa akan muncul di sini setelah responden pertama mengunjungi survei "
+"yang sudah terbit."
 
 #: survey/templates/editor/partials/analytics_performance.html:25
 msgid "Sessions started <span class=\"perf-tracked-note\">(tracked visits)</span>"
 msgstr ""
+"Sesi yang dimulai <span class=\"perf-tracked-note\">(kunjungan "
+"terlacak)</span>"
 
 #: survey/templates/editor/partials/analytics_performance.html:25
 msgid "Sessions Started"
-msgstr ""
+msgstr "Sesi yang dimulai"
 
 #: survey/templates/editor/partials/analytics_performance.html:29
 msgid "Completed <span class=\"perf-tracked-note\">(tracked)</span>"
-msgstr ""
+msgstr "Selesai <span class=\"perf-tracked-note\">(terlacak)</span>"
 
 #: survey/templates/editor/partials/analytics_performance.html:33
 msgid "Completion <span class=\"perf-tracked-note\">(of tracked)</span>"
 msgstr ""
+"Penyelesaian <span class=\"perf-tracked-note\">(dari yang terlacak)</span>"
 
 #: survey/templates/editor/partials/analytics_performance.html:39
 msgid "Median Page Load"
-msgstr ""
+msgstr "Median waktu muat halaman"
 
 #: survey/templates/editor/partials/analytics_performance.html:46
 msgid "Section Funnel"
-msgstr ""
+msgstr "Funnel per bagian"
 
 #: survey/templates/editor/partials/analytics_performance.html:47
 msgid ""
 "Views vs. submissions per section. Drop rate shows the percentage of "
 "respondents who viewed but did not submit."
 msgstr ""
+"Tampilan dibanding kiriman per bagian. Rasio pengabaian menunjukkan "
+"persentase responden yang melihat bagian itu tetapi tidak mengirimkannya."
 
-#: survey/templates/editor/partials/analytics_performance.html:69
+#: survey/templates/editor/partials/analytics_performance.html:57
+#, python-format
+msgid ""
+"Sample too small for drop rates — only %(starts)s tracked session so far. "
+"Rates appear from 20."
+msgid_plural ""
+"Sample too small for drop rates — only %(starts)s tracked sessions so far. "
+"Rates appear from 20."
+msgstr[0] ""
+"Sampel terlalu kecil untuk menghitung rasio pengabaian — sejauh ini baru "
+"%(starts)s sesi terlacak. Rasio muncul mulai dari 20."
+
+#: survey/templates/editor/partials/analytics_performance.html:68
 msgid "submits"
-msgstr ""
+msgstr "kiriman"
+
+#: survey/templates/editor/partials/analytics_performance.html:80
+msgid "Submitted"
+msgstr "Terkirim"
 
 #: survey/templates/editor/partials/analytics_performance.html:81
-msgid "Submitted"
-msgstr ""
-
-#: survey/templates/editor/partials/analytics_performance.html:82
 msgid "Dropped"
-msgstr ""
+msgstr "Diabaikan"
 
-#: survey/templates/editor/partials/analytics_performance.html:123
+#: survey/templates/editor/partials/analytics_performance.html:122
+#: survey/templates/editor/survey_share.html:163
+#: survey/templates/editor/survey_share.html:240
 msgid "Traffic Sources"
-msgstr ""
+msgstr "Sumber trafik"
 
-#: survey/templates/editor/partials/analytics_performance.html:127
-#: survey/templates/editor/partials/analytics_performance.html:226
-#: survey/templates/editor/partials/analytics_performance.html:308
+#: survey/templates/editor/partials/analytics_performance.html:126
+#: survey/templates/editor/partials/analytics_performance.html:225
+#: survey/templates/editor/partials/analytics_performance.html:307
 #: survey/templates/editor/survey_share.html:197
 msgid "Source"
-msgstr ""
+msgstr "Sumber"
 
-#: survey/templates/editor/partials/analytics_performance.html:128
-#: survey/templates/editor/partials/analytics_performance.html:165
+#: survey/templates/editor/partials/analytics_performance.html:127
+#: survey/templates/editor/partials/analytics_performance.html:164
 msgid "Sessions"
-msgstr ""
+msgstr "Sesi"
 
-#: survey/templates/editor/partials/analytics_performance.html:136
+#: survey/templates/editor/partials/analytics_performance.html:135
 msgid "Direct / Unknown"
-msgstr ""
+msgstr "Langsung / tidak diketahui"
 
-#: survey/templates/editor/partials/analytics_performance.html:160
+#: survey/templates/editor/partials/analytics_performance.html:137
+msgid "Google"
+msgstr "Google"
+
+#: survey/templates/editor/partials/analytics_performance.html:139
+msgid "Bing"
+msgstr "Bing"
+
+#: survey/templates/editor/partials/analytics_performance.html:141
+msgid "Social"
+msgstr "Media sosial"
+
+#: survey/templates/editor/partials/analytics_performance.html:145
+msgid "Other"
+msgstr "Lainnya"
+
+#: survey/templates/editor/partials/analytics_performance.html:159
 #: survey/templates/editor/partials/survey_settings_panel.html:43
 #: survey/templates/metroquest_alternative.html:100
 msgid "Languages"
-msgstr ""
+msgstr "Bahasa"
 
-#: survey/templates/editor/partials/analytics_performance.html:183
+#: survey/templates/editor/partials/analytics_performance.html:182
 msgid "Devices, OS & Browsers"
-msgstr ""
+msgstr "Perangkat, sistem operasi, dan peramban"
 
-#: survey/templates/editor/partials/analytics_performance.html:187
+#: survey/templates/editor/partials/analytics_performance.html:186
 msgid "Platform"
-msgstr ""
+msgstr "Platform"
 
-#: survey/templates/editor/partials/analytics_performance.html:207
+#: survey/templates/editor/partials/analytics_performance.html:206
 msgid "Browser"
-msgstr ""
+msgstr "Peramban"
 
-#: survey/templates/editor/partials/analytics_performance.html:222
+#: survey/templates/editor/partials/analytics_performance.html:221
 msgid "Completion Rate by Source"
-msgstr ""
+msgstr "Rasio penyelesaian menurut sumber"
 
-#: survey/templates/editor/partials/analytics_performance.html:227
-#: survey/templates/editor/partials/analytics_performance.html:311
+#: survey/templates/editor/partials/analytics_performance.html:226
+#: survey/templates/editor/partials/analytics_performance.html:310
 msgid "Started"
-msgstr ""
+msgstr "Dimulai"
 
-#: survey/templates/editor/partials/analytics_performance.html:229
-#: survey/templates/editor/partials/analytics_performance.html:313
+#: survey/templates/editor/partials/analytics_performance.html:228
+#: survey/templates/editor/partials/analytics_performance.html:312
 msgid "Rate"
-msgstr ""
+msgstr "Rasio"
 
-#: survey/templates/editor/partials/analytics_performance.html:249
+#: survey/templates/editor/partials/analytics_performance.html:248
 msgid "Time on Section"
-msgstr ""
+msgstr "Waktu per bagian"
+
+#: survey/templates/editor/partials/analytics_performance.html:252
+#: survey/templates/editor/partials/analytics_performance.html:279
+#: survey/templates/editor/partials/section_detail_form.html:5
+msgid "Section"
+msgstr "Bagian"
 
 #: survey/templates/editor/partials/analytics_performance.html:253
 #: survey/templates/editor/partials/analytics_performance.html:280
-msgid "Section"
-msgstr ""
+msgid "Avg"
+msgstr "Rata-rata"
 
 #: survey/templates/editor/partials/analytics_performance.html:254
 #: survey/templates/editor/partials/analytics_performance.html:281
-msgid "Avg"
-msgstr ""
+#: survey/templates/editor/partials/analytics_question_stats.html:97
+msgid "Median"
+msgstr "Median"
 
 #: survey/templates/editor/partials/analytics_performance.html:255
 #: survey/templates/editor/partials/analytics_performance.html:282
-#: survey/templates/editor/partials/analytics_question_stats.html:97
-msgid "Median"
-msgstr ""
-
-#: survey/templates/editor/partials/analytics_performance.html:256
-#: survey/templates/editor/partials/analytics_performance.html:283
 msgid "Samples"
-msgstr ""
+msgstr "Sampel"
 
-#: survey/templates/editor/partials/analytics_performance.html:276
+#: survey/templates/editor/partials/analytics_performance.html:275
 msgid "Page Load Time by Section"
-msgstr ""
+msgstr "Waktu muat halaman per bagian"
+
+#: survey/templates/editor/partials/analytics_performance.html:302
+msgid "Campaign Breakdown"
+msgstr "Rincian kampanye"
 
 #: survey/templates/editor/partials/analytics_performance.html:303
-msgid "Campaign Breakdown"
-msgstr ""
-
-#: survey/templates/editor/partials/analytics_performance.html:304
 #, python-format
 msgid ""
 "Sessions from tracked UTM links. Create links on the <a "
 "href=\"%(share_url)s\">Share</a> page."
 msgstr ""
+"Sesi dari tautan UTM terlacak. Buat tautan di halaman <a "
+"href=\"%(share_url)s\">Bagikan</a>."
 
-#: survey/templates/editor/partials/analytics_performance.html:309
+#: survey/templates/editor/partials/analytics_performance.html:308
 #: survey/templates/editor/survey_share.html:198
 msgid "Medium"
-msgstr ""
+msgstr "Medium"
 
-#: survey/templates/editor/partials/analytics_performance.html:310
+#: survey/templates/editor/partials/analytics_performance.html:309
 #: survey/templates/editor/survey_share.html:199
 msgid "Campaign"
-msgstr ""
+msgstr "Kampanye"
 
 #: survey/templates/editor/partials/analytics_question_stats.html:4
 msgid "Question Statistics"
-msgstr ""
+msgstr "Statistik pertanyaan"
 
 #: survey/templates/editor/partials/analytics_question_stats.html:11
 msgid "This question was removed in a newer version — historical answers only"
 msgstr ""
+"Pertanyaan ini dihapus pada versi yang lebih baru — hanya jawaban lama"
+
+#: survey/templates/editor/partials/analytics_question_stats.html:11
+msgid "archived"
+msgstr "terarsip"
+
+#: survey/templates/editor/partials/analytics_question_stats.html:22
+#: survey/templates/editor/partials/analytics_question_stats.html:250
+#: survey/templates/editor/partials/analytics_text_answers.html:5
+#, python-format
+msgid "%(n)s answer"
+msgid_plural "%(n)s answers"
+msgstr[0] "%(n)s jawaban"
 
 #: survey/templates/editor/partials/analytics_question_stats.html:89
 msgid "Answers"
-msgstr ""
+msgstr "Jawaban satuan"
 
 #: survey/templates/editor/partials/analytics_question_stats.html:93
 msgid "Average"
-msgstr ""
+msgstr "Rata-rata hitung"
 
 #: survey/templates/editor/partials/analytics_question_stats.html:101
 #: survey/templates/editor/partials/question_form_modal.html:338
 msgid "Min"
-msgstr ""
+msgstr "Min"
 
 #: survey/templates/editor/partials/analytics_question_stats.html:105
 #: survey/templates/editor/partials/question_form_modal.html:343
 msgid "Max"
-msgstr ""
+msgstr "Maks"
 
 #: survey/templates/editor/partials/analytics_question_stats.html:111
 msgid "Step:"
-msgstr ""
+msgstr "Langkah:"
+
+#: survey/templates/editor/partials/analytics_question_stats.html:238
+#, python-format
+msgid "%(n)s text answer"
+msgid_plural "%(n)s text answers"
+msgstr[0] "%(n)s jawaban teks"
+
+#: survey/templates/editor/partials/analytics_question_stats.html:247
+#, python-format
+msgid "%(n)s geo feature — see map above"
+msgid_plural "%(n)s geo features — see map above"
+msgstr[0] "%(n)s objek peta — lihat peta di atas"
 
 #: survey/templates/editor/partials/analytics_question_stats.html:254
 msgid "No questions in this survey."
-msgstr ""
+msgstr "Survei ini tidak punya pertanyaan."
+
+#: survey/templates/editor/partials/analytics_session_detail.html:9
+msgid "Session"
+msgstr "Sesi"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:11
+#: survey/templates/editor/partials/analytics_session_detail.html:42
 #: survey/templates/editor/partials/analytics_table.html:170
 #: survey/templates/editor/partials/analytics_table.html:346
 #: survey/templates/editor/partials/analytics_table.html:351
 msgid "Approved"
-msgstr ""
+msgstr "Disetujui"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:12
 #: survey/templates/editor/partials/analytics_table.html:171
 #: survey/templates/editor/partials/analytics_table.html:347
 #: survey/templates/editor/partials/analytics_table.html:352
 msgid "Not approved"
-msgstr ""
+msgstr "Tidak disetujui"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:13
+#: survey/templates/editor/partials/analytics_session_detail.html:46
 #: survey/templates/editor/partials/analytics_table.html:172
 #: survey/templates/editor/partials/analytics_table.html:348
 #: survey/templates/editor/partials/analytics_table.html:353
 msgid "On hold"
-msgstr ""
+msgstr "Ditangguhkan"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:15
 msgid "Trashed"
-msgstr ""
+msgstr "Di tempat sampah"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:26
 msgid "Trash"
-msgstr ""
+msgstr "Tempat sampah"
+
+#: survey/templates/editor/partials/analytics_session_detail.html:50
+msgid "Rejected"
+msgstr "Ditolak"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:59
 #: survey/templates/editor/partials/pr_add_block_modal.html:21
 msgid "Question"
-msgstr ""
+msgstr "Pertanyaan"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:60
 msgid "Answer"
-msgstr ""
+msgstr "Jawaban satuan"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:97
 msgid "No answers in this session."
-msgstr ""
+msgstr "Tidak ada jawaban dalam sesi ini."
 
 #: survey/templates/editor/partials/analytics_session_detail.html:103
 msgid "Tags"
-msgstr ""
+msgstr "Tag"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:109
 msgid "Add tag..."
-msgstr ""
+msgstr "Tambahkan tag …"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:114
 msgid "Notes"
-msgstr ""
+msgstr "Catatan"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:116
 msgid "Add notes..."
-msgstr ""
+msgstr "Tambahkan catatan …"
 
 #: survey/templates/editor/partials/analytics_table.html:68
 msgid "Search all columns"
-msgstr ""
+msgstr "Cari di semua kolom"
 
 #: survey/templates/editor/partials/analytics_table.html:72
 #: survey/templates/editor/partials/analytics_table.html:105
 msgid "Show/hide columns"
-msgstr ""
+msgstr "Tampilkan atau sembunyikan kolom"
 
 #: survey/templates/editor/partials/analytics_table.html:76
 #: survey/templates/editor/partials/analytics_table.html:146
 msgid "Validation settings"
-msgstr ""
+msgstr "Pengaturan validasi"
 
 #: survey/templates/editor/partials/analytics_table.html:93
 msgid "Search responses"
-msgstr ""
+msgstr "Cari di tanggapan"
 
 #: survey/templates/editor/partials/analytics_table.html:111
 msgid "Show/hide trash"
-msgstr ""
+msgstr "Tampilkan atau sembunyikan tempat sampah"
 
 #: survey/templates/editor/partials/analytics_table.html:118
 msgid "All sessions"
-msgstr ""
+msgstr "Semua sesi"
 
 #: survey/templates/editor/partials/analytics_table.html:119
 #: survey/templates/editor/partials/analytics_table.html:358
 msgid "Empty"
-msgstr ""
+msgstr "Kosong"
 
 #: survey/templates/editor/partials/analytics_table.html:120
 #: survey/templates/editor/partials/analytics_table.html:359
 msgid "Incomplete"
-msgstr ""
+msgstr "Tidak lengkap"
 
 #: survey/templates/editor/partials/analytics_table.html:121
 msgid "Missing required"
-msgstr ""
+msgstr "Ada wajib yang kosong"
 
 #: survey/templates/editor/partials/analytics_table.html:122
 msgid "Fast completion"
-msgstr ""
+msgstr "Pengisian cepat"
 
 #: survey/templates/editor/partials/analytics_table.html:123
 #: survey/templates/editor/partials/analytics_table.html:362
 #: survey/templates/editor/partials/section_list_item.html:15
 msgid "Duplicate"
-msgstr ""
+msgstr "Duplikat"
 
 #: survey/templates/editor/partials/analytics_table.html:124
 msgid "Has answer errors"
-msgstr ""
+msgstr "Ada galat pada jawaban"
 
 #: survey/templates/editor/partials/analytics_table.html:125
 msgid "Has answer warnings"
-msgstr ""
+msgstr "Ada peringatan pada jawaban"
 
 #: survey/templates/editor/partials/analytics_table.html:134
 msgid "Remove filter"
-msgstr ""
+msgstr "Hapus filter"
 
 #: survey/templates/editor/partials/analytics_table.html:138
 msgid "Clear all"
-msgstr ""
+msgstr "Bersihkan semua"
 
 #: survey/templates/editor/partials/analytics_table.html:160
 msgid "Deselect all"
-msgstr ""
+msgstr "Batalkan semua pilihan"
 
 #: survey/templates/editor/partials/analytics_table.html:169
 msgid "— No status"
-msgstr ""
+msgstr "— Tanpa status"
 
 #: survey/templates/editor/partials/analytics_table.html:188
 msgid "Hide selected rows"
-msgstr ""
+msgstr "Sembunyikan baris terpilih"
 
 #: survey/templates/editor/partials/analytics_table.html:191
 msgid "Keep only selected, hide rest"
-msgstr ""
+msgstr "Simpan hanya yang terpilih, sembunyikan sisanya"
 
 #: survey/templates/editor/partials/analytics_table.html:194
 msgid "Invert selection"
-msgstr ""
+msgstr "Balikkan pilihan"
 
 #: survey/templates/editor/partials/analytics_table.html:221
 msgid "Visible columns"
-msgstr ""
+msgstr "Kolom yang terlihat"
 
 #: survey/templates/editor/partials/analytics_table.html:246
 msgid "Select / deselect all"
-msgstr ""
+msgstr "Pilih atau batalkan semua"
 
 #: survey/templates/editor/partials/analytics_table.html:253
 msgid "Drag to reorder"
-msgstr ""
+msgstr "Seret untuk mengubah urutan"
 
 #: survey/templates/editor/partials/analytics_table.html:267
 msgid "Sort"
-msgstr ""
+msgstr "Urutkan"
 
 #: survey/templates/editor/partials/analytics_table.html:276
 #: survey/templates/editor/partials/analytics_table.html:462
 msgid "Filter"
-msgstr ""
+msgstr "Saring"
 
 #: survey/templates/editor/partials/analytics_table.html:279
 msgid "Column options"
-msgstr ""
+msgstr "Opsi kolom"
 
 #: survey/templates/editor/partials/analytics_table.html:307
 msgid "View details"
-msgstr ""
+msgstr "Lihat rincian"
 
 #: survey/templates/editor/partials/analytics_table.html:319
 msgid "Move to trash"
-msgstr ""
+msgstr "Pindahkan ke tempat sampah"
 
 #: survey/templates/editor/partials/analytics_table.html:358
 msgid "Session has 0 answers"
-msgstr ""
+msgstr "Sesi tidak memiliki jawaban"
 
 #: survey/templates/editor/partials/analytics_table.html:359
 msgid "Session did not reach the last section"
-msgstr ""
+msgstr "Sesi tidak mencapai bagian terakhir"
 
 #: survey/templates/editor/partials/analytics_table.html:360
 msgid "Required question was skipped in a visited section"
-msgstr ""
+msgstr "Pertanyaan wajib dilewati pada bagian yang dikunjungi"
 
 #: survey/templates/editor/partials/analytics_table.html:360
 msgid "Missing req."
-msgstr ""
+msgstr "Wajib kosong"
 
 #: survey/templates/editor/partials/analytics_table.html:361
 msgid "Session completed suspiciously fast"
-msgstr ""
+msgstr "Sesi selesai dengan sangat cepat dan mencurigakan"
 
 #: survey/templates/editor/partials/analytics_table.html:361
 msgid "Fast"
-msgstr ""
+msgstr "Cepat"
 
 #: survey/templates/editor/partials/analytics_table.html:362
 msgid "Same browser submitted multiple sessions within the detection window"
-msgstr ""
+msgstr "Peramban yang sama mengirim beberapa sesi dalam jendela deteksi"
 
 #: survey/templates/editor/partials/analytics_table.html:427
 msgid "No responses"
-msgstr ""
+msgstr "Tidak ada tanggapan"
 
 #: survey/templates/editor/partials/analytics_table.html:468
 msgid "Clear"
-msgstr ""
+msgstr "Bersihkan"
 
 #: survey/templates/editor/partials/analytics_table.html:474
 msgid "Sort A→Z"
-msgstr ""
+msgstr "Urutkan A ke Z"
 
 #: survey/templates/editor/partials/analytics_table.html:475
 msgid "Sort Z→A"
-msgstr ""
+msgstr "Urutkan Z ke A"
 
 #: survey/templates/editor/partials/analytics_table.html:477
 msgid "Hide field"
-msgstr ""
+msgstr "Sembunyikan bidang"
 
 #: survey/templates/editor/partials/analytics_table.html:478
 msgid "Freeze field"
-msgstr ""
+msgstr "Bekukan bidang"
+
+#: survey/templates/editor/partials/analytics_text_answers.html:5
+#, python-format
+msgid ", page %(page)s of %(total)s"
+msgstr ", halaman %(page)s dari %(total)s"
+
+#: survey/templates/editor/partials/analytics_text_answers.html:8
+#: survey/templates/editor/partials/analytics_text_answers.html:9
+#: survey/templates/editor/partials/analytics_text_answers.html:10
+msgid "page"
+msgstr "halaman"
 
 #: survey/templates/editor/partials/analytics_text_answers.html:32
 msgid "No text answers yet."
-msgstr ""
+msgstr "Belum ada jawaban teks."
 
 #: survey/templates/editor/partials/collaborator_list.html:3
 #: survey/templates/editor/partials/survey_settings_panel.html:281
 #: survey/templates/editor/survey_settings.html:220
 msgid "Collaborators"
-msgstr ""
+msgstr "Kolaborator"
 
 #: survey/templates/editor/partials/collaborator_list.html:7
 #: survey/templates/org/org_members.html:33
 msgid "User"
-msgstr ""
+msgstr "Pengguna"
 
 #: survey/templates/editor/partials/collaborator_list.html:8
 #: survey/templates/org/org_members.html:35
 #: survey/templates/org/org_members.html:112
 msgid "Role"
-msgstr ""
+msgstr "Peran"
 
 #: survey/templates/editor/partials/collaborator_list.html:32
 #: survey/templates/file_upload.html:55
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Singkirkan"
 
 #: survey/templates/editor/partials/collaborator_list.html:37
 msgid "No collaborators yet."
-msgstr ""
+msgstr "Belum ada kolaborator."
+
+#: survey/templates/editor/partials/collaborator_list.html:48
+msgid "Select member…"
+msgstr "Pilih anggota …"
 
 #: survey/templates/editor/partials/collaborator_list.html:58
 msgid "Add"
-msgstr ""
+msgstr "Tambahkan"
 
 #: survey/templates/editor/partials/generation_failed.html:12
 msgid "Your brief is still in the form — adjust it and try again."
-msgstr ""
+msgstr "Deskripsi Anda masih ada di formulir — sesuaikan lalu coba lagi."
+
+#: survey/templates/editor/partials/generation_progress.html:16
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s pertanyaan"
+
+#: survey/templates/editor/partials/generation_progress.html:17
+#, python-format
+msgid "%(n)s section"
+msgid_plural "%(n)s sections"
+msgstr[0] "%(n)s bagian"
 
 #: survey/templates/editor/partials/generation_progress.html:17
 msgid "drafted"
-msgstr ""
+msgstr "dibuat"
 
 #: survey/templates/editor/partials/generation_status.html:42
 msgid "Building your survey…"
-msgstr ""
+msgstr "Menyusun survei Anda …"
 
 #: survey/templates/editor/partials/generation_status.html:44
 msgid "Unfolding the map…"
-msgstr ""
+msgstr "Membentangkan peta …"
 
 #: survey/templates/editor/partials/generation_status.html:51
 msgid ""
 "This usually takes under a minute. You can leave this page — the draft will "
 "be waiting on your dashboard."
 msgstr ""
+"Biasanya perlu kurang dari satu menit. Anda boleh meninggalkan halaman ini —"
+" drafnya akan menunggu di dasbor Anda."
 
 #: survey/templates/editor/partials/language_picker.html:4
 msgid "Search languages..."
-msgstr ""
+msgstr "Cari bahasa …"
 
 #: survey/templates/editor/partials/pr_add_block_modal.html:6
 #: survey/templates/editor/partials/pr_add_block_modal.html:55
 #: survey/templates/editor/public_results.html:114
 msgid "Add block"
-msgstr ""
+msgstr "Tambahkan blok"
 
 #: survey/templates/editor/partials/pr_add_block_modal.html:13
 msgid "Block type"
-msgstr ""
+msgstr "Jenis blok"
+
+#: survey/templates/editor/partials/pr_add_block_modal.html:15
+msgid "Question results…"
+msgstr "Hasil pertanyaan …"
+
+#: survey/templates/editor/partials/pr_add_block_modal.html:17
+msgid "Text block"
+msgstr "Blok teks"
 
 #: survey/templates/editor/partials/pr_add_block_modal.html:22
 msgid ""
@@ -2868,55 +3286,90 @@ msgid ""
 " lines with the type/count on their own muted line, and adds a search box — "
 "none of which a native"
 msgstr ""
+"tetap menjadi acuan saat formulir dikirim (opsi nonaktif = tidak dapat "
+"diterbitkan); daftar khusus di atasnya menampilkan teks pertanyaan panjang "
+"dalam beberapa baris, menaruh jenis dan jumlah pada baris redup tersendiri, "
+"serta menambahkan kotak pencarian — semuanya tidak dapat dilakukan elemen "
+"bawaan"
 
 #: survey/templates/editor/partials/pr_add_block_modal.html:30
 msgid "Search by name or type…"
-msgstr ""
+msgstr "Cari berdasarkan nama atau jenis …"
 
 #: survey/templates/editor/partials/pr_add_block_modal.html:33
 msgid "No matching questions."
-msgstr ""
+msgstr "Tidak ada pertanyaan yang cocok."
+
+#: survey/templates/editor/partials/pr_add_block_modal.html:41
+#: survey/templates/editor/partials/pr_add_block_modal.html:42
+#, python-format
+msgid "%(n)s response"
+msgid_plural "%(n)s responses"
+msgstr[0] "%(n)s tanggapan"
+
+#: survey/templates/editor/partials/pr_add_block_modal.html:41
+#: survey/templates/editor/partials/pr_add_block_modal.html:42
+msgid "text — not publishable"
+msgstr "teks — tidak dapat diterbitkan"
 
 #: survey/templates/editor/partials/pr_add_block_modal.html:46
 msgid ""
 "Text questions are not available for publication — individual answers are "
 "never shown publicly."
 msgstr ""
+"Pertanyaan teks tidak dapat diterbitkan — jawaban perorangan tidak pernah "
+"ditampilkan ke publik."
 
 #: survey/templates/editor/partials/pr_add_block_modal.html:49
 msgid "Image file"
-msgstr ""
+msgstr "Berkas gambar"
+
+#: survey/templates/editor/partials/question_form_modal.html:73
+#, python-format
+msgid "New Sub-question for “%(name)s”"
+msgstr "Sub-pertanyaan baru untuk „%(name)s”"
+
+#: survey/templates/editor/partials/question_form_modal.html:74
+msgid "Edit Question"
+msgstr "Sunting pertanyaan"
+
+#: survey/templates/editor/partials/question_form_modal.html:75
+#: survey/templates/editor/partials/section_detail_form.html:139
+msgid "New Question"
+msgstr "Pertanyaan baru"
 
 #: survey/templates/editor/partials/question_form_modal.html:130
 msgid "Editor-only label — respondents don't see it."
-msgstr ""
+msgstr "Label khusus editor — responden tidak melihatnya."
 
 #: survey/templates/editor/partials/question_form_modal.html:146
 msgid "Content"
-msgstr ""
+msgstr "Konten"
 
 #: survey/templates/editor/partials/question_form_modal.html:148
 msgid "Respondents see exactly this — it collects no answer."
-msgstr ""
+msgstr "Responden melihat persis ini — tidak mengumpulkan jawaban apa pun."
 
 #: survey/templates/editor/partials/question_form_modal.html:153
 msgid "Display as"
-msgstr ""
+msgstr "Tampilkan sebagai"
 
 #: survey/templates/editor/partials/question_form_modal.html:163
 #: survey/templates/editor/partials/question_form_modal.html:177
 msgid "Default"
-msgstr ""
+msgstr "Bawaan"
 
 #: survey/templates/editor/partials/question_form_modal.html:205
 msgid "Number of stars"
-msgstr ""
+msgstr "Jumlah bintang"
 
 #: survey/templates/editor/partials/question_form_modal.html:209
 msgid ""
 "Writes the choices below for you. Edit them directly if you want names on "
 "each step."
 msgstr ""
+"Menuliskan opsi di bawah untuk Anda. Suntinglah langsung jika ingin memberi "
+"nama pada setiap tingkat."
 
 #: survey/templates/editor/partials/question_form_modal.html:214
 msgid ""
@@ -2924,666 +3377,919 @@ msgid ""
 "roughly 20px per option on a 320px screen, which is hard to tap. The "
 "labelled list stays readable at any length."
 msgstr ""
+"Dengan opsi sebanyak ini, bilahnya menjadi sempit di ponsel — sekitar 20 px "
+"per opsi pada layar 320 px, sulit disentuh. Daftar berlabel tetap terbaca "
+"pada panjang berapa pun."
 
 #: survey/templates/editor/partials/question_form_modal.html:260
 msgid "Primary language"
-msgstr ""
+msgstr "Bahasa utama"
 
 #: survey/templates/editor/partials/question_form_modal.html:272
 msgid "Add Choice"
-msgstr ""
+msgstr "Tambahkan opsi"
 
 #: survey/templates/editor/partials/question_form_modal.html:279
 #: survey/templates/editor/partials/question_form_modal.html:300
 #: survey/templates/editor/partials/question_form_modal.html:309
 #: survey/templates/editor/partials/question_form_modal.html:318
 msgid "Validation"
-msgstr ""
+msgstr "Validasi"
 
 #: survey/templates/editor/partials/question_form_modal.html:282
 msgid "Min value"
-msgstr ""
+msgstr "Nilai minimum"
 
 #: survey/templates/editor/partials/question_form_modal.html:287
 msgid "Max value"
-msgstr ""
+msgstr "Nilai maksimum"
+
+#: survey/templates/editor/partials/question_form_modal.html:292
+msgid "Outlier"
+msgstr "Pencilan"
 
 #: survey/templates/editor/partials/question_form_modal.html:302
 msgid "Min text length"
-msgstr ""
+msgstr "Panjang teks minimum"
 
 #: survey/templates/editor/partials/question_form_modal.html:311
 msgid "Area outlier factor"
-msgstr ""
+msgstr "Faktor pencilan luas area"
 
 #: survey/templates/editor/partials/question_form_modal.html:320
 msgid "Max files (1–10)"
-msgstr ""
+msgstr "Jumlah berkas maksimum (1–10)"
 
 #: survey/templates/editor/partials/question_form_modal.html:328
 msgid "Max file size, MB (platform cap 25)"
-msgstr ""
+msgstr "Ukuran berkas maksimum, MB (batas platform 25)"
 
 #: survey/templates/editor/partials/question_form_modal.html:335
-#: survey/templates/editor/partials/question_form_modal.html:411
+#: survey/templates/editor/partials/question_form_modal.html:409
 msgid "Places per respondent"
-msgstr ""
+msgstr "Jumlah tempat per responden"
 
 #: survey/templates/editor/partials/question_form_modal.html:348
 msgid ""
 "Respondents can add several places to one map question. Leave max empty for "
 "unlimited; the export stays a single layer either way."
 msgstr ""
+"Responden dapat menambahkan beberapa tempat pada satu pertanyaan peta. "
+"Kosongkan nilai maksimum agar tanpa batas; ekspornya tetap satu lapisan."
 
 #: survey/templates/editor/partials/question_form_modal.html:354
 #: survey/templates/editor/partials/section_detail_form.html:70
 msgid "Translations"
-msgstr ""
+msgstr "Terjemahan"
 
 #: survey/templates/editor/partials/question_form_modal.html:383
 msgid "Respondent sees"
-msgstr ""
+msgstr "Tampilan responden"
 
 #: survey/templates/editor/partials/question_form_modal.html:388
 msgid "Updates as you edit — the real respondent-side rendering."
 msgstr ""
+"Diperbarui saat Anda menyunting — tampilan sesungguhnya di sisi responden."
+
+#: survey/templates/editor/partials/question_form_modal.html:391
+msgid "Shown when:"
+msgstr "Tampil bila:"
 
 #: survey/templates/editor/partials/question_form_modal.html:397
 msgid "Type example"
-msgstr ""
+msgstr "Contoh jenis ini"
 
 #: survey/templates/editor/partials/question_form_modal.html:407
 msgid "Tips"
-msgstr ""
+msgstr "Kiat"
 
 #: survey/templates/editor/partials/question_form_modal.html:409
 msgid "One map question collects many places."
-msgstr ""
+msgstr "Satu pertanyaan peta mengumpulkan banyak tempat."
 
-#: survey/templates/editor/partials/question_form_modal.html:412
+#: survey/templates/editor/partials/question_form_modal.html:409
+msgid ""
+"Respondents keep adding marks to the same question — never create “Mark the "
+"1st / 2nd location” copies."
+msgstr ""
+"Responden terus menambahkan penanda pada pertanyaan yang sama — jangan "
+"pernah membuat salinan seperti „Tandai lokasi ke-1 / ke-2”."
+
+#: survey/templates/editor/partials/question_form_modal.html:409
+msgid "below to ask for, say, 1–5."
+msgstr "di bawah untuk meminta, misalnya, 1–5."
+
+#: survey/templates/editor/partials/question_form_modal.html:410
 msgid "Describe each place with sub-questions."
-msgstr ""
+msgstr "Jelaskan setiap tempat dengan sub-pertanyaan."
 
-#: survey/templates/editor/partials/question_form_modal.html:412
+#: survey/templates/editor/partials/question_form_modal.html:410
 msgid ""
 "They pop up on every placed mark, and each becomes a column of your GeoJSON "
 "layer in QGIS. Without them the map collects dots with no meaning."
 msgstr ""
+"Sub-pertanyaan muncul pada setiap penanda, dan masing-masing menjadi kolom "
+"lapisan GeoJSON Anda di QGIS. Tanpa itu, peta hanya mengumpulkan titik tanpa"
+" makna."
 
-#: survey/templates/editor/partials/question_form_modal.html:413
+#: survey/templates/editor/partials/question_form_modal.html:411
 msgid "Points get answered about twice as often"
-msgstr ""
+msgstr "Pertanyaan titik dijawab kira-kira dua kali lebih sering"
 
-#: survey/templates/editor/partials/question_form_modal.html:413
+#: survey/templates/editor/partials/question_form_modal.html:411
 msgid ""
 "as polygons — draw requests cost respondents real effort. When in doubt, ask"
 " for a point."
 msgstr ""
+"dibanding area — menggambar menuntut usaha nyata dari responden. Jika ragu, "
+"mintalah titik."
 
-#: survey/templates/editor/partials/question_form_modal.html:416
+#: survey/templates/editor/partials/question_form_modal.html:414
 msgid "The scale is built from your choice codes"
-msgstr ""
+msgstr "Skala dibentuk dari kode opsi Anda"
 
-#: survey/templates/editor/partials/question_form_modal.html:422
+#: survey/templates/editor/partials/question_form_modal.html:414
+msgid "— keep them integers in ascending order (1, 2, 3…)."
+msgstr "— gunakan bilangan bulat berurutan naik (1, 2, 3 …)."
+
+#: survey/templates/editor/partials/question_form_modal.html:415
+msgid ""
+"Label at least the endpoints (“Not at all” … “Very much”) so the scale reads"
+" the same for everyone."
+msgstr ""
+"Berilah label setidaknya pada kedua ujung („Sama sekali tidak” … „Sangat”) "
+"agar skalanya dibaca sama oleh semua orang."
+
+#: survey/templates/editor/partials/question_form_modal.html:418
 msgid "Choices are the items to be ordered"
-msgstr ""
+msgstr "Opsi adalah butir-butir yang harus diurutkan"
 
-#: survey/templates/editor/partials/question_form_modal.html:424
+#: survey/templates/editor/partials/question_form_modal.html:420
 msgid "Respondents must place"
-msgstr ""
+msgstr "Responden harus mengurutkan"
 
-#: survey/templates/editor/partials/question_form_modal.html:424
+#: survey/templates/editor/partials/question_form_modal.html:420
 msgid "every"
-msgstr ""
+msgstr "setiap"
 
-#: survey/templates/editor/partials/question_form_modal.html:424
+#: survey/templates/editor/partials/question_form_modal.html:420
 msgid ""
 "item and no two can share a rank — use Rating instead when independent "
 "scores are enough."
 msgstr ""
+"butir dan tidak ada dua butir yang boleh berbagi peringkat — pakai Penilaian"
+" bila skor yang berdiri sendiri sudah cukup."
 
-#: survey/templates/editor/partials/question_form_modal.html:427
+#: survey/templates/editor/partials/question_form_modal.html:423
 msgid ""
 "Codes end up in your data export; names are what respondents see. Keep codes"
 " stable once responses start arriving."
 msgstr ""
+"Kode masuk ke ekspor data Anda; nama adalah yang dilihat responden. Jangan "
+"ubah kode begitu tanggapan mulai berdatangan."
 
-#: survey/templates/editor/partials/question_form_modal.html:440
+#: survey/templates/editor/partials/question_form_modal.html:436
 msgid "All changes saved"
-msgstr ""
+msgstr "Semua perubahan tersimpan"
+
+#: survey/templates/editor/partials/question_form_modal.html:447
+#: survey/templates/org/org_new.html:19
+msgid "Create"
+msgstr "Buat"
+
+#: survey/templates/editor/partials/question_form_modal.html:807
+msgid "Where is your fruit market?"
+msgstr "Di mana pasar buah Anda?"
+
+#: survey/templates/editor/partials/question_form_modal.html:809
+msgid "Place point"
+msgstr "Letakkan titik"
+
+#: survey/templates/editor/partials/question_form_modal.html:811
+msgid "Your route to the market"
+msgstr "Rute Anda menuju pasar"
+
+#: survey/templates/editor/partials/question_form_modal.html:815
+msgid "Draw line"
+msgstr "Gambar garis"
+
+#: survey/templates/editor/partials/question_form_modal.html:817
+msgid "Outline the orchard"
+msgstr "Buat garis batas kebun"
+
+#: survey/templates/editor/partials/question_form_modal.html:821
+msgid "Draw area"
+msgstr "Gambar area"
 
 #: survey/templates/editor/partials/question_list_item.html:10
 msgid "broken rule"
-msgstr ""
+msgstr "aturan rusak"
 
 #: survey/templates/editor/partials/question_list_item.html:82
 msgid "Add Sub-question"
-msgstr ""
+msgstr "Tambahkan sub-pertanyaan"
 
 #: survey/templates/editor/partials/question_list_item.html:91
 msgid "Paste as sub-question"
+msgstr "Tempel sebagai sub-pertanyaan"
+
+#: survey/templates/editor/partials/section_detail_form.html:7
+#, python-format
+msgid ""
+"Missing translations — respondents in these languages will see %(primary)s "
+"text"
 msgstr ""
+"Terjemahan belum lengkap — responden dalam bahasa ini akan melihat teks "
+"berbahasa %(primary)s"
 
 #: survey/templates/editor/partials/section_detail_form.html:19
 msgid "Map Position"
-msgstr ""
+msgstr "Posisi peta"
 
 #: survey/templates/editor/partials/section_detail_form.html:48
 #: survey/templates/editor/partials/survey_settings_panel.html:126
 msgid "Reference layers"
-msgstr ""
+msgstr "Lapisan rujukan"
 
 #: survey/templates/editor/partials/section_detail_form.html:60
 msgid ""
 "Which reference layers respondents see on this section's map. Layers are "
 "added in Survey settings."
 msgstr ""
+"Lapisan rujukan mana yang dilihat responden pada peta bagian ini. Lapisan "
+"ditambahkan di pengaturan survei."
 
 #: survey/templates/editor/partials/section_detail_form.html:122
 msgid "Questions"
-msgstr ""
-
-#: survey/templates/editor/partials/section_detail_form.html:139
-msgid "New Question"
-msgstr ""
+msgstr "Pertanyaan"
 
 #: survey/templates/editor/partials/section_detail_form.html:148
 msgid "Paste question here"
-msgstr ""
+msgstr "Tempel pertanyaan di sini"
+
+#: survey/templates/editor/partials/section_detail_form.html:203
+msgid "Optional text under the section title"
+msgstr "Teks opsional di bawah judul bagian"
 
 #: survey/templates/editor/partials/section_list_item.html:14
 msgid "Questions in this section"
-msgstr ""
+msgstr "Pertanyaan di bagian ini"
 
 #: survey/templates/editor/partials/section_list_item.html:22
 #: survey/templates/editor/survey_detail.html:152
 msgid "Copy"
-msgstr ""
+msgstr "Salin"
+
+#: survey/templates/editor/partials/section_map_picker.html:3
+msgid "Set Map Position"
+msgstr "Tetapkan posisi peta"
 
 #: survey/templates/editor/partials/section_map_picker.html:9
 msgid "Click on the map to set the starting position. Adjust zoom as needed."
 msgstr ""
+"Klik peta untuk menetapkan posisi awal. Sesuaikan perbesarannya bila perlu."
+
+#: survey/templates/editor/partials/section_map_picker.html:17
+msgid "No position set (inherits from survey or previous section)"
+msgstr "Posisi belum ditetapkan (mewarisi dari survei atau bagian sebelumnya)"
+
+#: survey/templates/editor/partials/section_map_picker.html:27
+msgid ""
+"When checked, this section inherits map position from the survey default or "
+"keeps the respondent’s current view."
+msgstr ""
+"Bila dicentang, bagian ini mewarisi posisi peta bawaan survei atau "
+"mempertahankan tampilan responden saat ini."
 
 #: survey/templates/editor/partials/section_map_picker.html:28
 msgid "Inherit position (don't override)"
+msgstr "Warisi posisi (jangan timpa)"
+
+#: survey/templates/editor/partials/section_map_picker.html:37
+msgid ""
+"When enabled, the map will fly to the respondent’s browser location on this "
+"section."
 msgstr ""
+"Bila diaktifkan, pada bagian ini peta akan berpindah ke lokasi peramban "
+"responden."
 
 #: survey/templates/editor/partials/section_map_picker.html:38
 msgid "Fly to respondent's geolocation"
-msgstr ""
+msgstr "Pindah ke lokasi responden"
 
 #: survey/templates/editor/partials/section_map_picker.html:43
 msgid "Override basemap"
-msgstr ""
+msgstr "Timpa peta dasar"
+
+#: survey/templates/editor/partials/section_map_picker.html:45
+msgid "Inherit"
+msgstr "Warisi"
 
 #: survey/templates/editor/partials/section_map_picker.html:55
 msgid "Save Position"
-msgstr ""
+msgstr "Simpan posisi"
 
 #: survey/templates/editor/partials/survey_password_modal.html:3
 msgid "Password Status:"
-msgstr ""
+msgstr "Status kata sandi:"
 
 #: survey/templates/editor/partials/survey_password_modal.html:5
 msgid "Password is set"
-msgstr ""
+msgstr "Kata sandi sudah diatur"
 
 #: survey/templates/editor/partials/survey_password_modal.html:7
 msgid "No password set"
-msgstr ""
+msgstr "Tanpa kata sandi"
+
+#: survey/templates/editor/partials/survey_password_modal.html:16
+#: survey/templates/editor/partials/survey_password_modal.html:21
+msgid "Change"
+msgstr "Ubah"
+
+#: survey/templates/editor/partials/survey_password_modal.html:16
+#: survey/templates/editor/partials/survey_password_modal.html:21
+msgid "Set"
+msgstr "Atur"
 
 #: survey/templates/editor/partials/survey_password_modal.html:16
 msgid "Password"
-msgstr ""
+msgstr "Kata sandi"
 
 #: survey/templates/editor/partials/survey_password_modal.html:18
 msgid "Enter password (min 4 chars)"
-msgstr ""
+msgstr "Masukkan kata sandi (min. 4 karakter)"
 
 #: survey/templates/editor/partials/survey_password_modal.html:34
 msgid "Remove Password"
-msgstr ""
+msgstr "Hapus kata sandi"
 
 #: survey/templates/editor/partials/survey_password_modal.html:41
 msgid "Test Link"
-msgstr ""
+msgstr "Tautan uji"
 
 #: survey/templates/editor/partials/survey_password_modal.html:57
 msgid "Regenerate Token"
-msgstr ""
+msgstr "Buat ulang token"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:8
 msgid "Applies to the whole survey"
-msgstr ""
+msgstr "Berlaku untuk seluruh survei"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:21
 msgid "Basics"
-msgstr ""
+msgstr "Dasar"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:53
 msgid "Respondent map"
-msgstr ""
+msgstr "Peta responden"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:54
 msgid ""
 "The base map, starting position, and zoom respondents open on. Sections can "
 "override the position individually."
 msgstr ""
+"Peta dasar, posisi awal, dan perbesaran saat responden membuka survei. "
+"Setiap bagian dapat menimpa posisinya."
 
 #: survey/templates/editor/partials/survey_settings_panel.html:90
 msgid "Default position"
+msgstr "Posisi bawaan"
+
+#: survey/templates/editor/partials/survey_settings_panel.html:99
+#: survey/templates/editor/survey_settings.html:130
+#| msgid "Click the last point to finish the line."
+msgid "Click the map to set position"
+msgstr "Klik peta untuk menetapkan posisi"
+
+#: survey/templates/editor/partials/survey_settings_panel.html:104
+#: survey/templates/editor/survey_settings.html:139
+msgid ""
+"Auto-center the map on the respondent’s browser location when they first "
+"enter the survey."
 msgstr ""
+"Pusatkan peta otomatis ke lokasi peramban responden saat pertama kali masuk "
+"ke survei."
 
 #: survey/templates/editor/partials/survey_settings_panel.html:105
 #: survey/templates/editor/survey_settings.html:140
 msgid "Auto-center on respondent's location"
-msgstr ""
+msgstr "Pusatkan otomatis ke lokasi responden"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:105
 msgid "uses the visitor's browser geolocation on entry"
-msgstr ""
+msgstr "memakai geolokasi peramban pengunjung saat masuk"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:109
 msgid "Save map position"
-msgstr ""
+msgstr "Simpan posisi peta"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:111
 #: survey/templates/editor/survey_settings.html:147
 msgid "Saved!"
-msgstr ""
+msgstr "Tersimpan!"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:128
 msgid ""
 "Non-editable layers respondents see under the map: counting zones, "
 "boundaries, routes. Sections can hide each layer individually."
 msgstr ""
+"Lapisan yang tidak dapat disunting dan dilihat responden di bawah peta: zona"
+" penghitungan, batas wilayah, rute. Setiap bagian dapat menyembunyikan "
+"lapisan secara terpisah."
 
 #: survey/templates/editor/partials/survey_settings_panel.html:149
 msgid "Fallback — style properties inside the file win."
-msgstr ""
+msgstr "Nilai cadangan — properti gaya di dalam berkas lebih diutamakan."
 
 #: survey/templates/editor/partials/survey_settings_panel.html:152
 msgid "Label field"
-msgstr ""
+msgstr "Bidang label"
+
+#: survey/templates/editor/partials/survey_settings_panel.html:154
+#: survey/templates/editor/partials/survey_settings_panel.html:164
+msgid "none"
+msgstr "tidak ada"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:159
 msgid "Feature property shown as a map label."
-msgstr ""
+msgstr "Properti objek yang ditampilkan sebagai label peta."
 
 #: survey/templates/editor/partials/survey_settings_panel.html:162
 msgid "Key field"
-msgstr ""
+msgstr "Bidang kunci"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:169
 msgid "Makes features addressable — reserved for answer-driven map context."
 msgstr ""
+"Membuat objek dapat dialamatkan — disediakan untuk konteks peta berbasis "
+"jawaban."
 
 #: survey/templates/editor/partials/survey_settings_panel.html:172
 msgid "Info popups"
-msgstr ""
+msgstr "Jendela info"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:172
 msgid "tap a feature to see its name and description"
-msgstr ""
+msgstr "sentuh objek untuk melihat nama dan deskripsinya"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:186
 msgid ""
 "Drop a <b>.geojson</b> here or <span class=\"ref-layers-choose\">choose a "
 "file</span>"
 msgstr ""
+"Jatuhkan berkas <b>.geojson</b> di sini atau <span class=\"ref-layers-"
+"choose\">pilih berkas</span>"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:187
 msgid "GeoJSON (WGS84), up to 10 MB, max 5 layers per survey."
-msgstr ""
+msgstr "GeoJSON (WGS84), hingga 10 MB, maksimal 5 lapisan per survei."
 
 #: survey/templates/editor/partials/survey_settings_panel.html:208
 #: survey/templates/editor/partials/thanks_panel.html:29
 #: survey/templates/editor/public_results.html:201
 #: survey/templates/editor/public_results.html:289
 msgid "Changes save automatically"
-msgstr ""
+msgstr "Perubahan tersimpan otomatis"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:209
 #: survey/templates/editor/survey_settings.html:112
 #: survey/templates/editor/survey_settings_modal.html:28
 msgid "Save Settings"
-msgstr ""
+msgstr "Simpan pengaturan"
+
+#: survey/templates/editor/partials/survey_settings_panel.html:290
+msgid "Password & test access"
+msgstr "Kata sandi dan akses uji"
 
 #: survey/templates/editor/partials/thanks_panel.html:6
 #: survey/templates/editor/survey_detail.html:285
 msgid "Thanks page"
-msgstr ""
+msgstr "Halaman terima kasih"
 
 #: survey/templates/editor/partials/thanks_panel.html:6
 msgid "The last screen respondents see after they submit"
-msgstr ""
+msgstr "Layar terakhir yang dilihat responden setelah mengirim"
 
 #: survey/templates/editor/partials/thanks_panel.html:16
 msgid "Message"
-msgstr ""
+msgstr "Pesan"
 
 #: survey/templates/editor/partials/thanks_panel.html:17
 msgid "Written just how respondents will see it — no HTML needed."
 msgstr ""
+"Ditulis persis seperti yang akan dilihat responden — tanpa perlu HTML."
 
 #: survey/templates/editor/partials/thanks_panel.html:35
 msgid "Results link"
-msgstr ""
+msgstr "Tautan hasil"
 
 #: survey/templates/editor/partials/thanks_panel.html:38
 msgid "Show a “See the results” button"
-msgstr ""
+msgstr "Tampilkan tombol „Lihat hasil”"
+
+#: survey/templates/editor/partials/thanks_panel.html:39
+msgid "links respondents to your public results page"
+msgstr "mengarahkan responden ke halaman hasil publik Anda"
+
+#: survey/templates/editor/partials/thanks_panel.html:39
+msgid "appears once your results page is published (Publish tab)"
+msgstr "muncul begitu halaman hasil Anda diterbitkan (tab Terbitkan)"
 
 #: survey/templates/editor/partials/thanks_panel.html:47
 msgid "Always shown below your message"
+msgstr "Selalu tampil di bawah pesan Anda"
+
+#: survey/templates/editor/partials/thanks_panel.html:48
+msgid ""
+"Every thanks page ends with a share action and the “Made with Mapsurvey” "
+"link — these are fixed and cannot be removed."
 msgstr ""
+"Setiap halaman terima kasih diakhiri tombol berbagi dan tautan „Made with "
+"Mapsurvey” — keduanya tetap dan tidak dapat dihapus."
 
 #: survey/templates/editor/partials/thanks_panel.html:50
 msgid "Share this survey"
-msgstr ""
+msgstr "Bagikan survei ini"
+
+#: survey/templates/editor/partials/thanks_panel.html:102
+#| msgid "Your responses have been recorded."
+msgid "Thank you! Your responses have been recorded…"
+msgstr "Terima kasih! Jawaban Anda telah tersimpan …"
+
+#: survey/templates/editor/partials/thanks_panel.html:120
+#: survey/templates/survey_thanks.html:29
+msgid "Thank you!"
+msgstr "Terima kasih!"
+
+#: survey/templates/editor/partials/thanks_panel.html:120
+#: survey/templates/survey_thanks.html:30
+msgid "Your responses have been recorded."
+msgstr "Jawaban Anda telah dicatat."
+
+#: survey/templates/editor/public_results.html:49
+msgid "Not published"
+msgstr "Belum diterbitkan"
 
 #: survey/templates/editor/public_results.html:53
 msgid "Page"
-msgstr ""
+msgstr "Halaman"
 
 #: survey/templates/editor/public_results.html:55
 #: survey/templates/editor/public_results.html:226
 msgid "Unpublish"
-msgstr ""
+msgstr "Batalkan penerbitan"
+
+#: survey/templates/editor/public_results.html:55
+#, python-format
+msgid "/r/%(slug)s/ stops opening for visitors"
+msgstr "/r/%(slug)s/ berhenti terbuka bagi pengunjung"
 
 #: survey/templates/editor/public_results.html:57
 #: survey/templates/editor/public_results.html:228
 #: survey/templates/editor/public_results.html:240
 msgid "Publish page"
-msgstr ""
+msgstr "Terbitkan halaman"
 
 #: survey/templates/editor/public_results.html:57
 msgid "publish the survey first"
-msgstr ""
+msgstr "terbitkan surveinya lebih dulu"
+
+#: survey/templates/editor/public_results.html:63
+msgid "Update snapshot"
+msgstr "Perbarui cuplikan"
+
+#: survey/templates/editor/public_results.html:63
+#: survey/templates/editor/public_results.html:297
+msgid "Freeze snapshot"
+msgstr "Bekukan cuplikan"
 
 #: survey/templates/editor/public_results.html:63
 msgid "show a fixed snapshot instead of live data"
-msgstr ""
+msgstr "tampilkan cuplikan tetap alih-alih data langsung"
 
 #: survey/templates/editor/public_results.html:68
 msgid "Back to live data"
-msgstr ""
+msgstr "Kembali ke data langsung"
 
 #: survey/templates/editor/public_results.html:78
 msgid "Refresh the frozen snapshot with the data collected since"
-msgstr ""
+msgstr "Segarkan cuplikan beku dengan data yang terkumpul sejak itu"
 
 #: survey/templates/editor/public_results.html:78
 msgid "⟳ Update snapshot"
-msgstr ""
+msgstr "⟳ Perbarui cuplikan"
 
 #: survey/templates/editor/public_results.html:80
 #: survey/templates/editor/public_results.html:82
 #: survey/templates/editor/survey_detail.html:126
 msgid "🔗 Share"
-msgstr ""
+msgstr "🔗 Bagikan"
 
 #: survey/templates/editor/public_results.html:85
 msgid ""
 "Show visitors a fixed snapshot instead of live data — useful before a public"
 " announcement"
 msgstr ""
+"Tampilkan cuplikan tetap kepada pengunjung alih-alih data langsung — berguna"
+" sebelum pengumuman publik"
 
 #: survey/templates/editor/public_results.html:85
 msgid "❄ Freeze snapshot"
-msgstr ""
+msgstr "❄ Bekukan cuplikan"
 
 #: survey/templates/editor/public_results.html:88
 msgid "The live page exactly as visitors see it"
-msgstr ""
+msgstr "Halaman terbit persis seperti yang dilihat pengunjung"
 
 #: survey/templates/editor/public_results.html:88
 #: survey/templates/editor/public_results.html:91
 msgid "↗ Open as visitor"
-msgstr ""
+msgstr "↗ Buka sebagai pengunjung"
 
 #: survey/templates/editor/public_results.html:90
 #: survey/templates/editor/public_results.html:228
 msgid "Publish the survey first"
-msgstr ""
+msgstr "Terbitkan surveinya lebih dulu"
 
 #: survey/templates/editor/public_results.html:90
 msgid "🌐 Publish page"
-msgstr ""
+msgstr "🌐 Terbitkan halaman"
 
 #: survey/templates/editor/public_results.html:91
 #: survey/templates/editor/public_results.html:222
 msgid "Private preview — only you can open this URL"
-msgstr ""
+msgstr "Pratinjau pribadi — hanya Anda yang dapat membuka URL ini"
 
 #: survey/templates/editor/public_results.html:103
 #: survey/templates/editor/public_results.html:210
 msgid "Page settings"
-msgstr ""
+msgstr "Pengaturan halaman"
 
 #: survey/templates/editor/public_results.html:106
 msgid "Content blocks"
-msgstr ""
+msgstr "Blok konten"
+
+#: survey/templates/editor/public_results.html:130
+msgid "Block"
+msgstr "Blok"
 
 #: survey/templates/editor/public_results.html:136
 msgid "Block settings"
-msgstr ""
+msgstr "Pengaturan blok"
 
 #: survey/templates/editor/public_results.html:138
 msgid "Custom title (optional)"
-msgstr ""
+msgstr "Judul khusus (opsional)"
 
 #: survey/templates/editor/public_results.html:143
 #: survey/templates/editor/public_results.html:152
 msgid "Visualization"
-msgstr ""
+msgstr "Visualisasi"
 
 #: survey/templates/editor/public_results.html:160
 msgid "Basemap"
-msgstr ""
+msgstr "Peta dasar"
 
 #: survey/templates/editor/public_results.html:168
 msgid "Point popup fields"
-msgstr ""
+msgstr "Bidang jendela titik"
 
 #: survey/templates/editor/public_results.html:169
 msgid ""
 "Attributes shown when a point is clicked — the sub-questions this respondent"
 " answered"
 msgstr ""
+"Atribut yang tampil saat titik diklik — sub-pertanyaan yang dijawab "
+"responden ini"
 
 #: survey/templates/editor/public_results.html:169
 msgid "for that point"
-msgstr ""
+msgstr "untuk titik itu"
 
 #: survey/templates/editor/public_results.html:169
 msgid ". Empty = anonymous geometry only. Free-text answers can't be shown."
 msgstr ""
+". Kosong = hanya geometri anonim. Jawaban teks bebas tidak dapat "
+"ditampilkan."
 
 #: survey/templates/editor/public_results.html:177
 msgid ""
 "This map question has no sub-questions, so points are shown as anonymous "
 "geometry."
 msgstr ""
+"Pertanyaan peta ini tidak punya sub-pertanyaan, jadi titik ditampilkan "
+"sebagai geometri anonim."
+
+#: survey/templates/editor/public_results.html:192
+msgid "Choose a new file to replace the current image."
+msgstr "Pilih berkas baru untuk mengganti gambar saat ini."
 
 #: survey/templates/editor/public_results.html:195
 msgid "Caption (optional)"
-msgstr ""
+msgstr "Keterangan (opsional)"
 
 #: survey/templates/editor/public_results.html:199
 msgid "Hidden"
-msgstr ""
+msgstr "Tersembunyi"
 
 #: survey/templates/editor/public_results.html:199
 msgid "keep but don't show publicly"
-msgstr ""
+msgstr "simpan tetapi jangan tampilkan ke publik"
 
 #: survey/templates/editor/public_results.html:202
 msgid "Save block"
-msgstr ""
+msgstr "Simpan blok"
 
 #: survey/templates/editor/public_results.html:210
 msgid "Applies to the whole public results page"
-msgstr ""
+msgstr "Berlaku untuk seluruh halaman hasil publik"
 
 #: survey/templates/editor/public_results.html:224
 msgid "Copy public link"
-msgstr ""
+msgstr "Salin tautan publik"
 
 #: survey/templates/editor/public_results.html:225
 msgid "The page as visitors see it"
-msgstr ""
+msgstr "Halaman seperti yang dilihat pengunjung"
 
 #: survey/templates/editor/public_results.html:225
 msgid "Live page"
-msgstr ""
+msgstr "Halaman terbit"
 
 #: survey/templates/editor/public_results.html:233
 msgid "This results page is"
-msgstr ""
+msgstr "Halaman hasil ini"
 
 #: survey/templates/editor/public_results.html:237
 msgid ""
 "This survey is a draft. Publish the survey before publishing its results "
 "page."
 msgstr ""
+"Survei ini masih draf. Terbitkan surveinya sebelum menerbitkan halaman "
+"hasilnya."
 
 #: survey/templates/editor/public_results.html:240
 msgid "We drafted this page from your questions — review the blocks, then hit"
 msgstr ""
+"Kami menyusun halaman ini dari pertanyaan Anda — periksa bloknya, lalu tekan"
+
+#: survey/templates/editor/public_results.html:245
+msgid "Visibility & address"
+msgstr "Visibilitas dan alamat"
 
 #: survey/templates/editor/public_results.html:253
 msgid ""
 "Public is indexable and listable. Unlisted is reachable by direct link only "
 "and not indexed."
 msgstr ""
+"Publik dapat diindeks dan masuk daftar. Tak terdaftar hanya dapat dibuka "
+"lewat tautan langsung dan tidak diindeks."
 
 #: survey/templates/editor/public_results.html:256
 msgid "Page address"
-msgstr ""
+msgstr "Alamat halaman"
 
 #: survey/templates/editor/public_results.html:256
 msgid "changes the public URL — applied explicitly"
-msgstr ""
+msgstr "mengubah URL publik — diterapkan secara eksplisit"
 
 #: survey/templates/editor/public_results.html:261
 msgid "Public URL:"
-msgstr ""
+msgstr "URL publik:"
 
 #: survey/templates/editor/public_results.html:263
 msgid ""
 "Use the <strong>Publish page</strong> button above to make this page live."
 msgstr ""
+"Gunakan tombol <strong>Terbitkan halaman</strong> di atas untuk menerbitkan "
+"halaman ini."
 
 #: survey/templates/editor/public_results.html:267
 msgid "Intro"
-msgstr ""
+msgstr "Pengantar"
 
 #: survey/templates/editor/public_results.html:270
 msgid "Body"
-msgstr ""
+msgstr "Isi"
+
+#: survey/templates/editor/public_results.html:275
+msgid "Display & privacy"
+msgstr "Tampilan dan privasi"
 
 #: survey/templates/editor/public_results.html:276
 msgid "Show response counter"
-msgstr ""
+msgstr "Tampilkan penghitung tanggapan"
 
 #: survey/templates/editor/public_results.html:278
 msgid "Show “Take the survey” CTA"
-msgstr ""
+msgstr "Tampilkan tombol „Isi survei”"
 
 #: survey/templates/editor/public_results.html:278
 msgid "only while the survey is open"
-msgstr ""
+msgstr "hanya selama survei terbuka"
 
 #: survey/templates/editor/public_results.html:280
 msgid "Link from the thanks page"
-msgstr ""
+msgstr "Tautan dari halaman terima kasih"
 
 #: survey/templates/editor/public_results.html:280
 msgid "a “See the results” button after respondents submit"
-msgstr ""
+msgstr "tombol „Lihat hasil” setelah responden mengirim"
 
 #: survey/templates/editor/public_results.html:282
 msgid "Feature in public stories listing"
-msgstr ""
+msgstr "Tampilkan di daftar cerita publik"
 
 #: survey/templates/editor/public_results.html:284
 msgid "k-anonymity threshold"
+msgstr "Ambang k-anonimitas"
+
+#: survey/templates/editor/public_results.html:286
+msgid "Mask buckets smaller than K as “<K”. Set to 1 to disable."
 msgstr ""
+"Samarkan kelompok yang lebih kecil dari K sebagai „<K”. Setel 1 untuk "
+"menonaktifkan."
 
 #: survey/templates/editor/public_results.html:290
 msgid "Save page settings"
-msgstr ""
+msgstr "Simpan pengaturan halaman"
 
 #: survey/templates/editor/public_results.html:294
 msgid "Data mode"
-msgstr ""
+msgstr "Mode data"
 
 #: survey/templates/editor/public_results.html:295
 msgid "Current:"
-msgstr ""
+msgstr "Saat ini:"
 
-#: survey/templates/editor/public_results.html:297
-msgid "Freeze snapshot"
-msgstr ""
+#: survey/templates/editor/public_results.html:295
+msgid "frozen"
+msgstr "dibekukan pada"
 
 #: survey/templates/editor/public_results.html:301
 msgid "Back to live"
-msgstr ""
+msgstr "Kembali ke mode langsung"
 
 #: survey/templates/editor/public_results.html:314
 #: survey/templates/editor/survey_detail.html:336
 msgid "Live preview"
-msgstr ""
+msgstr "Pratinjau langsung"
 
 #: survey/templates/editor/public_results.html:315
 msgid "Refresh preview"
-msgstr ""
+msgstr "Segarkan pratinjau"
 
 #: survey/templates/editor/survey_create.html:195
 msgid "Create New Survey"
-msgstr ""
+msgstr "Buat survei baru"
 
 #: survey/templates/editor/survey_create.html:224
 msgid ""
 "The languages respondents can take this survey in. You can add more later."
 msgstr ""
+"Bahasa yang dapat dipakai responden untuk mengisi survei ini. Anda bisa "
+"menambah nanti."
 
 #: survey/templates/editor/survey_create.html:231
 msgid "Let AI draft it"
-msgstr ""
+msgstr "Biarkan AI menyusun drafnya"
 
 #: survey/templates/editor/survey_create.html:231
 msgid "optional"
-msgstr ""
+msgstr "opsional"
 
 #: survey/templates/editor/survey_create.html:233
 msgid ""
 "Describe your project and we'll generate sections, questions and "
 "translations — then you edit whatever you like."
 msgstr ""
+"Ceritakan proyek Anda dan kami akan membuat bagian, pertanyaan, serta "
+"terjemahannya — selanjutnya Anda menyunting sesuka hati."
 
 #: survey/templates/editor/survey_create.html:247
 msgid "Try an example:"
-msgstr ""
+msgstr "Coba contoh:"
 
 #: survey/templates/editor/survey_create.html:249
 msgid ""
 "Where do cyclists feel unsafe in our city, and which routes need protected "
 "bike lanes"
 msgstr ""
+"Di mana pesepeda merasa tidak aman di kota kami, dan rute mana yang "
+"memerlukan jalur sepeda terlindung"
 
 #: survey/templates/editor/survey_create.html:250
 msgid "Residents who cycle or would like to start, all ages"
-msgstr ""
+msgstr "Warga yang bersepeda atau ingin mulai bersepeda, segala usia"
 
 #: survey/templates/editor/survey_create.html:251
 msgid "Unsafe spots, dangerous crossings, routes that need protected lanes"
 msgstr ""
+"Titik rawan, penyeberangan berbahaya, rute yang butuh jalur terlindung"
 
 #: survey/templates/editor/survey_create.html:252
 msgid "Bike lane feedback"
-msgstr ""
+msgstr "Masukan tentang jalur sepeda"
 
 #: survey/templates/editor/survey_create.html:254
 msgid ""
@@ -3591,99 +4297,134 @@ msgid ""
 "during the annual count, and how does their population compare to gray "
 "squirrels and to cats — their main predator"
 msgstr ""
+"Berapa banyak tupai putih (albino) yang hidup di kota kami, di mana mereka "
+"terlihat saat penghitungan tahunan, dan bagaimana populasinya dibandingkan "
+"tupai kelabu serta kucing — pemangsa utamanya"
 
 #: survey/templates/editor/survey_create.html:255
 msgid "Local residents and count volunteers, all ages"
-msgstr ""
+msgstr "Warga setempat dan relawan penghitungan, segala usia"
 
 #: survey/templates/editor/survey_create.html:256
 msgid ""
 "Each sighting — white squirrel, gray squirrel, or cat — with the number seen"
 " at that spot"
 msgstr ""
+"Setiap penampakan — tupai putih, tupai kelabu, atau kucing — beserta jumlah "
+"yang terlihat di titik itu"
 
 #: survey/templates/editor/survey_create.html:257
 msgid "White squirrel count"
-msgstr ""
+msgstr "Penghitungan tupai putih"
 
 #: survey/templates/editor/survey_create.html:259
 msgid ""
 "Where does summer heat feel most unbearable in our city, and which places do"
 " people avoid or use as cool refuges during heatwaves"
 msgstr ""
+"Di mana panas musim panas terasa paling menyiksa di kota kami, dan tempat "
+"mana yang dihindari atau dipakai orang sebagai tempat berteduh saat "
+"gelombang panas"
 
 #: survey/templates/editor/survey_create.html:260
 msgid ""
 "Residents who spend time outdoors in summer, including older people and "
 "parents with children"
 msgstr ""
+"Warga yang beraktivitas di luar ruangan saat musim panas, termasuk lansia "
+"dan orang tua yang membawa anak"
 
 #: survey/templates/editor/survey_create.html:261
 msgid ""
 "Spots that feel dangerously hot and the cool places used to escape the heat"
 msgstr ""
+"Titik yang terasa panas berbahaya dan tempat sejuk untuk menghindari panas"
 
 #: survey/templates/editor/survey_create.html:262
 msgid "Heatwave map"
-msgstr ""
+msgstr "Peta gelombang panas"
 
 #: survey/templates/editor/survey_create.html:263
 msgid "× Clear"
-msgstr ""
+msgstr "× Bersihkan"
 
 #: survey/templates/editor/survey_create.html:279
 msgid ""
 "Write this in whatever language you think in — Deutsch, Español, Polski, "
 "Bahasa Indonesia. The draft comes out in the languages you picked above."
 msgstr ""
+"Tulislah dalam bahasa yang Anda pakai berpikir — Deutsch, Español, Polski, "
+"Bahasa Indonesia. Drafnya akan keluar dalam bahasa yang Anda pilih di atas."
 
 #: survey/templates/editor/survey_create.html:291
 msgid "Add details (optional)"
-msgstr ""
+msgstr "Tambahkan detail (opsional)"
 
 #: survey/templates/editor/survey_create.html:302
 msgid "Kind of project"
-msgstr ""
+msgstr "Jenis proyek"
 
 #: survey/templates/editor/survey_create.html:310
 msgid "Steers the draft toward question sets that work for this scenario."
 msgstr ""
+"Mengarahkan draf ke kumpulan pertanyaan yang cocok untuk skenario ini."
+
+#: survey/templates/editor/survey_create.html:328
+msgid "Draft my survey"
+msgstr "Susun survei saya"
 
 #: survey/templates/editor/survey_create.html:328
 msgid "Generate draft"
-msgstr ""
+msgstr "Buat draf"
 
 #: survey/templates/editor/survey_create.html:340
 msgid "✨ Next — choose the place"
-msgstr ""
+msgstr "✨ Berikutnya — pilih lokasinya"
 
 #: survey/templates/editor/survey_create.html:343
 msgid ""
 "Your description is processed by an AI provider to build the draft. Survey "
 "answers are never sent to AI providers."
 msgstr ""
+"Deskripsi Anda diproses penyedia AI untuk menyusun draf. Jawaban survei "
+"tidak pernah dikirim ke penyedia AI."
+
+#: survey/templates/editor/survey_create.html:356
+msgid "You already described your project — draft it with AI (~10 s)?"
+msgstr "Proyek Anda sudah dijelaskan — susun drafnya dengan AI (~10 dtk)?"
 
 #: survey/templates/editor/survey_create.html:358
 msgid "✨ Generate draft"
-msgstr ""
+msgstr "✨ Buat draf"
 
 #: survey/templates/editor/survey_create.html:359
 msgid "Create empty anyway"
-msgstr ""
+msgstr "Tetap buat yang kosong"
+
+#: survey/templates/editor/survey_create.html:372
+#: survey/templates/editor/survey_create.html:452
+msgid "Skip and start from scratch"
+msgstr "Lewati dan mulai dari nol"
+
+#: survey/templates/editor/survey_create.html:372
+msgid "Create empty"
+msgstr "Buat kosong"
 
 #: survey/templates/editor/survey_create.html:381
 msgid "Create Survey"
-msgstr ""
+msgstr "Buat survei"
 
 #: survey/templates/editor/survey_create.html:393
 msgid ""
 "Languages, thanks page, visibility, and other options — later in "
 "<strong>Survey settings</strong>."
 msgstr ""
+"Bahasa, halaman terima kasih, visibilitas, dan opsi lain — nanti di "
+"<strong>pengaturan survei</strong>."
 
 #: survey/templates/editor/survey_create.html:398
 msgid "Skip to dashboard →"
-msgstr ""
+msgstr "Langsung ke dasbor →"
 
 #: survey/templates/editor/survey_create.html:407
 #: survey/templates/partials/survey_section_partial.html:87
@@ -3694,19 +4435,19 @@ msgstr "Kembali"
 
 #: survey/templates/editor/survey_create.html:408
 msgid "Where?"
-msgstr ""
+msgstr "Di mana?"
 
 #: survey/templates/editor/survey_create.html:412
 msgid "The map people will see"
-msgstr ""
+msgstr "Peta yang akan dilihat orang"
 
 #: survey/templates/editor/survey_create.html:413
 msgid "This is"
-msgstr ""
+msgstr "Inilah"
 
 #: survey/templates/editor/survey_create.html:413
 msgid "exactly"
-msgstr ""
+msgstr "persis"
 
 #: survey/templates/editor/survey_create.html:413
 msgid ""
@@ -3714,274 +4455,364 @@ msgid ""
 "a base map (top-right) to frame it — the pin marks the centre they'll land "
 "on."
 msgstr ""
+"yang dilihat responden saat membuka survei. Geser, perbesar, cari, atau "
+"pilih peta dasar (kanan atas) untuk mengatur bingkainya — pin menandai titik"
+" tengah tempat mereka mendarat."
 
 #: survey/templates/editor/survey_create.html:434
 msgid "Respondents will open the map exactly like this"
-msgstr ""
+msgstr "Responden akan membuka peta persis seperti ini"
 
 #: survey/templates/editor/survey_create.html:435
 msgid "Create survey"
-msgstr ""
-
-#: survey/templates/editor/survey_create.html:452
-msgid "Skip and start from scratch"
-msgstr ""
+msgstr "Buat survei"
 
 #: survey/templates/editor/survey_create.html:454
 msgid "Next — choose the place"
-msgstr ""
+msgstr "Berikutnya — pilih lokasinya"
+
+#: survey/templates/editor/survey_create.html:549
+msgid "Respondents open here — centre"
+msgstr "Responden mulai di sini — titik tengah"
+
+#: survey/templates/editor/survey_create.html:550
+msgid "zoom"
+msgstr "perbesaran"
+
+#: survey/templates/editor/survey_create.html:605
+msgid "Search for a place — city, address, landmark…"
+msgstr "Cari tempat — kota, alamat, penanda …"
+
+#: survey/templates/editor/survey_detail.html:10
+#, python-format
+msgid "Draft of %(name)s"
+msgstr "Draf dari %(name)s"
 
 #: survey/templates/editor/survey_detail.html:35
 msgid "read-only"
+msgstr "baca-saja"
+
+#: survey/templates/editor/survey_detail.html:39
+msgid "Nothing has been collected yet, so this can go back to editing"
 msgstr ""
+"Belum ada yang terkumpul, jadi survei ini bisa kembali ke penyuntingan"
+
+#: survey/templates/editor/survey_detail.html:39
+msgid "Published and closed surveys cannot be edited"
+msgstr "Survei yang sudah terbit dan yang ditutup tidak dapat disunting"
 
 #: survey/templates/editor/survey_detail.html:41
 #: survey/templates/editor/survey_detail.html:185
 msgid "Back to editing"
-msgstr ""
+msgstr "Kembali menyunting"
+
+#: survey/templates/editor/survey_detail.html:43
+msgid "Go to draft"
+msgstr "Buka draf"
 
 #: survey/templates/editor/survey_detail.html:47
 msgid "Draft new version"
-msgstr ""
+msgstr "Buat versi baru"
 
 #: survey/templates/editor/survey_detail.html:52
 #: survey/templates/editor/survey_detail.html:66
 msgid "Open the survey as a respondent"
-msgstr ""
+msgstr "Buka survei sebagai responden"
+
+#: survey/templates/editor/survey_detail.html:63
+msgid "Draft — not collecting responses"
+msgstr "Draf — tidak mengumpulkan tanggapan"
+
+#: survey/templates/editor/survey_detail.html:63
+msgid "Testing — invite-link access"
+msgstr "Uji coba — akses lewat tautan undangan"
+
+#: survey/templates/editor/survey_detail.html:63
+#, python-format
+msgid "%(counter)s response"
+msgid_plural "%(counter)s responses"
+msgstr[0] "%(counter)s tanggapan"
+
+#: survey/templates/editor/survey_detail.html:63
+msgid "Sections, questions & survey settings"
+msgstr "Bagian, pertanyaan, dan pengaturan survei"
 
 #: survey/templates/editor/survey_detail.html:107
 #: survey/templates/editor/survey_detail.html:109
 msgid "🌐 Publish"
-msgstr ""
+msgstr "🌐 Terbitkan"
 
 #: survey/templates/editor/survey_detail.html:111
 msgid "🔗 Share test link"
-msgstr ""
+msgstr "🔗 Bagikan tautan uji"
 
 #: survey/templates/editor/survey_detail.html:117
 #: survey/templates/editor/survey_detail.html:119
 #: survey/templates/editor/survey_detail.html:123
 msgid "✎ Edit"
-msgstr ""
+msgstr "✎ Sunting"
 
 #: survey/templates/editor/survey_detail.html:128
 msgid ""
 "Take the survey the way a respondent will — real page, real map, real submit"
 msgstr ""
+"Isi survei seperti yang akan dilakukan responden — halaman asli, peta asli, "
+"kiriman asli"
 
 #: survey/templates/editor/survey_detail.html:128
 msgid "↗ Open as respondent"
-msgstr ""
+msgstr "↗ Buka sebagai responden"
 
 #: survey/templates/editor/survey_detail.html:131
 msgid "More survey actions"
-msgstr ""
+msgstr "Tindakan survei lainnya"
 
 #: survey/templates/editor/survey_detail.html:138
 msgid "No extra actions"
-msgstr ""
+msgstr "Tidak ada tindakan tambahan"
 
 #: survey/templates/editor/survey_detail.html:149
 msgid "Test mode"
-msgstr ""
+msgstr "Mode uji"
 
 #: survey/templates/editor/survey_detail.html:159
 msgid "Access password"
-msgstr ""
+msgstr "Kata sandi akses"
 
 #: survey/templates/editor/survey_detail.html:167
 msgid ""
 "Take the survey yourself and send the link to colleagues — before going "
 "public. Test responses can be cleared with one switch when you publish."
 msgstr ""
+"Isi sendiri surveinya dan kirim tautannya ke rekan kerja — sebelum dibuka "
+"untuk publik. Tanggapan uji dapat dihapus dengan satu sakelar saat Anda "
+"menerbitkan."
 
 #: survey/templates/editor/survey_detail.html:169
 msgid "🌐 Publish — open for everyone"
-msgstr ""
+msgstr "🌐 Terbitkan — buka untuk semua orang"
 
 #: survey/templates/editor/survey_detail.html:178
 msgid "This survey is live and collecting responses"
-msgstr ""
+msgstr "Survei ini sudah terbit dan sedang mengumpulkan tanggapan"
 
 #: survey/templates/editor/survey_detail.html:180
 msgid ""
 "Edits are made in a new version. The current version keeps collecting until "
 "you publish the update."
 msgstr ""
+"Perubahan dilakukan pada versi baru. Versi saat ini tetap mengumpulkan "
+"tanggapan sampai Anda menerbitkan pembaruannya."
 
 #: survey/templates/editor/survey_detail.html:183
 msgid "Continue editing the draft →"
-msgstr ""
+msgstr "Lanjutkan menyunting draf →"
 
 #: survey/templates/editor/survey_detail.html:189
 msgid "Open a new version"
-msgstr ""
+msgstr "Buka versi baru"
 
 #: survey/templates/editor/survey_detail.html:227
 msgid "Show sections"
-msgstr ""
+msgstr "Tampilkan bagian"
 
 #: survey/templates/editor/survey_detail.html:228
 #: survey/templates/editor/survey_detail.html:243
 msgid "Sections"
-msgstr ""
+msgstr "Bagian"
 
 #: survey/templates/editor/survey_detail.html:244
 msgid "Hide sidebar"
-msgstr ""
+msgstr "Sembunyikan panel samping"
 
 #: survey/templates/editor/survey_detail.html:267
 msgid "New Section"
-msgstr ""
+msgstr "Bagian baru"
 
 #: survey/templates/editor/survey_detail.html:276
 msgid "Paste section"
-msgstr ""
+msgstr "Tempel bagian"
 
 #: survey/templates/editor/survey_detail.html:320
 msgid "No sections yet. Create one to get started."
-msgstr ""
+msgstr "Belum ada bagian. Buat satu untuk memulai."
 
 #: survey/templates/editor/survey_detail.html:329
 msgid "Show preview"
-msgstr ""
+msgstr "Tampilkan pratinjau"
 
 #: survey/templates/editor/survey_detail.html:344
 msgid "Hide preview"
-msgstr ""
+msgstr "Sembunyikan pratinjau"
 
 #: survey/templates/editor/survey_detail.html:392
 msgid "Delete this draft survey and everything in it? This can't be undone."
 msgstr ""
+"Hapus draf survei ini beserta seluruh isinya? Tindakan ini tidak dapat "
+"dibatalkan."
+
+#: survey/templates/editor/survey_detail.html:653
+msgid "No sections yet. Click “New Section” to add one."
+msgstr "Belum ada bagian. Klik „Bagian baru” untuk menambahkannya."
 
 #: survey/templates/editor/survey_settings.html:26
 msgid "General"
-msgstr ""
+msgstr "Umum"
 
 #: survey/templates/editor/survey_settings.html:78
 msgid "Style"
-msgstr ""
+msgstr "Gaya"
 
 #: survey/templates/editor/survey_settings.html:89
 msgid ""
 "Default look for rating questions. Individual questions can override this in"
 " the question editor."
 msgstr ""
+"Tampilan bawaan untuk pertanyaan penilaian. Tiap pertanyaan dapat menimpanya"
+" di editor pertanyaan."
 
 #: survey/templates/editor/survey_settings.html:100
 msgid ""
 "Colors the survey's buttons and the form-page background tint. Off = "
 "platform default."
 msgstr ""
+"Mewarnai tombol survei dan latar halaman formulir. Nonaktif = bawaan "
+"platform."
 
 #: survey/templates/editor/survey_settings.html:118
 msgid "Default Map Position"
-msgstr ""
+msgstr "Posisi peta bawaan"
 
 #: survey/templates/editor/survey_settings.html:120
 msgid ""
 "Set the default starting position and zoom for the survey map. Sections can "
 "override this individually."
 msgstr ""
+"Tetapkan posisi awal dan perbesaran bawaan untuk peta survei. Tiap bagian "
+"dapat menimpanya."
 
 #: survey/templates/editor/survey_settings.html:145
 msgid "Save Map Position"
-msgstr ""
+msgstr "Simpan posisi peta"
 
 #: survey/templates/editor/survey_settings.html:229
 #: survey/templates/editor/survey_settings_modal.html:37
 msgid "Password & Test Access"
-msgstr ""
+msgstr "Kata sandi dan akses uji"
 
 #: survey/templates/editor/survey_share.html:81
 msgid "This survey is still a Draft"
-msgstr ""
+msgstr "Survei ini masih berupa draf"
 
 #: survey/templates/editor/survey_share.html:82
 msgid ""
 "Only you can open it, in Preview. Anyone else who opens the link will get a "
 "<strong>404</strong> page. Publish it before you share the link."
 msgstr ""
+"Hanya Anda yang dapat membukanya, lewat pratinjau. Orang lain yang membuka "
+"tautannya akan melihat halaman <strong>404</strong>. Terbitkan dulu sebelum "
+"membagikan tautannya."
 
 #: survey/templates/editor/survey_share.html:84
 msgid "This survey is in Testing"
-msgstr ""
+msgstr "Survei ini sedang dalam uji coba"
 
 #: survey/templates/editor/survey_share.html:85
 msgid ""
 "The public link isn't live yet — it only works through your private test "
 "link. Publish to open the survey for responses."
 msgstr ""
+"Tautan publiknya belum aktif — survei hanya dapat dibuka lewat tautan uji "
+"pribadi Anda. Terbitkan untuk membukanya bagi tanggapan."
 
 #: survey/templates/editor/survey_share.html:87
 msgid "This survey is Closed"
-msgstr ""
+msgstr "Survei ini ditutup"
 
 #: survey/templates/editor/survey_share.html:88
 msgid ""
 "It's no longer accepting responses, so a shared link won't collect anything."
 msgstr ""
+"Survei tidak lagi menerima tanggapan, jadi tautan yang dibagikan tidak akan "
+"mengumpulkan apa pun."
 
 #: survey/templates/editor/survey_share.html:90
 msgid "This survey isn't published"
-msgstr ""
+msgstr "Survei ini belum diterbitkan"
 
 #: survey/templates/editor/survey_share.html:91
 msgid "The public link won't work until the survey is published."
-msgstr ""
+msgstr "Tautan publik tidak akan berfungsi sampai survei diterbitkan."
+
+#: survey/templates/editor/survey_share.html:100
+#| msgid "Finish editing"
+msgid "finish it in"
+msgstr "selesaikan itu di"
 
 #: survey/templates/editor/survey_share.html:101
 msgid "before you can publish."
-msgstr ""
+msgstr "sebelum Anda dapat menerbitkan."
 
 #: survey/templates/editor/survey_share.html:103
 msgid "Ask the survey owner to publish it."
-msgstr ""
+msgstr "Mintalah pemilik survei untuk menerbitkannya."
 
 #: survey/templates/editor/survey_share.html:111
 msgid "Share your survey"
-msgstr ""
+msgstr "Bagikan survei Anda"
 
 #: survey/templates/editor/survey_share.html:112
 msgid ""
 "Grab the direct link below, or create tracking links to see which channels "
 "bring the most responses."
 msgstr ""
+"Salin tautan langsung di bawah, atau buat tautan terlacak untuk melihat "
+"saluran mana yang membawa tanggapan terbanyak."
 
 #: survey/templates/editor/survey_share.html:117
 msgid "Survey link"
-msgstr ""
+msgstr "Tautan survei"
 
 #: survey/templates/editor/survey_share.html:119
 msgid ""
 "Anyone with this link can open your survey. Copy it, or show it as a QR "
 "code."
 msgstr ""
+"Siapa pun yang punya tautan ini dapat membuka survei Anda. Salin tautannya "
+"atau tampilkan sebagai kode QR."
 
 #: survey/templates/editor/survey_share.html:124
 #: survey/templates/editor/survey_share.html:144
 msgid "Copy link"
-msgstr ""
+msgstr "Salin tautan"
 
 #: survey/templates/editor/survey_share.html:127
 msgid "QR code"
-msgstr ""
+msgstr "Kode QR"
 
 #: survey/templates/editor/survey_share.html:139
 msgid ""
 "Your public results page is live — share it so respondents can see what "
 "others said."
 msgstr ""
+"Halaman hasil publik Anda sudah terbit — bagikan agar responden dapat "
+"melihat jawaban orang lain."
 
 #: survey/templates/editor/survey_share.html:150
 msgid ""
 "We drafted a public results page from your questions. Review it and publish "
 "to give your audience a live view of the answers."
 msgstr ""
+"Kami menyusun halaman hasil publik dari pertanyaan Anda. Periksa lalu "
+"terbitkan agar audiens Anda dapat melihat jawaban secara langsung."
+
+#: survey/templates/editor/survey_share.html:153
+msgid "Review & publish the results page"
+msgstr "Periksa dan terbitkan halaman hasil"
 
 #: survey/templates/editor/survey_share.html:161
 msgid "Track where responses come from"
-msgstr ""
+msgstr "Lacak dari mana tanggapan datang"
 
 #: survey/templates/editor/survey_share.html:163
 msgid ""
@@ -3989,32 +4820,37 @@ msgid ""
 "Every response that arrives through it is tagged with its source, so you can"
 " compare channels in"
 msgstr ""
+"Buat tautan terpisah untuk tiap saluran — buletin, Instagram, poster cetak. "
+"Setiap tanggapan yang masuk lewat tautan itu ditandai sumbernya, jadi Anda "
+"bisa membandingkan saluran di"
 
 #: survey/templates/editor/survey_share.html:185
 msgid "Create Link"
-msgstr ""
+msgstr "Buat tautan"
 
 #: survey/templates/editor/survey_share.html:192
 msgid "Your Tracking Links"
-msgstr ""
+msgstr "Tautan terlacak Anda"
 
 #: survey/templates/editor/survey_share.html:200
 msgid "Actions"
-msgstr ""
+msgstr "Tindakan"
 
 #: survey/templates/editor/survey_share.html:210
 msgid "Copy URL"
-msgstr ""
+msgstr "Salin URL"
 
 #: survey/templates/editor/survey_share.html:213
 msgid "QR Code"
-msgstr ""
+msgstr "Kode QR"
 
 #: survey/templates/editor/survey_share.html:240
 msgid ""
 "See how each link performs — started, completed and completion rate per "
 "source — in"
 msgstr ""
+"Lihat kinerja tiap tautan — dimulai, selesai, dan rasio penyelesaian per "
+"sumber — di"
 
 #: survey/templates/editor/survey_share.html:244
 #, python-format
@@ -4023,42 +4859,45 @@ msgid ""
 "performance in <a href=\"%(analytics_url)s#traffic-"
 "sources\">Responses&nbsp;→&nbsp;Traffic&nbsp;Sources</a>."
 msgstr ""
+"Belum ada tautan terlacak. Buat satu di atas, lalu pantau kinerja tiap "
+"sumber di <a href=\"%(analytics_url)s#traffic-"
+"sources\">Tanggapan&nbsp;→&nbsp;Sumber&nbsp;trafik</a>."
 
 #: survey/templates/file_upload.html:55
 msgid "Remove file"
-msgstr ""
+msgstr "Hapus berkas"
 
 #: survey/templates/file_upload.html:70
 msgid "Take photo"
-msgstr ""
+msgstr "Ambil foto"
 
 #: survey/templates/file_upload.html:74
 msgid "Add photo"
-msgstr ""
+msgstr "Tambahkan foto"
 
 #: survey/templates/file_upload.html:79
 msgid "Add audio file"
-msgstr ""
+msgstr "Tambahkan berkas audio"
 
 #: survey/templates/file_upload.html:80
 msgid "Attach file"
-msgstr ""
+msgstr "Lampirkan berkas"
 
 #: survey/templates/file_upload.html:86
 msgid "Record"
-msgstr ""
+msgstr "Rekam"
 
 #: survey/templates/file_upload.html:96
 msgid "Stop"
-msgstr ""
+msgstr "Berhenti"
 
 #: survey/templates/file_upload.html:102
 msgid "Uploading"
-msgstr ""
+msgstr "Mengunggah"
 
 #: survey/templates/file_upload.html:108
 msgid "Retry"
-msgstr ""
+msgstr "Coba lagi"
 
 #: survey/templates/for_consultants.html:4
 msgid ""
@@ -5617,124 +6456,135 @@ msgstr ""
 msgid "See the Social Pinpoint comparison"
 msgstr ""
 
+#: survey/templates/org/invitation_email.html:21
+#: survey/templates/org/invitation_landing.html:24
+msgid "You're Invited!"
+msgstr "Anda diundang!"
+
+#: survey/templates/org/invitation_email.html:23
+#, python-format
+msgid ""
+"<strong>%(inviter)s</strong> has invited you to join "
+"<strong>%(org_name)s</strong> as <strong>%(role)s</strong>."
+msgstr ""
+"<strong>%(inviter)s</strong> mengundang Anda bergabung dengan "
+"<strong>%(org_name)s</strong> sebagai <strong>%(role)s</strong>."
+
+#: survey/templates/org/invitation_email.html:30
+msgid "Accept Invitation"
+msgstr "Terima undangan"
+
+#: survey/templates/org/invitation_email.html:44
+#: survey/templates/org/invitation_landing.html:41
+msgid "This invitation expires in 7 days."
+msgstr "Undangan ini kedaluwarsa dalam 7 hari."
+
 #: survey/templates/org/invitation_landing.html:4
 msgid "Invitation"
-msgstr ""
+msgstr "Undangan"
 
 #: survey/templates/org/invitation_landing.html:13
 msgid "Invitation Unavailable"
-msgstr ""
-
-#: survey/templates/org/invitation_landing.html:24
-msgid "You're Invited!"
-msgstr ""
+msgstr "Undangan tidak tersedia"
 
 #: survey/templates/org/invitation_landing.html:27
 msgid "has invited you to join"
-msgstr ""
+msgstr "mengundang Anda bergabung dengan"
 
 #: survey/templates/org/invitation_landing.html:29
 msgid "as"
-msgstr ""
+msgstr "sebagai"
 
 #: survey/templates/org/invitation_landing.html:34
 msgid "Sign In to Accept"
-msgstr ""
-
-#: survey/templates/org/invitation_landing.html:41
-msgid "This invitation expires in 7 days."
-msgstr ""
+msgstr "Masuk untuk menerima"
 
 #: survey/templates/org/org_members.html:11
 msgid "Members & Invitations"
-msgstr ""
+msgstr "Anggota dan undangan"
 
 #: survey/templates/org/org_members.html:36
 msgid "Joined"
-msgstr ""
+msgstr "Bergabung"
 
 #: survey/templates/org/org_members.html:43
 msgid "you"
-msgstr ""
+msgstr "Anda"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
-msgstr ""
+msgstr "Undang anggota"
 
 #: survey/templates/org/org_members.html:101
 msgid "Send"
-msgstr ""
+msgstr "Kirim"
 
 #: survey/templates/org/org_members.html:108
 msgid "Pending Invitations"
-msgstr ""
+msgstr "Undangan tertunda"
 
 #: survey/templates/org/org_members.html:112
 msgid "Sent"
-msgstr ""
+msgstr "Terkirim pada"
 
 #: survey/templates/org/org_new.html:11
 msgid "Create a workspace for your team."
-msgstr ""
+msgstr "Buat ruang kerja untuk tim Anda."
 
 #: survey/templates/org/org_new.html:16
 msgid "Organization Name"
-msgstr ""
-
-#: survey/templates/org/org_new.html:19
-msgid "Create"
-msgstr ""
+msgstr "Nama organisasi"
 
 #: survey/templates/org/org_new.html:23
 #: survey/templates/org/org_settings.html:36
 msgid "Back to Dashboard"
-msgstr ""
+msgstr "Kembali ke dasbor"
 
 #: survey/templates/org/org_settings.html:10
 msgid "Organization Settings"
-msgstr ""
+msgstr "Pengaturan organisasi"
 
 #: survey/templates/org/org_settings.html:26
 msgid "Slug"
-msgstr ""
+msgstr "Pengenal"
 
 #: survey/templates/org/org_settings.html:28
 msgid "URL identifier:"
-msgstr ""
+msgstr "Pengenal pada URL:"
 
 #: survey/templates/partials/_faq_section.html:10
 msgid "FAQ"
-msgstr ""
+msgstr "FAQ"
 
 #: survey/templates/partials/_faq_section.html:11
 msgid "Frequently asked questions"
-msgstr ""
+msgstr "Pertanyaan yang sering diajukan"
 
 #: survey/templates/partials/_made_with_mapsurvey.html:16
 #: survey/templates/public_results.html:121
 msgid "Made with"
-msgstr ""
+msgstr "Dibuat dengan"
 
 #: survey/templates/partials/_made_with_mapsurvey.html:17
 msgid "create your own free map survey"
-msgstr ""
+msgstr "buat survei peta gratis milik Anda sendiri"
 
 #: survey/templates/partials/survey_section_partial.html:36
 msgid "A few required questions still need an answer."
-msgstr ""
+msgstr "Beberapa pertanyaan wajib masih perlu dijawab."
 
 #: survey/templates/partials/survey_section_partial.html:39
 msgid "This question is required"
-msgstr ""
+msgstr "Pertanyaan ini wajib diisi"
 
 #: survey/templates/partials/survey_section_partial.html:97
 #: survey/templates/survey_section_block.html:22
 msgid "Finish"
-msgstr "Selesai"
+msgstr "Selesaikan"
 
 #: survey/templates/partials/survey_section_partial.html:109
 msgid "This is the last section — respondents finish here"
-msgstr ""
+msgstr "Ini bagian terakhir — di sini responden selesai"
 
 #: survey/templates/participatory_budgeting.html:4
 msgid "Participatory Budgeting on a Map — Open-Source Tool | Mapsurvey"
@@ -6005,49 +6855,51 @@ msgstr ""
 #: survey/templates/public_results.html:7
 #: survey/templates/public_results.html:77
 msgid "Survey results"
-msgstr ""
+msgstr "Hasil survei"
 
 #: survey/templates/public_results.html:72
 msgid "Unlisted — viewable by direct link only, not indexed."
 msgstr ""
+"Tak terdaftar — hanya dapat dilihat lewat tautan langsung, tidak diindeks."
 
 #: survey/templates/public_results.html:86
 msgid "Take the survey"
-msgstr ""
+msgstr "Isi survei"
 
 #: survey/templates/public_results.html:90
 msgid "Data as of"
-msgstr ""
+msgstr "Data per"
 
 #: survey/templates/public_results.html:95
 msgid "This snapshot needs to be refreshed by the survey owner."
-msgstr ""
+msgstr "Cuplikan ini perlu disegarkan oleh pemilik survei."
 
 #: survey/templates/public_results.html:97
 msgid "No results to show yet."
-msgstr ""
+msgstr "Belum ada hasil untuk ditampilkan."
 
 #: survey/templates/public_results.html:111
 msgid "Small groups are masked to protect privacy."
-msgstr ""
+msgstr "Kelompok kecil disamarkan demi melindungi privasi."
 
 #: survey/templates/registration/login.html:14
 msgid ""
 "Your account doesn't have access to this page. Please sign in with a "
 "different account."
 msgstr ""
+"Akun Anda tidak punya akses ke halaman ini. Masuklah dengan akun lain."
 
 #: survey/templates/registration/login.html:16
 msgid "Please sign in to continue."
-msgstr ""
+msgstr "Masuk untuk melanjutkan."
 
 #: survey/templates/registration/login.html:19
 msgid "Welcome back to Mapsurvey."
-msgstr ""
+msgstr "Selamat datang kembali di Mapsurvey."
 
 #: survey/templates/registration/login.html:25
 msgid "Invalid username/email or password. Please try again."
-msgstr ""
+msgstr "Nama pengguna, email, atau kata sandi salah. Coba lagi."
 
 #: survey/templates/registration/login.html:29
 #, python-format
@@ -6055,115 +6907,126 @@ msgid ""
 "Haven't activated your account yet? <a href=\"%(resend_url)s\">Resend the "
 "activation email</a>."
 msgstr ""
+"Belum mengaktifkan akun Anda? <a href=\"%(resend_url)s\">Kirim ulang email "
+"aktivasi</a>."
 
 #: survey/templates/registration/login.html:44
 msgid "Username or Email"
-msgstr ""
+msgstr "Nama pengguna atau email"
 
 #: survey/templates/registration/login.html:57
 msgid "Forgot password?"
-msgstr ""
+msgstr "Lupa kata sandi?"
 
 #: survey/templates/registration/login.html:59
 msgid "Create an account"
-msgstr ""
+msgstr "Buat akun baru"
 
 #: survey/templates/registration/password_reset_complete.html:4
 #: survey/templates/registration/password_reset_complete.html:11
 msgid "Password Changed"
-msgstr ""
+msgstr "Kata sandi diubah"
 
 #: survey/templates/registration/password_reset_complete.html:12
 msgid "Your password has been set successfully."
-msgstr ""
+msgstr "Kata sandi Anda berhasil diatur."
 
 #: survey/templates/registration/password_reset_confirm.html:4
 #: survey/templates/registration/password_reset_confirm.html:11
 msgid "Set New Password"
-msgstr ""
+msgstr "Atur kata sandi baru"
 
 #: survey/templates/registration/password_reset_confirm.html:12
 msgid "Enter and confirm your new password."
-msgstr ""
+msgstr "Masukkan dan konfirmasi kata sandi baru Anda."
 
 #: survey/templates/registration/password_reset_confirm.html:17
 msgid "New password"
-msgstr ""
+msgstr "Kata sandi baru"
 
 #: survey/templates/registration/password_reset_confirm.html:26
 msgid "Confirm password"
-msgstr ""
+msgstr "Konfirmasi kata sandi"
 
 #: survey/templates/registration/password_reset_confirm.html:34
 msgid "Change Password"
-msgstr ""
+msgstr "Ubah kata sandi"
 
 #: survey/templates/registration/password_reset_confirm.html:39
 msgid "Link Invalid"
-msgstr ""
+msgstr "Tautan tidak valid"
 
 #: survey/templates/registration/password_reset_confirm.html:40
 msgid "This password reset link is invalid or has already been used."
 msgstr ""
+"Tautan penyetelan ulang kata sandi ini tidak valid atau sudah dipakai."
 
 #: survey/templates/registration/password_reset_confirm.html:42
 msgid "Request a new reset link"
-msgstr ""
+msgstr "Minta tautan baru"
 
 #: survey/templates/registration/password_reset_done.html:4
 msgid "Email Sent"
-msgstr ""
+msgstr "Email terkirim"
 
 #: survey/templates/registration/password_reset_done.html:12
 msgid ""
 "We've emailed you instructions for resetting your password. If you don't "
 "receive it in a few minutes, check your spam folder."
 msgstr ""
+"Kami mengirimkan petunjuk penyetelan ulang kata sandi lewat email. Jika "
+"tidak sampai dalam beberapa menit, periksa folder spam Anda."
 
 #: survey/templates/registration/password_reset_form.html:4
 #: survey/templates/registration/password_reset_form.html:10
 msgid "Reset Password"
-msgstr ""
+msgstr "Setel ulang kata sandi"
 
 #: survey/templates/registration/password_reset_form.html:11
 msgid ""
 "Enter your email address and we'll send you a link to reset your password."
 msgstr ""
+"Masukkan alamat email Anda dan kami akan mengirim tautan untuk menyetel "
+"ulang kata sandi."
 
 #: survey/templates/registration/password_reset_form.html:21
 msgid "Email address"
-msgstr ""
+msgstr "Alamat email"
 
 #: survey/templates/registration/password_reset_form.html:24
 msgid "Send Reset Link"
-msgstr ""
+msgstr "Kirim tautannya"
 
 #: survey/templates/registration/rate_limited.html:12
 #: survey/templates/registration/rate_limited.html:18
 msgid "Too many attempts"
-msgstr ""
+msgstr "Terlalu banyak percobaan"
 
 #: survey/templates/registration/rate_limited.html:20
 msgid ""
 "We've had a lot of sign-up attempts from your connection, so we've paused "
 "new ones for a short while."
 msgstr ""
+"Ada banyak percobaan pendaftaran dari koneksi Anda, jadi kami menjedanya "
+"sebentar."
 
 #: survey/templates/registration/rate_limited.html:24
 #, python-format
 msgid "Please try again in about a minute."
 msgid_plural "Please try again in about %(minutes)s minutes."
-msgstr[0] ""
+msgstr[0] "Coba lagi sekitar %(minutes)s menit."
 
 #: survey/templates/registration/rate_limited.html:28
 msgid ""
 "If you already have a Mapsurvey account, you can sign in instead — or reset "
 "your password if you don't remember it."
 msgstr ""
+"Jika Anda sudah punya akun Mapsurvey, cukup masuk — atau setel ulang kata "
+"sandi bila lupa."
 
 #: survey/templates/registration/rate_limited.html:34
 msgid "Reset password"
-msgstr ""
+msgstr "Setel ulang kata sandi Anda"
 
 #: survey/templates/services.html:4
 msgid "Expert help with your map survey | Mapsurvey"
@@ -6545,27 +7408,21 @@ msgstr "Masukkan kata sandi"
 msgid "Continue"
 msgstr "Lanjutkan"
 
-#: survey/templates/survey_thanks.html:29
-msgid "Thank you!"
-msgstr "Terima kasih!"
-
-#: survey/templates/survey_thanks.html:30
-msgid "Your responses have been recorded."
-msgstr "Jawaban Anda telah dicatat."
-
 #: survey/templates/survey_thanks.html:38
 msgid "See the results"
-msgstr ""
+msgstr "Lihat hasil"
 
 #: survey/templates/survey_unavailable.html:11
 msgid "Survey unavailable"
-msgstr ""
+msgstr "Survei tidak tersedia"
 
 #: survey/templates/survey_unavailable.html:21
 msgid ""
 "It may not be published yet, or it may have been closed or removed. If you "
 "have a link from an organizer, check with them."
 msgstr ""
+"Survei mungkin belum diterbitkan, atau sudah ditutup atau dihapus. Jika "
+"tautannya Anda terima dari penyelenggara, tanyakan kepada mereka."
 
 #: survey/templatetags/i18n_extras.py:17
 msgid "Start drawing"
@@ -6605,31 +7462,31 @@ msgstr "Klik titik terakhir untuk menyelesaikan garis."
 
 #: survey/templatetags/i18n_extras.py:39
 msgid "Move the map to position the pin, then press Apply."
-msgstr ""
+msgstr "Geser peta untuk menempatkan pin, lalu tekan Terapkan."
 
 #: survey/templatetags/i18n_extras.py:40
 msgid "Tap to add the shape’s corners."
-msgstr ""
+msgstr "Sentuh untuk menambahkan sudut bentuknya."
 
 #: survey/templatetags/i18n_extras.py:41
 msgid "Tap to add the next corner."
-msgstr ""
+msgstr "Sentuh untuk menambahkan sudut berikutnya."
 
 #: survey/templatetags/i18n_extras.py:42
 msgid "Tap the first point to close the shape."
-msgstr ""
+msgstr "Sentuh titik pertama untuk menutup bentuknya."
 
 #: survey/templatetags/i18n_extras.py:43
 msgid "Tap to start the line."
-msgstr ""
+msgstr "Sentuh untuk memulai garis."
 
 #: survey/templatetags/i18n_extras.py:44
 msgid "Tap to add the next point."
-msgstr ""
+msgstr "Sentuh untuk menambahkan titik berikutnya."
 
 #: survey/templatetags/i18n_extras.py:45
 msgid "Tap the last point to finish the line."
-msgstr ""
+msgstr "Sentuh titik terakhir untuk mengakhiri garis."
 
 #: survey/templatetags/i18n_extras.py:49
 msgid "<strong>Error:</strong> Shape edges cannot intersect!"
@@ -6645,74 +7502,74 @@ msgstr "Tidak ada hasil"
 
 #: survey/templatetags/i18n_extras.py:54
 msgid "Search failed — check your connection and try again."
-msgstr ""
+msgstr "Pencarian gagal — periksa koneksi Anda lalu coba lagi."
 
 #: survey/templatetags/i18n_extras.py:57
 msgid "Add another"
-msgstr ""
+msgstr "Tambahkan lagi"
 
 #: survey/templatetags/i18n_extras.py:58
 #, python-brace-format
 msgid "up to {n} more"
-msgstr ""
+msgstr "maksimal {n} lagi"
 
 #: survey/templatetags/i18n_extras.py:59
 msgid "Maximum reached — remove one below to change it."
-msgstr ""
+msgstr "Batas maksimum tercapai — hapus satu di bawah untuk menggantinya."
 
 #: survey/templatetags/i18n_extras.py:60
 #, python-brace-format
 msgid "{n} marked"
-msgstr ""
+msgstr "{n} ditandai"
 
 #: survey/templatetags/i18n_extras.py:61
 #, python-brace-format
 msgid "{n} of {m} marked"
-msgstr ""
+msgstr "{n} dari {m} ditandai"
 
 #: survey/templatetags/i18n_extras.py:62
 #, python-brace-format
 msgid "at least {n} required"
-msgstr ""
+msgstr "minimal {n} diperlukan"
 
 #: survey/templatetags/i18n_extras.py:63
 #, python-brace-format
 msgid "All {m} marked — thank you!"
-msgstr ""
+msgstr "Semua {m} sudah ditandai — terima kasih!"
 
 #: survey/uploads.py:80 survey/views.py:2175
 msgid "This question does not accept files."
-msgstr ""
+msgstr "Pertanyaan ini tidak menerima berkas."
 
 #: survey/uploads.py:84
 msgid "This file type is not accepted here."
-msgstr ""
+msgstr "Jenis berkas ini tidak diterima di sini."
 
 #: survey/uploads.py:89
 #, python-format
 msgid "The file is too large (limit %(mb)s MB)."
-msgstr ""
+msgstr "Berkasnya terlalu besar (batas %(mb)s MB)."
 
 #: survey/uploads.py:96 survey/uploads.py:98
 msgid "The file does not match its declared type."
-msgstr ""
+msgstr "Berkas tidak sesuai dengan jenis yang dinyatakan."
 
 #: survey/uploads.py:109
 msgid "Too many files in this response."
-msgstr ""
+msgstr "Terlalu banyak berkas dalam tanggapan ini."
 
 #: survey/uploads.py:111
 msgid "The files in this response are too large overall."
-msgstr ""
+msgstr "Berkas dalam tanggapan ini terlalu besar secara keseluruhan."
 
 #: survey/views.py:2166
 msgid "Please reload the survey page and try again."
-msgstr ""
+msgstr "Muat ulang halaman survei lalu coba lagi."
 
 #: survey/views.py:2180
 msgid "Too many uploads, try again later."
-msgstr ""
+msgstr "Terlalu banyak unggahan, coba lagi nanti."
 
 #: survey/views.py:2184
 msgid "No file received."
-msgstr ""
+msgstr "Tidak ada berkas yang diterima."
