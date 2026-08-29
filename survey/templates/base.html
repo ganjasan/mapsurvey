@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load static %}
 
 <html>
@@ -359,9 +360,9 @@
                       <!-- Clipboard status pill — populated by editor_clipboard.js -->
                       <div id="clipboardPill" role="status" aria-live="polite">
                           <i class="fas fa-clipboard"></i>
-                          <span class="clipboard-pill-label">Copied: </span>
+                          <span class="clipboard-pill-label">{% trans "Copied:" %} </span>
                           <a class="clipboard-pill-name" href="#"></a>
-                          <button type="button" class="clipboard-pill-clear" title="Clear clipboard (Esc)" aria-label="Clear clipboard">
+                          <button type="button" class="clipboard-pill-clear" title="{% trans 'Clear clipboard (Esc)' %}" aria-label="{% trans 'Clear clipboard' %}">
                               <i class="fas fa-times"></i>
                           </button>
                       </div>
@@ -378,11 +379,13 @@
                               </form>
                               {% endfor %}
                               <div class="dropdown-divider"></div>
-                              <a class="dropdown-item" href="{% url 'org_create' %}"><i class="fas fa-plus" style="margin-right:4px;"></i>New Organization</a>
+                              <a class="dropdown-item" href="{% url 'org_create' %}"><i class="fas fa-plus" style="margin-right:4px;"></i>{% trans "New Organization" %}</a>
                               {% if active_org %}
-                              <a class="dropdown-item" href="{% url 'org_settings' active_org.slug %}"><i class="fas fa-cog" style="margin-right:4px;"></i>Settings</a>
-                              <a class="dropdown-item" href="{% url 'org_members' active_org.slug %}"><i class="fas fa-users" style="margin-right:4px;"></i>Members</a>
+                              <a class="dropdown-item" href="{% url 'org_settings' active_org.slug %}"><i class="fas fa-cog" style="margin-right:4px;"></i>{% trans "Settings" %}</a>
+                              <a class="dropdown-item" href="{% url 'org_members' active_org.slug %}"><i class="fas fa-users" style="margin-right:4px;"></i>{% trans "Members" %}</a>
                               {% endif %}
+                              <div class="dropdown-divider"></div>
+                              {% include "editor/partials/_language_switcher.html" %}
                               {% if MOBILE_EDITOR_NAV %}
                               <div class="dropdown-divider"></div>
                               <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>Help &amp; support</a>
@@ -390,9 +393,9 @@
                           </div>
                       </div>
                       <span class="nav-username">{{ user.get_username }}</span>
-                      <a href="{% url 'logout' %}" style="font-size:0.85rem;">Logout</a>
+                      <a href="{% url 'logout' %}" style="font-size:0.85rem;">{% trans "Logout" %}</a>
                   {% else %}
-                      <a href="{% url 'login' %}?next={{ request.path }}" style="font-size:0.85rem;">Login</a>
+                      <a href="{% url 'login' %}?next={{ request.path }}" style="font-size:0.85rem;">{% trans "Sign in" %}</a>
                   {% endif %}
                 </nav>
             {% endblock %}

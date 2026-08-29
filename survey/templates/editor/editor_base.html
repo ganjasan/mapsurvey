@@ -915,27 +915,7 @@
                     <a class="dropdown-item" href="{% url 'org_members' active_org.slug %}"><i class="fas fa-users" style="margin-right:4px;"></i>{% trans "Members" %}</a>
                     {% endif %}
                     <div class="dropdown-divider"></div>
-                    {% comment %}Language switcher. Each name is written in its own
-                    language: it is read by someone who may not be reading English
-                    comfortably, so "German" would be the wrong label for the person
-                    who needs it. POST, because it changes stored state; `next` returns
-                    the creator to the page they were on rather than the dashboard.
-                    Only creator chrome is affected — respondent pages follow the
-                    survey's own language.{% endcomment %}
-                    <h6 class="dropdown-header">{% trans "Language" %}</h6>
-                    {% get_current_language as CURRENT_LANGUAGE %}
-                    {% get_available_languages as AVAILABLE_LANGUAGES %}
-                    <form method="post" action="{% url 'set_creator_language' %}" style="margin:0;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                        {% for code, name in AVAILABLE_LANGUAGES %}
-                        <button type="submit" name="language" value="{{ code }}"
-                                class="dropdown-item{% if code == CURRENT_LANGUAGE %} active{% endif %}"
-                                style="border:0;background:none;width:100%;text-align:left;">
-                            {% if code == CURRENT_LANGUAGE %}<i class="fas fa-check" style="margin-right:4px;"></i>{% else %}<span style="display:inline-block;width:18px;"></span>{% endif %}{{ name }}
-                        </button>
-                        {% endfor %}
-                    </form>
+                    {% include "editor/partials/_language_switcher.html" %}
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>Help &amp; support</a>
                     <a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt" style="margin-right:4px;"></i>{% trans "Logout" %}</a>

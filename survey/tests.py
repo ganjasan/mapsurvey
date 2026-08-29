@@ -11570,11 +11570,16 @@ class AnalyticsViewTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
 
+    @override_settings(RESPONSES_V2=False)
     def test_dashboard_renders(self):
         """
-        GIVEN an authenticated survey owner
+        GIVEN an authenticated survey owner and Responses v2 off
         WHEN GET analytics dashboard
         THEN returns 200 with analytics data
+
+        Pinned to RESPONSES_V2=False: these are the v1 KPI labels. v2 replaced
+        the dashboard with its own pane set and carries its own tests
+        (ResponsesV2* classes).
         """
         response = self.client.get(f'/editor/surveys/{self.survey.uuid}/analytics/')
         self.assertEqual(response.status_code, 200)
@@ -13900,14 +13905,20 @@ class SessionValidationStatusTest(TestCase):
         WHEN GET analytics table with ?trash=1
         THEN response contains only trashed sessions
         """
-        self._create_session()
-        self._create_session()
-        self._create_session(is_deleted=True)
+        active_one = self._create_session()
+        active_two = self._create_session()
+        trashed = self._create_session(is_deleted=True)
         self._login_owner()
         url = f'/editor/surveys/{self.survey.uuid}/analytics/table/?trash=1'
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, '1 trashed')
+
+        # See the note in test_table_view_issues_param: "1 trashed" lives only
+        # in the pre-v2 toolbar, so this asserted chrome rather than filtering.
+        body = resp.content.decode()
+        self.assertIn(f'data-session-id="{trashed.id}"', body)
+        for session in (active_one, active_two):
+            self.assertNotIn(f'data-session-id="{session.id}"', body)
 
 
 class CleanExportTest(TestCase):
@@ -14731,8 +14742,8 @@ class AutoValidationBasicTest(TestCase):
         WHEN GET analytics table with ?issues=empty
         THEN response contains only the empty session
         """
-        self._create_completed_session()
-        self._create_empty_session()
+        clean = self._create_completed_session()
+        empty = self._create_empty_session()
         self.client.login(username='avowner', password='pass')
         session = self.client.session
         session['active_org_id'] = self.org.id
@@ -14740,7 +14751,15 @@ class AutoValidationBasicTest(TestCase):
         url = f'/editor/surveys/{self.survey.uuid}/analytics/table/?issues=empty'
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, '1 result')
+
+        # Assert on the rows themselves, not on a toolbar string. The previous
+        # assertion looked for "1 result", which only the pre-v2 toolbar
+        # renders; RESPONSES_V2 replaced it with count chips and the test broke
+        # while the filtering it covers kept working. Row checkboxes carry
+        # data-session-id under both toolbars.
+        body = resp.content.decode()
+        self.assertIn(f'data-session-id="{empty.id}"', body)
+        self.assertNotIn(f'data-session-id="{clean.id}"', body)
 
 
 class AnswerLintingErrorsTest(TestCase):
@@ -27839,6 +27858,106 @@ class TemplateCommentSyntaxTest(SimpleTestCase):
             '{% comment %}/{% endcomment %} instead: ' + ', '.join(offenders),
         )
 
+    def test_every_template_parses(self):
+        """
+        GIVEN every template shipped with the survey app
+        WHEN Django is asked to load each one
+        THEN none raises a syntax error, because a template that cannot parse
+             takes down every view that includes it — an automated i18n pass
+             once left 60 template tags mangled here and 40 tests failed on one
+             unparseable partial
+        """
+        import pathlib
+
+        from django.template.loader import get_template
+        from django.template import TemplateSyntaxError
+
+        root = pathlib.Path(__file__).resolve().parent / 'templates'
+        offenders = []
+        for path in sorted(root.rglob('*.html')):
+            try:
+                get_template(str(path.relative_to(root)))
+            except TemplateSyntaxError as exc:
+                offenders.append(f'{path.relative_to(root)}: {exc}')
+
+        self.assertEqual(offenders, [], 'Templates that will not parse:\n  '
+                         + '\n  '.join(offenders))
+
+    def test_no_form_meta_assigns_the_same_key_twice(self):
+        """
+        GIVEN the form modules
+        WHEN each ModelForm's Meta is scanned for repeated assignments
+        THEN none assigns the same name twice, because the later one silently
+             discards the earlier — SurveySectionForm.Meta had two `labels`
+             dicts, so three of its five fields had no label at all and reached
+             the creator in English whatever their interface language
+        """
+        import ast
+        import collections
+        import pathlib
+
+        offenders = []
+        app = pathlib.Path(__file__).resolve().parent
+        for module in ('editor_forms.py', 'forms.py'):
+            tree = ast.parse((app / module).read_text(encoding='utf-8'))
+            for cls in (n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)):
+                for meta in (n for n in cls.body
+                             if isinstance(n, ast.ClassDef) and n.name == 'Meta'):
+                    names = [t.id for stmt in meta.body if isinstance(stmt, ast.Assign)
+                             for t in stmt.targets if isinstance(t, ast.Name)]
+                    for key, count in collections.Counter(names).items():
+                        if count > 1:
+                            offenders.append(f'{module} {cls.name}.Meta: {key} assigned {count}x')
+
+        self.assertEqual(offenders, [], 'Duplicate Meta assignment:\n  '
+                         + '\n  '.join(offenders))
+
+    def test_no_translation_tag_is_nested_in_a_blocktrans(self):
+        """
+        GIVEN every template shipped with the survey app
+        WHEN each {% blocktrans %} body is inspected
+        THEN it contains no further translation tag, because Django rejects
+             that outright ("Translation blocks must not include other block
+             tags") and the page 500s rather than degrading
+        """
+        import pathlib
+
+        root = pathlib.Path(__file__).resolve().parent / 'templates'
+        offenders = []
+        for path in root.rglob('*.html'):
+            text = path.read_text(encoding='utf-8')
+            for match in re.finditer(
+                    r'\{%\s*blocktrans.*?\{%\s*endblocktrans\s*%\}', text, re.S):
+                body = match.group(0)[12:]
+                if re.search(r'\{%\s*(?:trans|blocktrans)\b', body):
+                    line = text[:match.start()].count('\n') + 1
+                    offenders.append(f'{path.relative_to(root)}:{line}')
+
+        self.assertEqual(offenders, [], 'Nested translation tag: '
+                         + ', '.join(offenders))
+
+    def test_no_msgid_carries_html_entities(self):
+        """
+        GIVEN every translatable string in the templates
+        WHEN its msgid is inspected
+        THEN it holds no HTML entity, because the msgid is what a translator
+             reads — `Questions &amp; Responses` invites a dropped semicolon,
+             and a bare `&` before a space is valid HTML5 anyway
+        """
+        import pathlib
+
+        root = pathlib.Path(__file__).resolve().parent / 'templates'
+        offenders = []
+        for path in root.rglob('*.html'):
+            text = path.read_text(encoding='utf-8')
+            for match in re.finditer(
+                    r'\{%\s*trans\s+"([^"]*(?:&[a-zA-Z]+;|&#\d+;)[^"]*)"', text):
+                line = text[:match.start()].count('\n') + 1
+                offenders.append(f'{path.relative_to(root)}:{line} {match.group(1)[:40]}')
+
+        self.assertEqual(offenders, [], 'HTML entity inside a msgid:\n  '
+                         + '\n  '.join(offenders))
+
     def test_no_translation_tag_contains_a_newline(self):
         """
         GIVEN every template shipped with the survey app
@@ -30091,13 +30210,18 @@ class MobileContextualPaneBarTest(TestCase):
         self.survey = SurveyHeader.objects.create(name="ctx_survey", organization=self.org)
         self.client.force_login(self.user)
 
-    @override_settings(MOBILE_EDITOR_NAV=True)
+    @override_settings(MOBILE_EDITOR_NAV=True, RESPONSES_V2=False)
     def test_responses_bar_has_its_own_panes(self):
         """
-        GIVEN the mobile nav flag on
+        GIVEN the mobile nav flag on and Responses v2 off
         WHEN the Responses (analytics) page renders
         THEN the bottom bar carries Table/Map/Charts/Performance, with Charts
              as the mobile default
+
+        Pinned to RESPONSES_V2=False: this is the v1 pane vocabulary, which
+        still ships behind that switch. v2 replaced it with
+        Overview/Map/Responses/Perf and has its own coverage in
+        ResponsesV2MobileTest.test_v2_bottom_bar_vocabulary.
         """
         response = self.client.get(f'/editor/surveys/{self.survey.uuid}/analytics/')
         self.assertEqual(response.status_code, 200)
@@ -30137,7 +30261,10 @@ class MobileContextualPaneBarTest(TestCase):
                      f'/editor/surveys/{self.survey.uuid}/public-results/'):
             response = self.client.get(path)
             self.assertEqual(response.status_code, 200)
-            self.assertNotIn('mobile-tabbar', response.content.decode())
+            # The rendered element, not the bare class name: the v2 dashboard's
+            # JavaScript holds `.mobile-tabbar` as a selector, so searching for
+            # the string alone reported a bar that is not there.
+            self.assertNotIn('<nav class="mobile-tabbar"', response.content.decode())
 
 
 class DashboardVariantATest(TestCase):
