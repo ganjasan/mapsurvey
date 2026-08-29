@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mapsurvey 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-29 08:25+0000\n"
+"POT-Creation-Date: 2026-08-29 09:43+0000\n"
 "PO-Revision-Date: 2026-02-01 14:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: English\n"
@@ -29,16 +29,32 @@ msgstr ""
 msgid "Available languages"
 msgstr ""
 
+#: survey/editor_forms.py:35
+msgid "e.g. Park improvements"
+msgstr ""
+
 #: survey/editor_forms.py:63
 msgid "What do you want to find out?"
+msgstr ""
+
+#: survey/editor_forms.py:66
+msgid "e.g. Where traffic congestion is worst in Treviglio and why"
 msgstr ""
 
 #: survey/editor_forms.py:71
 msgid "Who will answer?"
 msgstr ""
 
+#: survey/editor_forms.py:73
+msgid "e.g. Residents of Treviglio, all ages"
+msgstr ""
+
 #: survey/editor_forms.py:78
 msgid "What should they mark on the map?"
+msgstr ""
+
+#: survey/editor_forms.py:80
+msgid "e.g. Congestion spots, dangerous crossings"
 msgstr ""
 
 #: survey/editor_forms.py:98
@@ -82,6 +98,13 @@ msgstr ""
 #: survey/editor_forms.py:125
 msgid "Default base map"
 msgstr ""
+
+#: survey/editor_forms.py:201
+#: survey/templates/editor/analytics_dashboard_v2.html:162
+#: survey/templates/partials/survey_section_partial.html:97
+#: survey/templates/survey_section_block.html:20
+msgid "Next"
+msgstr "Next"
 
 #: survey/editor_forms.py:211 survey/templates/editor/public_results.html:268
 msgid "Title"
@@ -1885,12 +1908,6 @@ msgstr ""
 msgid "Previous"
 msgstr ""
 
-#: survey/templates/editor/analytics_dashboard_v2.html:162
-#: survey/templates/partials/survey_section_partial.html:97
-#: survey/templates/survey_section_block.html:20
-msgid "Next"
-msgstr "Next"
-
 #: survey/templates/editor/analytics_dashboard_v2.html:180
 msgid "Done"
 msgstr ""
@@ -3551,12 +3568,60 @@ msgstr ""
 msgid "Try an example:"
 msgstr ""
 
+#: survey/templates/editor/survey_create.html:249
+msgid ""
+"Where do cyclists feel unsafe in our city, and which routes need protected "
+"bike lanes"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:250
+msgid "Residents who cycle or would like to start, all ages"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:251
+msgid "Unsafe spots, dangerous crossings, routes that need protected lanes"
+msgstr ""
+
 #: survey/templates/editor/survey_create.html:252
 msgid "Bike lane feedback"
 msgstr ""
 
+#: survey/templates/editor/survey_create.html:254
+msgid ""
+"How many white (albino) squirrels live in our town, where are they spotted "
+"during the annual count, and how does their population compare to gray "
+"squirrels and to cats — their main predator"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:255
+msgid "Local residents and count volunteers, all ages"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:256
+msgid ""
+"Each sighting — white squirrel, gray squirrel, or cat — with the number seen"
+" at that spot"
+msgstr ""
+
 #: survey/templates/editor/survey_create.html:257
 msgid "White squirrel count"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:259
+msgid ""
+"Where does summer heat feel most unbearable in our city, and which places do"
+" people avoid or use as cool refuges during heatwaves"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:260
+msgid ""
+"Residents who spend time outdoors in summer, including older people and "
+"parents with children"
+msgstr ""
+
+#: survey/templates/editor/survey_create.html:261
+msgid ""
+"Spots that feel dangerously hot and the cool places used to escape the heat"
 msgstr ""
 
 #: survey/templates/editor/survey_create.html:262

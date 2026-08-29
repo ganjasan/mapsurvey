@@ -243,19 +243,19 @@
               <div class="example-chips" id="example-chips">
                 <span class="example-chips-label">{% trans "Try an example:" %}</span>
                 <button type="button" class="example-chip"
-                        data-goal="Where do cyclists feel unsafe in our city, and which routes need protected bike lanes"
-                        data-audience="Residents who cycle or would like to start, all ages"
-                        data-map-target="Unsafe spots, dangerous crossings, routes that need protected lanes"
+                        data-goal="{% trans 'Where do cyclists feel unsafe in our city, and which routes need protected bike lanes' %}"
+                        data-audience="{% trans 'Residents who cycle or would like to start, all ages' %}"
+                        data-map-target="{% trans 'Unsafe spots, dangerous crossings, routes that need protected lanes' %}"
                         data-use-case="urban_planning">{% trans "Bike lane feedback" %}</button>
                 <button type="button" class="example-chip"
-                        data-goal="How many white (albino) squirrels live in our town, where are they spotted during the annual count, and how does their population compare to gray squirrels and to cats — their main predator"
-                        data-audience="Local residents and count volunteers, all ages"
-                        data-map-target="Each sighting — white squirrel, gray squirrel, or cat — with the number seen at that spot"
+                        data-goal="{% trans 'How many white (albino) squirrels live in our town, where are they spotted during the annual count, and how does their population compare to gray squirrels and to cats — their main predator' %}"
+                        data-audience="{% trans 'Local residents and count volunteers, all ages' %}"
+                        data-map-target="{% trans 'Each sighting — white squirrel, gray squirrel, or cat — with the number seen at that spot' %}"
                         data-use-case="citizen_science">{% trans "White squirrel count" %}</button>
                 <button type="button" class="example-chip"
-                        data-goal="Where does summer heat feel most unbearable in our city, and which places do people avoid or use as cool refuges during heatwaves"
-                        data-audience="Residents who spend time outdoors in summer, including older people and parents with children"
-                        data-map-target="Spots that feel dangerously hot and the cool places used to escape the heat"
+                        data-goal="{% trans 'Where does summer heat feel most unbearable in our city, and which places do people avoid or use as cool refuges during heatwaves' %}"
+                        data-audience="{% trans 'Residents who spend time outdoors in summer, including older people and parents with children' %}"
+                        data-map-target="{% trans 'Spots that feel dangerously hot and the cool places used to escape the heat' %}"
                         data-use-case="urban_planning">{% trans "Heatwave map" %}</button>
                 <button type="button" class="example-chip example-chip-clear" id="example-clear" hidden>{% trans "× Clear" %}</button>
               </div>
