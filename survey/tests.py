@@ -36414,3 +36414,76 @@ class MalformedArchiveImportTest(TestCase):
         self.assertEqual(response.status_code, 200)
         texts = [str(m) for m in response.context['messages']]
         self.assertTrue(any('name' in t for t in texts), texts)
+
+
+class ExternalScriptCorsTest(SimpleTestCase):
+    """Every cross-origin <script src> must carry crossorigin="anonymous".
+
+    Without the attribute a browser withholds the message, file and line of any
+    exception thrown inside that script and reports the bare string
+    "Script error." — 107 such events over 30 days from 18 people, and not one
+    of them said what broke (PostHog 01a00c89).
+
+    Plausible in `partials/_analytics.html` was the only external script in any
+    base template missing it, and the opaque errors landed on exactly the pages
+    that include that partial and on none of the respondent pages, which do not.
+
+    This scans the templates rather than a rendered page because the point is to
+    fail when someone ADDS a script tag, which no rendering test would cover:
+    the new script would simply be as opaque as Plausible was.
+    """
+
+    TEMPLATE_DIR = os.path.join(settings.BASE_DIR, 'survey', 'templates')
+    SCRIPT_TAG = re.compile(r'<script\b[^>]*\bsrc=(?P<q>["\'])(?P<src>.*?)(?P=q)[^>]*>', re.I | re.S)
+
+    # A src that resolves against our own origin needs no CORS negotiation.
+    LOCAL_SRC = re.compile(r'^(/|\{%\s*static|\{\{\s*STATIC)')
+
+    def _external_script_tags(self):
+        """Yield (relative path, tag) for every non-local script tag we ship."""
+        for root, _dirs, files in os.walk(self.TEMPLATE_DIR):
+            for filename in files:
+                if not filename.endswith('.html'):
+                    continue
+                path = os.path.join(root, filename)
+                with open(path, encoding='utf-8') as fh:
+                    body = fh.read()
+                for match in self.SCRIPT_TAG.finditer(body):
+                    src = match.group('src').strip()
+                    if not src or self.LOCAL_SRC.match(src):
+                        continue
+                    yield os.path.relpath(path, self.TEMPLATE_DIR), match.group(0)
+
+    def test_every_external_script_declares_crossorigin(self):
+        """
+        GIVEN the templates we ship
+        WHEN every external <script src> is inspected
+        THEN each carries a crossorigin attribute
+
+        A missing one does not break the page — it silently blinds error
+        tracking for that script, which is why nothing else catches it.
+        """
+        missing = [
+            f'{path}: {tag[:120]}'
+            for path, tag in self._external_script_tags()
+            if 'crossorigin' not in tag.lower()
+        ]
+        self.assertEqual(
+            missing, [],
+            'external script tags without crossorigin — exceptions inside them '
+            'will be reported as the bare string "Script error.":\n' + '\n'.join(missing))
+
+    def test_the_scan_actually_finds_our_script_tags(self):
+        """
+        GIVEN the same scan
+        WHEN it runs
+        THEN it sees the external scripts we know we ship
+
+        Pins the scanner: a regex that matched nothing would make the assertion
+        above pass forever.
+        """
+        tags = list(self._external_script_tags())
+        self.assertGreater(len(tags), 5, 'the scan found almost nothing — the regex is wrong')
+        srcs = ' '.join(tag for _path, tag in tags)
+        self.assertIn('leaflet', srcs.lower())
+        self.assertIn('PLAUSIBLE_SCRIPT_URL', srcs)
