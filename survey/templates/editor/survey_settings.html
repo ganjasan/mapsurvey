@@ -1,6 +1,7 @@
 {% extends "editor/editor_base.html" %}
 {% load i18n %}
 {% load survey_filters %}
+{% load l10n %}
 
 {% block page_title %}{% trans "Settings" %} – {{ survey.name }}{% endblock %}
 
@@ -149,10 +150,14 @@
 
     <script>
     (function() {
+        {% comment %}See section_map_picker.html: a localized decimal comma here
+        breaks the whole script and the map never loads.{% endcomment %}
+        {% localize off %}
         var hasPosition = {{ survey.start_map_postion|yesno:"true,false" }};
         var lat = hasPosition ? {{ survey.start_map_postion.y|default:"52.52" }} : 52.52;
         var lng = hasPosition ? {{ survey.start_map_postion.x|default:"13.405" }} : 13.405;
         var zoom = {{ survey.start_map_zoom|default:"12" }};
+        {% endlocalize %}
 
         var map = L.map('survey-map-picker').setView([lat, lng], zoom);
         L.tileLayer('{{ MAPBOX_URL }}', {
