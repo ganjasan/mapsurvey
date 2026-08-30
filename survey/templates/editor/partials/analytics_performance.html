@@ -42,7 +42,7 @@
 {% if funnel %}
 <div class="analytics-section">
     <h6>{% trans "Section Funnel" %}</h6>
-    <p style="font-size:0.8rem;color:#9ca3af;margin-bottom:1rem;">{% trans "Views vs. submissions per section. Drop rate shows the percentage of respondents who viewed but did not submit." %}</p>
+    <p style="font-size:0.8rem;color:#9ca3af;margin-bottom:1rem;">{% trans "Share of started sessions that reached each section, and how many left before the next one. One person counts once, however often they reload." %}</p>
 
     {% comment %}
     Small-sample guard (v2 only): below 20 tracked sessions a −100% drop is
@@ -55,62 +55,33 @@
     </div>
     {% endif %}
 
-    {% for step in funnel %}
-    <div style="margin-bottom:1rem;">
-        <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.3rem;">
-            <span style="font-weight:500;">{{ step.section_title }}</span>
-            <span>
-                <span style="color:var(--accent);font-weight:600;">{{ step.views }}</span> views
-                &rarr;
-                <span style="color:#059669;font-weight:600;">{{ step.submits }}</span> {% trans "submits" %}
-                {% if step.drop_rate > 0 %}
-                {% if RESPONSES_V2 and event_summary.session_starts < 20 %}
-                {# suppressed: sample below threshold, see notice above #}
-                {% else %}
-                <span style="color:#ef4444;font-size:0.8rem;margin-left:0.5rem;">&minus;{{ step.drop_rate }}%</span>
+    <div class="perf-funnel" role="list">
+        {% for step in funnel %}
+        <div class="perf-funnel-step" role="listitem" title="{{ step.views }} {% trans 'views' %}, {{ step.submits }} {% trans 'submits' %}">
+            <div class="perf-funnel-bar">
+                <div class="perf-funnel-fill" style="height:{{ step.reached_pct }}%;--reached:{{ step.reached_pct }}%;"></div>
+                <span class="perf-funnel-pct">{{ step.reached_pct }}%</span>
+            </div>
+            <div class="perf-funnel-meta">
+                <div class="perf-funnel-title"><span class="perf-funnel-num">{{ step.step }}</span>{{ step.section_title }}</div>
+                <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i>
+                    {% blocktrans count n=step.reached %}{{ n }} reached{% plural %}{{ n }} reached{% endblocktrans %}
+                    ({{ step.reached_pct }}%)</div>
+                {% if step.dropped > 0 %}
+                <div class="perf-funnel-line perf-funnel-dropped"><i class="fas fa-level-down-alt"></i>
+                    {% blocktrans count n=step.dropped %}{{ n }} dropped{% plural %}{{ n }} dropped{% endblocktrans %}
+                    {% if not RESPONSES_V2 or event_summary.session_starts >= 20 %}({{ step.dropped_pct }}%){% endif %}</div>
                 {% endif %}
+                {% if step.median_label %}
+                <div class="perf-funnel-line perf-funnel-time"><i class="far fa-clock"></i> {{ step.median_label }}</div>
                 {% endif %}
-            </span>
+                <div class="perf-funnel-line perf-funnel-completed">
+                    {% blocktrans count n=step.completed %}{{ n }} submitted{% plural %}{{ n }} submitted{% endblocktrans %}</div>
+            </div>
         </div>
-        <div style="display:flex;gap:2px;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
-            {% if step.views > 0 %}
-            <div style="background:#059669;width:{% widthratio step.submits step.views 100 %}%;height:100%;border-radius:4px 0 0 4px;transition:width 0.4s;" title="{% trans 'Submitted' %}"></div>
-            <div style="background:#fca5a5;flex:1;height:100%;border-radius:0 4px 4px 0;" title="{% trans 'Dropped' %}"></div>
-            {% endif %}
-        </div>
-    </div>
-    {% endfor %}
-
-    <!-- Funnel chart -->
-    <div style="margin-top:1.5rem;">
-        <canvas id="funnelChart" height="60"></canvas>
+        {% endfor %}
     </div>
 </div>
-
-<script>
-(function() {
-    var funnel = {{ funnel_json|safe }};
-    if (!funnel.length) return;
-    var labels = funnel.map(function(f) { return f.section_title; });
-    var views = funnel.map(function(f) { return f.views; });
-    var submits = funnel.map(function(f) { return f.submits; });
-    new Chart(document.getElementById('funnelChart'), {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                { label: 'Views', data: views, backgroundColor: 'rgba(99,102,241,0.3)', borderColor: 'rgb(99,102,241)', borderWidth: 1 },
-                { label: 'Submits', data: submits, backgroundColor: 'rgba(5,150,105,0.3)', borderColor: 'rgb(5,150,105)', borderWidth: 1 },
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { position: 'top' } },
-            scales: { y: { beginAtZero: true } },
-        }
-    });
-})();
-</script>
 {% endif %}
 
 <!-- Traffic Sources -->

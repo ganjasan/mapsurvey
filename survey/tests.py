@@ -12003,6 +12003,28 @@ class ResponsesV2NavigationTest(TestCase):
         response = self.client.get(self.url)
         self.assertContains(response, 'tracked visits')
 
+    def test_funnel_renders_step_columns_without_chartjs_canvas(self):
+        """
+        GIVEN two started sessions of which one viewed the head section
+        WHEN GET the dashboard
+        THEN the Performance pane has one .perf-funnel-step with a 50% fill and no funnelChart canvas
+        """
+        for viewed in (True, False):
+            sess = SurveySession.objects.create(survey=self.survey)
+            SurveyEvent.objects.create(session=sess, event_type='session_start')
+            if viewed:
+                SurveyEvent.objects.create(
+                    session=sess, event_type='section_view',
+                    metadata={'section_name': self.section.name},
+                )
+        response = self.client.get(self.url)
+        html = response.content.decode()
+        self.assertEqual(html.count('class="perf-funnel-step"'), 1)
+        self.assertIn('class="perf-funnel-fill" style="height:50%;--reached:50%;"', html)
+        self.assertContains(response, '1 reached')
+        self.assertContains(response, '1 dropped')
+        self.assertNotIn('funnelChart', html)
+
     def test_small_sample_funnel_notice(self):
         """
         GIVEN fewer than 20 tracked sessions with section views
@@ -13629,6 +13651,78 @@ class PerformanceAnalyticsServiceTest(TestCase):
         self.assertEqual(summary['session_starts'], 2)
         self.assertEqual(summary['completions'], 1)
         self.assertEqual(summary['completion_rate'], 50)
+
+    def _section(self, name, is_head=False):
+        return SurveySection.objects.create(
+            survey_header=self.survey, name=name, code=name.upper(), is_head=is_head,
+        )
+
+    def test_funnel_counts_a_session_once_however_often_it_reloads(self):
+        """
+        GIVEN one session that viewed section A three times and submitted it once
+        WHEN get_funnel is called
+        THEN A shows reached=1 and completed=1, while raw views stays 3
+        """
+        from .analytics import PerformanceAnalyticsService
+        self._section('a', is_head=True)
+        emit_event(self.s1, 'session_start')
+        for _ in range(3):
+            emit_event(self.s1, 'section_view', {'section_name': 'a'})
+        emit_event(self.s1, 'section_submit', {'section_name': 'a'})
+
+        step = PerformanceAnalyticsService(self.survey).get_funnel()[0]
+        self.assertEqual(step['reached'], 1)
+        self.assertEqual(step['completed'], 1)
+        self.assertEqual(step['views'], 3)
+        self.assertEqual(step['reached_pct'], 100)
+        self.assertEqual(step['dropped'], 0)
+
+    def test_funnel_percentages_are_relative_to_starts_and_previous_step(self):
+        """
+        GIVEN 10 started sessions, 8 of which viewed A and 5 viewed B
+        WHEN get_funnel is called
+        THEN A is 80% reached / 2 dropped (20%) and B is 50% reached / 3 dropped (38% of A)
+        """
+        from .analytics import PerformanceAnalyticsService
+        a = self._section('a', is_head=True)
+        b = self._section('b')
+        a.next_section = b
+        a.save()
+        sessions = [SurveySession.objects.create(survey=self.survey) for _ in range(10)]
+        for sess in sessions:
+            emit_event(sess, 'session_start')
+        for sess in sessions[:8]:
+            emit_event(sess, 'section_view', {'section_name': 'a'})
+        for sess in sessions[:5]:
+            emit_event(sess, 'section_view', {'section_name': 'b'})
+
+        fa, fb = PerformanceAnalyticsService(self.survey).get_funnel()
+        self.assertEqual((fa['step'], fa['reached'], fa['reached_pct'], fa['dropped'], fa['dropped_pct']),
+                         (1, 8, 80, 2, 20))
+        self.assertEqual((fb['step'], fb['reached'], fb['reached_pct'], fb['dropped'], fb['dropped_pct']),
+                         (2, 5, 50, 3, 38))
+
+    def test_funnel_never_reports_negative_drop(self):
+        """
+        GIVEN section A reached by 1 session and later section B reached by 2
+        WHEN get_funnel is called
+        THEN B shows dropped=0 and dropped_pct=0
+        """
+        from .analytics import PerformanceAnalyticsService
+        a = self._section('a', is_head=True)
+        b = self._section('b')
+        a.next_section = b
+        a.save()
+        emit_event(self.s1, 'session_start')
+        emit_event(self.s2, 'session_start')
+        emit_event(self.s1, 'section_view', {'section_name': 'a'})
+        emit_event(self.s1, 'section_view', {'section_name': 'b'})
+        emit_event(self.s2, 'section_view', {'section_name': 'b'})
+
+        fb = PerformanceAnalyticsService(self.survey).get_funnel()[1]
+        self.assertEqual(fb['reached'], 2)
+        self.assertEqual(fb['dropped'], 0)
+        self.assertEqual(fb['dropped_pct'], 0)
 
     def test_referrer_breakdown_groups_by_type(self):
         """

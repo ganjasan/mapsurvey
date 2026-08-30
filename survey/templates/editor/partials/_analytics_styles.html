@@ -334,4 +334,54 @@
     }
     .geo-toolbar-btn:hover { background: var(--accent-light); color: var(--accent); }
     .geo-toolbar-btn.active { background: var(--accent); color: #fff; }
+
+    /* Performance → Section Funnel: one column per section, PostHog-style */
+    .perf-funnel { display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.5rem; }
+    .perf-funnel-step { flex: 1 1 0; min-width: 150px; max-width: 260px; }
+    .perf-funnel-bar {
+        position: relative; height: 200px; border-radius: 6px 6px 0 0; overflow: hidden;
+        background: repeating-linear-gradient(135deg, #ede9fe 0 6px, #f5f3ff 6px 12px);
+    }
+    .perf-funnel-fill {
+        position: absolute; left: 0; right: 0; bottom: 0; min-height: 2px;
+        background: var(--accent); border-radius: 6px 6px 0 0;
+    }
+    .perf-funnel-pct {
+        position: absolute; top: 0.4rem; right: 0.5rem; padding: 0.05rem 0.4rem;
+        font-size: 0.75rem; font-weight: 600; color: #374151;
+        background: rgba(255,255,255,0.9); border-radius: 999px;
+    }
+    .perf-funnel-meta { border-top: 2px solid var(--border-color); padding-top: 0.5rem; font-size: 0.8rem; }
+    .perf-funnel-title { font-weight: 600; margin-bottom: 0.35rem; display: flex; gap: 0.4rem; align-items: flex-start; }
+    .perf-funnel-num {
+        flex-shrink: 0; width: 1.3rem; height: 1.3rem; border-radius: 4px; background: #e5e7eb;
+        font-size: 0.7rem; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .perf-funnel-line { color: #6b7280; margin-top: 0.15rem; }
+    .perf-funnel-line i { width: 1rem; }
+    .perf-funnel-reached i { color: #059669; }
+    .perf-funnel-dropped i { color: #ef4444; }
+    .perf-funnel-time i { color: #9ca3af; }
+    .perf-funnel-completed { padding-left: 1.25rem; font-size: 0.75rem; }
+    @media (max-width: 767px) {
+        /* Phone: KPI cards in a 2×2 grid instead of an overflowing row */
+        .stat-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .stat-card { padding: 0.75rem 0.5rem; }
+        .stat-card .stat-value { font-size: 1.5rem; }
+        .stat-card .stat-label { font-size: 0.75rem; }
+        /* Phone: stack steps vertically, bar becomes a horizontal track */
+        .perf-funnel { flex-direction: column; gap: 0; overflow: visible; }
+        .perf-funnel-step { min-width: 0; max-width: none; display: grid;
+            grid-template-columns: 1fr; padding: 0.6rem 0; border-top: 1px solid #f3f4f6; }
+        .perf-funnel-step:first-child { border-top: none; }
+        .perf-funnel-bar { height: 12px; border-radius: 6px; order: 2; margin: 0.35rem 0; }
+        .perf-funnel-fill { top: 0; bottom: 0; right: auto; min-height: 0; border-radius: 6px;
+            width: var(--reached, 0%); height: auto !important; }
+        .perf-funnel-pct { display: none; }
+        .perf-funnel-meta { border-top: none; padding-top: 0; display: flex; flex-wrap: wrap;
+            column-gap: 0.75rem; align-items: baseline; }
+        .perf-funnel-title { width: 100%; margin-bottom: 0.15rem; }
+        .perf-funnel-line { margin-top: 0; }
+        .perf-funnel-completed { padding-left: 0; font-size: 0.8rem; }
+    }
 </style>
