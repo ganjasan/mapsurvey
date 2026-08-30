@@ -187,6 +187,33 @@ locale.{% endcomment %}
 
     var map = L.map('map', {zoomControl: false}).setView([_initialMapState.lat, _initialMapState.lng], _initialMapState.zoom);
 
+    // Leaflet derives every projection from getSize(). On a hidden container
+    // that is 0x0, and unprojecting through it yields LatLng(NaN, NaN), which
+    // Leaflet rejects by throwing -- once per animation frame for an animated
+    // flyTo, which is how 3 sessions produced 64 errors. A `form` section hides
+    // #map through the survey-form-layout body class, so this is reachable
+    // whenever a move is asked for while the respondent is on one.
+    // The editor's analytics dashboard carries the same guard for leaflet.heat;
+    // the two pages share no bundle, so the four lines are duplicated rather
+    // than fetched.
+    function mapHasSize() {
+        var size = map.getSize();
+        return !!size && size.x > 0 && size.y > 0;
+    }
+
+    // A move asked for while the map was hidden, replayed once it is back.
+    var _pendingMapTarget = null;
+
+    function moveMapTo(lat, lng, zoom, opts) {
+        if (!isFinite(lat) || !isFinite(lng) || !isFinite(zoom)) return false;
+        if (!mapHasSize()) {
+            _pendingMapTarget = {lat: lat, lng: lng, zoom: zoom};
+            return false;
+        }
+        map.flyTo([lat, lng], zoom, opts || {animate: true, duration: 0.8});
+        return true;
+    }
+
     L.control.zoom({position: 'bottomright'}).addTo(map);
 
     // Basemap layers — also populates window._basemapLayers
@@ -204,7 +231,11 @@ locale.{% endcomment %}
             function(position) {
                 var lat = position.coords.latitude;
                 var lng = position.coords.longitude;
-                map.flyTo([lat, lng], 13, {animate: true, duration: 0.8});
+                // The callback lands whenever the device answers -- up to the
+                // 10s timeout below -- so the respondent may already be on a
+                // form section with the map hidden. Defer rather than drop:
+                // they asked to be located, and doing it late beats not at all.
+                if (!moveMapTo(lat, lng, 13)) return;
                 if (geoMarker) {
                     geoMarker.setLatLng([lat, lng]);
                 } else {
@@ -973,7 +1004,19 @@ locale.{% endcomment %}
         var isFormLayout = dataEl.dataset.layout === 'form';
         document.body.classList.toggle('survey-form-layout', isFormLayout);
         if (!isFormLayout && typeof map !== 'undefined') {
-            setTimeout(function () { map.invalidateSize(); }, 0);
+            setTimeout(function () {
+                map.invalidateSize();
+                // The container has its size back; this is the moment a move
+                // that arrived while it was hidden becomes possible. Back
+                // through moveMapTo, so a container that is somehow still
+                // empty re-defers instead of throwing -- and so exactly one
+                // raw map.flyTo call exists in this file, which a test pins.
+                if (_pendingMapTarget) {
+                    var t = _pendingMapTarget;
+                    _pendingMapTarget = null;
+                    moveMapTo(t.lat, t.lng, t.zoom);
+                }
+            }, 0);
         }
 
         // 1. Clear map state from previous section
@@ -989,8 +1032,11 @@ locale.{% endcomment %}
         var lat = parseFloat(dataEl.dataset.mapLat);
         var lng = parseFloat(dataEl.dataset.mapLng);
         var zoom = parseInt(dataEl.dataset.mapZoom, 10);
-        if (!isFirstLoad && !isNaN(lat) && !isNaN(lng) && !isNaN(zoom)) {
-            map.flyTo([lat, lng], zoom, {animate: true, duration: 0.8});
+        if (!isFirstLoad) {
+            // moveMapTo also rejects a zero-size container, which the previous
+            // isNaN checks on the inputs did not -- and that was the case that
+            // actually threw.
+            moveMapTo(lat, lng, zoom);
         }
         _mapInitialized = true;
 

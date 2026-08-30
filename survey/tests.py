@@ -36120,3 +36120,158 @@ class EditorJsNumberLocaleTest(TestCase):
             rendered = unguarded.render(Context({'y': 52.5231}))
         self.assertRegex(self._scripts(rendered), self.DECIMAL_COMMA)
 
+
+
+class ZeroSizeMapGuardTest(TestCase):
+    """Leaflet must not be driven while its container has no size.
+
+    Everything Leaflet computes comes from `map.getSize()`; on a hidden
+    container that is 0x0, and the projections built on it degenerate. Two
+    PostHog issues, one root cause:
+
+    * respondent/preview — the geolocation callback called `map.flyTo` from up
+      to ten seconds later, by which point the respondent could be on a `form`
+      section where `survey-form-layout` hides `#map`. `flyTo` is animated, so
+      it threw once per frame: 3 sessions produced 64 events (01a03018).
+    * editor analytics — `invalidateSize()` on a hidden pane re-fires the heat
+      layer's redraw against a 0x0 canvas and `getImageData` throws (01a04e54).
+
+    These assert on rendered markup. The Django test client runs no JavaScript
+    and has no layout, so it cannot execute the geometry that fails; the real
+    check is a browser pass, recorded in the change's verification tasks. What
+    the markup CAN pin is that no unguarded call path exists — which is the
+    part a future edit would break.
+    """
+
+    def setUp(self):
+        self.org = _make_org('MapGuardOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='mapguard', organization=self.org, status='published',
+            available_languages=[], redirect_url='#',
+            start_map_postion=Point(13.405, 52.52), start_map_zoom=12,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='pick', title='Pick', code='S1',
+            is_head=True, start_map_postion=Point(13.377, 52.516),
+        )
+        Question.objects.create(
+            survey_section=self.section, code='Q1', name='Where?',
+            input_type='point', order_number=1)
+
+    def _respondent_html(self):
+        response = self.client.get('/surveys/mapguard/pick/')
+        self.assertEqual(response.status_code, 200)
+        return response.content.decode()
+
+    def test_respondent_page_defines_the_size_guard(self):
+        """
+        GIVEN the respondent survey page
+        WHEN it renders
+        THEN the size guard and the move helper are defined on the page
+        """
+        html = self._respondent_html()
+        self.assertIn('function mapHasSize()', html)
+        self.assertIn('function moveMapTo(', html)
+
+    def test_every_respondent_fly_goes_through_the_helper(self):
+        """
+        GIVEN the respondent page's map code
+        WHEN counting raw Leaflet fly calls
+        THEN exactly one exists, the one inside moveMapTo
+
+        This is the assertion that survives future edits: a new `map.flyTo(`
+        added anywhere else on this page fails here, which is precisely how
+        the geolocation call slipped through in the first place.
+        """
+        html = self._respondent_html()
+        self.assertEqual(html.count('map.flyTo('), 1, 'an unguarded map.flyTo was added')
+
+    def test_geolocation_callback_defers_instead_of_flying(self):
+        """
+        GIVEN the locate-me handler
+        WHEN it succeeds
+        THEN it routes through moveMapTo and abandons the callback if the move
+             could not happen
+        """
+        html = self._respondent_html()
+        self.assertIn('if (!moveMapTo(lat, lng, 13)) return;', html)
+
+    def test_pending_target_is_replayed_after_invalidate_size(self):
+        """
+        GIVEN a move deferred while the map was hidden
+        WHEN the map section returns and the container is measured again
+        THEN the deferred target is replayed
+        """
+        html = self._respondent_html()
+        self.assertIn('_pendingMapTarget', html)
+        invalidate = html.index('map.invalidateSize();')
+        replay = html.index('moveMapTo(t.lat, t.lng, t.zoom);')
+        self.assertLess(invalidate, replay,
+                        'the deferred move must be replayed after the resize, not before')
+
+    def test_map_section_still_carries_its_coordinates(self):
+        """
+        GIVEN a section with its own map position
+        WHEN the respondent page renders
+        THEN the coordinates still reach the page
+
+        Guards against a "fix" that simply stops moving the map.
+        """
+        html = self._respondent_html()
+        self.assertIn('data-map-lat="52.516', html)
+        self.assertIn('data-map-lng="13.377', html)
+
+
+class AnalyticsHeatLayerGuardTest(TestCase):
+    """The analytics heat layer must not draw into a 0x0 canvas.
+
+    The guard is on the layer rather than on the callers: `invalidateSize()` is
+    called from sixteen places across the analytics templates, and a per-caller
+    guard would neither cover them all nor cover the next one added.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='heat_owner', password='pass')
+        self.org = _make_org('HeatOrg')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name='heat_survey', organization=self.org)
+        section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec', code='S1', is_head=True)
+        # Both dashboards include the geo map only when the survey has geo
+        # features, so an empty survey renders the "no geo questions" placeholder
+        # and the guard would look absent. One stored point is the minimum that
+        # puts the heat layer on the page at all.
+        question = Question.objects.create(
+            survey_section=section, code='Q_PT', name='Where?',
+            input_type='point', order_number=1)
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=session, question=question,
+                              point=Point(13.405, 52.52))
+        self.client.login(username='heat_owner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+    def test_heat_layer_redraw_is_guarded(self):
+        """
+        GIVEN the analytics dashboard
+        WHEN it renders
+        THEN the heat layer's redraw guard is defined and applied at creation
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/analytics/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('function _guardHeatRedraw(layer)', html)
+        self.assertIn('_guardHeatRedraw(heatLayer);', html)
+
+    def test_guard_precedes_adding_the_layer_to_the_map(self):
+        """
+        GIVEN the heat layer creation code
+        WHEN the layer is wrapped
+        THEN the wrapping happens before addTo(), so the first redraw is guarded too
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/analytics/')
+        html = response.content.decode()
+        guard_at = html.index('_guardHeatRedraw(heatLayer);')
+        add_at = html.index('heatLayer.addTo(this._map);')
+        self.assertLess(guard_at, add_at)
