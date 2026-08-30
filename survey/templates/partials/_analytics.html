@@ -1,5 +1,15 @@
 {% if PLAUSIBLE_SCRIPT_URL %}
-<script async src="{{ PLAUSIBLE_SCRIPT_URL }}"></script>
+{% comment %}crossorigin is not optional here. Without it the browser withholds
+the message, file and line of any exception thrown inside a cross-origin script
+and reports the bare string "Script error." -- 107 such events over 30 days, 18
+people, and not one of them said what broke. This was the only external script
+in any of our base templates missing the attribute, and the opaque errors
+appeared on exactly the pages that include this partial and on no others.
+plausible.io answers with `access-control-allow-origin: *`, so the attribute
+costs nothing; a host that did NOT send that header would refuse to execute the
+script, which is why this is checked rather than sprinkled everywhere.
+{% endcomment %}
+<script async src="{{ PLAUSIBLE_SCRIPT_URL }}" crossorigin="anonymous"></script>
 <script>window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()</script>
 {% endif %}
 {% comment %}
