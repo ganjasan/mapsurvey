@@ -5,7 +5,7 @@ Included by question_form_modal.html and section_detail_form.html inside their
 <form>, so the fields ride every save/autosave POST. visibility_groups comes
 from editor_views._visibility_block_context; empty groups = nothing can control
 this item yet, and the block says so instead of rendering a dead picker.{% endcomment %}
-<div class="form-group" id="fg-visibility">
+<div class="form-group fg-visibility" data-read-only="{% if is_read_only %}1{% else %}0{% endif %}">
     <label>{% trans "Visibility" %}</label>
     <div style="border:1px solid var(--border-color, #e9ecef);border-left:3px solid #0b5ed7;border-radius:8px;padding:.65rem .8rem;background:#f8f9fa;">
         <label style="display:flex;align-items:center;gap:.45rem;font-weight:400;margin:0 0 .3rem;{% if is_read_only %}opacity:.65;{% endif %}">
@@ -21,7 +21,7 @@ this item yet, and the block says so instead of rendering a dead picker.{% endco
         {% if not visibility_groups %}
         <small class="form-text text-muted" style="margin-left:1.4rem;">{% trans "No earlier choice question to depend on yet." %}</small>
         {% else %}
-        <div id="visibility-controls" style="margin:.6rem 0 0 1.4rem;{% if not visibility_rule %}display:none;{% endif %}">
+        <div class="visibility-controls" style="margin:.6rem 0 0 1.4rem;{% if not visibility_rule %}display:none;{% endif %}">
             <div class="form-group" style="margin-bottom:.6rem;">
                 <label style="font-size:.8rem;">{% trans "When the answer to" %}</label>
                 <select name="visibility_question" class="form-control form-control-sm"
@@ -62,29 +62,36 @@ this item yet, and the block says so instead of rendering a dead picker.{% endco
 </div>
 <script>
 (function () {
-    var block = document.getElementById('fg-visibility');
-    if (!block || block.dataset.visBound) return;
-    block.dataset.visBound = '1';
-    var controls = block.querySelector('#visibility-controls');
-    var select = block.querySelector('select[name="visibility_question"]');
-    function syncChoices() {
-        if (!select) return;
-        block.querySelectorAll('.visibility-choices').forEach(function (box) {
-            var active = box.getAttribute('data-controller') === select.value;
-            box.style.display = active ? '' : 'none';
-            box.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
-                if (active) { cb.disabled = {% if is_read_only %}true{% else %}false{% endif %}; cb.removeAttribute('data-vis-inactive'); }
-                else { cb.disabled = true; cb.setAttribute('data-vis-inactive', '1'); }
+    // The block is included twice on the survey page — once in the section
+    // panel, once in the question modal — so it must be located by class and
+    // bound per instance: a getElementById here returned the section's
+    // already-bound block and left the modal's radios dead
+    // (openspec: fix-question-modal-error-retarget).
+    document.querySelectorAll('.fg-visibility').forEach(function (block) {
+        if (block.dataset.visBound) return;
+        block.dataset.visBound = '1';
+        var readOnly = block.dataset.readOnly === '1';
+        var controls = block.querySelector('.visibility-controls');
+        var select = block.querySelector('select[name="visibility_question"]');
+        function syncChoices() {
+            if (!select) return;
+            block.querySelectorAll('.visibility-choices').forEach(function (box) {
+                var active = box.getAttribute('data-controller') === select.value;
+                box.style.display = active ? '' : 'none';
+                box.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+                    if (active) { cb.disabled = readOnly; cb.removeAttribute('data-vis-inactive'); }
+                    else { cb.disabled = true; cb.setAttribute('data-vis-inactive', '1'); }
+                });
+            });
+        }
+        block.querySelectorAll('input[name="visibility_mode"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                if (controls) controls.style.display = (radio.value === 'conditional' && radio.checked) ? '' : 'none';
+                if (radio.value === 'conditional' && radio.checked) syncChoices();
             });
         });
-    }
-    block.querySelectorAll('input[name="visibility_mode"]').forEach(function (radio) {
-        radio.addEventListener('change', function () {
-            if (controls) controls.style.display = (radio.value === 'conditional' && radio.checked) ? '' : 'none';
-            if (radio.value === 'conditional' && radio.checked) syncChoices();
-        });
+        if (select) select.addEventListener('change', syncChoices);
     });
-    if (select) select.addEventListener('change', syncChoices);
 })();
 </script>
 {% endif %}
