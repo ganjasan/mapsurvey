@@ -2,7 +2,8 @@ from django.test import TestCase, SimpleTestCase, Client, override_settings
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, LineString, Polygon
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, translation
+from django.template import Template, Context
 from io import BytesIO
 from unittest import mock
 from unittest.mock import patch
@@ -35992,3 +35993,130 @@ class SurveyNavScriptsTest(TestCase):
         THEN the handler is defined exactly as before
         """
         self._assert_handler_defined(f'/editor/surveys/{self.survey.uuid}/')
+
+
+class EditorJsNumberLocaleTest(TestCase):
+    """Numbers the editor writes into JavaScript must not be locale-formatted.
+
+    `USE_L10N` is on and every one of the ten non-English languages in
+    `LANGUAGES` -- de, fr, es, pt, pl, id, nl, it, et, fi -- writes decimals
+    with a comma, so an unguarded coordinate renders as `52,5231` and
+    the surrounding `<script>` stops being JavaScript -- the map picker never
+    initialises for a creator working in anything but English. PostHog logged
+    this as three separate htmx issues, because htmx evaluates the scripts it
+    swaps in and its frames sit on top of the stack: "Unexpected token ','.
+    Expected ':' in ternary operator." names the exact construct, and
+    "Unexpected number '52'" names the leading digits of our Berlin default.
+
+    The respondent side has been guarded since before the editor was written
+    (`{% localize off %}` in base_survey_template.html), which is why this test
+    checks the editor's templates specifically.
+
+    Getting the page into Russian at all took two tries: `translation.override`
+    is discarded by `LocaleMiddleware`, which re-activates per request, and
+    `Accept-Language` loses to the language cookie that `login()` has already
+    written. Both versions passed against the unfixed templates.
+    """
+
+    # A comma between two digits inside a script block: no hand-written JS
+    # produces that, and these templates carry no JSON blobs where `[1,2]`
+    # would be legitimate.
+    DECIMAL_COMMA = re.compile(r'\d,\d')
+    SCRIPT = re.compile(r'<script\b[^>]*>(.*?)</script>', re.S | re.I)
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='locale_owner', password='pass')
+        self.org = _make_org('LocaleOrg')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='locale_survey', organization=self.org,
+            start_map_postion=Point(13.4050, 52.5231), start_map_zoom=12,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec', code='S1', is_head=True,
+            start_map_postion=Point(13.3777, 52.5163), start_map_zoom=14,
+        )
+        self.client.login(username='locale_owner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        # The creator's UI language lives in the language COOKIE, written by
+        # CreatorLanguageCookieMiddleware from their saved preference; login()
+        # above already set it to `en`. Neither Accept-Language nor
+        # translation.override can beat a cookie that is already there, so the
+        # cookie is the only honest way to put these pages into Russian --
+        # written either of the other two ways, these tests pass against the
+        # unfixed templates.
+        self._use_language('de')
+
+    def _use_language(self, code):
+        from django.conf import settings as _s
+        self.client.cookies[_s.LANGUAGE_COOKIE_NAME] = code
+
+    def _scripts(self, html):
+        return '\n'.join(self.SCRIPT.findall(html))
+
+    def _assert_no_localized_decimal(self, html, where):
+        scripts = self._scripts(html)
+        found = self.DECIMAL_COMMA.search(scripts)
+        self.assertIsNone(
+            found,
+            f"{where}: a locale-formatted number reached JavaScript "
+            f"({scripts[max(0, found.start() - 60):found.start() + 40] if found else ''!r})",
+        )
+
+    def test_section_map_picker_has_no_localized_decimals(self):
+        """
+        GIVEN a section with float coordinates
+        WHEN its map picker renders under a comma-decimal UI language
+        THEN no digit-comma-digit sequence appears in any script block
+        """
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/map/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get('Content-Language'), 'de')
+        self._assert_no_localized_decimal(response.content.decode(), 'section map picker')
+
+    def test_survey_settings_has_no_localized_decimals(self):
+        """
+        GIVEN a survey with float coordinates
+        WHEN the settings page renders under a comma-decimal UI language
+        THEN no digit-comma-digit sequence appears in any script block
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get('Content-Language'), 'de')
+        self._assert_no_localized_decimal(response.content.decode(), 'survey settings')
+
+    def test_coordinates_are_identical_in_both_locales(self):
+        """
+        GIVEN the same survey
+        WHEN the settings page renders under English and under German
+        THEN the coordinates in the script are byte-identical
+
+        Guards against a fix that merely removes commas — the numbers have to
+        be the same numbers, with a decimal point, in both languages.
+        """
+        url = f'/editor/surveys/{self.survey.uuid}/settings/'
+        self._use_language('en')
+        en = self._scripts(self.client.get(url).content.decode())
+        self._use_language('de')
+        ru = self._scripts(self.client.get(url).content.decode())
+        for needle in ('52.5231', '13.405'):
+            self.assertIn(needle, en)
+            self.assertIn(needle, ru)
+
+    def test_guard_would_catch_a_localized_decimal(self):
+        """
+        GIVEN a template line of the shape this bug produced
+        WHEN rendered under a comma-decimal locale without the guard
+        THEN the detector fires
+
+        Pins the detector itself: without this, a regex that never matches
+        anything would make the tests above pass forever.
+        """
+        unguarded = Template('<script>var lat = a ? {{ y }} : b;</script>')
+        with translation.override('de'):
+            rendered = unguarded.render(Context({'y': 52.5231}))
+        self.assertRegex(self._scripts(rendered), self.DECIMAL_COMMA)
+

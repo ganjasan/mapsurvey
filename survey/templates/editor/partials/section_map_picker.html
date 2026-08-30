@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load l10n %}
 <div class="modal-header">
     <h5 class="modal-title">{% trans "Set Map Position" %} — {{ section.title|default:section.name }}</h5>
     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
@@ -57,6 +58,14 @@
 
 <script>
 (function() {
+    {% comment %}USE_L10N is on, so a float rendered under any locale that writes
+    decimals with a comma arrives here as `52,5231` and the whole script stops
+    being JavaScript -- the map picker then never initialises for a creator
+    working in anything but English. `localize off` wraps the block rather than
+    each value so a coordinate added later is covered too. The respondent side
+    has done this in base_survey_template.html since before the editor did.
+    {% endcomment %}
+    {% localize off %}
     var hasPosition = {{ section.start_map_postion|yesno:"true,false" }};
     var inheritLat = {{ survey.start_map_postion.y|default:"52.52" }};
     var inheritLng = {{ survey.start_map_postion.x|default:"13.405" }};
@@ -64,6 +73,7 @@
     var lat = hasPosition ? {{ section.start_map_postion.y|default:"52.52" }} : inheritLat;
     var lng = hasPosition ? {{ section.start_map_postion.x|default:"13.405" }} : inheritLng;
     var zoom = hasPosition ? {{ section.start_map_zoom|default:"12" }} : inheritZoom;
+    {% endlocalize %}
 
     var mapboxUrl = '{{ MAPBOX_URL }}';
     var mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';

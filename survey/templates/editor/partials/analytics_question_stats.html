@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load survey_filters %}
+{% load l10n %}
 
 <h6 style="font-weight:700; margin-bottom:0.75rem;">{% trans "Question Statistics" %}</h6>
 
@@ -119,7 +120,9 @@
     document.addEventListener('DOMContentLoaded', function() {
         var qid = '{{ stat.question.id }}';
         var allValues = [];
-        var minVal = {{ stat.min_val }}, maxVal = {{ stat.max_val }};
+        {% comment %}Localized decimals would make this a comma-operator soup
+        that does not parse; see section_map_picker.html.{% endcomment %}
+        {% localize off %}var minVal = {{ stat.min_val }}, maxVal = {{ stat.max_val }};{% endlocalize %}
         window.analyticsQuestionNames.set(qid, '{{ stat.question.name|escapejs }}');
 
         // Collect all numeric values from matrix for dynamic rebinning
