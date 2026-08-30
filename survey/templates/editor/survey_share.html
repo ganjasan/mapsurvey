@@ -302,4 +302,9 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeQr();
 });
 </script>
+
+{% comment %}The nav tabs above wire Share/Preview to navMenuToggle, which is
+defined here. Without this include both buttons throw ReferenceError and open
+nothing -- a Django test asserting the markup stays green either way.{% endcomment %}
+{% include "editor/partials/_lifecycle_scripts.html" %}
 {% endblock %}

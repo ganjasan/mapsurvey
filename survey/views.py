@@ -76,6 +76,27 @@ from django.http import HttpResponse
 logger = logging.getLogger(__name__)
 
 
+def choice_ids(values):
+    """Posted choice identifiers, skipping anything that is not one.
+
+    A creator who changes a question's type while respondents hold the page open
+    leaves the stored `input_type` and the served widget disagreeing, so the POST
+    can carry e.g. pipe-joined GeoJSON under a `choice` question's code. Parsing
+    that with a bare `int()` took out 62 respondents' submissions in 26 minutes
+    on 2026-08-24. A value nobody can read as a choice is stored as nothing --
+    the way an unanswered question is -- never as a failed request.
+    """
+    ids = []
+    for value in values:
+        if value == '' or value is None:
+            continue
+        try:
+            ids.append(int(value))
+        except (TypeError, ValueError):
+            continue
+    return ids
+
+
 class AsyncEmailRegistrationView(
     __import__('django_registration.backends.activation.views', fromlist=['RegistrationView']).RegistrationView
 ):
@@ -1019,7 +1040,10 @@ def survey_section(request, survey_slug, section_name):
 		submitted_answers = answers_by_code_for_session(survey_session)
 		for q in section_questions:
 			if q.input_type in CONTROLLER_TYPES:
-				posted = [int(v) for v in request.POST.getlist(q.code) if v != '']
+				# `choice_ids`, not a bare `int()`: a controller whose posted value
+				# cannot be read as a choice contributes nothing to visibility
+				# rather than 500ing the submission. See its docstring.
+				posted = choice_ids(request.POST.getlist(q.code))
 				if posted:
 					submitted_answers[q.code] = posted
 				else:
@@ -1135,9 +1159,13 @@ def survey_section(request, survey_slug, section_name):
 						answer.save()
 
 				elif question.input_type in ('choice', 'multichoice', 'rating'):
-					answer = Answer(survey_session=survey_session, question=question)
-					answer.selected_choices = [int(r) for r in result if r]
-					answer.save()
+					# Same tolerance as the visibility pre-pass above: a value the
+					# stored type cannot read is dropped, not raised on.
+					selected = choice_ids(result)
+					if selected:
+						answer = Answer(survey_session=survey_session, question=question)
+						answer.selected_choices = selected
+						answer.save()
 
 				elif question.input_type in FILE_INPUT_TYPES:
 					# The form posts async-upload tokens, never bytes — one

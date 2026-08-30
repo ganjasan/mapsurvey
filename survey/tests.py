@@ -34416,6 +34416,43 @@ class ConditionalVisibilityRespondentTest(TestCase):
         self.assertEqual(self._answers(self.howmany).count(), 0)
         self.assertEqual(self._answers(self.albino).count(), 1)
 
+    def test_geojson_posted_under_a_choice_question_does_not_500(self):
+        """
+        GIVEN ZONE is stored as a choice question
+        WHEN the POST carries pipe-joined GeoJSON under its code, as happens
+             when a creator switches a question's type while respondents hold
+             the page open
+        THEN the submission is processed, the other answers are stored, and no
+             500 is raised
+
+        Reproduces the 2026-08-24 incident: 136 ValueErrors, 62 respondents,
+        26 minutes — every submit of the section died in the visibility
+        pre-pass's `int()`.
+        """
+        geojson_blob = (
+            '{"type":"Feature","properties":{"question_id":"ZONE"},'
+            '"geometry":{"type":"Point","coordinates":[-119.35,49.87]}}|'
+        )
+        self.client.get('/surveys/condvis/pick/')
+        response = self.client.post('/surveys/condvis/pick/', {
+            'ZONE': geojson_blob, 'ALB': '1', 'HOW': 'two by the tower',
+        })
+        self.assertEqual(response.status_code, 302)
+        # The unreadable controller stores nothing; everything else survives.
+        self.assertEqual(self._answers(self.zone).count(), 0)
+        self.assertEqual(self._answers(self.albino).get().selected_choices, [1])
+        self.assertEqual(self._answers(self.howmany).count(), 1)
+
+    def test_choice_ids_ignores_unparseable_values(self):
+        """
+        GIVEN a mix of choice identifiers and values that are not identifiers
+        WHEN choice_ids parses them
+        THEN only the identifiers survive, in order
+        """
+        from .views import choice_ids
+
+        self.assertEqual(choice_ids(['1', '', '{"type":"Feature"}', '0', None]), [1, 0])
+
     def test_cascade_filled_then_controller_flipped_purges_whole_chain(self):
         """
         GIVEN a filled cascade (ALB=Yes + HOW answered, stored in the DB)
@@ -35829,3 +35866,129 @@ class MultiFileExportTest(TestCase):
             [n for n in names if n.endswith('.geojson')][0]).decode()
         for i in range(2):
             self.assertIn(f'files/{session.id}/Q_SPOT_PH__spot{i}.jpg', geojson_text)
+
+
+class StructureImageExportTest(TestCase):
+    """Structure export must read question images through the storage backend.
+
+    `question.image.path` raises `NotImplementedError: This backend doesn't
+    support absolute paths` on S3, so after media moved off local disk on
+    2026-08-27 the structure export 500'd for every survey with a question
+    image (PostHog issue 01a04ddb, 9 events on 2026-08-29).
+    """
+
+    def setUp(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        self.org = _make_org('ImgExportOrg')
+        self.survey = SurveyHeader.objects.create(name="img_export", organization=self.org)
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="sec", code="S1", is_head=True)
+        self.question = Question.objects.create(
+            survey_section=self.section, code="Q_IMG", name="Illustrated",
+            input_type="text", order_number=1)
+        self.question.image.save(
+            'diagram.png', SimpleUploadedFile('diagram.png', b'PNGDATA', 'image/png'), save=True)
+
+    def test_structure_export_includes_the_image_bytes(self):
+        """
+        GIVEN a survey with a question image
+        WHEN it is exported in structure mode
+        THEN the archive holds the image bytes under images/structure/
+        """
+        output = BytesIO()
+        export_survey_to_zip(self.survey, output, mode="structure")
+
+        output.seek(0)
+        with zipfile.ZipFile(output, 'r') as zf:
+            entries = [n for n in zf.namelist() if n.startswith('images/structure/')]
+            self.assertEqual(len(entries), 1, zf.namelist())
+            self.assertEqual(zf.read(entries[0]), b'PNGDATA')
+
+    def test_export_survives_a_backend_that_cannot_open_the_file(self):
+        """
+        GIVEN a storage backend that raises on open, the way S3 raises on .path
+        WHEN the survey is exported
+        THEN the archive is still written and a warning names the image
+
+        Uses the exact exception S3Boto3Storage raises for `.path`, so the test
+        fails again if anyone reintroduces a path-based read.
+        """
+        from unittest.mock import patch
+
+        def boom(*args, **kwargs):
+            raise NotImplementedError("This backend doesn't support absolute paths.")
+
+        output = BytesIO()
+        with patch.object(type(self.question.image), 'open', boom):
+            warnings = export_survey_to_zip(self.survey, output, mode="structure")
+
+        output.seek(0)
+        with zipfile.ZipFile(output, 'r') as zf:
+            self.assertIn("survey.json", zf.namelist())
+            self.assertFalse([n for n in zf.namelist() if n.startswith('images/structure/')])
+        self.assertTrue(any('Q_IMG' in w for w in warnings), warnings)
+
+
+@override_settings(MOBILE_EDITOR_NAV=False)
+class SurveyNavScriptsTest(TestCase):
+    """Every page rendering the survey nav must define the nav's click handler.
+
+    `_survey_nav_tabs.html` wires Share and Preview to `onclick="navMenuToggle"`,
+    which lives in `_lifecycle_scripts.html`. Share and Settings never included
+    it, so both buttons threw ReferenceError and opened nothing (PostHog issue
+    01a02d79, 2026-08-23).
+
+    The flag is pinned OFF here on purpose. Later the same day, commit 928e927
+    stopped rendering those dropdowns outside the Responses tab whenever
+    MOBILE_EDITOR_NAV is on -- which is the default -- so the symptom vanished
+    by accident rather than by repair. Setting the flag to False is the
+    documented rollback path, and on that path the dead buttons are live again.
+    Testing with the default would assert nothing.
+
+    Asserted on rendered markup because a Django test that only checks the
+    button exists stays green either way.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='nav_owner', password='pass')
+        self.org = _make_org('NavOrg')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name="nav_survey", organization=self.org)
+        SurveySection.objects.create(
+            survey_header=self.survey, name="sec", code="S1", is_head=True)
+        self.client.login(username='nav_owner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+    def _assert_handler_defined(self, url):
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, url)
+        body = response.content.decode()
+        self.assertIn('navMenuToggle(this,event)', body)
+        self.assertIn('function navMenuToggle', body)
+
+    def test_share_page_defines_the_nav_handler(self):
+        """
+        GIVEN the Share page, which renders the survey nav
+        WHEN it is loaded
+        THEN navMenuToggle is defined on the page, not only referenced
+        """
+        self._assert_handler_defined(f'/editor/surveys/{self.survey.uuid}/share/')
+
+    def test_settings_page_defines_the_nav_handler(self):
+        """
+        GIVEN the survey Settings page, which renders the survey nav
+        WHEN it is loaded
+        THEN navMenuToggle is defined on the page, not only referenced
+        """
+        self._assert_handler_defined(f'/editor/surveys/{self.survey.uuid}/settings/')
+
+    def test_build_page_still_defines_the_nav_handler(self):
+        """
+        GIVEN the Build page, which already included the scripts
+        WHEN it is loaded
+        THEN the handler is defined exactly as before
+        """
+        self._assert_handler_defined(f'/editor/surveys/{self.survey.uuid}/')

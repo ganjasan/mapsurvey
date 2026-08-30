@@ -92,8 +92,7 @@ def collect_layer_files(survey: SurveyHeader) -> List[Tuple[str, str]]:
     """(archive_path, geojson_text) per layer.
 
     Text, not a filesystem path: layers live in the database precisely so they
-    are not public objects in the media bucket, which also spares this path the
-    `.path`-on-S3 trap that collect_structure_images() still has."""
+    are not public objects in the media bucket."""
     return [
         (f"layers/{index}.geojson", layer.geojson)
         for index, layer in enumerate(survey.map_layers.all())
@@ -174,22 +173,37 @@ def serialize_questions(section: SurveySection) -> List[Dict[str, Any]]:
     ]
 
 
-def collect_structure_images(survey: SurveyHeader) -> List[Tuple[str, str]]:
-    """
-    Gather all question images for export.
-    Returns list of (archive_path, filesystem_path) tuples.
+def collect_structure_images(survey: SurveyHeader) -> Tuple[List[Tuple[str, bytes]], List[str]]:
+    """Gather all question images for export.
+
+    Returns (images, warnings) where images is a list of (archive_path, data).
+
+    Bytes, not a filesystem path. `question.image.path` raises
+    `NotImplementedError: This backend doesn't support absolute paths` on any
+    remote storage backend, so once media moved to S3 (2026-08-27) the structure
+    export died for every survey that has a question image. Reading through the
+    storage API works on both local disk and S3.
+
+    An image the backend cannot open is skipped with a warning: one missing file
+    must not cost the creator the whole archive.
     """
     images = []
+    warnings = []
 
     for question in survey.questions():
         if question.image and question.image.name:
             original_name = os.path.basename(question.image.name)
             archive_path = f"images/structure/{question.code}_{original_name}"
-            filesystem_path = question.image.path
-            if os.path.exists(filesystem_path):
-                images.append((archive_path, filesystem_path))
+            try:
+                with question.image.open('rb') as fh:
+                    images.append((archive_path, fh.read()))
+            except Exception:
+                warnings.append(
+                    f"Image for question '{question.code}' could not be read "
+                    f"({question.image.name}); it is not in the archive."
+                )
 
-    return images
+    return images, warnings
 
 
 # =============================================================================
@@ -304,14 +318,15 @@ def export_survey_to_zip(
             zf.writestr("survey.json", json.dumps(survey_data, indent=2, ensure_ascii=False))
 
             # Add structure images
-            images = collect_structure_images(survey)
+            images, image_warnings = collect_structure_images(survey)
             if images:
                 warnings.append(
                     f"Survey contains {len(images)} image(s). "
                     "Media files are included in the archive."
                 )
-            for archive_path, filesystem_path in images:
-                zf.write(filesystem_path, archive_path)
+            warnings.extend(image_warnings)
+            for archive_path, data in images:
+                zf.writestr(archive_path, data)
 
             # Reference layers: geometry written straight from the row
             for archive_path, geojson_text in collect_layer_files(survey):
