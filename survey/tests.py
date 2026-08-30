@@ -25321,13 +25321,13 @@ class AIMaterializeTest(TestCase):
         THEN it raises and no survey survives
         """
         from django.db import transaction
-        from survey.serialization import ImportError as SerializationImportError
+        from survey.serialization import ImportError as ImportError
 
         blob = _ai_blob(('en',))
         blob['sections'][0]['questions'][0]['input_type'] = 'telepathy'
         before = SurveyHeader.objects.count()
 
-        with self.assertRaises(SerializationImportError):
+        with self.assertRaises(ImportError):
             with transaction.atomic():
                 self._materialize(blob)
 
@@ -36275,3 +36275,142 @@ class AnalyticsHeatLayerGuardTest(TestCase):
         guard_at = html.index('_guardHeatRedraw(heatLayer);')
         add_at = html.index('heatLayer.addTo(this._map);')
         self.assertLess(guard_at, add_at)
+
+
+class MalformedArchiveImportTest(TestCase):
+    """A creator's bad ZIP must produce a message, not a 500.
+
+    `survey_data.get("redirect_url", "#")[:250]` reads as safe and is not: the
+    default only fires when the key is ABSENT, so `"redirect_url": null` hands
+    back None and the slice raises `TypeError: 'NoneType' object is not
+    subscriptable`. That was PostHog issue 01a02d72 on 2026-08-23, on
+    /editor/import/. Every archive field is content from outside this
+    installation, and a hand-edited or foreign survey.json can null out or
+    retype any of them.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='importer', password='pass')
+        self.org = _make_org('ImportOrg')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='importer', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+    def _archive(self, survey_obj):
+        """A minimal structure-only ZIP carrying the given survey dict."""
+        buf = BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zf:
+            zf.writestr('survey.json', json.dumps({
+                'version': '1.0',
+                'exported_at': '2026-08-30T00:00:00Z',
+                'mode': 'structure',
+                'survey': survey_obj,
+            }))
+        buf.seek(0)
+        return buf
+
+    def _valid_survey(self, **overrides):
+        data = {
+            'name': 'Imported survey',
+            'redirect_url': '#',
+            'available_languages': [],
+            'sections': [{
+                'name': 'first',
+                'code': 'S1',
+                'is_head': True,
+                'questions': [{'code': 'Q1', 'name': 'Q', 'input_type': 'text_line'}],
+            }],
+        }
+        data.update(overrides)
+        return data
+
+    def test_baseline_archive_imports(self):
+        """
+        GIVEN a well-formed structure archive
+        WHEN it is imported
+        THEN a survey is created
+
+        Without this the null cases below could pass for the wrong reason.
+        """
+        survey, warnings = import_survey_from_zip(
+            self._archive(self._valid_survey()),
+            organization=self.org, created_by=self.user)
+        self.assertIsNotNone(survey)
+        self.assertEqual(survey.name, 'Imported survey')
+
+    def test_explicit_null_text_field_is_treated_as_absent(self):
+        """
+        GIVEN an archive whose redirect_url is explicitly null
+        WHEN it is imported
+        THEN the import succeeds and the field falls back to its default
+
+        This is the exact payload shape that produced the reported 500.
+        """
+        survey, _ = import_survey_from_zip(
+            self._archive(self._valid_survey(redirect_url=None)),
+            organization=self.org, created_by=self.user)
+        self.assertIsNotNone(survey)
+        self.assertEqual(survey.redirect_url, '#')
+
+    def test_null_optional_fields_across_the_tree_do_not_raise(self):
+        """
+        GIVEN nulls in optional section and question fields
+        WHEN the archive is imported
+        THEN it still imports, treating each null as an absent key
+        """
+        data = self._valid_survey()
+        data['sections'][0]['title'] = None
+        data['sections'][0]['code'] = None
+        data['sections'][0]['questions'][0]['color'] = None
+        data['sections'][0]['questions'][0]['icon_class'] = None
+        survey, _ = import_survey_from_zip(
+            self._archive(data), organization=self.org, created_by=self.user)
+        self.assertIsNotNone(survey)
+
+    def test_missing_required_field_is_a_message_not_a_crash(self):
+        """
+        GIVEN an archive whose section has no name
+        WHEN it is imported
+        THEN a ImportError names the problem
+        """
+        data = self._valid_survey()
+        del data['sections'][0]['name']
+        with self.assertRaises(ImportError) as ctx:
+            import_survey_from_zip(self._archive(data),
+                                   organization=self.org, created_by=self.user)
+        self.assertIn('name', str(ctx.exception))
+
+    def test_wrongly_typed_field_is_a_message_not_a_crash(self):
+        """
+        GIVEN an archive where a list appears where text belongs
+        WHEN it is imported
+        THEN the archive is rejected with a readable error rather than a 500
+
+        The catch-all matters more than any single field: an archive's fields
+        cannot all be enumerated, so the shape errors a foreign file produces
+        have to degrade to a message by default.
+        """
+        data = self._valid_survey()
+        data['sections'][0]['questions'][0]['choices'] = {'not': 'a list'}
+        try:
+            import_survey_from_zip(self._archive(data),
+                                   organization=self.org, created_by=self.user)
+        except ImportError:
+            pass  # rejected cleanly — the point of the test
+        except Exception as exc:  # noqa: BLE001 - that is exactly what must not happen
+            self.fail(f'a malformed archive raised {type(exc).__name__} instead of ImportError: {exc}')
+
+    def test_import_view_shows_a_message_for_a_bad_archive(self):
+        """
+        GIVEN a creator uploading an archive with a null required field
+        WHEN they POST it to the import view
+        THEN they are redirected with an error message, not served a 500
+        """
+        data = self._valid_survey(name=None)
+        response = self.client.post('/editor/import/',
+                                    {'file': self._archive(data)}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        texts = [str(m) for m in response.context['messages']]
+        self.assertTrue(any('name' in t for t in texts), texts)

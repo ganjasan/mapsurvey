@@ -5,6 +5,7 @@ Provides functions for exporting surveys to ZIP archives and importing them back
 Supports three modes: structure, data, full.
 """
 import json
+import logging
 import zipfile
 import os
 from datetime import datetime
@@ -23,6 +24,8 @@ from .models import (
     QuestionTranslation, default_basemaps, SurveyMapLayer,
 )
 from .html_sanitize import coerce_creator_html
+
+logger = logging.getLogger(__name__)
 from .question_types import CHOICE_TYPES
 
 # Format version for compatibility checking
@@ -353,6 +356,38 @@ def export_survey_to_zip(
 # IMPORT - Validation
 # =============================================================================
 
+def _archive_text(data: Dict[str, Any], key: str, default: str = "", limit: Optional[int] = None) -> str:
+    """A text field out of an archive, treating an explicit null like a missing key.
+
+    `data.get(key, default)[:limit]` reads as safe and is not: `.get`'s default
+    only fires when the key is ABSENT, so a survey.json carrying
+    `"redirect_url": null` hands back None and the slice raises
+    `TypeError: 'NoneType' object is not subscriptable` -- a 500 on the import
+    page for a creator whose only mistake was a hand-edited or foreign archive.
+    That is what happened on 2026-08-23.
+
+    An archive is content from outside this installation, so every field it
+    supplies is read through here rather than trusted to be a string.
+    """
+    value = data.get(key)
+    if value is None:
+        value = default
+    if not isinstance(value, str):
+        value = str(value)
+    return value[:limit] if limit else value
+
+
+def _required_text(data: Dict[str, Any], key: str, what: str, limit: Optional[int] = None) -> str:
+    """A field the import cannot invent a default for. Raises ImportError, which
+    the view renders as a message, rather than letting a KeyError become a 500."""
+    value = data.get(key)
+    if value is None or (isinstance(value, str) and not value.strip()):
+        raise ImportError(f"{what} is missing its '{key}' field")
+    if not isinstance(value, str):
+        value = str(value)
+    return value[:limit] if limit else value
+
+
 def validate_archive(zip_file: zipfile.ZipFile) -> Dict[str, Any]:
     """
     Validate archive structure, version, and required files.
@@ -596,13 +631,13 @@ def create_survey_header(
     Reads status from data (defaults to 'draft').
     Never imports password_hash or test_token for security.
     """
-    name = survey_data["name"]
+    name = _required_text(survey_data, "name", "The survey", limit=45)
 
     return SurveyHeader.objects.create(
-        name=name[:45],
+        name=name,
         organization=organization,
         created_by=created_by,
-        redirect_url=survey_data.get("redirect_url", "#")[:250],
+        redirect_url=_archive_text(survey_data, "redirect_url", "#", 250),
         available_languages=survey_data.get("available_languages", []),
         thanks_html=survey_data.get("thanks_html", {}),
         status=survey_data.get("status", "draft"),
@@ -660,10 +695,10 @@ def create_sections(
 
         section = SurveySection.objects.create(
             survey_header=survey,
-            name=section_data["name"][:45],
-            title=section_data.get("title", "")[:256] if section_data.get("title") else None,
+            name=_required_text(section_data, "name", "A section", limit=45),
+            title=_archive_text(section_data, "title", "", 256) or None,
             subheading=_import_rich_text(section_data.get("subheading")),
-            code=section_data.get("code", "")[:8],
+            code=_archive_text(section_data, "code", "", 8),
             is_head=section_data.get("is_head", False),
             layout=section_data.get("layout") if section_data.get("layout") in ("map", "form") else "map",
             next_label=(section_data.get("next_label") or None) and str(section_data.get("next_label"))[:30],
@@ -722,7 +757,7 @@ def _create_question(
     parent: Optional[Question] = None
 ) -> Question:
     """Create a single question, handling code collisions."""
-    original_code = question_data["code"]
+    original_code = _required_text(question_data, "code", "A question")
 
     # Check for code collision
     if Question.objects.filter(code=original_code).exists():
@@ -784,8 +819,8 @@ def _create_question(
         input_type=input_type[:80],
         choices=choices,
         required=question_data.get("required", False),
-        color=question_data.get("color", "#000000")[:7],
-        icon_class=question_data.get("icon_class", "")[:80] if question_data.get("icon_class") else None,
+        color=_archive_text(question_data, "color", "#000000", 7),
+        icon_class=_archive_text(question_data, "icon_class", "", 80) or None,
         display_style=display_style,
         # image is handled separately during extraction
     )
@@ -1230,5 +1265,19 @@ def import_survey_from_zip(
 
     except zipfile.BadZipFile:
         raise ImportError("Invalid ZIP archive")
+    except ImportError:
+        raise
+    except (TypeError, KeyError, IndexError, AttributeError, ValueError) as exc:
+        # An archive is data from outside this installation, and its fields
+        # cannot all be enumerated -- a hand-edited or foreign survey.json can
+        # null out or retype anything. The shape errors that produces are the
+        # creator's file being wrong, not our logic, and they must not surface
+        # as a 500 on the import page. Logged so a genuine bug hiding in here
+        # still leaves a trail in the request log.
+        logger.exception("Malformed survey archive rejected during import")
+        raise ImportError(
+            f"The archive could not be read: {type(exc).__name__}: {exc}. "
+            "It may be edited, truncated, or produced by a different tool."
+        )
 
     return survey, warnings
