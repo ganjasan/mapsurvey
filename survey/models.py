@@ -253,6 +253,30 @@ class TrackedLink(models.Model):
         return path
 
 
+# `org/(?P<slug>[-.\w]+)/...` in urls.py. A slug outside this set reverses to
+# nothing, and `{% url 'org_settings' active_org.slug %}` sits in the account
+# dropdown of every base template -- so one unroutable row is a 500 on every
+# page its owner opens, including the settings page that would fix it.
+ORG_SLUG_RE = re_module.compile(r'^[-.\w]+\Z')
+
+
+def unique_org_slug(base, exclude_pk=None, model=None):
+    """A routable, unused slug derived from `base`.
+
+    Shared by `Organization.save()` and the repair migration so both agree on
+    what a slug looks like; the migration passes its historical model in.
+    """
+    model = model or Organization
+    base_slug = slugify(base)[:100] or 'org'
+    slug = base_slug
+    counter = 2
+    while model.objects.filter(slug=slug).exclude(pk=exclude_pk).exists():
+        suffix = f'-{counter}'
+        slug = base_slug[:100 - len(suffix)] + suffix
+        counter += 1
+    return slug
+
+
 class Organization(models.Model):
     name = models.CharField(max_length=250)
     slug = models.SlugField(max_length=100, unique=True)
@@ -264,15 +288,14 @@ class Organization(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-            base_slug = slugify(self.name)[:100] or 'org'
-            slug = base_slug
-            counter = 2
-            while Organization.objects.filter(slug=slug).exclude(pk=self.pk).exists():
-                suffix = f'-{counter}'
-                slug = base_slug[:100 - len(suffix)] + suffix
-                counter += 1
-            self.slug = slug
+        # Generate when empty, normalise when unroutable. `SlugField` does carry
+        # `validate_slug`, but Django runs field validators only from
+        # `full_clean()`, which the hand-rolled org views never called -- the
+        # validation read as present in the model and was inert at runtime.
+        # `OrganizationSettingsForm` gives a human the readable error; this is
+        # the backstop for admin, shell, commands and imports.
+        if not self.slug or not ORG_SLUG_RE.match(self.slug):
+            self.slug = unique_org_slug(self.slug or self.name, exclude_pk=self.pk)
         super().save(*args, **kwargs)
 
 

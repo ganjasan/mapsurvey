@@ -355,3 +355,36 @@ class QuestionForm(forms.ModelForm):
         elif style == 'dropdown':
             cleaned['display_style'] = 'default'
         return cleaned
+
+
+class OrganizationSettingsForm(forms.ModelForm):
+    """Name + slug for the organization settings page.
+
+    A ModelForm, not hand-read POST values, because the whole defect this
+    replaces was that `SlugField`'s validator never ran: Django applies field
+    validators from `full_clean()`, and the previous view checked only
+    uniqueness before assigning `org.slug` directly. The field looked validated
+    in the model and accepted "CBPR Summer 26' PM" at runtime, which reverses to
+    nothing and 500s every page that renders the account dropdown.
+    """
+
+    class Meta:
+        model = Organization
+        fields = ('name', 'slug')
+        labels = {
+            'name': 'Name',
+            'slug': 'Slug',
+        }
+        help_texts = {
+            'slug': 'URL identifier — letters, numbers, hyphens and underscores only.',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].required = True
+        self.fields['slug'].required = True
+        for name, field in self.fields.items():
+            field.widget.attrs.setdefault('class', 'form-control')
+        # Client-side echo of the server rule, so the common mistake (typing a
+        # display name into the slug box) is caught before the round trip.
+        self.fields['slug'].widget.attrs.setdefault('pattern', r'[-\w.]+')

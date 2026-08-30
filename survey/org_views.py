@@ -9,6 +9,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 
 from .models import Organization, Membership, Invitation
+from .editor_forms import OrganizationSettingsForm
 from .permissions import get_org_membership, ORG_ROLE_RANK
 
 
@@ -58,20 +59,23 @@ def org_settings(request, slug):
         return HttpResponseForbidden()
 
     if request.method == 'POST':
-        name = request.POST.get('name', '').strip()
-        new_slug = request.POST.get('slug', '').strip()
-        if name:
-            org.name = name
-        if new_slug and new_slug != org.slug:
-            if Organization.objects.filter(slug=new_slug).exclude(pk=org.pk).exists():
-                messages.error(request, f"Slug '{new_slug}' is already taken.")
-            else:
-                org.slug = new_slug
-        org.save()
-        messages.success(request, 'Organization settings updated.')
-        return redirect('org_settings', slug=org.slug)
+        # Through a ModelForm so `SlugField`'s validator actually runs. Reading
+        # POST by hand skipped it -- Django applies field validators only from
+        # `full_clean()` -- and a slug typed as a display name reversed to
+        # nothing, 500ing every page that renders the account dropdown.
+        form = OrganizationSettingsForm(request.POST, instance=org)
+        if form.is_valid():
+            org = form.save()
+            messages.success(request, 'Organization settings updated.')
+            return redirect('org_settings', slug=org.slug)
+        # `construct_instance` has already written the valid fields onto the
+        # instance. The error page links to `org/<slug>/members/`, so it must
+        # reverse against what is stored, not against a half-applied edit.
+        org.refresh_from_db()
+    else:
+        form = OrganizationSettingsForm(instance=org)
 
-    return render(request, 'org/org_settings.html', {'org': org})
+    return render(request, 'org/org_settings.html', {'org': org, 'form': form})
 
 
 # ─── Member Management ───────────────────────────────────────────────────────
