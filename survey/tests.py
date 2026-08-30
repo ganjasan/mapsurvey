@@ -34635,14 +34635,15 @@ class ConditionalVisibilityEditorTest(TestCase):
             input_type="text_line")
         self.client.login(username="cv_owner", password="pass")
 
-    def _edit_question(self, question, extra):
+    def _edit_question(self, question, extra, htmx=False):
         payload = {
             'name': question.name, 'input_type': question.input_type,
             'subtext': '', 'color': '#000000', 'icon_class': '',
         }
         payload.update(extra)
         return self.client.post(
-            f'/editor/surveys/{self.survey.uuid}/questions/{question.id}/edit/', payload)
+            f'/editor/surveys/{self.survey.uuid}/questions/{question.id}/edit/', payload,
+            **({'HTTP_HX_REQUEST': 'true'} if htmx else {}))
 
     def test_rule_saved_via_question_edit(self):
         """
@@ -34686,6 +34687,55 @@ class ConditionalVisibilityEditorTest(TestCase):
         self.assertEqual(r.status_code, 422)
         self.dep.refresh_from_db()
         self.assertIsNone(self.dep.visibility_rule)
+
+    def test_create_conditional_without_choices_retargets_modal(self):
+        """
+        GIVEN the New question form posted over HTMX in conditional mode with no
+              answer ticked (its hx-target is the question list, beforeend)
+        WHEN the create POST is processed
+        THEN the modal re-renders with the error and HX-Retarget/HX-Reswap point
+             the swap at the modal body, and no question is created
+        """
+        before = Question.objects.count()
+        r = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.s1.id}/questions/new/',
+            {'name': 'Q', 'input_type': 'text_line', 'subtext': '', 'color': '#000000',
+             'icon_class': '', 'visibility_mode': 'conditional',
+             'visibility_question': 'CTRL'},
+            HTTP_HX_REQUEST='true')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r['HX-Retarget'], '#questionModalBody')
+        self.assertEqual(r['HX-Reswap'], 'innerHTML')
+        self.assertContains(r, 'Pick a controlling question')
+        self.assertEqual(Question.objects.count(), before)
+
+    def test_edit_form_invalid_retargets_modal(self):
+        """
+        GIVEN a non-autosave edit POST in conditional mode with no answer ticked
+        WHEN it is processed over HTMX
+        THEN the modal is re-rendered into the modal body, not over the list item
+        """
+        r = self._edit_question(self.dep, {
+            'visibility_mode': 'conditional', 'visibility_question': 'CTRL',
+        }, htmx=True)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r['HX-Retarget'], '#questionModalBody')
+
+    def test_visibility_block_is_class_addressed(self):
+        """
+        GIVEN the section panel and the question modal both render the block
+        WHEN either is rendered
+        THEN neither carries id="fg-visibility" (the script binds by class, per
+             instance — a shared id left the modal's radios dead)
+        """
+        for url in (
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.s1.id}/',
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.dep.id}/edit/',
+        ):
+            r = self.client.get(url)
+            self.assertEqual(r.status_code, 200, url)
+            self.assertContains(r, 'class="form-group fg-visibility"')
+            self.assertNotContains(r, 'id="fg-visibility"')
 
     def test_absent_block_leaves_rule_untouched(self):
         """

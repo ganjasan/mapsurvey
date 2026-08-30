@@ -1092,6 +1092,23 @@ def _parse_file_validation_settings(request, question, vs=None):
     return vs
 
 
+def _render_question_modal(request, context):
+    """Render the question modal so HTMX always swaps it into the modal body.
+
+    The <form> inside the modal targets the question LIST for its success
+    response (a list item), so a validation re-render of the modal returned
+    as a plain 200 would be appended to / swapped over that list — the modal
+    stays open with the error out of sight and every retry adds a copy
+    (PostHog replay 01a051a7, openspec: fix-question-modal-error-retarget).
+    HX-Retarget/HX-Reswap point the swap back at #questionModalBody.
+    """
+    response = render(request, 'editor/partials/question_form_modal.html', context)
+    if request.headers.get('HX-Request'):
+        response['HX-Retarget'] = '#questionModalBody'
+        response['HX-Reswap'] = 'innerHTML'
+    return response
+
+
 @survey_permission_required('editor')
 def editor_question_create(request, survey_uuid, section_id):
     survey = request.survey
@@ -1121,7 +1138,7 @@ def editor_question_create(request, survey_uuid, section_id):
             vis_present, vis_rule, vis_error = _parse_visibility_rule(request)
             if vis_error:
                 form.add_error(None, vis_error)
-                return render(request, 'editor/partials/question_form_modal.html', {
+                return _render_question_modal(request, {
                     **_visibility_block_context(survey, section, 'question'),
                     'form': form,
                     'survey': survey,
@@ -1149,7 +1166,7 @@ def editor_question_create(request, survey_uuid, section_id):
             response['HX-Trigger'] = 'questionSaved'
             return response
         # Form invalid — re-render modal with errors
-        return render(request, 'editor/partials/question_form_modal.html', {
+        return _render_question_modal(request, {
             **_visibility_block_context(survey, section, 'question'),
             'form': form,
             'survey': survey,
@@ -1157,7 +1174,7 @@ def editor_question_create(request, survey_uuid, section_id):
         })
     else:
         form = QuestionForm(section=section)
-    return render(request, 'editor/partials/question_form_modal.html', {
+    return _render_question_modal(request, {
         **_visibility_block_context(survey, section, 'question'),
         'form': form,
         'survey': survey,
@@ -1219,7 +1236,7 @@ def editor_question_edit(request, survey_uuid, question_id):
                             vs[key] = parsed
                 if 'min_features' in vs and 'max_features' in vs and vs['max_features'] < vs['min_features']:
                     form.add_error(None, 'Max places must be greater than or equal to min places.')
-                    return render(request, 'editor/partials/question_form_modal.html', {
+                    return _render_question_modal(request, {
                         'form': form,
                         'survey': survey,
                         'section': question.survey_section,
@@ -1231,7 +1248,7 @@ def editor_question_edit(request, survey_uuid, question_id):
                 if request.POST.get('autosave'):
                     return JsonResponse({'ok': False, 'errors': {'visibility': [vis_error]}}, status=422)
                 form.add_error(None, vis_error)
-                return render(request, 'editor/partials/question_form_modal.html', {
+                return _render_question_modal(request, {
                     **_visibility_block_context(survey, question.survey_section, 'question', host=question),
                     'form': form,
                     'survey': survey,
@@ -1254,7 +1271,7 @@ def editor_question_edit(request, survey_uuid, question_id):
             # report the errors and let the client show the indicator instead
             # (openspec: mobile-adaptive-refactor, editor-autosave).
             return JsonResponse({'ok': False, 'errors': form.errors}, status=422)
-        return render(request, 'editor/partials/question_form_modal.html', {
+        return _render_question_modal(request, {
             **_visibility_block_context(survey, question.survey_section, 'question', host=question),
             'form': form,
             'survey': survey,
@@ -1263,7 +1280,7 @@ def editor_question_edit(request, survey_uuid, question_id):
         })
     else:
         form = QuestionForm(instance=question, is_subquestion=is_subquestion, section=question.survey_section)
-    return render(request, 'editor/partials/question_form_modal.html', {
+    return _render_question_modal(request, {
         # Sub-questions live inside a geo popup and never carry rules of their own.
         **({} if is_subquestion else _visibility_block_context(survey, question.survey_section, 'question', host=question)),
         'form': form,
@@ -1472,7 +1489,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
             vis_present, vis_rule, vis_error = _parse_visibility_rule(request)
             if vis_error:
                 form.add_error(None, vis_error)
-                return render(request, 'editor/partials/question_form_modal.html', {
+                return _render_question_modal(request, {
                     **_visibility_block_context(survey, section, 'question'),
                     'form': form,
                     'survey': survey,
@@ -1492,7 +1509,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
             return response
     else:
         form = QuestionForm(is_subquestion=True)
-    return render(request, 'editor/partials/question_form_modal.html', {
+    return _render_question_modal(request, {
         'form': form,
         'survey': survey,
         'section': parent.survey_section,
