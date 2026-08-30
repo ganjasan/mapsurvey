@@ -197,6 +197,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ── Heat layer lifecycle ──────────────────────────────────────
 
+    // leaflet.heat draws by reading the canvas back with getImageData, which
+    // throws IndexSizeError the moment that canvas is 0 wide. Leaflet sizes it
+    // from map.getSize(), so any redraw while the map pane is hidden hits it --
+    // and invalidateSize(), called from sixteen places across the analytics
+    // templates, fires exactly that redraw chain. Guarding the layer covers
+    // every one of those callers; guarding the callers would not cover the
+    // seventeenth. A pane nobody can see has nothing worth drawing.
+    // The respondent template guards flyTo the same way, for the same reason.
+    function _guardHeatRedraw(layer) {
+        var original = layer._redraw;
+        if (typeof original !== 'function') return layer;
+        layer._redraw = function() {
+            var c = this._canvas;
+            if (!c || !c.width || !c.height) return;
+            return original.apply(this, arguments);
+        };
+        return layer;
+    }
+
     LayerManager.prototype.createHeat = function(sourceId) {
         var src = this._slots.get(sourceId);
         if (!src || src.geomType !== 'Point' || !src.allPoints.length) return null;
@@ -206,6 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var paneName = this._createPane();
         var heatLayer = L.heatLayer([], Object.assign({}, HEAT_DEFAULTS));
+        _guardHeatRedraw(heatLayer);
         heatLayer.addTo(this._map);
 
         // Move canvas into dedicated pane for z-ordering
