@@ -140,7 +140,6 @@ def analytics_dashboard(request, survey_uuid):
         # Performance tab
         'event_summary': perf_service.get_event_summary(),
         'funnel': funnel,
-        'funnel_json': json.dumps(funnel),
         'referrer_breakdown': perf_service.get_referrer_breakdown(),
         'language_breakdown': perf_service.get_language_breakdown(),
         'device_breakdown': perf_service.get_device_breakdown(),

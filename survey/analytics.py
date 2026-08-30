@@ -112,6 +112,14 @@ def _get_ordered_sections(survey):
     return ordered
 
 
+def _format_seconds(seconds):
+    """45 -> '45s', 179 -> '2m 59s', None -> None."""
+    if seconds is None:
+        return None
+    minutes, secs = divmod(int(seconds), 60)
+    return f'{minutes}m {secs}s' if minutes else f'{secs}s'
+
+
 def _get_last_section(survey):
     """Return the last section in linked-list order, or None."""
     ordered = _get_ordered_sections(survey)
@@ -1844,46 +1852,69 @@ class PerformanceAnalyticsService:
         }
 
     def get_funnel(self):
-        """Return per-section views/submits/drop_rate in linked-list order."""
+        """Return a step funnel over sections in linked-list order.
+
+        Counts DISTINCT SESSIONS per section (``reached`` = viewed at least once,
+        ``completed`` = submitted at least once), not events — a refresh or a
+        "back" adds a second ``section_view`` for the same person and must not
+        move the funnel. Percentages are relative to ``session_start`` count so
+        the first column agrees with the Sessions Started card. ``dropped`` is
+        the loss versus the previous step's ``reached`` (never negative: a
+        conditional branch can make a later section more visited than an
+        earlier one). Raw ``views``/``submits`` event counts and the legacy
+        event-based ``drop_rate`` stay in the payload.
+        """
         qs = self._events_qs()
+        starts = qs.filter(event_type='session_start').count()
 
-        # Fetch all section_view and section_submit events
-        view_events = list(
-            qs.filter(event_type='section_view')
-            .values_list('metadata', flat=True)
-        )
-        submit_events = list(
-            qs.filter(event_type='section_submit')
-            .values_list('metadata', flat=True)
-        )
-
-        # Count by section_name
-        views_map = {}
-        for m in view_events:
+        view_sessions, submit_sessions = {}, {}
+        views_map, submit_map = {}, {}
+        rows = qs.filter(event_type__in=('section_view', 'section_submit')) \
+                 .values_list('event_type', 'session_id', 'metadata')
+        for event_type, session_id, m in rows:
             name = (m or {}).get('section_name', '')
-            if name:
+            if not name:
+                continue
+            if event_type == 'section_view':
+                view_sessions.setdefault(name, set()).add(session_id)
                 views_map[name] = views_map.get(name, 0) + 1
-
-        submit_map = {}
-        for m in submit_events:
-            name = (m or {}).get('section_name', '')
-            if name:
+            else:
+                submit_sessions.setdefault(name, set()).add(session_id)
                 submit_map[name] = submit_map.get(name, 0) + 1
 
-        # Order by linked-list section order
+        def pct(part, whole):
+            return min(100, round(part / whole * 100)) if whole > 0 else 0
+
+        time_by_section = {
+            row['section_name']: row['median_seconds'] for row in self.get_time_on_section()
+        }
+
         sections = _get_ordered_sections(self.survey)
         result = []
-        for s in sections:
+        prev_reached = starts
+        for i, s in enumerate(sections, start=1):
             v = views_map.get(s.name, 0)
             sub = submit_map.get(s.name, 0)
-            drop_rate = round((v - sub) / v * 100) if v > 0 else 0
+            reached = len(view_sessions.get(s.name, ()))
+            completed = len(submit_sessions.get(s.name, ()))
+            dropped = max(prev_reached - reached, 0)
+            median_s = time_by_section.get(s.name)
             result.append({
+                'step': i,
                 'section_name': s.name,
                 'section_title': s.title or s.name,
                 'views': v,
                 'submits': sub,
-                'drop_rate': drop_rate,
+                'drop_rate': round((v - sub) / v * 100) if v > 0 else 0,
+                'reached': reached,
+                'completed': completed,
+                'reached_pct': pct(reached, starts),
+                'dropped': dropped,
+                'dropped_pct': pct(dropped, prev_reached),
+                'median_seconds': median_s,
+                'median_label': _format_seconds(median_s),
             })
+            prev_reached = reached
         return result
 
     def _session_start_metadata(self):
