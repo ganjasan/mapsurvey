@@ -39,6 +39,7 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/', editor_views.editor_survey_detail, name='editor_survey_detail'),
     path('editor/surveys/<uuid:survey_uuid>/settings/', editor_views.editor_survey_settings, name='editor_survey_settings'),
     path('editor/surveys/<uuid:survey_uuid>/settings-panel/', editor_views.editor_survey_settings_panel, name='editor_survey_settings_panel'),
+    path('editor/surveys/<uuid:survey_uuid>/rename/', editor_views.editor_survey_rename, name='editor_survey_rename'),
     path('editor/surveys/<uuid:survey_uuid>/thanks-panel/', editor_views.editor_survey_thanks_panel, name='editor_survey_thanks_panel'),
     path('editor/surveys/<uuid:survey_uuid>/thanks-preview/', editor_views.editor_survey_thanks_preview, name='editor_survey_thanks_preview'),
     path('editor/surveys/<uuid:survey_uuid>/thanks-image/', editor_views.editor_survey_thanks_image, name='editor_survey_thanks_image'),

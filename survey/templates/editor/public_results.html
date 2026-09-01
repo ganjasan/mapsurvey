@@ -5,7 +5,7 @@
 {% block page_title %}{% trans "Public results" %} – {{ survey.name }}{% endblock %}
 
 {% block navbar_content %}
-<span class="survey-name">{{ survey.name }}</span>
+{% survey_title survey %}
 {% include "editor/partials/_survey_nav_tabs.html" with active_tab="publish" %}
 {% endblock %}
 

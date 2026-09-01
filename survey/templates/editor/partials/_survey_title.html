@@ -1,0 +1,23 @@
+{% load i18n %}
+{% comment %}
+Survey name in the editor navbar. Rendered through the {% survey_title %} tag,
+which decides `can_rename` — do not include this file directly.
+
+When the viewer may rename, the name is a click-to-edit control: editor_survey_rename.js
+swaps in an input on activation. When they may not, the markup holds no input at all, so
+the affordance is absent rather than merely hidden.
+{% endcomment %}
+{% if survey.is_draft_copy %}
+<span class="survey-name">{% blocktrans with name=survey.published_version.name %}Draft of {{ name }}{% endblocktrans %}</span>
+{% elif can_rename %}
+<span class="survey-name survey-name--editable"
+      data-rename-url="{% url 'editor_survey_rename' survey.uuid %}"
+      data-max-length="{{ name_max_length }}"
+      data-csrf="{{ csrf_token }}"
+      data-label-rename="{% trans 'Rename survey' %}"
+      data-label-error="{% trans 'Could not save the name. Check your connection and try again.' %}">
+    <button type="button" class="survey-name__button" title="{% trans 'Rename survey' %}">{{ survey.name }}</button>
+</span>
+{% else %}
+<span class="survey-name">{{ survey.name }}</span>
+{% endif %}

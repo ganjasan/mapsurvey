@@ -7591,3 +7591,12 @@ msgstr "Liiga palju üleslaadimisi, proovi hiljem uuesti."
 #: survey/views.py:2184
 msgid "No file received."
 msgstr "Ühtegi faili ei saadud."
+
+msgid "Rename survey"
+msgstr "Muuda küsitluse nime"
+
+msgid "Could not save the name. Check your connection and try again."
+msgstr "Nime ei õnnestunud salvestada. Kontrolli ühendust ja proovi uuesti."
+
+msgid "A draft is renamed by renaming the published survey."
+msgstr "Mustandi nime muutmiseks muuda avaldatud küsitluse nime."

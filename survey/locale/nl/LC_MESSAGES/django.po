@@ -7650,3 +7650,12 @@ msgstr "Te veel uploads, probeer het later opnieuw."
 #: survey/views.py:2184
 msgid "No file received."
 msgstr "Geen bestand ontvangen."
+
+msgid "Rename survey"
+msgstr "Enquête hernoemen"
+
+msgid "Could not save the name. Check your connection and try again."
+msgstr "De naam kon niet worden opgeslagen. Controleer je verbinding en probeer het opnieuw."
+
+msgid "A draft is renamed by renaming the published survey."
+msgstr "Een concept hernoem je door de gepubliceerde enquête te hernoemen."
