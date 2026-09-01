@@ -1596,6 +1596,11 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 
 		zip.writestr(prefix + _sanitize_filename(question.name) + '.geojson', geojson_str)
 
+	# Answers ABOUT layer objects (spec object-answers): one CSV per Objects-
+	# on-the-map question keyed by object, and the layer's derived GeoJSON
+	# enriched with per-object aggregates — never with free text.
+	_export_object_answers(zip, survey, prefix, excluded_session_ids)
+
 	#обработка обычных вопросов
 
 	sessions = survey.sessions()
@@ -1659,6 +1664,71 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 				"Export: upload %s missing from storage; row keeps the path, file absent from ZIP.",
 				answer.upload_id,
 			)
+
+
+def _export_object_answers(zip, survey, prefix, excluded_session_ids):
+	from .object_stats import object_aggregates, flat_properties, sub_questions_of
+	questions = Question.objects.filter(
+		survey_section__survey_header=survey, input_type='layer_objects', layer__isnull=False,
+	).select_related('layer').order_by('survey_section_id', 'order_number')
+	layers_done = set()
+	for question in questions:
+		subs = sub_questions_of(question)
+		rows = (Answer.objects
+		        .filter(question__in=subs, layer_object__isnull=False)
+		        .exclude(survey_session_id__in=excluded_session_ids)
+		        .select_related('layer_object', 'survey_session', 'question')
+		        .order_by('survey_session_id', 'layer_object__position', 'layer_object_id'))
+		grouped = {}
+		for a in rows:
+			grouped.setdefault((a.survey_session_id, a.layer_object_id), []).append(a)
+		records = []
+		for (session_id, _obj_id), answers in grouped.items():
+			session = answers[0].survey_session
+			obj = answers[0].layer_object
+			record = {
+				'session_id': session_id,
+				'object_key': obj.key,
+				'object_title': obj.title,
+				'object_category': obj.category,
+			}
+			by_q = {}
+			for a in answers:
+				by_q.setdefault(a.question, []).append(a)
+			for sub_q in subs:
+				cell = _answer_cell(sub_q, by_q.get(sub_q, []))
+				if cell is EXPORT_NO_COLUMN:
+					continue
+				if isinstance(cell, dict):
+					record.update(cell)
+				else:
+					record[sub_q.name] = cell
+			record['datetime'] = session.start_datetime
+			record['language'] = session.language or ''
+			record['validation_status'] = session.validation_status or ''
+			records.append(record)
+		zip.writestr(prefix + 'objects_' + _sanitize_filename(question.code) + '.csv', pd.DataFrame(records).to_csv())
+
+		layer = question.layer
+		if layer.pk in layers_done:
+			continue
+		layers_done.add(layer.pk)
+		aggregates = {}
+		for q in layer.questions.filter(input_type='layer_objects'):
+			for key, entry in object_aggregates(q, excluded_session_ids=excluded_session_ids).items():
+				props = flat_properties(entry)
+				aggregates.setdefault(key, {}).update(props)
+		try:
+			collection = json.loads(layer.geojson)
+		except ValueError:
+			continue
+		for feature in collection.get('features') or []:
+			key = (feature.get('properties') or {}).get('_key')
+			feature.setdefault('properties', {}).update(aggregates.get(key, {'answers': 0}))
+		collection['name'] = layer.name
+		collection['crs'] = {"type": "name", "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
+		zip.writestr(prefix + 'layers/' + _sanitize_filename(layer.name) + '.results.geojson',
+		             json.dumps(collection, ensure_ascii=False).encode('utf8'))
 
 
 @survey_permission_required('viewer')

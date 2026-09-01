@@ -1610,6 +1610,7 @@ PUBLIC_RESULTS_BLOCK_TYPE_CHOICES = (
     ("image", _("Image")),
     ("chart", _("Chart")),
     ("map", _("Map")),
+    ("objects", _("Objects")),   # per-object aggregates of an Objects-on-the-map question
 )
 
 # Current snapshot serialization format. Bumped when the per-block payload

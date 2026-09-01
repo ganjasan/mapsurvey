@@ -1,5 +1,5 @@
 {% load i18n %}
-{% load survey_filters %}
+{% load survey_filters question_utils %}
 {% load l10n %}
 
 <h6 style="font-weight:700; margin-bottom:0.75rem;">{% trans "Question Statistics" %}</h6>
@@ -83,6 +83,39 @@
     });
     </script>
 
+    {% elif stat.type == 'objects' %}
+    {% comment %}Objects on the map (spec object-answers): one row per object of the
+    bound layer, a column per sub-question aggregate. Clicking a row selects the
+    sessions that answered about that object — the same SelectionManager the map
+    and table share.{% endcomment %}
+    <p class="mb-1"><small class="text-muted">{% blocktrans count n=stat.total_answers %}{{ n }} answer{% plural %}{{ n }} answers{% endblocktrans %} · {{ stat.layer.name }}</small></p>
+    <div style="max-height:320px;overflow:auto;">
+    <table class="table table-sm" style="font-size:.8rem;margin-bottom:0;">
+        <thead><tr>
+            <th>{% trans "Object" %}</th>
+            <th style="text-align:right;">{% trans "Answers" %}</th>
+            {% for sub in stat.sub_questions %}<th style="text-align:right;" title="{{ sub.name }}">{{ sub.name|truncatechars:22 }}</th>{% endfor %}
+        </tr></thead>
+        <tbody>
+        {% for row in stat.object_rows %}
+        <tr class="objects-stat-row" data-object-key="{{ row.key }}" data-sessions="{{ row.sessions_json }}"
+            onclick="if (window.selectionManager) { try { window.selectionManager.setSelection(JSON.parse(this.dataset.sessions)); } catch (e) {} }"
+            style="cursor:pointer;{% if not row.answers %}color:#9ca3af;{% endif %}">
+            <td>{{ row.title }}{% if row.category %} <small class="text-muted">· {{ row.category }}</small>{% endif %}</td>
+            <td style="text-align:right;">{{ row.answers }}</td>
+            {% for sub in row.subs %}
+            <td style="text-align:right;white-space:nowrap;">
+                {% if sub.type == 'rating' or sub.type == 'range' or sub.type == 'number' %}{% if sub.mean is not None %}{{ sub.mean }}{% else %}—{% endif %}
+                {% elif sub.type == 'thumbs' %}👍 {{ sub.up }} / 👎 {{ sub.down }}
+                {% elif sub.type == 'choice' or sub.type == 'multichoice' %}{% for code, n in sub.counts.items %}{% if n %}{{ n }}×{{ sub.labels|get_item:code|truncatechars:12 }} {% endif %}{% endfor %}
+                {% else %}{{ sub.count }}{% endif %}
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
     {% elif stat.type == 'number' %}
     <div class="number-stats" data-num-stats="{{ stat.question.id }}">
         <div class="ns-item">

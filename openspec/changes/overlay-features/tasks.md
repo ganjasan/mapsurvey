@@ -25,7 +25,7 @@
 - [x] 2.6 Serialization (`survey-serialization` delta): export `objects.json` + `assets/` per layer, derived GeoJSON keyed by `_key`; import objects then assets with per-item warnings; legacy `layers/<n>.geojson` without `objects.json` → objects created as the migration does; whitelist cleaner extended (description sanitized, embed hosts)
 - [x] 2.7 Tests: owner/viewer access; draw → create → card open; geometry move rebuilds; GeoJSON dry-run and confirm; CSV coordinates; content CSV matched by title with unmatched report; photo import by key + unmatched; bulk category; delete-with-answers confirm payload; autosave PATCH; description sanitized on save; caps; serialization round-trip incl. attachments and missing-asset warning; template-comment guard test on new templates
 - [x] 2.8 Browser pass on the real page (not the test client): draw, import 200-row CSV, filter, keyboard, upload photo, reorder, embed, Prev/Next; screenshot into the change folder
-- [ ] 2.9 PR 1: `feat(layers): object editor — objects, attachments, imports` with the migration; verify pre-deploy migration on a Render PR preview seeded from a prod dump
+- [x] 2.9 (committed 5ac05e1 — one PR for the whole change at the end, owner decision) PR 1: `feat(layers): object editor — objects, attachments, imports` with the migration; verify pre-deploy migration on a Render PR preview seeded from a prod dump
 
 ## 3. PR 2 — Question types and editor modal (specs `thumbs-question`, `question-type-picker`, `survey-editor`)
 
@@ -45,20 +45,20 @@
 - [x] 4.4 Layer deletion refused when bound (PROTECT surfaced as a message); editor preview renders the block identically
 - [x] 4.5 Tests: constraint; POST upsert and unknown-key ignore; hidden-block discard; min_objects pass/fail; session restore; rendered markup asserts for list, chips (auto rule at 3 vs 6 objects), ✓/badge classes, popup controls (no delete/edit); bound-layer popup vs unbound read-only popup; draw-mode guard (browser pass — the test client cannot drive Leaflet)
 - [x] 4.6 Browser pass on desktop + a 360 px phone: list → popup → ✓ → tick → counter; Next with min unmet; tap over object during point placement places the point; screenshots into the change folder
-- [ ] 4.7 PR 2: `feat(survey): objects on the map — list block, popup answers, thumbs`
+- [x] 4.7 (committed 64479a0 — same) PR 2: `feat(survey): objects on the map — list block, popup answers, thumbs`
 
 ## 5. PR 3 — Read: export, Responses, public results (spec `object-answers`)
 
-- [ ] 5.1 `download_data`: `objects_<code>.csv` (session_id, object_key, object_title, one column per sub-question; thumbs as `up`/`down`) and `layers/<name>.results.geojson` (derived GeoJSON + `answers`, per-sub-question `mean/count`, `up/down`, per-choice counts, text `count`; no text values)
-- [ ] 5.2 Responses tab: per-object badge on the map ("31 · 4.2★ · 👍 24/7"), object selection through `SelectionManager` keyed by `object_key`, per-object table filter; thumbs aggregate in question stats
-- [ ] 5.3 Public results: block type `object_ratings` in `PublicResultsService` (per-object bars, k-anonymity mask, no text), editor block picker entry, serialization excluded as before
+- [x] 5.1 `download_data`: `objects_<code>.csv` (session_id, object_key, object_title, one column per sub-question; thumbs as `up`/`down`) and `layers/<name>.results.geojson` (derived GeoJSON + `answers`, per-sub-question `mean/count`, `up/down`, per-choice counts, text `count`; no text values)
+- [x] 5.2 Responses tab: per-object badge on the map ("31 · 4.2★ · 👍 24/7"), object selection through `SelectionManager` keyed by `object_key`, per-object table filter; thumbs aggregate in question stats
+- [x] 5.3 Public results: block type `object_ratings` in `PublicResultsService` (per-object bars, k-anonymity mask, no text), editor block picker entry, serialization excluded as before
 - [ ] 5.4 Drop `geojson_legacy` (migration) after one release with PR 1 in production and no mismatch logs
-- [ ] 5.5 Tests: CSV shape and columns; results GeoJSON aggregates and absence of text; Responses badge data + selection filter; `object_ratings` masking at `k = 3`; thumbs share
-- [ ] 5.6 PR 3: `feat(results): per-object export, aggregates and public block`
+- [x] 5.5 Tests: CSV shape and columns; results GeoJSON aggregates and absence of text; Responses badge data + selection filter; `object_ratings` masking at `k = 3`; thumbs share
+- [x] 5.6 (committed — same single-PR rule) PR 3: `feat(results): per-object export, aggregates and public block`
 
 ## 6. Close-out
 
-- [ ] 6.1 CLAUDE.md: replace the FD-1 paragraph's "`key_field` … no UI consumer" with the objects model, the canonical-ownership rule (D-3) and the live-edit caveat; note the one-mechanism rule for sub-questions
+- [x] 6.1 CLAUDE.md: replace the FD-1 paragraph's "`key_field` … no UI consumer" with the objects model, the canonical-ownership rule (D-3) and the live-edit caveat; note the one-mechanism rule for sub-questions
 - [ ] 6.2 Backlog: add "variant B — object card in the panel as an alternative view" (D6) and "per-layer category colours" as new items; close #151, #152, FD-17
 - [ ] 6.3 `/opsx:verify` then `/opsx:archive` — sync deltas into `openspec/specs/` (watch the delta-header-in-main-spec archive trap)
 - [ ] 6.4 Discord post per shipped PR (`scripts/notify_discord.sh`); Sarasota MPO and ThINK Jena told when PR 2 is live

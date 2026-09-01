@@ -38382,3 +38382,146 @@ class LayerObjectsRespondentTest(TestCase):
         data = json.loads(re.search(r'id="ref-layers-data"[^>]*>(.*?)</script>', html, re.S).group(1))
         by_id = {d['id']: d for d in data}
         self.assertEqual((by_id[self.layer.pk]['bound'], by_id[other.pk]['bound'], by_id[other.pk]['show_popups']), (True, False, True))
+
+
+class ObjectAnswersReadTest(TestCase):
+    """Export, Responses aggregates and the public block (spec object-answers, group 5)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="OAR Org")
+        self.owner = User.objects.create_user(username='oarowner', password='pw12345678')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="oar_survey", organization=self.org, redirect_url="/thanks/",
+            status='published', available_languages=['en'], created_by=self.owner,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        self.q = Question.objects.create(
+            survey_section=self.section, code="OA001", name="Objects", input_type="layer_objects",
+            layer=self.layer, order_number=1,
+        )
+        self.rating = Question.objects.create(
+            survey_section=self.section, code="OA002", name="Rate", input_type="rating",
+            parent_question_id=self.q, order_number=1, choices=[{"code": i, "name": str(i)} for i in range(1, 6)],
+        )
+        self.thumbs = Question.objects.create(
+            survey_section=self.section, code="OA003", name="Build?", input_type="thumbs",
+            parent_question_id=self.q, order_number=2,
+        )
+        self.thumbs.choices = self.thumbs.thumbs_choices()
+        self.thumbs.save()
+        self.comment = Question.objects.create(
+            survey_section=self.section, code="OA004", name="Comment", input_type="text",
+            parent_question_id=self.q, order_number=3,
+        )
+        self.objects = {o.key: o for o in self.layer.items.all()}
+        # 3 sessions about object 1 (ratings 4,5,3; thumbs up,up,down; one comment),
+        # 1 session about object 2 (rating 2, thumbs down), nothing about 3.
+        self.sessions = [SurveySession.objects.create(survey=self.survey) for _ in range(3)]
+        for s, r, t in zip(self.sessions, (4, 5, 3), (1, 1, 0)):
+            Answer.objects.create(survey_session=s, question=self.rating, layer_object=self.objects['1'], selected_choices=[r])
+            Answer.objects.create(survey_session=s, question=self.thumbs, layer_object=self.objects['1'], selected_choices=[t])
+        Answer.objects.create(survey_session=self.sessions[0], question=self.comment, layer_object=self.objects['1'], text='Keep the oaks')
+        Answer.objects.create(survey_session=self.sessions[0], question=self.rating, layer_object=self.objects['2'], selected_choices=[2])
+        Answer.objects.create(survey_session=self.sessions[0], question=self.thumbs, layer_object=self.objects['2'], selected_choices=[0])
+
+    def test_aggregates_per_object(self):
+        """
+        GIVEN the answers above
+        WHEN per-object aggregates are computed
+        THEN object 1 has 3 answers, mean 4.0, up 2 / down 1, one comment; object 3 has none
+        """
+        from .object_stats import object_aggregates, headline, flat_properties
+        agg = object_aggregates(self.q)
+        one = agg['1']
+        self.assertEqual(one['answers'], 3)
+        self.assertEqual(one['subs']['OA002']['mean'], 4.0)
+        self.assertEqual((one['subs']['OA003']['up'], one['subs']['OA003']['down']), (2, 1))
+        self.assertEqual(one['subs']['OA004']['count'], 1)
+        self.assertEqual(one['subs']['OA004']['values'], [])
+        self.assertEqual(headline(one), '3 · 4.0★ · 👍 2/1')
+        self.assertEqual(agg['3']['answers'], 0)
+        props = flat_properties(one)
+        self.assertEqual((props['answers'], props['OA002_mean'], props['OA003_up'], props['OA003_down']), (3, 4.0, 2, 1))
+        self.assertNotIn('Keep the oaks', json.dumps(props))
+
+    def test_export_zip_has_object_csv_and_results_geojson(self):
+        """
+        GIVEN the owner downloads the responses ZIP
+        WHEN the archive is read
+        THEN objects_OA001.csv has one row per (session, object) with the sub-question columns,
+             and layers/Sites.results.geojson carries per-object aggregates and no text
+        """
+        self.client.login(username='oarowner', password='pw12345678')
+        response = self.client.get(reverse('download_data', kwargs={'survey_slug': str(self.survey.uuid)}))
+        self.assertEqual(response.status_code, 200)
+        with zipfile.ZipFile(BytesIO(response.content)) as zf:
+            names = zf.namelist()
+            csv_name = next(n for n in names if n.endswith('objects_OA001.csv'))
+            geo_name = next(n for n in names if n.endswith('layers/Sites.results.geojson'))
+            csv_text = zf.read(csv_name).decode()
+            geo = json.loads(zf.read(geo_name))
+        rows = [r for r in csv_text.splitlines() if r.strip()]
+        self.assertEqual(len(rows), 1 + 4)   # header + 3 sessions about object 1 + 1 about object 2
+        self.assertIn('object_key', rows[0])
+        self.assertIn('Rate', rows[0])
+        self.assertIn('Build?', rows[0])
+        self.assertIn('Keep the oaks', csv_text)
+        self.assertIn(',up,', csv_text)
+        by_key = {f['properties']['_key']: f['properties'] for f in geo['features']}
+        self.assertEqual((by_key['1']['answers'], by_key['1']['OA002_mean'], by_key['1']['OA003_up']), (3, 4.0, 2))
+        self.assertEqual(by_key['3']['answers'], 0)
+        self.assertNotIn('Keep the oaks', json.dumps(geo))
+
+    def test_responses_stats_and_map_badges(self):
+        """
+        GIVEN the analytics service and the Responses page
+        WHEN the question stats and layer metadata are built
+        THEN the layer_objects question yields an 'objects' stat with per-object rows,
+             and the bound layer's metadata carries badges and the sessions to select
+        """
+        service = SurveyAnalyticsService(self.survey)
+        stat = service.get_question_stats(self.q)
+        self.assertEqual(stat['type'], 'objects')
+        first = stat['object_rows'][0]
+        self.assertEqual((first['key'], first['answers'], first['headline']), ('1', 3, '3 · 4.0★ · 👍 2/1'))
+        self.assertEqual(sorted(json.loads(first['sessions_json'])), sorted(s.id for s in self.sessions))
+        from .analytics_views import _map_layers_with_object_stats
+        metas = _map_layers_with_object_stats(self.survey)
+        stats = metas[0]['object_stats']
+        self.assertEqual(stats['1']['headline'], '3 · 4.0★ · 👍 2/1')
+        self.assertEqual(stats['2']['answers'], 1)
+        self.assertNotIn('3', stats)
+        self.client.login(username='oarowner', password='pw12345678')
+        html = self.client.get(reverse('editor_survey_analytics', kwargs={'survey_uuid': self.survey.uuid})).content.decode()
+        self.assertIn('objects-stat-row', html)
+        self.assertIn('object_stats', html)
+
+    def test_public_results_objects_block_respects_k(self):
+        """
+        GIVEN a public results page with k = 3 and an objects block
+        WHEN it renders
+        THEN object 1 (3 answers) shows its aggregates, object 2 (1 answer) is masked,
+             object 3 shows 0, and no comment text appears anywhere in the payload
+        """
+        from .models import PublicResultsPage, PublicResultsBlock
+        from .public_results import PublicResultsService, block_type_for_question
+        self.assertEqual(block_type_for_question(self.q), 'objects')
+        page = PublicResultsPage.objects.create(survey=self.survey, slug="oar", is_published=True, k_anonymity_threshold=3)
+        PublicResultsBlock.objects.create(page=page, block_type="objects", question=self.q, order=0)
+        blocks = PublicResultsService(page).build_blocks()
+        block = blocks[0]
+        self.assertEqual(block['data_type'], 'objects')
+        rows = {r['key']: r for r in block['rows']}
+        self.assertEqual(rows['1']['answers']['display'], '3')
+        self.assertTrue(rows['2']['answers']['masked'])
+        self.assertEqual(rows['2']['subs'][0]['display'], '<3')
+        self.assertEqual(rows['3']['answers']['display'], '0')
+        self.assertEqual([s['code'] for s in block['sub_questions']], ['OA002', 'OA003'])
+        self.assertNotIn('Keep the oaks', json.dumps(block))
+        html = self.client.get(reverse('public_results', kwargs={'slug': 'oar'})).content.decode()
+        self.assertIn('objects-holder', html)
+        self.assertIn('renderObjects', html)

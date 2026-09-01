@@ -121,6 +121,36 @@ answer layers in the Layers panel (own pane each, so stacking = panel order, nev
 order, visibility and opacity persist in `localStorage['rv2RefLayers:<uuid>']` — browser-only,
 never the model. Cap: `MAX_LAYERS_PER_SURVEY = 10`.
 
+**Layer objects (`LayerObject`, `LayerObjectAsset`; change `overlay-features`)**: a layer is a
+container of objects — key, title, category, rich-text description, link, one-part geometry,
+raw imported properties, ordered attachments (image/audio/document/video files on the PUBLIC
+media tier under random `layer_assets/<uuid>` keys, or YouTube/Vimeo embeds). `SurveyMapLayer.geojson`
+is a CACHE derived from them (`survey/layers.py::rebuild_layer`, reserved `_key/_title/_category/
+_has_content/_cover` properties) — never edit it as a source; `geojson_legacy` holds the FD-1 text
+until one release after migration `0068` and then goes. Layers are owned by the CANONICAL survey
+and borrowed by draft copies and archived versions through `layers_for()`/`layer_owner()`; nothing
+copies them, so an object edit on a published survey is live for respondents (the object editor
+says so in a banner). The object editor is a full page, `/editor/surveys/<uuid>/layers/<id>/edit/`
+(`survey/layer_object_views.py`, `js/layer_editor.js`), with three ways in — draw, import GeoJSON,
+import CSV — plus content CSV and photo batches matched by key, then title. Per-object cards for
+respondents come from `survey_layer_object` under the same gate as the layer endpoint.
+
+**Objects on the map (`layer_objects`) and `thumbs`**: `layer_objects` is a question type bound to
+one layer (`Question.layer`, PROTECT — the settings card refuses to delete a bound layer and names
+the question); `min_objects` replaces `required`. **Sub-questions are the one mechanism** for "ask
+about an object on the map", shared by geo questions and `layer_objects` (`PARENT_TYPES`), with two
+entry points into the same modal: the *Sub-questions* section inside the question modal and the
+"+ Add Sub-question" button under the question. A geo question with no sub-questions is a normal
+state — hint, never block. Respondent side = variant A: the panel list (`partials/layer_objects_block.html`)
+is navigation; a row or a feature opens the SAME Leaflet popup respondent-placed features use, with
+the object card + the sub-question form + ✓, and nothing opens while a draw/crosshair mode is
+active. Answers about objects are rows on the sub-questions with `Answer.layer_object` set (partial
+unique per session/sub-question/object) and NEVER `parent_answer_id`; they post as `obj__<key>__<code>`
+fields. `thumbs` (👍/👎) is a choice type with the fixed `THUMBS_CHOICES` (`1=up`, `0=down`), so
+every choice consumer works unchanged. Aggregates on every read surface come from one place,
+`survey/object_stats.py`. Variant B (object card in the panel, geo popups moved there too) is
+deferred as a future alternative view — do not reintroduce it ad hoc.
+
 **Hierarchical Questions/Answers**: Both Question and Answer models support self-referential parent relationships via `parent_question_id` and `parent_answer_id` for conditional sub-questions.
 
 **Conditional visibility (`CONDITIONAL_VISIBILITY` kill switch, default ON)**: a

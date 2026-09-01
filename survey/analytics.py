@@ -634,10 +634,36 @@ class SurveyAnalyticsService:
             ).count(),
         }
 
+    def _stats_layer_objects(self, question):
+        """Per-object aggregates for an Objects-on-the-map question (spec
+        object-answers): one row per object, the sub-questions as columns."""
+        from .object_stats import object_aggregates, headline, layer_object_stats
+        aggregates = object_aggregates(question)
+        sessions_by_key = layer_object_stats(question.layer) if question.layer_id else {}
+        rows = []
+        for entry in aggregates.values():
+            rows.append({
+                'key': entry['key'], 'title': entry['title'], 'category': entry['category'],
+                'answers': entry['answers'], 'headline': headline(entry),
+                'subs': list(entry['subs'].values()),
+                'sessions_json': json.dumps((sessions_by_key.get(entry['key']) or {}).get('sessions', [])),
+            })
+        rows.sort(key=lambda r: (-r['answers'], r['title']))
+        return {
+            'type': 'objects',
+            'total_answers': sum(r['answers'] for r in rows),
+            'object_rows': rows,
+            'sub_questions': [{'code': s['code'], 'name': s['name'], 'type': s['type']}
+                              for s in (rows[0]['subs'] if rows else [])],
+            'layer': question.layer,
+        }
+
     _STAT_DISPATCH = {
         'choice': _stats_choices,
         'multichoice': _stats_choices,
         'rating': _stats_choices,
+        'thumbs': _stats_choices,
+        'layer_objects': _stats_layer_objects,
         'number': _stats_number,
         'range': _stats_number,
         'text': _stats_text,

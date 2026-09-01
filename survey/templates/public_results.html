@@ -112,6 +112,11 @@
         {% endif %}
       {% elif block.block_type == 'map' %}
         <div class="map-holder" id="map-{{ block.id }}"></div>
+      {% elif block.block_type == 'objects' %}
+        <div class="objects-holder" id="objects-{{ block.id }}"></div>
+        {% if page.k_anonymity_threshold > 1 %}
+        <div class="kanon-note">{% trans "Objects with few answers are masked to protect privacy." %}</div>
+        {% endif %}
       {% endif %}
     </div>
     {% endfor %}
@@ -147,7 +152,34 @@
       if (b.block_type === 'chart' && b.data_type === 'choices') { renderChoiceChart(b); }
       else if (b.block_type === 'chart' && b.data_type === 'number') { renderHistogram(b); }
       else if (b.block_type === 'map') { renderMap(b); }
+      else if (b.block_type === 'objects') { renderObjects(b); }
     });
+
+    // Objects on the map: a plain table via DOM methods (textContent escapes),
+    // one row per object, a column per non-text sub-question. Masked objects
+    // carry the "<K" label from the server and nothing else.
+    function renderObjects(b){
+      var holder = document.getElementById('objects-' + b.id);
+      if (!holder) return;
+      var table = document.createElement('table');
+      table.className = 'objects-table';
+      var thead = document.createElement('thead'), hr = document.createElement('tr');
+      ['', 'Answers'].concat((b.sub_questions || []).map(function(s){ return s.name; })).forEach(function(h){
+        var th = document.createElement('th'); th.textContent = h; hr.appendChild(th);
+      });
+      thead.appendChild(hr); table.appendChild(thead);
+      var tbody = document.createElement('tbody');
+      (b.rows || []).forEach(function(r){
+        var tr = document.createElement('tr');
+        if (r.answers.masked) tr.className = 'masked';
+        var td = document.createElement('td'); td.textContent = r.title + (r.category ? ' · ' + r.category : ''); tr.appendChild(td);
+        td = document.createElement('td'); td.textContent = r.answers.display; tr.appendChild(td);
+        (r.subs || []).forEach(function(s){ var c = document.createElement('td'); c.textContent = s.display; tr.appendChild(c); });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      holder.appendChild(table);
+    }
 
     // Map a creator-selected viz to a Chart.js chart type. 'auto' and 'bar'
     // both render as a bar chart; 'table' is handled separately (not Chart.js).

@@ -48,6 +48,8 @@ def block_type_for_question(question):
         return 'map'
     if question.input_type in CHART_INPUT_TYPES:
         return 'chart'
+    if question.input_type == 'layer_objects':
+        return 'objects'
     return None  # text/datetime/html/... — not publishable
 
 
@@ -129,7 +131,54 @@ class PublicResultsService:
             if block.block_type == 'map':
                 return self._map_payload(block)
             return self._chart_payload(block)
+        if block.block_type == 'objects':
+            if block.question_id is None or block.question is None:
+                return None
+            return self._objects_payload(block)
         return None
+
+    def _objects_payload(self, block):
+        """Per-object aggregates of an Objects-on-the-map question, masked by k
+        (spec object-answers): objects with fewer than k answers show as masked;
+        free-text values are never included."""
+        from .object_stats import object_aggregates
+        question = block.question
+        payload = self._base(block)
+        payload['data_type'] = 'objects'
+        aggregates = object_aggregates(question, session_ids=self._clean_ids)
+        rows = []
+        subs_meta = []
+        for entry in aggregates.values():
+            answers = self._mask(entry['answers'])
+            row = {'key': entry['key'], 'title': entry['title'], 'category': entry['category'],
+                   'answers': answers, 'subs': []}
+            for sub in entry['subs'].values():
+                if sub['type'] in ('text', 'text_line'):
+                    continue
+                cell = {'code': sub['code'], 'type': sub['type']}
+                if answers['masked'] or not entry['answers']:
+                    cell['display'] = answers['display'] if entry['answers'] else '—'
+                elif sub['type'] in ('rating', 'range', 'number'):
+                    cell['display'] = '' if sub.get('mean') is None else str(sub['mean'])
+                    cell['value'] = sub.get('mean')
+                elif sub['type'] == 'thumbs':
+                    cell['display'] = '👍 %s / 👎 %s' % (sub['up'], sub['down'])
+                    cell['up'], cell['down'] = sub['up'], sub['down']
+                elif sub['type'] in ('choice', 'multichoice'):
+                    cell['display'] = ', '.join('%s×%s' % (n, sub['labels'].get(code, code))
+                                                for code, n in sub['counts'].items() if n) or '—'
+                else:
+                    cell['display'] = str(sub['count'])
+                row['subs'].append(cell)
+            rows.append(row)
+            if not subs_meta:
+                subs_meta = [{'code': s['code'], 'name': s['name'], 'type': s['type']}
+                             for s in entry['subs'].values() if s['type'] not in ('text', 'text_line')]
+        rows.sort(key=lambda r: (-(r['answers']['value'] or 0), r['title']))
+        payload['rows'] = rows
+        payload['sub_questions'] = subs_meta
+        payload['k'] = self.k
+        return payload
 
     def _base(self, block, extra_title=None):
         title = _localize(block.custom_title, self.lang)

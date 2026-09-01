@@ -107,6 +107,15 @@ def question_subtext(field):
 
 
 @register.filter
+def get_item(mapping, key):
+    """dict[key] for templates; '' when missing."""
+    try:
+        return mapping.get(key, '')
+    except AttributeError:
+        return ''
+
+
+@register.filter
 def choice_label(question, choice):
     """Primary-language label of one inline choice dict (name may be a dict)."""
     try:

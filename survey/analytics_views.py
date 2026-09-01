@@ -15,7 +15,19 @@ from .analytics import (
     version_choices,
 )
 from .events import emit_event
-from .layers import build_map_layers_metadata
+from .layers import build_map_layers_metadata, layers_for
+
+
+def _map_layers_with_object_stats(survey):
+    """Responses-tab layer metadata: FD-1's list plus, for layers bound to an
+    Objects-on-the-map question, {key: {answers, headline, sessions}}."""
+    from .object_stats import layer_object_stats
+    metas = build_map_layers_metadata(survey)
+    layers = {layer.pk: layer for layer in layers_for(survey)}
+    for meta in metas:
+        if meta.get('bound') and meta['id'] in layers:
+            meta['object_stats'] = layer_object_stats(layers[meta['id']])
+    return metas
 from .versioning import family_ids_with_draft
 
 
@@ -136,7 +148,9 @@ def analytics_dashboard(request, survey_uuid):
         'geo_json': json.dumps(geo_collection),
         'geo_features_count': len(geo_collection['features']),
         # Reference layers: metadata only, geometry comes from the gated endpoint.
-        'map_layers': build_map_layers_metadata(survey),
+        # Bound layers also carry per-object aggregates for the map badges and
+        # the click-to-select (spec object-answers).
+        'map_layers': _map_layers_with_object_stats(survey),
         'question_stats': question_stats,
         'answer_matrix_json': json.dumps(answer_matrix),
         'text_question_ids_json': json.dumps(text_question_ids),
