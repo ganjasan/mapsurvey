@@ -50,7 +50,7 @@ WITH geo AS (
          bool_or(NOT has_sub AND next_type IN ('text','text_line','choice','multichoice','rating','number','range','ranking')) AS uses_followup_q
   FROM geo GROUP BY survey_header_id
 ), used AS (
-  SELECT survey_header_id FROM survey_surveysession GROUP BY survey_header_id HAVING count(*) >= 5
+  SELECT survey_id FROM survey_surveysession GROUP BY survey_id HAVING count(*) >= 5
 )
 SELECT count(*) AS surveys_with_geo,
        count(*) FILTER (WHERE uses_subq) AS use_subq,

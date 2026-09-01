@@ -2,7 +2,7 @@
 
 - [x] 0.1 Worktree `../Mapsurvey-feature-browser` on `feature/overlay-feature-browser` from `origin/master`; bootstrapped (`env`, `.env`, `PORT_OFFSET=250`, `collectstatic`)
 - [ ] 0.2 Commit backlog items #151, #152 and the INDEX row to `master` (they exist only uncommitted in the main checkout) and mark them "Promoted on 2026-09-01"; mark FD-17 `feature-draw-overlay-layer-in-editor` as absorbed by this change
-- [ ] 0.3 Run `geo_subq_usage.sql` against prod (owner runs `! psql "$MAPSURVEY_DB_URL" -f …`) and paste the four result blocks into `mechanism-ab.mockup.html` section 0 note — informs hint copy only (D4)
+- [x] 0.3 Run `geo_subq_usage.sql` against prod (owner runs `! psql "$MAPSURVEY_DB_URL" -f …`) and paste the four result blocks into `mechanism-ab.mockup.html` section 0 note — informs hint copy only (D4)
 - [x] 0.4 Baseline: `./run_tests.sh survey` green before any change
 
 ## 1. PR 1 — Objects: model, migration, derived GeoJSON (spec `layer-objects`)

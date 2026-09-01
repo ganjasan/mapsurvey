@@ -250,6 +250,17 @@ type `layer_objects` reference their layer by position index like `hidden_layers
 
 No kill switch (owner rule); `MAP_REFERENCE_LAYERS=False` still hides every surface.
 
+## Follow-ups noticed during implementation
+
+- The public `objects` block lists every object of the layer; on a 221-object layer with
+  one answered object that is 220 rows of zeros. Cap or "answered first, fold the rest"
+  before a real municipality publishes one.
+- The rating sub-question inside the object popup renders as plain radios (the popup uses
+  `as_p()`, exactly like geo popups do); the stars style does not reach popups. Same gap
+  as today's geo sub-questions — fix once, for both.
+- The Responses per-object table has no filter; 200+ rows scroll. Search/category chips
+  like the editor's list would be the natural next step.
+
 ## Open Questions
 
 - Category as free text with autocomplete (mockup) vs. a per-layer category list with
