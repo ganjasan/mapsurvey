@@ -7658,3 +7658,12 @@ msgstr "Troppi caricamenti, riprova più tardi."
 #: survey/views.py:2184
 msgid "No file received."
 msgstr "Nessun file ricevuto."
+
+msgid "Rename survey"
+msgstr "Rinomina il sondaggio"
+
+msgid "Could not save the name. Check your connection and try again."
+msgstr "Non è stato possibile salvare il nome. Controlla la connessione e riprova."
+
+msgid "A draft is renamed by renaming the published survey."
+msgstr "Una bozza si rinomina rinominando il sondaggio pubblicato."

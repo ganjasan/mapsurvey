@@ -14,6 +14,7 @@ from django.http import HttpResponse, Http404, JsonResponse
 from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.utils import timezone, translation
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 
@@ -34,7 +35,8 @@ from .cloning import clone_question, clone_section
 from .html_sanitize import coerce_creator_html
 from .translation_gaps import survey_translation_gaps
 from .editor_forms import (
-    SurveyHeaderForm, SurveyCreateForm, SurveyBriefForm, SurveySectionForm, QuestionForm,
+    SurveyHeaderForm, SurveyCreateForm, SurveyBriefForm, SurveyRenameForm,
+    SurveySectionForm, QuestionForm,
     SUBQUESTION_DISALLOWED_INPUT_TYPES,
 )
 from .ai import client as ai_client
@@ -567,6 +569,28 @@ def editor_survey_settings(request, survey_uuid):
         'map_layers': _editor_layers(survey),
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
     })
+
+
+@require_POST
+@survey_permission_required('owner')
+def editor_survey_rename(request, survey_uuid):
+    """Rename a survey from the editor header. Writes the name and nothing else.
+
+    Owner-gated, matching ``editor_survey_settings`` — the header is a second
+    door onto the same field, not a lower bar for reaching it. A draft copy has
+    no name of its own to change; its header names the published survey.
+    """
+    survey = request.survey
+    if survey.is_draft_copy:
+        return JsonResponse(
+            {'ok': False, 'errors': {'name': [str(_('A draft is renamed by renaming the published survey.'))]}},
+            status=400,
+        )
+    form = SurveyRenameForm(request.POST, instance=survey)
+    if not form.is_valid():
+        return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
+    form.save()
+    return JsonResponse({'ok': True, 'name': survey.name})
 
 
 @survey_permission_required('owner')

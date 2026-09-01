@@ -7642,3 +7642,12 @@ msgstr "Zu viele Uploads, versuchen Sie es später erneut."
 #: survey/views.py:2184
 msgid "No file received."
 msgstr "Keine Datei empfangen."
+
+msgid "Rename survey"
+msgstr "Umfrage umbenennen"
+
+msgid "Could not save the name. Check your connection and try again."
+msgstr "Der Name konnte nicht gespeichert werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+
+msgid "A draft is renamed by renaming the published survey."
+msgstr "Ein Entwurf wird umbenannt, indem die veröffentlichte Umfrage umbenannt wird."

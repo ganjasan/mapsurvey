@@ -7638,3 +7638,12 @@ msgstr "Trop d'envois, réessayez plus tard."
 #: survey/views.py:2184
 msgid "No file received."
 msgstr "Aucun fichier reçu."
+
+msgid "Rename survey"
+msgstr "Renommer l'enquête"
+
+msgid "Could not save the name. Check your connection and try again."
+msgstr "Le nom n'a pas pu être enregistré. Vérifiez votre connexion et réessayez."
+
+msgid "A draft is renamed by renaming the published survey."
+msgstr "Pour renommer un brouillon, renommez l'enquête publiée."
