@@ -203,12 +203,26 @@ def _serialize_question(question: Question) -> Dict[str, Any]:
             {"language": t.language, "name": t.name, "subtext": t.subtext}
             for t in question.translations.all()
         ],
+        # Objects on the map: the bound layer travels as its position in the
+        # exported `layers` array (ids mean nothing elsewhere), like hidden_layers.
+        "layer": _layer_position(question),
+        "min_objects": question.min_objects,
+        "objects_search": question.objects_search,
         "sub_questions": [
             _serialize_question(sub_q)
             for sub_q in question.subQuestions()
         ],
     }
     return data
+
+
+def _layer_position(question: Question) -> Optional[int]:
+    if question.input_type != 'layer_objects' or not question.layer_id:
+        return None
+    for index, layer in enumerate(layers_for(question.survey_section.survey_header)):
+        if layer.pk == question.layer_id:
+            return index
+    return None
 
 
 def serialize_questions(section: SurveySection) -> List[Dict[str, Any]]:
@@ -615,7 +629,7 @@ def import_structure_from_archive(
         section = sections.get(section_data["name"])
         if section:
             questions_data = section_data.get("questions", [])
-            create_questions(section, questions_data, legacy_option_groups, code_remap)
+            create_questions(section, questions_data, legacy_option_groups, code_remap, layer_ids=layer_ids)
 
     # Apply visibility rules once every question exists (a rule's controller is
     # earlier in survey order, but a post-pass is immune to creation order and
@@ -797,9 +811,14 @@ def _create_question(
     question_data: Dict[str, Any],
     legacy_option_groups: List[Dict[str, Any]],
     code_remap: Dict[str, str],
-    parent: Optional[Question] = None
+    parent: Optional[Question] = None,
+    layer_ids: Optional[List[Optional[int]]] = None,
 ) -> Question:
-    """Create a single question, handling code collisions."""
+    """Create a single question, handling code collisions.
+
+    `layer_ids` maps an exported layer position to its new id; an Objects-on-
+    the-map question whose layer did not import (or an archive index out of
+    range) is created unbound rather than failing the import."""
     original_code = _required_text(question_data, "code", "A question")
 
     # Check for code collision
@@ -828,6 +847,12 @@ def _create_question(
                 raise ImportError(
                     f"Question '{original_code}': option_group_name '{og_name}' not found in option_groups"
                 )
+
+    # Thumbs carries a FIXED choice list; an archive (AI-written, hand-edited,
+    # or from before the type existed) never gets to override it.
+    if input_type == 'thumbs':
+        from .question_types import THUMBS_CHOICES
+        choices = [dict(c) for c in THUMBS_CHOICES]
 
     # Validate choices required for certain input types
     requires_choices = {"choice", "multichoice", "range", "rating"}
@@ -865,6 +890,9 @@ def _create_question(
         color=_archive_text(question_data, "color", "#000000", 7),
         icon_class=_archive_text(question_data, "icon_class", "", 80) or None,
         display_style=display_style,
+        layer_id=_layer_id_from_archive(question_data, input_type, layer_ids),
+        min_objects=max(0, int(question_data.get("min_objects") or 0)) if input_type == 'layer_objects' else 0,
+        objects_search=question_data.get("objects_search") if question_data.get("objects_search") in ('auto', 'on', 'off') else 'auto',
         # image is handled separately during extraction
     )
 
@@ -879,20 +907,31 @@ def _create_question(
 
     # Create sub-questions recursively
     for sub_q_data in question_data.get("sub_questions", []):
-        _create_question(section, sub_q_data, legacy_option_groups, code_remap, parent=question)
+        _create_question(section, sub_q_data, legacy_option_groups, code_remap, parent=question, layer_ids=layer_ids)
 
     return question
+
+
+def _layer_id_from_archive(question_data, input_type, layer_ids):
+    if input_type != 'layer_objects':
+        return None
+    index = question_data.get("layer")
+    ids = layer_ids or []
+    if isinstance(index, int) and 0 <= index < len(ids):
+        return ids[index]
+    return None
 
 
 def create_questions(
     section: SurveySection,
     questions_data: List[Dict[str, Any]],
     legacy_option_groups: List[Dict[str, Any]],
-    code_remap: Dict[str, str]
+    code_remap: Dict[str, str],
+    layer_ids: Optional[List[Optional[int]]] = None,
 ) -> None:
     """Create questions with hierarchy, updating code_remap for collisions."""
     for question_data in questions_data:
-        _create_question(section, question_data, legacy_option_groups, code_remap)
+        _create_question(section, question_data, legacy_option_groups, code_remap, layer_ids=layer_ids)
 
 
 def resolve_section_links(

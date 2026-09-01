@@ -290,6 +290,15 @@ class FileUploadField(forms.Field):
         self.subtitle = subtitle
 
 
+class ThumbsWidget(widgets.RadioSelect):
+    """👍 / 👎 as two large buttons over a radio pair (spec thumbs-question).
+
+    A RadioSelect under the hood, so the choice machinery — required handling,
+    stored `selected_choices`, prepopulation on revisit, visibility rules —
+    needs nothing special; only the rendering differs."""
+    template_name = 'thumbs.html'
+
+
 class RankingWidget(widgets.Widget):
     """Drag-to-order list.
 
@@ -340,6 +349,48 @@ class RankingField(forms.Field):
         attrs = super().widget_attrs(widget)
         attrs['items'] = self.items
 
+        return attrs
+
+
+class LayerObjectsWidget(widgets.Widget):
+    """The "Objects on the map" block: header, search/chips, list container.
+
+    Renders only the shell — the rows come from the layer GeoJSON the map has
+    already loaded (base_survey_template.html fills them), so a 300-object
+    layer costs no second fetch and no server-rendered list."""
+    template_name = 'layer_objects.html'
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        a = context['widget']['attrs']
+        for key in ('title', 'subtitle', 'layer_id', 'layer_name', 'question_code', 'min_objects', 'objects_search', 'object_count'):
+            context['widget'][key] = a.get(key)
+        return context
+
+
+class LayerObjectsField(forms.Field):
+    """Display-only: the block collects nothing itself, its sub-questions do."""
+
+    def __init__(self, *, title, subtitle, question, **kwargs):
+        self.title = title
+        self.subtitle = subtitle
+        self.question = question
+        kwargs.setdefault('required', False)
+        super().__init__(**kwargs)
+
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        layer = self.question.layer
+        attrs.update({
+            'title': self.title,
+            'subtitle': self.subtitle,
+            'layer_id': layer.pk if layer else None,
+            'layer_name': layer.name if layer else '',
+            'question_code': self.question.code,
+            'min_objects': self.question.min_objects,
+            'objects_search': self.question.objects_search,
+            'object_count': layer.feature_count if layer else 0,
+        })
         return attrs
 
 
@@ -474,6 +525,19 @@ class SurveySectionAnswerForm(forms.Form):
             choices = [(c["code"], question.get_choice_name(c["code"], language) or str(c["code"]))
                        for c in source]
             return forms.ChoiceField(widget=forms.RadioSelect(attrs={'class': 'form-check-inline', 'style': 'margin-right:0;'}), choices=choices, label=label, required=required)
+
+        elif input_type == 'thumbs':
+            # Fixed two-choice list; names are the export values (`up`/`down`),
+            # the widget template draws the icons and localised labels.
+            choices = [(c["code"], c["name"]) for c in question.thumbs_choices()]
+            return forms.ChoiceField(widget=ThumbsWidget, choices=choices, label=label, required=required)
+
+        elif input_type == 'layer_objects':
+            # Collects nothing itself: the list block and the popup carry the
+            # sub-question forms (spec layer-objects-question). The field is
+            # display-only so the section form has a slot to render the block in.
+            return LayerObjectsField(widget=LayerObjectsWidget, label=False, title=label,
+                                     subtitle=sublabel, question=question)
 
         elif input_type == 'ranking':
             # `initial` carries the respondent's stored order when they navigate

@@ -1,0 +1,14 @@
+{% load i18n %}{% comment %}
+Thumbs up / down: two big buttons over a plain radio pair. Codes are the fixed
+THUMBS_CHOICES (1 = up, 0 = down); the labels are the respondent's language,
+the export reads `up` / `down`. CSS in main.css (.thumbs).
+{% endcomment %}
+<div class="thumbs" role="radiogroup"{% if widget.attrs.id %} id="{{ widget.attrs.id }}"{% endif %}>
+{% for group, options, index in widget.optgroups %}{% for option in options %}
+    <label class="thumbs__option{% if option.attrs.checked %} is-checked{% endif %}" data-thumb="{{ option.value }}">
+        <input type="radio" name="{{ option.name }}" value="{{ option.value }}"{% if option.attrs.checked %} checked{% endif %}{% if widget.attrs.required %} required{% endif %}>
+        <span class="thumbs__icon"><i class="fas {% if option.value == 1 or option.value == '1' %}fa-thumbs-up{% else %}fa-thumbs-down{% endif %}"></i></span>
+        <span class="thumbs__label">{% if option.value == 1 or option.value == '1' %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</span>
+    </label>
+{% endfor %}{% endfor %}
+</div>

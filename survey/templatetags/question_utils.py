@@ -4,7 +4,7 @@ from django.conf import settings
 register = template.Library()
 
 CARD_INPUT_TYPES = {'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating',
-                    'ranking', 'datetime', 'photo', 'audio', 'document'}
+                    'ranking', 'datetime', 'photo', 'audio', 'document', 'thumbs'}
 
 
 @register.filter
@@ -94,7 +94,7 @@ def star_color(field):
 # caption, so all four are deliberately absent.
 SUBTEXT_IN_TEMPLATE_TYPES = {
     'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating', 'ranking',
-    'datetime', 'photo', 'audio', 'document',
+    'datetime', 'photo', 'audio', 'document', 'thumbs',
 }
 
 

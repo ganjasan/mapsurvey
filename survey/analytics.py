@@ -428,7 +428,7 @@ class SurveyAnalyticsService:
     def _subanswer_display(answer):
         """Display value for a sub-answer, or None when there is nothing to show."""
         input_type = answer.question.input_type
-        if input_type in ('choice', 'multichoice', 'rating'):
+        if input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
             return ', '.join(answer.get_selected_choice_names()) or None
         if input_type in ('number', 'range'):
             return str(answer.numeric) if answer.numeric is not None else None
@@ -799,7 +799,7 @@ class SurveyAnalyticsService:
             Answer.objects
             .filter(
                 question__survey_section__survey_header_id__in=self.scope_ids,
-                question__input_type__in=['choice', 'multichoice', 'rating'],
+                question__input_type__in=['choice', 'multichoice', 'rating', 'thumbs'],
                 survey_session__is_deleted=False,
             )
             .exclude(selected_choices__isnull=True)
@@ -878,7 +878,7 @@ class SurveyAnalyticsService:
             attributes = []
             geo_object_id = None
             geo_label = ''
-            if q.input_type in ('choice', 'multichoice', 'rating'):
+            if q.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
                 value = ', '.join(a.get_selected_choice_names()) or '\u2014'
             elif q.input_type in ('number', 'range'):
                 value = str(a.numeric) if a.numeric is not None else '\u2014'
@@ -1279,7 +1279,7 @@ class SurveyAnalyticsService:
     def _format_cell(answer):
         """Format a single Answer to a display string for the attribute table."""
         q = answer.question
-        if q.input_type in ('choice', 'multichoice', 'rating'):
+        if q.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
             names = answer.get_selected_choice_names()
             return ', '.join(names) if names else '—'
         elif q.input_type in ('number', 'range'):
@@ -1388,7 +1388,7 @@ class SurveyAnalyticsService:
         question_cols = [
             {
                 'key': str(q.id), 'label': _col_label(q), 'input_type': q.input_type,
-                'choices_json': json.dumps(q.choices or [], ensure_ascii=False) if q.input_type in ('choice', 'multichoice', 'rating') else '',
+                'choices_json': json.dumps(q.choices or [], ensure_ascii=False) if q.input_type in ('choice', 'multichoice', 'rating', 'thumbs') else '',
             }
             for q in questions
         ]
@@ -1668,7 +1668,7 @@ class SurveyAnalyticsService:
                     vals.add(str(v) if v else '')
             unique_values[col['key']] = sorted(vals)
         for col in question_cols:
-            if col['input_type'] in ('choice', 'multichoice', 'rating'):
+            if col['input_type'] in ('choice', 'multichoice', 'rating', 'thumbs'):
                 vals = set()
                 for r in rows:
                     v = r['cells'].get(col['key'], '—')

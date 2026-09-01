@@ -369,7 +369,7 @@ def analytics_answer_edit(request, survey_uuid, session_id, question_id):
         except (ValueError, TypeError):
             return HttpResponse(status=400)
         answer.save(update_fields=['numeric'])
-    elif itype in ('choice', 'rating'):
+    elif itype in ('choice', 'rating', 'thumbs'):
         try:
             answer.selected_choices = [int(value)] if value not in (None, '') else []
         except (ValueError, TypeError):

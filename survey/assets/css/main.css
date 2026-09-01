@@ -1145,6 +1145,60 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
    shared `.question-card label:has(input[type="radio"])` rule out-specifies a
    bare .rating-stars__star and would paint every unselected star as body
    text. Same scoping the scale-strip block uses above.                     */
+/* ---- Objects on the map (spec layer-objects-question) ---- */
+.layer-objects { margin:4px 0 14px; }
+.layer-objects__head { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.layer-objects__title { font-weight:600; }
+.layer-objects__counter { font-size:.78rem; color:var(--text-secondary); white-space:nowrap; }
+.layer-objects__counter b { color:var(--success); }
+.layer-objects__subtitle { font-size:.85rem; color:var(--text-secondary); margin:2px 0 6px; }
+.layer-objects__tools { margin:8px 0; }
+.layer-objects__search { width:100%; border:1px solid var(--input-border); border-radius:var(--radius-sm); padding:7px 10px; font-size:.9rem; background:var(--input-bg); }
+.layer-objects__chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+.lo-chip { font-size:.75rem; padding:3px 9px; border-radius:999px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-secondary); cursor:pointer; }
+.lo-chip.is-on { background:var(--accent-light); border-color:var(--accent); color:var(--accent); font-weight:600; }
+.layer-objects__list { max-height:320px; overflow:auto; }
+.lo-row { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--card-border); border-left:4px solid var(--accent); background:var(--card-bg); border-radius:var(--radius-sm); margin-bottom:5px; cursor:pointer; font-size:.9rem; transition:background var(--transition); }
+.lo-row:hover { background:var(--card-hover); }
+.lo-row.is-open { border-color:var(--accent); background:var(--accent-light); }
+.lo-row.is-answered { opacity:.65; }
+.lo-row__swatch { width:10px; height:10px; border-radius:2px; background:var(--accent); flex:none; }
+.lo-row__cover { width:32px; height:24px; border-radius:3px; background-size:cover; background-position:center; flex:none; }
+.lo-row__title { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lo-row__tick { color:var(--success); font-size:.8rem; }
+.lo-row__cat { font-size:.72rem; color:var(--text-tertiary); white-space:nowrap; }
+.lo-empty { font-size:.85rem; color:var(--text-tertiary); padding:8px 2px; }
+.layer-objects__min { font-size:.8rem; color:var(--danger); margin-top:6px; }
+.layer-objects--invalid .layer-objects__list { outline:2px solid var(--danger); outline-offset:2px; border-radius:var(--radius-sm); }
+.layer-objects__empty { font-size:.85rem; color:var(--text-tertiary); }
+.leaflet-overlay-pane path.lo-answered { stroke-dasharray:6 4; }
+/* the popup card (variant A: the geo popup, reused) */
+.lo-card { margin:-6px -4px 8px; }
+.lo-card__cover { height:150px; background-size:cover; background-position:center; border-radius:8px 8px 0 0; margin:0 0 8px; }
+.lo-card__title { font-weight:700; font-size:1rem; margin:0 0 2px; }
+.lo-card__cat { font-size:.75rem; color:var(--text-secondary); margin-bottom:6px; }
+.lo-card__body { font-size:.88rem; margin-bottom:8px; }
+.lo-card__body img { max-width:100%; border-radius:6px; }
+.lo-card__assets { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+.lo-asset--image { width:64px; height:48px; border-radius:6px; background-size:cover; background-position:center; }
+.lo-asset--audio, .lo-asset--video { width:100%; max-height:200px; }
+.lo-asset--embed { width:100%; aspect-ratio:16/9; }
+.lo-asset--embed iframe { width:100%; height:100%; border:0; border-radius:6px; }
+.lo-asset--doc { font-size:.8rem; border:1px solid var(--input-border); border-radius:6px; padding:4px 8px; }
+.lo-card__link { display:inline-block; font-size:.85rem; margin-bottom:6px; }
+.lo-form { border-top:1px solid var(--card-border); padding-top:8px; }
+
+/* ---- Thumbs up / down (spec thumbs-question) ---- */
+.thumbs { display:flex; gap:10px; }
+.thumbs__option { flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 10px;
+  border:1px solid var(--input-border); border-radius:var(--radius-sm); background:var(--input-bg); cursor:pointer;
+  font-size:1rem; margin:0; transition:border-color var(--transition), background var(--transition); }
+.thumbs__option input { position:absolute; opacity:0; width:0; height:0; }
+.thumbs__option:hover { border-color:var(--accent); }
+.thumbs__option.is-checked, .thumbs__option:has(input:checked) { border-color:var(--accent); background:var(--accent-light); color:var(--accent); font-weight:600; }
+.thumbs__icon { font-size:1.25rem; }
+.thumbs__option[data-thumb="0"] .thumbs__icon { transform:translateY(2px); }
+
 .rating-stars {
   --star-color: #f5b301;
   --star-empty: #d5d8dc;

@@ -145,8 +145,15 @@ def build_map_layers_metadata(survey):
             'color': layer.color,
             'label_field': layer.label_field,
             'show_popups': layer.show_popups,
+            # Bound to an Objects-on-the-map question: features are clickable
+            # and open the object popup (card + sub-questions) instead of the
+            # read-only name/description popup — spec reference-overlay-layers.
+            'bound': layer.questions.filter(input_type='layer_objects').exists(),
             'url': reverse('survey_layer_geojson', kwargs={
                 'survey_slug': str(survey.uuid), 'layer_id': layer.pk,
+            }),
+            'object_url': reverse('survey_layer_object', kwargs={
+                'survey_slug': str(survey.uuid), 'layer_id': layer.pk, 'key': 'KEY',
             }),
         }
         # defer('geojson'): the 100s-of-KB geometry column loaded on every map

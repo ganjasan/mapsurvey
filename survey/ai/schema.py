@@ -39,7 +39,10 @@ from ..serialization import VALID_INPUT_TYPES
 # FILE_UPLOAD_QUESTIONS kill switch is ever off, a generated file question
 # renders as nothing for respondents (fail open) — a degraded draft, not a
 # broken one.
-TOP_LEVEL_INPUT_TYPES = [t for t in VALID_INPUT_TYPES if t != 'image']
+# `image` needs a file the model cannot produce; `layer_objects` needs a
+# reference layer the creator builds in the object editor — a draft cannot
+# invent objects on a map, so the type stays out of generation entirely.
+TOP_LEVEL_INPUT_TYPES = [t for t in VALID_INPUT_TYPES if t not in ('image', 'layer_objects')]
 SUB_QUESTION_INPUT_TYPES = [
     t for t in TOP_LEVEL_INPUT_TYPES if t not in SUBQUESTION_DISALLOWED_INPUT_TYPES
 ]

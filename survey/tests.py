@@ -29263,6 +29263,10 @@ class QuestionSubtextRenderingTest(TestCase):
         'photo':       (True, True),
         'audio':       (True, True),
         'document':    (True, True),
+        # Thumbs is a card question like rating; the block's title is its name
+        # and its subtext renders under the heading (layer_objects.html).
+        'thumbs':      (True, True),
+        'layer_objects': (True, True),
     }
 
     def test_every_input_type_has_a_decision(self):
@@ -37902,3 +37906,479 @@ class LayerObjectEditorTest(TestCase):
         html = self.client.get(reverse('editor_survey_settings_panel', args=[self.survey.uuid])).content.decode()
         self.assertIn(self._u('editor_layer_objects'), html)
         self.assertIn('ref-layers-new', html)
+
+
+# ─── overlay-features: thumbs + layer_objects question types (group 3) ──────
+
+class ThumbsQuestionTest(TestCase):
+    """👍/👎 as a fixed two-choice type (spec thumbs-question)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Thumbs Org")
+        self.survey = SurveyHeader.objects.create(
+            name="thumbs_survey", organization=self.org, redirect_url="/thanks/",
+            status='published', available_languages=['en'],
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.q = Question.objects.create(
+            survey_section=self.section, code="TH001", name="Build it?", input_type="thumbs", order_number=1,
+        )
+        self.q.choices = self.q.thumbs_choices()
+        self.q.save()
+        self.url = f'/surveys/{self.survey.uuid}/{self.section.name}/'
+
+    def test_widget_renders_two_options(self):
+        """
+        GIVEN a thumbs question on a published survey
+        WHEN the respondent opens the section
+        THEN two thumb buttons render, with codes 1 and 0
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/')
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('class="thumbs"', html)
+        self.assertIn('data-thumb="1"', html)
+        self.assertIn('data-thumb="0"', html)
+        self.assertIn('fa-thumbs-down', html)
+
+    def test_answer_is_stored_and_changeable(self):
+        """
+        GIVEN a respondent who taps 👍 and later 👎
+        WHEN each submission is stored
+        THEN the answer holds code 1, then code 0, and the export cell reads up/down
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/')
+        self.client.get(self.url)
+        self.client.post(self.url, {self.q.code: '1'})
+        answer = Answer.objects.get(question=self.q)
+        self.assertEqual(answer.selected_choices, [1])
+        self.assertEqual(answer.get_selected_choice_names(), ['up'])
+        self.client.post(self.url, {self.q.code: '0'})
+        answer = Answer.objects.filter(question=self.q).order_by('-id').first()
+        self.assertEqual(answer.selected_choices, [0])
+        self.assertEqual(answer.get_selected_choice_names(), ['down'])
+
+    def test_required_thumbs_validates_like_other_single_value_types(self):
+        """
+        GIVEN a required thumbs question
+        WHEN the single-question form is bound without a value, then with 👍
+        THEN validation fails on empty (the same client-side `required` path
+             every choice type uses) and accepts the code
+        """
+        from django.core.exceptions import ValidationError
+        self.q.required = True
+        self.q.save()
+        form = SurveySectionAnswerForm.single_question_form(self.q)
+        field = form.fields[self.q.code]
+        with self.assertRaises(ValidationError):
+            field.clean('')
+        self.assertEqual(field.clean('1'), '1')
+        self.client.get(f'/surveys/{self.survey.uuid}/')
+        html = self.client.get(self.url).content.decode()
+        self.assertRegex(html, r'<input type="radio" name="%s" value="1"[^>]*required' % self.q.code)
+
+    def test_editor_writes_the_fixed_choices(self):
+        """
+        GIVEN an owner creating a thumbs question through the editor
+        WHEN the create endpoint saves it
+        THEN the stored choices are the fixed up/down pair regardless of the posted choices_json
+        """
+        owner = User.objects.create_user(username='thumbsowner', password='pw12345678')
+        Membership.objects.create(user=owner, organization=self.org, role='owner')
+        self.survey.status = 'draft'
+        self.survey.created_by = owner
+        self.survey.save()
+        self.client.login(username='thumbsowner', password='pw12345678')
+        response = self.client.post(
+            reverse('editor_question_create', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk}),
+            {'name': 'Like it?', 'input_type': 'thumbs', 'subtext': '', 'display_style': 'default',
+             'color': '#000000', 'choices_json': '[{"code": 5, "name": "x"}]'})
+        self.assertEqual(response.status_code, 200)
+        q = Question.objects.get(name='Like it?')
+        self.assertEqual(q.choices, [{"code": 1, "name": "up"}, {"code": 0, "name": "down"}])
+
+    def test_picker_lists_thumbs_with_the_questions(self):
+        """
+        GIVEN the type picker groups
+        WHEN they are built from every input type
+        THEN thumbs sits in the Questions group with the thumbs-up icon and its label
+        """
+        from .models import INPUT_TYPE_CHOICES
+        from .question_types import picker_groups_for
+        groups = dict(picker_groups_for(INPUT_TYPE_CHOICES))
+        entry = next(t for t in groups['Questions'] if t['value'] == 'thumbs')
+        self.assertEqual((entry['icon'], entry['label']), ('fa-thumbs-up', 'Thumbs up / down'))
+
+
+class LayerObjectsQuestionEditorTest(TestCase):
+    """The `layer_objects` type in the editor: picker, form, sub-questions (specs
+    survey-editor, question-type-picker)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="LOQ Org")
+        self.owner = User.objects.create_user(username='loqowner', password='pw12345678')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="loq_survey", organization=self.org, redirect_url="/thanks/", created_by=self.owner,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.form_section = SurveySection.objects.create(
+            survey_header=self.survey, name="s2", title="S2", code="S2", layout='form',
+        )
+        self.layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        self.client.login(username='loqowner', password='pw12345678')
+
+    def _create_url(self, section=None):
+        return reverse('editor_question_create', kwargs={'survey_uuid': self.survey.uuid, 'section_id': (section or self.section).pk})
+
+    def _post(self, data, section=None):
+        base = {'subtext': '', 'display_style': 'default', 'color': '#000000'}
+        base.update(data)
+        return self.client.post(self._create_url(section), base)
+
+    def test_picker_offers_objects_on_the_map_with_a_layer(self):
+        """
+        GIVEN a survey with a reference layer and a map-layout section
+        WHEN the new-question modal is opened
+        THEN the picker lists "Objects on the map" in the Map questions group
+        """
+        html = self.client.get(self._create_url()).content.decode()
+        self.assertIn('data-qtp-value="layer_objects"', html)
+        self.assertIn('Objects on the map', html)
+
+    def test_picker_hides_the_type_without_layers_and_on_form_sections(self):
+        """
+        GIVEN a survey with no layers, or a form-layout section
+        WHEN the new-question modal is opened
+        THEN the picker does not offer layer_objects
+        """
+        html = self.client.get(self._create_url(self.form_section)).content.decode()
+        self.assertNotIn('data-qtp-value="layer_objects"', html)
+        self.layer.delete()
+        html = self.client.get(self._create_url()).content.decode()
+        self.assertNotIn('data-qtp-value="layer_objects"', html)
+
+    def test_create_requires_a_layer_and_ignores_required(self):
+        """
+        GIVEN a POST for an Objects-on-the-map question without a layer, then with one and required=on
+        WHEN the create endpoint validates
+        THEN the first is refused on the layer field and the second is stored with required=False and min_objects
+        """
+        response = self._post({'name': 'Objects', 'input_type': 'layer_objects'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Pick the reference layer', response.content.decode())
+        self.assertFalse(Question.objects.filter(name='Objects').exists())
+        response = self._post({'name': 'Objects', 'input_type': 'layer_objects', 'layer': self.layer.pk,
+                               'required': 'on', 'min_objects': '2', 'objects_search': 'on'})
+        self.assertEqual(response.status_code, 200)
+        q = Question.objects.get(name='Objects')
+        self.assertEqual((q.layer_id, q.required, q.min_objects, q.objects_search), (self.layer.pk, False, 2, 'on'))
+        html = response.content.decode()
+        self.assertIn('Sites', html)
+        self.assertIn('min 2', html)
+        self.assertIn('Add Sub-question', html)
+
+    def test_switching_type_drops_the_layer_binding(self):
+        """
+        GIVEN a layer_objects question
+        WHEN it is edited into a text question
+        THEN the layer binding is cleared so the layer stays deletable
+        """
+        q = Question.objects.create(survey_section=self.section, code="LO001", name="Objects",
+                                    input_type="layer_objects", layer=self.layer, order_number=1)
+        self.client.post(reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': q.pk}),
+                         {'name': 'Objects', 'input_type': 'text', 'subtext': '', 'display_style': 'default', 'color': '#000000'})
+        q.refresh_from_db()
+        self.assertEqual((q.input_type, q.layer_id), ('text', None))
+
+    def test_subquestion_form_excludes_parent_types(self):
+        """
+        GIVEN the New Sub-question modal for a layer_objects question
+        WHEN it renders and when a POST tries a parent type
+        THEN the picker offers neither geo types nor layer_objects, and the POST is rejected
+        """
+        q = Question.objects.create(survey_section=self.section, code="LO002", name="Objects",
+                                    input_type="layer_objects", layer=self.layer, order_number=1)
+        url = reverse('editor_subquestion_create', kwargs={'survey_uuid': self.survey.uuid, 'parent_id': q.pk})
+        html = self.client.get(url).content.decode()
+        for value in ('point', 'line', 'polygon', 'layer_objects'):
+            self.assertNotIn(f'data-qtp-value="{value}"', html)
+        self.assertIn('data-qtp-value="thumbs"', html)
+        self.client.post(url, {'name': 'Nested', 'input_type': 'layer_objects', 'layer': self.layer.pk,
+                               'subtext': '', 'display_style': 'default', 'color': '#000000'})
+        self.assertFalse(Question.objects.filter(name='Nested').exists())
+        self.client.post(url, {'name': 'Rate', 'input_type': 'rating', 'subtext': '', 'display_style': 'default',
+                               'color': '#000000', 'choices_json': '[]'})
+        sub = Question.objects.get(name='Rate')
+        self.assertEqual(sub.parent_question_id_id, q.pk)
+
+    def test_modal_shows_subquestions_section_for_parent_types_only(self):
+        """
+        GIVEN edit modals for a polygon question with no sub-questions and for a text question
+        WHEN they render
+        THEN the polygon modal carries the Sub-questions section with the hint and add button,
+             and the text modal carries the section markup but no add button target of its own
+        """
+        poly = Question.objects.create(survey_section=self.section, code="LO003", name="Area", input_type="polygon", order_number=1)
+        html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': poly.pk})).content.decode()
+        self.assertIn('id="fg-subquestions"', html)
+        self.assertIn('subquestions-empty-hint', html)
+        self.assertIn(reverse('editor_subquestion_create', kwargs={'survey_uuid': self.survey.uuid, 'parent_id': poly.pk}), html)
+        sub = Question.objects.create(survey_section=self.section, code="LO004", name="Why?", input_type="text",
+                                      parent_question_id=poly, order_number=1)
+        html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': poly.pk})).content.decode()
+        self.assertIn('subquestion-list--modal', html)
+        self.assertIn('Why?', html)
+        # A sub-question's own modal never nests further.
+        html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': sub.pk})).content.decode()
+        self.assertNotIn('id="fg-subquestions"', html)
+
+    def test_polygon_without_subquestions_saves(self):
+        """
+        GIVEN a polygon question created with no sub-questions
+        WHEN it is saved
+        THEN it exists — no minimum, no block (D4)
+        """
+        response = self._post({'name': 'Area', 'input_type': 'polygon'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Question.objects.filter(name='Area', input_type='polygon').exists())
+
+    def test_live_preview_renders_the_block(self):
+        """
+        GIVEN a draft Objects-on-the-map question in the modal
+        WHEN the live preview endpoint renders it with the picked layer
+        THEN the block shell renders with the layer's object count and code attributes
+        """
+        response = self.client.post(
+            reverse('editor_question_preview_live', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk}),
+            {'input_type': 'layer_objects', 'name': 'Objects', 'layer': self.layer.pk, 'min_objects': '1', 'objects_search': 'auto'})
+        html = response.content.decode()
+        self.assertIn('data-layer-objects', html)
+        self.assertIn(f'data-layer-id="{self.layer.pk}"', html)
+        self.assertIn('data-min-objects="1"', html)
+
+    def test_clone_keeps_layer_within_the_survey_and_drops_it_elsewhere(self):
+        """
+        GIVEN a layer_objects question
+        WHEN it is cloned into the same survey and into another survey
+        THEN the same-survey clone keeps the layer and the cross-survey clone is unbound
+        """
+        from .cloning import clone_question
+        q = Question.objects.create(survey_section=self.section, code="LO005", name="Objects",
+                                    input_type="layer_objects", layer=self.layer, min_objects=1, order_number=1)
+        same = clone_question(q, target_section=self.section)
+        self.assertEqual((same.layer_id, same.min_objects), (self.layer.pk, 1))
+        other = SurveyHeader.objects.create(name="other_survey", organization=self.org, redirect_url="/thanks/")
+        other_section = SurveySection.objects.create(survey_header=other, name="s1", title="S1", code="S1", is_head=True)
+        cross = clone_question(q, target_section=other_section)
+        self.assertIsNone(cross.layer_id)
+
+    def test_bound_layer_cannot_be_deleted(self):
+        """
+        GIVEN a layer bound to a layer_objects question
+        WHEN the owner deletes the layer through the settings endpoint
+        THEN the request is refused with a message naming the question and the layer remains
+        """
+        Question.objects.create(survey_section=self.section, code="LO006", name="Rate the sites",
+                                input_type="layer_objects", layer=self.layer, order_number=1)
+        response = self.client.post(reverse('editor_survey_layer_delete', kwargs={'survey_uuid': self.survey.uuid, 'layer_id': self.layer.pk}))
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Rate the sites', response.json()['error'])
+        self.assertTrue(self.layer.__class__.objects.filter(pk=self.layer.pk).exists())
+
+    def test_serialization_round_trips_the_binding(self):
+        """
+        GIVEN a layer_objects question bound to the survey's layer
+        WHEN the survey is exported and re-imported
+        THEN the imported question is bound to the imported layer by position, with its settings
+        """
+        Question.objects.create(survey_section=self.section, code="LO007", name="Objects",
+                                input_type="layer_objects", layer=self.layer, min_objects=2, objects_search='off', order_number=1)
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, 'structure')
+        buf.seek(0)
+        self.survey.name = 'loq_survey_old'
+        self.survey.save()
+        imported, warnings = import_survey_from_zip(buf)
+        q = Question.objects.get(survey_section__survey_header=imported, name='Objects')
+        self.assertEqual(q.layer, imported.map_layers.get())
+        self.assertEqual((q.min_objects, q.objects_search), (2, 'off'))
+
+
+class LayerObjectsRespondentTest(TestCase):
+    """The list block, the bound-layer metadata and answers about objects
+    (specs layer-objects-question, object-answers, reference-overlay-layers)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="LOR Org")
+        self.survey = SurveyHeader.objects.create(
+            name="lor_survey", organization=self.org, redirect_url="/thanks/",
+            status='published', available_languages=['en'],
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.next_section = SurveySection.objects.create(
+            survey_header=self.survey, name="s2", title="S2", code="S2",
+        )
+        self.section.next_section = self.next_section
+        self.section.save()
+        Question.objects.create(survey_section=self.next_section, code="LR100", name="Later", input_type="text", order_number=1)
+        self.layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        for obj, cat in zip(self.layer.items.order_by('key'), ('Parks', 'Parks', 'Roads')):
+            obj.category = cat
+            obj.save()
+        from .layers import rebuild_layer
+        rebuild_layer(self.layer)
+        self.q = Question.objects.create(
+            survey_section=self.section, code="LR001", name="Objects", input_type="layer_objects",
+            layer=self.layer, min_objects=1, order_number=1,
+        )
+        self.rating = Question.objects.create(
+            survey_section=self.section, code="LR002", name="Rate", input_type="rating",
+            parent_question_id=self.q, order_number=1, choices=[{"code": i, "name": str(i)} for i in range(1, 6)],
+        )
+        self.thumbs = Question.objects.create(
+            survey_section=self.section, code="LR003", name="Build?", input_type="thumbs",
+            parent_question_id=self.q, order_number=2,
+        )
+        self.thumbs.choices = self.thumbs.thumbs_choices()
+        self.thumbs.save()
+        self.comment = Question.objects.create(
+            survey_section=self.section, code="LR004", name="Comment", input_type="text",
+            parent_question_id=self.q, order_number=3,
+        )
+        self.url = f'/surveys/{self.survey.uuid}/{self.section.name}/'
+
+    def _start(self):
+        self.client.get(f'/surveys/{self.survey.uuid}/')
+        return self.client.get(self.url)
+
+    def test_block_and_bound_layer_metadata_render(self):
+        """
+        GIVEN a section with an Objects-on-the-map question bound to a layer
+        WHEN the respondent opens it
+        THEN the block shell carries the code, layer, minimum and search mode; the layer
+             metadata marks the layer bound with an object URL; the sub-question form is
+             pre-rendered for the popup; and no object geometry is inlined
+        """
+        html = self._start().content.decode()
+        self.assertIn('data-layer-objects', html)
+        self.assertIn(f'data-layer-id="{self.layer.pk}"', html)
+        self.assertIn('data-min-objects="1"', html)
+        self.assertIn('data-search="auto"', html)
+        self.assertIn('"bound": true', html)
+        self.assertIn('/objects/KEY/', html)
+        self.assertIn('initLayerObjectBlocks', html)
+        # The sub-question form is pre-rendered into the sq-forms json_script
+        # (json_script escapes quotes, so match on the names, not the markup).
+        forms = json.loads(re.search(r'id="sq-forms-data"[^>]*>(.*?)</script>', html, re.S).group(1))
+        self.assertIn('LR002', forms['LR001'])          # rating sub-question
+        self.assertIn('thumbs__option', forms['LR001'])  # thumbs widget
+        self.assertNotIn('"coordinates"', html)
+
+    def test_object_answers_are_stored_one_row_per_object_and_subquestion(self):
+        """
+        GIVEN a respondent who answered about objects 1 and 2 (rating, thumbs, comment)
+        WHEN the section POSTs obj__<key>__<code> fields
+        THEN one Answer per (object, sub-question) exists with layer_object set and no parent answer
+        """
+        self._start()
+        response = self.client.post(self.url, {
+            'obj__1__LR002': '4', 'obj__1__LR003': '1', 'obj__1__LR004': 'Keep the oaks',
+            'obj__2__LR002': '2', 'obj__2__LR003': '0',
+        })
+        self.assertIn(response.status_code, (200, 302))
+        rows = Answer.objects.filter(layer_object__isnull=False).select_related('layer_object', 'question')
+        self.assertEqual(rows.count(), 5)
+        by = {(a.layer_object.key, a.question.code): a for a in rows}
+        self.assertEqual(by[('1', 'LR002')].selected_choices, [4])
+        self.assertEqual(by[('1', 'LR003')].selected_choices, [1])
+        self.assertEqual(by[('1', 'LR004')].text, 'Keep the oaks')
+        self.assertEqual(by[('2', 'LR003')].selected_choices, [0])
+        self.assertTrue(all(a.parent_answer_id_id is None for a in rows))
+
+    def test_resubmit_replaces_and_unknown_keys_are_ignored(self):
+        """
+        GIVEN stored object answers
+        WHEN the section is POSTed again with a changed rating, a dropped object and a bogus key
+        THEN the rows reflect the latest POST only and the bogus key stores nothing
+        """
+        self._start()
+        self.client.post(self.url, {'obj__1__LR002': '4', 'obj__2__LR002': '2'})
+        self.client.post(self.url, {'obj__1__LR002': '5', 'obj__zzz__LR002': '3', 'obj__1__NOPE': 'x'})
+        rows = list(Answer.objects.filter(layer_object__isnull=False))
+        self.assertEqual(len(rows), 1)
+        self.assertEqual((rows[0].layer_object.key, rows[0].selected_choices), ('1', [5]))
+
+    def test_hidden_block_discards_object_answers(self):
+        """
+        GIVEN the Objects question is hidden by a visibility rule for this session
+        WHEN the POST still carries obj__ fields
+        THEN nothing is stored
+        """
+        controller = Question.objects.create(
+            survey_section=self.section, code="LR000", name="Interested?", input_type="choice", order_number=0,
+            choices=[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}],
+        )
+        self.q.visibility_rule = {"question_code": "LR000", "choice_codes": [1]}
+        self.q.save()
+        self._start()
+        self.client.post(self.url, {'LR000': '2', 'obj__1__LR002': '4'})
+        self.assertEqual(Answer.objects.filter(layer_object__isnull=False).count(), 0)
+
+    def test_session_restore_carries_object_answers_to_the_page(self):
+        """
+        GIVEN a respondent who answered about object 1 and moved on
+        WHEN they come back to the section
+        THEN the page embeds the stored values keyed by object and sub-question for the popup and ✓ state
+        """
+        self._start()
+        self.client.post(self.url, {'obj__1__LR002': '4', 'obj__1__LR004': 'Keep the oaks'})
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('id="object-answers-data"', html)
+        data = json.loads(re.search(r'id="object-answers-data"[^>]*>(.*?)</script>', html, re.S).group(1))
+        self.assertEqual(data['LR001']['1']['LR002'], ['4'])
+        self.assertEqual(data['LR001']['1']['LR004'], ['Keep the oaks'])
+
+    def test_deleting_an_object_removes_its_answers(self):
+        """
+        GIVEN answers about object 1
+        WHEN the object is deleted
+        THEN its answers cascade away and other objects' answers stay
+        """
+        self._start()
+        self.client.post(self.url, {'obj__1__LR002': '4', 'obj__2__LR002': '2'})
+        self.layer.items.get(key='1').delete()
+        self.assertEqual(list(Answer.objects.filter(layer_object__isnull=False).values_list('layer_object__key', flat=True)), ['2'])
+
+    def test_unique_constraint_per_session_question_object(self):
+        """
+        GIVEN one stored answer for (session, sub-question, object)
+        WHEN a second identical row is inserted directly
+        THEN the database refuses it, while legacy rows without an object are unconstrained
+        """
+        from django.db import IntegrityError, transaction
+        session = SurveySession.objects.create(survey=self.survey)
+        obj = self.layer.items.get(key='1')
+        Answer.objects.create(survey_session=session, question=self.rating, layer_object=obj, selected_choices=[3])
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Answer.objects.create(survey_session=session, question=self.rating, layer_object=obj, selected_choices=[4])
+        Answer.objects.create(survey_session=session, question=self.rating, selected_choices=[1])
+        Answer.objects.create(survey_session=session, question=self.rating, selected_choices=[2])
+
+    def test_unbound_layer_keeps_read_only_popup_semantics(self):
+        """
+        GIVEN a second layer not bound to any question, with popups enabled
+        WHEN the page renders the layer metadata
+        THEN that layer is marked unbound and keeps show_popups, so the factory binds the read-only popup
+        """
+        other = _objects_layer(self.survey, name="Boundary", show_popups=True)
+        html = self._start().content.decode()
+        data = json.loads(re.search(r'id="ref-layers-data"[^>]*>(.*?)</script>', html, re.S).group(1))
+        by_id = {d['id']: d for d in data}
+        self.assertEqual((by_id[self.layer.pk]['bound'], by_id[other.pk]['bound'], by_id[other.pk]['show_popups']), (True, False, True))

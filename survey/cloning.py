@@ -71,6 +71,13 @@ def clone_question(
         image=question.image,
         display_style=question.display_style,
         visibility_rule=question.visibility_rule if same_survey else None,
+        # A layer belongs to one survey; pasting an Objects-on-the-map question
+        # elsewhere drops the binding the way the visibility rule is dropped.
+        # Draft copies and versions share the canonical survey's layers, and
+        # those clone within the same survey_header lineage — see layer_owner().
+        layer=question.layer if same_survey or (question.layer_id and _shares_layers(question, target_section)) else None,
+        min_objects=question.min_objects,
+        objects_search=question.objects_search,
     )
 
     for trans in QuestionTranslation.objects.filter(question=question):
@@ -93,6 +100,13 @@ def clone_question(
             )
 
     return new_question
+
+
+def _shares_layers(question: Question, target_section: SurveySection) -> bool:
+    """True when the source and target surveys resolve to the same layer owner
+    (a draft copy or archived version of the same canonical survey)."""
+    from .layers import layer_owner
+    return layer_owner(question.survey_section.survey_header) == layer_owner(target_section.survey_header)
 
 
 def _unique_section_name(base_name: str, target_survey: SurveyHeader) -> str:

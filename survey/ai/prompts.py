@@ -34,8 +34,8 @@ Respondents open a page with the questions on one side and a map on the other.
   the data usable in QGIS afterwards.
 - Other question types: `text` (multi-line), `text_line`, `number`, `choice`,
   `multichoice`, `range` (slider), `rating` (scale), `ranking` (drag items into
-  a strict order), `datetime`, `html` (a decoration block that collects
-  nothing).
+  a strict order), `thumbs` (a single 👍/👎 vote — for/against, no choices
+  needed), `datetime`, `html` (a decoration block that collects nothing).
 - File questions collect evidence: `photo` (the respondent's camera opens
   directly on mobile), `audio` (an audio file, or voice recorded right in the
   browser — useful where typing is hard, e.g. street interviews), `document`

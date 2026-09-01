@@ -816,6 +816,12 @@ def editor_survey_layer_update(request, survey_uuid, layer_id):
 def editor_survey_layer_delete(request, survey_uuid, layer_id):
     _layers_enabled_or_404()
     layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey))
+    # Question.layer is PROTECT: answers about the layer's objects would be
+    # orphaned. Say which question holds the binding instead of a 500.
+    bound = list(layer.questions.values_list('name', flat=True))
+    if bound:
+        names = ', '.join(f'“{n}”' for n in bound if n) or 'a question'
+        return JsonResponse({'error': f'This layer is used by {names}. Change that question\'s layer or delete it first.'}, status=400)
     layer.delete()
     return HttpResponse(status=204)
 
@@ -1133,6 +1139,11 @@ def _render_question_modal(request, context):
     (PostHog replay 01a051a7, openspec: fix-question-modal-error-retarget).
     HX-Retarget/HX-Reswap point the swap back at #questionModalBody.
     """
+    survey = context.get('survey')
+    if survey is not None:
+        # The in-modal sub-question list renders the same disabled state as
+        # the section list does on published/closed surveys.
+        context.setdefault('is_read_only', survey.status in ('published', 'closed'))
     response = render(request, 'editor/partials/question_form_modal.html', context)
     if request.headers.get('HX-Request'):
         response['HX-Retarget'] = '#questionModalBody'
@@ -1164,6 +1175,9 @@ def editor_question_create(request, survey_uuid, section_id):
             choices_json = request.POST.get('choices_json', '').strip()
             if question.input_type not in CHOICE_TYPES:
                 question.choices = None
+            elif question.input_type == 'thumbs':
+                # Fixed 👍/👎 list; the choices editor never shows for this type.
+                question.choices = question.thumbs_choices()
             elif choices_json:
                 question.choices = _guard_choice_codes(question, json.loads(choices_json))
             vis_present, vis_rule, vis_error = _parse_visibility_rule(request)
@@ -1231,6 +1245,8 @@ def editor_question_edit(request, survey_uuid, question_id):
                 # The choices widget keeps choices_json populated across a type
                 # switch, so the type decides — not the posted field.
                 q.choices = None
+            elif q.input_type == 'thumbs':
+                q.choices = q.thumbs_choices()
             elif choices_json:
                 q.choices = _guard_choice_codes(question, json.loads(choices_json))
             # Validation settings per question type
@@ -1410,6 +1426,19 @@ def editor_question_preview_live(request, survey_uuid, section_id):
             ]
             choices = cleaned or None
 
+    # Objects on the map: the draft's layer comes from the modal's picker and
+    # must be one of this survey's (canonical owner's) layers.
+    draft_layer = None
+    if input_type == 'layer_objects':
+        raw_layer = request.POST.get('layer', '').strip()
+        if raw_layer.isdigit():
+            draft_layer = layers_for(survey).filter(pk=int(raw_layer)).first()
+    try:
+        min_objects = max(0, int(request.POST.get('min_objects') or 0))
+    except ValueError:
+        min_objects = 0
+    objects_search = request.POST.get('objects_search') if request.POST.get('objects_search') in ('auto', 'on', 'off') else 'auto'
+
     question = Question(
         survey_section=section,
         input_type=input_type,
@@ -1417,12 +1446,17 @@ def editor_question_preview_live(request, survey_uuid, section_id):
         # Put through the same allow-list a save would, so the preview shows what
         # the question will actually become rather than the raw draft.
         subtext=coerce_creator_html(request.POST.get('subtext', '')),
-        choices=choices,
+        choices=choices if input_type != 'thumbs' else None,
         color=request.POST.get('color', '').strip() or '#000000',
         icon_class=request.POST.get('icon_class', '').strip(),
         display_style=display_style,
         required=False,
+        layer=draft_layer,
+        min_objects=min_objects,
+        objects_search=objects_search,
     )
+    if input_type == 'thumbs':
+        question.choices = question.thumbs_choices()
 
     lang = _preview_language(request, survey)
     form = SurveySectionAnswerForm.single_question_form(question, lang)
@@ -1515,6 +1549,9 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
             choices_json = request.POST.get('choices_json', '').strip()
             if question.input_type not in CHOICE_TYPES:
                 question.choices = None
+            elif question.input_type == 'thumbs':
+                # Fixed 👍/👎 list; the choices editor never shows for this type.
+                question.choices = question.thumbs_choices()
             elif choices_json:
                 question.choices = _guard_choice_codes(question, json.loads(choices_json))
             vis_present, vis_rule, vis_error = _parse_visibility_rule(request)

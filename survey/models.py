@@ -123,6 +123,14 @@ INPUT_TYPE_CHOICES = (
     ("photo", _("Photo Upload")),
     ("audio", _("Audio Upload")),
     ("document", _("Document Upload")),
+    ("thumbs", _("Thumbs up / down")),
+    ("layer_objects", _("Objects on the map")),
+)
+
+OBJECTS_SEARCH_CHOICES = (
+    ("auto", _("Automatic — shown for more than 5 objects or when categories exist")),
+    ("on", _("Always")),
+    ("off", _("Never")),
 )
 
 # Question types whose answer is a respondent-uploaded file. NOT the `image`
@@ -798,12 +806,31 @@ class Question(models.Model):
     # Same shape and semantics as SurveySection.visibility_rule; a question is visible
     # only when its section is visible AND this rule (if any) is satisfied.
     visibility_rule = models.JSONField(null=True, blank=True, help_text=_('Show this question only when the referenced choice question\'s answer includes any of the referenced option codes. Null = always shown.'))
+    # `layer_objects` only: the reference layer whose objects this question lists.
+    # PROTECT — deleting the layer would orphan every answer hanging on its
+    # objects; the settings card refuses and names the question instead.
+    layer = models.ForeignKey(SurveyMapLayer, null=True, blank=True, on_delete=models.PROTECT, related_name='questions')
+    min_objects = models.PositiveIntegerField(default=0, help_text=_('`layer_objects` only: the respondent must answer about at least this many objects to move on. 0 = optional. Replaces `required` for this type.'))
+    objects_search = models.CharField(max_length=4, choices=OBJECTS_SEARCH_CHOICES, default='auto', help_text=_('`layer_objects` only: whether the list shows a search box and category chips.'))
 
     class Meta:
         app_label = 'survey'
 
     def __str__(self):
-        return self.name 
+        return self.name
+
+    @property
+    def can_have_subquestions(self):
+        """Questions that put objects on the map own sub-questions: the
+        respondent's own geometry (point/line/polygon) and the creator's layer
+        objects. One mechanism, two entry points (spec survey-editor)."""
+        from survey.question_types import PARENT_TYPES
+        return self.input_type in PARENT_TYPES and self.parent_question_id_id is None
+
+    def thumbs_choices(self):
+        """The fixed 👍/👎 choice list — codes 1 and 0, names `up`/`down`."""
+        from survey.question_types import THUMBS_CHOICES
+        return [dict(c) for c in THUMBS_CHOICES]
 
     def subQuestions(self):
     	if not hasattr(self, "__sqcache"):
@@ -983,10 +1010,22 @@ class Answer(models.Model):
     # submitted answer's row down with it (and an attached upload is never
     # reclaimed — see reclaim_orphan_uploads).
     upload = models.ForeignKey("Upload", null=True, blank=True, on_delete=models.SET_NULL)
+    # Answers ABOUT a creator's layer object (sub-questions of an Objects-on-
+    # the-map question): one row per (session, sub-question, object). Never
+    # `parent_answer_id` — the respondent did not create the object, the
+    # creator did (spec object-answers).
+    layer_object = models.ForeignKey(LayerObject, null=True, blank=True, on_delete=models.CASCADE, related_name='answers')
 
     class Meta:
         app_label = 'survey'
-    
+        constraints = [
+            models.UniqueConstraint(
+                fields=['survey_session', 'question', 'layer_object'],
+                condition=Q(layer_object__isnull=False),
+                name='answer_unique_per_session_question_object',
+            ),
+        ]
+
     def get_selected_choice_names(self, lang=None):
         codes = self.selected_choices or []
         return [self.question.get_choice_name(code, lang) for code in codes]

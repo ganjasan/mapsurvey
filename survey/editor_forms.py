@@ -4,9 +4,11 @@ from django.core.validators import RegexValidator
 from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP_CHOICES
 from .html_sanitize import coerce_creator_html
 from .layers import layers_for
-from .question_types import GEO_TYPES
+from .question_types import GEO_TYPES, MAP_ONLY_TYPES
 
-SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon')
+# Parent-capable types cannot themselves be sub-questions: a sub-question lives
+# inside an object's popup, and an object cannot contain more objects.
+SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon', 'layer_objects')
 
 USE_CASE_CHOICES = (
     ('urban_planning', 'Urban planning'),
@@ -302,7 +304,8 @@ class SurveySectionForm(forms.ModelForm):
 class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
-        fields = ['name', 'subtext', 'input_type', 'required', 'color', 'icon_class', 'image', 'display_style']
+        fields = ['name', 'subtext', 'input_type', 'required', 'color', 'icon_class', 'image', 'display_style',
+                  'layer', 'min_objects', 'objects_search']
         labels = {
             'name': _('Name'),
             'subtext': _('Subtext'),
@@ -312,6 +315,9 @@ class QuestionForm(forms.ModelForm):
             'icon_class': _('Icon class'),
             'image': _('Image'),
             'display_style': _('Display style'),
+            'layer': _('Layer'),
+            'min_objects': _('Respondent must answer about at least'),
+            'objects_search': _('Search and category chips'),
         }
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -321,6 +327,9 @@ class QuestionForm(forms.ModelForm):
             'color': forms.TextInput(attrs={'class': 'form-control', 'type': 'color'}),
             'icon_class': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'fas fa-map-marker-alt'}),
             'display_style': forms.RadioSelect(),
+            'layer': forms.Select(attrs={'class': 'form-control'}),
+            'min_objects': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'objects_search': forms.Select(attrs={'class': 'form-control'}),
         }
         help_texts = {
             'icon_class': '<a href="https://fontawesome.com/v5/search" target="_blank" rel="noopener">Font Awesome</a> class',
@@ -334,6 +343,23 @@ class QuestionForm(forms.ModelForm):
         # selection to agree on from the first render.
         if not self.instance.pk:
             self.initial.setdefault('input_type', 'text')
+        # Objects on the map: the layer picker lists the survey's layers
+        # (resolved to the canonical owner, so a draft copy sees them too);
+        # without any layer — or with the layers kill switch off — the type is
+        # not offered at all, which also rejects it server-side.
+        from django.conf import settings as conf_settings
+        from .layers import layers_for
+        survey = section.survey_header if section is not None else (
+            self.instance.survey_section.survey_header if self.instance.pk else None)
+        layer_qs = layers_for(survey) if (survey is not None and conf_settings.MAP_REFERENCE_LAYERS) else None
+        self.fields['layer'].required = False
+        self.fields['layer'].queryset = layer_qs if layer_qs is not None else self.fields['layer'].queryset.none()
+        self.fields['layer'].empty_label = _('— pick a layer —')
+        self.fields['min_objects'].required = False
+        self.fields['objects_search'].required = False
+        if layer_qs is None or not layer_qs.exists():
+            field = self.fields['input_type']
+            field.choices = [(value, label) for value, label in field.choices if value != 'layer_objects']
         if section is not None and section.layout == 'form':
             # A form section has no map — filtering the field's choices both
             # removes the geo group from the type picker (picker_groups_for
@@ -342,7 +368,7 @@ class QuestionForm(forms.ModelForm):
             field = self.fields['input_type']
             field.choices = [
                 (value, label) for value, label in field.choices
-                if value not in GEO_TYPES
+                if value not in MAP_ONLY_TYPES
             ]
         if is_subquestion:
             field = self.fields['input_type']
@@ -380,6 +406,20 @@ class QuestionForm(forms.ModelForm):
                 cleaned['display_style'] = 'default'
         elif style == 'dropdown':
             cleaned['display_style'] = 'default'
+        if input_type == 'layer_objects':
+            if not cleaned.get('layer'):
+                self.add_error('layer', _('Pick the reference layer whose objects this question lists.'))
+            # The minimum-objects rule replaces `required` for this type.
+            cleaned['required'] = False
+            cleaned['min_objects'] = cleaned.get('min_objects') or 0
+            cleaned['objects_search'] = cleaned.get('objects_search') or 'auto'
+        else:
+            # The binding is meaningful for one type only; never keep a stale
+            # layer on a question that switched type (PROTECT would then block
+            # deleting the layer for no visible reason).
+            cleaned['layer'] = None
+            cleaned['min_objects'] = 0
+            cleaned['objects_search'] = 'auto'
         return cleaned
 
 

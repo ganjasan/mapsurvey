@@ -877,7 +877,7 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 			elif question.input_type == 'number':
 				if answer.numeric is not None:
 					initial[question.code] = answer.numeric
-			elif question.input_type in ('choice', 'rating'):
+			elif question.input_type in ('choice', 'rating', 'thumbs'):
 				if answer.selected_choices:
 					initial[question.code] = str(answer.selected_choices[0])
 				elif answer.numeric is not None:
@@ -914,6 +914,10 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 	for question in questions:
 		subquestions_forms[question.code] = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=request.session['survey_session_id'], language=selected_language).as_p()
 
+	# Answers about layer objects (spec object-answers): {question_code: {object_key:
+	# {sub_code: [values]}}} — the popup prefill and the answered ✓ on revisit.
+	existing_object_answers = _existing_object_answers(questions, request.session['survey_session_id'])
+
 	section_title = section.get_translated_title(selected_language)
 	section_subheading = section.get_translated_subheading(selected_language)
 
@@ -921,6 +925,7 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 		'form': form,
 		'subquestions_forms': subquestions_forms,
 		'existing_geo_answers': existing_geo_answers,
+		'existing_object_answers': existing_object_answers,
 		'survey': survey,
 		'section': section,
 		'section_title': section_title,
@@ -1096,7 +1101,7 @@ def survey_section(request, survey_slug, section_name):
 									elif sub_question.input_type in ('number', 'range'):
 										if first:
 											sub_answer.numeric = float(first)
-									elif sub_question.input_type in ('choice', 'multichoice', 'rating'):
+									elif sub_question.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
 										sub_answer.selected_choices = [int(v) for v in value if v]
 									elif sub_question.input_type in FILE_INPUT_TYPES:
 										# The popup carries async-upload tokens as ordinary
@@ -1143,7 +1148,7 @@ def survey_section(request, survey_slug, section_name):
 						answer.selected_choices = [int(r) for r in submitted]
 						answer.save()
 
-				elif question.input_type in ('choice', 'multichoice', 'rating'):
+				elif question.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
 					# Same tolerance as the visibility pre-pass above: a value the
 					# stored type cannot read is dropped, not raised on.
 					selected = choice_ids(result)
@@ -1188,6 +1193,22 @@ def survey_section(request, survey_slug, section_name):
 		emit_event(survey_session, 'section_submit', {
 			'section_name': section.name, 'section_index': section_current,
 		})
+
+		# Answers about layer objects (spec object-answers). They live on the
+		# sub-questions of an Objects-on-the-map question, keyed by the object,
+		# so the top-level delete above never touched them: replace them here,
+		# per visible block, from the `obj__<key>__<code>` fields.
+		for question in section_questions:
+			if question.input_type != 'layer_objects':
+				continue
+			Answer.objects.filter(
+				survey_session=survey_session,
+				question__parent_question_id=question,
+				layer_object__isnull=False,
+			).delete()
+			if not vmap_post.is_question_visible(question.id) or not question.layer_id:
+				continue
+			_save_object_answers(request.POST, survey_session, question)
 
 		# Navigation walks the visible chain under the just-saved answers.
 		chain = vmap_final.visible_sections
@@ -1389,7 +1410,7 @@ def _sanitize_filename(name):
 # Carry respondent input; exported as a CSV column or a GeoJSON property.
 EXPORT_VALUE_TYPES = frozenset({
 	'text', 'text_line', 'number', 'range',
-	'choice', 'rating', 'multichoice', 'datetime', 'ranking',
+	'choice', 'rating', 'thumbs', 'multichoice', 'datetime', 'ranking',
 	'photo', 'audio', 'document',
 })
 
@@ -1475,7 +1496,7 @@ def _answer_cell(question, answers):
 			return answer.selected_choices[0]
 		return ""
 
-	if input_type in ('choice', 'rating'):
+	if input_type in ('choice', 'rating', 'thumbs'):
 		names = answer.get_selected_choice_names()
 		return names[0] if names else ""
 
@@ -1859,6 +1880,99 @@ def survey_password_gate(request, survey_slug):
 		'survey': survey,
 		'error': error,
 	})
+
+
+OBJECT_FIELD_PREFIX = 'obj__'
+
+
+def _parse_object_fields(post):
+	"""`obj__<key>__<code>` → {key: {code: [non-empty values]}}. Keys and codes
+	are matched against the database afterwards; anything else is dropped."""
+	parsed = {}
+	for name in post.keys():
+		if not name.startswith(OBJECT_FIELD_PREFIX):
+			continue
+		rest = name[len(OBJECT_FIELD_PREFIX):]
+		if '__' not in rest:
+			continue
+		key, code = rest.rsplit('__', 1)
+		values = [v for v in post.getlist(name) if v != '']
+		if not key or not code or not values:
+			continue
+		parsed.setdefault(key, {})[code] = values
+	return parsed
+
+
+def _save_object_answers(post, survey_session, question):
+	"""Store the posted sub-answers of one Objects-on-the-map question.
+
+	Unknown object keys and unknown sub-question codes are ignored, never
+	raised on — the same tolerance the geo sub-answer path applies. One row
+	per (session, sub-question, object); the caller has already cleared the
+	previous rows for this question."""
+	parsed = _parse_object_fields(post)
+	if not parsed:
+		return 0
+	objects = {o.key: o for o in question.layer.items.filter(key__in=list(parsed.keys()))}
+	sub_questions = {q.code: q for q in Question.objects.filter(parent_question_id=question)}
+	saved = 0
+	for key, by_code in parsed.items():
+		obj = objects.get(key)
+		if obj is None:
+			continue
+		for code, values in by_code.items():
+			sub_q = sub_questions.get(code)
+			if sub_q is None:
+				continue
+			answer = Answer(survey_session=survey_session, question=sub_q, layer_object=obj)
+			first = values[0]
+			if sub_q.input_type in ('text', 'text_line', 'datetime'):
+				answer.text = first
+			elif sub_q.input_type in ('number', 'range'):
+				try:
+					answer.numeric = float(first)
+				except ValueError:
+					continue
+			elif sub_q.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
+				selected = choice_ids(values)
+				if not selected:
+					continue
+				answer.selected_choices = selected
+			elif sub_q.input_type == 'ranking':
+				defined = [str(c["code"]) for c in (sub_q.choices or [])]
+				if sorted(values) != sorted(defined) or not defined:
+					continue
+				answer.selected_choices = [int(v) for v in values]
+			else:
+				# Files and display blocks are not object sub-answers in this change.
+				continue
+			answer.save()
+			saved += 1
+	return saved
+
+
+def _existing_object_answers(questions, session_id):
+	"""{question_code: {object_key: {sub_code: [values]}}} for the session."""
+	out = {}
+	for question in questions:
+		if question.input_type != 'layer_objects':
+			continue
+		rows = (Answer.objects
+		        .filter(survey_session_id=session_id, question__parent_question_id=question, layer_object__isnull=False)
+		        .select_related('question', 'layer_object'))
+		by_key = {}
+		for a in rows:
+			if a.text is not None:
+				values = [a.text]
+			elif a.numeric is not None:
+				values = [str(a.numeric)]
+			elif a.selected_choices:
+				values = [str(c) for c in a.selected_choices]
+			else:
+				continue
+			by_key.setdefault(a.layer_object.key, {})[a.question.code] = values
+		out[question.code] = by_key
+	return out
 
 
 def _gated_layer(request, survey_slug, layer_id):

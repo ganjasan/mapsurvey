@@ -39,7 +39,7 @@ TEXT_INPUT_TYPES = ('text', 'text_line')
 GEO_INPUT_TYPES = ('point', 'line', 'polygon')
 
 # Question types that aggregate into a chart block on the public page.
-CHART_INPUT_TYPES = ('choice', 'multichoice', 'rating', 'number', 'range')
+CHART_INPUT_TYPES = ('choice', 'multichoice', 'rating', 'thumbs', 'number', 'range')
 
 
 def block_type_for_question(question):
@@ -162,7 +162,7 @@ class PublicResultsService:
         if itype in TEXT_INPUT_TYPES:
             # Defensive: text questions must never be published as blocks.
             return None
-        if itype in ('choice', 'multichoice', 'rating'):
+        if itype in ('choice', 'multichoice', 'rating', 'thumbs'):
             payload.update(self._choice_data(question))
         elif itype in ('number', 'range'):
             payload.update(self._number_data(question))
@@ -299,7 +299,7 @@ class PublicResultsService:
 
     def _answer_display_value(self, answer):
         q = answer.question
-        if q.input_type in ('choice', 'multichoice', 'rating'):
+        if q.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
             names = [q.get_choice_name(code, self.lang) for code in (answer.selected_choices or [])]
             return ', '.join(n for n in names if n)
         if q.input_type in ('number', 'range'):

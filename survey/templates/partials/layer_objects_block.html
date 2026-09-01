@@ -1,0 +1,297 @@
+{% comment %}
+Objects on the map — respondent side (openspec: layer-objects-question, object-answers).
+
+Bare JS, included INSIDE the shell's <script> block after reference_layers.html.
+For every `[data-layer-objects]` block in the current section it builds the object
+list from the layer GeoJSON reference_layers.html has already fetched (no second
+request), wires list ↔ map, and opens an object as the SAME Leaflet popup the
+respondent's own placed features use (variant A): the object card fetched from the
+gated object endpoint + this question's sub-question form from
+window._subquestionsForms[code] + a single ✓ control. Answers live in
+window._objectAnswers[code][key][subCode] until the section POSTs them as
+`obj__<key>__<subCode>` fields (see the htmx:configRequest hook in the shell).
+
+Nothing here runs while a draw or crosshair mode is active — a tap over an object
+must place the respondent's geometry, never open a card (reference-overlay-layers).
+
+Markup is assembled from esc()-escaped values; the one raw insertion is the object
+description, which the object endpoint passed through coerce_creator_html.
+{% endcomment %}
+(function() {
+    window._objectAnswers = window._objectAnswers || {};
+    var esc = window.RefLayerFactory ? window.RefLayerFactory.esc : function(v) { return String(v); };
+    var _cards = {};          // layerId -> key -> card payload
+    var _blocks = {};         // question code -> state
+    var _highlight = null;    // {layer, style}
+    function setHtml(el, html) { el.innerHTML = html; }   // callers pass esc()-built markup only
+
+    function placing() {
+        var overlay = document.getElementById('crosshair-overlay');
+        return !!(currentDrawFeature || currentEditLayer || (overlay && overlay.style.display === 'flex'));
+    }
+
+    function layerEntry(id) { return (window._refLayers || {})[id]; }
+
+    function subLayerFor(entry, key) {
+        var found = null;
+        if (!entry || !entry.layer) return null;
+        entry.layer.eachLayer(function(l) {
+            if (!found && l.feature && l.feature.properties && l.feature.properties._key === key) found = l;
+        });
+        return found;
+    }
+
+    function answeredKeys(code) {
+        var byKey = window._objectAnswers[code] || {};
+        return Object.keys(byKey).filter(function(k) {
+            var sub = byKey[k];
+            return Object.keys(sub).some(function(c) { return (sub[c] || []).some(function(v) { return v !== ''; }); });
+        });
+    }
+
+    // ---- list ---------------------------------------------------------------
+    function buildBlock(el) {
+        var code = el.dataset.questionCode;
+        var layerId = parseInt(el.dataset.layerId, 10);
+        var entry = layerEntry(layerId);
+        if (!entry || !entry.featureCollection) return false;
+        var state = _blocks[code] = {
+            el: el, code: code, layerId: layerId, entry: entry,
+            min: parseInt(el.dataset.minObjects, 10) || 0,
+            search: el.dataset.search || 'auto',
+            q: '', category: null, open: null,
+            features: entry.featureCollection.features.map(function(f) { return f.properties || {}; })
+        };
+        var cats = {};
+        state.features.forEach(function(p) { if (p._category) cats[p._category] = (cats[p._category] || 0) + 1; });
+        state.cats = cats;
+        var tools = el.querySelector('[data-lo-tools]');
+        var showTools = state.search === 'on' || (state.search === 'auto' && (Object.keys(cats).length > 0 || state.features.length > 5));
+        if (tools) tools.hidden = !showTools;
+        if (showTools) {
+            var chips = el.querySelector('[data-lo-chips]');
+            var html = '<span class="lo-chip is-on" data-cat="">' + esc(el.dataset.allLabel || 'All') + '</span>';
+            Object.keys(cats).sort().forEach(function(c) {
+                html += '<span class="lo-chip" data-cat="' + esc(c) + '">' + esc(c) + ' · ' + cats[c] + '</span>';
+            });
+            setHtml(chips, html);
+            chips.addEventListener('click', function(e) {
+                var chip = e.target.closest('.lo-chip'); if (!chip) return;
+                state.category = chip.dataset.cat || null;
+                chips.querySelectorAll('.lo-chip').forEach(function(c) { c.classList.toggle('is-on', c === chip); });
+                renderRows(state);
+            });
+            var search = el.querySelector('[data-lo-search]');
+            var t;
+            search.addEventListener('input', function() {
+                clearTimeout(t);
+                t = setTimeout(function() { state.q = search.value.trim().toLowerCase(); renderRows(state); }, 120);
+            });
+        }
+        el.querySelector('[data-lo-list]').addEventListener('click', function(e) {
+            var row = e.target.closest('.lo-row'); if (!row || placing()) return;
+            openObject(state, row.dataset.key, true);
+        });
+        // Feature click on the map → the same popup. One handler per block, on
+        // the layer group; Leaflet hands the clicked sub-layer in e.layer.
+        entry.layer.on('click', function(e) {
+            if (placing()) return;
+            var p = e.layer && e.layer.feature && e.layer.feature.properties;
+            if (p && p._key) openObject(state, p._key, false);
+        });
+        renderRows(state);
+        return true;
+    }
+
+    function matches(state, p) {
+        if (state.category && p._category !== state.category) return false;
+        if (state.q && ((p._title || '') + ' ' + (p._category || '')).toLowerCase().indexOf(state.q) === -1) return false;
+        return true;
+    }
+
+    function renderRows(state) {
+        var answered = answeredKeys(state.code);
+        var visible = state.features.filter(function(p) { return matches(state, p); });
+        var html = visible.map(function(p) {
+            var done = answered.indexOf(p._key) !== -1;
+            return '<div class="lo-row' + (done ? ' is-answered' : '') + (state.open === p._key ? ' is-open' : '') + '" data-key="' + esc(p._key) + '">' +
+                (p._cover ? '<span class="lo-row__cover" style="background-image:url(&quot;' + esc(p._cover) + '&quot;)"></span>' : '<span class="lo-row__swatch"></span>') +
+                '<span class="lo-row__title">' + esc(p._title || p._key) + '</span>' +
+                (done ? '<span class="lo-row__tick"><i class="fas fa-check"></i></span>' : '') +
+                (p._category ? '<span class="lo-row__cat">' + esc(p._category) + '</span>' : '') +
+                '</div>';
+        }).join('');
+        if (!visible.length) html = '<div class="lo-empty">' + esc(state.el.dataset.emptyLabel || 'Nothing matches') + '</div>';
+        setHtml(state.el.querySelector('[data-lo-list]'), html);
+        // Dim features outside the filter; restore the rest.
+        var visibleKeys = {};
+        visible.forEach(function(p) { visibleKeys[p._key] = true; });
+        state.entry.layer.eachLayer(function(l) {
+            var p = l.feature && l.feature.properties; if (!p) return;
+            var dim = !visibleKeys[p._key];
+            if (l.setStyle) l.setStyle({ opacity: dim ? 0.25 : 0.9, fillOpacity: dim ? 0.05 : (l instanceof L.CircleMarker ? 0.85 : 0.15) });
+            if (l._path) L.DomUtil[answered.indexOf(p._key) !== -1 ? 'addClass' : 'removeClass'](l._path, 'lo-answered');
+        });
+        updateCounter(state);
+    }
+
+    function updateCounter(state) {
+        var n = answeredKeys(state.code).length;
+        var counter = state.el.querySelector('[data-lo-counter]');
+        if (counter) { counter.hidden = n === 0 && !state.min; counter.querySelector('[data-lo-answered]').textContent = n; }
+        var minEl = state.el.querySelector('[data-lo-min]');
+        if (minEl && n >= state.min) { minEl.hidden = true; state.el.classList.remove('layer-objects--invalid'); }
+    }
+
+    // ---- popup ------------------------------------------------------------
+    function cardHtml(card) {
+        var h = '<div class="lo-card">';
+        if (card.cover) h += '<div class="lo-card__cover" style="background-image:url(&quot;' + esc(card.cover) + '&quot;)"></div>';
+        h += '<div class="lo-card__title">' + esc(card.title || card.key) + '</div>';
+        if (card.category) h += '<div class="lo-card__cat">' + esc(card.category) + '</div>';
+        // Server-sanitized creator HTML (coerce_creator_html on the object endpoint).
+        if (card.description) h += '<div class="lo-card__body">' + card.description + '</div>';
+        var media = (card.assets || []).filter(function(a) { return a.kind !== 'image' || a.url !== card.cover; });
+        if (media.length) {
+            h += '<div class="lo-card__assets">';
+            media.forEach(function(a) {
+                var u = esc(a.url), t = esc(a.title || a.kind);
+                if (a.kind === 'image') h += '<a class="lo-asset lo-asset--image" href="' + u + '" target="_blank" rel="noopener" style="background-image:url(&quot;' + u + '&quot;)" title="' + t + '"></a>';
+                else if (a.kind === 'audio') h += '<audio class="lo-asset lo-asset--audio" controls preload="none" src="' + u + '"></audio>';
+                else if (a.kind === 'video') h += '<video class="lo-asset lo-asset--video" controls preload="metadata" src="' + u + '"></video>';
+                else if (a.kind === 'embed') h += '<div class="lo-asset lo-asset--embed"><iframe src="' + u + '" loading="lazy" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>';
+                else h += '<a class="lo-asset lo-asset--doc" href="' + u + '" target="_blank" rel="noopener"><i class="fas fa-file-alt"></i> ' + t + '</a>';
+            });
+            h += '</div>';
+        }
+        if (card.link) h += '<a class="lo-card__link" href="' + esc(card.link) + '" target="_blank" rel="noopener">' + esc(card.link.replace(/^https?:\/\//, '').split('/')[0]) + ' <i class="fas fa-external-link-alt"></i></a>';
+        return h + '</div>';
+    }
+
+    function fetchCard(state, key) {
+        _cards[state.layerId] = _cards[state.layerId] || {};
+        if (_cards[state.layerId][key]) return Promise.resolve(_cards[state.layerId][key]);
+        var url = state.entry.meta.object_url.replace('KEY', encodeURIComponent(key));
+        return fetch(url, { credentials: 'same-origin' }).then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(card) { if (card) _cards[state.layerId][key] = card; return card; });
+    }
+
+    function clearHighlight() {
+        if (_highlight && _highlight.layer.setStyle) _highlight.layer.setStyle(_highlight.style);
+        _highlight = null;
+    }
+
+    function openObject(state, key, fly) {
+        var lyr = subLayerFor(state.entry, key);
+        if (!lyr) return;
+        clearHighlight();
+        if (lyr.setStyle) {
+            _highlight = { layer: lyr, style: { color: lyr.options.color, weight: lyr.options.weight, fillOpacity: lyr.options.fillOpacity } };
+            lyr.setStyle({ color: '#c2410c', weight: 4, fillOpacity: 0.35 });
+        }
+        state.open = key;
+        renderRows(state);
+        if (fly) {
+            if (lyr.getBounds) map.fitBounds(lyr.getBounds().pad(0.5), { maxZoom: 17 }); else map.panTo(lyr.getLatLng());
+        }
+        fetchCard(state, key).then(function(card) {
+            card = card || { key: key, title: key };
+            var formId = 'object_form_' + state.code + '_' + L.Util.stamp(lyr);
+            var sqHtml = window._subquestionsForms[state.code] || '';
+            var html = cardHtml(card) +
+                '<form action="" onsubmit="return false;" id="' + formId + '" class="lo-form">' + sqHtml +
+                (sqHtml ? '<div class="layer-controls"><button type="button" class="btn btn-success layer-apply"><i class="fas fa-check"></i></button></div>' : '') +
+                '</form>';
+            lyr.unbindPopup();
+            lyr.bindPopup(html, _subquestionPopupOptions());
+            lyr.off('popupopen').off('popupclose');
+            lyr.on('popupopen', function() {
+                var $popup = $(lyr.getPopup().getElement());
+                if (window.initFileUploads) window.initFileUploads($popup[0]);
+                var $form = $('#' + formId);
+                var stored = (window._objectAnswers[state.code] || {})[key] || {};
+                Object.keys(stored).forEach(function(name) {
+                    var $el = $form.find('[name="' + name + '"]');
+                    if ($el.length > 1 || ($el.length && ($el[0].type === 'radio' || $el[0].type === 'checkbox'))) {
+                        stored[name].forEach(function(v) { $form.find('[name="' + name + '"][value="' + v + '"]').prop('checked', true); });
+                    } else if ($el.length) { $el.val(stored[name][0]); }
+                });
+                $form.find('.thumbs__option input:checked').closest('.thumbs__option').addClass('is-checked');
+                $form.find('.thumbs__option input').on('change', function() {
+                    $(this).closest('.thumbs').find('.thumbs__option').removeClass('is-checked');
+                    $(this).closest('.thumbs__option').addClass('is-checked');
+                });
+                $popup.find('button.layer-apply').on('click', function() {
+                    if (window.fileUploadsBusy && window.fileUploadsBusy($popup[0])) return;
+                    storeForm(state, key, $form);
+                    lyr.closePopup();
+                });
+            });
+            lyr.on('popupclose', function() {
+                var $form = $('#' + formId);
+                if ($form.length) storeForm(state, key, $form);   // closing keeps typed values, like geo
+                clearHighlight();
+                state.open = null;
+                renderRows(state);
+            });
+            lyr.openPopup();
+        });
+    }
+
+    function storeForm(state, key, $form) {
+        var grouped = {};
+        $form.serializeArray().forEach(function(f) { (grouped[f.name] = grouped[f.name] || []).push(f.value); });
+        window._objectAnswers[state.code] = window._objectAnswers[state.code] || {};
+        var nonEmpty = Object.keys(grouped).some(function(n) { return grouped[n].some(function(v) { return v !== ''; }); });
+        if (nonEmpty) window._objectAnswers[state.code][key] = grouped;
+        else delete window._objectAnswers[state.code][key];
+        renderRows(state);
+    }
+
+    // ---- shell hooks --------------------------------------------------------
+    window.initLayerObjectBlocks = function() {
+        _blocks = {};
+        clearHighlight();
+        var dataEl = document.getElementById('object-answers-data');
+        var restored = {};
+        if (dataEl) { try { restored = JSON.parse(dataEl.textContent) || {}; } catch (e) {} }
+        Object.keys(restored).forEach(function(code) { window._objectAnswers[code] = restored[code]; });
+        document.querySelectorAll('[data-layer-objects][data-layer-id]').forEach(function(el) {
+            if (!el.dataset.layerId) return;
+            if (!buildBlock(el)) {
+                var wanted = parseInt(el.dataset.layerId, 10);
+                var once = function(e) {
+                    if (e.detail.id !== wanted) return;
+                    document.removeEventListener('refLayerLoaded', once);
+                    if (document.body.contains(el)) buildBlock(el);
+                };
+                document.addEventListener('refLayerLoaded', once);
+            }
+        });
+    };
+
+    // Called from the htmx:configRequest hook: adds the object answers of the
+    // blocks on this section to the POST and enforces each block's minimum.
+    window.collectObjectAnswers = function(parameters, isBack) {
+        var firstInvalid = null;
+        Object.keys(_blocks).forEach(function(code) {
+            var state = _blocks[code];
+            var byKey = window._objectAnswers[code] || {};
+            Object.keys(byKey).forEach(function(key) {
+                Object.keys(byKey[key]).forEach(function(sub) {
+                    parameters['obj__' + key + '__' + sub] = byKey[key][sub];
+                });
+            });
+            if (!isBack && state.min > 0 && answeredKeys(code).length < state.min) {
+                var minEl = state.el.querySelector('[data-lo-min]');
+                if (minEl) {
+                    minEl.hidden = false;
+                    minEl.textContent = (state.el.dataset.minLabel || 'Please answer about at least %d object(s)').replace('%d', state.min);
+                }
+                state.el.classList.add('layer-objects--invalid');
+                if (!firstInvalid) firstInvalid = state.el;
+            }
+        });
+        return firstInvalid;
+    };
+})();

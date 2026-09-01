@@ -38,8 +38,12 @@ which must be included before this partial.
             return r.json();
         }).then(function(fc) {
             entry.layer = window.RefLayerFactory.build(meta, fc, { pane: 'refLayersPane' });
+            entry.featureCollection = fc;
             if (entry.allowed && !entry.userOff) { entry.layer.addTo(map); entry.added = true; }
             if (entry.allowed) { window._layersControl.addOverlay(entry.layer, esc(meta.name)); }
+            // Objects-on-the-map blocks (layer_objects_block.html) build their
+            // list from this collection once it has arrived.
+            document.dispatchEvent(new CustomEvent('refLayerLoaded', { detail: { id: meta.id } }));
         }).catch(function(err) { console.warn('Reference layer failed:', err); });
     });
 

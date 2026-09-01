@@ -222,6 +222,7 @@ locale.{% endcomment %}
     // Reference overlay layers — fetched once, live across section swaps
     {% include "partials/ref_layer_factory.html" %}
     {% include "partials/reference_layers.html" %}
+    {% include "partials/layer_objects_block.html" %}
 
     // Geolocation
     var geoMarker = null;
@@ -828,6 +829,16 @@ locale.{% endcomment %}
             $(".geo-inp[name='" + qid + "']").val(evt.detail.parameters[qid]);
         });
 
+        // Answers about layer objects ride along as obj__<key>__<code> fields;
+        // a block below its minimum blocks Next like a required question.
+        var objectInvalid = window.collectObjectAnswers ? window.collectObjectAnswers(evt.detail.parameters, isBack) : null;
+        if (objectInvalid) {
+            evt.preventDefault();
+            evt.detail.cancel = true;
+            try { objectInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+            return;
+        }
+
         // Validate required questions (skip when going back). Native HTML5
         // validation is disabled on the form (novalidate) because hidden/custom
         // widgets silently block submit without a visible message — we highlight
@@ -1070,6 +1081,9 @@ locale.{% endcomment %}
         var existingGeoAnswers = geoEl ? JSON.parse(geoEl.textContent) : {};
         restoreGeoAnswers(existingGeoAnswers);
         refreshGeoQuestionUI();
+
+        // 6a. Objects-on-the-map blocks: list ↔ map ↔ popup (layer_objects_block.html)
+        if (window.initLayerObjectBlocks) window.initLayerObjectBlocks();
 
         // 6b. Rating scale-strip: show chip for pre-checked radios (back navigation)
         syncRatingChips();

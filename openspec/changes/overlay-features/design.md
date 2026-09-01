@@ -161,12 +161,18 @@ and C5.
 `show_popups` on the layer keeps its meaning for layers **not** bound to a `layer_objects`
 question (read-only name/description); a bound layer's popup is the object card.
 
-### D-8 `thumbs` is an input type with a two-value store
+### D-8 `thumbs` is an input type over a fixed two-choice list
 
-`input_type = 'thumbs'`, stored in `Answer.text` as `up`/`down` (no new column), widget =
-two buttons, label overrides "👍 Yes / 👎 No" translatable through choice-less
-`QuestionTranslation` fields (`subtext` unused). Aggregation: `up`, `down`, `share_up`;
-export column values `up`/`down`. Picker group *Questions*, icon `fa-thumbs-up`.
+`input_type = 'thumbs'`, stored like every choice type — `Answer.selected_choices` holding
+code `1` (up) or `0` (down) — with `Question.choices` pinned to `THUMBS_CHOICES`
+(`[{1: "up"}, {0: "down"}]`) by the editor and never shown in the choices editor.
+*Revised during implementation* from "store `up`/`down` in `Answer.text`": storage,
+export, analytics, visibility rules, public-results charts and serialization all branch on
+the choice-type tuples, so a choice-shaped thumbs gets every consumer for free — export
+cells read `up`/`down` through the choice names, aggregates are the two counts, and a
+thumbs question can drive a visibility rule like any choice. Widget = two large buttons
+over a radio pair (`thumbs.html`), labels localised in the template. Picker group
+*Questions*, icon `fa-thumbs-up`.
 
 ### D-9 Editor screen is a Django page with one page-level JS module
 
