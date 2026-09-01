@@ -116,7 +116,14 @@
                 <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="selectionManager.invert()"><i class="fas fa-exchange-alt"></i> {% trans "Invert" %}</button>
             </div>
         </div>
-        {% if geo_features_count %}
+        {% if map_layers %}
+        {# Reference layers: metadata only, geometry comes from the gated endpoint #}
+        {{ map_layers|json_script:"ref-layers-data" }}
+        <script>
+        {% include "partials/ref_layer_factory.html" %}
+        </script>
+        {% endif %}
+        {% if geo_features_count or map_layers %}
         {% include "editor/partials/analytics_geo_map.html" %}
         {% else %}
         <div class="text-center text-muted py-5"><i class="fas fa-map mr-2"></i>{% trans "No geo questions in this survey" %}</div>

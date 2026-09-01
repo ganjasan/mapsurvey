@@ -6,6 +6,8 @@ basemap_layers.html. Config arrives via the "ref-layers-data" json_script emitte
 by base_survey_template.html; geometry is fetched per layer from the gated endpoint
 exactly once, because layers live across HTMX section swaps on the persistent map.
 Per-section visibility is applied by initSection() via applyRefLayerVisibility().
+Layer construction (styling, markers, labels, popups) lives in ref_layer_factory.html,
+which must be included before this partial.
 {% endcomment %}
 (function() {
     var dataEl = document.getElementById('ref-layers-data');
@@ -24,25 +26,7 @@ Per-section visibility is applied by initSection() via applyRefLayerVisibility()
         window._layersControl = L.control.layers(null, null, { position: 'topright', collapsed: true }).addTo(map);
     }
 
-    function esc(v) {
-        return String(v).replace(/[&<>"']/g, function(c) {
-            return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
-        });
-    }
-
-    // simplestyle-spec properties win over the layer's fallback color, so a plan
-    // exported with its own colors arrives already styled.
-    function featureStyle(meta, props) {
-        props = props || {};
-        return {
-            color: props['stroke'] || meta.color,
-            weight: props['stroke-width'] != null ? Number(props['stroke-width']) : 2,
-            opacity: props['stroke-opacity'] != null ? Number(props['stroke-opacity']) : 0.9,
-            fillColor: props['fill'] || meta.color,
-            fillOpacity: props['fill-opacity'] != null ? Number(props['fill-opacity']) : 0.15,
-            pane: 'refLayersPane'
-        };
-    }
+    var esc = window.RefLayerFactory.esc;
 
     var _suppressEvents = false;
 
@@ -53,41 +37,7 @@ Per-section visibility is applied by initSection() via applyRefLayerVisibility()
             if (!r.ok) throw new Error('layer ' + meta.id + ' HTTP ' + r.status);
             return r.json();
         }).then(function(fc) {
-            entry.layer = L.geoJSON(fc, {
-                pane: 'refLayersPane',
-                interactive: !!meta.show_popups,
-                style: function(f) { return featureStyle(meta, f.properties); },
-                pointToLayer: function(f, latlng) {
-                    var p = f.properties || {};
-                    // Circle markers, never default pins: a pin reads as an answer.
-                    return L.circleMarker(latlng, {
-                        pane: 'refLayersPane',
-                        radius: 6,
-                        color: p['marker-color'] || meta.color,
-                        fillColor: p['marker-color'] || meta.color,
-                        fillOpacity: 0.85,
-                        interactive: !!meta.show_popups
-                    });
-                },
-                onEachFeature: function(f, lyr) {
-                    var p = f.properties || {};
-                    if (meta.label_field && p[meta.label_field] != null) {
-                        lyr.bindTooltip(esc(p[meta.label_field]), {
-                            permanent: true, direction: 'center', className: 'ref-layer-label'
-                        });
-                    }
-                    if (meta.show_popups) {
-                        var title = p.name != null ? p.name : (meta.label_field ? p[meta.label_field] : null);
-                        var body = p.description != null ? p.description : '';
-                        if (title || body) {
-                            lyr.bindPopup(
-                                (title != null && title !== '' ? '<b>' + esc(title) + '</b>' : '') +
-                                (title && body ? '<br>' : '') + (body ? esc(body) : '')
-                            );
-                        }
-                    }
-                },
-            });
+            entry.layer = window.RefLayerFactory.build(meta, fc, { pane: 'refLayersPane' });
             if (entry.allowed && !entry.userOff) { entry.layer.addTo(map); entry.added = true; }
             if (entry.allowed) { window._layersControl.addOverlay(entry.layer, esc(meta.name)); }
         }).catch(function(err) { console.warn('Reference layer failed:', err); });

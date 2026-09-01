@@ -13,7 +13,13 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var geoData = JSON.parse('{{ geo_json|escapejs }}');
-    if (!geoData.features.length) return;
+    // Reference-layer metadata (openspec: responses-reference-layers). The map
+    // renders when the survey has layers even before the first geo answer, so a
+    // creator can check the zones on the very map they will read answers from.
+    var refLayerMetas = [];
+    var refDataEl = document.getElementById('ref-layers-data');
+    if (refDataEl) { try { refLayerMetas = JSON.parse(refDataEl.textContent) || []; } catch (e) {} }
+    if (!geoData.features.length && !refLayerMetas.length) return;
 
     window.geoToolMode = 'pointer';
     window._sessionMiniMap = null;
@@ -26,6 +32,165 @@ document.addEventListener('DOMContentLoaded', function() {
     window.analyticsMap = map;
 
     {% include "partials/basemap_layers.html" %}
+
+    // ── Reference layers ──────────────────────────────────────────
+    // Reference layers are slots of the LayerManager (type 'reference'), so
+    // the Layers panel owns them: checkbox, drag order, opacity. Each slot gets
+    // its own pane, which makes the stacking order the panel order rather than
+    // the order the fetches happened to complete in. Non-interactive whatever
+    // the layer's popup setting: a reference polygon must never swallow a click
+    // meant for an answer or for the selection tools. Every section's layers are
+    // shown -- this map aggregates all sections, so hidden_layers does not apply.
+    // Geometry is fetched once per page and cached for the response map modal.
+    // Order, visibility and opacity are remembered per survey in this browser
+    // only (openspec: responses-reference-layers, design D10).
+    window._analyticsRefLayers = [];
+    var _refPrefsKey = 'rv2RefLayers:{{ survey.uuid }}';
+    function _loadRefPrefs() {
+        try { return JSON.parse(localStorage.getItem(_refPrefsKey)) || {}; } catch (e) { return {}; }
+    }
+    function _saveRefPrefs() {
+        var lm = window.layerManager;
+        if (!lm) return;
+        var prefs = { order: lm.getSlotIds(), hidden: [], opacity: {} };
+        lm.getSlotIds().forEach(function(id) {
+            var slot = lm.getSlot(id);
+            if (!slot || slot.type !== 'reference') return;
+            if (!slot.visible) prefs.hidden.push(id);
+            if (slot.opacity !== 1) prefs.opacity[id] = slot.opacity;
+        });
+        try { localStorage.setItem(_refPrefsKey, JSON.stringify(prefs)); } catch (e) {}
+    }
+    window._saveRefPrefs = _saveRefPrefs;
+    // Order, applied every time a layer arrives: the panel rows and the pane
+    // z-indices both follow it. Saved order first; anything it does not know
+    // keeps its place, except reference layers, which fall in by their
+    // survey-settings position -- position 0 is the bottom row, so a boundary
+    // uploaded first draws beneath the zones uploaded after it, whatever the
+    // network did.
+    function _refPositionIndex(id) {
+        var n = parseInt(id.slice(4), 10);
+        for (var i = 0; i < refLayerMetas.length; i++) if (refLayerMetas[i].id === n) return i;
+        return -1;
+    }
+    function _applyRefOrder() {
+        var lm = window.layerManager, prefs = _loadRefPrefs();
+        if (!lm) return;
+        var current = lm.getSlotIds();
+        var isRef = function(id) { return id.indexOf('ref:') === 0; };
+        var answers = current.filter(function(id) { return !isRef(id); });
+        var refs = current.filter(isRef);
+        var saved = (prefs.order || []).filter(function(id) { return refs.indexOf(id) !== -1; });
+        var rest = refs.filter(function(id) { return saved.indexOf(id) === -1; })
+            .sort(function(a, b) { return _refPositionIndex(b) - _refPositionIndex(a); });
+        var refOrder = saved.concat(rest);
+        // Reference layers always sit beneath every answer layer: the panel
+        // keeps them in their own group, so the order is answers, then refs.
+        lm.reorder(answers.concat(refOrder));
+        if (_legendRefBody) {
+            refOrder.forEach(function(id) {
+                var el = _legendRefBody.querySelector('[data-layer-id="' + CSS.escape(id) + '"]');
+                if (el) _legendRefBody.appendChild(el);
+            });
+        }
+    }
+    // Panel rows -> LayerManager order, answers first, then the reference group.
+    function _syncOrderFromPanel() {
+        var lm = window.layerManager;
+        if (!lm) return;
+        var order = [];
+        [_legendBody, _legendRefBody].forEach(function(container) {
+            if (!container) return;
+            container.querySelectorAll('.geo-legend-item').forEach(function(el) { order.push(el.dataset.layerId); });
+        });
+        lm.reorder(order);
+        _saveRefPrefs();
+    }
+    // The Map pane starts hidden (0x0 container) and only invalidateSize()s
+    // when its tab opens; a layer joins the map only once the map has a size,
+    // so nothing is measured against a container that does not exist yet.
+    function whenMapSized(fn) {
+        var size = map.getSize();
+        if (size.x > 0 && size.y > 0) { fn(); return; }
+        map.once('resize', fn);
+    }
+    // With no answers the map follows the union of the layers as they arrive,
+    // until the creator moves it themselves.
+    var refFitBounds = L.latLngBounds([]);
+    var refFitActive = !geoData.features.length;
+    var _ownMove = false;
+    map.on('dragstart', function() { refFitActive = false; });
+    map.on('zoomstart', function() { if (!_ownMove) refFitActive = false; });
+    // Reference layers for any other map on the page -- the Overview thumbnail,
+    // the response modal. Same geometry cache, same visibility, order and
+    // opacity as the Layers panel: its slots when they exist, the saved prefs
+    // (or survey position) before the Map pane has been opened. One pane per
+    // layer so opacity applies per layer; re-rendering replaces the last set.
+    window.rv2RenderRefLayers = function(target) {
+        if (!window.RefLayerFactory) return;
+        (target._rv2RefLayers || []).forEach(function(l) { if (target.hasLayer(l)) target.removeLayer(l); });
+        target._rv2RefLayers = [];
+        var lm = window.layerManager, prefs = _loadRefPrefs();
+        var entries = (window._analyticsRefLayers || []).filter(function(e) { return e.fc; });
+        var slotOf = function(e) { return lm ? lm.getSlot('ref:' + e.meta.id) : null; };
+        var idOf = function(e) { return 'ref:' + e.meta.id; };
+        var rank = function(e) {   // higher = drawn on top
+            var slot = slotOf(e);
+            if (slot && lm) return -lm.getSlotIds().indexOf(slot.id);
+            var saved = (prefs.order || []).indexOf(idOf(e));
+            if (saved !== -1) return -saved;
+            return -1000 + _refPositionIndex(idOf(e));
+        };
+        entries.sort(function(a, b) { return rank(a) - rank(b); });
+        entries.forEach(function(entry, i) {
+            var slot = slotOf(entry);
+            var visible = slot ? slot.visible : (prefs.hidden || []).indexOf(idOf(entry)) === -1;
+            if (!visible) return;
+            var opacity = slot ? slot.opacity : (typeof (prefs.opacity || {})[idOf(entry)] === 'number' ? prefs.opacity[idOf(entry)] : 1);
+            var pane = 'rv2RefPane' + i;
+            if (!target.getPane(pane)) target.createPane(pane);
+            target.getPane(pane).style.zIndex = 350 + i;
+            target.getPane(pane).style.opacity = opacity;
+            var layer = window.RefLayerFactory.build(entry.meta, entry.fc, { interactive: false, pane: pane });
+            layer.addTo(target);
+            target._rv2RefLayers.push(layer);
+        });
+    };
+    if (refLayerMetas.length && window.RefLayerFactory) {
+        refLayerMetas.forEach(function(meta) {
+            var entry = { meta: meta, fc: null, layer: null };
+            window._analyticsRefLayers.push(entry);
+            fetch(meta.url).then(function(r) {
+                if (!r.ok) throw new Error('layer ' + meta.id + ' HTTP ' + r.status);
+                return r.json();
+            }).then(function(fc) {
+                entry.fc = fc;
+                // Other maps on the page (Overview thumbnail, response modal)
+                // draw from the same cache; tell them a layer is in.
+                document.dispatchEvent(new CustomEvent('analytics:reflayer', { detail: entry }));
+                whenMapSized(function() {
+                    var lm = window.layerManager;
+                    if (!lm) return;
+                    var prefs = _loadRefPrefs();
+                    var slot = lm.addReference(entry, {
+                        visible: !(prefs.hidden || []).some(function(h) { return h === 'ref:' + meta.id; }),
+                        opacity: (prefs.opacity || {})['ref:' + meta.id],
+                    });
+                    if (_legendRefBody) {
+                        _legendRefBody.appendChild(_buildLegendItem(slot));
+                        if (_legendRefWrap) _legendRefWrap.hidden = false;
+                    }
+                    _applyRefOrder();
+                    if (refFitActive && slot.layer.getBounds().isValid()) {
+                        refFitBounds.extend(slot.layer.getBounds());
+                        _ownMove = true;
+                        map.once('moveend', function() { _ownMove = false; });
+                        map.fitBounds(refFitBounds.pad(0.05));
+                    }
+                });
+            }).catch(function(err) { console.warn('Reference layer failed:', err); });
+        });
+    }
 
     var colors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
     var HEAT_DEFAULTS = { radius: 25, blur: 15, minOpacity: 0.4 };
@@ -309,6 +474,42 @@ document.addEventListener('DOMContentLoaded', function() {
         slot.heatLayer.redraw();
     };
 
+    // ── Reference layer slots ─────────────────────────────────────
+    // A creator-uploaded overlay from the Survey settings. Appended at the
+    // bottom of the order so it starts beneath every answer layer; the panel
+    // can drag it anywhere afterwards.
+    LayerManager.prototype.addReference = function(entry, opts) {
+        opts = opts || {};
+        var id = 'ref:' + entry.meta.id;
+        if (this._slots.has(id)) return this._slots.get(id);
+        var paneName = this._createPane();
+        var layer = window.RefLayerFactory.build(entry.meta, entry.fc, { interactive: false, pane: paneName });
+        var slot = {
+            id: id, type: 'reference', meta: entry.meta, layer: layer, pane: paneName,
+            visible: opts.visible !== false,
+            opacity: typeof opts.opacity === 'number' ? opts.opacity : 1,
+        };
+        entry.layer = layer;
+        entry.slot = slot;
+        this._slots.set(id, slot);
+        this._order.push(id);
+        if (slot.visible) layer.addTo(this._map);
+        this._map.getPane(paneName).style.opacity = slot.opacity;
+        this._assignPaneZIndices();
+        return slot;
+    };
+
+    // Opacity is the pane's CSS opacity, not a per-feature setStyle: simplestyle
+    // files carry their own fill/stroke opacities, and one property on the pane
+    // dims the whole layer uniformly while keeping the file's relative styling.
+    // Labels sit in the tooltip pane and stay readable -- that is what a label is for.
+    LayerManager.prototype.setReferenceOpacity = function(id, value) {
+        var slot = this._slots.get(id);
+        if (!slot || slot.type !== 'reference') return;
+        slot.opacity = Math.max(0, Math.min(1, value));
+        this._map.getPane(slot.pane).style.opacity = slot.opacity;
+    };
+
     // ── Visibility & filtering ────────────────────────────────────
 
     LayerManager.prototype.setFilter = function(sids) {
@@ -348,6 +549,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }.bind(this));
         } else if (slot.type === 'heat') {
             this._rebuildHeat(slot);
+        } else if (slot.type === 'reference') {
+            if (visible) {
+                if (!this._map.hasLayer(slot.layer)) slot.layer.addTo(this._map);
+            } else if (this._map.hasLayer(slot.layer)) {
+                this._map.removeLayer(slot.layer);
+            }
         }
     };
 
@@ -434,7 +641,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     var allBounds = L.geoJSON(geoData).getBounds();
-    map.fitBounds(allBounds.pad(0.02));
+    if (allBounds.isValid()) {
+        map.fitBounds(allBounds.pad(0.02));
+    } else {
+        // No answers yet: a placeholder view until the first reference layer
+        // arrives and the loader above fits the map to it.
+        map.setView([20, 0], 2);
+    }
 
     // ── Tool switching ────────────────────────────────────────────
     window.setGeoTool = function(name) {
@@ -673,11 +886,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ── Legend control ─────────────────────────────────────────────
     var _legendBody = null;
+    var _legendRefBody = null;   // reference-layer group, beneath the answer layers
+    var _legendRefWrap = null;   // its title + list; hidden until the first layer arrives
 
     function _buildLegendItem(slot) {
         var id = slot.id;
         var item = document.createElement('div');
-        item.className = 'geo-legend-item';
+        item.className = 'geo-legend-item' + (slot.type === 'reference' ? ' geo-legend-item-ref' : '');
         item.dataset.layerId = id;
 
         var row = document.createElement('div');
@@ -695,6 +910,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cb.addEventListener('change', function() {
             window.layerManager.setLayerVisible(id, cb.checked);
             if (window.filterManager) window.filterManager._renderSelection();
+            if (slot.type === 'reference' && window._saveRefPrefs) window._saveRefPrefs();
         });
         row.appendChild(cb);
 
@@ -805,10 +1021,102 @@ document.addEventListener('DOMContentLoaded', function() {
                 item.remove();
             });
             row.appendChild(delBtn);
+        } else if (slot.type === 'reference') {
+            var rSwatch = document.createElement('span');
+            rSwatch.className = 'geo-legend-ref-swatch';
+            rSwatch.style.background = slot.meta.color;
+            row.appendChild(rSwatch);
+
+            var rLabel = document.createElement('span');
+            rLabel.className = 'geo-legend-label';
+            rLabel.textContent = slot.meta.name;
+            rLabel.title = slot.meta.name + ' \u2014 zoom to layer';
+            rLabel.addEventListener('click', function() {
+                var b = slot.layer.getBounds();
+                if (b.isValid()) map.fitBounds(b.pad(0.05));
+            });
+            row.appendChild(rLabel);
+
+            var rAim = document.createElement('i');
+            rAim.className = 'fas fa-crosshairs';
+            rAim.style.cssText = 'color:#9ca3af;font-size:0.7rem;flex-shrink:0;cursor:pointer;';
+            rAim.title = 'Zoom to layer';
+            rAim.addEventListener('click', function() { rLabel.click(); });
+            row.appendChild(rAim);
+
+            var opBtn = document.createElement('button');
+            opBtn.className = 'geo-heat-settings-btn';
+            opBtn.title = 'Opacity';
+            var opIcon = document.createElement('i');
+            opIcon.className = 'fas fa-adjust';
+            opBtn.appendChild(opIcon);
+            opBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                _openReferenceSettings(id);
+            });
+            row.appendChild(opBtn);
         }
 
         item.appendChild(row);
         return item;
+    }
+
+    // Opacity popover for a reference layer: the heat popover's skeleton with
+    // a single slider.
+    function _openReferenceSettings(refId) {
+        _closeHeatSettings();
+        var slot = window.layerManager.getSlot(refId);
+        if (!slot || slot.type !== 'reference') return;
+
+        var pop = document.createElement('div');
+        pop.className = 'geo-heat-popover';
+        L.DomEvent.disableClickPropagation(pop);
+        L.DomEvent.disableScrollPropagation(pop);
+
+        var header = document.createElement('div');
+        header.className = 'geo-heat-popover-header';
+        var title = document.createElement('h6');
+        title.textContent = 'Layer opacity';
+        header.appendChild(title);
+        var closeBtn = document.createElement('button');
+        closeBtn.className = 'close-btn';
+        var closeIcon = document.createElement('i');
+        closeIcon.className = 'fas fa-times';
+        closeBtn.appendChild(closeIcon);
+        closeBtn.addEventListener('click', _closeHeatSettings);
+        header.appendChild(closeBtn);
+        pop.appendChild(header);
+
+        var layerLabel = document.createElement('div');
+        layerLabel.className = 'geo-heat-popover-layer';
+        layerLabel.textContent = slot.meta.name;
+        layerLabel.title = slot.meta.name;
+        pop.appendChild(layerLabel);
+
+        var row = document.createElement('label');
+        var nameSpan = document.createElement('span');
+        nameSpan.textContent = 'Opacity';
+        row.appendChild(nameSpan);
+        var input = document.createElement('input');
+        input.type = 'range'; input.min = 0; input.max = 100; input.step = 5;
+        input.value = Math.round(slot.opacity * 100);
+        row.appendChild(input);
+        var valSpan = document.createElement('span');
+        valSpan.className = 'val';
+        valSpan.textContent = input.value + '%';
+        row.appendChild(valSpan);
+        input.addEventListener('input', function() {
+            valSpan.textContent = input.value + '%';
+            window.layerManager.setReferenceOpacity(refId, parseInt(input.value, 10) / 100);
+        });
+        input.addEventListener('change', function() { if (window._saveRefPrefs) window._saveRefPrefs(); });
+        pop.appendChild(row);
+
+        var mapContainer = document.getElementById('analytics-map');
+        mapContainer.style.position = 'relative';
+        mapContainer.appendChild(pop);
+        _activePopover = pop;
+        setTimeout(function() { document.addEventListener('mousedown', _onDocClickClosePopover); }, 0);
     }
 
     // Layer context menu
@@ -899,12 +1207,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
             var lm = window.layerManager;
             lm.getSlotIds().forEach(function(id) {
+                if (id.indexOf('ref:') === 0) return;
                 body.appendChild(_buildLegendItem(lm.getSlot(id)));
             });
 
+            // Reference layers: their own group under the answers, with a
+            // title, so a creator can tell what respondents drew from what the
+            // survey was set up with. Rows reorder within the group only --
+            // reference material never rises above an answer layer.
+            var refWrap = document.createElement('div');
+            refWrap.className = 'geo-legend-body geo-legend-group collapsed';
+            refWrap.hidden = true;
+            var refTitle = document.createElement('div');
+            refTitle.className = 'geo-legend-group-title';
+            var refTitleIcon = document.createElement('i');
+            refTitleIcon.className = 'fas fa-map';
+            refTitle.appendChild(refTitleIcon);
+            refTitle.appendChild(document.createTextNode(' Reference layers'));
+            refWrap.appendChild(refTitle);
+            var refBody = document.createElement('div');
+            refBody.className = 'geo-legend-group-body';
+            refWrap.appendChild(refBody);
+            _legendRefBody = refBody;
+            _legendRefWrap = refWrap;
+            div.appendChild(refWrap);
+
             toggleAll.addEventListener('change', function() {
                 var checked = toggleAll.checked;
-                body.querySelectorAll('.geo-legend-item input[type=checkbox]').forEach(function(cb) {
+                div.querySelectorAll('.geo-legend-item input[type=checkbox]').forEach(function(cb) {
                     if (cb.checked !== checked) {
                         cb.checked = checked;
                         cb.dispatchEvent(new Event('change'));
@@ -912,22 +1242,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
 
-            toggle.addEventListener('click', function() { body.classList.toggle('collapsed'); });
+            toggle.addEventListener('click', function() {
+                body.classList.toggle('collapsed');
+                refWrap.classList.toggle('collapsed');
+            });
 
             if (typeof Sortable !== 'undefined') {
-                Sortable.create(body, {
+                var sortOpts = {
                     animation: 150,
                     handle: '.geo-drag-handle',
                     draggable: '.geo-legend-item',
                     ghostClass: 'sortable-ghost',
-                    onEnd: function() {
-                        var newOrder = [];
-                        body.querySelectorAll('.geo-legend-item').forEach(function(el) {
-                            newOrder.push(el.dataset.layerId);
-                        });
-                        lm.reorder(newOrder);
-                    }
-                });
+                    onEnd: _syncOrderFromPanel,
+                };
+                Sortable.create(body, sortOpts);
+                Sortable.create(refBody, sortOpts);
             }
 
             return div;

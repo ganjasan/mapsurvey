@@ -13,6 +13,7 @@ from django.utils.translation import gettext as _
 from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator, SurveyMapLayer
 from .models import FILE_INPUT_TYPES
 from .uploads import attach_upload, detach_unreferenced
+from .layers import build_map_layers_metadata
 from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role, get_org_membership, SURVEY_ROLE_RANK,
@@ -932,25 +933,9 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 	}
 
 
-def _build_map_layers_metadata(survey):
-	"""Layer list for the respondent shell — config only, geometry stays behind
-	the gated endpoint. Empty when the kill switch is off."""
-	from django.conf import settings as django_settings
-	if not django_settings.MAP_REFERENCE_LAYERS:
-		return []
-	return [
-		{
-			'id': layer.pk,
-			'name': layer.name,
-			'color': layer.color,
-			'label_field': layer.label_field,
-			'show_popups': layer.show_popups,
-			'url': reverse('survey_layer_geojson', kwargs={
-				'survey_slug': str(survey.uuid), 'layer_id': layer.pk,
-			}),
-		}
-		for layer in survey.map_layers.all()
-	]
+# Moved to survey/layers.py (shared with the Responses tab); kept under the old
+# name so the respondent shell's call site does not change.
+_build_map_layers_metadata = build_map_layers_metadata
 
 
 def survey_section(request, survey_slug, section_name):
@@ -1889,7 +1874,14 @@ def survey_layer_geojson(request, survey_slug, layer_id):
 	if not django_settings.MAP_REFERENCE_LAYERS:
 		raise Http404
 	survey = resolve_survey(survey_slug)
-	if check_survey_access(request, survey) is not None:
+	# Collaborators (viewer and up) read layers on the Responses tab in every
+	# survey status -- a closed survey is exactly where responses get read.
+	# The bypass lives here, not in check_survey_access: that module also
+	# guards the respondent pages, and letting a viewer *answer* a draft or a
+	# closed survey is a separate decision.
+	role = get_effective_survey_role(request.user, survey)
+	is_collaborator = SURVEY_ROLE_RANK.get(role, -1) >= SURVEY_ROLE_RANK['viewer']
+	if not is_collaborator and check_survey_access(request, survey) is not None:
 		raise Http404
 	layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=survey)
 

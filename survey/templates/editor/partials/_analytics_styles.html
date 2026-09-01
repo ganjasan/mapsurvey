@@ -225,6 +225,13 @@
     .geo-legend-toggle:hover { color: var(--accent); }
     .geo-legend-body { margin-top: 0.4rem; }
     .geo-legend-body.collapsed { display: none; }
+    .geo-legend-group { margin-top: 0.45rem; padding-top: 0.35rem; border-top: 1px dashed #d1d5db; }
+    .geo-legend-group-title {
+        font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+        color: #6b7280; margin-bottom: 0.2rem; padding-left: 2px;
+    }
+    .geo-legend-group-title i { font-size: 0.6rem; margin-right: 2px; }
+    .geo-legend-item-ref .geo-legend-label { color: #4b5563; }
     .geo-legend-item {
         display: block; padding: 0.1rem 0;
     }
@@ -253,6 +260,10 @@
         flex: 1; min-width: 0; font-size: 0.8rem; font-style: italic;
         border: 1px solid var(--accent); border-radius: 3px;
         padding: 0 0.2rem; outline: none; color: #374151;
+    }
+    .geo-legend-ref-swatch {
+        width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0;
+        border: 1px solid rgba(0,0,0,0.15);
     }
     .geo-legend-heat-swatch {
         width: 20px; height: 6px; border-radius: 2px; flex-shrink: 0;

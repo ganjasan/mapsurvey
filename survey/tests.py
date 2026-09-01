@@ -33017,6 +33017,48 @@ class LayerEndpointTest(TestCase):
         self.assertEqual(self.client.get(self.url).status_code, 404)
         self.assertTrue(SurveyMapLayer.objects.filter(pk=self.layer.pk).exists())
 
+    def test_viewer_fetches_a_draft_survey_layer(self):
+        """
+        GIVEN a draft survey and a user holding the viewer role on it
+        WHEN the viewer fetches the layer URL
+        THEN the GeoJSON is returned with private caching
+        """
+        self.survey.status = 'draft'
+        self.survey.save()
+        viewer = User.objects.create_user('layer_viewer', password='pw')
+        Membership.objects.create(user=viewer, organization=self.org, role='viewer')
+        self.client.force_login(viewer)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['features']), 3)
+        self.assertIn('private', response['Cache-Control'])
+
+    def test_owner_fetches_a_closed_survey_layer(self):
+        """
+        GIVEN a closed survey
+        WHEN its owner fetches the layer URL
+        THEN the GeoJSON is returned instead of the closed-survey 404
+        """
+        self.survey.status = 'closed'
+        self.survey.save()
+        owner = User.objects.create_user('layer_owner', password='pw')
+        Membership.objects.create(user=owner, organization=self.org, role='owner')
+        self.client.force_login(owner)
+        self.assertEqual(self.client.get(self.url).status_code, 200)
+
+    def test_outsiders_still_refused_on_a_closed_survey(self):
+        """
+        GIVEN a closed survey
+        WHEN an anonymous visitor, then a signed-in user with no role on it, fetch the layer URL
+        THEN both get 404
+        """
+        self.survey.status = 'closed'
+        self.survey.save()
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+        stranger = User.objects.create_user('layer_stranger', password='pw')
+        self.client.force_login(stranger)
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+
 
 class LayerRespondentRenderingTest(TestCase):
     """Layer metadata reaching the respondent shell."""
@@ -33192,6 +33234,26 @@ class LayerEditorTest(TestCase):
         self.assertEqual(data['properties'], ['name', 'zone_id'])
         self.assertEqual(SurveyMapLayer.objects.filter(survey=self.survey).count(), 2)
 
+    def test_eleventh_layer_is_refused(self):
+        """
+        GIVEN a survey that already holds the maximum of 10 reference layers
+        WHEN the owner uploads one more
+        THEN the upload is refused with a message naming the limit and the count stays 10
+        """
+        from .models import SurveyMapLayer
+        from .layers import MAX_LAYERS_PER_SURVEY
+        self.assertEqual(MAX_LAYERS_PER_SURVEY, 10)
+        existing = SurveyMapLayer.objects.filter(survey=self.survey).count()
+        for i in range(MAX_LAYERS_PER_SURVEY - existing):
+            SurveyMapLayer.objects.create(
+                survey=self.survey, name=f"Filler {i}", geojson=self.layer.geojson,
+                feature_count=self.layer.feature_count, size_bytes=self.layer.size_bytes,
+            )
+        response = self._upload()
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('10 reference layers', response.json()['error'])
+        self.assertEqual(SurveyMapLayer.objects.filter(survey=self.survey).count(), MAX_LAYERS_PER_SURVEY)
+
     def test_invalid_upload_is_refused_with_a_readable_reason(self):
         """
         GIVEN an upload that is not GeoJSON
@@ -33315,6 +33377,89 @@ class LayerEditorTest(TestCase):
         THEN it 404s
         """
         self.assertEqual(self._upload().status_code, 404)
+
+
+class AnalyticsReferenceLayerTest(TestCase):
+    """Reference layers on the Responses tab (openspec: responses-reference-layers)."""
+
+    def setUp(self):
+        from .models import SurveyMapLayer
+        from .layers import validate_layer_upload
+        self.org = Organization.objects.create(name="Layer Analytics Org")
+        self.owner = User.objects.create_user('layer_analytics_owner', password='pw')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="layer_analytics_survey", organization=self.org, redirect_url="/thanks/",
+            status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        self.layer = SurveyMapLayer.objects.create(
+            survey=self.survey, name="Zones", geojson=geojson, feature_count=count,
+            size_bytes=len(geojson),
+        )
+        self.layer_url = reverse('survey_layer_geojson', kwargs={
+            'survey_slug': str(self.survey.uuid), 'layer_id': self.layer.pk,
+        })
+        self.dashboard_url = reverse('editor_survey_analytics', kwargs={'survey_uuid': self.survey.uuid})
+
+    def _first_coordinate(self):
+        return json.loads(self.layer.geojson)['features'][0]['geometry']['coordinates'][0][0]
+
+    def test_dashboard_carries_layer_metadata_but_not_geometry(self):
+        """
+        GIVEN a survey with a reference layer and no geo answers
+        WHEN the owner opens the Responses tab
+        THEN the page holds the layer's metadata, its URL, the factory and the map container,
+             and none of the layer's coordinates
+        """
+        self.client.force_login(self.owner)
+        response = self.client.get(self.dashboard_url)
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('id="ref-layers-data"', html)
+        metas = json.loads(re.search(
+            r'<script id="ref-layers-data" type="application/json">(.*?)</script>', html, re.S
+        ).group(1))
+        self.assertEqual([m['id'] for m in metas], [self.layer.pk])
+        self.assertEqual(metas[0]['name'], 'Zones')
+        self.assertEqual(metas[0]['url'], self.layer_url)
+        self.assertIn('window.RefLayerFactory = {', html)
+        self.assertIn('id="analytics-map"', html)
+        lng, lat = self._first_coordinate()
+        self.assertNotIn(f'{lng:.4f}', html)
+
+    @override_settings(MAP_REFERENCE_LAYERS=False)
+    def test_kill_switch_strips_layers_from_the_dashboard(self):
+        """
+        GIVEN the reference-layers kill switch is off
+        WHEN the owner opens the Responses tab
+        THEN the page carries no layer metadata, no layer URL and no factory
+        """
+        self.client.force_login(self.owner)
+        html = self.client.get(self.dashboard_url).content.decode()
+        self.assertNotIn('ref-layers-data', html)
+        self.assertNotIn(self.layer_url, html)
+        # The modal's consumer code stays; the factory definition must not be emitted.
+        self.assertNotIn('window.RefLayerFactory = {', html)
+
+    def test_viewer_sees_layer_metadata_on_a_draft(self):
+        """
+        GIVEN a draft survey with a layer and a user holding the viewer role
+        WHEN the viewer opens the Responses tab
+        THEN the layer metadata is present, so the loader fetches from the endpoint the
+             viewer is now allowed to read
+        """
+        self.survey.status = 'draft'
+        self.survey.save()
+        viewer = User.objects.create_user('layer_analytics_viewer', password='pw')
+        Membership.objects.create(user=viewer, organization=self.org, role='viewer')
+        self.client.force_login(viewer)
+        response = self.client.get(self.dashboard_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.layer_url, response.content.decode())
 
 
 class LayerSerializationTest(TestCase):

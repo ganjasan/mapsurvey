@@ -93,8 +93,15 @@
             {% include "editor/partials/analytics_overview_pane.html" %}
         </section>
 
+        {% if map_layers %}
+        {# Reference layers: metadata only, geometry comes from the gated endpoint #}
+        {{ map_layers|json_script:"ref-layers-data" }}
+        <script>
+        {% include "partials/ref_layer_factory.html" %}
+        </script>
+        {% endif %}
         <section id="rv2-pane-map" class="rv2-pane" data-pane-content="map" hidden>
-            {% if geo_features_count %}
+            {% if geo_features_count or map_layers %}
             {# Selection actions live in the global pills bar — no per-panel bar in v2. #}
             <div id="rv2-map-wrap">
                 {% include "editor/partials/analytics_geo_map.html" %}
@@ -1175,6 +1182,10 @@ function sessionGeoOpenMap(objectId) {
             accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
         }).addTo(map);
 
+        /* Reference layers from the Map pane's cache -- same visibility, order
+           and opacity as its Layers panel, no second request. */
+        if (window.rv2RenderRefLayers) window.rv2RenderRefLayers(map);
+
         var qNames = [];
         geoData.features.forEach(function (f) {
             if (qNames.indexOf(f.properties.question) === -1) qNames.push(f.properties.question);
@@ -1313,7 +1324,16 @@ function rv2FitMap(delay) {
         if (!m) return;
         m.invalidateSize();
         var featureLayers = [];
+        /* Reference layers are context, not data: they must not widen the fit. */
+        var refPanes = {};
+        if (window.layerManager) {
+            window.layerManager.getSlotIds().forEach(function (id) {
+                var s = window.layerManager.getSlot(id);
+                if (s && s.type === 'reference') refPanes[s.pane] = true;
+            });
+        }
         m.eachLayer(function (l) {
+            if (l.options && l.options.pane && refPanes[l.options.pane]) return;
             if (l.feature && (l.getBounds || l.getLatLng)) featureLayers.push(l);
         });
         if (featureLayers.length) {

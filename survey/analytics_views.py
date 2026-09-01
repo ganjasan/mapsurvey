@@ -15,6 +15,7 @@ from .analytics import (
     version_choices,
 )
 from .events import emit_event
+from .layers import build_map_layers_metadata
 from .versioning import family_ids_with_draft
 
 
@@ -134,6 +135,8 @@ def analytics_dashboard(request, survey_uuid):
         'session_hours_json': json.dumps(session_hours),
         'geo_json': json.dumps(geo_collection),
         'geo_features_count': len(geo_collection['features']),
+        # Reference layers: metadata only, geometry comes from the gated endpoint.
+        'map_layers': build_map_layers_metadata(survey),
         'question_stats': question_stats,
         'answer_matrix_json': json.dumps(answer_matrix),
         'text_question_ids_json': json.dumps(text_question_ids),

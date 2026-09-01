@@ -3897,8 +3897,8 @@ msgstr ""
 "choose\">wybierz plik</span>"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:187
-msgid "GeoJSON (WGS84), up to 10 MB, max 5 layers per survey."
-msgstr "GeoJSON (WGS84), do 10 MB, maksymalnie 5 warstw na ankietę."
+msgid "GeoJSON (WGS84), up to 10 MB, max 10 layers per survey."
+msgstr "GeoJSON (WGS84), do 10 MB, maksymalnie 10 warstw na ankietę."
 
 #: survey/templates/editor/partials/survey_settings_panel.html:208
 #: survey/templates/editor/partials/thanks_panel.html:29
