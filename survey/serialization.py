@@ -24,6 +24,7 @@ from .models import (
     QuestionTranslation, default_basemaps, SurveyMapLayer,
 )
 from .html_sanitize import coerce_creator_html
+from .layers import layers_for
 
 logger = logging.getLogger(__name__)
 from .question_types import CHOICE_TYPES
@@ -87,19 +88,61 @@ def serialize_layers(survey: SurveyHeader) -> List[Dict[str, Any]]:
             "key_field": layer.key_field,
             "show_popups": layer.show_popups,
         }
-        for layer in survey.map_layers.all()
+        for layer in layers_for(survey)
     ]
 
 
-def collect_layer_files(survey: SurveyHeader) -> List[Tuple[str, str]]:
-    """(archive_path, geojson_text) per layer.
+def serialize_layer_objects(layer, index: int) -> List[Dict[str, Any]]:
+    """Object content + attachment manifest for `layers/<index>/objects.json`.
 
-    Text, not a filesystem path: layers live in the database precisely so they
-    are not public objects in the media bucket."""
-    return [
-        (f"layers/{index}.geojson", layer.geojson)
-        for index, layer in enumerate(survey.map_layers.all())
-    ]
+    Geometry is NOT repeated here — it travels in the derived GeoJSON keyed by
+    `_key`. File attachments are referenced by their archive path; embeds by URL."""
+    out = []
+    for obj in layer.items.prefetch_related('assets').order_by('position', 'id'):
+        assets = []
+        for asset in obj.assets.all():
+            entry = {"kind": asset.kind, "title": asset.title, "position": asset.position}
+            if asset.kind == 'embed':
+                entry["embed_url"] = asset.embed_url
+            elif asset.file:
+                entry["file"] = f"layers/{index}/assets/{os.path.basename(asset.file.name)}"
+                entry["content_type"] = asset.content_type
+            assets.append(entry)
+        out.append({
+            "key": obj.key,
+            "title": obj.title,
+            "category": obj.category,
+            "description": obj.description,
+            "link": obj.link,
+            "properties": obj.properties or {},
+            "assets": assets,
+        })
+    return out
+
+
+def collect_layer_files(survey: SurveyHeader) -> List[Tuple[str, Any]]:
+    """(archive_path, data) per layer: the derived GeoJSON text, the objects
+    manifest, and each attachment's bytes read back from media storage.
+
+    GeoJSON is text, not a filesystem path: layers live in the database
+    precisely so they are not public objects in the media bucket. Attachments
+    ARE public objects, so copying their bytes into the archive is the only way
+    an import into another environment can own them."""
+    from .models import LayerObjectAsset
+    entries: List[Tuple[str, Any]] = []
+    for index, layer in enumerate(layers_for(survey)):
+        entries.append((f"layers/{index}.geojson", layer.geojson))
+        entries.append((f"layers/{index}/objects.json",
+                        json.dumps(serialize_layer_objects(layer, index), ensure_ascii=False, indent=2)))
+        for asset in LayerObjectAsset.objects.filter(object__layer=layer).exclude(kind='embed'):
+            if not asset.file:
+                continue
+            try:
+                with asset.file.open('rb') as fh:
+                    entries.append((f"layers/{index}/assets/{os.path.basename(asset.file.name)}", fh.read()))
+            except (OSError, ValueError) as exc:
+                logger.warning("layer asset %s unreadable during export: %s", asset.pk, exc)
+    return entries
 
 
 def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
@@ -108,7 +151,7 @@ def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
     result = []
     # Layer ids mean nothing in another database; export the position within
     # the exported `layers` array instead.
-    layer_index = {layer.pk: i for i, layer in enumerate(survey.map_layers.all())}
+    layer_index = {layer.pk: i for i, layer in enumerate(layers_for(survey))}
 
     for section in sections:
         result.append({
@@ -906,6 +949,75 @@ def _clean_layer_config(cfg: Dict[str, Any], index: int) -> Dict[str, Any]:
     return out
 
 
+def _apply_layer_objects_manifest(zip_file: zipfile.ZipFile, layer, index: int) -> List[str]:
+    """Overlay `layers/<index>/objects.json` onto the objects created from the
+    GeoJSON: description, link, raw properties and attachments. Missing
+    manifest = FD-1 archive, nothing to do. A missing or unreadable asset file
+    is a warning per asset, never a failed import."""
+    from django.core.files.base import ContentFile
+    from .models import LayerObjectAsset
+    from .layer_assets import normalize_embed_url, AssetRejected, kind_for_content_type
+
+    warnings: List[str] = []
+    try:
+        manifest = json.loads(zip_file.read(f"layers/{index}/objects.json").decode('utf-8'))
+    except KeyError:
+        return warnings
+    except (ValueError, UnicodeDecodeError):
+        return [f"Reference layer '{layer.name}': objects.json is not valid JSON — object content skipped."]
+    if not isinstance(manifest, list):
+        return warnings
+
+    by_key = {obj.key: obj for obj in layer.items.all()}
+    for entry in manifest:
+        if not isinstance(entry, dict):
+            continue
+        obj = by_key.get(str(entry.get('key', '')))
+        if obj is None:
+            warnings.append(f"Reference layer '{layer.name}': object '{entry.get('key')}' has no geometry in the archive — skipped.")
+            continue
+        if isinstance(entry.get('title'), str) and entry['title']:
+            obj.title = entry['title'][:255]
+        if isinstance(entry.get('category'), str):
+            obj.category = entry['category'][:100]
+        if isinstance(entry.get('description'), str):
+            obj.description = coerce_creator_html(entry['description'])
+        if isinstance(entry.get('link'), str):
+            obj.link = entry['link'][:500]
+        if isinstance(entry.get('properties'), dict):
+            obj.properties = {k: v for k, v in entry['properties'].items() if isinstance(k, str)}
+        obj.save()
+
+        for position, asset in enumerate(entry.get('assets') or []):
+            if not isinstance(asset, dict):
+                continue
+            title = str(asset.get('title') or '')[:255]
+            if asset.get('kind') == 'embed':
+                try:
+                    url = normalize_embed_url(asset.get('embed_url') or '')
+                except AssetRejected as exc:
+                    warnings.append(f"Object '{obj.key}': embed skipped — {exc.message}")
+                    continue
+                LayerObjectAsset.objects.create(object=obj, kind='embed', embed_url=url,
+                                                title=title, position=position)
+                continue
+            content_type = str(asset.get('content_type') or '').lower()
+            kind = kind_for_content_type(content_type)
+            archive_path = asset.get('file')
+            if kind is None or not isinstance(archive_path, str):
+                warnings.append(f"Object '{obj.key}': attachment '{title}' has an unsupported type — skipped.")
+                continue
+            try:
+                data = zip_file.read(archive_path)
+            except KeyError:
+                warnings.append(f"Object '{obj.key}': attachment file '{archive_path}' is missing — skipped.")
+                continue
+            row = LayerObjectAsset(object=obj, kind=kind, title=title, content_type=content_type,
+                                   size_bytes=len(data), position=position)
+            row.file.save(os.path.basename(archive_path), ContentFile(data), save=True)
+    return warnings
+
+
 def extract_layers(
     zip_file: zipfile.ZipFile,
     survey: SurveyHeader,
@@ -948,10 +1060,20 @@ def extract_layers(
             ids.append(None)
             warnings.append(f"Reference layer '{clean['name']}' was skipped: {exc}")
             continue
+        # Objects are the source; the derived geojson is rebuilt from them.
+        # A derived GeoJSON (this change's exports) carries `_key`/`_title`/
+        # `_category`, so keys round-trip exactly; an FD-1-era archive has no
+        # reserved fields and gets its objects as the split migration derives them.
+        from .layers import objects_from_features, rebuild_layer
         layer = SurveyMapLayer.objects.create(
-            survey=survey, geojson=geojson_str, feature_count=count,
-            size_bytes=len(geojson_str.encode("utf-8")), position=index, **clean,
+            survey=survey, geojson='', position=index, **clean,
         )
+        features = json.loads(geojson_str)['features']
+        derived = any(isinstance(f.get('properties'), dict) and '_key' in f['properties'] for f in features)
+        mapping = {'key': '_key', 'title': '_title', 'category': '_category'} if derived else None
+        objects_from_features(layer, features, mapping=mapping, sanitize=coerce_creator_html)
+        warnings.extend(_apply_layer_objects_manifest(zip_file, layer, index))
+        rebuild_layer(layer)
         ids.append(layer.pk)
 
     return ids, warnings

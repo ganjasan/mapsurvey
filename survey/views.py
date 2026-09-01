@@ -10,10 +10,10 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import translation
 from django.utils.translation import override as lang_override
 from django.utils.translation import gettext as _
-from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator, SurveyMapLayer
+from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator, SurveyMapLayer, LayerObject
 from .models import FILE_INPUT_TYPES
 from .uploads import attach_upload, detach_unreferenced
-from .layers import build_map_layers_metadata
+from .layers import build_map_layers_metadata, layer_owner
 from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role, get_org_membership, SURVEY_ROLE_RANK,
@@ -1861,14 +1861,14 @@ def survey_password_gate(request, survey_slug):
 	})
 
 
-def survey_layer_geojson(request, survey_slug, layer_id):
-	"""Serve a reference layer's GeoJSON under the survey's own access rules.
+def _gated_layer(request, survey_slug, layer_id):
+	"""Resolve a layer under the survey's own access rules, or 404.
 
-	Never a raw storage URL: the S3 media bucket is public-read, and a draft
-	survey's layer must be as invisible as the draft itself. Any access denial
-	collapses to 404 — a fetch() consumer can't follow the password/closed
-	redirects the page views return, and a bare 404 keeps drafts
-	indistinguishable from nonexistent surveys.
+	Shared by the GeoJSON endpoint and the per-object card endpoint so the two
+	can never disagree on who may read a layer. Any access denial collapses to
+	404: a fetch() consumer can't follow the password/closed redirects the page
+	views return, and a bare 404 keeps drafts indistinguishable from
+	nonexistent surveys.
 	"""
 	from django.conf import settings as django_settings
 	if not django_settings.MAP_REFERENCE_LAYERS:
@@ -1883,7 +1883,36 @@ def survey_layer_geojson(request, survey_slug, layer_id):
 	is_collaborator = SURVEY_ROLE_RANK.get(role, -1) >= SURVEY_ROLE_RANK['viewer']
 	if not is_collaborator and check_survey_access(request, survey) is not None:
 		raise Http404
-	layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=survey)
+	# Versions and draft copies borrow the canonical survey's layers.
+	return get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(survey))
+
+
+def survey_layer_object(request, survey_slug, layer_id, key):
+	"""One object's card: what the popup shows beyond the list-level fields.
+
+	Description and attachments are deliberately NOT in the layer GeoJSON — a
+	300-object layer must not ship 300 rich-text bodies to render a list. The
+	description passes the creator-HTML coercer on the way out as well as on
+	the way in, so an imported file's markup can never reach a respondent raw.
+	"""
+	from .layer_assets import object_card_payload
+	layer = _gated_layer(request, survey_slug, layer_id)
+	obj = get_object_or_404(LayerObject, layer=layer, key=key)
+	response = JsonResponse(object_card_payload(obj))
+	response['Cache-Control'] = 'private, max-age=300'
+	return response
+
+
+def survey_layer_geojson(request, survey_slug, layer_id):
+	"""Serve a reference layer's GeoJSON under the survey's own access rules.
+
+	Never a raw storage URL: the S3 media bucket is public-read, and a draft
+	survey's layer must be as invisible as the draft itself. Any access denial
+	collapses to 404 — a fetch() consumer can't follow the password/closed
+	redirects the page views return, and a bare 404 keeps drafts
+	indistinguishable from nonexistent surveys.
+	"""
+	layer = _gated_layer(request, survey_slug, layer_id)
 
 	etag = '"layer-%s-%s"' % (layer.pk, layer.updated_at.strftime('%Y%m%d%H%M%S%f'))
 	if request.headers.get('If-None-Match') == etag:

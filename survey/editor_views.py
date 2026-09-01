@@ -26,7 +26,8 @@ from .models import (
     CreatorPreferences,
 )
 from .layers import (
-    validate_layer_upload, LayerValidationError,
+    validate_layer_upload, LayerValidationError, layers_for, layer_owner,
+    objects_from_features, rebuild_layer, check_object_caps,
     MAX_LAYER_BYTES, MAX_LAYERS_PER_SURVEY,
 )
 from . import product_events as pe
@@ -715,7 +716,7 @@ def _editor_layers(survey):
         return []
     return [
         {'layer': layer, 'properties': _layer_property_names(layer)}
-        for layer in survey.map_layers.all()
+        for layer in layers_for(survey)
     ]
 
 
@@ -753,7 +754,7 @@ def editor_survey_layer_create(request, survey_uuid):
     f = request.FILES.get('layer')
     if not f:
         return JsonResponse({'error': 'No file'}, status=400)
-    if survey.map_layers.count() >= MAX_LAYERS_PER_SURVEY:
+    if layer_owner(survey).map_layers.count() >= MAX_LAYERS_PER_SURVEY:
         return JsonResponse({'error': f'A survey can hold {MAX_LAYERS_PER_SURVEY} reference layers.'}, status=400)
     if f.size > MAX_LAYER_BYTES:
         return JsonResponse({'error': f'File is larger than {MAX_LAYER_BYTES // (1024 * 1024)} MB.'}, status=400)
@@ -763,12 +764,17 @@ def editor_survey_layer_create(request, survey_uuid):
         return JsonResponse({'error': str(exc)}, status=400)
 
     name = (os.path.splitext(f.name)[0] or 'Layer')[:100]
-    position = (survey.map_layers.aggregate(m=models.Max('position'))['m'] or 0) + 1
+    owner = layer_owner(survey)
+    position = (owner.map_layers.aggregate(m=models.Max('position'))['m'] or 0) + 1
+    # The layer is created on the OWNER (canonical) survey: a draft copy borrows
+    # its layers rather than holding copies (see survey.layers.layer_owner).
     layer = SurveyMapLayer.objects.create(
-        survey=survey, name=name, geojson=geojson_str,
-        feature_count=count, size_bytes=len(geojson_str.encode('utf-8')),
-        position=position,
+        survey=owner, name=name, geojson='', position=position,
     )
+    # The file becomes objects; the layer's geojson is derived from them.
+    objects_from_features(layer, json.loads(geojson_str)['features'],
+                          sanitize=coerce_creator_html)
+    rebuild_layer(layer)
     return JsonResponse(_layer_payload(layer, properties), status=201)
 
 
@@ -777,7 +783,7 @@ def editor_survey_layer_create(request, survey_uuid):
 def editor_survey_layer_update(request, survey_uuid, layer_id):
     """Update a layer's presentation config (never its geometry)."""
     _layers_enabled_or_404()
-    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=request.survey)
+    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey))
 
     name = (request.POST.get('name') or '').strip()
     if name:
@@ -809,7 +815,7 @@ def editor_survey_layer_update(request, survey_uuid, layer_id):
 @require_POST
 def editor_survey_layer_delete(request, survey_uuid, layer_id):
     _layers_enabled_or_404()
-    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=request.survey)
+    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey))
     layer.delete()
     return HttpResponse(status=204)
 
@@ -820,11 +826,12 @@ def _layer_property_names(layer):
         parsed = json.loads(layer.geojson)
     except ValueError:
         return []
+    from .layers import RESERVED_PROPS
     names = set()
     for feature in parsed.get('features') or []:
         props = feature.get('properties')
         if isinstance(props, dict):
-            names.update(k for k in props if isinstance(k, str))
+            names.update(k for k in props if isinstance(k, str) and k not in RESERVED_PROPS)
     return sorted(names)
 
 
@@ -983,7 +990,7 @@ def editor_section_detail(request, survey_uuid, section_id):
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
         'section_layers': [
             {'layer': layer, 'visible': layer.pk not in hidden_ids}
-            for layer in survey.map_layers.defer('geojson')
+            for layer in layers_for(survey).defer('geojson', 'geojson_legacy')
         ] if settings.MAP_REFERENCE_LAYERS else [],
     })
 

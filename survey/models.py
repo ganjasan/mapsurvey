@@ -1,4 +1,5 @@
 import uuid as uuid_module
+import os
 
 from django.conf import settings
 from django.db import models
@@ -552,17 +553,25 @@ class SurveyCollaborator(models.Model):
 
 
 class SurveyMapLayer(models.Model):
-    """A creator-uploaded reference overlay (zones, boundaries, a plan) rendered
-    read-only under the respondent map. GeoJSON lives in the row, not in media
+    """A creator's reference overlay (zones, boundaries, a plan, the objects of a
+    consultation) rendered read-only under the respondent map.
+
+    Since `overlay-features` a layer is a container of LayerObject rows and
+    `geojson` is a CACHE derived from them (`survey.layers.rebuild_layer`), never
+    an independently edited source. It still lives in the row, not in media
     storage: the S3 bucket is public-read, and a layer must obey the survey's
-    access rules, so it is served only through the gated layer endpoint."""
+    access rules, so it is served only through the gated layer endpoint.
+
+    Layers hang off the CANONICAL survey; draft copies and archived versions
+    borrow them through `survey.layers.layers_for()` and never get copies."""
     survey = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE, related_name='map_layers')
     name = models.CharField(max_length=100)
     color = models.CharField(max_length=7, default='#2c7be5', help_text=_('Fallback style; simplestyle properties inside the file win.'))
-    label_field = models.CharField(max_length=100, blank=True, default='', help_text=_('Feature property rendered as a permanent map label. Empty = no labels.'))
-    key_field = models.CharField(max_length=100, blank=True, default='', help_text=_('Feature property that makes features addressable (reserved for answer-driven map context). No UI consumer yet.'))
-    show_popups = models.BooleanField(default=False, help_text=_('Tap a feature shows a read-only popup of its name/description properties.'))
-    geojson = models.TextField(help_text=_('Re-serialized FeatureCollection — never the raw uploaded bytes.'))
+    label_field = models.CharField(max_length=100, blank=True, default='', help_text=_('Feature property rendered as a permanent map label. Empty = no labels. Also the default title mapping for imports.'))
+    key_field = models.CharField(max_length=100, blank=True, default='', help_text=_('Feature property used as the object key on import. Answers about objects are stored against the key.'))
+    show_popups = models.BooleanField(default=False, help_text=_('Tap a feature shows a read-only popup of its title/description (layers not bound to an Objects-on-the-map question).'))
+    geojson = models.TextField(help_text=_('Derived FeatureCollection, rebuilt from the layer objects on every write.'))
+    geojson_legacy = models.TextField(blank=True, default='', help_text=_('The pre-objects FeatureCollection kept for one release after the split migration; empty for layers created since.'))
     feature_count = models.PositiveIntegerField(default=0)
     size_bytes = models.PositiveIntegerField(default=0)
     position = models.PositiveIntegerField(default=0)
@@ -574,6 +583,93 @@ class SurveyMapLayer(models.Model):
 
     def __str__(self):
         return f"{self.survey.name} / {self.name}"
+
+
+def layer_asset_key(instance, filename):
+    """layer_assets/<uuid4>.<ext> on the public tier. Random, non-guessable keys
+    are the whole access story for creator artwork (see `media-storage`): a
+    draft survey's rendering is reachable by anyone holding the URL, exactly like
+    Question.image today. The original filename is kept on the row as `title`."""
+    ext = (os.path.splitext(filename)[1] or '')[:8].lower()
+    return f'layer_assets/{uuid_module.uuid4().hex}{ext}'
+
+
+class LayerObject(models.Model):
+    """One thing on a reference layer a respondent can find, read about and
+    answer about: a construction site, a tram stop, a route variant.
+
+    `key` is the stable identity answers and exports hang on — unique per layer,
+    from the imported file's key field when it had one, else generated. `properties`
+    keeps whatever the imported feature carried (simplestyle included) so nothing
+    from a GIS file is thrown away; the derived layer GeoJSON re-emits them."""
+    layer = models.ForeignKey(SurveyMapLayer, on_delete=models.CASCADE, related_name='items')
+    key = models.CharField(max_length=100)
+    title = models.CharField(max_length=255, blank=True, default='')
+    category = models.CharField(max_length=100, blank=True, default='')
+    description = models.TextField(blank=True, default='', help_text=_('Creator rich text — passes html_sanitize on every write.'))
+    link = models.URLField(max_length=500, blank=True, default='')
+    geometry = geomodels.GeometryField(srid=4326)
+    position = models.PositiveIntegerField(default=0)
+    properties = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['position', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['layer', 'key'], name='layerobject_unique_key_per_layer'),
+        ]
+        indexes = [models.Index(fields=['layer', 'category'])]
+
+    def __str__(self):
+        return f"{self.layer.name} / {self.key}"
+
+    @property
+    def cover(self):
+        """First image asset by position, or None."""
+        for asset in self.assets.all():
+            if asset.kind == 'image':
+                return asset
+        return None
+
+
+LAYER_ASSET_KINDS = (
+    ('image', _('Image')),
+    ('audio', _('Audio')),
+    ('document', _('Document')),
+    ('video', _('Video')),
+    ('embed', _('Embedded video')),
+)
+
+
+class LayerObjectAsset(models.Model):
+    """A file or embed attached to a LayerObject, shown in the object's card in
+    `position` order. The first image is the cover. Files go to the public tier
+    (respondents load them unauthenticated in <img>/<audio>); `embed` rows carry
+    only a URL from the allow-listed hosts."""
+    object = models.ForeignKey(LayerObject, on_delete=models.CASCADE, related_name='assets')
+    kind = models.CharField(max_length=10, choices=LAYER_ASSET_KINDS)
+    file = models.FileField(upload_to=layer_asset_key, max_length=500, blank=True)
+    embed_url = models.URLField(max_length=500, blank=True, default='')
+    title = models.CharField(max_length=255, blank=True, default='')
+    content_type = models.CharField(max_length=100, blank=True, default='')
+    size_bytes = models.PositiveIntegerField(default=0)
+    position = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['position', 'id']
+
+    def __str__(self):
+        return f"{self.object.key} / {self.kind} / {self.title}"
+
+    @property
+    def url(self):
+        if self.kind == 'embed':
+            return self.embed_url
+        return self.file.url if self.file else ''
 
 
 SECTION_LAYOUT_CHOICES = (

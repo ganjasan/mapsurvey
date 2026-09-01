@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
 from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP_CHOICES
 from .html_sanitize import coerce_creator_html
+from .layers import layers_for
 from .question_types import GEO_TYPES
 
 SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon')
@@ -285,7 +286,7 @@ class SurveySectionForm(forms.ModelForm):
         if self.data and 'reference_layers_submitted' in self.data:
             survey = section.survey_header or (self.instance.survey_header if self.instance.pk else None)
             if survey is not None:
-                valid_ids = set(survey.map_layers.values_list('id', flat=True))
+                valid_ids = set(layers_for(survey).values_list('id', flat=True))
                 shown = set()
                 for raw in self.data.getlist('visible_layers'):
                     try:

@@ -3,6 +3,7 @@ from django.views.generic import RedirectView
 
 from . import views
 from . import editor_views
+from . import layer_object_views
 from . import analytics_views
 from . import share_views
 from . import org_views
@@ -47,6 +48,20 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/layers/', editor_views.editor_survey_layer_create, name='editor_survey_layer_create'),
     path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/', editor_views.editor_survey_layer_update, name='editor_survey_layer_update'),
     path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/delete/', editor_views.editor_survey_layer_delete, name='editor_survey_layer_delete'),
+    # Object editor (overlay-features): one page per layer + its JSON endpoints.
+    path('editor/surveys/<uuid:survey_uuid>/layers/new/', layer_object_views.layer_create_empty, name='editor_layer_create_empty'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/edit/', layer_object_views.layer_editor, name='editor_layer_objects'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/objects/', layer_object_views.objects_collection, name='editor_layer_objects_collection'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/objects/bulk/', layer_object_views.objects_bulk, name='editor_layer_objects_bulk'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/objects/<str:key>/', layer_object_views.object_detail, name='editor_layer_object'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/objects/<str:key>/geometry/', layer_object_views.object_geometry, name='editor_layer_object_geometry'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/objects/<str:key>/answers/', layer_object_views.object_answer_count, name='editor_layer_object_answers'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/objects/<str:key>/assets/', layer_object_views.asset_create, name='editor_layer_asset_create'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/objects/<str:key>/assets/reorder/', layer_object_views.assets_reorder, name='editor_layer_assets_reorder'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/objects/<str:key>/assets/<int:asset_id>/', layer_object_views.asset_detail, name='editor_layer_asset'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/import/geojson/', layer_object_views.import_geojson, name='editor_layer_import_geojson'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/import/csv/', layer_object_views.import_csv, name='editor_layer_import_csv'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/import/photos/', layer_object_views.import_photos, name='editor_layer_import_photos'),
     path('editor/surveys/<uuid:survey_uuid>/sections/new/', editor_views.editor_section_create, name='editor_section_create'),
     path('editor/surveys/<uuid:survey_uuid>/sections/<int:section_id>/', editor_views.editor_section_detail, name='editor_section_detail'),
     path('editor/surveys/<uuid:survey_uuid>/sections/<int:section_id>/delete/', editor_views.editor_section_delete, name='editor_section_delete'),
@@ -126,6 +141,7 @@ urlpatterns = [
     # Before the <section_name> catch-all, or 'upload' would resolve as a section.
     path('surveys/<str:survey_slug>/upload/', views.survey_upload, name='survey_upload'),
     path('surveys/<str:survey_slug>/layers/<int:layer_id>.geojson', views.survey_layer_geojson, name='survey_layer_geojson'),
+    path('surveys/<str:survey_slug>/layers/<int:layer_id>/objects/<str:key>/', views.survey_layer_object, name='survey_layer_object'),
     path('surveys/<str:survey_slug>/<str:section_name>/', views.survey_section, name='section'),
     path('surveys/<str:survey_slug>/download', views.download_data, name='download_data'),
     path('stories/', views.stories_index, name='stories_index'),

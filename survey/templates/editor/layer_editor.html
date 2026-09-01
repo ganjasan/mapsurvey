@@ -1,0 +1,221 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n %}
+{% load static %}
+{% load survey_filters %}
+{% block page_title %}{{ layer.name }} — {% trans "Objects" %}{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js" crossorigin="anonymous"></script>
+<style>
+  .loe { display:flex; flex-direction:column; height:calc(100vh - 49px); }
+  .loe-body { flex:1; display:flex; min-height:0; }
+  .loe-list { width:340px; flex:none; background:#fff; border-right:1px solid var(--border-color); display:flex; flex-direction:column; min-height:0; }
+  .loe-tools { padding:.6rem .75rem; border-bottom:1px solid var(--border-color); }
+  .loe-tools input[type=search] { width:100%; }
+  .loe-chips { display:flex; flex-wrap:wrap; gap:.3rem; margin-top:.45rem; }
+  .loe-chip { font-size:.72rem; padding:.15rem .55rem; border-radius:999px; border:1px solid #d1d5db; background:#fff; color:#6b7280; cursor:pointer; }
+  .loe-chip.on { background:var(--accent-light); border-color:var(--accent); color:var(--accent); font-weight:600; }
+  .loe-chip.warn { border-color:#fed7aa; color:#c2410c; }
+  .loe-bulk { display:flex; align-items:center; gap:.5rem; padding:.35rem .75rem; font-size:.74rem; color:#6b7280; border-bottom:1px solid var(--border-color); }
+  .loe-bulk[hidden] { display:none; }
+  .loe-rows { flex:1; overflow:auto; position:relative; }
+  .loe-row { display:flex; align-items:center; gap:.5rem; padding:.42rem .75rem; border-bottom:1px solid #f3f4f6; font-size:.84rem; cursor:pointer; height:38px; box-sizing:border-box; }
+  .loe-row:hover { background:#f9fafb; }
+  .loe-row.sel { background:var(--accent-light); }
+  .loe-row .sw { width:10px; height:10px; border-radius:2px; flex:none; }
+  .loe-row .t { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .loe-row .m { color:#9ca3af; font-size:.68rem; white-space:nowrap; }
+  .loe-row.miss .t::after { content:" •"; color:#c2410c; }
+  .loe-foot { padding:.45rem .75rem; border-top:1px solid var(--border-color); font-size:.72rem; color:#6b7280; display:flex; gap:.5rem; }
+  .loe-map { flex:1; position:relative; min-width:0; }
+  #loe-map { position:absolute; inset:0; }
+  .loe-hint { position:absolute; left:50%; top:12px; transform:translateX(-50%); background:#fff; border-radius:999px; box-shadow:var(--shadow-md, 0 4px 12px rgba(0,0,0,.08)); padding:.3rem .8rem; font-size:.76rem; color:#6b7280; z-index:500; }
+  .loe-hint[hidden] { display:none; }
+  .loe-card { width:420px; flex:none; background:#fff; border-left:1px solid var(--border-color); display:flex; flex-direction:column; min-height:0; }
+  .loe-card-head { padding:.7rem 1rem; border-bottom:1px solid var(--border-color); display:flex; align-items:center; gap:.5rem; font-weight:600; }
+  .loe-card-head .x { margin-left:auto; color:#9ca3af; cursor:pointer; font-weight:400; }
+  .loe-card-body { flex:1; overflow:auto; padding:.85rem 1rem; }
+  .loe-card-body .pr-field label { display:block; font-size:.78rem; font-weight:500; color:#374151; margin-bottom:.25rem; }
+  .loe-card-body input[type=text], .loe-card-body input[type=url] { width:100%; }
+  .loe-card-foot { border-top:1px solid var(--border-color); padding:.6rem 1rem; display:flex; gap:.5rem; align-items:center; font-size:.76rem; }
+  .loe-empty { flex:1; display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:.82rem; text-align:center; padding:1rem; }
+  .loe-att { display:flex; align-items:center; gap:.5rem; padding:.35rem .5rem; border:1px solid var(--border-color); border-radius:6px; margin-bottom:.3rem; font-size:.78rem; background:#fff; }
+  .loe-att .th { width:32px; height:24px; border-radius:3px; flex:none; background-size:cover; background-position:center; background-color:#f3f4f6; display:flex; align-items:center; justify-content:center; color:#6b7280; }
+  .loe-att .n { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .loe-att .a { color:#9ca3af; cursor:pointer; }
+  .loe-att .grip { color:#c4c7cc; cursor:grab; }
+  .loe-drop { border:1px dashed #c4c7cc; border-radius:6px; padding:.55rem; text-align:center; color:#6b7280; font-size:.76rem; cursor:pointer; }
+  .loe-drop.dragover { border-color:var(--accent); background:var(--accent-light); }
+  .loe-empty-state { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:400; pointer-events:none; }
+  .loe-empty-state .box { background:#fff; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,.12); padding:1.4rem 1.6rem; width:520px; text-align:center; pointer-events:auto; }
+  .loe-ways { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.6rem; margin-top:1rem; }
+  .loe-way { border:1px solid var(--border-color); border-radius:8px; padding:.75rem .5rem; font-size:.78rem; cursor:pointer; background:#fff; }
+  .loe-way:hover { border-color:var(--accent); }
+  .loe-way i { display:block; font-size:1.3rem; color:var(--accent); margin-bottom:.35rem; }
+  .loe-way small { display:block; color:#9ca3af; margin-top:.2rem; font-size:.68rem; }
+  .loe-status { margin-left:auto; font-size:.74rem; color:#9ca3af; }
+  .loe-status.saved { color:#10b981; } .loe-status.error { color:#dc2626; }
+  .loe-banner { background:#fff7ed; border-bottom:1px solid #fed7aa; color:#9a3412; padding:.45rem 1.5rem; font-size:.8rem; }
+  /* Quill mounts INTO #loe-quill, which becomes the .ql-container; `height:auto`
+     defeats the snow theme's `height:100%` (see editor_base.html for the story). */
+  #loe-quill.ql-container { height:auto; font-size:.85rem; background:#fff; }
+  #loe-quill .ql-editor { min-height:110px; max-height:260px; overflow:auto; }
+  .loe-modal-report { font-size:.8rem; max-height:260px; overflow:auto; }
+  .loe-feature-label { background:rgba(255,255,255,.85); border:none; box-shadow:none; font-size:11px; font-weight:600; color:#7c2d12; padding:1px 4px; border-radius:3px; }
+  @media (max-width: 1100px) { .loe-card { width:340px; } .loe-list { width:280px; } }
+</style>
+{% endblock %}
+{% block navbar_content %}
+{% survey_title survey %}
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="build" %}
+{% endblock %}
+{% block content %}
+{# Single-line template comments only in this file: a multi-line hash comment renders as page text. #}
+<div class="loe" id="loe"
+     data-layer-id="{{ layer.pk }}"
+     data-urls='{
+       "objects": "{% url 'editor_layer_objects_collection' survey.uuid layer.pk %}",
+       "object": "{% url 'editor_layer_object' survey.uuid layer.pk 'KEY' %}",
+       "geometry": "{% url 'editor_layer_object_geometry' survey.uuid layer.pk 'KEY' %}",
+       "answers": "{% url 'editor_layer_object_answers' survey.uuid layer.pk 'KEY' %}",
+       "assets": "{% url 'editor_layer_asset_create' survey.uuid layer.pk 'KEY' %}",
+       "asset": "{% url 'editor_layer_asset' survey.uuid layer.pk 'KEY' 0 %}",
+       "reorder": "{% url 'editor_layer_assets_reorder' survey.uuid layer.pk 'KEY' %}",
+       "bulk": "{% url 'editor_layer_objects_bulk' survey.uuid layer.pk %}",
+       "importGeojson": "{% url 'editor_layer_import_geojson' survey.uuid layer.pk %}",
+       "importCsv": "{% url 'editor_layer_import_csv' survey.uuid layer.pk %}",
+       "importPhotos": "{% url 'editor_layer_import_photos' survey.uuid layer.pk %}",
+       "descriptionImage": "{% url 'editor_survey_thanks_image' survey.uuid %}",
+       "geojson": "{% url 'survey_layer_geojson' survey.uuid layer.pk %}"
+     }'
+     data-color="{{ layer.color }}"
+     data-max-asset-mb="{{ max_asset_mb }}"
+     data-max-assets="{{ max_assets_per_object }}">
+
+  <div class="pr-ctxbar" style="flex-shrink:0;">
+    <span class="ico"><i class="fas fa-map-marked-alt"></i></span>
+    <div>
+      <div class="t"><a href="{% url 'editor_survey_detail' survey.uuid %}?panel=settings" style="color:#6b7280;font-weight:400;">{% trans "Survey settings" %}</a> › <a href="{% url 'editor_survey_detail' survey.uuid %}?panel=settings" style="color:#6b7280;font-weight:400;">{% trans "Reference layers" %}</a> › {{ layer.name }}</div>
+      <div class="s"><span id="loe-count">{{ summary.object_count }}</span> {% trans "objects" %} · <span id="loe-nophoto">{{ summary.without_photo }}</span> {% trans "without photo" %} · <span id="loe-notext">{{ summary.without_text }}</span> {% trans "without text" %}</div>
+    </div>
+    <span style="flex:1;"></span>
+    <button class="btn btn-sm btn-outline-secondary" type="button" id="loe-btn-import-geojson"><i class="fas fa-file-import"></i> {% trans "Import GeoJSON" %}</button>
+    <button class="btn btn-sm btn-outline-secondary" type="button" id="loe-btn-import-csv"><i class="fas fa-table"></i> {% trans "Import CSV" %}</button>
+    <button class="btn btn-sm btn-outline-secondary" type="button" id="loe-btn-import-photos"><i class="fas fa-images"></i> {% trans "Upload photos" %}</button>
+    <span class="loe-status" id="loe-status" aria-live="polite"></span>
+    <a class="btn btn-sm btn-primary" href="{% url 'editor_survey_detail' survey.uuid %}?panel=settings"><i class="fas fa-arrow-left"></i> {% trans "Back to survey" %}</a>
+  </div>
+
+  {% if summary.published %}
+  <div class="loe-banner"><i class="fas fa-globe"></i> {% trans "This survey is published: every change here is visible to respondents immediately." %}</div>
+  {% endif %}
+
+  <div class="loe-body">
+    <div class="loe-list">
+      <div class="loe-tools">
+        <input type="search" id="loe-search" class="form-control form-control-sm" placeholder="{% trans 'Search objects…' %}" autocomplete="off">
+        <div class="loe-chips" id="loe-chips"></div>
+      </div>
+      <div class="loe-bulk" id="loe-bulk" hidden>
+        <span id="loe-bulk-count"></span>
+        <button type="button" class="btn btn-sm btn-link p-0" id="loe-bulk-category">{% trans "Set category" %}</button>
+        <button type="button" class="btn btn-sm btn-link p-0 text-danger" id="loe-bulk-delete">{% trans "Delete" %}</button>
+        <button type="button" class="btn btn-sm btn-link p-0 ml-auto" id="loe-bulk-clear">{% trans "Clear" %}</button>
+      </div>
+      <div class="loe-rows" id="loe-rows" tabindex="0"></div>
+      <div class="loe-foot"><span>↑↓ · Enter</span><span style="margin-left:auto" id="loe-range"></span></div>
+    </div>
+
+    <div class="loe-map">
+      <div id="loe-map"></div>
+      <div class="loe-hint" id="loe-hint" hidden></div>
+      <div class="loe-empty-state" id="loe-empty" hidden>
+        <div class="box">
+          <h5 style="margin:0 0 .3rem;">{% trans "Add your first object" %}</h5>
+          <div style="color:#9ca3af;font-size:.8rem;">{% trans "Objects are what respondents browse, open and answer about." %}</div>
+          <div class="loe-ways">
+            <div class="loe-way" id="loe-way-draw"><i class="fas fa-map-marker-alt"></i><b>{% trans "Draw on the map" %}</b><small>{% trans "point, line or polygon — no file needed" %}</small></div>
+            <div class="loe-way" id="loe-way-geojson"><i class="fas fa-file-import"></i><b>{% trans "Import GeoJSON" %}</b><small>{% trans "from your GIS; properties become title, category, text" %}</small></div>
+            <div class="loe-way" id="loe-way-csv"><i class="fas fa-table"></i><b>{% trans "Import CSV with coordinates" %}</b><small>{% trans "a spreadsheet with lat/lng columns" %}</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="loe-card" id="loe-card">
+      <div class="loe-empty" id="loe-card-empty">{% trans "Select an object in the list or on the map, or draw a new one." %}</div>
+      <div id="loe-card-form" hidden style="display:contents;">
+        <div class="loe-card-head"><span class="sw" id="loe-card-swatch" style="width:10px;height:10px;border-radius:2px;background:{{ layer.color }};"></span><span id="loe-card-title">—</span><span class="x" id="loe-card-close" title="{% trans 'Close' %}">×</span></div>
+        <div class="loe-card-body">
+          <div class="pr-field" style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;">
+            <div><label>{% trans "Title" %}</label><input type="text" data-field="title" maxlength="255"></div>
+            <div><label>{% trans "Category" %}</label><input type="text" data-field="category" maxlength="100" list="loe-categories"><datalist id="loe-categories"></datalist></div>
+          </div>
+          <div class="pr-field"><label>{% trans "Key" %} <small class="pr-help" style="display:inline">— {% trans "stable id, used in exports" %}</small></label><input type="text" id="loe-key" readonly style="width:100%;background:#f9fafb;"></div>
+          <div class="pr-field"><label>{% trans "Link" %}</label><input type="url" data-field="link" maxlength="500" placeholder="https://"></div>
+          <div class="pr-field loe-quill"><label>{% trans "Description" %}</label><div id="loe-quill"></div><div class="pr-help">{% trans "Same editor as the Thanks page; the image button uploads to the survey's media." %}</div></div>
+          <div class="pr-field">
+            <label><i class="fas fa-paperclip"></i> {% trans "Attachments" %} <small class="pr-help" style="display:inline">— {% trans "first image is the cover" %}</small></label>
+            <div id="loe-assets"></div>
+            <div class="loe-drop" id="loe-drop">
+              <i class="fas fa-upload"></i> {% trans "Drop files or" %} <u>{% trans "choose" %}</u> · {% trans "image, audio, document, video" %} ≤ {{ max_asset_mb }} MB
+              &nbsp;·&nbsp; <span id="loe-embed-link"><i class="fab fa-youtube"></i> <u>{% trans "embed link" %}</u></span>
+              <input type="file" id="loe-file" multiple hidden accept="image/*,audio/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.odt,.ods">
+            </div>
+          </div>
+          <div class="pr-field"><label>{% trans "Geometry" %}</label>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:.8rem;color:#6b7280;border:1px solid var(--border-color);border-radius:6px;padding:.4rem .6rem;">
+              <span id="loe-geom">—</span>
+              <button type="button" class="btn btn-sm btn-link p-0" id="loe-move">{% trans "Edit on map" %}</button>
+            </div>
+          </div>
+        </div>
+        <div class="loe-card-foot">
+          <button type="button" class="btn btn-sm btn-outline-danger" id="loe-delete"><i class="fas fa-trash"></i> {% trans "Delete object" %}</button>
+          <span style="flex:1"></span>
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="loe-prev">‹ {% trans "Prev" %}</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="loe-next">{% trans "Next" %} ›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Import dialog: one modal, three modes. #}
+<div class="modal fade" id="loe-import-modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title" id="loe-import-title">{% trans "Import" %}</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
+    <div class="modal-body">
+      <input type="file" id="loe-import-file" class="form-control-file" multiple>
+      <div id="loe-import-mapping" hidden style="margin-top:.8rem;">
+        <div class="pr-help" style="margin-bottom:.4rem;">{% trans "Which property fills each field:" %}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+          <label style="font-size:.78rem;">{% trans "Key" %}<select class="form-control form-control-sm" data-map="key"></select></label>
+          <label style="font-size:.78rem;">{% trans "Title" %}<select class="form-control form-control-sm" data-map="title"></select></label>
+          <label style="font-size:.78rem;">{% trans "Category" %}<select class="form-control form-control-sm" data-map="category"></select></label>
+          <label style="font-size:.78rem;">{% trans "Link" %}<select class="form-control form-control-sm" data-map="link"></select></label>
+          <label style="font-size:.78rem;grid-column:1 / -1;">{% trans "Description" %}<select class="form-control form-control-sm" data-map="description"></select></label>
+        </div>
+      </div>
+      <div class="loe-modal-report" id="loe-import-report" style="margin-top:.8rem;"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">{% trans "Close" %}</button>
+      <button type="button" class="btn btn-sm btn-primary" id="loe-import-go">{% trans "Import" %}</button>
+    </div>
+  </div></div>
+</div>
+
+<script type="application/json" id="loe-objects">{{ objects_json|safe }}</script>
+<script type="application/json" id="loe-categories-data">{{ summary.categories|safe }}</script>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+  var mapboxUrl = '{{ MAPBOX_URL }}';
+  var mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
+  var map = L.map('loe-map', { zoomControl: true }).setView([{{ survey.start_map_postion.y|default:"48.85" }}, {{ survey.start_map_postion.x|default:"2.35" }}], {{ survey.start_map_zoom|default:"12" }});
+  {# The partial is bare JS (no script tag of its own) — every includer wraps it. #}
+  {% include "partials/basemap_layers.html" %}
+</script>
+<script src="{% static 'js/layer_editor.js' %}"></script>
+{% endblock %}
