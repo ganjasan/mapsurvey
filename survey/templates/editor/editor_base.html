@@ -24,6 +24,7 @@
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js" crossorigin="anonymous"></script>
     <script src="{% static 'js/editor_dialog.js' %}"></script>
     <script src="{% static 'js/editor_clipboard.js' %}"></script>
+    <script src="{% static 'js/editor_survey_rename.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
     {% if MOBILE_EDITOR_NAV %}
     {% comment %}Dev-only cache-buster: DEBUG serves unhashed static, and stale
     copies of exactly these files produced three phantom layout bugs in one
@@ -73,6 +74,35 @@
         .editor-navbar a { color: #6b7280; text-decoration: none; }
         .editor-navbar a:hover { color: var(--accent); }
         .editor-navbar .survey-name { font-weight: 700; color: #111827; font-size: 1.1rem; }
+        /* Inline rename (editor_survey_rename.js). The wrapper is the position
+           anchor for the counter and the error, so neither can reflow the
+           navbar row while the creator types. */
+        .survey-name--editable { position: relative; display: inline-flex; align-items: center; flex: 0 0 auto; }
+        .survey-name__button {
+            font: inherit; color: inherit; background: none; border: none; padding: 2px 6px;
+            margin-left: -6px; border-radius: 4px; cursor: text; text-align: left;
+            white-space: nowrap;
+        }
+        .survey-name__button:hover { background: #f3f4f6; }
+        .survey-name__button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+        .survey-name__input {
+            font: inherit; color: inherit; padding: 2px 6px; margin-left: -6px;
+            max-width: 100%; border: 1px solid var(--accent); border-radius: 4px; background: #fff;
+        }
+        .survey-name__input:focus { outline: none; }
+        .survey-name__counter {
+            position: absolute; right: 6px; top: 100%; font-size: 0.7rem; font-weight: 400;
+            color: #6b7280; background: #fff; padding: 0 3px; border-radius: 3px;
+        }
+        .survey-name__counter.is-full { color: #b91c1c; font-weight: 600; }
+        .char-counter { font-size: 0.75rem; color: #6b7280; text-align: right; min-height: 1em; }
+        .char-counter.is-full { color: #b91c1c; font-weight: 600; }
+        .survey-name__error {
+            position: absolute; left: 0; top: 100%; z-index: 20; margin-top: 2px;
+            font-size: 0.75rem; font-weight: 400; color: #fff; background: #b91c1c;
+            padding: 2px 6px; border-radius: 4px; white-space: nowrap; max-width: 60vw;
+            overflow: hidden; text-overflow: ellipsis;
+        }
         .editor-navbar .spacer { flex: 1; }
 
         .editor-container {

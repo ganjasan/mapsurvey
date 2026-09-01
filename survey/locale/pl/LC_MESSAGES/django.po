@@ -7652,3 +7652,12 @@ msgstr "Zbyt wiele przesłań, spróbuj później."
 #: survey/views.py:2184
 msgid "No file received."
 msgstr "Nie otrzymano żadnego pliku."
+
+msgid "Rename survey"
+msgstr "Zmień nazwę ankiety"
+
+msgid "Could not save the name. Check your connection and try again."
+msgstr "Nie udało się zapisać nazwy. Sprawdź połączenie i spróbuj ponownie."
+
+msgid "A draft is renamed by renaming the published survey."
+msgstr "Wersję roboczą zmienia się, zmieniając nazwę opublikowanej ankiety."

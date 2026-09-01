@@ -5,13 +5,7 @@
 {% block page_title %}{{ survey.name }}{% endblock %}
 
 {% block navbar_content %}
-<span class="survey-name">
-    {% if survey.is_draft_copy %}
-        {% blocktrans with name=survey.published_version.name %}Draft of {{ name }}{% endblocktrans %}
-    {% else %}
-        {{ survey.name }}
-    {% endif %}
-</span>
+{% survey_title survey %}
 
 {% include "editor/partials/_survey_nav_tabs.html" with active_tab="build" %}
 {% endblock %}

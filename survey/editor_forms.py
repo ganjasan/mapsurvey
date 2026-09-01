@@ -37,6 +37,22 @@ class SurveyCreateForm(forms.ModelForm):
         }
 
 
+class SurveyRenameForm(forms.ModelForm):
+    """The name, alone — what the editor header's inline rename writes.
+
+    Deliberately not ``SurveyHeaderForm``: that form binds languages, basemaps
+    and default_basemap too, so a POST carrying only ``name`` would bind those
+    as absent and could rewrite them. A one-field ModelForm cannot damage
+    anything else, and still runs the model's own ``max_length`` and
+    ``validate_url_name`` so the header and Survey settings can never disagree
+    on what a valid name is.
+    """
+    class Meta:
+        model = SurveyHeader
+        fields = ['name']
+        labels = {'name': _('Survey name')}
+
+
 class SurveyBriefForm(forms.Form):
     """The AI brief — what the creator tells the model about their project.
 
@@ -116,7 +132,10 @@ class SurveyHeaderForm(forms.ModelForm):
         # future paid-tier flag on the model, not a creator-facing field.
         fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'cover_image', 'basemaps', 'default_basemap']
         labels = {
-            'name': _('Name'),
+            # "Name" with the placeholder "survey_name" read as an identifier
+            # nobody should touch, which is how surveys ended up called things
+            # like demo_city_feedback. It is the title respondents see.
+            'name': _('Survey name'),
             'redirect_url': _('Redirect URL'),
             'available_languages': _('Available languages'),
             'visibility': _('Visibility'),
@@ -125,7 +144,13 @@ class SurveyHeaderForm(forms.ModelForm):
             'default_basemap': _('Default base map'),
         }
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'survey_name'}),
+            # Django renders maxlength from the model field; data-char-counter
+            # makes that limit visible before it bites (editor_survey_rename.js),
+            # on both the settings page and its HTMX panel twin.
+            'name': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': _('e.g. Park improvements'),
+                'data-char-counter': '',
+            }),
             'redirect_url': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '#'}),
             'available_languages': forms.HiddenInput(attrs={'id': 'id_available_languages'}),
             'visibility': forms.Select(attrs={'class': 'form-control'}),

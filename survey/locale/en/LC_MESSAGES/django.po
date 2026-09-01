@@ -6747,3 +6747,12 @@ msgstr ""
 #~ msgstr ""
 #~ "Thank you for registering. A confirmation code has been sent to your email. "
 #~ "Please confirm your registration by clicking the link provided."
+
+msgid "Rename survey"
+msgstr ""
+
+msgid "Could not save the name. Check your connection and try again."
+msgstr ""
+
+msgid "A draft is renamed by renaming the published survey."
+msgstr ""

@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block navbar_content %}
-<span class="survey-name">{{ survey.name }}</span>
+{% survey_title survey %}
 {% include "editor/partials/_survey_nav_tabs.html" with active_tab="settings" hide_status_badge=False %}
 {% endblock %}
 

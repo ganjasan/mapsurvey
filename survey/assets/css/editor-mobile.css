@@ -143,6 +143,21 @@ body.mobile-nav-enabled .pr-container { height: auto; flex: 1; min-height: 0; }
         white-space: nowrap;
         font-size: 1rem;
     }
+    /* The editable title is a grid item here, not an inline flex child: it must
+       be allowed to shrink so the name ellipsises inside its 1fr cell instead
+       of pushing the version chip and the ⋯ overflow off row 1. */
+    body.mobile-nav-enabled .editor-navbar .survey-name--editable {
+        flex: initial;
+        min-width: 0;
+    }
+    body.mobile-nav-enabled .editor-navbar .survey-name__button {
+        /* min-width:0 rather than max-width:100%: the wrapper is auto-sized on
+           desktop, where a percentage max-width resolves circularly and
+           truncated the name at ~150px. */
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
     /* Desktop-only toolbar items collapse into the ⋯ overflow menu.
        !important: some carry Bootstrap's .d-inline, whose display:inline
        !important would win otherwise. */

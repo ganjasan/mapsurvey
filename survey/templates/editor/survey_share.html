@@ -1,6 +1,7 @@
 {% extends "editor/editor_base.html" %}
 
 {% load i18n %}
+{% load survey_filters %}
 {% block page_title %}{% trans "Share" %} – {{ survey.name }}{% endblock %}
 
 {% block extra_head %}
@@ -65,7 +66,7 @@
 {% endblock %}
 
 {% block navbar_content %}
-<span class="survey-name">{{ survey.name }}</span>
+{% survey_title survey %}
 {% include "editor/partials/_survey_nav_tabs.html" with active_tab="share" %}
 {% endblock %}
 

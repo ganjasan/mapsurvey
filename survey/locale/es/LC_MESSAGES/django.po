@@ -7617,3 +7617,12 @@ msgstr "Demasiadas subidas; inténtalo más tarde."
 #: survey/views.py:2184
 msgid "No file received."
 msgstr "No se recibió ningún archivo."
+
+msgid "Rename survey"
+msgstr "Cambiar el nombre de la encuesta"
+
+msgid "Could not save the name. Check your connection and try again."
+msgstr "No se ha podido guardar el nombre. Comprueba tu conexión e inténtalo de nuevo."
+
+msgid "A draft is renamed by renaming the published survey."
+msgstr "Un borrador se renombra cambiando el nombre de la encuesta publicada."

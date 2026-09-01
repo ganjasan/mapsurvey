@@ -7612,3 +7612,12 @@ msgstr "Liian monta latausta, yritä myöhemmin uudelleen."
 #: survey/views.py:2184
 msgid "No file received."
 msgstr "Tiedostoa ei vastaanotettu."
+
+msgid "Rename survey"
+msgstr "Nimeä kysely uudelleen"
+
+msgid "Could not save the name. Check your connection and try again."
+msgstr "Nimen tallennus epäonnistui. Tarkista yhteys ja yritä uudelleen."
+
+msgid "A draft is renamed by renaming the published survey."
+msgstr "Luonnos nimetään uudelleen nimeämällä julkaistu kysely uudelleen."

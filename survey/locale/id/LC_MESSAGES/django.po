@@ -7573,3 +7573,12 @@ msgstr "Terlalu banyak unggahan, coba lagi nanti."
 #: survey/views.py:2184
 msgid "No file received."
 msgstr "Tidak ada berkas yang diterima."
+
+msgid "Rename survey"
+msgstr "Ubah nama survei"
+
+msgid "Could not save the name. Check your connection and try again."
+msgstr "Nama tidak dapat disimpan. Periksa koneksi Anda dan coba lagi."
+
+msgid "A draft is renamed by renaming the published survey."
+msgstr "Draf diubah namanya dengan mengubah nama survei yang sudah dipublikasikan."

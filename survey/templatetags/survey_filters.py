@@ -96,3 +96,26 @@ def section_next_label(section, language=None):
     Empty/None means "use the default Next/Finish" — the template decides which.
     """
     return section.get_translated_next_label(language) or ''
+
+
+@register.inclusion_tag('editor/partials/_survey_title.html', takes_context=True)
+def survey_title(context, survey):
+    """The survey name in the editor navbar, on every editor page.
+
+    A tag rather than an {% include %} so the rename affordance cannot drift
+    between pages: permission and the field's length limit are decided here
+    once, not re-derived from whatever each view happened to put in its
+    context. The role comes off the request, where
+    ``survey_permission_required`` already put it.
+    """
+    from survey.models import SurveyHeader
+
+    request = context.get('request')
+    role = getattr(request, 'effective_survey_role', None)
+    return {
+        'survey': survey,
+        # A draft copy's header names the survey it is a draft OF, so there is
+        # nothing on it to rename — the canonical header is where that happens.
+        'can_rename': role == 'owner' and not survey.is_draft_copy,
+        'name_max_length': SurveyHeader._meta.get_field('name').max_length,
+    }
