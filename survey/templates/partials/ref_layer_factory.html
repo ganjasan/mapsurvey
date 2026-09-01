@@ -1,0 +1,90 @@
+{% comment %}
+Reference-layer factory (openspec: reference-overlay-layers, responses-reference-layers).
+
+Bare JS, included INSIDE a <script> block. Defines window.RefLayerFactory once; the
+respondent shell (reference_layers.html) and the Responses tab both build their
+overlays through it, so simplestyle handling, circle markers and escaped labels
+cannot drift between the two. No map state lives here: build() returns a fresh
+L.GeoJSON for whichever map the caller owns.
+
+  RefLayerFactory.build(meta, featureCollection, opts) -> L.GeoJSON
+    meta: {id, name, color, label_field, show_popups} from build_map_layers_metadata
+    opts.pane        pane name (default 'refLayersPane'; the caller creates it)
+    opts.interactive overrides meta.show_popups (Responses passes false: a
+                     reference polygon must never swallow a click meant for an answer)
+{% endcomment %}
+(function() {
+    if (window.RefLayerFactory) return;
+
+    function esc(v) {
+        return String(v).replace(/[&<>"']/g, function(c) {
+            return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
+        });
+    }
+
+    // simplestyle-spec properties win over the layer's fallback color, so a plan
+    // exported with its own colors arrives already styled.
+    function featureStyle(meta, props, pane) {
+        props = props || {};
+        return {
+            color: props['stroke'] || meta.color,
+            weight: props['stroke-width'] != null ? Number(props['stroke-width']) : 2,
+            opacity: props['stroke-opacity'] != null ? Number(props['stroke-opacity']) : 0.9,
+            fillColor: props['fill'] || meta.color,
+            fillOpacity: props['fill-opacity'] != null ? Number(props['fill-opacity']) : 0.15,
+            pane: pane
+        };
+    }
+
+    function build(meta, fc, opts) {
+        opts = opts || {};
+        var pane = opts.pane || 'refLayersPane';
+        var interactive = opts.interactive != null ? !!opts.interactive : !!meta.show_popups;
+        return L.geoJSON(fc, {
+            pane: pane,
+            interactive: interactive,
+            style: function(f) { return featureStyle(meta, f.properties, pane); },
+            pointToLayer: function(f, latlng) {
+                var p = f.properties || {};
+                // Circle markers, never default pins: a pin reads as an answer.
+                return L.circleMarker(latlng, {
+                    pane: pane,
+                    radius: 6,
+                    color: p['marker-color'] || meta.color,
+                    fillColor: p['marker-color'] || meta.color,
+                    fillOpacity: 0.85,
+                    interactive: interactive
+                });
+            },
+            onEachFeature: function(f, lyr) {
+                var p = f.properties || {};
+                if (meta.label_field && p[meta.label_field] != null) {
+                    // A permanent tooltip on a path is anchored once, at add
+                    // time, via getCenter() -- a projected centroid. On a map
+                    // whose container was still 0x0 (a hidden Responses pane,
+                    // a collapsed panel) that centroid is garbage and the
+                    // label never moves again. The bounds centre is pure
+                    // latlng arithmetic and correct in any state of the map.
+                    if (lyr.getBounds) {
+                        lyr.getCenter = function() { return this.getBounds().getCenter(); };
+                    }
+                    lyr.bindTooltip(esc(p[meta.label_field]), {
+                        permanent: true, direction: 'center', className: 'ref-layer-label'
+                    });
+                }
+                if (interactive) {
+                    var title = p.name != null ? p.name : (meta.label_field ? p[meta.label_field] : null);
+                    var body = p.description != null ? p.description : '';
+                    if (title || body) {
+                        lyr.bindPopup(
+                            (title != null && title !== '' ? '<b>' + esc(title) + '</b>' : '') +
+                            (title && body ? '<br>' : '') + (body ? esc(body) : '')
+                        );
+                    }
+                }
+            },
+        });
+    }
+
+    window.RefLayerFactory = { build: build, esc: esc };
+})();

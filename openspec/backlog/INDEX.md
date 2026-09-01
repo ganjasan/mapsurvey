@@ -2,6 +2,7 @@
 
 | # | Type | Title | Priority | Area | Epic | Created |
 |---|------|-------|----------|------|------|---------|
+| 151 | feature | [Feature-anchored answers — respond about a reference feature, not near it](feature-feature-anchored-answers.md) | high | fullstack | community-engagement | 2026-09-01 |
 | 150 | improvement | [Editor guidance: attributes of a mapped object belong in sub-questions](improvement-subquestion-guidance-in-editor.md) | medium | frontend | community-engagement | 2026-08-25 |
 | 149 | feature | [AI brief: "incident reporting / watch map" use case](feature-ai-brief-incident-reporting-use-case.md) | medium | backend | community-engagement | 2026-08-25 |
 | 148 | feature | [Draw a reference overlay layer directly in the editor](feature-draw-overlay-layer-in-editor.md) | medium | frontend | field-data-collection | 2026-08-25 |

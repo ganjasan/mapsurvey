@@ -8,7 +8,7 @@ import json
 
 MAX_LAYER_BYTES = 10 * 1024 * 1024
 MAX_LAYER_FEATURES = 5000
-MAX_LAYERS_PER_SURVEY = 5
+MAX_LAYERS_PER_SURVEY = 10
 
 
 class LayerValidationError(Exception):
@@ -99,3 +99,26 @@ def validate_layer_upload(data):
     collection = {'type': 'FeatureCollection', 'features': features}
     geojson_str = json.dumps(collection, ensure_ascii=False, separators=(',', ':'))
     return geojson_str, len(features), sorted(properties)
+
+
+def build_map_layers_metadata(survey):
+    """Layer list for a map surface — config only, geometry stays behind the
+    gated endpoint. Empty when the kill switch is off. Consumed by the
+    respondent shell, the editor preview and the Responses tab alike."""
+    from django.conf import settings as django_settings
+    from django.urls import reverse
+    if not django_settings.MAP_REFERENCE_LAYERS:
+        return []
+    return [
+        {
+            'id': layer.pk,
+            'name': layer.name,
+            'color': layer.color,
+            'label_field': layer.label_field,
+            'show_popups': layer.show_popups,
+            'url': reverse('survey_layer_geojson', kwargs={
+                'survey_slug': str(survey.uuid), 'layer_id': layer.pk,
+            }),
+        }
+        for layer in survey.map_layers.all()
+    ]

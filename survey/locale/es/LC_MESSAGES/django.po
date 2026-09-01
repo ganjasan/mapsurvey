@@ -3884,8 +3884,8 @@ msgstr ""
 "choose\">elige un archivo</span>"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:187
-msgid "GeoJSON (WGS84), up to 10 MB, max 5 layers per survey."
-msgstr "GeoJSON (WGS84), hasta 10 MB, máximo 5 capas por encuesta."
+msgid "GeoJSON (WGS84), up to 10 MB, max 10 layers per survey."
+msgstr "GeoJSON (WGS84), hasta 10 MB, máximo 10 capas por encuesta."
 
 #: survey/templates/editor/partials/survey_settings_panel.html:208
 #: survey/templates/editor/partials/thanks_panel.html:29

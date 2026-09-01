@@ -104,6 +104,23 @@ The **Formatted Text block (`html`)** is the extreme case: it collects nothing a
 the whole body, rendered `|safe` in `html_text.html`. `Question.name` for `html` and `image` is an
 editor-only label that never reaches the respondent (see the `question-subtext` spec).
 
+**Reference overlay layers (`SurveyMapLayer`, kill switch `MAP_REFERENCE_LAYERS`)**: creator-uploaded
+GeoJSON rendered read-only beneath answer geometry on four surfaces — the respondent map, the editor
+preview, the Responses **Map pane** and the per-response **map modal** (the 200-px session thumbnail
+stays bare). One styling source: `partials/ref_layer_factory.html` (`window.RefLayerFactory.build`)
+is included before any consumer; `partials/reference_layers.html` (respondent) and
+`editor/partials/analytics_geo_map.html` (Responses) only fetch and place what it builds. Metadata
+comes from `survey/layers.py::build_map_layers_metadata`, geometry only from the gated endpoint
+`survey_layer_geojson` — never inlined. That endpoint admits any collaborator with the `viewer`
+role or above in every survey status (a closed survey is where responses get read); outsiders
+still go through `check_survey_access`, which is deliberately untouched. On Responses, layers are
+non-interactive whatever `show_popups` says, ignore per-section `hidden_layers` (the map
+aggregates all sections), and make the Map pane render even with zero geo answers. On the Map
+pane they are `reference` slots of the `LayerManager`, listed in a titled group beneath the
+answer layers in the Layers panel (own pane each, so stacking = panel order, never fetch order);
+order, visibility and opacity persist in `localStorage['rv2RefLayers:<uuid>']` — browser-only,
+never the model. Cap: `MAX_LAYERS_PER_SURVEY = 10`.
+
 **Hierarchical Questions/Answers**: Both Question and Answer models support self-referential parent relationships via `parent_question_id` and `parent_answer_id` for conditional sub-questions.
 
 **Conditional visibility (`CONDITIONAL_VISIBILITY` kill switch, default ON)**: a

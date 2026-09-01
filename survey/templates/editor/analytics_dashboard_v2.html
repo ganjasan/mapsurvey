@@ -92,8 +92,15 @@
             {% include "editor/partials/analytics_overview_pane.html" %}
         </section>
 
+        {% if map_layers %}
+        {# Reference layers: metadata only, geometry comes from the gated endpoint #}
+        {{ map_layers|json_script:"ref-layers-data" }}
+        <script>
+        {% include "partials/ref_layer_factory.html" %}
+        </script>
+        {% endif %}
         <section id="rv2-pane-map" class="rv2-pane" data-pane-content="map" hidden>
-            {% if geo_features_count %}
+            {% if geo_features_count or map_layers %}
             {# Selection actions live in the global pills bar — no per-panel bar in v2. #}
             <div id="rv2-map-wrap">
                 {% include "editor/partials/analytics_geo_map.html" %}
@@ -1174,6 +1181,32 @@ function sessionGeoOpenMap(objectId) {
             accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
         }).addTo(map);
 
+        /* Reference layers, from the geometry the Map pane already fetched —
+           no second request. Whatever has not arrived yet is simply absent:
+           layers are context, the response is the subject. */
+        var refEntries = window._analyticsRefLayers || [];
+        if (refEntries.length && window.RefLayerFactory) {
+            /* Same visibility, order and opacity as the Map pane's Layers panel:
+               its slots are the source of truth. Added bottom-to-top in panel
+               order, one pane per layer so opacity applies per layer. */
+            var lm = window.layerManager;
+            var ordered = refEntries.filter(function (e) { return e.fc && (!e.slot || e.slot.visible); });
+            if (lm) {
+                var ids = lm.getSlotIds();
+                ordered.sort(function (a, b) {
+                    var ia = a.slot ? ids.indexOf(a.slot.id) : -1, ib = b.slot ? ids.indexOf(b.slot.id) : -1;
+                    return ib - ia;
+                });
+            }
+            ordered.forEach(function (entry, i) {
+                var pane = 'refPane' + i;
+                map.createPane(pane);
+                map.getPane(pane).style.zIndex = 350 + i;
+                map.getPane(pane).style.opacity = entry.slot ? entry.slot.opacity : 1;
+                window.RefLayerFactory.build(entry.meta, entry.fc, { interactive: false, pane: pane }).addTo(map);
+            });
+        }
+
         var qNames = [];
         geoData.features.forEach(function (f) {
             if (qNames.indexOf(f.properties.question) === -1) qNames.push(f.properties.question);
@@ -1312,7 +1345,16 @@ function rv2FitMap(delay) {
         if (!m) return;
         m.invalidateSize();
         var featureLayers = [];
+        /* Reference layers are context, not data: they must not widen the fit. */
+        var refPanes = {};
+        if (window.layerManager) {
+            window.layerManager.getSlotIds().forEach(function (id) {
+                var s = window.layerManager.getSlot(id);
+                if (s && s.type === 'reference') refPanes[s.pane] = true;
+            });
+        }
         m.eachLayer(function (l) {
+            if (l.options && l.options.pane && refPanes[l.options.pane]) return;
             if (l.feature && (l.getBounds || l.getLatLng)) featureLayers.push(l);
         });
         if (featureLayers.length) {

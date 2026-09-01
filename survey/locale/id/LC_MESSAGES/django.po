@@ -3841,8 +3841,8 @@ msgstr ""
 "choose\">pilih berkas</span>"
 
 #: survey/templates/editor/partials/survey_settings_panel.html:187
-msgid "GeoJSON (WGS84), up to 10 MB, max 5 layers per survey."
-msgstr "GeoJSON (WGS84), hingga 10 MB, maksimal 5 lapisan per survei."
+msgid "GeoJSON (WGS84), up to 10 MB, max 10 layers per survey."
+msgstr "GeoJSON (WGS84), hingga 10 MB, maksimal 10 lapisan per survei."
 
 #: survey/templates/editor/partials/survey_settings_panel.html:208
 #: survey/templates/editor/partials/thanks_panel.html:29
