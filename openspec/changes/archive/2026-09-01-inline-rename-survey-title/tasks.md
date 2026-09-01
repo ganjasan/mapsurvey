@@ -14,7 +14,7 @@
 
 - [x] 2.1 Add `editor/partials/_survey_title.html` rendering the name, the `Draft of …` branch, and — only when the viewer is an owner and the survey is not a draft copy — the editable control
 - [x] 2.2 Replace the span in all five templates with the include
-- [ ] 2.3 Verify each of the five pages still renders its title, at desktop and below 768px
+- [~] 2.3 Verify each of the five pages still renders its title, at desktop and below 768px — desktop verified; below 768px NOT verified (window resize had no effect on the viewport in the review environment)
 
 ## 3. Rename endpoint
 
@@ -37,8 +37,8 @@
 
 ## 6. Verify in a browser, not only in tests
 
-- [ ] 6.1 Rename from each of the five pages; reload and confirm the new name; check the dashboard card shows it
-- [ ] 6.2 Below 768px: entering edit mode does not reflow the navbar grid or push the version chip / ⋯ overflow off row 1
-- [ ] 6.3 Type a name at exactly the limit and one over; confirm the counter and the rejection
-- [ ] 6.4 Rename a published survey and confirm respondents see the new name; rename a draft and confirm the draft header is untouched
-- [ ] 6.5 Run the template-comment guard test right after editing templates, and `./run_tests.sh survey` once at the end
+- [~] 6.1 Rename from each of the five pages; reload and confirm the new name; check the dashboard card shows it — verified from Survey and Responses, reload confirmed; the dashboard card was not re-checked
+- [ ] 6.2 NOT DONE — below 768px: entering edit mode does not reflow the navbar grid or push the version chip / ⋯ overflow off row 1
+- [x] 6.3 Type a name at exactly the limit and one over; confirm the counter and the rejection
+- [ ] 6.4 NOT DONE in a browser — both covered by tests (SurveyInlineRenameTest), neither checked on the respondent page
+- [x] 6.5 Run the template-comment guard test right after editing templates, and `./run_tests.sh survey` once at the end
