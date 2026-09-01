@@ -106,8 +106,8 @@ editor-only label that never reaches the respondent (see the `question-subtext` 
 
 **Reference overlay layers (`SurveyMapLayer`, kill switch `MAP_REFERENCE_LAYERS`)**: creator-uploaded
 GeoJSON rendered read-only beneath answer geometry on four surfaces — the respondent map, the editor
-preview, the Responses **Map pane** and the per-response **map modal** (the 200-px session thumbnail
-stays bare). One styling source: `partials/ref_layer_factory.html` (`window.RefLayerFactory.build`)
+preview, the Responses **Map pane**, its **Overview thumbnail** and the per-response **map modal**
+(the 200-px drawer thumbnail stays bare). One styling source: `partials/ref_layer_factory.html` (`window.RefLayerFactory.build`)
 is included before any consumer; `partials/reference_layers.html` (respondent) and
 `editor/partials/analytics_geo_map.html` (Responses) only fetch and place what it builds. Metadata
 comes from `survey/layers.py::build_map_layers_metadata`, geometry only from the gated endpoint

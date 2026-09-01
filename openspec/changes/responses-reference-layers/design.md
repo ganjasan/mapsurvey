@@ -152,8 +152,13 @@ SortableJS lists rather than one with a divider: a divider inside a single list 
 are dragged past it, and the group also encodes the rule that reference material never rises
 above an answer layer — the order fed to `LayerManager` is always answers, then the group.
 Rows carry a square colour swatch (answers use a geometry glyph) and a muted label.
-*The response modal reads the same slots*: hidden layers are skipped, opacity is applied to its
-pane, and layers are added bottom-to-top in panel order.
+*The response modal and the Overview thumbnail read the same state* through one renderer,
+`window.rv2RenderRefLayers(map)`: panel slots when the Map pane has been opened, saved prefs or
+survey position before that; hidden layers skipped, opacity per pane, bottom-to-top in panel
+order. The loader fires `analytics:reflayer` on every arrival so a map built before the fetches
+finished (the Overview thumbnail is visible at page load) fills in as geometry lands, and the
+thumbnail re-renders on every return to Overview to pick up panel changes (owner: the thumbnail
+without layers read as a bug, 2026-09-01).
 *Alternative rejected:* keeping the Leaflet overlays control and adding a second reorder UI to
 it. Two controls for one concept, and Leaflet's control cannot reorder or dim.
 

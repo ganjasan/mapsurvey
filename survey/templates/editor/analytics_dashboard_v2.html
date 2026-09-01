@@ -1181,31 +1181,9 @@ function sessionGeoOpenMap(objectId) {
             accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
         }).addTo(map);
 
-        /* Reference layers, from the geometry the Map pane already fetched —
-           no second request. Whatever has not arrived yet is simply absent:
-           layers are context, the response is the subject. */
-        var refEntries = window._analyticsRefLayers || [];
-        if (refEntries.length && window.RefLayerFactory) {
-            /* Same visibility, order and opacity as the Map pane's Layers panel:
-               its slots are the source of truth. Added bottom-to-top in panel
-               order, one pane per layer so opacity applies per layer. */
-            var lm = window.layerManager;
-            var ordered = refEntries.filter(function (e) { return e.fc && (!e.slot || e.slot.visible); });
-            if (lm) {
-                var ids = lm.getSlotIds();
-                ordered.sort(function (a, b) {
-                    var ia = a.slot ? ids.indexOf(a.slot.id) : -1, ib = b.slot ? ids.indexOf(b.slot.id) : -1;
-                    return ib - ia;
-                });
-            }
-            ordered.forEach(function (entry, i) {
-                var pane = 'refPane' + i;
-                map.createPane(pane);
-                map.getPane(pane).style.zIndex = 350 + i;
-                map.getPane(pane).style.opacity = entry.slot ? entry.slot.opacity : 1;
-                window.RefLayerFactory.build(entry.meta, entry.fc, { interactive: false, pane: pane }).addTo(map);
-            });
-        }
+        /* Reference layers from the Map pane's cache -- same visibility, order
+           and opacity as its Layers panel, no second request. */
+        if (window.rv2RenderRefLayers) window.rv2RenderRefLayers(map);
 
         var qNames = [];
         geoData.features.forEach(function (f) {

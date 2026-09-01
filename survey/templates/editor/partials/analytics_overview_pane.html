@@ -231,6 +231,14 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
                 m.setView([0, 0], 2);
             }
             window._rv2OverviewMap = m;
+            /* Reference layers, as the Layers panel shows them. They arrive
+               asynchronously and the creator may reorder or dim them on the
+               Map pane, so the thumbnail re-renders on every arrival and on
+               every return to Overview. */
+            if (window.rv2RenderRefLayers) window.rv2RenderRefLayers(m);
+            document.addEventListener('analytics:reflayer', function () {
+                if (window.rv2RenderRefLayers) window.rv2RenderRefLayers(m);
+            });
         }
     }
 
@@ -239,6 +247,7 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
             rv2Router.onPaneChange(function (pane) {
                 if (pane === 'overview') {
                     initOverview();
+                    if (window._rv2OverviewMap && window.rv2RenderRefLayers) window.rv2RenderRefLayers(window._rv2OverviewMap);
                     setTimeout(function () {
                         if (window._rv2OverviewMap) window._rv2OverviewMap.invalidateSize();
                     }, 120);

@@ -54,18 +54,28 @@ dashboard HTML.
 - **WHEN** the dashboard HTML is rendered for a survey with a 2 MB layer
 - **THEN** the HTML carries only the layer metadata (id, name, color, label field, URL) and the geometry is fetched from the layer endpoint
 
-### Requirement: The response map modal renders reference layers
-The full-size map of a single response, opened from the Responses tab, SHALL render the
-survey's reference layers beneath that response's geometry with the same styling, visibility,
-order and opacity as the Map pane, reusing geometry already fetched on the page rather than
-requesting it again. The session
-mini-map thumbnail SHALL NOT render reference layers.
+### Requirement: The response map modal and the Overview thumbnail render reference layers
+The response map modal and the Overview thumbnail SHALL render the survey's reference layers
+beneath the answer geometry with the same styling, visibility, order and opacity as the Map
+pane's Layers panel, reusing geometry already fetched on the page rather than requesting it
+again.
+The Overview thumbnail SHALL reflect changes made in the Layers panel when the creator returns
+to Overview. The session mini-map thumbnail in the response drawer SHALL NOT render reference
+layers.
 
 #### Scenario: One response against the plan
 - **WHEN** the creator opens the full-size map of a response on a survey with a plan layer
 - **THEN** the plan renders beneath the response's geometry and no additional layer request is issued
 
-#### Scenario: Thumbnail stays bare
+#### Scenario: Overview thumbnail shows the layers
+- **WHEN** the creator opens the Responses tab of a survey with reference layers and stays on Overview
+- **THEN** the Response Map thumbnail draws the layers beneath the answers as they arrive, without a request beyond the ones the Map pane makes
+
+#### Scenario: Overview follows the panel
+- **WHEN** the creator hides one layer and dims another on the Map pane, then returns to Overview
+- **THEN** the thumbnail omits the hidden layer and draws the dimmed one at the chosen opacity
+
+#### Scenario: Drawer thumbnail stays bare
 - **WHEN** the session detail drawer renders its mini-map
 - **THEN** no reference layer is drawn on the thumbnail
 

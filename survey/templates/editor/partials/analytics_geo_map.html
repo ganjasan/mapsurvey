@@ -121,6 +121,41 @@ document.addEventListener('DOMContentLoaded', function() {
     var _ownMove = false;
     map.on('dragstart', function() { refFitActive = false; });
     map.on('zoomstart', function() { if (!_ownMove) refFitActive = false; });
+    // Reference layers for any other map on the page -- the Overview thumbnail,
+    // the response modal. Same geometry cache, same visibility, order and
+    // opacity as the Layers panel: its slots when they exist, the saved prefs
+    // (or survey position) before the Map pane has been opened. One pane per
+    // layer so opacity applies per layer; re-rendering replaces the last set.
+    window.rv2RenderRefLayers = function(target) {
+        if (!window.RefLayerFactory) return;
+        (target._rv2RefLayers || []).forEach(function(l) { if (target.hasLayer(l)) target.removeLayer(l); });
+        target._rv2RefLayers = [];
+        var lm = window.layerManager, prefs = _loadRefPrefs();
+        var entries = (window._analyticsRefLayers || []).filter(function(e) { return e.fc; });
+        var slotOf = function(e) { return lm ? lm.getSlot('ref:' + e.meta.id) : null; };
+        var idOf = function(e) { return 'ref:' + e.meta.id; };
+        var rank = function(e) {   // higher = drawn on top
+            var slot = slotOf(e);
+            if (slot && lm) return -lm.getSlotIds().indexOf(slot.id);
+            var saved = (prefs.order || []).indexOf(idOf(e));
+            if (saved !== -1) return -saved;
+            return -1000 + _refPositionIndex(idOf(e));
+        };
+        entries.sort(function(a, b) { return rank(a) - rank(b); });
+        entries.forEach(function(entry, i) {
+            var slot = slotOf(entry);
+            var visible = slot ? slot.visible : (prefs.hidden || []).indexOf(idOf(entry)) === -1;
+            if (!visible) return;
+            var opacity = slot ? slot.opacity : (typeof (prefs.opacity || {})[idOf(entry)] === 'number' ? prefs.opacity[idOf(entry)] : 1);
+            var pane = 'rv2RefPane' + i;
+            if (!target.getPane(pane)) target.createPane(pane);
+            target.getPane(pane).style.zIndex = 350 + i;
+            target.getPane(pane).style.opacity = opacity;
+            var layer = window.RefLayerFactory.build(entry.meta, entry.fc, { interactive: false, pane: pane });
+            layer.addTo(target);
+            target._rv2RefLayers.push(layer);
+        });
+    };
     if (refLayerMetas.length && window.RefLayerFactory) {
         refLayerMetas.forEach(function(meta) {
             var entry = { meta: meta, fc: null, layer: null };
@@ -130,6 +165,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return r.json();
             }).then(function(fc) {
                 entry.fc = fc;
+                // Other maps on the page (Overview thumbnail, response modal)
+                // draw from the same cache; tell them a layer is in.
+                document.dispatchEvent(new CustomEvent('analytics:reflayer', { detail: entry }));
                 whenMapSized(function() {
                     var lm = window.layerManager;
                     if (!lm) return;

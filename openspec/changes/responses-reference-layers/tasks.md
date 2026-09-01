@@ -45,6 +45,7 @@
 - [x] 8.3 Prefs in `localStorage['rv2RefLayers:<uuid>']` — `{order, hidden, opacity}` applied on arrival, saved on every change (reorder hook, checkbox, slider)
 - [x] 8.4 Zero-answer fit extends bounds with every arriving layer and refits until the creator moves the map
 - [x] 8.5 Modal applies the slots' visibility, order and opacity
+- [x] 8.7 Overview thumbnail renders the layers via the shared `rv2RenderRefLayers`, fills in on `analytics:reflayer`, re-renders on return to Overview; modal uses the same renderer
 - [x] 8.6 Browser check on the stand: 8 layers listed beneath answer layers; boundary at the bottom whatever arrives first; drag to top → on top; slider dims only that layer; reload keeps both; respondent page unaffected
 
 ## 9. Wrap-up
