@@ -983,7 +983,7 @@ def editor_section_detail(request, survey_uuid, section_id):
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
         'section_layers': [
             {'layer': layer, 'visible': layer.pk not in hidden_ids}
-            for layer in survey.map_layers.all()
+            for layer in survey.map_layers.defer('geojson')
         ] if settings.MAP_REFERENCE_LAYERS else [],
     })
 

@@ -120,5 +120,8 @@ def build_map_layers_metadata(survey):
                 'survey_slug': str(survey.uuid), 'layer_id': layer.pk,
             }),
         }
-        for layer in survey.map_layers.all()
+        # defer('geojson'): the 100s-of-KB geometry column loaded on every map
+        # surface render fragments the worker heap into an RSS ratchet (the
+        # 2026-09 "exceeded memory limits" incident); only config fields render.
+        for layer in survey.map_layers.defer('geojson')
     ]
