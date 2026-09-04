@@ -255,7 +255,7 @@
                 <div class="col-5">
                     <label for="{{ form.min_objects.id_for_label }}" style="font-weight:600;">{{ form.min_objects.label }}</label>
                     {{ form.min_objects }}
-                    <small class="form-text text-muted">{% trans "objects · 0 = optional. Replaces “Required” for this type." %}</small>
+                    <small class="form-text text-muted">{% trans "The respondent must answer about at least this many. 0 = optional; replaces “Required” for this type." %}</small>
                     {% for error in form.min_objects.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
                 </div>
             </div>

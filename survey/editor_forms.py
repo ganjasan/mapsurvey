@@ -316,7 +316,7 @@ class QuestionForm(forms.ModelForm):
             'image': _('Image'),
             'display_style': _('Display style'),
             'layer': _('Layer'),
-            'min_objects': _('Respondent must answer about at least'),
+            'min_objects': _('Minimum objects'),
             'objects_search': _('Search and category chips'),
         }
         widgets = {
