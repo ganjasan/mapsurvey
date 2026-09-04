@@ -38115,26 +38115,26 @@ class LayerObjectsQuestionEditorTest(TestCase):
         sub = Question.objects.get(name='Rate')
         self.assertEqual(sub.parent_question_id_id, q.pk)
 
-    def test_modal_shows_subquestions_section_for_parent_types_only(self):
+    def test_modal_has_no_subquestions_section(self):
         """
-        GIVEN edit modals for a polygon question with no sub-questions and for a text question
+        GIVEN edit modals for a polygon question with a sub-question and for the sub-question itself
         WHEN they render
-        THEN the polygon modal carries the Sub-questions section with the hint and add button,
-             and the text modal carries the section markup but no add button target of its own
+        THEN neither carries a Sub-questions section — sub-questions are managed only from
+             the section list (owner decision 2026-09-05: a create modal cannot host them
+             because the parent does not exist yet, so the section was one-sided and confusing)
         """
         poly = Question.objects.create(survey_section=self.section, code="LO003", name="Area", input_type="polygon", order_number=1)
-        html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': poly.pk})).content.decode()
-        self.assertIn('id="fg-subquestions"', html)
-        self.assertIn('subquestions-empty-hint', html)
-        self.assertIn(reverse('editor_subquestion_create', kwargs={'survey_uuid': self.survey.uuid, 'parent_id': poly.pk}), html)
         sub = Question.objects.create(survey_section=self.section, code="LO004", name="Why?", input_type="text",
                                       parent_question_id=poly, order_number=1)
-        html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': poly.pk})).content.decode()
-        self.assertIn('subquestion-list--modal', html)
-        self.assertIn('Why?', html)
-        # A sub-question's own modal never nests further.
-        html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': sub.pk})).content.decode()
-        self.assertNotIn('id="fg-subquestions"', html)
+        for q in (poly, sub):
+            html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': q.pk})).content.decode()
+            self.assertNotIn('id="fg-subquestions"', html)
+            self.assertNotIn('subquestion-list--modal', html)
+        html = self.client.get(reverse('editor_question_create', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk})).content.decode()
+        self.assertNotIn('fg-subquestions', html)
+        # The section list keeps its entry point.
+        html = self.client.get(reverse('editor_section_detail', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk})).content.decode()
+        self.assertIn(reverse('editor_subquestion_create', kwargs={'survey_uuid': self.survey.uuid, 'parent_id': poly.pk}), html)
 
     def test_polygon_without_subquestions_saves(self):
         """

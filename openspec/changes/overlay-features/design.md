@@ -121,11 +121,12 @@ group *Map questions*; hidden on form-layout sections like the geo types). New f
 5). Sub-questions use `parent_question_id` exactly as geo questions do; the sub-question
 form excludes geo types and `layer_objects` itself.
 
-The editor's question modal grows a *Sub-questions* section for `point/line/polygon/
-layer_objects`: a nested list rendered from the same `question_list_item.html` partial in
-"sub" mode and an "Add sub-question" button posting to the existing
-`editor_subquestion_create` — the list is a second view onto the same data as the section
-list; no new create path.
+Sub-questions are managed from the section list only ("+ Add Sub-question" under the
+parent card, posting to the existing `editor_subquestion_create`). The question modal
+carried a second *Sub-questions* section for parent-capable types until 2026-09-05; the
+owner removed it after testing: a question being created has no id yet, so the section
+could only appear on edit, and a control present on the second open but not the first
+read as broken. One entry point, no modal/list sync to keep.
 
 ### D-6 Answers reference objects through a nullable FK, one row per sub-question
 

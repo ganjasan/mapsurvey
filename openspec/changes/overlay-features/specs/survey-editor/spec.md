@@ -6,22 +6,16 @@ objects on the map: geo-type questions (point, line, polygon) and `layer_objects
 questions. Sub-questions SHALL have `parent_question_id` set to the parent question. The
 sub-question form SHALL support the same fields as regular questions.
 
-There SHALL be two entry points into the same "New Sub-question" modal:
+The single entry point into the "New Sub-question" modal SHALL be the section list: a
+prominent, full-width button labelled "+ Add Sub-question" with a `fa-plus` icon, rendered
+**inside** every parent-capable question card directly **below** the sub-question list,
+always visible including when the list is empty, styled like the section-level "+ New
+Question" button, sized for the nested context. The question modal itself SHALL NOT carry a
+Sub-questions section: a question being created has no id to hang sub-questions on, so a
+modal section could only ever work for edits, and a control that appears on the second
+open but not the first reads as broken.
 
-1. Inside the question modal of a parent-capable type, a **Sub-questions** section listing
-   the existing sub-questions (drag to reorder, edit, delete) with an "Add sub-question"
-   button. When the list is empty it SHALL show the geo tip line ("Describe each place with
-   sub-questions — each becomes a column in QGIS") and nothing else; a parent question with
-   zero sub-questions SHALL remain valid and saveable.
-2. In the section list, a prominent, full-width button labelled "+ Add Sub-question" with a
-   `fa-plus` icon, rendered **inside** every parent-capable question card directly **below**
-   the sub-question list, always visible including when the list is empty, styled like the
-   section-level "+ New Question" button, sized for the nested context.
-
-Both lists SHALL render the same partial and SHALL stay in sync after create, edit, reorder
-or delete without a page reload.
-
-When the survey is in a read-only state (status `published` or `closed`), both entry points
+When the survey is in a read-only state (status `published` or `closed`), the entry point
 SHALL be rendered `disabled` with the tooltip "Create a draft to edit". There SHALL NOT be
 a separate icon-button affordance for adding sub-questions.
 
@@ -36,13 +30,9 @@ used for a top-level question.
 - **WHEN** the user clicks "+ Add Sub-question" on a point-type question card and creates a choice sub-question
 - **THEN** a Question is created with `parent_question_id` set to the point question, and it appears nested under the parent in the question list
 
-#### Scenario: Add sub-question from inside the modal
-- **WHEN** the user edits a `layer_objects` question and clicks "Add sub-question" in the modal's Sub-questions section, creating a rating sub-question
-- **THEN** the sub-question appears in the modal's list and, after closing, nested under the parent in the section list
-
-#### Scenario: Empty list hints, does not block
+#### Scenario: No sub-questions does not block
 - **WHEN** the user creates a polygon question and saves it without any sub-question
-- **THEN** the question is saved, and the modal's Sub-questions section shows only the geo tip line and the add button
+- **THEN** the question is saved; the modal carries no Sub-questions section on create or on edit
 
 #### Scenario: Sub-question button only on parent-capable questions
 - **WHEN** the question list shows a `text` question, a `point` question and a `layer_objects` question
@@ -57,8 +47,8 @@ used for a top-level question.
 - **THEN** the "+ Add Sub-question" button is rendered below the sub-question list, in addition to the listed sub-questions
 
 #### Scenario: Button disabled in read-only state
-- **WHEN** the survey status is `published` and the editor renders a parent-capable question card or modal
-- **THEN** both entry points are rendered with the `disabled` attribute and the tooltip "Create a draft to edit"
+- **WHEN** the survey status is `published` and the editor renders a parent-capable question card
+- **THEN** the "+ Add Sub-question" button is rendered with the `disabled` attribute and the tooltip "Create a draft to edit"
 
 #### Scenario: Legacy icon-button entry point removed
 - **WHEN** the editor renders any parent-capable question card

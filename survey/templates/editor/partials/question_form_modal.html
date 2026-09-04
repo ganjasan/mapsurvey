@@ -265,54 +265,6 @@
             </div>
         </div>
 
-        {% comment %}Sub-questions inside the modal (spec survey-editor "Sub-question
-        management"): entry point №1. Same modal, same create endpoint as the "+ Add
-        Sub-question" button under the question in the section list (entry point №2).
-        A parent question with no sub-questions is a normal, saveable state — the empty
-        list only hints. Shown for parent-capable types by toggleTypeScopedFields.{% endcomment %}
-        {% if question and not question.parent_question_id_id %}
-        <div class="form-group" id="fg-subquestions" style="display:none;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;">
-            <label style="font-weight:600;margin-bottom:2px;"><i class="fas fa-list-ol"></i> {% trans "Sub-questions" %}
-                <small class="text-muted" style="font-weight:400;">— {% trans "asked about every object the respondent opens or marks" %}</small></label>
-            {% with sub_questions=question.subQuestions %}
-            {% if sub_questions %}
-            <ul class="subquestion-list subquestion-list--modal" style="margin:6px 0 0;padding:0;list-style:none;">
-                {% for subq in sub_questions %}
-                <li class="question-item" data-question-id="{{ subq.id }}" data-input-type="{{ subq.input_type }}" style="margin-bottom:4px;">
-                    <div class="question-item-row">
-                        <span class="q-name">{{ subq.name|default:"(unnamed)" }}</span>
-                        <span class="badge badge-secondary">{{ subq|input_type_label }}</span>
-                        {% if subq.required %}<span class="badge badge-danger">{% trans "Required" %}</span>{% endif %}
-                        <span class="q-actions">
-                            <button type="button" title="{% trans 'Edit' %}" {% if is_read_only %}disabled{% else %}
-                                    hx-get="{% url 'editor_question_edit' survey.uuid subq.id %}" hx-target="#questionModalBody" hx-swap="innerHTML"{% endif %}>
-                                <i class="fas fa-pen"></i></button>
-                            <button type="button" title="{% trans 'Delete' %}" class="text-danger" {% if is_read_only %}disabled{% else %}
-                                    hx-post="{% url 'editor_question_delete' survey.uuid subq.id %}" hx-target="closest li" hx-swap="outerHTML"
-                                    hx-confirm="{% trans 'Delete this sub-question?' %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'{% endif %}>
-                                <i class="fas fa-trash"></i></button>
-                        </span>
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <div class="text-muted" style="font-size:.8rem;margin:4px 0 6px;" id="subquestions-empty-hint">
-                {% trans "Describe each object with sub-questions — each becomes a column of your export. A question without them is fine too." %}
-            </div>
-            {% endif %}
-            {% endwith %}
-            <button type="button" class="add-question-btn add-question-btn--sub" id="modal-add-subquestion" style="margin-top:6px;"
-                    {% if is_read_only %}disabled title="{% trans 'Create a draft to edit' %}"{% else %}
-                    hx-get="{% url 'editor_subquestion_create' survey.uuid question.id %}" hx-target="#questionModalBody" hx-swap="innerHTML"{% endif %}>
-                <i class="fas fa-plus"></i> {% trans "Add sub-question" %}
-            </button>
-        </div>
-        {% elif not question and not parent %}
-        <div class="form-group" id="fg-subquestions" style="display:none;">
-            <small class="text-muted"><i class="fas fa-list-ol"></i> {% trans "Sub-questions — asked about every object — can be added right after the question is created." %}</small>
-        </div>
-        {% endif %}
 
         {% include "editor/partials/_visibility_block.html" %}
 
@@ -644,8 +596,7 @@
     // ── Type-scoped settings (#111): only fields the selected type consumes ──
     var GEO_TYPES = ['point', 'line', 'polygon'];
     var DISPLAY_BLOCK_TYPES = ['image', 'html'];
-    // Mirrors survey.question_types.PARENT_TYPES / NOT_REQUIRABLE_TYPES.
-    var PARENT_TYPES = ['point', 'line', 'polygon', 'layer_objects'];
+    // Mirrors survey.question_types.NOT_REQUIRABLE_TYPES.
     var NOT_REQUIRABLE_TYPES = ['image', 'html', 'layer_objects'];
 
     // CSS-hidden inputs still submit, so stored values pass through a save
@@ -684,7 +635,6 @@
         show('fg-required', NOT_REQUIRABLE_TYPES.indexOf(t) === -1);
         show('name-internal-hint', DISPLAY_BLOCK_TYPES.indexOf(t) !== -1);
         show('fg-layer-objects', t === 'layer_objects');
-        show('fg-subquestions', PARENT_TYPES.indexOf(t) !== -1);
         toggleHtmlBodyEditor(t === 'html');
     }
 

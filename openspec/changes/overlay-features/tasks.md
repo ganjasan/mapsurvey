@@ -36,6 +36,7 @@
 - [x] 3.5 Section list item: `layer_objects` badge with layer name + count and `min N` badge; "Add Sub-question" under `layer_objects` cards
 - [x] 3.6 Modal preview for `layer_objects` renders the list block; `editor_question_preview_live` handles the new types
 - [x] 3.7 Tests: picker groups/visibility rules; thumbs widget + storage; `layer_objects` form validation; sub-question exclusion client/server for `layer_objects`; modal Sub-questions list add/reorder/delete and sync with section list; read-only disabled; polygon without sub-questions saves; cloning keeps `Question.layer`
+- [x] 3.8 REMOVED the modal *Sub-questions* section from 3.4 (owner decision 2026-09-05, PR-preview test): on create the parent has no id, so the section only ever showed on edit and read as broken. Sub-questions stay on the section list ("+ Add Sub-question" under the card); spec `survey-editor` now names a single entry point; test replaced by `test_modal_has_no_subquestions_section`
 
 ## 4. PR 2 — Respondent list block, popup and answers (specs `layer-objects-question`, `object-answers`, `reference-overlay-layers` delta)
 
