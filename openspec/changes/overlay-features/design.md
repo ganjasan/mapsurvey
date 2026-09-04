@@ -252,6 +252,12 @@ No kill switch (owner rule); `MAP_REFERENCE_LAYERS=False` still hides every surf
 
 ## Follow-ups noticed during implementation
 
+- `_buildPopupHtml`-style popups must never be looked up by element id: Leaflet keeps a
+  closed popup in the DOM for its 200 ms fade, and a re-bound popup on the same feature
+  carries the same id. The geo popup already scopes to `$popup.find('form')`; the object
+  popup now does too, and unregisters Leaflet's own click opener so a feature click has
+  exactly one opener (found by the owner on the PR preview, task 4.8).
+
 - The public `objects` block lists every object of the layer; on a 221-object layer with
   one answered object that is 220 rows of zeros. Cap or "answered first, fold the rest"
   before a real municipality publishes one.

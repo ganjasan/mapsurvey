@@ -204,11 +204,17 @@ description, which the object endpoint passed through coerce_creator_html.
                 '</form>';
             lyr.unbindPopup();
             lyr.bindPopup(html, _subquestionPopupOptions());
+            // bindPopup also registers Leaflet's own click → openPopup on the
+            // feature. Left in place, a map click opened the stale popup first
+            // and this one 60 ms later; the two forms shared an id for the
+            // 200 ms fade, so `$('#id')` restored into the dying one and the
+            // stale popupclose wiped the highlight. One opener: the group click.
+            lyr.off('click', lyr._openPopup, lyr);
             lyr.off('popupopen').off('popupclose');
-            lyr.on('popupopen', function() {
-                var $popup = $(lyr.getPopup().getElement());
+            lyr.on('popupopen', function(e) {
+                var $popup = $(e.popup.getElement());
                 if (window.initFileUploads) window.initFileUploads($popup[0]);
-                var $form = $('#' + formId);
+                var $form = $popup.find('form.lo-form');   // scoped: never by id
                 var stored = (window._objectAnswers[state.code] || {})[key] || {};
                 Object.keys(stored).forEach(function(name) {
                     var $el = $form.find('[name="' + name + '"]');
@@ -227,9 +233,13 @@ description, which the object endpoint passed through coerce_creator_html.
                     lyr.closePopup();
                 });
             });
-            lyr.on('popupclose', function() {
-                var $form = $('#' + formId);
+            lyr.on('popupclose', function(e) {
+                var el = e.popup && e.popup.getElement();
+                var $form = el ? $(el).find('form.lo-form') : $();
                 if ($form.length) storeForm(state, key, $form);   // closing keeps typed values, like geo
+                // A superseded popup (re-opened on the same feature) closes
+                // after the new one took the highlight — leave that alone.
+                if (e.popup && e.popup !== lyr.getPopup()) return;
                 clearHighlight();
                 state.open = null;
                 renderRows(state);

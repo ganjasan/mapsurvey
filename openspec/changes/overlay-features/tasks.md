@@ -46,6 +46,7 @@
 - [x] 4.5 Tests: constraint; POST upsert and unknown-key ignore; hidden-block discard; min_objects pass/fail; session restore; rendered markup asserts for list, chips (auto rule at 3 vs 6 objects), ✓/badge classes, popup controls (no delete/edit); bound-layer popup vs unbound read-only popup; draw-mode guard (browser pass — the test client cannot drive Leaflet)
 - [x] 4.6 Browser pass on desktop + a 360 px phone: list → popup → ✓ → tick → counter; Next with min unmet; tap over object during point placement places the point; screenshots into the change folder
 - [x] 4.7 (committed 64479a0 — same) PR 2: `feat(survey): objects on the map — list block, popup answers, thumbs`
+- [x] 4.8 Owner test on the PR preview (2026-09-04): feature click on the MAP reopened the popup without the thumb, without the highlight, and closing it wiped the stored answer. Cause: `bindPopup` also registers Leaflet's own click opener, so one click opened the stale popup and then ours; both forms shared an id during the 200 ms fade and `$('#id')` restored into the dying one; the stale `popupclose` reset the highlight and stored the empty visible form. Fix in `layer_objects_block.html`: drop Leaflet's opener (`lyr.off('click', lyr._openPopup, lyr)`), look the form up inside `e.popup.getElement()`, ignore `popupclose` of a superseded popup. Browser-verified (one open per click, thumb restored, highlight kept, answer survives close); no Django test can drive it
 
 ## 5. PR 3 — Read: export, Responses, public results (spec `object-answers`)
 
