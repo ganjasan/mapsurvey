@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Mockup — Objects on the map (respondent) — #151 + #152</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --panel-bg:#ffffff; --panel-border:rgba(0,0,0,.06); --card-bg:#f7f8fa; --card-border:rgba(0,0,0,.06);
+    --card-hover:#f0f2f5; --text-primary:#1a1d21; --text-secondary:#5f6368; --text-tertiary:#9aa0a6;
+    --accent:#4f46e5; --accent-light:#eef2ff; --accent-hover:#4338ca; --input-border:#d1d5db;
+    --danger:#ef4444; --success:#22c55e; --radius-sm:8px; --radius-md:12px; --radius-lg:16px;
+    --shadow-md:0 4px 12px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);
+    --shadow-lg:0 12px 40px rgba(0,0,0,.1),0 4px 12px rgba(0,0,0,.04);
+    --star:#f5b301; --star-empty:#d5d8dc; --obj:#f97316; --obj-dim:#fdba74;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:var(--text-primary); background:#e9ebef; padding:32px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .note { color:var(--text-secondary); max-width:900px; margin:0 0 24px; }
+  .note b { color:var(--text-primary); }
+  h2 { font-size:15px; margin:36px 0 10px; color:var(--text-secondary); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  .callout { position:absolute; background:#111827; color:#fff; font-size:11px; padding:4px 8px; border-radius:6px; box-shadow:var(--shadow-md); z-index:30; white-space:nowrap; }
+  .callout::after { content:""; position:absolute; left:10px; bottom:-5px; border:5px solid transparent; border-top-color:#111827; border-bottom:0; }
+
+  /* ---------- frames ---------- */
+  .desktop { position:relative; width:1180px; height:1040px; background:#dfe6dc; border-radius:10px; overflow:hidden; box-shadow:var(--shadow-lg); }
+  .phone { position:relative; width:390px; height:760px; background:#dfe6dc; border-radius:28px; overflow:hidden; box-shadow:var(--shadow-lg); border:8px solid #111; display:inline-block; vertical-align:top; margin-right:40px; }
+  .map { position:absolute; inset:0; }
+  .map svg { width:100%; height:100%; display:block; }
+
+  /* ---------- panel (mirrors #info_page) ---------- */
+  .panel { position:absolute; top:0; left:0; width:420px; height:100%; background:var(--panel-bg); border-right:1px solid var(--panel-border); box-shadow:var(--shadow-lg); z-index:10; display:flex; flex-direction:column; }
+  .phone .panel { width:88%; }
+  .phone .panel.hidden { transform:translateX(-100%); }
+  .panel-body { flex:1; overflow-y:auto; padding:22px 20px 16px; }
+  .panel-foot { border-top:1px solid var(--panel-border); padding:12px 20px; display:flex; justify-content:space-between; align-items:center; background:#fff; }
+  .btn { border:1px solid var(--input-border); background:#fff; border-radius:var(--radius-sm); padding:8px 14px; font-size:14px; }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  .hint { font-size:12px; color:var(--text-tertiary); }
+  .progress { height:3px; background:var(--accent); width:35%; }
+
+  .sec-title { font-size:19px; font-weight:700; margin:0 0 6px; }
+  .sec-sub { color:var(--text-secondary); margin:0 0 18px; }
+  .q-label { font-weight:600; margin:0 0 6px; }
+
+  /* ---------- objects block ---------- */
+  .objs { margin-top:8px; }
+  .objs-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px; }
+  .objs-head .cnt { font-size:12px; color:var(--text-secondary); }
+  .objs-head .cnt b { color:var(--success); }
+  .search { display:flex; align-items:center; gap:8px; border:1px solid var(--input-border); border-radius:var(--radius-sm); padding:8px 10px; color:var(--text-tertiary); background:#fff; margin-bottom:10px; }
+  .search span { flex:1; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .chip { font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid var(--input-border); background:#fff; color:var(--text-secondary); }
+  .chip.on { background:var(--accent-light); border-color:var(--accent); color:var(--accent); font-weight:600; }
+  .row { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--card-border); background:var(--card-bg); border-radius:var(--radius-sm); margin-bottom:6px; border-left:4px solid var(--obj); }
+  .row .cat { font-size:11px; color:var(--text-tertiary); margin-left:auto; white-space:nowrap; }
+  .row.done { opacity:.62; }
+  .row.done .tick { color:var(--success); font-weight:700; }
+  .row .ico { width:16px; text-align:center; color:var(--obj); }
+  .row.filtered { display:none; }
+
+  /* ---------- card ---------- */
+  .card { border:1px solid var(--accent); border-radius:var(--radius-md); background:#fff; box-shadow:var(--shadow-md); margin:6px 0 10px; overflow:hidden; }
+  .card-head { display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--card-border); border-left:4px solid var(--obj); font-weight:700; }
+  .card-head .x { margin-left:auto; color:var(--text-tertiary); font-weight:400; font-size:18px; }
+  .card-img { height:150px; background:linear-gradient(135deg,#8fbf8f 0%,#5e9a63 50%,#c8a36e 100%); display:flex; align-items:flex-end; padding:8px 10px; color:#fff; font-size:11px; text-shadow:0 1px 2px rgba(0,0,0,.5); }
+  .card-body { padding:12px 14px 4px; }
+  .card-body p { margin:0 0 8px; color:var(--text-primary); }
+  .card-body a { color:var(--accent); }
+  .meta { font-size:12px; color:var(--text-secondary); margin-bottom:8px; }
+  .card-q { padding:10px 14px 12px; border-top:1px solid var(--card-border); }
+  .card-q .q-label { font-size:13px; }
+  .stars { font-size:24px; letter-spacing:3px; color:var(--star-empty); }
+  .stars b { color:var(--star); font-weight:400; }
+  .thumbs { display:flex; gap:8px; }
+  .thumb { flex:1; text-align:center; padding:8px; border:1px solid var(--input-border); border-radius:var(--radius-sm); background:#fff; font-size:16px; }
+  .thumb.on { background:var(--accent-light); border-color:var(--accent); }
+  .ta { border:1px solid var(--input-border); border-radius:var(--radius-sm); padding:8px 10px; min-height:58px; color:var(--text-primary); background:#fff; }
+  .saved { font-size:11px; color:var(--success); margin-top:6px; }
+
+  /* ---------- map chrome ---------- */
+  .reopen { position:absolute; top:12px; left:12px; background:#fff; border-radius:6px; box-shadow:var(--shadow-md); padding:6px 10px; font-weight:700; z-index:5; }
+  .zoom { position:absolute; right:12px; bottom:28px; background:#fff; border-radius:6px; box-shadow:var(--shadow-md); width:34px; text-align:center; font-weight:700; z-index:5; }
+  .zoom div { padding:6px 0; border-bottom:1px solid var(--card-border); }
+  .layers { position:absolute; right:12px; top:12px; background:#fff; border-radius:6px; box-shadow:var(--shadow-md); padding:6px 8px; z-index:5; font-size:12px; }
+  .attrib { position:absolute; right:0; bottom:0; background:rgba(255,255,255,.8); font-size:10px; padding:2px 6px; color:var(--text-secondary); }
+  .badge { font:600 11px sans-serif; fill:#fff; }
+  .lbl { font:600 11px sans-serif; fill:#7c2d12; }
+</style>
+</head>
+<body>
+
+<h1>Объекты на карте — респондент (#151 + #152)</h1>
+<p class="note">
+  Вёрстка = текущий респондентский layout: панель <b>420px</b> слева поверх карты на десктопе,
+  <b>88%</b>-оверлей со стрелкой скрытия на мобильном (никакого bottom-sheet). Новое — только
+  содержимое панели: блок <b>«Объекты на карте»</b> (список + поиск + чипы), раскрывающаяся
+  <b>карточка</b> объекта и <b>вопросы к объекту</b> внутри карточки (звёзды, 👍/👎, комментарий).
+  Ответ сохраняется при изменении, без кнопки Save. Отвеченные строки приглушены и отмечены ✓,
+  счётчик «Отвечено 2 из 10». Кнопка «Далее» — мягкий минимум от создателя.
+</p>
+
+<h2>1 · Desktop — карточка объекта открыта после клика по строке (или по полигону на карте)</h2>
+<div class="desktop">
+  <div class="map">
+    <svg viewBox="0 0 1180 720" preserveAspectRatio="xMidYMid slice">
+      <rect width="1180" height="720" fill="#e8ece6"/>
+      <!-- parks -->
+      <path d="M560 60 L760 40 L820 180 L640 240 Z" fill="#cfe5c4"/>
+      <path d="M900 420 L1120 400 L1150 620 L940 660 Z" fill="#cfe5c4"/>
+      <!-- water -->
+      <path d="M420 700 Q650 600 900 690 L900 720 L420 720 Z" fill="#b9d6ea"/>
+      <!-- blocks -->
+      <g fill="#dcdfd9">
+        <rect x="470" y="300" width="90" height="70"/><rect x="580" y="300" width="120" height="70"/>
+        <rect x="470" y="400" width="90" height="90"/><rect x="580" y="400" width="120" height="90"/>
+        <rect x="740" y="290" width="110" height="80"/><rect x="740" y="400" width="110" height="90"/>
+        <rect x="880" y="120" width="120" height="70"/><rect x="1020" y="120" width="120" height="70"/>
+        <rect x="880" y="220" width="120" height="120"/><rect x="1020" y="220" width="120" height="120"/>
+        <rect x="470" y="520" width="230" height="60"/><rect x="740" y="520" width="110" height="60"/>
+      </g>
+      <!-- roads -->
+      <g stroke="#ffffff" stroke-width="8" fill="none">
+        <path d="M440 0 L440 720"/><path d="M0 385 L1180 385"/><path d="M720 0 L720 720"/><path d="M860 0 L860 720"/><path d="M440 205 L1180 205"/><path d="M440 505 L1180 505"/>
+      </g>
+      <path d="M440 0 L1180 260" stroke="#f3d27a" stroke-width="10" fill="none"/>
+      <!-- objects (layer, orange) -->
+      <g fill="var(--obj-dim)" fill-opacity=".55" stroke="var(--obj)" stroke-width="2">
+        <path d="M900 430 L1010 420 L1020 520 L910 535 Z"/>
+        <rect x="1040" y="240" width="90" height="80"/>
+        <circle cx="640" cy="560" r="14"/>
+        <circle cx="1080" cy="150" r="14"/>
+        <path d="M480 310 L550 310 L550 365 L480 365 Z"/>
+        <path d="M760 420 L840 420 L840 480 L760 480 Z"/>
+        <circle cx="960" cy="640" r="14"/>
+        <path d="M590 410 L690 410 L690 480 L590 480 Z"/>
+        <circle cx="1120" cy="560" r="14"/>
+      </g>
+      <!-- highlighted object -->
+      <path d="M580 70 L740 55 L790 175 L650 220 Z" fill="var(--obj)" fill-opacity=".45" stroke="#c2410c" stroke-width="4"/>
+      <text x="612" y="150" class="lbl">Парк на Ленина 14</text>
+      <!-- answered marks -->
+      <g>
+        <circle cx="1130" cy="245" r="9" fill="#22c55e"/><text x="1126" y="249" class="badge">✓</text>
+        <circle cx="860" cy="420" r="9" fill="#22c55e"/><text x="856" y="424" class="badge">✓</text>
+      </g>
+      <text x="1050" y="290" class="lbl">Школа №12</text>
+      <text x="920" y="480" class="lbl">Развязка</text>
+      <text x="480" y="345" class="lbl">Поликлиника</text>
+    </svg>
+  </div>
+  <div class="layers">☰ Слои</div>
+  <div class="zoom"><div>+</div><div>−</div></div>
+  <div class="attrib">© OpenStreetMap contributors</div>
+
+  <div class="callout" style="left:600px; top:30px;">клик по объекту на карте → та же карточка в панели</div>
+
+  <div class="panel">
+    <div class="progress"></div>
+    <div class="panel-body">
+      <p class="sec-title">Что мы строим в 2026–2027</p>
+      <p class="sec-sub">Десять объектов уже в работе. Посмотрите, что планируется рядом с вами, и скажите, что вы об этом думаете.</p>
+
+      <div class="objs">
+        <div class="objs-head">
+          <span class="q-label">Объекты на карте · 10</span>
+          <span class="cnt">Отвечено <b>2</b> из 10</span>
+        </div>
+        <div class="search">🔍 <span>Поиск по названию…</span></div>
+        <div class="chips">
+          <span class="chip on">Все</span><span class="chip">Дороги</span><span class="chip">Парки</span><span class="chip">Школы</span><span class="chip">Инженерные сети</span>
+        </div>
+
+        <div class="row done"><span class="ico">▰</span> Школа №12 — пристройка <span class="tick">✓</span><span class="cat">Школы</span></div>
+        <div class="row done"><span class="ico">▰</span> Развязка на кольцевой <span class="tick">✓</span><span class="cat">Дороги</span></div>
+
+        <div class="card">
+          <div class="card-head"><span class="ico" style="color:var(--obj)">▰</span> Парк на Ленина 14 <span class="x">×</span></div>
+          <div class="card-img">фото: визуализация проекта</div>
+          <div class="card-body">
+            <div class="meta">Парки · открытие 2027</div>
+            <p>Карманный парк 0,4 га на месте бывшей автостоянки: детская площадка, дорожки, 60 новых деревьев. Старые дубы вдоль улицы сохраняются.</p>
+            <p><a href="#">Подробнее на сайте города ↗</a></p>
+          </div>
+          <div class="card-q">
+            <p class="q-label">Как вы оцениваете этот проект?</p>
+            <div class="stars"><b>★★★★</b>★</div>
+          </div>
+          <div class="card-q">
+            <p class="q-label">Стоит ли городу его строить?</p>
+            <div class="thumbs"><span class="thumb on">👍 Да</span><span class="thumb">👎 Нет</span></div>
+          </div>
+          <div class="card-q">
+            <p class="q-label">Ваш комментарий</p>
+            <div class="ta">Пожалуйста, сохраните старые дубы у дороги.</div>
+            <div class="saved">✓ Сохранено</div>
+          </div>
+        </div>
+
+        <div class="row"><span class="ico">●</span> Поликлиника на Мира <span class="cat">Инженерные сети</span></div>
+        <div class="row"><span class="ico">▰</span> Сквер у вокзала <span class="cat">Парки</span></div>
+        <div class="row"><span class="ico">●</span> Велодорожка вдоль реки <span class="cat">Дороги</span></div>
+        <div class="row"><span class="ico">▰</span> Детский сад на Гагарина <span class="cat">Школы</span></div>
+        <div class="row"><span class="ico">●</span> Насосная станция <span class="cat">Инженерные сети</span></div>
+        <div class="row"><span class="ico">▰</span> Пешеходный мост <span class="cat">Дороги</span></div>
+        <div class="row"><span class="ico">●</span> Тепловой пункт <span class="cat">Инженерные сети</span></div>
+      </div>
+    </div>
+    <div class="panel-foot">
+      <span class="btn">‹ Назад</span>
+      <span class="hint">оцените хотя бы 1 объект — готово</span>
+      <span class="btn primary">Далее ›</span>
+    </div>
+  </div>
+</div>
+
+<h2>2 · Mobile — два состояния: панель скрыта (фильтр «Парки» активен) → тап по объекту → панель с карточкой</h2>
+<div class="phone">
+  <div class="map">
+    <svg viewBox="0 0 390 760" preserveAspectRatio="none">
+      <rect width="390" height="760" fill="#e8ece6"/>
+      <path d="M40 120 L200 100 L240 230 L90 270 Z" fill="#cfe5c4"/>
+      <path d="M200 500 L370 480 L380 680 L220 700 Z" fill="#cfe5c4"/>
+      <g fill="#dcdfd9"><rect x="40" y="330" width="90" height="70"/><rect x="150" y="330" width="100" height="70"/><rect x="270" y="150" width="90" height="120"/><rect x="40" y="430" width="90" height="60"/></g>
+      <g stroke="#fff" stroke-width="7" fill="none"><path d="M140 0 L140 760"/><path d="M0 300 L390 300"/><path d="M260 0 L260 760"/><path d="M0 520 L390 520"/></g>
+      <!-- dimmed (filtered out) -->
+      <g fill="#e5e7eb" stroke="#cbd5e1" stroke-width="2"><rect x="290" y="170" width="60" height="55"/><circle cx="90" cy="365" r="11"/><rect x="160" y="430" width="70" height="50"/><circle cx="330" cy="70" r="11"/></g>
+      <!-- parks (match) -->
+      <g fill="var(--obj-dim)" fill-opacity=".55" stroke="var(--obj)" stroke-width="2">
+        <path d="M220 520 L330 505 L340 610 L235 625 Z"/>
+        <circle cx="90" cy="600" r="14"/>
+      </g>
+      <path d="M60 130 L190 118 L225 215 L100 250 Z" fill="var(--obj)" fill-opacity=".45" stroke="#c2410c" stroke-width="4"/>
+      <text x="70" y="195" class="lbl">Парк на Ленина 14</text>
+      <text x="238" y="575" class="lbl">Сквер у вокзала</text>
+    </svg>
+  </div>
+  <div class="reopen">›</div>
+  <div class="zoom"><div>+</div><div>−</div></div>
+  <div class="callout" style="left:16px; top:56px;">панель скрыта стрелкой, как сейчас</div>
+  <div class="callout" style="left:150px; top:290px;">тап → панель возвращается с карточкой</div>
+  <div style="position:absolute; left:0; right:0; bottom:0; background:#fff; padding:8px 12px; font-size:12px; color:var(--text-secondary); border-top:1px solid var(--panel-border);">Парки · 3 из 10 · Отвечено 0</div>
+</div>
+
+<div class="phone">
+  <div class="map">
+    <svg viewBox="0 0 390 760" preserveAspectRatio="none">
+      <rect width="390" height="760" fill="#e8ece6"/>
+      <path d="M60 130 L190 118 L225 215 L100 250 Z" fill="var(--obj)" fill-opacity=".45" stroke="#c2410c" stroke-width="4"/>
+    </svg>
+  </div>
+  <div class="panel">
+    <div class="progress"></div>
+    <div class="panel-body">
+      <div class="objs">
+        <div class="objs-head">
+          <span class="q-label">Объекты на карте · 10</span>
+          <span class="cnt">Отвечено <b>0</b> из 10</span>
+        </div>
+        <div class="chips"><span class="chip">Все</span><span class="chip">Дороги</span><span class="chip on">Парки</span><span class="chip">Школы</span></div>
+        <div class="card">
+          <div class="card-head"><span class="ico" style="color:var(--obj)">▰</span> Парк на Ленина 14 <span class="x">×</span></div>
+          <div class="card-img">фото</div>
+          <div class="card-body">
+            <div class="meta">Парки · открытие 2027</div>
+            <p>Карманный парк 0,4 га на месте автостоянки. Старые дубы сохраняются.</p>
+            <p><a href="#">Подробнее ↗</a></p>
+          </div>
+          <div class="card-q"><p class="q-label">Как вы оцениваете этот проект?</p><div class="stars">★★★★★</div></div>
+          <div class="card-q"><p class="q-label">Стоит ли городу его строить?</p><div class="thumbs"><span class="thumb">👍 Да</span><span class="thumb">👎 Нет</span></div></div>
+          <div class="card-q"><p class="q-label">Ваш комментарий</p><div class="ta" style="color:var(--text-tertiary)">Напишите…</div></div>
+        </div>
+        <div class="row"><span class="ico">▰</span> Сквер у вокзала <span class="cat">Парки</span></div>
+        <div class="row"><span class="ico">●</span> Аллея на Победы <span class="cat">Парки</span></div>
+      </div>
+    </div>
+    <div class="panel-foot">
+      <span class="btn">‹</span>
+      <span class="hint">оцените хотя бы 1 объект</span>
+      <span class="btn primary">Далее ›</span>
+    </div>
+  </div>
+  <div class="callout" style="left:120px; top:250px;">карточка = та же, что на десктопе</div>
+</div>
+
+<h2>3 · Что здесь намеренно НЕ так, как у PARTIMAP</h2>
+<p class="note">
+  • Вопросы к объекту живут <b>внутри карточки</b>, не отдельным шагом — один клик от «узнал» до «ответил».<br>
+  • Мобильный флоу — существующая панель/стрелка, ни одного нового жеста.<br>
+  • Поиск и чипы показываются только если объектов &gt; 5 или есть поле категории — три варианта трассы не выглядят как база данных.<br>
+  • Отвеченные объекты помечены и на карте (✓), не только в списке.
+</p>
+
+</body>
+</html>

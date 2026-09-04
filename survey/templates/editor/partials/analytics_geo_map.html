@@ -151,7 +151,25 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!target.getPane(pane)) target.createPane(pane);
             target.getPane(pane).style.zIndex = 350 + i;
             target.getPane(pane).style.opacity = opacity;
-            var layer = window.RefLayerFactory.build(entry.meta, entry.fc, { interactive: false, pane: pane });
+            // A layer bound to an Objects-on-the-map question is clickable here:
+            // each object carries its answer badge, and a click selects the
+            // sessions that answered about it (spec object-answers).
+            var stats = entry.meta.object_stats || null;
+            var layer = window.RefLayerFactory.build(entry.meta, entry.fc, { interactive: !!stats, pane: pane });
+            if (stats) {
+                var escFn = window.RefLayerFactory.esc;
+                layer.eachLayer(function(l) {
+                    var p = l.feature && l.feature.properties; if (!p || !p._key) return;
+                    var s = stats[p._key];
+                    var label = escFn(p._title || p._key) + (s ? ' — ' + escFn(s.headline) : '');
+                    l.bindTooltip(label, { direction: 'top', className: 'rv2-object-badge' });
+                    if (s && s.sessions && s.sessions.length) {
+                        l.on('click', function() {
+                            if (window.selectionManager) window.selectionManager.setSelection(s.sessions);
+                        });
+                    }
+                });
+            }
             layer.addTo(target);
             target._rv2RefLayers.push(layer);
         });

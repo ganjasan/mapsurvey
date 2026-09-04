@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Mockup — Object editor screen (D9)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+  :root { --border-color:#e5e7eb; --accent:#4f46e5; --accent-light:#eef2ff; --text:#1a1d21; --muted:#6b7280; --help:#9ca3af; --obj:#f97316; --obj-dim:#fdba74; --green:#10b981;
+    --shadow-md:0 4px 12px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04); --shadow-lg:0 12px 40px rgba(0,0,0,.1),0 4px 12px rgba(0,0,0,.04); }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:32px; background:#e9ebef; font:14px/1.45 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:var(--text); }
+  h1 { font-size:20px; margin:0 0 4px; }
+  h2 { font-size:15px; margin:40px 0 10px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  .note { color:var(--muted); max-width:1000px; margin:0 0 20px; } .note b { color:var(--text); }
+  .callout { position:absolute; background:#111827; color:#fff; font-size:11px; padding:4px 8px; border-radius:6px; z-index:40; white-space:nowrap; }
+  .callout::after { content:""; position:absolute; left:10px; bottom:-5px; border:5px solid transparent; border-top-color:#111827; border-bottom:0; }
+  .new { outline:2px dashed #f59e0b; outline-offset:3px; border-radius:6px; position:relative; }
+  .new::before { content:"new"; position:absolute; top:-10px; right:6px; background:#f59e0b; color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:4px; }
+
+  /* editor chrome */
+  .frame { position:relative; width:1500px; height:900px; background:#f5f6f8; border:1px solid var(--border-color); border-radius:10px; overflow:hidden; box-shadow:var(--shadow-lg); display:flex; flex-direction:column; }
+  .topbar { display:flex; align-items:center; gap:18px; padding:10px 20px; background:#fff; border-bottom:1px solid var(--border-color); font-size:13px; flex:none; }
+  .topbar .title { font-weight:700; font-size:16px; }
+  .tabs { display:flex; background:#f1f3f5; border-radius:8px; padding:3px; margin-left:12px; }
+  .tabs span { padding:5px 12px; border-radius:6px; color:var(--muted); }
+  .tabs span.on { background:#fff; color:var(--accent); font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  .subbar { display:flex; align-items:center; gap:10px; padding:8px 20px; background:#fff; border-bottom:1px solid var(--border-color); flex:none; font-size:13px; }
+  .crumb { color:var(--muted); } .crumb b { color:var(--text); }
+  .btn { border:1px solid var(--border-color); border-radius:6px; padding:6px 12px; background:#fff; font-size:12.5px; white-space:nowrap; }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  .btn.ghost { border-color:transparent; color:var(--muted); }
+  .badge { display:inline-block; font-size:10.5px; padding:2px 7px; border-radius:4px; background:#6b7280; color:#fff; font-weight:600; }
+  .badge.light { background:#e7f1ff; color:#0b5ed7; border:1px solid #b6d4fe; }
+  .badge.warn { background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; }
+  .badge.ok { background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; }
+
+  .body { flex:1; display:flex; min-height:0; }
+  /* list column */
+  .list { width:340px; background:#fff; border-right:1px solid var(--border-color); display:flex; flex-direction:column; }
+  .list-tools { padding:10px 12px; border-bottom:1px solid var(--border-color); }
+  .inp { border:1px solid #d1d5db; border-radius:6px; padding:7px 10px; background:#fff; font-size:13px; }
+  .chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+  .chip { font-size:11.5px; padding:3px 9px; border-radius:999px; border:1px solid #d1d5db; color:var(--muted); background:#fff; }
+  .chip.on { background:var(--accent-light); border-color:var(--accent); color:var(--accent); font-weight:600; }
+  .chip.warn { border-color:#fed7aa; color:#c2410c; }
+  .list-head { display:flex; align-items:center; gap:8px; padding:6px 12px; font-size:11.5px; color:var(--muted); border-bottom:1px solid var(--border-color); }
+  .rows { flex:1; overflow:auto; }
+  .row { display:flex; align-items:center; gap:8px; padding:7px 12px; border-bottom:1px solid #f3f4f6; font-size:13px; }
+  .row .cb { width:14px; height:14px; border:1px solid #cbd5e1; border-radius:3px; flex:none; }
+  .row .sw { width:10px; height:10px; border-radius:2px; background:var(--obj); flex:none; }
+  .row .t { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .row .m { color:var(--help); font-size:11px; white-space:nowrap; }
+  .row.sel { background:var(--accent-light); }
+  .row.miss .t::after { content:" ·"; color:#c2410c; }
+  .list-foot { padding:8px 12px; border-top:1px solid var(--border-color); display:flex; gap:8px; align-items:center; font-size:12px; color:var(--muted); }
+
+  /* map */
+  .mapcol { flex:1; position:relative; background:#dfe6dc; }
+  .mapcol svg { position:absolute; inset:0; width:100%; height:100%; }
+  .drawbar { position:absolute; left:12px; top:12px; background:#fff; border-radius:6px; box-shadow:var(--shadow-md); display:flex; flex-direction:column; z-index:5; }
+  .drawbar span { width:34px; height:32px; display:flex; align-items:center; justify-content:center; border-bottom:1px solid var(--border-color); color:#374151; font-size:13px; }
+  .drawbar span.on { background:var(--accent-light); color:var(--accent); }
+  .zoom { position:absolute; right:12px; bottom:28px; background:#fff; border-radius:6px; box-shadow:var(--shadow-md); width:32px; text-align:center; font-weight:700; z-index:5; }
+  .zoom div { padding:5px 0; border-bottom:1px solid var(--border-color); }
+  .maphint { position:absolute; left:50%; top:12px; transform:translateX(-50%); background:#fff; border-radius:999px; box-shadow:var(--shadow-md); padding:5px 12px; font-size:12px; color:var(--muted); z-index:5; }
+  .lbl { font:600 11px sans-serif; fill:#7c2d12; }
+
+  /* card editor column */
+  .card { width:420px; background:#fff; border-left:1px solid var(--border-color); display:flex; flex-direction:column; }
+  .card-head { padding:12px 16px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; gap:8px; font-weight:700; }
+  .card-head .x { margin-left:auto; color:var(--help); font-weight:400; }
+  .card-body { flex:1; overflow:auto; padding:14px 16px; }
+  .fg { margin-bottom:12px; } .fg label { display:block; font-size:12px; font-weight:500; color:#374151; margin-bottom:4px; }
+  .sel { border:1px solid #d1d5db; border-radius:6px; padding:7px 10px; background:#fff; font-size:13px; }
+  .help { font-size:11.5px; color:var(--help); margin-top:3px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .quill-tb { border:1px solid #d1d5db; border-radius:6px 6px 0 0; padding:5px 10px; display:flex; gap:12px; color:#6b7280; font-size:12.5px; background:#fafafa; }
+  .quill-body { border:1px solid #d1d5db; border-top:none; border-radius:0 0 6px 6px; padding:9px; font-size:13px; min-height:70px; }
+  .att { display:flex; align-items:center; gap:8px; padding:6px 8px; border:1px solid var(--border-color); border-radius:6px; margin-bottom:5px; font-size:12.5px; }
+  .att .th { width:32px; height:24px; border-radius:3px; flex:none; }
+  .att .ic { width:32px; text-align:center; color:var(--muted); }
+  .att .a { margin-left:auto; color:#9ca3af; display:flex; gap:9px; font-size:11px; }
+  .drop { border:1px dashed #c4c7cc; border-radius:6px; padding:9px; text-align:center; color:var(--muted); font-size:12px; margin-top:4px; }
+  .card-foot { border-top:1px solid var(--border-color); padding:10px 16px; display:flex; gap:8px; align-items:center; font-size:12px; }
+
+  /* small frames */
+  .small { width:720px; height:420px; }
+  .empty { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .empty .box { background:#fff; border-radius:12px; box-shadow:var(--shadow-lg); padding:26px 30px; width:520px; text-align:center; }
+  .empty .box h4 { margin:0 0 6px; font-size:16px; }
+  .ways { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:16px; }
+  .way { border:1px solid var(--border-color); border-radius:8px; padding:12px 10px; font-size:12.5px; }
+  .way i { display:block; font-size:20px; color:var(--accent); margin-bottom:6px; }
+  .way small { display:block; color:var(--help); margin-top:4px; font-size:11px; }
+</style>
+</head>
+<body>
+
+<h1>Редактор объектов — отдельный экран (D9)</h1>
+<p class="note">
+  Решение владельца 2026-09-01: не таб в карточке слоя, а <b>свой экран</b> по адресу <code>/editor/surveys/&lt;uuid&gt;/layers/&lt;id&gt;/</code>, вход из
+  Survey settings → Reference layers → «Open editor». Три причины: создатель <b>без GeoJSON</b> рисует объекты на карте; создатель <b>без хостинга</b> загружает файлы;
+  слой на <b>сотни объектов</b> требует списка с поиском, фильтрами, клавиатурой и массовыми операциями. Хром — тот же редакторский (topbar, табы, кнопки);
+  раскладка — три колонки: <b>список · карта с инструментами рисования · карточка объекта</b>. Поглощает бэклог FD-17 «draw overlay layer in editor».
+</p>
+
+<h2>1 · Основное состояние: слой на 214 объектов, выбран один, карточка справа</h2>
+<div class="frame">
+  <div class="topbar"><span>← Dashboard</span><span class="title">Транспортная инфраструктура 2026</span>
+    <div class="tabs"><span class="on"><i class="fas fa-pen-nib"></i> Survey</span><span><i class="fas fa-chart-bar"></i> Responses</span><span><i class="fas fa-globe"></i> Public results</span></div></div>
+  <div class="subbar">
+    <span class="crumb">Survey settings › Reference layers › <b>Остановки и станции</b></span>
+    <span class="badge light">214 objects</span><span class="badge warn">37 without photo</span>
+    <span style="margin-left:auto; display:flex; gap:8px; align-items:center">
+      <span class="btn"><i class="fas fa-file-import"></i> Import GeoJSON</span>
+      <span class="btn"><i class="fas fa-table"></i> Import content (CSV)</span>
+      <span class="btn"><i class="fas fa-images"></i> Upload photos (match by name)</span>
+      <span class="btn ghost"><i class="fas fa-cog"></i> Layer settings</span>
+      <span class="help"><i class="fas fa-check" style="color:var(--green)"></i> All changes saved</span>
+      <span class="btn primary"><i class="fas fa-arrow-left"></i> Back to survey</span>
+    </span>
+  </div>
+
+  <div class="body">
+    <div class="list">
+      <div class="list-tools">
+        <div class="inp" style="color:var(--help)">🔍 Search 214 objects… <span style="float:right; font-size:11px">⌘K</span></div>
+        <div class="chips"><span class="chip on">All</span><span class="chip">Метро · 62</span><span class="chip">Трамвай · 88</span><span class="chip">Автобус · 64</span><span class="chip warn"><i class="fas fa-image"></i> no photo · 37</span><span class="chip warn"><i class="fas fa-align-left"></i> no text · 12</span></div>
+      </div>
+      <div class="list-head"><span class="cb" style="width:14px;height:14px;border:1px solid #cbd5e1;border-radius:3px"></span> 3 selected <span class="btn ghost" style="padding:2px 6px; color:var(--accent)">Set category ▾</span><span class="btn ghost" style="padding:2px 6px; color:#dc2626">Delete</span><span style="margin-left:auto">sort: <b>title</b> ▾</span></div>
+      <div class="rows">
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Автозаводская</span><span class="m">Метро · <i class="fas fa-image"></i>2</span></div>
+        <div class="row miss"><span class="cb"></span><span class="sw"></span><span class="t">Академическая</span><span class="m">Метро</span></div>
+        <div class="row"><span class="cb" style="background:var(--accent);border-color:var(--accent)"></span><span class="sw"></span><span class="t">Алексеевская</span><span class="m">Метро · <i class="fas fa-image"></i>1</span></div>
+        <div class="row"><span class="cb" style="background:var(--accent);border-color:var(--accent)"></span><span class="sw"></span><span class="t">Аэропорт</span><span class="m">Метро · <i class="fas fa-image"></i>3</span></div>
+        <div class="row sel"><span class="cb" style="background:var(--accent);border-color:var(--accent)"></span><span class="sw"></span><span class="t"><b>Бауманская</b></span><span class="m">Метро · <i class="fas fa-image"></i>2 <i class="fas fa-microphone"></i>1</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Беговая</span><span class="m">Метро · <i class="fas fa-image"></i>1</span></div>
+        <div class="row miss"><span class="cb"></span><span class="sw"></span><span class="t">Белорусская</span><span class="m">Метро</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Библиотека им. Ленина</span><span class="m">Метро · <i class="fas fa-image"></i>1</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Боровицкая</span><span class="m">Метро · <i class="fas fa-image"></i>2</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Ботанический сад</span><span class="m">Метро · <i class="fas fa-image"></i>1</span></div>
+        <div class="row miss"><span class="cb"></span><span class="sw"></span><span class="t">Бульвар Рокоссовского</span><span class="m">Метро</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">ВДНХ</span><span class="m">Метро · <i class="fas fa-image"></i>4</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Владыкино</span><span class="m">Метро · <i class="fas fa-image"></i>1</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Водный стадион</span><span class="m">Метро · <i class="fas fa-image"></i>1</span></div>
+        <div class="row miss"><span class="cb"></span><span class="sw"></span><span class="t">Войковская</span><span class="m">Метро</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Волгоградский проспект</span><span class="m">Метро · <i class="fas fa-image"></i>1</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Выставочная</span><span class="m">Метро · <i class="fas fa-image"></i>2</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Динамо</span><span class="m">Метро · <i class="fas fa-image"></i>1</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Дмитровская</span><span class="m">Метро · <i class="fas fa-image"></i>1</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Добрынинская</span><span class="m">Метро · <i class="fas fa-image"></i>1</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Домодедовская</span><span class="m">Метро · <i class="fas fa-image"></i>2</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Достоевская</span><span class="m">Метро · <i class="fas fa-image"></i>1</span></div>
+        <div class="row"><span class="cb"></span><span class="sw"></span><span class="t">Дубровка</span><span class="m">Метро · <i class="fas fa-image"></i>1</span></div>
+      </div>
+      <div class="list-foot">↑↓ move · Enter open · map follows <span style="margin-left:auto">1–23 of 214</span></div>
+    </div>
+
+    <div class="mapcol">
+      <svg viewBox="0 0 740 800" preserveAspectRatio="xMidYMid slice">
+        <rect width="740" height="800" fill="#e8ece6"/>
+        <path d="M60 80 L260 60 L320 200 L140 260 Z" fill="#cfe5c4"/><path d="M480 520 L700 500 L730 720 L520 760 Z" fill="#cfe5c4"/>
+        <g fill="#dcdfd9"><rect x="80" y="330" width="90" height="70"/><rect x="190" y="330" width="120" height="70"/><rect x="80" y="430" width="90" height="90"/><rect x="190" y="430" width="120" height="90"/><rect x="350" y="290" width="110" height="80"/><rect x="350" y="400" width="110" height="90"/><rect x="480" y="120" width="120" height="70"/><rect x="620" y="120" width="100" height="70"/><rect x="480" y="220" width="120" height="120"/><rect x="620" y="220" width="100" height="120"/></g>
+        <g stroke="#fff" stroke-width="8" fill="none"><path d="M40 0 L40 800"/><path d="M0 385 L740 385"/><path d="M330 0 L330 800"/><path d="M460 0 L460 800"/><path d="M40 205 L740 205"/><path d="M40 505 L740 505"/></g>
+        <path d="M0 300 C 200 250, 400 420, 740 380" stroke="#c2410c" stroke-width="5" fill="none" stroke-dasharray="1 0"/>
+        <g fill="#fff" stroke="var(--obj)" stroke-width="3">
+          <circle cx="90" cy="292" r="8"/><circle cx="210" cy="272" r="8"/><circle cx="300" cy="300" r="8"/><circle cx="410" cy="360" r="8"/><circle cx="520" cy="395" r="8"/><circle cx="640" cy="385" r="8"/><circle cx="150" cy="640" r="8"/><circle cx="270" cy="600" r="8"/><circle cx="400" cy="640" r="8"/><circle cx="560" cy="620" r="8"/><circle cx="600" cy="90" r="8"/><circle cx="200" cy="120" r="8"/>
+        </g>
+        <circle cx="410" cy="360" r="16" fill="var(--obj)" fill-opacity=".35" stroke="#c2410c" stroke-width="3"/>
+        <circle cx="410" cy="360" r="8" fill="var(--obj)" stroke="#fff" stroke-width="2"/>
+        <text x="425" y="352" class="lbl">Бауманская</text>
+        <text x="100" y="315" class="lbl">Автозаводская</text><text x="530" y="418" class="lbl">Беговая</text>
+        <g fill="#fff" stroke="#9ca3af" stroke-width="2" opacity=".7"><circle cx="330" cy="705" r="6"/><circle cx="480" cy="700" r="6"/><circle cx="680" cy="560" r="6"/></g>
+      </svg>
+      <div class="drawbar"><span title="Add point" class="on"><i class="fas fa-map-marker-alt"></i></span><span title="Add line"><i class="fas fa-route"></i></span><span title="Add polygon"><i class="fas fa-draw-polygon"></i></span><span title="Edit geometry"><i class="fas fa-edit"></i></span><span title="Delete" style="border-bottom:none"><i class="far fa-trash-alt"></i></span></div>
+      <div class="maphint">Click the map to add a station · Esc to cancel</div>
+      <div class="zoom"><div>+</div><div>−</div></div>
+      <div class="callout" style="left:60px; top:210px;">Leaflet.draw — тот же, что у респондента</div>
+      <div class="callout" style="left:420px; top:300px;">выбранный объект подсвечен; клик по метке = выбор</div>
+      <div class="callout" style="left:300px; top:660px;">серые = вне фильтра</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span style="color:var(--obj)">●</span> Бауманская <span class="badge light">Метро</span><span class="x">× close</span></div>
+      <div class="card-body">
+        <div class="row2">
+          <div class="fg"><label>Title</label><div class="sel">Бауманская</div></div>
+          <div class="fg"><label>Category</label><div class="sel">Метро ▾</div></div>
+        </div>
+        <div class="fg"><label>Key <span class="help" style="display:inline">— stable id, used in exports</span></label><div class="sel" style="color:var(--muted)">m-034 <span style="float:right; font-size:11px">auto</span></div></div>
+        <div class="fg"><label>Link</label><div class="sel" style="color:var(--accent)">https://transport.example/m-034</div></div>
+        <div class="fg"><label>Description</label>
+          <div class="quill-tb"><b>B</b><i>I</i><i class="fas fa-link"></i><i class="fas fa-list-ul"></i><i class="fas fa-image" style="color:var(--accent)"></i><i class="fas fa-remove-format"></i></div>
+          <div class="quill-body">Реконструкция вестибюля и установка двух лифтов с платформы на улицу, 2026–2027. На время работ вход через северный вестибюль.</div>
+        </div>
+        <div class="fg">
+          <label><i class="fas fa-paperclip"></i> Attachments <span class="help" style="display:inline">— first image is the cover</span></label>
+          <div class="att"><i class="fas fa-grip-vertical" style="color:#c4c7cc"></i><span class="th" style="background:linear-gradient(135deg,#8fbf8f,#5e9a63)"></span> lift_render.jpg <span class="badge">cover</span><span class="a"><i class="fas fa-pen"></i><i class="fas fa-trash"></i></span></div>
+          <div class="att"><i class="fas fa-grip-vertical" style="color:#c4c7cc"></i><span class="th" style="background:linear-gradient(135deg,#c8a36e,#8b6b3e)"></span> today.jpg <span class="a"><i class="fas fa-pen"></i><i class="fas fa-trash"></i></span></div>
+          <div class="att"><i class="fas fa-grip-vertical" style="color:#c4c7cc"></i><span class="ic"><i class="fas fa-microphone"></i></span> Пояснение проектировщика.m4a <span class="help" style="margin:0">1:48</span><span class="a"><i class="fas fa-pen"></i><i class="fas fa-trash"></i></span></div>
+          <div class="att"><i class="fas fa-grip-vertical" style="color:#c4c7cc"></i><span class="ic"><i class="fab fa-youtube"></i></span> youtu.be/x8f2… <span class="help" style="margin:0">embed</span><span class="a"><i class="fas fa-pen"></i><i class="fas fa-trash"></i></span></div>
+          <div class="drop"><i class="fas fa-upload"></i> Drop files or <u>choose</u> · image, audio, document, video ≤ 25 MB &nbsp;·&nbsp; <i class="fab fa-youtube"></i> <u>embed link</u></div>
+        </div>
+        <div class="fg"><label>Geometry</label><div class="sel" style="display:flex; justify-content:space-between; color:var(--muted)"><span><i class="fas fa-map-marker-alt" style="color:var(--obj)"></i> Point · 55.7724, 37.6793</span><span style="color:var(--accent)">Move on map</span></div></div>
+      </div>
+      <div class="card-foot"><span class="btn" style="color:#dc2626"><i class="fas fa-trash"></i> Delete object</span><span class="help" style="margin-left:auto"><i class="fas fa-check" style="color:var(--green)"></i> Saved</span><span class="btn">‹ Prev</span><span class="btn">Next ›</span></div>
+    </div>
+  </div>
+  <div class="callout" style="left:1130px; top:540px;">карточка — та же, что в п. 1b; Prev/Next идут по отфильтрованному списку</div>
+  <div class="callout" style="left:40px; top:146px;">чипы-фильтры «без фото / без текста» — для сотен объектов</div>
+</div>
+
+<h2>2 · Пустое состояние — новый слой без единого объекта: три пути внутрь</h2>
+<div class="cols" style="display:flex; gap:28px; align-items:flex-start">
+<div class="frame small">
+  <div class="subbar"><span class="crumb">Survey settings › Reference layers › <b>Новый слой</b></span><span class="badge light">0 objects</span></div>
+  <div class="body">
+    <div class="list" style="width:220px"><div class="list-tools"><div class="inp" style="color:var(--help)">🔍 Search…</div></div><div class="rows" style="display:flex; align-items:center; justify-content:center; color:var(--help); font-size:12px; text-align:center; padding:20px">No objects yet.<br>Draw one or import.</div></div>
+    <div class="mapcol">
+      <svg viewBox="0 0 500 400" preserveAspectRatio="xMidYMid slice"><rect width="500" height="400" fill="#e8ece6"/><g stroke="#fff" stroke-width="6" fill="none"><path d="M120 0 L120 400"/><path d="M0 200 L500 200"/><path d="M340 0 L340 400"/></g><g fill="#dcdfd9"><rect x="150" y="60" width="80" height="60"/><rect x="150" y="240" width="80" height="60"/><rect x="370" y="60" width="80" height="60"/></g></svg>
+      <div class="drawbar"><span><i class="fas fa-map-marker-alt"></i></span><span><i class="fas fa-route"></i></span><span style="border-bottom:none"><i class="fas fa-draw-polygon"></i></span></div>
+      <div class="empty"><div class="box">
+        <h4>Add your first object</h4>
+        <div class="help" style="margin:0">Objects are what respondents browse, open and answer about.</div>
+        <div class="ways">
+          <div class="way"><i class="fas fa-map-marker-alt"></i><b>Draw on the map</b><small>point, line or polygon — no file needed</small></div>
+          <div class="way"><i class="fas fa-file-import"></i><b>Import GeoJSON</b><small>from your GIS; properties become title, category, text</small></div>
+          <div class="way"><i class="fas fa-table"></i><b>Import CSV with coordinates</b><small>a spreadsheet with lat/lng columns</small></div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<div style="max-width:700px">
+  <h2 style="margin-top:0">Что здесь решено</h2>
+  <ul class="note" style="padding-left:18px">
+    <li><b>Три входа</b>: рисование, GeoJSON, CSV с координатами. Все дают один и тот же объект с картой и карточкой. GeoJSON — больше не ворота.</li>
+    <li><b>Ключ объекта</b> генерируется автоматически (`m-034`), из GeoJSON берётся `key_field`, если задан. Это то, к чему привязываются ответы (#152) и экспорт.</li>
+    <li><b>Масштаб</b>: список виртуализирован, поиск ⌘K, чипы «без фото / без текста», multi-select с массовыми действиями, ↑↓/Enter и Prev/Next по отфильтрованному списку, карта следует за выбором.</li>
+    <li><b>Массовый контент</b>: CSV (title/category/description/link, матч по key или title) и загрузка папки фото с матчем по имени файла — иначе 214 карточек руками.</li>
+    <li><b>Вложения</b> — загрузка в публичный S3-tier с лимитом 25 MB на файл; видео большого размера — embed-ссылкой (YouTube/Vimeo, iframe уже в allow-list санитайзера).</li>
+    <li><b>Layer settings</b> (цвет, label field, popups, per-section visibility) остаются в карточке слоя в Survey settings — экран редактора про объекты, не про слой.</li>
+    <li><b>Не в этом экране</b>: стилизация отдельных объектов (simplestyle из файла по-прежнему уважается), версионирование слоя, совместное редактирование.</li>
+  </ul>
+</div>
+</div>
+
+</body>
+</html>

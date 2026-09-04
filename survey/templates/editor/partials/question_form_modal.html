@@ -241,6 +241,31 @@
         {% endif %}
         {% endfor %}
 
+        {% comment %}Objects on the map (spec survey-editor "Objects on the map question
+        form"): the layer, the minimum that replaces Required, and the search mode.
+        Hidden for every other type by toggleTypeScopedFields.{% endcomment %}
+        <div class="form-group" id="fg-layer-objects" style="display:none;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;background:#fafafa;">
+            <div class="form-row">
+                <div class="col-7">
+                    <label for="{{ form.layer.id_for_label }}" style="font-weight:600;">{{ form.layer.label }}</label>
+                    {{ form.layer }}
+                    <small class="form-text text-muted">{% trans "Layers are created in Survey settings → Reference layers → Open editor." %}</small>
+                    {% for error in form.layer.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-5">
+                    <label for="{{ form.min_objects.id_for_label }}" style="font-weight:600;">{{ form.min_objects.label }}</label>
+                    {{ form.min_objects }}
+                    <small class="form-text text-muted">{% trans "The respondent must answer about at least this many. 0 = optional; replaces “Required” for this type." %}</small>
+                    {% for error in form.min_objects.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+                </div>
+            </div>
+            <div style="margin-top:8px;">
+                <label for="{{ form.objects_search.id_for_label }}" style="font-weight:600;">{{ form.objects_search.label }}</label>
+                {{ form.objects_search }}
+            </div>
+        </div>
+
+
         {% include "editor/partials/_visibility_block.html" %}
 
         <!-- Choices editor -->
@@ -571,6 +596,8 @@
     // ── Type-scoped settings (#111): only fields the selected type consumes ──
     var GEO_TYPES = ['point', 'line', 'polygon'];
     var DISPLAY_BLOCK_TYPES = ['image', 'html'];
+    // Mirrors survey.question_types.NOT_REQUIRABLE_TYPES.
+    var NOT_REQUIRABLE_TYPES = ['image', 'html', 'layer_objects'];
 
     // CSS-hidden inputs still submit, so stored values pass through a save
     // untouched. The hidden `required` checkbox is the deliberate exception:
@@ -605,8 +632,9 @@
             colorInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         show('fg-image', t === 'image');
-        show('fg-required', DISPLAY_BLOCK_TYPES.indexOf(t) === -1);
+        show('fg-required', NOT_REQUIRABLE_TYPES.indexOf(t) === -1);
         show('name-internal-hint', DISPLAY_BLOCK_TYPES.indexOf(t) !== -1);
+        show('fg-layer-objects', t === 'layer_objects');
         toggleHtmlBodyEditor(t === 'html');
     }
 

@@ -5,6 +5,10 @@
         <span class="q-name">{{ question.name|default:"(unnamed)" }}</span>
         <span class="badge badge-secondary">{{ question|input_type_label }}</span>
         {% if question.required %}<span class="badge badge-danger">{% trans "Required" %}</span>{% endif %}
+        {% if question.input_type == 'layer_objects' %}
+        {% if question.layer %}<span class="badge" style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;" title="{% trans 'Reference layer' %}"><i class="fas fa-layer-group"></i> {{ question.layer.name|truncatechars:30 }} · {{ question.layer.feature_count }}</span>{% else %}<span class="badge badge-warning"><i class="fas fa-exclamation-triangle"></i> {% trans "no layer" %}</span>{% endif %}
+        {% if question.min_objects %}<span class="badge badge-info" style="background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe;">min {{ question.min_objects }}</span>{% endif %}
+        {% endif %}
         {% load question_utils %}{% with vis=question|visibility_info:survey %}{% if vis %}
         {% if vis.broken %}
         <span class="badge badge-warning" title="{{ vis.reason }}. Shown to everyone until fixed."><i class="fas fa-exclamation-triangle"></i> {% trans "broken rule" %}</span>
@@ -69,7 +73,7 @@
     </ul>
     {% endif %}
     {% endwith %}
-    {% if question.input_type == 'point' or question.input_type == 'line' or question.input_type == 'polygon' %}
+    {% if question.can_have_subquestions %}
     <div class="add-subquestion-wrap">
         <button class="add-question-btn add-question-btn--sub"
                 title="{% if is_read_only %}Create a draft to edit{% else %}Add Sub-question{% endif %}"

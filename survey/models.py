@@ -1,4 +1,5 @@
 import uuid as uuid_module
+import os
 
 from django.conf import settings
 from django.db import models
@@ -122,6 +123,14 @@ INPUT_TYPE_CHOICES = (
     ("photo", _("Photo Upload")),
     ("audio", _("Audio Upload")),
     ("document", _("Document Upload")),
+    ("thumbs", _("Thumbs up / down")),
+    ("layer_objects", _("Objects on the map")),
+)
+
+OBJECTS_SEARCH_CHOICES = (
+    ("auto", _("Automatic — shown for more than 5 objects or when categories exist")),
+    ("on", _("Always")),
+    ("off", _("Never")),
 )
 
 # Question types whose answer is a respondent-uploaded file. NOT the `image`
@@ -552,17 +561,25 @@ class SurveyCollaborator(models.Model):
 
 
 class SurveyMapLayer(models.Model):
-    """A creator-uploaded reference overlay (zones, boundaries, a plan) rendered
-    read-only under the respondent map. GeoJSON lives in the row, not in media
+    """A creator's reference overlay (zones, boundaries, a plan, the objects of a
+    consultation) rendered read-only under the respondent map.
+
+    Since `overlay-features` a layer is a container of LayerObject rows and
+    `geojson` is a CACHE derived from them (`survey.layers.rebuild_layer`), never
+    an independently edited source. It still lives in the row, not in media
     storage: the S3 bucket is public-read, and a layer must obey the survey's
-    access rules, so it is served only through the gated layer endpoint."""
+    access rules, so it is served only through the gated layer endpoint.
+
+    Layers hang off the CANONICAL survey; draft copies and archived versions
+    borrow them through `survey.layers.layers_for()` and never get copies."""
     survey = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE, related_name='map_layers')
     name = models.CharField(max_length=100)
     color = models.CharField(max_length=7, default='#2c7be5', help_text=_('Fallback style; simplestyle properties inside the file win.'))
-    label_field = models.CharField(max_length=100, blank=True, default='', help_text=_('Feature property rendered as a permanent map label. Empty = no labels.'))
-    key_field = models.CharField(max_length=100, blank=True, default='', help_text=_('Feature property that makes features addressable (reserved for answer-driven map context). No UI consumer yet.'))
-    show_popups = models.BooleanField(default=False, help_text=_('Tap a feature shows a read-only popup of its name/description properties.'))
-    geojson = models.TextField(help_text=_('Re-serialized FeatureCollection — never the raw uploaded bytes.'))
+    label_field = models.CharField(max_length=100, blank=True, default='', help_text=_('Feature property rendered as a permanent map label. Empty = no labels. Also the default title mapping for imports.'))
+    key_field = models.CharField(max_length=100, blank=True, default='', help_text=_('Feature property used as the object key on import. Answers about objects are stored against the key.'))
+    show_popups = models.BooleanField(default=False, help_text=_('Tap a feature shows a read-only popup of its title/description (layers not bound to an Objects-on-the-map question).'))
+    geojson = models.TextField(help_text=_('Derived FeatureCollection, rebuilt from the layer objects on every write.'))
+    geojson_legacy = models.TextField(blank=True, default='', help_text=_('The pre-objects FeatureCollection kept for one release after the split migration; empty for layers created since.'))
     feature_count = models.PositiveIntegerField(default=0)
     size_bytes = models.PositiveIntegerField(default=0)
     position = models.PositiveIntegerField(default=0)
@@ -574,6 +591,93 @@ class SurveyMapLayer(models.Model):
 
     def __str__(self):
         return f"{self.survey.name} / {self.name}"
+
+
+def layer_asset_key(instance, filename):
+    """layer_assets/<uuid4>.<ext> on the public tier. Random, non-guessable keys
+    are the whole access story for creator artwork (see `media-storage`): a
+    draft survey's rendering is reachable by anyone holding the URL, exactly like
+    Question.image today. The original filename is kept on the row as `title`."""
+    ext = (os.path.splitext(filename)[1] or '')[:8].lower()
+    return f'layer_assets/{uuid_module.uuid4().hex}{ext}'
+
+
+class LayerObject(models.Model):
+    """One thing on a reference layer a respondent can find, read about and
+    answer about: a construction site, a tram stop, a route variant.
+
+    `key` is the stable identity answers and exports hang on — unique per layer,
+    from the imported file's key field when it had one, else generated. `properties`
+    keeps whatever the imported feature carried (simplestyle included) so nothing
+    from a GIS file is thrown away; the derived layer GeoJSON re-emits them."""
+    layer = models.ForeignKey(SurveyMapLayer, on_delete=models.CASCADE, related_name='items')
+    key = models.CharField(max_length=100)
+    title = models.CharField(max_length=255, blank=True, default='')
+    category = models.CharField(max_length=100, blank=True, default='')
+    description = models.TextField(blank=True, default='', help_text=_('Creator rich text — passes html_sanitize on every write.'))
+    link = models.URLField(max_length=500, blank=True, default='')
+    geometry = geomodels.GeometryField(srid=4326)
+    position = models.PositiveIntegerField(default=0)
+    properties = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['position', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['layer', 'key'], name='layerobject_unique_key_per_layer'),
+        ]
+        indexes = [models.Index(fields=['layer', 'category'])]
+
+    def __str__(self):
+        return f"{self.layer.name} / {self.key}"
+
+    @property
+    def cover(self):
+        """First image asset by position, or None."""
+        for asset in self.assets.all():
+            if asset.kind == 'image':
+                return asset
+        return None
+
+
+LAYER_ASSET_KINDS = (
+    ('image', _('Image')),
+    ('audio', _('Audio')),
+    ('document', _('Document')),
+    ('video', _('Video')),
+    ('embed', _('Embedded video')),
+)
+
+
+class LayerObjectAsset(models.Model):
+    """A file or embed attached to a LayerObject, shown in the object's card in
+    `position` order. The first image is the cover. Files go to the public tier
+    (respondents load them unauthenticated in <img>/<audio>); `embed` rows carry
+    only a URL from the allow-listed hosts."""
+    object = models.ForeignKey(LayerObject, on_delete=models.CASCADE, related_name='assets')
+    kind = models.CharField(max_length=10, choices=LAYER_ASSET_KINDS)
+    file = models.FileField(upload_to=layer_asset_key, max_length=500, blank=True)
+    embed_url = models.URLField(max_length=500, blank=True, default='')
+    title = models.CharField(max_length=255, blank=True, default='')
+    content_type = models.CharField(max_length=100, blank=True, default='')
+    size_bytes = models.PositiveIntegerField(default=0)
+    position = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['position', 'id']
+
+    def __str__(self):
+        return f"{self.object.key} / {self.kind} / {self.title}"
+
+    @property
+    def url(self):
+        if self.kind == 'embed':
+            return self.embed_url
+        return self.file.url if self.file else ''
 
 
 SECTION_LAYOUT_CHOICES = (
@@ -702,12 +806,31 @@ class Question(models.Model):
     # Same shape and semantics as SurveySection.visibility_rule; a question is visible
     # only when its section is visible AND this rule (if any) is satisfied.
     visibility_rule = models.JSONField(null=True, blank=True, help_text=_('Show this question only when the referenced choice question\'s answer includes any of the referenced option codes. Null = always shown.'))
+    # `layer_objects` only: the reference layer whose objects this question lists.
+    # PROTECT — deleting the layer would orphan every answer hanging on its
+    # objects; the settings card refuses and names the question instead.
+    layer = models.ForeignKey(SurveyMapLayer, null=True, blank=True, on_delete=models.PROTECT, related_name='questions')
+    min_objects = models.PositiveIntegerField(default=0, help_text=_('`layer_objects` only: the respondent must answer about at least this many objects to move on. 0 = optional. Replaces `required` for this type.'))
+    objects_search = models.CharField(max_length=4, choices=OBJECTS_SEARCH_CHOICES, default='auto', help_text=_('`layer_objects` only: whether the list shows a search box and category chips.'))
 
     class Meta:
         app_label = 'survey'
 
     def __str__(self):
-        return self.name 
+        return self.name
+
+    @property
+    def can_have_subquestions(self):
+        """Questions that put objects on the map own sub-questions: the
+        respondent's own geometry (point/line/polygon) and the creator's layer
+        objects. One mechanism, two entry points (spec survey-editor)."""
+        from survey.question_types import PARENT_TYPES
+        return self.input_type in PARENT_TYPES and self.parent_question_id_id is None
+
+    def thumbs_choices(self):
+        """The fixed 👍/👎 choice list — codes 1 and 0, names `up`/`down`."""
+        from survey.question_types import THUMBS_CHOICES
+        return [dict(c) for c in THUMBS_CHOICES]
 
     def subQuestions(self):
     	if not hasattr(self, "__sqcache"):
@@ -887,10 +1010,22 @@ class Answer(models.Model):
     # submitted answer's row down with it (and an attached upload is never
     # reclaimed — see reclaim_orphan_uploads).
     upload = models.ForeignKey("Upload", null=True, blank=True, on_delete=models.SET_NULL)
+    # Answers ABOUT a creator's layer object (sub-questions of an Objects-on-
+    # the-map question): one row per (session, sub-question, object). Never
+    # `parent_answer_id` — the respondent did not create the object, the
+    # creator did (spec object-answers).
+    layer_object = models.ForeignKey(LayerObject, null=True, blank=True, on_delete=models.CASCADE, related_name='answers')
 
     class Meta:
         app_label = 'survey'
-    
+        constraints = [
+            models.UniqueConstraint(
+                fields=['survey_session', 'question', 'layer_object'],
+                condition=Q(layer_object__isnull=False),
+                name='answer_unique_per_session_question_object',
+            ),
+        ]
+
     def get_selected_choice_names(self, lang=None):
         codes = self.selected_choices or []
         return [self.question.get_choice_name(code, lang) for code in codes]
@@ -1475,6 +1610,7 @@ PUBLIC_RESULTS_BLOCK_TYPE_CHOICES = (
     ("image", _("Image")),
     ("chart", _("Chart")),
     ("map", _("Map")),
+    ("objects", _("Objects")),   # per-object aggregates of an Objects-on-the-map question
 )
 
 # Current snapshot serialization format. Bumped when the per-block payload

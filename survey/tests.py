@@ -29263,6 +29263,10 @@ class QuestionSubtextRenderingTest(TestCase):
         'photo':       (True, True),
         'audio':       (True, True),
         'document':    (True, True),
+        # Thumbs is a card question like rating; the block's title is its name
+        # and its subtext renders under the heading (layer_objects.html).
+        'thumbs':      (True, True),
+        'layer_objects': (True, True),
     }
 
     def test_every_input_type_has_a_decision(self):
@@ -37055,3 +37059,1469 @@ class SurveyInlineRenameTest(TestCase):
         max_length = SurveyHeader._meta.get_field('name').max_length
         self.assertRegex(html, r'name="name"[^>]*maxlength="%d"' % max_length)
         self.assertIn('data-char-counter', html)
+
+
+# ─── overlay-features: layer objects ────────────────────────────────────────
+
+def _objects_layer(survey, name="Zones", geojson_text=None, **layer_fields):
+    """A layer populated the way the editor and ZIP import populate it: objects
+    first, derived GeoJSON second."""
+    from .models import SurveyMapLayer
+    from .layers import validate_layer_upload, objects_from_features, rebuild_layer
+    geojson, _count, _props = validate_layer_upload((geojson_text or _zones_geojson()).encode())
+    layer = SurveyMapLayer.objects.create(survey=survey, name=name, geojson='', **layer_fields)
+    objects_from_features(layer, json.loads(geojson)['features'])
+    rebuild_layer(layer)
+    return layer
+
+
+class LayerObjectsModelTest(TestCase):
+    """Objects are the source; the layer GeoJSON is derived (spec layer-objects)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Objects Org")
+        self.survey = SurveyHeader.objects.create(
+            name="objects_survey", organization=self.org, redirect_url="/thanks/", status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+
+    def test_import_creates_objects_and_derived_geojson(self):
+        """
+        GIVEN a validated 3-zone FeatureCollection with a key field
+        WHEN it is imported into a layer
+        THEN 3 objects exist keyed by zone_id, titled by name, and the derived
+             GeoJSON carries the raw properties plus the reserved fields
+        """
+        layer = _objects_layer(self.survey, key_field='zone_id', label_field='name')
+        self.assertEqual(layer.items.count(), 3)
+        self.assertEqual(sorted(layer.items.values_list('key', flat=True)), ['1', '2', '3'])
+        self.assertEqual(layer.items.get(key='2').title, 'Area 2')
+        self.assertEqual(layer.feature_count, 3)
+        feature = json.loads(layer.geojson)['features'][0]
+        self.assertEqual(feature['properties']['name'], 'Area 1')
+        self.assertEqual(feature['properties']['_key'], '1')
+        self.assertEqual(feature['properties']['_title'], 'Area 1')
+        self.assertFalse(feature['properties']['_has_content'])
+
+    def test_object_write_rebuilds_geojson_and_bumps_etag(self):
+        """
+        GIVEN an imported layer
+        WHEN an object is renamed and the layer rebuilt
+        THEN the served GeoJSON carries the new title and the ETag changes
+        """
+        from .layers import rebuild_layer
+        layer = _objects_layer(self.survey, key_field='zone_id')
+        url = reverse('survey_layer_geojson', kwargs={'survey_slug': str(self.survey.uuid), 'layer_id': layer.pk})
+        etag_before = self.client.get(url)['ETag']
+        obj = layer.items.get(key='1')
+        obj.title = 'Renamed zone'
+        obj.save()
+        rebuild_layer(layer)
+        response = self.client.get(url)
+        titles = [f['properties']['_title'] for f in json.loads(response.content)['features']]
+        self.assertIn('Renamed zone', titles)
+        self.assertNotEqual(response['ETag'], etag_before)
+
+    def test_key_collision_is_reported_not_duplicated(self):
+        """
+        GIVEN a layer that already holds key "2"
+        WHEN the same file is imported again with the key field
+        THEN no duplicate objects are created and the collisions are reported
+        """
+        from .layers import objects_from_features, validate_layer_upload
+        layer = _objects_layer(self.survey, key_field='zone_id')
+        geojson, _, _ = validate_layer_upload(_zones_geojson().encode())
+        report = objects_from_features(layer, json.loads(geojson)['features'])
+        self.assertEqual(report['created'], 0)
+        self.assertEqual(sorted(report['collisions']), ['1', '2', '3'])
+        self.assertEqual(layer.items.count(), 3)
+
+    def test_raw_properties_survive_and_reserved_names_are_not_clobbered(self):
+        """
+        GIVEN a feature carrying simplestyle and a property named like a reserved field
+        WHEN it is imported
+        THEN the object keeps the properties and the derived feature re-emits them
+             alongside the reserved fields
+        """
+        feature = {"type": "Feature",
+                   "properties": {"stroke": "#0a0", "custom": 7, "_key": "spoof", "name": "P"},
+                   "geometry": {"type": "Point", "coordinates": [10.0, 50.0]}}
+        text = json.dumps({"type": "FeatureCollection", "features": [feature]})
+        layer = _objects_layer(self.survey, geojson_text=text)
+        obj = layer.items.get()
+        self.assertEqual(obj.properties['custom'], 7)
+        props = json.loads(layer.geojson)['features'][0]['properties']
+        self.assertEqual(props['stroke'], '#0a0')
+        self.assertEqual(props['_key'], obj.key)
+        self.assertNotEqual(props['_key'], 'spoof')
+
+    def test_multipart_geometry_is_exploded(self):
+        """
+        GIVEN a MultiPolygon feature with two parts
+        WHEN it is imported
+        THEN two objects exist, keyed <key>-1 and <key>-2
+        """
+        ring = lambda x: [[x, 0], [x + 1, 0], [x + 1, 1], [x, 1], [x, 0]]
+        feature = {"type": "Feature", "properties": {"id": "mp"},
+                   "geometry": {"type": "MultiPolygon", "coordinates": [[ring(0)], [ring(5)]]}}
+        text = json.dumps({"type": "FeatureCollection", "features": [feature]})
+        layer = _objects_layer(self.survey, geojson_text=text, key_field='id')
+        self.assertEqual(sorted(layer.items.values_list('key', flat=True)), ['mp-1', 'mp-2'])
+
+    def test_feature_cap_refuses_another_object(self):
+        """
+        GIVEN a layer at the feature cap
+        WHEN one more object is checked against the caps
+        THEN a human-readable refusal names the cap
+        """
+        from .layers import check_object_caps, LayerValidationError, MAX_LAYER_FEATURES
+        layer = _objects_layer(self.survey)
+        with patch('survey.layers.MAX_LAYER_FEATURES', 3):
+            with self.assertRaises(LayerValidationError) as ctx:
+                check_object_caps(layer, adding=1)
+        self.assertIn('limit is 3', str(ctx.exception))
+        self.assertEqual(MAX_LAYER_FEATURES, 5000)
+
+
+class LayerObjectCardEndpointTest(TestCase):
+    """GET /surveys/<uuid>/layers/<id>/objects/<key>/ — gated like the layer."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Card Org")
+        self.survey = SurveyHeader.objects.create(
+            name="card_survey", organization=self.org, redirect_url="/thanks/", status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.layer = _objects_layer(self.survey, key_field='zone_id')
+
+    def _url(self, key='1'):
+        return reverse('survey_layer_object', kwargs={
+            'survey_slug': str(self.survey.uuid), 'layer_id': self.layer.pk, 'key': key})
+
+    def test_card_is_served_with_sanitized_description(self):
+        """
+        GIVEN an object whose description carries a script tag
+        WHEN the card is fetched
+        THEN the payload has the visible text and no script element
+        """
+        obj = self.layer.items.get(key='1')
+        obj.description = '<p>Pocket park</p><script>alert(1)</script>'
+        obj.link = 'https://city.example/p'
+        obj.save()
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('Pocket park', data['description'])
+        self.assertNotIn('<script', data['description'])
+        self.assertEqual(data['link'], 'https://city.example/p')
+        self.assertEqual(data['assets'], [])
+
+    def test_card_of_a_draft_survey_is_a_bare_404(self):
+        """
+        GIVEN the survey is a draft
+        WHEN an anonymous visitor fetches an object card
+        THEN the response is 404, exactly as the layer endpoint behaves
+        """
+        self.survey.status = 'draft'
+        self.survey.save()
+        self.assertEqual(self.client.get(self._url()).status_code, 404)
+
+    def test_unknown_key_is_404(self):
+        """
+        GIVEN a published survey
+        WHEN a key that is not in the layer is requested
+        THEN 404
+        """
+        self.assertEqual(self.client.get(self._url('nope')).status_code, 404)
+
+    @override_settings(MAP_REFERENCE_LAYERS=False)
+    def test_kill_switch_hides_the_card(self):
+        """
+        GIVEN the layers kill switch is off
+        WHEN a card is fetched
+        THEN 404
+        """
+        self.assertEqual(self.client.get(self._url()).status_code, 404)
+
+
+class LayerObjectAssetTest(TestCase):
+    """Attachment validation, cover and the derived _cover field."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Asset Org")
+        self.survey = SurveyHeader.objects.create(
+            name="asset_survey", organization=self.org, redirect_url="/thanks/", status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.layer = _objects_layer(self.survey, key_field='zone_id')
+        self.obj = self.layer.items.get(key='1')
+
+    def _png(self, name='render.png', size=None):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        body = b'\x89PNG\r\n\x1a\n' + (b'0' * (size or 64))
+        return SimpleUploadedFile(name, body, content_type='image/png')
+
+    def test_first_image_is_the_cover_and_reaches_the_geojson(self):
+        """
+        GIVEN an object with no images
+        WHEN a PNG is attached and the layer rebuilt
+        THEN the asset lives under a random layer_assets/ key, is the cover, and
+             the derived feature's _cover points at it with _has_content true
+        """
+        from .models import LayerObjectAsset
+        from .layer_assets import validate_asset_upload
+        from .layers import rebuild_layer
+        upload = self._png()
+        kind, content_type = validate_asset_upload(self.obj, upload)
+        self.assertEqual((kind, content_type), ('image', 'image/png'))
+        asset = LayerObjectAsset.objects.create(
+            object=self.obj, kind=kind, file=upload, title=upload.name,
+            content_type=content_type, size_bytes=upload.size)
+        self.assertRegex(asset.file.name, r'^layer_assets/[0-9a-f]{32}\.png$')
+        self.assertEqual(self.obj.cover, asset)
+        rebuild_layer(self.layer)
+        feature = next(f for f in json.loads(self.layer.geojson)['features'] if f['properties']['_key'] == '1')
+        self.assertEqual(feature['properties']['_cover'], asset.url)
+        self.assertTrue(feature['properties']['_has_content'])
+        card = self.client.get(reverse('survey_layer_object', kwargs={
+            'survey_slug': str(self.survey.uuid), 'layer_id': self.layer.pk, 'key': '1'})).json()
+        self.assertEqual(card['cover'], asset.url)
+        self.assertEqual(card['assets'][0]['kind'], 'image')
+
+    def test_spoofed_and_oversized_files_are_refused(self):
+        """
+        GIVEN a .png whose bytes are not PNG, and a file over the per-file cap
+        WHEN each is validated
+        THEN both are refused with a readable reason and no row is created
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from .layer_assets import validate_asset_upload, AssetRejected
+        spoof = SimpleUploadedFile('x.png', b'not a png at all', content_type='image/png')
+        with self.assertRaises(AssetRejected):
+            validate_asset_upload(self.obj, spoof)
+        big = SimpleUploadedFile('big.png', b'\x89PNG\r\n\x1a\n' + b'0' * 32, content_type='image/png')
+        big.size = 26 * 1024 * 1024
+        with self.assertRaises(AssetRejected) as ctx:
+            validate_asset_upload(self.obj, big)
+        self.assertIn('25 MB', str(ctx.exception.message))
+        self.assertEqual(self.obj.assets.count(), 0)
+
+    def test_unsupported_type_is_refused(self):
+        """
+        GIVEN an SVG upload (a stored-XSS vector on a public bucket)
+        WHEN it is validated
+        THEN it is refused
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from .layer_assets import validate_asset_upload, AssetRejected
+        svg = SimpleUploadedFile('a.svg', b'<svg/>', content_type='image/svg+xml')
+        with self.assertRaises(AssetRejected):
+            validate_asset_upload(self.obj, svg)
+
+    def test_per_object_cap(self):
+        """
+        GIVEN an object already carrying the maximum number of attachments
+        WHEN another is validated
+        THEN it is refused with the cap in the message
+        """
+        from .models import LayerObjectAsset
+        from .layer_assets import validate_asset_upload, AssetRejected, MAX_ASSETS_PER_OBJECT
+        for i in range(MAX_ASSETS_PER_OBJECT):
+            LayerObjectAsset.objects.create(object=self.obj, kind='embed',
+                                            embed_url='https://www.youtube.com/embed/abcdef', position=i)
+        with self.assertRaises(AssetRejected) as ctx:
+            validate_asset_upload(self.obj, self._png())
+        self.assertIn(str(MAX_ASSETS_PER_OBJECT), str(ctx.exception.message))
+
+    def test_per_layer_cap(self):
+        """
+        GIVEN a layer whose attachments already total the layer cap
+        WHEN one more file is validated
+        THEN it is refused
+        """
+        from .models import LayerObjectAsset
+        from .layer_assets import validate_asset_upload, AssetRejected, MAX_ASSET_BYTES_PER_LAYER
+        other = self.layer.items.get(key='2')
+        LayerObjectAsset.objects.create(object=other, kind='video', embed_url='',
+                                        size_bytes=MAX_ASSET_BYTES_PER_LAYER)
+        with self.assertRaises(AssetRejected) as ctx:
+            validate_asset_upload(self.obj, self._png())
+        self.assertIn('200 MB', str(ctx.exception.message))
+
+    def test_embed_host_allow_list(self):
+        """
+        GIVEN YouTube, youtu.be and Vimeo links and a link on another host
+        WHEN they are normalized
+        THEN the three become player URLs and the other is refused
+        """
+        from .layer_assets import normalize_embed_url, AssetRejected
+        self.assertEqual(normalize_embed_url('https://www.youtube.com/watch?v=dQw4w9WgXcQ'),
+                         'https://www.youtube.com/embed/dQw4w9WgXcQ')
+        self.assertEqual(normalize_embed_url('https://youtu.be/dQw4w9WgXcQ?t=4'),
+                         'https://www.youtube.com/embed/dQw4w9WgXcQ')
+        self.assertEqual(normalize_embed_url('https://vimeo.com/123456789'),
+                         'https://player.vimeo.com/video/123456789')
+        with self.assertRaises(AssetRejected):
+            normalize_embed_url('https://evil.example/v?v=dQw4w9WgXcQ')
+        with self.assertRaises(AssetRejected):
+            normalize_embed_url('javascript:alert(1)')
+
+
+class LayerOwnershipTest(TestCase):
+    """Layers belong to the canonical survey; versions and draft copies borrow them (D-3)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Owner Org")
+        self.owner = User.objects.create_user(username='canonowner', password='pw12345678')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.canonical = SurveyHeader.objects.create(
+            name="canonical_survey", organization=self.org, redirect_url="/thanks/",
+            status='published', created_by=self.owner,
+        )
+        SurveySection.objects.create(
+            survey_header=self.canonical, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.layer = _objects_layer(self.canonical, key_field='zone_id')
+
+    def test_draft_copy_reads_the_canonical_layers_without_copying(self):
+        """
+        GIVEN a published survey with a layer
+        WHEN a draft copy is created
+        THEN the copy resolves the same layer through layers_for and no layer row is duplicated
+        """
+        from .versioning import clone_survey_for_draft
+        from .layers import layers_for
+        from .models import SurveyMapLayer
+        draft = clone_survey_for_draft(self.canonical)
+        self.assertEqual(list(layers_for(draft)), [self.layer])
+        self.assertEqual(SurveyMapLayer.objects.count(), 1)
+
+    def test_draft_copy_serves_the_canonical_layer_geometry(self):
+        """
+        GIVEN a draft copy of a published survey with a layer
+        WHEN the owner fetches the layer by the draft's uuid
+        THEN the canonical layer's GeoJSON is served
+        """
+        from .versioning import clone_survey_for_draft
+        draft = clone_survey_for_draft(self.canonical)
+        self.client.login(username='canonowner', password='pw12345678')
+        url = reverse('survey_layer_geojson', kwargs={'survey_slug': str(draft.uuid), 'layer_id': self.layer.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['features']), 3)
+
+    def test_archived_version_reads_the_canonical_layers(self):
+        """
+        GIVEN an archived version pointing at the canonical survey
+        WHEN layers are resolved for it
+        THEN they are the canonical survey's
+        """
+        from .layers import layers_for
+        version = SurveyHeader.objects.create(
+            name="canonical_survey_v1", organization=self.org, redirect_url="/thanks/",
+            status='closed', canonical_survey=self.canonical, is_canonical=False, version_number=1,
+        )
+        self.assertEqual(list(layers_for(version)), [self.layer])
+
+
+class LayerSplitMigrationTest(TestCase):
+    """0068: FD-1 layers become objects, losslessly."""
+
+    def _run_forwards(self):
+        from django.apps import apps
+        from django.db import connection
+        from importlib import import_module
+        module = import_module('survey.migrations.0068_split_layers_into_objects')
+        module.forwards(apps, connection.schema_editor)
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Migration Org")
+        self.survey = SurveyHeader.objects.create(
+            name="migration_survey", organization=self.org, redirect_url="/thanks/",
+        )
+
+    def test_zones_layer_migrates_losslessly(self):
+        """
+        GIVEN a pre-objects layer storing a 35-polygon FeatureCollection keyed by zone_id
+        WHEN the split migration runs
+        THEN 35 objects exist keyed by zone_id, the derived GeoJSON has 35 features
+             with the same bbox, and geojson_legacy holds the original text
+        """
+        from .models import SurveyMapLayer
+        from .layers import validate_layer_upload, bbox_of_collection
+        geojson, count, _ = validate_layer_upload(_zones_geojson(count=35).encode())
+        layer = SurveyMapLayer.objects.create(
+            survey=self.survey, name="Legacy", geojson=geojson, feature_count=count,
+            size_bytes=len(geojson), key_field='zone_id', label_field='name',
+        )
+        self._run_forwards()
+        layer.refresh_from_db()
+        self.assertEqual(layer.items.count(), 35)
+        self.assertEqual(layer.items.get(key='35').title, 'Area 35')
+        self.assertEqual(len(json.loads(layer.geojson)['features']), 35)
+        for derived, original in zip(bbox_of_collection(layer.geojson), bbox_of_collection(geojson)):
+            self.assertAlmostEqual(derived, original, places=6)
+        self.assertEqual(layer.geojson_legacy, geojson)
+        self.assertEqual(layer.feature_count, 35)
+
+    def test_duplicate_key_field_falls_back_to_generated_keys(self):
+        """
+        GIVEN a legacy layer whose key_field values repeat
+        WHEN the migration runs
+        THEN keys are f-<index> and every feature still becomes an object
+        """
+        from .models import SurveyMapLayer
+        from .layers import validate_layer_upload
+        parsed = json.loads(_zones_geojson(count=3))
+        for f in parsed['features']:
+            f['properties']['zone_id'] = 1
+        geojson, count, _ = validate_layer_upload(json.dumps(parsed).encode())
+        layer = SurveyMapLayer.objects.create(
+            survey=self.survey, name="Dupes", geojson=geojson, feature_count=count,
+            size_bytes=len(geojson), key_field='zone_id',
+        )
+        self._run_forwards()
+        self.assertEqual(sorted(layer.items.values_list('key', flat=True)), ['f-1', 'f-2', 'f-3'])
+
+    def test_migration_is_idempotent(self):
+        """
+        GIVEN a layer that already has objects
+        WHEN the migration runs again
+        THEN nothing is duplicated
+        """
+        layer = _objects_layer(self.survey)
+        self._run_forwards()
+        self.assertEqual(layer.items.count(), 3)
+
+
+class LayerObjectsSerializationTest(TestCase):
+    """Objects and attachments through export → import (survey-serialization delta)."""
+
+    def setUp(self):
+        from .models import LayerObjectAsset
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from .layers import rebuild_layer
+        self.org = Organization.objects.create(name="Obj Ser Org")
+        self.survey = SurveyHeader.objects.create(
+            name="obj_ser_survey", organization=self.org, redirect_url="/thanks/",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        Question.objects.create(
+            survey_section=self.section, code="OS001", name="Q", input_type="text", order_number=1,
+        )
+        self.layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        self.obj = self.layer.items.get(key='2')
+        self.obj.description = '<p>Pocket <b>park</b></p>'
+        self.obj.link = 'https://city.example/2'
+        self.obj.category = 'Парки'
+        self.obj.save()
+        png = SimpleUploadedFile('render.png', b'\x89PNG\r\n\x1a\n' + b'0' * 40, content_type='image/png')
+        LayerObjectAsset.objects.create(object=self.obj, kind='image', file=png, title='render.png',
+                                        content_type='image/png', size_bytes=png.size, position=0)
+        LayerObjectAsset.objects.create(object=self.obj, kind='embed', title='walkthrough',
+                                        embed_url='https://www.youtube.com/embed/dQw4w9WgXcQ', position=1)
+        rebuild_layer(self.layer)
+
+    def _export(self):
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, 'structure')
+        buf.seek(0)
+        return buf
+
+    def test_archive_carries_objects_manifest_and_asset_bytes(self):
+        """
+        GIVEN a layer with an object carrying an image and an embed
+        WHEN the survey is exported
+        THEN the archive has objects.json, the asset file, and the derived GeoJSON keyed by _key
+        """
+        with zipfile.ZipFile(self._export()) as zf:
+            names = zf.namelist()
+            self.assertIn('layers/0/objects.json', names)
+            self.assertTrue(any(n.startswith('layers/0/assets/') and n.endswith('.png') for n in names))
+            manifest = json.loads(zf.read('layers/0/objects.json'))
+            entry = next(e for e in manifest if e['key'] == '2')
+            self.assertEqual(entry['description'], '<p>Pocket <b>park</b></p>')
+            self.assertEqual([a['kind'] for a in entry['assets']], ['image', 'embed'])
+            geo = json.loads(zf.read('layers/0.geojson'))
+            self.assertEqual(sorted(f['properties']['_key'] for f in geo['features']), ['1', '2', '3'])
+
+    def test_objects_and_attachments_round_trip(self):
+        """
+        GIVEN the exported archive
+        WHEN it is imported
+        THEN keys, titles, descriptions, links, categories and both attachments arrive,
+             with the image copied into storage under a fresh random key
+        """
+        buf = self._export()
+        self.survey.name = 'obj_ser_survey_old'
+        self.survey.save()
+        imported, warnings = import_survey_from_zip(buf)
+        self.assertEqual(warnings, [])
+        layer = imported.map_layers.get()
+        self.assertEqual(sorted(layer.items.values_list('key', flat=True)), ['1', '2', '3'])
+        obj = layer.items.get(key='2')
+        self.assertEqual((obj.title, obj.category, obj.link), ('Area 2', 'Парки', 'https://city.example/2'))
+        self.assertIn('<b>park</b>', obj.description)
+        kinds = list(obj.assets.values_list('kind', flat=True))
+        self.assertEqual(kinds, ['image', 'embed'])
+        image = obj.assets.get(kind='image')
+        self.assertRegex(image.file.name, r'^layer_assets/[0-9a-f]{32}\.png$')
+        self.assertNotEqual(image.file.name, self.obj.assets.get(kind='image').file.name)
+        self.assertEqual(obj.assets.get(kind='embed').embed_url, 'https://www.youtube.com/embed/dQw4w9WgXcQ')
+        self.assertNotIn('_key', obj.properties)
+        self.assertEqual(layer.feature_count, 3)
+
+    def test_missing_asset_file_is_a_warning(self):
+        """
+        GIVEN an archive whose manifest names an asset entry that is absent
+        WHEN it is imported
+        THEN the object imports without that asset and the warning names the file
+        """
+        buf = self._export()
+        stripped = BytesIO()
+        with zipfile.ZipFile(buf) as src, zipfile.ZipFile(stripped, 'w') as dst:
+            for name in src.namelist():
+                if not name.startswith('layers/0/assets/'):
+                    dst.writestr(name, src.read(name))
+        stripped.seek(0)
+        self.survey.name = 'obj_ser_survey_old'
+        self.survey.save()
+        imported, warnings = import_survey_from_zip(stripped)
+        obj = imported.map_layers.get().items.get(key='2')
+        self.assertEqual(list(obj.assets.values_list('kind', flat=True)), ['embed'])
+        self.assertTrue(any('is missing' in w for w in warnings), warnings)
+
+    def test_fd1_archive_without_manifest_creates_objects(self):
+        """
+        GIVEN an FD-1-era archive: layers/0.geojson without reserved fields and no objects.json
+        WHEN it is imported
+        THEN objects are created from the features with keys and titles as the migration derives them
+        """
+        buf = self._export()
+        rebuilt = BytesIO()
+        with zipfile.ZipFile(buf) as src, zipfile.ZipFile(rebuilt, 'w') as dst:
+            for name in src.namelist():
+                if name.startswith('layers/0/'):
+                    continue
+                if name == 'layers/0.geojson':
+                    dst.writestr(name, _zones_geojson())
+                else:
+                    dst.writestr(name, src.read(name))
+        rebuilt.seek(0)
+        self.survey.name = 'obj_ser_survey_old'
+        self.survey.save()
+        imported, warnings = import_survey_from_zip(rebuilt)
+        layer = imported.map_layers.get()
+        self.assertEqual(sorted(layer.items.values_list('key', flat=True)), ['1', '2', '3'])
+        self.assertEqual(layer.items.get(key='1').title, 'Area 1')
+        self.assertEqual(layer.items.get(key='1').assets.count(), 0)
+
+
+class LayerObjectEditorTest(TestCase):
+    """The object editor page and its JSON endpoints (spec layer-object-editor)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="LOE Org")
+        self.owner = User.objects.create_user(username='loeowner', password='pw12345678')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.viewer = User.objects.create_user(username='loeviewer', password='pw12345678')
+        Membership.objects.create(user=self.viewer, organization=self.org, role='viewer')
+        self.survey = SurveyHeader.objects.create(
+            name="loe_survey", organization=self.org, redirect_url="/thanks/", created_by=self.owner,
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        self.client.login(username='loeowner', password='pw12345678')
+
+    def _u(self, name, **kw):
+        kw.setdefault('survey_uuid', self.survey.uuid)
+        kw.setdefault('layer_id', self.layer.pk)
+        return reverse(name, kwargs=kw)
+
+    def _json(self, method, url, data=None, **extra):
+        return getattr(self.client, method)(url, data=json.dumps(data or {}), content_type='application/json', **extra)
+
+    def test_owner_opens_the_editor_page(self):
+        """
+        GIVEN an owner and a layer with three objects
+        WHEN the editor page is requested
+        THEN it renders the three columns with the objects embedded as JSON
+        """
+        response = self.client.get(self._u('editor_layer_objects'))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('id="loe-rows"', html)
+        self.assertIn('id="loe-map"', html)
+        self.assertIn('id="loe-card"', html)
+        self.assertIn('"key": "1"', html)
+        self.assertNotIn('visible to respondents immediately', html)
+
+    def test_published_survey_shows_the_live_banner(self):
+        """
+        GIVEN the survey is published
+        WHEN the owner opens the editor
+        THEN the page carries the "changes are visible immediately" banner
+        """
+        self.survey.status = 'published'
+        self.survey.save()
+        html = self.client.get(self._u('editor_layer_objects')).content.decode()
+        self.assertIn('visible to respondents immediately', html)
+
+    def test_viewer_is_refused(self):
+        """
+        GIVEN a viewer-role collaborator
+        WHEN they request the editor page or an endpoint
+        THEN the request is refused
+        """
+        self.client.login(username='loeviewer', password='pw12345678')
+        self.assertIn(self.client.get(self._u('editor_layer_objects')).status_code, (403, 404))
+        self.assertIn(self._json('post', self._u('editor_layer_objects_collection'), {}).status_code, (403, 404))
+
+    @override_settings(MAP_REFERENCE_LAYERS=False)
+    def test_kill_switch_hides_the_editor(self):
+        """
+        GIVEN the layers kill switch is off
+        WHEN the editor page is requested
+        THEN 404
+        """
+        self.assertEqual(self.client.get(self._u('editor_layer_objects')).status_code, 404)
+
+    def test_draw_creates_an_object_and_rebuilds_the_layer(self):
+        """
+        GIVEN a drawn point geometry
+        WHEN it is POSTed to the objects collection
+        THEN an object with a generated key exists, its row and card come back, and
+             the derived GeoJSON has four features
+        """
+        response = self._json('post', self._u('editor_layer_objects_collection'),
+                              {'geometry': {'type': 'Point', 'coordinates': [-88.09, 38.73]}, 'title': ''})
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertEqual(data['object']['geometry']['type'], 'Point')
+        self.assertTrue(data['row']['key'].startswith('o-'))
+        self.assertEqual(data['summary']['object_count'], 4)
+        self.layer.refresh_from_db()
+        self.assertEqual(len(json.loads(self.layer.geojson)['features']), 4)
+
+    def test_invalid_geometry_is_refused(self):
+        """
+        GIVEN a MultiPolygon (two parts) or garbage geometry
+        WHEN POSTed as a new object
+        THEN 400 with a readable message and no object created
+        """
+        ring = lambda x: [[x, 0], [x + 1, 0], [x + 1, 1], [x, 1], [x, 0]]
+        bad = {'geometry': {'type': 'MultiPolygon', 'coordinates': [[ring(0)], [ring(3)]]}}
+        self.assertEqual(self._json('post', self._u('editor_layer_objects_collection'), bad).status_code, 400)
+        self.assertEqual(self._json('post', self._u('editor_layer_objects_collection'), {'geometry': 'nope'}).status_code, 400)
+        self.assertEqual(self.layer.items.count(), 3)
+
+    def test_geometry_move_rebuilds(self):
+        """
+        GIVEN an existing polygon object
+        WHEN a new geometry is POSTed to its geometry endpoint
+        THEN the object and the derived feature carry the new geometry
+        """
+        new = {'type': 'Point', 'coordinates': [10.0, 50.0]}
+        response = self._json('post', self._u('editor_layer_object_geometry', key='1'), {'geometry': new})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.layer.items.get(key='1').geometry.geom_type, 'Point')
+        feature = next(f for f in json.loads(self.layer.__class__.objects.get(pk=self.layer.pk).geojson)['features'] if f['properties']['_key'] == '1')
+        self.assertEqual(feature['geometry']['type'], 'Point')
+
+    def test_patch_autosaves_fields_and_sanitizes_description(self):
+        """
+        GIVEN a PATCH with a title, a category, a link and a description carrying a script
+        WHEN it is applied
+        THEN the fields are stored, the script is stripped, and the row reflects the change
+        """
+        response = self._json('patch', self._u('editor_layer_object', key='1'),
+                              {'title': 'Ring road overpass', 'category': 'Roads',
+                               'link': 'https://city.example/1', 'description': '<p>Plan</p><script>x()</script>'})
+        self.assertEqual(response.status_code, 200)
+        obj = self.layer.items.get(key='1')
+        self.assertEqual((obj.title, obj.category, obj.link), ('Ring road overpass', 'Roads', 'https://city.example/1'))
+        self.assertIn('Plan', obj.description)
+        self.assertNotIn('<script', obj.description)
+        self.assertEqual(response.json()['row']['category'], 'Roads')
+        self.assertTrue(response.json()['row']['has_text'])
+
+    def test_delete_reports_answer_count_and_removes(self):
+        """
+        GIVEN an object with no answers
+        WHEN the answer-count endpoint and then DELETE are called
+        THEN the count is 0 and the object is gone, layer rebuilt
+        """
+        self.assertEqual(self.client.get(self._u('editor_layer_object_answers', key='1')).json(), {'answers': 0})
+        response = self.client.delete(self._u('editor_layer_object', key='1'))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(self.layer.items.filter(key='1').exists())
+        self.assertEqual(response.json()['summary']['object_count'], 2)
+
+    def test_bulk_set_category(self):
+        """
+        GIVEN two selected objects
+        WHEN bulk set_category is POSTed
+        THEN both carry the category and the summary lists it
+        """
+        response = self._json('post', self._u('editor_layer_objects_bulk'),
+                              {'action': 'set_category', 'category': 'Parks', 'keys': ['1', '2']})
+        self.assertEqual(response.json()['affected'], 2)
+        self.assertEqual(self.layer.items.filter(category='Parks').count(), 2)
+        self.assertIn('Parks', response.json()['summary']['categories'])
+
+    def test_asset_upload_embed_reorder_and_delete(self):
+        """
+        GIVEN an object
+        WHEN a PNG is uploaded, a YouTube link embedded, the two reordered and the image deleted
+        THEN each step returns the updated row and the assets end in the expected state
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        png = SimpleUploadedFile('render.png', b'\x89PNG\r\n\x1a\n' + b'0' * 40, content_type='image/png')
+        up = self.client.post(self._u('editor_layer_asset_create', key='1'), {'file': png})
+        self.assertEqual(up.status_code, 201)
+        self.assertEqual(up.json()['asset']['kind'], 'image')
+        self.assertEqual(up.json()['row']['assets'], {'image': 1})
+        em = self.client.post(self._u('editor_layer_asset_create', key='1'), {'embed_url': 'https://youtu.be/dQw4w9WgXcQ'})
+        self.assertEqual(em.status_code, 201)
+        self.assertEqual(em.json()['asset']['url'], 'https://www.youtube.com/embed/dQw4w9WgXcQ')
+        bad = self.client.post(self._u('editor_layer_asset_create', key='1'), {'embed_url': 'https://evil.example/v'})
+        self.assertEqual(bad.status_code, 400)
+        image_id, embed_id = up.json()['asset']['id'], em.json()['asset']['id']
+        self._json('post', self._u('editor_layer_assets_reorder', key='1'), {'order': [embed_id, image_id]})
+        obj = self.layer.items.get(key='1')
+        self.assertEqual(list(obj.assets.values_list('kind', flat=True)), ['embed', 'image'])
+        rm = self.client.delete(self._u('editor_layer_asset', key='1', asset_id=image_id))
+        self.assertEqual(rm.status_code, 200)
+        self.assertEqual(rm.json()['row']['assets'], {'embed': 1})
+
+    def test_geojson_import_dry_run_then_confirm(self):
+        """
+        GIVEN a GeoJSON of two new zones with keys 10 and 11
+        WHEN imported with dry_run and then for real, mapping name→title and zone_id→key
+        THEN the dry run reports 2 to create without writing, and the real run creates them
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        parsed = json.loads(_zones_geojson(count=2))
+        for i, f in enumerate(parsed['features']):
+            f['properties']['zone_id'] = 10 + i
+        body = json.dumps(parsed).encode()
+        dry = self.client.post(self._u('editor_layer_import_geojson'), {
+            'file': SimpleUploadedFile('more.geojson', body), 'dry_run': '1', 'map_key': 'zone_id', 'map_title': 'name'})
+        self.assertEqual(dry.status_code, 200)
+        self.assertEqual((dry.json()['created'], dry.json()['collisions'], dry.json()['dry_run']), (2, [], True))
+        self.assertEqual(dry.json()['properties'], ['name', 'zone_id'])
+        self.assertEqual(self.layer.items.count(), 3)
+        real = self.client.post(self._u('editor_layer_import_geojson'), {
+            'file': SimpleUploadedFile('more.geojson', body), 'map_key': 'zone_id', 'map_title': 'name'})
+        self.assertEqual(real.json()['created'], 2)
+        self.assertEqual(sorted(self.layer.items.values_list('key', flat=True)), ['1', '10', '11', '2', '3'])
+
+    def test_csv_with_coordinates_creates_points(self):
+        """
+        GIVEN a CSV with title, lat, lng, category columns
+        WHEN imported
+        THEN one point object per row is created with those fields
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        csv_text = 'title,lat,lng,category\nStation A,55.75,37.62,Metro\nStation B,55.76,37.63,Tram\nBroken,x,y,Tram\n'
+        response = self.client.post(self._u('editor_layer_import_csv'), {'file': SimpleUploadedFile('s.csv', csv_text.encode())})
+        data = response.json()
+        self.assertEqual((data['mode'], data['created'], data['invalid']), ('coordinates', 2, [3]))
+        obj = self.layer.items.get(title='Station A')
+        self.assertEqual((obj.category, obj.geometry.geom_type), ('Metro', 'Point'))
+
+    def test_content_csv_matches_by_title_and_reports_unmatched(self):
+        """
+        GIVEN a CSV without coordinates carrying title, description and link
+        WHEN imported
+        THEN matching objects receive the content and the unmatched row is listed
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        csv_text = 'title,description,link\nArea 1,Pocket park,https://city.example/1\nNowhere,x,https://x\n'
+        response = self.client.post(self._u('editor_layer_import_csv'), {'file': SimpleUploadedFile('c.csv', csv_text.encode())})
+        data = response.json()
+        self.assertEqual((data['mode'], data['updated'], data['unmatched']), ('content', 1, ['Nowhere']))
+        obj = self.layer.items.get(key='1')
+        self.assertIn('Pocket park', obj.description)
+        self.assertEqual(obj.link, 'https://city.example/1')
+
+    def test_photo_import_matches_by_key_then_title(self):
+        """
+        GIVEN photos named 2.png (a key) and area 3.png (a title) and stray.png
+        WHEN uploaded as a batch
+        THEN the first two are attached as covers and stray.png is reported unmatched
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        body = b'\x89PNG\r\n\x1a\n' + b'0' * 40
+        files = [SimpleUploadedFile('2.png', body, content_type='image/png'),
+                 SimpleUploadedFile('Area 3.png', body, content_type='image/png'),
+                 SimpleUploadedFile('stray.png', body, content_type='image/png')]
+        response = self.client.post(self._u('editor_layer_import_photos'), {'files': files})
+        data = response.json()
+        self.assertEqual((data['attached'], data['unmatched']), (2, ['stray.png']))
+        self.assertIsNotNone(self.layer.items.get(key='2').cover)
+        self.assertIsNotNone(self.layer.items.get(key='3').cover)
+        self.assertIsNone(self.layer.items.get(key='1').cover)
+
+    def test_new_empty_layer(self):
+        """
+        GIVEN the settings card's "New layer" action
+        WHEN it POSTs
+        THEN an empty layer exists on the canonical survey and the editor for it renders the empty state
+        """
+        response = self.client.post(reverse('editor_layer_create_empty', kwargs={'survey_uuid': self.survey.uuid}), {'name': 'Drawn'})
+        self.assertEqual(response.status_code, 201)
+        layer_id = response.json()['id']
+        html = self.client.get(reverse('editor_layer_objects', kwargs={'survey_uuid': self.survey.uuid, 'layer_id': layer_id})).content.decode()
+        self.assertIn('Add your first object', html)
+
+    def test_feature_cap_on_create(self):
+        """
+        GIVEN the feature cap lowered to the current count
+        WHEN another object is POSTed
+        THEN 400 naming the cap
+        """
+        with patch('survey.layers.MAX_LAYER_FEATURES', 3):
+            response = self._json('post', self._u('editor_layer_objects_collection'),
+                                  {'geometry': {'type': 'Point', 'coordinates': [0, 0]}})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('limit is 3', response.json()['error'])
+
+    def test_settings_card_links_to_the_editor(self):
+        """
+        GIVEN the Survey settings page
+        WHEN the owner opens it
+        THEN each layer card carries "Open editor" and the "New empty layer" action is present
+        """
+        html = self.client.get(reverse('editor_survey_settings_panel', args=[self.survey.uuid])).content.decode()
+        self.assertIn(self._u('editor_layer_objects'), html)
+        self.assertIn('ref-layers-new', html)
+
+
+# ─── overlay-features: thumbs + layer_objects question types (group 3) ──────
+
+class ThumbsQuestionTest(TestCase):
+    """👍/👎 as a fixed two-choice type (spec thumbs-question)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Thumbs Org")
+        self.survey = SurveyHeader.objects.create(
+            name="thumbs_survey", organization=self.org, redirect_url="/thanks/",
+            status='published', available_languages=['en'],
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.q = Question.objects.create(
+            survey_section=self.section, code="TH001", name="Build it?", input_type="thumbs", order_number=1,
+        )
+        self.q.choices = self.q.thumbs_choices()
+        self.q.save()
+        self.url = f'/surveys/{self.survey.uuid}/{self.section.name}/'
+
+    def test_widget_renders_two_options(self):
+        """
+        GIVEN a thumbs question on a published survey
+        WHEN the respondent opens the section
+        THEN two thumb buttons render, with codes 1 and 0
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/')
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('class="thumbs"', html)
+        self.assertIn('data-thumb="1"', html)
+        self.assertIn('data-thumb="0"', html)
+        self.assertIn('fa-thumbs-down', html)
+
+    def test_answer_is_stored_and_changeable(self):
+        """
+        GIVEN a respondent who taps 👍 and later 👎
+        WHEN each submission is stored
+        THEN the answer holds code 1, then code 0, and the export cell reads up/down
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/')
+        self.client.get(self.url)
+        self.client.post(self.url, {self.q.code: '1'})
+        answer = Answer.objects.get(question=self.q)
+        self.assertEqual(answer.selected_choices, [1])
+        self.assertEqual(answer.get_selected_choice_names(), ['up'])
+        self.client.post(self.url, {self.q.code: '0'})
+        answer = Answer.objects.filter(question=self.q).order_by('-id').first()
+        self.assertEqual(answer.selected_choices, [0])
+        self.assertEqual(answer.get_selected_choice_names(), ['down'])
+
+    def test_required_thumbs_validates_like_other_single_value_types(self):
+        """
+        GIVEN a required thumbs question
+        WHEN the single-question form is bound without a value, then with 👍
+        THEN validation fails on empty (the same client-side `required` path
+             every choice type uses) and accepts the code
+        """
+        from django.core.exceptions import ValidationError
+        self.q.required = True
+        self.q.save()
+        form = SurveySectionAnswerForm.single_question_form(self.q)
+        field = form.fields[self.q.code]
+        with self.assertRaises(ValidationError):
+            field.clean('')
+        self.assertEqual(field.clean('1'), '1')
+        self.client.get(f'/surveys/{self.survey.uuid}/')
+        html = self.client.get(self.url).content.decode()
+        self.assertRegex(html, r'<input type="radio" name="%s" value="1"[^>]*required' % self.q.code)
+
+    def test_editor_writes_the_fixed_choices(self):
+        """
+        GIVEN an owner creating a thumbs question through the editor
+        WHEN the create endpoint saves it
+        THEN the stored choices are the fixed up/down pair regardless of the posted choices_json
+        """
+        owner = User.objects.create_user(username='thumbsowner', password='pw12345678')
+        Membership.objects.create(user=owner, organization=self.org, role='owner')
+        self.survey.status = 'draft'
+        self.survey.created_by = owner
+        self.survey.save()
+        self.client.login(username='thumbsowner', password='pw12345678')
+        response = self.client.post(
+            reverse('editor_question_create', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk}),
+            {'name': 'Like it?', 'input_type': 'thumbs', 'subtext': '', 'display_style': 'default',
+             'color': '#000000', 'choices_json': '[{"code": 5, "name": "x"}]'})
+        self.assertEqual(response.status_code, 200)
+        q = Question.objects.get(name='Like it?')
+        self.assertEqual(q.choices, [{"code": 1, "name": "up"}, {"code": 0, "name": "down"}])
+
+    def test_picker_lists_thumbs_with_the_questions(self):
+        """
+        GIVEN the type picker groups
+        WHEN they are built from every input type
+        THEN thumbs sits in the Questions group with the thumbs-up icon and its label
+        """
+        from .models import INPUT_TYPE_CHOICES
+        from .question_types import picker_groups_for
+        groups = dict(picker_groups_for(INPUT_TYPE_CHOICES))
+        entry = next(t for t in groups['Questions'] if t['value'] == 'thumbs')
+        self.assertEqual((entry['icon'], entry['label']), ('fa-thumbs-up', 'Thumbs up / down'))
+
+
+class LayerObjectsQuestionEditorTest(TestCase):
+    """The `layer_objects` type in the editor: picker, form, sub-questions (specs
+    survey-editor, question-type-picker)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="LOQ Org")
+        self.owner = User.objects.create_user(username='loqowner', password='pw12345678')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="loq_survey", organization=self.org, redirect_url="/thanks/", created_by=self.owner,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.form_section = SurveySection.objects.create(
+            survey_header=self.survey, name="s2", title="S2", code="S2", layout='form',
+        )
+        self.layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        self.client.login(username='loqowner', password='pw12345678')
+
+    def _create_url(self, section=None):
+        return reverse('editor_question_create', kwargs={'survey_uuid': self.survey.uuid, 'section_id': (section or self.section).pk})
+
+    def _post(self, data, section=None):
+        base = {'subtext': '', 'display_style': 'default', 'color': '#000000'}
+        base.update(data)
+        return self.client.post(self._create_url(section), base)
+
+    def test_picker_offers_objects_on_the_map_with_a_layer(self):
+        """
+        GIVEN a survey with a reference layer and a map-layout section
+        WHEN the new-question modal is opened
+        THEN the picker lists "Objects on the map" in the Map questions group
+        """
+        html = self.client.get(self._create_url()).content.decode()
+        self.assertIn('data-qtp-value="layer_objects"', html)
+        self.assertIn('Objects on the map', html)
+
+    def test_picker_hides_the_type_without_layers_and_on_form_sections(self):
+        """
+        GIVEN a survey with no layers, or a form-layout section
+        WHEN the new-question modal is opened
+        THEN the picker does not offer layer_objects
+        """
+        html = self.client.get(self._create_url(self.form_section)).content.decode()
+        self.assertNotIn('data-qtp-value="layer_objects"', html)
+        self.layer.delete()
+        html = self.client.get(self._create_url()).content.decode()
+        self.assertNotIn('data-qtp-value="layer_objects"', html)
+
+    def test_create_requires_a_layer_and_ignores_required(self):
+        """
+        GIVEN a POST for an Objects-on-the-map question without a layer, then with one and required=on
+        WHEN the create endpoint validates
+        THEN the first is refused on the layer field and the second is stored with required=False and min_objects
+        """
+        response = self._post({'name': 'Objects', 'input_type': 'layer_objects'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Pick the reference layer', response.content.decode())
+        self.assertFalse(Question.objects.filter(name='Objects').exists())
+        response = self._post({'name': 'Objects', 'input_type': 'layer_objects', 'layer': self.layer.pk,
+                               'required': 'on', 'min_objects': '2', 'objects_search': 'on'})
+        self.assertEqual(response.status_code, 200)
+        q = Question.objects.get(name='Objects')
+        self.assertEqual((q.layer_id, q.required, q.min_objects, q.objects_search), (self.layer.pk, False, 2, 'on'))
+        html = response.content.decode()
+        self.assertIn('Sites', html)
+        self.assertIn('min 2', html)
+        self.assertIn('Add Sub-question', html)
+
+    def test_switching_type_drops_the_layer_binding(self):
+        """
+        GIVEN a layer_objects question
+        WHEN it is edited into a text question
+        THEN the layer binding is cleared so the layer stays deletable
+        """
+        q = Question.objects.create(survey_section=self.section, code="LO001", name="Objects",
+                                    input_type="layer_objects", layer=self.layer, order_number=1)
+        self.client.post(reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': q.pk}),
+                         {'name': 'Objects', 'input_type': 'text', 'subtext': '', 'display_style': 'default', 'color': '#000000'})
+        q.refresh_from_db()
+        self.assertEqual((q.input_type, q.layer_id), ('text', None))
+
+    def test_subquestion_form_excludes_parent_types(self):
+        """
+        GIVEN the New Sub-question modal for a layer_objects question
+        WHEN it renders and when a POST tries a parent type
+        THEN the picker offers neither geo types nor layer_objects, and the POST is rejected
+        """
+        q = Question.objects.create(survey_section=self.section, code="LO002", name="Objects",
+                                    input_type="layer_objects", layer=self.layer, order_number=1)
+        url = reverse('editor_subquestion_create', kwargs={'survey_uuid': self.survey.uuid, 'parent_id': q.pk})
+        html = self.client.get(url).content.decode()
+        for value in ('point', 'line', 'polygon', 'layer_objects'):
+            self.assertNotIn(f'data-qtp-value="{value}"', html)
+        self.assertIn('data-qtp-value="thumbs"', html)
+        self.client.post(url, {'name': 'Nested', 'input_type': 'layer_objects', 'layer': self.layer.pk,
+                               'subtext': '', 'display_style': 'default', 'color': '#000000'})
+        self.assertFalse(Question.objects.filter(name='Nested').exists())
+        self.client.post(url, {'name': 'Rate', 'input_type': 'rating', 'subtext': '', 'display_style': 'default',
+                               'color': '#000000', 'choices_json': '[]'})
+        sub = Question.objects.get(name='Rate')
+        self.assertEqual(sub.parent_question_id_id, q.pk)
+
+    def test_modal_has_no_subquestions_section(self):
+        """
+        GIVEN edit modals for a polygon question with a sub-question and for the sub-question itself
+        WHEN they render
+        THEN neither carries a Sub-questions section — sub-questions are managed only from
+             the section list (owner decision 2026-09-05: a create modal cannot host them
+             because the parent does not exist yet, so the section was one-sided and confusing)
+        """
+        poly = Question.objects.create(survey_section=self.section, code="LO003", name="Area", input_type="polygon", order_number=1)
+        sub = Question.objects.create(survey_section=self.section, code="LO004", name="Why?", input_type="text",
+                                      parent_question_id=poly, order_number=1)
+        for q in (poly, sub):
+            html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': q.pk})).content.decode()
+            self.assertNotIn('id="fg-subquestions"', html)
+            self.assertNotIn('subquestion-list--modal', html)
+        html = self.client.get(reverse('editor_question_create', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk})).content.decode()
+        self.assertNotIn('fg-subquestions', html)
+        # The section list keeps its entry point.
+        html = self.client.get(reverse('editor_section_detail', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk})).content.decode()
+        self.assertIn(reverse('editor_subquestion_create', kwargs={'survey_uuid': self.survey.uuid, 'parent_id': poly.pk}), html)
+
+    def test_polygon_without_subquestions_saves(self):
+        """
+        GIVEN a polygon question created with no sub-questions
+        WHEN it is saved
+        THEN it exists — no minimum, no block (D4)
+        """
+        response = self._post({'name': 'Area', 'input_type': 'polygon'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Question.objects.filter(name='Area', input_type='polygon').exists())
+
+    def test_live_preview_renders_the_block(self):
+        """
+        GIVEN a draft Objects-on-the-map question in the modal
+        WHEN the live preview endpoint renders it with the picked layer
+        THEN the block shell renders with the layer's object count and code attributes
+        """
+        response = self.client.post(
+            reverse('editor_question_preview_live', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk}),
+            {'input_type': 'layer_objects', 'name': 'Objects', 'layer': self.layer.pk, 'min_objects': '1', 'objects_search': 'auto'})
+        html = response.content.decode()
+        self.assertIn('data-layer-objects', html)
+        self.assertIn(f'data-layer-id="{self.layer.pk}"', html)
+        self.assertIn('data-min-objects="1"', html)
+
+    def test_clone_keeps_layer_within_the_survey_and_drops_it_elsewhere(self):
+        """
+        GIVEN a layer_objects question
+        WHEN it is cloned into the same survey and into another survey
+        THEN the same-survey clone keeps the layer and the cross-survey clone is unbound
+        """
+        from .cloning import clone_question
+        q = Question.objects.create(survey_section=self.section, code="LO005", name="Objects",
+                                    input_type="layer_objects", layer=self.layer, min_objects=1, order_number=1)
+        same = clone_question(q, target_section=self.section)
+        self.assertEqual((same.layer_id, same.min_objects), (self.layer.pk, 1))
+        other = SurveyHeader.objects.create(name="other_survey", organization=self.org, redirect_url="/thanks/")
+        other_section = SurveySection.objects.create(survey_header=other, name="s1", title="S1", code="S1", is_head=True)
+        cross = clone_question(q, target_section=other_section)
+        self.assertIsNone(cross.layer_id)
+
+    def test_bound_layer_cannot_be_deleted(self):
+        """
+        GIVEN a layer bound to a layer_objects question
+        WHEN the owner deletes the layer through the settings endpoint
+        THEN the request is refused with a message naming the question and the layer remains
+        """
+        Question.objects.create(survey_section=self.section, code="LO006", name="Rate the sites",
+                                input_type="layer_objects", layer=self.layer, order_number=1)
+        response = self.client.post(reverse('editor_survey_layer_delete', kwargs={'survey_uuid': self.survey.uuid, 'layer_id': self.layer.pk}))
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Rate the sites', response.json()['error'])
+        self.assertTrue(self.layer.__class__.objects.filter(pk=self.layer.pk).exists())
+
+    def test_serialization_round_trips_the_binding(self):
+        """
+        GIVEN a layer_objects question bound to the survey's layer
+        WHEN the survey is exported and re-imported
+        THEN the imported question is bound to the imported layer by position, with its settings
+        """
+        Question.objects.create(survey_section=self.section, code="LO007", name="Objects",
+                                input_type="layer_objects", layer=self.layer, min_objects=2, objects_search='off', order_number=1)
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, 'structure')
+        buf.seek(0)
+        self.survey.name = 'loq_survey_old'
+        self.survey.save()
+        imported, warnings = import_survey_from_zip(buf)
+        q = Question.objects.get(survey_section__survey_header=imported, name='Objects')
+        self.assertEqual(q.layer, imported.map_layers.get())
+        self.assertEqual((q.min_objects, q.objects_search), (2, 'off'))
+
+
+class LayerObjectsRespondentTest(TestCase):
+    """The list block, the bound-layer metadata and answers about objects
+    (specs layer-objects-question, object-answers, reference-overlay-layers)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="LOR Org")
+        self.survey = SurveyHeader.objects.create(
+            name="lor_survey", organization=self.org, redirect_url="/thanks/",
+            status='published', available_languages=['en'],
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.next_section = SurveySection.objects.create(
+            survey_header=self.survey, name="s2", title="S2", code="S2",
+        )
+        self.section.next_section = self.next_section
+        self.section.save()
+        Question.objects.create(survey_section=self.next_section, code="LR100", name="Later", input_type="text", order_number=1)
+        self.layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        for obj, cat in zip(self.layer.items.order_by('key'), ('Parks', 'Parks', 'Roads')):
+            obj.category = cat
+            obj.save()
+        from .layers import rebuild_layer
+        rebuild_layer(self.layer)
+        self.q = Question.objects.create(
+            survey_section=self.section, code="LR001", name="Objects", input_type="layer_objects",
+            layer=self.layer, min_objects=1, order_number=1,
+        )
+        self.rating = Question.objects.create(
+            survey_section=self.section, code="LR002", name="Rate", input_type="rating",
+            parent_question_id=self.q, order_number=1, choices=[{"code": i, "name": str(i)} for i in range(1, 6)],
+        )
+        self.thumbs = Question.objects.create(
+            survey_section=self.section, code="LR003", name="Build?", input_type="thumbs",
+            parent_question_id=self.q, order_number=2,
+        )
+        self.thumbs.choices = self.thumbs.thumbs_choices()
+        self.thumbs.save()
+        self.comment = Question.objects.create(
+            survey_section=self.section, code="LR004", name="Comment", input_type="text",
+            parent_question_id=self.q, order_number=3,
+        )
+        self.url = f'/surveys/{self.survey.uuid}/{self.section.name}/'
+
+    def _start(self):
+        self.client.get(f'/surveys/{self.survey.uuid}/')
+        return self.client.get(self.url)
+
+    def test_block_and_bound_layer_metadata_render(self):
+        """
+        GIVEN a section with an Objects-on-the-map question bound to a layer
+        WHEN the respondent opens it
+        THEN the block shell carries the code, layer, minimum and search mode; the layer
+             metadata marks the layer bound with an object URL; the sub-question form is
+             pre-rendered for the popup; and no object geometry is inlined
+        """
+        html = self._start().content.decode()
+        self.assertIn('data-layer-objects', html)
+        self.assertIn(f'data-layer-id="{self.layer.pk}"', html)
+        self.assertIn('data-min-objects="1"', html)
+        self.assertIn('data-search="auto"', html)
+        self.assertIn('"bound": true', html)
+        self.assertIn('/objects/KEY/', html)
+        self.assertIn('initLayerObjectBlocks', html)
+        # The sub-question form is pre-rendered into the sq-forms json_script
+        # (json_script escapes quotes, so match on the names, not the markup).
+        forms = json.loads(re.search(r'id="sq-forms-data"[^>]*>(.*?)</script>', html, re.S).group(1))
+        self.assertIn('LR002', forms['LR001'])          # rating sub-question
+        self.assertIn('thumbs__option', forms['LR001'])  # thumbs widget
+        self.assertNotIn('"coordinates"', html)
+
+    def test_object_answers_are_stored_one_row_per_object_and_subquestion(self):
+        """
+        GIVEN a respondent who answered about objects 1 and 2 (rating, thumbs, comment)
+        WHEN the section POSTs obj__<key>__<code> fields
+        THEN one Answer per (object, sub-question) exists with layer_object set and no parent answer
+        """
+        self._start()
+        response = self.client.post(self.url, {
+            'obj__1__LR002': '4', 'obj__1__LR003': '1', 'obj__1__LR004': 'Keep the oaks',
+            'obj__2__LR002': '2', 'obj__2__LR003': '0',
+        })
+        self.assertIn(response.status_code, (200, 302))
+        rows = Answer.objects.filter(layer_object__isnull=False).select_related('layer_object', 'question')
+        self.assertEqual(rows.count(), 5)
+        by = {(a.layer_object.key, a.question.code): a for a in rows}
+        self.assertEqual(by[('1', 'LR002')].selected_choices, [4])
+        self.assertEqual(by[('1', 'LR003')].selected_choices, [1])
+        self.assertEqual(by[('1', 'LR004')].text, 'Keep the oaks')
+        self.assertEqual(by[('2', 'LR003')].selected_choices, [0])
+        self.assertTrue(all(a.parent_answer_id_id is None for a in rows))
+
+    def test_resubmit_replaces_and_unknown_keys_are_ignored(self):
+        """
+        GIVEN stored object answers
+        WHEN the section is POSTed again with a changed rating, a dropped object and a bogus key
+        THEN the rows reflect the latest POST only and the bogus key stores nothing
+        """
+        self._start()
+        self.client.post(self.url, {'obj__1__LR002': '4', 'obj__2__LR002': '2'})
+        self.client.post(self.url, {'obj__1__LR002': '5', 'obj__zzz__LR002': '3', 'obj__1__NOPE': 'x'})
+        rows = list(Answer.objects.filter(layer_object__isnull=False))
+        self.assertEqual(len(rows), 1)
+        self.assertEqual((rows[0].layer_object.key, rows[0].selected_choices), ('1', [5]))
+
+    def test_hidden_block_discards_object_answers(self):
+        """
+        GIVEN the Objects question is hidden by a visibility rule for this session
+        WHEN the POST still carries obj__ fields
+        THEN nothing is stored
+        """
+        controller = Question.objects.create(
+            survey_section=self.section, code="LR000", name="Interested?", input_type="choice", order_number=0,
+            choices=[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}],
+        )
+        self.q.visibility_rule = {"question_code": "LR000", "choice_codes": [1]}
+        self.q.save()
+        self._start()
+        self.client.post(self.url, {'LR000': '2', 'obj__1__LR002': '4'})
+        self.assertEqual(Answer.objects.filter(layer_object__isnull=False).count(), 0)
+
+    def test_session_restore_carries_object_answers_to_the_page(self):
+        """
+        GIVEN a respondent who answered about object 1 and moved on
+        WHEN they come back to the section
+        THEN the page embeds the stored values keyed by object and sub-question for the popup and ✓ state
+        """
+        self._start()
+        self.client.post(self.url, {'obj__1__LR002': '4', 'obj__1__LR004': 'Keep the oaks'})
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('id="object-answers-data"', html)
+        data = json.loads(re.search(r'id="object-answers-data"[^>]*>(.*?)</script>', html, re.S).group(1))
+        self.assertEqual(data['LR001']['1']['LR002'], ['4'])
+        self.assertEqual(data['LR001']['1']['LR004'], ['Keep the oaks'])
+
+    def test_deleting_an_object_removes_its_answers(self):
+        """
+        GIVEN answers about object 1
+        WHEN the object is deleted
+        THEN its answers cascade away and other objects' answers stay
+        """
+        self._start()
+        self.client.post(self.url, {'obj__1__LR002': '4', 'obj__2__LR002': '2'})
+        self.layer.items.get(key='1').delete()
+        self.assertEqual(list(Answer.objects.filter(layer_object__isnull=False).values_list('layer_object__key', flat=True)), ['2'])
+
+    def test_unique_constraint_per_session_question_object(self):
+        """
+        GIVEN one stored answer for (session, sub-question, object)
+        WHEN a second identical row is inserted directly
+        THEN the database refuses it, while legacy rows without an object are unconstrained
+        """
+        from django.db import IntegrityError, transaction
+        session = SurveySession.objects.create(survey=self.survey)
+        obj = self.layer.items.get(key='1')
+        Answer.objects.create(survey_session=session, question=self.rating, layer_object=obj, selected_choices=[3])
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Answer.objects.create(survey_session=session, question=self.rating, layer_object=obj, selected_choices=[4])
+        Answer.objects.create(survey_session=session, question=self.rating, selected_choices=[1])
+        Answer.objects.create(survey_session=session, question=self.rating, selected_choices=[2])
+
+    def test_unbound_layer_keeps_read_only_popup_semantics(self):
+        """
+        GIVEN a second layer not bound to any question, with popups enabled
+        WHEN the page renders the layer metadata
+        THEN that layer is marked unbound and keeps show_popups, so the factory binds the read-only popup
+        """
+        other = _objects_layer(self.survey, name="Boundary", show_popups=True)
+        html = self._start().content.decode()
+        data = json.loads(re.search(r'id="ref-layers-data"[^>]*>(.*?)</script>', html, re.S).group(1))
+        by_id = {d['id']: d for d in data}
+        self.assertEqual((by_id[self.layer.pk]['bound'], by_id[other.pk]['bound'], by_id[other.pk]['show_popups']), (True, False, True))
+
+
+class ObjectAnswersReadTest(TestCase):
+    """Export, Responses aggregates and the public block (spec object-answers, group 5)."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="OAR Org")
+        self.owner = User.objects.create_user(username='oarowner', password='pw12345678')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="oar_survey", organization=self.org, redirect_url="/thanks/",
+            status='published', available_languages=['en'], created_by=self.owner,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        self.q = Question.objects.create(
+            survey_section=self.section, code="OA001", name="Objects", input_type="layer_objects",
+            layer=self.layer, order_number=1,
+        )
+        self.rating = Question.objects.create(
+            survey_section=self.section, code="OA002", name="Rate", input_type="rating",
+            parent_question_id=self.q, order_number=1, choices=[{"code": i, "name": str(i)} for i in range(1, 6)],
+        )
+        self.thumbs = Question.objects.create(
+            survey_section=self.section, code="OA003", name="Build?", input_type="thumbs",
+            parent_question_id=self.q, order_number=2,
+        )
+        self.thumbs.choices = self.thumbs.thumbs_choices()
+        self.thumbs.save()
+        self.comment = Question.objects.create(
+            survey_section=self.section, code="OA004", name="Comment", input_type="text",
+            parent_question_id=self.q, order_number=3,
+        )
+        self.objects = {o.key: o for o in self.layer.items.all()}
+        # 3 sessions about object 1 (ratings 4,5,3; thumbs up,up,down; one comment),
+        # 1 session about object 2 (rating 2, thumbs down), nothing about 3.
+        self.sessions = [SurveySession.objects.create(survey=self.survey) for _ in range(3)]
+        for s, r, t in zip(self.sessions, (4, 5, 3), (1, 1, 0)):
+            Answer.objects.create(survey_session=s, question=self.rating, layer_object=self.objects['1'], selected_choices=[r])
+            Answer.objects.create(survey_session=s, question=self.thumbs, layer_object=self.objects['1'], selected_choices=[t])
+        Answer.objects.create(survey_session=self.sessions[0], question=self.comment, layer_object=self.objects['1'], text='Keep the oaks')
+        Answer.objects.create(survey_session=self.sessions[0], question=self.rating, layer_object=self.objects['2'], selected_choices=[2])
+        Answer.objects.create(survey_session=self.sessions[0], question=self.thumbs, layer_object=self.objects['2'], selected_choices=[0])
+
+    def test_aggregates_per_object(self):
+        """
+        GIVEN the answers above
+        WHEN per-object aggregates are computed
+        THEN object 1 has 3 answers, mean 4.0, up 2 / down 1, one comment; object 3 has none
+        """
+        from .object_stats import object_aggregates, headline, flat_properties
+        agg = object_aggregates(self.q)
+        one = agg['1']
+        self.assertEqual(one['answers'], 3)
+        self.assertEqual(one['subs']['OA002']['mean'], 4.0)
+        self.assertEqual((one['subs']['OA003']['up'], one['subs']['OA003']['down']), (2, 1))
+        self.assertEqual(one['subs']['OA004']['count'], 1)
+        self.assertEqual(one['subs']['OA004']['values'], [])
+        self.assertEqual(headline(one), '3 · 4.0★ · 👍 2/1')
+        self.assertEqual(agg['3']['answers'], 0)
+        props = flat_properties(one)
+        self.assertEqual((props['answers'], props['OA002_mean'], props['OA003_up'], props['OA003_down']), (3, 4.0, 2, 1))
+        self.assertNotIn('Keep the oaks', json.dumps(props))
+
+    def test_export_zip_has_object_csv_and_results_geojson(self):
+        """
+        GIVEN the owner downloads the responses ZIP
+        WHEN the archive is read
+        THEN objects_OA001.csv has one row per (session, object) with the sub-question columns,
+             and layers/Sites.results.geojson carries per-object aggregates and no text
+        """
+        self.client.login(username='oarowner', password='pw12345678')
+        response = self.client.get(reverse('download_data', kwargs={'survey_slug': str(self.survey.uuid)}))
+        self.assertEqual(response.status_code, 200)
+        with zipfile.ZipFile(BytesIO(response.content)) as zf:
+            names = zf.namelist()
+            csv_name = next(n for n in names if n.endswith('objects_OA001.csv'))
+            geo_name = next(n for n in names if n.endswith('layers/Sites.results.geojson'))
+            csv_text = zf.read(csv_name).decode()
+            geo = json.loads(zf.read(geo_name))
+        rows = [r for r in csv_text.splitlines() if r.strip()]
+        self.assertEqual(len(rows), 1 + 4)   # header + 3 sessions about object 1 + 1 about object 2
+        self.assertIn('object_key', rows[0])
+        self.assertIn('Rate', rows[0])
+        self.assertIn('Build?', rows[0])
+        self.assertIn('Keep the oaks', csv_text)
+        self.assertIn(',up,', csv_text)
+        by_key = {f['properties']['_key']: f['properties'] for f in geo['features']}
+        self.assertEqual((by_key['1']['answers'], by_key['1']['OA002_mean'], by_key['1']['OA003_up']), (3, 4.0, 2))
+        self.assertEqual(by_key['3']['answers'], 0)
+        self.assertNotIn('Keep the oaks', json.dumps(geo))
+
+    def test_responses_stats_and_map_badges(self):
+        """
+        GIVEN the analytics service and the Responses page
+        WHEN the question stats and layer metadata are built
+        THEN the layer_objects question yields an 'objects' stat with per-object rows,
+             and the bound layer's metadata carries badges and the sessions to select
+        """
+        service = SurveyAnalyticsService(self.survey)
+        stat = service.get_question_stats(self.q)
+        self.assertEqual(stat['type'], 'objects')
+        first = stat['object_rows'][0]
+        self.assertEqual((first['key'], first['answers'], first['headline']), ('1', 3, '3 · 4.0★ · 👍 2/1'))
+        self.assertEqual(sorted(json.loads(first['sessions_json'])), sorted(s.id for s in self.sessions))
+        from .analytics_views import _map_layers_with_object_stats
+        metas = _map_layers_with_object_stats(self.survey)
+        stats = metas[0]['object_stats']
+        self.assertEqual(stats['1']['headline'], '3 · 4.0★ · 👍 2/1')
+        self.assertEqual(stats['2']['answers'], 1)
+        self.assertNotIn('3', stats)
+        self.client.login(username='oarowner', password='pw12345678')
+        html = self.client.get(reverse('editor_survey_analytics', kwargs={'survey_uuid': self.survey.uuid})).content.decode()
+        self.assertIn('objects-stat-row', html)
+        self.assertIn('object_stats', html)
+
+    def test_public_results_objects_block_respects_k(self):
+        """
+        GIVEN a public results page with k = 3 and an objects block
+        WHEN it renders
+        THEN object 1 (3 answers) shows its aggregates, object 2 (1 answer) is masked,
+             object 3 shows 0, and no comment text appears anywhere in the payload
+        """
+        from .models import PublicResultsPage, PublicResultsBlock
+        from .public_results import PublicResultsService, block_type_for_question
+        self.assertEqual(block_type_for_question(self.q), 'objects')
+        page = PublicResultsPage.objects.create(survey=self.survey, slug="oar", is_published=True, k_anonymity_threshold=3)
+        PublicResultsBlock.objects.create(page=page, block_type="objects", question=self.q, order=0)
+        blocks = PublicResultsService(page).build_blocks()
+        block = blocks[0]
+        self.assertEqual(block['data_type'], 'objects')
+        rows = {r['key']: r for r in block['rows']}
+        self.assertEqual(rows['1']['answers']['display'], '3')
+        self.assertTrue(rows['2']['answers']['masked'])
+        self.assertEqual(rows['2']['subs'][0]['display'], '<3')
+        self.assertEqual(rows['3']['answers']['display'], '0')
+        self.assertEqual([s['code'] for s in block['sub_questions']], ['OA002', 'OA003'])
+        self.assertNotIn('Keep the oaks', json.dumps(block))
+        html = self.client.get(reverse('public_results', kwargs={'slug': 'oar'})).content.decode()
+        self.assertIn('objects-holder', html)
+        self.assertIn('renderObjects', html)

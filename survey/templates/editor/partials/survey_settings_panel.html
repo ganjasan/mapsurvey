@@ -133,8 +133,9 @@
             <div class="ref-layer-head">
               <span class="ref-layer-swatch" style="background:{{ item.layer.color }}"></span>
               <b class="ref-layer-name">{{ item.layer.name }}</b>
-              <span class="pr-help ref-layer-meta">{{ item.layer.feature_count }} {% trans "features" %} · {{ item.layer.size_bytes|filesizeformat }}</span>
-              <button type="button" class="ref-layer-toggle" title="{% trans 'Edit' %}"><i class="fas fa-pen"></i></button>
+              <span class="pr-help ref-layer-meta">{{ item.layer.feature_count }} {% trans "objects" %} · {{ item.layer.size_bytes|filesizeformat }}</span>
+              <a class="btn btn-sm btn-primary ref-layer-open" href="{% url 'editor_layer_objects' survey.uuid item.layer.pk %}" style="font-size:.74rem;padding:.15rem .55rem;margin-left:.4rem;"><i class="fas fa-edit"></i> {% trans "Open editor" %}</a>
+              <button type="button" class="ref-layer-toggle" title="{% trans 'Settings' %}"><i class="fas fa-pen"></i></button>
               <button type="button" class="ref-layer-delete" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
             </div>
             <div class="ref-layer-body" hidden>
@@ -185,6 +186,12 @@
           <div class="pr-help">{% trans "GeoJSON (WGS84), up to 10 MB, max 10 layers per survey." %}</div>
           <input type="file" accept=".geojson,.json,application/geo+json,application/json" hidden id="ref-layers-file">
         </label>
+        <div style="text-align:center;margin-top:.5rem;">
+          <span class="pr-help">{% trans "No file?" %}</span>
+          <button type="button" class="btn btn-sm btn-outline-primary" id="ref-layers-new" data-url="{% url 'editor_layer_create_empty' survey.uuid %}" style="font-size:.78rem;">
+            <i class="fas fa-plus"></i> {% trans "New empty layer — draw objects in the editor" %}
+          </button>
+        </div>
         <div class="ref-layers-error text-danger" id="ref-layers-error" style="font-size:.8rem;margin-top:.4rem;"></div>
       </div>
       {% endif %}
@@ -436,6 +443,18 @@
     });
     drop.addEventListener('drop', function(e) {
         if (e.dataTransfer.files && e.dataTransfer.files[0]) upload(e.dataTransfer.files[0]);
+    });
+
+    // "New layer": an empty layer that opens straight in the object editor,
+    // where the creator draws or imports (spec layer-object-editor).
+    var newBtn = document.getElementById('ref-layers-new');
+    if (newBtn) newBtn.addEventListener('click', function() {
+        errorBox.textContent = '';
+        var fd = new FormData();
+        fd.append('name', 'New layer');
+        post(newBtn.dataset.url, fd).then(function(data) {
+            window.location = '{% url "editor_layer_objects" survey.uuid 0 %}'.replace('/0/edit/', '/' + data.id + '/edit/');
+        }).catch(function(e) { errorBox.textContent = e.message; });
     });
 })();
 </script>

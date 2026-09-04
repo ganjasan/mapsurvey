@@ -39,7 +39,11 @@ L.GeoJSON for whichever map the caller owns.
     function build(meta, fc, opts) {
         opts = opts || {};
         var pane = opts.pane || 'refLayersPane';
-        var interactive = opts.interactive != null ? !!opts.interactive : !!meta.show_popups;
+        // A layer bound to an Objects-on-the-map question is always clickable
+        // (the respondent shell binds the object popup itself); the read-only
+        // name/description popup below is only for unbound layers.
+        var bound = !!meta.bound && opts.interactive == null;
+        var interactive = opts.interactive != null ? !!opts.interactive : (bound || !!meta.show_popups);
         return L.geoJSON(fc, {
             pane: pane,
             interactive: interactive,
@@ -72,7 +76,7 @@ L.GeoJSON for whichever map the caller owns.
                         permanent: true, direction: 'center', className: 'ref-layer-label'
                     });
                 }
-                if (interactive) {
+                if (interactive && !bound) {
                     var title = p.name != null ? p.name : (meta.label_field ? p[meta.label_field] : null);
                     var body = p.description != null ? p.description : '';
                     if (title || body) {

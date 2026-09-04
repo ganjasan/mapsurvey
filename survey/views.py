@@ -10,10 +10,10 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import translation
 from django.utils.translation import override as lang_override
 from django.utils.translation import gettext as _
-from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator, SurveyMapLayer
+from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator, SurveyMapLayer, LayerObject
 from .models import FILE_INPUT_TYPES
 from .uploads import attach_upload, detach_unreferenced
-from .layers import build_map_layers_metadata
+from .layers import build_map_layers_metadata, layer_owner
 from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role, get_org_membership, SURVEY_ROLE_RANK,
@@ -877,7 +877,7 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 			elif question.input_type == 'number':
 				if answer.numeric is not None:
 					initial[question.code] = answer.numeric
-			elif question.input_type in ('choice', 'rating'):
+			elif question.input_type in ('choice', 'rating', 'thumbs'):
 				if answer.selected_choices:
 					initial[question.code] = str(answer.selected_choices[0])
 				elif answer.numeric is not None:
@@ -914,6 +914,10 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 	for question in questions:
 		subquestions_forms[question.code] = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=request.session['survey_session_id'], language=selected_language).as_p()
 
+	# Answers about layer objects (spec object-answers): {question_code: {object_key:
+	# {sub_code: [values]}}} — the popup prefill and the answered ✓ on revisit.
+	existing_object_answers = _existing_object_answers(questions, request.session['survey_session_id'])
+
 	section_title = section.get_translated_title(selected_language)
 	section_subheading = section.get_translated_subheading(selected_language)
 
@@ -921,6 +925,7 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 		'form': form,
 		'subquestions_forms': subquestions_forms,
 		'existing_geo_answers': existing_geo_answers,
+		'existing_object_answers': existing_object_answers,
 		'survey': survey,
 		'section': section,
 		'section_title': section_title,
@@ -1096,7 +1101,7 @@ def survey_section(request, survey_slug, section_name):
 									elif sub_question.input_type in ('number', 'range'):
 										if first:
 											sub_answer.numeric = float(first)
-									elif sub_question.input_type in ('choice', 'multichoice', 'rating'):
+									elif sub_question.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
 										sub_answer.selected_choices = [int(v) for v in value if v]
 									elif sub_question.input_type in FILE_INPUT_TYPES:
 										# The popup carries async-upload tokens as ordinary
@@ -1143,7 +1148,7 @@ def survey_section(request, survey_slug, section_name):
 						answer.selected_choices = [int(r) for r in submitted]
 						answer.save()
 
-				elif question.input_type in ('choice', 'multichoice', 'rating'):
+				elif question.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
 					# Same tolerance as the visibility pre-pass above: a value the
 					# stored type cannot read is dropped, not raised on.
 					selected = choice_ids(result)
@@ -1188,6 +1193,22 @@ def survey_section(request, survey_slug, section_name):
 		emit_event(survey_session, 'section_submit', {
 			'section_name': section.name, 'section_index': section_current,
 		})
+
+		# Answers about layer objects (spec object-answers). They live on the
+		# sub-questions of an Objects-on-the-map question, keyed by the object,
+		# so the top-level delete above never touched them: replace them here,
+		# per visible block, from the `obj__<key>__<code>` fields.
+		for question in section_questions:
+			if question.input_type != 'layer_objects':
+				continue
+			Answer.objects.filter(
+				survey_session=survey_session,
+				question__parent_question_id=question,
+				layer_object__isnull=False,
+			).delete()
+			if not vmap_post.is_question_visible(question.id) or not question.layer_id:
+				continue
+			_save_object_answers(request.POST, survey_session, question)
 
 		# Navigation walks the visible chain under the just-saved answers.
 		chain = vmap_final.visible_sections
@@ -1389,7 +1410,7 @@ def _sanitize_filename(name):
 # Carry respondent input; exported as a CSV column or a GeoJSON property.
 EXPORT_VALUE_TYPES = frozenset({
 	'text', 'text_line', 'number', 'range',
-	'choice', 'rating', 'multichoice', 'datetime', 'ranking',
+	'choice', 'rating', 'thumbs', 'multichoice', 'datetime', 'ranking',
 	'photo', 'audio', 'document',
 })
 
@@ -1475,7 +1496,7 @@ def _answer_cell(question, answers):
 			return answer.selected_choices[0]
 		return ""
 
-	if input_type in ('choice', 'rating'):
+	if input_type in ('choice', 'rating', 'thumbs'):
 		names = answer.get_selected_choice_names()
 		return names[0] if names else ""
 
@@ -1575,6 +1596,11 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 
 		zip.writestr(prefix + _sanitize_filename(question.name) + '.geojson', geojson_str)
 
+	# Answers ABOUT layer objects (spec object-answers): one CSV per Objects-
+	# on-the-map question keyed by object, and the layer's derived GeoJSON
+	# enriched with per-object aggregates — never with free text.
+	_export_object_answers(zip, survey, prefix, excluded_session_ids)
+
 	#обработка обычных вопросов
 
 	sessions = survey.sessions()
@@ -1638,6 +1664,71 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 				"Export: upload %s missing from storage; row keeps the path, file absent from ZIP.",
 				answer.upload_id,
 			)
+
+
+def _export_object_answers(zip, survey, prefix, excluded_session_ids):
+	from .object_stats import object_aggregates, flat_properties, sub_questions_of
+	questions = Question.objects.filter(
+		survey_section__survey_header=survey, input_type='layer_objects', layer__isnull=False,
+	).select_related('layer').order_by('survey_section_id', 'order_number')
+	layers_done = set()
+	for question in questions:
+		subs = sub_questions_of(question)
+		rows = (Answer.objects
+		        .filter(question__in=subs, layer_object__isnull=False)
+		        .exclude(survey_session_id__in=excluded_session_ids)
+		        .select_related('layer_object', 'survey_session', 'question')
+		        .order_by('survey_session_id', 'layer_object__position', 'layer_object_id'))
+		grouped = {}
+		for a in rows:
+			grouped.setdefault((a.survey_session_id, a.layer_object_id), []).append(a)
+		records = []
+		for (session_id, _obj_id), answers in grouped.items():
+			session = answers[0].survey_session
+			obj = answers[0].layer_object
+			record = {
+				'session_id': session_id,
+				'object_key': obj.key,
+				'object_title': obj.title,
+				'object_category': obj.category,
+			}
+			by_q = {}
+			for a in answers:
+				by_q.setdefault(a.question, []).append(a)
+			for sub_q in subs:
+				cell = _answer_cell(sub_q, by_q.get(sub_q, []))
+				if cell is EXPORT_NO_COLUMN:
+					continue
+				if isinstance(cell, dict):
+					record.update(cell)
+				else:
+					record[sub_q.name] = cell
+			record['datetime'] = session.start_datetime
+			record['language'] = session.language or ''
+			record['validation_status'] = session.validation_status or ''
+			records.append(record)
+		zip.writestr(prefix + 'objects_' + _sanitize_filename(question.code) + '.csv', pd.DataFrame(records).to_csv())
+
+		layer = question.layer
+		if layer.pk in layers_done:
+			continue
+		layers_done.add(layer.pk)
+		aggregates = {}
+		for q in layer.questions.filter(input_type='layer_objects'):
+			for key, entry in object_aggregates(q, excluded_session_ids=excluded_session_ids).items():
+				props = flat_properties(entry)
+				aggregates.setdefault(key, {}).update(props)
+		try:
+			collection = json.loads(layer.geojson)
+		except ValueError:
+			continue
+		for feature in collection.get('features') or []:
+			key = (feature.get('properties') or {}).get('_key')
+			feature.setdefault('properties', {}).update(aggregates.get(key, {'answers': 0}))
+		collection['name'] = layer.name
+		collection['crs'] = {"type": "name", "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
+		zip.writestr(prefix + 'layers/' + _sanitize_filename(layer.name) + '.results.geojson',
+		             json.dumps(collection, ensure_ascii=False).encode('utf8'))
 
 
 @survey_permission_required('viewer')
@@ -1861,14 +1952,107 @@ def survey_password_gate(request, survey_slug):
 	})
 
 
-def survey_layer_geojson(request, survey_slug, layer_id):
-	"""Serve a reference layer's GeoJSON under the survey's own access rules.
+OBJECT_FIELD_PREFIX = 'obj__'
 
-	Never a raw storage URL: the S3 media bucket is public-read, and a draft
-	survey's layer must be as invisible as the draft itself. Any access denial
-	collapses to 404 — a fetch() consumer can't follow the password/closed
-	redirects the page views return, and a bare 404 keeps drafts
-	indistinguishable from nonexistent surveys.
+
+def _parse_object_fields(post):
+	"""`obj__<key>__<code>` → {key: {code: [non-empty values]}}. Keys and codes
+	are matched against the database afterwards; anything else is dropped."""
+	parsed = {}
+	for name in post.keys():
+		if not name.startswith(OBJECT_FIELD_PREFIX):
+			continue
+		rest = name[len(OBJECT_FIELD_PREFIX):]
+		if '__' not in rest:
+			continue
+		key, code = rest.rsplit('__', 1)
+		values = [v for v in post.getlist(name) if v != '']
+		if not key or not code or not values:
+			continue
+		parsed.setdefault(key, {})[code] = values
+	return parsed
+
+
+def _save_object_answers(post, survey_session, question):
+	"""Store the posted sub-answers of one Objects-on-the-map question.
+
+	Unknown object keys and unknown sub-question codes are ignored, never
+	raised on — the same tolerance the geo sub-answer path applies. One row
+	per (session, sub-question, object); the caller has already cleared the
+	previous rows for this question."""
+	parsed = _parse_object_fields(post)
+	if not parsed:
+		return 0
+	objects = {o.key: o for o in question.layer.items.filter(key__in=list(parsed.keys()))}
+	sub_questions = {q.code: q for q in Question.objects.filter(parent_question_id=question)}
+	saved = 0
+	for key, by_code in parsed.items():
+		obj = objects.get(key)
+		if obj is None:
+			continue
+		for code, values in by_code.items():
+			sub_q = sub_questions.get(code)
+			if sub_q is None:
+				continue
+			answer = Answer(survey_session=survey_session, question=sub_q, layer_object=obj)
+			first = values[0]
+			if sub_q.input_type in ('text', 'text_line', 'datetime'):
+				answer.text = first
+			elif sub_q.input_type in ('number', 'range'):
+				try:
+					answer.numeric = float(first)
+				except ValueError:
+					continue
+			elif sub_q.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
+				selected = choice_ids(values)
+				if not selected:
+					continue
+				answer.selected_choices = selected
+			elif sub_q.input_type == 'ranking':
+				defined = [str(c["code"]) for c in (sub_q.choices or [])]
+				if sorted(values) != sorted(defined) or not defined:
+					continue
+				answer.selected_choices = [int(v) for v in values]
+			else:
+				# Files and display blocks are not object sub-answers in this change.
+				continue
+			answer.save()
+			saved += 1
+	return saved
+
+
+def _existing_object_answers(questions, session_id):
+	"""{question_code: {object_key: {sub_code: [values]}}} for the session."""
+	out = {}
+	for question in questions:
+		if question.input_type != 'layer_objects':
+			continue
+		rows = (Answer.objects
+		        .filter(survey_session_id=session_id, question__parent_question_id=question, layer_object__isnull=False)
+		        .select_related('question', 'layer_object'))
+		by_key = {}
+		for a in rows:
+			if a.text is not None:
+				values = [a.text]
+			elif a.numeric is not None:
+				values = [str(a.numeric)]
+			elif a.selected_choices:
+				values = [str(c) for c in a.selected_choices]
+			else:
+				continue
+			by_key.setdefault(a.layer_object.key, {})[a.question.code] = values
+		out[question.code] = by_key
+	return out
+
+
+def _gated_layer(request, survey_slug, layer_id):
+	"""Resolve a layer under the survey's own access rules, or 404.
+
+	Shared by the GeoJSON endpoint and the per-object card endpoint so the two
+	can never disagree on who may read a layer. Any access denial collapses to
+	404: a fetch() consumer can't follow the password/closed redirects the page
+	views return, and a bare 404 keeps drafts indistinguishable from
+	nonexistent surveys.
 	"""
 	from django.conf import settings as django_settings
 	if not django_settings.MAP_REFERENCE_LAYERS:
@@ -1883,7 +2067,36 @@ def survey_layer_geojson(request, survey_slug, layer_id):
 	is_collaborator = SURVEY_ROLE_RANK.get(role, -1) >= SURVEY_ROLE_RANK['viewer']
 	if not is_collaborator and check_survey_access(request, survey) is not None:
 		raise Http404
-	layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=survey)
+	# Versions and draft copies borrow the canonical survey's layers.
+	return get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(survey))
+
+
+def survey_layer_object(request, survey_slug, layer_id, key):
+	"""One object's card: what the popup shows beyond the list-level fields.
+
+	Description and attachments are deliberately NOT in the layer GeoJSON — a
+	300-object layer must not ship 300 rich-text bodies to render a list. The
+	description passes the creator-HTML coercer on the way out as well as on
+	the way in, so an imported file's markup can never reach a respondent raw.
+	"""
+	from .layer_assets import object_card_payload
+	layer = _gated_layer(request, survey_slug, layer_id)
+	obj = get_object_or_404(LayerObject, layer=layer, key=key)
+	response = JsonResponse(object_card_payload(obj))
+	response['Cache-Control'] = 'private, max-age=300'
+	return response
+
+
+def survey_layer_geojson(request, survey_slug, layer_id):
+	"""Serve a reference layer's GeoJSON under the survey's own access rules.
+
+	Never a raw storage URL: the S3 media bucket is public-read, and a draft
+	survey's layer must be as invisible as the draft itself. Any access denial
+	collapses to 404 — a fetch() consumer can't follow the password/closed
+	redirects the page views return, and a bare 404 keeps drafts
+	indistinguishable from nonexistent surveys.
+	"""
+	layer = _gated_layer(request, survey_slug, layer_id)
 
 	etag = '"layer-%s-%s"' % (layer.pk, layer.updated_at.strftime('%Y%m%d%H%M%S%f'))
 	if request.headers.get('If-None-Match') == etag:

@@ -4,7 +4,7 @@ from django.conf import settings
 register = template.Library()
 
 CARD_INPUT_TYPES = {'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating',
-                    'ranking', 'datetime', 'photo', 'audio', 'document'}
+                    'ranking', 'datetime', 'photo', 'audio', 'document', 'thumbs'}
 
 
 @register.filter
@@ -94,7 +94,7 @@ def star_color(field):
 # caption, so all four are deliberately absent.
 SUBTEXT_IN_TEMPLATE_TYPES = {
     'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating', 'ranking',
-    'datetime', 'photo', 'audio', 'document',
+    'datetime', 'photo', 'audio', 'document', 'thumbs',
 }
 
 
@@ -104,6 +104,15 @@ def question_subtext(field):
     if getattr(field.field.widget, 'question_type', None) not in SUBTEXT_IN_TEMPLATE_TYPES:
         return ''
     return getattr(field.field.widget, 'question_subtext', '') or ''
+
+
+@register.filter
+def get_item(mapping, key):
+    """dict[key] for templates; '' when missing."""
+    try:
+        return mapping.get(key, '')
+    except AttributeError:
+        return ''
 
 
 @register.filter
