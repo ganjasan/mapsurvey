@@ -44,6 +44,11 @@ L.GeoJSON for whichever map the caller owns.
         // name/description popup below is only for unbound layers.
         var bound = !!meta.bound && opts.interactive == null;
         var interactive = opts.interactive != null ? !!opts.interactive : (bound || !!meta.show_popups);
+        // A 6 px circle is a fine target for a mouse and a miss for a thumb:
+        // on a coarse pointer a tappable marker grows to ~22 px (Leaflet's hit
+        // area is the path itself), a decorative one keeps its size.
+        var coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+        var pointRadius = (interactive && coarse) ? 11 : 6;
         return L.geoJSON(fc, {
             pane: pane,
             interactive: interactive,
@@ -53,7 +58,7 @@ L.GeoJSON for whichever map the caller owns.
                 // Circle markers, never default pins: a pin reads as an answer.
                 return L.circleMarker(latlng, {
                     pane: pane,
-                    radius: 6,
+                    radius: pointRadius,
                     color: p['marker-color'] || meta.color,
                     fillColor: p['marker-color'] || meta.color,
                     fillOpacity: 0.85,
@@ -81,8 +86,11 @@ L.GeoJSON for whichever map the caller owns.
                     if (lyr.getBounds) {
                         lyr.getCenter = function() { return this.getBounds().getCenter(); };
                     }
+                    // interactive: a tap on the badge reaches the marker's click
+                    // handlers — on a phone the badge is the bigger target.
                     lyr.bindTooltip('👍 ' + esc(p.tally_up) + (p.tally_down ? ' · 👎 ' + esc(p.tally_down) : ''), {
-                        permanent: true, direction: 'right', offset: [8, 0], className: 'ref-layer-tally'
+                        permanent: true, direction: 'right', offset: [pointRadius + 2, 0],
+                        className: 'ref-layer-tally', interactive: interactive
                     });
                 }
                 if (interactive && !bound) {
