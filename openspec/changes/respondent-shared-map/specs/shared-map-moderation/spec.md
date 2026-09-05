@@ -29,9 +29,9 @@ For each question bound to a `question` layer the Responses tab SHALL show a *Sh
 block in that question's per-object results: the per-object table with a Status column, filter chips All / Pending / Hidden with counts, actions
 Approve (pending → visible), Hide (any → hidden), Show (hidden → visible), and a row
 expander listing the mark's comments each with Hide / Show. Actions SHALL apply without a
-page reload and SHALL touch the layer so respondents' next load reflects them. The pane
+page reload and SHALL touch the layer so respondents' next load reflects them. The block
 SHALL warn when `approve_first` is on, pending marks exist and the bound question has
-`min_objects > 0`. The pane SHALL be read-only for collaborators without edit rights and
+`min_objects > 0`. The block SHALL be read-only for collaborators without edit rights and
 absent under the kill switch.
 
 #### Scenario: Approve from the block

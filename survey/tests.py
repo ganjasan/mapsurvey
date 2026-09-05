@@ -38970,3 +38970,190 @@ class SharedMapModerationTest(TestCase):
         self.assertIn(response.status_code, (302, 403, 404))
         self.obj.refresh_from_db()
         self.assertEqual(self.obj.status, 'visible')
+
+
+class SharedMapEditorTest(TestCase):
+    """Layer from answers, its settings, the read-only object editor, the
+    delete refusal (spec survey-editor delta, task 5)."""
+
+    def setUp(self):
+        from django.contrib.auth.models import User
+        self.f = _shared_map_survey("shared_map_editor")
+        self.f['survey'].status = 'draft'
+        self.f['survey'].save()
+        self.owner = User.objects.create_user('edowner', 'e@example.com', 'pw')
+        Membership.objects.create(user=self.owner, organization=self.f['survey'].organization, role='admin')
+        self.client.login(username='edowner', password='pw')
+        self.uuid = self.f['survey'].uuid
+        self.from_answers = reverse('editor_survey_layer_create_from_answers', kwargs={'survey_uuid': self.uuid})
+
+    def test_create_from_answers(self):
+        """
+        GIVEN a point question with a text sub-question
+        WHEN the owner creates a layer from its answers with that label
+        THEN a question layer exists with the code, label and default settings; unknown codes and non-geo codes are refused
+        """
+        from .models import SurveyMapLayer
+        response = self.client.post(self.from_answers, {'question_code': 'Q1', 'label_field': 'WHY', 'name': ''})
+        self.assertEqual(response.status_code, 201)
+        layer = SurveyMapLayer.objects.get(pk=response.json()['id'])
+        self.assertEqual((layer.source, layer.source_question_code, layer.label_field, layer.name),
+                         ('question', 'Q1', 'WHY', 'Marks: Where?'))
+        self.assertTrue(layer.show_tallies); self.assertFalse(layer.show_comments); self.assertFalse(layer.approve_first)
+        self.assertEqual(self.client.post(self.from_answers, {'question_code': 'NOPE'}).status_code, 400)
+        self.assertEqual(self.client.post(self.from_answers, {'question_code': 'OBJ'}).status_code, 400)
+        self.assertEqual(self.client.post(self.from_answers, {'question_code': 'Q1', 'label_field': 'CMT'}).status_code, 400)
+
+    def test_settings_save_and_label_validation(self):
+        """
+        GIVEN the question layer
+        WHEN the owner posts the three settings and a label
+        THEN they persist; a label that is not a sub-question of Q1 is refused
+        """
+        url = reverse('editor_survey_layer_update', kwargs={'survey_uuid': self.uuid, 'layer_id': self.f['layer'].pk})
+        r = self.client.post(url, {'show_tallies': '0', 'show_comments': '1', 'approve_first': '1', 'label_field': 'WHY'})
+        self.assertEqual(r.status_code, 200)
+        self.f['layer'].refresh_from_db()
+        self.assertEqual((self.f['layer'].show_tallies, self.f['layer'].show_comments, self.f['layer'].approve_first),
+                         (False, True, True))
+        self.assertEqual(self.client.post(url, {'label_field': 'VOTE'}).status_code, 400)
+
+    def test_settings_card_markup(self):
+        """
+        GIVEN the settings page
+        WHEN it renders
+        THEN the question layer shows its badge, the label picker and the three switches, no key field; the "from answers" form lists Q1
+        """
+        html = self.client.get(reverse('editor_survey_settings_panel', kwargs={'survey_uuid': self.uuid})).content.decode()
+        self.assertIn('source: answers', html)
+        self.assertIn('data-field="show_tallies"', html)
+        self.assertIn('data-field="approve_first"', html)
+        self.assertIn('id="ref-layers-from-answers-btn"', html)
+        self.assertIn('<option value="Q1"', html)
+        layer_block = html[html.index('data-layer-id="%d"' % self.f['layer'].pk):]
+        layer_block = layer_block[:layer_block.index('ref-layer-status')]
+        self.assertNotIn('data-field="key_field"', layer_block)
+        self.assertIn('read-only', layer_block)
+
+    def test_object_editor_read_only(self):
+        """
+        GIVEN the question layer with one materialised mark
+        WHEN the owner opens its object editor and tries to change geometry, delete, import
+        THEN the page renders the read-only banner and every write is refused with 400
+        """
+        from .layers import sync_question_layer
+        s = SurveySession.objects.create(survey=self.f['survey'])
+        _mark(s, self.f['q1'], 13.4, 52.5)
+        sync_question_layer(self.f['layer'], s)
+        obj = self.f['layer'].items.get()
+        kw = {'survey_uuid': self.uuid, 'layer_id': self.f['layer'].pk}
+        html = self.client.get(reverse('editor_layer_objects', kwargs=kw)).content.decode()
+        self.assertIn('loe--readonly', html)
+        self.assertEqual(self.client.post(reverse('editor_layer_object_geometry', kwargs=dict(kw, key=obj.key)),
+                                          json.dumps({'geometry': {'type': 'Point', 'coordinates': [1, 1]}}),
+                                          content_type='application/json').status_code, 400)
+        self.assertEqual(self.client.delete(reverse('editor_layer_object', kwargs=dict(kw, key=obj.key))).status_code, 400)
+        self.assertEqual(self.client.post(reverse('editor_layer_objects_collection', kwargs=kw),
+                                          json.dumps({'title': 'x', 'geometry': {'type': 'Point', 'coordinates': [1, 1]}}),
+                                          content_type='application/json').status_code, 400)
+        self.assertEqual(self.client.get(reverse('editor_layer_object', kwargs=dict(kw, key=obj.key))).status_code, 200)
+        self.assertEqual(self.f['layer'].items.count(), 1)
+
+    def test_delete_source_question_refused_and_form_note(self):
+        """
+        GIVEN Q1 feeds the layer
+        WHEN the owner deletes Q1, and opens Q1's form
+        THEN the delete is refused (409, blocked) naming the layer, Q1 remains, and the form names the layer
+        """
+        r = self.client.post(reverse('editor_question_delete', kwargs={'survey_uuid': self.uuid, 'question_id': self.f['q1'].pk}))
+        self.assertEqual(r.status_code, 409)
+        self.assertIn('Marks: Where?', r.json()['blocked'])
+        self.assertTrue(Question.objects.filter(pk=self.f['q1'].pk).exists())
+        html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.uuid, 'question_id': self.f['q1'].pk})).content.decode()
+        self.assertIn('feed the reference layer', html)
+        # A geo question no layer reads deletes as before.
+        q2 = Question.objects.create(survey_section=self.f['section'], code="Q2", name="Other", input_type="point", order_number=9)
+        self.assertEqual(self.client.post(reverse('editor_question_delete', kwargs={'survey_uuid': self.uuid, 'question_id': q2.pk})).status_code, 200)
+
+
+class SharedMapExportTest(TestCase):
+    """Export carries the verdict; ZIP round-trips the config (task 6)."""
+
+    def setUp(self):
+        from django.contrib.auth.models import User
+        from .layers import sync_question_layer
+        self.f = _shared_map_survey("shared_map_export")
+        self.owner = User.objects.create_user('exowner', 'x@example.com', 'pw')
+        Membership.objects.create(user=self.owner, organization=self.f['survey'].organization, role='admin')
+        self.client.login(username='exowner', password='pw')
+        self.a = SurveySession.objects.create(survey=self.f['survey'])
+        _mark(self.a, self.f['q1'], 13.4, 52.5, why="A's bin")
+        sync_question_layer(self.f['layer'], self.a)
+        self.obj = self.f['layer'].items.get()
+        for up in (True, True, False):
+            _react(SurveySession.objects.create(survey=self.f['survey']), self.f['obj'], self.obj, up=up)
+        _react(SurveySession.objects.create(survey=self.f['survey']), self.f['obj'], self.obj, comment="ok")
+        self.obj.status = 'hidden'
+        self.obj.save()
+
+    def _zip(self):
+        from zipfile import ZipFile
+        from io import BytesIO
+        response = self.client.get(reverse('download_data', kwargs={'survey_slug': str(self.f['survey'].uuid)}))
+        self.assertEqual(response.status_code, 200)
+        return ZipFile(BytesIO(response.content))
+
+    def test_geojson_and_csv_carry_the_verdict(self):
+        """
+        GIVEN A's mark with 2 👍, 1 👎, one comment, hidden by the creator
+        WHEN the survey data is downloaded
+        THEN A's feature in the Q1 GeoJSON has mark_key/votes_up=2/votes_down=1/comments=1, and the objects CSV has a status column saying hidden
+        """
+        z = self._zip()
+        names = z.namelist()
+        geo = next(n for n in names if n.endswith('.geojson') and 'results' not in n)   # Q1 is the only geo question
+        props = json.loads(z.read(geo))['features'][0]['properties']
+        self.assertEqual((props['mark_key'], props['votes_up'], props['votes_down'], props['comments']),
+                         (self.obj.key, 2, 1, 1))
+        csv_name = next(n for n in names if n.endswith('objects_OBJ.csv'))
+        csv = z.read(csv_name).decode()
+        self.assertIn('status', csv.splitlines()[0])
+        self.assertIn('hidden', csv)
+
+    def test_zip_round_trip_and_dangling_code(self):
+        """
+        GIVEN the survey exported as a structure ZIP
+        WHEN it is imported back, and again with the geo question removed from the archive
+        THEN the layer keeps source/code/settings with zero objects and the pair stays bound; the second import downgrades it with a report line
+        """
+        from .serialization import export_survey_to_zip, import_survey_from_zip
+        from .models import SurveyMapLayer
+        self.f['layer'].show_comments = True
+        self.f['layer'].save()
+        from io import BytesIO
+        buf = BytesIO()
+        export_survey_to_zip(self.f['survey'], buf)
+        data = buf.getvalue()
+        imported, warnings = import_survey_from_zip(BytesIO(data), organization=self.f['survey'].organization, created_by=self.owner)
+        layer = SurveyMapLayer.objects.get(survey=imported)
+        # Q1 already exists in this organisation, so the import remaps its code —
+        # and the layer's source code follows the remap (spec survey-editor).
+        imported_q1 = Question.objects.get(survey_section__survey_header=imported, input_type='point')
+        self.assertEqual((layer.source, layer.source_question_code, layer.show_comments, layer.items.count()),
+                         ('question', imported_q1.code, True, 0))
+        self.assertEqual(Question.objects.get(survey_section__survey_header=imported, input_type='layer_objects').layer_id, layer.pk)
+        self.assertFalse([w for w in warnings if 'Reference layer' in w])
+        # Dangling: rewrite the archive's survey.json without Q1.
+        from zipfile import ZipFile
+        src = ZipFile(BytesIO(data))
+        survey_json = json.loads(src.read('survey.json'))
+        for section in survey_json['survey']['sections']:
+            section['questions'] = [q for q in section['questions'] if q.get('code') != 'Q1']
+        out = BytesIO()
+        with ZipFile(out, 'w') as dst:
+            for name in src.namelist():
+                dst.writestr(name, json.dumps(survey_json) if name == 'survey.json' else src.read(name))
+        imported2, warnings2 = import_survey_from_zip(BytesIO(out.getvalue()), organization=self.f['survey'].organization, created_by=self.owner)
+        layer2 = SurveyMapLayer.objects.get(survey=imported2)
+        self.assertEqual((layer2.source, layer2.source_question_code), ('upload', ''))
+        self.assertTrue([w for w in warnings2 if 'imported as an empty layer' in w])

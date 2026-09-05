@@ -46,6 +46,7 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/thanks-image/', editor_views.editor_survey_thanks_image, name='editor_survey_thanks_image'),
     path('editor/surveys/<uuid:survey_uuid>/settings/map-position/', editor_views.editor_survey_map_position, name='editor_survey_map_position'),
     path('editor/surveys/<uuid:survey_uuid>/layers/', editor_views.editor_survey_layer_create, name='editor_survey_layer_create'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/from-answers/', editor_views.editor_survey_layer_create_from_answers, name='editor_survey_layer_create_from_answers'),
     path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/', editor_views.editor_survey_layer_update, name='editor_survey_layer_update'),
     path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/delete/', editor_views.editor_survey_layer_delete, name='editor_survey_layer_delete'),
     # Object editor (overlay-features): one page per layer + its JSON endpoints.

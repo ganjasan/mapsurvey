@@ -165,6 +165,22 @@ OPEN (shown to everyone) and are badged in the editor. Rules ride ZIP export/imp
 `parent_question_id` for visibility — that relation means "geo popup sub-question". Env var off ⇒
 rules stored but inert, editor hides the Visibility block.
 
+**Shared map (`question`-sourced reference layers)**: a `SurveyMapLayer` with
+`source='question'` holds no creator objects — its `LayerObject`s are MATERIALISED from
+respondents' answers to the geo question named by `source_question_code` (a code, not a FK:
+layers belong to the canonical survey, question rows are copied per version). Materialisation
+runs at the end of the section POST (`layers.sync_question_layers_for_session`) and keys
+objects `s<session>-<n>`, never by answer id, because the POST deletes and re-inserts a
+session's answers on every submit and a re-keyed object would lose the reactions other
+respondents left on it. Respondents get `build_question_layer_geojson` per request
+(`no-store`, own marks omitted, only `status='visible'` from clean sessions); creator
+surfaces read the cached `layer.geojson` (every status, clean sessions) rebuilt on
+materialisation, moderation and session-status changes. Reactions are ordinary answers to
+the sub-questions of an "Objects on the map" question bound to that layer; `show_tallies`,
+`show_comments`, `approve_first` on the layer decide what other respondents see, and
+`LayerObject.status` / `Answer.hidden` are the creator's per-item moderation. The object
+editor is read-only for such layers; deleting the source geo question is refused.
+
 **Session Management**: Survey sessions are created on first section view and tracked via `request.session['survey_session_id']`.
 
 **Data Export** (`download_data` view): Exports survey responses as ZIP containing:

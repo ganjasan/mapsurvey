@@ -120,6 +120,7 @@
       {% endcomment %}
       <div class="pr-card" id="ref-layers-card"
            data-create-url="{% url 'editor_survey_layer_create' survey.uuid %}"
+           data-from-answers-url="{% url 'editor_survey_layer_create_from_answers' survey.uuid %}"
            data-update-url="{% url 'editor_survey_layer_update' survey.uuid 0 %}"
            data-delete-url="{% url 'editor_survey_layer_delete' survey.uuid 0 %}">
         <h6>{% trans "Reference layers" %}</h6>
@@ -129,11 +130,12 @@
 
         <div id="ref-layers-list">
           {% for item in map_layers %}
-          <div class="ref-layer" data-layer-id="{{ item.layer.pk }}">
+          <div class="ref-layer" data-layer-id="{{ item.layer.pk }}" data-source="{{ item.layer.source }}">
             <div class="ref-layer-head">
               <span class="ref-layer-swatch" style="background:{{ item.layer.color }}"></span>
               <b class="ref-layer-name">{{ item.layer.name }}</b>
-              <span class="pr-help ref-layer-meta">{{ item.layer.feature_count }} {% trans "objects" %} · {{ item.layer.size_bytes|filesizeformat }}</span>
+              {% if item.layer.source == 'question' %}<span class="badge badge-pill" style="background:var(--accent-light);color:var(--accent);font-size:.68rem;margin-left:.4rem;" title="{% trans 'Objects are respondents’ marks on this question' %}">{% trans "source: answers" %} · {{ item.layer.source_question_code }}</span>{% endif %}
+              <span class="pr-help ref-layer-meta">{{ item.layer.feature_count }} {% trans "objects" %}{% if item.layer.source == 'question' %} · {% trans "read-only" %}{% else %} · {{ item.layer.size_bytes|filesizeformat }}{% endif %}</span>
               <a class="btn btn-sm btn-primary ref-layer-open" href="{% url 'editor_layer_objects' survey.uuid item.layer.pk %}" style="font-size:.74rem;padding:.15rem .55rem;margin-left:.4rem;"><i class="fas fa-edit"></i> {% trans "Open editor" %}</a>
               <button type="button" class="ref-layer-toggle" title="{% trans 'Settings' %}"><i class="fas fa-pen"></i></button>
               <button type="button" class="ref-layer-delete" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
@@ -148,6 +150,32 @@
                 <input type="color" data-field="color" value="{{ item.layer.color }}">
                 <div class="pr-help">{% trans "Fallback — style properties inside the file win." %}</div>
               </div>
+              {% if item.layer.source == 'question' %}
+              {% comment %}Shared map (spec shared-map-layer): the label is a sub-question of
+              the source question, and three switches decide what OTHER respondents see.{% endcomment %}
+              <div class="pr-field">
+                <label>{% trans "Label shown on other people's marks" %}</label>
+                <select data-field="label_field">
+                  <option value="">— {% trans "none: marks are listed by number" %} —</option>
+                  {% for opt in item.label_options %}
+                  <option value="{{ opt.code }}" {% if opt.code == item.layer.label_field %}selected{% endif %}>{{ opt.name }} ({{ opt.type }}){% if opt.free_text %} — {% trans "free text, shown as written" %}{% endif %}</option>
+                  {% endfor %}
+                </select>
+                <div class="pr-help">{% trans "A sub-question of the source question. Choice answers are safer than free text." %}</div>
+              </div>
+              <label class="pr-switch">
+                <span>{% trans "Show tallies" %} <small class="pr-help">{% trans "👍/👎 counts next to each mark" %}</small></span>
+                <input type="checkbox" data-field="show_tallies" {% if item.layer.show_tallies %}checked{% endif %}>
+              </label>
+              <label class="pr-switch">
+                <span>{% trans "Show other people's comments" %} <small class="pr-help">{% trans "off: comments reach only you" %}</small></span>
+                <input type="checkbox" data-field="show_comments" {% if item.layer.show_comments %}checked{% endif %}>
+              </label>
+              <label class="pr-switch">
+                <span>{% trans "Approve marks before they appear" %} <small class="pr-help">{% trans "new marks wait in Responses until you approve them" %}</small></span>
+                <input type="checkbox" data-field="approve_first" {% if item.layer.approve_first %}checked{% endif %}>
+              </label>
+              {% else %}
               <div class="pr-field">
                 <label>{% trans "Label field" %}</label>
                 <select data-field="label_field">
@@ -172,6 +200,7 @@
                 <span>{% trans "Info popups" %} <small class="pr-help">{% trans "tap a feature to see its name and description" %}</small></span>
                 <input type="checkbox" data-field="show_popups" {% if item.layer.show_popups %}checked{% endif %}>
               </label>
+              {% endif %}
               <div class="ref-layer-status pr-help"></div>
             </div>
           </div>
@@ -191,7 +220,36 @@
           <button type="button" class="btn btn-sm btn-outline-primary" id="ref-layers-new" data-url="{% url 'editor_layer_create_empty' survey.uuid %}" style="font-size:.78rem;">
             <i class="fas fa-plus"></i> {% trans "New empty layer — draw objects in the editor" %}
           </button>
+          {% if geo_questions %}
+          <button type="button" class="btn btn-sm btn-outline-primary" id="ref-layers-from-answers-btn" style="font-size:.78rem;">
+            <i class="fas fa-users"></i> {% trans "New layer from answers" %}
+          </button>
+          {% endif %}
         </div>
+        {% if geo_questions %}
+        {% comment %}Shared map (spec shared-map-layer): a layer whose objects are respondents'
+        marks on a geo question. Bind an "Objects on the map" question to it afterwards.{% endcomment %}
+        <div id="ref-layers-from-answers" class="pr-card" style="margin-top:.6rem;background:#fafafa;" hidden>
+          <div class="pr-field">
+            <label>{% trans "Geo question whose marks become objects" %}</label>
+            <select id="rlfa-question">
+              {% for q in geo_questions %}<option value="{{ q.code }}" data-labels='[{% for sub in q.subQuestions %}{"code":"{{ sub.code|escapejs }}","name":"{{ sub.name|escapejs }}","type":"{{ sub.input_type }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>{{ q.name }} ({{ q.code }})</option>{% endfor %}
+            </select>
+          </div>
+          <div class="pr-field">
+            <label>{% trans "Label shown on other people's marks" %}</label>
+            <select id="rlfa-label"><option value="">— {% trans "none: marks are listed by number" %} —</option></select>
+            <div class="pr-help">{% trans "A sub-question of that question. Choice answers are safer than free text." %}</div>
+          </div>
+          <div class="pr-field">
+            <label>{% trans "Name" %}</label>
+            <input type="text" id="rlfa-name" maxlength="100" placeholder="{% trans 'Marks: …' %}">
+          </div>
+          <div class="pr-help" style="margin-bottom:.5rem;">{% trans "Respondents see each other's marks and can react to them once you add an “Objects on the map” question bound to this layer. Tallies, comments and approval are settings of the layer." %}</div>
+          <button type="button" class="btn btn-sm btn-primary" id="rlfa-create"><i class="fas fa-plus"></i> {% trans "Create layer" %}</button>
+          <button type="button" class="btn btn-sm btn-link" id="rlfa-cancel">{% trans "Cancel" %}</button>
+        </div>
+        {% endif %}
         <div class="ref-layers-error text-danger" id="ref-layers-error" style="font-size:.8rem;margin-top:.4rem;"></div>
       </div>
       {% endif %}
@@ -447,6 +505,42 @@
 
     // "New layer": an empty layer that opens straight in the object editor,
     // where the creator draws or imports (spec layer-object-editor).
+    // "New layer from answers" (spec shared-map-layer): the label picker follows
+    // the chosen geo question; choice-type sub-questions come first.
+    var faBtn = document.getElementById('ref-layers-from-answers-btn');
+    var faBox = document.getElementById('ref-layers-from-answers');
+    if (faBtn && faBox) {
+        var qSel = document.getElementById('rlfa-question'), lSel = document.getElementById('rlfa-label');
+        function fillLabels() {
+            var opt = qSel.options[qSel.selectedIndex];
+            var subs = [];
+            try { subs = JSON.parse(opt.dataset.labels || '[]'); } catch (e) {}
+            var choice = ['choice', 'multichoice', 'rating', 'thumbs'];
+            subs.sort(function(a, b) { return (choice.indexOf(b.type) !== -1) - (choice.indexOf(a.type) !== -1); });
+            lSel.innerHTML = '<option value="">— ' + (lSel.dataset.none || 'none: marks are listed by number') + ' —</option>';
+            subs.forEach(function(sub) {
+                var o = document.createElement('option');
+                o.value = sub.code;
+                o.textContent = sub.name + ' (' + sub.type + ')' + (sub.type === 'text' || sub.type === 'text_line' ? ' — free text' : '');
+                lSel.appendChild(o);
+            });
+        }
+        lSel.dataset.none = lSel.options[0].textContent.replace(/^—\s*|\s*—$/g, '');
+        qSel.addEventListener('change', fillLabels);
+        fillLabels();
+        faBtn.addEventListener('click', function() { faBox.hidden = !faBox.hidden; });
+        document.getElementById('rlfa-cancel').addEventListener('click', function() { faBox.hidden = true; });
+        document.getElementById('rlfa-create').addEventListener('click', function() {
+            errorBox.textContent = '';
+            var fd = new FormData();
+            fd.append('question_code', qSel.value);
+            fd.append('label_field', lSel.value);
+            fd.append('name', document.getElementById('rlfa-name').value);
+            post(card.dataset.fromAnswersUrl, fd).then(function() { location.reload(); })
+                .catch(function(e) { errorBox.textContent = e.message; });
+        });
+    }
+
     var newBtn = document.getElementById('ref-layers-new');
     if (newBtn) newBtn.addEventListener('click', function() {
         errorBox.textContent = '';

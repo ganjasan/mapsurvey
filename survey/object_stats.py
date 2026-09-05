@@ -201,3 +201,24 @@ def shared_map_comments(obj, limit=10):
             .order_by('-id')
             .values_list('text', flat=True)[:limit])
     return list(rows)
+
+
+def shared_map_verdicts(survey, question):
+    """{geo_answer_id: {'mark_key', 'votes_up', 'votes_down', 'comments'}} for a
+    geo question that feeds `question` layers of this survey family — what the
+    question's own GeoJSON export carries per feature. Empty when no layer
+    reads the question, so exports of ordinary geo questions are untouched."""
+    from .layers import layer_owner
+    from .models import LayerObject
+    layers = list(layer_owner(survey).map_layers.filter(source='question', source_question_code=question.code))
+    if not layers:
+        return {}
+    out = {}
+    for layer in layers:
+        tallies = shared_map_tallies(layer)
+        for key, answer_id in (LayerObject.objects.filter(layer=layer, source_answer__isnull=False)
+                               .values_list('key', 'source_answer_id')):
+            t = tallies.get(key, {})
+            out[answer_id] = {'mark_key': key, 'votes_up': t.get('up', 0),
+                              'votes_down': t.get('down', 0), 'comments': t.get('comments', 0)}
+    return out

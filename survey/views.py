@@ -1547,6 +1547,8 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 		#получить ответы
 		features = []
 		answers = question.answers()
+		from .object_stats import shared_map_verdicts
+		verdicts = shared_map_verdicts(survey, question)
 		for geo_answer in answers:
 			# Skip excluded sessions
 			if geo_answer.survey_session_id in excluded_session_ids:
@@ -1578,6 +1580,12 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 			properties["session_id"] = geo_answer.survey_session_id
 			properties["language"] = geo_answer.survey_session.language or ''
 			properties["validation_status"] = geo_answer.survey_session.validation_status or ''
+			# Shared map (spec shared-map-layer): the verdict other respondents
+			# gave this mark rides on the author's own feature — ten residents
+			# asking for the same corner are one feature with votes_up=9.
+			if verdicts:
+				properties.update(verdicts.get(geo_answer.pk) or {
+					"mark_key": "", "votes_up": 0, "votes_down": 0, "comments": 0})
 
 			feature = {
 				"type": "Feature",
@@ -1712,6 +1720,8 @@ def _export_object_answers(zip, survey, prefix, excluded_session_ids):
 			record['datetime'] = session.start_datetime
 			record['language'] = session.language or ''
 			record['validation_status'] = session.validation_status or ''
+			if question.layer.source == 'question':
+				record['status'] = obj.status   # the creator's moderation is part of their data
 			records.append(record)
 		zip.writestr(prefix + 'objects_' + _sanitize_filename(question.code) + '.csv', pd.DataFrame(records).to_csv())
 

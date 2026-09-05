@@ -266,6 +266,11 @@
         </div>
 
 
+        {% if source_layers %}
+        <div class="form-group" style="font-size:.8rem;color:#6b7280;"><i class="fas fa-users"></i>
+            {% blocktrans with names=source_layers|join:", " %}Respondents' marks on this question feed the reference layer {{ names }}. The question cannot be deleted while that layer exists.{% endblocktrans %}
+        </div>
+        {% endif %}
         {% include "editor/partials/_visibility_block.html" %}
 
         <!-- Choices editor -->

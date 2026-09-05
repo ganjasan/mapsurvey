@@ -38,16 +38,16 @@
 
 ## 5. Editor (spec `survey-editor` delta, design D6)
 
-- [ ] 5.1 Layer card: "New layer from answers" (geo question picker + label sub-question picker, choice types first, "listed by number" note), "source: answers" badge naming the question, settings in edit state, no upload/draw actions
-- [ ] 5.2 Object editor read-only for `question` layers (no draw/import/card edits, explanatory banner)
-- [ ] 5.3 Refuse deleting a geo question that is a layer source (message names the layer); code change cascades to `source_question_code`; note on the geo question form naming the layer(s)
-- [ ] 5.4 Tests: create from answers (valid/invalid question, label picker contents and order); settings save; badge and absence of upload actions; read-only editor; delete refused; code cascade; note rendered
+- [x] 5.1 Layer card: "New layer from answers" (geo question picker + label sub-question picker, choice types first, "listed by number" note), "source: answers" badge naming the question, settings in edit state, no upload/draw actions
+- [x] 5.2 Object editor read-only for `question` layers (no draw/import/card edits, explanatory banner)
+- [x] 5.3 Refuse deleting a geo question that is a layer source (message names the layer); question codes are not editable in the editor, so the cascade lives only in the import remap (6.2); note on the geo question form naming the layer(s)
+- [x] 5.4 Tests: create from answers (valid/invalid question, label picker contents and order); settings save; badge and absence of upload actions; read-only editor; delete refused; code cascade; note rendered
 
 ## 6. Export and serialization (specs `shared-map-layer`, `survey-serialization` delta, design D8–D9)
 
-- [ ] 6.1 `download_data`: source geo question GeoJSON adds `mark_key`, `votes_up`, `votes_down`, `comments`; per-object CSV adds `status`
-- [ ] 6.2 `serialize_layers` / `_clean_layer_config` / `extract_layers`: five new fields, no objects for `question` layers, downgrade with report line when the code resolves to nothing
-- [ ] 6.3 Tests: export properties; CSV status column; ZIP round-trip of a `question` layer + pair; dangling code downgrade
+- [x] 6.1 `download_data`: source geo question GeoJSON adds `mark_key`, `votes_up`, `votes_down`, `comments`; per-object CSV adds `status`
+- [x] 6.2 `serialize_layers` / `_clean_layer_config` / `extract_layers`: five new fields, no objects for `question` layers, downgrade with report line when the code resolves to nothing
+- [x] 6.3 Tests: export properties; CSV status column; ZIP round-trip of a `question` layer + pair; dangling code downgrade
 
 ## 7. Verification and close-out
 

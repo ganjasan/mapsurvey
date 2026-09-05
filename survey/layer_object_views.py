@@ -40,14 +40,37 @@ def _enabled_or_404():
         raise Http404
 
 
-def _layer(request, layer_id):
+READ_ONLY_MESSAGE = "This layer's objects are respondents' marks; edit the answers instead."
+
+
+class _ReadOnlyLayer(Exception):
+    pass
+
+
+def _layer(request, layer_id, writable=False):
     _enabled_or_404()
-    return get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey))
+    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey))
+    if writable and layer.source == 'question':
+        # Shared map: materialised objects are never edited by hand.
+        raise _ReadOnlyLayer()
+    return layer
 
 
-def _object(request, layer_id, key):
-    layer = _layer(request, layer_id)
+def _object(request, layer_id, key, writable=False):
+    layer = _layer(request, layer_id, writable=writable)
     return layer, get_object_or_404(LayerObject, layer=layer, key=key)
+
+
+def _writes_objects(view):
+    """Mutating object-editor views refuse `question` layers with a 400."""
+    from functools import wraps
+    @wraps(view)
+    def wrapper(request, *args, **kwargs):
+        try:
+            return view(request, *args, **kwargs)
+        except _ReadOnlyLayer:
+            return _error(READ_ONLY_MESSAGE, 400)
+    return wrapper
 
 
 def _body(request):
@@ -152,6 +175,7 @@ def layer_editor(request, survey_uuid, layer_id):
     return render(request, 'editor/layer_editor.html', {
         'survey': request.survey,
         'layer': layer,
+        'read_only': layer.source == 'question',
         'summary': _layer_summary(layer),
         'objects_json': json.dumps(objects, ensure_ascii=False),
         'bound_questions': bound,
@@ -179,8 +203,9 @@ def layer_create_empty(request, survey_uuid):
 
 @survey_permission_required('owner')
 @require_http_methods(['GET', 'POST'])
+@_writes_objects
 def objects_collection(request, survey_uuid, layer_id):
-    layer = _layer(request, layer_id)
+    layer = _layer(request, layer_id, writable=request.method != 'GET')
     if request.method == 'GET':
         rows = [object_row(o) for o in layer.items.prefetch_related('assets').order_by('position', 'id')]
         return JsonResponse({'objects': rows, 'summary': _layer_summary(layer)})
@@ -211,8 +236,9 @@ def objects_collection(request, survey_uuid, layer_id):
 
 @survey_permission_required('owner')
 @require_http_methods(['GET', 'PATCH', 'DELETE'])
+@_writes_objects
 def object_detail(request, survey_uuid, layer_id, key):
-    layer, obj = _object(request, layer_id, key)
+    layer, obj = _object(request, layer_id, key, writable=request.method != 'GET')
     if request.method == 'GET':
         return JsonResponse({'object': _object_detail(obj), 'row': object_row(obj)})
 
@@ -239,8 +265,9 @@ def object_detail(request, survey_uuid, layer_id, key):
 
 @survey_permission_required('owner')
 @require_POST
+@_writes_objects
 def object_geometry(request, survey_uuid, layer_id, key):
-    layer, obj = _object(request, layer_id, key)
+    layer, obj = _object(request, layer_id, key, writable=True)
     geom = _geometry_from(_body(request))
     if geom is None:
         return _error('A single Point, LineString or Polygon geometry is required.')
@@ -263,8 +290,9 @@ def object_answer_count(request, survey_uuid, layer_id, key):
 
 @survey_permission_required('owner')
 @require_POST
+@_writes_objects
 def objects_bulk(request, survey_uuid, layer_id):
-    layer = _layer(request, layer_id)
+    layer = _layer(request, layer_id, writable=True)
     payload = _body(request)
     keys = payload.get('keys') or []
     if isinstance(keys, str):
@@ -287,8 +315,9 @@ def objects_bulk(request, survey_uuid, layer_id):
 
 @survey_permission_required('owner')
 @require_POST
+@_writes_objects
 def asset_create(request, survey_uuid, layer_id, key):
-    layer, obj = _object(request, layer_id, key)
+    layer, obj = _object(request, layer_id, key, writable=True)
     position = (obj.assets.aggregate(m=Max('position'))['m'] or 0) + 1
     embed = (request.POST.get('embed_url') or '').strip()
     if embed:
@@ -320,8 +349,9 @@ def asset_create(request, survey_uuid, layer_id, key):
 
 @survey_permission_required('owner')
 @require_http_methods(['PATCH', 'DELETE'])
+@_writes_objects
 def asset_detail(request, survey_uuid, layer_id, key, asset_id):
-    layer, obj = _object(request, layer_id, key)
+    layer, obj = _object(request, layer_id, key, writable=True)
     asset = get_object_or_404(LayerObjectAsset, pk=asset_id, object=obj)
     if request.method == 'DELETE':
         asset.delete()
@@ -336,8 +366,9 @@ def asset_detail(request, survey_uuid, layer_id, key, asset_id):
 
 @survey_permission_required('owner')
 @require_POST
+@_writes_objects
 def assets_reorder(request, survey_uuid, layer_id, key):
-    layer, obj = _object(request, layer_id, key)
+    layer, obj = _object(request, layer_id, key, writable=True)
     order = _body(request).get('order') or []
     if isinstance(order, str):
         order = [o for o in order.split(',') if o]
@@ -358,11 +389,12 @@ def _mapping_from(request):
 
 @survey_permission_required('owner')
 @require_POST
+@_writes_objects
 def import_geojson(request, survey_uuid, layer_id):
     """`dry_run=1` returns the report without writing; the same request without
     it creates the objects. Mapping fields: map_key, map_title, map_category,
     map_description, map_link (property names from the file)."""
-    layer = _layer(request, layer_id)
+    layer = _layer(request, layer_id, writable=True)
     f = request.FILES.get('file')
     if not f:
         return _error('No file.')
@@ -413,11 +445,12 @@ def _pick(row, *names):
 
 @survey_permission_required('owner')
 @require_POST
+@_writes_objects
 def import_csv(request, survey_uuid, layer_id):
     """Two shapes, told apart by the columns: rows with lat/lng become new point
     objects; rows without coordinates update existing objects matched by key,
     then by title. Unmatched rows are reported, never dropped silently."""
-    layer = _layer(request, layer_id)
+    layer = _layer(request, layer_id, writable=True)
     f = request.FILES.get('file')
     if not f:
         return _error('No file.')
@@ -497,10 +530,11 @@ def import_csv(request, survey_uuid, layer_id):
 
 @survey_permission_required('owner')
 @require_POST
+@_writes_objects
 def import_photos(request, survey_uuid, layer_id):
     """Many image files at once, each attached to the object whose key, then
     title, equals the filename stem (case-insensitive)."""
-    layer = _layer(request, layer_id)
+    layer = _layer(request, layer_id, writable=True)
     files = request.FILES.getlist('files') or request.FILES.getlist('file')
     if not files:
         return _error('No files.')

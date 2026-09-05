@@ -36,14 +36,15 @@ SHALL be visible to owners only and absent when the kill switch is off.
 
 ### Requirement: Source geo questions are protected
 The system SHALL refuse to delete a point, line or polygon question whose code is the
-`source_question_code` of a `question` layer, with a message naming the layer. Changing such a
-question's code SHALL update the layer's `source_question_code` in the same save. The
-question form SHALL show a note naming the layer(s) that read its answers.
+`source_question_code` of a `question` layer, with a message naming the layer. Question
+codes are not editable in the editor; where an import remaps codes, the layer's
+`source_question_code` SHALL follow the remap. The question form SHALL show a note naming
+the layer(s) that read its answers.
 
 #### Scenario: Source question cannot be deleted
 - **WHEN** the creator deletes `Q1` while a `question` layer names `Q1`
 - **THEN** the deletion is refused with a message naming the layer
 
-#### Scenario: Code change follows
-- **WHEN** the creator changes `Q1`'s code to `BINS`
-- **THEN** the layer's `source_question_code` becomes `BINS` and materialisation keeps working
+#### Scenario: Remapped code follows on import
+- **WHEN** an archive whose `Q1` collides with an existing code is imported and `Q1` is remapped
+- **THEN** the imported layer's `source_question_code` is the remapped code

@@ -568,6 +568,7 @@ def editor_survey_settings(request, survey_uuid):
         'effective_role': request.effective_survey_role,
         'basemap_choices': BASEMAP_CHOICES,
         'map_layers': _editor_layers(survey),
+        'geo_questions': _geo_questions(survey) if settings.MAP_REFERENCE_LAYERS else [],
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
     })
 
@@ -620,6 +621,7 @@ def editor_survey_settings_panel(request, survey_uuid):
         'effective_role': request.effective_survey_role,
         'basemap_choices': BASEMAP_CHOICES,
         'map_layers': _editor_layers(survey),
+        'geo_questions': _geo_questions(survey) if settings.MAP_REFERENCE_LAYERS else [],
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
     })
 
@@ -710,14 +712,54 @@ def editor_survey_thanks_image(request, survey_uuid):
 
 # ─── Reference overlay layers ────────────────────────────────────────────────
 
+def _source_layers_of(survey, question):
+    """Names of the `question` layers reading this geo question — the form
+    says so, since deleting the question is refused while they exist."""
+    if not settings.MAP_REFERENCE_LAYERS or question.input_type not in ('point', 'line', 'polygon') \
+            or question.parent_question_id_id is not None:
+        return []
+    from .layers import question_layers_for
+    return list(question_layers_for(survey, question.code).values_list('name', flat=True))
+
+
+def _geo_questions(survey):
+    """Top-level point/line/polygon questions of the (canonical) survey — the
+    candidates for a layer sourced from answers (spec shared-map-layer)."""
+    from .layers import GEO_INPUT_TYPES
+    owner = layer_owner(survey)
+    return list(Question.objects
+                .filter(survey_section__survey_header=owner, input_type__in=GEO_INPUT_TYPES,
+                        parent_question_id__isnull=True)
+                .select_related('survey_section')
+                .order_by('survey_section_id', 'order_number', 'id'))
+
+
+def _label_options(question):
+    """Sub-questions a `question` layer may use as the mark's label: choice
+    types first (they cannot carry a name or an address), free text after."""
+    if question is None:
+        return []
+    subs = list(Question.objects.filter(parent_question_id=question).order_by('order_number', 'id'))
+    choice_like = ('choice', 'multichoice', 'rating', 'thumbs')
+    ordered = [q for q in subs if q.input_type in choice_like] + [q for q in subs if q.input_type not in choice_like]
+    return [{'code': q.code, 'name': q.name, 'type': q.input_type,
+             'free_text': q.input_type in ('text', 'text_line')} for q in ordered]
+
+
 def _editor_layers(survey):
     """Layers with their property names, for the settings card's field pickers."""
     if not settings.MAP_REFERENCE_LAYERS:
         return []
-    return [
-        {'layer': layer, 'properties': _layer_property_names(layer)}
-        for layer in layers_for(survey)
-    ]
+    from .layers import source_question_for
+    items = []
+    for layer in layers_for(survey):
+        item = {'layer': layer, 'properties': _layer_property_names(layer)}
+        if layer.source == 'question':
+            source = source_question_for(layer)
+            item['source_question'] = source
+            item['label_options'] = _label_options(source)
+        items.append(item)
+    return items
 
 
 def _layer_payload(layer, properties=None):
@@ -730,6 +772,11 @@ def _layer_payload(layer, properties=None):
         'show_popups': layer.show_popups,
         'feature_count': layer.feature_count,
         'size_bytes': layer.size_bytes,
+        'source': layer.source,
+        'source_question_code': layer.source_question_code,
+        'show_tallies': layer.show_tallies,
+        'show_comments': layer.show_comments,
+        'approve_first': layer.approve_first,
     }
     if properties is not None:
         data['properties'] = properties
@@ -780,10 +827,40 @@ def editor_survey_layer_create(request, survey_uuid):
 
 @survey_permission_required('owner')
 @require_POST
+def editor_survey_layer_create_from_answers(request, survey_uuid):
+    """"New layer from answers": a `question` layer reading a geo question
+    (spec shared-map-layer). Objects are materialised as respondents submit;
+    the object editor is read-only for it."""
+    _layers_enabled_or_404()
+    survey = request.survey
+    owner = layer_owner(survey)
+    if owner.map_layers.count() >= MAX_LAYERS_PER_SURVEY:
+        return JsonResponse({'error': f'A survey can hold {MAX_LAYERS_PER_SURVEY} reference layers.'}, status=400)
+    code = (request.POST.get('question_code') or '').strip()
+    question = next((q for q in _geo_questions(survey) if q.code == code), None)
+    if question is None:
+        return JsonResponse({'error': 'Pick a point, line or polygon question of this survey.'}, status=400)
+    label = (request.POST.get('label_field') or '').strip()[:100]
+    if label and label not in {o['code'] for o in _label_options(question)}:
+        return JsonResponse({'error': f'"{label}" is not a sub-question of that question.'}, status=400)
+    name = (request.POST.get('name') or '').strip()[:100] or f'Marks: {question.name}'[:100]
+    position = (owner.map_layers.aggregate(m=models.Max('position'))['m'] or 0) + 1
+    layer = SurveyMapLayer.objects.create(
+        survey=owner, name=name, color='#f97316', position=position,
+        source='question', source_question_code=question.code, label_field=label,
+        geojson='{"type":"FeatureCollection","features":[]}',
+    )
+    return JsonResponse(_layer_payload(layer, []), status=201)
+
+
+@survey_permission_required('owner')
+@require_POST
 def editor_survey_layer_update(request, survey_uuid, layer_id):
     """Update a layer's presentation config (never its geometry)."""
     _layers_enabled_or_404()
     layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey))
+    if layer.source == 'question':
+        return _update_question_layer(request, layer)
 
     name = (request.POST.get('name') or '').strip()
     if name:
@@ -809,6 +886,31 @@ def editor_survey_layer_update(request, survey_uuid, layer_id):
 
     layer.save()
     return JsonResponse(_layer_payload(layer, known))
+
+
+def _update_question_layer(request, layer):
+    """The `question`-layer edit state: name, color, label sub-question and the
+    three visibility settings. Key field / popups have no meaning here."""
+    from .layers import source_question_for
+    name = (request.POST.get('name') or '').strip()
+    if name:
+        layer.name = name[:100]
+    color = (request.POST.get('color') or '').strip()
+    if color:
+        if not re.match(r'^#[0-9a-fA-F]{6}$', color):
+            return JsonResponse({'error': 'Color must be #RRGGBB.'}, status=400)
+        layer.color = color
+    if 'label_field' in request.POST:
+        value = (request.POST.get('label_field') or '').strip()[:100]
+        allowed = {o['code'] for o in _label_options(source_question_for(layer))}
+        if value and value not in allowed:
+            return JsonResponse({'error': f'"{value}" is not a sub-question of the source question.'}, status=400)
+        layer.label_field = value
+    for flag in ('show_tallies', 'show_comments', 'approve_first'):
+        if flag in request.POST:
+            setattr(layer, flag, request.POST.get(flag) in ('1', 'true', 'on'))
+    layer.save()
+    return JsonResponse(_layer_payload(layer, []))
 
 
 @survey_permission_required('owner')
@@ -1330,6 +1432,7 @@ def editor_question_edit(request, survey_uuid, question_id):
     return _render_question_modal(request, {
         # Sub-questions live inside a geo popup and never carry rules of their own.
         **({} if is_subquestion else _visibility_block_context(survey, question.survey_section, 'question', host=question)),
+        'source_layers': _source_layers_of(survey, question),
         'form': form,
         'survey': survey,
         'section': question.survey_section,
@@ -1473,6 +1576,15 @@ def editor_question_delete(request, survey_uuid, question_id):
     if blocked:
         return blocked
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
+
+    # Shared map (spec survey-editor): a geo question feeding a `question`
+    # layer cannot go — the layer would read a code that no longer exists.
+    from .layers import question_layers_for
+    source_of = list(question_layers_for(survey, question.code).values_list('name', flat=True)) \
+        if question.input_type in ('point', 'line', 'polygon') else []
+    if source_of:
+        names = ', '.join(f'“{n}”' for n in source_of)
+        return JsonResponse({'blocked': f'This question feeds the reference layer {names}. Delete that layer first.'}, status=409)
 
     refusal = _refuse_if_answers_at_risk(request, survey, question.answer_count())
     if refusal:
