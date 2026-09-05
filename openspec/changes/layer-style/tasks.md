@@ -36,7 +36,7 @@
 
 ## 5. Verification and close-out
 
-- [ ] 5.1 Full suite once after; `openspec validate --strict layer-style`
-- [ ] 5.2 Browser pass on the dev stand with the Sarasota export (worktree `responses-reference-layers` dev has it; or a synthetic 4-class segments layer): rule by `priority_class`, graduated by `priority_score`, icons on a points layer, legend on respondent / Responses / public results, mobile tap targets unchanged. Screenshots into the change folder
+- [x] 5.1 Full suite after: 1926 OK, 1 skipped (2026-09-05); `openspec validate --strict` valid
+- [x] 5.2 (respondent side, dev 8020, synthetic 30-segment layer with a 3-class rule + 12-bin points layer with icons: classes render in colour/width, unmatched 'Odd' segments grey-dashed as Other, icon discs with glyphs, legend expanded in the layers control with 7 rows, no console errors; screenshot in the change folder. Card JS and Responses panel are the owner's browser pass.) Browser pass on the dev stand with the Sarasota export (worktree `responses-reference-layers` dev has it; or a synthetic 4-class segments layer): rule by `priority_class`, graduated by `priority_score`, icons on a points layer, legend on respondent / Responses / public results, mobile tap targets unchanged. Screenshots into the change folder
 - [x] 5.3 CLAUDE.md: a paragraph on `style` normalisation being the one validator and the factory being the one styling site
 - [ ] 5.4 PR to master; Discord `#announcements` after merge; ping mrgmiami (Sarasota) with the preview — they are the design partner for this
