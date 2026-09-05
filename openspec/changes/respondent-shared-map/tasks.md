@@ -31,10 +31,10 @@
 
 ## 4. Moderation (spec `shared-map-moderation`, design D5)
 
-- [ ] 4.1 Endpoints: object status change (approve/hide/show) and comment hide/show, owner/editor only, touch layer, 404 under kill switch
-- [ ] 4.2 Responses → Shared map pane per `question` layer: per-object table + Status column, chips All/Pending/Hidden with counts, actions, row expander with comments and per-comment Hide/Show; warning when approve_first ∧ pending>0 ∧ min_objects>0; read-only for non-editors
-- [ ] 4.3 Session validation-status change and soft-delete trigger `rebuild_layer` for `question` layers of that survey family
-- [ ] 4.4 Tests: pending on approve_first layer; approve/hide/show transitions and respondent visibility after each; comment hide affects card and count, not export; warning condition; permissions
+- [x] 4.1 Endpoints: object status change (approve/hide/show) and comment hide/show, owner/editor only, touch layer, 404 under kill switch
+- [x] 4.2 Responses → Shared map block (inside the bound question's per-object results on the Charts pane, not a new pane — the pane router, split view and mobile bar would all need plumbing for one table): per-object table + Status column, chips All/Pending/Hidden with counts, actions, row expander with comments and per-comment Hide/Show; warning when approve_first ∧ pending>0 ∧ min_objects>0; read-only for non-editors
+- [x] 4.3 Session validation-status change and soft-delete trigger `rebuild_layer` for `question` layers of that survey family
+- [x] 4.4 Tests: pending on approve_first layer; approve/hide/show transitions and respondent visibility after each; comment hide affects card and count, not export; warning condition; permissions
 
 ## 5. Editor (spec `survey-editor` delta, design D6)
 

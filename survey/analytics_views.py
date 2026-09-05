@@ -609,3 +609,46 @@ def analytics_track_event(request):
         pass
 
     return JsonResponse({}, status=204)
+
+
+# ─── Shared map moderation (spec shared-map-moderation) ─────────────────────
+
+@survey_permission_required('editor')
+@require_POST
+def analytics_object_status(request, survey_uuid, layer_id, key):
+    """Approve / hide / show one respondent's mark on a `question` layer."""
+    from django.conf import settings as django_settings
+    from django.http import Http404, JsonResponse
+    from .layers import layer_owner, rebuild_layer
+    from .models import LayerObject, SurveyMapLayer, LAYER_OBJECT_STATUS_CHOICES
+    if not django_settings.MAP_REFERENCE_LAYERS:
+        raise Http404
+    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey), source='question')
+    obj = get_object_or_404(LayerObject, layer=layer, key=key)
+    status = request.POST.get('status', '')
+    if status not in {c[0] for c in LAYER_OBJECT_STATUS_CHOICES}:
+        return HttpResponse(status=400)
+    obj.status = status
+    obj.save(update_fields=['status', 'updated_at'])
+    rebuild_layer(layer)
+    return JsonResponse({'key': obj.key, 'status': obj.status})
+
+
+@survey_permission_required('editor')
+@require_POST
+def analytics_comment_hidden(request, survey_uuid, answer_id):
+    """Hide / show one comment (a text sub-answer about a `question`-layer object)."""
+    from django.conf import settings as django_settings
+    from django.http import Http404, JsonResponse
+    from .layers import rebuild_layer
+    if not django_settings.MAP_REFERENCE_LAYERS:
+        raise Http404
+    answer = get_object_or_404(
+        Answer, pk=answer_id, layer_object__isnull=False,
+        layer_object__layer__source='question',
+        survey_session__survey_id__in=family_ids_with_draft(request.survey),
+    )
+    answer.hidden = request.POST.get('hidden', '') in ('1', 'true', 'on')
+    answer.save(update_fields=['hidden'])
+    rebuild_layer(answer.layer_object.layer)
+    return JsonResponse({'id': answer.pk, 'hidden': answer.hidden})

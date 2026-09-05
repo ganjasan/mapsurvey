@@ -135,8 +135,9 @@ Answer.hidden      = BooleanField(default=False)
 
 - New objects are `pending` when the layer has `approve_first`, else `visible`. Flipping
   `approve_first` on does not retro-hide existing objects.
-- The Responses tab gets a *Shared map* pane per `question` layer: the per-object table
-  from #155 with a Status column, filter chips All / Pending / Hidden, and Approve / Hide /
+- The Responses tab gets a *Shared map* block inside the bound question's per-object
+  results (Charts pane; a new pane would need router, split-view and mobile-bar plumbing
+  for one table): the per-object table from #155 with a Status column, filter chips All / Pending / Hidden, and Approve / Hide /
   Show actions; the row expander lists comments with a Hide/Show each. Hidden and pending
   objects stay in the Responses map, the export and aggregates for the creator — they are
   hidden *from respondents*, not deleted.

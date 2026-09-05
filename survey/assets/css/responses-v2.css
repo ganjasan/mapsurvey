@@ -670,3 +670,9 @@
     font-size: 0.82rem;
     width: 110px;
 }
+
+/* Shared map moderation (spec shared-map-moderation) */
+.shared-map-status { font-weight: 600; text-transform: none; }
+.shared-map-status--visible { background: #dcfce7; color: #166534; }
+.shared-map-status--pending { background: #fef3c7; color: #92400e; }
+.shared-map-status--hidden { background: #fee2e2; color: #991b1b; }

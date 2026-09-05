@@ -538,3 +538,11 @@ def build_question_layer_geojson(layer, exclude_session_id=None):
         features.append(feature)
     return json.dumps({'type': 'FeatureCollection', 'features': features},
                       ensure_ascii=False, separators=(',', ':'))
+
+
+def rebuild_question_layers_for(survey):
+    """After a session's validation status / trash state changed: the creator
+    surfaces read the cached GeoJSON, which must drop or restore that session's
+    marks. Respondent responses are computed per request and need nothing."""
+    for layer in layer_owner(survey).map_layers.filter(source='question'):
+        rebuild_layer(layer)
