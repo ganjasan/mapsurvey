@@ -568,7 +568,6 @@ def editor_survey_settings(request, survey_uuid):
         'effective_role': request.effective_survey_role,
         'basemap_choices': BASEMAP_CHOICES,
         'map_layers': _editor_layers(survey),
-        'geo_questions': _geo_questions(survey) if settings.MAP_REFERENCE_LAYERS else [],
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
     })
 
@@ -621,7 +620,6 @@ def editor_survey_settings_panel(request, survey_uuid):
         'effective_role': request.effective_survey_role,
         'basemap_choices': BASEMAP_CHOICES,
         'map_layers': _editor_layers(survey),
-        'geo_questions': _geo_questions(survey) if settings.MAP_REFERENCE_LAYERS else [],
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
     })
 
@@ -755,9 +753,8 @@ def _editor_layers(survey):
     for layer in layers_for(survey):
         item = {'layer': layer, 'properties': _layer_property_names(layer)}
         if layer.source == 'question':
-            source = source_question_for(layer)
-            item['source_question'] = source
-            item['label_options'] = _label_options(source)
+            item['source_question'] = source_question_for(layer)
+            item['used_by'] = list(layer.questions.values_list('name', flat=True))
         items.append(item)
     return items
 
@@ -827,34 +824,6 @@ def editor_survey_layer_create(request, survey_uuid):
 
 @survey_permission_required('owner')
 @require_POST
-def editor_survey_layer_create_from_answers(request, survey_uuid):
-    """"New layer from answers": a `question` layer reading a geo question
-    (spec shared-map-layer). Objects are materialised as respondents submit;
-    the object editor is read-only for it."""
-    _layers_enabled_or_404()
-    survey = request.survey
-    owner = layer_owner(survey)
-    if owner.map_layers.count() >= MAX_LAYERS_PER_SURVEY:
-        return JsonResponse({'error': f'A survey can hold {MAX_LAYERS_PER_SURVEY} reference layers.'}, status=400)
-    code = (request.POST.get('question_code') or '').strip()
-    question = next((q for q in _geo_questions(survey) if q.code == code), None)
-    if question is None:
-        return JsonResponse({'error': 'Pick a point, line or polygon question of this survey.'}, status=400)
-    label = (request.POST.get('label_field') or '').strip()[:100]
-    if label and label not in {o['code'] for o in _label_options(question)}:
-        return JsonResponse({'error': f'"{label}" is not a sub-question of that question.'}, status=400)
-    name = (request.POST.get('name') or '').strip()[:100] or f'Marks: {question.name}'[:100]
-    position = (owner.map_layers.aggregate(m=models.Max('position'))['m'] or 0) + 1
-    layer = SurveyMapLayer.objects.create(
-        survey=owner, name=name, color='#f97316', position=position,
-        source='question', source_question_code=question.code, label_field=label,
-        geojson='{"type":"FeatureCollection","features":[]}',
-    )
-    return JsonResponse(_layer_payload(layer, []), status=201)
-
-
-@survey_permission_required('owner')
-@require_POST
 def editor_survey_layer_update(request, survey_uuid, layer_id):
     """Update a layer's presentation config (never its geometry)."""
     _layers_enabled_or_404()
@@ -889,9 +858,8 @@ def editor_survey_layer_update(request, survey_uuid, layer_id):
 
 
 def _update_question_layer(request, layer):
-    """The `question`-layer edit state: name, color, label sub-question and the
-    three visibility settings. Key field / popups have no meaning here."""
-    from .layers import source_question_for
+    """The `question`-layer edit state on the settings card: name and color.
+    Key field / popups have no meaning here."""
     name = (request.POST.get('name') or '').strip()
     if name:
         layer.name = name[:100]
@@ -900,15 +868,8 @@ def _update_question_layer(request, layer):
         if not re.match(r'^#[0-9a-fA-F]{6}$', color):
             return JsonResponse({'error': 'Color must be #RRGGBB.'}, status=400)
         layer.color = color
-    if 'label_field' in request.POST:
-        value = (request.POST.get('label_field') or '').strip()[:100]
-        allowed = {o['code'] for o in _label_options(source_question_for(layer))}
-        if value and value not in allowed:
-            return JsonResponse({'error': f'"{value}" is not a sub-question of the source question.'}, status=400)
-        layer.label_field = value
-    for flag in ('show_tallies', 'show_comments', 'approve_first'):
-        if flag in request.POST:
-            setattr(layer, flag, request.POST.get(flag) in ('1', 'true', 'on'))
+    # Label and the visibility switches are edited on the Objects-on-the-map
+    # question bound to this layer — one door (owner decision 2026-09-05).
     layer.save()
     return JsonResponse(_layer_payload(layer, []))
 
@@ -1231,6 +1192,78 @@ def _parse_file_validation_settings(request, question, vs=None):
     return vs
 
 
+def _shared_map_layer_options(survey):
+    """What the Objects-on-the-map layer picker offers (spec survey-editor
+    "Objects on the map source picker"): the survey's layers, then the geo
+    questions whose answers may become a layer — picking one of those creates
+    the `question` layer on save. One geo question ⇒ one layer, so a question
+    that already has its layer is listed under the layer, not twice."""
+    if not settings.MAP_REFERENCE_LAYERS:
+        return [], []
+    from .layers import source_question_for
+    layers, taken = [], set()
+    for layer in layers_for(survey):
+        entry = {'id': layer.pk, 'name': layer.name, 'source': layer.source, 'code': layer.source_question_code,
+                 'label_field': layer.label_field, 'show_tallies': layer.show_tallies,
+                 'show_comments': layer.show_comments, 'approve_first': layer.approve_first, 'labels': []}
+        if layer.source == 'question':
+            entry['labels'] = _label_options(source_question_for(layer))
+            taken.add(layer.source_question_code)
+        layers.append(entry)
+    sources = [{'code': q.code, 'name': q.name, 'labels': _label_options(q)}
+               for q in _geo_questions(survey) if q.code not in taken]
+    return layers, sources
+
+
+def _resolve_layer_choice(request, survey):
+    """`layer=answers:<code>` in a question POST means "a layer sourced from
+    that geo question": create it if missing and hand the form its id."""
+    value = request.POST.get('layer', '')
+    if not value.startswith('answers:'):
+        return request.POST
+    code = value[len('answers:'):]
+    question = next((q for q in _geo_questions(survey) if q.code == code), None)
+    if question is None:
+        return request.POST
+    owner = layer_owner(survey)
+    layer = owner.map_layers.filter(source='question', source_question_code=code).first()
+    if layer is None:
+        position = (owner.map_layers.aggregate(m=models.Max('position'))['m'] or 0) + 1
+        label = (request.POST.get('sm_label_field') or '').strip()[:100]
+        if label and label not in {o['code'] for o in _label_options(question)}:
+            label = ''
+        layer = SurveyMapLayer.objects.create(
+            survey=owner, name=f'Marks: {question.name}'[:100], color='#f97316', position=position,
+            source='question', source_question_code=code, label_field=label,
+            geojson='{"type":"FeatureCollection","features":[]}',
+        )
+    post = request.POST.copy()
+    post['layer'] = str(layer.pk)
+    return post
+
+
+def _apply_shared_map_settings(request, question):
+    """The Objects-on-the-map form is the ONE place a `question` layer's
+    label and visibility settings are edited (owner decision 2026-09-05: the
+    layer card in Survey settings does not repeat them)."""
+    layer = question.layer if question.input_type == 'layer_objects' else None
+    if layer is None or layer.source != 'question':
+        return
+    from .layers import source_question_for
+    changed = []
+    if 'sm_label_field' in request.POST:
+        value = (request.POST.get('sm_label_field') or '').strip()[:100]
+        if not value or value in {o['code'] for o in _label_options(source_question_for(layer))}:
+            layer.label_field = value
+            changed.append('label_field')
+    for flag in ('show_tallies', 'show_comments', 'approve_first'):
+        if 'sm_settings' in request.POST:   # the block was rendered: unchecked boxes mean False
+            setattr(layer, flag, request.POST.get('sm_' + flag) in ('1', 'true', 'on'))
+            changed.append(flag)
+    if changed:
+        layer.save(update_fields=changed + ['updated_at'])
+
+
 def _render_question_modal(request, context):
     """Render the question modal so HTMX always swaps it into the modal body.
 
@@ -1246,10 +1279,42 @@ def _render_question_modal(request, context):
         # The in-modal sub-question list renders the same disabled state as
         # the section list does on published/closed surveys.
         context.setdefault('is_read_only', survey.status in ('published', 'closed'))
+        if 'layer_options' not in context:
+            context['layer_options'], context['answer_sources'] = _shared_map_layer_options(survey)
     response = render(request, 'editor/partials/question_form_modal.html', context)
     if request.headers.get('HX-Request'):
         response['HX-Retarget'] = '#questionModalBody'
         response['HX-Reswap'] = 'innerHTML'
+    return response
+
+
+def _edit_modal_response(request, question, oob_list_item=False, trigger=None):
+    """The question's edit modal, as `editor_question_edit` GET renders it.
+
+    `oob_list_item` appends the question's section-list item as an
+    out-of-band swap (a draft created from the type picker, spec
+    survey-editor "Question rows are created on type pick"); `trigger` sets
+    HX-Trigger without the modal-closing `questionSaved`."""
+    survey = request.survey
+    is_subquestion = question.parent_question_id_id is not None
+    form = QuestionForm(instance=question, is_subquestion=is_subquestion, section=question.survey_section)
+    response = _render_question_modal(request, {
+        **({} if is_subquestion else _visibility_block_context(survey, question.survey_section, 'question', host=question)),
+        'source_layers': _source_layers_of(survey, question),
+        'form': form,
+        'survey': survey,
+        'section': question.survey_section,
+        'question': question,
+    })
+    if oob_list_item:
+        item = render(request, 'editor/partials/question_list_item.html', {
+            'question': question, 'survey': survey,
+            'is_read_only': survey.status in ('published', 'closed'),
+        }).content.decode()
+        response.content = response.content + (
+            '<div hx-swap-oob="beforeend:#questions-list">%s</div>' % item).encode()
+    if trigger:
+        response['HX-Trigger'] = trigger
     return response
 
 
@@ -1261,8 +1326,29 @@ def editor_question_create(request, survey_uuid, section_id):
         return blocked
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
+    if request.method == 'POST' and request.POST.get('draft') == '1':
+        # Type picked in the "New question" modal: the row exists from this
+        # moment (spec survey-editor "Question rows are created on type pick"),
+        # and the modal re-renders in edit mode — autosave, sub-questions,
+        # everything an existing question has. An unnamed draft is deleted
+        # when the modal closes (survey_detail.html).
+        input_type = request.POST.get('input_type', '')
+        allowed = {value for value, _label in QuestionForm(section=section).fields['input_type'].choices}
+        if input_type not in allowed:
+            return JsonResponse({'error': 'Unknown question type.'}, status=400)
+        question = Question(survey_section=section, input_type=input_type, name='')
+        max_order = Question.objects.filter(
+            survey_section=section, parent_question_id__isnull=True
+        ).aggregate(Max('order_number'))['order_number__max']
+        question.order_number = (max_order or 0) + 1
+        question.choices = question.thumbs_choices() if question.input_type == 'thumbs' else None
+        question.save()
+        if not Question.objects.filter(survey_section__survey_header=survey).exclude(pk=question.pk).exists():
+            pe.emit(pe.SURVEY_QUESTION_ADDED, request.user.pk, {'survey_id': str(survey.id)})
+        return _edit_modal_response(request, question, oob_list_item=True, trigger='questionUpdated')
+
     if request.method == 'POST':
-        form = QuestionForm(request.POST, request.FILES, section=section)
+        form = QuestionForm(_resolve_layer_choice(request, survey), request.FILES, section=section)
         if form.is_valid():
             question = form.save(commit=False)
             question.survey_section = section
@@ -1296,6 +1382,7 @@ def editor_question_create(request, survey_uuid, section_id):
             if question.input_type in ('photo', 'audio', 'document'):
                 question.validation_settings = _parse_file_validation_settings(request, question)
             question.save()
+            _apply_shared_map_settings(request, question)
             # Funnel stage, so it fires only for a survey's *first* question --
             # emitting per question would make the step count questions rather
             # than creators who got past the empty editor.
@@ -1339,7 +1426,7 @@ def editor_question_edit(request, survey_uuid, question_id):
     is_subquestion = question.parent_question_id_id is not None
 
     if request.method == 'POST':
-        form = QuestionForm(request.POST, request.FILES, instance=question, is_subquestion=is_subquestion, section=question.survey_section)
+        form = QuestionForm(_resolve_layer_choice(request, survey), request.FILES, instance=question, is_subquestion=is_subquestion, section=question.survey_section)
         if form.is_valid():
             q = form.save(commit=False)
             choices_json = request.POST.get('choices_json', '').strip()
@@ -1407,6 +1494,7 @@ def editor_question_edit(request, survey_uuid, question_id):
             if vis_present:
                 q.visibility_rule = vis_rule
             q.save()
+            _apply_shared_map_settings(request, q)
             _save_question_translations(request, q, survey)
             response = render(request, 'editor/partials/question_list_item.html', {
                 'question': q,
@@ -1437,6 +1525,7 @@ def editor_question_edit(request, survey_uuid, question_id):
         'survey': survey,
         'section': question.survey_section,
         'question': question,
+        'return_to_parent': is_subquestion and request.GET.get('return') == 'modal',
     })
 
 
@@ -1670,15 +1759,18 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
             if vis_error:
                 form.add_error(None, vis_error)
                 return _render_question_modal(request, {
-                    **_visibility_block_context(survey, section, 'question'),
                     'form': form,
                     'survey': survey,
-                    'section': section,
+                    'section': parent.survey_section,
+                    'parent': parent,
                 })
             if vis_present:
                 question.visibility_rule = vis_rule
             question.save()
             _save_question_translations(request, question, survey)
+            if request.POST.get('return_to_parent') == '1':
+                # Opened from the parent's modal: back to it, list kept in sync.
+                return _edit_modal_response(request, parent, trigger='questionUpdated')
             # Return the parent question item (includes sub-questions)
             response = render(request, 'editor/partials/question_list_item.html', {
                 'question': parent,
@@ -1694,6 +1786,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
         'survey': survey,
         'section': parent.survey_section,
         'parent': parent,
+        'return_to_parent': request.GET.get('return') == 'modal',
     })
 
 

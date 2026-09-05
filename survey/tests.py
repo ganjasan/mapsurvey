@@ -38115,26 +38115,26 @@ class LayerObjectsQuestionEditorTest(TestCase):
         sub = Question.objects.get(name='Rate')
         self.assertEqual(sub.parent_question_id_id, q.pk)
 
-    def test_modal_has_no_subquestions_section(self):
+    def test_modal_subquestions_block_and_picker_only_create(self):
         """
-        GIVEN edit modals for a polygon question with a sub-question and for the sub-question itself
-        WHEN they render
-        THEN neither carries a Sub-questions section — sub-questions are managed only from
-             the section list (owner decision 2026-09-05: a create modal cannot host them
-             because the parent does not exist yet, so the section was one-sided and confusing)
+        GIVEN a polygon question with one sub-question, and the section's New question modal
+        WHEN the edit modal and the create modal render
+        THEN the edit modal carries the Sub-questions block listing the child with an in-modal add link,
+             the sub-question's own modal has none, and the create modal is the type picker
+             (data-create-picker, no Create button submit path)
         """
         poly = Question.objects.create(survey_section=self.section, code="LO003", name="Area", input_type="polygon", order_number=1)
         sub = Question.objects.create(survey_section=self.section, code="LO004", name="Why?", input_type="text",
                                       parent_question_id=poly, order_number=1)
-        for q in (poly, sub):
-            html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': q.pk})).content.decode()
-            self.assertNotIn('id="fg-subquestions"', html)
-            self.assertNotIn('subquestion-list--modal', html)
+        html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': poly.pk})).content.decode()
+        self.assertIn('id="fg-subquestions"', html)
+        self.assertIn('Why?', html)
+        self.assertIn(reverse('editor_subquestion_create', kwargs={'survey_uuid': self.survey.uuid, 'parent_id': poly.pk}) + '?return=modal', html)
+        html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': sub.pk})).content.decode()
+        self.assertNotIn('id="fg-subquestions"', html)
         html = self.client.get(reverse('editor_question_create', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk})).content.decode()
-        self.assertNotIn('fg-subquestions', html)
-        # The section list keeps its entry point.
-        html = self.client.get(reverse('editor_section_detail', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk})).content.decode()
-        self.assertIn(reverse('editor_subquestion_create', kwargs={'survey_uuid': self.survey.uuid, 'parent_id': poly.pk}), html)
+        self.assertIn('data-create-picker', html)
+        self.assertIn('pick a type', html)
 
     def test_polygon_without_subquestions_saves(self):
         """
@@ -38973,8 +38973,9 @@ class SharedMapModerationTest(TestCase):
 
 
 class SharedMapEditorTest(TestCase):
-    """Layer from answers, its settings, the read-only object editor, the
-    delete refusal (spec survey-editor delta, task 5)."""
+    """The Objects-on-the-map form is the one door to a layer from answers and
+    its settings; the layer card only names it; the object editor is read-only;
+    the source question cannot be deleted (spec survey-editor delta, task 5)."""
 
     def setUp(self):
         from django.contrib.auth.models import User
@@ -38985,55 +38986,70 @@ class SharedMapEditorTest(TestCase):
         Membership.objects.create(user=self.owner, organization=self.f['survey'].organization, role='admin')
         self.client.login(username='edowner', password='pw')
         self.uuid = self.f['survey'].uuid
-        self.from_answers = reverse('editor_survey_layer_create_from_answers', kwargs={'survey_uuid': self.uuid})
+        self.create_url = reverse('editor_question_create', kwargs={'survey_uuid': self.uuid, 'section_id': self.f['section'].pk})
 
-    def test_create_from_answers(self):
+    def _post(self, url, **extra):
+        data = {'name': 'React', 'input_type': 'layer_objects', 'subtext': '', 'display_style': 'default',
+                'color': '#000000', 'choices_json': '[]', 'min_objects': '0', 'objects_search': 'auto'}
+        data.update(extra)
+        return self.client.post(url, data)
+
+    def test_picker_lists_layers_and_geo_sources(self):
         """
-        GIVEN a point question with a text sub-question
-        WHEN the owner creates a layer from its answers with that label
-        THEN a question layer exists with the code, label and default settings; unknown codes and non-geo codes are refused
+        GIVEN a survey with one question layer (fed by Q1) and a second geo question Q2 without one
+        WHEN the create modal renders for an Objects question
+        THEN the picker lists the layer under Layers and only Q2 under Respondents' marks, with label options
+        """
+        Question.objects.create(survey_section=self.f['section'], code="Q2", name="Route?", input_type="line", order_number=5)
+        html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.uuid, 'question_id': self.f['obj'].pk})).content.decode()
+        self.assertIn('data-layer-picker', html)
+        self.assertIn('value="answers:Q2"', html)
+        self.assertNotIn('value="answers:Q1"', html)
+        self.assertIn('respondents&#x27; marks on Q1', html.replace("respondents' marks on Q1", "respondents&#x27; marks on Q1"))
+        self.assertIn('id="fg-shared-map"', html)
+
+    def test_picking_a_geo_source_creates_the_layer_with_settings(self):
+        """
+        GIVEN a geo question Q2 with a text sub-question T2 and no layer
+        WHEN the owner creates an Objects question with layer=answers:Q2, label T2, comments on
+        THEN a question layer for Q2 exists with that label and settings and the question is bound to it;
+             an unknown code or label is ignored safely
         """
         from .models import SurveyMapLayer
-        response = self.client.post(self.from_answers, {'question_code': 'Q1', 'label_field': 'WHY', 'name': ''})
-        self.assertEqual(response.status_code, 201)
-        layer = SurveyMapLayer.objects.get(pk=response.json()['id'])
-        self.assertEqual((layer.source, layer.source_question_code, layer.label_field, layer.name),
-                         ('question', 'Q1', 'WHY', 'Marks: Where?'))
-        self.assertTrue(layer.show_tallies); self.assertFalse(layer.show_comments); self.assertFalse(layer.approve_first)
-        self.assertEqual(self.client.post(self.from_answers, {'question_code': 'NOPE'}).status_code, 400)
-        self.assertEqual(self.client.post(self.from_answers, {'question_code': 'OBJ'}).status_code, 400)
-        self.assertEqual(self.client.post(self.from_answers, {'question_code': 'Q1', 'label_field': 'CMT'}).status_code, 400)
+        q2 = Question.objects.create(survey_section=self.f['section'], code="Q2", name="Route?", input_type="line", order_number=5)
+        Question.objects.create(survey_section=self.f['section'], code="T2", name="Tell us", input_type="text", parent_question_id=q2, order_number=1)
+        r = self._post(self.create_url, layer='answers:Q2', sm_settings='1', sm_label_field='T2', sm_show_comments='1')
+        self.assertEqual(r.status_code, 200, r.content[:300])
+        layer = SurveyMapLayer.objects.get(survey=self.f['survey'], source_question_code='Q2')
+        self.assertEqual((layer.source, layer.label_field, layer.show_tallies, layer.show_comments, layer.approve_first, layer.name),
+                         ('question', 'T2', False, True, False, 'Marks: Route?'))
+        self.assertEqual(Question.objects.get(name='React').layer_id, layer.pk)
+        # Second question on the same source reuses the layer.
+        self._post(self.create_url, name='React again', layer='answers:Q2', sm_settings='1', sm_show_tallies='1')
+        self.assertEqual(SurveyMapLayer.objects.filter(source_question_code='Q2').count(), 1)
+        layer.refresh_from_db()
+        self.assertTrue(layer.show_tallies)
+        # Unknown source: no layer, the form complains about the layer field.
+        r = self._post(self.create_url, name='Nope', layer='answers:NOPE')
+        self.assertFalse(SurveyMapLayer.objects.filter(source_question_code='NOPE').exists())
 
-    def test_settings_save_and_label_validation(self):
+    def test_settings_edit_through_the_question(self):
         """
-        GIVEN the question layer
-        WHEN the owner posts the three settings and a label
-        THEN they persist; a label that is not a sub-question of Q1 is refused
+        GIVEN the Objects question bound to the Q1 layer
+        WHEN its form is saved with approve_first on and label WHY
+        THEN the layer carries both; the layer card no longer offers those fields
         """
-        url = reverse('editor_survey_layer_update', kwargs={'survey_uuid': self.uuid, 'layer_id': self.f['layer'].pk})
-        r = self.client.post(url, {'show_tallies': '0', 'show_comments': '1', 'approve_first': '1', 'label_field': 'WHY'})
-        self.assertEqual(r.status_code, 200)
+        url = reverse('editor_question_edit', kwargs={'survey_uuid': self.uuid, 'question_id': self.f['obj'].pk})
+        r = self._post(url, name='Marks by others', layer=str(self.f['layer'].pk), sm_settings='1',
+                       sm_label_field='WHY', sm_approve_first='1', sm_show_tallies='1')
+        self.assertEqual(r.status_code, 200, r.content[:300])
         self.f['layer'].refresh_from_db()
-        self.assertEqual((self.f['layer'].show_tallies, self.f['layer'].show_comments, self.f['layer'].approve_first),
-                         (False, True, True))
-        self.assertEqual(self.client.post(url, {'label_field': 'VOTE'}).status_code, 400)
-
-    def test_settings_card_markup(self):
-        """
-        GIVEN the settings page
-        WHEN it renders
-        THEN the question layer shows its badge, the label picker and the three switches, no key field; the "from answers" form lists Q1
-        """
+        self.assertEqual((self.f['layer'].label_field, self.f['layer'].approve_first, self.f['layer'].show_comments), ('WHY', True, False))
         html = self.client.get(reverse('editor_survey_settings_panel', kwargs={'survey_uuid': self.uuid})).content.decode()
         self.assertIn('source: answers', html)
-        self.assertIn('data-field="show_tallies"', html)
-        self.assertIn('data-field="approve_first"', html)
-        self.assertIn('id="ref-layers-from-answers-btn"', html)
-        self.assertIn('<option value="Q1"', html)
-        layer_block = html[html.index('data-layer-id="%d"' % self.f['layer'].pk):]
-        layer_block = layer_block[:layer_block.index('ref-layer-status')]
-        self.assertNotIn('data-field="key_field"', layer_block)
-        self.assertIn('read-only', layer_block)
+        self.assertIn('settings are on the question', html)
+        self.assertNotIn('data-field="approve_first"', html)
+        self.assertNotIn('data-field="key_field"', html[html.index('data-layer-id="%d"' % self.f['layer'].pk):])
 
     def test_object_editor_read_only(self):
         """
@@ -39071,9 +39087,80 @@ class SharedMapEditorTest(TestCase):
         self.assertTrue(Question.objects.filter(pk=self.f['q1'].pk).exists())
         html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.uuid, 'question_id': self.f['q1'].pk})).content.decode()
         self.assertIn('feed the reference layer', html)
-        # A geo question no layer reads deletes as before.
-        q2 = Question.objects.create(survey_section=self.f['section'], code="Q2", name="Other", input_type="point", order_number=9)
+        q2 = Question.objects.create(survey_section=self.f['section'], code="Q9", name="Other", input_type="point", order_number=9)
         self.assertEqual(self.client.post(reverse('editor_question_delete', kwargs={'survey_uuid': self.uuid, 'question_id': q2.pk})).status_code, 200)
+
+
+class QuestionDraftOnTypePickTest(TestCase):
+    """New question = pick a type; the row exists from that moment and the modal
+    is the edit modal (spec survey-editor "Question rows are created on type pick")."""
+
+    def setUp(self):
+        from django.contrib.auth.models import User
+        self.org = Organization.objects.create(name="Draft Org")
+        self.survey = SurveyHeader.objects.create(name="draft_survey", organization=self.org, redirect_url="/t/", status='draft')
+        self.section = SurveySection.objects.create(survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True)
+        self.owner = User.objects.create_user('draftowner', 'd@example.com', 'pw')
+        Membership.objects.create(user=self.owner, organization=self.org, role='admin')
+        self.client.login(username='draftowner', password='pw')
+        self.create_url = reverse('editor_question_create', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk})
+
+    def test_type_pick_creates_the_row_and_returns_the_edit_modal(self):
+        """
+        GIVEN an empty section
+        WHEN the picker posts draft=1 with input_type=point
+        THEN a nameless point question exists, the response is its edit modal with the sub-questions
+             block and the draft marker, plus the list item out of band; a bogus type is a 400
+        """
+        r = self.client.post(self.create_url, {'draft': '1', 'input_type': 'point'}, HTTP_HX_REQUEST='true')
+        self.assertEqual(r.status_code, 200)
+        q = Question.objects.get(survey_section=self.section)
+        self.assertEqual((q.input_type, q.name or ''), ('point', ''))
+        html = r.content.decode()
+        self.assertIn('data-draft-question="%d"' % q.pk, html)
+        self.assertIn('id="fg-subquestions"', html)
+        self.assertIn('hx-swap-oob="beforeend:#questions-list"', html)
+        self.assertIn('data-question-id="%d"' % q.pk, html)
+        self.assertEqual(r['HX-Trigger'], 'questionUpdated')
+        self.assertEqual(self.client.post(self.create_url, {'draft': '1', 'input_type': 'bogus'}).status_code, 400)
+        self.assertEqual(Question.objects.filter(survey_section=self.section).count(), 1)
+
+    def test_named_question_loses_the_draft_marker(self):
+        """
+        GIVEN a draft question
+        WHEN it is autosaved with a name and the modal re-renders
+        THEN the form no longer carries data-draft-question, so closing keeps it
+        """
+        self.client.post(self.create_url, {'draft': '1', 'input_type': 'text'})
+        q = Question.objects.get(survey_section=self.section)
+        url = reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': q.pk})
+        self.client.post(url, {'name': 'Named now', 'input_type': 'text', 'subtext': '', 'display_style': 'default',
+                               'color': '#000000', 'choices_json': '[]', 'autosave': '1'})
+        html = self.client.get(url).content.decode()
+        self.assertNotIn('data-draft-question', html)
+        self.assertEqual(Question.objects.get(pk=q.pk).name, 'Named now')
+
+    def test_subquestion_from_modal_returns_to_parent(self):
+        """
+        GIVEN a draft point question opened in the modal
+        WHEN a sub-question is created with return_to_parent=1
+        THEN the response is the parent's edit modal listing the new child, not the closing list item
+        """
+        self.client.post(self.create_url, {'draft': '1', 'input_type': 'point'})
+        parent = Question.objects.get(survey_section=self.section)
+        url = reverse('editor_subquestion_create', kwargs={'survey_uuid': self.survey.uuid, 'parent_id': parent.pk})
+        html = self.client.get(url + '?return=modal').content.decode()
+        self.assertIn('name="return_to_parent"', html)
+        self.assertIn('Back to question', html)
+        r = self.client.post(url, {'name': 'Why here?', 'input_type': 'text', 'subtext': '', 'display_style': 'default',
+                                   'color': '#000000', 'choices_json': '[]', 'return_to_parent': '1'})
+        self.assertEqual(r.status_code, 200)
+        html = r.content.decode()
+        self.assertIn('id="fg-subquestions"', html)
+        self.assertIn('Why here?', html)
+        self.assertIn('data-draft-question="%d"' % parent.pk, html)
+        self.assertEqual(r['HX-Trigger'], 'questionUpdated')
+        self.assertEqual(Question.objects.filter(parent_question_id=parent).count(), 1)
 
 
 class SharedMapExportTest(TestCase):

@@ -29,8 +29,8 @@ Responses moderation). Decisions taken with the owner on 2026-09-05 are marked *
   and can 👍/👎 and comment on one instead of duplicating it.
 - Zero new respondent mechanics: the object popup, answered state, `min_objects`, per-object
   results, export and public block from #155 are reused verbatim.
-- The creator builds it from first-class pieces — a layer from answers plus an ordinary
-  Objects question — and can arrange them across sections *(owner)*.
+- The creator builds an ordinary Objects question and picks a geo question as its source;
+  the layer is an implementation detail they never create by hand *(owner)*.
 - Moderation that a three-person parish council will actually use: live by default,
   per-item hide, approve-first as an option *(owner)*.
 - Tallies visible by default, others' comments hidden by default, both per-layer settings
@@ -151,30 +151,48 @@ Answer.hidden      = BooleanField(default=False)
 
 *(owner)*: A+B — live by default with per-item hide, approve-first as an option.
 
-### D6. Assembled by hand: the layer card is the only creator entry point *(owner)*
+### D6. One door: the Objects-on-the-map form owns the shared map *(owner, revised)*
 
-The Reference layers card in Survey settings gains "New layer from answers": pick a
-point/line/polygon question of the survey, optionally the sub-question whose answer labels
-each mark, and the layer is created with `source='question'`. Its edit state exposes the
-label sub-question, `show_tallies`, `show_comments`, `approve_first`; it has no upload
-zone, no draw action, and "Open editor" opens the object editor read-only. From there the
-creator adds an "Objects on the map" question bound to that layer wherever they want it —
-same section as the geo question for Julian's flow, a later section for "rate what others
-said" — with the sub-questions they choose.
+The creator never creates the layer by hand. The "Objects on the map" question form's
+layer picker has two groups — the survey's layers, and *Respondents' marks on…* listing
+the geo questions that have no layer yet. Picking a geo question posts `layer=answers:<code>`;
+the view creates the `question` layer (name "Marks: <question>", one per geo question,
+reused on later picks) and binds the question to it. The same form carries the four
+settings (`label_field` as a sub-question picker, `show_tallies`, `show_comments`,
+`approve_first`) whenever the picked layer is question-sourced; they are stored on the
+layer and edited **only** here. The Reference layers card in Survey settings shows a
+question-sourced layer as name + colour + "source: answers" badge + which question uses
+it; its label/key/popup fields and the earlier "New layer from answers" action are gone.
+The type "Objects on the map" is offered whenever the survey has a layer *or* a geo
+question.
 
-Two consequences the editor states plainly:
-- With no label sub-question, other people's marks are listed by key (`s12-1`). The card
-  says so next to the picker ("Without a label, marks are listed by number"). Choice
-  sub-questions are listed before text ones: they cannot carry an address or a name.
-- Deleting the source geo question while a `question` layer references its code is
-  refused with a message naming the layer, mirroring "bound layer cannot be deleted".
-  Renaming the question's code cascades to `source_question_code`.
+Why one door: the first cut had the four fields both on the layer card and on the
+question form. Same storage, two places to look — the owner called the settings-card
+detour "an extra step" and the duplicate fields a trap.
+
+Deleting the source geo question while a `question` layer references its code is refused
+with a message naming the layer, mirroring "bound layer cannot be deleted". Question codes
+are not editable in the editor; the import remap (D9) is the only place a code changes.
 
 *Rejected (owner)*: a toggle on the geo question that creates the layer and a pair
-question with a 👍/👎 sub-question in one save. It hid three entities behind one checkbox,
-needed a refusal path for turning it off, and would have had to invent a "Why here?"
-sub-question to give marks a label. A creator who wants the pair builds two questions and
-sees exactly what respondents get.
+question with a 👍/👎 sub-question in one save — three entities behind one checkbox, a
+refusal path for turning it off, and an invented "Why here?" sub-question.
+
+### D6a. Question rows are created on type pick *(owner)*
+
+"New question" opens the type picker and nothing else. Picking a type POSTs
+`draft=1` + `input_type` to `editor_question_create`, which creates the row with an empty
+name and responds with the question's **edit** modal (autosave, sub-questions block,
+type-specific fields) plus the section-list item out of band. From that moment the
+question behaves like any existing one; the sub-question block — list, add, edit, delete —
+lives in the modal and its actions return to the parent's modal (`?return=modal` /
+`return_to_parent=1`) instead of closing it. Closing the modal with the name still empty
+deletes the draft (`data-draft-question` + the delete endpoint) and removes the list item.
+
+Why: sub-questions hang on `parent_question_id`, so a create form has nothing to hang
+them on; the earlier "create, close, find the card, add sub-question" path was the gap
+the owner hit. The alternative — Create keeps the modal open in edit mode — was offered
+and declined in favour of this: no create/edit split at all, the way form builders behave.
 
 ### D7. "Required" is unchanged
 

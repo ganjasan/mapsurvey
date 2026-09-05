@@ -70,7 +70,7 @@
 </style>
 <div class="modal-header">
     <h5 class="modal-title">
-        {% if parent %}{% blocktrans with name=parent.name %}New Sub-question for “{{ name }}”{% endblocktrans %}
+        {% if parent %}{% blocktrans with name=parent.name %}New Sub-question for “{{ name }}”{% endblocktrans %}{% elif not question %}{% trans "New question — pick a type" %}
         {% elif question %}{% trans "Edit Question" %}
         {% else %}{% trans "New Question" %}
         {% endif %}
@@ -92,8 +92,20 @@
       {% endif %}
       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
       {% if EDITOR_AUTOSAVE and question %}data-autosave{% endif %}
+      {% if question and not question.name %}data-draft-question="{{ question.id }}" data-delete-url="{% url 'editor_question_delete' survey.uuid question.id %}"{% endif %}
+      {% if not question and not parent %}data-create-picker{% endif %}
       enctype="multipart/form-data">
     {% csrf_token %}
+    {% if return_to_parent %}<input type="hidden" name="return_to_parent" value="1">{% endif %}
+    {% if not question and not parent %}
+    <style>
+      /* New question = the type picker. Picking a type creates the row and the
+         modal re-renders in edit mode (spec survey-editor). */
+      form[data-create-picker] .form-group:not(#fg-input_type), form[data-create-picker] .choices-editor,
+      form[data-create-picker] .qtp-preview-col, form[data-create-picker] .modal-footer .btn-primary,
+      form[data-create-picker] .visibility-block { display: none !important; }
+    </style>
+    {% endif %}
     <div class="modal-body qtp-body-cols">
         <div class="qtp-form-col">
         {% if form.non_field_errors %}
@@ -247,9 +259,20 @@
         <div class="form-group" id="fg-layer-objects" style="display:none;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;background:#fafafa;">
             <div class="form-row">
                 <div class="col-7">
-                    <label for="{{ form.layer.id_for_label }}" style="font-weight:600;">{{ form.layer.label }}</label>
-                    {{ form.layer }}
-                    <small class="form-text text-muted">{% trans "Layers are created in Survey settings → Reference layers → Open editor." %}</small>
+                    <label for="id_layer" style="font-weight:600;">{{ form.layer.label }}</label>
+                    {% comment %}Two groups (spec survey-editor "Objects on the map source picker"):
+                    the survey's layers, and geo questions whose marks become a layer on save
+                    (value answers:<code>). data-source/data-labels drive the settings block.{% endcomment %}
+                    <select name="layer" id="id_layer" class="form-control" data-layer-picker>
+                        <option value="">— {% trans "pick a layer" %} —</option>
+                        {% if layer_options %}<optgroup label="{% trans 'Layers' %}">
+                        {% for l in layer_options %}<option value="{{ l.id }}" data-source="{{ l.source }}" data-labels='{{ l.labels|json_attr }}' data-label-field="{{ l.label_field }}" data-show-tallies="{{ l.show_tallies|yesno:'1,0' }}" data-show-comments="{{ l.show_comments|yesno:'1,0' }}" data-approve-first="{{ l.approve_first|yesno:'1,0' }}" {% if form.layer.value|stringformat:'s' == l.id|stringformat:'s' %}selected{% endif %}>{{ l.name }}{% if l.source == 'question' %} · {% trans "respondents' marks on" %} {{ l.code }}{% endif %}</option>{% endfor %}
+                        </optgroup>{% endif %}
+                        {% if answer_sources %}<optgroup label="{% trans 'Respondents’ marks on…' %}">
+                        {% for q in answer_sources %}<option value="answers:{{ q.code }}" data-source="question" data-labels='{{ q.labels|json_attr }}' data-show-tallies="1" data-show-comments="0" data-approve-first="0">{{ q.name }}</option>{% endfor %}
+                        </optgroup>{% endif %}
+                    </select>
+                    <small class="form-text text-muted">{% trans "Uploaded layers come from Survey settings → Reference layers. Picking a geo question turns its marks into a layer other respondents can react to." %}</small>
                     {% for error in form.layer.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
                 </div>
                 <div class="col-5">
@@ -263,6 +286,24 @@
                 <label for="{{ form.objects_search.id_for_label }}" style="font-weight:600;">{{ form.objects_search.label }}</label>
                 {{ form.objects_search }}
             </div>
+            {% comment %}Shared map settings (spec shared-map-layer). Stored on the layer, edited
+            ONLY here — the layer card in Survey settings shows name and colour.{% endcomment %}
+            <div id="fg-shared-map" style="display:none;margin-top:10px;border-top:1px solid #e5e7eb;padding-top:10px;">
+                <input type="hidden" name="sm_settings" value="1">
+                <div class="form-row">
+                    <div class="col-7">
+                        <label for="id_sm_label_field" style="font-weight:600;">{% trans "Label shown on other people's marks" %}</label>
+                        <select name="sm_label_field" id="id_sm_label_field" class="form-control"><option value="">— {% trans "none: marks are listed by number" %} —</option></select>
+                        <small class="form-text text-muted">{% trans "A sub-question of the geo question. Choice answers are safer than free text." %}</small>
+                    </div>
+                    <div class="col-5" style="font-size:.85rem;">
+                        <label style="font-weight:600;">{% trans "Other respondents see" %}</label>
+                        <div class="form-check"><input type="checkbox" class="form-check-input" name="sm_show_tallies" id="id_sm_show_tallies" value="1"><label class="form-check-label" for="id_sm_show_tallies">{% trans "👍/👎 counts" %}</label></div>
+                        <div class="form-check"><input type="checkbox" class="form-check-input" name="sm_show_comments" id="id_sm_show_comments" value="1"><label class="form-check-label" for="id_sm_show_comments">{% trans "other people's comments" %}</label></div>
+                        <div class="form-check"><input type="checkbox" class="form-check-input" name="sm_approve_first" id="id_sm_approve_first" value="1"><label class="form-check-label" for="id_sm_approve_first">{% trans "marks only after you approve them" %}</label></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
 
@@ -271,6 +312,52 @@
             {% blocktrans with names=source_layers|join:", " %}Respondents' marks on this question feed the reference layer {{ names }}. The question cannot be deleted while that layer exists.{% endblocktrans %}
         </div>
         {% endif %}
+        {% comment %}Sub-questions inside the modal (spec survey-editor "Sub-question
+        management"): the question exists from the moment its type was picked, so the
+        block is always live here — add, edit and delete without leaving the modal; the
+        section list is kept in sync out of band. Shown for parent-capable types by
+        toggleTypeScopedFields.{% endcomment %}
+        {% if question and not question.parent_question_id_id %}
+        <div class="form-group" id="fg-subquestions" style="display:none;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;">
+            <label style="font-weight:600;margin-bottom:2px;"><i class="fas fa-list-ol"></i> {% trans "Sub-questions" %}
+                <small class="text-muted" style="font-weight:400;">— {% trans "asked about every object the respondent opens or marks" %}</small></label>
+            {% with sub_questions=question.subQuestions %}
+            {% if sub_questions %}
+            <ul class="subquestion-list subquestion-list--modal" style="margin:6px 0 0;padding:0;list-style:none;">
+                {% for subq in sub_questions %}
+                <li class="question-item" data-question-id="{{ subq.id }}" data-input-type="{{ subq.input_type }}" style="margin-bottom:4px;">
+                    <div class="question-item-row">
+                        <span class="q-name">{{ subq.name|default:"(unnamed)" }}</span>
+                        <span class="badge badge-secondary">{{ subq|input_type_label }}</span>
+                        {% if subq.required %}<span class="badge badge-danger">{% trans "Required" %}</span>{% endif %}
+                        <span class="q-actions">
+                            <button type="button" title="{% trans 'Edit' %}" {% if is_read_only %}disabled{% else %}
+                                    hx-get="{% url 'editor_question_edit' survey.uuid subq.id %}?return=modal" hx-target="#questionModalBody" hx-swap="innerHTML"{% endif %}>
+                                <i class="fas fa-pen"></i></button>
+                            <button type="button" title="{% trans 'Delete' %}" class="text-danger" {% if is_read_only %}disabled{% else %}
+                                    hx-post="{% url 'editor_question_delete' survey.uuid subq.id %}" hx-target="closest li" hx-swap="outerHTML"
+                                    hx-confirm="{% trans 'Delete this sub-question?' %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    hx-on::after-request="document.body.dispatchEvent(new CustomEvent('questionUpdated'))"{% endif %}>
+                                <i class="fas fa-trash"></i></button>
+                        </span>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="text-muted" style="font-size:.8rem;margin:4px 0 6px;" id="subquestions-empty-hint">
+                {% trans "Describe each object with sub-questions — each becomes a column of your export. A question without them is fine too." %}
+            </div>
+            {% endif %}
+            {% endwith %}
+            <button type="button" class="add-question-btn add-question-btn--sub" id="modal-add-subquestion" style="margin-top:6px;"
+                    {% if is_read_only %}disabled title="{% trans 'Create a draft to edit' %}"{% else %}
+                    hx-get="{% url 'editor_subquestion_create' survey.uuid question.id %}?return=modal" hx-target="#questionModalBody" hx-swap="innerHTML"{% endif %}>
+                <i class="fas fa-plus"></i> {% trans "Add sub-question" %}
+            </button>
+        </div>
+        {% endif %}
+
         {% include "editor/partials/_visibility_block.html" %}
 
         <!-- Choices editor -->
@@ -458,9 +545,17 @@
             <span class="autosave-label">{% trans "All changes saved" %}</span>
         </span>
         <span style="flex:1;"></span>
+        {% if return_to_parent and question.parent_question_id_id %}
+        <button type="button" class="btn btn-secondary" hx-get="{% url 'editor_question_edit' survey.uuid question.parent_question_id_id %}" hx-target="#questionModalBody" hx-swap="innerHTML"><i class="fas fa-arrow-left"></i> {% trans "Back to question" %}</button>
+        {% else %}
         <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Close" %}</button>
+        {% endif %}
+        {% else %}
+        {% if return_to_parent and parent %}
+        <button type="button" class="btn btn-secondary" hx-get="{% url 'editor_question_edit' survey.uuid parent.id %}" hx-target="#questionModalBody" hx-swap="innerHTML"><i class="fas fa-arrow-left"></i> {% trans "Back to question" %}</button>
         {% else %}
         <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+        {% endif %}
         {% if question %}
         <button type="button" class="btn btn-outline-primary" id="apply-question-btn" onclick="serializeChoices(); applyQuestion();">
             <i class="fas fa-eye"></i> {% trans "Apply" %}
@@ -601,7 +696,8 @@
     // ── Type-scoped settings (#111): only fields the selected type consumes ──
     var GEO_TYPES = ['point', 'line', 'polygon'];
     var DISPLAY_BLOCK_TYPES = ['image', 'html'];
-    // Mirrors survey.question_types.NOT_REQUIRABLE_TYPES.
+    // Mirrors survey.question_types.PARENT_TYPES / NOT_REQUIRABLE_TYPES.
+    var PARENT_TYPES = ['point', 'line', 'polygon', 'layer_objects'];
     var NOT_REQUIRABLE_TYPES = ['image', 'html', 'layer_objects'];
 
     // CSS-hidden inputs still submit, so stored values pass through a save
@@ -640,6 +736,7 @@
         show('fg-required', NOT_REQUIRABLE_TYPES.indexOf(t) === -1);
         show('name-internal-hint', DISPLAY_BLOCK_TYPES.indexOf(t) !== -1);
         show('fg-layer-objects', t === 'layer_objects');
+        show('fg-subquestions', PARENT_TYPES.indexOf(t) !== -1);
         toggleHtmlBodyEditor(t === 'html');
     }
 
@@ -742,6 +839,32 @@
         });
     }
 
+    // ── Objects on the map: the layer picker drives the shared-map settings ──
+    var layerPicker = document.getElementById('id_layer');
+    function syncSharedMap() {
+        var box = document.getElementById('fg-shared-map');
+        if (!layerPicker || !box) return;
+        var opt = layerPicker.options[layerPicker.selectedIndex];
+        var isShared = !!(opt && opt.getAttribute('data-source') === 'question');
+        box.style.display = isShared ? '' : 'none';
+        if (!isShared) return;
+        var labels = [];
+        try { labels = JSON.parse(opt.getAttribute('data-labels') || '[]'); } catch (e) {}
+        var sel = document.getElementById('id_sm_label_field');
+        var current = opt.getAttribute('data-label-field') || '';
+        sel.innerHTML = '<option value="">' + sel.options[0].textContent + '</option>';
+        labels.forEach(function(l) {
+            var o = document.createElement('option');
+            o.value = l.code; o.textContent = l.name + ' (' + l.type + ')' + (l.free_text ? ' — free text' : '');
+            if (l.code === current) o.selected = true;
+            sel.appendChild(o);
+        });
+        ['show_tallies', 'show_comments', 'approve_first'].forEach(function(f) {
+            document.getElementById('id_sm_' + f).checked = opt.getAttribute('data-' + f.replace('_', '-')) === '1';
+        });
+    }
+    if (layerPicker) { layerPicker.addEventListener('change', syncSharedMap); syncSharedMap(); }
+
     // ── Type picker cards drive the hidden select ──
     var picker = document.getElementById('qtp-picker');
     var hintLine = document.getElementById('qtp-hint-line');
@@ -759,6 +882,20 @@
         picker.addEventListener('click', function(e) {
             var card = e.target.closest('.qtp-card');
             if (!card) return;
+            var form = picker.closest('form');
+            if (form && form.hasAttribute('data-create-picker')) {
+                // Create the row now; the response is the edit modal plus the
+                // section-list item out of band (editor_question_create draft=1).
+                if (form._draftPending) return;
+                form._draftPending = true;
+                card.classList.add('selected');
+                htmx.ajax('POST', form.getAttribute('hx-post'), {
+                    target: '#questionModalBody', swap: 'innerHTML',
+                    values: { input_type: card.getAttribute('data-qtp-value'), draft: '1' },
+                    headers: { 'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value }
+                }).then(function() { form._draftPending = false; });
+                return;
+            }
             inputTypeSelect.value = card.getAttribute('data-qtp-value');
             inputTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
             qtpHideExample();

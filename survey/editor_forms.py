@@ -357,7 +357,13 @@ class QuestionForm(forms.ModelForm):
         self.fields['layer'].empty_label = _('— pick a layer —')
         self.fields['min_objects'].required = False
         self.fields['objects_search'].required = False
-        if layer_qs is None or not layer_qs.exists():
+        # Offered when there is anything to bind: an uploaded layer, or a geo
+        # question whose answers can become one (spec survey-editor
+        # "Objects on the map source picker").
+        geo_exists = bool(survey is not None and conf_settings.MAP_REFERENCE_LAYERS and Question.objects.filter(
+            survey_section__survey_header=survey, input_type__in=('point', 'line', 'polygon'),
+            parent_question_id__isnull=True).exists())
+        if (layer_qs is None or not layer_qs.exists()) and not geo_exists:
             field = self.fields['input_type']
             field.choices = [(value, label) for value, label in field.choices if value != 'layer_objects']
         if section is not None and section.layout == 'form':

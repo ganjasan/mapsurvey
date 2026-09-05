@@ -49,9 +49,19 @@
 - [x] 6.2 `serialize_layers` / `_clean_layer_config` / `extract_layers`: five new fields, no objects for `question` layers, downgrade with report line when the code resolves to nothing
 - [x] 6.3 Tests: export properties; CSV status column; ZIP round-trip of a `question` layer + pair; dangling code downgrade
 
+## 8. Owner revisions after the PR-preview test (2026-09-05)
+
+- [x] 8.1 One door (D6): layer picker on the Objects question form with the "Respondents' marks on…" group; `_resolve_layer_choice` creates/reuses the `question` layer; shared-map settings block on the form (`_apply_shared_map_settings`); type offered when geo questions exist; `json_attr` filter
+- [x] 8.2 Settings card: question-layer card shows badge + used-by, name/colour only; "New layer from answers" view, URL, form and JS removed
+- [x] 8.3 Question rows created on type pick (D6a): `draft=1` branch of `editor_question_create`, `_edit_modal_response` with out-of-band list item and `questionUpdated` trigger; create modal = picker only (`data-create-picker`); draft cleanup on `hidden.bs.modal` when the name is empty
+- [x] 8.4 Sub-questions block restored in the edit modal; `?return=modal` / `return_to_parent=1` bring sub-question create and edit back to the parent's modal ("Back to question"); the undefined `section` in the sub-question create error path fixed
+- [x] 8.5 Mobile: tappable markers radius 11 under `pointer: coarse`, interactive tally badge; counter without a total on question layers
+- [x] 8.6 Tests: `QuestionDraftOnTypePickTest`, `SharedMapEditorTest` rewritten for the one door, modal test rewritten; 47 OK on the editor classes
+- [ ] 8.7 Owner browser pass of the new creator flow on the preview (automation cannot log in): pick type → edit modal → add sub-question → back; Objects question with a geo source; close an unnamed draft
+
 ## 7. Verification and close-out
 
-- [x] 7.1 Full suite after: 1908 OK, 1 skipped (2026-09-05); `openspec validate --strict` valid
+- [x] 7.1 Full suite after: 1911 OK, 1 skipped (2026-09-05, after the owner revisions); `openspec validate --strict` valid
 - [x] 7.2 (respondent flow, 2026-09-05 on dev 8010: three seeded marks with tallies + badge, popup with tallies line, 👍 + comment + ✓, own mark placed via crosshair + WHY, Finish → materialised as s10-1, reload: own mark restored as editable, absent from the list, park-gate tally 5·1, reacted row ticked. Editor screens covered by SharedMapEditorTest/SharedMapModerationTest — the automation cannot log in.) Browser pass on the dev stand: create the layer from answers, bind an Objects question with 👍/👎 + comment; as respondent A place a mark; as B see it, 👍 + comment, ✓; A re-submits, B's reaction survives; hide from Responses, B no longer sees it; approve-first flow; tallies off; comments on. Screenshots into the change folder
 - [ ] 7.3 k6 `lecture-burst` on a PR preview against a shared-map survey (per-session endpoint cost, design risk 1)
 - [ ] 7.4 Backlog: mark #160 promoted, note #153 no longer a prerequisite (the backlog file lives only in the main checkout's uncommitted changes — do it there); [x] CLAUDE.md paragraph on `question` layers and the one-source-of-truth rule for object keys
