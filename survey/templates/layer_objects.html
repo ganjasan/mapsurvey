@@ -15,7 +15,7 @@ card and this question's sub-question form (window._subquestionsForms[code]).
      data-min-label="{% trans 'Please answer about at least %d object(s) to continue' %}">
     <div class="layer-objects__head">
         <span class="layer-objects__title">{{ widget.title }}{% if widget.object_count %} · <span data-lo-total>{{ widget.object_count }}</span>{% endif %}</span>
-        <span class="layer-objects__counter" data-lo-counter hidden>{% trans "Answered" %} <b data-lo-answered>0</b> {% trans "of" %} <span data-lo-total2>{{ widget.object_count }}</span></span>
+        <span class="layer-objects__counter" data-lo-counter hidden>{% trans "Answered" %} <b data-lo-answered>0</b>{% if widget.layer_source != 'question' %} {% trans "of" %} <span data-lo-total2>{{ widget.object_count }}</span>{% endif %}</span>
     </div>
     {% if widget.subtitle %}<div class="layer-objects__subtitle">{{ widget.subtitle|safe }}</div>{% endif %}
     {% if not widget.layer_id %}
