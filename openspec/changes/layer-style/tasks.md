@@ -5,21 +5,21 @@
 
 ## 1. Model and normalisation (spec `layer-style`)
 
-- [ ] 1.1 `SurveyMapLayer.style` JSONField (default dict); migration `0073_layer_style`, reversible, no data
-- [ ] 1.2 `layers.normalize_style(raw) -> dict`: defaults, clamps, colour regex, icon allow-list (`LAYER_ICONS`, curated Font Awesome 5 solid names), ≤12 classes, rule dropped without a field, graduated classes sorted and contiguous; raises `LayerValidationError` only for >12 classes
-- [ ] 1.3 `layers.style_summary(layer, field)`: categorical values + counts (≤12 else too_many) / numeric min-max-count-quantiles
-- [ ] 1.4 `layers.legend_for(layer)`: rows per class, `other` only when unmatched objects exist (count them once per rebuild and cache on the layer? — no: compute in `build_map_layers_metadata`, it is metadata)
-- [ ] 1.5 Tests: defaults, clamps, colour fallback, icon allow-list, class cap, graduated ordering, summary on categorical / numeric / mixed, legend with and without `other`
+- [x] 1.1 `SurveyMapLayer.style` JSONField (default dict); migration `0073_layer_style`, reversible, no data
+- [x] 1.2 `layers.normalize_style(raw) -> dict`: defaults, clamps, colour regex, icon allow-list (`LAYER_ICONS`, curated Font Awesome 5 solid names), ≤12 classes, rule dropped without a field, graduated classes sorted and contiguous; raises `LayerValidationError` only for >12 classes
+- [x] 1.3 `layers.style_summary(layer, field)`: categorical values + counts (≤12 else too_many) / numeric min-max-count-quantiles
+- [x] 1.4 `layers.legend_for(layer)`: rows per class, `other` only when unmatched objects exist (count them once per rebuild and cache on the layer? — no: compute in `build_map_layers_metadata`, it is metadata)
+- [x] 1.5 Tests: defaults, clamps, colour fallback, icon allow-list, class cap, graduated ordering, summary on categorical / numeric / mixed, legend with and without `other`
 
 ## 2. Rendering (specs `layer-style`, `reference-overlay-layers` delta)
 
-- [ ] 2.1 `build_map_layers_metadata`: `style` (normalised) and `legend`
-- [ ] 2.2 Factory: `styleFor(meta, props, geomType)` — rule class → simplestyle → base; replace `featureStyle`, the `pointToLayer` colours and the tally offset; `divIcon` markers for icons (disc + glyph, 2·radius, coarse-pointer radius kept, fallback to circles above 1 000 icon points)
-- [ ] 2.3 CSS: `.ref-layer-icon`, legend rows (`.ref-layer-legend`, line / dot / icon samples)
-- [ ] 2.4 `reference_layers.html`: overlay label = name + legend HTML (escaped labels); expand the control once when a visible layer has a legend; `applyRefLayerVisibility` re-adds the same label
-- [ ] 2.5 Responses map (`analytics_geo_map.html`) and public results map: legend rows in their layer panels from `meta.legend`; swatch shows base colour + "by attribute" pill
-- [ ] 2.6 Object editor map (`layer_editor.html`): styled through the same factory (its preview should match the respondent map)
-- [ ] 2.7 Tests: metadata carries style/legend; rendered markup for the legend container and escaping; the four existing rendering tests still pass with an empty style
+- [x] 2.1 `build_map_layers_metadata`: `style` (normalised) and `legend`
+- [x] 2.2 Factory: `styleFor(meta, props, geomType)` — rule class → simplestyle → base; replace `featureStyle`, the `pointToLayer` colours and the tally offset; `divIcon` markers for icons (disc + glyph, 2·radius, coarse-pointer radius kept, fallback to circles above 1 000 icon points)
+- [x] 2.3 CSS: `.ref-layer-icon`, legend rows (`.ref-layer-legend`, line / dot / icon samples)
+- [x] 2.4 `reference_layers.html`: overlay label = name + legend HTML (escaped labels); expand the control once when a visible layer has a legend; `applyRefLayerVisibility` re-adds the same label
+- [x] 2.5 Responses map (`analytics_geo_map.html`): legend rows in their layer panels from `meta.legend`; swatch shows base colour + "by attribute" pill
+- [ ] 2.6 Object editor map (`layer_editor.html`) draws with its own code (drag/edit handles), not the factory — left as is; noted as follow-up in design. Public results has no reference layers, so 'public results map' in the proposal is moot
+- [x] 2.7 Tests: metadata carries style/legend; rendered markup for the legend container and escaping; the four existing rendering tests still pass with an empty style
 
 ## 3. Editor (spec `survey-editor` delta, design D4)
 

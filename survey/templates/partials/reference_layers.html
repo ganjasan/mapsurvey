@@ -40,7 +40,9 @@ which must be included before this partial.
             entry.layer = window.RefLayerFactory.build(meta, fc, { pane: 'refLayersPane' });
             entry.featureCollection = fc;
             if (entry.allowed && !entry.userOff) { entry.layer.addTo(map); entry.added = true; }
-            if (entry.allowed) { window._layersControl.addOverlay(entry.layer, esc(meta.name)); }
+            if (entry.allowed) { window._layersControl.addOverlay(entry.layer, window.RefLayerFactory.overlayLabel(meta)); }
+            // A legend nobody sees is no legend: open the control once when one arrives.
+            if (entry.allowed && meta.legend && meta.legend.length && !window._legendShown) { window._legendShown = true; try { window._layersControl.expand(); } catch (e) {} }
             // Objects-on-the-map blocks (layer_objects_block.html) build their
             // list from this collection once it has arrived.
             document.dispatchEvent(new CustomEvent('refLayerLoaded', { detail: { id: meta.id } }));
@@ -82,7 +84,7 @@ which must be included before this partial.
                     if (entry.added) { map.removeLayer(entry.layer); entry.added = false; }
                     window._layersControl.removeLayer(entry.layer);
                 } else {
-                    window._layersControl.addOverlay(entry.layer, esc(entry.meta.name));
+                    window._layersControl.addOverlay(entry.layer, window.RefLayerFactory.overlayLabel(entry.meta));
                     if (!entry.userOff) { entry.layer.addTo(map); entry.added = true; }
                 }
             }

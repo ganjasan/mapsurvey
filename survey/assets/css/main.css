@@ -1506,3 +1506,18 @@ body.survey-form-layout #info_page {
     width: calc(100% - 20px);
   }
 }
+
+/* Layer style (spec layer-style): icon markers and legend rows */
+.ref-layer-icon { background:none; border:none; }
+.ref-layer-icon > span { display:flex; align-items:center; justify-content:center; border-radius:50%; color:#fff; font-size:.6em; box-shadow:0 0 0 2px #fff, 0 1px 3px rgba(0,0,0,.3); }
+.ref-layer-icon > span i { font-size:11px; }
+.ref-layer-legend { display:block; margin:2px 0 4px 20px; }
+.ref-legend-row { display:flex; align-items:center; gap:6px; font-size:.78rem; color:var(--text-secondary, #5f6368); line-height:1.5; }
+.ref-legend-row.is-other { opacity:.7; }
+.ref-legend-line { display:inline-block; width:22px; height:0; flex:none; }
+.ref-legend-fill { display:inline-block; width:14px; height:10px; border-radius:2px; opacity:.7; flex:none; }
+.ref-legend-dot { display:inline-flex; align-items:center; justify-content:center; border-radius:50%; color:#fff; flex:none; }
+.ref-legend-dot i { font-size:7px; }
+.geo-legend-pill { font-size:.62rem; padding:0 5px; border-radius:999px; background:#eef2ff; color:#4f46e5; margin-left:4px; white-space:nowrap; }
+.geo-legend-ref-rows { flex-basis:100%; margin-left:22px; }
+.geo-legend-row:has(.geo-legend-ref-rows) { flex-wrap:wrap; }

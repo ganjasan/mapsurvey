@@ -8,7 +8,7 @@ cannot drift between the two. No map state lives here: build() returns a fresh
 L.GeoJSON for whichever map the caller owns.
 
   RefLayerFactory.build(meta, featureCollection, opts) -> L.GeoJSON
-    meta: {id, name, color, label_field, show_popups, source, show_tallies} from build_map_layers_metadata
+    meta: {id, name, color, label_field, show_popups, source, show_tallies, style, legend} from build_map_layers_metadata
     opts.pane        pane name (default 'refLayersPane'; the caller creates it)
     opts.interactive overrides meta.show_popups (Responses passes false: a
                      reference polygon must never swallow a click meant for an answer)
@@ -22,18 +22,82 @@ L.GeoJSON for whichever map the caller owns.
         });
     }
 
-    // simplestyle-spec properties win over the layer's fallback color, so a plan
-    // exported with its own colors arrives already styled.
-    function featureStyle(meta, props, pane) {
+    // Layer style (spec layer-style). Precedence per feature: the rule class
+    // (meta.style.by, matched on one property) → simplestyle properties in the
+    // file → the base style with the layer colour. Mirrors layers.match_class.
+    var BASE = { opacity: 0.9, weight: 2, fill_opacity: 0.15, radius: 6, icon: '' };
+
+    function matchClass(rule, value) {
+        if (!rule) return null;
+        var classes = rule.classes || [];
+        if (rule.mode === 'graduated') {
+            var v = Number(value);
+            if (value == null || value === '' || isNaN(v)) return null;
+            for (var i = 0; i < classes.length; i++) {
+                var c = classes[i], last = i === classes.length - 1;
+                if ((c.from <= v && v < c.to) || (last && v === c.to)) return c;
+            }
+            return null;
+        }
+        var text = value == null ? '' : String(value);
+        for (var j = 0; j < classes.length; j++) if (classes[j].value === text) return classes[j];
+        return null;
+    }
+
+    function styleFor(meta, props) {
         props = props || {};
-        return {
+        var st = meta.style || BASE;
+        var out = {
             color: props['stroke'] || meta.color,
-            weight: props['stroke-width'] != null ? Number(props['stroke-width']) : 2,
-            opacity: props['stroke-opacity'] != null ? Number(props['stroke-opacity']) : 0.9,
-            fillColor: props['fill'] || meta.color,
-            fillOpacity: props['fill-opacity'] != null ? Number(props['fill-opacity']) : 0.15,
-            pane: pane
+            weight: props['stroke-width'] != null ? Number(props['stroke-width']) : st.weight,
+            opacity: props['stroke-opacity'] != null ? Number(props['stroke-opacity']) : st.opacity,
+            fillColor: props['fill'] || props['marker-color'] || meta.color,
+            fillOpacity: props['fill-opacity'] != null ? Number(props['fill-opacity']) : st.fill_opacity,
+            radius: st.radius,
+            icon: st.icon || ''
         };
+        if (props['marker-color']) out.color = props['marker-color'];
+        var rule = st.by;
+        if (rule && rule.field) {
+            var cls = matchClass(rule, props[rule.field]);
+            if (cls) {
+                out.color = cls.color; out.fillColor = cls.color; out.weight = cls.weight;
+                out.radius = cls.radius; out.icon = cls.icon || st.icon || '';
+            } else if (rule.other) {
+                out.color = rule.other.color; out.fillColor = rule.other.color; out.weight = rule.other.weight;
+                out.radius = rule.other.radius; out.opacity = rule.other.opacity; out.icon = '';
+            }
+        }
+        return out;
+    }
+
+    function featureStyle(meta, props, pane) {
+        var s = styleFor(meta, props);
+        return { color: s.color, weight: s.weight, opacity: s.opacity, fillColor: s.fillColor, fillOpacity: s.fillOpacity, pane: pane };
+    }
+
+    // Legend rows (meta.legend, computed server-side) as HTML for a layers
+    // control label or a Responses panel row. Labels are escaped.
+    function legendHtml(meta) {
+        var rows = meta.legend || [];
+        if (!rows.length) return '';
+        return '<div class="ref-layer-legend">' + rows.map(function(r) {
+            var sample;
+            if (r.kind === 'point') {
+                var d = Math.max(8, Math.round(r.radius * 2));
+                sample = '<span class="ref-legend-dot" style="width:' + d + 'px;height:' + d + 'px;background:' + esc(r.color) + '">' +
+                    (r.icon ? '<i class="fas ' + esc(r.icon) + '"></i>' : '') + '</span>';
+            } else if (r.kind === 'line') {
+                sample = '<span class="ref-legend-line" style="border-top:' + Math.max(1, r.weight) + 'px solid ' + esc(r.color) + '"></span>';
+            } else {
+                sample = '<span class="ref-legend-fill" style="background:' + esc(r.color) + '"></span>';
+            }
+            return '<span class="ref-legend-row' + (r.other ? ' is-other' : '') + '">' + sample + '<span>' + esc(r.label) + '</span></span>';
+        }).join('') + '</div>';
+    }
+
+    function overlayLabel(meta) {
+        return '<span class="ref-layer-name">' + esc(meta.name) + '</span>' + legendHtml(meta);
     }
 
     function build(meta, fc, opts) {
@@ -48,19 +112,35 @@ L.GeoJSON for whichever map the caller owns.
         // on a coarse pointer a tappable marker grows to ~22 px (Leaflet's hit
         // area is the path itself), a decorative one keeps its size.
         var coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-        var pointRadius = (interactive && coarse) ? 11 : 6;
+        // Icon markers are DOM nodes: above this many points fall back to circles.
+        var iconBudget = 1000, iconCount = 0;
+        function radiusFor(s) { return (interactive && coarse) ? Math.max(11, s.radius) : s.radius; }
         return L.geoJSON(fc, {
             pane: pane,
             interactive: interactive,
             style: function(f) { return featureStyle(meta, f.properties, pane); },
             pointToLayer: function(f, latlng) {
-                var p = f.properties || {};
-                // Circle markers, never default pins: a pin reads as an answer.
+                var s = styleFor(meta, f.properties);
+                var r = radiusFor(s);
+                // Circle markers (or a glyph on a disc), never default pins: a pin reads as an answer.
+                if (s.icon && iconCount < iconBudget) {
+                    iconCount++;
+                    var d = r * 2;
+                    return L.marker(latlng, {
+                        pane: pane, interactive: interactive,
+                        icon: L.divIcon({
+                            className: 'ref-layer-icon',
+                            iconSize: [d, d], iconAnchor: [r, r], tooltipAnchor: [r, 0], popupAnchor: [0, -r],
+                            html: '<span style="width:' + d + 'px;height:' + d + 'px;background:' + esc(s.color) + ';opacity:' + s.opacity + '"><i class="fas ' + esc(s.icon) + '"></i></span>'
+                        })
+                    });
+                }
                 return L.circleMarker(latlng, {
                     pane: pane,
-                    radius: pointRadius,
-                    color: p['marker-color'] || meta.color,
-                    fillColor: p['marker-color'] || meta.color,
+                    radius: r,
+                    color: s.color,
+                    fillColor: s.fillColor,
+                    opacity: s.opacity,
                     fillOpacity: 0.85,
                     interactive: interactive
                 });
@@ -89,7 +169,7 @@ L.GeoJSON for whichever map the caller owns.
                     // interactive: a tap on the badge reaches the marker's click
                     // handlers — on a phone the badge is the bigger target.
                     lyr.bindTooltip('👍 ' + esc(p.tally_up) + (p.tally_down ? ' · 👎 ' + esc(p.tally_down) : ''), {
-                        permanent: true, direction: 'right', offset: [pointRadius + 2, 0],
+                        permanent: true, direction: 'right', offset: [radiusFor(styleFor(meta, p)) + 2, 0],
                         className: 'ref-layer-tally', interactive: interactive
                     });
                 }
@@ -107,5 +187,5 @@ L.GeoJSON for whichever map the caller owns.
         });
     }
 
-    window.RefLayerFactory = { build: build, esc: esc };
+    window.RefLayerFactory = { build: build, esc: esc, styleFor: styleFor, legendHtml: legendHtml, overlayLabel: overlayLabel };
 })();

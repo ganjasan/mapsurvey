@@ -1054,6 +1054,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (b.isValid()) map.fitBounds(b.pad(0.05));
             });
             row.appendChild(rLabel);
+            // Layer style: the same legend rows respondents see (spec layer-style).
+            if (slot.meta.legend && slot.meta.legend.length && window.RefLayerFactory) {
+                var pill = document.createElement('span');
+                pill.className = 'geo-legend-pill';
+                pill.textContent = 'by ' + (slot.meta.style && slot.meta.style.by ? slot.meta.style.by.field : 'attribute');
+                row.appendChild(pill);
+                var legend = document.createElement('div');
+                legend.className = 'geo-legend-ref-rows';
+                legend.innerHTML = window.RefLayerFactory.legendHtml(slot.meta);
+                row.appendChild(legend);
+            }
 
             var rAim = document.createElement('i');
             rAim.className = 'fas fa-crosshairs';
