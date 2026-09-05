@@ -42,7 +42,8 @@ which must be included before this partial.
             if (entry.allowed && !entry.userOff) { entry.layer.addTo(map); entry.added = true; }
             if (entry.allowed) { window._layersControl.addOverlay(entry.layer, window.RefLayerFactory.overlayLabel(meta)); }
             // A legend nobody sees is no legend: open the control once when one arrives.
-            if (entry.allowed && meta.legend && meta.legend.length && !window._legendShown) { window._legendShown = true; try { window._layersControl.expand(); } catch (e) {} }
+            // Desktop only: on a phone the expanded control covers the map and the popups.
+            if (entry.allowed && meta.legend && meta.legend.length && !window._legendShown && !(typeof isMobile === 'function' && isMobile())) { window._legendShown = true; try { window._layersControl.expand(); } catch (e) {} }
             // Objects-on-the-map blocks (layer_objects_block.html) build their
             // list from this collection once it has arrived.
             document.dispatchEvent(new CustomEvent('refLayerLoaded', { detail: { id: meta.id } }));

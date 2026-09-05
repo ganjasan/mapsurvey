@@ -198,9 +198,23 @@ description, which the object endpoint passed through coerce_creator_html.
         _highlight = null;
     }
 
+    // On a phone the panel covers the map (88 % wide), so a popup opened from
+    // the list would sit behind it. Slide the panel away the way the draw flow
+    // does, and bring it back when the popup closes — the respondent is
+    // usually working down the list.
+    function hidePanelForPopup(state) {
+        if (typeof isMobile !== 'function' || !isMobile()) return;
+        var panel = document.getElementById('info_page');
+        if (panel && !panel.classList.contains('hidden')) { toggleInfo(false); state.reshowPanel = true; }
+    }
+    function reshowPanel(state) {
+        if (state.reshowPanel) { state.reshowPanel = false; toggleInfo(true); }
+    }
+
     function openObject(state, key, fly) {
         var lyr = subLayerFor(state.entry, key);
         if (!lyr) return;
+        hidePanelForPopup(state);
         clearHighlight();
         if (lyr.setStyle) {
             _highlight = { layer: lyr, style: { color: lyr.options.color, weight: lyr.options.weight, fillOpacity: lyr.options.fillOpacity } };
@@ -260,6 +274,7 @@ description, which the object endpoint passed through coerce_creator_html.
                 clearHighlight();
                 state.open = null;
                 renderRows(state);
+                reshowPanel(state);
             });
             lyr.openPopup();
         });
