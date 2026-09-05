@@ -1210,6 +1210,12 @@ def survey_section(request, survey_slug, section_name):
 				continue
 			_save_object_answers(request.POST, survey_session, question)
 
+		# Shared map (spec shared-map-layer): this session's marks become
+		# objects of every layer sourced from a geo question of this section.
+		# Runs last, after the answers are safe; it never raises.
+		from .layers import sync_question_layers_for_session
+		sync_question_layers_for_session(survey_session, section_questions)
+
 		# Navigation walks the visible chain under the just-saved answers.
 		chain = vmap_final.visible_sections
 		chain_ids = [s.id for s in chain]
@@ -2068,7 +2074,12 @@ def _gated_layer(request, survey_slug, layer_id):
 	if not is_collaborator and check_survey_access(request, survey) is not None:
 		raise Http404
 	# Versions and draft copies borrow the canonical survey's layers.
-	return get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(survey))
+	layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(survey))
+	# `question` layers answer differently to the creator (every mark, every
+	# status) and to a respondent (other people's visible marks only); the two
+	# endpoints read this instead of re-deriving the role.
+	layer.collaborator_access = is_collaborator
+	return layer
 
 
 def survey_layer_object(request, survey_slug, layer_id, key):
@@ -2081,9 +2092,25 @@ def survey_layer_object(request, survey_slug, layer_id, key):
 	"""
 	from .layer_assets import object_card_payload
 	layer = _gated_layer(request, survey_slug, layer_id)
-	obj = get_object_or_404(LayerObject, layer=layer, key=key)
-	response = JsonResponse(object_card_payload(obj))
-	response['Cache-Control'] = 'private, max-age=300'
+	if layer.source == 'question' and not layer.collaborator_access:
+		# A respondent may open only what their layer collection contains —
+		# never a pending/hidden mark, a rejected session's, or their own.
+		from .layers import visible_objects
+		obj = get_object_or_404(visible_objects(layer, request.session.get('survey_session_id')), key=key)
+	else:
+		obj = get_object_or_404(LayerObject, layer=layer, key=key)
+	payload = object_card_payload(obj)
+	if layer.source == 'question':
+		from .object_stats import shared_map_tallies, shared_map_comments
+		payload['status'] = obj.status
+		if layer.show_tallies:
+			t = shared_map_tallies(layer).get(obj.key, {})
+			payload['tallies'] = {'up': t.get('up', 0), 'down': t.get('down', 0),
+			                      'comments': t.get('comments', 0)}
+		if layer.show_comments or layer.collaborator_access:
+			payload['comments'] = shared_map_comments(obj)
+	response = JsonResponse(payload)
+	response['Cache-Control'] = 'private, no-store' if layer.source == 'question' else 'private, max-age=300'
 	return response
 
 
@@ -2097,6 +2124,23 @@ def survey_layer_geojson(request, survey_slug, layer_id):
 	indistinguishable from nonexistent surveys.
 	"""
 	layer = _gated_layer(request, survey_slug, layer_id)
+
+	if layer.source == 'question' and not layer.collaborator_access:
+		# Other people's marks, computed per request (spec shared-map-layer):
+		# "not mine" is per session and tallies move with every reaction, so
+		# nothing here may be stored by a shared cache. The ETag hashes the
+		# body — it differs per session and changes with the tallies.
+		import hashlib
+		from .layers import build_question_layer_geojson
+		body = build_question_layer_geojson(layer, request.session.get('survey_session_id'))
+		etag = '"layer-%s-%s"' % (layer.pk, hashlib.md5(body.encode('utf-8')).hexdigest()[:16])
+		if request.headers.get('If-None-Match') == etag:
+			response = HttpResponse(status=304)
+		else:
+			response = HttpResponse(body, content_type='application/geo+json')
+		response['ETag'] = etag
+		response['Cache-Control'] = 'private, no-store'
+		return response
 
 	etag = '"layer-%s-%s"' % (layer.pk, layer.updated_at.strftime('%Y%m%d%H%M%S%f'))
 	if request.headers.get('If-None-Match') == etag:

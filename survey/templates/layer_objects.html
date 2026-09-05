@@ -5,6 +5,7 @@ the object's popup — the same one respondent-placed features use — carrying 
 card and this question's sub-question form (window._subquestionsForms[code]).
 {% endcomment %}
 <div class="layer-objects" data-layer-objects
+     data-layer-source="{{ widget.layer_source|default:'' }}"
      data-question-code="{{ widget.question_code }}"
      data-layer-id="{{ widget.layer_id|default:'' }}"
      data-min-objects="{{ widget.min_objects|default:0 }}"
@@ -25,6 +26,7 @@ card and this question's sub-question form (window._subquestionsForms[code]).
         <div class="layer-objects__chips" data-lo-chips></div>
     </div>
     <div class="layer-objects__list" data-lo-list></div>
+    {% if widget.layer_source == 'question' %}<div class="layer-objects__hint">{% trans "Marks placed by other respondents. Your own marks are not in this list." %}</div>{% endif %}
     <div class="layer-objects__min" data-lo-min hidden></div>
     {% endif %}
 </div>

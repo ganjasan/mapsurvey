@@ -38525,3 +38525,322 @@ class ObjectAnswersReadTest(TestCase):
         html = self.client.get(reverse('public_results', kwargs={'slug': 'oar'})).content.decode()
         self.assertIn('objects-holder', html)
         self.assertIn('renderObjects', html)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Shared map — layers sourced from respondents' answers (change respondent-shared-map)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _shared_map_survey(name="shared_map_survey"):
+    """A published survey with a point question Q1 (+ text sub-question WHY),
+    a `question` layer reading Q1 labelled by WHY, and an Objects-on-the-map
+    question OBJ bound to it with 👍/👎 (VOTE) and comment (CMT) sub-questions."""
+    from .models import SurveyMapLayer
+    org = Organization.objects.create(name=f"{name} org")
+    survey = SurveyHeader.objects.create(name=name, organization=org, redirect_url="/thanks/", status='published')
+    section = SurveySection.objects.create(survey_header=survey, name="s1", title="S1", code="S1", is_head=True)
+    q1 = Question.objects.create(survey_section=section, code="Q1", name="Where?", input_type="point", order_number=1)
+    why = Question.objects.create(survey_section=section, code="WHY", name="Why here?", input_type="text",
+                                  parent_question_id=q1, order_number=1)
+    layer = SurveyMapLayer.objects.create(survey=survey, name="Marks: Where?", geojson='{"type":"FeatureCollection","features":[]}',
+                                          source='question', source_question_code='Q1', label_field='WHY')
+    obj = Question.objects.create(survey_section=section, code="OBJ", name="Marks by others", input_type="layer_objects",
+                                  layer=layer, order_number=2)
+    vote = Question.objects.create(survey_section=section, code="VOTE", name="Support?", input_type="thumbs",
+                                   parent_question_id=obj, order_number=1, choices=[{"code": 1, "name": "up"}, {"code": 0, "name": "down"}])
+    cmt = Question.objects.create(survey_section=section, code="CMT", name="Comment", input_type="text",
+                                  parent_question_id=obj, order_number=2)
+    return {'survey': survey, 'section': section, 'q1': q1, 'why': why, 'layer': layer,
+            'obj': obj, 'vote': vote, 'cmt': cmt}
+
+
+def _mark(session, q1, lng, lat, why=None):
+    """A stored point answer with an optional WHY sub-answer, as the section POST stores them."""
+    a = Answer.objects.create(survey_session=session, question=q1, point=Point(lng, lat))
+    if why is not None:
+        Answer.objects.create(survey_session=session, question=Question.objects.get(code='WHY', survey_section=q1.survey_section),
+                              parent_answer_id=a, text=why)
+    return a
+
+
+def _react(session, obj_question, layer_object, up=None, comment=None):
+    from .models import Question as Q_
+    if up is not None:
+        Answer.objects.create(survey_session=session, question=Q_.objects.get(code='VOTE', parent_question_id=obj_question),
+                              layer_object=layer_object, selected_choices=[1 if up else 0])
+    if comment is not None:
+        Answer.objects.create(survey_session=session, question=Q_.objects.get(code='CMT', parent_question_id=obj_question),
+                              layer_object=layer_object, text=comment)
+
+
+class SharedMapModelTest(TestCase):
+    """Fields and validation (spec shared-map-layer, task 1)."""
+
+    def setUp(self):
+        self.f = _shared_map_survey()
+
+    def test_defaults(self):
+        """
+        GIVEN a layer created without shared-map fields
+        WHEN it is read back
+        THEN it is an upload layer with tallies on, comments off, no approval gate
+        """
+        from .models import SurveyMapLayer
+        layer = SurveyMapLayer.objects.create(survey=self.f['survey'], name="Plain", geojson='{}')
+        self.assertEqual((layer.source, layer.show_tallies, layer.show_comments, layer.approve_first),
+                         ('upload', True, False, False))
+
+    def test_clean_rejects_unknown_or_non_geo_code(self):
+        """
+        GIVEN a question layer
+        WHEN its source code names nothing, or a text question
+        THEN clean() raises on source_question_code; a geo code passes
+        """
+        from django.core.exceptions import ValidationError
+        layer = self.f['layer']
+        layer.full_clean()
+        for code in ('NOPE', 'WHY', ''):
+            layer.source_question_code = code
+            with self.assertRaises(ValidationError):
+                layer.clean()
+
+
+class SharedMapMaterialisationTest(TestCase):
+    """Marks become objects; keys survive re-submits (spec shared-map-layer, task 2)."""
+
+    def setUp(self):
+        self.f = _shared_map_survey()
+        self.a = SurveySession.objects.create(survey=self.f['survey'])
+        self.b = SurveySession.objects.create(survey=self.f['survey'])
+
+    def _sync(self, session):
+        from .layers import sync_question_layer
+        return sync_question_layer(self.f['layer'], session)
+
+    def test_first_submit_creates_objects(self):
+        """
+        GIVEN session A stored two marks, one with a WHY answer
+        WHEN the layer is synced for A
+        THEN two objects keyed sA-1, sA-2 exist, titled by WHY, visible, linked to A
+        """
+        _mark(self.a, self.f['q1'], 13.4, 52.5, why="Bin by the gate")
+        _mark(self.a, self.f['q1'], 13.5, 52.6)
+        self.assertEqual(self._sync(self.a), 2)
+        objs = {o.key: o for o in self.f['layer'].items.all()}
+        self.assertEqual(set(objs), {f's{self.a.pk}-1', f's{self.a.pk}-2'})
+        first = objs[f's{self.a.pk}-1']
+        self.assertEqual((first.title, first.status, first.source_session_id), ("Bin by the gate", 'visible', self.a.pk))
+        self.assertIsNotNone(first.source_answer_id)
+        self.assertEqual(objs[f's{self.a.pk}-2'].title, '')
+
+    def test_resubmit_keeps_key_and_reactions(self):
+        """
+        GIVEN A's mark materialised and B reacted 👍 to it
+        WHEN A's answers are deleted and re-inserted (as the section POST does) and the layer re-synced
+        THEN the same key still exists with the new geometry and B's reaction is still attached
+        """
+        _mark(self.a, self.f['q1'], 13.4, 52.5, why="v1")
+        self._sync(self.a)
+        obj = self.f['layer'].items.get(key=f's{self.a.pk}-1')
+        _react(self.b, self.f['obj'], obj, up=True)
+        Answer.objects.filter(survey_session=self.a).delete()
+        _mark(self.a, self.f['q1'], 13.9, 52.9, why="v2")
+        self._sync(self.a)
+        obj.refresh_from_db()
+        self.assertEqual(obj.title, "v2")
+        self.assertAlmostEqual(obj.geometry.x, 13.9)
+        self.assertEqual(obj.answers.count(), 1)
+        self.assertEqual(self.f['layer'].items.count(), 1)
+
+    def test_fewer_features_drops_surplus_and_its_reactions(self):
+        """
+        GIVEN A had two marks, B reacted to the second
+        WHEN A re-submits with one mark
+        THEN sA-2 and B's reaction on it are gone, sA-1 remains
+        """
+        _mark(self.a, self.f['q1'], 13.4, 52.5)
+        _mark(self.a, self.f['q1'], 13.5, 52.6)
+        self._sync(self.a)
+        second = self.f['layer'].items.get(key=f's{self.a.pk}-2')
+        _react(self.b, self.f['obj'], second, up=False)
+        Answer.objects.filter(survey_session=self.a).delete()
+        _mark(self.a, self.f['q1'], 13.4, 52.5)
+        self._sync(self.a)
+        self.assertEqual(list(self.f['layer'].items.values_list('key', flat=True)), [f's{self.a.pk}-1'])
+        self.assertFalse(Answer.objects.filter(survey_session=self.b, layer_object__isnull=False).exists())
+
+    def test_approve_first_creates_pending(self):
+        """
+        GIVEN the layer requires approval
+        WHEN A's mark is materialised
+        THEN the object is pending
+        """
+        self.f['layer'].approve_first = True
+        self.f['layer'].save()
+        _mark(self.a, self.f['q1'], 13.4, 52.5)
+        self._sync(self.a)
+        self.assertEqual(self.f['layer'].items.get().status, 'pending')
+
+    def test_section_post_materialises(self):
+        """
+        GIVEN a respondent opened the section (session created)
+        WHEN they POST a point with a WHY property
+        THEN the layer has their object titled by WHY
+        """
+        url = reverse('section', kwargs={'survey_slug': str(self.f['survey'].uuid), 'section_name': 's1'})
+        self.client.get(url)
+        feature = json.dumps({"type": "Feature", "geometry": {"type": "Point", "coordinates": [13.4, 52.5]},
+                              "properties": {"question_id": "Q1", "WHY": ["Posted why"]}})
+        self.client.post(url, {'Q1': feature + '|'})
+        sid = self.client.session['survey_session_id']
+        obj = self.f['layer'].items.get(source_session_id=sid)
+        self.assertEqual((obj.key, obj.title), (f's{sid}-1', "Posted why"))
+
+    def test_older_version_feeds_canonical(self):
+        """
+        GIVEN an archived version of the survey with its own copy of Q1
+        WHEN a session on that version is synced
+        THEN the canonical layer gets the object
+        """
+        version = SurveyHeader.objects.create(name="v1", organization=self.f['survey'].organization, redirect_url="/t/",
+                                              status='archived', canonical_survey=self.f['survey'])
+        vsec = SurveySection.objects.create(survey_header=version, name="s1", title="S1", code="S1", is_head=True)
+        vq1 = Question.objects.create(survey_section=vsec, code="Q1", name="Where?", input_type="point", order_number=1)
+        vs = SurveySession.objects.create(survey=version)
+        Answer.objects.create(survey_session=vs, question=vq1, point=Point(1, 2))
+        self.assertEqual(self._sync(vs), 1)
+        self.assertEqual(self.f['layer'].items.get().source_session_id, vs.pk)
+
+
+class SharedMapEndpointTest(TestCase):
+    """What a respondent receives (spec shared-map-layer, task 3)."""
+
+    def setUp(self):
+        from .layers import sync_question_layer
+        self.f = _shared_map_survey()
+        self.url = reverse('section', kwargs={'survey_slug': str(self.f['survey'].uuid), 'section_name': 's1'})
+        self.layer_url = reverse('survey_layer_geojson', kwargs={'survey_slug': str(self.f['survey'].uuid), 'layer_id': self.f['layer'].pk})
+        # Respondent A: a real client session with one mark.
+        self.client.get(self.url)
+        self.a = SurveySession.objects.get(pk=self.client.session['survey_session_id'])
+        _mark(self.a, self.f['q1'], 13.4, 52.5, why="A's bin")
+        sync_question_layer(self.f['layer'], self.a)
+        # Respondent B: a bare session with one mark.
+        self.b = SurveySession.objects.create(survey=self.f['survey'])
+        _mark(self.b, self.f['q1'], 13.5, 52.6, why="B's bin")
+        sync_question_layer(self.f['layer'], self.b)
+        self.a_key, self.b_key = f's{self.a.pk}-1', f's{self.b.pk}-1'
+
+    def _keys(self, response):
+        return [f['properties']['_key'] for f in json.loads(response.content)['features']]
+
+    def _card_url(self, key):
+        return reverse('survey_layer_object', kwargs={'survey_slug': str(self.f['survey'].uuid),
+                                                      'layer_id': self.f['layer'].pk, 'key': key})
+
+    def test_own_marks_absent_no_store(self):
+        """
+        GIVEN A and B each have a mark
+        WHEN A fetches the layer
+        THEN only B's mark is there, the response is no-store, and the card for A's own mark is 404
+        """
+        response = self.client.get(self.layer_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._keys(response), [self.b_key])
+        self.assertEqual(response['Cache-Control'], 'private, no-store')
+        self.assertEqual(self.client.get(self._card_url(self.a_key)).status_code, 404)
+        self.assertEqual(self.client.get(self._card_url(self.b_key)).status_code, 200)
+
+    def test_etag_varies_per_session_and_revalidates(self):
+        """
+        GIVEN two respondents
+        WHEN each fetches the layer
+        THEN their ETags differ, and a matching If-None-Match gets 304
+        """
+        first = self.client.get(self.layer_url)
+        other = Client()
+        other.get(self.url)
+        second = other.get(self.layer_url)
+        self.assertNotEqual(first['ETag'], second['ETag'])
+        self.assertEqual(self.client.get(self.layer_url, HTTP_IF_NONE_MATCH=first['ETag']).status_code, 304)
+
+    def test_unclean_and_moderated_marks_absent(self):
+        """
+        GIVEN B's session is on hold, and C's mark is hidden, D's pending
+        WHEN A fetches the layer
+        THEN none of them is served, and B's reaction no longer counts
+        """
+        from .layers import sync_question_layer
+        c = SurveySession.objects.create(survey=self.f['survey'])
+        d = SurveySession.objects.create(survey=self.f['survey'])
+        for s in (c, d):
+            _mark(s, self.f['q1'], 14, 53)
+            sync_question_layer(self.f['layer'], s)
+        self.f['layer'].items.filter(source_session=c).update(status='hidden')
+        self.f['layer'].items.filter(source_session=d).update(status='pending')
+        self.b.validation_status = 'on_hold'
+        self.b.save()
+        self.assertEqual(self._keys(self.client.get(self.layer_url)), [])
+        for key in (self.b_key, f's{c.pk}-1', f's{d.pk}-1'):
+            self.assertEqual(self.client.get(self._card_url(key)).status_code, 404)
+
+    def test_tallies_and_comments_follow_settings(self):
+        """
+        GIVEN B's mark has 2 👍, 1 👎 and 2 comments (one hidden), reacted by clean sessions
+        WHEN A fetches the layer and the card under default, tallies-off and comments-on settings
+        THEN counts and comments appear exactly when the layer says so, and the hidden comment never does
+        """
+        obj = self.f['layer'].items.get(key=self.b_key)
+        for up in (True, True, False):
+            _react(SurveySession.objects.create(survey=self.f['survey']), self.f['obj'], obj, up=up)
+        _react(SurveySession.objects.create(survey=self.f['survey']), self.f['obj'], obj, comment="Bags every morning")
+        _react(SurveySession.objects.create(survey=self.f['survey']), self.f['obj'], obj, comment="rude words")
+        Answer.objects.filter(text="rude words").update(hidden=True)
+        rejected = SurveySession.objects.create(survey=self.f['survey'], validation_status='not_approved')
+        _react(rejected, self.f['obj'], obj, up=True)
+
+        props = json.loads(self.client.get(self.layer_url).content)['features'][0]['properties']
+        self.assertEqual((props['tally_up'], props['tally_down'], props['comment_count']), (2, 1, 1))
+        card = json.loads(self.client.get(self._card_url(self.b_key)).content)
+        self.assertEqual(card['tallies'], {'up': 2, 'down': 1, 'comments': 1})
+        self.assertNotIn('comments', card)
+
+        self.f['layer'].show_tallies = False
+        self.f['layer'].show_comments = True
+        self.f['layer'].save()
+        props = json.loads(self.client.get(self.layer_url).content)['features'][0]['properties']
+        self.assertNotIn('tally_up', props)
+        card = json.loads(self.client.get(self._card_url(self.b_key)).content)
+        self.assertNotIn('tallies', card)
+        self.assertEqual(card['comments'], ["Bags every morning"])
+
+    def test_section_renders_hint_and_no_total(self):
+        """
+        GIVEN the section with the Objects question bound to a question layer
+        WHEN a respondent renders it
+        THEN the block says own marks are not listed and shows no object total
+        """
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('Your own marks are not in this list', html)
+        self.assertIn('data-layer-source="question"', html)
+        self.assertNotIn('data-lo-total>', html)
+
+    def test_creator_sees_everything(self):
+        """
+        GIVEN the owner is logged in
+        WHEN they fetch the layer and a pending mark's card
+        THEN every clean mark of every status is served with its status, and the card carries comments
+        """
+        from django.contrib.auth.models import User
+        owner = User.objects.create_user('owner', 'o@example.com', 'pw')
+        Membership.objects.create(user=owner, organization=self.f['survey'].organization, role='admin')
+        from .layers import rebuild_layer
+        self.f['layer'].items.filter(source_session=self.b).update(status='pending')
+        rebuild_layer(self.f['layer'])   # what the moderation endpoint does after a status change
+        self.client.login(username='owner', password='pw')
+        features = json.loads(self.client.get(self.layer_url).content)['features']
+        self.assertEqual(sorted(f['properties']['_key'] for f in features), sorted([self.a_key, self.b_key]))
+        self.assertEqual({f['properties']['_status'] for f in features}, {'visible', 'pending'})
+        card = json.loads(self.client.get(self._card_url(self.b_key)).content)
+        self.assertEqual(card['status'], 'pending')
+        self.assertIn('comments', card)

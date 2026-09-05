@@ -363,7 +363,7 @@ class LayerObjectsWidget(widgets.Widget):
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         a = context['widget']['attrs']
-        for key in ('title', 'subtitle', 'layer_id', 'layer_name', 'question_code', 'min_objects', 'objects_search', 'object_count'):
+        for key in ('title', 'subtitle', 'layer_id', 'layer_name', 'question_code', 'min_objects', 'objects_search', 'object_count', 'layer_source'):
             context['widget'][key] = a.get(key)
         return context
 
@@ -389,7 +389,10 @@ class LayerObjectsField(forms.Field):
             'question_code': self.question.code,
             'min_objects': self.question.min_objects,
             'objects_search': self.question.objects_search,
-            'object_count': layer.feature_count if layer else 0,
+            # A `question` layer's count includes the respondent's own marks
+            # and unapproved ones, which their list never shows — no total.
+            'object_count': (layer.feature_count if layer and layer.source != 'question' else 0),
+            'layer_source': layer.source if layer else '',
         })
         return attrs
 

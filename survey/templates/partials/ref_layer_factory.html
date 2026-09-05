@@ -8,7 +8,7 @@ cannot drift between the two. No map state lives here: build() returns a fresh
 L.GeoJSON for whichever map the caller owns.
 
   RefLayerFactory.build(meta, featureCollection, opts) -> L.GeoJSON
-    meta: {id, name, color, label_field, show_popups} from build_map_layers_metadata
+    meta: {id, name, color, label_field, show_popups, source, show_tallies} from build_map_layers_metadata
     opts.pane        pane name (default 'refLayersPane'; the caller creates it)
     opts.interactive overrides meta.show_popups (Responses passes false: a
                      reference polygon must never swallow a click meant for an answer)
@@ -74,6 +74,15 @@ L.GeoJSON for whichever map the caller owns.
                     }
                     lyr.bindTooltip(esc(p[meta.label_field]), {
                         permanent: true, direction: 'center', className: 'ref-layer-label'
+                    });
+                }
+                if (meta.show_tallies && p.tally_up != null && (p.tally_up || p.tally_down)) {
+                    // Shared map: the count next to another respondent's mark.
+                    if (lyr.getBounds) {
+                        lyr.getCenter = function() { return this.getBounds().getCenter(); };
+                    }
+                    lyr.bindTooltip('👍 ' + esc(p.tally_up) + (p.tally_down ? ' · 👎 ' + esc(p.tally_down) : ''), {
+                        permanent: true, direction: 'right', offset: [8, 0], className: 'ref-layer-tally'
                     });
                 }
                 if (interactive && !bound) {

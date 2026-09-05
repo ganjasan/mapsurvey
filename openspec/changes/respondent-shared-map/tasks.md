@@ -1,33 +1,33 @@
 ## 0. Prerequisites
 
-- [ ] 0.1 Worktree `../Mapsurvey-shared-map` on `feature/respondent-shared-map` from the merged #155 master; `.env.ports` offset 10; `env` symlink; `.env`; `collectstatic` (done 2026-09-05)
+- [x] 0.1 Worktree `../Mapsurvey-shared-map` on `feature/respondent-shared-map` from the merged #155 master; `.env.ports` offset 10; `env` symlink; `.env`; `collectstatic` (done 2026-09-05)
 - [ ] 0.2 Archive `overlay-features` in the main checkout so its delta specs land in `openspec/specs/` before this change's `validate --strict` and archive
 
 ## 1. Model and migration (specs `shared-map-layer`, `shared-map-moderation`)
 
-- [ ] 1.1 `SurveyMapLayer`: `source` (choices upload/question, default upload), `source_question_code`, `show_tallies=True`, `show_comments=False`, `approve_first=False`; `clean()` validates the code names a point/line/polygon question of the canonical survey
-- [ ] 1.2 `LayerObject`: `status` (visible/pending/hidden, default visible, indexed with `layer`), `source_answer` (FK Answer, SET_NULL), `source_session` (FK SurveySession, CASCADE)
-- [ ] 1.3 `Answer.hidden` (default False) with a model comment that it applies to text sub-answers on `question` layers only
-- [ ] 1.4 Migration `0072_shared_map` — defaults only, reversible
-- [ ] 1.5 Tests: field defaults, `clean()` rejects unknown/non-geo code, status choices
+- [x] 1.1 `SurveyMapLayer`: `source` (choices upload/question, default upload), `source_question_code`, `show_tallies=True`, `show_comments=False`, `approve_first=False`; `clean()` validates the code names a point/line/polygon question of the canonical survey
+- [x] 1.2 `LayerObject`: `status` (visible/pending/hidden, default visible, indexed with `layer`), `source_answer` (FK Answer, SET_NULL), `source_session` (FK SurveySession, CASCADE)
+- [x] 1.3 `Answer.hidden` (default False) with a model comment that it applies to text sub-answers on `question` layers only
+- [x] 1.4 Migration `0072_shared_map` — defaults only, reversible
+- [x] 1.5 Tests: field defaults, `clean()` rejects unknown/non-geo code, status choices
 
 ## 2. Materialisation (spec `shared-map-layer`, design D2)
 
-- [ ] 2.1 `layers.sync_question_layer(layer, session)`: resolve source question by code within `session.survey`, build `s<session>-<n>` keys, upsert title/geometry/`source_answer`, delete surplus keys, status per `approve_first`, `rebuild_layer`
-- [ ] 2.2 `layers.question_layers_for(survey, code)` helper (canonical layers whose `source_question_code == code`)
-- [ ] 2.3 Hook in `survey_section` POST after geo answers are saved: for each geo question with source layers, call 2.1 inside try/except with logging (answers never lost on failure)
-- [ ] 2.4 Label: `label_field` names a sub-question code; text → value, choice → label, else `''`; truncate 255
-- [ ] 2.5 Tests (GIVEN/WHEN/THEN): first submit creates objects; re-submit keeps key + updates geometry + preserves another session's reaction; fewer features deletes surplus and its reactions; older version feeds canonical; materialisation error logged, answers saved
+- [x] 2.1 `layers.sync_question_layer(layer, session)`: resolve source question by code within `session.survey`, build `s<session>-<n>` keys, upsert title/geometry/`source_answer`, delete surplus keys, status per `approve_first`, `rebuild_layer`
+- [x] 2.2 `layers.question_layers_for(survey, code)` helper (canonical layers whose `source_question_code == code`)
+- [x] 2.3 Hook in `survey_section` POST after geo answers are saved: for each geo question with source layers, call 2.1 inside try/except with logging (answers never lost on failure)
+- [x] 2.4 Label: `label_field` names a sub-question code; text → value, choice → label, else `''`; truncate 255
+- [x] 2.5 Tests (GIVEN/WHEN/THEN): first submit creates objects; re-submit keeps key + updates geometry + preserves another session's reaction; fewer features deletes surplus and its reactions; older version feeds canonical; materialisation error logged, answers saved
 
 ## 3. Respondent delivery (specs `shared-map-layer`, `reference-overlay-layers` delta, design D3–D4)
 
-- [ ] 3.1 `layers.visible_objects(layer, exclude_session)` — status visible, clean sessions, not the given session
-- [ ] 3.2 `survey_layer_geojson`: `question` branch builds per request from 3.1, adds `tally_up`/`tally_down`/`comment_count` when `show_tallies`, ETag with session id, `Cache-Control: private, no-store`; `upload` branch unchanged
-- [ ] 3.3 `survey_layer_object`: 404 outside 3.1; `comments` (newest 10, non-hidden, clean, no author) when `show_comments`
-- [ ] 3.4 `object_stats`: tally helper over the bound question's `thumbs` and text sub-questions honouring `Answer.hidden` and clean sessions; `rebuild_layer` + touch after `_save_object_answers` for `question` layers
-- [ ] 3.5 Responses/editor surfaces (`build_layer_geojson`) keep serving all clean objects regardless of status for the creator; respondent metadata (`build_map_layers_metadata`) adds `source`, `show_tallies`
-- [ ] 3.6 Respondent JS (`layer_objects_block.html`): tallies in rows and badges when present; popup card shows tallies line and comments list; "Your own marks are not in this list" hint; layer name default for the pair block heading
-- [ ] 3.7 Tests: own marks absent; on_hold/not_approved/deleted sessions absent from collection and tallies; no-store + session-varying ETag; tallies present/absent per setting; comments present/absent per setting and `hidden`; card 404 for hidden/pending/own objects; rendered markup for rows/badges/hint
+- [x] 3.1 `layers.visible_objects(layer, exclude_session)` — status visible, clean sessions, not the given session
+- [x] 3.2 `survey_layer_geojson`: `question` branch builds per request from 3.1, adds `tally_up`/`tally_down`/`comment_count` when `show_tallies`, ETag with session id, `Cache-Control: private, no-store`; `upload` branch unchanged
+- [x] 3.3 `survey_layer_object`: 404 outside 3.1; `comments` (newest 10, non-hidden, clean, no author) when `show_comments`
+- [x] 3.4 `object_stats`: tally helper over the bound question's `thumbs` and text sub-questions honouring `Answer.hidden` and clean sessions; `rebuild_layer` + touch after `_save_object_answers` for `question` layers
+- [x] 3.5 Responses/editor surfaces (`build_layer_geojson`) keep serving all clean objects regardless of status for the creator; respondent metadata (`build_map_layers_metadata`) adds `source`, `show_tallies`
+- [x] 3.6 Respondent JS (`layer_objects_block.html`): tallies in rows and badges when present; popup card shows tallies line and comments list; "Your own marks are not in this list" hint; layer name default for the pair block heading
+- [x] 3.7 Tests: own marks absent; on_hold/not_approved/deleted sessions absent from collection and tallies; no-store + session-varying ETag; tallies present/absent per setting; comments present/absent per setting and `hidden`; card 404 for hidden/pending/own objects; rendered markup for rows/badges/hint
 
 ## 4. Moderation (spec `shared-map-moderation`, design D5)
 
