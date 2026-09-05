@@ -26,6 +26,7 @@ from .models import (
     CreatorPreferences,
 )
 from .layers import (
+    normalize_style, legend_for, LAYER_ICONS,
     validate_layer_upload, LayerValidationError, layers_for, layer_owner,
     objects_from_features, rebuild_layer, check_object_caps,
     MAX_LAYER_BYTES, MAX_LAYERS_PER_SURVEY,
@@ -568,6 +569,7 @@ def editor_survey_settings(request, survey_uuid):
         'effective_role': request.effective_survey_role,
         'basemap_choices': BASEMAP_CHOICES,
         'map_layers': _editor_layers(survey),
+        'layer_icons': LAYER_ICONS,
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
     })
 
@@ -620,6 +622,7 @@ def editor_survey_settings_panel(request, survey_uuid):
         'effective_role': request.effective_survey_role,
         'basemap_choices': BASEMAP_CHOICES,
         'map_layers': _editor_layers(survey),
+        'layer_icons': LAYER_ICONS,
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
     })
 
@@ -751,7 +754,9 @@ def _editor_layers(survey):
     from .layers import source_question_for
     items = []
     for layer in layers_for(survey):
-        item = {'layer': layer, 'properties': _layer_property_names(layer)}
+        item = {'layer': layer, 'properties': _layer_property_names(layer),
+                'style': normalize_style(layer.style, layer.color),
+                'geojson_url': reverse('survey_layer_geojson', kwargs={'survey_slug': str(survey.uuid), 'layer_id': layer.pk})}
         if layer.source == 'question':
             item['source_question'] = source_question_for(layer)
             item['used_by'] = list(layer.questions.values_list('name', flat=True))
@@ -774,6 +779,8 @@ def _layer_payload(layer, properties=None):
         'show_tallies': layer.show_tallies,
         'show_comments': layer.show_comments,
         'approve_first': layer.approve_first,
+        'style': normalize_style(layer.style, layer.color),
+        'legend': legend_for(layer),
     }
     if properties is not None:
         data['properties'] = properties
@@ -828,6 +835,9 @@ def editor_survey_layer_update(request, survey_uuid, layer_id):
     """Update a layer's presentation config (never its geometry)."""
     _layers_enabled_or_404()
     layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey))
+    style_error = _apply_style(request, layer)
+    if style_error:
+        return style_error
     if layer.source == 'question':
         return _update_question_layer(request, layer)
 
@@ -855,6 +865,43 @@ def editor_survey_layer_update(request, survey_uuid, layer_id):
 
     layer.save()
     return JsonResponse(_layer_payload(layer, known))
+
+
+def _apply_style(request, layer):
+    """`style` (JSON) on the layer update endpoint — normalised, never stored
+    raw (spec layer-style). A `question` layer keeps the base only: its
+    objects carry no properties to rule on. Returns an error response or None."""
+    if 'style' not in request.POST:
+        return None
+    from .layers import normalize_style as _normalize
+    try:
+        raw = json.loads(request.POST.get('style') or '{}')
+    except ValueError:
+        return JsonResponse({'error': 'Style must be JSON.'}, status=400)
+    try:
+        color = (request.POST.get('color') or '').strip() or layer.color
+        style = _normalize(raw, color if re.match(r'^#[0-9a-fA-F]{6}$', color) else layer.color)
+    except LayerValidationError as exc:
+        return JsonResponse({'error': str(exc)}, status=400)
+    if layer.source == 'question':
+        style['by'] = None
+    layer.style = style
+    return None
+
+
+@survey_permission_required('owner')
+def editor_survey_layer_style_summary(request, survey_uuid, layer_id):
+    """Distinct values / numeric range of one object property — what the
+    card's Auto-fill builds classes from (spec layer-style)."""
+    _layers_enabled_or_404()
+    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey))
+    if layer.source == 'question':
+        raise Http404
+    from .layers import style_summary
+    field = (request.GET.get('field') or '').strip()[:100]
+    if not field:
+        return JsonResponse({'error': 'field is required'}, status=400)
+    return JsonResponse(style_summary(layer, field))
 
 
 def _update_question_layer(request, layer):

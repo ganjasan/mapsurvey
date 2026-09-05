@@ -181,6 +181,16 @@ the sub-questions of an "Objects on the map" question bound to that layer; `show
 `LayerObject.status` / `Answer.hidden` are the creator's per-item moderation. The object
 editor is read-only for such layers; deleting the source geo question is refused.
 
+**Reference layer style**: `SurveyMapLayer.style` (JSON) holds the base look beyond `color`
+(opacity, weight, fill_opacity, radius, icon) and at most one rule `by` one object property
+(categories or graduated classes, plus `other`). `layers.normalize_style` is the ONE validator
+— the update endpoint and the ZIP cleaner both run it, so a style that saves is a style that
+draws; never read `layer.style` raw. `ref_layer_factory.html`'s `styleFor()` is the ONE
+renderer (rule class → simplestyle in the file → base) for the respondent map and the
+Responses map alike; `layers.match_class` mirrors its matching for the server-side legend
+(`legend_for`, delivered as metadata). The object editor draws with its own code and does
+not honour rules yet.
+
 **Session Management**: Survey sessions are created on first section view and tracked via `request.session['survey_session_id']`.
 
 **Data Export** (`download_data` view): Exports survey responses as ZIP containing:

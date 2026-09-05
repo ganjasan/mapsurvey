@@ -603,6 +603,10 @@ class SurveyMapLayer(models.Model):
     show_tallies = models.BooleanField(default=True, help_text=_('`question` layers only: respondents see 👍/👎 counts on other people\'s marks.'))
     show_comments = models.BooleanField(default=False, help_text=_('`question` layers only: respondents see other people\'s comments on a mark.'))
     approve_first = models.BooleanField(default=False, help_text=_('`question` layers only: new marks wait as `pending` until the creator approves them.'))
+    # Layer style (spec layer-style): base look beyond `color` plus at most one
+    # rule by object attribute. Always read through `layers.normalize_style`
+    # — an empty dict is today's look; the raw value is never trusted.
+    style = models.JSONField(default=dict, blank=True, help_text=_('Base style (opacity, weight, fill_opacity, radius, icon) and an optional rule `by` one object property; normalised on every write.'))
     geojson = models.TextField(help_text=_('Derived FeatureCollection, rebuilt from the layer objects on every write.'))
     geojson_legacy = models.TextField(blank=True, default='', help_text=_('The pre-objects FeatureCollection kept for one release after the split migration; empty for layers created since.'))
     feature_count = models.PositiveIntegerField(default=0)

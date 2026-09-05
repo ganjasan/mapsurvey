@@ -5,7 +5,7 @@
 # plain arguments — the same trap as preDeployCommand), so everything that needs
 # quoting lives in this file and the job only passes positional arguments:
 #
-#   sh scripts/preview_seed_survey.sh <base64 of the ZIP> [survey uuid] [org name]
+#   sh scripts/preview_seed_survey.sh <base64 of the ZIP | https URL of a base64 text> [survey uuid] [org name]
 #
 # Creates the dev admin (admin / adminadmin — a preview database is disposable),
 # an organisation, imports the ZIP through the normal import path (same validation
@@ -15,7 +15,12 @@ SEED_B64="$1"
 SEED_UUID="${2:-}"
 SEED_ORG="${3:-Preview workspace}"
 [ -n "$SEED_B64" ] || { echo "usage: preview_seed_survey.sh <base64 zip> [uuid] [org]" >&2; exit 1; }
-echo "$SEED_B64" | base64 -d > /tmp/seed_survey.zip
+# A ZIP above ~90 KB no longer fits the job's argument limit (~128 KB): pass an
+# https URL to a base64 text instead (a secret gist works), deleted after use.
+case "$SEED_B64" in
+  http://*|https://*) curl -fsSL "$SEED_B64" | base64 -d > /tmp/seed_survey.zip ;;
+  *) echo "$SEED_B64" | base64 -d > /tmp/seed_survey.zip ;;
+esac
 export SEED_UUID SEED_ORG
 python manage.py shell <<'PY'
 import os, uuid

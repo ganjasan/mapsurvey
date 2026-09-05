@@ -147,6 +147,10 @@ def analytics_dashboard(request, survey_uuid):
         'session_hours_json': json.dumps(session_hours),
         'geo_json': json.dumps(geo_collection),
         'geo_features_count': len(geo_collection['features']),
+        # The empty map has two different stories: no geo question to answer,
+        # or geo questions that nobody has answered yet. Only the first should
+        # send the creator to the editor.
+        'has_geo_questions': survey.geo_questions().exists(),
         # Reference layers: metadata only, geometry comes from the gated endpoint.
         # Bound layers also carry per-object aggregates for the map badges and
         # the click-to-select (spec object-answers).

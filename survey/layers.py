@@ -150,6 +150,10 @@ def build_map_layers_metadata(survey):
             'show_popups': layer.show_popups,
             'source': layer.source,
             'show_tallies': layer.source == 'question' and layer.show_tallies,
+            # Layer style (spec layer-style): the normalised style the factory
+            # draws with, and the legend rows the layers control shows.
+            'style': normalize_style(layer.style, layer.color),
+            'legend': legend_for(layer),
             # Bound to an Objects-on-the-map question: features are clickable
             # and open the object popup (card + sub-questions) instead of the
             # read-only name/description popup — spec reference-overlay-layers.
@@ -546,3 +550,200 @@ def rebuild_question_layers_for(survey):
     marks. Respondent responses are computed per request and need nothing."""
     for layer in layer_owner(survey).map_layers.filter(source='question'):
         rebuild_layer(layer)
+
+
+# ─── Layer style: base + one rule by attribute (spec layer-style) ────────────
+#
+# `normalize_style` is the ONE validator (update endpoint, ZIP import); the
+# factory (ref_layer_factory.html) is the ONE renderer. Both read the same
+# shape, so a style that saves is a style that draws, on every map.
+
+STYLE_DEFAULTS = {'opacity': 0.9, 'weight': 2, 'fill_opacity': 0.15, 'radius': 6, 'icon': ''}
+STYLE_MAX_CLASSES = 12
+STYLE_OTHER_DEFAULT = {'color': '#bbbbbb', 'weight': 1, 'radius': 5, 'opacity': 0.4, 'label': 'Other'}
+# Curated Font Awesome 5 solid glyphs — enough for civic layers, small enough to pick from.
+LAYER_ICONS = (
+    'fa-trash', 'fa-trash-alt', 'fa-dumpster', 'fa-recycle', 'fa-bus', 'fa-train', 'fa-subway',
+    'fa-bicycle', 'fa-walking', 'fa-car', 'fa-parking', 'fa-charging-station', 'fa-gas-pump',
+    'fa-tree', 'fa-leaf', 'fa-seedling', 'fa-water', 'fa-mountain', 'fa-campground', 'fa-dog',
+    'fa-paw', 'fa-school', 'fa-graduation-cap', 'fa-hospital', 'fa-clinic-medical', 'fa-church',
+    'fa-landmark', 'fa-university', 'fa-store', 'fa-shopping-cart', 'fa-utensils', 'fa-coffee',
+    'fa-home', 'fa-building', 'fa-industry', 'fa-hard-hat', 'fa-tools', 'fa-exclamation-triangle',
+    'fa-lightbulb', 'fa-bench', 'fa-toilet', 'fa-futbol', 'fa-child', 'fa-wheelchair', 'fa-camera',
+    'fa-map-marker-alt', 'fa-flag', 'fa-star', 'fa-heart', 'fa-question',
+)
+_COLOR_RE = re.compile(r'^#[0-9a-fA-F]{6}$')
+
+
+def _clamp(value, lo, hi, default):
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return default
+    if v != v:  # NaN
+        return default
+    return max(lo, min(hi, v))
+
+
+def _color(value, fallback):
+    return value if isinstance(value, str) and _COLOR_RE.match(value) else fallback
+
+
+def _icon(value):
+    return value if isinstance(value, str) and value in LAYER_ICONS else ''
+
+
+def _label(value, fallback):
+    if value is None:
+        return fallback
+    text = str(value).strip()
+    return text[:60] if text else fallback
+
+
+def _class(raw, base_color, index, mode):
+    """One rule class, repaired. Categories keep `value`; graduated keep from/to."""
+    raw = raw if isinstance(raw, dict) else {}
+    cls = {
+        'color': _color(raw.get('color'), base_color),
+        'weight': _clamp(raw.get('weight'), 0, 12, STYLE_DEFAULTS['weight']),
+        'radius': _clamp(raw.get('radius'), 2, 20, STYLE_DEFAULTS['radius']),
+        'icon': _icon(raw.get('icon')),
+    }
+    if mode == 'categories':
+        value = raw.get('value')
+        cls['value'] = '' if value is None else str(value)[:100]
+        cls['label'] = _label(raw.get('label'), cls['value'] or f'Class {index + 1}')
+    else:
+        lo = _clamp(raw.get('from'), -1e12, 1e12, None)
+        hi = _clamp(raw.get('to'), -1e12, 1e12, None)
+        if lo is None or hi is None:
+            return None
+        cls['from'], cls['to'] = (lo, hi) if lo <= hi else (hi, lo)
+        cls['label'] = _label(raw.get('label'), f'{_num(cls["from"])} – {_num(cls["to"])}')
+    return cls
+
+
+def _num(v):
+    return str(int(v)) if float(v).is_integer() else f'{v:g}'
+
+
+def normalize_style(raw, base_color='#2c7be5'):
+    """The stored/served shape of a layer's style. Unknown keys dropped, numbers
+    clamped, colours validated, icons from the allow-list; a rule without a
+    field is dropped. Raises LayerValidationError only when a rule has more
+    than STYLE_MAX_CLASSES classes — everything else is repaired silently
+    (same posture as _clean_layer_config)."""
+    raw = raw if isinstance(raw, dict) else {}
+    out = {
+        'opacity': _clamp(raw.get('opacity'), 0, 1, STYLE_DEFAULTS['opacity']),
+        'weight': _clamp(raw.get('weight'), 0, 12, STYLE_DEFAULTS['weight']),
+        'fill_opacity': _clamp(raw.get('fill_opacity'), 0, 1, STYLE_DEFAULTS['fill_opacity']),
+        'radius': _clamp(raw.get('radius'), 2, 20, STYLE_DEFAULTS['radius']),
+        'icon': _icon(raw.get('icon')),
+        'legend': raw.get('legend', True) not in (False, 0, '0', 'false', 'off'),
+        'by': None,
+    }
+    by = raw.get('by')
+    field = (by or {}).get('field') if isinstance(by, dict) else None
+    if isinstance(field, str) and field.strip():
+        mode = 'graduated' if by.get('mode') == 'graduated' else 'categories'
+        raw_classes = by.get('classes') if isinstance(by.get('classes'), list) else []
+        if len(raw_classes) > STYLE_MAX_CLASSES:
+            raise LayerValidationError(f'A style rule holds at most {STYLE_MAX_CLASSES} classes.')
+        classes = [c for c in (_class(rc, base_color, i, mode) for i, rc in enumerate(raw_classes)) if c]
+        if mode == 'graduated':
+            classes.sort(key=lambda c: c['from'])
+        other_raw = by.get('other') if isinstance(by.get('other'), dict) else {}
+        rule = {
+            'field': field.strip()[:100],
+            'mode': mode,
+            'classes': classes,
+            'other': {
+                'color': _color(other_raw.get('color'), STYLE_OTHER_DEFAULT['color']),
+                'weight': _clamp(other_raw.get('weight'), 0, 12, STYLE_OTHER_DEFAULT['weight']),
+                'radius': _clamp(other_raw.get('radius'), 2, 20, STYLE_OTHER_DEFAULT['radius']),
+                'opacity': _clamp(other_raw.get('opacity'), 0, 1, STYLE_OTHER_DEFAULT['opacity']),
+                'label': _label(other_raw.get('label'), STYLE_OTHER_DEFAULT['label']),
+            },
+        }
+        if mode == 'graduated':
+            ramp = by.get('ramp') if isinstance(by.get('ramp'), list) else []
+            rule['ramp'] = [c for c in ramp if isinstance(c, str) and _COLOR_RE.match(c)][:2] or ['#8ecae6', '#d62828']
+            wr = by.get('weight_range') if isinstance(by.get('weight_range'), list) and len(by.get('weight_range')) == 2 else [2, 6]
+            rule['weight_range'] = [_clamp(wr[0], 0, 12, 2), _clamp(wr[1], 0, 12, 6)]
+            rule['breaks'] = by.get('breaks') if by.get('breaks') in ('quantiles', 'equal', 'manual') else 'quantiles'
+        out['by'] = rule
+    return out
+
+
+def _property_values(layer, field):
+    for obj_props in layer.items.values_list('properties', flat=True):
+        if isinstance(obj_props, dict) and field in obj_props:
+            yield obj_props[field]
+
+
+def style_summary(layer, field):
+    """What the editor's Auto-fill needs about one property: distinct values
+    with counts (≤ STYLE_MAX_CLASSES) or, when every non-empty value is a
+    number, min / max / count / quartile breaks."""
+    from collections import Counter
+    values = [v for v in _property_values(layer, field) if v not in (None, '')]
+    if not values:
+        return {'kind': 'empty', 'count': 0}
+    numbers = []
+    for v in values:
+        try:
+            numbers.append(float(v))
+        except (TypeError, ValueError):
+            numbers = None
+            break
+    if numbers:
+        numbers.sort()
+        n = len(numbers)
+        q = [numbers[min(n - 1, int(n * p))] for p in (0.25, 0.5, 0.75)]
+        return {'kind': 'numeric', 'min': numbers[0], 'max': numbers[-1], 'count': n, 'quantiles': q}
+    counts = Counter(str(v) for v in values)
+    if len(counts) > STYLE_MAX_CLASSES:
+        return {'kind': 'too_many', 'count': len(counts)}
+    return {'kind': 'categories',
+            'values': [{'value': v, 'count': c} for v, c in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))]}
+
+
+def match_class(rule, value):
+    """The rule class a property value falls into, or None (→ `other`).
+    Mirrors styleFor() in ref_layer_factory.html — keep the two in step."""
+    if rule['mode'] == 'categories':
+        text = '' if value is None else str(value)
+        return next((c for c in rule['classes'] if c['value'] == text), None)
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return None
+    classes = rule['classes']
+    for i, c in enumerate(classes):
+        last = i == len(classes) - 1
+        if c['from'] <= v < c['to'] or (last and v == c['to']):
+            return c
+    return None
+
+
+def legend_for(layer, style=None):
+    """Legend rows for a layer with a rule (metadata, computed per request):
+    one per class, then `other` only when at least one object falls into it."""
+    style = style or normalize_style(layer.style, layer.color)
+    rule = style.get('by')
+    if not rule or not style.get('legend'):
+        return []
+    geom = 'point'
+    first = layer.items.values_list('geometry', flat=True).first()
+    if first is not None:
+        geom = {'Point': 'point', 'LineString': 'line'}.get(first.geom_type, 'polygon')
+    rows = [{'label': c['label'], 'color': c['color'], 'weight': c['weight'], 'radius': c['radius'],
+             'icon': c['icon'], 'kind': geom} for c in rule['classes']]
+    unmatched = sum(1 for v in _property_values(layer, rule['field']) if match_class(rule, v) is None)
+    unmatched += layer.items.count() - sum(1 for _ in _property_values(layer, rule['field']))
+    if unmatched > 0:
+        o = rule['other']
+        rows.append({'label': o['label'], 'color': o['color'], 'weight': o['weight'], 'radius': o['radius'],
+                     'icon': '', 'kind': geom, 'other': True, 'count': unmatched})
+    return rows

@@ -144,10 +144,55 @@
                 <label>{% trans "Name" %}</label>
                 <input type="text" data-field="name" value="{{ item.layer.name }}" maxlength="100">
               </div>
-              <div class="pr-field">
-                <label>{% trans "Color" %}</label>
-                <input type="color" data-field="color" value="{{ item.layer.color }}">
-                <div class="pr-help">{% trans "Fallback — style properties inside the file win." %}</div>
+              {% comment %}Layer style (spec layer-style): base look + one rule by attribute.
+              State lives in data-style (normalised JSON); every change re-posts the whole
+              `style` to the update endpoint, which normalises again. The preview is the
+              respondent factory over a subset of the layer's own objects.{% endcomment %}
+              <div class="pr-field ref-style" data-style='{{ item.style|json_attr }}'
+                   data-geojson-url="{{ item.geojson_url }}"
+                   {% if item.layer.source != 'question' %}data-summary-url="{% url 'editor_survey_layer_style_summary' survey.uuid item.layer.pk %}"{% endif %}>
+                <label>{% trans "Style" %}</label>
+                <div class="ref-style-base">
+                  <div><small>{% trans "Colour" %}</small><input type="color" data-field="color" value="{{ item.layer.color }}"></div>
+                  <div><small>{% trans "Opacity" %} <span data-style-opacity-val></span></small><input type="range" min="0" max="1" step="0.05" data-style="opacity"></div>
+                  <div><small>{% trans "Line width" %}</small><input type="number" min="0" max="12" step="0.5" data-style="weight"></div>
+                  <div><small>{% trans "Point size" %}</small><input type="number" min="2" max="20" step="1" data-style="radius"></div>
+                  <div><small>{% trans "Point icon" %}</small>
+                    <select data-style="icon"><option value="">— {% trans "dot" %} —</option>{% for ico in layer_icons %}<option value="{{ ico }}">{{ ico|slice:"3:" }}</option>{% endfor %}</select></div>
+                </div>
+                <div class="pr-help">{% trans "Used where no rule applies. Style properties inside the file (simplestyle) still win over the base." %}</div>
+                {% if item.layer.source != 'question' %}
+                <label class="pr-switch" style="margin-top:.5rem;">
+                  <span>{% trans "Style by attribute" %} <small class="pr-help">{% trans "colour, width and icon from one object property" %}</small></span>
+                  <input type="checkbox" data-style-rule-on>
+                </label>
+                <div class="ref-style-rule" data-style-rule hidden>
+                  <div class="ref-style-rule-head">
+                    <div><small>{% trans "Property" %}</small>
+                      <select data-style-field><option value="">—</option>{% for prop in item.properties %}<option value="{{ prop }}">{{ prop }}</option>{% endfor %}</select></div>
+                    <div><small>{% trans "Mode" %}</small>
+                      <div class="ref-style-tabs"><button type="button" class="ref-style-tab" data-style-mode="categories">{% trans "Categories" %}</button><button type="button" class="ref-style-tab" data-style-mode="graduated">{% trans "Graduated" %}</button></div></div>
+                    <div><small>&nbsp;</small><button type="button" class="btn btn-sm btn-outline-primary" data-style-autofill style="font-size:.74rem;width:100%;">{% trans "Auto-fill from data" %}</button></div>
+                  </div>
+                  <div class="ref-style-grad" data-style-grad hidden>
+                    <div><small>{% trans "Classes" %}</small><input type="number" min="2" max="12" value="4" data-style-nclasses></div>
+                    <div><small>{% trans "Colour from → to" %}</small><span style="display:flex;gap:4px;"><input type="color" data-style-ramp="0"><input type="color" data-style-ramp="1"></span></div>
+                    <div><small>{% trans "Width from → to" %}</small><span style="display:flex;gap:4px;"><input type="number" min="0" max="12" step="0.5" data-style-wr="0"><input type="number" min="0" max="12" step="0.5" data-style-wr="1"></span></div>
+                    <div><small>{% trans "Breaks" %}</small><select data-style-breaks><option value="quantiles">{% trans "quantiles" %}</option><option value="equal">{% trans "equal intervals" %}</option><option value="manual">{% trans "manual" %}</option></select></div>
+                  </div>
+                  <table class="ref-style-table" data-style-table>
+                    <thead><tr><th data-style-th-value>{% trans "Value" %}</th><th>{% trans "Colour" %}</th><th>{% trans "Width" %}</th><th>{% trans "Size" %}</th><th>{% trans "Icon" %}</th><th>{% trans "Legend label" %}</th><th></th></tr></thead>
+                    <tbody data-style-classes></tbody>
+                    <tfoot><tr class="is-other"><td class="pr-help">{% trans "anything else" %}</td><td><input type="color" data-style-other="color"></td><td><input type="number" min="0" max="12" step="0.5" data-style-other="weight"></td><td><input type="number" min="2" max="20" data-style-other="radius"></td><td></td><td><input type="text" data-style-other="label" maxlength="60"></td><td><span class="pr-help" data-style-other-count></span></td></tr></tfoot>
+                  </table>
+                  <div style="display:flex;gap:8px;align-items:center;margin-top:.4rem;">
+                    <button type="button" class="btn btn-sm btn-link p-0" data-style-add-class style="font-size:.76rem;">+ {% trans "Add class" %}</button>
+                    <label class="pr-switch" style="margin:0 0 0 auto;"><span>{% trans "Show legend to respondents" %}</span><input type="checkbox" data-style-legend></label>
+                  </div>
+                  <div class="text-warning" style="font-size:.76rem;" data-style-warning></div>
+                </div>
+                {% endif %}
+                <div class="ref-style-preview" data-style-preview></div>
               </div>
               {% if item.layer.source == 'question' %}
               {% comment %}Shared map: objects are respondents' marks on a geo question. Label
@@ -225,6 +270,9 @@
       <noscript><button type="submit" class="btn btn-primary btn-sm">{% trans "Save Settings" %}</button></noscript>
     </form>
 
+    <script>
+    {% include "partials/ref_layer_factory.html" %}
+    </script>
     <script>
     (function() {
         {% comment %}See section_map_picker.html: a localized decimal comma here
@@ -394,6 +442,7 @@
     var fileInput = document.getElementById('ref-layers-file');
     var errorBox = document.getElementById('ref-layers-error');
 
+    function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
     function post(url, body) {
         return fetch(url, {method:'POST', headers:{'X-CSRFToken': csrf}, body: body})
             .then(function(r) {
@@ -433,6 +482,215 @@
         });
     }
     list.querySelectorAll('.ref-layer').forEach(bindLayer);
+
+    // ── Layer style editor (spec layer-style) ────────────────────────────
+    var PALETTE = ['#e69f00', '#56b4e9', '#009e73', '#f0e442', '#0072b2', '#d55e00', '#cc79a7', '#000000',
+                   '#8ecae6', '#ffb703', '#fb8500', '#6a4c93'];
+    function hexToRgb(h) { return [1, 3, 5].map(function(i) { return parseInt(h.substr(i, 2), 16); }); }
+    function mix(a, b, t) {
+        var A = hexToRgb(a), B = hexToRgb(b);
+        return '#' + A.map(function(v, i) { return ('0' + Math.round(v + (B[i] - v) * t).toString(16)).slice(-2); }).join('');
+    }
+    function fmt(n) { return Number.isInteger(n) ? String(n) : Number(n).toFixed(1).replace(/\.0$/, ''); }
+
+    function bindStyle(card) {
+        var box = card.querySelector('.ref-style');
+        if (!box) return;
+        var id = card.dataset.layerId;
+        var status = card.querySelector('.ref-layer-status');
+        var state; try { state = JSON.parse(box.dataset.style || '{}'); } catch (e) { state = {}; }
+        var ruleOn = box.querySelector('[data-style-rule-on]');
+        var ruleBox = box.querySelector('[data-style-rule]');
+        var fieldSel = box.querySelector('[data-style-field]');
+        var tbody = box.querySelector('[data-style-classes]');
+        var gradBox = box.querySelector('[data-style-grad]');
+        var warn = box.querySelector('[data-style-warning]');
+        var colorInput = box.querySelector('[data-field="color"]');
+        var ICONS = Array.prototype.map.call(box.querySelectorAll('[data-style="icon"] option'), function(o) { return o.value; });
+
+        function iconSelect(value) {
+            return '<select data-cls="icon">' + ICONS.map(function(v) {
+                return '<option value="' + v + '"' + (v === value ? ' selected' : '') + '>' + (v ? v.slice(3) : '—') + '</option>';
+            }).join('') + '</select>';
+        }
+        function renderBase() {
+            box.querySelectorAll('[data-style]').forEach(function(inp) {
+                var k = inp.dataset.style; if (state[k] != null) inp.value = state[k];
+            });
+            var ov = box.querySelector('[data-style-opacity-val]'); if (ov) ov.textContent = Math.round((state.opacity != null ? state.opacity : 0.9) * 100) + '%';
+        }
+        function renderRule() {
+            if (!ruleBox) return;
+            var by = state.by;
+            ruleOn.checked = !!by;
+            ruleBox.hidden = !by;
+            if (!by) return;
+            fieldSel.value = by.field || '';
+            box.querySelectorAll('[data-style-mode]').forEach(function(b) { b.classList.toggle('on', b.dataset.styleMode === by.mode); });
+            var grad = by.mode === 'graduated';
+            gradBox.hidden = !grad;
+            box.querySelector('[data-style-th-value]').textContent = grad ? 'Range' : 'Value';
+            if (grad) {
+                box.querySelector('[data-style-ramp="0"]').value = (by.ramp || ['#8ecae6', '#d62828'])[0];
+                box.querySelector('[data-style-ramp="1"]').value = (by.ramp || ['#8ecae6', '#d62828'])[1];
+                box.querySelector('[data-style-wr="0"]').value = (by.weight_range || [2, 6])[0];
+                box.querySelector('[data-style-wr="1"]').value = (by.weight_range || [2, 6])[1];
+                box.querySelector('[data-style-breaks]').value = by.breaks || 'quantiles';
+                box.querySelector('[data-style-nclasses]').value = (by.classes || []).length || 4;
+            }
+            tbody.innerHTML = (by.classes || []).map(function(c, i) {
+                var first = grad
+                    ? '<input type="number" step="any" data-cls="from" value="' + c.from + '" style="width:64px"> – <input type="number" step="any" data-cls="to" value="' + c.to + '" style="width:64px">'
+                    : '<input type="text" data-cls="value" value="' + esc(c.value || '') + '" maxlength="100">';
+                return '<tr data-cls-row="' + i + '"><td>' + first + '</td>' +
+                    '<td><input type="color" data-cls="color" value="' + esc(c.color) + '"></td>' +
+                    '<td><input type="number" min="0" max="12" step="0.5" data-cls="weight" value="' + c.weight + '"></td>' +
+                    '<td><input type="number" min="2" max="20" data-cls="radius" value="' + c.radius + '"></td>' +
+                    '<td>' + iconSelect(c.icon || '') + '</td>' +
+                    '<td><input type="text" data-cls="label" value="' + esc(c.label || '') + '" maxlength="60"></td>' +
+                    '<td><button type="button" class="btn btn-sm btn-link p-0 text-danger" data-cls-remove title="Remove">×</button></td></tr>';
+            }).join('');
+            var o = by.other || {};
+            box.querySelectorAll('[data-style-other]').forEach(function(inp) { inp.value = o[inp.dataset.styleOther] != null ? o[inp.dataset.styleOther] : ''; });
+            box.querySelector('[data-style-legend]').checked = state.legend !== false;
+        }
+        function readClasses() {
+            var grad = state.by.mode === 'graduated';
+            return Array.prototype.map.call(tbody.querySelectorAll('tr'), function(tr) {
+                var c = {};
+                tr.querySelectorAll('[data-cls]').forEach(function(inp) { c[inp.dataset.cls] = inp.value; });
+                if (grad) { c.from = Number(c.from); c.to = Number(c.to); }
+                return c;
+            });
+        }
+        function collect() {
+            box.querySelectorAll('[data-style]').forEach(function(inp) { state[inp.dataset.style] = inp.type === 'number' || inp.type === 'range' ? Number(inp.value) : inp.value; });
+            if (ruleBox) {
+                if (!ruleOn.checked) { state.by = null; }
+                else {
+                    state.by = state.by || { mode: 'categories', classes: [], other: {} };
+                    state.by.field = fieldSel.value;
+                    state.by.classes = readClasses();
+                    var other = {};
+                    box.querySelectorAll('[data-style-other]').forEach(function(inp) { other[inp.dataset.styleOther] = inp.type === 'number' ? Number(inp.value) : inp.value; });
+                    state.by.other = other;
+                    if (state.by.mode === 'graduated') {
+                        state.by.ramp = [box.querySelector('[data-style-ramp="0"]').value, box.querySelector('[data-style-ramp="1"]').value];
+                        state.by.weight_range = [Number(box.querySelector('[data-style-wr="0"]').value), Number(box.querySelector('[data-style-wr="1"]').value)];
+                        state.by.breaks = box.querySelector('[data-style-breaks]').value;
+                    }
+                }
+                state.legend = box.querySelector('[data-style-legend]').checked;
+            }
+            return state;
+        }
+        var timer;
+        function save() {
+            clearTimeout(timer);
+            timer = setTimeout(function() {
+                var fd = new FormData();
+                fd.append('style', JSON.stringify(collect()));
+                fd.append('color', colorInput.value);
+                status.textContent = 'Saving…';
+                post(urlFor('update', id), fd).then(function(data) {
+                    state = data.style; box.dataset.style = JSON.stringify(state);
+                    status.textContent = 'Saved';
+                    renderBase(); renderRule(); preview(data.legend);
+                    warn.textContent = '';
+                    var unmatched = (data.legend || []).filter(function(r) { return r.other; })[0];
+                    if (unmatched && warn) warn.textContent = unmatched.count + ' object(s) match no class and use the "anything else" style.';
+                    var pill = card.querySelector('.ref-layer-pill');
+                    if (state.by && !pill) { pill = document.createElement('span'); pill.className = 'ref-layer-pill'; card.querySelector('.ref-layer-name').after(pill); }
+                    if (pill) { pill.textContent = state.by ? 'by ' + state.by.field : ''; pill.hidden = !state.by; }
+                }).catch(function(e) { status.textContent = e.message; });
+            }, 500);
+        }
+        // preview: the respondent factory over ≤300 objects of this layer
+        var pv = box.querySelector('[data-style-preview]'), pvMap, pvLayer, pvFc;
+        function preview(legend) {
+            if (!pv || !window.L || !window.RefLayerFactory) return;
+            if (!pvMap) {
+                pvMap = L.map(pv, { attributionControl: false, zoomControl: false });
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, opacity: .6 }).addTo(pvMap);
+            }
+            function draw() {
+                if (pvLayer) pvMap.removeLayer(pvLayer);
+                var meta = { id: id, name: '', color: colorInput.value, label_field: '', show_popups: false, style: state, legend: legend || [] };
+                pvLayer = window.RefLayerFactory.build(meta, pvFc, { interactive: false, pane: 'overlayPane' }).addTo(pvMap);
+                var b = pvLayer.getBounds(); if (b.isValid()) pvMap.fitBounds(b.pad(0.05));
+            }
+            if (pvFc) { draw(); return; }
+            fetch(box.dataset.geojsonUrl, { credentials: 'same-origin' }).then(function(r) { return r.json(); }).then(function(fc) {
+                pvFc = { type: 'FeatureCollection', features: (fc.features || []).slice(0, 300) };
+                draw();
+            }).catch(function() {});
+        }
+        // auto-fill from the data
+        function autofill() {
+            if (!fieldSel.value) { warn.textContent = 'Pick a property first.'; return; }
+            fetch(box.dataset.summaryUrl + '?field=' + encodeURIComponent(fieldSel.value), { credentials: 'same-origin' })
+                .then(function(r) { return r.json(); }).then(function(sum) {
+                    warn.textContent = '';
+                    state.by = state.by || { mode: 'categories', classes: [], other: {} };
+                    state.by.field = fieldSel.value;
+                    if (sum.kind === 'categories' && state.by.mode !== 'graduated') {
+                        state.by.classes = sum.values.map(function(v, i) {
+                            return { value: v.value, color: PALETTE[i % PALETTE.length], weight: state.weight || 2, radius: state.radius || 6, icon: '', label: v.value };
+                        });
+                    } else if (sum.kind === 'numeric') {
+                        state.by.mode = 'graduated';
+                        var n = Math.max(2, Math.min(12, Number(box.querySelector('[data-style-nclasses]').value) || 4));
+                        var ramp = [box.querySelector('[data-style-ramp="0"]').value || '#8ecae6', box.querySelector('[data-style-ramp="1"]').value || '#d62828'];
+                        var wr = [Number(box.querySelector('[data-style-wr="0"]').value) || 2, Number(box.querySelector('[data-style-wr="1"]').value) || 6];
+                        var breaksMode = box.querySelector('[data-style-breaks]').value;
+                        var edges = [sum.min];
+                        if (breaksMode === 'quantiles' && n === 4 && sum.quantiles) edges = edges.concat(sum.quantiles);
+                        else for (var i = 1; i < n; i++) edges.push(sum.min + (sum.max - sum.min) * i / n);
+                        edges.push(sum.max);
+                        state.by.classes = [];
+                        for (var k = 0; k < edges.length - 1; k++) {
+                            var t = edges.length > 2 ? k / (edges.length - 2) : 0;
+                            state.by.classes.push({ from: edges[k], to: edges[k + 1], color: mix(ramp[0], ramp[1], t),
+                                weight: wr[0] + (wr[1] - wr[0]) * t, radius: (state.radius || 6) + 4 * t, icon: '', label: fmt(edges[k]) + ' – ' + fmt(edges[k + 1]) });
+                        }
+                        state.by.ramp = ramp; state.by.weight_range = wr; state.by.breaks = breaksMode;
+                    } else if (sum.kind === 'too_many') {
+                        warn.textContent = sum.count + ' distinct values — too many for categories; use Graduated or another property.'; return;
+                    } else if (sum.kind === 'empty') {
+                        warn.textContent = 'No object carries this property.'; return;
+                    } else {
+                        warn.textContent = 'This property is not numeric — switch to Categories.'; return;
+                    }
+                    ruleOn.checked = true;
+                    renderRule(); save();
+                }).catch(function() { warn.textContent = 'Could not read the data.'; });
+        }
+        // wiring
+        renderBase(); renderRule();
+        box.addEventListener('input', function(e) {
+            if (e.target.matches('[data-style="opacity"]')) box.querySelector('[data-style-opacity-val]').textContent = Math.round(e.target.value * 100) + '%';
+        });
+        box.addEventListener('change', function(e) {
+            if (e.target.matches('[data-field="color"]')) return;   // its own handler posts colour; preview follows
+            if (e.target.matches('[data-style-rule-on]')) { if (e.target.checked && !state.by) state.by = { field: fieldSel.value, mode: 'categories', classes: [], other: { color: '#bbbbbb', weight: 1, radius: 5, opacity: 0.4, label: 'Other' } }; if (!e.target.checked) state.by = null; renderRule(); }
+            if (e.target.matches('[data-style-field]') && state.by) state.by.field = e.target.value;
+            save();
+        });
+        box.addEventListener('click', function(e) {
+            var mode = e.target.closest('[data-style-mode]');
+            if (mode) { collect(); state.by = state.by || { classes: [], other: {} }; if (state.by.mode !== mode.dataset.styleMode) { state.by.mode = mode.dataset.styleMode; state.by.classes = []; } ruleOn.checked = true; renderRule(); return; }
+            if (e.target.closest('[data-style-autofill]')) { collect(); autofill(); return; }
+            if (e.target.closest('[data-style-add-class]')) { collect(); state.by.classes.push(state.by.mode === 'graduated' ? { from: 0, to: 1, color: colorInput.value, weight: state.weight || 2, radius: state.radius || 6, icon: '', label: '' } : { value: '', color: PALETTE[state.by.classes.length % PALETTE.length], weight: state.weight || 2, radius: state.radius || 6, icon: '', label: '' }); renderRule(); return; }
+            var rm = e.target.closest('[data-cls-remove]');
+            if (rm) { collect(); state.by.classes.splice(Number(rm.closest('tr').dataset.clsRow), 1); renderRule(); save(); }
+        });
+        card.querySelector('.ref-layer-toggle').addEventListener('click', function() {
+            var body = card.querySelector('.ref-layer-body');
+            if (!body.hidden) setTimeout(function() { preview(); if (pvMap) pvMap.invalidateSize(); }, 50);
+        });
+        if (state.by) { var pill = document.createElement('span'); pill.className = 'ref-layer-pill'; pill.textContent = 'by ' + state.by.field; card.querySelector('.ref-layer-name').after(pill); }
+    }
+    list.querySelectorAll('.ref-layer').forEach(bindStyle);
 
     function upload(file) {
         errorBox.textContent = '';

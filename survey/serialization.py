@@ -24,7 +24,7 @@ from .models import (
     QuestionTranslation, default_basemaps, SurveyMapLayer,
 )
 from .html_sanitize import coerce_creator_html
-from .layers import layers_for
+from .layers import layers_for, normalize_style
 
 logger = logging.getLogger(__name__)
 from .question_types import CHOICE_TYPES
@@ -84,6 +84,7 @@ def serialize_layers(survey: SurveyHeader) -> List[Dict[str, Any]]:
         {
             "name": layer.name,
             "color": layer.color,
+            "style": normalize_style(layer.style, layer.color),
             "label_field": layer.label_field,
             "key_field": layer.key_field,
             "show_popups": layer.show_popups,
@@ -1000,6 +1001,15 @@ def _clean_layer_config(cfg: Dict[str, Any], index: int) -> Dict[str, Any]:
     out["source"] = "question" if cfg.get("source") == "question" else "upload"
     code = cfg.get("source_question_code")
     out["source_question_code"] = str(code)[:50] if isinstance(code, str) and out["source"] == "question" else ""
+    # Style (spec layer-style): normalised, never stored raw; a bad rule
+    # (too many classes) is repaired to "no rule" — an import never fails on style.
+    from .layers import normalize_style as _normalize, LayerValidationError as _LVE
+    try:
+        out["style"] = _normalize(cfg.get("style"), color)
+    except _LVE:
+        raw = dict(cfg.get("style") or {})
+        raw.pop("by", None)
+        out["style"] = _normalize(raw, color)
     out["show_tallies"] = bool(cfg.get("show_tallies", True))
     out["show_comments"] = bool(cfg.get("show_comments", False))
     out["approve_first"] = bool(cfg.get("approve_first", False))

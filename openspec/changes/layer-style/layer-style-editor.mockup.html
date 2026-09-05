@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Mockup — Reference layer style: base + style by attribute</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --card-bg:#f7f8fa; --card-border:rgba(0,0,0,.08); --text-primary:#1a1d21; --text-secondary:#5f6368; --text-tertiary:#9aa0a6;
+    --accent:#4f46e5; --accent-light:#eef2ff; --input-border:#d1d5db; --radius-sm:8px; --radius-md:12px;
+    --shadow-md:0 4px 12px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04); --shadow-lg:0 12px 40px rgba(0,0,0,.1),0 4px 12px rgba(0,0,0,.04);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:var(--text-primary); background:#e9ebef; padding:32px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .note { color:var(--text-secondary); max-width:960px; margin:0 0 24px; }
+  .note b { color:var(--text-primary); }
+  h2 { font-size:15px; margin:40px 0 10px; color:var(--text-secondary); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  .callout { position:absolute; background:#111827; color:#fff; font-size:11px; padding:4px 8px; border-radius:6px; box-shadow:var(--shadow-md); z-index:30; white-space:nowrap; }
+  .callout::after { content:""; position:absolute; left:10px; bottom:-5px; border:5px solid transparent; border-top-color:#111827; border-bottom:0; }
+  .frame { position:relative; background:#fff; border-radius:10px; overflow:hidden; box-shadow:var(--shadow-lg); }
+  .row2 { display:flex; gap:28px; align-items:flex-start; flex-wrap:wrap; }
+
+  /* settings card */
+  .card { width:560px; padding:18px 20px; }
+  .card h3 { margin:0 0 4px; font-size:16px; }
+  .help { font-size:12px; color:var(--text-tertiary); margin-top:3px; }
+  .lay { display:flex; align-items:center; gap:8px; padding:9px 12px; border:1px solid var(--card-border); background:var(--card-bg); border-radius:var(--radius-sm); margin-bottom:6px; font-size:13px; }
+  .lay .sw { width:10px; height:10px; border-radius:2px; flex:none; }
+  .lay .meta { color:var(--text-tertiary); font-size:12px; margin-left:auto; }
+  .lay .btn { margin-left:6px; }
+  .lay.open { border-color:var(--accent); background:var(--accent-light); }
+  .btn { border:1px solid var(--input-border); background:#fff; border-radius:var(--radius-sm); padding:5px 10px; font-size:12px; }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  .btn.sm { padding:2px 7px; font-size:11px; }
+  .body { border:1px solid var(--accent); border-top:0; border-radius:0 0 var(--radius-sm) var(--radius-sm); padding:12px 12px 14px; margin:-6px 0 10px; background:#fff; }
+  .lbl { font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; color:var(--text-secondary); margin:10px 0 6px; }
+  .lbl:first-child { margin-top:0; }
+  .grid { display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; }
+  .fld label { display:block; font-size:11px; color:var(--text-tertiary); margin-bottom:2px; }
+  .inp { border:1px solid var(--input-border); border-radius:6px; padding:5px 8px; background:#fff; font-size:13px; width:100%; }
+  .color { width:100%; height:28px; border-radius:6px; border:1px solid var(--input-border); }
+  .range { position:relative; height:28px; }
+  .range::before { content:""; position:absolute; left:0; right:0; top:13px; height:3px; background:#e5e7eb; border-radius:2px; }
+  .range::after { content:""; position:absolute; left:calc(var(--v) * 100% - 7px); top:7px; width:14px; height:14px; border-radius:50%; background:var(--accent); }
+  .range .v { position:absolute; right:0; top:-14px; font-size:10px; color:var(--text-tertiary); }
+  .icons { display:flex; gap:4px; flex-wrap:wrap; }
+  .ico { width:26px; height:26px; border:1px solid var(--input-border); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; background:#fff; }
+  .ico.on { border-color:var(--accent); background:var(--accent-light); }
+  .tog { display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; margin-top:12px; }
+  .sw2 { width:30px; height:16px; border-radius:999px; background:#cbd5e1; position:relative; }
+  .sw2.on { background:var(--accent); }
+  .sw2::after { content:""; position:absolute; top:2px; left:2px; width:12px; height:12px; border-radius:50%; background:#fff; }
+  .sw2.on::after { left:16px; }
+  .tabs { display:flex; gap:4px; margin:8px 0; }
+  .tab { font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid var(--input-border); background:#fff; color:var(--text-secondary); }
+  .tab.on { background:var(--accent-light); border-color:var(--accent); color:var(--accent); font-weight:600; }
+  table { border-collapse:collapse; width:100%; font-size:12.5px; }
+  th { text-align:left; font-size:10.5px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:.03em; padding:4px 6px; }
+  td { padding:4px 6px; border-top:1px solid #f0f2f5; vertical-align:middle; }
+  .swatch { width:22px; height:22px; border-radius:5px; border:1px solid rgba(0,0,0,.15); display:inline-block; vertical-align:middle; }
+  .line { display:inline-block; width:38px; border-radius:2px; vertical-align:middle; }
+  .num { width:44px; text-align:center; }
+  .muted { color:var(--text-tertiary); }
+  .foot { display:flex; gap:8px; align-items:center; margin-top:10px; }
+  .status { font-size:11px; color:#16a34a; margin-left:auto; }
+
+  /* preview */
+  .prev { width:520px; }
+  .map { position:relative; height:340px; background:#e4ebe0; }
+  .map svg { width:100%; height:100%; display:block; }
+  .legend { position:absolute; right:12px; top:12px; background:#fff; border-radius:8px; box-shadow:var(--shadow-md); padding:8px 10px; font-size:12px; min-width:190px; }
+  .legend b { display:block; font-size:12px; margin-bottom:4px; }
+  .legend .row { display:flex; align-items:center; gap:8px; margin:3px 0; }
+  .legend .row .k { width:28px; height:0; border-top-style:solid; }
+  .legend .row .dot { width:12px; height:12px; border-radius:50%; }
+  .legend .chk { width:12px; height:12px; border:1px solid var(--input-border); border-radius:3px; background:var(--accent); margin-right:4px; }
+  .capt { padding:10px 14px; font-size:12px; color:var(--text-secondary); }
+</style>
+</head>
+<body>
+
+<h1>Reference layer style — base + one rule by attribute</h1>
+<p class="note">Case: <b>Sarasota/Manatee MPO</b> loaded 6 119 road segments with <code>priority_score</code> / <code>priority_class</code> and had to split
+them into four layers because a layer has one colour. Proposal: every layer keeps a <b>base style</b> (colour, opacity, line width, point size, icon)
+and may add <b>one rule</b> — categories or graduated — on one object property. Priority at render: rule → simplestyle in the file → base.
+Respondents get a legend under the layer name in the layers control.</p>
+
+<!-- ============================================================ -->
+<h2>1 · Survey settings → Reference layers · Style by categories</h2>
+<div class="row2">
+  <div class="frame card" style="position:relative;">
+    <h3>Reference layers</h3>
+    <div class="help" style="margin-bottom:10px;">Non-editable layers respondents see under the map. Sections can hide each layer individually.</div>
+
+    <div class="lay open"><span class="sw" style="background:#d62828;"></span> <b>Road segments — priority</b> <span class="meta">6 119 objects · 2.8 MB</span>
+      <span class="btn sm primary">Open editor</span><span class="btn sm">✎</span><span class="btn sm">🗑</span></div>
+    <div class="body" style="position:relative;">
+      <div class="callout" style="top:-12px;right:12px;left:auto;">new: Style block replaces the single colour picker</div>
+
+      <div class="lbl">Base style</div>
+      <div class="grid">
+        <div class="fld"><label>Colour</label><div class="color" style="background:#2c7be5;"></div></div>
+        <div class="fld"><label>Opacity</label><div class="range" style="--v:.9"><span class="v">90%</span></div></div>
+        <div class="fld"><label>Line width</label><div class="inp num">2</div></div>
+        <div class="fld"><label>Point size</label><div class="inp num">6</div></div>
+        <div class="fld"><label>Point icon</label><div class="icons"><span class="ico on">●</span><span class="ico">🗑</span><span class="ico">🚏</span><span class="ico">🌳</span><span class="ico">…</span></div></div>
+      </div>
+      <div class="help">Used where no rule applies. Style properties inside the file (simplestyle) still win over the base.</div>
+
+      <div class="tog"><span class="sw2 on"></span> Style by attribute</div>
+      <div class="grid" style="grid-template-columns:2fr 1fr 1fr; margin-top:8px;">
+        <div class="fld"><label>Property</label><div class="inp">priority_class ▾</div></div>
+        <div class="fld"><label>Mode</label><div class="tabs" style="margin:0;"><span class="tab on">Categories</span><span class="tab">Graduated</span></div></div>
+        <div class="fld"><label>&nbsp;</label><span class="btn" style="width:100%;text-align:center;">Auto-fill from data</span></div>
+      </div>
+
+      <table style="margin-top:8px;">
+        <tr><th>Value</th><th>Colour</th><th>Width</th><th>Legend label</th><th></th></tr>
+        <tr><td>High</td><td><span class="swatch" style="background:#d62828;"></span></td><td><div class="inp num">5</div></td><td><div class="inp">High priority</div></td><td class="muted">1 204</td></tr>
+        <tr><td>Medium-High</td><td><span class="swatch" style="background:#f77f00;"></span></td><td><div class="inp num">4</div></td><td><div class="inp">Medium-high</div></td><td class="muted">1 731</td></tr>
+        <tr><td>Medium</td><td><span class="swatch" style="background:#fcbf49;"></span></td><td><div class="inp num">3</div></td><td><div class="inp">Medium</div></td><td class="muted">1 990</td></tr>
+        <tr><td>Low</td><td><span class="swatch" style="background:#8ecae6;"></span></td><td><div class="inp num">2</div></td><td><div class="inp">Low</div></td><td class="muted">1 194</td></tr>
+        <tr><td class="muted">anything else</td><td><span class="swatch" style="background:#bbbbbb;"></span></td><td><div class="inp num">1</div></td><td><div class="inp muted">Unclassified</div></td><td class="muted">0</td></tr>
+      </table>
+      <div class="help">Values come from the objects; counts show how many each class covers. Point size follows width on point layers.</div>
+      <div class="foot"><span class="btn sm">Show legend to respondents ☑</span><span class="status">Saved</span></div>
+    </div>
+
+    <div class="lay"><span class="sw" style="background:#2c7be5;"></span> County boundary <span class="meta">1 object · 96 KB</span><span class="btn sm primary">Open editor</span><span class="btn sm">✎</span><span class="btn sm">🗑</span></div>
+    <div class="lay" style="opacity:.55;text-decoration:line-through;"><span class="sw" style="background:#22c55e;"></span> Priority — Low <span class="meta">1 194 objects</span></div>
+    <div class="lay" style="opacity:.55;text-decoration:line-through;"><span class="sw" style="background:#f59e0b;"></span> Priority — Medium <span class="meta">1 990 objects</span></div>
+    <div class="lay" style="opacity:.55;text-decoration:line-through;"><span class="sw" style="background:#ef4444;"></span> Priority — High <span class="meta">1 204 objects</span></div>
+    <div class="help">The three struck-through layers are what Sarasota had to create — one layer per class. With a rule they merge into the first one.</div>
+  </div>
+
+  <div class="frame prev" style="position:relative;">
+    <div class="callout" style="top:-12px;left:12px;">live preview on the card + respondent legend</div>
+    <div class="map"><svg viewBox="0 0 520 340">
+      <rect width="520" height="340" fill="#e4ebe0"/>
+      <path d="M0 80 L520 60" stroke="#fff" stroke-width="10"/><path d="M60 0 L90 340" stroke="#fff" stroke-width="8"/><path d="M300 0 L330 340" stroke="#fff" stroke-width="8"/>
+      <path d="M0 200 L520 230" stroke="#fff" stroke-width="10"/>
+      <!-- segments styled by class -->
+      <path d="M0 82 L200 74" stroke="#d62828" stroke-width="5" fill="none"/>
+      <path d="M200 74 L360 68" stroke="#f77f00" stroke-width="4" fill="none"/>
+      <path d="M360 68 L520 62" stroke="#8ecae6" stroke-width="2" fill="none"/>
+      <path d="M62 0 L74 130" stroke="#fcbf49" stroke-width="3" fill="none"/>
+      <path d="M74 130 L90 340" stroke="#d62828" stroke-width="5" fill="none"/>
+      <path d="M302 0 L312 120" stroke="#8ecae6" stroke-width="2" fill="none"/>
+      <path d="M312 120 L330 340" stroke="#f77f00" stroke-width="4" fill="none"/>
+      <path d="M0 202 L260 216" stroke="#fcbf49" stroke-width="3" fill="none"/>
+      <path d="M260 216 L520 232" stroke="#d62828" stroke-width="5" fill="none"/>
+      <path d="M120 300 L250 260 L400 290" stroke="#bbbbbb" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+      <path d="M30 20 L500 30 L505 320 L20 330 Z" stroke="#2c7be5" stroke-width="2" fill="none" stroke-dasharray="6 4" opacity=".7"/>
+    </svg>
+      <div class="legend">
+        <div class="row"><span class="chk"></span><b style="margin:0;">Road segments — priority</b></div>
+        <div class="row"><span class="k" style="border-color:#d62828;border-top-width:5px;"></span> High priority</div>
+        <div class="row"><span class="k" style="border-color:#f77f00;border-top-width:4px;"></span> Medium-high</div>
+        <div class="row"><span class="k" style="border-color:#fcbf49;border-top-width:3px;"></span> Medium</div>
+        <div class="row"><span class="k" style="border-color:#8ecae6;border-top-width:2px;"></span> Low</div>
+        <div class="row" style="margin-top:6px;"><span class="chk"></span><b style="margin:0;">County boundary</b></div>
+      </div>
+    </div>
+    <div class="capt">Respondent map. The legend lives inside the layers control (top-right ⧉), one block per layer with a rule; layers without a rule show the checkbox and name only, as today. The same styling function renders the Responses tab and the public results page.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>2 · Same card · Graduated mode on a numeric property</h2>
+<div class="row2">
+  <div class="frame card">
+    <div class="lay open"><span class="sw" style="background:#d62828;"></span> <b>Road segments — priority</b> <span class="meta">6 119 objects</span><span class="btn sm">✎</span></div>
+    <div class="body">
+      <div class="tog" style="margin-top:0;"><span class="sw2 on"></span> Style by attribute</div>
+      <div class="grid" style="grid-template-columns:2fr 1fr 1fr; margin-top:8px;">
+        <div class="fld"><label>Property</label><div class="inp">priority_score ▾ <span class="muted">(number, 3 – 97)</span></div></div>
+        <div class="fld"><label>Mode</label><div class="tabs" style="margin:0;"><span class="tab">Categories</span><span class="tab on">Graduated</span></div></div>
+        <div class="fld"><label>Classes</label><div class="inp num">4</div></div>
+      </div>
+      <div class="grid" style="grid-template-columns:1fr 1fr 1fr; margin-top:8px;">
+        <div class="fld"><label>Colour ramp</label><div class="inp" style="padding:4px;"><span style="display:block;height:18px;border-radius:4px;background:linear-gradient(90deg,#8ecae6,#fcbf49,#f77f00,#d62828);"></span></div></div>
+        <div class="fld"><label>Width from → to</label><div style="display:flex;gap:6px;"><div class="inp num">2</div><div class="inp num">6</div></div></div>
+        <div class="fld"><label>Breaks</label><div class="inp">quantiles ▾</div></div>
+      </div>
+      <table style="margin-top:8px;">
+        <tr><th>Range</th><th>Colour</th><th>Width</th><th>Legend label</th><th></th></tr>
+        <tr><td>3 – 24</td><td><span class="swatch" style="background:#8ecae6;"></span></td><td>2</td><td><div class="inp">Low</div></td><td class="muted">1 530</td></tr>
+        <tr><td>24 – 48</td><td><span class="swatch" style="background:#fcbf49;"></span></td><td>3.3</td><td><div class="inp">Medium</div></td><td class="muted">1 529</td></tr>
+        <tr><td>48 – 71</td><td><span class="swatch" style="background:#f77f00;"></span></td><td>4.7</td><td><div class="inp">Medium-high</div></td><td class="muted">1 531</td></tr>
+        <tr><td>71 – 97</td><td><span class="swatch" style="background:#d62828;"></span></td><td>6</td><td><div class="inp">High</div></td><td class="muted">1 529</td></tr>
+      </table>
+      <div class="help">Breaks are editable by hand; "quantiles" / "equal intervals" are starting points. Colour and width interpolate together across the classes.</div>
+      <div class="foot"><span class="status">Saved</span></div>
+    </div>
+  </div>
+
+  <div class="frame prev">
+    <div class="capt" style="padding-top:14px;"><b>Point layers</b> use the same rule with <b>size</b> instead of width, and an icon per class when the base icon is set — e.g. a bins layer where <code>status</code> = full / ok / damaged colours the marker and picks 🗑 / ● / ⚠.</div>
+    <div class="map" style="height:200px;"><svg viewBox="0 0 520 200">
+      <rect width="520" height="200" fill="#e4ebe0"/>
+      <g stroke="#fff" stroke-width="2">
+        <circle cx="90" cy="70" r="7" fill="#8ecae6"/><circle cx="150" cy="120" r="11" fill="#d62828"/><circle cx="240" cy="60" r="9" fill="#f77f00"/>
+        <circle cx="330" cy="130" r="7" fill="#8ecae6"/><circle cx="410" cy="80" r="11" fill="#d62828"/><circle cx="460" cy="150" r="9" fill="#fcbf49"/>
+      </g>
+      <text x="142" y="125" font-size="11" fill="#fff">⚠</text><text x="402" y="85" font-size="11" fill="#fff">⚠</text>
+    </svg>
+      <div class="legend">
+        <div class="row"><span class="chk"></span><b style="margin:0;">Dog bins — status</b></div>
+        <div class="row"><span class="dot" style="background:#d62828;width:14px;height:14px;"></span> Damaged</div>
+        <div class="row"><span class="dot" style="background:#f77f00;"></span> Often full</div>
+        <div class="row"><span class="dot" style="background:#8ecae6;width:10px;height:10px;"></span> Fine</div>
+      </div>
+    </div>
+    <div class="capt"><b>Stored shape</b> (one JSON field on the layer, rides the ZIP):<br>
+      <code style="font-size:11px;">style = {color, opacity, weight, radius, icon, by: {field, mode, classes:[{value|range, color, weight, icon, label}], other}}</code><br>
+      Out of scope for v1: several rules per layer, per-object overrides in the editor (simplestyle already covers that), clustering, image icons, "size by votes" on respondents' layers (v2).</div>
+  </div>
+</div>
+
+</body>
+</html>
