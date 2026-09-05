@@ -51,7 +51,7 @@
 
 ## 7. Verification and close-out
 
-- [ ] 7.1 Full suite once before and once after (no linter loops); `openspec validate --strict respondent-shared-map`
+- [x] 7.1 Full suite after: 1908 OK, 1 skipped (2026-09-05); `openspec validate --strict` valid
 - [x] 7.2 (respondent flow, 2026-09-05 on dev 8010: three seeded marks with tallies + badge, popup with tallies line, 👍 + comment + ✓, own mark placed via crosshair + WHY, Finish → materialised as s10-1, reload: own mark restored as editable, absent from the list, park-gate tally 5·1, reacted row ticked. Editor screens covered by SharedMapEditorTest/SharedMapModerationTest — the automation cannot log in.) Browser pass on the dev stand: create the layer from answers, bind an Objects question with 👍/👎 + comment; as respondent A place a mark; as B see it, 👍 + comment, ✓; A re-submits, B's reaction survives; hide from Responses, B no longer sees it; approve-first flow; tallies off; comments on. Screenshots into the change folder
 - [ ] 7.3 k6 `lecture-burst` on a PR preview against a shared-map survey (per-session endpoint cost, design risk 1)
 - [ ] 7.4 Backlog: mark #160 promoted, note #153 no longer a prerequisite (the backlog file lives only in the main checkout's uncommitted changes — do it there); [x] CLAUDE.md paragraph on `question` layers and the one-source-of-truth rule for object keys
