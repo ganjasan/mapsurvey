@@ -161,3 +161,64 @@ def layer_object_stats(layer, excluded_session_ids=None):
             stats[key] = {'answers': entry['answers'], 'headline': headline(entry),
                           'sessions': sorted(sessions.get(key, ()))}
     return stats
+
+
+def shared_map_tallies(layer):
+    """{object_key: {'up', 'down', 'comments'}} for a `question` layer — what
+    respondents see next to other people's marks (spec shared-map-layer).
+    Counts 👍/👎 sub-answers and non-hidden text sub-answers of every question
+    bound to the layer, over clean sessions only."""
+    from .public_results import EXCLUDED_VALIDATION_STATUSES
+    rows = (Answer.objects
+            .filter(layer_object__layer=layer,
+                    question__parent_question_id__layer=layer,
+                    question__parent_question_id__input_type='layer_objects',
+                    question__input_type__in=('thumbs', 'text', 'text_line'),
+                    hidden=False,
+                    survey_session__is_deleted=False)
+            .exclude(survey_session__validation_status__in=EXCLUDED_VALIDATION_STATUSES)
+            .values_list('layer_object__key', 'question__input_type', 'selected_choices', 'text'))
+    out = defaultdict(lambda: {'up': 0, 'down': 0, 'comments': 0})
+    for key, input_type, codes, text in rows:
+        if input_type == 'thumbs':
+            if codes:
+                out[key]['up' if int(codes[0]) == 1 else 'down'] += 1
+        elif text:
+            out[key]['comments'] += 1
+    return dict(out)
+
+
+def shared_map_comments(obj, limit=10):
+    """Newest non-hidden comments on one mark, as plain strings, no author."""
+    from .public_results import EXCLUDED_VALIDATION_STATUSES
+    rows = (Answer.objects
+            .filter(layer_object=obj, hidden=False,
+                    question__input_type__in=('text', 'text_line'),
+                    question__parent_question_id__input_type='layer_objects',
+                    survey_session__is_deleted=False)
+            .exclude(survey_session__validation_status__in=EXCLUDED_VALIDATION_STATUSES)
+            .exclude(text__isnull=True).exclude(text='')
+            .order_by('-id')
+            .values_list('text', flat=True)[:limit])
+    return list(rows)
+
+
+def shared_map_verdicts(survey, question):
+    """{geo_answer_id: {'mark_key', 'votes_up', 'votes_down', 'comments'}} for a
+    geo question that feeds `question` layers of this survey family — what the
+    question's own GeoJSON export carries per feature. Empty when no layer
+    reads the question, so exports of ordinary geo questions are untouched."""
+    from .layers import layer_owner
+    from .models import LayerObject
+    layers = list(layer_owner(survey).map_layers.filter(source='question', source_question_code=question.code))
+    if not layers:
+        return {}
+    out = {}
+    for layer in layers:
+        tallies = shared_map_tallies(layer)
+        for key, answer_id in (LayerObject.objects.filter(layer=layer, source_answer__isnull=False)
+                               .values_list('key', 'source_answer_id')):
+            t = tallies.get(key, {})
+            out[answer_id] = {'mark_key': key, 'votes_up': t.get('up', 0),
+                              'votes_down': t.get('down', 0), 'comments': t.get('comments', 0)}
+    return out

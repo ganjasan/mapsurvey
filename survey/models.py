@@ -560,6 +560,18 @@ class SurveyCollaborator(models.Model):
         return f"{self.user.username} - {self.survey.name} ({self.role})"
 
 
+LAYER_SOURCE_CHOICES = [
+    ('upload', 'upload'),      # drawn / imported by the creator
+    ('question', 'question'),  # materialised from respondents' geo answers
+]
+
+LAYER_OBJECT_STATUS_CHOICES = [
+    ('visible', 'visible'),
+    ('pending', 'pending'),    # approve_first layers: waits for the creator
+    ('hidden', 'hidden'),      # hidden from respondents, kept for the creator
+]
+
+
 class SurveyMapLayer(models.Model):
     """A creator's reference overlay (zones, boundaries, a plan, the objects of a
     consultation) rendered read-only under the respondent map.
@@ -578,6 +590,19 @@ class SurveyMapLayer(models.Model):
     label_field = models.CharField(max_length=100, blank=True, default='', help_text=_('Feature property rendered as a permanent map label. Empty = no labels. Also the default title mapping for imports.'))
     key_field = models.CharField(max_length=100, blank=True, default='', help_text=_('Feature property used as the object key on import. Answers about objects are stored against the key.'))
     show_popups = models.BooleanField(default=False, help_text=_('Tap a feature shows a read-only popup of its title/description (layers not bound to an Objects-on-the-map question).'))
+    # Shared map (spec shared-map-layer): a `question` layer's objects are not
+    # drawn by the creator but MATERIALISED from respondents' answers to the geo
+    # question named by `source_question_code` (a code, not a FK — layers belong
+    # to the canonical survey while question rows are copied per version and
+    # keep their code). Objects then carry `source_session`/`source_answer`, the
+    # object editor is read-only, and the three flags decide what OTHER
+    # respondents get to see: counts, comments, and whether a mark waits for
+    # the creator's approval first.
+    source = models.CharField(max_length=8, choices=LAYER_SOURCE_CHOICES, default='upload')
+    source_question_code = models.CharField(max_length=50, blank=True, default='', help_text=_('`question` layers only: code of the point/line/polygon question whose answers become the objects.'))
+    show_tallies = models.BooleanField(default=True, help_text=_('`question` layers only: respondents see 👍/👎 counts on other people\'s marks.'))
+    show_comments = models.BooleanField(default=False, help_text=_('`question` layers only: respondents see other people\'s comments on a mark.'))
+    approve_first = models.BooleanField(default=False, help_text=_('`question` layers only: new marks wait as `pending` until the creator approves them.'))
     geojson = models.TextField(help_text=_('Derived FeatureCollection, rebuilt from the layer objects on every write.'))
     geojson_legacy = models.TextField(blank=True, default='', help_text=_('The pre-objects FeatureCollection kept for one release after the split migration; empty for layers created since.'))
     feature_count = models.PositiveIntegerField(default=0)
@@ -591,6 +616,14 @@ class SurveyMapLayer(models.Model):
 
     def __str__(self):
         return f"{self.survey.name} / {self.name}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.source == 'question':
+            from survey.layers import source_question_for
+            if not self.source_question_code or source_question_for(self) is None:
+                raise ValidationError({'source_question_code': _(
+                    'Pick a point, line or polygon question of this survey.')})
 
 
 def layer_asset_key(instance, filename):
@@ -619,6 +652,18 @@ class LayerObject(models.Model):
     geometry = geomodels.GeometryField(srid=4326)
     position = models.PositiveIntegerField(default=0)
     properties = models.JSONField(default=dict, blank=True)
+    # Shared map (spec shared-map-moderation). `status` gates what RESPONDENTS
+    # see; the creator's Responses, aggregates and export read every status.
+    # `source_session`/`source_answer` are set only on objects materialised
+    # from answers (`layer.source == 'question'`). The session FK cascades — a
+    # hard-deleted session takes its marks and, through Answer.layer_object,
+    # the reactions on them; soft-deleted / on_hold / not_approved sessions are
+    # filtered at read time by the clean-session rule instead. The answer FK is
+    # SET_NULL because the section POST re-inserts answers on every submit and
+    # the object must outlive that (its key is session+index, not answer id).
+    status = models.CharField(max_length=8, choices=LAYER_OBJECT_STATUS_CHOICES, default='visible')
+    source_session = models.ForeignKey("SurveySession", null=True, blank=True, on_delete=models.CASCADE, related_name='layer_objects')
+    source_answer = models.ForeignKey("Answer", null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -628,7 +673,10 @@ class LayerObject(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['layer', 'key'], name='layerobject_unique_key_per_layer'),
         ]
-        indexes = [models.Index(fields=['layer', 'category'])]
+        indexes = [
+            models.Index(fields=['layer', 'category']),
+            models.Index(fields=['layer', 'status']),
+        ]
 
     def __str__(self):
         return f"{self.layer.name} / {self.key}"
@@ -1015,6 +1063,11 @@ class Answer(models.Model):
     # `parent_answer_id` — the respondent did not create the object, the
     # creator did (spec object-answers).
     layer_object = models.ForeignKey(LayerObject, null=True, blank=True, on_delete=models.CASCADE, related_name='answers')
+    # Shared map moderation: a creator can hide one comment (a text sub-answer
+    # about a `question`-layer object) from other respondents. Read only by the
+    # object card and `comment_count`; Responses and export ignore it. Has no
+    # meaning on any other answer (spec shared-map-moderation).
+    hidden = models.BooleanField(default=False)
 
     class Meta:
         app_label = 'survey'

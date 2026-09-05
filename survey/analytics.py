@@ -640,15 +640,41 @@ class SurveyAnalyticsService:
         from .object_stats import object_aggregates, headline, layer_object_stats
         aggregates = object_aggregates(question)
         sessions_by_key = layer_object_stats(question.layer) if question.layer_id else {}
+        # Shared map (spec shared-map-moderation): on a `question` layer every
+        # row is another respondent's mark — it carries a status, and the
+        # creator moderates it (and its comments) right here.
+        shared = bool(question.layer_id and question.layer.source == 'question')
+        objects_by_key = {}
+        comments_by_key = {}
+        if shared:
+            from .layers import creator_objects
+            objects_by_key = {o.key: o for o in creator_objects(question.layer)}
+            for a in (Answer.objects
+                      .filter(layer_object__layer=question.layer,
+                              question__parent_question_id=question,
+                              question__input_type__in=('text', 'text_line'),
+                              survey_session__is_deleted=False)
+                      .exclude(text__isnull=True).exclude(text='')
+                      .select_related('layer_object')
+                      .order_by('-id')):
+                comments_by_key.setdefault(a.layer_object.key, []).append(
+                    {'id': a.pk, 'text': a.text, 'hidden': a.hidden})
         rows = []
         for entry in aggregates.values():
+            if shared and entry['key'] not in objects_by_key:
+                continue   # a rejected/trashed session's mark: gone everywhere
+            obj = objects_by_key.get(entry['key'])
             rows.append({
                 'key': entry['key'], 'title': entry['title'], 'category': entry['category'],
                 'answers': entry['answers'], 'headline': headline(entry),
                 'subs': list(entry['subs'].values()),
                 'sessions_json': json.dumps((sessions_by_key.get(entry['key']) or {}).get('sessions', [])),
+                'status': obj.status if obj else 'visible',
+                'comments': comments_by_key.get(entry['key'], []),
             })
         rows.sort(key=lambda r: (-r['answers'], r['title']))
+        pending = sum(1 for r in rows if r['status'] == 'pending')
+        hidden = sum(1 for r in rows if r['status'] == 'hidden')
         return {
             'type': 'objects',
             'total_answers': sum(r['answers'] for r in rows),
@@ -656,6 +682,14 @@ class SurveyAnalyticsService:
             'sub_questions': [{'code': s['code'], 'name': s['name'], 'type': s['type']}
                               for s in (rows[0]['subs'] if rows else [])],
             'layer': question.layer,
+            'shared': shared,
+            'pending': pending,
+            'hidden': hidden,
+            # Approve-first with nothing visible and a minimum: respondents
+            # cannot pass — the creator must know before residents write in.
+            'min_warning': bool(shared and question.layer.approve_first and pending
+                                and question.min_objects > 0
+                                and not any(r['status'] == 'visible' for r in rows)),
         }
 
     _STAT_DISPATCH = {
@@ -1824,22 +1858,38 @@ class SessionValidationService:
             raise ValueError(f"Invalid validation status: {status!r}")
         session.validation_status = status
         session.save(update_fields=['validation_status'])
+        self._sync_shared_map(session)
 
     def trash(self, session):
         """Soft-delete a session (move to trash)."""
         session.is_deleted = True
         session.deleted_at = timezone.now()
         session.save(update_fields=['is_deleted', 'deleted_at'])
+        self._sync_shared_map(session)
 
     def restore(self, session):
         """Restore a trashed session."""
         session.is_deleted = False
         session.deleted_at = None
         session.save(update_fields=['is_deleted', 'deleted_at'])
+        self._sync_shared_map(session)
 
     def hard_delete(self, session):
         """Permanently delete a trashed session and all its answers."""
+        survey = session.survey
         session.delete()
+        self._sync_shared_map_survey(survey)
+
+    @staticmethod
+    def _sync_shared_map(session):
+        SessionValidationService._sync_shared_map_survey(session.survey)
+
+    @staticmethod
+    def _sync_shared_map_survey(survey):
+        # Shared map (spec shared-map-moderation): the session status is the
+        # coarse moderation lever — its marks leave/return every creator map.
+        from .layers import rebuild_question_layers_for
+        rebuild_question_layers_for(survey)
 
 
 class PerformanceAnalyticsService:

@@ -87,6 +87,13 @@ def serialize_layers(survey: SurveyHeader) -> List[Dict[str, Any]]:
             "label_field": layer.label_field,
             "key_field": layer.key_field,
             "show_popups": layer.show_popups,
+            # Shared map (spec shared-map-layer): config only — objects of a
+            # `question` layer are answers and never travel in a structure ZIP.
+            "source": layer.source,
+            "source_question_code": layer.source_question_code,
+            "show_tallies": layer.show_tallies,
+            "show_comments": layer.show_comments,
+            "approve_first": layer.approve_first,
         }
         for layer in layers_for(survey)
     ]
@@ -131,6 +138,8 @@ def collect_layer_files(survey: SurveyHeader) -> List[Tuple[str, Any]]:
     from .models import LayerObjectAsset
     entries: List[Tuple[str, Any]] = []
     for index, layer in enumerate(layers_for(survey)):
+        if layer.source == 'question':
+            continue   # respondents' marks are answers, not structure
         entries.append((f"layers/{index}.geojson", layer.geojson))
         entries.append((f"layers/{index}/objects.json",
                         json.dumps(serialize_layer_objects(layer, index), ensure_ascii=False, indent=2)))
@@ -637,6 +646,9 @@ def import_structure_from_archive(
     rule_warnings = _apply_visibility_rules(sections, sections_data, code_remap)
     warnings.extend(rule_warnings)
 
+    # Shared-map layers name a geo question by code; resolve once questions exist.
+    warnings.extend(resolve_question_layers(survey, code_remap))
+
     # Resolve section links
     link_warnings = resolve_section_links(sections, sections_data)
     warnings.extend(link_warnings)
@@ -985,6 +997,12 @@ def _clean_layer_config(cfg: Dict[str, Any], index: int) -> Dict[str, Any]:
     for field in ("label_field", "key_field"):
         value = cfg.get(field)
         out[field] = str(value)[:100] if isinstance(value, str) else ""
+    out["source"] = "question" if cfg.get("source") == "question" else "upload"
+    code = cfg.get("source_question_code")
+    out["source_question_code"] = str(code)[:50] if isinstance(code, str) and out["source"] == "question" else ""
+    out["show_tallies"] = bool(cfg.get("show_tallies", True))
+    out["show_comments"] = bool(cfg.get("show_comments", False))
+    out["approve_first"] = bool(cfg.get("approve_first", False))
     return out
 
 
@@ -1086,6 +1104,15 @@ def extract_layers(
             ids.append(None)
             continue
         clean = _clean_layer_config(cfg, index)
+        if clean["source"] == "question":
+            # Empty on import; its source code is checked against the imported
+            # questions afterwards (resolve_question_layers).
+            layer = SurveyMapLayer.objects.create(
+                survey=survey, geojson='{"type":"FeatureCollection","features":[]}',
+                position=index, **clean,
+            )
+            ids.append(layer.pk)
+            continue
         archive_path = f"layers/{index}.geojson"
         try:
             raw = zip_file.read(archive_path)
@@ -1116,6 +1143,26 @@ def extract_layers(
         ids.append(layer.pk)
 
     return ids, warnings
+
+
+def resolve_question_layers(survey: SurveyHeader, code_remap: Dict[str, str]) -> List[str]:
+    """After questions exist: point each `question` layer at the imported code
+    (codes may have been remapped) or, when nothing geo answers to it, downgrade
+    the layer to an empty upload layer with a report line — the same fail-safe
+    as an unresolvable visibility rule."""
+    from .layers import source_question_for
+    warnings: List[str] = []
+    for layer in survey.map_layers.filter(source='question'):
+        layer.source_question_code = code_remap.get(layer.source_question_code, layer.source_question_code)
+        if source_question_for(layer) is None:
+            warnings.append(
+                f"Reference layer '{layer.name}' read answers to question "
+                f"'{layer.source_question_code}', which is not a geo question of this archive — "
+                "imported as an empty layer.")
+            layer.source = 'upload'
+            layer.source_question_code = ''
+        layer.save(update_fields=['source', 'source_question_code', 'updated_at'])
+    return warnings
 
 
 def extract_structure_images(

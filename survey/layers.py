@@ -143,8 +143,13 @@ def build_map_layers_metadata(survey):
             'id': layer.pk,
             'name': layer.name,
             'color': layer.color,
-            'label_field': layer.label_field,
+            # On a `question` layer `label_field` names a sub-question, not a
+            # feature property; the title already carries it (`_title`), so no
+            # permanent map label — the tally badge takes that spot.
+            'label_field': '' if layer.source == 'question' else layer.label_field,
             'show_popups': layer.show_popups,
+            'source': layer.source,
+            'show_tallies': layer.source == 'question' and layer.show_tallies,
             # Bound to an Objects-on-the-map question: features are clickable
             # and open the object popup (card + sub-questions) instead of the
             # read-only name/description popup — spec reference-overlay-layers.
@@ -314,8 +319,18 @@ def build_layer_geojson(layer):
                   .filter(object__layer=layer, kind='image')
                   .order_by('object_id', 'position', 'id')):
         covers.setdefault(asset.object_id, asset.url)
-    features = [feature_for_object(obj, covers.get(obj.pk, ''))
-                for obj in layer.items.order_by('position', 'id')]
+    if layer.source == 'question':
+        # Creator surfaces (object editor, Responses map): every status of every
+        # clean session, with the status exposed for badges. Respondents get
+        # `build_question_layer_geojson` per request instead.
+        features = []
+        for obj in creator_objects(layer):
+            feature = feature_for_object(obj)
+            feature['properties']['_status'] = obj.status
+            features.append(feature)
+    else:
+        features = [feature_for_object(obj, covers.get(obj.pk, ''))
+                    for obj in layer.items.order_by('position', 'id')]
     return json.dumps({'type': 'FeatureCollection', 'features': features},
                       ensure_ascii=False, separators=(',', ':'))
 
@@ -356,3 +371,178 @@ def bbox_of_collection(geojson_str):
     lngs = [c[0] for c in coords]
     lats = [c[1] for c in coords]
     return (min(lngs), min(lats), max(lngs), max(lats))
+
+
+# ─── Shared map: layers sourced from answers (spec shared-map-layer) ─────────
+#
+# A `question` layer's objects are other respondents' marks. They are
+# MATERIALISED here from the geo answers on every section submit, keyed by
+# session + mark index rather than by answer id, because the section POST
+# deletes and re-inserts a session's answers on every submit: an answer-id key
+# would recreate the object on Back → Next and drop every reaction other people
+# had left on it.
+
+import logging
+
+_log = logging.getLogger(__name__)
+
+GEO_INPUT_TYPES = ('point', 'line', 'polygon')
+QUESTION_LAYER_KEY = 's{session}-{index}'
+
+
+def source_question_for(layer, survey=None):
+    """The geo question a `question` layer reads, resolved BY CODE inside
+    `survey` (a version, a draft copy, or the canonical owner by default)."""
+    from survey.models import Question
+    if layer.source != 'question' or not layer.source_question_code:
+        return None
+    return (Question.objects
+            .filter(survey_section__survey_header=survey or layer.survey,
+                    code=layer.source_question_code,
+                    input_type__in=GEO_INPUT_TYPES,
+                    parent_question_id__isnull=True)
+            .first())
+
+
+def question_layers_for(survey, code):
+    """Canonical `question` layers fed by the geo question with `code`."""
+    return layer_owner(survey).map_layers.filter(source='question', source_question_code=code)
+
+
+def answer_geometry(answer):
+    return answer.point or answer.line or answer.polygon
+
+
+def label_for_answer(answer, label_code):
+    """The mark's title as OTHER respondents see it: the sub-answer named by the
+    layer's `label_field` (a sub-question code here, a property name on upload
+    layers). Choice-type labels come out as choice names; free text as written."""
+    if not label_code:
+        return ''
+    from survey.models import Answer
+    sub = (Answer.objects
+           .filter(parent_answer_id=answer, question__code=label_code)
+           .select_related('question')
+           .first())
+    if sub is None:
+        return ''
+    t = sub.question.input_type
+    if t in ('text', 'text_line', 'datetime'):
+        value = sub.text or ''
+    elif t in ('choice', 'multichoice', 'rating', 'thumbs'):
+        value = ', '.join(str(n) for n in sub.get_selected_choice_names())
+    elif sub.numeric is not None:
+        value = str(sub.numeric)
+    else:
+        value = ''
+    return value[:255]
+
+
+def sync_question_layer(layer, session):
+    """Upsert `layer`'s objects for one session from its geo answers.
+
+    The n-th stored feature is `s<session>-<n>`: an existing key is updated in
+    place (geometry, title, source_answer) so reactions on it survive; missing
+    indexes are created (`pending` on approve-first layers); keys of this
+    session with no feature any more are deleted — and only then do the
+    reactions on them go. Returns the number of objects present afterwards."""
+    from django.db.models import Max
+    from survey.models import Answer, LayerObject
+    question = source_question_for(layer, session.survey)
+    if question is None:
+        return 0
+    answers = (Answer.objects
+               .filter(survey_session=session, question=question, parent_answer_id__isnull=True)
+               .order_by('id'))
+    existing = {o.key: o for o in layer.items.filter(source_session=session)}
+    next_position = (layer.items.aggregate(m=Max('position'))['m'] or 0) + 1
+    seen = []
+    for index, answer in enumerate(answers, start=1):
+        geometry = answer_geometry(answer)
+        if geometry is None:
+            continue
+        key = QUESTION_LAYER_KEY.format(session=session.pk, index=index)
+        seen.append(key)
+        title = label_for_answer(answer, layer.label_field)
+        obj = existing.get(key)
+        if obj is not None:
+            obj.geometry = geometry
+            obj.title = title
+            obj.source_answer = answer
+            obj.save(update_fields=['geometry', 'title', 'source_answer', 'updated_at'])
+        else:
+            LayerObject.objects.create(
+                layer=layer, key=key, title=title, geometry=geometry,
+                source_session=session, source_answer=answer,
+                status='pending' if layer.approve_first else 'visible',
+                position=next_position,
+            )
+            next_position += 1
+    layer.items.filter(source_session=session).exclude(key__in=seen).delete()
+    rebuild_layer(layer)
+    return len(seen)
+
+
+def sync_question_layers_for_session(session, questions):
+    """After a section POST: feed every `question` layer read by a geo question
+    of that section. Never raises — a failed materialisation is logged and the
+    next submit re-syncs; the answers themselves are already stored."""
+    for question in questions:
+        if question.input_type not in GEO_INPUT_TYPES:
+            continue
+        for layer in question_layers_for(session.survey, question.code):
+            try:
+                sync_question_layer(layer, session)
+            except Exception:  # noqa: BLE001 — answers must never be lost to this
+                _log.exception('shared map: materialisation failed for layer %s session %s',
+                               layer.pk, session.pk)
+
+
+def clean_session_filter(qs, prefix='source_session'):
+    """The clean-session rule (public_results): not deleted, not on hold, not
+    rejected. Applied to objects (via their source session) and to reactions."""
+    from survey.public_results import EXCLUDED_VALIDATION_STATUSES
+    return (qs.filter(**{f'{prefix}__is_deleted': False})
+              .exclude(**{f'{prefix}__validation_status__in': EXCLUDED_VALIDATION_STATUSES}))
+
+
+def visible_objects(layer, exclude_session_id=None):
+    """What a RESPONDENT may see of a `question` layer: visible status, clean
+    source session, and never their own marks."""
+    qs = clean_session_filter(layer.items.filter(status='visible'))
+    if exclude_session_id:
+        qs = qs.exclude(source_session_id=exclude_session_id)
+    return qs.order_by('position', 'id')
+
+
+def creator_objects(layer):
+    """What the CREATOR's surfaces show of a `question` layer: every status,
+    clean sessions only (a rejected session's marks are gone everywhere)."""
+    return clean_session_filter(layer.items.all()).order_by('position', 'id')
+
+
+def build_question_layer_geojson(layer, exclude_session_id=None):
+    """Per-request FeatureCollection for a respondent (spec shared-map-layer):
+    own marks omitted, tallies attached when the layer shows them."""
+    from survey.object_stats import shared_map_tallies
+    tallies = shared_map_tallies(layer) if layer.show_tallies else {}
+    features = []
+    for obj in visible_objects(layer, exclude_session_id):
+        feature = feature_for_object(obj)
+        if layer.show_tallies:
+            t = tallies.get(obj.key, {})
+            feature['properties'].update({
+                'tally_up': t.get('up', 0), 'tally_down': t.get('down', 0),
+                'comment_count': t.get('comments', 0),
+            })
+        features.append(feature)
+    return json.dumps({'type': 'FeatureCollection', 'features': features},
+                      ensure_ascii=False, separators=(',', ':'))
+
+
+def rebuild_question_layers_for(survey):
+    """After a session's validation status / trash state changed: the creator
+    surfaces read the cached GeoJSON, which must drop or restore that session's
+    marks. Respondent responses are computed per request and need nothing."""
+    for layer in layer_owner(survey).map_layers.filter(source='question'):
+        rebuild_layer(layer)

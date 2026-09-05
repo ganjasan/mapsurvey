@@ -104,6 +104,9 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/analytics/bulk/trash/', analytics_views.analytics_bulk_trash, name='analytics_bulk_trash'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/bulk/restore/', analytics_views.analytics_bulk_restore, name='analytics_bulk_restore'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/bulk/delete/', analytics_views.analytics_bulk_hard_delete, name='analytics_bulk_hard_delete'),
+    # Shared map moderation (spec shared-map-moderation)
+    path('editor/surveys/<uuid:survey_uuid>/analytics/layers/<int:layer_id>/objects/<str:key>/status/', analytics_views.analytics_object_status, name='analytics_object_status'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/comments/<int:answer_id>/hidden/', analytics_views.analytics_comment_hidden, name='analytics_comment_hidden'),
 
     # Public results page configuration
     path('editor/surveys/<uuid:survey_uuid>/public-results/', public_results_editor.public_results_config, name='editor_survey_public_results'),

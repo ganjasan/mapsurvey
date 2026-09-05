@@ -182,6 +182,24 @@
 </div>
 
 {# Import dialog: one modal, three modes. #}
+{% if read_only %}
+{% comment %}Shared map: objects are respondents' marks — look, don't touch.{% endcomment %}
+<style>
+  .loe--readonly #loe-btn-import-geojson, .loe--readonly #loe-btn-import-csv, .loe--readonly #loe-btn-import-photos,
+  .loe--readonly .loe-ways, .loe--readonly .leaflet-draw, .loe--readonly #loe-bulk-delete, .loe--readonly #loe-bulk-category { display:none !important; }
+  .loe--readonly .loe-card input, .loe--readonly .loe-card textarea, .loe--readonly .loe-card select, .loe--readonly .loe-card button { pointer-events:none; opacity:.7; }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var root = document.querySelector('.loe'); if (root) root.classList.add('loe--readonly');
+    var banner = document.createElement('div');
+    banner.className = 'alert alert-info py-1 px-2 mb-0';
+    banner.style.cssText = 'font-size:.8rem;border-radius:0;';
+    banner.innerHTML = '<i class="fas fa-users"></i> {% trans "Read-only: these objects are respondents’ marks on question" %} <b>{{ layer.source_question_code }}</b>. {% trans "Moderate them on the Responses tab." %}';
+    if (root) root.insertBefore(banner, root.firstChild);
+  });
+</script>
+{% endif %}
 <div class="modal fade" id="loe-import-modal" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title" id="loe-import-title">{% trans "Import" %}</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>

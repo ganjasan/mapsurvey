@@ -119,6 +119,7 @@ description, which the object endpoint passed through coerce_creator_html.
                 '<span class="lo-row__title">' + esc(p._title || p._key) + '</span>' +
                 (done ? '<span class="lo-row__tick"><i class="fas fa-check"></i></span>' : '') +
                 (p._category ? '<span class="lo-row__cat">' + esc(p._category) + '</span>' : '') +
+                (p.tally_up != null ? '<span class="lo-row__tally">' + tallyText(p) + '</span>' : '') +
                 '</div>';
         }).join('');
         if (!visible.length) html = '<div class="lo-empty">' + esc(state.el.dataset.emptyLabel || 'Nothing matches') + '</div>';
@@ -144,11 +145,27 @@ description, which the object endpoint passed through coerce_creator_html.
     }
 
     // ---- popup ------------------------------------------------------------
+    // Shared map (spec shared-map-layer): 👍/👎 counts on other people's marks.
+    // Present on features and cards only when the layer shows tallies.
+    function tallyText(t) {
+        var up = t.tally_up != null ? t.tally_up : t.up, down = t.tally_down != null ? t.tally_down : t.down;
+        return '<i class="fas fa-thumbs-up"></i> ' + esc(up) + ' · <i class="fas fa-thumbs-down"></i> ' + esc(down);
+    }
+
     function cardHtml(card) {
         var h = '<div class="lo-card">';
         if (card.cover) h += '<div class="lo-card__cover" style="background-image:url(&quot;' + esc(card.cover) + '&quot;)"></div>';
         h += '<div class="lo-card__title">' + esc(card.title || card.key) + '</div>';
         if (card.category) h += '<div class="lo-card__cat">' + esc(card.category) + '</div>';
+        if (card.tallies) {
+            h += '<div class="lo-card__tallies">' + tallyText(card.tallies) +
+                (card.tallies.comments ? ' · <i class="fas fa-comment"></i> ' + esc(card.tallies.comments) : '') + '</div>';
+        }
+        if (card.comments && card.comments.length) {
+            h += '<div class="lo-card__comments">' + card.comments.map(function(c) {
+                return '<div class="lo-card__comment">' + esc(c) + '</div>';
+            }).join('') + '</div>';
+        }
         // Server-sanitized creator HTML (coerce_creator_html on the object endpoint).
         if (card.description) h += '<div class="lo-card__body">' + card.description + '</div>';
         var media = (card.assets || []).filter(function(a) { return a.kind !== 'image' || a.url !== card.cover; });

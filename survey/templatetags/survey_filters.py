@@ -119,3 +119,14 @@ def survey_title(context, survey):
         'can_rename': role == 'owner' and not survey.is_draft_copy,
         'name_max_length': SurveyHeader._meta.get_field('name').max_length,
     }
+
+
+@register.filter
+def json_attr(value):
+    """JSON for a single-quoted HTML attribute (data-x='...'): HTML entity
+    escaping, not |escapejs — the browser un-escapes the entities before
+    JSON.parse sees the text, so the JSON must be intact underneath."""
+    import json as _json
+    from django.utils.safestring import mark_safe
+    text = _json.dumps(value, ensure_ascii=False)
+    return mark_safe(text.replace('&', '&amp;').replace("'", '&#39;').replace('<', '&lt;').replace('>', '&gt;'))

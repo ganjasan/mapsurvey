@@ -606,6 +606,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var data;
         try { data = JSON.parse(xhr.responseText); } catch (e) { return; }
+        if (data.blocked) {
+            // A refusal that no acknowledgement can lift (a geo question feeding
+            // a reference layer): say why, do nothing else.
+            if (window.Dialog && Dialog.alert) Dialog.alert(data.blocked); else window.alert(data.blocked);
+            return;
+        }
         if (typeof data.answers_at_risk !== 'number') return;
 
         var elt = evt.detail.elt;
@@ -653,6 +659,27 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.addEventListener('questionSaved', function() {
         $('#questionModal').modal('hide');
         refreshPreview();
+    });
+    // Saved from inside the modal (draft created, sub-question added): keep it open.
+    document.body.addEventListener('questionUpdated', function() { refreshPreview(); });
+
+    // A question is created the moment its type is picked; closing the modal
+    // with the name still empty throws that draft away (spec survey-editor
+    // "Question rows are created on type pick").
+    $('#questionModal').on('hidden.bs.modal', function() {
+        var form = document.querySelector('#questionModalBody form[data-draft-question]');
+        if (!form) return;
+        var name = form.querySelector('[name=name]');
+        if (name && name.value.trim()) return;
+        var id = form.getAttribute('data-draft-question');
+        fetch(form.getAttribute('data-delete-url'), {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value }
+        }).then(function() {
+            var item = document.querySelector('#questions-list [data-question-id="' + id + '"]');
+            if (item) item.remove();
+            refreshPreview();
+        });
     });
 
     // After map position saved, close modal

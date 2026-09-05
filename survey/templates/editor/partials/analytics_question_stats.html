@@ -89,19 +89,42 @@
     sessions that answered about that object — the same SelectionManager the map
     and table share.{% endcomment %}
     <p class="mb-1"><small class="text-muted">{% blocktrans count n=stat.total_answers %}{{ n }} answer{% plural %}{{ n }} answers{% endblocktrans %} · {{ stat.layer.name }}</small></p>
+    {% if stat.shared %}
+    {% comment %}Shared map (spec shared-map-moderation): every row is another
+    respondent's mark. Status column + Approve/Hide/Show, chips to filter by
+    status, and a comment expander with per-comment hide — all in place, no
+    reload. Actions post to analytics_object_status / analytics_comment_hidden.{% endcomment %}
+    <div class="shared-map-mod" data-shared-map data-survey="{{ survey.uuid }}" data-layer="{{ stat.layer.pk }}"
+         data-status-url="{% url 'analytics_object_status' survey.uuid stat.layer.pk 'KEY' %}"
+         data-comment-url="{% url 'analytics_comment_hidden' survey.uuid 0 %}">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:4px 0 8px;">
+            <button type="button" class="rv2-chip active" data-mod-filter="all">{% trans "All" %} {{ stat.object_rows|length }}</button>
+            <button type="button" class="rv2-chip" data-mod-filter="pending">{% trans "Pending" %} <span data-mod-count="pending">{{ stat.pending }}</span></button>
+            <button type="button" class="rv2-chip" data-mod-filter="hidden">{% trans "Hidden" %} <span data-mod-count="hidden">{{ stat.hidden }}</span></button>
+            <small class="text-muted" style="margin-left:auto;">{% trans "Shared map" %} · {% trans "approve first" %}: {% if stat.layer.approve_first %}<b>{% trans "on" %}</b>{% else %}{% trans "off" %}{% endif %} · {% trans "tallies" %}: {% if stat.layer.show_tallies %}{% trans "on" %}{% else %}{% trans "off" %}{% endif %} · {% trans "comments" %}: {% if stat.layer.show_comments %}{% trans "on" %}{% else %}{% trans "off" %}{% endif %}</small>
+        </div>
+        {% if stat.min_warning %}
+        <div class="alert alert-warning py-1 px-2" style="font-size:.8rem;" data-mod-warning>
+            <i class="fas fa-exclamation-triangle"></i> {% trans "Marks are waiting for approval and none is visible, while this question requires a minimum — respondents cannot continue until you approve some." %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
     <div style="max-height:320px;overflow:auto;">
     <table class="table table-sm" style="font-size:.8rem;margin-bottom:0;">
         <thead><tr>
             <th>{% trans "Object" %}</th>
             <th style="text-align:right;">{% trans "Answers" %}</th>
             {% for sub in stat.sub_questions %}<th style="text-align:right;" title="{{ sub.name }}">{{ sub.name|truncatechars:22 }}</th>{% endfor %}
+            {% if stat.shared %}<th>{% trans "Status" %}</th><th></th>{% endif %}
         </tr></thead>
         <tbody>
         {% for row in stat.object_rows %}
-        <tr class="objects-stat-row" data-object-key="{{ row.key }}" data-sessions="{{ row.sessions_json }}"
+        <tr class="objects-stat-row" data-object-key="{{ row.key }}" data-sessions="{{ row.sessions_json }}"{% if stat.shared %} data-mod-status="{{ row.status }}"{% endif %}
             onclick="if (window.selectionManager) { try { window.selectionManager.setSelection(JSON.parse(this.dataset.sessions)); } catch (e) {} }"
             style="cursor:pointer;{% if not row.answers %}color:#9ca3af;{% endif %}">
-            <td>{{ row.title }}{% if row.category %} <small class="text-muted">· {{ row.category }}</small>{% endif %}</td>
+            <td>{{ row.title }}{% if row.category %} <small class="text-muted">· {{ row.category }}</small>{% endif %}
+                {% if stat.shared and row.comments %}<button type="button" class="btn btn-link btn-sm p-0 ml-1" data-mod-expand onclick="event.stopPropagation();" title="{% trans 'Comments' %}"><i class="fas fa-comment"></i> {{ row.comments|length }}</button>{% endif %}</td>
             <td style="text-align:right;">{{ row.answers }}</td>
             {% for sub in row.subs %}
             <td style="text-align:right;white-space:nowrap;">
@@ -111,7 +134,27 @@
                 {% else %}{{ sub.count }}{% endif %}
             </td>
             {% endfor %}
+            {% if stat.shared %}
+            <td><span class="badge shared-map-status shared-map-status--{{ row.status }}" data-mod-badge>{{ row.status }}</span></td>
+            <td style="white-space:nowrap;" onclick="event.stopPropagation();">
+                <button type="button" class="btn btn-sm btn-primary py-0" data-mod-action="visible" {% if row.status != 'pending' %}hidden{% endif %}>{% trans "Approve" %}</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary py-0" data-mod-action="visible" {% if row.status != 'hidden' %}hidden{% endif %}>{% trans "Show" %}</button>
+                <button type="button" class="btn btn-sm btn-outline-danger py-0" data-mod-action="hidden" {% if row.status == 'hidden' %}hidden{% endif %}>{% trans "Hide" %}</button>
+            </td>
+            {% endif %}
         </tr>
+        {% if stat.shared and row.comments %}
+        <tr class="shared-map-comments" data-mod-comments-for="{{ row.key }}" hidden>
+            <td colspan="{{ stat.sub_questions|length|add:4 }}" style="background:#fafafa;">
+                {% for c in row.comments %}
+                <div data-mod-comment="{{ c.id }}" style="display:flex;gap:8px;align-items:flex-start;padding:2px 0;{% if c.hidden %}opacity:.5;{% endif %}">
+                    <span style="flex:1;">«{{ c.text }}»</span>
+                    <button type="button" class="btn btn-link btn-sm p-0" data-mod-comment-toggle data-hidden="{% if c.hidden %}1{% else %}0{% endif %}" data-label-show="{% trans 'Show' %}" data-label-hide="{% trans 'Hide' %}">{% if c.hidden %}{% trans "Show" %}{% else %}{% trans "Hide" %}{% endif %}</button>
+                </div>
+                {% endfor %}
+            </td>
+        </tr>
+        {% endif %}
         {% endfor %}
         </tbody>
     </table>
@@ -289,3 +332,83 @@
 {% empty %}
 <p class="text-muted">{% trans "No questions in this survey." %}</p>
 {% endfor %}
+
+{% comment %}Shared map moderation actions (spec shared-map-moderation). One delegated
+handler for every [data-shared-map] block on the page; posts form-encoded with the
+CSRF cookie, updates the row in place, keeps the chip counts honest.{% endcomment %}
+<script>
+(function() {
+    if (window._sharedMapModBound) return;
+    window._sharedMapModBound = true;
+    function csrf() {
+        var m = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+        return m ? decodeURIComponent(m[1]) : '';
+    }
+    function post(url, data) {
+        var body = new URLSearchParams(data);
+        return fetch(url, { method: 'POST', credentials: 'same-origin', body: body,
+                            headers: { 'X-CSRFToken': csrf() } })
+            .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    }
+    function block(el) { return el.closest('.analytics-question, .card, .rv2-pane') || document; }
+    function applyFilter(mod, filter) {
+        mod.querySelectorAll('[data-mod-filter]').forEach(function(b) { b.classList.toggle('active', b.dataset.modFilter === filter); });
+        block(mod).querySelectorAll('tr[data-mod-status]').forEach(function(tr) {
+            var show = filter === 'all' || tr.dataset.modStatus === filter;
+            tr.hidden = !show;
+            var c = tr.nextElementSibling;
+            if (c && c.hasAttribute('data-mod-comments-for') && !show) c.hidden = true;
+        });
+    }
+    function recount(mod) {
+        ['pending', 'hidden'].forEach(function(st) {
+            var n = block(mod).querySelectorAll('tr[data-mod-status="' + st + '"]').length;
+            var el = mod.querySelector('[data-mod-count="' + st + '"]'); if (el) el.textContent = n;
+        });
+    }
+    document.addEventListener('click', function(e) {
+        var chip = e.target.closest('[data-mod-filter]');
+        if (chip) { applyFilter(chip.closest('[data-shared-map]'), chip.dataset.modFilter); return; }
+        var expand = e.target.closest('[data-mod-expand]');
+        if (expand) {
+            var tr = expand.closest('tr'), c = tr.nextElementSibling;
+            if (c && c.hasAttribute('data-mod-comments-for')) c.hidden = !c.hidden;
+            return;
+        }
+        var action = e.target.closest('[data-mod-action]');
+        if (action) {
+            var tr = action.closest('tr');
+            var mod = block(tr).querySelector('[data-shared-map]');
+            var url = mod.dataset.statusUrl.replace('KEY', encodeURIComponent(tr.dataset.objectKey));
+            post(url, { status: action.dataset.modAction }).then(function(res) {
+                tr.dataset.modStatus = res.status;
+                var badge = tr.querySelector('[data-mod-badge]');
+                badge.textContent = res.status;
+                badge.className = 'badge shared-map-status shared-map-status--' + res.status;
+                tr.querySelectorAll('[data-mod-action]').forEach(function(b) {
+                    var st = res.status, a = b.dataset.modAction, label = b.textContent.trim();
+                    // Approve shows for pending, Show for hidden, Hide for anything not hidden.
+                    b.hidden = !((a === 'visible' && ((st === 'pending' && /Approve|Одобрить/.test(label)) || (st === 'hidden' && !/Approve|Одобрить/.test(label)))) ||
+                                 (a === 'hidden' && st !== 'hidden'));
+                });
+                recount(mod);
+                var w = mod.querySelector('[data-mod-warning]');
+                if (w && res.status === 'visible') w.hidden = true;
+            }).catch(function(err) { console.warn('shared map: status change failed', err); });
+            return;
+        }
+        var toggle = e.target.closest('[data-mod-comment-toggle]');
+        if (toggle) {
+            var row = toggle.closest('[data-mod-comment]');
+            var mod = block(row).querySelector('[data-shared-map]');
+            var next = toggle.dataset.hidden === '1' ? '0' : '1';
+            var url = mod.dataset.commentUrl.replace(/\/0\/hidden\/$/, '/' + row.dataset.modComment + '/hidden/');
+            post(url, { hidden: next }).then(function(res) {
+                toggle.dataset.hidden = res.hidden ? '1' : '0';
+                toggle.textContent = res.hidden ? toggle.dataset.labelShow || 'Show' : toggle.dataset.labelHide || 'Hide';
+                row.style.opacity = res.hidden ? '.5' : '';
+            }).catch(function(err) { console.warn('shared map: comment toggle failed', err); });
+        }
+    });
+})();
+</script>

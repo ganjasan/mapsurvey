@@ -129,11 +129,12 @@
 
         <div id="ref-layers-list">
           {% for item in map_layers %}
-          <div class="ref-layer" data-layer-id="{{ item.layer.pk }}">
+          <div class="ref-layer" data-layer-id="{{ item.layer.pk }}" data-source="{{ item.layer.source }}">
             <div class="ref-layer-head">
               <span class="ref-layer-swatch" style="background:{{ item.layer.color }}"></span>
               <b class="ref-layer-name">{{ item.layer.name }}</b>
-              <span class="pr-help ref-layer-meta">{{ item.layer.feature_count }} {% trans "objects" %} · {{ item.layer.size_bytes|filesizeformat }}</span>
+              {% if item.layer.source == 'question' %}<span class="badge badge-pill" style="background:var(--accent-light);color:var(--accent);font-size:.68rem;margin-left:.4rem;" title="{% trans 'Objects are respondents’ marks on this question' %}">{% trans "source: answers" %} · {{ item.layer.source_question_code }}</span>{% endif %}
+              <span class="pr-help ref-layer-meta">{{ item.layer.feature_count }} {% trans "objects" %}{% if item.layer.source == 'question' %} · {% trans "read-only" %}{% else %} · {{ item.layer.size_bytes|filesizeformat }}{% endif %}</span>
               <a class="btn btn-sm btn-primary ref-layer-open" href="{% url 'editor_layer_objects' survey.uuid item.layer.pk %}" style="font-size:.74rem;padding:.15rem .55rem;margin-left:.4rem;"><i class="fas fa-edit"></i> {% trans "Open editor" %}</a>
               <button type="button" class="ref-layer-toggle" title="{% trans 'Settings' %}"><i class="fas fa-pen"></i></button>
               <button type="button" class="ref-layer-delete" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
@@ -148,6 +149,15 @@
                 <input type="color" data-field="color" value="{{ item.layer.color }}">
                 <div class="pr-help">{% trans "Fallback — style properties inside the file win." %}</div>
               </div>
+              {% if item.layer.source == 'question' %}
+              {% comment %}Shared map: objects are respondents' marks on a geo question. Label
+              and visibility settings are edited on the Objects-on-the-map question bound
+              to this layer — one door (owner decision 2026-09-05).{% endcomment %}
+              <div class="pr-help" style="margin:.2rem 0 .4rem;">
+                {% trans "Marks by respondents on question" %} <b>{{ item.layer.source_question_code }}</b>{% if item.source_question %} — {{ item.source_question.name }}{% endif %}.
+                {% if item.used_by %}{% trans "Label and visibility settings are on the question" %} {% for n in item.used_by %}<b>{{ n }}</b>{% if not forloop.last %}, {% endif %}{% endfor %}.{% else %}{% trans "Not used by any “Objects on the map” question yet — add one and pick this layer." %}{% endif %}
+              </div>
+              {% else %}
               <div class="pr-field">
                 <label>{% trans "Label field" %}</label>
                 <select data-field="label_field">
@@ -172,6 +182,7 @@
                 <span>{% trans "Info popups" %} <small class="pr-help">{% trans "tap a feature to see its name and description" %}</small></span>
                 <input type="checkbox" data-field="show_popups" {% if item.layer.show_popups %}checked{% endif %}>
               </label>
+              {% endif %}
               <div class="ref-layer-status pr-help"></div>
             </div>
           </div>

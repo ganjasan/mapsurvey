@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Mockup — Shared map: respondents see and react to each other's marks — #160</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --panel-bg:#ffffff; --panel-border:rgba(0,0,0,.06); --card-bg:#f7f8fa; --card-border:rgba(0,0,0,.06);
+    --text-primary:#1a1d21; --text-secondary:#5f6368; --text-tertiary:#9aa0a6;
+    --accent:#4f46e5; --accent-light:#eef2ff; --input-border:#d1d5db;
+    --danger:#ef4444; --success:#22c55e; --warn:#f59e0b; --radius-sm:8px; --radius-md:12px;
+    --shadow-md:0 4px 12px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);
+    --shadow-lg:0 12px 40px rgba(0,0,0,.1),0 4px 12px rgba(0,0,0,.04);
+    --obj:#f97316; --mine:#4f46e5;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:var(--text-primary); background:#e9ebef; padding:32px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .note { color:var(--text-secondary); max-width:960px; margin:0 0 24px; }
+  .note b { color:var(--text-primary); }
+  h2 { font-size:15px; margin:40px 0 10px; color:var(--text-secondary); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  .callout { position:absolute; background:#111827; color:#fff; font-size:11px; padding:4px 8px; border-radius:6px; box-shadow:var(--shadow-md); z-index:30; white-space:nowrap; }
+  .callout::after { content:""; position:absolute; left:10px; bottom:-5px; border:5px solid transparent; border-top-color:#111827; border-bottom:0; }
+  .frame { position:relative; background:#fff; border-radius:10px; overflow:hidden; box-shadow:var(--shadow-lg); }
+  .row2 { display:flex; gap:32px; align-items:flex-start; flex-wrap:wrap; }
+
+  /* ---------- editor modal ---------- */
+  .modal { width:640px; padding:22px 24px; }
+  .modal h3 { margin:0 0 14px; font-size:17px; }
+  .fg { margin-bottom:14px; }
+  .fg label { display:block; font-weight:600; margin-bottom:4px; }
+  .inp { border:1px solid var(--input-border); border-radius:var(--radius-sm); padding:8px 10px; background:#fff; width:100%; }
+  .help { font-size:12px; color:var(--text-tertiary); margin-top:4px; }
+  .box { border:1px solid #e5e7eb; border-radius:var(--radius-sm); padding:10px 12px; background:#fafafa; }
+  .box.on { border-color:var(--accent); background:var(--accent-light); }
+  .tog { display:flex; align-items:center; gap:10px; font-weight:600; }
+  .sw { width:34px; height:18px; border-radius:999px; background:#cbd5e1; position:relative; flex:none; }
+  .sw.on { background:var(--accent); }
+  .sw::after { content:""; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:#fff; }
+  .sw.on::after { left:18px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px 16px; margin-top:10px; }
+  .chk { display:flex; align-items:flex-start; gap:8px; font-size:13px; }
+  .chk i { width:14px; height:14px; border:1px solid var(--input-border); border-radius:3px; background:#fff; flex:none; margin-top:2px; display:inline-block; }
+  .chk i.on { background:var(--accent); border-color:var(--accent); }
+  .chk small { display:block; color:var(--text-tertiary); font-size:11px; }
+  .foot { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
+  .btn { border:1px solid var(--input-border); background:#fff; border-radius:var(--radius-sm); padding:8px 14px; font-size:14px; }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  .btn.sm { padding:4px 9px; font-size:12px; }
+  .btn.danger { color:var(--danger); border-color:#fecaca; }
+
+  /* ---------- section list ---------- */
+  .list { width:460px; padding:16px 18px; }
+  .qi { border:1px solid var(--card-border); background:var(--card-bg); border-radius:var(--radius-sm); padding:10px 12px; margin-bottom:8px; }
+  .qi .t { display:flex; align-items:center; gap:8px; font-weight:600; }
+  .badge { font-size:10.5px; padding:2px 7px; border-radius:999px; background:#e5e7eb; color:var(--text-secondary); font-weight:600; }
+  .badge.link { background:var(--accent-light); color:var(--accent); }
+  .badge.auto { background:#fef3c7; color:#92400e; }
+  .sub { margin:8px 0 0 18px; border-left:2px solid #e5e7eb; padding-left:10px; }
+  .sub .qi { background:#fff; }
+  .addsub { margin:6px 0 0 18px; font-size:12px; color:var(--accent); }
+  .lay { display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--card-border); background:var(--card-bg); border-radius:var(--radius-sm); margin-bottom:8px; }
+  .sw2 { width:10px; height:10px; border-radius:2px; background:var(--obj); flex:none; }
+
+  /* ---------- respondent ---------- */
+  .desktop { width:1180px; height:720px; background:#dfe6dc; }
+  .map { position:absolute; inset:0; }
+  .map svg { width:100%; height:100%; display:block; }
+  .panel { position:absolute; top:0; left:0; width:400px; height:100%; background:var(--panel-bg); border-right:1px solid var(--panel-border); box-shadow:var(--shadow-lg); z-index:10; padding:22px 20px; }
+  .sec-title { font-size:19px; font-weight:700; margin:0 0 6px; }
+  .sec-sub { color:var(--text-secondary); margin:0 0 18px; }
+  .q-label { font-weight:600; margin:0 0 6px; }
+  .drawbtn { display:flex; align-items:center; gap:12px; border:1px solid var(--card-border); background:var(--card-bg); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:16px; }
+  .drawbtn .ic { width:36px; height:36px; border-radius:50%; background:#111; color:#fff; display:flex; align-items:center; justify-content:center; }
+  .objs-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px; }
+  .objs-head .cnt { font-size:12px; color:var(--text-secondary); }
+  .orow { display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid var(--card-border); background:var(--card-bg); border-radius:var(--radius-sm); margin-bottom:6px; border-left:4px solid var(--obj); font-size:13px; }
+  .orow .tally { margin-left:auto; font-size:12px; color:var(--text-secondary); white-space:nowrap; }
+  .orow.done { opacity:.62; }
+  .popup { position:absolute; width:300px; background:#fff; border-radius:12px; box-shadow:var(--shadow-lg); padding:14px 16px; z-index:20; }
+  .popup::after { content:""; position:absolute; left:50%; bottom:-8px; margin-left:-8px; border:8px solid transparent; border-top-color:#fff; border-bottom:0; }
+  .popup .ttl { font-weight:700; margin-bottom:2px; }
+  .popup .by { font-size:11px; color:var(--text-tertiary); margin-bottom:8px; }
+  .tallies { display:flex; gap:12px; font-size:13px; margin-bottom:10px; }
+  .tallies b { font-size:15px; }
+  .cmt { font-size:12px; color:var(--text-secondary); border-left:3px solid #e5e7eb; padding:2px 8px; margin:0 0 6px; }
+  .qq { font-size:13px; font-weight:600; margin:10px 0 6px; }
+  .thumbs { display:flex; gap:8px; }
+  .th { flex:1; border:1px solid var(--input-border); border-radius:var(--radius-sm); padding:8px; text-align:center; background:#fff; }
+  .th.on { border-color:var(--accent); background:var(--accent-light); color:var(--accent); font-weight:600; }
+  .ta { border:1px solid var(--input-border); border-radius:var(--radius-sm); height:44px; margin-top:8px; color:var(--text-tertiary); padding:6px 8px; font-size:12px; }
+  .apply { margin-top:8px; background:var(--success); color:#fff; border-radius:var(--radius-sm); text-align:center; padding:7px; font-weight:700; }
+
+  /* ---------- responses ---------- */
+  .resp { width:1180px; padding:18px 20px; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid #eef0f3; vertical-align:top; }
+  th { font-size:11.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--text-tertiary); }
+  .st { font-size:11px; padding:2px 7px; border-radius:999px; font-weight:600; }
+  .st.live { background:#dcfce7; color:#166534; }
+  .st.hid { background:#fee2e2; color:#991b1b; }
+  .st.pend { background:#fef3c7; color:#92400e; }
+  .muted { color:var(--text-tertiary); }
+  .toolbar { display:flex; gap:10px; align-items:center; margin-bottom:12px; }
+  .toolbar .chip { font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid var(--input-border); background:#fff; color:var(--text-secondary); }
+  .toolbar .chip.on { background:var(--accent-light); border-color:var(--accent); color:var(--accent); font-weight:600; }
+</style>
+</head>
+<body>
+
+<h1>Shared map — respondents see and react to each other's marks (#160)</h1>
+<p class="note">Julian Thomas (Whitehouse CC): <i>«see previous submissions and up vote them instead of adding a new pin»</i>.
+Built on the merged <b>overlay-features</b> model: a reference layer with <b>source = answers to a geo question</b>, whose objects are
+materialised from respondents' marks; reactions are sub-questions of an ordinary <b>Objects on the map</b> question bound to that layer.
+Decisions so far: live by default + per-item hide, «approve first» as a layer option; tallies shown (option, on); others' comments (option, off);
+own marks excluded from the layer for the author; assembled by hand — a layer from answers plus an ordinary Objects question, no toggle.</p>
+
+<!-- ============================================================ -->
+<h2>1 · Editor — built by hand: a layer from answers, then an ordinary Objects question</h2>
+<div class="row2">
+  <div class="frame modal" style="position:relative;">
+    <div class="callout" style="top:-12px;right:12px;left:auto;">Survey settings → Reference layers → New layer from answers</div>
+    <h3>New layer from answers</h3>
+    <div class="fg"><label>Geo question whose marks become objects</label><div class="inp">📍 Where do we need a dog bin? (Q1) ▾</div><div class="help">Point, line and polygon questions of this survey.</div></div>
+    <div class="fg"><label>Label shown on other people's marks</label><div class="inp">Why here? (text) ▾</div><div class="help">A sub-question of Q1. Choice sub-questions come first — safer than free text. Without a label, marks are listed by number.</div></div>
+    <div class="fg"><label>Name</label><div class="inp">Marks: Where do we need a dog bin?</div></div>
+    <div class="fg box">
+      <label style="font-size:12px;">Visibility</label>
+      <div class="chk"><i class="on"></i><span>Show tallies 👍 4 · 👎 1<small>Off hides counts until the survey closes (avoids bandwagon).</small></span></div>
+      <div class="chk" style="margin-top:6px;"><i></i><span>Show other people's comments<small>Off: comments go to you only.</small></span></div>
+      <div class="chk" style="margin-top:6px;"><i></i><span>Approve marks before they appear<small>New marks wait in Responses → Shared map.</small></span></div>
+    </div>
+    <div class="help">Objects are your respondents' marks; the object editor is read-only for this layer. Next: add an «Objects on the map» question bound to it, with the sub-questions you want (👍/👎, comment, rating).</div>
+    <div class="foot"><span class="btn">Cancel</span><span class="btn primary">Create layer</span></div>
+  </div>
+
+  <div class="frame list" style="position:relative;">
+    <div class="callout" style="top:-12px;right:12px;left:auto;">section list — two ordinary questions</div>
+    <div style="font-weight:700;margin-bottom:10px;">Section 1 · Dog bins</div>
+    <div class="qi">
+      <div class="t">📍 Where do we need a dog bin? <span class="badge">point</span> <span class="badge link">feeds layer «Marks: …»</span></div>
+      <div class="sub"><div class="qi"><div class="t" style="font-weight:500;">Why here? <span class="badge">text</span></div></div></div>
+      <div class="addsub">+ Add Sub-question</div>
+    </div>
+    <div class="qi">
+      <div class="t">🗺 Marks by other residents <span class="badge">objects on the map</span> <span class="badge auto">layer: Marks: Where do we need a dog bin?</span></div>
+      <div class="sub"><div class="qi"><div class="t" style="font-weight:500;">Do you support this? <span class="badge">👍/👎</span></div></div>
+      <div class="qi"><div class="t" style="font-weight:500;">Your comment <span class="badge">text</span></div></div></div>
+      <div class="addsub">+ Add Sub-question</div>
+    </div>
+    <div class="qi" style="opacity:.55;"><div class="t">Anything else? <span class="badge">text</span></div></div>
+
+    <div style="font-weight:700;margin:22px 0 8px;">Survey settings → Reference layers</div>
+    <div class="lay"><span class="sw2"></span> Marks: Where do we need a dog bin? <span class="badge link">source: answers · Q1</span> <span class="muted" style="margin-left:auto;font-size:12px;">37 objects · read-only</span></div>
+    <div class="lay"><span class="sw2" style="background:#2c7be5;"></span> Ward boundary <span class="badge">upload</span> <span class="muted" style="margin-left:auto;font-size:12px;">1 object</span></div>
+    <div class="help">The Objects question can live in any section: own marks in section 1, rating others' in section 3. Tallies / comments / approval are layer settings. Deleting Q1 is refused while the layer reads it.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>2 · Respondent — one map, own mark or a reaction to someone else's</h2>
+<div class="frame desktop">
+  <div class="map"><svg viewBox="0 0 1180 720">
+    <rect width="1180" height="720" fill="#e4ebe0"/>
+    <path d="M400 0 L470 720" stroke="#fff" stroke-width="22"/><path d="M0 300 L1180 260" stroke="#fff" stroke-width="18"/><path d="M700 0 L760 720" stroke="#fff" stroke-width="14"/><path d="M0 520 L1180 560" stroke="#fff" stroke-width="14"/>
+    <rect x="500" y="320" width="180" height="180" fill="#cfe3c7" rx="8"/><rect x="800" y="60" width="300" height="180" fill="#cfe3c7" rx="8"/>
+    <!-- others' marks -->
+    <g fill="#f97316" stroke="#fff" stroke-width="2"><circle cx="560" cy="200" r="9"/><circle cx="640" cy="420" r="9"/><circle cx="905" cy="330" r="9"/><circle cx="1010" cy="600" r="9"/><circle cx="820" cy="640" r="9"/><circle cx="1090" cy="180" r="9"/></g>
+    <circle cx="905" cy="330" r="14" fill="none" stroke="#c2410c" stroke-width="3"/>
+    <text x="580" y="205" font-size="11" fill="#7c2d12">👍 4</text><text x="660" y="425" font-size="11" fill="#7c2d12">👍 2</text><text x="1030" y="605" font-size="11" fill="#7c2d12">👍 1 👎 1</text>
+    <!-- own mark -->
+    <path d="M740 470 c-10 -14 -10 -26 0 -34 c10 8 10 20 0 34z" fill="#4f46e5" stroke="#fff" stroke-width="2" transform="translate(0,-6) scale(1.6) translate(-278,-190)"/>
+  </svg></div>
+
+  <div class="panel">
+    <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px;">1 / 2</div>
+    <p class="sec-title">Dog bins — yes, really</p>
+    <p class="sec-sub">Tell us where a bin is needed. If someone already marked your spot, support their mark instead of adding another.</p>
+
+    <p class="q-label">Where do we need a dog bin?</p>
+    <div class="drawbtn"><span class="ic">📍</span><div><div style="font-weight:600;">Place a mark</div><div class="help">Tap the map, then answer «Why here?»</div></div></div>
+
+    <div class="objs-head"><span class="q-label" style="margin:0;">Marks by other respondents</span><span class="cnt">37 · you reacted to <b style="color:var(--success);">1</b></span></div>
+    <div class="orow done"><span>Bin by the park gate</span><span class="tally">👍 4 · 👎 0 ✓</span></div>
+    <div class="orow"><span>Corner of Mill Lane</span><span class="tally">👍 2</span></div>
+    <div class="orow"><span>Bus stop, Watling St</span><span class="tally">👍 1 · 👎 1</span></div>
+    <div class="orow"><span>Footpath to the school</span><span class="tally">—</span></div>
+    <div class="help" style="margin-top:8px;">Your own marks are not in this list.</div>
+    <div style="position:absolute;bottom:16px;left:20px;right:20px;display:flex;justify-content:flex-end;"><span class="btn primary">Next</span></div>
+  </div>
+
+  <div class="popup" style="left:840px;top:60px;">
+    <div class="callout" style="top:-30px;left:0;">someone else's mark · same popup as objects</div>
+    <div class="ttl">Bus stop, Watling St</div>
+    <div class="by">marked by another respondent · 3 days ago</div>
+    <div class="tallies"><span>👍 <b>1</b></span><span>👎 <b>1</b></span><span class="muted" style="font-size:12px;align-self:center;">· 2 comments</span></div>
+    <div class="cmt">«Bags get left on the bench every morning»</div>
+    <div class="cmt">«There is one 50 m away already»</div>
+    <div class="help" style="margin-top:-2px;">comments visible only when the layer option is on</div>
+    <div class="qq">Do you support this?</div>
+    <div class="thumbs"><span class="th">👍 Yes</span><span class="th">👎 No</span></div>
+    <div class="ta">Your comment (optional)</div>
+    <div class="apply">✓</div>
+  </div>
+  <div class="callout" style="left:735px;top:520px;">my own mark · blue, editable, not in the list</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>3 · Responses → Shared map — moderation and what the council actually gets</h2>
+<div class="frame resp">
+  <div class="toolbar"><span class="chip on">All 37</span><span class="chip">Pending 3</span><span class="chip">Hidden 1</span><span class="muted" style="margin-left:auto;font-size:12px;">Layer «Marks: Where do we need a dog bin?» · approve first: <b>on</b> · tallies: on · comments: off</span></div>
+  <table>
+    <tr><th>Mark</th><th>Why here? (label)</th><th>👍</th><th>👎</th><th>Comments</th><th>Status</th><th></th></tr>
+    <tr><td>#212 · 52.04, -0.79</td><td>Bin by the park gate</td><td>4</td><td>0</td><td>1</td><td><span class="st live">visible</span></td><td><span class="btn sm">Hide</span></td></tr>
+    <tr><td>#231 · 52.05, -0.80</td><td>Bus stop, Watling St</td><td>1</td><td>1</td><td>2 <span class="muted">(1 hidden)</span></td><td><span class="st live">visible</span></td><td><span class="btn sm">Hide</span></td></tr>
+    <tr><td>#240 · 52.04, -0.78</td><td>Next to the Ivanovs, they never clean up</td><td>—</td><td>—</td><td>0</td><td><span class="st pend">pending</span></td><td><span class="btn sm primary">Approve</span> <span class="btn sm danger">Hide</span></td></tr>
+    <tr><td>#238 · 52.06, -0.81</td><td class="muted">(no label)</td><td>—</td><td>—</td><td>0</td><td><span class="st pend">pending</span></td><td><span class="btn sm primary">Approve</span> <span class="btn sm danger">Hide</span></td></tr>
+    <tr><td>#199 · 52.03, -0.79</td><td class="muted">test test</td><td>0</td><td>0</td><td>0</td><td><span class="st hid">hidden</span></td><td><span class="btn sm">Show</span></td></tr>
+  </table>
+  <p class="help" style="margin-top:12px;">Same table as the per-object results from #155, plus the status column and per-comment hide (in the row expander). Hidden = not on the shared map, still in your data and export.
+  Export: <code>objects_&lt;code&gt;.csv</code> and <code>layers/&lt;name&gt;.results.geojson</code> with <code>votes_up</code>, <code>votes_down</code>, <code>comments</code> — one row per mark, so ten residents asking for the same corner are one row with 👍 9, not ten pins.</p>
+</div>
+
+</body>
+</html>
