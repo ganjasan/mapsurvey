@@ -23,20 +23,20 @@
 
 ## 3. Editor (spec `survey-editor` delta, design D4)
 
-- [ ] 3.1 `editor_survey_layer_update`: accept `style` (JSON string), normalise, 400 with the reason on `LayerValidationError`; payload returns the normalised style
-- [ ] 3.2 `GET …/layers/<id>/style-summary/?field=` endpoint (owner, 404 under kill switch / for `question` layers)
-- [ ] 3.3 Card template: Style block per mockup (base controls; switch; property picker from `_layer_property_names`; mode tabs; class table; other row; auto-fill; legend switch); `question` layers: base only
-- [ ] 3.4 Card JS (`survey_settings_panel.html`): state → `style` JSON on change (debounced), auto-fill via the summary endpoint with the Okabe-Ito palette / viridis-like ramp and quantile or equal breaks, live preview mini-map re-styled from a ≤300-object subset, unmatched-count warning, "by attribute" pill on the head row
-- [ ] 3.5 Tests: update endpoint (valid, clamped, too many classes → 400, question layer base-only); summary endpoint; card markup (block present, question layer without rule editor); browser pass on dev for the JS
+- [x] 3.1 `editor_survey_layer_update`: accept `style` (JSON string), normalise, 400 with the reason on `LayerValidationError`; payload returns the normalised style
+- [x] 3.2 `GET …/layers/<id>/style-summary/?field=` endpoint (owner, 404 under kill switch / for `question` layers)
+- [x] 3.3 Card template: Style block per mockup (base controls; switch; property picker from `_layer_property_names`; mode tabs; class table; other row; auto-fill; legend switch); `question` layers: base only
+- [x] 3.4 Card JS (`survey_settings_panel.html`): state → `style` JSON on change (debounced), auto-fill via the summary endpoint with the Okabe-Ito palette / viridis-like ramp and quantile or equal breaks, live preview mini-map re-styled from a ≤300-object subset, unmatched-count warning, "by attribute" pill on the head row
+- [x] 3.5 Tests: update endpoint (valid, clamped, too many classes → 400, question layer base-only); summary endpoint; card markup — 33 OK. [ ] Browser pass of the card JS is the owner's (automation cannot log in)
 
 ## 4. Serialization (spec `survey-serialization` delta)
 
-- [ ] 4.1 `serialize_layers` writes `style`; `_clean_layer_config` normalises it; legacy archives default
-- [ ] 4.2 Tests: round-trip; edited archive clamped
+- [x] 4.1 `serialize_layers` writes `style`; `_clean_layer_config` normalises it; legacy archives default
+- [x] 4.2 Tests: round-trip; edited archive clamped
 
 ## 5. Verification and close-out
 
 - [ ] 5.1 Full suite once after; `openspec validate --strict layer-style`
 - [ ] 5.2 Browser pass on the dev stand with the Sarasota export (worktree `responses-reference-layers` dev has it; or a synthetic 4-class segments layer): rule by `priority_class`, graduated by `priority_score`, icons on a points layer, legend on respondent / Responses / public results, mobile tap targets unchanged. Screenshots into the change folder
-- [ ] 5.3 CLAUDE.md: a paragraph on `style` normalisation being the one validator and the factory being the one styling site
+- [x] 5.3 CLAUDE.md: a paragraph on `style` normalisation being the one validator and the factory being the one styling site
 - [ ] 5.4 PR to master; Discord `#announcements` after merge; ping mrgmiami (Sarasota) with the preview — they are the design partner for this

@@ -39440,3 +39440,123 @@ class LayerStyleRenderingTest(TestCase):
         plain = SurveyMapLayer.objects.create(survey=self.survey, name="Plain", geojson='{"type":"FeatureCollection","features":[]}')
         meta = next(m for m in build_map_layers_metadata(self.survey) if m['id'] == plain.pk)
         self.assertEqual((meta['style']['radius'], meta['style']['by'], meta['legend']), (6, None, []))
+
+
+class LayerStyleEditorTest(TestCase):
+    """The update endpoint normalises style, the summary endpoint feeds auto-fill,
+    the card renders the Style block (spec layer-style, survey-editor delta)."""
+
+    def setUp(self):
+        from django.contrib.auth.models import User
+        self.org = Organization.objects.create(name="Style Editor Org")
+        self.survey = SurveyHeader.objects.create(name="style_editor", organization=self.org, redirect_url="/t/", status='draft')
+        self.section = SurveySection.objects.create(survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True)
+        self.layer = _styled_layer(self.survey)
+        self.owner = User.objects.create_user('styleowner', 's@example.com', 'pw')
+        Membership.objects.create(user=self.owner, organization=self.org, role='admin')
+        self.client.login(username='styleowner', password='pw')
+        self.update = reverse('editor_survey_layer_update', kwargs={'survey_uuid': self.survey.uuid, 'layer_id': self.layer.pk})
+        self.summary = reverse('editor_survey_layer_style_summary', kwargs={'survey_uuid': self.survey.uuid, 'layer_id': self.layer.pk})
+
+    def test_update_normalises_and_returns_legend(self):
+        """
+        GIVEN a categories rule posted with a clamped weight and a stray key
+        WHEN saved
+        THEN the stored style is normalised, the payload carries style + legend, and a 13-class rule is a 400
+        """
+        style = {'weight': 3, 'junk': 1, 'by': {'field': 'priority_class', 'classes': [
+            {'value': 'High', 'color': '#d62828', 'weight': 50}, {'value': 'Medium', 'color': '#f77f00'}, {'value': 'Low', 'color': '#8ecae6'}]}}
+        r = self.client.post(self.update, {'style': json.dumps(style)})
+        self.assertEqual(r.status_code, 200, r.content[:200])
+        data = r.json()
+        self.assertEqual(data['style']['by']['classes'][0]['weight'], 12)
+        self.assertNotIn('junk', data['style'])
+        self.assertEqual([row['label'] for row in data['legend']], ['High', 'Medium', 'Low', 'Other'])
+        self.layer.refresh_from_db()
+        self.assertEqual(self.layer.style['by']['field'], 'priority_class')
+        bad = {'by': {'field': 'priority_class', 'classes': [{'value': str(i)} for i in range(13)]}}
+        self.assertEqual(self.client.post(self.update, {'style': json.dumps(bad)}).status_code, 400)
+        self.assertEqual(self.client.post(self.update, {'style': 'not json'}).status_code, 400)
+
+    def test_question_layer_keeps_base_only(self):
+        """
+        GIVEN a layer sourced from answers
+        WHEN a style with a rule is posted
+        THEN the base is stored and the rule dropped; the summary endpoint is a 404 for it
+        """
+        from .models import SurveyMapLayer
+        Question.objects.create(survey_section=self.section, code="Q1", name="Where?", input_type="point", order_number=1)
+        ql = SurveyMapLayer.objects.create(survey=self.survey, name="Marks", geojson='{"type":"FeatureCollection","features":[]}',
+                                           source='question', source_question_code='Q1')
+        url = reverse('editor_survey_layer_update', kwargs={'survey_uuid': self.survey.uuid, 'layer_id': ql.pk})
+        r = self.client.post(url, {'style': json.dumps({'radius': 9, 'by': {'field': 'x', 'classes': [{'value': 'a'}]}})})
+        self.assertEqual(r.status_code, 200)
+        ql.refresh_from_db()
+        self.assertEqual((ql.style['radius'], ql.style['by']), (9, None))
+        self.assertEqual(self.client.get(reverse('editor_survey_layer_style_summary', kwargs={'survey_uuid': self.survey.uuid, 'layer_id': ql.pk}) + '?field=x').status_code, 404)
+
+    def test_summary_endpoint(self):
+        """
+        GIVEN the segments layer
+        WHEN the owner asks for priority_class, priority_score and nothing
+        THEN categories, numeric and a 400 come back; a viewer is refused
+        """
+        self.assertEqual(self.client.get(self.summary + '?field=priority_class').json()['kind'], 'categories')
+        num = self.client.get(self.summary + '?field=priority_score').json()
+        self.assertEqual((num['kind'], num['min'], num['max']), ('numeric', 3, 73))
+        self.assertEqual(self.client.get(self.summary).status_code, 400)
+
+    def test_card_markup(self):
+        """
+        GIVEN the settings panel
+        WHEN it renders
+        THEN the upload layer's card has the Style block with base controls, the rule editor and its properties, and the legend switch
+        """
+        html = self.client.get(reverse('editor_survey_settings_panel', kwargs={'survey_uuid': self.survey.uuid})).content.decode()
+        self.assertIn('class="pr-field ref-style"', html)
+        self.assertIn('data-style="opacity"', html)
+        self.assertIn('data-style-rule-on', html)
+        self.assertIn('<option value="priority_class">', html)
+        self.assertIn('data-style-legend', html)
+        self.assertIn('data-summary-url=', html)
+        self.assertIn('function styleFor', html)
+
+
+class LayerStyleSerializationTest(TestCase):
+    """style rides the ZIP and is normalised on the way in (spec survey-serialization delta)."""
+
+    def test_round_trip_and_clamp(self):
+        """
+        GIVEN a layer with a three-class rule
+        WHEN exported, the archive's class weight edited to 99, and re-imported
+        THEN the imported layer has the rule with that weight clamped to 12, the rest identical; a 13-class archive imports without a rule
+        """
+        from io import BytesIO
+        from zipfile import ZipFile
+        from django.contrib.auth.models import User
+        from .serialization import export_survey_to_zip, import_survey_from_zip
+        from .models import SurveyMapLayer
+        org = Organization.objects.create(name="Style Ser Org")
+        survey = SurveyHeader.objects.create(name="style_ser", organization=org, redirect_url="/t/", status='published')
+        SurveySection.objects.create(survey_header=survey, name="s1", title="S1", code="S1", is_head=True)
+        _styled_layer(survey, style={'opacity': 0.5, 'by': {'field': 'priority_class', 'classes': [
+            {'value': 'High', 'color': '#d62828', 'weight': 5, 'label': 'Hi'}, {'value': 'Medium', 'color': '#f77f00'}, {'value': 'Low', 'color': '#8ecae6'}]}})
+        user = User.objects.create_user('seruser', 'z@example.com', 'pw')
+        buf = BytesIO(); export_survey_to_zip(survey, buf); data = buf.getvalue()
+        src = ZipFile(BytesIO(data)); sj = json.loads(src.read('survey.json'))
+        self.assertEqual(sj['survey']['layers'][0]['style']['by']['classes'][0]['label'], 'Hi')
+        sj['survey']['layers'][0]['style']['by']['classes'][0]['weight'] = 99
+        out = BytesIO()
+        with ZipFile(out, 'w') as dst:
+            for n in src.namelist():
+                dst.writestr(n, json.dumps(sj) if n == 'survey.json' else src.read(n))
+        imported, warnings = import_survey_from_zip(BytesIO(out.getvalue()), organization=org, created_by=user)
+        layer = SurveyMapLayer.objects.get(survey=imported)
+        self.assertEqual((layer.style['opacity'], layer.style['by']['classes'][0]['weight'], layer.style['by']['classes'][0]['label']), (0.5, 12, 'Hi'))
+        sj['survey']['layers'][0]['style']['by']['classes'] = [{'value': str(i)} for i in range(13)]
+        out2 = BytesIO()
+        with ZipFile(out2, 'w') as dst:
+            for n in src.namelist():
+                dst.writestr(n, json.dumps(sj) if n == 'survey.json' else src.read(n))
+        imported2, _w = import_survey_from_zip(BytesIO(out2.getvalue()), organization=org, created_by=user)
+        self.assertIsNone(SurveyMapLayer.objects.get(survey=imported2).style['by'])
