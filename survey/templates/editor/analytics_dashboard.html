@@ -126,7 +126,7 @@
         {% if geo_features_count or map_layers %}
         {% include "editor/partials/analytics_geo_map.html" %}
         {% else %}
-        <div class="text-center text-muted py-5"><i class="fas fa-map mr-2"></i>{% trans "No geo questions in this survey" %}</div>
+        <div class="text-center text-muted py-5"><i class="fas fa-map mr-2"></i>{% if has_geo_questions %}{% trans "No map answers yet" %}{% else %}{% trans "No geo questions in this survey" %}{% endif %}</div>
         {% endif %}
     </div>
     {# Charts sub-panel #}

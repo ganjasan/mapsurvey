@@ -109,11 +109,16 @@
             {% else %}
             <div class="rv2-empty" data-testid="rv2-map-empty">
                 <div class="rv2-empty-icon"><i class="fas fa-map"></i></div>
+                {% if has_geo_questions %}
+                <b>{% trans "No map answers yet" %}</b>
+                <p>{% blocktrans %}This survey has map questions, but nobody has answered them yet — responses will appear here on a live map as they arrive.{% endblocktrans %}</p>
+                {% else %}
                 <b>{% trans "No geo questions in this survey" %}</b>
                 <p>{% blocktrans %}Add a point, line or polygon question in the Survey tab — responses will appear here on a live map.{% endblocktrans %}</p>
                 <a class="btn btn-outline-secondary btn-sm" href="/editor/surveys/{{ survey.uuid }}/">
                     <i class="fas fa-plus"></i> {% trans "Add a map question" %}
                 </a>
+                {% endif %}
             </div>
             {% endif %}
         </section>

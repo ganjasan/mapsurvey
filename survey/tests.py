@@ -39560,3 +39560,37 @@ class LayerStyleSerializationTest(TestCase):
                 dst.writestr(n, json.dumps(sj) if n == 'survey.json' else src.read(n))
         imported2, _w = import_survey_from_zip(BytesIO(out2.getvalue()), organization=org, created_by=user)
         self.assertIsNone(SurveyMapLayer.objects.get(survey=imported2).style['by'])
+class ResponsesMapEmptyStateTest(TestCase):
+    """The empty Responses map tells the two stories apart (bug reported 2026-09-05)."""
+
+    def setUp(self):
+        from django.contrib.auth.models import User
+        self.org = Organization.objects.create(name="Empty Map Org")
+        self.survey = SurveyHeader.objects.create(name="empty_map", organization=self.org, redirect_url="/t/", status='published')
+        self.section = SurveySection.objects.create(survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True)
+        owner = User.objects.create_user('emptyowner', 'e@example.com', 'pw')
+        Membership.objects.create(user=owner, organization=self.org, role='admin')
+        self.client.login(username='emptyowner', password='pw')
+        self.url = reverse('editor_survey_analytics', kwargs={'survey_uuid': self.survey.uuid})
+
+    def test_geo_question_without_answers(self):
+        """
+        GIVEN a survey with a point question and no answers
+        WHEN the owner opens Responses
+        THEN the map pane says there are no map answers yet, not that there are no geo questions
+        """
+        Question.objects.create(survey_section=self.section, code="Q1", name="Where?", input_type="point", order_number=1)
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('No map answers yet', html)
+        self.assertNotIn('No geo questions in this survey', html)
+
+    def test_no_geo_question(self):
+        """
+        GIVEN a survey without any geo question
+        WHEN the owner opens Responses
+        THEN the map pane says there are no geo questions and offers to add one
+        """
+        Question.objects.create(survey_section=self.section, code="T1", name="Text", input_type="text", order_number=1)
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('No geo questions in this survey', html)
+        self.assertIn('Add a map question', html)
