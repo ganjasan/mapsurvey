@@ -442,7 +442,7 @@ def label_for_answer(answer, label_code):
     return value[:255]
 
 
-def sync_question_layer(layer, session):
+def sync_question_layer(layer, session, rebuild=True):
     """Upsert `layer`'s objects for one session from its geo answers.
 
     The n-th stored feature is `s<session>-<n>`: an existing key is updated in
@@ -483,8 +483,35 @@ def sync_question_layer(layer, session):
             )
             next_position += 1
     layer.items.filter(source_session=session).exclude(key__in=seen).delete()
-    rebuild_layer(layer)
+    if rebuild:
+        rebuild_layer(layer)
     return len(seen)
+
+
+def backfill_question_layer(layer):
+    """Materialise every session that ALREADY answered the source question.
+
+    Materialisation otherwise runs only at the end of a section POST, so a
+    layer created after collection started, or answers arriving through a
+    ZIP import, showed "0 features" until the next respondent happened to
+    submit. Sessions of every version count — the question is resolved by
+    code inside each session's own survey. Returns the number of objects."""
+    from survey.models import SurveyHeader, SurveySession
+    if layer.source != 'question' or not layer.source_question_code:
+        return 0
+    owner = layer_owner(layer.survey)
+    family = [owner] + list(SurveyHeader.objects.filter(canonical_survey=owner))
+    sessions = (SurveySession.objects
+                .filter(survey__in=family,
+                        answer__question__code=layer.source_question_code,
+                        answer__question__input_type__in=GEO_INPUT_TYPES,
+                        answer__parent_answer_id__isnull=True)
+                .distinct().order_by('id'))
+    total = 0
+    for session in sessions:
+        total += sync_question_layer(layer, session, rebuild=False)
+    rebuild_layer(layer)
+    return total
 
 
 def sync_question_layers_for_session(session, questions):
