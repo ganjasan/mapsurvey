@@ -131,21 +131,42 @@ The system SHALL display a dynamic choices editor when the question's input_type
 - **THEN** the choices editor is not displayed
 
 ### Requirement: Sub-question management for geo questions
-The system SHALL allow adding, editing, and deleting sub-questions for geo-type questions (point, line, polygon). Sub-questions SHALL have `parent_question_id` set to the geo question. The sub-question form SHALL support the same fields as regular questions.
+The system SHALL allow adding, editing, and deleting sub-questions for questions that put
+objects on the map: geo-type questions (point, line, polygon) and `layer_objects`
+questions. Sub-questions SHALL have `parent_question_id` set to the parent question. The
+sub-question form SHALL support the same fields as regular questions.
 
-The entry point for adding a sub-question SHALL be a prominent, full-width button labelled "+ Add Sub-question" with a `fa-plus` icon, rendered **inside** every geo-type question card directly **below** the sub-question list. The button SHALL always be visible on geo-type cards — including when the sub-question list is empty. The button SHALL match the visual style of the section-level "+ New Question" button (dashed-border, subdued, accent-on-hover), sized for the nested context.
+The single entry point into the "New Sub-question" modal SHALL be the section list: a
+prominent, full-width button labelled "+ Add Sub-question" with a `fa-plus` icon, rendered
+**inside** every parent-capable question card directly **below** the sub-question list,
+always visible including when the list is empty, styled like the section-level "+ New
+Question" button, sized for the nested context. The question modal itself SHALL NOT carry a
+Sub-questions section: a question being created has no id to hang sub-questions on, so a
+modal section could only ever work for edits, and a control that appears on the second
+open but not the first reads as broken.
 
-When the survey is in a read-only state (status `published` or `closed`), the button SHALL be rendered as `disabled` and SHALL show the tooltip "Create a draft to edit", consistent with all other editor structural-edit affordances. There SHALL NOT be a separate icon-button affordance for adding sub-questions.
+When the survey is in a read-only state (status `published` or `closed`), the entry point
+SHALL be rendered `disabled` with the tooltip "Create a draft to edit". There SHALL NOT be
+a separate icon-button affordance for adding sub-questions.
 
-A sub-question SHALL NOT be a geo-type question itself. The sub-question form (used for both creation and for editing an existing sub-question) SHALL exclude `point`, `line`, and `polygon` from the `input_type` field's available choices. A POST that attempts to create or update a sub-question with `input_type` in `{point, line, polygon}` SHALL be rejected by form validation and SHALL NOT mutate the database. The same `input_type` field SHALL continue to offer all geo and non-geo options when the form is used to create or edit a top-level question.
+A sub-question SHALL NOT be a geo-type question or a `layer_objects` question. The
+sub-question form (creation and edit) SHALL exclude `point`, `line`, `polygon` and
+`layer_objects` from `input_type`. A POST that attempts to create or update a sub-question
+with one of those types SHALL be rejected by form validation and SHALL NOT mutate the
+database. The same `input_type` field SHALL continue to offer all types when the form is
+used for a top-level question.
 
 #### Scenario: Add sub-question to a point question
 - **WHEN** the user clicks "+ Add Sub-question" on a point-type question card and creates a choice sub-question
 - **THEN** a Question is created with `parent_question_id` set to the point question, and it appears nested under the parent in the question list
 
-#### Scenario: Sub-question button only on geo questions
-- **WHEN** the question list shows a `text` question and a `point` question
-- **THEN** only the `point` question card renders an "+ Add Sub-question" button; the `text` question card renders no such button
+#### Scenario: No sub-questions does not block
+- **WHEN** the user creates a polygon question and saves it without any sub-question
+- **THEN** the question is saved; the modal carries no Sub-questions section on create or on edit
+
+#### Scenario: Sub-question button only on parent-capable questions
+- **WHEN** the question list shows a `text` question, a `point` question and a `layer_objects` question
+- **THEN** the `point` and `layer_objects` cards render an "+ Add Sub-question" button; the `text` card renders none
 
 #### Scenario: Button visible when no sub-questions exist
 - **WHEN** a `polygon` question has zero sub-questions
@@ -156,28 +177,28 @@ A sub-question SHALL NOT be a geo-type question itself. The sub-question form (u
 - **THEN** the "+ Add Sub-question" button is rendered below the sub-question list, in addition to the listed sub-questions
 
 #### Scenario: Button disabled in read-only state
-- **WHEN** the survey status is `published` and the editor renders a geo question card
+- **WHEN** the survey status is `published` and the editor renders a parent-capable question card
 - **THEN** the "+ Add Sub-question" button is rendered with the `disabled` attribute and the tooltip "Create a draft to edit"
 
 #### Scenario: Legacy icon-button entry point removed
-- **WHEN** the editor renders any geo question card
+- **WHEN** the editor renders any parent-capable question card
 - **THEN** the q-actions row contains only the edit and delete icon buttons; no `fa-sitemap` icon button is present
 
-#### Scenario: Sub-question creation form excludes geo input types
-- **WHEN** the user opens the "New Sub-question" modal for a geo question
-- **THEN** the `input_type` select offers no `point`, `line`, or `polygon` options (and continues to offer non-geo options such as `text`, `choice`, `number`, `image`)
+#### Scenario: Sub-question creation form excludes parent types
+- **WHEN** the user opens the "New Sub-question" modal for a geo or `layer_objects` question
+- **THEN** the `input_type` select offers no `point`, `line`, `polygon` or `layer_objects` options (and continues to offer non-parent options such as `text`, `choice`, `rating`, `thumbs`, `number`, `image`)
 
-#### Scenario: Sub-question creation rejects geo input types server-side
-- **WHEN** a POST is sent to `editor_subquestion_create` with `input_type=point` (e.g. by a stale or crafted request)
+#### Scenario: Sub-question creation rejects parent types server-side
+- **WHEN** a POST is sent to `editor_subquestion_create` with `input_type=point` or `input_type=layer_objects`
 - **THEN** no Question is created and the response re-renders the form with a validation error on `input_type`
 
-#### Scenario: Sub-question edit form excludes geo input types
-- **WHEN** the user opens the edit modal for an existing sub-question (a Question with `parent_question_id` set)
-- **THEN** the `input_type` select offers no `point`, `line`, or `polygon` options
+#### Scenario: Sub-question edit form excludes parent types
+- **WHEN** the user opens the edit modal for an existing sub-question
+- **THEN** the `input_type` select offers no `point`, `line`, `polygon` or `layer_objects` options
 
-#### Scenario: Top-level question form keeps geo input types
+#### Scenario: Top-level question form keeps parent types
 - **WHEN** the user opens the create modal for a section, or the edit modal for a top-level question
-- **THEN** the `input_type` select still offers `point`, `line`, and `polygon` alongside the non-geo options
+- **THEN** the `input_type` select still offers `point`, `line`, `polygon` and `layer_objects` alongside the other options
 
 ### Requirement: Section map position picker
 The system SHALL provide a Leaflet map picker for setting a section's start_map_position and start_map_zoom. The picker SHALL open in a modal, display a map centered at the section's current position, and allow the user to click to set a new position and adjust zoom.
@@ -364,19 +385,47 @@ existing display-style validation.
 
 ### Requirement: Reference layers card in Survey settings
 Survey settings SHALL include a "Reference layers" card (after "Respondent map")
-showing each layer as a card with color swatch, name, feature count and size, an edit
-state exposing color, label field, key field (both pickable from the file's property
-names) and the info-popups toggle, plus a delete action and a GeoJSON upload drop-zone.
-Layer operations SHALL save via dedicated endpoints and reflect results without a page
-reload. The card SHALL be visible to owners only and absent when the kill switch is off.
+showing each layer as a card with color swatch, name, object count and attachment summary,
+an "Open editor" action leading to the layer's object editor, an edit state exposing a
+*Style* block (base: colour, opacity, line width, point size, point icon; a "Style by
+attribute" switch with property picker, categories / graduated mode, an editable class
+table with colour, width, icon and legend label per class, an "other" class, an
+"Auto-fill from data" action and a "Show legend to respondents" switch, with a live
+preview of the layer), label field, key field (both pickable from the objects' property
+names) and the info-popups toggle, plus a delete action and a "New layer" action. A
+`question` layer's card SHALL show a "source: answers" badge naming the geo question and
+the "Objects on the map" question(s) using it, SHALL expose only name and the base style
+in its edit state, SHALL offer no upload/draw actions, and its "Open editor" SHALL open the
+object editor read-only. The card SHALL NOT create `question` layers — they are created
+from the Objects-on-the-map question form. Layer operations SHALL save via dedicated
+endpoints and reflect results without a page reload; a style that fails normalisation
+SHALL be reported on the card with the reason. Deleting a layer bound to a `layer_objects`
+question SHALL be refused with a message naming the question. The card SHALL be visible to
+owners only and absent when the kill switch is off.
 
-#### Scenario: Upload from the settings card
-- **WHEN** the owner drops `zones.geojson` on the card's upload zone
-- **THEN** a layer card appears with feature count and size, and label/key dropdowns list the file's property names
+#### Scenario: Open the editor from the card
+- **WHEN** the owner clicks "Open editor" on a layer card
+- **THEN** the object editor for that layer opens
 
-#### Scenario: Invalid upload surfaces the reason
-- **WHEN** the owner uploads a non-GeoJSON file
-- **THEN** the card shows the server's human-readable error and no layer is created
+#### Scenario: New layer goes straight to the editor
+- **WHEN** the owner clicks "New layer"
+- **THEN** an empty layer is created and its object editor opens in the empty state
+
+#### Scenario: Bound layer cannot be deleted
+- **WHEN** the owner clicks delete on a layer bound to a `layer_objects` question
+- **THEN** the card shows a message naming the question and the layer remains
+
+#### Scenario: Question layer card points at the question
+- **WHEN** the owner opens the card of a layer sourced from `Q1`, used by "Marks by other residents"
+- **THEN** the card shows the badge, names both, offers name and base style, and no label/key/popup fields, rule editor or upload zone
+
+#### Scenario: Auto-fill a categories rule
+- **WHEN** the owner switches on "Style by attribute", picks `priority_class` and clicks Auto-fill
+- **THEN** the table lists the four values with counts, distinct colours and widths, and saving stores the rule
+
+#### Scenario: Style saves without a reload
+- **WHEN** the owner changes the base opacity
+- **THEN** the card preview updates and the status reads Saved
 
 ### Requirement: Per-section layer visibility checklist
 The section form SHALL include a "Reference layers" checklist between "Layout" and
@@ -392,4 +441,83 @@ The server SHALL drop unknown layer IDs from the submitted list.
 #### Scenario: No checklist on a form section
 - **WHEN** the creator edits a section with `layout = "form"`
 - **THEN** no layer checklist is rendered
+
+### Requirement: Objects on the map question form
+The question modal for `layer_objects` SHALL offer a layer picker limited to the survey's
+layers, a "respondent must answer on at least N objects" field (default 0) replacing the
+`required` checkbox, and the search/chips mode (`auto`/`on`/`off`). Saving without a layer
+SHALL fail validation. The modal preview SHALL show the list block as respondents see it.
+
+#### Scenario: Layer required
+- **WHEN** the creator saves an "Objects on the map" question without picking a layer
+- **THEN** the form re-renders with a validation error on the layer field
+
+#### Scenario: Minimum replaces required
+- **WHEN** the creator opens the form for a `layer_objects` question
+- **THEN** no `required` checkbox is rendered and the minimum-objects field is
+
+### Requirement: Objects on the map source picker
+The "Objects on the map" question form's layer picker SHALL offer two groups: the survey's
+layers, and "Respondents' marks on…" listing the top-level point, line and polygon
+questions that have no `question` layer yet. Saving with a geo question picked SHALL create
+that question's `question` layer (one per geo question; a later pick reuses it) and bind
+the question to it. When the bound layer is question-sourced the form SHALL show and save
+the layer's label sub-question (choice types first, with the note that without a label marks
+are listed by number) and the *show tallies*, *show other people's comments*, *approve marks
+before they appear* settings; these SHALL be edited nowhere else. The type SHALL be offered
+when the survey has at least one layer or one geo question.
+
+#### Scenario: Pick a geo question as the source
+- **WHEN** the owner creates an Objects question, picks "Where do we need a bin?" under Respondents' marks, sets the label to "Why here?" and saves
+- **THEN** a `question` layer for that question exists with that label and default settings, the new question is bound to it, and the geo question no longer appears under Respondents' marks
+
+#### Scenario: Settings travel with the question form
+- **WHEN** the owner edits the bound Objects question, ticks "approve marks before they appear" and saves
+- **THEN** the layer's `approve_first` is true and the layer card shows no such field
+
+#### Scenario: Type offered without any uploaded layer
+- **WHEN** a survey has a point question and no reference layer
+- **THEN** the type picker still offers "Objects on the map"
+
+### Requirement: Question rows are created on type pick
+"New question" SHALL open the type picker alone. Picking a type SHALL create the question
+(empty name) and SHALL re-render the modal as that question's edit modal — autosave,
+type-specific fields, and for parent-capable types the Sub-questions block — adding the
+question to the section list without a reload. The Sub-questions block SHALL list the
+children with edit and delete, and an "Add sub-question" that opens the sub-question form
+inside the same modal; creating or leaving a sub-question SHALL return to the parent's
+modal. Closing the modal while the name is still empty SHALL delete the draft and remove
+its list item. A published or closed survey SHALL refuse the draft like any structural
+edit.
+
+#### Scenario: Pick a type
+- **WHEN** the creator clicks "New question" and picks Point
+- **THEN** a nameless point question exists, the modal shows its edit form with the Sub-questions block, and the section list has a new card
+
+#### Scenario: Add a sub-question without leaving the modal
+- **WHEN** the creator clicks "Add sub-question", fills a text sub-question and creates it
+- **THEN** the modal shows the parent again with the child listed, and the section list card lists it too
+
+#### Scenario: Close an unnamed draft
+- **WHEN** the creator closes the modal before typing a name
+- **THEN** the draft question is deleted and its card disappears
+
+#### Scenario: Close a named question
+- **WHEN** the creator typed a name (autosaved) and closes the modal
+- **THEN** the question stays
+
+### Requirement: Source geo questions are protected
+The system SHALL refuse to delete a point, line or polygon question whose code is the
+`source_question_code` of a `question` layer, with a message naming the layer. Question
+codes are not editable in the editor; where an import remaps codes, the layer's
+`source_question_code` SHALL follow the remap. The question form SHALL show a note naming
+the layer(s) that read its answers.
+
+#### Scenario: Source question cannot be deleted
+- **WHEN** the creator deletes `Q1` while a `question` layer names `Q1`
+- **THEN** the deletion is refused with a message naming the layer
+
+#### Scenario: Remapped code follows on import
+- **WHEN** an archive whose `Q1` collides with an existing code is imported and `Q1` is remapped
+- **THEN** the imported layer's `source_question_code` is the remapped code
 

@@ -12,7 +12,11 @@ The question editor SHALL present input types as a grouped picker — real quest
 files, and display blocks that collect nothing — where each type carries an icon, its display label
 and a one-line hint of what the respondent does. Hovering a type SHALL show a canned example of
 that type as a respondent would see it. The Files group SHALL appear only while
-`FILE_UPLOAD_QUESTIONS` is enabled.
+`FILE_UPLOAD_QUESTIONS` is enabled. The *Questions* group SHALL include `thumbs` ("Thumbs
+up / down", `fa-thumbs-up`). The *Map questions* group SHALL include `layer_objects`
+("Objects on the map", `fa-map-marked-alt`), which SHALL follow the same section-layout rule
+as the geo types and SHALL be offered only when the survey has at least one reference layer
+and the reference-layers kill switch is on.
 
 #### Scenario: Display blocks are visibly not questions
 
@@ -42,6 +46,21 @@ that type as a respondent would see it. The Files group SHALL appear only while
 
 - **WHEN** `FILE_UPLOAD_QUESTIONS` is off
 - **THEN** the picker shows no Files group
+
+#### Scenario: Objects on the map sits with the map questions
+
+- **WHEN** a creator opens the picker on a map-layout section of a survey with a reference layer
+- **THEN** `layer_objects` appears in the Map questions group after the geo types with the label "Objects on the map"
+
+#### Scenario: Objects on the map hidden without a layer
+
+- **WHEN** the survey has no reference layers, or the section layout is `form`
+- **THEN** the picker does not offer `layer_objects`
+
+#### Scenario: Thumbs is an ordinary question
+
+- **WHEN** a creator opens the picker
+- **THEN** `thumbs` appears in the Questions group with a thumbs-up icon and is offered for sub-questions too
 
 ### Requirement: Picker metadata cannot drift from the model
 
