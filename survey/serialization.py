@@ -1262,6 +1262,12 @@ def import_responses_from_archive(
     upload_warnings = extract_upload_images(zip_file, survey)
     warnings.extend(upload_warnings)
 
+    # Imported marks never went through a section POST, which is the only
+    # other place a `question` layer is materialised.
+    from .layers import backfill_question_layer, layer_owner
+    for layer in layer_owner(survey).map_layers.filter(source='question'):
+        backfill_question_layer(layer)
+
     return warnings
 
 

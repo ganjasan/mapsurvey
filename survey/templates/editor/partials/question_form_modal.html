@@ -70,8 +70,7 @@
 </style>
 <div class="modal-header">
     <h5 class="modal-title">
-        {% if parent %}{% blocktrans with name=parent.name %}New Sub-question for “{{ name }}”{% endblocktrans %}{% elif not question %}{% trans "New question — pick a type" %}
-        {% elif question %}{% trans "Edit Question" %}
+        {% if parent %}{% blocktrans with name=parent.name %}New Sub-question for “{{ name }}”{% endblocktrans %}{% elif question %}{% trans "Edit Question" %}
         {% else %}{% trans "New Question" %}
         {% endif %}
     </h5>
@@ -99,11 +98,14 @@
     {% if return_to_parent %}<input type="hidden" name="return_to_parent" value="1">{% endif %}
     {% if not question and not parent %}
     <style>
-      /* New question = the type picker. Picking a type creates the row and the
-         modal re-renders in edit mode (spec survey-editor). */
-      form[data-create-picker] .form-group:not(#fg-input_type), form[data-create-picker] .choices-editor,
-      form[data-create-picker] .qtp-preview-col, form[data-create-picker] .modal-footer .btn-primary,
-      form[data-create-picker] .visibility-block { display: none !important; }
+      /* New question = the edit modal's shell with no type picked. Name, Subtext
+         and the preview column are there from the start; only what sits BELOW the
+         picker depends on the type, so only that (and Create) waits for the pick.
+         Picking a type creates the row and the modal re-renders in edit mode with
+         the same layout — no jump (spec survey-editor "Question rows are created
+         on type pick"). */
+      form[data-create-picker] .qtp-form-col > #fg-input_type ~ *,
+      form[data-create-picker] .modal-footer .btn-primary { display: none !important; }
     </style>
     {% endif %}
     <div class="modal-body qtp-body-cols">
@@ -871,7 +873,11 @@
 
     function qtpSyncCards() {
         if (!picker || !inputTypeSelect) return;
+        // New question: no type is picked yet, whatever the select's default —
+        // a lit "Text" tile would read as a choice already made.
+        var createMode = picker.closest('form') && picker.closest('form').hasAttribute('data-create-picker');
         picker.querySelectorAll('.qtp-card').forEach(function(card) {
+            if (createMode) { card.classList.remove('selected'); if (hintLine) hintLine.textContent = ''; return; }
             var on = card.getAttribute('data-qtp-value') === inputTypeSelect.value;
             card.classList.toggle('selected', on);
             if (on && hintLine) hintLine.textContent = card.getAttribute('data-qtp-hint') || '';
@@ -889,9 +895,15 @@
                 if (form._draftPending) return;
                 form._draftPending = true;
                 card.classList.add('selected');
+                // Name and Subtext are typed before the type as often as after;
+                // the draft carries them so the re-render shows what was typed.
+                var nameEl = form.querySelector('[name="name"]');
+                var subtextEl = form.querySelector('[name="subtext"]');
                 htmx.ajax('POST', form.getAttribute('hx-post'), {
                     target: '#questionModalBody', swap: 'innerHTML',
-                    values: { input_type: card.getAttribute('data-qtp-value'), draft: '1' },
+                    values: { input_type: card.getAttribute('data-qtp-value'), draft: '1',
+                              name: nameEl ? nameEl.value : '',
+                              subtext: subtextEl ? subtextEl.value : '' },
                     headers: { 'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value }
                 }).then(function() { form._draftPending = false; });
                 return;

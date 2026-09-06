@@ -38120,8 +38120,8 @@ class LayerObjectsQuestionEditorTest(TestCase):
         GIVEN a polygon question with one sub-question, and the section's New question modal
         WHEN the edit modal and the create modal render
         THEN the edit modal carries the Sub-questions block listing the child with an in-modal add link,
-             the sub-question's own modal has none, and the create modal is the type picker
-             (data-create-picker, no Create button submit path)
+             the sub-question's own modal has none, and the create modal is the same shell with the
+             picker in create mode (data-create-picker) — Name, Subtext and the preview column present
         """
         poly = Question.objects.create(survey_section=self.section, code="LO003", name="Area", input_type="polygon", order_number=1)
         sub = Question.objects.create(survey_section=self.section, code="LO004", name="Why?", input_type="text",
@@ -38134,7 +38134,9 @@ class LayerObjectsQuestionEditorTest(TestCase):
         self.assertNotIn('id="fg-subquestions"', html)
         html = self.client.get(reverse('editor_question_create', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk})).content.decode()
         self.assertIn('data-create-picker', html)
-        self.assertIn('pick a type', html)
+        self.assertNotIn('pick a type', html)
+        for marker in ('id="fg-name"', 'id="fg-subtext"', 'question-preview-panel qtp-preview-col'):
+            self.assertIn(marker, html)
 
     def test_polygon_without_subquestions_saves(self):
         """
@@ -38633,6 +38635,30 @@ class SharedMapMaterialisationTest(TestCase):
         self.assertIsNotNone(first.source_answer_id)
         self.assertEqual(objs[f's{self.a.pk}-2'].title, '')
 
+    def test_backfill_materialises_marks_stored_before_the_layer_existed(self):
+        """
+        GIVEN two sessions stored marks (one is on hold) while no `question` layer existed,
+              and a third session answered only the WHY sub-question
+        WHEN the layer is backfilled
+        THEN objects exist for both marking sessions under the same keys a section POST would
+             use, the cached geojson carries the clean session's mark, and a second backfill
+             creates no duplicates
+        """
+        from .layers import backfill_question_layer
+        _mark(self.a, self.f['q1'], 13.4, 52.5, why="Early bird")
+        self.b.validation_status = 'on_hold'
+        self.b.save()
+        _mark(self.b, self.f['q1'], 13.5, 52.6)
+        self.f['layer'].items.all().delete()
+        self.assertEqual(backfill_question_layer(self.f['layer']), 2)
+        keys = set(self.f['layer'].items.values_list('key', flat=True))
+        self.assertEqual(keys, {f's{self.a.pk}-1', f's{self.b.pk}-1'})
+        self.f['layer'].refresh_from_db()
+        titles = [ft['properties'].get('_title') for ft in json.loads(self.f['layer'].geojson)['features']]
+        self.assertEqual(titles, ["Early bird"])
+        self.assertEqual(backfill_question_layer(self.f['layer']), 2)
+        self.assertEqual(self.f['layer'].items.count(), 2)
+
     def test_resubmit_keeps_key_and_reactions(self):
         """
         GIVEN A's mark materialised and B reacted 👍 to it
@@ -39124,6 +39150,25 @@ class QuestionDraftOnTypePickTest(TestCase):
         self.assertEqual(r['HX-Trigger'], 'questionUpdated')
         self.assertEqual(self.client.post(self.create_url, {'draft': '1', 'input_type': 'bogus'}).status_code, 400)
         self.assertEqual(Question.objects.filter(survey_section=self.section).count(), 1)
+
+    def test_type_pick_keeps_name_and_subtext_typed_before_it(self):
+        """
+        GIVEN the New question modal with Name and Subtext typed before any type is picked
+        WHEN the picker posts draft=1 with those values
+        THEN the created question carries them (subtext sanitised), the re-rendered modal shows
+             the name and has no draft marker — closing the modal keeps a named question
+        """
+        r = self.client.post(self.create_url, {
+            'draft': '1', 'input_type': 'text', 'name': '  Where do you live?  ',
+            'subtext': '<p>Roughly</p><script>alert(1)</script>',
+        }, HTTP_HX_REQUEST='true')
+        self.assertEqual(r.status_code, 200)
+        q = Question.objects.get(survey_section=self.section)
+        self.assertEqual(q.name, 'Where do you live?')
+        self.assertEqual(q.subtext, '<p>Roughly</p>')
+        html = r.content.decode()
+        self.assertIn('Where do you live?', html)
+        self.assertNotIn('data-draft-question', html)
 
     def test_named_question_loses_the_draft_marker(self):
         """

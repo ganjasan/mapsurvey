@@ -28,7 +28,7 @@ from .models import (
 from .layers import (
     normalize_style, legend_for, LAYER_ICONS,
     validate_layer_upload, LayerValidationError, layers_for, layer_owner,
-    objects_from_features, rebuild_layer, check_object_caps,
+    objects_from_features, rebuild_layer, check_object_caps, backfill_question_layer,
     MAX_LAYER_BYTES, MAX_LAYERS_PER_SURVEY,
 )
 from . import product_events as pe
@@ -1284,6 +1284,9 @@ def _resolve_layer_choice(request, survey):
             source='question', source_question_code=code, label_field=label,
             geojson='{"type":"FeatureCollection","features":[]}',
         )
+        # Marks stored before this moment would otherwise stay invisible
+        # until the next respondent submits.
+        backfill_question_layer(layer)
     post = request.POST.copy()
     post['layer'] = str(layer.pk)
     return post
@@ -1383,7 +1386,11 @@ def editor_question_create(request, survey_uuid, section_id):
         allowed = {value for value, _label in QuestionForm(section=section).fields['input_type'].choices}
         if input_type not in allowed:
             return JsonResponse({'error': 'Unknown question type.'}, status=400)
-        question = Question(survey_section=section, input_type=input_type, name='')
+        # Name/Subtext were on screen before the pick; keep what was typed. A
+        # named draft is simply a question — no draft marker, closing keeps it.
+        name = request.POST.get('name', '').strip()[:Question._meta.get_field('name').max_length]
+        question = Question(survey_section=section, input_type=input_type, name=name,
+                            subtext=coerce_creator_html(request.POST.get('subtext', '')))
         max_order = Question.objects.filter(
             survey_section=section, parent_question_id__isnull=True
         ).aggregate(Max('order_number'))['order_number__max']

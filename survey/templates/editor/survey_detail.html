@@ -194,6 +194,15 @@ document.addEventListener('click', function (e) {
         '#editor-main .add-question-btn, #editor-main .section-form-card > h6, ' +
         '.sidebar-footer .add-question-btn, .sidebar-footer'
     );
+    if (!editIntent && e.target.closest('#editor-main, .sidebar-footer')) {
+        // A disabled control has pointer-events:none (style above), so the
+        // click lands on its parent — often an anonymous wrapper that none of
+        // the selectors name. Claim it when the pointer is over that control.
+        editIntent = Array.prototype.find.call(e.target.querySelectorAll(':scope > [disabled]'), function (ctl) {
+            var r = ctl.getBoundingClientRect();
+            return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+        });
+    }
     if (editIntent) { e.preventDefault(); openEditIntercept(); }
 }, true);
 </script>
