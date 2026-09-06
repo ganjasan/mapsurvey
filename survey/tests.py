@@ -31172,6 +31172,9 @@ class DashboardVariantATest(TestCase):
         self.assertNotIn('dash-count', html.split('</style>')[-1])
 
 
+# The create page renders different buttons depending on ai_available, so the
+# provider must be pinned or the assertions track the developer's .env.
+@override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
 class CreateSurveyWizardTest(TestCase):
     """Create-survey wizard (variant A) behind MOBILE_EDITOR_NAV."""
 
