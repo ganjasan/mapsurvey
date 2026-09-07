@@ -322,10 +322,10 @@
                     <select name="layer" id="id_layer" class="form-control" data-layer-picker>
                         <option value="">— {% trans "pick a layer" %} —</option>
                         {% if layer_options %}<optgroup label="{% trans 'Layers' %}">
-                        {% for l in layer_options %}<option value="{{ l.id }}" data-source="{{ l.source }}" data-labels='{{ l.labels|json_attr }}' data-label-field="{{ l.label_field }}" data-approve-first="{{ l.approve_first|yesno:'1,0' }}" {% if form.layer.value|stringformat:'s' == l.id|stringformat:'s' %}selected{% endif %}>{{ l.name }}{% if l.source == 'question' %} · {% trans "respondents' marks on" %} {{ l.code }}{% else %} · {{ l.feature_count }} {% trans "objects" %}{% endif %}</option>{% endfor %}
+                        {% for l in layer_options %}<option value="{{ l.id }}" data-source="{{ l.source }}" data-labels='{{ l.labels|json_attr }}' data-label-field="{{ l.label_field }}" data-approve-first="{{ l.approve_first|yesno:'1,0' }}" data-default-name="{{ l.default_name }}" {% if form.layer.value|stringformat:'s' == l.id|stringformat:'s' %}selected{% endif %}>{{ l.name }}{% if l.source == 'question' %} · {% trans "respondents' marks on" %} {{ l.code }}{% else %} · {{ l.feature_count }} {% trans "objects" %}{% endif %}</option>{% endfor %}
                         </optgroup>{% endif %}
                         {% if answer_sources %}<optgroup label="{% trans 'Respondents’ marks on…' %}">
-                        {% for q in answer_sources %}<option value="answers:{{ q.code }}" data-source="question" data-labels='{{ q.labels|json_attr }}' data-approve-first="0">{{ q.name }}</option>{% endfor %}
+                        {% for q in answer_sources %}<option value="answers:{{ q.code }}" data-source="question" data-labels='{{ q.labels|json_attr }}' data-approve-first="0" data-default-name="Other respondents' marks">{{ q.name }}</option>{% endfor %}
                         </optgroup>{% endif %}
                     </select>
                     <a class="lo-link" href="{% url 'editor_survey_detail' survey.uuid %}?panel=settings" target="_blank" rel="noopener">{% trans "Upload new…" %}</a>
@@ -996,7 +996,7 @@
             var nameInput = document.querySelector('#questionModalBody [name="name"]');
             var opt = layerPicker.options[layerPicker.selectedIndex];
             if (!nameInput || nameInput.value.trim() || !opt || !opt.value) return;
-            nameInput.value = (opt.textContent || '').split(' · ')[0].trim();
+            nameInput.value = opt.getAttribute('data-default-name') || (opt.textContent || '').split(' · ')[0].trim();
             nameInput.dispatchEvent(new Event('input', { bubbles: true }));
         });
     }

@@ -33603,6 +33603,44 @@ class LayersByQuestionMigrationTest(TestCase):
             size_bytes=len(geojson), position=1,
         )
 
+    def test_default_question_names_and_the_follow_up_migration(self):
+        """
+        GIVEN an uploaded layer "existing-dog-bins" and a marks layer, Objects questions still
+              carrying the raw layer names (as migration 0074 wrote them), one renamed by the
+              creator, and the marks layer never materialised although its source has answers
+        WHEN the 0077 follow-up runs
+        THEN the untouched questions read "Existing dog bins" / "Other respondents' marks", the
+             renamed one is left alone, the marks layer holds an object per answer, and a fresh
+             conversion names new questions the same way
+        """
+        import importlib
+        from .layers import default_question_name, ensure_layer_questions
+        from .models import SurveyMapLayer
+        self.assertEqual(default_question_name(self.a), 'A')
+        self.a.name = 'existing-dog-bins'
+        self.a.save()
+        self.assertEqual(default_question_name(self.a), 'Existing dog bins')
+        q1 = Question.objects.create(survey_section=self.map_section, code="LBQ_Q1", name="Where?", input_type="point", order_number=1)
+        marks = SurveyMapLayer.objects.create(survey=self.survey, name="Marks: Where?", source='question', source_question_code='LBQ_Q1',
+                                              geojson='{"type":"FeatureCollection","features":[]}')
+        self.assertEqual(default_question_name(marks), "Other respondents' marks")
+        raw_a = Question.objects.create(survey_section=self.map_section, code="LBQ_A", name="existing-dog-bins", input_type="layer_objects", layer=self.a, order_number=2)
+        raw_m = Question.objects.create(survey_section=self.map_section, code="LBQ_M", name="Marks: Where?", input_type="layer_objects", layer=marks, order_number=3)
+        renamed = Question.objects.create(survey_section=self.map_section, code="LBQ_B", name="Bins nearby", input_type="layer_objects", layer=self.b, order_number=4)
+        sess = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=sess, question=q1, point=Point(13.4, 52.5))
+        mig = importlib.import_module('survey.migrations.0077_backfill_marks_and_legend_names')
+        mig.forwards(None, None)
+        for q in (raw_a, raw_m, renamed):
+            q.refresh_from_db()
+        self.assertEqual((raw_a.name, raw_m.name, renamed.name), ('Existing dog bins', "Other respondents' marks", 'Bins nearby'))
+        self.assertEqual(marks.items.count(), 1)
+        created = ensure_layer_questions(self.form_section, [])
+        self.assertEqual(created, [])
+        section3 = SurveySection.objects.create(survey_header=self.survey, name="s3", title="Map 2", code="S3", layout='map')
+        names = sorted(q.name for q in ensure_layer_questions(section3, []))
+        self.assertEqual(names, ['B', 'Existing dog bins', "Other respondents' marks"])
+
     def test_conversion_creates_legend_questions_for_visible_unbound_layers(self):
         """
         GIVEN a map section that hid layer B and already binds nothing, and a form section

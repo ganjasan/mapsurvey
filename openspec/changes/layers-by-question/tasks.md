@@ -37,6 +37,11 @@
 - [x] Sub-question adder (chips vs button) depended on the type picked FIRST: both are in the
       markup, toggled by the current type like the block title
 
+- [x] Production follow-up (2026-09-07): marks layers created before #160 never materialised
+      ("0 features" next to 28 answers) → migration 0077 backfills every empty question layer;
+      0074's raw layer names on Objects questions → `layers.default_question_name`
+      ("Existing dog bins", "Other respondents' marks"), also used by the picker's auto-name
+
 ## 1. Model
 - [x] 1.1 `Question.panel_mode` (`list`/`legend`, default `list`) + migration
 - [x] 1.2 `Question.collects_objects` property (layer_objects with ≥1 sub-question)
