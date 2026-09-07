@@ -1,5 +1,8 @@
+# PR previews off (owner, 2026-09-07): every PR spun up a full stack on paid
+# plans; testing happens on local worktree stands now. Flip back to
+# `automatic` when a preview is wanted for a specific PR.
 previews:
-    generation: automatic
+    generation: off
 
 databases:
   - name: mapsurvey-db
