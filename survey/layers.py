@@ -60,6 +60,16 @@ def section_layer_ids(section):
     return seen
 
 
+def default_question_name(layer):
+    """What an Objects question is called when the creator has not named it:
+    a marks layer reads as what it is to the respondent, an uploaded layer's
+    file name becomes words ("existing-dog-bins" → "Existing dog bins")."""
+    if layer.source == 'question':
+        return "Other respondents' marks"
+    name = re.sub(r'[-_]+', ' ', (layer.name or '').strip()).strip()
+    return (name[:1].upper() + name[1:]) if name else 'Layer'
+
+
 def ensure_layer_questions(section, hidden_ids=()):
     """Give `section` a display-only Objects question for every owner layer it
     is not already showing, except the ids in `hidden_ids`.
@@ -83,7 +93,7 @@ def ensure_layer_questions(section, hidden_ids=()):
             continue
         max_order += 1
         created.append(Question.objects.create(
-            survey_section=section, name=(layer.name or '')[:250], input_type='layer_objects',
+            survey_section=section, name=default_question_name(layer)[:250], input_type='layer_objects',
             layer=layer, required=False, min_objects=0, objects_search='auto',
             panel_mode='legend', order_number=max_order, choices=None,
         ))

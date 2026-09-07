@@ -1250,11 +1250,12 @@ def _shared_map_layer_options(survey):
     that already has its layer is listed under the layer, not twice."""
     if not settings.MAP_REFERENCE_LAYERS:
         return [], []
-    from .layers import source_question_for
+    from .layers import source_question_for, default_question_name
     layers, taken = [], set()
     for layer in layers_for(survey):
         entry = {'id': layer.pk, 'name': layer.name, 'source': layer.source, 'code': layer.source_question_code,
-                 'label_field': layer.label_field, 'approve_first': layer.approve_first, 'labels': []}
+                 'label_field': layer.label_field, 'approve_first': layer.approve_first, 'labels': [],
+                 'default_name': default_question_name(layer)}
         if layer.source == 'question':
             entry['labels'] = _label_options(source_question_for(layer))
             taken.add(layer.source_question_code)
