@@ -5,7 +5,9 @@ Bare JS — this partial is included INSIDE the shell's <script> block, next to
 basemap_layers.html. Config arrives via the "ref-layers-data" json_script emitted
 by base_survey_template.html; geometry is fetched per layer from the gated endpoint
 exactly once, because layers live across HTMX section swaps on the persistent map.
-Per-section visibility is applied by initSection() via applyRefLayerVisibility().
+Per-section visibility is applied by initSection() via applyRefLayerVisibility(visibleIds):
+a layer is on a section's map when an Objects-on-the-map question of that section binds
+it, and nowhere else (change layers-by-question).
 Layer construction (styling, markers, labels, popups) lives in ref_layer_factory.html,
 which must be included before this partial.
 {% endcomment %}
@@ -31,7 +33,9 @@ which must be included before this partial.
     var _suppressEvents = false;
 
     layers.forEach(function(meta) {
-        var entry = { meta: meta, layer: null, allowed: true, userOff: false, added: false };
+        // Nothing is allowed until the section says so — the shell loads
+        // every layer of the survey once, each section names the ones it shows.
+        var entry = { meta: meta, layer: null, allowed: false, userOff: false, added: false };
         window._refLayers[meta.id] = entry;
         fetch(meta.url).then(function(r) {
             if (!r.ok) throw new Error('layer ' + meta.id + ' HTTP ' + r.status);
@@ -71,13 +75,13 @@ which must be included before this partial.
         }
     });
 
-    window.applyRefLayerVisibility = function(hiddenIds) {
-        hiddenIds = hiddenIds || [];
+    window.applyRefLayerVisibility = function(visibleIds) {
+        visibleIds = visibleIds || [];
         _suppressEvents = true;
         try {
             for (var id in window._refLayers) {
                 var entry = window._refLayers[id];
-                var allowed = hiddenIds.indexOf(entry.meta.id) === -1;
+                var allowed = visibleIds.indexOf(entry.meta.id) !== -1;
                 if (allowed === entry.allowed) continue;
                 entry.allowed = allowed;
                 if (!entry.layer) continue;

@@ -176,10 +176,6 @@ def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
             "start_map_zoom": section.start_map_zoom,
             "use_geolocation": section.use_geolocation,
             "override_basemap": section.override_basemap,
-            "hidden_layers": sorted(
-                layer_index[i] for i in (section.hidden_layers or [])
-                if i in layer_index
-            ),
             "next_section_name": section.next_section.name if section.next_section else None,
             "prev_section_name": section.prev_section.name if section.prev_section else None,
             "visibility_rule": section.visibility_rule,
@@ -218,6 +214,8 @@ def _serialize_question(question: Question) -> Dict[str, Any]:
         "layer": _layer_position(question),
         "min_objects": question.min_objects,
         "objects_search": question.objects_search,
+        "panel_mode": question.panel_mode,
+        "share_with_respondents": question.share_with_respondents,
         "sub_questions": [
             _serialize_question(sub_q)
             for sub_q in question.subQuestions()
@@ -288,6 +286,7 @@ def serialize_sessions(survey: SurveyHeader) -> List[Dict[str, Any]]:
         sessions.append({
             "start_datetime": session.start_datetime.isoformat() if session.start_datetime else None,
             "end_datetime": session.end_datetime.isoformat() if session.end_datetime else None,
+            "last_activity_at": session.last_activity_at.isoformat() if session.last_activity_at else None,
             "language": session.language,
             "validation_status": session.validation_status,
             "is_deleted": session.is_deleted,
@@ -650,6 +649,17 @@ def import_structure_from_archive(
     # Shared-map layers name a geo question by code; resolve once questions exist.
     warnings.extend(resolve_question_layers(survey, code_remap))
 
+    # Archives from before share_with_respondents carried the sharing flags
+    # on the layer: seed the sub-questions from them, as migration 0076 did.
+    if not _archive_has_share_flags(sections_data):
+        seed_share_flags_from_layers(survey)
+
+    # Archives from before layers-by-question carry a per-section `hidden_layers`
+    # list instead of Objects questions: convert it so the imported survey shows
+    # the same maps the archive did (spec survey-serialization "Section layer
+    # visibility rides as questions"). Newer archives have no such key.
+    convert_hidden_layers(sections, sections_data, layer_ids)
+
     # Resolve section links
     link_warnings = resolve_section_links(sections, sections_data)
     warnings.extend(link_warnings)
@@ -776,10 +786,6 @@ def create_sections(
             start_map_zoom=section_data.get("start_map_zoom"),
             use_geolocation=section_data.get("use_geolocation", False),
             override_basemap=section_data.get("override_basemap"),
-            hidden_layers=[
-                layer_ids[i] for i in (section_data.get("hidden_layers") or [])
-                if isinstance(i, int) and 0 <= i < len(layer_ids) and layer_ids[i] is not None
-            ],
             # next_section and prev_section are resolved later
         )
 
@@ -906,6 +912,8 @@ def _create_question(
         layer_id=_layer_id_from_archive(question_data, input_type, layer_ids),
         min_objects=max(0, int(question_data.get("min_objects") or 0)) if input_type == 'layer_objects' else 0,
         objects_search=question_data.get("objects_search") if question_data.get("objects_search") in ('auto', 'on', 'off') else 'auto',
+        panel_mode=question_data.get("panel_mode") if question_data.get("panel_mode") in ('list', 'legend') else 'list',
+        share_with_respondents=bool(question_data.get("share_with_respondents", False)),
         # image is handled separately during extraction
     )
 
@@ -1155,6 +1163,46 @@ def extract_layers(
     return ids, warnings
 
 
+def _archive_has_share_flags(sections_data) -> bool:
+    def walk(questions):
+        for q in questions or []:
+            if 'share_with_respondents' in q:
+                return True
+            if walk(q.get('sub_questions')):
+                return True
+        return False
+    return any(walk(s.get('questions')) for s in sections_data or [])
+
+
+def seed_share_flags_from_layers(survey: SurveyHeader) -> None:
+    """Legacy layer `show_tallies` / `show_comments` → the sub-questions that
+    collect those answers (Question.share_with_respondents)."""
+    for layer in survey.map_layers.all():
+        subs = Question.objects.filter(parent_question_id__layer=layer, parent_question_id__input_type='layer_objects')
+        if layer.show_tallies:
+            subs.filter(input_type='thumbs').update(share_with_respondents=True)
+        if layer.show_comments:
+            subs.filter(input_type__in=('text', 'text_line')).update(share_with_respondents=True)
+
+
+def convert_hidden_layers(sections, sections_data, layer_ids) -> None:
+    """Legacy `hidden_layers` (indexes into the exported layers array) → one
+    display-only Objects question per layer the section did NOT hide, unless a
+    question of the section already binds it."""
+    from .layers import ensure_layer_questions
+    for section_data in sections_data:
+        if 'hidden_layers' not in section_data:
+            continue
+        section = sections.get(section_data["name"])
+        if section is None:
+            continue
+        hidden = [
+            layer_ids[i] for i in (section_data.get("hidden_layers") or [])
+            if isinstance(i, int) and 0 <= i < len(layer_ids or []) and layer_ids[i] is not None
+        ]
+        ensure_layer_questions(section, hidden)
+
+
 def resolve_question_layers(survey: SurveyHeader, code_remap: Dict[str, str]) -> List[str]:
     """After questions exist: point each `question` layer at the imported code
     (codes may have been remapped) or, when nothing geo answers to it, downgrade
@@ -1286,10 +1334,15 @@ def create_session(
     if session_data.get("end_datetime"):
         end_dt = parse_datetime(session_data["end_datetime"])
 
+    seen_dt = None
+    if session_data.get("last_activity_at"):
+        seen_dt = parse_datetime(session_data["last_activity_at"])
+
     return SurveySession.objects.create(
         survey=survey,
         start_datetime=start_dt or datetime.now(),
         end_datetime=end_dt,
+        last_activity_at=seen_dt or end_dt,
         language=session_data.get("language"),
     )
 

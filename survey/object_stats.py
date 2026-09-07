@@ -163,11 +163,12 @@ def layer_object_stats(layer, excluded_session_ids=None):
     return stats
 
 
-def shared_map_tallies(layer):
-    """{object_key: {'up', 'down', 'comments'}} for a `question` layer — what
-    respondents see next to other people's marks (spec shared-map-layer).
-    Counts 👍/👎 sub-answers and non-hidden text sub-answers of every question
-    bound to the layer, over clean sessions only."""
+def shared_map_tallies(layer, shared_only=True):
+    """{object_key: {'up', 'down', 'comments'}} for a layer of any source —
+    what respondents see next to other people's answers (spec
+    shared-map-layer). Counts 👍/👎 sub-answers and non-hidden text
+    sub-answers of every SHARED sub-question (Question.share_with_respondents)
+    under the questions bound to the layer, over clean sessions only."""
     from .public_results import EXCLUDED_VALIDATION_STATUSES
     rows = (Answer.objects
             .filter(layer_object__layer=layer,
@@ -176,8 +177,12 @@ def shared_map_tallies(layer):
                     question__input_type__in=('thumbs', 'text', 'text_line'),
                     hidden=False,
                     survey_session__is_deleted=False)
-            .exclude(survey_session__validation_status__in=EXCLUDED_VALIDATION_STATUSES)
-            .values_list('layer_object__key', 'question__input_type', 'selected_choices', 'text'))
+            .exclude(survey_session__validation_status__in=EXCLUDED_VALIDATION_STATUSES))
+    if shared_only:
+        # What RESPONDENTS see; the creator's export (shared_map_verdicts)
+        # counts every answer.
+        rows = rows.filter(question__share_with_respondents=True)
+    rows = rows.values_list('layer_object__key', 'question__input_type', 'selected_choices', 'text')
     out = defaultdict(lambda: {'up': 0, 'down': 0, 'comments': 0})
     for key, input_type, codes, text in rows:
         if input_type == 'thumbs':
@@ -194,6 +199,7 @@ def shared_map_comments(obj, limit=10):
     rows = (Answer.objects
             .filter(layer_object=obj, hidden=False,
                     question__input_type__in=('text', 'text_line'),
+                    question__share_with_respondents=True,
                     question__parent_question_id__input_type='layer_objects',
                     survey_session__is_deleted=False)
             .exclude(survey_session__validation_status__in=EXCLUDED_VALIDATION_STATUSES)
@@ -215,7 +221,7 @@ def shared_map_verdicts(survey, question):
         return {}
     out = {}
     for layer in layers:
-        tallies = shared_map_tallies(layer)
+        tallies = shared_map_tallies(layer, shared_only=False)
         for key, answer_id in (LayerObject.objects.filter(layer=layer, source_answer__isnull=False)
                                .values_list('key', 'source_answer_id')):
             t = tallies.get(key, {})

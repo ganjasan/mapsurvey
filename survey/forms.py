@@ -363,7 +363,7 @@ class LayerObjectsWidget(widgets.Widget):
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         a = context['widget']['attrs']
-        for key in ('title', 'subtitle', 'layer_id', 'layer_name', 'question_code', 'min_objects', 'objects_search', 'object_count', 'layer_source'):
+        for key in ('title', 'subtitle', 'layer_id', 'layer_name', 'question_code', 'min_objects', 'objects_search', 'object_count', 'layer_source', 'panel_mode', 'collects', 'layer_color', 'preview'):
             context['widget'][key] = a.get(key)
         return context
 
@@ -381,19 +381,37 @@ class LayerObjectsField(forms.Field):
     def widget_attrs(self, widget):
         attrs = super().widget_attrs(widget)
         layer = self.question.layer
+        # Without sub-questions the block only shows the layer: no counter, no
+        # minimum (spec layer-objects-question; Question.collects_objects).
+        collects = getattr(self.question, 'preview_collects', None)
+        if collects is None:
+            collects = self.question.collects_objects
         attrs.update({
-            'title': self.title,
+            # A question that only shows a layer is often left unnamed: the
+            # layer's name is the natural label then, never "None".
+            'title': self.title or (layer.name if layer else ''),
             'subtitle': self.subtitle,
-            'layer_id': layer.pk if layer else None,
+            # An unsaved layer (live preview of "Respondents' marks on…") has
+            # no pk yet; the block still needs a truthy id to render its shell.
+            'layer_id': (layer.pk or 'new') if layer else None,
             'layer_name': layer.name if layer else '',
+            'layer_color': layer.color if layer else '',
             'question_code': self.question.code,
-            'min_objects': self.question.min_objects,
+            'panel_mode': self.question.panel_mode,
+            'collects': collects,
+            'min_objects': self.question.min_objects if collects else 0,
             'objects_search': self.question.objects_search,
             # A `question` layer's count includes the respondent's own marks
             # and unapproved ones, which their list never shows — no total.
             'object_count': (layer.feature_count if layer and layer.source != 'question' else 0),
             'layer_source': layer.source if layer else '',
         })
+        # The editor's live preview asks for a server-rendered panel: real
+        # objects instead of the empty shell the client would fill from a
+        # map this frame does not have.
+        if layer is not None and layer.pk and getattr(self.question, 'preview_panel', False):
+            from .layers import preview_panel
+            attrs['preview'] = preview_panel(layer)
         return attrs
 
 

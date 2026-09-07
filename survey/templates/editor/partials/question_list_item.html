@@ -5,9 +5,11 @@
         <span class="q-name">{{ question.name|default:"(unnamed)" }}</span>
         <span class="badge badge-secondary">{{ question|input_type_label }}</span>
         {% if question.required %}<span class="badge badge-danger">{% trans "Required" %}</span>{% endif %}
+        {% if question.share_with_respondents %}<span class="badge badge-light" style="border:1px solid #c7d2fe;color:#4f46e5;" title="{% trans 'Other respondents see the answers on the object' %}"><i class="fas fa-users"></i> {% if question.input_type == 'thumbs' %}{% trans "counts shown" %}{% else %}{% trans "comments shown" %}{% endif %}</span>{% endif %}
         {% if question.input_type == 'layer_objects' %}
         {% if question.layer %}<span class="badge" style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;" title="{% trans 'Reference layer' %}"><i class="fas fa-layer-group"></i> {{ question.layer.name|truncatechars:30 }} · {{ question.layer.feature_count }}</span>{% else %}<span class="badge badge-warning"><i class="fas fa-exclamation-triangle"></i> {% trans "no layer" %}</span>{% endif %}
-        {% if question.min_objects %}<span class="badge badge-info" style="background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe;">min {{ question.min_objects }}</span>{% endif %}
+        <span class="badge badge-light" style="border:1px solid #e5e7eb;color:#6b7280;">{% if question.panel_mode == 'legend' %}{% trans "legend" %}{% else %}{% trans "list" %}{% endif %}</span>
+        {% if question.min_objects and question.collects_objects %}<span class="badge badge-info" style="background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe;">min {{ question.min_objects }}</span>{% endif %}
         {% endif %}
         {% load question_utils %}{% with vis=question|visibility_info:survey %}{% if vis %}
         {% if vis.broken %}

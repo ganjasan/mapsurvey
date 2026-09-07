@@ -1,6 +1,7 @@
 import json
 
 from django.conf import settings
+from django.utils import timezone
 from django.core.cache import cache
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
@@ -599,6 +600,9 @@ def analytics_track_event(request):
             return JsonResponse({'error': 'invalid timing'}, status=400)
         metadata['load_ms'] = load_ms
     elif event_type == 'page_leave':
+        # The row itself records when the respondent was last seen; the
+        # Responses table reads it for the duration of abandoned sessions.
+        SurveySession.objects.filter(pk=client_session_id).update(last_activity_at=timezone.now())
         try:
             time_on_page_ms = int(body.get('time_on_page_ms', 0))
         except (ValueError, TypeError):

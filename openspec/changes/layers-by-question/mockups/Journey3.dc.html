@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; font-family: 'DM Sans', system-ui, -apple-system, sans-serif; color: #212529; background: #ffffff; }
+    a { color: #4f46e5; } a:hover { color: #4338ca; }
+    .card { border: 1px solid #e5e7eb; border-radius: 8px; background: #fafafa; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+    .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .title { font-size: 15.2px; font-weight: 600; }
+    .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: #4f46e5; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 999px; padding: 3px 10px; }
+    .ctl { display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 12px; border: 1px solid #ced4da; border-radius: 4px; background: #fff; font-size: 15px; flex: 1; }
+    .help { font-size: 12.5px; color: #868e96; }
+    .lbl { font-size: 13.6px; font-weight: 600; }
+    .divider { height: 1px; background: #e5e7eb; }
+    .row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid rgba(0,0,0,.06); border-radius: 8px; background: #fff; font-size: 14px; }
+    .badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #6c757d; color: #fff; white-space: nowrap; }
+    .switch { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: #5f6368; white-space: nowrap; }
+    .tog { width: 30px; height: 18px; border-radius: 999px; background: #d1d5db; position: relative; flex: none; }
+    .tog::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; }
+    .tog.on { background: #4f46e5; }
+    .tog.on::after { left: 14px; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px dashed #d1d5db; border-radius: 999px; background: #fff; font-size: 12.5px; color: #5f6368; }
+    .step { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #868e96; margin: 0 0 8px; }
+  </style>
+</helmet>
+<div style="width: 700px; padding: 8px; background: #fff; box-sizing: border-box;">
+  <div class="step">Steps 3–6 · Sub-questions added — sharing is per sub-question, for any layer</div>
+  <div class="card">
+    <div class="head"><div class="title">Layer on this map</div><span class="status"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><span>Asks about each object</span></span></div>
+    <div style="display: flex; gap: 10px; align-items: center;"><div class="ctl"><span style="display: inline-flex; align-items: center; gap: 8px;"><span style="width: 12px; height: 12px; border-radius: 3px; background: #2c7be5; display: inline-block;"></span><span>existing-dog-bins</span><span style="font-size: 12.5px; color: #868e96;">· 14 objects</span></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div><a href="#" style="font-size: 13.6px; font-weight: 500; text-decoration: none; white-space: nowrap;">Upload new…</a></div>
+    <div class="divider"></div>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div class="head"><div class="title">Ask about each object</div><span class="help">3 sub-questions · each an export column</span></div>
+      <div class="row"><span style="flex: 1;">Do you like it</span><span class="badge">Thumbs up / down</span><span class="switch"><span class="tog on"></span><span>Others see 👍/👎 counts</span></span></div>
+      <div class="row"><span style="flex: 1;">Anything to add?</span><span class="badge">Text</span><span class="switch"><span class="tog"></span><span>Others see comments</span></span></div>
+      <div class="row"><span style="flex: 1;">How clean is it?</span><span class="badge">Rating</span><span class="help" style="white-space: nowrap;">results for you only</span></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <span class="chip">+ 👍/👎</span><span class="chip">+ Rating</span><span class="chip">+ Comment</span><span class="chip">+ Other…</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
+        <span class="lbl">Minimum objects</span>
+        <div class="ctl" style="flex: 0 0 72px; font-size: 14px;"><span>1</span></div>
+        <span class="help">The respondent must answer about at least this many. 0 = optional.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

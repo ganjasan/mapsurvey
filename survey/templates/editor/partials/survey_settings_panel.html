@@ -194,6 +194,9 @@
                 {% endif %}
                 <div class="ref-style-preview" data-style-preview></div>
               </div>
+              <div class="pr-help" style="margin:.2rem 0 .4rem;">
+                {% if item.shown_in %}{% trans "On the map in" %} {% for t in item.shown_in %}<b>{{ t }}</b>{% if not forloop.last %}, {% endif %}{% endfor %}.{% else %}{% trans "Not on any map yet — add an “Objects on the map” question to a section and pick this layer." %}{% endif %}
+              </div>
               {% if item.layer.source == 'question' %}
               {% comment %}Shared map: objects are respondents' marks on a geo question. Label
               and visibility settings are edited on the Objects-on-the-map question bound

@@ -57,11 +57,36 @@ description, which the object endpoint passed through coerce_creator_html.
         if (!entry || !entry.featureCollection) return false;
         var state = _blocks[code] = {
             el: el, code: code, layerId: layerId, entry: entry,
+            legend: el.dataset.panelMode === 'legend',
             min: parseInt(el.dataset.minObjects, 10) || 0,
             search: el.dataset.search || 'auto',
             q: '', category: null, open: null,
             features: entry.featureCollection.features.map(function(f) { return f.properties || {}; })
         };
+        if (state.legend) {
+            // Legend line (spec layer-objects-question): no list, no tools —
+            // the toggle mirrors the layers control both ways, and features
+            // on the map still open the object popup.
+            var toggle = el.querySelector('[data-lo-toggle]');
+            if (toggle) {
+                toggle.checked = !entry.userOff;
+                toggle.addEventListener('change', function() {
+                    if (!entry.layer || !entry.allowed) return;
+                    if (toggle.checked) { entry.layer.addTo(map); } else { map.removeLayer(entry.layer); }
+                });
+                var sync = function(e) { if (entry.layer && e.layer === entry.layer) toggle.checked = e.type === 'overlayadd'; };
+                map.on('overlayadd', sync);
+                map.on('overlayremove', sync);
+                state.unsync = function() { map.off('overlayadd', sync); map.off('overlayremove', sync); };
+            }
+            entry.layer.on('click', function(e) {
+                if (placing()) return;
+                var p = e.layer && e.layer.feature && e.layer.feature.properties;
+                if (p && p._key) openObject(state, p._key, false);
+            });
+            updateCounter(state);
+            return true;
+        }
         var cats = {};
         state.features.forEach(function(p) { if (p._category) cats[p._category] = (cats[p._category] || 0) + 1; });
         state.cats = cats;
@@ -110,6 +135,7 @@ description, which the object endpoint passed through coerce_creator_html.
     }
 
     function renderRows(state) {
+        if (state.legend) { updateCounter(state); return; }
         var answered = answeredKeys(state.code);
         var visible = state.features.filter(function(p) { return matches(state, p); });
         var html = visible.map(function(p) {
@@ -292,6 +318,7 @@ description, which the object endpoint passed through coerce_creator_html.
 
     // ---- shell hooks --------------------------------------------------------
     window.initLayerObjectBlocks = function() {
+        Object.keys(_blocks).forEach(function(code) { if (_blocks[code].unsync) _blocks[code].unsync(); });
         _blocks = {};
         clearHighlight();
         var dataEl = document.getElementById('object-answers-data');

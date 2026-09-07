@@ -13,7 +13,7 @@ from django.utils.translation import gettext as _
 from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator, SurveyMapLayer, LayerObject
 from .models import FILE_INPUT_TYPES
 from .uploads import attach_upload, detach_unreferenced
-from .layers import build_map_layers_metadata, layer_owner
+from .layers import build_map_layers_metadata, layer_owner, section_layer_ids
 from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role, get_org_membership, SURVEY_ROLE_RANK,
@@ -933,7 +933,10 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 		'selected_language': selected_language,
 		'section_current': section_current,
 		'section_total': section_total,
-		'hidden_layers_json': json.dumps([i for i in (section.hidden_layers or []) if isinstance(i, int)]),
+		# Layers on this section's map = layers its Objects questions bind
+		# (spec reference-overlay-layers). The shell loads every layer of the
+		# survey once; this list says which ones this section shows.
+		'visible_layers_json': json.dumps(section_layer_ids(section)),
 		'visibility_rules_json': json.dumps(client_rules),
 	}
 
@@ -1193,6 +1196,7 @@ def survey_section(request, survey_slug, section_name):
 		emit_event(survey_session, 'section_submit', {
 			'section_name': section.name, 'section_index': section_current,
 		})
+		survey_session.touch()
 
 		# Answers about layer objects (spec object-answers). They live on the
 		# sub-questions of an Objects-on-the-map question, keyed by the object,
@@ -1688,6 +1692,11 @@ def _export_object_answers(zip, survey, prefix, excluded_session_ids):
 	layers_done = set()
 	for question in questions:
 		subs = sub_questions_of(question)
+		if not subs:
+			# Display-only (spec layer-objects-question): nothing was asked, so
+			# there is no sheet to write — the layer itself still gets its
+			# results GeoJSON below when another question of this survey asks.
+			continue
 		rows = (Answer.objects
 		        .filter(question__in=subs, layer_object__isnull=False)
 		        .exclude(survey_session_id__in=excluded_session_ids)
@@ -1730,7 +1739,10 @@ def _export_object_answers(zip, survey, prefix, excluded_session_ids):
 			continue
 		layers_done.add(layer.pk)
 		aggregates = {}
-		for q in layer.questions.filter(input_type='layer_objects'):
+		# Only THIS header's questions: the layer is shared with the draft copy
+		# and the archived versions, whose sub-questions would otherwise add
+		# empty columns to every feature.
+		for q in layer.questions.filter(input_type='layer_objects', survey_section__survey_header=survey):
 			for key, entry in object_aggregates(q, excluded_session_ids=excluded_session_ids).items():
 				props = flat_properties(entry)
 				aggregates.setdefault(key, {}).update(props)
@@ -2110,17 +2122,22 @@ def survey_layer_object(request, survey_slug, layer_id, key):
 	else:
 		obj = get_object_or_404(LayerObject, layer=layer, key=key)
 	payload = object_card_payload(obj)
+	# What other respondents see is decided by the SUB-QUESTIONS that share
+	# their answers, whatever the layer's source (spec shared-map-layer).
+	from .layers import shared_kinds
+	from .object_stats import shared_map_tallies, shared_map_comments
+	kinds = shared_kinds(layer)
 	if layer.source == 'question':
-		from .object_stats import shared_map_tallies, shared_map_comments
 		payload['status'] = obj.status
-		if layer.show_tallies:
-			t = shared_map_tallies(layer).get(obj.key, {})
-			payload['tallies'] = {'up': t.get('up', 0), 'down': t.get('down', 0),
-			                      'comments': t.get('comments', 0)}
-		if layer.show_comments or layer.collaborator_access:
-			payload['comments'] = shared_map_comments(obj)
+	if kinds['tallies']:
+		t = shared_map_tallies(layer).get(obj.key, {})
+		payload['tallies'] = {'up': t.get('up', 0), 'down': t.get('down', 0),
+		                      'comments': t.get('comments', 0)}
+	if kinds['comments'] or layer.collaborator_access:
+		payload['comments'] = shared_map_comments(obj)
+	volatile = layer.source == 'question' or kinds['tallies'] or kinds['comments']
 	response = JsonResponse(payload)
-	response['Cache-Control'] = 'private, no-store' if layer.source == 'question' else 'private, max-age=300'
+	response['Cache-Control'] = 'private, no-store' if volatile else 'private, max-age=300'
 	return response
 
 
@@ -2152,6 +2169,17 @@ def survey_layer_geojson(request, survey_slug, layer_id):
 		response['Cache-Control'] = 'private, no-store'
 		return response
 
+	from .layers import shared_kinds, attach_tallies
+	if shared_kinds(layer)['tallies'] and not layer.collaborator_access:
+		# An uploaded layer whose objects carry shared 👍/👎: the counts move
+		# with every answer, so the cached collection is served with them
+		# attached per request, uncached — exactly like a marks layer.
+		from .object_stats import shared_map_tallies
+		body = json.dumps(attach_tallies(json.loads(layer.geojson), shared_map_tallies(layer)),
+		                  ensure_ascii=False, separators=(',', ':'))
+		response = HttpResponse(body, content_type='application/geo+json')
+		response['Cache-Control'] = 'private, no-store'
+		return response
 	etag = '"layer-%s-%s"' % (layer.pk, layer.updated_at.strftime('%Y%m%d%H%M%S%f'))
 	if request.headers.get('If-None-Match') == etag:
 		response = HttpResponse(status=304)
@@ -2178,6 +2206,7 @@ def survey_thanks(request, survey_slug):
 		try:
 			_sess = SurveySession.objects.get(pk=session_id)
 			emit_event(_sess, 'survey_complete')
+			_sess.mark_completed()
 		except SurveySession.DoesNotExist:
 			pass
 

@@ -1322,6 +1322,22 @@ class SurveyAnalyticsService:
             q.order_number,
         ))
 
+        # Key everything on the lineage REPRESENTATIVE, the same object the
+        # table cells key on (`rep_key` in get_table_page). Read from a draft
+        # copy, `self.survey`'s questions are clones with fresh ids while the
+        # answers in scope belong to the published version: keeping the clone
+        # here gave the right columns with every cell empty (2026-09-06).
+        seen = set()
+        representatives = []
+        for q in questions:
+            entry = self._lineages.get((q.code, q.input_type))
+            rep = (entry['current'] or entry['questions'][0]) if entry else q
+            if rep.id in seen:
+                continue
+            seen.add(rep.id)
+            representatives.append(rep)
+        questions = representatives
+
         for entry in self._lineages.values():
             if entry['current'] is not None:
                 continue
@@ -1394,7 +1410,11 @@ class SurveyAnalyticsService:
         if not sort_col:
             sort_col = 'start_datetime'
 
-        questions = self._get_ordered_questions()
+        # Objects-on-the-map questions never hold a cell: their answers live
+        # per object on the sub-questions (own per-object table, export sheet)
+        # and a display-only one collects nothing at all — an always-empty
+        # column per layer would be pure noise (change layers-by-question).
+        questions = [q for q in self._get_ordered_questions() if q.input_type != 'layer_objects']
         # Fetch answers for every lineage member in scope, not just the reps
         rep_by_qid = self._rep_question_by_qid()
         question_ids = sorted({
@@ -1570,16 +1590,15 @@ class SurveyAnalyticsService:
                 self.base_qs.order_by('start_datetime').values_list('id', flat=True)
             )
             seq_by_id = {sid: i + 1 for i, sid in enumerate(ordered_ids)}
-            ev_starts = dict(
-                SurveyEvent.objects
-                .filter(session_id__in=session_pks, event_type='session_start')
-                .values_list('session_id', 'created_at')
-            ) if session_pks else {}
-            ev_completes = dict(
-                SurveyEvent.objects
-                .filter(session_id__in=session_pks, event_type='survey_complete')
-                .values_list('session_id', 'created_at')
-            ) if session_pks else {}
+            # Duration comes off the session row: start → end_datetime when
+            # the thanks page was reached, else start → last_activity_at
+            # (the respondent left; shown with a trailing "+").
+            timing = {
+                sid: (start, end, seen)
+                for sid, start, end, seen in SurveySession.objects
+                .filter(id__in=session_pks)
+                .values_list('id', 'start_datetime', 'end_datetime', 'last_activity_at')
+            } if session_pks else {}
             text_keys = [
                 c['key'] for c in question_cols
                 if c['input_type'] in ('text', 'text_line')
@@ -1592,13 +1611,18 @@ class SurveyAnalyticsService:
                 sid = row['session_id']
                 row['seq'] = seq_by_id.get(sid)
                 secs = None
-                if sid in ev_starts and sid in ev_completes:
-                    delta = (ev_completes[sid] - ev_starts[sid]).total_seconds()
+                left = False
+                start, end, seen = timing.get(sid, (None, None, None))
+                stop = end or seen
+                if start is not None and stop is not None:
+                    delta = (stop - start).total_seconds()
                     if delta > 0:
                         secs = int(delta)
+                        left = end is None
                 row['duration_seconds'] = secs
+                row['duration_open'] = left
                 row['duration_display'] = (
-                    '%d:%02d' % (secs // 60, secs % 60) if secs is not None else None
+                    '%d:%02d%s' % (secs // 60, secs % 60, '+' if left else '') if secs is not None else None
                 )
                 # Phone card list: one-line summary (first text answer + geo count)
                 excerpt = ''

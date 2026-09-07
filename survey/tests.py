@@ -243,6 +243,25 @@ class DataSerializationTest(TestCase):
         self.assertIn("end_datetime", result[0])
         self.assertIn("answers", result[0])
 
+    def test_session_timing_rides_the_archive(self):
+        """
+        GIVEN a session with last_activity_at set
+        WHEN it is serialized and re-created from that data
+        THEN last_activity_at survives the round trip, and a session without it inherits end_datetime
+        """
+        from datetime import timedelta
+        from django.utils import timezone
+        from .serialization import create_session
+        seen = timezone.now() - timedelta(minutes=5)
+        SurveySession.objects.filter(pk=self.session.pk).update(last_activity_at=seen)
+        data = serialize_sessions(self.survey)[0]
+        self.assertEqual(data["last_activity_at"], seen.isoformat())
+        copy = create_session(self.survey, data)
+        self.assertEqual(copy.last_activity_at, seen)
+        done = timezone.now() - timedelta(minutes=1)
+        legacy = create_session(self.survey, {"start_datetime": data["start_datetime"], "end_datetime": done.isoformat()})
+        self.assertEqual(legacy.last_activity_at, done)
+
     def test_serialize_answers_with_text(self):
         """
         GIVEN a session with text answer
@@ -12071,6 +12090,60 @@ class ResponsesV2TableTest(TestCase):
         self.sess_empty = SurveySession.objects.create(survey=self.survey)
         self.url = f'/editor/surveys/{self.survey.uuid}/analytics/table/'
 
+    def test_duration_reads_the_session_row(self):
+        """
+        GIVEN a completed session (end_datetime), an abandoned one (last_activity_at only) and
+              an untimed one, with no events at all
+        WHEN the v2 table is built
+        THEN Duration is m:ss for the completed one, m:ss+ for the abandoned one, and empty for the third
+        """
+        from datetime import timedelta
+        from django.utils import timezone
+        from .analytics import SurveyAnalyticsService
+        t0 = timezone.now() - timedelta(hours=1)
+        SurveySession.objects.filter(pk=self.sess_complete.pk).update(
+            start_datetime=t0, end_datetime=t0 + timedelta(minutes=3, seconds=20),
+            last_activity_at=t0 + timedelta(minutes=3, seconds=20))
+        SurveySession.objects.filter(pk=self.sess_empty.pk).update(
+            start_datetime=t0, last_activity_at=t0 + timedelta(seconds=45))
+        untimed = SurveySession.objects.create(survey=self.survey, start_datetime=t0)
+        page = SurveyAnalyticsService(self.survey, version='all').get_table_page(page=1, page_size=10, v2=True)
+        by_id = {r['session_id']: r for r in page['rows']}
+        self.assertEqual(by_id[self.sess_complete.pk]['duration_display'], '3:20')
+        self.assertEqual(by_id[self.sess_empty.pk]['duration_display'], '0:45+')
+        self.assertTrue(by_id[self.sess_empty.pk]['duration_open'])
+        self.assertIsNone(by_id[untimed.pk]['duration_display'])
+
+    def test_layer_questions_get_no_table_column(self):
+        """
+        GIVEN a survey with a text question and an Objects-on-the-map question bound to a layer
+        WHEN the response table is built
+        THEN the Objects question has no column — its answers live per object on its sub-questions
+        """
+        from .analytics import SurveyAnalyticsService
+        layer = _objects_layer(self.survey, name="Bins")
+        Question.objects.create(survey_section=self.s1, name='Bins', code='lq', input_type='layer_objects',
+                                layer=layer, order_number=2)
+        page = SurveyAnalyticsService(self.survey, version='all').get_table_page(page=1, page_size=10)
+        self.assertEqual([c['input_type'] for c in page['columns'] if c['input_type']], ['text'])
+
+    def test_table_read_from_a_draft_copy_keys_cells_on_the_published_question(self):
+        """
+        GIVEN a published survey with one answered text question and a draft copy of it
+        WHEN the response table is built from the draft (scope: the published family)
+        THEN the question column's key equals the published question's id, so the stored
+             answer lands in that column rather than under the draft clone's id
+        """
+        draft = clone_survey_for_draft(self.survey)
+        clone = Question.objects.get(survey_section__survey_header=draft, code='q1')
+        self.assertNotEqual(clone.pk, self.q.pk)
+        from .analytics import SurveyAnalyticsService
+        page = SurveyAnalyticsService(draft, version='all').get_table_page(page=1, page_size=10)
+        keys = [c['key'] for c in page['columns'] if c['input_type'] == 'text']
+        self.assertEqual(keys, [str(self.q.pk)])
+        row = next(r for r in page['rows'] if r['session_id'] == self.sess_complete.pk)
+        self.assertEqual(row['cells'].get(str(self.q.pk)), 'done here')
+
     @override_settings(RESPONSES_V2=True)
     def test_v2_column_defaults(self):
         """
@@ -13480,6 +13553,28 @@ class EventIntegrationTest(TestCase):
         self.client.get(f'/surveys/{self.survey.uuid}/thanks/')
         self.assertTrue(SurveyEvent.objects.filter(event_type='survey_complete').exists())
 
+    def test_session_row_records_activity_and_completion(self):
+        """
+        GIVEN a respondent who opened the survey
+        WHEN they submit a section, then reach the thanks page twice
+        THEN the section submit stamps last_activity_at, the thanks page stamps end_datetime
+             once (a reload keeps the first time) and both live on the session row
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        session = SurveySession.objects.get(pk=self.client.session['survey_session_id'])
+        self.assertIsNone(session.last_activity_at)
+        self.client.post(f'/surveys/{self.survey.uuid}/s1/', {'q1': 'hello'})
+        session.refresh_from_db()
+        self.assertIsNotNone(session.last_activity_at)
+        self.assertIsNone(session.end_datetime)
+        self.client.get(f'/surveys/{self.survey.uuid}/thanks/')
+        session.refresh_from_db()
+        first_end = session.end_datetime
+        self.assertIsNotNone(first_end)
+        session.mark_completed()
+        session.refresh_from_db()
+        self.assertEqual(session.end_datetime, first_end)
+
     def test_session_start_captures_referrer(self):
         """
         GIVEN a request with HTTP_REFERER from google.com
@@ -13552,6 +13647,10 @@ class PageLoadTrackingTest(TestCase):
         ev = SurveyEvent.objects.filter(event_type='page_leave').first()
         self.assertIsNotNone(ev)
         self.assertEqual(ev.metadata['time_on_page_ms'], 45000)
+        # The beacon is the last trace an abandoning respondent leaves: the
+        # session row records it (spec responses-overview "Session timing").
+        self.session.refresh_from_db()
+        self.assertIsNotNone(self.session.last_activity_at)
 
     def test_mismatched_session_returns_204_silently(self):
         """
@@ -33102,16 +33201,22 @@ class LayerRespondentRenderingTest(TestCase):
         self.assertIn('layers/%d.geojson' % self.layer.pk, html)
         self.assertNotIn('"Area 1"', html)
 
-    def test_section_hidden_layers_reach_the_page(self):
+    def test_section_layers_are_the_ones_its_questions_bind(self):
         """
-        GIVEN a section that hides the layer
-        WHEN a respondent opens it
-        THEN the section element carries that layer id in data-hidden-layers
+        GIVEN a survey with a layer, and a section with no Objects question for it
+        WHEN a respondent opens the section, then again after an Objects question binds the layer
+        THEN the section element first lists no visible layer, then that layer's id
+             (spec reference-overlay-layers: visibility is binding)
         """
-        self.head.hidden_layers = [self.layer.pk]
-        self.head.save()
         html = self.client.get(self.url).content.decode()
-        self.assertIn('data-hidden-layers="[%d]"' % self.layer.pk, html)
+        self.assertIn('data-visible-layers="[]"', html)
+        Question.objects.create(
+            survey_section=self.head, code="LR002", name="Bins", input_type="layer_objects",
+            layer=self.layer, order_number=2,
+        )
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('data-visible-layers="[%d]"' % self.layer.pk, html)
+        self.assertIn('data-panel-mode="list"', html)
 
     @override_settings(MAP_REFERENCE_LAYERS=False)
     def test_kill_switch_removes_layer_metadata(self):
@@ -33171,16 +33276,20 @@ class LayerPreviewTest(TestCase):
 
     def test_preview_honours_per_section_visibility(self):
         """
-        GIVEN a section that hides the layer
+        GIVEN a section whose Objects question binds the layer in legend mode
         WHEN its preview is rendered
-        THEN the preview marks the layer hidden, as the respondent page would
+        THEN the preview lists that layer as visible and renders the legend line, as the respondent page would
         """
-        self.section.hidden_layers = [self.layer.pk]
-        self.section.save()
+        Question.objects.create(
+            survey_section=self.section, code="LP002", name="Zones", input_type="layer_objects",
+            layer=self.layer, panel_mode='legend', order_number=2,
+        )
 
         html = self.client.get(self.url).content.decode()
 
-        self.assertIn('data-hidden-layers="[%d]"' % self.layer.pk, html)
+        self.assertIn('data-visible-layers="[%d]"' % self.layer.pk, html)
+        self.assertIn('data-panel-mode="legend"', html)
+        self.assertIn('data-lo-toggle', html)
 
     @override_settings(MAP_REFERENCE_LAYERS=False)
     def test_kill_switch_empties_the_preview_too(self):
@@ -33341,37 +33450,38 @@ class LayerEditorTest(TestCase):
         self.assertNotIn(response.status_code, (200, 201))
         self.assertEqual(SurveyMapLayer.objects.filter(survey=self.survey).count(), 1)
 
-    def test_section_save_stores_hidden_layers_and_drops_unknown_ids(self):
+    def test_section_form_has_no_layer_checklist(self):
         """
-        GIVEN a section form posting visible layers plus a foreign layer id
-        WHEN the section is saved
-        THEN hidden_layers holds only this survey's unchecked layers
+        GIVEN a survey with a layer
+        WHEN the section form renders
+        THEN there is no "Reference layers" checklist, only the hint to add an Objects question
+             (spec survey-editor "Layers are put on a map by adding a question")
         """
-        response = self.client.post(
+        html = self.client.get(
             reverse('editor_section_detail', args=[self.survey.uuid, self.section.id]),
-            {
-                'title': 'S1', 'subheading': '', 'code': 'S1', 'layout': 'map', 'next_label': '',
-                'reference_layers_submitted': '1', 'visible_layers': ['999999'],
-            },
-        )
-        self.assertIn(response.status_code, (200, 204, 302))
-        self.section.refresh_from_db()
-        self.assertEqual(self.section.hidden_layers, [self.layer.pk])
+        ).content.decode()
+        self.assertNotIn('name="visible_layers"', html)
+        self.assertNotIn('reference_layers_submitted', html)
+        self.assertIn('add an “Objects on the map” question', html)
 
-    def test_section_form_without_the_checklist_keeps_stored_visibility(self):
+    def test_same_layer_twice_in_a_section_is_refused(self):
         """
-        GIVEN a section POST that carries no reference-layer checklist
-        WHEN the section is saved
-        THEN the stored hidden_layers are left alone rather than cleared
+        GIVEN a section whose Objects question already binds the layer
+        WHEN a second Objects question of that section picks the same layer
+        THEN the form refuses on the layer field, naming the first question
         """
-        self.section.hidden_layers = [self.layer.pk]
-        self.section.save()
-        self.client.post(
-            reverse('editor_section_detail', args=[self.survey.uuid, self.section.id]),
-            {'title': 'S1', 'subheading': '', 'code': 'S1', 'layout': 'map', 'next_label': ''},
+        Question.objects.create(
+            survey_section=self.section, code="LE_FIRST", name="Zones here", input_type="layer_objects",
+            layer=self.layer, order_number=5,
         )
-        self.section.refresh_from_db()
-        self.assertEqual(self.section.hidden_layers, [self.layer.pk])
+        response = self.client.post(
+            reverse('editor_question_create', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk}),
+            {'name': 'Again', 'input_type': 'layer_objects', 'layer': self.layer.pk, 'subtext': '',
+             'display_style': 'default', 'color': '#000000', 'choices_json': '[]', 'panel_mode': 'list'},
+        )
+        html = response.content.decode()
+        self.assertIn('Already on this section’s map as “Zones here”', html)
+        self.assertEqual(Question.objects.filter(survey_section=self.section, input_type='layer_objects').count(), 1)
 
     @override_settings(MAP_REFERENCE_LAYERS=False)
     def test_kill_switch_closes_editor_endpoints(self):
@@ -33466,6 +33576,98 @@ class AnalyticsReferenceLayerTest(TestCase):
         self.assertIn(self.layer_url, response.content.decode())
 
 
+class LayersByQuestionMigrationTest(TestCase):
+    """The hidden_layers → Objects-question conversion (migration 0074 and the
+    live `ensure_layer_questions` copy the ZIP import uses)."""
+
+    def setUp(self):
+        from .models import SurveyMapLayer
+        from .layers import validate_layer_upload
+        self.org = Organization.objects.create(name="LBQ Org")
+        self.survey = SurveyHeader.objects.create(
+            name="lbq_survey", organization=self.org, redirect_url="/thanks/", status='published',
+        )
+        self.map_section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="Map", code="S1", is_head=True, layout='map',
+        )
+        self.form_section = SurveySection.objects.create(
+            survey_header=self.survey, name="s2", title="Form", code="S2", layout='form',
+        )
+        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        self.a = SurveyMapLayer.objects.create(
+            survey=self.survey, name="A", color="#111111", geojson=geojson, feature_count=count,
+            size_bytes=len(geojson), position=0,
+        )
+        self.b = SurveyMapLayer.objects.create(
+            survey=self.survey, name="B", color="#222222", geojson=geojson, feature_count=count,
+            size_bytes=len(geojson), position=1,
+        )
+
+    def test_conversion_creates_legend_questions_for_visible_unbound_layers(self):
+        """
+        GIVEN a map section that hid layer B and already binds nothing, and a form section
+        WHEN the conversion runs
+        THEN the map section gets one legend-mode Objects question for A only, the form section
+             gets none, and a second run creates nothing more (idempotent)
+        """
+        from .layers import ensure_layer_questions, section_layer_ids
+        created = ensure_layer_questions(self.map_section, [self.b.pk])
+        self.assertEqual([(q.layer_id, q.panel_mode, q.min_objects, q.name) for q in created],
+                         [(self.a.pk, 'legend', 0, 'A')])
+        self.assertEqual(ensure_layer_questions(self.form_section, []), [])
+        self.assertEqual(ensure_layer_questions(self.map_section, [self.b.pk]), [])
+        self.assertEqual(section_layer_ids(self.map_section), [self.a.pk])
+
+    def test_conversion_skips_layers_a_question_already_binds(self):
+        """
+        GIVEN a map section whose Objects question already binds layer A
+        WHEN the conversion runs with nothing hidden
+        THEN only B gets a new question, appended after the existing one
+        """
+        from .layers import ensure_layer_questions, section_layer_ids
+        existing = Question.objects.create(
+            survey_section=self.map_section, code="LBQ1", name="Ask about A", input_type="layer_objects",
+            layer=self.a, order_number=3,
+        )
+        created = ensure_layer_questions(self.map_section, [])
+        self.assertEqual([(q.layer_id, q.order_number) for q in created], [(self.b.pk, 4)])
+        self.assertEqual(section_layer_ids(self.map_section), [self.a.pk, self.b.pk])
+        self.assertEqual(Question.objects.get(pk=existing.pk).panel_mode, 'list')
+
+    def test_draft_copy_sections_convert_against_the_canonical_layers(self):
+        """
+        GIVEN a draft copy of the survey (which borrows the canonical's layers)
+        WHEN its map section is converted
+        THEN it gets Objects questions bound to the canonical's layers
+        """
+        from .layers import ensure_layer_questions
+        draft = clone_survey_for_draft(self.survey)
+        section = SurveySection.objects.get(survey_header=draft, name='s1')
+        created = ensure_layer_questions(section, [])
+        self.assertEqual(sorted(q.layer_id for q in created), sorted([self.a.pk, self.b.pk]))
+
+
+class ShareFlagSeedingTest(TestCase):
+    """Legacy layer flags → sub-question sharing (migration 0076 and the ZIP import seed)."""
+
+    def test_seed_from_layer_flags(self):
+        """
+        GIVEN a marks layer with show_tallies on and show_comments off, bound by an Objects
+              question with a 👍/👎 and a text sub-question
+        WHEN the seed runs
+        THEN the 👍/👎 sub-question shares and the text one does not
+        """
+        from .serialization import seed_share_flags_from_layers
+        f = _shared_map_survey("seed_survey")
+        f['layer'].show_tallies = True
+        f['layer'].show_comments = False
+        f['layer'].save()
+        seed_share_flags_from_layers(f['survey'])
+        f['vote'].refresh_from_db(); f['cmt'].refresh_from_db()
+        self.assertTrue(f['vote'].share_with_respondents)
+        self.assertFalse(f['cmt'].share_with_respondents)
+
+
 class LayerSerializationTest(TestCase):
     """Layers through export → import."""
 
@@ -33488,8 +33690,12 @@ class LayerSerializationTest(TestCase):
             key_field="zone_id", show_popups=True, geojson=geojson, feature_count=count,
             size_bytes=len(geojson), position=0,
         )
-        self.first.hidden_layers = [self.layer.pk]
-        self.first.save()
+        # The layer is on the section's map through an Objects question in
+        # legend mode (change layers-by-question).
+        self.bins = Question.objects.create(
+            survey_section=self.first, code="LS002", name="Zones", input_type="layer_objects",
+            layer=self.layer, panel_mode='legend', order_number=2,
+        )
 
     def _export(self):
         buf = BytesIO()
@@ -33499,11 +33705,16 @@ class LayerSerializationTest(TestCase):
 
     def test_layers_round_trip_with_section_visibility(self):
         """
-        GIVEN a survey whose section hides its configured layer
+        GIVEN a survey whose section shows its layer through a legend-mode Objects question
         WHEN it is exported and re-imported
-        THEN the layer arrives with its config and the section still hides it by the new id
+        THEN the layer arrives with its config, the question binds the new layer in legend
+             mode, and no hidden_layers key is written
         """
         buf = self._export()
+        with zipfile.ZipFile(buf) as zf:
+            data = json.loads(zf.read('survey.json'))
+            self.assertNotIn('hidden_layers', data['survey']['sections'][0])
+        buf.seek(0)
         self.survey.name = 'layer_ser_survey_old'
         self.survey.save()
         imported, warnings = import_survey_from_zip(buf)
@@ -33513,8 +33724,52 @@ class LayerSerializationTest(TestCase):
             ('Counting zones', '#e8971e', 'name', 'zone_id', True, 3),
         )
         section = SurveySection.objects.get(survey_header=imported, name='s1')
-        self.assertEqual(section.hidden_layers, [layer.pk])
+        q = Question.objects.get(survey_section=section, input_type='layer_objects')
+        self.assertEqual((q.layer_id, q.panel_mode), (layer.pk, 'legend'))
         self.assertEqual(warnings, [])
+
+    def _legacy_archive(self, hidden):
+        """The archive as exported before layers-by-question: a `hidden_layers`
+        list on the section and no Objects question."""
+        buf = self._export()
+        out = BytesIO()
+        with zipfile.ZipFile(buf) as src, zipfile.ZipFile(out, 'w') as dst:
+            for item in src.namelist():
+                if item == 'survey.json':
+                    data = json.loads(src.read(item))
+                    sec = data['survey']['sections'][0]
+                    sec['hidden_layers'] = hidden
+                    sec['questions'] = [q for q in sec['questions'] if q['input_type'] != 'layer_objects']
+                    data['survey']['name'] = 'legacy_hidden_%d' % len(hidden)
+                    dst.writestr(item, json.dumps(data))
+                else:
+                    dst.writestr(item, src.read(item))
+        out.seek(0)
+        return out
+
+    def test_legacy_archive_with_visible_layer_gets_a_legend_question(self):
+        """
+        GIVEN an archive from before this change whose section left the layer visible
+        WHEN it is imported
+        THEN the section gets one display-only Objects question bound to the layer in legend mode
+        """
+        imported, _ = import_survey_from_zip(self._legacy_archive([]))
+        section = SurveySection.objects.get(survey_header=imported, name='s1')
+        q = Question.objects.get(survey_section=section, input_type='layer_objects')
+        self.assertEqual((q.layer_id, q.panel_mode, q.min_objects, q.name), (imported.map_layers.get().pk, 'legend', 0, 'Counting zones'))
+        self.assertFalse(q.collects_objects)
+
+    def test_legacy_archive_with_hidden_layer_gets_no_question(self):
+        """
+        GIVEN an archive from before this change whose section hid the layer
+        WHEN it is imported
+        THEN no Objects question is created and the section shows no layer
+        """
+        from .layers import section_layer_ids
+        imported, _ = import_survey_from_zip(self._legacy_archive([0]))
+        section = SurveySection.objects.get(survey_header=imported, name='s1')
+        self.assertFalse(Question.objects.filter(survey_section=section, input_type='layer_objects').exists())
+        self.assertEqual(section_layer_ids(section), [])
 
     def test_archive_carries_geometry_as_its_own_entry(self):
         """
@@ -33528,7 +33783,7 @@ class LayerSerializationTest(TestCase):
             data = json.loads(zf.read('survey.json'))
             self.assertEqual(data['survey']['layers'][0]['name'], 'Counting zones')
             self.assertNotIn('geojson', data['survey']['layers'][0])
-            self.assertEqual(data['survey']['sections'][0]['hidden_layers'], [0])
+            self.assertNotIn('hidden_layers', data['survey']['sections'][0])
 
     def test_legacy_archive_without_layers_imports_cleanly(self):
         """
@@ -33579,7 +33834,7 @@ class LayerSerializationTest(TestCase):
         self.assertEqual(imported.map_layers.count(), 0)
         self.assertTrue(any('Counting zones' in w for w in warnings))
         section = SurveySection.objects.get(survey_header=imported, name='s1')
-        self.assertEqual(section.hidden_layers, [])
+        self.assertFalse(Question.objects.filter(survey_section=section, input_type='layer_objects', layer__isnull=False).exists())
 class RespondentSessionRoutingTest(TestCase):
     """A stale survey_session_id cookie must never 500 a respondent URL.
 
@@ -38065,7 +38320,8 @@ class LayerObjectsQuestionEditorTest(TestCase):
         """
         GIVEN a POST for an Objects-on-the-map question without a layer, then with one and required=on
         WHEN the create endpoint validates
-        THEN the first is refused on the layer field and the second is stored with required=False and min_objects
+        THEN the first is refused on the layer field and the second is stored with required=False and min_objects;
+             the "min" badge waits for a sub-question, since without one the question collects nothing
         """
         response = self._post({'name': 'Objects', 'input_type': 'layer_objects'})
         self.assertEqual(response.status_code, 200)
@@ -38078,8 +38334,9 @@ class LayerObjectsQuestionEditorTest(TestCase):
         self.assertEqual((q.layer_id, q.required, q.min_objects, q.objects_search), (self.layer.pk, False, 2, 'on'))
         html = response.content.decode()
         self.assertIn('Sites', html)
-        self.assertIn('min 2', html)
+        self.assertNotIn('min 2', html)
         self.assertIn('Add Sub-question', html)
+        self.assertFalse(q.collects_objects)
 
     def test_switching_type_drops_the_layer_binding(self):
         """
@@ -38152,7 +38409,8 @@ class LayerObjectsQuestionEditorTest(TestCase):
         """
         GIVEN a draft Objects-on-the-map question in the modal
         WHEN the live preview endpoint renders it with the picked layer
-        THEN the block shell renders with the layer's object count and code attributes
+        THEN the block shell renders with the layer's object count and code attributes; the minimum
+             is 0 because a draft with no sub-questions collects nothing
         """
         response = self.client.post(
             reverse('editor_question_preview_live', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk}),
@@ -38160,7 +38418,27 @@ class LayerObjectsQuestionEditorTest(TestCase):
         html = response.content.decode()
         self.assertIn('data-layer-objects', html)
         self.assertIn(f'data-layer-id="{self.layer.pk}"', html)
-        self.assertIn('data-min-objects="1"', html)
+        self.assertIn('data-min-objects="0"', html)
+        self.assertIn('data-collects="0"', html)
+
+    def test_live_preview_renders_the_layers_objects_as_a_static_panel(self):
+        """
+        GIVEN the Sites layer with three objects, one categorised
+        WHEN the live preview renders a list-mode draft bound to it
+        THEN the pane shows the objects' titles as rows and the category as a chip — a picture of
+             the respondent's panel, not the empty shell the map would fill (direction B)
+        """
+        first = self.layer.items.order_by('key').first()
+        first.category = 'Parks'
+        first.save()
+        html = self.client.post(
+            reverse('editor_question_preview_live', kwargs={'survey_uuid': self.survey.uuid, 'section_id': self.section.pk}),
+            {'input_type': 'layer_objects', 'name': 'Objects', 'layer': self.layer.pk, 'panel_mode': 'list', 'objects_search': 'on'}).content.decode()
+        self.assertIn('class="lo-row"', html)
+        self.assertIn(first.title, html)
+        self.assertIn('Parks · 1', html)
+        # The respondent page itself still gets the empty shell the map fills.
+        self.assertNotIn('data-lo-list', html.split('class="layer-objects__list"')[0][-60:])
 
     def test_clone_keeps_layer_within_the_survey_and_drops_it_elsewhere(self):
         """
@@ -38281,6 +38559,29 @@ class LayerObjectsRespondentTest(TestCase):
         self.assertIn('LR002', forms['LR001'])          # rating sub-question
         self.assertIn('thumbs__option', forms['LR001'])  # thumbs widget
         self.assertNotIn('"coordinates"', html)
+
+    def test_display_only_question_shows_the_layer_and_collects_nothing(self):
+        """
+        GIVEN an Objects question in legend mode with min_objects=2 but no sub-questions
+        WHEN the respondent opens the section and submits it without touching an object
+        THEN the block renders as a legend line with min 0 and no counter, the layer is visible,
+             and the POST moves on — nothing was there to answer (spec layer-objects-question)
+        """
+        Question.objects.filter(parent_question_id=self.q).delete()
+        self.q.panel_mode = 'legend'
+        self.q.min_objects = 2
+        self.q.save()
+        self._start()
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('data-panel-mode="legend"', html)
+        self.assertIn('data-collects="0"', html)
+        self.assertIn('data-min-objects="0"', html)
+        self.assertIn('data-lo-toggle', html)
+        self.assertNotIn('class="layer-objects__list"', html)
+        self.assertIn('data-visible-layers="[%d]"' % self.layer.pk, html)
+        response = self.client.post(self.url, {})
+        self.assertIn(response.status_code, (200, 302))
+        self.assertFalse(Answer.objects.filter(layer_object__isnull=False).exists())
 
     def test_object_answers_are_stored_one_row_per_object_and_subquestion(self):
         """
@@ -38549,7 +38850,8 @@ def _shared_map_survey(name="shared_map_survey"):
     obj = Question.objects.create(survey_section=section, code="OBJ", name="Marks by others", input_type="layer_objects",
                                   layer=layer, order_number=2)
     vote = Question.objects.create(survey_section=section, code="VOTE", name="Support?", input_type="thumbs",
-                                   parent_question_id=obj, order_number=1, choices=[{"code": 1, "name": "up"}, {"code": 0, "name": "down"}])
+                                   parent_question_id=obj, order_number=1, choices=[{"code": 1, "name": "up"}, {"code": 0, "name": "down"}],
+                                   share_with_respondents=True)
     cmt = Question.objects.create(survey_section=section, code="CMT", name="Comment", input_type="text",
                                   parent_question_id=obj, order_number=2)
     return {'survey': survey, 'section': section, 'q1': q1, 'why': why, 'layer': layer,
@@ -38813,8 +39115,8 @@ class SharedMapEndpointTest(TestCase):
     def test_tallies_and_comments_follow_settings(self):
         """
         GIVEN B's mark has 2 👍, 1 👎 and 2 comments (one hidden), reacted by clean sessions
-        WHEN A fetches the layer and the card under default, tallies-off and comments-on settings
-        THEN counts and comments appear exactly when the layer says so, and the hidden comment never does
+        WHEN A fetches the layer and the card with 👍/👎 shared, then with 👍/👎 unshared and comments shared
+        THEN counts and comments appear exactly as far as the sub-questions share them, and the hidden comment never does
         """
         obj = self.f['layer'].items.get(key=self.b_key)
         for up in (True, True, False):
@@ -38825,15 +39127,15 @@ class SharedMapEndpointTest(TestCase):
         rejected = SurveySession.objects.create(survey=self.f['survey'], validation_status='not_approved')
         _react(rejected, self.f['obj'], obj, up=True)
 
+        # Comments are not shared yet, so their count is not either.
         props = json.loads(self.client.get(self.layer_url).content)['features'][0]['properties']
-        self.assertEqual((props['tally_up'], props['tally_down'], props['comment_count']), (2, 1, 1))
+        self.assertEqual((props['tally_up'], props['tally_down'], props['comment_count']), (2, 1, 0))
         card = json.loads(self.client.get(self._card_url(self.b_key)).content)
-        self.assertEqual(card['tallies'], {'up': 2, 'down': 1, 'comments': 1})
+        self.assertEqual(card['tallies'], {'up': 2, 'down': 1, 'comments': 0})
         self.assertNotIn('comments', card)
 
-        self.f['layer'].show_tallies = False
-        self.f['layer'].show_comments = True
-        self.f['layer'].save()
+        Question.objects.filter(pk=self.f['vote'].pk).update(share_with_respondents=False)
+        Question.objects.filter(pk=self.f['cmt'].pk).update(share_with_respondents=True)
         props = json.loads(self.client.get(self.layer_url).content)['features'][0]['properties']
         self.assertNotIn('tally_up', props)
         card = json.loads(self.client.get(self._card_url(self.b_key)).content)
@@ -38926,6 +39228,7 @@ class SharedMapModerationTest(TestCase):
         WHEN the owner hides it
         THEN the respondent card and count drop it, the Responses block still lists it, and show restores it
         """
+        Question.objects.filter(pk=self.f['cmt'].pk).update(share_with_respondents=True)
         from .object_stats import shared_map_tallies
         self.f['layer'].show_comments = True
         self.f['layer'].save()
@@ -39039,7 +39342,8 @@ class SharedMapEditorTest(TestCase):
         GIVEN a geo question Q2 with a text sub-question T2 and no layer
         WHEN the owner creates an Objects question with layer=answers:Q2, label T2, comments on
         THEN a question layer for Q2 exists with that label and settings and the question is bound to it;
-             an unknown code or label is ignored safely
+             a second question on the same source in the same section is refused (one layer once per
+             section); an unknown code or label is ignored safely
         """
         from .models import SurveyMapLayer
         q2 = Question.objects.create(survey_section=self.f['section'], code="Q2", name="Route?", input_type="line", order_number=5)
@@ -39047,17 +39351,136 @@ class SharedMapEditorTest(TestCase):
         r = self._post(self.create_url, layer='answers:Q2', sm_settings='1', sm_label_field='T2', sm_show_comments='1')
         self.assertEqual(r.status_code, 200, r.content[:300])
         layer = SurveyMapLayer.objects.get(survey=self.f['survey'], source_question_code='Q2')
-        self.assertEqual((layer.source, layer.label_field, layer.show_tallies, layer.show_comments, layer.approve_first, layer.name),
-                         ('question', 'T2', False, True, False, 'Marks: Route?'))
+        self.assertEqual((layer.source, layer.label_field, layer.approve_first, layer.name),
+                         ('question', 'T2', False, 'Marks: Route?'))
         self.assertEqual(Question.objects.get(name='React').layer_id, layer.pk)
-        # Second question on the same source reuses the layer.
-        self._post(self.create_url, name='React again', layer='answers:Q2', sm_settings='1', sm_show_tallies='1')
+        # Second question on the same source in the same section: the layer is
+        # reused, not duplicated, and the question is refused — it is already
+        # on this map (spec layer-objects-question).
+        r = self._post(self.create_url, name='React again', layer='answers:Q2', sm_settings='1', sm_show_tallies='1')
         self.assertEqual(SurveyMapLayer.objects.filter(source_question_code='Q2').count(), 1)
-        layer.refresh_from_db()
-        self.assertTrue(layer.show_tallies)
+        self.assertIn('Already on this section’s map', r.content.decode())
+        self.assertFalse(Question.objects.filter(name='React again').exists())
         # Unknown source: no layer, the form complains about the layer field.
         r = self._post(self.create_url, name='Nope', layer='answers:NOPE')
         self.assertFalse(SurveyMapLayer.objects.filter(source_question_code='NOPE').exists())
+
+    def test_live_preview_shows_a_marks_layer_before_it_exists_and_the_collects_state(self):
+        """
+        GIVEN a geo question Q2 with no marks layer yet, and the saved Objects question OBJ (which has sub-questions)
+        WHEN the live preview renders a draft with layer=answers:Q2, and one with question_id=OBJ
+        THEN the first shows the shared-map block for a transient "Marks: …" layer (not "not bound"),
+             and the second reports collects=1 although the draft itself is unsaved
+        """
+        Question.objects.create(survey_section=self.f['section'], code="Q2", name="Route?", input_type="line", order_number=5)
+        url = reverse('editor_question_preview_live', kwargs={'survey_uuid': self.uuid, 'section_id': self.f['section'].pk})
+        html = self.client.post(url, {'input_type': 'layer_objects', 'name': 'React', 'layer': 'answers:Q2',
+                                      'panel_mode': 'legend'}).content.decode()
+        self.assertNotIn('not bound to a reference layer', html)
+        self.assertIn('data-layer-source="question"', html)
+        self.assertIn('data-panel-mode="legend"', html)
+        self.assertIn('data-layer-id="new"', html)
+        html = self.client.post(url, {'input_type': 'layer_objects', 'name': 'Marks by others', 'layer': str(self.f['layer'].pk),
+                                      'question_id': str(self.f['obj'].pk), 'min_objects': '2'}).content.decode()
+        self.assertIn('data-collects="1"', html)
+        self.assertIn('data-min-objects="2"', html)
+
+    def test_sharing_is_per_subquestion_for_any_layer(self):
+        """
+        GIVEN an uploaded layer bound by an Objects question with a 👍/👎 and a text sub-question,
+              and answers about one object from two clean sessions
+        WHEN nothing is shared, then the 👍/👎 sub-question is shared through the switch endpoint,
+             then the text one (the survey is published between edits so a respondent can fetch)
+        THEN the respondent metadata, the layer GeoJSON and the object card carry tallies and
+             comments exactly as far as the sub-questions share them, uploaded layer included
+        """
+        from .layers import build_map_layers_metadata
+        survey = self.f['survey']
+        layer = _objects_layer(survey, name="Bins")
+        objq = Question.objects.create(survey_section=self.f['section'], code="UOBJ", name="Bins", input_type="layer_objects", layer=layer, order_number=7)
+        vote = Question.objects.create(survey_section=self.f['section'], code="UVOTE", name="Like?", input_type="thumbs",
+                                       parent_question_id=objq, order_number=1, choices=[{"code": 1, "name": "up"}, {"code": 0, "name": "down"}])
+        cmt = Question.objects.create(survey_section=self.f['section'], code="UCMT", name="Say", input_type="text", parent_question_id=objq, order_number=2)
+        obj = layer.items.order_by('key').first()
+        for sess in (SurveySession.objects.create(survey=survey), SurveySession.objects.create(survey=survey)):
+            Answer.objects.create(survey_session=sess, question=vote, layer_object=obj, selected_choices=[1])
+            Answer.objects.create(survey_session=sess, question=cmt, layer_object=obj, text="nice")
+        geo_url = reverse('survey_layer_geojson', kwargs={'survey_slug': str(survey.uuid), 'layer_id': layer.pk})
+        card_url = reverse('survey_layer_object', kwargs={'survey_slug': str(survey.uuid), 'layer_id': layer.pk, 'key': obj.key})
+        share_url = lambda q: reverse('editor_question_share', kwargs={'survey_uuid': self.uuid, 'question_id': q.pk})
+        status = lambda st: SurveyHeader.objects.filter(pk=survey.pk).update(status=st)
+        resp = Client()
+
+        def respondent():
+            status('published')
+            r0 = resp.get(reverse('section', kwargs={'survey_slug': str(survey.uuid), 'section_name': self.f['section'].name}))
+            self.assertEqual(r0.status_code, 200, r0.content[:200])
+            g = resp.get(geo_url)
+            c = resp.get(card_url)
+            self.assertEqual(c.status_code, 200, c.content[:200])
+            meta = next(m for m in build_map_layers_metadata(survey) if m['id'] == layer.pk)
+            status('draft')
+            return meta, g, c.json()
+
+        meta, g, card = respondent()
+        self.assertFalse(meta['show_tallies'])
+        self.assertNotIn('tally_up', g.content.decode())
+        self.assertNotIn('tallies', card)
+        self.assertNotIn('comments', card)
+        # share 👍/👎
+        r = self.client.post(share_url(vote), {'share': '1'})
+        self.assertEqual((r.status_code, r['HX-Trigger']), (204, 'questionUpdated'))
+        meta, g, card = respondent()
+        self.assertTrue(meta['show_tallies'])
+        self.assertEqual(g['Cache-Control'], 'private, no-store')
+        feat = next(f for f in json.loads(g.content)['features'] if f['properties']['_key'] == obj.key)
+        self.assertEqual((feat['properties']['tally_up'], feat['properties']['tally_down']), (2, 0))
+        self.assertEqual(card['tallies']['up'], 2)
+        self.assertNotIn('comments', card)
+        # share comments
+        self.client.post(share_url(cmt), {'share': '1'})
+        meta, g, card = respondent()
+        self.assertEqual(card['comments'], ["nice", "nice"])
+        # a rating sub-question has nothing to share
+        rating = Question.objects.create(survey_section=self.f['section'], code="URATE", name="Rate", input_type="rating",
+                                         parent_question_id=objq, order_number=3, choices=[{"code": i, "name": str(i)} for i in range(1, 6)])
+        self.assertEqual(self.client.post(share_url(rating), {'share': '1'}).status_code, 400)
+
+    def test_quick_add_chips_create_preset_subquestions(self):
+        """
+        GIVEN the Objects question OBJ
+        WHEN the 👍/👎, Rating and Comment chips post quick=thumbs|rating|comment
+        THEN three sub-questions exist with the preset names, the 👍/👎 one shared and the others not,
+             the rating with codes 1–5, and each response returns to the parent's modal with the switches
+        """
+        url = reverse('editor_subquestion_create', kwargs={'survey_uuid': self.uuid, 'parent_id': self.f['obj'].pk}) + '?return=modal'
+        for quick in ('thumbs', 'rating', 'comment'):
+            r = self.client.post(url, {'quick': quick}, HTTP_HX_REQUEST='true')
+            self.assertEqual(r.status_code, 200, r.content[:200])
+            html = r.content.decode()
+            self.assertIn('data-share-toggle', html)
+            self.assertIn('id="fg-subquestions"', html)
+        subs = {q.name: q for q in Question.objects.filter(parent_question_id=self.f['obj'])}
+        self.assertEqual((subs['Do you like it?'].input_type, subs['Do you like it?'].share_with_respondents), ('thumbs', True))
+        self.assertEqual((subs['How would you rate it?'].input_type, [c['code'] for c in subs['How would you rate it?'].choices]), ('rating', [1, 2, 3, 4, 5]))
+        self.assertEqual((subs['Anything to add?'].input_type, subs['Anything to add?'].share_with_respondents), ('text', False))
+
+    def test_source_settings_keep_label_and_moderation_only(self):
+        """
+        GIVEN the Objects question bound to the Q1 marks layer
+        WHEN its form is saved with the Source block (label WHY, approve-first on)
+        THEN the layer carries both, and the form renders the Source block without the old
+             tallies/comments checkboxes
+        """
+        url = reverse('editor_question_edit', kwargs={'survey_uuid': self.uuid, 'question_id': self.f['obj'].pk})
+        self._post(url, name='Marks by others', layer=str(self.f['layer'].pk), sm_settings='1', sm_label_field='WHY', sm_approve_first='1')
+        self.f['layer'].refresh_from_db()
+        self.assertEqual((self.f['layer'].label_field, self.f['layer'].approve_first), ('WHY', True))
+        html = self.client.get(url).content.decode()
+        self.assertIn('id="fg-shared-map"', html)
+        self.assertIn('Label each mark by', html)
+        self.assertNotIn('sm_show_tallies', html)
+        self.assertNotIn('sm_show_comments', html)
 
     def test_settings_edit_through_the_question(self):
         """
@@ -39101,20 +39524,67 @@ class SharedMapEditorTest(TestCase):
         self.assertEqual(self.client.get(reverse('editor_layer_object', kwargs=dict(kw, key=obj.key))).status_code, 200)
         self.assertEqual(self.f['layer'].items.count(), 1)
 
-    def test_delete_source_question_refused_and_form_note(self):
+    def test_delete_source_question_refused_while_an_objects_question_reads_it(self):
         """
-        GIVEN Q1 feeds the layer
+        GIVEN Q1 feeds the layer and the Objects question OBJ shows that layer
         WHEN the owner deletes Q1, and opens Q1's form
-        THEN the delete is refused (409, blocked) naming the layer, Q1 remains, and the form names the layer
+        THEN the delete is refused (409, blocked) naming OBJ, Q1 remains, and the form names the layer
         """
         r = self.client.post(reverse('editor_question_delete', kwargs={'survey_uuid': self.uuid, 'question_id': self.f['q1'].pk}))
         self.assertEqual(r.status_code, 409)
-        self.assertIn('Marks: Where?', r.json()['blocked'])
+        self.assertIn('Marks by others', r.json()['blocked'])
         self.assertTrue(Question.objects.filter(pk=self.f['q1'].pk).exists())
         html = self.client.get(reverse('editor_question_edit', kwargs={'survey_uuid': self.uuid, 'question_id': self.f['q1'].pk})).content.decode()
         self.assertIn('feed the reference layer', html)
         q2 = Question.objects.create(survey_section=self.f['section'], code="Q9", name="Other", input_type="point", order_number=9)
         self.assertEqual(self.client.post(reverse('editor_question_delete', kwargs={'survey_uuid': self.uuid, 'question_id': q2.pk})).status_code, 200)
+
+    def test_deleting_the_last_objects_question_drops_the_marks_layer_and_frees_the_source(self):
+        """
+        GIVEN the Objects question OBJ is the only one showing the Q1 marks layer
+        WHEN the owner deletes OBJ, then Q1
+        THEN OBJ's delete answers with HX-Trigger questionUpdated (the preview refreshes), the
+             orphaned marks layer is gone with it, and Q1 now deletes normally
+        """
+        from .models import SurveyMapLayer
+        r = self.client.post(reverse('editor_question_delete', kwargs={'survey_uuid': self.uuid, 'question_id': self.f['obj'].pk}))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r['HX-Trigger'], 'questionUpdated')
+        self.assertFalse(SurveyMapLayer.objects.filter(pk=self.f['layer'].pk).exists())
+        r = self.client.post(reverse('editor_question_delete', kwargs={'survey_uuid': self.uuid, 'question_id': self.f['q1'].pk}))
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(Question.objects.filter(pk=self.f['q1'].pk).exists())
+
+    def test_a_reader_in_another_version_neither_blocks_nor_loses_the_layer(self):
+        """
+        GIVEN the published version's OBJ shows the Q1 marks layer, and a draft copy where the
+              creator removed its own OBJ
+        WHEN the creator deletes Q1 in the draft
+        THEN the draft's Q1 goes (readers in other headers do not block a draft's structure),
+             while the layer stays — the published version still shows it
+        """
+        from .models import SurveyMapLayer
+        draft = clone_survey_for_draft(self.f['survey'])
+        Question.objects.filter(survey_section__survey_header=draft, input_type='layer_objects').delete()
+        q1_draft = Question.objects.get(survey_section__survey_header=draft, code='Q1')
+        r = self.client.post(reverse('editor_question_delete', kwargs={'survey_uuid': draft.uuid, 'question_id': q1_draft.pk}))
+        self.assertEqual(r.status_code, 200, r.content[:200])
+        self.assertFalse(Question.objects.filter(pk=q1_draft.pk).exists())
+        self.assertTrue(SurveyMapLayer.objects.filter(pk=self.f['layer'].pk).exists())
+        self.assertTrue(Question.objects.filter(pk=self.f['obj'].pk).exists())
+
+    def test_deleting_the_source_question_takes_an_unread_marks_layer_with_it(self):
+        """
+        GIVEN a marks layer on Q1 that no Objects question shows any more (OBJ re-bound elsewhere)
+        WHEN the owner deletes Q1
+        THEN Q1 and the layer are both gone
+        """
+        from .models import SurveyMapLayer
+        Question.objects.filter(pk=self.f['obj'].pk).update(layer=None)
+        r = self.client.post(reverse('editor_question_delete', kwargs={'survey_uuid': self.uuid, 'question_id': self.f['q1'].pk}))
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(Question.objects.filter(pk=self.f['q1'].pk).exists())
+        self.assertFalse(SurveyMapLayer.objects.filter(pk=self.f['layer'].pk).exists())
 
 
 class QuestionDraftOnTypePickTest(TestCase):
@@ -39169,6 +39639,69 @@ class QuestionDraftOnTypePickTest(TestCase):
         html = r.content.decode()
         self.assertIn('Where do you live?', html)
         self.assertNotIn('data-draft-question', html)
+
+    def test_subquestion_added_and_deleted_inside_the_modal_updates_the_section_row(self):
+        """
+        GIVEN a point question P created from the picker
+        WHEN a sub-question is created with return_to_parent=1, then deleted
+        THEN each response carries P's section-list row out of band (replace, scoped to
+             #questions-list) — first with the child, then without it
+        """
+        self.client.post(self.create_url, {'draft': '1', 'input_type': 'point'})
+        p = Question.objects.get(survey_section=self.section)
+        r = self.client.post(reverse('editor_subquestion_create', kwargs={'survey_uuid': self.survey.uuid, 'parent_id': p.pk}),
+                             {'name': 'Why here?', 'input_type': 'text', 'subtext': '', 'display_style': 'default',
+                              'color': '#000000', 'choices_json': '[]', 'return_to_parent': '1'}, HTTP_HX_REQUEST='true')
+        html = r.content.decode()
+        self.assertIn('hx-swap-oob="outerHTML:#questions-list > li[data-question-id=\'%d\']"' % p.pk, html)
+        self.assertIn('id="fg-subquestions"', html)
+        self.assertIn('Why here?', html.split('hx-swap-oob=', 1)[1])  # the section row carries the child
+        sub = Question.objects.get(parent_question_id=p)
+        r = self.client.post(reverse('editor_question_delete', kwargs={'survey_uuid': self.survey.uuid, 'question_id': sub.pk}))
+        html = r.content.decode()
+        self.assertIn('hx-swap-oob="outerHTML:#questions-list > li[data-question-id=\'%d\']"' % p.pk, html)
+        self.assertNotIn('Why here?', html)
+        self.assertEqual(r['HX-Trigger'], 'questionUpdated')
+
+    def test_subquestion_edit_answers_with_the_parents_row(self):
+        """
+        GIVEN a point question P with a text sub-question S
+        WHEN S is autosaved through its edit endpoint, and P's edit modal renders
+        THEN the response is P's section-list row (with S nested inside), and the modal forms of
+             both P and S target P's top-level row in #questions-list
+        """
+        self.client.post(self.create_url, {'draft': '1', 'input_type': 'point'})
+        p = Question.objects.get(survey_section=self.section)
+        s = Question.objects.create(survey_section=self.section, code='SUBX', name='Why?', input_type='text',
+                                    parent_question_id=p, order_number=1)
+        url = reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': s.pk})
+        r = self.client.post(url, {'name': 'Why there?', 'input_type': 'text', 'subtext': '', 'display_style': 'default',
+                                   'color': '#000000', 'choices_json': '[]', 'autosave': '1'})
+        html = r.content.decode()
+        self.assertTrue(html.lstrip().startswith('<li class="question-item" data-question-id="%d"' % p.pk))
+        self.assertIn('data-question-id="%d"' % s.pk, html)
+        self.assertIn('Why there?', html)
+        self.assertIn("hx-target=\"#questions-list > [data-question-id='%d']\"" % p.pk, self.client.get(url).content.decode())
+        purl = reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': p.pk})
+        self.assertIn("hx-target=\"#questions-list > [data-question-id='%d']\"" % p.pk, self.client.get(purl).content.decode())
+
+    def test_close_keeps_a_configured_draft_and_drops_an_empty_one(self):
+        """
+        GIVEN two unnamed drafts: one Objects question with a layer picked, one bare text question
+        WHEN the modal's close handler posts delete with if_empty=1 for each
+        THEN the configured one is kept (204) and the empty one is deleted (200)
+        """
+        layer = _objects_layer(self.survey, name="Bins")
+        self.client.post(self.create_url, {'draft': '1', 'input_type': 'layer_objects'})
+        configured = Question.objects.get(survey_section=self.section)
+        Question.objects.filter(pk=configured.pk).update(layer=layer)
+        self.client.post(self.create_url, {'draft': '1', 'input_type': 'text'})
+        empty = Question.objects.get(survey_section=self.section, input_type='text')
+        url = lambda q: reverse('editor_question_delete', kwargs={'survey_uuid': self.survey.uuid, 'question_id': q.pk})
+        self.assertEqual(self.client.post(url(configured), {'if_empty': '1'}).status_code, 204)
+        self.assertTrue(Question.objects.filter(pk=configured.pk).exists())
+        self.assertEqual(self.client.post(url(empty), {'if_empty': '1'}).status_code, 200)
+        self.assertFalse(Question.objects.filter(pk=empty.pk).exists())
 
     def test_named_question_loses_the_draft_marker(self):
         """
@@ -39234,6 +39767,28 @@ class SharedMapExportTest(TestCase):
         response = self.client.get(reverse('download_data', kwargs={'survey_slug': str(self.f['survey'].uuid)}))
         self.assertEqual(response.status_code, 200)
         return ZipFile(BytesIO(response.content))
+
+    def test_export_skips_display_only_questions_and_scopes_aggregates_to_the_header(self):
+        """
+        GIVEN a display-only Objects question (no sub-questions) on the Q1 layer, and a draft copy
+              whose cloned sub-questions also point at the layer
+        WHEN the survey is exported
+        THEN no objects CSV is written for the display-only question, and the layer's results
+             GeoJSON carries columns for this header's sub-questions only
+        """
+        Question.objects.create(survey_section=self.f['section'], code="DISP", name="Just show", input_type="layer_objects",
+                                layer=self.f['layer'], order_number=9)
+        draft = clone_survey_for_draft(self.f['survey'])
+        self.assertTrue(Question.objects.filter(survey_section__survey_header=draft, parent_question_id__layer=self.f['layer']).exists())
+        r = self.client.get(reverse('download_data', kwargs={'survey_slug': str(self.f['survey'].uuid)}))
+        zf = zipfile.ZipFile(BytesIO(r.content))
+        names = zf.namelist()
+        self.assertFalse(any('objects_DISP' in n for n in names), names)
+        self.assertTrue(any('objects_OBJ' in n for n in names), names)
+        results = next(n for n in names if n.endswith('.results.geojson'))
+        props = json.loads(zf.read(results))['features'][0]['properties']
+        sub_cols = {k.rsplit('_', 1)[0] for k in props if k.endswith('_count')}
+        self.assertEqual(sub_cols, {'VOTE', 'CMT'})
 
     def test_geojson_and_csv_carry_the_verdict(self):
         """

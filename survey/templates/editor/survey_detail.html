@@ -680,11 +680,21 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!form) return;
         var name = form.querySelector('[name=name]');
         if (name && name.value.trim()) return;
+        // "Empty" means nothing was configured either: a layer picked or a
+        // sub-question added is real work, an Objects question needs no name
+        // (its legend line falls back to the layer's). The server checks the
+        // same before deleting (if_empty).
+        var layer = form.querySelector('select[name=layer]');
+        if (layer && layer.value) return;
+        if (form.querySelector('.subquestion-list--modal li')) return;
         var id = form.getAttribute('data-draft-question');
+        var fd = new FormData();
+        fd.append('if_empty', '1');
         fetch(form.getAttribute('data-delete-url'), {
-            method: 'POST', credentials: 'same-origin',
+            method: 'POST', credentials: 'same-origin', body: fd,
             headers: { 'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value }
-        }).then(function() {
+        }).then(function(r) {
+            if (r.status !== 200) return;
             var item = document.querySelector('#questions-list [data-question-id="' + id + '"]');
             if (item) item.remove();
             refreshPreview();

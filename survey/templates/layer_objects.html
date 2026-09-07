@@ -4,7 +4,9 @@ from the layer GeoJSON the map already loaded; clicking a row or a feature opens
 the object's popup — the same one respondent-placed features use — carrying the
 card and this question's sub-question form (window._subquestionsForms[code]).
 {% endcomment %}
-<div class="layer-objects" data-layer-objects
+<div class="layer-objects{% if widget.panel_mode == 'legend' %} layer-objects--legend{% endif %}" data-layer-objects
+     data-panel-mode="{{ widget.panel_mode|default:'list' }}"
+     data-collects="{% if widget.collects %}1{% else %}0{% endif %}"
      data-layer-source="{{ widget.layer_source|default:'' }}"
      data-question-code="{{ widget.question_code }}"
      data-layer-id="{{ widget.layer_id|default:'' }}"
@@ -13,6 +15,20 @@ card and this question's sub-question form (window._subquestionsForms[code]).
      data-all-label="{% trans 'All' %}"
      data-empty-label="{% trans 'Nothing matches' %}"
      data-min-label="{% trans 'Please answer about at least %d object(s) to continue' %}">
+    {% if widget.panel_mode == 'legend' and widget.layer_id %}
+    {% comment %}Legend line (spec layer-objects-question "panel_mode = legend"): one row —
+    swatch, name, count, an on/off toggle kept in sync with the Leaflet layers control by
+    layer_objects_block.html. Objects stay clickable on the map.{% endcomment %}
+    <label class="layer-objects__legend" data-lo-legend>
+        <input type="checkbox" checked data-lo-toggle>
+        <span class="layer-objects__swatch" style="background:{{ widget.layer_color|default:'#2c7be5' }}"></span>
+        <span class="layer-objects__title">{{ widget.title }}</span>
+        {% if widget.object_count %}<span class="layer-objects__count" data-lo-total>{{ widget.object_count }}</span>{% endif %}
+        <span class="layer-objects__counter" data-lo-counter hidden>{% trans "Answered" %} <b data-lo-answered>0</b></span>
+    </label>
+    {% if widget.subtitle %}<div class="layer-objects__subtitle">{{ widget.subtitle|safe }}</div>{% endif %}
+    <div class="layer-objects__min" data-lo-min hidden></div>
+    {% else %}
     <div class="layer-objects__head">
         <span class="layer-objects__title">{{ widget.title }}{% if widget.object_count %} · <span data-lo-total>{{ widget.object_count }}</span>{% endif %}</span>
         <span class="layer-objects__counter" data-lo-counter hidden>{% trans "Answered" %} <b data-lo-answered>0</b>{% if widget.layer_source != 'question' %} {% trans "of" %} <span data-lo-total2>{{ widget.object_count }}</span>{% endif %}</span>
@@ -21,12 +37,37 @@ card and this question's sub-question form (window._subquestionsForms[code]).
     {% if not widget.layer_id %}
     <div class="layer-objects__empty">{% trans "This question is not bound to a reference layer yet." %}</div>
     {% else %}
+    {% if widget.preview %}
+    {% comment %}Editor preview only: a static picture of the list the respondent's
+    page builds from the layer GeoJSON (layers.preview_panel).{% endcomment %}
+    {% if widget.preview.tools and widget.objects_search != 'off' or widget.objects_search == 'on' %}
+    <div class="layer-objects__tools">
+        <input type="search" class="layer-objects__search" placeholder="{% trans 'Search objects…' %}" disabled>
+        <div class="layer-objects__chips"><span class="lo-chip is-on">{% trans "All" %}</span>{% for cat, n in widget.preview.categories %}<span class="lo-chip">{{ cat }} · {{ n }}</span>{% endfor %}</div>
+    </div>
+    {% endif %}
+    <div class="layer-objects__list">
+        {% for row in widget.preview.rows %}
+        <div class="lo-row">
+            {% if row.cover %}<span class="lo-row__cover" style="background-image:url('{{ row.cover }}')"></span>{% else %}<span class="lo-row__swatch" style="background:{{ widget.layer_color|default:'#2c7be5' }}"></span>{% endif %}
+            <span class="lo-row__title">{{ row.title }}</span>
+            {% if row.category %}<span class="lo-row__cat">{{ row.category }}</span>{% endif %}
+            {% if row.tally %}<span class="lo-row__tally"><i class="fas fa-thumbs-up"></i> {{ row.tally|cut:" /" }}</span>{% endif %}
+        </div>
+        {% empty %}
+        <div class="lo-empty">{% trans "No objects in this layer yet" %}</div>
+        {% endfor %}
+        {% if widget.preview.more %}<div class="layer-objects__hint">{% blocktrans with n=widget.preview.more %}… and {{ n }} more{% endblocktrans %}</div>{% endif %}
+    </div>
+    {% else %}
     <div class="layer-objects__tools" data-lo-tools hidden>
         <input type="search" class="layer-objects__search" data-lo-search placeholder="{% trans 'Search objects…' %}" autocomplete="off">
         <div class="layer-objects__chips" data-lo-chips></div>
     </div>
     <div class="layer-objects__list" data-lo-list></div>
+    {% endif %}
     {% if widget.layer_source == 'question' %}<div class="layer-objects__hint">{% trans "Marks placed by other respondents. Your own marks are not in this list." %}</div>{% endif %}
     <div class="layer-objects__min" data-lo-min hidden></div>
+    {% endif %}
     {% endif %}
 </div>

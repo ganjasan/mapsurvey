@@ -285,17 +285,6 @@ class SurveySectionForm(forms.ModelForm):
         forever.
         """
         section = super().save(commit=False)
-        if self.data and 'reference_layers_submitted' in self.data:
-            survey = section.survey_header or (self.instance.survey_header if self.instance.pk else None)
-            if survey is not None:
-                valid_ids = set(layers_for(survey).values_list('id', flat=True))
-                shown = set()
-                for raw in self.data.getlist('visible_layers'):
-                    try:
-                        shown.add(int(raw))
-                    except (TypeError, ValueError):
-                        continue
-                section.hidden_layers = sorted(valid_ids - shown)
         if commit:
             section.save()
         return section
@@ -305,7 +294,7 @@ class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
         fields = ['name', 'subtext', 'input_type', 'required', 'color', 'icon_class', 'image', 'display_style',
-                  'layer', 'min_objects', 'objects_search']
+                  'layer', 'min_objects', 'objects_search', 'panel_mode', 'share_with_respondents']
         labels = {
             'name': _('Name'),
             'subtext': _('Subtext'),
@@ -318,6 +307,8 @@ class QuestionForm(forms.ModelForm):
             'layer': _('Layer'),
             'min_objects': _('Minimum objects'),
             'objects_search': _('Search and category chips'),
+            'panel_mode': _('In the panel'),
+            'share_with_respondents': _('Visible to other respondents'),
         }
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -330,6 +321,7 @@ class QuestionForm(forms.ModelForm):
             'layer': forms.Select(attrs={'class': 'form-control'}),
             'min_objects': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'objects_search': forms.Select(attrs={'class': 'form-control'}),
+            'panel_mode': forms.RadioSelect,
         }
         help_texts = {
             'icon_class': '<a href="https://fontawesome.com/v5/search" target="_blank" rel="noopener">Font Awesome</a> class',
@@ -351,12 +343,18 @@ class QuestionForm(forms.ModelForm):
         from .layers import layers_for
         survey = section.survey_header if section is not None else (
             self.instance.survey_section.survey_header if self.instance.pk else None)
+        # The section the question lives in, for the one-layer-per-section rule.
+        self.section = section if section is not None else (
+            self.instance.survey_section if self.instance.pk else None)
         layer_qs = layers_for(survey) if (survey is not None and conf_settings.MAP_REFERENCE_LAYERS) else None
         self.fields['layer'].required = False
         self.fields['layer'].queryset = layer_qs if layer_qs is not None else self.fields['layer'].queryset.none()
         self.fields['layer'].empty_label = _('— pick a layer —')
         self.fields['min_objects'].required = False
         self.fields['objects_search'].required = False
+        self.fields['panel_mode'].required = False
+        self.fields['share_with_respondents'].required = False
+        self.is_subquestion = is_subquestion
         # Offered when there is anything to bind: an uploaded layer, or a geo
         # question whose answers can become one (spec survey-editor
         # "Objects on the map source picker").
@@ -413,12 +411,25 @@ class QuestionForm(forms.ModelForm):
         elif style == 'dropdown':
             cleaned['display_style'] = 'default'
         if input_type == 'layer_objects':
-            if not cleaned.get('layer'):
+            layer = cleaned.get('layer')
+            if not layer:
                 self.add_error('layer', _('Pick the reference layer whose objects this question lists.'))
+            elif self.section is not None:
+                # One layer once per section (spec layer-objects-question): the
+                # question IS the layer's presence on this map, and a second
+                # one would draw it twice with two panel lines.
+                twin = (Question.objects
+                        .filter(survey_section=self.section, input_type='layer_objects',
+                                layer=layer, parent_question_id__isnull=True)
+                        .exclude(pk=self.instance.pk or 0)
+                        .first())
+                if twin is not None:
+                    self.add_error('layer', _('Already on this section’s map as “%(name)s”.') % {'name': twin.name or _('(unnamed)')})
             # The minimum-objects rule replaces `required` for this type.
             cleaned['required'] = False
             cleaned['min_objects'] = cleaned.get('min_objects') or 0
             cleaned['objects_search'] = cleaned.get('objects_search') or 'auto'
+            cleaned['panel_mode'] = cleaned.get('panel_mode') or 'list'
         else:
             # The binding is meaningful for one type only; never keep a stale
             # layer on a question that switched type (PROTECT would then block
@@ -426,6 +437,11 @@ class QuestionForm(forms.ModelForm):
             cleaned['layer'] = None
             cleaned['min_objects'] = 0
             cleaned['objects_search'] = 'auto'
+            cleaned['panel_mode'] = 'list'
+        # Sharing is a sub-question thing, and only 👍/👎 and text have
+        # something other respondents can see.
+        if not self.is_subquestion or input_type not in ('thumbs', 'text', 'text_line'):
+            cleaned['share_with_respondents'] = False
         return cleaned
 
 

@@ -1172,6 +1172,11 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
 .lo-card__comments { margin:0 0 8px; }
 .lo-card__comment { font-size:.8rem; color:var(--text-secondary); border-left:3px solid var(--card-border); padding:2px 8px; margin:0 0 4px; }
 .layer-objects__hint { font-size:.78rem; color:var(--text-tertiary); margin:6px 0 0; }
+.layer-objects--legend { margin:2px 0 10px; }
+.layer-objects__legend { display:flex; align-items:center; gap:8px; margin:0; padding:7px 10px; border:1px solid var(--card-border); border-radius:var(--radius-sm); background:var(--card-bg); cursor:pointer; font-size:.9rem; }
+.layer-objects__legend input { margin:0; }
+.layer-objects__swatch { width:12px; height:12px; border-radius:3px; flex:none; }
+.layer-objects__count { margin-left:auto; font-size:.78rem; color:var(--text-secondary); }
 .leaflet-tooltip.ref-layer-tally { cursor:pointer; background:#fff; border:1px solid rgba(0,0,0,.12); border-radius:999px; padding:1px 7px; font-size:11px; box-shadow:0 1px 3px rgba(0,0,0,.12); }
 .leaflet-tooltip.ref-layer-tally::before { display:none; }
 .lo-empty { font-size:.85rem; color:var(--text-tertiary); padding:8px 2px; }

@@ -61,6 +61,40 @@
     .qtp-card .qtp-name { font-size: 0.72rem; font-weight: 600; color: #343a40; line-height: 1.2; }
     .qtp-hint-line { font-size: 0.75rem; color: #6c757d; margin-top: 6px; min-height: 1em; }
 
+    /* Objects on the map — direction A of mockups/Main.dc.html: one card. */
+    .lo-card { border: 1px solid #e5e7eb; border-radius: 8px; background: #fafafa; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; margin-bottom: 0; }
+    .lo-card--tail { border-top: 0 !important; border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; background: #fafafa !important; padding: 0 16px 14px !important; margin-top: 0 !important; }
+    .lo-card--tail::before { content: ""; display: block; height: 1px; background: #e5e7eb; margin: 0 0 12px; }
+    #fg-layer-objects.lo-card--head { border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; }
+    .lo-card__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .lo-card__title { font-size: .95rem; font-weight: 600; }
+    .lo-status { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; color: #5f6368; background: #fff; border: 1px solid #e5e7eb; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+    .lo-status--collects { color: #4f46e5; background: #eef2ff; border-color: #c7d2fe; }
+    .lo-field { display: flex; flex-direction: column; gap: 6px; }
+    .lo-label { font-size: .85rem; font-weight: 600; margin: 0; }
+    .lo-row { display: flex; align-items: center; gap: 10px; }
+    .lo-row .form-control { flex: 1; }
+    .lo-row input.form-control[type=number] { flex: 0 0 96px; }
+    .lo-link { font-size: .85rem; font-weight: 500; white-space: nowrap; }
+    .lo-help { font-size: .78rem; color: #868e96; margin: 0; }
+    .lo-seg { display: flex; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; background: #fff; }
+    .lo-seg__opt { flex: 1; margin: 0; cursor: pointer; position: relative; }
+    .lo-seg__opt + .lo-seg__opt { border-left: 1px solid #d1d5db; }
+    .lo-seg__opt input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .lo-seg__opt span { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 12px; font-size: .85rem; font-weight: 500; color: #5f6368; }
+    .lo-seg__opt input:checked + span { background: #eef2ff; color: #4f46e5; }
+    .lo-seg__opt input:focus-visible + span { box-shadow: inset 0 0 0 2px #4f46e5; }
+    .lo-source { border: 1px solid #c7d2fe; border-radius: 8px; background: #eef2ff; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+    .lo-source__title { font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #4f46e5; }
+    .lo-source__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .lo-check { display: flex; align-items: center; gap: 8px; margin: 0; font-size: .85rem; font-weight: 400; cursor: pointer; }
+    .lo-share { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 0 auto; font-size: .76rem; color: #5f6368; white-space: nowrap; cursor: pointer; font-weight: 400; }
+    .lo-share input { margin: 0; }
+    .lo-share--none { color: #adb5bd; cursor: default; }
+    .lo-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .lo-chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px dashed #d1d5db; border-radius: 999px; background: #fff; font-size: .8rem; color: #5f6368; cursor: pointer; }
+    .lo-chip:hover { border-color: #4f46e5; color: #4f46e5; }
+
     /* Hover flyout with a canned example */
     .qtp-flyout-hint { font-size: 0.7rem; color: #868e96; margin-bottom: 8px; }
     .qtp-example-frame {
@@ -78,7 +112,7 @@
 </div>
 <form {% if question %}
         hx-post="{% url 'editor_question_edit' survey.uuid question.id %}"
-        hx-target="[data-question-id='{{ question.id }}']"
+        hx-target="#questions-list > [data-question-id='{% if question.parent_question_id_id %}{{ question.parent_question_id_id }}{% else %}{{ question.id }}{% endif %}']"
         hx-swap="outerHTML"
       {% elif parent %}
         hx-post="{% url 'editor_subquestion_create' survey.uuid parent.id %}"
@@ -148,6 +182,13 @@
         {% endif %}
         {% endfor %}
 
+        {% if parent.input_type == 'layer_objects' or question.parent_question_id.input_type == 'layer_objects' %}
+        <div class="form-group" id="fg-share" style="display:none;">
+            <label class="lo-check"><input type="checkbox" name="share_with_respondents" value="on" {% if form.share_with_respondents.value %}checked{% endif %}><span>{{ form.share_with_respondents.label }}</span></label>
+            <small class="form-text text-muted" data-share-help="thumbs">{% trans "Other respondents see the 👍/👎 counts on the object." %}</small>
+            <small class="form-text text-muted" data-share-help="text">{% trans "Other respondents see the comments in the object’s card." %}</small>
+        </div>
+        {% endif %}
         {% comment %}The Formatted Text block's body. It sits here, below the type picker,
         because it is a type-scoped setting like the choices editor and the validation
         fields — the whole lower half of this dialog is "settings for the type you picked".
@@ -258,53 +299,85 @@
         {% comment %}Objects on the map (spec survey-editor "Objects on the map question
         form"): the layer, the minimum that replaces Required, and the search mode.
         Hidden for every other type by toggleTypeScopedFields.{% endcomment %}
-        <div class="form-group" id="fg-layer-objects" style="display:none;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;background:#fafafa;">
-            <div class="form-row">
-                <div class="col-7">
-                    <label for="id_layer" style="font-weight:600;">{{ form.layer.label }}</label>
+        <div class="form-group lo-card" id="fg-layer-objects" style="display:none;">
+            {% comment %}Direction A of the owner-approved mockup (mockups/Main.dc.html):
+            one card, one story — the layer on this map, how the panel presents it,
+            then "Ask about each object" (the sub-questions block below joins this card
+            for this type via lo-card--tail). The status pill says whether the question
+            collects anything (Question.collects_objects).{% endcomment %}
+            <div class="lo-card__head">
+                <div class="lo-card__title">{% trans "Layer on this map" %}</div>
+                {% if question.collects_objects %}
+                <span class="lo-status lo-status--collects"><i class="fas fa-comment-dots"></i> {% trans "Asks about each object" %}</span>
+                {% else %}
+                <span class="lo-status" id="fg-display-only-hint"><i class="fas fa-eye"></i> {% trans "Shows only · collects nothing" %}</span>
+                {% endif %}
+            </div>
+
+            <div class="lo-field">
+                <div class="lo-row">
                     {% comment %}Two groups (spec survey-editor "Objects on the map source picker"):
                     the survey's layers, and geo questions whose marks become a layer on save
                     (value answers:<code>). data-source/data-labels drive the settings block.{% endcomment %}
                     <select name="layer" id="id_layer" class="form-control" data-layer-picker>
                         <option value="">— {% trans "pick a layer" %} —</option>
                         {% if layer_options %}<optgroup label="{% trans 'Layers' %}">
-                        {% for l in layer_options %}<option value="{{ l.id }}" data-source="{{ l.source }}" data-labels='{{ l.labels|json_attr }}' data-label-field="{{ l.label_field }}" data-show-tallies="{{ l.show_tallies|yesno:'1,0' }}" data-show-comments="{{ l.show_comments|yesno:'1,0' }}" data-approve-first="{{ l.approve_first|yesno:'1,0' }}" {% if form.layer.value|stringformat:'s' == l.id|stringformat:'s' %}selected{% endif %}>{{ l.name }}{% if l.source == 'question' %} · {% trans "respondents' marks on" %} {{ l.code }}{% endif %}</option>{% endfor %}
+                        {% for l in layer_options %}<option value="{{ l.id }}" data-source="{{ l.source }}" data-labels='{{ l.labels|json_attr }}' data-label-field="{{ l.label_field }}" data-approve-first="{{ l.approve_first|yesno:'1,0' }}" {% if form.layer.value|stringformat:'s' == l.id|stringformat:'s' %}selected{% endif %}>{{ l.name }}{% if l.source == 'question' %} · {% trans "respondents' marks on" %} {{ l.code }}{% else %} · {{ l.feature_count }} {% trans "objects" %}{% endif %}</option>{% endfor %}
                         </optgroup>{% endif %}
                         {% if answer_sources %}<optgroup label="{% trans 'Respondents’ marks on…' %}">
-                        {% for q in answer_sources %}<option value="answers:{{ q.code }}" data-source="question" data-labels='{{ q.labels|json_attr }}' data-show-tallies="1" data-show-comments="0" data-approve-first="0">{{ q.name }}</option>{% endfor %}
+                        {% for q in answer_sources %}<option value="answers:{{ q.code }}" data-source="question" data-labels='{{ q.labels|json_attr }}' data-approve-first="0">{{ q.name }}</option>{% endfor %}
                         </optgroup>{% endif %}
                     </select>
-                    <small class="form-text text-muted">{% trans "Uploaded layers come from Survey settings → Reference layers. Picking a geo question turns its marks into a layer other respondents can react to." %}</small>
-                    {% for error in form.layer.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+                    <a class="lo-link" href="{% url 'editor_survey_detail' survey.uuid %}?panel=settings" target="_blank" rel="noopener">{% trans "Upload new…" %}</a>
                 </div>
-                <div class="col-5">
-                    <label for="{{ form.min_objects.id_for_label }}" style="font-weight:600;">{{ form.min_objects.label }}</label>
-                    {{ form.min_objects }}
-                    <small class="form-text text-muted">{% trans "The respondent must answer about at least this many. 0 = optional; replaces “Required” for this type." %}</small>
-                    {% for error in form.min_objects.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+                <small class="lo-help">{% trans "This question puts the layer on this section’s map. Or pick “Respondents’ marks on…” a geo question to show what others have already placed." %}</small>
+                {% for error in form.layer.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+            </div>
+            {% comment %}Source settings of a marks layer (spec shared-map-layer): the
+            sub-answer that labels each mark and approve-first moderation. Shown only for
+            "Respondents’ marks on…"; what OTHER respondents see of the answers is a
+            switch on each sub-question below (share_with_respondents), whatever the
+            layer's source.{% endcomment %}
+            <div class="lo-source" id="fg-shared-map" style="display:none;">
+                <input type="hidden" name="sm_settings" value="1">
+                <div class="lo-source__title">{% trans "Source" %}</div>
+                <div class="lo-source__grid">
+                    <div class="lo-field">
+                        <label class="lo-label" for="id_sm_label_field">{% trans "Label each mark by" %}</label>
+                        <select name="sm_label_field" id="id_sm_label_field" class="form-control"><option value="">— {% trans "none: marks are listed by number" %} —</option></select>
+                        <small class="lo-help">{% trans "A sub-question of the geo question. Choice answers are safer than free text." %}</small>
+                    </div>
+                    <div class="lo-field" style="justify-content:center;">
+                        <label class="lo-check"><input type="checkbox" name="sm_approve_first" id="id_sm_approve_first" value="1"><span>{% trans "Show marks only after I approve them" %}</span></label>
+                        <small class="lo-help">{% trans "New marks wait in Responses → On hold until you approve them." %}</small>
+                    </div>
                 </div>
             </div>
-            <div style="margin-top:8px;">
-                <label for="{{ form.objects_search.id_for_label }}" style="font-weight:600;">{{ form.objects_search.label }}</label>
+
+            <div class="lo-field">
+                <div class="lo-label">{{ form.panel_mode.label }}</div>
+                <div class="lo-seg" id="lo-panel-mode">
+                    {% for radio in form.panel_mode %}<label class="lo-seg__opt">{{ radio.tag }}<span><i class="fas {% if radio.data.value == 'list' %}fa-list-ul{% else %}fa-minus-square{% endif %}"></i> {{ radio.choice_label }}</span></label>{% endfor %}
+                </div>
+                <small class="lo-help" data-lo-mode-help="list">{% trans "Respondents browse and search the objects in the panel; each row opens its object on the map." %}</small>
+                <small class="lo-help" data-lo-mode-help="legend">{% trans "One line naming the layer with a toggle — right for a backdrop such as existing bins or district boundaries." %}</small>
+            </div>
+
+            <div class="lo-field" id="fg-objects-search">
+                <label class="lo-label" for="{{ form.objects_search.id_for_label }}">{{ form.objects_search.label }}</label>
                 {{ form.objects_search }}
             </div>
-            {% comment %}Shared map settings (spec shared-map-layer). Stored on the layer, edited
-            ONLY here — the layer card in Survey settings shows name and colour.{% endcomment %}
-            <div id="fg-shared-map" style="display:none;margin-top:10px;border-top:1px solid #e5e7eb;padding-top:10px;">
-                <input type="hidden" name="sm_settings" value="1">
-                <div class="form-row">
-                    <div class="col-7">
-                        <label for="id_sm_label_field" style="font-weight:600;">{% trans "Label shown on other people's marks" %}</label>
-                        <select name="sm_label_field" id="id_sm_label_field" class="form-control"><option value="">— {% trans "none: marks are listed by number" %} —</option></select>
-                        <small class="form-text text-muted">{% trans "A sub-question of the geo question. Choice answers are safer than free text." %}</small>
-                    </div>
-                    <div class="col-5" style="font-size:.85rem;">
-                        <label style="font-weight:600;">{% trans "Other respondents see" %}</label>
-                        <div class="form-check"><input type="checkbox" class="form-check-input" name="sm_show_tallies" id="id_sm_show_tallies" value="1"><label class="form-check-label" for="id_sm_show_tallies">{% trans "👍/👎 counts" %}</label></div>
-                        <div class="form-check"><input type="checkbox" class="form-check-input" name="sm_show_comments" id="id_sm_show_comments" value="1"><label class="form-check-label" for="id_sm_show_comments">{% trans "other people's comments" %}</label></div>
-                        <div class="form-check"><input type="checkbox" class="form-check-input" name="sm_approve_first" id="id_sm_approve_first" value="1"><label class="form-check-label" for="id_sm_approve_first">{% trans "marks only after you approve them" %}</label></div>
-                    </div>
+
+            {% comment %}Only a question WITH sub-questions collects anything; without
+            them the block just shows the layer, so a minimum would be a rule nobody
+            can satisfy (spec layer-objects-question, D2).{% endcomment %}
+            <div class="lo-field" id="fg-min-objects"{% if not question.collects_objects %} style="display:none;"{% endif %}>
+                <label class="lo-label" for="{{ form.min_objects.id_for_label }}">{{ form.min_objects.label }}</label>
+                <div class="lo-row">
+                    {{ form.min_objects }}
+                    <small class="lo-help" style="margin:0;">{% trans "The respondent must answer about at least this many. 0 = optional; replaces “Required” for this type." %}</small>
                 </div>
+                {% for error in form.min_objects.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
             </div>
         </div>
 
@@ -321,8 +394,12 @@
         toggleTypeScopedFields.{% endcomment %}
         {% if question and not question.parent_question_id_id %}
         <div class="form-group" id="fg-subquestions" style="display:none;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;">
-            <label style="font-weight:600;margin-bottom:2px;"><i class="fas fa-list-ol"></i> {% trans "Sub-questions" %}
-                <small class="text-muted" style="font-weight:400;">— {% trans "asked about every object the respondent opens or marks" %}</small></label>
+            <label style="font-weight:600;margin-bottom:2px;">
+                <span data-lo-subq-title="geo"><i class="fas fa-list-ol"></i> {% trans "Sub-questions" %}
+                    <small class="text-muted" style="font-weight:400;">— {% trans "asked about every object the respondent opens or marks" %}</small></span>
+                <span data-lo-subq-title="objects" style="display:none;"><i class="fas fa-comment-dots"></i> {% trans "Ask about each object" %}
+                    <small class="text-muted" style="font-weight:400;">— {% trans "optional; sub-questions open when a respondent taps an object" %}</small></span>
+            </label>
             {% with sub_questions=question.subQuestions %}
             {% if sub_questions %}
             <ul class="subquestion-list subquestion-list--modal" style="margin:6px 0 0;padding:0;list-style:none;">
@@ -332,6 +409,16 @@
                         <span class="q-name">{{ subq.name|default:"(unnamed)" }}</span>
                         <span class="badge badge-secondary">{{ subq|input_type_label }}</span>
                         {% if subq.required %}<span class="badge badge-danger">{% trans "Required" %}</span>{% endif %}
+                        {% if question.input_type == 'layer_objects' %}
+                        {% if subq.input_type == 'thumbs' or subq.input_type == 'text' or subq.input_type == 'text_line' %}
+                        <label class="lo-share" title="{% trans 'Other respondents see the answers on the object' %}">
+                            <input type="checkbox" data-share-toggle data-url="{% url 'editor_question_share' survey.uuid subq.id %}" {% if subq.share_with_respondents %}checked{% endif %} {% if is_read_only %}disabled{% endif %}>
+                            <span>{% if subq.input_type == 'thumbs' %}{% trans "Others see 👍/👎 counts" %}{% else %}{% trans "Others see comments" %}{% endif %}</span>
+                        </label>
+                        {% else %}
+                        <span class="lo-share lo-share--none">{% trans "results for you only" %}</span>
+                        {% endif %}
+                        {% endif %}
                         <span class="q-actions">
                             <button type="button" title="{% trans 'Edit' %}" {% if is_read_only %}disabled{% else %}
                                     hx-get="{% url 'editor_question_edit' survey.uuid subq.id %}?return=modal" hx-target="#questionModalBody" hx-swap="innerHTML"{% endif %}>
@@ -352,7 +439,23 @@
             </div>
             {% endif %}
             {% endwith %}
-            <button type="button" class="add-question-btn add-question-btn--sub" id="modal-add-subquestion" style="margin-top:6px;"
+            {% if not is_read_only %}
+            {% comment %}One-tap presets (mockups/journey.md): the common questions about an
+            object, created at once and renamed later; "Other…" is the full form. Both
+            adders are in the markup; toggleTypeScopedFields shows the one for the type
+            picked NOW — the modal is not re-rendered on a type switch.{% endcomment %}
+            <div class="lo-chips" data-lo-subq-add="objects" style="margin-top:8px;{% if question.input_type != 'layer_objects' %}display:none;{% endif %}">
+                {% for quick, label in QUICK_LABELS %}
+                <button type="button" class="lo-chip"
+                        hx-post="{% url 'editor_subquestion_create' survey.uuid question.id %}?return=modal"
+                        hx-vals='{"quick": "{{ quick }}"}' hx-params="quick" hx-target="#questionModalBody" hx-swap="innerHTML"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'><i class="fas fa-plus"></i> {{ label }}</button>
+                {% endfor %}
+                <button type="button" class="lo-chip"
+                        hx-get="{% url 'editor_subquestion_create' survey.uuid question.id %}?return=modal" hx-target="#questionModalBody" hx-swap="innerHTML"><i class="fas fa-plus"></i> {% trans "Other…" %}</button>
+            </div>
+            {% endif %}
+            <button type="button" class="add-question-btn add-question-btn--sub" id="modal-add-subquestion" data-lo-subq-add="geo" style="margin-top:6px;{% if question.input_type == 'layer_objects' and not is_read_only %}display:none;{% endif %}"
                     {% if is_read_only %}disabled title="{% trans 'Create a draft to edit' %}"{% else %}
                     hx-get="{% url 'editor_subquestion_create' survey.uuid question.id %}?return=modal" hx-target="#questionModalBody" hx-swap="innerHTML"{% endif %}>
                 <i class="fas fa-plus"></i> {% trans "Add sub-question" %}
@@ -530,6 +633,11 @@
                     <li><b>{% trans "Choices are the items to be ordered" %}</b>, not a scale. Give 3&ndash;6
                         short, comparable items.</li>
                     <li>{% trans "Respondents must place" %} <i>{% trans "every" %}</i> {% trans "item and no two can share a rank — use Rating instead when independent scores are enough." %}</li>
+                </ul>
+                <ul class="qtp-tips-list" data-tip-for="layer_objects">
+                    <li><b>{% trans "This is how a layer gets onto this section’s map." %}</b> {% trans "Pick an uploaded layer (Survey settings → Reference layers) or “Respondents’ marks on…” a geo question to show what others have already placed." %}</li>
+                    <li><b>{% trans "Without sub-questions it only shows." %}</b> {% trans "Add a sub-question (👍/👎, a rating, a comment) and respondents can open any object on the map and answer about it — each answer becomes a row per object in your results." %}</li>
+                    <li><b>{% trans "List or legend line." %}</b> {% trans "A list lets respondents browse and search the objects in the panel; a legend line just names the layer with a toggle — right for a backdrop like existing bins or district boundaries." %}</li>
                 </ul>
                 <ul class="qtp-tips-list" data-tip-for="choice multichoice">
                     <li>{% trans "Codes end up in your data export; names are what respondents see. Keep codes stable once responses start arriving." %}</li>
@@ -739,6 +847,22 @@
         show('name-internal-hint', DISPLAY_BLOCK_TYPES.indexOf(t) !== -1);
         show('fg-layer-objects', t === 'layer_objects');
         show('fg-subquestions', PARENT_TYPES.indexOf(t) !== -1);
+        // Sharing exists for 👍/👎 (counts) and text (comments) sub-questions.
+        show('fg-share', t === 'thumbs' || t === 'text' || t === 'text_line');
+        document.querySelectorAll('[data-share-help]').forEach(function(el) {
+            el.style.display = el.getAttribute('data-share-help') === (t === 'thumbs' ? 'thumbs' : 'text') ? '' : 'none';
+        });
+        // Objects on the map: the sub-questions block joins the layer card
+        // (one card, one story — mockups/Main.dc.html).
+        var subq = document.getElementById('fg-subquestions');
+        var loCard = document.getElementById('fg-layer-objects');
+        if (subq) subq.classList.toggle('lo-card--tail', t === 'layer_objects');
+        if (loCard) loCard.classList.toggle('lo-card--head', t === 'layer_objects' && !!subq);
+        document.querySelectorAll('[data-lo-subq-title], [data-lo-subq-add]').forEach(function(el) {
+            var want = el.getAttribute('data-lo-subq-title') || el.getAttribute('data-lo-subq-add');
+            el.style.display = (want === (t === 'layer_objects' ? 'objects' : 'geo')) ? '' : 'none';
+        });
+        syncPanelMode();
         toggleHtmlBodyEditor(t === 'html');
     }
 
@@ -861,11 +985,37 @@
             if (l.code === current) o.selected = true;
             sel.appendChild(o);
         });
-        ['show_tallies', 'show_comments', 'approve_first'].forEach(function(f) {
-            document.getElementById('id_sm_' + f).checked = opt.getAttribute('data-' + f.replace('_', '-')) === '1';
-        });
+        document.getElementById('id_sm_approve_first').checked = opt.getAttribute('data-approve-first') === '1';
     }
     if (layerPicker) { layerPicker.addEventListener('change', syncSharedMap); syncSharedMap(); }
+    // An Objects question is usually named after its layer: fill an empty
+    // Name from the pick (the creator keeps the last word), so the section
+    // list never shows "(unnamed)" for a configured question.
+    if (layerPicker) {
+        layerPicker.addEventListener('change', function() {
+            var nameInput = document.querySelector('#questionModalBody [name="name"]');
+            var opt = layerPicker.options[layerPicker.selectedIndex];
+            if (!nameInput || nameInput.value.trim() || !opt || !opt.value) return;
+            nameInput.value = (opt.textContent || '').split(' · ')[0].trim();
+            nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    }
+
+    // "Others see" switches on the sub-question rows: one POST, the preview
+    // follows (questionUpdated).
+    document.querySelectorAll('#questionModalBody [data-share-toggle]').forEach(function(box) {
+        box.addEventListener('change', function() {
+            var fd = new FormData();
+            fd.append('share', box.checked ? '1' : '0');
+            fetch(box.getAttribute('data-url'), {
+                method: 'POST', body: fd,
+                headers: { 'X-CSRFToken': document.querySelector('#questionModalBody [name=csrfmiddlewaretoken]').value }
+            }).then(function(r) {
+                if (!r.ok) { box.checked = !box.checked; return; }
+                document.body.dispatchEvent(new CustomEvent('questionUpdated'));
+            }).catch(function() { box.checked = !box.checked; });
+        });
+    });
 
     // ── Type picker cards drive the hidden select ──
     var picker = document.getElementById('qtp-picker');
@@ -1092,6 +1242,20 @@
         });
         box.hidden = !any;
     }
+
+    // Panel mode (list / legend): the matching help line, and search chips
+    // only make sense for the list.
+    function syncPanelMode() {
+        var checked = document.querySelector('#lo-panel-mode input[name="panel_mode"]:checked');
+        var mode = checked ? checked.value : 'list';
+        document.querySelectorAll('[data-lo-mode-help]').forEach(function(el) {
+            el.style.display = el.getAttribute('data-lo-mode-help') === mode ? '' : 'none';
+        });
+        show('fg-objects-search', mode === 'list');
+    }
+    document.querySelectorAll('#lo-panel-mode input[name="panel_mode"]').forEach(function(r) {
+        r.addEventListener('change', syncPanelMode);
+    });
 
     if (inputTypeSelect) {
         inputTypeSelect.addEventListener('change', function() {
@@ -1367,10 +1531,13 @@
         var f = document.querySelector('#questionModalBody form');
         if (!f) return;
         var fd = new FormData();
-        ['name', 'subtext', 'color', 'icon_class'].forEach(function(n) {
+        ['name', 'subtext', 'color', 'icon_class', 'layer', 'objects_search', 'min_objects'].forEach(function(n) {
             var el = f.querySelector('[name="' + n + '"]');
             if (el) fd.append(n, el.value);
         });
+        var pm = f.querySelector('input[name="panel_mode"]:checked');
+        if (pm) fd.append('panel_mode', pm.value);
+        {% if question %}fd.append('question_id', '{{ question.id }}');{% endif %}
         fd.append('input_type', inputTypeSelect ? inputTypeSelect.value : 'text');
         var ds = f.querySelector('input[name="display_style"]:checked');
         fd.append('display_style', ds ? ds.value : 'default');

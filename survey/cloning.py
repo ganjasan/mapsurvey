@@ -78,6 +78,8 @@ def clone_question(
         layer=question.layer if same_survey or (question.layer_id and _shares_layers(question, target_section)) else None,
         min_objects=question.min_objects,
         objects_search=question.objects_search,
+        panel_mode=question.panel_mode,
+        share_with_respondents=question.share_with_respondents,
     )
 
     for trans in QuestionTranslation.objects.filter(question=question):

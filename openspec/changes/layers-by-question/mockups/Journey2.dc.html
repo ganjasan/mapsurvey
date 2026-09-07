@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; font-family: 'DM Sans', system-ui, -apple-system, sans-serif; color: #212529; background: #ffffff; }
+    a { color: #4f46e5; } a:hover { color: #4338ca; }
+    .card { border: 1px solid #e5e7eb; border-radius: 8px; background: #fafafa; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+    .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .title { font-size: 15.2px; font-weight: 600; }
+    .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: #5f6368; background: #fff; border: 1px solid #e5e7eb; border-radius: 999px; padding: 3px 10px; }
+    .ctl { display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 12px; border: 1px solid #ced4da; border-radius: 4px; background: #fff; font-size: 15px; flex: 1; }
+    .help { font-size: 12.5px; color: #868e96; }
+    .lbl { font-size: 13.6px; font-weight: 600; }
+    .divider { height: 1px; background: #e5e7eb; }
+    .sub { border: 1px solid #c7d2fe; border-radius: 8px; background: #eef2ff; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+    .chk { display: flex; align-items: center; gap: 8px; font-size: 13.6px; }
+    .box { width: 16px; height: 16px; border: 1px solid #adb5bd; border-radius: 3px; background: #fff; flex: none; }
+    .seg { display: flex; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; background: #fff; }
+    .seg > div { flex: 1; padding: 9px 12px; font-size: 13.6px; font-weight: 500; color: #5f6368; text-align: center; }
+    .seg > div.on { background: #eef2ff; color: #4f46e5; }
+    .seg > div + div { border-left: 1px solid #d1d5db; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px dashed #d1d5db; border-radius: 999px; background: #fff; font-size: 12.5px; color: #5f6368; }
+    .step { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #868e96; margin: 0 0 8px; }
+  </style>
+</helmet>
+<div style="width: 700px; padding: 8px; background: #fff; box-sizing: border-box;">
+  <div class="step">Step 2b · Source: respondents’ marks — source settings live under the picker</div>
+  <div class="card">
+    <div class="head"><div class="title">Layer on this map</div><span class="status"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><span>Shows only · collects nothing</span></span></div>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; gap: 10px; align-items: center;"><div class="ctl"><span style="display: inline-flex; align-items: center; gap: 8px;"><span style="width: 12px; height: 12px; border-radius: 3px; background: #f97316; display: inline-block;"></span><span>Respondents’ marks on “Where is a bin needed?”</span></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div><a href="#" style="font-size: 13.6px; font-weight: 500; text-decoration: none; white-space: nowrap;">Upload new…</a></div>
+      <div class="sub">
+        <div style="font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #4f46e5;">Source</div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;">
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div class="lbl">Label each mark by</div>
+            <div class="ctl" style="font-size: 13.6px;"><span>Why would a bin be useful here?</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+            <div class="help">A sub-question of the geo question. Choice answers are safer than free text.</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; justify-content: center;">
+            <div class="chk"><span class="box"></span><span>Show marks only after I approve them</span></div>
+            <div class="help">New marks wait in Responses → On hold until you approve them.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div class="lbl">In the panel</div>
+      <div class="seg"><div class="on">List the objects</div><div>Legend line only</div></div>
+      <div class="help">Respondents browse and search the marks in the panel; each row opens its mark on the map.</div>
+    </div>
+    <div class="divider"></div>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div class="head"><div class="title">Ask about each object <span style="font-size: 12.5px; font-weight: 400; color: #868e96;">— optional</span></div></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <span class="chip">+ 👍/👎</span><span class="chip">+ Rating</span><span class="chip">+ Comment</span><span class="chip">+ Other…</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

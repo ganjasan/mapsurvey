@@ -760,6 +760,14 @@ def _editor_layers(survey):
         if layer.source == 'question':
             item['source_question'] = source_question_for(layer)
             item['used_by'] = list(layer.questions.values_list('name', flat=True))
+        # Where the layer is on a map: the sections whose Objects questions
+        # bind it (spec survey-editor "Layers are put on a map by adding a
+        # question"). Draft copies and versions carry their own question rows;
+        # the card lists the canonical survey's sections.
+        item['shown_in'] = list(dict.fromkeys(
+            layer.questions.filter(survey_section__survey_header=survey, parent_question_id__isnull=True)
+            .order_by('survey_section__id')
+            .values_list('survey_section__title', flat=True)))
         items.append(item)
     return items
 
@@ -1094,7 +1102,6 @@ def editor_section_detail(request, survey_uuid, section_id):
         ).order_by('order_number')
     )
 
-    hidden_ids = set(i for i in (section.hidden_layers or []) if isinstance(i, int))
     return render(request, 'editor/partials/section_detail_form.html', {
         **_visibility_block_context(survey, section, 'section', host=section),
         'survey': survey,
@@ -1104,10 +1111,6 @@ def editor_section_detail(request, survey_uuid, section_id):
         'questions': questions,
         'is_read_only': survey.status in ('published', 'closed'),
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
-        'section_layers': [
-            {'layer': layer, 'visible': layer.pk not in hidden_ids}
-            for layer in layers_for(survey).defer('geojson', 'geojson_legacy')
-        ] if settings.MAP_REFERENCE_LAYERS else [],
     })
 
 
@@ -1251,8 +1254,7 @@ def _shared_map_layer_options(survey):
     layers, taken = [], set()
     for layer in layers_for(survey):
         entry = {'id': layer.pk, 'name': layer.name, 'source': layer.source, 'code': layer.source_question_code,
-                 'label_field': layer.label_field, 'show_tallies': layer.show_tallies,
-                 'show_comments': layer.show_comments, 'approve_first': layer.approve_first, 'labels': []}
+                 'label_field': layer.label_field, 'approve_first': layer.approve_first, 'labels': []}
         if layer.source == 'question':
             entry['labels'] = _label_options(source_question_for(layer))
             taken.add(layer.source_question_code)
@@ -1306,12 +1308,16 @@ def _apply_shared_map_settings(request, question):
         if not value or value in {o['code'] for o in _label_options(source_question_for(layer))}:
             layer.label_field = value
             changed.append('label_field')
-    for flag in ('show_tallies', 'show_comments', 'approve_first'):
-        if 'sm_settings' in request.POST:   # the block was rendered: unchecked boxes mean False
-            setattr(layer, flag, request.POST.get('sm_' + flag) in ('1', 'true', 'on'))
-            changed.append(flag)
+    # Tallies / comments are per SUB-question now (share_with_respondents);
+    # the source keeps only the label field and moderation.
+    if 'sm_settings' in request.POST:   # the block was rendered: an unchecked box means False
+        layer.approve_first = request.POST.get('sm_approve_first') in ('1', 'true', 'on')
+        changed.append('approve_first')
     if changed:
         layer.save(update_fields=changed + ['updated_at'])
+
+
+QUICK_LABELS = (('thumbs', '👍/👎'), ('rating', 'Rating'), ('comment', 'Comment'))
 
 
 def _render_question_modal(request, context):
@@ -1324,6 +1330,7 @@ def _render_question_modal(request, context):
     (PostHog replay 01a051a7, openspec: fix-question-modal-error-retarget).
     HX-Retarget/HX-Reswap point the swap back at #questionModalBody.
     """
+    context = {**context, 'QUICK_LABELS': QUICK_LABELS}
     survey = context.get('survey')
     if survey is not None:
         # The in-modal sub-question list renders the same disabled state as
@@ -1338,13 +1345,32 @@ def _render_question_modal(request, context):
     return response
 
 
+def _section_list_row_oob(request, question, survey, mode):
+    """The question's section-list row as an out-of-band swap: `append` adds
+    it to the list (a row that does not exist yet), `replace` re-renders the
+    existing top-level row in place — `#questions-list >` keeps the selector
+    off the modal's own sub-question rows, which carry the same
+    data-question-id."""
+    item = render(request, 'editor/partials/question_list_item.html', {
+        'question': question, 'survey': survey,
+        'is_read_only': survey.status in ('published', 'closed'),
+    }).content.decode()
+    if mode == 'append':
+        return '<div hx-swap-oob="beforeend:#questions-list">%s</div>' % item
+    # outerHTML replaces the wrapper too, so the row must BE the oob element.
+    return item.replace('<li class="question-item"',
+                        '<li hx-swap-oob="outerHTML:#questions-list > li[data-question-id=\'%d\']" class="question-item"' % question.pk, 1)
+
+
 def _edit_modal_response(request, question, oob_list_item=False, trigger=None):
     """The question's edit modal, as `editor_question_edit` GET renders it.
 
-    `oob_list_item` appends the question's section-list item as an
-    out-of-band swap (a draft created from the type picker, spec
-    survey-editor "Question rows are created on type pick"); `trigger` sets
-    HX-Trigger without the modal-closing `questionSaved`."""
+    `oob_list_item` carries the question's section-list row out of band:
+    `'append'` (or True) for a row that does not exist yet — a draft created
+    from the type picker, spec survey-editor "Question rows are created on
+    type pick" — and `'replace'` to re-render the existing row, e.g. after a
+    sub-question was added from inside the modal; `trigger` sets HX-Trigger
+    without the modal-closing `questionSaved`."""
     survey = request.survey
     is_subquestion = question.parent_question_id_id is not None
     form = QuestionForm(instance=question, is_subquestion=is_subquestion, section=question.survey_section)
@@ -1357,12 +1383,8 @@ def _edit_modal_response(request, question, oob_list_item=False, trigger=None):
         'question': question,
     })
     if oob_list_item:
-        item = render(request, 'editor/partials/question_list_item.html', {
-            'question': question, 'survey': survey,
-            'is_read_only': survey.status in ('published', 'closed'),
-        }).content.decode()
-        response.content = response.content + (
-            '<div hx-swap-oob="beforeend:#questions-list">%s</div>' % item).encode()
+        mode = 'replace' if oob_list_item == 'replace' else 'append'
+        response.content = response.content + _section_list_row_oob(request, question, survey, mode).encode()
     if trigger:
         response['HX-Trigger'] = trigger
     return response
@@ -1550,8 +1572,11 @@ def editor_question_edit(request, survey_uuid, question_id):
             q.save()
             _apply_shared_map_settings(request, q)
             _save_question_translations(request, q, survey)
+            # A sub-question lives inside its parent's section-list row: answer
+            # with the parent's row (the form targets it), never a top-level
+            # item for the child.
             response = render(request, 'editor/partials/question_list_item.html', {
-                'question': q,
+                'question': q.parent_question_id or q,
                 'survey': survey,
                 'is_read_only': survey.status in ('published', 'closed'),
             })
@@ -1588,6 +1613,9 @@ def editor_question_edit(request, survey_uuid, question_id):
 def editor_question_preview(request, survey_uuid, question_id):
     survey = request.survey
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
+    # The pane is a standalone frame: draw the layer's objects server-side
+    # (layers.preview_panel) instead of the shell the map would fill.
+    question.preview_panel = True
 
     lang = _preview_language(request, survey)
 
@@ -1679,6 +1707,17 @@ def editor_question_preview_live(request, survey_uuid, section_id):
         raw_layer = request.POST.get('layer', '').strip()
         if raw_layer.isdigit():
             draft_layer = layers_for(survey).filter(pk=int(raw_layer)).first()
+        elif raw_layer.startswith('answers:'):
+            # "Respondents' marks on <geo question>": the layer is created on
+            # save (_resolve_layer_choice); until then preview a transient one
+            # so the pane shows the shared-map block, not "not bound yet".
+            code = raw_layer[len('answers:'):]
+            source = next((q for q in _geo_questions(survey) if q.code == code), None)
+            if source is not None:
+                owner = layer_owner(survey)
+                draft_layer = (owner.map_layers.filter(source='question', source_question_code=code).first()
+                               or SurveyMapLayer(survey=owner, name=f'Marks: {source.name}'[:100], color='#f97316',
+                                                 source='question', source_question_code=code))
     try:
         min_objects = max(0, int(request.POST.get('min_objects') or 0))
     except ValueError:
@@ -1700,7 +1739,16 @@ def editor_question_preview_live(request, survey_uuid, section_id):
         layer=draft_layer,
         min_objects=min_objects,
         objects_search=objects_search,
+        panel_mode=request.POST.get('panel_mode') if request.POST.get('panel_mode') in ('list', 'legend') else 'list',
     )
+    # The draft is unsaved, so it cannot see the sub-questions the real
+    # question already has; the pane should still show "collects" correctly.
+    if input_type == 'layer_objects':
+        question.preview_panel = True
+    qid = request.POST.get('question_id', '')
+    if input_type == 'layer_objects' and qid.isdigit():
+        question.preview_collects = Question.objects.filter(
+            parent_question_id_id=int(qid), parent_question_id__survey_section__survey_header=survey).exists()
     if input_type == 'thumbs':
         question.choices = question.thumbs_choices()
 
@@ -1720,21 +1768,60 @@ def editor_question_delete(request, survey_uuid, question_id):
         return blocked
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
 
-    # Shared map (spec survey-editor): a geo question feeding a `question`
-    # layer cannot go — the layer would read a code that no longer exists.
+    # The modal's close handler discards an unnamed draft — but only an EMPTY
+    # one: a name is not the only sign of work (a picked layer, sub-questions).
+    if request.POST.get('if_empty') == '1':
+        configured = (question.name or '').strip() or question.layer_id \
+            or Question.objects.filter(parent_question_id=question).exists()
+        if configured:
+            return HttpResponse(status=204)
+
+    # Shared map (spec shared-map-layer "Source geo questions are protected"):
+    # a geo question feeding a `question` layer that some Objects question
+    # still shows cannot go — that question would list marks of a code that
+    # no longer exists. A layer nobody shows is derived data with no reader:
+    # it goes with its source question (change layers-by-question).
     from .layers import question_layers_for
-    source_of = list(question_layers_for(survey, question.code).values_list('name', flat=True)) \
+    source_layers = list(question_layers_for(survey, question.code)) \
         if question.input_type in ('point', 'line', 'polygon') else []
-    if source_of:
-        names = ', '.join(f'“{n}”' for n in source_of)
-        return JsonResponse({'blocked': f'This question feeds the reference layer {names}. Delete that layer first.'}, status=409)
+    # Only readers in THIS header count: a draft's structure is the draft's
+    # to change, and the published version's own Objects question keeps its
+    # own copy of the geo question until the draft is published.
+    readers = [q for layer in source_layers
+               for q in layer.questions.filter(input_type='layer_objects', survey_section__survey_header=survey)
+               .select_related('survey_section')]
+    if readers:
+        names = ', '.join(f'“{q.name or "(unnamed)"}” ({q.survey_section.title or q.survey_section.name})' for q in readers)
+        return JsonResponse({'blocked': f'Respondents’ marks on this question are shown by {names}. Delete that question first.'}, status=409)
 
     refusal = _refuse_if_answers_at_risk(request, survey, question.answer_count())
     if refusal:
         return refusal
 
+    # An Objects question was the layer's presence on a map; when it was the
+    # last one showing a `question`-sourced layer, the layer is orphaned
+    # derived data (its reactions were answers to this question's
+    # sub-questions, gone with it) — drop it so Survey settings does not keep
+    # a "Marks" layer nothing reads.
+    orphan_layer = question.layer if (question.input_type == 'layer_objects' and question.layer_id
+                                      and question.layer.source == 'question') else None
+    parent = question.parent_question_id
     question.delete()
-    return HttpResponse('')
+    if orphan_layer is not None and not orphan_layer.questions.exists():
+        orphan_layer.delete()
+    # The layer itself goes only when NO header reads it any more — the
+    # published version may still show it to live respondents.
+    for layer in source_layers:
+        if not layer.questions.exists():
+            layer.delete()
+    # Empty body removes the list row; the trigger is what refreshes the
+    # preview — the page does not get a swap event for an empty response. A
+    # sub-question deleted inside the parent's modal also re-renders the
+    # parent's row in the section list, which otherwise keeps showing it.
+    body = _section_list_row_oob(request, parent, survey, 'replace') if parent is not None else ''
+    response = HttpResponse(body)
+    response['HX-Trigger'] = 'questionUpdated'
+    return response
 
 
 def _save_question_translations(request, question, survey):
@@ -1783,6 +1870,42 @@ def editor_questions_reorder(request, survey_uuid):
 
 # ─── Sub-question CRUD ────────────────────────────────────────────────────────
 
+
+
+QUICK_SUBQUESTIONS = {
+    'thumbs': {'name': 'Do you like it?', 'input_type': 'thumbs', 'choices_json': '',
+               'share_with_respondents': 'on'},
+    'rating': {'name': 'How would you rate it?', 'input_type': 'rating',
+               'choices_json': json.dumps([{'code': i, 'name': str(i)} for i in range(1, 6)])},
+    'comment': {'name': 'Anything to add?', 'input_type': 'text', 'choices_json': ''},
+}
+for _preset in QUICK_SUBQUESTIONS.values():
+    _preset.setdefault('subtext', '')
+    _preset.setdefault('display_style', 'default')
+    _preset.setdefault('color', '#000000')
+
+
+@survey_permission_required('editor')
+def editor_question_share(request, survey_uuid, question_id):
+    """The "Others see" switch on a sub-question row: other respondents see
+    this sub-question's answers on the object (👍/👎 counts, comments)."""
+    survey = request.survey
+    blocked = _check_structural_edit_allowed(survey)
+    if blocked:
+        return blocked
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+    question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey,
+                                 parent_question_id__input_type='layer_objects')
+    if question.input_type not in ('thumbs', 'text', 'text_line'):
+        return JsonResponse({'error': 'This sub-question type has nothing to share.'}, status=400)
+    question.share_with_respondents = request.POST.get('share') in ('1', 'true', 'on')
+    question.save(update_fields=['share_with_respondents'])
+    response = HttpResponse(status=204)
+    response['HX-Trigger'] = 'questionUpdated'
+    return response
+
+
 @survey_permission_required('editor')
 def editor_subquestion_create(request, survey_uuid, parent_id):
     survey = request.survey
@@ -1792,7 +1915,15 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
     parent = get_object_or_404(Question, id=parent_id, survey_section__survey_header=survey)
 
     if request.method == 'POST':
-        form = QuestionForm(request.POST, request.FILES, is_subquestion=True)
+        data = request.POST
+        quick = request.POST.get('quick')
+        if quick in QUICK_SUBQUESTIONS:
+            # One-tap chips in the Objects form (mockups/journey.md): a preset
+            # sub-question the creator can rename afterwards.
+            data = request.POST.copy()
+            data.update(QUICK_SUBQUESTIONS[quick])
+            data['return_to_parent'] = '1'
+        form = QuestionForm(data, request.FILES, is_subquestion=True)
         if form.is_valid():
             question = form.save(commit=False)
             question.survey_section = parent.survey_section
@@ -1801,7 +1932,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
                 parent_question_id=parent
             ).aggregate(Max('order_number'))['order_number__max']
             question.order_number = (max_order or 0) + 1
-            choices_json = request.POST.get('choices_json', '').strip()
+            choices_json = data.get('choices_json', '').strip()
             if question.input_type not in CHOICE_TYPES:
                 question.choices = None
             elif question.input_type == 'thumbs':
@@ -1822,9 +1953,10 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
                 question.visibility_rule = vis_rule
             question.save()
             _save_question_translations(request, question, survey)
-            if request.POST.get('return_to_parent') == '1':
-                # Opened from the parent's modal: back to it, list kept in sync.
-                return _edit_modal_response(request, parent, trigger='questionUpdated')
+            if data.get('return_to_parent') == '1':
+                # Opened from the parent's modal: back to it, and the parent's
+                # row in the section list re-rendered with the new child.
+                return _edit_modal_response(request, parent, oob_list_item='replace', trigger='questionUpdated')
             # Return the parent question item (includes sub-questions)
             response = render(request, 'editor/partials/question_list_item.html', {
                 'question': parent,
@@ -2110,6 +2242,7 @@ def editor_section_preview(request, survey_uuid, section_name):
     # Local import: views imports editor_forms, so a module-level import here
     # would close the circle (the two thanks-page helpers above do the same).
     from .views import _build_map_layers_metadata
+    from .layers import section_layer_ids
 
     survey = request.survey
     section = get_object_or_404(SurveySection, survey_header=survey, name=section_name)
@@ -2170,9 +2303,7 @@ def editor_section_preview(request, survey_uuid, section_name):
         # Same helper the respondent view uses: two views render this shell from
         # two hand-built contexts, and a layer list built twice would drift.
         'map_layers': _build_map_layers_metadata(survey),
-        'hidden_layers_json': json.dumps(
-            [i for i in (section.hidden_layers or []) if isinstance(i, int)]
-        ),
+        'visible_layers_json': json.dumps(section_layer_ids(section)),
         # Same-section rules so the preview plays both branches live, exactly
         # like the respondent page (conditional_visibility.js reads this).
         'visibility_rules_json': json.dumps({
