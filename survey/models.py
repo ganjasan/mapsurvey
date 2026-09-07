@@ -127,6 +127,14 @@ INPUT_TYPE_CHOICES = (
     ("layer_objects", _("Objects on the map")),
 )
 
+# `layer_objects` only: how the question presents its layer in the panel
+# (spec layer-objects-question, change layers-by-question). `list` is the
+# browsable object list; `legend` is one line — swatch, name, count, toggle.
+PANEL_MODE_CHOICES = (
+    ("list", _("List the objects")),
+    ("legend", _("Legend line only")),
+)
+
 OBJECTS_SEARCH_CHOICES = (
     ("auto", _("Automatic — shown for more than 5 objects or when categories exist")),
     ("on", _("Always")),
@@ -177,6 +185,12 @@ class SurveySession(models.Model):
     survey = models.ForeignKey("SurveyHeader", on_delete=models.PROTECT)
     start_datetime = models.DateTimeField(default=datetime.now)
     end_datetime = models.DateTimeField(null=True, blank=True)
+    # When the respondent was last seen: every section submit and the
+    # page-leave beacon write it. With `end_datetime` (set when the thanks
+    # page is reached) the row itself says how long the session took and
+    # whether it finished — no join to SurveyEvent, and both survive a ZIP
+    # round trip (owner decision 2026-09-06).
+    last_activity_at = models.DateTimeField(null=True, blank=True)
     language = models.CharField(max_length=10, null=True, blank=True, help_text=_('Selected language code (ISO 639-1)'))
     validation_status = models.CharField(
         max_length=15, blank=True, default='',
@@ -191,6 +205,21 @@ class SurveySession(models.Model):
 
     class Meta:
         app_label = 'survey'
+
+    def touch(self):
+        """The respondent did something: a section submit, a page leave."""
+        self.last_activity_at = timezone.now()
+        SurveySession.objects.filter(pk=self.pk).update(last_activity_at=self.last_activity_at)
+
+    def mark_completed(self):
+        """The respondent reached the thanks page. Idempotent: a reload keeps
+        the first completion time."""
+        now = timezone.now()
+        if self.end_datetime is None:
+            self.end_datetime = now
+        self.last_activity_at = now
+        SurveySession.objects.filter(pk=self.pk).update(
+            end_datetime=self.end_datetime, last_activity_at=now)
 
     def answers(self):
         if not hasattr(self, "__acache"):
@@ -864,6 +893,13 @@ class Question(models.Model):
     layer = models.ForeignKey(SurveyMapLayer, null=True, blank=True, on_delete=models.PROTECT, related_name='questions')
     min_objects = models.PositiveIntegerField(default=0, help_text=_('`layer_objects` only: the respondent must answer about at least this many objects to move on. 0 = optional. Replaces `required` for this type.'))
     objects_search = models.CharField(max_length=4, choices=OBJECTS_SEARCH_CHOICES, default='auto', help_text=_('`layer_objects` only: whether the list shows a search box and category chips.'))
+    panel_mode = models.CharField(max_length=6, choices=PANEL_MODE_CHOICES, default='list', help_text=_('`layer_objects` only: list the objects in the panel, or show one legend line.'))
+    # Sub-questions of an Objects-on-the-map question only: other respondents
+    # see this sub-question's answers on the object — 👍/👎 counts for `thumbs`,
+    # comments for text. A property of the sub-question, not of the layer's
+    # source, so an uploaded layer shares exactly like respondents' marks do
+    # (owner decision 2026-09-07, mockups/journey.md).
+    share_with_respondents = models.BooleanField(default=False, help_text=_('Sub-questions of an Objects-on-the-map question: other respondents see the answers on the object (👍/👎 counts, comments).'))
 
     class Meta:
         app_label = 'survey'
@@ -878,6 +914,16 @@ class Question(models.Model):
         objects. One mechanism, two entry points (spec survey-editor)."""
         from survey.question_types import PARENT_TYPES
         return self.input_type in PARENT_TYPES and self.parent_question_id_id is None
+
+    @property
+    def collects_objects(self):
+        """An Objects-on-the-map question with at least one sub-question asks
+        about each object; without any it only SHOWS the layer — no answered
+        state, no minimum, nothing to count (spec layer-objects-question,
+        owner decision 2026-09-06: "если у слоя не будет подвопросов, то он
+        и не будет ничего собирать")."""
+        return (self.input_type == 'layer_objects'
+                and Question.objects.filter(parent_question_id=self).exists())
 
     def thumbs_choices(self):
         """The fixed 👍/👎 choice list — codes 1 and 0, names `up`/`down`."""

@@ -72,6 +72,7 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/questions/<int:question_id>/preview/', editor_views.editor_question_preview, name='editor_question_preview'),
     path('editor/surveys/<uuid:survey_uuid>/sections/<int:section_id>/question-preview/', editor_views.editor_question_preview_live, name='editor_question_preview_live'),
     path('editor/surveys/<uuid:survey_uuid>/questions/<int:question_id>/delete/', editor_views.editor_question_delete, name='editor_question_delete'),
+    path('editor/surveys/<uuid:survey_uuid>/questions/<int:question_id>/share/', editor_views.editor_question_share, name='editor_question_share'),
     path('editor/surveys/<uuid:survey_uuid>/questions/reorder/', editor_views.editor_questions_reorder, name='editor_questions_reorder'),
     path('editor/surveys/<uuid:survey_uuid>/questions/<int:parent_id>/subquestions/new/', editor_views.editor_subquestion_create, name='editor_subquestion_create'),
     # Duplicate / paste (issue #16)

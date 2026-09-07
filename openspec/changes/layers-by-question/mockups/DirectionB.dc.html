@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; font-family: 'DM Sans', system-ui, -apple-system, sans-serif; color: #212529; background: #ffffff; }
+    a { color: #4f46e5; } a:hover { color: #4338ca; }
+    .lbl { font-size: 13.6px; font-weight: 600; }
+    .help { font-size: 12.5px; color: #868e96; }
+    .ctl { display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 12px; border: 1px solid #ced4da; border-radius: 4px; background: #ffffff; font-size: 15px; }
+    .chk { display: flex; align-items: center; gap: 8px; font-size: 13.6px; }
+    .chk .box { width: 16px; height: 16px; border: 1px solid #adb5bd; border-radius: 3px; background: #ffffff; display: inline-flex; align-items: center; justify-content: center; }
+    .chk .box.on { background: #4f46e5; border-color: #4f46e5; }
+  </style>
+</helmet>
+<div style="width: 700px; padding: 8px; background: #ffffff; box-sizing: border-box;">
+  <div style="font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #868e96; margin: 0 0 8px;">B · Settings beside what respondents get</div>
+
+  <div style="border: 1px solid #e5e7eb; border-radius: 8px; background: #fafafa; padding: 14px 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;">
+
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="lbl">Layer</div>
+        <div class="ctl">
+          <span style="display: inline-flex; align-items: center; gap: 8px;"><span style="width: 12px; height: 12px; border-radius: 3px; background: #2c7be5; display: inline-block;"></span><span>existing-dog-bins</span></span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="help">14 objects · <a href="#" style="text-decoration: none;">Upload a new layer…</a></div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="lbl">In the panel</div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div class="chk"><span style="width: 16px; height: 16px; border-radius: 50%; border: 5px solid #4f46e5; box-sizing: border-box; background: #ffffff;"></span><span>List the objects</span></div>
+          <div class="chk"><span style="width: 16px; height: 16px; border-radius: 50%; border: 1px solid #adb5bd; box-sizing: border-box; background: #ffffff;"></span><span>Legend line only</span></div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="lbl">Search and category chips</div>
+        <div class="ctl" style="font-size: 13.6px;"><span>Automatic</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="lbl">Other respondents see</div>
+        <div class="chk"><span class="box on"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>👍/👎 counts on each object</span></div>
+        <div class="chk"><span class="box"></span><span>other people’s comments</span></div>
+        <div class="help">Needs a 👍/👎 or text sub-question below.</div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #6b7280;">In the respondent’s panel</div>
+      <div style="border: 1px solid #e5e7eb; border-radius: 8px; background: #ffffff; padding: 10px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;"><span style="font-size: 13.6px; font-weight: 600;">Existing bins · 14</span><span style="font-size: 11.5px; color: #16a34a;">Answered <b>2</b> of 14</span></div>
+        <div style="display: flex; gap: 5px;"><span style="font-size: 11px; padding: 2px 9px; border-radius: 999px; background: #eef2ff; color: #4f46e5; font-weight: 600;">All</span><span style="font-size: 11px; padding: 2px 9px; border-radius: 999px; border: 1px solid #d1d5db; color: #5f6368;">Park · 6</span><span style="font-size: 11px; padding: 2px 9px; border-radius: 999px; border: 1px solid #d1d5db; color: #5f6368;">Street · 8</span></div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="display: flex; align-items: center; gap: 8px; padding: 7px 9px; border: 1px solid rgba(0,0,0,.06); border-left: 4px solid #4f46e5; border-radius: 8px; font-size: 13px; opacity: .65;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #2c7be5;"></span><span style="flex: 1;">Bin 1 · Two Mile Ash</span><span style="color: #16a34a;">✓</span><span style="font-size: 11.5px; color: #5f6368;">👍 3 · 👎 1</span></div>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 7px 9px; border: 1px solid rgba(0,0,0,.06); border-left: 4px solid #4f46e5; border-radius: 8px; font-size: 13px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #2c7be5;"></span><span style="flex: 1;">Bin 2 · Randall Ave</span><span style="font-size: 11.5px; color: #5f6368;">👍 5 · 👎 0</span></div>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 7px 9px; border: 1px solid rgba(0,0,0,.06); border-left: 4px solid #4f46e5; border-radius: 8px; font-size: 13px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #2c7be5;"></span><span style="flex: 1;">Bin 3 · Hazeley Wood</span><span style="font-size: 11.5px; color: #5f6368;">👍 1 · 👎 2</span></div>
+        </div>
+      </div>
+      <div class="help">Updates as you change the settings on the left.</div>
+    </div>
+
+    <div style="grid-column: 1 / -1; height: 1px; background: #e5e7eb;"></div>
+
+    <div style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="font-size: 15.2px; font-weight: 600;">Sub-questions <span style="font-size: 12.5px; font-weight: 400; color: #868e96;">— asked about every object the respondent opens</span></div>
+        <span style="font-size: 12px; color: #4f46e5; background: #eef2ff; border-radius: 999px; padding: 2px 10px;">collects answers</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid rgba(0,0,0,.06); border-radius: 8px; background: #ffffff; font-size: 14px;"><span style="flex: 1;">Do you like it</span><span style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #6c757d; color: #ffffff;">Thumbs up / down</span></div>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; border: 1px dashed #d1d5db; border-radius: 8px; background: #ffffff; color: #5f6368; font-size: 14px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>Add sub-question</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

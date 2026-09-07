@@ -101,7 +101,7 @@
             <button type="button" class="rv2-chip active" data-mod-filter="all">{% trans "All" %} {{ stat.object_rows|length }}</button>
             <button type="button" class="rv2-chip" data-mod-filter="pending">{% trans "Pending" %} <span data-mod-count="pending">{{ stat.pending }}</span></button>
             <button type="button" class="rv2-chip" data-mod-filter="hidden">{% trans "Hidden" %} <span data-mod-count="hidden">{{ stat.hidden }}</span></button>
-            <small class="text-muted" style="margin-left:auto;">{% trans "Shared map" %} · {% trans "approve first" %}: {% if stat.layer.approve_first %}<b>{% trans "on" %}</b>{% else %}{% trans "off" %}{% endif %} · {% trans "tallies" %}: {% if stat.layer.show_tallies %}{% trans "on" %}{% else %}{% trans "off" %}{% endif %} · {% trans "comments" %}: {% if stat.layer.show_comments %}{% trans "on" %}{% else %}{% trans "off" %}{% endif %}</small>
+            <small class="text-muted" style="margin-left:auto;">{% trans "Shared map" %} · {% trans "approve first" %}: {% if stat.layer.approve_first %}<b>{% trans "on" %}</b>{% else %}{% trans "off" %}{% endif %} · {% trans "shared with respondents: set per sub-question" %}</small>
         </div>
         {% if stat.min_warning %}
         <div class="alert alert-warning py-1 px-2" style="font-size:.8rem;" data-mod-warning>

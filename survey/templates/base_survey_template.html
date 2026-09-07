@@ -1056,10 +1056,11 @@ locale.{% endcomment %}
         var basemap = dataEl.dataset.mapBasemap;
         if (basemap) { switchBasemap(basemap); }
 
-        // 3b. Reference layers hidden on this section
-        var hiddenLayers = [];
-        try { hiddenLayers = JSON.parse(dataEl.dataset.hiddenLayers || '[]'); } catch (e) {}
-        window.applyRefLayerVisibility(hiddenLayers);
+        // 3b. Reference layers on this section's map: the ones its
+        // Objects-on-the-map questions bind (spec reference-overlay-layers).
+        var visibleLayers = [];
+        try { visibleLayers = JSON.parse(dataEl.dataset.visibleLayers || '[]'); } catch (e) {}
+        window.applyRefLayerVisibility(visibleLayers);
 
         // 4. Geolocation: survey-level on first load, per-section on subsequent.
         // Never on a form section — a welcome page must not open with a

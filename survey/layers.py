@@ -40,6 +40,56 @@ def layers_for(survey):
     return layer_owner(survey).map_layers.all()
 
 
+def section_layer_ids(section):
+    """The layers on a section's map: those bound by its top-level Objects-on-
+    the-map questions, in question order (spec reference-overlay-layers "Layer
+    visibility is controllable per section": visibility IS binding — there is
+    no second list). Form-layout sections have no map and no layers."""
+    from survey.models import Question
+    if section.layout == 'form':
+        return []
+    seen = []
+    rows = (Question.objects
+            .filter(survey_section=section, parent_question_id__isnull=True,
+                    input_type='layer_objects', layer__isnull=False)
+            .order_by('order_number', 'id')
+            .values_list('layer_id', flat=True))
+    for layer_id in rows:
+        if layer_id not in seen:
+            seen.append(layer_id)
+    return seen
+
+
+def ensure_layer_questions(section, hidden_ids=()):
+    """Give `section` a display-only Objects question for every owner layer it
+    is not already showing, except the ids in `hidden_ids`.
+
+    Migration 0074 does the same over historical models for the rows that
+    existed at deploy time; this is the live copy for archives that still
+    carry a section `hidden_layers` list (spec survey-serialization "Section
+    layer visibility rides as questions"). Returns the questions created."""
+    from django.db.models import Max
+    from survey.models import Question
+    if section.layout == 'form':
+        return []
+    hidden = {i for i in hidden_ids if isinstance(i, int)}
+    bound = set(section_layer_ids(section))
+    max_order = Question.objects.filter(
+        survey_section=section, parent_question_id__isnull=True,
+    ).aggregate(m=Max('order_number'))['m'] or 0
+    created = []
+    for layer in layers_for(section.survey_header).defer('geojson', 'geojson_legacy').order_by('position', 'id'):
+        if layer.pk in hidden or layer.pk in bound:
+            continue
+        max_order += 1
+        created.append(Question.objects.create(
+            survey_section=section, name=(layer.name or '')[:250], input_type='layer_objects',
+            layer=layer, required=False, min_objects=0, objects_search='auto',
+            panel_mode='legend', order_number=max_order, choices=None,
+        ))
+    return created
+
+
 class LayerValidationError(Exception):
     """Human-readable rejection reason, safe to show in the editor."""
 
@@ -149,7 +199,7 @@ def build_map_layers_metadata(survey):
             'label_field': '' if layer.source == 'question' else layer.label_field,
             'show_popups': layer.show_popups,
             'source': layer.source,
-            'show_tallies': layer.source == 'question' and layer.show_tallies,
+            'show_tallies': shared_kinds(layer)['tallies'],
             # Layer style (spec layer-style): the normalised style the factory
             # draws with, and the legend rows the layers control shows.
             'style': normalize_style(layer.style, layer.color),
@@ -408,6 +458,32 @@ def source_question_for(layer, survey=None):
             .first())
 
 
+SHARE_KINDS = {'thumbs': 'tallies', 'text': 'comments', 'text_line': 'comments'}
+
+
+def shared_kinds(layer):
+    """What other respondents may see on this layer's objects: {'tallies',
+    'comments'} → bool, from the sub-questions that share their answers
+    (`Question.share_with_respondents`) under any Objects question bound to
+    the layer. Any source — an uploaded layer shares like a marks layer."""
+    from survey.models import Question
+    kinds = set(Question.objects
+                .filter(parent_question_id__layer=layer, parent_question_id__input_type='layer_objects',
+                        share_with_respondents=True, input_type__in=SHARE_KINDS)
+                .values_list('input_type', flat=True))
+    return {'tallies': 'thumbs' in kinds, 'comments': bool(kinds & {'text', 'text_line'})}
+
+
+def attach_tallies(collection, tallies):
+    """Put 👍/👎 counts on each feature of a FeatureCollection (dict)."""
+    for feature in collection.get('features') or []:
+        props = feature.setdefault('properties', {})
+        t = tallies.get(props.get('_key'), {})
+        props.update({'tally_up': t.get('up', 0), 'tally_down': t.get('down', 0),
+                      'comment_count': t.get('comments', 0)})
+    return collection
+
+
 def question_layers_for(survey, code):
     """Canonical `question` layers fed by the geo question with `code`."""
     return layer_owner(survey).map_layers.filter(source='question', source_question_code=code)
@@ -546,6 +622,36 @@ def visible_objects(layer, exclude_session_id=None):
     return qs.order_by('position', 'id')
 
 
+def preview_panel(layer, limit=6):
+    """A static picture of the respondent's panel for the editor's "Respondent
+    sees" pane (direction B of the settings mockups, owner 2026-09-07): the
+    real objects, categories and — on a shared-map layer that shows them —
+    tallies. The respondent page builds the same rows client-side from the
+    layer GeoJSON; the standalone preview frame has no map to build from."""
+    from survey.object_stats import shared_map_tallies
+    items = creator_objects(layer) if layer.source == 'question' else layer.items.order_by('position', 'id')
+    items = list(items.prefetch_related('assets'))
+    categories = {}
+    for obj in items:
+        if obj.category:
+            categories[obj.category] = categories.get(obj.category, 0) + 1
+    tallies = shared_map_tallies(layer) if shared_kinds(layer)['tallies'] else {}
+    rows = []
+    for obj in items[:limit]:
+        cover = obj.cover
+        t = tallies.get(obj.key)
+        rows.append({
+            'key': obj.key, 'title': obj.title or obj.key, 'category': obj.category,
+            'cover': cover.url if cover else '',
+            'tally': f"{t.get('up', 0)} / {t.get('down', 0)}" if t else '',
+        })
+    return {
+        'total': len(items), 'rows': rows, 'more': max(0, len(items) - limit),
+        'categories': sorted(categories.items()),
+        'tools': bool(categories) or len(items) > 5,
+    }
+
+
 def creator_objects(layer):
     """What the CREATOR's surfaces show of a `question` layer: every status,
     clean sessions only (a rejected session's marks are gone everywhere)."""
@@ -556,11 +662,12 @@ def build_question_layer_geojson(layer, exclude_session_id=None):
     """Per-request FeatureCollection for a respondent (spec shared-map-layer):
     own marks omitted, tallies attached when the layer shows them."""
     from survey.object_stats import shared_map_tallies
-    tallies = shared_map_tallies(layer) if layer.show_tallies else {}
+    show_tallies = shared_kinds(layer)['tallies']
+    tallies = shared_map_tallies(layer) if show_tallies else {}
     features = []
     for obj in visible_objects(layer, exclude_session_id):
         feature = feature_for_object(obj)
-        if layer.show_tallies:
+        if show_tallies:
             t = tallies.get(obj.key, {})
             feature['properties'].update({
                 'tally_up': t.get('up', 0), 'tally_down': t.get('down', 0),

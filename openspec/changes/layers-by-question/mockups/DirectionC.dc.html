@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; font-family: 'DM Sans', system-ui, -apple-system, sans-serif; color: #212529; background: #ffffff; }
+    a { color: #4f46e5; } a:hover { color: #4338ca; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid #d1d5db; border-radius: 999px; background: #ffffff; font-size: 12.5px; color: #212529; white-space: nowrap; }
+    .pill b { font-weight: 600; }
+    .pill svg { flex: none; }
+    .row { display: flex; align-items: center; gap: 10px; }
+    .help { font-size: 12.5px; color: #868e96; }
+  </style>
+</helmet>
+<div style="width: 700px; padding: 8px; background: #ffffff; box-sizing: border-box;">
+  <div style="font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #868e96; margin: 0 0 8px;">C · Summary row, details on demand</div>
+
+  <div style="display: flex; flex-direction: column; gap: 10px;">
+
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; background: #ffffff; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+      <div class="row">
+        <span style="width: 14px; height: 14px; border-radius: 3px; background: #2c7be5; flex: none;"></span>
+        <span style="font-size: 15.2px; font-weight: 600; flex: 1;">existing-dog-bins <span style="font-weight: 400; color: #868e96; font-size: 13px;">14 objects</span></span>
+        <a href="#" style="font-size: 13px; text-decoration: none; font-weight: 500;">Change layer</a>
+      </div>
+      <div class="row" style="flex-wrap: wrap;">
+        <span class="pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg><span>Panel: <b>list</b></span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
+        <span class="pill"><span>Search: <b>automatic</b></span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
+        <span class="pill" style="background: #eef2ff; border-color: #c7d2fe; color: #4f46e5;"><span>Others see: <b>👍/👎 counts</b></span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
+        <span class="pill"><span>Minimum: <b>none</b></span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
+      </div>
+      <div class="help">Respondents browse the 14 bins in the panel, open any of them on the map and answer the sub-questions below. Other respondents see 👍/👎 counts on each bin.</div>
+    </div>
+
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; background: #ffffff; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;">
+      <div class="row">
+        <span style="font-size: 15.2px; font-weight: 600; flex: 1;">Ask about each object</span>
+        <span style="font-size: 12px; color: #5f6368;">1 sub-question · each becomes an export column</span>
+      </div>
+      <div class="row" style="padding: 8px 10px; border: 1px solid rgba(0,0,0,.06); border-radius: 8px; background: #fafafa; font-size: 14px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#adb5bd" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="6" r="1"></circle><circle cx="15" cy="6" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="9" cy="18" r="1"></circle><circle cx="15" cy="18" r="1"></circle></svg>
+        <span style="flex: 1;">Do you like it</span>
+        <span style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #6c757d; color: #ffffff;">Thumbs up / down</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <span class="pill" style="border-style: dashed;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span>👍/👎</span></span>
+        <span class="pill" style="border-style: dashed;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span>Rating</span></span>
+        <span class="pill" style="border-style: dashed;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span>Comment</span></span>
+        <span class="pill" style="border-style: dashed;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span>Other…</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

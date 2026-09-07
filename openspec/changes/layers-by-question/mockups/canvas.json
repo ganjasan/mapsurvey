@@ -1,0 +1,20 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Directions" },
+    { "id": "page-2", "name": "Journey" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 716, "h": 560, "title": "A · One card, one story", "page": "page-1" },
+    { "file": "DirectionB.dc.html", "x": 820, "y": 0, "w": 716, "h": 640, "title": "B · Settings beside the respondent panel", "page": "page-1" },
+    { "file": "DirectionC.dc.html", "x": 1640, "y": 0, "w": 716, "h": 420, "title": "C · Summary row, details on demand", "page": "page-1" },
+    { "file": "Journey1.dc.html", "x": 0, "y": 0, "w": 716, "h": 420, "title": "1 · New question", "page": "page-2" },
+    { "file": "Journey2.dc.html", "x": 820, "y": 0, "w": 716, "h": 640, "title": "2b · Marks source → source settings", "page": "page-2" },
+    { "file": "Journey3.dc.html", "x": 1640, "y": 0, "w": 716, "h": 520, "title": "3–6 · Sub-questions with sharing switches", "page": "page-2" },
+    { "file": "Journey4.dc.html", "x": 2460, "y": 0, "w": 716, "h": 520, "title": "Respondent · list + popup", "page": "page-2" }
+  ],
+  "annotations": [
+    { "id": "brief", "x": 0, "y": -150, "w": 700, "page": "page-1", "text": "Objects on the map — settings block in the question modal. Three directions, DM Sans + editor tokens (#4f46e5 accent, 8px radii, #e5e7eb card border).\nA: one vertical story — layer → panel → ask about objects; status pill says whether it collects.\nB: settings on the left, a live picture of the respondent panel on the right; 'Other respondents see' offered for any layer.\nC: the whole block collapses to a summary row with pills; sub-question types offered as one-tap chips." },
+    { "id": "journey-brief", "x": 0, "y": -170, "w": 760, "page": "page-2", "text": "Creator journey after giving every setting back to its owner (journey.md).\nSource settings (label field, approve-first) sit under the picker and only for 'Respondents’ marks on…'.\nWhat other respondents see is a switch on each sub-question — 👍/👎 → counts, text → comments — and works for uploaded layers too.\nStatus pill + Minimum objects follow the sub-questions, not the layer." }
+  ],
+  "launch": { "view": "canvas", "page": "page-2" }
+}

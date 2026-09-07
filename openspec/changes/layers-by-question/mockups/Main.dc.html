@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; font-family: 'DM Sans', system-ui, -apple-system, sans-serif; color: #212529; background: #ffffff; }
+    a { color: #4f46e5; } a:hover { color: #4338ca; }
+    .seg { display: flex; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; }
+    .seg > div { flex: 1; padding: 9px 12px; font-size: 13.6px; font-weight: 500; color: #5f6368; display: flex; align-items: center; gap: 8px; }
+    .seg > div.on { background: #eef2ff; color: #4f46e5; }
+    .seg > div + div { border-left: 1px solid #d1d5db; }
+  </style>
+</helmet>
+<div style="width: 700px; padding: 8px; background: #ffffff; box-sizing: border-box;">
+  <div style="font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #868e96; margin: 0 0 8px;">A · One card, one story</div>
+
+  <div style="border: 1px solid #e5e7eb; border-radius: 8px; background: #fafafa; padding: 14px 16px; display: flex; flex-direction: column; gap: 16px;">
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+      <div style="font-size: 15.2px; font-weight: 600;">Layer on this map</div>
+      <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: #5f6368; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 999px; padding: 3px 10px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        <span>Shows only · collects nothing</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <div style="flex: 1; display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 12px; border: 1px solid #ced4da; border-radius: 4px; background: #ffffff; font-size: 16px;">
+          <span style="display: inline-flex; align-items: center; gap: 8px;"><span style="width: 12px; height: 12px; border-radius: 3px; background: #2c7be5; display: inline-block;"></span><span>existing-dog-bins</span><span style="font-size: 12.5px; color: #868e96;">· 14 objects</span></span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <a href="#" style="font-size: 13.6px; white-space: nowrap; text-decoration: none; font-weight: 500;">Upload new…</a>
+      </div>
+      <div style="font-size: 12.5px; color: #868e96;">This question puts the layer on this section’s map. Or pick “Respondents’ marks on…” a geo question to show what others have already placed.</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div style="font-size: 13.6px; font-weight: 600;">In the panel</div>
+      <div class="seg">
+        <div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          <span>List the objects</span>
+        </div>
+        <div class="on">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="2"></rect><rect x="6" y="11" width="3" height="2" fill="currentColor" stroke="none"></rect></svg>
+          <span>Legend line only</span>
+        </div>
+      </div>
+      <div style="font-size: 12.5px; color: #868e96;">One line naming the layer with a toggle — right for a backdrop such as existing bins or district boundaries.</div>
+    </div>
+
+    <div style="height: 1px; background: #e5e7eb;"></div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: baseline; gap: 8px;">
+        <div style="font-size: 15.2px; font-weight: 600;">Ask about each object</div>
+        <div style="font-size: 12.5px; color: #868e96;">optional</div>
+      </div>
+      <div style="font-size: 12.5px; color: #868e96;">Sub-questions open when a respondent taps an object. Each becomes a column of your export; without them the layer just shows.</div>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; border: 1px dashed #d1d5db; border-radius: 8px; background: #ffffff; color: #5f6368; font-size: 14px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>Add sub-question</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

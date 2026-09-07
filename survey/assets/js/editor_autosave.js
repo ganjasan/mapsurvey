@@ -54,9 +54,22 @@
                 return resp.text().then(function (html) {
                     var targetSel = form.getAttribute('hx-target');
                     var target = targetSel && document.querySelector(targetSel);
-                    if (target && html) target.outerHTML = html;
+                    if (target && html) {
+                        target.outerHTML = html;
+                        // A plain outerHTML assignment bypasses htmx: without
+                        // this the fresh row's Edit / Delete / Duplicate
+                        // buttons carry hx-* attributes nobody listens to,
+                        // and "the button does nothing" until a reload.
+                        var fresh = document.querySelector(targetSel);
+                        if (fresh && window.htmx) window.htmx.process(fresh);
+                    }
                     var iframe = document.getElementById('question-preview-frame');
                     if (iframe) iframe.src = iframe.src;
+                    // The page's Live preview listens for this (survey_detail.html);
+                    // a plain fetch fires no htmx event, so say it explicitly.
+                    // `questionUpdated`, not `questionSaved`: the latter also
+                    // closes the modal, which an autosave must never do.
+                    document.body.dispatchEvent(new CustomEvent('questionUpdated', { detail: { autosave: true } }));
                     setState(form, 'saved', 'All changes saved');
                 });
             }

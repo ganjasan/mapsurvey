@@ -34,6 +34,21 @@
         opts = opts || {};
 
         var modal = $(MODAL_ID);
+        // One element serves every dialog. A request issued from a confirm's
+        // OK can answer (409 → Dialog.alert) while that confirm is still
+        // fading out; Bootstrap ignores show() mid-transition, the alert never
+        // appears and its backdrop stays over the page — every button then
+        // "does nothing". Queue behind the hide instead.
+        var state = modal.data('bs.modal');
+        // Bootstrap 4 keeps _isShown until `hidden` fires and refuses show()
+        // meanwhile; the class alone drops at the start of the fade.
+        if (modal.hasClass('show') || (state && (state._isShown || state._isTransitioning))) {
+            return new Promise(function (resolve) {
+                modal.one('hidden.bs.modal.editorDialogQueue', function () {
+                    _show(message, opts, isConfirm).then(resolve);
+                });
+            });
+        }
         var $title = modal.find('#editorDialogTitle');
         var $msg = modal.find('#editorDialogMessage');
         var $cancel = modal.find('#editorDialogCancel');
