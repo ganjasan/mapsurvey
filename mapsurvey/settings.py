@@ -88,6 +88,9 @@ MIDDLEWARE = [
     # Applies the noindex flag survey.access_control sets. Must sit outside the
     # view so it also reaches the redirects survey_header returns.
     'survey.middleware.SurveyIndexingMiddleware',
+    # Writes the first-touch attribution cookie on marketing pages; read at
+    # registration by survey.events.persist_signup_attribution.
+    'survey.middleware.FirstTouchMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'survey.middleware.ActiveOrgMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -370,8 +373,6 @@ EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False').lower() in ('true', '1'
 EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() in ('true', '1')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@mapsurvey.org')
 
-# Plausible Analytics
-PLAUSIBLE_SCRIPT_URL = os.environ.get('PLAUSIBLE_SCRIPT_URL', '')
 # Google Search Console verification token (meta-tag method); empty = tag not rendered.
 GOOGLE_SITE_VERIFICATION = os.environ.get('GOOGLE_SITE_VERIFICATION', '')
 
@@ -522,31 +523,12 @@ def _posthog_scrub_tags(tags):
 POSTHOG_MW_REQUEST_FILTER = _posthog_skip_request
 POSTHOG_MW_TAG_MAP = _posthog_scrub_tags
 
-# Acquisition metrics sync (top of the creator funnel).
-# Every credential below defaults to empty: unset means "not configured", which the
-# funnel dashboard renders as such instead of as a zero.
-GSC_SITE = os.environ.get('GSC_SITE', 'sc-domain:mapsurvey.org')
-# Service-account key as JSON in the environment (production; Render has no secret files).
-GSC_SERVICE_ACCOUNT_JSON = os.environ.get('GSC_SERVICE_ACCOUNT_JSON', '')
-# Local-development fallback: the same key as a file on disk. No default path -- this
-# repository is public, and a hardcoded path would publish the GCP project and key
-# filename for no benefit. Set GSC_KEY in your (gitignored) .env instead.
-GSC_KEY_PATH = os.path.expanduser(os.environ.get('GSC_KEY', ''))
-PLAUSIBLE_API_KEY = os.environ.get('PLAUSIBLE_API_KEY', '')
-PLAUSIBLE_SITE_ID = os.environ.get('PLAUSIBLE_SITE_ID', 'mapsurvey.org')
-
-# What the "marketing pages" GSC segment excludes. Defined by exclusion because the
-# set of app prefixes is stable while marketing landings keep being added -- an
-# allow-list would silently drop each new SEO landing out of the funnel.
-# Survey pages matter most: their impressions are our customers' respondents finding
-# their own survey, traffic that can never convert into a registration.
-ACQUISITION_NON_MARKETING_PREFIXES = (
-    '/surveys/', '/accounts/', '/admin/', '/editor/', '/org/', '/invitations/',
-    '/internal/', '/nl/', '/i18n/', '/media/', '/static/', '/staticfiles/',
-    '/__debug__/',
+# Top of the funnel (search impressions, landing visits, channel mix) is read on the
+# PostHog AARRR dashboard, where Search Console and Bing are warehouse sources. The
+# staff funnel dashboard links there instead of computing it.
+POSTHOG_AARRR_DASHBOARD_URL = os.environ.get(
+    'POSTHOG_AARRR_DASHBOARD_URL', 'https://eu.posthog.com/project/248938/dashboard/941308'
 )
-# A configured source that has not synced successfully within this many hours is stale.
-ACQUISITION_STALE_HOURS = int(os.environ.get('ACQUISITION_STALE_HOURS', 48))
 
 # Landing page
 CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'konuchovartem@mapsurvey.org')
@@ -663,7 +645,7 @@ RESEND_ACTIVATION_RATE_LIMIT_DAY = int(os.environ.get('RESEND_ACTIVATION_RATE_LI
 
 # AI survey draft generation (survey/ai/). Optional: an unset provider credential
 # means the AI panel on the create page simply does not render — never a crash,
-# same convention as GSC/Plausible/Turnstile above. Calls run in the Celery
+# same convention as Turnstile above. Calls run in the Celery
 # worker, so the request path never blocks on a model. Provider access goes
 # through survey/ai/client.py's LLMProvider interface; 'anthropic' is the only
 # implementation today (EU-hosted/local providers plug in as one class later).

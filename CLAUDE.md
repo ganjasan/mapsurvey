@@ -221,32 +221,47 @@ Leaflet.draw tooltips pick tap-phrased strings via `pointer: coarse`
 
 **Registration abuse prevention**: `/accounts/register/` is served by `AbuseProtectedRegistrationView` (subclass of `AsyncEmailRegistrationView`). Three layered defenses run in order: honeypot field `website` (silent fake-success redirect), per-IP rate limit (`django-ratelimit`, fail-open on Redis outage), Cloudflare Turnstile siteverify (fail-closed on network error, dev-bypass when `TURNSTILE_SECRET_KEY=""`). Helpers in `survey/abuse.py`. Audit log in `AbuseEvent` model. Real client IP via `survey.middleware.CloudflareIPMiddleware` reading `CF-Connecting-IP` only when `CLOUDFLARE_TRUSTED=True`.
 
-**Acquisition metrics (top of the funnel)**: the staff funnel dashboard at
-`/admin/survey/funnelreport/` shows Google impressions → landing visits → registrations → demo
-opens above the registration-onward stages. External numbers are never fetched during a request:
-`python manage.py sync_acquisition_metrics [--days N] [--source gsc|plausible]` pulls Search Console
-and Plausible into `AcquisitionDaily` (keyed by source/date/segment, re-runnable — a rerun overwrites
-the window, which is how GSC's retroactive revisions land). Run daily by the
-`mapsurvey-acquisition-sync` cron service; the provider keys live only on that service. Clients in
-`survey/acquisition.py`, dashboard aggregation in `survey/funnel.py` (`AcquisitionService`).
-Per-source state in `AcquisitionSyncState` surfaces "not configured" / "failing" / stale on the
-dashboard itself, so a stalled sync is visible where the numbers are read. GSC's "marketing pages"
-segment is defined by *excluding* `ACQUISITION_NON_MARKETING_PREFIXES` (`/surveys/` above all — those
-impressions are customers' respondents finding their own survey). **GSC aggregation gotcha**: Search
-Console counts impressions property-level when no page filter is present and page-level when one is,
-and the totals differ (1329 vs 1717 over the same 14 days). Both segments therefore query *with* a
-page filter — the whole-property one uses a match-everything expression solely to stay in page-level
-mode. Never drop that filter: mixing modes makes the marketing segment exceed the whole property. Our
-stored whole-property number reads higher than the GSC UI's total for the same window, by design. Demo opens: total from
-`SurveySession` on the `DEMO_SURVEY_URL` survey (retroactive), anonymous/signed-in split from
-`DemoOpen` (forward-only; the user FK lives there and never on `SurveySession`, which must not link
-customers' respondents to platform accounts).
+**Acquisition metrics (top of the funnel)**: search impressions and clicks, landing visits and the
+channel mix are read on the PostHog **AARRR** dashboard (`POSTHOG_AARRR_DASHBOARD_URL`, project
+248938 dashboard 941308), where Google Search Console and Bing Webmaster Tools are native warehouse
+sources (`googlesearchconsole_*`, `bingwebmastertools_*` tables). Nothing in this application
+fetches or stores provider metrics any more — the former `sync_acquisition_metrics` command,
+`AcquisitionDaily`/`AcquisitionSyncState` and the `mapsurvey-acquisition-sync` cron were retired
+(change `acquisition-instrumentation`). Two rules for every HogQL over those tables: filter
+`country != 'mar'` (38% of impressions are Moroccans searching a namesake app) and keep marketing
+pages apart from `/surveys/` and `/r/` (those impressions are customers' respondents finding their
+own survey). GSC data exists only from 2026-07-03, when the property was created. The staff funnel
+dashboard at `/admin/survey/funnelreport/` keeps what only our database answers: registrations in
+the window, registrations by first-touch source, and demo opens — total from `SurveySession` on the
+`DEMO_SURVEY_URL` survey (retroactive), anonymous/signed-in split from `DemoOpen` (forward-only;
+the user FK lives there and never on `SurveySession`, which must not link customers' respondents to
+platform accounts). Demo helpers live in `survey/demo.py`.
+
+**Signup attribution**: `FirstTouchMiddleware` writes a signed 90-day first-party cookie (`ms_ft`)
+on the first marketing-page response — referrer host, bucket, UTM triple, landing path, no
+identifier — and never on `/surveys/`, `/r/`, the editor or admin. `persist_signup_attribution`
+reads it at registration (legacy session values as fallback) and never the request's own referrer,
+which is the site itself. `classify_source` in `survey/events.py` buckets referrers as `email`,
+`ai` (ChatGPT, Perplexity, Gemini, Claude, Copilot), `search_other` (DuckDuckGo, Brave, Yahoo,
+Ecosia…), `google`, `bing`, `social`, `other`/`direct`; an AI `utm_source` promotes a direct visit to
+`ai` because ChatGPT tags links with `utm_source=chatgpt.com` and often sends no referrer. The row
+reaches PostHog as `$set_once` person properties (`first_source_bucket`, `first_referrer_host`,
+`first_utm_*`, `first_landing_path`) on `creator_registered`; `sync_posthog_person_properties
+--reclassify` repairs and backfills existing rows.
+
+**First response and distribution events**: `SurveySession.opened_by_kind` (`external | owner |
+collaborator | preview`) is set from the signed-in user's relation to the survey, never from
+anything about an anonymous visitor. `survey_first_response` fires only for the first `external`
+session. Creator events `share_link_copied`, `qr_shown`, `embed_copied` (browser, guarded by
+`window.posthog`) and `responses_viewed`, `data_exported` (server) carry `survey_id` and a surface
+only — never a slug or URL.
 
 **Internal product analytics (PostHog)**: client-side snippet in
 `survey/templates/partials/_analytics.html`, gated by `POSTHOG_PROJECT_KEY` (empty default = nothing
 renders, which is what keeps tests, local dev and PR previews out of the production project) and
 `POSTHOG_API_HOST` (Cloud EU). It measures **us**: which creator-facing screens get used, where
-activation leaks. Plausible still runs alongside it and is not being replaced yet.
+activation leaks. Plausible was removed in September 2026; respondent pages load no third-party
+analytics script at all.
 
 **Two hosts, on purpose.** The browser initialises against `POSTHOG_CLIENT_HOST` — a first-party
 hostname CNAME'd to PostHog's managed reverse proxy, because `eu.i.posthog.com` is on every
@@ -311,10 +326,8 @@ Required in `.env`:
 - `SECRET_KEY`, `DEBUG`, `DJANGO_ALLOWED_HOSTS`
 - Database: `SQL_ENGINE`, `SQL_DATABASE`, `SQL_USER`, `SQL_PASSWORD`, `SQL_HOST`, `SQL_PORT`
 - Optional S3: `USE_S3=TRUE`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_STORAGE_BUCKET_NAME`
-- Acquisition metrics (optional; unset = "not configured" on the dashboard, never a zero):
-  `GSC_SITE`, `GSC_SERVICE_ACCOUNT_JSON` (key contents; production) or `GSC_KEY` (key file path;
-  local dev), `PLAUSIBLE_API_KEY`, `PLAUSIBLE_SITE_ID`. See `.env.example`. **This repo is public**
-  — no key path is defaulted in `settings.py`; keep the path in your gitignored `.env`
+- `POSTHOG_AARRR_DASHBOARD_URL` (optional): where the staff funnel dashboard sends readers for
+  top-of-funnel numbers; defaults to the production PostHog dashboard.
 
 ### GeoDjango Notes
 

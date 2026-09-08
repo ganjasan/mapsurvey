@@ -37,7 +37,6 @@ def mobile_adaptive(request):
 
 def analytics(request):
     return {
-        'PLAUSIBLE_SCRIPT_URL': getattr(settings, 'PLAUSIBLE_SCRIPT_URL', ''),
         # Google Search Console URL-prefix verification (meta-tag method).
         # Empty (default) renders nothing; set the env var to the token GSC shows.
         'GOOGLE_SITE_VERIFICATION': getattr(settings, 'GOOGLE_SITE_VERIFICATION', ''),

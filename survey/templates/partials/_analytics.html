@@ -1,17 +1,3 @@
-{% if PLAUSIBLE_SCRIPT_URL %}
-{% comment %}crossorigin is not optional here. Without it the browser withholds
-the message, file and line of any exception thrown inside a cross-origin script
-and reports the bare string "Script error." -- 107 such events over 30 days, 18
-people, and not one of them said what broke. This was the only external script
-in any of our base templates missing the attribute, and the opaque errors
-appeared on exactly the pages that include this partial and on no others.
-plausible.io answers with `access-control-allow-origin: *`, so the attribute
-costs nothing; a host that did NOT send that header would refuse to execute the
-script, which is why this is checked rather than sprinkled everywhere.
-{% endcomment %}
-<script async src="{{ PLAUSIBLE_SCRIPT_URL }}" crossorigin="anonymous"></script>
-<script>window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()</script>
-{% endif %}
 {% comment %}
 Internal product analytics. The key arrives empty -- and so nothing below renders -- both
 when PostHog is unconfigured and when the current page belongs to somebody else's audience
@@ -90,7 +76,7 @@ asset host with "posthog" in it would be blocked exactly like the ingest host wa
                         return request;
                     }
                 },
-                // Anonymous landing traffic is already answered by Plausible; profiles for
+                // Anonymous landing traffic needs no person profile; profiles for
                 // people who never sign up would be stored for nothing.
                 person_profiles: 'identified_only'
             }

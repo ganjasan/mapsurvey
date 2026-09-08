@@ -276,7 +276,18 @@ function publishFromShare(btn) {
     });
 }
 
+// Distribution events for the creator funnel. Guarded so a missing or blocked
+// PostHog client degrades to silence; properties never include the URL itself
+// (it carries the survey slug, which is respondent-facing).
+var SHARE_SURVEY_ID = '{{ survey.id|escapejs }}';
+function trackShare(eventName) {
+    if (window.posthog && posthog.capture) {
+        posthog.capture(eventName, { survey_id: SHARE_SURVEY_ID, surface: 'share_page' });
+    }
+}
+
 function copyLink(btn, url) {
+    trackShare('share_link_copied');
     navigator.clipboard.writeText(url).then(function() {
         var icon = btn.querySelector('i');
         if (icon) {
@@ -288,6 +299,7 @@ function copyLink(btn, url) {
 }
 
 function showQr(url) {
+    trackShare('qr_shown');
     var container = document.getElementById('qrContainer');
     container.textContent = '';
     new QRCode(container, {text: url, width: 256, height: 256});

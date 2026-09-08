@@ -10,15 +10,6 @@
         height: auto; margin: 1rem auto; border: 0;
     }
 </style>
-{% if PLAUSIBLE_SCRIPT_URL %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof plausible !== 'undefined') {
-        plausible('survey_complete', {props: {survey: '{{ survey.name|escapejs }}'}});
-    }
-});
-</script>
-{% endif %}
 {% endblock %}
 
 {% block content %}

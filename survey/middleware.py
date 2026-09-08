@@ -1,6 +1,9 @@
+import logging
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 from .models import Membership, Organization, Invitation, UserActivity
 
@@ -226,4 +229,58 @@ class CreatorLanguageCookieMiddleware:
                 path=settings.LANGUAGE_COOKIE_PATH,
                 samesite=settings.LANGUAGE_COOKIE_SAMESITE,
             )
+        return response
+
+
+class FirstTouchMiddleware:
+    """Remember a visitor's first marketing touch in a 90-day first-party cookie.
+
+    `SignupAttribution` used to read the first touch from the session, which dies
+    long before "saw us in ChatGPT, came back a week later, registered" completes;
+    and at registration it fell back to the request's own referrer, i.e. the site
+    itself. The cookie is written once, on the first marketing-page response that
+    lacks it, and read at registration by `persist_signup_attribution`.
+
+    Marketing pages only: respondent surfaces (/surveys/, /r/), the editor, admin
+    and account pages other than the registration form never write it, so a
+    respondent who later registers is attributed to the page they *started* on,
+    not to the survey they answered. The value is signed, holds no identifier and
+    is HttpOnly -- there is nothing in it for JavaScript to read.
+    """
+
+    EXCLUDED_PREFIXES = (
+        '/surveys/', '/r/', '/editor/', '/admin/', '/static/', '/staticfiles/',
+        '/media/', '/internal/', '/__debug__/', '/api/', '/i18n/',
+    )
+    ACCOUNTS_ALLOWED = ('/accounts/register/',)
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def _eligible(self, request):
+        if request.method != 'GET':
+            return False
+        path = request.path
+        if path.startswith('/accounts/'):
+            return path in self.ACCOUNTS_ALLOWED
+        return not path.startswith(self.EXCLUDED_PREFIXES)
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        try:
+            from .events import (
+                FIRST_TOUCH_COOKIE, FIRST_TOUCH_MAX_AGE, build_first_touch, encode_first_touch,
+            )
+            if (
+                self._eligible(request)
+                and FIRST_TOUCH_COOKIE not in request.COOKIES
+                and 200 <= response.status_code < 300
+            ):
+                response.set_cookie(
+                    FIRST_TOUCH_COOKIE, encode_first_touch(build_first_touch(request)),
+                    max_age=FIRST_TOUCH_MAX_AGE, httponly=True, samesite='Lax',
+                    secure=request.is_secure(),
+                )
+        except Exception:  # analytics must never break a page
+            logger.debug('first-touch cookie not set', exc_info=True)
         return response
