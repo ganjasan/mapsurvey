@@ -36061,6 +36061,90 @@ class SurveyNavScriptsTest(TestCase):
         self._assert_handler_defined(f'/editor/surveys/{self.survey.uuid}/')
 
 
+class EditorMapPickerSearchTest(TestCase):
+    """Every editor map picker carries the shared place search
+    (openspec: editor-map-picker-search) and the desktop sizing hooks."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='picker_owner', password='pass')
+        self.org = _make_org('PickerOrg')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='picker_survey', organization=self.org,
+            start_map_postion=Point(13.4050, 52.5231), start_map_zoom=12,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec', code='S1', is_head=True,
+        )
+        self.client.login(username='picker_owner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+    def test_settings_page_has_search_above_a_wide_picker(self):
+        """
+        GIVEN the standalone survey settings page
+        WHEN it renders
+        THEN one search container precedes the map picker, the section is
+             marked wide, and the picker carries the page sizing class
+        """
+        html = self.client.get(reverse('editor_survey_settings', args=[self.survey.uuid])).content.decode()
+
+        self.assertEqual(html.count('id="survey-map-search"'), 1)
+        self.assertLess(html.index('id="survey-map-search"'), html.index('id="survey-map-picker"'))
+        self.assertIn('settings-section--wide', html)
+        self.assertIn('class="picker-map picker-map--page"', html)
+        self.assertIn("container: document.getElementById('survey-map-search')", html)
+        # The base template ships the control for every editor page
+        # (hashed by the manifest storage, hence the pattern).
+        self.assertRegex(html, r'js/components/map_place_search(\.[0-9a-f]+)?\.js')
+
+    def test_settings_panel_has_search_above_the_picker(self):
+        """
+        GIVEN the in-editor settings panel fragment
+        WHEN it renders
+        THEN the search container precedes the picker and the panel sizing class is used
+        """
+        html = self.client.get(reverse('editor_survey_settings_panel', args=[self.survey.uuid])).content.decode()
+
+        self.assertEqual(html.count('id="survey-map-search"'), 1)
+        self.assertLess(html.index('id="survey-map-search"'), html.index('id="survey-map-picker"'))
+        self.assertIn('class="picker-map picker-map--panel"', html)
+        self.assertIn("container: document.getElementById('survey-map-search')", html)
+
+    def test_section_modal_has_search_that_lifts_inherit(self):
+        """
+        GIVEN the section map picker modal
+        WHEN it renders
+        THEN the search container precedes the picker and selecting a result
+             unchecks "Inherit position" before applying it
+        """
+        html = self.client.get(reverse('editor_section_map_picker', args=[self.survey.uuid, self.section.id])).content.decode()
+
+        self.assertEqual(html.count('id="map-picker-search"'), 1)
+        self.assertLess(html.index('id="map-picker-search"'), html.index('id="map-picker"'))
+        self.assertIn('class="picker-map picker-map--modal"', html)
+        self.assertIn("container: document.getElementById('map-picker-search')", html)
+        on_select = html[html.index('onSelect: function(result)'):]
+        self.assertLess(on_select.index('clearCb.checked = false'), on_select.index('updatePickerState()'))
+
+    def test_save_endpoint_is_unchanged(self):
+        """
+        GIVEN a position chosen by search and saved through the existing endpoint
+        WHEN the survey map position is posted
+        THEN it is stored exactly as a click-chosen one would be
+        """
+        response = self.client.post(
+            reverse('editor_survey_map_position', args=[self.survey.uuid]),
+            {'lat': '59.4370', 'lng': '24.7536', 'zoom': '12', 'use_geolocation': '0'},
+        )
+        self.assertIn(response.status_code, (200, 204))
+        self.survey.refresh_from_db()
+        self.assertAlmostEqual(self.survey.start_map_postion.y, 59.4370, places=4)
+        self.assertAlmostEqual(self.survey.start_map_postion.x, 24.7536, places=4)
+        self.assertEqual(self.survey.start_map_zoom, 12)
+
+
 class EditorJsNumberLocaleTest(TestCase):
     """Numbers the editor writes into JavaScript must not be locale-formatted.
 
