@@ -36,6 +36,7 @@ from django.urls import reverse
 from django.core.serializers import serialize
 import geojson
 from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.geos.error import GEOSException
 import sys
 from io import BytesIO
 import json
@@ -1078,9 +1079,19 @@ def survey_section(request, survey_slug, section_name):
 						if geostr != '':
 							answer = Answer(survey_session=survey_session, question=question)
 
-							gj = geojson.loads(geostr)
-							geometry = geojson.dumps(gj['geometry'])
-							resultToSave = GEOSGeometry(geometry)
+							# A chunk that is not a GeoJSON Feature skips itself, never
+							# the section: the POST has no error-render path, so a raise
+							# here cost one respondent 42 consecutive 500s (2026-09-07).
+							# Narrow catch — a database error in save() must still surface.
+							try:
+								gj = geojson.loads(geostr)
+								geometry = geojson.dumps(gj['geometry'])
+								resultToSave = GEOSGeometry(geometry)
+							except (ValueError, KeyError, TypeError, GEOSException):
+								logger.warning(
+									"Skipping unreadable geometry chunk for %s: %r",
+									question.code, geostr[:40])
+								continue
 
 							if question.input_type == "point":
 								answer.point = resultToSave
