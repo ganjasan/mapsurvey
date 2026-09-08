@@ -7582,3 +7582,62 @@ msgstr "Nama tidak dapat disimpan. Periksa koneksi Anda dan coba lagi."
 
 msgid "A draft is renamed by renaming the published survey."
 msgstr "Draf diubah namanya dengan mengubah nama survei yang sudah dipublikasikan."
+
+# --- Section funnel: conditional sections (change funnel-conditional-sections)
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Skipped by the visibility rule — never shown this section"
+msgstr "Dilewati oleh aturan visibilitas — bagian ini tidak pernah ditampilkan kepada mereka"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Shown when"
+msgstr "Ditampilkan jika"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Shown to everyone until fixed."
+msgstr "Ditampilkan ke semua orang sampai diperbaiki."
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Rule broken — shown to everyone"
+msgstr "Aturan rusak — ditampilkan ke semua orang"
+
+#: survey/templates/editor/partials/analytics_performance.html
+#, python-format
+msgid "Compared with step %(n)s, the last section everyone sees"
+msgstr "Dibandingkan dengan langkah %(n)s, bagian terakhir yang dilihat semua orang"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "of eligible"
+msgstr "dari yang memenuhi syarat"
+
+#: survey/templates/editor/partials/analytics_performance.html
+#, python-format
+msgid "since step %(n)s"
+msgstr "sejak langkah %(n)s"
+
+#: survey/templates/editor/partials/analytics_performance.html
+#, python-format
+msgid "%(pct)s%% of the %(n)s eligible"
+msgstr "%(pct)s%% dari %(n)s yang memenuhi syarat"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "reached"
+msgstr "sampai"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "skipped by a visibility rule (never shown the section)"
+msgstr "dilewati oleh aturan visibilitas (bagian tidak pernah ditampilkan)"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "did not get this far"
+msgstr "tidak sampai sejauh ini"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Sections behind a visibility rule are compared with the people the rule let in, not with everyone."
+msgstr "Bagian di balik aturan visibilitas dibandingkan dengan orang yang diloloskan aturan, bukan dengan semua orang."
+
+#: survey/templates/editor/partials/analytics_performance.html
+#, python-format
+msgid "%(n)s skipped by rule"
+msgid_plural "%(n)s skipped by rule"
+msgstr[0] "%(n)s dilewati oleh aturan"

@@ -1951,6 +1951,59 @@ class PerformanceAnalyticsService:
             'median_load_ms': median_ms,
         }
 
+    def _section_rules(self, sections):
+        """Per-section rule verdicts for the funnel, keyed by section name.
+
+        Returns {name: {'controller': Question, 'codes': [...], 'label': str}} for
+        sections with a valid rule and {name: {'broken': reason}} for sections whose
+        rule cannot be evaluated (the runtime fails open on those, so the funnel
+        treats them as unconditional). Sections without a rule are absent.
+        """
+        from .visibility import _rule_verdict, describe_rule, _iter_questions
+        questions_index = {}
+        for s_idx, section in enumerate(sections):
+            for question in _iter_questions(section):
+                questions_index[question.code] = {
+                    'question': question, 'section_index': s_idx, 'order': question.order_number,
+                }
+        rules = {}
+        for s_idx, section in enumerate(sections):
+            if section.visibility_rule is None:
+                continue
+            entry, matchable, broken = _rule_verdict(
+                section.visibility_rule, 'section', s_idx, None, questions_index)
+            if broken:
+                rules[section.name] = {'broken': broken}
+                continue
+            info = describe_rule('section', section, self.survey) or {}
+            label = info.get('label') or ''
+            if label.startswith('if '):
+                label = label[3:]  # the editor's "if X = Y"; the chart says "Shown when X = Y"
+            rules[section.name] = {'controller': entry['question'], 'codes': matchable, 'label': label}
+        return rules
+
+    def _eligible_sessions(self, controller, codes):
+        """Session ids in scope whose answer to ``controller`` matches any of ``codes``.
+
+        Read by question *code* across every version in scope — the same key the
+        visibility engine uses — so an older version's respondents still count.
+        """
+        rows = Answer.objects.filter(
+            survey_session__survey_id__in=self.scope_ids,
+            question__code=controller.code,
+            parent_answer_id__isnull=True,
+        ).exclude(selected_choices__isnull=True).values_list('survey_session_id', 'selected_choices')
+        wanted = {int(c) for c in codes}
+        eligible = set()
+        for session_id, selected in rows:
+            try:
+                picked = {int(c) for c in (selected or [])}
+            except (TypeError, ValueError):
+                continue
+            if picked & wanted:
+                eligible.add(session_id)
+        return eligible
+
     def get_funnel(self):
         """Return a step funnel over sections in linked-list order.
 
@@ -1958,13 +2011,24 @@ class PerformanceAnalyticsService:
         ``completed`` = submitted at least once), not events — a refresh or a
         "back" adds a second ``section_view`` for the same person and must not
         move the funnel. Percentages are relative to ``session_start`` count so
-        the first column agrees with the Sessions Started card. ``dropped`` is
-        the loss versus the previous step's ``reached`` (never negative: a
-        conditional branch can make a later section more visited than an
-        earlier one). Raw ``views``/``submits`` event counts and the legacy
+        the first column agrees with the Sessions Started card.
+
+        Conditional sections (a valid ``visibility_rule``) are compared with the
+        people the rule let in: ``eligible`` = sessions that reached the baseline
+        step AND answered the controlling question with a matching option,
+        ``skipped`` = baseline reached − eligible, ``dropped`` = eligible − reached
+        and ``dropped_pct`` is relative to ``eligible``. The *baseline* is the
+        nearest earlier unconditional step (or the session starts), and the step
+        after a branch compares with that same baseline — so a branch can never
+        make its successor look like it gained respondents. Broken rules fail
+        open at runtime, so here they are unconditional steps flagged
+        ``rule_broken``. Raw ``views``/``submits`` event counts and the legacy
         event-based ``drop_rate`` stay in the payload.
         """
         qs = self._events_qs()
+        start_sessions = set(
+            qs.filter(event_type='session_start').values_list('session_id', flat=True)
+        )
         starts = qs.filter(event_type='session_start').count()
 
         view_sessions, submit_sessions = {}, {}
@@ -1990,15 +2054,33 @@ class PerformanceAnalyticsService:
         }
 
         sections = _get_ordered_sections(self.survey)
+        rules = self._section_rules(sections)
         result = []
-        prev_reached = starts
+        baseline_sessions = start_sessions
+        baseline_reached = starts
+        baseline_step = 0  # 0 = session starts
         for i, s in enumerate(sections, start=1):
             v = views_map.get(s.name, 0)
             sub = submit_map.get(s.name, 0)
-            reached = len(view_sessions.get(s.name, ()))
+            reached_set = view_sessions.get(s.name, set())
+            reached = len(reached_set)
             completed = len(submit_sessions.get(s.name, ()))
-            dropped = max(prev_reached - reached, 0)
             median_s = time_by_section.get(s.name)
+            rule = rules.get(s.name)
+            conditional = bool(rule and 'controller' in rule)
+
+            if conditional:
+                eligible_set = self._eligible_sessions(rule['controller'], rule['codes']) & baseline_sessions
+                eligible = len(eligible_set)
+                skipped = max(baseline_reached - eligible, 0)
+                dropped = max(eligible - reached, 0)
+                dropped_pct = pct(dropped, eligible)
+            else:
+                eligible = baseline_reached
+                skipped = 0
+                dropped = max(baseline_reached - reached, 0)
+                dropped_pct = pct(dropped, baseline_reached)
+
             result.append({
                 'step': i,
                 'section_name': s.name,
@@ -2010,11 +2092,23 @@ class PerformanceAnalyticsService:
                 'completed': completed,
                 'reached_pct': pct(reached, starts),
                 'dropped': dropped,
-                'dropped_pct': pct(dropped, prev_reached),
+                'dropped_pct': dropped_pct,
                 'median_seconds': median_s,
                 'median_label': _format_seconds(median_s),
+                'conditional': conditional,
+                'rule_label': rule['label'] if conditional else '',
+                'rule_broken': bool(rule and 'broken' in rule),
+                'rule_reason': rule.get('broken', '') if rule else '',
+                'eligible': eligible,
+                'skipped': skipped,
+                'skipped_pct': pct(skipped, starts),
+                'eligible_pct': pct(reached, eligible) if conditional else None,
+                'baseline_step': baseline_step,
             })
-            prev_reached = reached
+            if not conditional:
+                baseline_sessions = reached_set
+                baseline_reached = reached
+                baseline_step = i
         return result
 
     def _session_start_metadata(self):

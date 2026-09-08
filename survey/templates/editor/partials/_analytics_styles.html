@@ -374,6 +374,28 @@
     .perf-funnel-dropped i { color: #ef4444; }
     .perf-funnel-time i { color: #9ca3af; }
     .perf-funnel-completed { padding-left: 1.25rem; font-size: 0.75rem; }
+    /* Conditional steps: sections behind a visibility rule (see funnel-conditional-sections) */
+    .perf-funnel-step.is-conditional .perf-funnel-bar {
+        box-shadow: inset 0 0 0 2px #b6d4fe;
+        background: repeating-linear-gradient(135deg, #eef4ff 0 6px, #f7faff 6px 12px);
+    }
+    .perf-funnel-skipped { position: absolute; left: 0; right: 0; background: #e7f1ff; border-top: 1px dashed #b6d4fe; }
+    .perf-funnel-step.is-conditional .perf-funnel-num { background: #e7f1ff; color: #0b5ed7; }
+    .perf-funnel-cond {
+        display: inline-flex; align-items: center; gap: 0.3rem; margin: 0.1rem 0 0.3rem; max-width: 100%;
+        min-width: 0; overflow: hidden; font-size: 0.7rem; font-weight: 600; color: #0b5ed7; background: #e7f1ff;
+        border: 1px solid #b6d4fe; border-radius: 999px; padding: 0.05rem 0.5rem;
+    }
+    .perf-funnel-cond span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .perf-funnel-cond.is-broken { color: #856404; background: #fff3cd; border-color: #ffeeba; }
+    .perf-funnel-skip i { color: #0b5ed7; }
+    .perf-funnel-eligible { color: #9ca3af; font-size: 0.72rem; padding-left: 1.25rem; }
+    .perf-funnel-legend { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.75rem; font-size: 0.75rem; color: #6b7280; }
+    .perf-funnel-legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .perf-sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+    .perf-sw-fill { background: var(--accent); }
+    .perf-sw-skip { background: #e7f1ff; border: 1px dashed #b6d4fe; }
+    .perf-sw-hatch { background: repeating-linear-gradient(135deg, #ede9fe 0 3px, #f5f3ff 3px 6px); }
     @media (max-width: 767px) {
         /* Phone: KPI cards in a 2×2 grid instead of an overflowing row */
         .stat-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
@@ -382,17 +404,21 @@
         .stat-card .stat-label { font-size: 0.75rem; }
         /* Phone: stack steps vertically, bar becomes a horizontal track */
         .perf-funnel { flex-direction: column; gap: 0; overflow: visible; }
+        /* minmax(0,1fr): a plain 1fr track grows to the min-content of a nowrap badge */
         .perf-funnel-step { min-width: 0; max-width: none; display: grid;
-            grid-template-columns: 1fr; padding: 0.6rem 0; border-top: 1px solid #f3f4f6; }
+            grid-template-columns: minmax(0, 1fr); padding: 0.6rem 0; border-top: 1px solid #f3f4f6; }
         .perf-funnel-step:first-child { border-top: none; }
         .perf-funnel-bar { height: 12px; border-radius: 6px; order: 2; margin: 0.35rem 0; }
         .perf-funnel-fill { top: 0; bottom: 0; right: auto; min-height: 0; border-radius: 6px;
             width: var(--reached, 0%); height: auto !important; }
+        .perf-funnel-skipped { top: 0; bottom: 0 !important; left: var(--reached, 0%); width: var(--skipped, 0%);
+            height: auto !important; border-top: none; border-left: 1px dashed #b6d4fe; }
+        .perf-funnel-cond { width: 100%; box-sizing: border-box; }
         .perf-funnel-pct { display: none; }
-        .perf-funnel-meta { border-top: none; padding-top: 0; display: flex; flex-wrap: wrap;
+        .perf-funnel-meta { border-top: none; padding-top: 0; display: flex; flex-wrap: wrap; min-width: 0;
             column-gap: 0.75rem; align-items: baseline; }
         .perf-funnel-title { width: 100%; margin-bottom: 0.15rem; }
         .perf-funnel-line { margin-top: 0; }
-        .perf-funnel-completed { padding-left: 0; font-size: 0.8rem; }
+        .perf-funnel-completed, .perf-funnel-eligible { padding-left: 0; font-size: 0.8rem; }
     }
 </style>

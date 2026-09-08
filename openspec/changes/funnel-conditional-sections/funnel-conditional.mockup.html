@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup — Section funnel with conditional sections</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+  :root { --accent:#6d28d9; --accent-light:#ede9fe; --border-color:#e5e7eb; --cond:#0b5ed7; --cond-bg:#e7f1ff; --cond-border:#b6d4fe; }
+  body { margin:0; background:#f3f4f6; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color:#111827; }
+  .page { max-width:1100px; margin:0 auto; padding:2rem 1.5rem 4rem; }
+  h1 { font-size:1.25rem; margin:0 0 .25rem; }
+  .lead { color:#6b7280; font-size:.9rem; margin:0 0 2rem; }
+  .variant { margin-bottom:2.5rem; }
+  .variant > h2 { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#6b7280; margin:0 0 .75rem; display:flex; gap:.5rem; align-items:center; }
+  .tag { font-size:.7rem; text-transform:none; letter-spacing:0; padding:.1rem .5rem; border-radius:999px; font-weight:600; }
+  .tag-now { background:#fee2e2; color:#b91c1c; }
+  .tag-new { background:#d1fae5; color:#047857; }
+  .analytics-section { background:#fff; border:1px solid var(--border-color); border-radius:8px; padding:1.25rem 1.5rem; }
+  .analytics-section h6 { font-size:.9rem; font-weight:600; margin:0 0 .35rem; }
+  .hint { font-size:.8rem; color:#9ca3af; margin:0 0 1rem; }
+
+  /* === production styles, copied from _analytics_styles.html === */
+  .perf-funnel { display:flex; gap:.75rem; overflow-x:auto; padding-bottom:.5rem; }
+  .perf-funnel-step { flex:1 1 0; min-width:150px; max-width:260px; }
+  .perf-funnel-bar { position:relative; height:200px; border-radius:6px 6px 0 0; overflow:hidden;
+    background:repeating-linear-gradient(135deg,#ede9fe 0 6px,#f5f3ff 6px 12px); }
+  .perf-funnel-fill { position:absolute; left:0; right:0; bottom:0; min-height:2px; background:var(--accent); border-radius:6px 6px 0 0; }
+  .perf-funnel-pct { position:absolute; top:.4rem; right:.5rem; padding:.05rem .4rem; font-size:.75rem; font-weight:600; color:#374151; background:rgba(255,255,255,.9); border-radius:999px; }
+  .perf-funnel-meta { border-top:2px solid var(--border-color); padding-top:.5rem; font-size:.8rem; }
+  .perf-funnel-title { font-weight:600; margin-bottom:.35rem; display:flex; gap:.4rem; align-items:flex-start; }
+  .perf-funnel-num { flex-shrink:0; width:1.3rem; height:1.3rem; border-radius:4px; background:#e5e7eb; font-size:.7rem; display:inline-flex; align-items:center; justify-content:center; }
+  .perf-funnel-line { color:#6b7280; margin-top:.15rem; }
+  .perf-funnel-line i { width:1rem; }
+  .perf-funnel-reached i { color:#059669; }
+  .perf-funnel-dropped i { color:#ef4444; }
+  .perf-funnel-time i { color:#9ca3af; }
+  .perf-funnel-completed { padding-left:1.25rem; font-size:.75rem; }
+
+  /* === NEW: conditional step === */
+  .perf-funnel-step.is-conditional .perf-funnel-bar {
+    box-shadow: inset 0 0 0 2px var(--cond-border);
+    background:repeating-linear-gradient(135deg,#eef4ff 0 6px,#f7faff 6px 12px);
+  }
+  /* band above the fill: sessions the rule skipped — they were never shown this section */
+  .perf-funnel-skipped { position:absolute; left:0; right:0; background:var(--cond-bg);
+    border-top:1px dashed var(--cond-border); }
+  .perf-funnel-step.is-conditional .perf-funnel-num { background:var(--cond-bg); color:var(--cond); }
+  .perf-funnel-cond { display:inline-flex; align-items:center; gap:.3rem; margin:.1rem 0 .3rem;
+    font-size:.7rem; font-weight:600; color:var(--cond); background:var(--cond-bg);
+    border:1px solid var(--cond-border); border-radius:999px; padding:.05rem .5rem; max-width:100%; }
+  .perf-funnel-cond span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .perf-funnel-skip i { color:var(--cond); }
+  .perf-funnel-eligible { color:#9ca3af; font-size:.72rem; padding-left:1.25rem; }
+  .perf-funnel-line.muted { color:#9ca3af; }
+  .perf-funnel-line.muted i { color:#d1d5db; }
+
+  .legend { display:flex; flex-wrap:wrap; gap:1rem; margin-top:.75rem; font-size:.75rem; color:#6b7280; }
+  .legend span { display:inline-flex; align-items:center; gap:.4rem; }
+  .sw { width:14px; height:14px; border-radius:3px; display:inline-block; }
+  .sw-fill { background:var(--accent); }
+  .sw-skip { background:var(--cond-bg); border:1px dashed var(--cond-border); }
+  .sw-hatch { background:repeating-linear-gradient(135deg,#ede9fe 0 3px,#f5f3ff 3px 6px); }
+
+  .callout { position:relative; }
+  .callout::after { content:attr(data-note); position:absolute; left:0; right:0; top:-1.6rem;
+    font-size:.7rem; color:#b91c1c; font-weight:600; }
+  .callout-ok::after { color:#047857; }
+
+  /* phone variant */
+  .phone { width:360px; border:10px solid #111827; border-radius:28px; background:#fff; padding:1rem .9rem; margin-top:1rem; }
+  .phone .perf-funnel { flex-direction:column; gap:0; overflow:visible; }
+  .phone .perf-funnel-step { min-width:0; max-width:none; display:grid; grid-template-columns:1fr; padding:.6rem 0; border-top:1px solid #f3f4f6; }
+  .phone .perf-funnel-step:first-child { border-top:none; }
+  .phone .perf-funnel-bar { height:12px; border-radius:6px; order:2; margin:.35rem 0; }
+  .phone .perf-funnel-fill { top:0; bottom:0; right:auto; min-height:0; border-radius:6px; width:var(--reached,0%); height:auto !important; }
+  .phone .perf-funnel-skipped { top:0; bottom:0; left:var(--reached,0%); width:var(--skipped,0%); border-top:none; border-left:1px dashed var(--cond-border); }
+  .phone .perf-funnel-pct { display:none; }
+  .phone .perf-funnel-meta { border-top:none; padding-top:0; display:flex; flex-wrap:wrap; column-gap:.75rem; align-items:baseline; }
+  .phone .perf-funnel-title { width:100%; margin-bottom:.15rem; }
+  .phone .perf-funnel-cond { width:100%; box-sizing:border-box; order:0; }
+  .phone .perf-funnel-line { margin-top:0; }
+  .phone .perf-funnel-completed, .phone .perf-funnel-eligible { padding-left:0; font-size:.8rem; }
+
+  .notes { font-size:.85rem; color:#374151; line-height:1.5; }
+  .notes li { margin-bottom:.35rem; }
+  .row { display:flex; gap:2rem; flex-wrap:wrap; align-items:flex-start; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Abschnitts-Funnel: условные секции</h1>
+  <p class="lead">Опрос 44f18f2c, шаги 4–9, реальные цифры из прод-базы (40 начатых сессий). Секции 6 и 8 показываются только при ответе «Ja» на вопрос предыдущей секции.</p>
+
+  <!-- ============ NOW ============ -->
+  <div class="variant">
+    <h2>Сейчас <span class="tag tag-now">вводит в заблуждение</span></h2>
+    <div class="analytics-section">
+      <h6>Section Funnel</h6>
+      <p class="hint">Share of started sessions that reached each section, and how many left before the next one. One person counts once, however often they reload.</p>
+      <div class="perf-funnel" style="padding-top:1.6rem;">
+        <div class="perf-funnel-step">
+          <div class="perf-funnel-bar"><div class="perf-funnel-fill" style="height:80%"></div><span class="perf-funnel-pct">80%</span></div>
+          <div class="perf-funnel-meta">
+            <div class="perf-funnel-title"><span class="perf-funnel-num">5</span>Wahrgenommene Entlastung am Ort</div>
+            <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i> 32 reached (80%)</div>
+            <div class="perf-funnel-line perf-funnel-time"><i class="far fa-clock"></i> 1m 8s</div>
+            <div class="perf-funnel-line perf-funnel-completed">32 submitted</div>
+          </div>
+        </div>
+        <div class="perf-funnel-step callout" data-note="«7 dropped» — никто не уходил, их не спросили">
+          <div class="perf-funnel-bar"><div class="perf-funnel-fill" style="height:62%"></div><span class="perf-funnel-pct">62%</span></div>
+          <div class="perf-funnel-meta">
+            <div class="perf-funnel-title"><span class="perf-funnel-num">6</span>Wahrgenommene Entlastung am Ort</div>
+            <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i> 25 reached (62%)</div>
+            <div class="perf-funnel-line perf-funnel-dropped"><i class="fas fa-level-down-alt"></i> 7 dropped (22%)</div>
+            <div class="perf-funnel-line perf-funnel-time"><i class="far fa-clock"></i> 49s</div>
+            <div class="perf-funnel-line perf-funnel-completed">25 submitted</div>
+          </div>
+        </div>
+        <div class="perf-funnel-step callout" data-note="выше предыдущего — «как так?»">
+          <div class="perf-funnel-bar"><div class="perf-funnel-fill" style="height:80%"></div><span class="perf-funnel-pct">80%</span></div>
+          <div class="perf-funnel-meta">
+            <div class="perf-funnel-title"><span class="perf-funnel-num">7</span>Wahrgenommene Belastung am Ort</div>
+            <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i> 32 reached (80%)</div>
+            <div class="perf-funnel-line perf-funnel-time"><i class="far fa-clock"></i> 1m 2s</div>
+            <div class="perf-funnel-line perf-funnel-completed">32 submitted</div>
+          </div>
+        </div>
+        <div class="perf-funnel-step callout" data-note="«21 dropped (66%)» — а на деле ноль">
+          <div class="perf-funnel-bar"><div class="perf-funnel-fill" style="height:28%"></div><span class="perf-funnel-pct">28%</span></div>
+          <div class="perf-funnel-meta">
+            <div class="perf-funnel-title"><span class="perf-funnel-num">8</span>Wahrgenommene Belastung am Ort</div>
+            <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i> 11 reached (28%)</div>
+            <div class="perf-funnel-line perf-funnel-dropped"><i class="fas fa-level-down-alt"></i> 21 dropped (66%)</div>
+            <div class="perf-funnel-line perf-funnel-time"><i class="far fa-clock"></i> 41s</div>
+            <div class="perf-funnel-line perf-funnel-completed">11 submitted</div>
+          </div>
+        </div>
+        <div class="perf-funnel-step">
+          <div class="perf-funnel-bar"><div class="perf-funnel-fill" style="height:80%"></div><span class="perf-funnel-pct">80%</span></div>
+          <div class="perf-funnel-meta">
+            <div class="perf-funnel-title"><span class="perf-funnel-num">9</span>Prägende Merkmale des Ortes</div>
+            <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i> 32 reached (80%)</div>
+            <div class="perf-funnel-line perf-funnel-time"><i class="far fa-clock"></i> 55s</div>
+            <div class="perf-funnel-line perf-funnel-completed">32 submitted</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PROPOSAL ============ -->
+  <div class="variant">
+    <h2>Предложение <span class="tag tag-new">условные шаги размечены</span></h2>
+    <div class="analytics-section">
+      <h6>Section Funnel</h6>
+      <p class="hint">Share of started sessions that reached each section, and how many left before the next one. One person counts once, however often they reload. Sections behind a visibility rule are compared with the people the rule let in, not with everyone.</p>
+      <div class="perf-funnel" style="padding-top:1.6rem;">
+        <div class="perf-funnel-step">
+          <div class="perf-funnel-bar"><div class="perf-funnel-fill" style="height:80%"></div><span class="perf-funnel-pct">80%</span></div>
+          <div class="perf-funnel-meta">
+            <div class="perf-funnel-title"><span class="perf-funnel-num">5</span>Wahrgenommene Entlastung am Ort</div>
+            <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i> 32 reached (80%)</div>
+            <div class="perf-funnel-line perf-funnel-time"><i class="far fa-clock"></i> 1m 8s</div>
+            <div class="perf-funnel-line perf-funnel-completed">32 submitted</div>
+          </div>
+        </div>
+
+        <div class="perf-funnel-step is-conditional callout callout-ok" data-note="полоса: дошли + кого правило пропустило">
+          <div class="perf-funnel-bar">
+            <div class="perf-funnel-skipped" style="bottom:62%; height:18%"></div>
+            <div class="perf-funnel-fill" style="height:62%"></div>
+            <span class="perf-funnel-pct">62%</span>
+          </div>
+          <div class="perf-funnel-meta">
+            <div class="perf-funnel-title"><span class="perf-funnel-num">6</span>Wahrgenommene Entlastung am Ort</div>
+            <div class="perf-funnel-cond" title="Shown when «Gibt es innerhalb dieses Ortes einen Bereich, den Sie als besonders angenehm…» = Ja"><i class="fas fa-code-branch"></i><span>Shown when Q5.3 = Ja</span></div>
+            <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i> 25 reached (62%)</div>
+            <div class="perf-funnel-line perf-funnel-skip"><i class="fas fa-forward"></i> 7 skipped by rule</div>
+            <div class="perf-funnel-line perf-funnel-time"><i class="far fa-clock"></i> 49s</div>
+            <div class="perf-funnel-line perf-funnel-completed">25 submitted</div>
+            <div class="perf-funnel-eligible">100% of the 25 eligible</div>
+          </div>
+        </div>
+
+        <div class="perf-funnel-step callout callout-ok" data-note="сравнение с шагом 5, не с веткой">
+          <div class="perf-funnel-bar"><div class="perf-funnel-fill" style="height:80%"></div><span class="perf-funnel-pct">80%</span></div>
+          <div class="perf-funnel-meta">
+            <div class="perf-funnel-title"><span class="perf-funnel-num">7</span>Wahrgenommene Belastung am Ort</div>
+            <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i> 32 reached (80%)</div>
+            <div class="perf-funnel-line muted" title="Compared with step 5 — the last section everyone sees"><i class="fas fa-level-down-alt"></i> 0 dropped since step 5</div>
+            <div class="perf-funnel-line perf-funnel-time"><i class="far fa-clock"></i> 1m 2s</div>
+            <div class="perf-funnel-line perf-funnel-completed">32 submitted</div>
+          </div>
+        </div>
+
+        <div class="perf-funnel-step is-conditional">
+          <div class="perf-funnel-bar">
+            <div class="perf-funnel-skipped" style="bottom:28%; height:52%"></div>
+            <div class="perf-funnel-fill" style="height:28%"></div>
+            <span class="perf-funnel-pct">28%</span>
+          </div>
+          <div class="perf-funnel-meta">
+            <div class="perf-funnel-title"><span class="perf-funnel-num">8</span>Wahrgenommene Belastung am Ort</div>
+            <div class="perf-funnel-cond" title="Shown when «…besonders unangenehm…» = Ja"><i class="fas fa-code-branch"></i><span>Shown when Q7.3 = Ja</span></div>
+            <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i> 11 reached (28%)</div>
+            <div class="perf-funnel-line perf-funnel-skip"><i class="fas fa-forward"></i> 21 skipped by rule</div>
+            <div class="perf-funnel-line perf-funnel-time"><i class="far fa-clock"></i> 41s</div>
+            <div class="perf-funnel-line perf-funnel-completed">11 submitted</div>
+            <div class="perf-funnel-eligible">100% of the 11 eligible</div>
+          </div>
+        </div>
+
+        <div class="perf-funnel-step">
+          <div class="perf-funnel-bar"><div class="perf-funnel-fill" style="height:80%"></div><span class="perf-funnel-pct">80%</span></div>
+          <div class="perf-funnel-meta">
+            <div class="perf-funnel-title"><span class="perf-funnel-num">9</span>Prägende Merkmale des Ortes</div>
+            <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i> 32 reached (80%)</div>
+            <div class="perf-funnel-line perf-funnel-time"><i class="far fa-clock"></i> 55s</div>
+            <div class="perf-funnel-line perf-funnel-completed">32 submitted</div>
+          </div>
+        </div>
+      </div>
+      <div class="legend">
+        <span><i class="sw sw-fill"></i> reached</span>
+        <span><i class="sw sw-skip"></i> skipped by a visibility rule (never shown the section)</span>
+        <span><i class="sw sw-hatch"></i> did not get this far</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PROPOSAL, when a branch actually loses people ============ -->
+  <div class="variant">
+    <h2>Предложение, случай с реальной потерей внутри ветки</h2>
+    <div class="row">
+      <div class="analytics-section" style="flex:0 0 auto;">
+        <p class="hint" style="margin-bottom:.5rem;">Гипотетические цифры: из 25 допущенных 20 дошли, 5 ушли.</p>
+        <div class="perf-funnel">
+          <div class="perf-funnel-step is-conditional" style="min-width:220px;">
+            <div class="perf-funnel-bar">
+              <div class="perf-funnel-skipped" style="bottom:50%; height:30%"></div>
+              <div class="perf-funnel-fill" style="height:50%"></div>
+              <span class="perf-funnel-pct">50%</span>
+            </div>
+            <div class="perf-funnel-meta">
+              <div class="perf-funnel-title"><span class="perf-funnel-num">6</span>Wahrgenommene Entlastung am Ort</div>
+              <div class="perf-funnel-cond"><i class="fas fa-code-branch"></i><span>Shown when Q5.3 = Ja</span></div>
+              <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i> 20 reached (50%)</div>
+              <div class="perf-funnel-line perf-funnel-skip"><i class="fas fa-forward"></i> 7 skipped by rule</div>
+              <div class="perf-funnel-line perf-funnel-dropped"><i class="fas fa-level-down-alt"></i> 5 dropped (20% of eligible)</div>
+              <div class="perf-funnel-line perf-funnel-time"><i class="far fa-clock"></i> 49s</div>
+              <div class="perf-funnel-line perf-funnel-completed">20 submitted</div>
+              <div class="perf-funnel-eligible">80% of the 25 eligible</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="analytics-section" style="padding:1rem;">
+          <p class="hint" style="margin:0 0 .5rem;">Телефон (&lt;768px), тот же шаг</p>
+          <div class="phone">
+            <div class="perf-funnel">
+              <div class="perf-funnel-step">
+                <div class="perf-funnel-meta">
+                  <div class="perf-funnel-title"><span class="perf-funnel-num">5</span>Wahrgenommene Entlastung am Ort</div>
+                  <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i> 32 reached (80%)</div>
+                  <div class="perf-funnel-line perf-funnel-completed">32 submitted</div>
+                </div>
+                <div class="perf-funnel-bar"><div class="perf-funnel-fill" style="--reached:80%"></div></div>
+              </div>
+              <div class="perf-funnel-step is-conditional">
+                <div class="perf-funnel-meta">
+                  <div class="perf-funnel-title"><span class="perf-funnel-num">6</span>Wahrgenommene Entlastung am Ort</div>
+                  <div class="perf-funnel-cond"><i class="fas fa-code-branch"></i><span>Shown when Q5.3 = Ja</span></div>
+                  <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i> 20 reached (50%)</div>
+                  <div class="perf-funnel-line perf-funnel-skip"><i class="fas fa-forward"></i> 7 skipped</div>
+                  <div class="perf-funnel-line perf-funnel-dropped"><i class="fas fa-level-down-alt"></i> 5 dropped (20%)</div>
+                  <div class="perf-funnel-line perf-funnel-completed">20 submitted</div>
+                </div>
+                <div class="perf-funnel-bar"><div class="perf-funnel-fill" style="--reached:50%"></div><div class="perf-funnel-skipped" style="--reached:50%; --skipped:30%"></div></div>
+              </div>
+              <div class="perf-funnel-step">
+                <div class="perf-funnel-meta">
+                  <div class="perf-funnel-title"><span class="perf-funnel-num">7</span>Wahrgenommene Belastung am Ort</div>
+                  <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i> 27 reached (68%)</div>
+                  <div class="perf-funnel-line perf-funnel-dropped"><i class="fas fa-level-down-alt"></i> 5 dropped since step 5</div>
+                  <div class="perf-funnel-line perf-funnel-completed">27 submitted</div>
+                </div>
+                <div class="perf-funnel-bar"><div class="perf-funnel-fill" style="--reached:68%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <h2>Правила</h2>
+    <ol class="notes">
+      <li><b>Шкала полосы не меняется</b>: высота = доля от начатых сессий, как у всех шагов. Иначе условная колонка станет выше соседей и воронка перестанет читаться сверху вниз.</li>
+      <li><b>Условный шаг узнаваем без чтения</b>: пунктирная рамка, синий номер шага, бейдж «Shown when …» тем же стилем, что бейдж в редакторе секций.</li>
+      <li><b>Три группы вместо двух</b>: reached / skipped by rule / dropped. «Skipped» — те, кто дошёл до последней безусловной секции, но правило секцию не показало. Это не потеря, цвет нейтральный синий, иконка <i class="fas fa-forward"></i>.</li>
+      <li><b>Dropped у условного шага считается от допущенных</b> (eligible = prev_reached − skipped), и подпись говорит об этом явно: «5 dropped (20% of eligible)».</li>
+      <li><b>Шаг после ветки сравнивается с последним безусловным шагом</b>, а не с веткой: «0 dropped since step 5». Так исчезает «на 7 больше, чем на 6».</li>
+      <li><b>Сломанное правило (fail open)</b> — секцию видят все; в воронке она рисуется как обычная, но бейдж жёлтый с той же подсказкой, что и в редакторе.</li>
+    </ol>
+  </div>
+</div>
+</body>
+</html>

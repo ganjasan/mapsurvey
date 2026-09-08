@@ -12044,6 +12044,73 @@ class ResponsesV2NavigationTest(TestCase):
         self.assertContains(response, '1 dropped')
         self.assertNotIn('funnelChart', html)
 
+    def _branch_pane(self, viewed_c=None, rule=None, starts=25):
+        """A → B (shown when Q = Yes) → C; 25 tracked sessions so rates are not gated."""
+        b = SurveySection.objects.create(survey_header=self.survey, name='s2', code='S2')
+        c = SurveySection.objects.create(survey_header=self.survey, name='s3', code='S3')
+        self.section.next_section = b
+        self.section.save()
+        b.next_section = c
+        b.save()
+        q = Question.objects.create(
+            survey_section=self.section, name='Show B?', code='q_show_b', input_type='choice',
+            order_number=2, choices=[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}],
+        )
+        b.visibility_rule = rule if rule is not None else {"question_code": "q_show_b", "choice_codes": [1]}
+        b.save()
+        yes = starts - 5  # 5 sessions skipped by the rule = 20% of 25 starts
+        for i in range(starts):
+            sess = SurveySession.objects.create(survey=self.survey)
+            SurveyEvent.objects.create(session=sess, event_type='session_start')
+            SurveyEvent.objects.create(session=sess, event_type='section_view', metadata={'section_name': 's1'})
+            Answer.objects.create(survey_session=sess, question=q, selected_choices=[1 if i < yes else 2])
+            if i < yes:
+                SurveyEvent.objects.create(session=sess, event_type='section_view', metadata={'section_name': 's2'})
+            if viewed_c is not None and i < viewed_c:
+                SurveyEvent.objects.create(session=sess, event_type='section_view', metadata={'section_name': 's3'})
+
+    def test_funnel_conditional_step_markup(self):
+        """
+        GIVEN section B behind a valid rule that skipped 5 of 25 sessions
+        WHEN GET the dashboard
+        THEN B's column is .is-conditional with a 'Shown when' badge, a 20% skipped band,
+             a 'skipped by rule' line, no dropped line, and the legend is rendered
+        """
+        self._branch_pane()
+        html = self.client.get(self.url).content.decode()
+        self.assertEqual(html.count('class="perf-funnel-step is-conditional"'), 1)
+        self.assertIn('Shown when Show B? = Yes', html)
+        self.assertIn('class="perf-funnel-skipped" style="bottom:80%;height:20%;--skipped:20%;"', html)
+        self.assertIn('5 skipped by rule', html)
+        column_b = html.split('class="perf-funnel-step is-conditional"')[1].split('class="perf-funnel-step"')[0]
+        self.assertNotIn('dropped', column_b)
+        self.assertIn('class="perf-funnel-legend"', html)
+        self.assertIn('100% of the 20 eligible', html)
+
+    def test_funnel_successor_caption_names_the_baseline(self):
+        """
+        GIVEN A → conditional B → C where C is reached by 23 of the 25 who saw A
+        WHEN GET the dashboard
+        THEN C's dropped line says 'since step 1'
+        """
+        self._branch_pane(viewed_c=23)
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('2 dropped', html)
+        self.assertIn('since step 1', html)
+
+    def test_funnel_broken_rule_badge(self):
+        """
+        GIVEN section B whose rule points at a missing question
+        WHEN GET the dashboard
+        THEN B carries the warning badge, is not conditional, and has no skipped band
+        """
+        self._branch_pane(rule={"question_code": "gone", "choice_codes": [1]})
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('Rule broken', html)
+        self.assertIn('controlling question not found', html)
+        self.assertNotIn('class="perf-funnel-step is-conditional"', html)
+        self.assertNotIn('class="perf-funnel-skipped"', html)
+
     def test_small_sample_funnel_notice(self):
         """
         GIVEN fewer than 20 tracked sessions with section views
@@ -13822,6 +13889,104 @@ class PerformanceAnalyticsServiceTest(TestCase):
         self.assertEqual(fb['reached'], 2)
         self.assertEqual(fb['dropped'], 0)
         self.assertEqual(fb['dropped_pct'], 0)
+
+    # -- conditional sections (change funnel-conditional-sections) -----------------
+
+    def _branch_survey(self, starts=10, viewed_a=10, yes=7, viewed_b=7, viewed_c=None, rule=None):
+        """A → B (shown when Q = Yes) → C, with the given session counts."""
+        from .visibility import CONTROLLER_TYPES  # noqa: F401 — documents the contract
+        a = self._section('a', is_head=True)
+        b = self._section('b')
+        c = self._section('c')
+        a.next_section = b
+        a.save()
+        b.next_section = c
+        b.save()
+        q = Question.objects.create(
+            survey_section=a, name='Show B?', code='q_show_b', input_type='choice', order_number=1,
+            choices=[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}],
+        )
+        b.visibility_rule = rule if rule is not None else {"question_code": "q_show_b", "choice_codes": [1]}
+        b.save()
+        sessions = [SurveySession.objects.create(survey=self.survey) for _ in range(starts)]
+        for sess in sessions:
+            emit_event(sess, 'session_start')
+        for sess in sessions[:viewed_a]:
+            emit_event(sess, 'section_view', {'section_name': 'a'})
+        for i, sess in enumerate(sessions[:viewed_a]):
+            Answer.objects.create(survey_session=sess, question=q, selected_choices=[1 if i < yes else 2])
+        for sess in sessions[:viewed_b]:
+            emit_event(sess, 'section_view', {'section_name': 'b'})
+        if viewed_c is not None:
+            for sess in sessions[:viewed_c]:
+                emit_event(sess, 'section_view', {'section_name': 'c'})
+        return sessions
+
+    def test_funnel_rule_skipped_sessions_are_not_dropped(self):
+        """
+        GIVEN 10 started sessions, all viewed A, 7 answered Yes to the question that shows B, all 7 viewed B
+        WHEN get_funnel is called
+        THEN B is conditional with eligible=7, skipped=3, dropped=0, reached_pct=70
+        """
+        from .analytics import PerformanceAnalyticsService
+        self._branch_survey()
+        fb = PerformanceAnalyticsService(self.survey).get_funnel()[1]
+        self.assertTrue(fb['conditional'])
+        self.assertEqual((fb['eligible'], fb['skipped'], fb['dropped'], fb['dropped_pct'], fb['reached_pct']),
+                         (7, 3, 0, 0, 70))
+        self.assertEqual(fb['skipped_pct'], 30)
+        self.assertEqual(fb['eligible_pct'], 100)
+        self.assertEqual(fb['rule_label'], 'Show B? = Yes')
+
+    def test_funnel_loss_inside_a_branch_is_relative_to_eligible(self):
+        """
+        GIVEN the same survey but only 5 of the 7 eligible sessions viewed B
+        WHEN get_funnel is called
+        THEN B has eligible=7, skipped=3, dropped=2, dropped_pct=29 (2 of 7, not of 10)
+        """
+        from .analytics import PerformanceAnalyticsService
+        self._branch_survey(viewed_b=5)
+        fb = PerformanceAnalyticsService(self.survey).get_funnel()[1]
+        self.assertEqual((fb['eligible'], fb['skipped'], fb['dropped'], fb['dropped_pct']), (7, 3, 2, 29))
+        self.assertEqual(fb['eligible_pct'], 71)
+
+    def test_funnel_broken_rule_falls_open(self):
+        """
+        GIVEN B's rule references a question code that does not exist
+        WHEN get_funnel is called
+        THEN B is unconditional, flagged rule_broken, and its drop follows the plain formula
+        """
+        from .analytics import PerformanceAnalyticsService
+        self._branch_survey(rule={"question_code": "gone", "choice_codes": [1]})
+        fb = PerformanceAnalyticsService(self.survey).get_funnel()[1]
+        self.assertFalse(fb['conditional'])
+        self.assertTrue(fb['rule_broken'])
+        self.assertEqual(fb['rule_reason'], 'controlling question not found')
+        self.assertEqual((fb['skipped'], fb['dropped'], fb['dropped_pct']), (0, 3, 30))
+
+    def test_funnel_branch_does_not_inflate_its_successor(self):
+        """
+        GIVEN A reached by 10, conditional B by 7, C by 10
+        WHEN get_funnel is called
+        THEN C has dropped=0 and both B and C name step 1 as their baseline
+        """
+        from .analytics import PerformanceAnalyticsService
+        self._branch_survey(viewed_c=10)
+        fa, fb, fc = PerformanceAnalyticsService(self.survey).get_funnel()
+        self.assertEqual(fa['baseline_step'], 0)
+        self.assertEqual((fb['baseline_step'], fc['baseline_step']), (1, 1))
+        self.assertEqual((fc['dropped'], fc['dropped_pct']), (0, 0))
+
+    def test_funnel_real_loss_after_a_branch_is_measured_against_baseline(self):
+        """
+        GIVEN A reached by 10, conditional B by 7, C by 8
+        WHEN get_funnel is called
+        THEN C has dropped=2, dropped_pct=20 (against A's 10, not B's 7), baseline_step=1
+        """
+        from .analytics import PerformanceAnalyticsService
+        self._branch_survey(viewed_c=8)
+        fc = PerformanceAnalyticsService(self.survey).get_funnel()[2]
+        self.assertEqual((fc['dropped'], fc['dropped_pct'], fc['baseline_step']), (2, 20, 1))
 
     def test_referrer_breakdown_groups_by_type(self):
         """

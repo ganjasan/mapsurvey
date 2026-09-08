@@ -7626,3 +7626,63 @@ msgstr "No se ha podido guardar el nombre. Comprueba tu conexión e inténtalo d
 
 msgid "A draft is renamed by renaming the published survey."
 msgstr "Un borrador se renombra cambiando el nombre de la encuesta publicada."
+
+# --- Section funnel: conditional sections (change funnel-conditional-sections)
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Skipped by the visibility rule — never shown this section"
+msgstr "Omitidos por la regla de visibilidad — nunca vieron esta sección"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Shown when"
+msgstr "Se muestra cuando"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Shown to everyone until fixed."
+msgstr "Se muestra a todos hasta que se corrija."
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Rule broken — shown to everyone"
+msgstr "Regla rota — se muestra a todos"
+
+#: survey/templates/editor/partials/analytics_performance.html
+#, python-format
+msgid "Compared with step %(n)s, the last section everyone sees"
+msgstr "Comparado con el paso %(n)s, la última sección que ven todos"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "of eligible"
+msgstr "de los elegibles"
+
+#: survey/templates/editor/partials/analytics_performance.html
+#, python-format
+msgid "since step %(n)s"
+msgstr "desde el paso %(n)s"
+
+#: survey/templates/editor/partials/analytics_performance.html
+#, python-format
+msgid "%(pct)s%% of the %(n)s eligible"
+msgstr "%(pct)s%% de los %(n)s elegibles"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "reached"
+msgstr "llegaron"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "skipped by a visibility rule (never shown the section)"
+msgstr "omitidos por una regla de visibilidad (nunca vieron la sección)"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "did not get this far"
+msgstr "no llegaron hasta aquí"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Sections behind a visibility rule are compared with the people the rule let in, not with everyone."
+msgstr "Las secciones tras una regla de visibilidad se comparan con las personas que la regla dejó pasar, no con todas."
+
+#: survey/templates/editor/partials/analytics_performance.html
+#, python-format
+msgid "%(n)s skipped by rule"
+msgid_plural "%(n)s skipped by rule"
+msgstr[0] "%(n)s omitido por la regla"
+msgstr[1] "%(n)s omitidos por la regla"

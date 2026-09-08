@@ -6985,3 +6985,65 @@ msgstr ""
 #~ msgstr ""
 #~ "Спасибо за уделённое время. На ваш e-mail отправлен код подтверждения. "
 #~ "Необходимо подтвердить регистрацию, просто кликнув по указанной ссылке."
+
+# --- Section funnel: conditional sections (change funnel-conditional-sections)
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Skipped by the visibility rule — never shown this section"
+msgstr "Пропущены правилом видимости — этот раздел им не показывался"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Shown when"
+msgstr "Показывается, если"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Shown to everyone until fixed."
+msgstr "Показывается всем, пока не исправлено."
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Rule broken — shown to everyone"
+msgstr "Правило сломано — показывается всем"
+
+#: survey/templates/editor/partials/analytics_performance.html
+#, python-format
+msgid "Compared with step %(n)s, the last section everyone sees"
+msgstr "Сравнение с шагом %(n)s — последним разделом, который видят все"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "of eligible"
+msgstr "от допущенных"
+
+#: survey/templates/editor/partials/analytics_performance.html
+#, python-format
+msgid "since step %(n)s"
+msgstr "с шага %(n)s"
+
+#: survey/templates/editor/partials/analytics_performance.html
+#, python-format
+msgid "%(pct)s%% of the %(n)s eligible"
+msgstr "%(pct)s%% из %(n)s допущенных"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "reached"
+msgstr "дошли"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "skipped by a visibility rule (never shown the section)"
+msgstr "пропущены правилом видимости (раздел им не показывался)"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "did not get this far"
+msgstr "не дошли"
+
+#: survey/templates/editor/partials/analytics_performance.html
+msgid "Sections behind a visibility rule are compared with the people the rule let in, not with everyone."
+msgstr "Разделы за правилом видимости сравниваются с теми, кого правило допустило, а не со всеми."
+
+#: survey/templates/editor/partials/analytics_performance.html
+#, python-format
+msgid "%(n)s skipped by rule"
+msgid_plural "%(n)s skipped by rule"
+msgstr[0] "%(n)s пропущен правилом"
+msgstr[1] "%(n)s пропущены правилом"
+msgstr[2] "%(n)s пропущены правилом"
+msgstr[3] "%(n)s пропущены правилом"
