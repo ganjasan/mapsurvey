@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#3aafa9">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -27,6 +27,8 @@
     and a script inside a swapped fragment is not reliably executed.{% endcomment %}
     <script src="{% static 'js/components/map_place_search.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js" crossorigin="anonymous"></script>
+    <script src="{% static 'js/marker_icon.js' %}"></script>
+    <script src="{% static 'js/icon_picker.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
     <script src="{% static 'js/editor_dialog.js' %}"></script>
     <script src="{% static 'js/editor_clipboard.js' %}"></script>
     <script src="{% static 'js/editor_survey_rename.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
@@ -741,6 +743,35 @@
         }
         .icon-picker-cell:hover { background: var(--accent-light); color: var(--accent); }
         .icon-picker-cell.selected { background: var(--accent); color: #fff; }
+        .icon-picker-cell { border: 0; background: transparent; padding: 0; }
+        .icon-picker-cell svg.marker-icon-svg-glyph { width: 18px; height: 18px; }
+        .icon-picker-preview svg.marker-icon-svg-glyph { width: 20px; height: 20px; }
+        .icon-picker-chips {
+            display: flex; flex-wrap: wrap; gap: 4px;
+            padding: 0.4rem 0.5rem 0;
+        }
+        .icon-picker-chip {
+            border: 1px solid var(--border-color);
+            background: #fff;
+            border-radius: 999px;
+            padding: 2px 10px;
+            font-size: 0.75rem;
+            color: #374151;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .icon-picker-chip:hover { border-color: var(--accent); color: var(--accent); }
+        .icon-picker-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .icon-picker-status {
+            font-size: 0.75rem; color: #6b7280;
+            padding: 0.35rem 0.6rem 0;
+        }
+        .icon-picker-dropdown { max-height: 420px; }
+        .icon-picker-grid { max-height: 260px; }
+        @media (max-width: 768px) {
+            .icon-picker-dropdown { position: fixed; left: 8px; right: 8px; top: auto; bottom: 8px; max-height: 70vh; }
+            .icon-picker-grid { max-height: 40vh; }
+        }
 
         /* Language multi-select */
         .lang-select-wrapper { position: relative; }
@@ -950,7 +981,7 @@
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body{% if MOBILE_EDITOR_NAV %} class="mobile-nav-enabled"{% endif %}>
+<body{% if MOBILE_EDITOR_NAV %} class="mobile-nav-enabled"{% endif %} data-icon-sprites='{{ ICON_SPRITES_JSON }}'>
     {% block navbar %}
     <div class="editor-navbar">
         <a href="{% url 'editor' %}"><i class="fas fa-arrow-left"></i><span class="nav-desktop"> {% trans "Dashboard" %}</span></a>

@@ -1,6 +1,8 @@
 from django import template
 from django.conf import settings
 
+from survey import marker_icons
+
 register = template.Library()
 
 CARD_INPUT_TYPES = {'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating',
@@ -80,8 +82,14 @@ def question_type_picker(bound_field):
 
 @register.filter
 def star_icon(field):
-    """Font Awesome class a star rating draws, resolved on the widget."""
+    """Icon value a star rating draws, resolved on the widget (draw it with {% marker_icon %})."""
     return getattr(field.field.widget, 'star_icon', 'fas fa-star')
+
+
+@register.simple_tag
+def marker_icon(value, color=None, css_class='', style=''):
+    """Draw an `icon_class` value — Font Awesome `<i>` or sprite `<svg>` — never by hand."""
+    return marker_icons.render(value, color=color, css_class=css_class, style=style)
 
 
 @register.filter

@@ -14,7 +14,7 @@ alone breaks the fill.
         {% for radio in field reversed %}
         <label class="rating-stars__star" title="{{ radio.choice_label }}">
             {{ radio.tag }}
-            <i class="{{ field|star_icon }}" aria-hidden="true"></i>
+            {% marker_icon field|star_icon %}
             <span class="sr-only">{{ radio.choice_label }}</span>
         </label>
         {% endfor %}

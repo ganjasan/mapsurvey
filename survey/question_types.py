@@ -20,7 +20,7 @@ PICKER_GROUPS = (
 )
 
 # input_type value -> presentation. `label` overrides the model's choice label
-# where set; icons are Font Awesome 5 classes (the version the editor loads).
+# where set; icons are Font Awesome 5 classes (the editor loads 5.15.4).
 PICKER_TYPES = {
     "text":        {"group": "plain", "icon": "fa-align-left",
                     "hint": "Multi-line free text answer"},

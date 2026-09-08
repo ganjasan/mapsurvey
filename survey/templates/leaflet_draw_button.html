@@ -1,3 +1,4 @@
+{% load question_utils %}
 <div class="geo-block" data-question="{{ widget.name }}">
 	<button name = "{{ widget.name }}" type="button" class="drawbutton {{ widget.draw_type }}" draw-type="{{widget.draw_type}}" data-color="{{widget.color}}" data-icon="{{widget.icon_class}}"
 		data-orig-subtitle="{{ widget.subtitle }}"
@@ -5,7 +6,7 @@
 		{% if widget.max_features %}data-max-features="{{ widget.max_features }}"{% endif %} >
 		<div class="geo-question">
 			<div class="geo-question-icon" style="background: {{ widget.color }}15;">
-				<i class="{{ widget.draw_icon_class }}" style="font-size:22px; color: {{ widget.color }}"></i>
+				{% marker_icon widget.draw_icon_class color=widget.color style="font-size:22px;width:22px;height:22px;" %}
 			</div>
 			<div class="geo-question-text">
 				<p class="geo-question-title">{{ widget.title }}</p>

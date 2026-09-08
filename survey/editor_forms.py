@@ -1,6 +1,7 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
+from survey import marker_icons
 from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP_CHOICES
 from .html_sanitize import coerce_creator_html
 from .layers import layers_for
@@ -324,7 +325,7 @@ class QuestionForm(forms.ModelForm):
             'panel_mode': forms.RadioSelect,
         }
         help_texts = {
-            'icon_class': '<a href="https://fontawesome.com/v5/search" target="_blank" rel="noopener">Font Awesome</a> class',
+            'icon_class': _('Pick from the catalog, or type a <a href="https://fontawesome.com/v5/search" target="_blank" rel="noopener">Font Awesome</a> class or a map icon name such as <code>maki:bus</code>.'),
         }
 
     def __init__(self, *args, is_subquestion=False, section=None, **kwargs):
@@ -392,6 +393,15 @@ class QuestionForm(forms.ModelForm):
                 (value, label) for value, label in field.choices
                 if value not in FILE_INPUT_TYPES
             ]
+
+    def clean_icon_class(self):
+        value = (self.cleaned_data.get('icon_class') or '').strip()
+        if not marker_icons.is_valid(value):
+            raise forms.ValidationError(_(
+                'Use a Font Awesome class (e.g. "fas fa-bus") or a map icon from the catalog '
+                '(e.g. "maki:bus", "temaki:bench").'
+            ))
+        return value
 
     def clean_display_style(self):
         return self.cleaned_data.get('display_style') or 'default'

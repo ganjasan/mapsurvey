@@ -366,7 +366,9 @@ function copyTestLink(btn) {
 <div class="modal fade editor-modal" id="questionModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div id="questionModalBody">
+            {# The icon picker reads its catalog URL and UI language from here (icon_picker.js). #}
+            {% get_current_language as LANGUAGE_CODE %}
+            <div id="questionModalBody" data-icon-catalog="{{ ICON_CATALOG_URL }}" data-icon-lang="{{ LANGUAGE_CODE }}">
             </div>
         </div>
     </div>

@@ -30,3 +30,12 @@
     text-align: center;
     display: block;
 }
+
+/* Sprite glyph (maki:/temaki: values, drawn by MarkerIcon as <svg><use>) sits where the
+   font glyph sits: same top, same 16px box, centred. `fill` is set inline by the resolver. */
+.leaflet-fa-markers svg.feature-icon {
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin-left: -8px;
+}
