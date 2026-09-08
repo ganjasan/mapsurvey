@@ -40225,3 +40225,47 @@ class FunnelDashboardAcquisitionLinkTest(TestCase):
         self.assertIn('demo', acq)
         for gone in ('stages', 'channels', 'freshness', 'clicks', 'conversions'):
             self.assertNotIn(gone, acq)
+
+
+class BackfillBoundsTest(TestCase):
+    """backfill_posthog_events --until / --events keep a re-run away from live rows."""
+
+    def _run(self, *args):
+        from io import StringIO
+        from django.core.management import call_command
+        out = StringIO()
+        call_command('backfill_posthog_events', '--dry-run', *args, stdout=out)
+        return out.getvalue()
+
+    def _count(self, out, name):
+        import re
+        m = re.search(rf'^{re.escape(name)}\s+(\d+)$', out, re.M)
+        return int(m.group(1)) if m else None
+
+    def test_until_excludes_rows_from_the_live_period(self):
+        """
+        GIVEN one creator registered before the cut-off and one after
+        WHEN the backfill runs with --until at the cut-off
+        THEN only the earlier registration is counted
+        """
+        from datetime import datetime, timezone as tz
+        old = User.objects.create_user('bf_old', password='x')
+        User.objects.filter(pk=old.pk).update(date_joined=datetime(2026, 8, 1, tzinfo=tz.utc))
+        new = User.objects.create_user('bf_new', password='x')
+        User.objects.filter(pk=new.pk).update(date_joined=datetime(2026, 8, 20, tzinfo=tz.utc))
+        out = self._run('--until', '2026-08-16')
+        self.assertEqual(self._count(out, 'creator_registered'), 1)
+
+    def test_events_restricts_to_named_events_and_rejects_unknown(self):
+        """
+        GIVEN an active creator
+        WHEN the backfill runs with --events creator_activated_account
+        THEN only activation rows are counted, and an unknown name is refused
+        """
+        from django.core.management import CommandError
+        User.objects.create_user('bf_active', password='x')
+        out = self._run('--events', 'creator_activated_account')
+        self.assertEqual(self._count(out, 'creator_activated_account'), 1)
+        self.assertEqual(self._count(out, 'creator_registered'), 0)
+        with self.assertRaises(CommandError):
+            self._run('--events', 'not_an_event')

@@ -11,12 +11,24 @@ Run order that keeps you out of trouble:
     manage.py backfill_posthog_events               # sends, idempotent
     manage.py check_posthog_funnel_parity           # the actual acceptance test
 
-Safe to re-run: every event carries a deterministic uuid5 derived from
-(event, source row), so PostHog deduplicates instead of doubling the funnel.
+Safe to re-run AGAINST ITSELF: every event carries a deterministic uuid5 derived
+from (event, source row), so a second backfill deduplicates against the first.
+
+NOT safe against LIVE events. A creator who registered after the live emitters
+shipped (2026-08-16) already has a `creator_registered` with a random uuid; the
+backfill would add a second row with a different uuid for the same fact. That
+happened on 2026-09-08 (an unbounded re-run to fill missing activations doubled
+every funnel event after 2026-08-16 -- funnels, which count persons, were
+unaffected; row totals were not). Bound every re-run:
+
+    manage.py backfill_posthog_events --until 2026-08-16                 # pre-live history only
+    manage.py backfill_posthog_events --events creator_activated_account # one event, all history
+
+Events with no live emitter yet are the only ones safe to backfill unbounded.
 """
 
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Min
 
 from survey import product_events as pe
@@ -40,12 +52,30 @@ class Command(BaseCommand):
             help='Only events at or after this date. Omit for all history.',
         )
         parser.add_argument(
+            '--until', default=None, metavar='YYYY-MM-DD',
+            help='Only events strictly before this date. Use the day the live emitters '
+                 'shipped so live rows are not duplicated (see module docstring).',
+        )
+        parser.add_argument(
+            '--events', default=None, metavar='NAME[,NAME]',
+            help='Only these event names (comma-separated). For filling one event '
+                 'whose live emitter was missing without touching the others.',
+        )
+        parser.add_argument(
             '--limit', type=int, default=None,
             help='Stop after this many events (smoke-testing the pipeline).',
         )
 
     def handle(self, *args, **options):
         events = sorted(self._collect(options['since']), key=lambda e: e['timestamp'])
+        if options['until']:
+            events = [e for e in events if e['timestamp'].date().isoformat() < options['until']]
+        if options['events']:
+            wanted = {n.strip() for n in options['events'].split(',') if n.strip()}
+            unknown = wanted - set(pe.CREATOR_FUNNEL_EVENTS)
+            if unknown:
+                raise CommandError(f'unknown event(s): {", ".join(sorted(unknown))}')
+            events = [e for e in events if e['event'] in wanted]
         if options['limit']:
             events = events[:options['limit']]
 
