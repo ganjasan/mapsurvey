@@ -21,6 +21,11 @@
     <script src="https://unpkg.com/htmx.org@1.9.10" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js" crossorigin="anonymous"></script>
+    {% comment %}Place search for the editor's map pickers (openspec:
+    editor-map-picker-search). Loaded here rather than by each picker
+    because two of them arrive by HTMX swap (settings panel, section modal)
+    and a script inside a swapped fragment is not reliably executed.{% endcomment %}
+    <script src="{% static 'js/components/map_place_search.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js" crossorigin="anonymous"></script>
     <script src="{% static 'js/editor_dialog.js' %}"></script>
     <script src="{% static 'js/editor_clipboard.js' %}"></script>
@@ -198,6 +203,49 @@
             text-align: left;
         }
         .sidebar-pinned-item:hover { background: var(--bg-muted); text-decoration: none; }
+
+        /* ── Editor map pickers (openspec: editor-map-picker-search) ──
+           One search box above each picker — the shared control rendered
+           into the DOM (not a Leaflet control) so its dropdown escapes the
+           map's overflow and sits clear of the modal's focus trap. Heights
+           grow on desktop only; below 1024px the mobile nav overlays need
+           the old sizes. */
+        .picker-map-search { position: relative; margin-bottom: 0.5rem; }
+        .picker-map-search .map-search { width: 100%; max-width: none; position: relative; }
+        .picker-map-search .map-search i { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 0.8rem; pointer-events: none; }
+        .picker-map-search .map-search input {
+            width: 100%; height: auto; padding: 0.45rem 0.6rem 0.45rem 2rem;
+            border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; background: #fff; box-shadow: none;
+        }
+        .picker-map-search .map-search input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
+        .picker-map-search .map-search-results {
+            position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 1100;
+            margin: 0; padding: 4px 0; list-style: none; background: #fff;
+            border: 1px solid var(--border-color); border-radius: 6px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.16); max-height: 280px; overflow-y: auto;
+        }
+        .picker-map-search .map-search-result { display: flex; flex-direction: column; gap: 1px; padding: 7px 12px; cursor: pointer; }
+        .picker-map-search .map-search-result.active,
+        .picker-map-search .map-search-result:hover { background: var(--accent-light); }
+        .picker-map-search .map-search-name { font-size: 0.85rem; color: #374151; }
+        .picker-map-search .map-search-context { font-size: 0.76rem; color: #6b7280; }
+        .picker-map-search .map-search-message { padding: 8px 12px; font-size: 0.82rem; color: #6b7280; }
+        .picker-map { width: 100%; position: relative; z-index: 0; }
+        .picker-map--page, .picker-map--panel { height: 300px; border-radius: var(--radius); border: 1px solid var(--border-color); }
+        .picker-map--modal { height: 400px; }
+        .picker-map-search--modal { margin: 0.75rem 1rem 0.5rem; }
+        @media (min-width: 1024px) {
+            .picker-map--page { height: 460px; }
+            .picker-map--panel { height: 380px; }
+            .picker-map--modal { height: 480px; }
+            /* The settings column is 800px for reading; a map wants more.
+               Margin, not transform: Leaflet maps mouse events through
+               getBoundingClientRect and a transformed ancestor skews them. */
+            .settings-main .settings-section--wide {
+                width: min(1160px, calc(100vw - 3rem));
+                margin-left: calc((800px - min(1160px, calc(100vw - 3rem))) / 2);
+            }
+        }
         .sidebar-pinned-item.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
         .sidebar-pinned-item .chev { margin-left: auto; color: #c4c7cf; font-size: 0.7rem; }
 
