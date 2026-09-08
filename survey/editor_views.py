@@ -2671,6 +2671,9 @@ def set_creator_language(request):
     CreatorPreferences.objects.update_or_create(
         user=request.user, defaults={'ui_language': language},
     )
+    # Person property, so activation can be split by interface language in
+    # PostHog -- the one number the localisation release still lacked.
+    pe.set_person_properties(request.user.pk, {'ui_language': language})
     translation.activate(language)
 
     # Only same-origin paths, so the switcher cannot be turned into an open
