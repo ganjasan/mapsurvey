@@ -19346,6 +19346,28 @@ class ActivationAutoLoginTest(TestCase):
         self.assertEqual(resp["Location"], settings.LOGIN_REDIRECT_URL)
         self.assertEqual(int(self.client.session["_auth_user_id"]), self.user.pk)
 
+    def test_activation_emits_one_live_funnel_event_and_replay_none(self):
+        """
+        GIVEN an inactive account and a valid activation key
+        WHEN the user confirms activation, then the same key is posted again
+        THEN exactly one creator_activated_account is emitted for that user
+             (the direct POST path bypasses form_valid, which is where the
+             library sends user_activated) and the replay emits nothing
+        """
+        from unittest import mock
+
+        from survey import product_events as pe
+
+        key = _activation_key("newbie")
+        with mock.patch("survey.signals.pe.emit") as emit:
+            self._activate(key)
+            self._confirm(key)          # already activated: must stay silent
+        calls = [c for c in emit.call_args_list if c.args[0] == pe.CREATOR_ACTIVATED]
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0].args[1], self.user.pk)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_active)
+
     def test_activation_records_last_login(self):
         """
         GIVEN an inactive account with last_login unset

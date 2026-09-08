@@ -332,6 +332,16 @@ class DirectActivationView(
                 activated_user = self.activate(form)
             except ActivationError as error:
                 return self._activation_error_response(request, form, error)
+            # django-registration sends user_activated from form_valid(), which
+            # this override bypasses by calling activate() directly. Without
+            # this line the funnel's creator_activated_account never fired live
+            # (found 2026-09-09: zero live events since the view shipped). Sent
+            # only after a genuine transition -- the already_activated branch
+            # raised above and correctly emits nothing.
+            from django_registration import signals as registration_signals
+            registration_signals.user_activated.send(
+                sender=self.__class__, user=activated_user, request=request,
+            )
             # Sign in only on the genuine inactive -> active transition. That
             # makes the key single-use as a credential: replaying it lands in
             # the already_activated branch, which does NOT sign anyone in.
