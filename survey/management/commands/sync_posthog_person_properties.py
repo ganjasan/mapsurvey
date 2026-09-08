@@ -24,7 +24,7 @@ from survey import product_events as pe
 from survey.cohorts import user_cohort_map
 from survey.events import classify_source
 from survey.funnel import FREEMAIL_DOMAINS, _domain
-from survey.models import SignupAttribution
+from survey.models import CreatorPreferences, SignupAttribution
 
 
 class Command(BaseCommand):
@@ -54,6 +54,7 @@ class Command(BaseCommand):
         }
 
         assignments = user_cohort_map()
+        ui_language = dict(CreatorPreferences.objects.values_list('user_id', 'ui_language'))
         rows = []
         for uid, email, joined in (
             User.objects
@@ -68,6 +69,9 @@ class Command(BaseCommand):
                 'segment': cohorts.get('segment', ''),
                 'plan': cohorts.get('plan', ''),
                 'date_joined': joined.isoformat(),
+                # '' = follows the browser; sent as such so the breakdown shows
+                # the default group rather than "no value".
+                'ui_language': ui_language.get(uid, ''),
             }))
 
         if options['limit']:

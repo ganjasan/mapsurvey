@@ -40498,3 +40498,62 @@ class BackfillBoundsTest(TestCase):
         self.assertEqual(self._count(out, 'creator_registered'), 0)
         with self.assertRaises(CommandError):
             self._run('--events', 'not_an_event')
+
+
+class UiLanguagePersonPropertyTest(TestCase):
+    """The creator's interface language reaches PostHog as a person property."""
+
+    def setUp(self):
+        self.org = _make_org('LangOrg')
+        self.user = User.objects.create_user('lang_user', password='x')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.force_login(self.user)
+
+    def test_switch_sets_property_and_redirects(self):
+        """
+        GIVEN a signed-in creator
+        WHEN they switch the interface language to German
+        THEN ui_language='de' is set on their person and the switch still redirects
+        """
+        from unittest import mock
+        from survey import product_events as pe
+        with mock.patch('survey.editor_views.pe.set_person_properties') as setp:
+            resp = self.client.post(reverse('set_creator_language'), {'language': 'de', 'next': '/editor/'})
+        self.assertEqual(resp.status_code, 302)
+        setp.assert_called_once_with(self.user.pk, {'ui_language': 'de'})
+        self.assertEqual(CreatorPreferences.objects.get(user=self.user).ui_language, 'de')
+
+    def test_set_person_properties_is_silent_when_disabled(self):
+        """
+        GIVEN PostHog is unconfigured (posthog.disabled)
+        WHEN set_person_properties is called
+        THEN nothing is sent and nothing raises
+        """
+        import posthog
+        from unittest import mock
+        from survey import product_events as pe
+        with mock.patch.object(posthog, 'disabled', True), mock.patch('posthog.set') as pset:
+            pe.set_person_properties(self.user.pk, {'ui_language': 'de'})
+        pset.assert_not_called()
+
+    def test_sync_includes_ui_language_for_everyone(self):
+        """
+        GIVEN one creator with a stored language and one without
+        WHEN the person-properties sync runs (dry run)
+        THEN the property dict of each carries ui_language, empty for the second
+        """
+        from survey.management.commands import sync_posthog_person_properties as cmd_mod
+        CreatorPreferences.objects.create(user=self.user, ui_language='pl')
+        other = User.objects.create_user('lang_other', password='x')
+        # The command builds `rows` before deciding to send; capture them by
+        # running with --limit high and inspecting through a patched posthog.set.
+        import posthog
+        from unittest import mock
+        from django.core.management import call_command
+        with self.settings(POSTHOG_PROJECT_KEY='phc_test'), \
+                mock.patch.object(posthog, 'disabled', False), \
+                mock.patch('posthog.set') as pset, mock.patch('posthog.set_once'), mock.patch('posthog.flush'):
+            call_command('sync_posthog_person_properties')
+        sent = {c.kwargs['distinct_id']: c.kwargs['properties'] for c in pset.call_args_list}
+        self.assertEqual(sent[str(self.user.pk)]['ui_language'], 'pl')
+        self.assertEqual(sent[str(other.pk)]['ui_language'], '')
