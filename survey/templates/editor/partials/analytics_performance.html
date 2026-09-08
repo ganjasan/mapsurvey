@@ -42,7 +42,7 @@
 {% if funnel %}
 <div class="analytics-section">
     <h6>{% trans "Section Funnel" %}</h6>
-    <p style="font-size:0.8rem;color:#9ca3af;margin-bottom:1rem;">{% trans "Share of started sessions that reached each section, and how many left before the next one. One person counts once, however often they reload." %}</p>
+    <p style="font-size:0.8rem;color:#9ca3af;margin-bottom:1rem;">{% trans "Share of started sessions that reached each section, and how many left before the next one. One person counts once, however often they reload." %}{% if has_conditional_steps %} {% trans "Sections behind a visibility rule are compared with the people the rule let in, not with everyone." %}{% endif %}</p>
 
     {% comment %}
     Small-sample guard (v2 only): below 20 tracked sessions a −100% drop is
@@ -57,30 +57,53 @@
 
     <div class="perf-funnel" role="list">
         {% for step in funnel %}
-        <div class="perf-funnel-step" role="listitem" title="{{ step.views }} {% trans 'views' %}, {{ step.submits }} {% trans 'submits' %}">
+        <div class="perf-funnel-step{% if step.conditional %} is-conditional{% endif %}" role="listitem" title="{{ step.views }} {% trans 'views' %}, {{ step.submits }} {% trans 'submits' %}">
             <div class="perf-funnel-bar">
+                {% if step.conditional and step.skipped %}
+                <div class="perf-funnel-skipped" style="bottom:{{ step.reached_pct }}%;height:{{ step.skipped_pct }}%;--skipped:{{ step.skipped_pct }}%;" title="{% trans 'Skipped by the visibility rule — never shown this section' %}"></div>
+                {% endif %}
                 <div class="perf-funnel-fill" style="height:{{ step.reached_pct }}%;--reached:{{ step.reached_pct }}%;"></div>
                 <span class="perf-funnel-pct">{{ step.reached_pct }}%</span>
             </div>
             <div class="perf-funnel-meta">
                 <div class="perf-funnel-title"><span class="perf-funnel-num">{{ step.step }}</span>{{ step.section_title }}</div>
+                {% if step.conditional %}
+                <div class="perf-funnel-cond" title="{% trans 'Shown when' %} {{ step.rule_label }}"><i class="fas fa-code-branch"></i><span>{% trans "Shown when" %} {{ step.rule_label }}</span></div>
+                {% elif step.rule_broken %}
+                <div class="perf-funnel-cond is-broken" title="{{ step.rule_reason }}. {% trans 'Shown to everyone until fixed.' %}"><i class="fas fa-exclamation-triangle"></i><span>{% trans "Rule broken — shown to everyone" %}</span></div>
+                {% endif %}
                 <div class="perf-funnel-line perf-funnel-reached"><i class="fas fa-arrow-right"></i>
                     {% blocktrans count n=step.reached %}{{ n }} reached{% plural %}{{ n }} reached{% endblocktrans %}
                     ({{ step.reached_pct }}%)</div>
+                {% if step.skipped > 0 %}
+                <div class="perf-funnel-line perf-funnel-skip"><i class="fas fa-forward"></i>
+                    {% blocktrans count n=step.skipped %}{{ n }} skipped by rule{% plural %}{{ n }} skipped by rule{% endblocktrans %}</div>
+                {% endif %}
                 {% if step.dropped > 0 %}
-                <div class="perf-funnel-line perf-funnel-dropped"><i class="fas fa-level-down-alt"></i>
+                <div class="perf-funnel-line perf-funnel-dropped"{% if step.baseline_step and step.baseline_step != step.step|add:"-1" %} title="{% blocktrans with n=step.baseline_step %}Compared with step {{ n }}, the last section everyone sees{% endblocktrans %}"{% endif %}><i class="fas fa-level-down-alt"></i>
                     {% blocktrans count n=step.dropped %}{{ n }} dropped{% plural %}{{ n }} dropped{% endblocktrans %}
-                    {% if not RESPONSES_V2 or event_summary.session_starts >= 20 %}({{ step.dropped_pct }}%){% endif %}</div>
+                    {% if not RESPONSES_V2 or event_summary.session_starts >= 20 %}({{ step.dropped_pct }}%{% if step.conditional %} {% trans "of eligible" %}{% endif %}){% endif %}
+                    {% if step.baseline_step and step.baseline_step != step.step|add:"-1" %}{% blocktrans with n=step.baseline_step %}since step {{ n }}{% endblocktrans %}{% endif %}</div>
                 {% endif %}
                 {% if step.median_label %}
                 <div class="perf-funnel-line perf-funnel-time"><i class="far fa-clock"></i> {{ step.median_label }}</div>
                 {% endif %}
                 <div class="perf-funnel-line perf-funnel-completed">
                     {% blocktrans count n=step.completed %}{{ n }} submitted{% plural %}{{ n }} submitted{% endblocktrans %}</div>
+                {% if step.conditional and step.eligible %}{% if not RESPONSES_V2 or event_summary.session_starts >= 20 %}
+                <div class="perf-funnel-eligible">{% blocktrans with pct=step.eligible_pct n=step.eligible %}{{ pct }}% of the {{ n }} eligible{% endblocktrans %}</div>
+                {% endif %}{% endif %}
             </div>
         </div>
         {% endfor %}
     </div>
+    {% if has_conditional_steps %}
+    <div class="perf-funnel-legend">
+        <span><i class="perf-sw perf-sw-fill"></i> {% trans "reached" %}</span>
+        <span><i class="perf-sw perf-sw-skip"></i> {% trans "skipped by a visibility rule (never shown the section)" %}</span>
+        <span><i class="perf-sw perf-sw-hatch"></i> {% trans "did not get this far" %}</span>
+    </div>
+    {% endif %}
 </div>
 {% endif %}
 

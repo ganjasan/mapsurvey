@@ -162,6 +162,7 @@ def analytics_dashboard(request, survey_uuid):
         # Performance tab
         'event_summary': perf_service.get_event_summary(),
         'funnel': funnel,
+        'has_conditional_steps': any(step['conditional'] or step['rule_broken'] for step in funnel),
         'referrer_breakdown': perf_service.get_referrer_breakdown(),
         'language_breakdown': perf_service.get_language_breakdown(),
         'device_breakdown': perf_service.get_device_breakdown(),
