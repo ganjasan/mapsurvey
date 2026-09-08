@@ -23,8 +23,11 @@ L.Icon.FontAwesome = L.Icon.extend({
 		// container div
 		var iconDiv = L.DomUtil.create('div', 'leaflet-fa-markers');
 
-		// feature icon
-		var iconSpan = L.DomUtil.create('span', options.iconClasses + ' feature-icon');
+		// feature icon — MarkerIcon decides whether iconClasses is a Font Awesome
+		// class list (<i>) or a sprite symbol (<svg>); this file only positions it.
+		var iconSpan = window.MarkerIcon
+			? window.MarkerIcon.element(options.iconClasses, options.iconColor, 'feature-icon')
+			: L.DomUtil.create('span', options.iconClasses + ' feature-icon');
 		iconSpan.style.color = options.iconColor;
 		iconSpan.style.textAlign = 'center';
 

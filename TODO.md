@@ -23,6 +23,12 @@
 
 ## Editor
 
+- [ ] Icon picker follow-ups (after `editor-icon-picker-expansion`, driven by PostHog `icon_search_miss`)
+  - Widen the AI generation `MARKER_ICONS` enum (`survey/ai/schema.py`) to the Maki/Temaki set
+  - Suggest icons from the question title (same term index, 6 candidates above the grid)
+  - Creator-uploaded custom icons (S3, SVG sanitising, export)
+  - Temaki keyword table if telemetry shows misses on Temaki names
+
 - [ ] Кнопка «Посмотреть опрос» в редакторе
   - Добавить кнопку для перехода на публичную страницу опроса из редактора
 

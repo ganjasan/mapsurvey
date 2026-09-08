@@ -26,7 +26,7 @@ locale.{% endcomment %}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
    integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
    crossorigin=""/>
-   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
     <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
    integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
    crossorigin="anonymous"></script>
@@ -43,6 +43,7 @@ locale.{% endcomment %}
 
    <!-- leaflet fa markers -->
    <link rel='stylesheet' href="{% static 'css/L.Icon.FontAwesome.css' %}">
+   <script type="text/javascript" src="{% static 'js/marker_icon.js' %}"></script>
    <script type="text/javascript" src="{% static 'js/L.Icon.FontAwesome.js' %}"></script>
    <!--end fa markers -->
 
@@ -107,7 +108,7 @@ locale.{% endcomment %}
 </head>
 
 {# Server-rendered so a direct form-section load never flashes the map; initSection() keeps it in step across HTMX swaps. #}
-<body{% if section.layout == 'form' %} class="survey-form-layout"{% endif %}>
+<body{% if section.layout == 'form' %} class="survey-form-layout"{% endif %} data-icon-sprites='{{ ICON_SPRITES_JSON }}'>
 
 <button id="showButton" onclick="toggleInfo(true)" style="visibility: hidden;">
         <i class="fas fa-angle-double-right" style="font-size:28px; width:28px; height:28px;"></i>
@@ -414,8 +415,11 @@ locale.{% endcomment %}
         }
         var overlay = document.getElementById('crosshair-overlay');
         overlay.querySelector('.crosshair-pin-path').setAttribute('fill', color);
-        var iconEl = overlay.querySelector('.crosshair-pin-icon');
-        iconEl.className = 'crosshair-pin-icon fa ' + iconClass;
+        // The overlay's glyph is rebuilt, not re-classed: a map-set value is an
+        // <svg>, not a class list. MarkerIcon owns that distinction.
+        var oldIcon = overlay.querySelector('.crosshair-pin-icon');
+        oldIcon.parentNode.replaceChild(
+            MarkerIcon.element(iconClass, '#fff', 'crosshair-pin-icon'), oldIcon);
         overlay.style.display = 'flex';
     }
 
@@ -443,7 +447,7 @@ locale.{% endcomment %}
         } else {
             var layer = L.marker(pinLatLng, {
                 icon: L.icon.fontAwesome({
-                    iconClasses: 'fa ' + crosshairIcon,
+                    iconClasses: crosshairIcon,
                     markerColor: crosshairColor,
                     iconColor: '#FFF',
                 })
@@ -722,7 +726,7 @@ locale.{% endcomment %}
                     var coords = geoFeature.geometry.coordinates;
                     layer = L.marker([coords[1], coords[0]], {
                         icon: L.icon.fontAwesome({
-                            iconClasses: 'fa ' + attrs.icon,
+                            iconClasses: attrs.icon,
                             markerColor: attrs.color,
                             iconColor: '#FFF',
                         })

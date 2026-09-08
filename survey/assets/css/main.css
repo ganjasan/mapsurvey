@@ -868,6 +868,21 @@ ul {
   font-size: 16px;
   color: #fff;
 }
+/* Same box for a sprite glyph (see .leaflet-fa-markers svg.feature-icon). */
+#crosshair-overlay svg.crosshair-pin-icon {
+  width: 20px;
+  height: 20px;
+  fill: #fff;
+}
+/* Generic sizing for sprite glyphs drawn inline by {% marker_icon %} / MarkerIcon where
+   no surface-specific rule applies: behave like a 1em Font Awesome glyph. */
+svg.marker-icon-svg-glyph {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  fill: currentColor;
+}
 
 #crosshair-overlay .crosshair-actions {
   pointer-events: auto;

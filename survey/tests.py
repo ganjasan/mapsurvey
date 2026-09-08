@@ -40498,3 +40498,355 @@ class BackfillBoundsTest(TestCase):
         self.assertEqual(self._count(out, 'creator_registered'), 0)
         with self.assertRaises(CommandError):
             self._run('--events', 'not_an_event')
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Marker icons: catalog, resolver, editor validation, rendering, serialization
+# (openspec: marker-icon-picker, marker-icon-rendering)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+from survey import marker_icons as _marker_icons
+
+
+class MarkerIconCatalogTest(SimpleTestCase):
+    """The generated catalog and sprites keep the shape the picker and resolver rely on."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.catalog = _marker_icons.catalog()
+        import os
+        base = os.path.join(os.path.dirname(_marker_icons.__file__), 'assets', 'img')
+        cls.sprites = {}
+        for name in _marker_icons.SVG_SETS:
+            with open(os.path.join(base, '%s.svg' % name), encoding='utf-8') as fh:
+                cls.sprites[name] = fh.read()
+
+    def test_catalog_has_every_set_and_no_brands(self):
+        """
+        GIVEN the committed catalog
+        WHEN it is loaded
+        THEN it holds Font Awesome, Maki and Temaki entries and no `fab ` brand icon
+        """
+        values = [i['v'] for i in self.catalog['icons']]
+        self.assertTrue(any(v.startswith('fas fa-') for v in values))
+        self.assertTrue(any(v.startswith('far fa-') for v in values))
+        self.assertTrue(any(v.startswith('maki:') for v in values))
+        self.assertTrue(any(v.startswith('temaki:') for v in values))
+        self.assertFalse([v for v in values if v.startswith('fab ')])
+        self.assertGreater(len(values), 1500)
+
+    def test_every_entry_is_complete_and_categorised(self):
+        """
+        GIVEN the catalog
+        WHEN each icon is inspected
+        THEN it carries value, label, declared categories and English terms
+        """
+        declared = {c['id'] for c in self.catalog['categories']}
+        for icon in self.catalog['icons']:
+            self.assertTrue(icon['v'] and icon['l'] and icon['c'] and icon['t'].get('en'), icon)
+            for cat in icon['c']:
+                self.assertIn(cat, declared, icon['v'])
+        for cat in self.catalog['categories']:
+            self.assertIn('en', cat['label'])
+
+    def test_map_set_values_have_sprite_symbols_without_fill(self):
+        """
+        GIVEN every maki:/temaki: value in the catalog
+        WHEN its sprite is searched
+        THEN the symbol exists and no symbol carries a fill attribute
+        """
+        for icon in self.catalog['icons']:
+            if ':' not in icon['v']:
+                continue
+            set_name, name = icon['v'].split(':', 1)
+            self.assertIn('id="%s-%s"' % (set_name, name), self.sprites[set_name], icon['v'])
+        for name, sheet in self.sprites.items():
+            self.assertNotIn(' fill=', sheet, name)
+
+    def test_gzipped_catalog_stays_under_the_ceiling(self):
+        """
+        GIVEN the catalog file
+        WHEN gzipped as WhiteNoise would serve it
+        THEN it stays under 350 KB so translation tables cannot balloon unnoticed
+        """
+        import gzip
+        with open(_marker_icons.CATALOG_PATH, 'rb') as fh:
+            size = len(gzip.compress(fh.read()))
+        self.assertLess(size, 350 * 1024, size)
+
+    def test_translated_terms_reach_the_catalog(self):
+        """
+        GIVEN the bus stop and bench icons
+        WHEN their terms are read
+        THEN each product language has a translation (the tables were merged at build time)
+        """
+        by_value = {i['v']: i for i in self.catalog['icons']}
+        bench = by_value['temaki:bench']
+        for lang in self.catalog['languages']:
+            self.assertIn(lang, bench['t'], lang)
+        self.assertIn('скамейк', bench['t']['ru'])
+        self.assertIn('bank', bench['t']['de'])
+        self.assertIn('bus', by_value['fas fa-bus']['t']['en'])
+
+
+class MarkerIconResolverTest(SimpleTestCase):
+    """survey/marker_icons.py — the one place an icon_class value becomes markup."""
+
+    def test_font_awesome_values_pass_through(self):
+        """
+        GIVEN a Font Awesome-shaped value, listed or not
+        WHEN resolved
+        THEN it is a font glyph with the value as its class list
+        """
+        self.assertEqual(_marker_icons.resolve('fas fa-bus'), {'kind': 'font', 'classes': 'fas fa-bus'})
+        self.assertEqual(_marker_icons.resolve('fas fa-some-pro-icon'),
+                         {'kind': 'font', 'classes': 'fas fa-some-pro-icon'})
+        self.assertEqual(_marker_icons.resolve(''), {'kind': 'font', 'classes': _marker_icons.DEFAULT_PIN})
+
+    def test_map_set_value_resolves_to_symbol(self):
+        """
+        GIVEN a catalogued maki: value
+        WHEN resolved
+        THEN it is an svg glyph naming the sprite symbol
+        """
+        self.assertEqual(_marker_icons.resolve('maki:bus'), {'kind': 'svg', 'set': 'maki', 'symbol': 'maki-bus'})
+
+    def test_unknown_map_set_value_falls_back_to_the_pin(self):
+        """
+        GIVEN a temaki: value no sprite knows
+        WHEN resolved
+        THEN the default pin is drawn instead of a blank glyph
+        """
+        self.assertEqual(_marker_icons.resolve('temaki:does-not-exist'),
+                         {'kind': 'font', 'classes': _marker_icons.DEFAULT_PIN})
+
+    def test_validation_accepts_both_forms_and_legacy(self):
+        """
+        GIVEN values of every accepted shape
+        WHEN validated
+        THEN empty, Font Awesome (v4 or v5, listed or not) and catalogued svg names pass; typos and garbage fail
+        """
+        for ok in ('', '  ', 'fas fa-anchor', 'far fa-circle', 'fa fa-bus', 'fas fa-some-pro-icon', 'maki:bus', 'temaki:bench'):
+            self.assertTrue(_marker_icons.is_valid(ok), ok)
+        for bad in ('maki:benchh', 'temaki:', 'garbage', 'fas', 'bus', '<script>'):
+            self.assertFalse(_marker_icons.is_valid(bad), bad)
+
+    def test_render_markup(self):
+        """
+        GIVEN the template tag's renderer
+        WHEN a font and an svg value are drawn with a colour
+        THEN the font is an <i> coloured via color: and the svg a <use> of the hashed sprite filled via fill:
+        """
+        font = _marker_icons.render('fas fa-bus', color='#123456', css_class='feature-icon')
+        self.assertIn('<i class="fas fa-bus feature-icon"', font)
+        self.assertIn('color:#123456', font)
+        svg = _marker_icons.render('maki:bus', color='#123456', css_class='feature-icon')
+        self.assertIn('<svg class="marker-icon-svg-glyph feature-icon"', svg)
+        self.assertIn('fill:#123456', svg)
+        self.assertRegex(svg, r'<use href="/static[a-z]*/img/maki(\.[0-9a-f]+)?\.svg#maki-bus"')
+
+    def test_render_escapes_a_hostile_value(self):
+        """
+        GIVEN a value carrying markup (the form rejects it, the DB might still hold it)
+        WHEN rendered
+        THEN it is escaped, not injected
+        """
+        out = _marker_icons.render('fas fa-x" onmouseover="alert(1)')
+        self.assertNotIn('onmouseover="alert', out)
+        self.assertIn('&quot;', out)
+
+
+class MarkerIconEditorValidationTest(TestCase):
+    """QuestionForm.clean_icon_class — what a creator may save."""
+
+    def setUp(self):
+        self.org = _make_org()
+        self.user = User.objects.create_user(username='iconeditor', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='iconeditor', password='pass')
+        self.survey = SurveyHeader.objects.create(name='icon_test', visibility='private', organization=self.org)
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section 1', code='S1', is_head=True,
+        )
+        self.url = f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/'
+
+    def _post(self, icon):
+        return self.client.post(self.url, {
+            'name': 'Where?', 'input_type': 'point', 'color': '#000000', 'icon_class': icon,
+        })
+
+    def test_pasted_font_awesome_class_saves(self):
+        """
+        GIVEN a creator types a Font Awesome class the picker never listed
+        WHEN the question is created
+        THEN the value is stored as typed
+        """
+        self._post('fas fa-anchor')
+        self.assertEqual(Question.objects.get(name='Where?').icon_class, 'fas fa-anchor')
+
+    def test_map_set_value_saves(self):
+        """
+        GIVEN a creator picks a Maki icon
+        WHEN the question is created
+        THEN the prefixed value is stored
+        """
+        self._post('maki:bus')
+        self.assertEqual(Question.objects.get(name='Where?').icon_class, 'maki:bus')
+
+    def test_unknown_map_set_name_is_rejected(self):
+        """
+        GIVEN a creator mistypes a map icon name
+        WHEN the form is submitted
+        THEN nothing is stored and the response carries a field error naming the accepted forms
+        """
+        response = self._post('maki:benchh')
+        self.assertFalse(Question.objects.filter(name='Where?').exists())
+        self.assertIn('maki:bus', response.content.decode())
+
+    def test_legacy_v4_class_still_saves(self):
+        """
+        GIVEN an existing question holding a Font Awesome 4 class
+        WHEN the creator saves an unrelated change
+        THEN the save succeeds and the value is unchanged
+        """
+        q = Question.objects.create(
+            survey_section=self.section, name='Old', code='q_old', input_type='point',
+            order_number=1, icon_class='fa fa-bus',
+        )
+        self.client.post(f'/editor/surveys/{self.survey.uuid}/questions/{q.id}/edit/', {
+            'name': 'Old renamed', 'input_type': 'point', 'color': '#000000', 'icon_class': 'fa fa-bus',
+        })
+        q.refresh_from_db()
+        self.assertEqual(q.name, 'Old renamed')
+        self.assertEqual(q.icon_class, 'fa fa-bus')
+
+
+class MarkerIconRenderingTest(TestCase):
+    """Every respondent-facing surface draws the icon through the resolver."""
+
+    def setUp(self):
+        self.org = _make_org()
+        self.user = User.objects.create_user('iconrender', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+
+    def _survey(self, input_type, icon_class, **extra):
+        survey = SurveyHeader.objects.create(
+            name=f'icons_{input_type}_{id(self)}', organization=self.org,
+            created_by=self.user, status='published',
+        )
+        section = SurveySection.objects.create(survey_header=survey, name='s1', code='S1', is_head=True)
+        Question.objects.create(
+            survey_section=section, name='Where?', code='q_geo', input_type=input_type,
+            order_number=1, color='#336699', icon_class=icon_class, **extra,
+        )
+        return survey
+
+    def _page(self, survey):
+        return Client().get(f'/surveys/{survey.uuid}/s1/').content.decode()
+
+    def test_map_set_point_question_renders_svg_everywhere(self):
+        """
+        GIVEN a point question with a Temaki icon
+        WHEN a respondent opens the section
+        THEN the draw button draws an <svg><use> of the Temaki symbol, keeps the raw value in data-icon,
+             and the body exposes the sprite URLs for the browser resolver
+        """
+        html = self._page(self._survey('point', 'temaki:bench'))
+        self.assertIn('data-icon="temaki:bench"', html)
+        self.assertIn('#temaki-bench"', html)
+        self.assertIn('<use href=', html)
+        self.assertIn('fill:#336699', html)
+        self.assertIn('data-icon-sprites=', html)
+        self.assertRegex(html, r'/static[a-z]*/img/maki')
+
+    def test_font_awesome_point_question_renders_as_before(self):
+        """
+        GIVEN a point question with a Font Awesome icon
+        WHEN a respondent opens the section
+        THEN the draw button holds <i class="fas fa-bus …"> and the page never prepends a bare `fa ` prefix
+        """
+        html = self._page(self._survey('point', 'fas fa-bus'))
+        self.assertIn('<i class="fas fa-bus', html)
+        self.assertIn('data-icon="fas fa-bus"', html)
+        self.assertNotIn("'fa ' +", html)
+        self.assertNotIn("fa ' + ", html)
+
+    def test_star_rating_with_map_set_icon(self):
+        """
+        GIVEN a stars rating whose icon is maki:star and colour blue
+        WHEN a respondent opens the section
+        THEN five sprite glyphs render instead of five <i> tags
+        """
+        choices = [{"code": i, "name": {"en": str(i)}} for i in range(1, 6)]
+        survey = self._survey('rating', 'maki:star', display_style='stars', choices=choices)
+        html = self._page(survey)
+        self.assertEqual(html.count('#maki-star"'), 5)
+        self.assertIn('--star-color: #336699', html)
+
+    def test_base_templates_load_the_catalog_font_awesome_version(self):
+        """
+        GIVEN the three base templates
+        WHEN their sources are read
+        THEN each loads Font Awesome 5.15.4 and none the old 5.8.1
+        """
+        import os
+        base = os.path.join(os.path.dirname(_marker_icons.__file__), 'templates')
+        for rel in ('base.html', 'base_survey_template.html', 'editor/editor_base.html'):
+            with open(os.path.join(base, rel), encoding='utf-8') as fh:
+                src = fh.read()
+            self.assertIn('fontawesome.com/releases/v5.15.4/', src, rel)
+            self.assertNotIn('v5.8.1', src, rel)
+
+    def test_editor_modal_exposes_catalog_and_language_and_no_inline_list(self):
+        """
+        GIVEN the survey editor page
+        WHEN it renders for a creator
+        THEN the modal body carries the catalog URL and UI language, and the old inline icon array is gone
+        """
+        self.client.login(username='iconrender', password='pass')
+        survey = self._survey('point', 'temaki:bench')
+        survey.status = 'draft'
+        survey.save()
+        html = self.client.get(f'/editor/surveys/{survey.uuid}/').content.decode()
+        self.assertRegex(html, r'data-icon-catalog="/static[a-z]*/data/icon_catalog')
+        self.assertIn('data-icon-lang="en"', html)
+        self.assertIn('js/icon_picker', html)
+        self.assertNotIn('var FA_ICONS', html)
+
+
+class MarkerIconSerializationTest(TestCase):
+    """icon_class rides ZIP export/import verbatim, in both value forms."""
+
+    def setUp(self):
+        self.org = _make_org()
+        self.user = User.objects.create_user('iconzip', password='pass')
+
+    def _roundtrip(self, icon_class):
+        survey = SurveyHeader.objects.create(name=f'zip_{id(self)}', organization=self.org, created_by=self.user)
+        section = SurveySection.objects.create(survey_header=survey, name='s1', code='S1', is_head=True)
+        Question.objects.create(
+            survey_section=section, name='Where?', code='q_geo', input_type='point',
+            order_number=1, icon_class=icon_class,
+        )
+        out = BytesIO()
+        export_survey_to_zip(survey, out, mode='structure')
+        out.seek(0)
+        imported, _warnings = import_survey_from_zip(out, organization=self.org, created_by=self.user)
+        return Question.objects.get(survey_section__survey_header=imported, name='Where?').icon_class
+
+    def test_map_set_value_survives_export_and_import(self):
+        """
+        GIVEN a question with icon_class maki:bench
+        WHEN it is exported and the archive imported
+        THEN the imported question stores maki:bench
+        """
+        self.assertEqual(self._roundtrip('maki:bench'), 'maki:bench')
+
+    def test_unknown_value_is_preserved(self):
+        """
+        GIVEN an archive carrying a map icon name the catalog does not know
+        WHEN imported
+        THEN import succeeds and the value is stored unchanged (it renders the fallback pin)
+        """
+        self.assertEqual(self._roundtrip('temaki:future-icon'), 'temaki:future-icon')

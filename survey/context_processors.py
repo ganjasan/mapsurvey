@@ -1,3 +1,4 @@
+import json
 from django.conf import settings
 
 from .models import Membership
@@ -130,4 +131,18 @@ def active_org(request):
         'active_org': org,
         'user_orgs': user_orgs,
         'org_role': org_role,
+    }
+
+
+def icon_sprites(request):
+    """Hashed sprite URLs and the picker catalog URL for the browser-side marker icon resolver.
+
+    Rendered into `data-icon-sprites` on <body> by the base templates, so `MarkerIcon` never
+    hard-codes a static path that the manifest storage has renamed.
+    """
+    from django.templatetags.static import static
+    from survey import marker_icons
+    return {
+        'ICON_SPRITES_JSON': json.dumps(marker_icons.sprite_urls()),
+        'ICON_CATALOG_URL': static(marker_icons.CATALOG_STATIC_PATH),
     }
