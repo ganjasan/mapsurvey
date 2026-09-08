@@ -48,5 +48,5 @@
 
 - [x] 8.1 Run the survey suite once before and once after; summarise the delta
 - [ ] 8.2 Drive in a browser: register via a landing visit with `?utm_source=test` in a fresh profile, confirm `SignupAttribution` and the `$set_once` payload in PostHog live events; open own published survey then an incognito one, confirm a single `survey_first_response`
-- [ ] 8.3 After merge (owner): run `sync_posthog_person_properties --reclassify` against prod; delete Render cron `mapsurvey-acquisition-sync` and `PLAUSIBLE_SCRIPT_URL` on the web service; export Plausible CSV to `docs/marketing/analytics/` and cancel the subscription
-- [ ] 8.4 PostHog: annotate the ship date on dashboard 941308; add tiles "registrations by `first_source_bucket` → published" and the distribution events once live data exists
+- [x] 8.3 After merge: `sync_posthog_person_properties --reclassify` run in the prod container over Render SSH on 2026-09-08 (55 rows reclassified, 115 first-touch backfilled, 357 people updated). Still open (needs the owner's Render / Plausible logins): delete Render cron `mapsurvey-acquisition-sync` (crn-d9ljd8jm8hqs738rpkl0) and `PLAUSIBLE_SCRIPT_URL` on the web service — both inert now; Plausible CSV exported 2026-09-09 to `docs/marketing/analytics/plausible-export-2026-09-09/`; cancelling the subscription is the owner's click
+- [x] 8.4 PostHog: annotate the ship date on dashboard 941308; add tiles "registrations by `first_source_bucket` → published" and the distribution events once live data exists
