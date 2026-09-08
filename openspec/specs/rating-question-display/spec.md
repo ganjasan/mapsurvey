@@ -8,7 +8,6 @@ regardless of style.
 
 Consolidated from the former `rating-display-style` capability when the star style was added —
 that spec pinned "exactly three allowed values", which stopped being true.
-
 ## Requirements
 ### Requirement: Display style field and resolution
 
@@ -102,9 +101,11 @@ up to and including the respondent's selection, and SHALL remain operable withou
 ### Requirement: Stars default to five gold stars and are configurable
 
 The star icon SHALL default to a solid star and its colour to gold. A creator SHALL be able to
-choose any Font Awesome icon, any colour, and how many icons the question shows. A question set to
-stars without choices SHALL render five numbered steps rather than nothing, resolved at render
-time without being written to the question.
+choose any icon the marker icon catalog offers (a Font Awesome class or a `maki:`/`temaki:`
+value), any colour, and how many icons the question shows. The icon SHALL be drawn through the
+shared marker icon resolver, so a map-set value renders as an SVG glyph and a Font Awesome value
+as before. A question set to stars without choices SHALL render five numbered steps rather than
+nothing, resolved at render time without being written to the question.
 
 #### Scenario: Untouched question shows gold stars
 
@@ -115,6 +116,11 @@ time without being written to the question.
 
 - **WHEN** the creator sets the icon to a heart and the colour to red
 - **THEN** the question renders red hearts
+
+#### Scenario: Map-set icon renders as SVG stars
+
+- **WHEN** the creator sets the icon to `maki:star` and the colour to blue
+- **THEN** each step renders an SVG glyph from the Maki sprite filled blue, and selecting the third fills the first three
 
 #### Scenario: Stars without choices still render
 
@@ -148,3 +154,4 @@ Every question-cloning path — versioning draft clone, editor duplicate, copy/p
 - **WHEN** a published survey containing a rating question with `display_style = "list_pips"` is
   cloned for a draft
 - **THEN** the cloned question has `display_style = "list_pips"`
+
