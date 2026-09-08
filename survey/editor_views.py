@@ -353,8 +353,13 @@ def _start_survey_generation(request, form):
         'language_count': len(languages),
         'has_use_case': bool(brief.use_case),
     })
+    # Set by the create page only on the creator's own gestures — never by the
+    # geolocation jump or the brief prefill — so the server can tell "framed
+    # it" from "left the default", which the always-filled lat/lng cannot.
+    map_locked = request.POST.get('map_touched') == '1'
     generate_survey_draft_task.delay(
         event.id, brief.as_dict(), languages, header_overrides,
+        map_locked=map_locked,
     )
     return render(request, 'editor/partials/generation_status.html', {
         'event': event,

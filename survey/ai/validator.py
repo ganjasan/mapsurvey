@@ -116,6 +116,26 @@ def _check_question(question, languages, label, errors, allowed_types, is_sub):
         )
 
 
+MAX_LOCATION_CHARS = 120
+
+
+def normalize_location(blob):
+    """Coerce `blob['location']` in place to a clean string, "" when unusable.
+
+    Deliberately not a validation error: a draft with good questions and a bad
+    place is a good draft, and a retry for the sake of the map would cost a
+    second provider call and a second wait for nothing the creator asked about.
+    """
+    if not isinstance(blob, dict):
+        return
+    value = blob.get('location')
+    if not isinstance(value, str):
+        blob['location'] = ''
+        return
+    value = value.strip()
+    blob['location'] = value if len(value) <= MAX_LOCATION_CHARS else ''
+
+
 def validate_blob(blob, requested_languages):
     """Return a list of human-readable problems; empty means the draft is usable.
 
@@ -130,6 +150,7 @@ def validate_blob(blob, requested_languages):
 
     if not isinstance(blob, dict):
         return ["model output is not an object"]
+    normalize_location(blob)
     sections = blob.get('sections')
     if not isinstance(sections, list) or not sections:
         return ["model output has no sections"]

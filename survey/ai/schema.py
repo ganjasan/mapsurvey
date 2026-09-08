@@ -138,8 +138,12 @@ def survey_draft_schema(languages):
     return {
         "type": "object",
         "properties": {
+            # The place the survey is about, as a geocodable name — or "" when
+            # the brief names none. A name, never coordinates: a name that does
+            # not geocode is dropped, a hallucinated coordinate would be saved.
+            "location": {"type": "string"},
             "sections": {"type": "array", "items": section},
         },
-        "required": ["sections"],
+        "required": ["location", "sections"],
         "additionalProperties": False,
     }

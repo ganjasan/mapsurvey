@@ -130,6 +130,14 @@ public input.
 %s
 Never invent identifiers, ordering or navigation fields — the platform assigns
 those. Return only what the schema asks for.
+
+LOCATION
+The `location` field is the geographic place the survey is about, read from ANY
+part of the brief (goal, audience, what to mark) in whatever language it is
+written. Return it as a name a geocoder will resolve — "<locality>, <region>,
+<country>", e.g. "Ülemiste, Tallinn, Estonia" — using the spelling most likely to
+resolve (local or English). Return an empty string when the brief names no place;
+never guess one.
 """ % (PLATFORM_DESCRIPTION, DESIGN_RULES)
 
 USE_CASE_GUIDANCE = {
