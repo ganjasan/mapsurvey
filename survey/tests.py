@@ -10053,161 +10053,6 @@ class SessionProtectTest(TestCase):
         self.assertEqual(self.session.survey, other_survey)
 
 
-class PlausibleAnalyticsTest(TestCase):
-    """Tests for Plausible Analytics integration."""
-
-    def setUp(self):
-        self.org = _make_org('AnalyticsOrg')
-        self.user = User.objects.create_user('analyticsuser', password='pass')
-        Membership.objects.create(user=self.user, organization=self.org, role='owner')
-        self.survey = SurveyHeader.objects.create(
-            name='analytics_survey',
-            organization=self.org,
-            redirect_url='#',
-            status='published',
-        )
-        self.section1 = SurveySection.objects.create(
-            survey_header=self.survey,
-            name='section1',
-            start_map_postion=Point(0, 0),
-            start_map_zoom=10,
-        )
-        self.section2 = SurveySection.objects.create(
-            survey_header=self.survey,
-            name='section2',
-            start_map_postion=Point(0, 0),
-            start_map_zoom=10,
-        )
-        self.section1.next_section = self.section2
-        self.section1.save()
-        self.section2.prev_section = self.section1
-        self.section2.save()
-
-    def test_no_plausible_script_when_url_unset(self):
-        """
-        GIVEN PLAUSIBLE_SCRIPT_URL is empty (default)
-        WHEN any page is rendered
-        THEN no Plausible script tag appears in the HTML
-        """
-        with self.settings(PLAUSIBLE_SCRIPT_URL=''):
-            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-            self.assertNotContains(response, 'plausible.io')
-            self.assertNotContains(response, 'plausible.init')
-
-    def test_plausible_script_present_when_url_set(self):
-        """
-        GIVEN PLAUSIBLE_SCRIPT_URL is set
-        WHEN any page is rendered
-        THEN the Plausible script tag and init block appear
-        """
-        with self.settings(PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test123.js'):
-            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-            self.assertContains(response, 'src="https://plausible.io/js/pa-test123.js"')
-            self.assertContains(response, 'plausible.init')
-
-    def test_plausible_script_with_custom_url(self):
-        """
-        GIVEN PLAUSIBLE_SCRIPT_URL points to a self-hosted instance
-        WHEN a page is rendered
-        THEN the script tag uses that URL
-        """
-        with self.settings(PLAUSIBLE_SCRIPT_URL='https://stats.example.com/js/pa-abc.js'):
-            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-            self.assertContains(response, 'src="https://stats.example.com/js/pa-abc.js"')
-
-    def test_yandex_metrica_absent(self):
-        """
-        GIVEN any configuration
-        WHEN a survey section page is rendered
-        THEN no Yandex Metrica code appears in the HTML
-        """
-        response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-        self.assertNotContains(response, 'mc.yandex.ru')
-        self.assertNotContains(response, '53686546')
-
-    def test_survey_start_event_on_first_section(self):
-        """
-        GIVEN PLAUSIBLE_SCRIPT_URL is configured
-        WHEN the first section of a survey is loaded
-        THEN the page contains plausible integration and section data with section_current=1
-        """
-        with self.settings(PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js'):
-            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-            # Plausible survey_start fires via JS when sectionCurrent === 1
-            self.assertContains(response, "plausible('survey_start'")
-            self.assertContains(response, 'data-section-current="1"')
-
-    def test_no_survey_start_on_non_first_section_via_htmx(self):
-        """
-        GIVEN PLAUSIBLE_SCRIPT_URL is configured
-        WHEN a non-first section is loaded via HTMX
-        THEN the partial contains data-section-current != 1 (JS skips survey_start)
-        """
-        with self.settings(PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js'):
-            self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-            response = self.client.get(
-                f'/surveys/{self.survey.uuid}/section2/',
-                HTTP_HX_REQUEST='true',
-            )
-            self.assertContains(response, 'data-section-current="2"')
-            # HTMX partial doesn't include the shell JS with plausible
-            self.assertNotContains(response, "plausible('survey_start'")
-
-    def test_survey_section_complete_event_present(self):
-        """
-        GIVEN PLAUSIBLE_SCRIPT_URL is configured
-        WHEN a survey section page is loaded
-        THEN the shell contains plausible survey_section_complete handler
-        """
-        with self.settings(PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js'):
-            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-            self.assertContains(response, "plausible('survey_section_complete'")
-
-    def test_survey_complete_event_on_thanks_page(self):
-        """
-        GIVEN PLAUSIBLE_SCRIPT_URL is configured AND a respondent has an active session
-        WHEN the thanks page is loaded
-        THEN the page contains a survey_complete event script
-        """
-        with self.settings(PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js'):
-            # Create a session by visiting first section
-            self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-            response = self.client.get(f'/surveys/{self.survey.uuid}/thanks/')
-            self.assertContains(response, "plausible('survey_complete'")
-
-    def test_no_plausible_script_tag_when_disabled(self):
-        """
-        GIVEN PLAUSIBLE_SCRIPT_URL is empty
-        WHEN a survey section page is loaded
-        THEN no Plausible script tag is included (the JS guards with typeof plausible check)
-        """
-        with self.settings(PLAUSIBLE_SCRIPT_URL=''):
-            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-            self.assertNotContains(response, 'plausible.io/js/')
-
-    def test_plausible_on_editor_page(self):
-        """
-        GIVEN PLAUSIBLE_SCRIPT_URL is set
-        WHEN the editor page is loaded
-        THEN the Plausible script tag is present
-        """
-        with self.settings(PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js'):
-            self.client.login(username='analyticsuser', password='pass')
-            response = self.client.get('/editor/')
-            self.assertContains(response, 'src="https://plausible.io/js/pa-test.js"')
-
-    def test_events_guarded_against_blocked_scripts(self):
-        """
-        GIVEN PLAUSIBLE_SCRIPT_URL is configured
-        WHEN survey section page is rendered
-        THEN event scripts are guarded with typeof plausible check
-        """
-        with self.settings(PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js'):
-            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-            content = response.content.decode()
-            self.assertIn("typeof plausible !== 'undefined'", content)
-
-
 class PostHogSnippetTest(TestCase):
     """Tests for the internal product-analytics snippet.
 
@@ -10482,20 +10327,6 @@ class PostHogSnippetTest(TestCase):
             self.client.login(username='posthoguser', password='pass')
             response = self.client.get('/editor/')
             self.assertContains(response, 'window.top !== window.self')
-
-    def test_plausible_still_renders_on_excluded_pages(self):
-        """
-        GIVEN both trackers are configured
-        WHEN a respondent survey page is rendered
-        THEN Plausible is still present and only PostHog is withheld
-        """
-        with self.settings(
-            POSTHOG_PROJECT_KEY=self.KEY,
-            PLAUSIBLE_SCRIPT_URL='https://plausible.io/js/pa-test.js',
-        ):
-            response = self.client.get(f'/surveys/{self.survey.uuid}/section1/')
-            self.assertContains(response, 'src="https://plausible.io/js/pa-test.js"')
-            self.assertNotContains(response, 'posthog.init')
 
     def test_exclusion_list_is_configurable(self):
         """
@@ -11388,7 +11219,8 @@ class CreatorFunnelEventTest(TestCase):
         call = next(c for c in capture.call_args_list
                     if c.args and c.args[0] == pe.SURVEY_FIRST_RESPONSE)
         self.assertEqual(set(call.kwargs['properties']) - {'timestamp_source'},
-                         {'survey_id', 'creation_method'})
+                         {'survey_id', 'creation_method', 'respondent_kind'})
+        self.assertEqual(call.kwargs['properties']['respondent_kind'], 'external')
 
     def test_backfill_and_live_emission_use_the_same_event_names(self):
         """
@@ -21467,264 +21299,8 @@ from unittest.mock import patch
 from django.contrib.auth.models import AnonymousUser
 from django.core.cache import cache as _cache
 
-from survey.acquisition import (
-    NotConfigured, ProviderError, demo_survey_uuid, exclusion_regex, record_demo_open,
-)
-from survey.funnel import ACQUISITION_LAG_DAYS, AcquisitionService
-from survey.models import AcquisitionDaily, AcquisitionSyncState, DemoOpen
-
-
-def _acq_window(days=30, today=None):
-    """The same window AcquisitionService derives, for placing test rows inside it."""
-    today = today or timezone.localdate()
-    end = today - _dt.timedelta(days=ACQUISITION_LAG_DAYS)
-    return end - _dt.timedelta(days=days - 1), end
-
-
-def _gsc_row(date, segment, impressions=0, clicks=0):
-    return AcquisitionDaily.objects.create(
-        source="gsc", date=date, segment=segment,
-        impressions=impressions, clicks=clicks, ctr=0.01, position=5.0,
-    )
-
-
-def _plausible_row(date, segment, visitors=0, pageviews=0):
-    return AcquisitionDaily.objects.create(
-        source="plausible", date=date, segment=segment,
-        visitors=visitors, pageviews=pageviews,
-    )
-
-
-def _synced(source, error="", configured=True, when=None):
-    return AcquisitionSyncState.objects.create(
-        source=source, is_configured=configured, last_error=error,
-        last_attempt_at=timezone.now(),
-        last_success_at=(when or timezone.now()) if not error else None,
-    )
-
-
-class AcquisitionSyncCommandTest(TestCase):
-    """The sync command: idempotency, revisions, isolation, exit status."""
-
-    def setUp(self):
-        self.start, self.end = _acq_window()
-
-    def _run(self, gsc_rows=None, plausible_rows=None, gsc_exc=None, plausible_exc=None,
-             **kwargs):
-        """Run the command with both providers patched."""
-        def fetcher(rows, exc):
-            def _f(days, today=None):
-                if exc is not None:
-                    raise exc
-                return rows or []
-            return _f
-
-        out, err = StringIO(), StringIO()
-        with patch.dict(
-            "survey.management.commands.sync_acquisition_metrics.FETCHERS",
-            {"gsc": fetcher(gsc_rows, gsc_exc),
-             "plausible": fetcher(plausible_rows, plausible_exc)},
-        ):
-            call_command("sync_acquisition_metrics", stdout=out, stderr=err, **kwargs)
-        return out.getvalue(), err.getvalue()
-
-    def _gsc_payload(self, impressions):
-        return [{"source": "gsc", "date": self.end, "segment": "marketing",
-                 "impressions": impressions, "clicks": 3, "ctr": 0.02, "position": 4.5}]
-
-    def test_rerunning_overwrites_instead_of_duplicating(self):
-        """
-        GIVEN a window already synced once
-        WHEN the command runs again over the same window
-        THEN the row count is unchanged and the values come from the second run
-        """
-        self._run(gsc_rows=self._gsc_payload(100))
-        self.assertEqual(AcquisitionDaily.objects.count(), 1)
-
-        self._run(gsc_rows=self._gsc_payload(100))
-
-        self.assertEqual(AcquisitionDaily.objects.count(), 1)
-
-    def test_provider_revision_replaces_stored_value(self):
-        """
-        GIVEN a day already stored with one value
-        WHEN the provider returns a revised value for that day
-        THEN the stored row reflects the new value
-        """
-        self._run(gsc_rows=self._gsc_payload(100))
-
-        self._run(gsc_rows=self._gsc_payload(175))
-
-        self.assertEqual(AcquisitionDaily.objects.get().impressions, 175)
-
-    def test_one_source_failing_leaves_the_other_intact(self):
-        """
-        GIVEN one provider erroring and the other succeeding
-        WHEN the sync runs
-        THEN the healthy source's rows are written and only the failing one records an error
-        """
-        self._run(gsc_rows=self._gsc_payload(100), plausible_exc=ProviderError("boom"))
-
-        self.assertEqual(AcquisitionDaily.objects.filter(source="gsc").count(), 1)
-        self.assertEqual(
-            AcquisitionSyncState.objects.get(source="plausible").last_error, "boom",
-        )
-        self.assertEqual(AcquisitionSyncState.objects.get(source="gsc").last_error, "")
-
-    def test_failure_does_not_delete_previously_stored_rows(self):
-        """
-        GIVEN a source with rows already stored
-        WHEN a later run of that source fails
-        THEN the previously stored rows survive
-        """
-        self._run(gsc_rows=self._gsc_payload(100))
-
-        self._run(gsc_exc=ProviderError("outage"))
-
-        self.assertEqual(AcquisitionDaily.objects.filter(source="gsc").count(), 1)
-
-    def test_all_sources_failing_exits_non_zero(self):
-        """
-        GIVEN every requested source failing
-        WHEN the command runs
-        THEN it exits non-zero so the cron run is visibly failed
-        """
-        with self.assertRaises(SystemExit):
-            self._run(gsc_exc=ProviderError("a"), plausible_exc=ProviderError("b"))
-
-    def test_not_configured_is_not_a_failure(self):
-        """
-        GIVEN neither provider configured
-        WHEN the command runs
-        THEN it completes, writes nothing, and both sources report not-configured
-        """
-        out, _ = self._run(
-            gsc_exc=NotConfigured("no key"), plausible_exc=NotConfigured("no token"),
-        )
-
-        self.assertEqual(AcquisitionDaily.objects.count(), 0)
-        for source in ("gsc", "plausible"):
-            state = AcquisitionSyncState.objects.get(source=source)
-            self.assertFalse(state.is_configured)
-            self.assertEqual(state.state, "not_configured")
-        self.assertIn("not configured", out)
-
-    def test_single_source_leaves_the_other_untouched(self):
-        """
-        GIVEN both sources have rows
-        WHEN the command runs restricted to one source
-        THEN the other source keeps its rows and its state is not attempted
-        """
-        _plausible_row(self.end, "landing", visitors=9)
-
-        self._run(gsc_rows=self._gsc_payload(50), source="gsc")
-
-        self.assertEqual(AcquisitionDaily.objects.get(source="plausible").visitors, 9)
-        self.assertFalse(AcquisitionSyncState.objects.filter(source="plausible").exists())
-
-    def test_successful_sync_clears_a_previous_error(self):
-        """
-        GIVEN a source whose last run failed
-        WHEN it next succeeds
-        THEN its state reports success and no outstanding error
-        """
-        self._run(gsc_exc=ProviderError("transient"))
-
-        self._run(gsc_rows=self._gsc_payload(10))
-
-        state = AcquisitionSyncState.objects.get(source="gsc")
-        self.assertEqual(state.last_error, "")
-        self.assertEqual(state.state, "ok")
-
-
-class MarketingPageGroupTest(TestCase):
-    """The GSC page-group exclusion that keeps customer survey traffic out."""
-
-    def test_survey_pages_are_excluded_and_landings_are_not(self):
-        """
-        GIVEN the configured non-marketing prefixes
-        WHEN URLs are matched against the exclusion regex
-        THEN app and survey pages are excluded while marketing landings are kept
-        """
-        import re
-        rx = re.compile(exclusion_regex(settings.ACQUISITION_NON_MARKETING_PREFIXES))
-
-        for url in ("https://mapsurvey.org/surveys/7a4688ca-660b-4e40-931d-abc",
-                    "https://mapsurvey.org/accounts/register/",
-                    "https://mapsurvey.org/editor/surveys/x/",
-                    "https://mapsurvey.org/admin/"):
-            self.assertIsNotNone(rx.search(url), url)
-
-        for url in ("https://mapsurvey.org/",
-                    "https://mapsurvey.org/#demo",
-                    "https://mapsurvey.org/for-educators/",
-                    "https://mapsurvey.org/alternatives/maptionnaire/",
-                    "https://mapsurvey.org/civic-engagement/",
-                    "https://mapsurvey.org/trust/"):
-            self.assertIsNone(rx.search(url), url)
-
-
-class GscAggregationModeTest(TestCase):
-    """Both GSC segments must be fetched under one aggregation mode.
-
-    GSC aggregates by property when no page filter is present and by page when one is;
-    the totals differ (1329 vs 1717 over the same 14 live days). Mixing the modes made
-    the marketing segment exceed the whole property, which is impossible and silently
-    corrupts every conversion below it. See design.md D3a.
-    """
-
-    def test_whole_property_query_also_carries_a_page_filter(self):
-        """
-        GIVEN a fetch of both the whole-property and the marketing segment
-        WHEN the requests are built
-        THEN both carry a page filter, keeping the provider in page-level aggregation
-        """
-        from survey import acquisition
-
-        bodies = []
-
-        class _FakeQuery:
-            def __init__(self, body):
-                bodies.append(body)
-
-            def execute(self):
-                return {"rows": [{"keys": ["2026-07-28"], "impressions": 10, "clicks": 1,
-                                  "ctr": 0.1, "position": 3.0}]}
-
-        class _FakeSearchAnalytics:
-            def query(self, siteUrl=None, body=None):
-                return _FakeQuery(body)
-
-        class _FakeService:
-            def searchanalytics(self):
-                return _FakeSearchAnalytics()
-
-        with patch.object(acquisition, "gsc_service",
-                          return_value=(_FakeService(), "sc-domain:example.org")):
-            acquisition.fetch_gsc(7)
-
-        self.assertEqual(len(bodies), 2)
-        for body in bodies:
-            filters = body["dimensionFilterGroups"][0]["filters"]
-            self.assertEqual(filters[0]["dimension"], "page")
-            self.assertTrue(filters[0]["expression"])
-
-    def test_marketing_never_exceeds_whole_property(self):
-        """
-        GIVEN stored GSC rows for both segments
-        WHEN their impressions are compared
-        THEN the marketing segment is not larger than the whole property
-        """
-        start, end = _acq_window()
-        _gsc_row(end, AcquisitionDaily.SEGMENT_ALL, impressions=1717)
-        _gsc_row(end, AcquisitionDaily.SEGMENT_MARKETING, impressions=1579)
-
-        whole = AcquisitionDaily.objects.get(
-            source="gsc", segment=AcquisitionDaily.SEGMENT_ALL).impressions
-        marketing = AcquisitionDaily.objects.get(
-            source="gsc", segment=AcquisitionDaily.SEGMENT_MARKETING).impressions
-
-        self.assertLessEqual(marketing, whole)
+from survey.demo import demo_survey_uuid, record_demo_open
+from survey.models import DemoOpen
 
 
 class DemoOpenRecordingTest(TestCase):
@@ -21822,289 +21398,6 @@ class DemoOpenRecordingTest(TestCase):
             self.assertIsNone(demo_survey_uuid())
         with self.settings(DEMO_SURVEY_URL=""):
             self.assertIsNone(demo_survey_uuid())
-
-
-class AcquisitionServiceTest(TestCase):
-    """The dashboard's acquisition block: values, unavailability, conversions."""
-
-    def setUp(self):
-        _cache.clear()
-        self.start, self.end = _acq_window()
-        self.org = _make_org("AcqOrg")
-
-    def tearDown(self):
-        _cache.clear()
-
-    def test_stages_and_conversions_with_all_sources_synced(self):
-        """
-        GIVEN synced GSC and Plausible rows plus registrations in the window
-        WHEN the block is built
-        THEN each stage carries its value and each conversion its rate
-        """
-        _synced("gsc")
-        _synced("plausible")
-        _gsc_row(self.end, AcquisitionDaily.SEGMENT_MARKETING, impressions=1000, clicks=40)
-        _plausible_row(self.end, AcquisitionDaily.SEGMENT_LANDING, visitors=100)
-        _user_at("acq_reg", timezone.now() - _dt.timedelta(days=ACQUISITION_LAG_DAYS + 1))
-
-        block = AcquisitionService(days=30).block()
-
-        impressions, visits, regs, demo = block["stages"]
-        self.assertEqual(impressions["value"], 1000)
-        self.assertEqual(visits["value"], 100)
-        self.assertEqual(regs["value"], 1)
-        self.assertEqual(block["conversions"][0]["pct"], 10.0)   # 100/1000
-        self.assertEqual(block["conversions"][1]["pct"], 1.0)    # 1/100
-        self.assertEqual(block["clicks"]["value"], 40)
-
-    def test_not_configured_source_renders_unavailable_not_zero(self):
-        """
-        GIVEN a source with no credentials configured
-        WHEN the block is built
-        THEN its stage is unavailable with a reason rather than a zero
-        """
-        AcquisitionSyncState.objects.create(
-            source="plausible", is_configured=False, last_error="no token",
-        )
-        _synced("gsc")
-        _gsc_row(self.end, AcquisitionDaily.SEGMENT_MARKETING, impressions=10)
-
-        block = AcquisitionService(days=30).block()
-
-        visits = block["stages"][1]
-        self.assertFalse(visits["known"])
-        self.assertIsNone(visits["value"])
-        self.assertIn("no token", visits["unavailable"])
-
-    def test_missing_stage_does_not_fabricate_a_conversion(self):
-        """
-        GIVEN landing visits unavailable
-        WHEN conversions are computed
-        THEN the rates that depend on visits are unknown rather than 0%
-        """
-        _synced("gsc")
-        _gsc_row(self.end, AcquisitionDaily.SEGMENT_MARKETING, impressions=500)
-
-        block = AcquisitionService(days=30).block()
-
-        self.assertFalse(block["conversions"][0]["known"])
-        self.assertIsNone(block["conversions"][0]["pct"])
-        self.assertFalse(block["conversions"][1]["known"])
-
-    def test_healthy_but_empty_window_shows_zero(self):
-        """
-        GIVEN a source that synced successfully but recorded nothing in the window
-        WHEN the block is built
-        THEN the stage shows zero, distinct from unavailable
-        """
-        _synced("gsc")
-        # A row outside the window proves the source has synced at some point.
-        _gsc_row(self.start - _dt.timedelta(days=10),
-                 AcquisitionDaily.SEGMENT_MARKETING, impressions=99)
-
-        impressions = AcquisitionService(days=30).block()["stages"][0]
-
-        self.assertTrue(impressions["known"])
-        self.assertEqual(impressions["value"], 0)
-
-    def test_registrations_match_the_cohort_funnel_population(self):
-        """
-        GIVEN staff, superusers and real users registered in the window
-        WHEN the registrations stage is computed
-        THEN it counts only the real registrations
-        """
-        inside = timezone.now() - _dt.timedelta(days=ACQUISITION_LAG_DAYS + 2)
-        _user_at("real_one", inside)
-        _user_at("real_two", inside)
-        _user_at("staff_one", inside, is_staff=True)
-        _user_at("super_one", inside, is_superuser=True)
-
-        regs = AcquisitionService(days=30).block()["stages"][2]
-
-        self.assertEqual(regs["value"], 2)
-
-    def test_registrations_card_is_all_time_while_conversions_stay_windowed(self):
-        """
-        GIVEN one real user inside the window and one registered long before it
-        WHEN the block is built
-        THEN the card counts both while the conversion rows count only the windowed one
-        """
-        _synced("plausible")
-        _plausible_row(self.end, AcquisitionDaily.SEGMENT_LANDING, visitors=100)
-        _user_at("acq_inside", timezone.now() - _dt.timedelta(days=ACQUISITION_LAG_DAYS + 1))
-        _user_at("acq_ancient", timezone.now() - _dt.timedelta(days=400))
-
-        block = AcquisitionService(days=30).block()
-
-        self.assertEqual(block["stages"][2]["value"], 2)
-        self.assertEqual(block["registrations_in_window"]["value"], 1)
-        # visits -> registrations: 1 windowed signup against 100 visitors, not 2.
-        self.assertEqual(block["conversions"][1]["pct"], 1.0)
-
-    def test_registrations_card_ignores_the_search_console_lag(self):
-        """
-        GIVEN a real user who registered today, inside the lag the window skips
-        WHEN the block is built
-        THEN the card already counts them
-        """
-        _user_at("acq_today", timezone.now())
-
-        block = AcquisitionService(days=30).block()
-
-        self.assertEqual(block["stages"][2]["value"], 1)
-        self.assertEqual(block["registrations_in_window"]["value"], 0)
-
-    def test_demo_total_and_split(self):
-        """
-        GIVEN demo sessions with and without recorded identity
-        WHEN the demo block is computed
-        THEN the total counts sessions and the split counts recorded entries with its start date
-        """
-        demo = SurveyHeader.objects.create(
-            name="demo_s", organization=self.org, status="published",
-        )
-        inside = timezone.now() - _dt.timedelta(days=ACQUISITION_LAG_DAYS + 1)
-        user = User.objects.create_user(username="demo_user", password="x")
-        for _ in range(3):
-            s = SurveySession.objects.create(survey=demo, start_datetime=inside)
-            DemoOpen.objects.create(session=s, created_at=inside)
-        s = SurveySession.objects.create(survey=demo, start_datetime=inside)
-        DemoOpen.objects.create(session=s, user=user, created_at=inside)
-        # A session predating the split: counted in the total, absent from the split.
-        SurveySession.objects.create(survey=demo, start_datetime=inside)
-
-        with self.settings(DEMO_SURVEY_URL=f"https://mapsurvey.org/surveys/{demo.uuid}"):
-            demo_block = AcquisitionService(days=30).block()["demo"]
-
-        self.assertEqual(demo_block["stage"]["value"], 5)
-        self.assertEqual(demo_block["anonymous"], 3)
-        self.assertEqual(demo_block["signed_in"], 1)
-        self.assertTrue(demo_block["split_known"])
-        self.assertEqual(demo_block["survey_name"], "demo_s")
-
-    def test_demo_unavailable_when_survey_cannot_be_resolved(self):
-        """
-        GIVEN a demo URL pointing at no existing survey
-        WHEN the demo block is computed
-        THEN the stage is unavailable and the block still renders
-        """
-        with self.settings(DEMO_SURVEY_URL=""):
-            block = AcquisitionService(days=30).block()
-
-        self.assertFalse(block["demo"]["stage"]["known"])
-        self.assertIn("DEMO_SURVEY_URL", block["demo"]["stage"]["unavailable"])
-
-    def test_channels_ordered_by_volume(self):
-        """
-        GIVEN visitors from several referrer channels
-        WHEN the channel breakdown is computed
-        THEN channels are listed largest first
-        """
-        _synced("plausible")
-        _plausible_row(self.end, "src:Google", visitors=40)
-        _plausible_row(self.end, "src:Reddit", visitors=70)
-        _plausible_row(self.end, "src:LinkedIn", visitors=5)
-
-        channels = AcquisitionService(days=30).block()["channels"]
-
-        self.assertTrue(channels["available"])
-        self.assertEqual([r["channel"] for r in channels["rows"]],
-                         ["Reddit", "Google", "LinkedIn"])
-
-    def test_channels_unavailable_without_data(self):
-        """
-        GIVEN no channel rows and an unconfigured source
-        WHEN the breakdown is computed
-        THEN it is unavailable with a reason
-        """
-        channels = AcquisitionService(days=30).block()["channels"]
-
-        self.assertFalse(channels["available"])
-        self.assertTrue(channels["unavailable"])
-
-    def test_freshness_flags_stale_sources(self):
-        """
-        GIVEN a configured source whose last success is older than the stale threshold
-        WHEN freshness is computed
-        THEN that source is marked stale
-        """
-        _synced("gsc", when=timezone.now() - _dt.timedelta(hours=200))
-
-        by_source = {f["source"]: f for f in AcquisitionService().freshness()}
-
-        self.assertTrue(by_source["gsc"]["stale"])
-        self.assertEqual(by_source["plausible"]["state"], "not_configured")
-
-
-class AcquisitionDashboardRenderTest(TestCase):
-    """The dashboard page itself, including the empty-install case."""
-
-    def setUp(self):
-        _cache.clear()
-        self.url = reverse("admin:survey_funnelreport_changelist")
-        self.staff = User.objects.create_user(
-            username="acq_staff", password="x", is_staff=True, is_superuser=True,
-        )
-
-    def tearDown(self):
-        _cache.clear()
-
-    def test_renders_with_no_acquisition_data_at_all(self):
-        """
-        GIVEN a fresh install with no synced metrics and no demo survey
-        WHEN a staff user opens the dashboard
-        THEN the page renders with the acquisition section in its unavailable state
-        """
-        self.client.force_login(self.staff)
-
-        with self.settings(DEMO_SURVEY_URL=""):
-            resp = self.client.get(self.url)
-
-        self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "Acquisition")
-        self.assertContains(resp, "not configured")
-        self.assertContains(resp, "Monthly cohort funnel")   # the rest still renders
-
-    def test_renders_values_when_synced(self):
-        """
-        GIVEN synced metrics
-        WHEN a staff user opens the dashboard
-        THEN the acquisition numbers appear on the page
-        """
-        start, end = _acq_window(days=26 * 7)
-        _synced("gsc")
-        _gsc_row(end, AcquisitionDaily.SEGMENT_MARKETING, impressions=2129, clicks=77)
-        self.client.force_login(self.staff)
-
-        resp = self.client.get(self.url)
-
-        self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "2129")
-
-    def test_non_staff_is_still_denied(self):
-        """
-        GIVEN a non-staff authenticated user
-        WHEN they request the dashboard
-        THEN access is denied and no acquisition data is shown
-        """
-        User.objects.create_user(username="acq_plain", password="x")
-        self.client.login(username="acq_plain", password="x")
-
-        resp = self.client.get(self.url)
-
-        self.assertNotEqual(resp.status_code, 200)
-        self.assertNotContains(resp, "Google impressions", status_code=302)
-
-    def test_anonymous_is_still_denied(self):
-        """
-        GIVEN an unauthenticated request
-        WHEN it hits the dashboard
-        THEN it is redirected to the admin login
-        """
-        resp = self.client.get(self.url)
-
-        self.assertEqual(resp.status_code, 302)
-        self.assertIn("/admin/login/", resp["Location"])
 
 
 class PublicResultsPageModelTest(TestCase):
@@ -37237,7 +36530,7 @@ class ExternalScriptCorsTest(SimpleTestCase):
         self.assertGreater(len(tags), 5, 'the scan found almost nothing — the regex is wrong')
         srcs = ' '.join(tag for _path, tag in tags)
         self.assertIn('leaflet', srcs.lower())
-        self.assertIn('PLAUSIBLE_SCRIPT_URL', srcs)
+        self.assertIn('unpkg.com', srcs)
 
 
 class SurveyInlineRenameTest(TestCase):
@@ -40474,3 +39767,439 @@ class MalformedGeometryChunkTest(TestCase):
                 response = self._post(chunk + '|')
                 self.assertEqual(response.status_code, 302)
                 self.assertEqual(self._answers(self.point).count(), 0)
+
+
+# ---------------------------------------------------------------------------
+# acquisition-instrumentation: first-touch attribution, external first response,
+# distribution events, badge on results, no third-party analytics for respondents
+# ---------------------------------------------------------------------------
+
+from unittest.mock import patch as _ai_patch
+
+from django.core import signing as _signing
+from django.test import RequestFactory as _AIRequestFactory
+from django_registration.signals import user_registered as _user_registered
+
+from survey import product_events as _pe
+from survey.events import (
+    FIRST_TOUCH_COOKIE, classify_source, encode_first_touch, first_touch_for_signup,
+)
+from survey.models import PublicResultsPage as _PRP, SignupAttribution as _SA
+
+
+class SourceClassificationTest(TestCase):
+    """classify_source: referrer buckets plus the UTM promotion to `ai`."""
+
+    def test_ai_assistant_referrers(self):
+        """
+        GIVEN referrers from ChatGPT, Perplexity and Gemini
+        WHEN classify_source runs
+        THEN every one lands in the `ai` bucket
+        """
+        for url in ('https://chatgpt.com/', 'https://www.perplexity.ai/search?q=x',
+                    'https://gemini.google.com/app'):
+            self.assertEqual(classify_source(url)[1], 'ai', url)
+
+    def test_chatgpt_utm_without_referrer(self):
+        """
+        GIVEN no referrer and utm_source=chatgpt.com (how ChatGPT tags its links)
+        WHEN classify_source runs
+        THEN the bucket is `ai`, not `direct`
+        """
+        self.assertEqual(classify_source('', 'chatgpt.com'), ('', 'ai'))
+
+    def test_secondary_search_engines(self):
+        """
+        GIVEN DuckDuckGo, Brave and Ecosia referrers
+        WHEN classify_source runs
+        THEN the bucket is `search_other`
+        """
+        for url in ('https://duckduckgo.com/', 'https://search.brave.com/search?q=x',
+                    'https://www.ecosia.org/search?q=x'):
+            self.assertEqual(classify_source(url)[1], 'search_other', url)
+
+    def test_google_bing_and_email_unchanged(self):
+        """
+        GIVEN Google, Bing and Gmail referrers
+        WHEN classify_source runs
+        THEN the historical buckets are kept, and Gmail is email rather than google
+        """
+        self.assertEqual(classify_source('https://www.google.com/search?q=x')[1], 'google')
+        self.assertEqual(classify_source('https://www.bing.com/search')[1], 'bing')
+        self.assertEqual(classify_source('https://mail.google.com/mail/u/0/')[1], 'email')
+
+    def test_own_host_is_direct(self):
+        """
+        GIVEN the site's own host as the referrer (an internal hop)
+        WHEN classify_source runs with the own host
+        THEN the result is direct with no host recorded
+        """
+        self.assertEqual(
+            classify_source('https://mapsurvey.org/for-planners/', own_host='mapsurvey.org'),
+            ('', 'direct'),
+        )
+
+
+class FirstTouchCookieTest(TestCase):
+    """FirstTouchMiddleware writes the cookie on marketing pages only."""
+
+    def setUp(self):
+        self.org = _make_org('FirstTouchOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='ft_survey', organization=self.org, redirect_url='#', status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name='section1',
+            start_map_postion=Point(0, 0), start_map_zoom=10,
+        )
+
+    def test_landing_sets_signed_cookie_with_source(self):
+        """
+        GIVEN a first visit to the landing page from ChatGPT
+        WHEN the response is served
+        THEN a signed ms_ft cookie holds the ai bucket, the host and the landing path
+        """
+        response = self.client.get('/', HTTP_REFERER='https://chatgpt.com/c/abc')
+        self.assertEqual(response.status_code, 200)
+        cookie = response.cookies.get(FIRST_TOUCH_COOKIE)
+        self.assertIsNotNone(cookie)
+        self.assertTrue(cookie['httponly'])
+        data = _signing.loads(cookie.value, salt='survey.first_touch')
+        self.assertEqual(data['b'], 'ai')
+        self.assertEqual(data['h'], 'chatgpt.com')
+        self.assertEqual(data['p'], '/')
+
+    def test_existing_cookie_is_not_overwritten(self):
+        """
+        GIVEN a visitor who already carries a first-touch cookie
+        WHEN they load another marketing page from Google
+        THEN the cookie is left alone (first touch wins)
+        """
+        self.client.cookies[FIRST_TOUCH_COOKIE] = encode_first_touch({'b': 'ai', 'h': 'chatgpt.com'})
+        response = self.client.get('/', HTTP_REFERER='https://www.google.com/')
+        self.assertNotIn(FIRST_TOUCH_COOKIE, response.cookies)
+
+    def test_respondent_pages_never_set_it(self):
+        """
+        GIVEN a respondent opening a survey page
+        WHEN the response is served
+        THEN no first-touch cookie is written
+        """
+        response = self.client.get(f'/surveys/{self.survey.uuid}/section1/', HTTP_REFERER='https://www.google.com/')
+        self.assertNotIn(FIRST_TOUCH_COOKIE, response.cookies)
+
+    def test_register_form_page_sets_it(self):
+        """
+        GIVEN a visitor landing straight on the registration form from an outreach link
+        WHEN the page is served
+        THEN the cookie records the UTM source
+        """
+        response = self.client.get('/accounts/register/?utm_source=edu&utm_medium=email')
+        cookie = response.cookies.get(FIRST_TOUCH_COOKIE)
+        self.assertIsNotNone(cookie)
+        data = _signing.loads(cookie.value, salt='survey.first_touch')
+        self.assertEqual(data['s'], 'edu')
+        self.assertEqual(data['m'], 'email')
+
+
+class FirstTouchPersistenceTest(TestCase):
+    """persist_signup_attribution reads the cookie and never the request's own referrer."""
+
+    def setUp(self):
+        self.rf = _AIRequestFactory()
+
+    def _req(self, cookie=None, referer=''):
+        req = self.rf.get('/accounts/register/', HTTP_REFERER=referer)
+        req.session = {}
+        if cookie is not None:
+            req.COOKIES[FIRST_TOUCH_COOKIE] = encode_first_touch(cookie)
+        return req
+
+    def test_cookie_wins_over_internal_referrer(self):
+        """
+        GIVEN a cookie captured from ChatGPT twelve days ago and a registration request
+              whose only referrer is the site itself
+        WHEN attribution is persisted
+        THEN the row carries the ai bucket, the UTM and the landing path from the cookie
+        """
+        req = self._req(
+            cookie={'r': 'https://chatgpt.com/', 'h': 'chatgpt.com', 'b': 'ai',
+                    's': 'chatgpt.com', 'm': '', 'c': '', 'p': '/for-planners/', 't': 1},
+            referer='http://testserver/accounts/register/',
+        )
+        user = User.objects.create_user('ft_cookie', password='x')
+        persist_signup_attribution(user, req)
+        a = _SA.objects.get(user=user)
+        self.assertEqual(a.source_bucket, 'ai')
+        self.assertEqual(a.utm_source, 'chatgpt.com')
+        self.assertEqual(a.landing_path, '/for-planners/')
+        self.assertIn('chatgpt', a.raw_referrer)
+
+    def test_internal_referrer_alone_is_direct(self):
+        """
+        GIVEN no cookie, no session value and the site itself as referrer
+        WHEN attribution is persisted
+        THEN the source is direct and the site's host is not stored
+        """
+        req = self._req(referer='http://testserver/')
+        user = User.objects.create_user('ft_internal', password='x')
+        persist_signup_attribution(user, req)
+        a = _SA.objects.get(user=user)
+        self.assertEqual(a.source_bucket, 'direct')
+        self.assertEqual(a.raw_referrer, '')
+
+    def test_tampered_cookie_is_ignored(self):
+        """
+        GIVEN a cookie whose signature does not verify
+        WHEN first_touch_for_signup resolves the source
+        THEN it falls through to direct instead of trusting the payload
+        """
+        req = self._req()
+        req.COOKIES[FIRST_TOUCH_COOKIE] = 'eyJiIjogImFpIn0:forged'
+        self.assertEqual(first_touch_for_signup(req)['bucket'], 'direct')
+
+
+class RegistrationEventFirstTouchTest(TestCase):
+    """creator_registered carries the first touch as $set_once person properties."""
+
+    def test_set_once_block_without_raw_url(self):
+        """
+        GIVEN a registration request carrying a first-touch cookie
+        WHEN the user_registered signal fires
+        THEN creator_registered is emitted with $set_once first-touch properties
+             and no raw referrer URL
+        """
+        rf = _AIRequestFactory()
+        req = rf.get('/accounts/register/')
+        req.session = {}
+        req.COOKIES[FIRST_TOUCH_COOKIE] = encode_first_touch(
+            {'r': 'https://duckduckgo.com/?q=map+survey', 'h': 'duckduckgo.com',
+             'b': 'search_other', 's': '', 'm': '', 'c': '', 'p': '/', 't': 1},
+        )
+        user = User.objects.create_user('ft_signal', password='x')
+        with _ai_patch('survey.signals.pe.emit') as emit:
+            _user_registered.send(sender=self.__class__, user=user, request=req)
+        calls = [c for c in emit.call_args_list if c.args[0] == _pe.CREATOR_REGISTERED]
+        self.assertEqual(len(calls), 1)
+        props = calls[0].args[2]
+        once = props['$set_once']
+        self.assertEqual(once['first_source_bucket'], 'search_other')
+        self.assertEqual(once['first_referrer_host'], 'duckduckgo.com')
+        self.assertEqual(once['first_landing_path'], '/')
+        self.assertNotIn('?q=', str(props))
+
+
+class ReclassifyAttributionCommandTest(TestCase):
+    """sync_posthog_person_properties --reclassify repairs stored buckets."""
+
+    def test_internal_referrer_and_ai_utm_are_repaired(self):
+        """
+        GIVEN a row spoiled by the internal referrer and a row from ChatGPT stored as other
+        WHEN the command runs with --reclassify --dry-run
+        THEN the first becomes direct and the second becomes ai, with nothing sent
+        """
+        from io import StringIO
+        from django.core.management import call_command
+
+        u1 = User.objects.create_user('rc_internal', password='x')
+        _SA.objects.create(user=u1, raw_referrer='https://mapsurvey.org/', source_bucket='other')
+        u2 = User.objects.create_user('rc_chatgpt', password='x')
+        _SA.objects.create(user=u2, raw_referrer='', source_bucket='other', utm_source='chatgpt.com')
+
+        out = StringIO()
+        call_command('sync_posthog_person_properties', '--reclassify', '--dry-run', stdout=out)
+        self.assertEqual(_SA.objects.get(user=u1).source_bucket, 'direct')
+        self.assertEqual(_SA.objects.get(user=u2).source_bucket, 'ai')
+        self.assertIn('reclassified: 2', out.getvalue())
+
+
+class SessionOpenerKindTest(TestCase):
+    """SurveySession.opened_by_kind and the external-only first response."""
+
+    def setUp(self):
+        self.org = _make_org('KindOrg')
+        self.owner = User.objects.create_user('kind_owner', password='x')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='kind_survey', organization=self.org, redirect_url='#',
+            status='published', created_by=self.owner,
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name='section1',
+            start_map_postion=Point(0, 0), start_map_zoom=10,
+        )
+
+    def test_owner_session_is_owner_and_anonymous_is_external(self):
+        """
+        GIVEN the owner opens their published survey, then an anonymous visitor does
+        WHEN the sessions are created by the section view
+        THEN the first is kind owner and the second is external
+        """
+        self.client.force_login(self.owner)
+        self.client.get(f'/surveys/{self.survey.uuid}/section1/')
+        self.client.logout()
+        anon = self.client_class()
+        anon.get(f'/surveys/{self.survey.uuid}/section1/')
+        kinds = list(SurveySession.objects.filter(survey=self.survey)
+                     .order_by('id').values_list('opened_by_kind', flat=True))
+        self.assertEqual(kinds, ['owner', 'external'])
+
+    def test_first_response_fires_once_for_the_first_external_session(self):
+        """
+        GIVEN an owner test session, then two anonymous sessions
+        WHEN sessions are saved
+        THEN survey_first_response is emitted exactly once, at the first external one,
+             with respondent_kind=external
+        """
+        with _ai_patch('survey.signals.pe.emit') as emit:
+            SurveySession.objects.create(survey=self.survey, opened_by_kind='owner')
+            SurveySession.objects.create(survey=self.survey, opened_by_kind='preview')
+            first_calls = [c for c in emit.call_args_list if c.args[0] == _pe.SURVEY_FIRST_RESPONSE]
+            self.assertEqual(first_calls, [])
+            SurveySession.objects.create(survey=self.survey)              # external by default
+            SurveySession.objects.create(survey=self.survey)
+        first_calls = [c for c in emit.call_args_list if c.args[0] == _pe.SURVEY_FIRST_RESPONSE]
+        self.assertEqual(len(first_calls), 1)
+        self.assertEqual(first_calls[0].args[1], self.owner.pk)
+        self.assertEqual(first_calls[0].args[2]['respondent_kind'], 'external')
+        self.assertEqual(first_calls[0].args[2]['survey_id'], str(self.survey.id))
+
+
+class DistributionEventsTest(TestCase):
+    """responses_viewed / data_exported server-side, share captures client-side."""
+
+    def setUp(self):
+        self.org = _make_org('DistOrg')
+        self.owner = User.objects.create_user('dist_owner', password='x')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='dist_survey', organization=self.org, redirect_url='#',
+            status='published', created_by=self.owner,
+        )
+        SurveyCollaborator.objects.create(user=self.owner, survey=self.survey, role='owner')
+        SurveySection.objects.create(
+            survey_header=self.survey, name='section1',
+            start_map_postion=Point(0, 0), start_map_zoom=10,
+        )
+        self.client.force_login(self.owner)
+
+    def test_responses_page_emits_responses_viewed(self):
+        """
+        GIVEN a signed-in owner
+        WHEN they open the responses page
+        THEN one responses_viewed event with the survey id is emitted
+        """
+        with _ai_patch('survey.analytics_views.pe.emit') as emit:
+            response = self.client.get(reverse('editor_survey_analytics', args=[self.survey.uuid]))
+        self.assertEqual(response.status_code, 200)
+        calls = [c for c in emit.call_args_list if c.args[0] == _pe.RESPONSES_VIEWED]
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0].args[2], {'survey_id': str(self.survey.id)})
+
+    def test_download_emits_data_exported(self):
+        """
+        GIVEN a signed-in owner
+        WHEN they download the responses ZIP
+        THEN one data_exported event with format zip is emitted and the ZIP is served
+        """
+        with _ai_patch('survey.views.pe.emit') as emit:
+            response = self.client.get(reverse('download_data', args=[str(self.survey.uuid)]))
+        self.assertEqual(response.status_code, 200)
+        calls = [c for c in emit.call_args_list if c.args[0] == _pe.DATA_EXPORTED]
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0].args[2]['format'], 'zip')
+
+    def test_share_page_captures_are_guarded_and_urlless(self):
+        """
+        GIVEN the share page
+        WHEN it renders
+        THEN the copy and QR handlers capture guarded PostHog events whose payload
+             names the survey id and surface, never the URL
+        """
+        response = self.client.get(reverse('editor_survey_share', args=[self.survey.uuid]))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("window.posthog && posthog.capture", html)
+        self.assertIn("trackShare('share_link_copied')", html)
+        self.assertIn("trackShare('qr_shown')", html)
+        self.assertIn("survey_id: SHARE_SURVEY_ID, surface: 'share_page'", html)
+
+
+class ResultsBadgeAndRespondentAnalyticsTest(TestCase):
+    """The badge on /r/ and the absence of any third-party analytics on respondent pages."""
+
+    def setUp(self):
+        self.org = _make_org('BadgeOrg')
+        self.survey = SurveyHeader.objects.create(
+            name='badge_survey', organization=self.org, redirect_url='#', status='published',
+        )
+        SurveySection.objects.create(
+            survey_header=self.survey, name='section1',
+            start_map_postion=Point(0, 0), start_map_zoom=10,
+        )
+        self.results_page = _PRP.objects.create(
+            survey=self.survey, slug='badge-results', is_published=True,
+        )
+
+    def test_results_page_badge_links_to_registration_with_utm_only(self):
+        """
+        GIVEN a published public results page
+        WHEN a visitor opens it
+        THEN the Made-with badge links to registration with utm_source=viral_loop and
+             utm_medium=results, and the href carries no slug or survey id
+        """
+        response = self.client.get(f'/r/{self.results_page.slug}/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        href = '/accounts/register/?utm_source=viral_loop&amp;utm_medium=results'
+        self.assertIn(href, html)
+        start = html.index(href)
+        self.assertNotIn(self.results_page.slug, html[start:start + len(href) + 40])
+        self.assertNotIn(str(self.survey.uuid), html[start:start + len(href) + 40])
+
+    def test_respondent_pages_load_no_third_party_analytics(self):
+        """
+        GIVEN PostHog configured
+        WHEN a survey page, the thanks page and the results page render
+        THEN none of them references plausible or initialises PostHog
+        """
+        with self.settings(POSTHOG_PROJECT_KEY='phc_testkey123'):
+            for url in (f'/surveys/{self.survey.uuid}/section1/',
+                        f'/surveys/{self.survey.uuid}/thanks/',
+                        f'/r/{self.results_page.slug}/'):
+                response = self.client.get(url, follow=True)
+                html = response.content.decode().lower()
+                self.assertNotIn('plausible', html, url)
+                self.assertNotIn('posthog.init', html, url)
+
+    def test_trust_page_states_the_new_boundary(self):
+        """
+        GIVEN the trust page
+        WHEN it renders
+        THEN it says respondent pages carry no analytics scripts, mentions the
+             first-party attribution cookie, and never names Plausible
+        """
+        response = self.client.get('/trust/')
+        html = response.content.decode()
+        self.assertIn('No analytics scripts of any kind', html)
+        self.assertIn('first-party cookie', html)
+        self.assertNotIn('Plausible', html)
+
+
+class FunnelDashboardAcquisitionLinkTest(TestCase):
+    """The Django funnel dashboard hands the top of the funnel to PostHog."""
+
+    def test_context_carries_link_and_no_provider_stages(self):
+        """
+        GIVEN the dashboard context
+        WHEN it is built
+        THEN the acquisition block has the PostHog URL, registrations and demo opens,
+             and no impressions, channels or freshness figures
+        """
+        ctx = _dashboard_context()
+        acq = ctx['acq']
+        self.assertTrue(acq['posthog_url'].startswith('https://'))
+        self.assertIn('registrations_in_window', acq)
+        self.assertIn('demo', acq)
+        for gone in ('stages', 'channels', 'freshness', 'clicks', 'conversions'):
+            self.assertNotIn(gone, acq)

@@ -9,6 +9,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from . import product_events as pe
 from .models import Question, Answer, SurveySession, VALIDATION_STATUS_CHOICES
 from .permissions import survey_permission_required
 from .analytics import (
@@ -98,6 +99,9 @@ def _resolve_filtered_session_ids(survey, filter_map, service=None):
 def analytics_dashboard(request, survey_uuid):
     """Full analytics dashboard page for a survey."""
     survey = request.survey
+    # Creator returned to the data: the only return that means anything for a
+    # project-shaped tool. Creator event, survey id only.
+    pe.emit(pe.RESPONSES_VIEWED, request.user.pk, {'survey_id': str(survey.id)})
     version = request.GET.get('version', 'all')
     service = SurveyAnalyticsService(survey, version=version)
 

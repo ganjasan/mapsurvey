@@ -78,57 +78,29 @@
     {% endfor %}
   </div>
 
-  {# ② ACQUISITION — top of the funnel, before registration #}
+  {# ② ACQUISITION — top of the funnel lives in PostHog now #}
   <h2 id="acquisition"><span class="step">2</span>Acquisition
-    <span class="sub">— {{ acq.start }} → {{ acq.end }} ({{ acq.days }}d, ends {{ acq.lag_days }}d back: Search Console lags)</span></h2>
-
-  <div class="cards">
-    {% for st in acq.stages %}
-    <div class="card">
-      <div class="lbl">{{ st.label }}</div>
-      {% if st.known %}
-      <div class="num">{{ st.value }}</div>
-      <div class="goal">{{ st.source }}</div>
-      <div class="goal subtle">{{ st.note }}</div>
-      {% else %}
-      <div class="num na">—</div>
-      <div class="goal">{{ st.source }}</div>
-      <div class="goal subtle">{{ st.unavailable }}</div>
-      {% endif %}
-    </div>
-    {% endfor %}
-  </div>
+    <span class="sub">— {{ acq.start }} → {{ acq.end }} ({{ acq.days }}d)</span></h2>
 
   <div class="grid3" style="margin-top:12px">
     <div class="panel">
-      <h3>Step conversion</h3>
-      <table class="funnel">
-        <tr><th>Step</th><th>Rate</th></tr>
-        {% for c in acq.conversions %}
-        <tr><td>{{ c.label }}</td>
-          <td>{% if c.known %}{{ c.pct }}%{% else %}<span class="na">—</span>{% endif %}</td></tr>
-        {% endfor %}
-      </table>
-      <div class="subtle" style="margin-top:6px">
-        Ratios across four separate measurement systems, not one cohort tracked down a
-        funnel: Search Console impressions, Plausible visitors (ad-blocked traffic
-        missing), and our own database. Read the trend, not the absolute drop-off.
-        Registrations here are the {{ acq.registrations_in_window.value }} inside the
-        window, not the all-time total on the card above — both sides of a rate have to
-        cover the same period.
-      </div>
+      <h3>Search, visits, channels → PostHog</h3>
+      <p class="subtle" style="margin:0 0 8px">
+        Impressions and clicks (Google Search Console, Bing), landing visits and the channel
+        mix are read on the PostHog <b>AARRR</b> dashboard, where Search Console and Bing are
+        warehouse sources. They are no longer computed in this application.
+      </p>
+      {% if acq.posthog_url %}
+      <a class="rowlink" href="{{ acq.posthog_url }}" target="_blank" rel="noopener">Open the AARRR dashboard →</a>
+      {% else %}
+      <div class="subtle">POSTHOG_AARRR_DASHBOARD_URL is unset.</div>
+      {% endif %}
     </div>
 
     <div class="panel">
-      <h3>Landing visits by channel</h3>
-      {% if acq.channels.available %}
-      <table class="funnel">
-        <tr><th>Channel</th><th>Visitors</th></tr>
-        {% for r in acq.channels.rows %}<tr><td>{{ r.channel }}</td><td>{{ r.visitors }}</td></tr>{% endfor %}
-      </table>
-      {% else %}
-      <div class="subtle">{{ acq.channels.unavailable }}</div>
-      {% endif %}
+      <h3>Registrations in window</h3>
+      <div class="num" style="font-size:25px;font-weight:700">{{ acq.registrations_in_window.value }}</div>
+      <div class="lbl" style="text-transform:uppercase;font-size:11px;opacity:.7">{{ acq.registrations_in_window.note }}</div>
     </div>
 
     <div class="panel">
@@ -157,19 +129,6 @@
       {% endif %}
     </div>
   </div>
-
-  <p class="subtle" style="margin:8px 0 0">
-    {% if acq.clicks.known %}Google clicks in window: <b>{{ acq.clicks.value }}</b> · {% endif %}
-    Sync:
-    {% for f in acq.freshness %}
-      <b>{{ f.source }}</b>
-      {% if f.state == 'not_configured' %}not configured{% if f.error %} ({{ f.error }}){% endif %}
-      {% elif f.state == 'never_run' %}configured, never synced
-      {% elif f.state == 'failing' %}<span class="tag bad">failing</span> {{ f.error }}
-      {% else %}last success {{ f.age_hours }}h ago{% if f.stale %} <span class="tag warn">stale</span>{% endif %}
-      {% endif %}{% if not forloop.last %} · {% endif %}
-    {% endfor %}
-  </p>
 
   {# ③ THIS WEEK #}
   <h2 id="week"><span class="step">3</span>This week</h2>

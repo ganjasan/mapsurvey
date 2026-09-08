@@ -22,11 +22,12 @@ from datetime import datetime
 from django import forms
 from django.views.generic import UpdateView
 from .forms import SurveySectionAnswerForm
+from . import product_events as pe
 from .events import (
     emit_event, build_session_start_metadata, store_utm_in_session,
     capture_signup_source, persist_signup_attribution,
 )
-from .acquisition import record_demo_open
+from .demo import record_demo_open
 from .seo_landings import (
     SEO_LANDINGS, render_seo_landing, Crumb, HOME,
     build_breadcrumb_jsonld, build_story_collection_jsonld,
@@ -723,7 +724,8 @@ def survey_language_select(request, survey_slug):
 			if request.session.get('survey_session_id'):
 				del request.session['survey_session_id']
 
-			survey_session = SurveySession(survey=survey, language=selected_language)
+			survey_session = SurveySession(survey=survey, language=selected_language,
+			                              opened_by_kind=session_kind_for(request, survey))
 			survey_session.save()
 			request.session['survey_session_id'] = survey_session.id
 			request.session['survey_language'] = selected_language
@@ -987,7 +989,8 @@ def survey_section(request, survey_slug, section_name):
 		):
 			survey_session = candidate
 	if survey_session is None:
-		survey_session = SurveySession(survey=survey, language=selected_language)
+		survey_session = SurveySession(survey=survey, language=selected_language,
+		                              opened_by_kind=session_kind_for(request, survey))
 		survey_session.save()
 		request.session['survey_session_id'] = survey_session.id
 		emit_event(survey_session, 'session_start', build_session_start_metadata(request))
@@ -1356,6 +1359,27 @@ def _get_version_surveys(survey, version_param):
 	return [(header, '') for header in scope.headers]
 
 
+def session_kind_for(request, survey):
+	"""`SurveySession.opened_by_kind` for a session created by this request.
+
+	Only the signed-in user's relation to the survey is consulted -- ownership and
+	the collaborator/org role -- never anything about an anonymous visitor. An
+	owner in a private window is therefore `external`, and that is correct: it is
+	an anonymous session, indistinguishable from a respondent by design.
+	"""
+	user = getattr(request, 'user', None)
+	if user is None or not user.is_authenticated:
+		return SurveySession.OPENED_BY_EXTERNAL
+	if survey.created_by_id == user.pk:
+		return SurveySession.OPENED_BY_OWNER
+	try:
+		if get_effective_survey_role(user, survey):
+			return SurveySession.OPENED_BY_COLLABORATOR
+	except Exception:
+		pass
+	return SurveySession.OPENED_BY_EXTERNAL
+
+
 @login_required
 def download_data(request, survey_slug):
 	in_memory = BytesIO()
@@ -1378,6 +1402,8 @@ def download_data(request, survey_slug):
 			request.user.pk, survey.uuid, role,
 		)
 		raise Http404
+
+	pe.emit(pe.DATA_EXPORTED, request.user.pk, {'survey_id': str(survey.id), 'format': 'zip'})
 
 	# Checked once, on the survey the URL names, before the family is expanded:
 	# a SurveyCollaborator holds a row on the canonical survey, not on each
@@ -1780,6 +1806,7 @@ def export_survey(request, survey_uuid):
 		return redirect('editor')
 
 	survey = request.survey
+	pe.emit(pe.DATA_EXPORTED, request.user.pk, {'survey_id': str(survey.id), 'format': mode})
 
 	try:
 		in_memory = BytesIO()
@@ -2536,7 +2563,9 @@ def survey_upload(request, survey_slug):
 				SurveySession.objects
 				.filter(survey=survey, is_deleted=False, tags__contains=['editor-preview'])
 				.first()
-			) or SurveySession.objects.create(survey=survey, tags=['editor-preview'])
+			) or SurveySession.objects.create(
+				survey=survey, tags=['editor-preview'], opened_by_kind=SurveySession.OPENED_BY_PREVIEW,
+			)
 	if survey_session is None:
 		# A real respondent lands here when cookies are blocked or the page
 		# outlived its session — "reload" is the action that actually helps.

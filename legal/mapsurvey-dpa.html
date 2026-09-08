@@ -96,8 +96,9 @@
      "undue delay") commit to timelines a one-person operation can meet.
 
   Facts in this draft were verified against the running system on 2026-08-15: hosting region via
-  the Render API, Cloudflare via response headers, Plausible via the production page source,
-  email host via EMAIL_HOST. Re-verify before publishing — they drift.
+  the Render API, Cloudflare via response headers, email host via EMAIL_HOST. Plausible was
+  removed as a sub-processor on 2026-09-09; survey pages now load no analytics script at all.
+  Re-verify before publishing — they drift.
 
   Rebuild the PDF with scripts/build_dpa.sh.
 -->
@@ -227,12 +228,6 @@ themselves to confidentiality or are under an appropriate statutory obligation o
     <td>Base map tiles and place search, requested directly by the respondent's browser</td>
     <td>United States</td>
     <td>Respondents</td>
-  </tr>
-  <tr>
-    <td>Plausible Insights OÜ</td>
-    <td>Cookieless aggregate visit analytics. Sets no cookies and builds no profiles of individuals</td>
-    <td>European Union</td>
-    <td>Creators and respondents</td>
   </tr>
   <tr>
     <td>PostHog, Inc. (EU Cloud)</td>

@@ -30,6 +30,15 @@ SURVEY_QUESTION_ADDED = 'survey_question_added'
 SURVEY_PUBLISHED = 'survey_published'
 SURVEY_FIRST_RESPONSE = 'survey_first_response'
 
+# Creator distribution / return events. Sharing is the step between "published"
+# and "answered" that the funnel could not see; responses/export are the only
+# returns to the product that mean anything for a project-shaped tool.
+SHARE_LINK_COPIED = 'share_link_copied'
+QR_SHOWN = 'qr_shown'
+EMBED_COPIED = 'embed_copied'
+RESPONSES_VIEWED = 'responses_viewed'
+DATA_EXPORTED = 'data_exported'
+
 CREATOR_FUNNEL_EVENTS = (
     CREATOR_REGISTERED,
     CREATOR_ACTIVATED,
@@ -190,3 +199,36 @@ def emit(event, user_id, properties=None, timestamp=None):
         )
     except Exception:
         logger.warning('posthog: failed to emit %s', event, exc_info=True)
+
+
+FIRST_TOUCH_PROPERTIES = (
+    'first_source_bucket', 'first_referrer_host', 'first_utm_source',
+    'first_utm_medium', 'first_utm_campaign', 'first_landing_path',
+)
+
+
+def first_touch_properties(attribution):
+    """PostHog person properties for a SignupAttribution row.
+
+    The raw referrer URL stays home: a host is enough for a breakdown and a URL
+    can carry a search query. Empty strings are sent as empty strings on purpose
+    -- `$set_once` with a missing key would let a later write fill it.
+    """
+    from urllib.parse import urlparse
+
+    host = ''
+    if attribution.raw_referrer:
+        try:
+            host = (urlparse(attribution.raw_referrer).hostname or '').lower()
+            if host.startswith('www.'):
+                host = host[4:]
+        except Exception:
+            host = ''
+    return {
+        'first_source_bucket': attribution.source_bucket or 'direct',
+        'first_referrer_host': host,
+        'first_utm_source': attribution.utm_source or '',
+        'first_utm_medium': attribution.utm_medium or '',
+        'first_utm_campaign': attribution.utm_campaign or '',
+        'first_landing_path': getattr(attribution, 'landing_path', '') or '',
+    }

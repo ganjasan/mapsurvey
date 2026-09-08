@@ -908,20 +908,10 @@ locale.{% endcomment %}
         }
     });
 
-    // --- Plausible section_complete on successful POST ---
+    // --- section_complete bookkeeping on successful POST ---
     $(document).on('htmx:afterRequest', function(evt) {
         var el = evt.detail.elt;
         if (!el || el.id !== 'section_question_form') return;
-        if (evt.detail.successful && typeof plausible !== 'undefined') {
-            var dataEl = document.getElementById('section-data');
-            if (dataEl) {
-                plausible('survey_section_complete', {props: {
-                    survey: dataEl.dataset.surveyName,
-                    section: dataEl.dataset.sectionName,
-                    section_number: parseInt(dataEl.dataset.sectionCurrent, 10)
-                }});
-            }
-        }
     });
 
     // --- Send page_leave before HTMX navigation ---
@@ -1100,12 +1090,7 @@ locale.{% endcomment %}
         var sectionCurrent = parseInt(dataEl.dataset.sectionCurrent, 10) || 0;
         initTracking(sessionId, sectionName, sectionCurrent);
 
-        // 8. Plausible survey_start on first section
-        if (typeof plausible !== 'undefined' && sectionCurrent === 1) {
-            plausible('survey_start', {props: {survey: dataEl.dataset.surveyName}});
-        }
-
-        // 9. Scroll to top
+        // 8. Scroll to top
         var infoPage = document.getElementById('info_page');
         if (infoPage) infoPage.scrollTop = 0;
     }

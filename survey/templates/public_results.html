@@ -122,7 +122,8 @@
     {% endfor %}
 
     <div class="footer">
-      <a class="made" href="https://mapsurvey.org/" target="_blank" rel="noopener">
+      {% comment %}Acquisition loop: the link carries the surface in utm_medium and no survey identifier, so a registration can be attributed to the badge without being attributable to this page.{% endcomment %}
+      <a class="made" href="{% url 'django_registration_register' %}?utm_source=viral_loop&amp;utm_medium=results" target="_blank" rel="noopener">
         {% trans "Made with" %} <strong>Mapsurvey</strong>
       </a>
     </div>
