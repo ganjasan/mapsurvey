@@ -23,7 +23,8 @@ SOFT_TIME_LIMIT = 300
 
 
 @shared_task(soft_time_limit=SOFT_TIME_LIMIT)
-def generate_survey_draft_task(event_id, brief_data, languages, header_overrides):
+def generate_survey_draft_task(event_id, brief_data, languages, header_overrides,
+                               map_locked=False):
     from .generation import SurveyBrief, generate_survey_draft
     from ..models import AIGenerationEvent
 
@@ -35,7 +36,8 @@ def generate_survey_draft_task(event_id, brief_data, languages, header_overrides
 
     brief = SurveyBrief(**brief_data)
     try:
-        generate_survey_draft(event, brief, languages, header_overrides)
+        generate_survey_draft(event, brief, languages, header_overrides,
+                              map_locked=map_locked)
     except Exception as exc:  # noqa: BLE001 - the poller must never wait forever
         logger.exception('AI draft task crashed for event %s', event_id)
         event.outcome = 'error'

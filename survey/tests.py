@@ -25330,6 +25330,205 @@ class AIGenerationFlowTest(_AIGenerationFixture, TestCase):
         self.assertEqual(event.outcome, 'not_configured')
 
 
+class AIBriefLocationTest(_AIGenerationFixture, TestCase):
+    """The place the model reads from the brief becomes the start position
+    (openspec: create-map-location-from-brief) — unless the creator framed
+    the map, and never at the cost of the draft."""
+
+    TALLINN = (59.4370, 24.7536, 12)
+
+    def _blob_with_location(self, location):
+        blob = _ai_blob(('en',))
+        blob['location'] = location
+        return blob
+
+    def _run_with(self, blob, map_locked, resolved):
+        from survey.ai.generation import generate_survey_draft, start_generation
+        from survey.ai.materialize import header_overrides_from_form
+
+        brief = self._brief()
+        event = start_generation(self.user, self.org, brief, ['en'])
+        overrides = header_overrides_from_form(
+            name=brief.name, languages=['en'],
+            map_lat='52.52', map_lng='13.405', map_zoom='12', default_basemap='streets',
+        )
+        provider = _FakeProvider([blob])
+        with patch('survey.ai.generation.client.get_provider', return_value=provider), \
+                patch('survey.ai.generation.geocode_place', return_value=resolved) as geocode:
+            generate_survey_draft(event, brief, ['en'], overrides, map_locked=map_locked)
+        event.refresh_from_db()
+        return event, geocode
+
+    def test_untouched_map_takes_the_briefs_place(self):
+        """
+        GIVEN the creator left the create-page map alone and the model named a place
+        WHEN the place geocodes
+        THEN the survey opens on the geocoded point at the place-type zoom
+        """
+        event, geocode = self._run_with(
+            self._blob_with_location('Tallinn, Estonia'), map_locked=False, resolved=self.TALLINN,
+        )
+
+        self.assertEqual(event.outcome, 'success')
+        geocode.assert_called_once_with('Tallinn, Estonia')
+        survey = event.created_survey
+        self.assertAlmostEqual(survey.start_map_postion.y, 59.4370, places=4)
+        self.assertAlmostEqual(survey.start_map_postion.x, 24.7536, places=4)
+        self.assertEqual(survey.start_map_zoom, 12)
+
+    def test_creator_framed_map_wins_and_skips_the_lookup(self):
+        """
+        GIVEN the creator dragged the map (map_touched posted)
+        WHEN the model also names a resolvable place
+        THEN the form position is kept and no geocode request is made
+        """
+        event, geocode = self._run_with(
+            self._blob_with_location('Tallinn, Estonia'), map_locked=True, resolved=self.TALLINN,
+        )
+
+        self.assertEqual(event.outcome, 'success')
+        geocode.assert_not_called()
+        survey = event.created_survey
+        self.assertAlmostEqual(survey.start_map_postion.y, 52.52, places=4)
+        self.assertAlmostEqual(survey.start_map_postion.x, 13.405, places=4)
+        self.assertEqual(survey.start_map_zoom, 12)
+
+    def test_unresolvable_place_falls_back_to_the_form(self):
+        """
+        GIVEN an untouched map and a place the geocoder cannot resolve
+        WHEN generation runs
+        THEN the draft still succeeds on the form position
+        """
+        event, geocode = self._run_with(
+            self._blob_with_location('Nowhere Particular'), map_locked=False, resolved=None,
+        )
+
+        self.assertEqual(event.outcome, 'success')
+        geocode.assert_called_once()
+        self.assertAlmostEqual(event.created_survey.start_map_postion.y, 52.52, places=4)
+
+    def test_empty_location_makes_no_lookup(self):
+        """
+        GIVEN a brief that names no place, so the model returned ""
+        WHEN generation runs
+        THEN no geocode request is made and the form position is used
+        """
+        event, geocode = self._run_with(self._blob_with_location(''), map_locked=False, resolved=self.TALLINN)
+
+        self.assertEqual(event.outcome, 'success')
+        geocode.assert_not_called()
+        self.assertAlmostEqual(event.created_survey.start_map_postion.x, 13.405, places=4)
+
+    def test_returned_location_is_kept_on_the_event(self):
+        """
+        GIVEN a successful generation
+        WHEN the blob is stored on the event
+        THEN the location the model returned is readable from generated_blob
+        """
+        event, _ = self._run_with(
+            self._blob_with_location('Tallinn, Estonia'), map_locked=False, resolved=self.TALLINN,
+        )
+
+        self.assertEqual(event.generated_blob['location'], 'Tallinn, Estonia')
+
+    def test_bad_location_is_normalized_not_rejected(self):
+        """
+        GIVEN drafts whose location is missing, not a string, or over-long
+        WHEN they are validated
+        THEN validation passes and the location reads as empty
+        """
+        from survey.ai.validator import MAX_LOCATION_CHARS, validate_blob
+
+        for bad in ({}, {'location': 42}, {'location': 'x' * (MAX_LOCATION_CHARS + 1)}):
+            blob = _ai_blob(('en',))
+            blob.pop('location', None)
+            blob.update(bad)
+            self.assertEqual(validate_blob(blob, ['en']), [], bad)
+            self.assertEqual(blob['location'], '', bad)
+
+        blob = self._blob_with_location('  Tallinn, Estonia  ')
+        self.assertEqual(validate_blob(blob, ['en']), [])
+        self.assertEqual(blob['location'], 'Tallinn, Estonia')
+
+    def test_schema_requires_location(self):
+        """
+        GIVEN the strict response schema
+        WHEN it is built
+        THEN location is a required top-level string, so the model always answers it
+        """
+        from survey.ai.schema import survey_draft_schema
+
+        schema = survey_draft_schema(['en'])
+        self.assertEqual(schema['properties']['location'], {'type': 'string'})
+        self.assertIn('location', schema['required'])
+
+
+class AIGeocodePlaceTest(TestCase):
+    """One bounded Photon lookup that can only ever return a position or None."""
+
+    def _response(self, status=200, payload=None):
+        response = mock.Mock()
+        response.status_code = status
+        response.json.return_value = payload if payload is not None else {}
+        return response
+
+    def _feature(self, lng, lat, place_type):
+        return {'features': [{
+            'geometry': {'coordinates': [lng, lat]},
+            'properties': {'type': place_type, 'name': 'x'},
+        }]}
+
+    def test_hit_returns_position_and_type_zoom(self):
+        """
+        GIVEN Photon answers with a country
+        WHEN the place is geocoded
+        THEN lat/lng come back in that order with the country zoom
+        """
+        from survey.ai import geocode
+
+        with patch('survey.ai.geocode.requests.get', return_value=self._response(
+                payload=self._feature(25.0, 58.6, 'country'))) as get:
+            self.assertEqual(geocode.geocode_place('Estonia'), (58.6, 25.0, 6))
+        kwargs = get.call_args.kwargs
+        self.assertEqual(kwargs['params'], {'q': 'Estonia', 'limit': 1})
+        self.assertLessEqual(kwargs['timeout'], 4)
+
+    def test_city_gets_default_zoom(self):
+        """
+        GIVEN Photon answers with a city
+        WHEN the place is geocoded
+        THEN the default (city) zoom is used
+        """
+        from survey.ai import geocode
+
+        with patch('survey.ai.geocode.requests.get', return_value=self._response(
+                payload=self._feature(24.75, 59.44, 'city'))):
+            self.assertEqual(geocode.geocode_place('Tallinn')[2], geocode.ZOOM_DEFAULT)
+
+    def test_every_failure_is_none(self):
+        """
+        GIVEN an empty result, a non-200, a timeout, a malformed feature, or a blank name
+        WHEN the place is geocoded
+        THEN the result is None and nothing raises
+        """
+        import requests as requests_lib
+        from survey.ai import geocode
+
+        cases = [
+            self._response(payload={'features': []}),
+            self._response(status=503),
+            self._response(payload={'features': [{'geometry': {}}]}),
+        ]
+        for response in cases:
+            with patch('survey.ai.geocode.requests.get', return_value=response):
+                self.assertIsNone(geocode.geocode_place('Tallinn'))
+        with patch('survey.ai.geocode.requests.get', side_effect=requests_lib.Timeout()):
+            self.assertIsNone(geocode.geocode_place('Tallinn'))
+        with patch('survey.ai.geocode.requests.get') as get:
+            self.assertIsNone(geocode.geocode_place('   '))
+            get.assert_not_called()
+
+
 class AIThinkingLevelRequestTest(TestCase):
     """Reasoning effort is a value we send, not a provider default we inherit."""
 
@@ -26516,6 +26715,36 @@ class AISurveyCreateViewTest(TestCase):
         # The POST is what puts the overlay and its poller on the page.
         self.assertContains(response, 'Building your survey')
         self.assertContains(response, 'hx-trigger')
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_map_touched_locks_the_position_for_the_task(self):
+        """
+        GIVEN the create page posted map_touched=1 (the creator framed the map)
+        WHEN the generate action is submitted
+        THEN the task is told the map is locked; without the flag it is not
+        """
+        base = {
+            'name': 'ai_survey', 'available_languages': '["en"]',
+            'action': 'generate', 'goal': 'Where is traffic worst',
+            'use_case': 'urban_planning',
+        }
+        with patch('survey.editor_views.generate_survey_draft_task.delay') as delay:
+            self.client.post(reverse('editor_survey_create'), dict(base, map_touched='1'))
+            self.assertTrue(delay.call_args.kwargs['map_locked'])
+        with patch('survey.editor_views.generate_survey_draft_task.delay') as delay:
+            self.client.post(reverse('editor_survey_create'), base)
+            self.assertFalse(delay.call_args.kwargs['map_locked'])
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_create_page_ships_the_map_touched_field(self):
+        """
+        GIVEN the create page
+        WHEN it renders
+        THEN the hidden map_touched field is present and empty, so an untouched
+             map is reported as untouched
+        """
+        response = self.client.get(reverse('editor_survey_create'))
+        self.assertContains(response, 'name="map_touched" id="create-map-touched" value=""')
 
     # The decorator is load-bearing: without it the test only passes on a
     # machine whose .env happens to hold a real provider key (run_tests.sh

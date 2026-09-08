@@ -10,11 +10,13 @@ import time
 from dataclasses import dataclass
 
 from django.conf import settings
+from django.contrib.gis.geos import Point
 from django.db import transaction
 
 from . import client, prompts
 from .materialize import materialize_draft
 from .quota import QuotaExceeded, check_quota
+from .geocode import geocode_place
 from .schema import survey_draft_schema
 from .validator import validate_blob
 from .. import product_events as pe
@@ -261,11 +263,17 @@ def _emit_terminal_events(event, outcome, survey):
         pe.emit(pe.SURVEY_QUESTION_ADDED, event.user_id, survey_props)
 
 
-def generate_survey_draft(event, brief, languages, header_overrides):
+def generate_survey_draft(event, brief, languages, header_overrides, map_locked=False):
     """Run one generation attempt-set for `event`, updating it in place.
 
     Never raises for expected failures — every outcome is recorded on the
     event, which is what the status endpoint polls.
+
+    `map_locked` is True when the creator framed the create-page map
+    themselves; then the form position is theirs and the brief's place is
+    not consulted. Otherwise the hidden fields only hold the untouched
+    default (or a geolocation jump), and a place the model read from the
+    brief is the better start position.
     """
     organization = event.organization
     try:
@@ -321,6 +329,11 @@ def generate_survey_draft(event, brief, languages, header_overrides):
             return _finish(event, 'invalid_draft', '; '.join(errors), attempts=attempts, blob=blob)
         user_prompt = prompts.build_retry_prompt(brief, languages, errors)
 
+    # Outside the transaction below: a slow geocoder must not hold a database
+    # transaction open, and its failure is not a materialization failure.
+    if not map_locked:
+        header_overrides = _apply_brief_location(blob, header_overrides)
+
     try:
         with transaction.atomic():
             survey, warnings = materialize_draft(
@@ -340,6 +353,26 @@ def generate_survey_draft(event, brief, languages, header_overrides):
     if warnings:
         logger.info('AI draft imported with warnings: %s', '; '.join(warnings))
     return _finish(event, 'success', survey=survey, attempts=attempts, blob=blob)
+
+
+def _apply_brief_location(blob, header_overrides):
+    """Replace the form's start position with the brief's place, when it resolves.
+
+    Returns a new dict; the caller's overrides are left alone so a fallback
+    is simply "use what we had".
+    """
+    location = blob.get('location') if isinstance(blob, dict) else ''
+    if not location:
+        return header_overrides
+    resolved = geocode_place(location)
+    if resolved is None:
+        return header_overrides
+    lat, lng, zoom = resolved
+    overrides = dict(header_overrides)
+    overrides['start_map_position'] = Point(lng, lat).wkt
+    overrides['start_map_zoom'] = zoom
+    logger.info('AI draft positioned on %r (%s, %s, z%s)', location, lat, lng, zoom)
+    return overrides
 
 
 def start_generation(user, organization, brief, languages):
