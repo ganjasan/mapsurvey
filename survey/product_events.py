@@ -232,3 +232,22 @@ def first_touch_properties(attribution):
         'first_utm_campaign': attribution.utm_campaign or '',
         'first_landing_path': getattr(attribution, 'landing_path', '') or '',
     }
+
+
+def set_person_properties(user_id, properties):
+    """Set current-state person properties for a creator. Never raises.
+
+    `posthog.set`, so a later value overwrites -- the right semantics for a
+    preference the creator can change, unlike the `$set_once` first touch.
+    Silent no-op when PostHog is unconfigured, like `emit`.
+    """
+    if user_id is None or not properties:
+        return
+    try:
+        import posthog
+
+        if posthog.disabled:
+            return
+        posthog.set(distinct_id=str(user_id), properties=dict(properties))
+    except Exception:
+        logger.warning('posthog: failed to set person properties', exc_info=True)

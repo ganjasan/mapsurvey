@@ -115,12 +115,13 @@
     </div>
 
     <!-- Default Map Position -->
-    <div class="settings-section">
+    <div class="settings-section settings-section--wide">
         <h6><i class="fas fa-map-marker-alt mr-1"></i> {% trans "Default Map Position" %}</h6>
         <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
             {% trans "Set the default starting position and zoom for the survey map. Sections can override this individually." %}
         </p>
-        <div id="survey-map-picker" style="height:300px;width:100%;border-radius:var(--radius);border:1px solid var(--border-color);margin-bottom:0.75rem;"></div>
+        <div class="picker-map-search" id="survey-map-search"></div>
+        <div id="survey-map-picker" class="picker-map picker-map--page" style="margin-bottom:0.75rem;"></div>
         <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
             <span id="survey-map-coords">
                 {% if survey.start_map_postion %}
@@ -193,6 +194,31 @@
             zoom = map.getZoom();
             document.getElementById('survey-map-coords').textContent =
                 'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
+        });
+
+        // ── Place search (openspec: editor-map-picker-search) ──
+        // Unlike the respondent map, choosing a result SETS the position:
+        // a creator searching for a city wants that city as the answer. A
+        // click afterwards still refines.
+        MapPlaceSearch.attach(map, {
+            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
+            container: document.getElementById('survey-map-search'),
+            labels: { placeholder: '{% trans "Search for a place — city, address, landmark…" %}' },
+            onSelect: function(result) {
+                lat = result.lat; lng = result.lng;
+                if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
+                else { marker.setLatLng([lat, lng]); }
+                // A result with bounds is fitted synchronously, so moveend
+                // may already have fired: write the label now and again
+                // once an animated fly settles on its final zoom.
+                function showPicked() {
+                    zoom = map.getZoom();
+                    document.getElementById('survey-map-coords').textContent =
+                        'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
+                }
+                showPicked();
+                map.once('moveend', showPicked);
+            }
         });
 
         document.getElementById('save-survey-map-position').addEventListener('click', function() {
