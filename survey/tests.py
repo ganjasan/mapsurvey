@@ -40232,3 +40232,80 @@ class ResponsesMapEmptyStateTest(TestCase):
         html = self.client.get(self.url).content.decode()
         self.assertIn('No geo questions in this survey', html)
         self.assertIn('Add a map question', html)
+
+
+class MalformedGeometryChunkTest(TestCase):
+    """Spec answer-persistence: a geometry chunk that does not parse skips
+    itself, never the section (change fix-geo-post-bad-json)."""
+
+    VALID = ('{"type":"Feature","properties":{"question_id":"PT"},'
+             '"geometry":{"type":"Point","coordinates":[13.3423,52.5013]}}')
+
+    def setUp(self):
+        self.client = Client()
+        self.org = Organization.objects.create(name="Chunk Org")
+        self.survey = SurveyHeader.objects.create(
+            name="chunks", organization=self.org, status='published',
+            available_languages=[], redirect_url="#",
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="place", title="Place", code="S1",
+            is_head=True,
+        )
+        self.point = Question.objects.create(
+            survey_section=self.section, code="PT", order_number=1, name="Where?",
+            input_type="point",
+        )
+        self.note = Question.objects.create(
+            survey_section=self.section, code="NOTE", order_number=2, name="Why?",
+            input_type="text_line",
+        )
+
+    def _post(self, geo_value):
+        self.client.get('/surveys/chunks/place/')
+        return self.client.post('/surveys/chunks/place/', {'PT': geo_value, 'NOTE': 'benches'})
+
+    def _answers(self, question):
+        session = SurveySession.objects.get(pk=self.client.session['survey_session_id'])
+        return Answer.objects.filter(survey_session=session, question=question)
+
+    def test_comma_prefixed_chunk_is_skipped_and_the_rest_persists(self):
+        """
+        GIVEN a section with a point question and a text question
+        WHEN the POST carries ",{feature}|" under the point code (htmx array join)
+        THEN the response is the normal redirect, the unreadable chunk stores
+             nothing, and the text answer is stored
+
+        Reproduces the 2026-09-07 incident: one iPhone respondent, 42 x 500 on
+        the same section until a page reload.
+        """
+        with self.assertLogs('survey.views', level='WARNING') as logs:
+            response = self._post(',' + self.VALID + '|')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self._answers(self.point).count(), 0)
+        self.assertEqual(self._answers(self.note).get().text, 'benches')
+        self.assertIn('PT', logs.output[0])
+
+    def test_valid_chunk_after_a_malformed_one_is_kept(self):
+        """
+        GIVEN the same section
+        WHEN the posted value is "garbage|{feature}|"
+        THEN exactly one point answer is stored, from the valid chunk
+        """
+        response = self._post('garbage|' + self.VALID + '|')
+        self.assertEqual(response.status_code, 302)
+        stored = self._answers(self.point)
+        self.assertEqual(stored.count(), 1)
+        self.assertAlmostEqual(stored.get().point.x, 13.3423, places=4)
+
+    def test_json_that_is_not_a_feature_is_skipped(self):
+        """
+        GIVEN the same section
+        WHEN a chunk is "[]" or "{}" (valid JSON, no geometry)
+        THEN it stores nothing and the submission succeeds
+        """
+        for chunk in ('[]', '{}'):
+            with self.subTest(chunk=chunk):
+                response = self._post(chunk + '|')
+                self.assertEqual(response.status_code, 302)
+                self.assertEqual(self._answers(self.point).count(), 0)

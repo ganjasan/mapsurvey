@@ -823,7 +823,12 @@ locale.{% endcomment %}
         editableLayers.eachLayer(function(layer){
             var qid = layer.feature.properties.question_id;
             var geoJson = JSON.stringify(layer.toGeoJSON()) + "|";
-            if (!evt.detail.parameters[qid]) evt.detail.parameters[qid] = '';
+            // htmx 1.9 collects a repeated control name as an array; `+=` on an
+            // array joins it with "," and the first chunk becomes ",{...}" —
+            // unreadable on the server. Flatten to a string before appending.
+            var prior = evt.detail.parameters[qid];
+            if (Array.isArray(prior)) prior = prior.join('');
+            evt.detail.parameters[qid] = prior || '';
             evt.detail.parameters[qid] += geoJson;
             // Also update DOM for the required-field validation below
             $(".geo-inp[name='" + qid + "']").val(evt.detail.parameters[qid]);
