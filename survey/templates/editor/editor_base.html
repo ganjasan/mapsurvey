@@ -984,7 +984,10 @@
 <body{% if MOBILE_EDITOR_NAV %} class="mobile-nav-enabled"{% endif %} data-icon-sprites='{{ ICON_SPRITES_JSON }}'>
     {% block navbar %}
     <div class="editor-navbar">
-        <a href="{% url 'editor' %}"><i class="fas fa-arrow-left"></i><span class="nav-desktop"> {% trans "Dashboard" %}</span></a>
+        {% comment %}?dashboard=1 bypasses the no-surveys redirect in views.editor —
+        without it a first-time creator clicking "Dashboard" from the create page
+        is bounced straight back to the create page and the click looks dead.{% endcomment %}
+        <a href="{% url 'editor' %}?dashboard=1"><i class="fas fa-arrow-left"></i><span class="nav-desktop"> {% trans "Dashboard" %}</span></a>
         {% block navbar_content %}{% endblock %}
         <span class="spacer"></span>
         <!-- Clipboard status pill — populated by editor_clipboard.js -->
