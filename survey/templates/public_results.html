@@ -134,12 +134,17 @@
     // it undefined while the forEach below is already invoking the renderers.
     var PALETTE = ['#4f46e5','#7c73f0','#22c55e','#f59e0b','#ef4444','#06b6d4','#ec4899','#8b5cf6','#10b981','#f97316'];
 
-    // Self-contained tile providers (no Mapbox token needed on the public page).
+    // Tile providers, same slugs and same sources as every other map (settings +
+    // the `mapbox` context processor). This page used to hard-code its own table
+    // pointed at OpenStreetMap's volunteer-run servers, which is a tile usage policy
+    // violation on a page creators publish; the Mapbox `pk.` token is public and is
+    // already served to anonymous respondents on every survey page.
     // Declared before the render loop for the same hoisting reason as PALETTE.
+    var MAPBOX_TOKEN = '{{ MAPBOX_ACCESS_TOKEN }}';
     var BASEMAPS = {
-      streets:   { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', opts: { attribution: '© OpenStreetMap', maxZoom: 19 } },
+      streets:   { url: '{{ MAPBOX_URL }}',          opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 23, accessToken: MAPBOX_TOKEN } },
       satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts: { attribution: '© Esri', maxZoom: 19 } },
-      topo:      { url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', opts: { attribution: '© OpenTopoMap', maxZoom: 17 } }
+      topo:      { url: '{{ MAPBOX_OUTDOORS_URL }}', opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 22, accessToken: MAPBOX_TOKEN } }
     };
 
     var blocks = JSON.parse(document.getElementById('blocks-data').textContent || '[]');

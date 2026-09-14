@@ -106,8 +106,6 @@
 
             {# Feature properties now carry respondent sub-answer text — never |safe. #}
             var geoData = JSON.parse('{{ geo_json|escapejs }}');
-            var mapboxUrl = '{{ MAPBOX_URL }}';
-            var mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
 
             var map = L.map('session-mini-map', { zoomControl: true });
             window._sessionMiniMap = map;

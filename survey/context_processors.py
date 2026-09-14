@@ -10,6 +10,7 @@ POSTHOG_API_HOST_DEFAULT = 'https://eu.i.posthog.com'
 def mapbox(request):
     return {
         'MAPBOX_URL': settings.MAPBOX_URL,
+        'MAPBOX_OUTDOORS_URL': settings.MAPBOX_OUTDOORS_URL,
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
     }
 
