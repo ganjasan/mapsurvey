@@ -15890,10 +15890,35 @@ class BasemapTest(TestCase):
         """
         GIVEN a survey with basemaps=["satellite", "topo"]
         WHEN the respondent loads the section page
-        THEN the HTML contains the OpenTopoMap tile URL
+        THEN the HTML contains the Mapbox Outdoors tile URL
         """
         resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
-        self.assertContains(resp, 'tile.opentopomap.org')
+        self.assertContains(resp, 'mapbox/outdoors-v12')
+
+    @override_settings(MAPBOX_OUTDOORS_URL='https://example.test/custom-topo/{z}/{x}/{y}.png')
+    def test_topo_tile_url_comes_from_settings(self):
+        """
+        GIVEN MAPBOX_OUTDOORS_URL overridden to a custom style URL
+        WHEN the respondent loads the section page
+        THEN the rendered topo layer uses that URL, proving no template literal remains
+        """
+        resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.assertContains(resp, 'https://example.test/custom-topo/')
+
+    def test_respondent_page_uses_no_volunteer_tile_servers(self):
+        """
+        GIVEN a survey with every basemap enabled
+        WHEN the respondent loads the section page
+        THEN the HTML requests tiles from neither OSM's nor OpenTopoMap's volunteer servers
+
+        Guard for the tile usage policy: a creator once got a Response Map tiled
+        entirely with OSM's "Access blocked - 403" placeholder.
+        """
+        self.survey.basemaps = ['streets', 'satellite', 'topo']
+        self.survey.save()
+        resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.assertNotContains(resp, 'tile.openstreetmap.org')
+        self.assertNotContains(resp, 'tile.opentopomap.org')
 
     def test_empty_basemaps_falls_back_to_streets_in_js(self):
         """
@@ -21920,6 +21945,22 @@ class PublicResultsViewTest(TestCase):
         r = self.client.get("/r/{}/".format(self.page.slug))
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, '"viz": "pie"')
+
+    def test_public_page_uses_no_volunteer_tile_servers(self):
+        """
+        GIVEN a published public results page
+        WHEN anyone loads /r/<slug>/
+        THEN it requests tiles from neither OSM's nor OpenTopoMap's volunteer servers,
+              and the basemap URLs come from the Mapbox settings like every other map
+
+        This page used to hard-code tile.openstreetmap.org, a tile usage policy
+        violation on a page creators are asked to publish and promote.
+        """
+        r = self.client.get("/r/{}/".format(self.page.slug))
+        self.assertEqual(r.status_code, 200)
+        self.assertNotContains(r, "tile.openstreetmap.org")
+        self.assertNotContains(r, "tile.opentopomap.org")
+        self.assertContains(r, "mapbox/outdoors-v12")
 
     def test_kanon_note_conditional_on_threshold(self):
         """

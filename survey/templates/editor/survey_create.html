@@ -463,9 +463,9 @@
 
         // Base map providers — identical to what respondents get (see basemap_layers.html)
         var providers = {
-            streets:   L.tileLayer('{{ MAPBOX_URL }}', { attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>', maxZoom: 23, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }),
+            streets:   L.tileLayer('{{ MAPBOX_URL }}', { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://osm.org/copyright">OpenStreetMap</a>', maxZoom: 23, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }),
             satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; Esri', maxZoom: 19 }),
-            topo:      L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>', maxZoom: 17 })
+            topo:      L.tileLayer('{{ MAPBOX_OUTDOORS_URL }}', { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' })
         };
         var currentBase = null;
         function setBasemap(slug) {
@@ -910,6 +910,9 @@
             background: #fff; border-bottom: 1px solid var(--border-color);
         }
         body.mobile-nav-enabled .create-card[data-step="map"] .create-map-search .map-search { width: 100%; }
+        /* <16px would trigger iOS focus auto-zoom; the persistent zoom hides
+           this fixed pane's topbar/footer off the visual viewport. */
+        body.mobile-nav-enabled .create-map-search .map-search input { font-size: 16px; }
         body.mobile-nav-enabled .create-card[data-step="map"] .create-map-search .map-search i {
             left: calc(10px + 0.65rem);
         }

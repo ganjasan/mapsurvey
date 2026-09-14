@@ -76,8 +76,6 @@
     var zoom = hasPosition ? {{ section.start_map_zoom|default:"12" }} : inheritZoom;
     {% endlocalize %}
 
-    var mapboxUrl = '{{ MAPBOX_URL }}';
-    var mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
 
     // Wait for modal to be visible before initializing map
     setTimeout(function() {

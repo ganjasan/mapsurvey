@@ -24,9 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.geoToolMode = 'pointer';
     window._sessionMiniMap = null;
 
-    var mapboxUrl = '{{ MAPBOX_URL }}';
-    var mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
-
     var map = L.map('analytics-map', { zoomControl: false });
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     window.analyticsMap = map;

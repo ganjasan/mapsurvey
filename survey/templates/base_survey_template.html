@@ -183,7 +183,7 @@ locale.{% endcomment %}
         else{drawbar.style.display="none";}
     }
 
-    var mapboxUrl = '{{ MAPBOX_URL }}';
+    {# Basemap tile URLs live in basemap_layers.html; this token is for MapPlaceSearch. #}
     var mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
 
     var map = L.map('map', {zoomControl: false}).setView([_initialMapState.lat, _initialMapState.lng], _initialMapState.zoom);

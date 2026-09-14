@@ -3,10 +3,16 @@
     if (!_enabled || !_enabled.length) _enabled = ['streets'];
     var _defaultSlug = '{{ survey.default_basemap|default:"" }}' || _enabled[0];
 
+    // Tile URLs come from the template context, not from variables in the including
+    // template's scope. This partial is included from five places; making each of them
+    // declare `var mapboxUrl` first is a coupling that stays invisible until a new
+    // including template forgets one and a basemap silently 404s. Every including view
+    // renders through render(request, ...), so the `mapbox` context processor always ran.
+    var _mapboxToken = '{{ MAPBOX_ACCESS_TOKEN }}';
     var _providers = {
-        'streets':   { name: 'Streets',   url: mapboxUrl, opts: { attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 23, accessToken: mapboxAccessToken }},
+        'streets':   { name: 'Streets',   url: '{{ MAPBOX_URL }}',          opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 23, accessToken: _mapboxToken }},
         'satellite': { name: 'Satellite', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts: { attribution: '&copy; Esri', maxZoom: 19 }},
-        'topo':      { name: 'Topo',      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', opts: { attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>', maxZoom: 17 }}
+        'topo':      { name: 'Topo',      url: '{{ MAPBOX_OUTDOORS_URL }}', opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: _mapboxToken }}
     };
 
     window._basemapLayers = {};

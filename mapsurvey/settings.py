@@ -356,7 +356,13 @@ LOGOUT_REDIRECT_URL = '/'
 ACCOUNT_ACTIVATION_DAYS = int(os.environ.get('ACCOUNT_ACTIVATION_DAYS', 7))
 
 # Mapbox
+# Both style URLs are settings rather than template literals: Mapbox retires style
+# versions (outdoors-v11 -> v12), and the URL is referenced from several templates.
+# MAPBOX_OUTDOORS_URL backs the `topo` basemap — it must not be derived from
+# MAPBOX_URL by string replacement, which would break the moment MAPBOX_URL points
+# at a custom style, which is the reason that env var exists.
 MAPBOX_URL = os.environ.get('MAPBOX_URL', 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}')
+MAPBOX_OUTDOORS_URL = os.environ.get('MAPBOX_OUTDOORS_URL', 'https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}')
 MAPBOX_ACCESS_TOKEN = os.environ.get('MAPBOX_ACCESS_TOKEN', '')
 
 # Email backend
