@@ -6,6 +6,8 @@
 **Created**: 2026-03-26
 **Updated**: 2026-08-04 — broadened from audio-only to image/audio/video; priority raised from low
 
+**Status**: CLOSED — shipped 2026-08-27 as respondent file uploads — photo, audio with voice recording, document (PR #127); video not included
+
 ## Description
 
 Add a file-upload input type so respondents can attach media to their response. Relevant for

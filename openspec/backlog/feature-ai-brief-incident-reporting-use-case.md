@@ -28,3 +28,13 @@ Related segment signal: neighbourhood-watch / watch-map is a recurring self-serv
 (community observation maps); pairs with epic community-engagement, and the taxonomy she wrote
 herself (Suspicious Person / Vehicle Break-In / Property Theft / Drug Use / Other) is a good
 seed for the template's default choices.
+
+**Update 2026-08-27 — this is a *monitoring* shape, not a campaign.** Three days of prod +
+PostHog data on the same survey confirm the use case is continuous live collection: respondents
+back-fill the Date/Time field with *past* incidents (2026-07-04 reported on 08-25, 2026-08-03
+reported on 08-26) — a register of events, not an opinion snapshot; the survey has no end
+horizon and the creator checks `/analytics/` daily in 2–7-minute visits (polling for new
+reports). The template should therefore assume an open-ended run: no completion framing,
+date-of-incident distinct from date-of-submission, and a "report another incident" path.
+Adjacent pains filed separately: empty-session cleanup
+(improvement-empty-session-cleanup.md, #156).

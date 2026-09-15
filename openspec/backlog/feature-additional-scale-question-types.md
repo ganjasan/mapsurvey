@@ -4,6 +4,7 @@
 **Priority**: medium
 **Area**: frontend
 **Created**: 2026-08-04
+**Updated**: 2026-08-31 — ranking shipped (`2026-08-16-ranking-question`); matrix added to scope (Maptionnaire base-tier row)
 
 ## Description
 
@@ -14,7 +15,10 @@ Researchers used to standard survey tools expect more:
   than a choice code (`Answer.numeric` already accommodates this)
 - **vertical scale** — same data, rotated; the natural orientation for a long labelled scale on a
   phone, and the standard presentation for some instruments
-- **ranking** — order N items by preference, which no current type approximates
+- ~~**ranking** — order N items by preference~~ — shipped 2026-08-16
+- **matrix / grid** — one set of choices applied to N statements (Likert grid); the standard
+  attitude-battery format every survey tool has and the one row in Maptionnaire's
+  "standard question types" we cannot answer
 - **presentation variants** for the existing types — stars, numbered buttons, faces, segmented bars
   instead of a single slider style
 

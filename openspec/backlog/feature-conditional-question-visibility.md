@@ -5,6 +5,8 @@
 **Area**: frontend
 **Created**: 2026-03-30
 
+**Status**: CLOSED — shipped 2026-08-26 (`2026-08-26-conditional-question-visibility`, `CONDITIONAL_VISIBILITY` flag)
+
 ## Description
 
 Allow survey creators to define skip/branching logic so that questions are shown or hidden based on previous answers. For example, show question 7 only if the respondent answered "yes" to question 6. This is a core survey feature commonly known as conditional logic or skip logic.
@@ -68,3 +70,13 @@ funnel confirms the cost: section 5 is the only mid-survey step that loses respo
 - Sodankylä's survey is **live until 2026-09-27**. If (a) lands before then, whether an existing
   published survey can adopt a rule without invalidating already-collected answers becomes a real
   question, not a hypothetical one.
+
+## Status
+
+- **2026-08-26 — (a) question-level AND section-level visibility IMPLEMENTED** in change
+  `conditional-question-visibility` (worktree `conditional-visibility`, branch
+  `feature/conditional-question-visibility`, not yet merged). Declarative visibility model
+  (no jump targets) per competitive research in the change folder; both halves shipped
+  together because section relevance turned out to be the same mechanism, not a second one.
+  Kill switch `CONDITIONAL_VISIBILITY`. Rules on published surveys go through the existing
+  draft-copy path (owner decision).

@@ -117,3 +117,29 @@ Price against Maptionnaire / Citizen Space (£10.5K–100K per instance per year
 Open Point ($15–40K per deal) — never against zero. Quote alongside the co-funding rate:
 "X €, of which the municipality carries 0.3X under the Kommunalrichtlinie" turns the
 price into an argument instead of an objection.
+
+## Sequencing (2026-08-31)
+
+Decided after the Maptionnaire tier teardown
+([`docs/marketing/competitors/maptionnaire.md`](../../../docs/marketing/competitors/maptionnaire.md)):
+their base tier already contains everything we have, and they charge only for the public
+layer and integrations. Feature parity is therefore not what unlocks revenue — a buyable
+offer is. Order of work, each step shippable on its own:
+
+| Step | Items | Exit condition |
+|---|---|---|
+| 0. Decide, don't build | [#93](../feature-billing-invoicing.md) EU-entity question, one anchor price, project-licence term | A number and a legal entity a German municipality can pay |
+| 1. Pro is visible | [#157](../feature-pro-tier-visible-pricing-page.md) pricing page + copy rewrite + editor badge | A lead can forward a URL to finance |
+| 2. Pro is enforceable | [#87](../feature-workspace-plans-entitlements.md) entitlements with grandfathering as data | Flipping a workspace to Pro changes what it can do, no deploy |
+| 3. Pro is signable | [#88](../feature-dpa-compliance-pack.md) DPA/AVV, [#35](../feature-eu-data-hosting-option.md)+[#11](../improvement-frankfurt-server-migration.md) EU hosting | ThINK's hard blocker is gone; the trust page says something true |
+| 4. Pro is worth it | [#91](../feature-workspace-roles-permissions.md) read-only client access, [#90](../feature-white-label-branding.md), [#89](../feature-custom-domain.md) | The three rows a client sees with their own eyes |
+| 5. Pro is billable | [#93](../feature-billing-invoicing.md) invoices, PO field, VAT/reverse charge; card as convenience | First invoice paid |
+| 6. What buyers asked for | [#152](../feature-questions-on-overlay-features.md), [#153](../feature-inline-results-step.md), [#95](../feature-ai-response-triage.md), [#92](../feature-ai-analytics.md), [#158](../feature-project-page-hub.md) | Each traced to a named call (ThINK 2026-07-31, Olney, Flagship) |
+
+Growth, community-engagement and analytics items keep their own priorities but sit
+*behind* steps 0–2 in scheduling, because none of them can be sold until there is
+something to sell. The one exception is a live-lead ask with a date attached (Olney's
+October count, ThINK's intern thesis) — those jump the queue as design-partner work.
+
+Not chased, deliberately (Maptionnaire Enterprise rows with no lead signal): SSO, ArcGIS
+Online sync, Mapbox, ESRI vector tiles, saved analyses.
