@@ -34,7 +34,7 @@ def send_thread_notification(self, thread_id, comment_id, actor_id, recipient_id
     actor = comment.author
     anchor = resolve_anchor(thread)
     mentioned = comment.mentions.filter(pk=recipient.pk).exists()
-    kind_label = {'question': 'the question', 'section': 'the section',
+    kind_label = {'survey': 'the survey', 'question': 'the question', 'section': 'the section',
                   'session': 'a response', 'block': 'the results block'}[anchor.kind]
     verb = 'mentioned you on' if mentioned else 'commented on'
     context = {

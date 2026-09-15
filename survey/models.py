@@ -1732,6 +1732,7 @@ class PublicResultsBlock(models.Model):
 # ─── Comment threads (spec survey-comment-threads) ──────────────────────────
 
 COMMENT_ANCHOR_CHOICES = (
+    ('survey', _('Survey')),
     ('question', _('Question')),
     ('section', _('Section')),
     ('session', _('Response')),
@@ -1766,7 +1767,8 @@ class CommentThread(models.Model):
     `SurveyMapLayer.source_question_code` is a code. Codes are regenerated on
     duplicate/paste, so a thread does not follow a duplicated survey; accepted.
     A session or a public-results block keeps one row for life, so those two
-    anchors are ordinary FKs.
+    anchors are ordinary FKs. `survey` alone (no other field) is the general
+    thread about the survey as a whole.
     """
     survey = models.ForeignKey('SurveyHeader', on_delete=models.CASCADE, related_name='comment_threads')
     anchor_kind = models.CharField(max_length=10, choices=COMMENT_ANCHOR_CHOICES)
@@ -1799,7 +1801,8 @@ class CommentThread(models.Model):
             models.CheckConstraint(
                 name='commentthread_one_anchor_only',
                 check=(
-                    Q(anchor_kind='question', section_code='', session__isnull=True, block__isnull=True) & ~Q(question_code='')
+                    Q(anchor_kind='survey', question_code='', section_code='', session__isnull=True, block__isnull=True)
+                    | Q(anchor_kind='question', section_code='', session__isnull=True, block__isnull=True) & ~Q(question_code='')
                     | Q(anchor_kind='section', question_code='', session__isnull=True, block__isnull=True) & ~Q(section_code='')
                     | Q(anchor_kind='session', question_code='', section_code='', session__isnull=False, block__isnull=True)
                     | Q(anchor_kind='block', question_code='', section_code='', session__isnull=True, block__isnull=False)

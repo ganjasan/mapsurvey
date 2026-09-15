@@ -57,6 +57,7 @@ def panel_context(request, survey, anchor=None, status='open', focus_thread=None
         threads = threads.distinct()
         anchor_obj, anchor_kind, anchor_key = a, a.kind, a.key
         status = 'all'
+        general = None
     elif anchor and anchor[0]:
         try:
             flt = svc.anchor_filter(survey, *anchor)
@@ -67,9 +68,16 @@ def panel_context(request, survey, anchor=None, status='open', focus_thread=None
         probe = CommentThread(survey=canonical_of(survey), **fields)
         anchor_obj = svc.resolve_anchor(probe)
         anchor_kind, anchor_key = anchor[0], anchor[1]
+        general = None
     else:
         threads = svc.threads_for(survey, status=status)
         anchor_obj = anchor_kind = anchor_key = None
+        if not inline:
+            # Whole-survey view: the composer at the bottom starts a general thread.
+            probe = CommentThread(survey=canonical_of(survey), anchor_kind='survey')
+            general = svc.resolve_anchor(probe)
+        else:
+            general = None
 
     threads = [svc.decorate(t) for t in threads]
     # Group by anchor, keeping the queryset's recency order for the first thread of each group.
@@ -89,7 +97,7 @@ def panel_context(request, survey, anchor=None, status='open', focus_thread=None
     # New threads first inside each group, then the drawer's recency order.
     for g in groups:
         g['threads'].sort(key=lambda t: (not t.is_new,))
-    groups.sort(key=lambda g: (not any(t.is_new for t in g['threads']),))
+    groups.sort(key=lambda g: (g['anchor'].kind != 'survey', not any(t.is_new for t in g['threads'])))
     resolved_total = CommentThread.objects.filter(survey=canonical_of(survey), status='resolved').count()
     return {
         'survey': survey,
@@ -97,6 +105,7 @@ def panel_context(request, survey, anchor=None, status='open', focus_thread=None
         'anchor': anchor_obj,
         'anchor_kind': anchor_kind,
         'anchor_key': anchor_key,
+        'general': general if not anchor_obj and not focus_thread else None,
         'status': status,
         'open_total': counts['total'],
         'new_total': len(new_ids),
@@ -196,7 +205,8 @@ def thread_create(request, survey_uuid):
     svc.notify(thread, comment, request.user)
     _emit(pe.COMMENT_THREAD_OPENED, request, thread)
     inline = request.POST.get('inline') == '1'
-    ctx = panel_context(request, survey, anchor=(kind, key), status='all' if inline else 'open', inline=inline)
+    anchor = None if kind == 'survey' else (kind, key)
+    ctx = panel_context(request, survey, anchor=anchor, status='all' if inline else 'open', inline=inline)
     resp = render(request, 'editor/partials/_comments_panel.html', ctx, status=201)
     svc.mark_seen(request.user, survey)
     return _trigger(resp, 'Comment posted')

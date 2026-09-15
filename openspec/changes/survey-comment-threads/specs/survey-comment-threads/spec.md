@@ -2,9 +2,14 @@
 
 ### Requirement: A thread is anchored to exactly one survey object
 The system SHALL store a comment thread against the canonical survey with exactly one anchor:
-a question (by `question_code`), a section (by `section_code`), a respondent session (by FK)
-or a public-results block (by FK). The database SHALL reject a thread with zero or more than
-one anchor, or an anchor that does not match `anchor_kind`.
+the survey itself (a general thread, no object fields), a question (by `question_code`), a
+section (by `section_code`), a respondent session (by FK) or a public-results block (by FK).
+The database SHALL reject a thread with more than one anchor, or an anchor that does not match
+`anchor_kind`.
+
+#### Scenario: General thread from the whole-survey view
+- **WHEN** a member opens the drawer from the toolbar and posts in the composer at the bottom
+- **THEN** a thread with `anchor_kind=survey` and no object fields is created and listed first under "Survey: general"
 
 #### Scenario: Thread opened on a question from a draft copy
 - **WHEN** a member opens a thread on a question while editing a draft copy of a published survey

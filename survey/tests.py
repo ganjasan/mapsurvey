@@ -41904,3 +41904,48 @@ class CommentDashboardBadgeTest(_CommentFixture):
         self._open('question', self.q1.id, 'owner text')
         self.assertEqual(_cm.unseen_by_survey(self.owner, [self.survey])[self.survey.id], (1, 0))
         self.assertEqual(_cm.unseen_by_survey(self.viewer, [self.survey])[self.survey.id], (1, 1))
+
+
+class CommentGeneralThreadTest(_CommentFixture):
+    """The survey itself is the fifth anchor: general threads with no object."""
+
+    def test_general_thread_from_the_whole_survey_view(self):
+        """
+        GIVEN the drawer opened without an anchor
+        WHEN a member posts with anchor survey:all
+        THEN a thread with anchor_kind=survey and no object fields is created, listed first under "Survey: general", and the composer stays general
+        """
+        r = self.client.get(self._u('editor_comment_threads'))
+        self.assertContains(r, 'name="anchor" value="survey:all"')
+        self._open('question', self.q1.id, 'on a question')
+        r = self.client.post(self._u('editor_comment_thread_create'), {'anchor': 'survey:all', 'body': 'When do we send the link?'})
+        self.assertEqual(r.status_code, 201)
+        t = CommentThread.objects.get(anchor_kind='survey')
+        self.assertEqual((t.question_code, t.section_code, t.session_id, t.block_id), ('', '', None, None))
+        html = r.content.decode()
+        self.assertLess(html.index('Survey:'), html.index('Question:'))
+        self.assertContains(r, 'name="anchor" value="survey:all"', status_code=201)
+        self.assertEqual(_cm.resolve_anchor(t).label, self.survey.name)
+        self.assertEqual(_cm.open_counts(self.survey)['survey']['all'], 1)
+        self.assertEqual(_cm.open_counts(self.survey)['total'], 2)
+
+    def test_constraint_still_rejects_a_survey_thread_with_an_object(self):
+        """
+        GIVEN a survey-kind thread that also names a question
+        WHEN it is saved
+        THEN the database rejects it
+        """
+        with self.assertRaises(_CmIntegrityError):
+            with _cm_transaction.atomic():
+                CommentThread.objects.create(survey=self.survey, anchor_kind='survey', question_code='Q_1')
+
+    def test_general_thread_is_new_for_the_other_member(self):
+        """
+        GIVEN the owner opened a general thread
+        WHEN the viewer reads the counts
+        THEN survey:all is listed as new
+        """
+        self.client.post(self._u('editor_comment_thread_create'), {'anchor': 'survey:all', 'body': 'hello all'})
+        self.client.login(username='cmviewer', password='pw12345678')
+        r = self.client.get(self._u('editor_comment_counts'))
+        self.assertIn('survey:all', r.json()['new'])
