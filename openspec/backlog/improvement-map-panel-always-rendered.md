@@ -5,6 +5,8 @@
 **Area**: frontend
 **Created**: 2026-08-05
 
+**Status**: CLOSED — shipped 2026-08-23 (`2026-08-23-mapless-sections`)
+
 ## Description
 
 `base_survey_template.html:74` renders `<div id="map"></div>` unconditionally, and `#map` takes the

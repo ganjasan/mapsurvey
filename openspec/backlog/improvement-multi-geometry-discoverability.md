@@ -5,6 +5,8 @@
 **Area**: frontend
 **Created**: 2026-08-05
 
+**Status**: CLOSED — shipped 2026-08-23 (`2026-08-23-geo-multi-feature-ux`)
+
 ## Description
 
 A geo question accepts **any number of geometries**, and each drawn feature carries its own

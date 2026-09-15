@@ -45,3 +45,36 @@ Caveat: answer-rate conflates "didn't reach", "reached but skipped", and "option
 - Measure impact via answer-rate-by-type before/after (the query above is the baseline).
 - Worth running through OpenSpec (`/opsx:new`) — touches respondent-facing forms and Leaflet widgets in `survey/forms.py` + `survey_section.html`.
 - **2026-08-10 — partially shipped.** Crosshair tap-to-place (`base_survey_template.html:94-105,313-340`), geolocation centering (`:815-817`) and the finish/cancel draw bar (#34) all landed. Still open: an explicit skip affordance, inline "tap the map" guidance, a real progress bar (#39), and any measurement of whether the answer rate moved.
+
+## Field evidence — 2026-09-03 (respondents, not analytics)
+
+Cllr Julian Thomas (Whitehouse Community Council) ran a dog-bin siting survey with real residents
+and reported back:
+
+> "Several residents have told me that the main 'place your pin' page isn't very mobile-friendly,
+> and the big button you click on to place a pin was not intuitive. I fixed this by minimising the
+> explanatory text so that the big button is more visible, and also relabelling that button to
+> 'CLICK HERE' — but I did expect to just be able to click on the map without first needing to
+> click that separate button, so I can see why they struggled"
+
+Three separate findings in one paragraph:
+
+1. **The crosshair entry button is a mode switch nobody expects.** The 2026-08-10 note above says
+   "crosshair tap-to-place shipped" — but shipped as *tap the button, then tap the map*. Both the
+   creator and his residents expected the first tap on the map to place the pin. The intended
+   lowest-effort default in this item's Scope section is therefore still not what respondents get.
+2. **Explanatory text pushes the control below the fold on phones.** He worked around it by
+   deleting his own instruction text — i.e. the fix cost him content he wanted respondents to read.
+   The button competes with `subtext`/`subheading` for the same first screen.
+3. **There is no button label to fix — the button *is* the question.**
+   `leaflet_draw_button.html` renders `widget.title` (the question's `name`) as the button text and
+   `widget.subtitle` (its `subtext`) underneath; nothing on that control says "tap to place a pin".
+   So Julian's fix — relabelling to "CLICK HERE" — means he renamed his actual question, and his
+   exported CSV/GeoJSON column is now called "CLICK HERE". He traded his data's labelling for a
+   working affordance. The control needs its own verb, separate from the question text.
+
+This is a creator who liked the product ("intuitive", "very well-received") and still had to
+hand-patch the pin page. Weight this item accordingly: the answer-rate table above said geo is the
+most-skipped type, and this is the first direct account of *why*.
+
+Source: `docs/marketing/user-outreach/julian_thomas/correspondence/2026-09-03_reply-received.md`

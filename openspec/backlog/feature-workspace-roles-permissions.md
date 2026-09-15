@@ -3,7 +3,7 @@
 **Type**: feature
 **Priority**: high
 **Area**: backend
-**Epic**: pro-tier
+**Epic**: team-collaboration
 **Created**: 2026-07-29
 
 ## Description

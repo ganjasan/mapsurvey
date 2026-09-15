@@ -9,6 +9,8 @@
 **Updated**: 2026-07-29 — assigned to the Pro tier (marginal LLM cost makes a free tier untenable)
 **Related**: [Interactive onboarding](idea-interactive-onboarding.md), [Survey template gallery](feature-survey-template-gallery.md), [Funnel monitoring](feature-funnel-monitoring.md), [Reduce geo-input friction](improvement-reduce-geo-input-friction.md)
 
+**Status**: CLOSED — shipped 2026-08-17 (`2026-08-17-ai-survey-generator`, streaming + latency telemetry)
+
 ## Description
 
 Conversational AI agent that builds a complete survey from a user's natural-language description. The user describes their goal in chat ("I want to ask Treviglio residents where the worst traffic is"); the agent asks clarifying follow-ups (target audience, languages, age brackets, what to map), then generates a fully populated survey — sections, questions with correct input types (text/choice/multichoice/range/point/line/polygon/image), choice options, and basic logic. The user lands in the editor with a working draft instead of an empty canvas.

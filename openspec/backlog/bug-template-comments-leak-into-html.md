@@ -5,6 +5,8 @@
 **Area**: frontend
 **Created**: 2026-08-05
 
+**Status**: CLOSED — fixed 2026-08-15 (`2026-08-15-template-comment-leak`) + guard test
+
 ## Description
 
 Django's `{# ... #}` comment syntax is **single-line only**. A comment spanning more than one line is

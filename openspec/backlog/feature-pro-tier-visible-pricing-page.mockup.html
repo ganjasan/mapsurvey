@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapsurvey Pricing — mockup 2026-09-11</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-primary:#1B2A4A; --color-accent:#0FA58E; --color-accent-hover:#0D8F7A; --color-accent-light:rgba(15,165,142,.12);
+    --color-bg:#F7F5F0; --color-bg-warm:#EFECE5; --color-bg-elevated:#FFFFFF;
+    --color-text:#1B2A4A; --color-text-secondary:#5A6680; --color-text-tertiary:#8A94A8;
+    --color-border:#D4CFC6; --color-border-light:#E4E0D8;
+    --font-display:'Instrument Sans',system-ui,sans-serif; --font-body:'Source Serif 4',Georgia,serif; --font-mono:'JetBrains Mono',monospace;
+    --radius-sm:4px; --radius-md:8px; --radius-lg:12px;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--color-bg); color:var(--color-text); font-family:var(--font-body); font-size:17px; line-height:1.55; }
+  a { color:var(--color-accent); }
+  .nav { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 2rem; border-bottom:1px solid var(--color-border-light); font-family:var(--font-display); }
+  .nav b { font-weight:700; font-size:1.1rem; }
+  .nav b span { color:var(--color-accent); }
+  .nav .links { display:flex; gap:1.6rem; font-size:.95rem; color:var(--color-text-secondary); }
+  .nav .links .on { color:var(--color-text); font-weight:600; }
+  .inner { max-width:1100px; margin:0 auto; padding:0 2rem; }
+  .eyebrow { font-family:var(--font-mono); font-size:.75rem; text-transform:uppercase; letter-spacing:.15em; color:var(--color-accent); margin:0 0 .6rem; }
+  h1 { font-family:var(--font-display); font-size:clamp(2rem,4.5vw,3rem); letter-spacing:-.03em; line-height:1.1; margin:0 0 1rem; }
+  h2 { font-family:var(--font-display); font-size:clamp(1.5rem,3vw,2.1rem); letter-spacing:-.025em; margin:0 0 .6rem; }
+  .lead { font-size:1.15rem; color:var(--color-text-secondary); max-width:680px; margin:0 auto; }
+  .hero { text-align:center; padding:5rem 0 3rem; }
+  .plans { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.5rem; margin:3rem auto 0; max-width:900px; }
+  .plan { background:var(--color-bg-elevated); border:1px solid var(--color-border-light); border-radius:var(--radius-lg); padding:2rem; text-align:left; display:flex; flex-direction:column; position:relative; }
+  .plan--hi { border-color:var(--color-accent); box-shadow:0 8px 32px rgba(15,165,142,.12); }
+  .plan .tag { position:absolute; top:-12px; left:2rem; background:var(--color-accent); color:#fff; font-family:var(--font-mono); font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; padding:.25rem .7rem; border-radius:999px; }
+  .plan h3 { font-family:var(--font-display); font-size:1.4rem; margin:0 0 .2rem; }
+  .plan .who { color:var(--color-text-secondary); font-size:.98rem; margin:0 0 1.2rem; min-height:3em; }
+  .price { font-family:var(--font-display); font-size:2.6rem; font-weight:700; letter-spacing:-.03em; line-height:1; }
+  .price small { font-size:1rem; font-weight:500; color:var(--color-text-secondary); letter-spacing:0; }
+  .price-sub { font-size:.9rem; color:var(--color-text-tertiary); margin:.4rem 0 1.4rem; font-family:var(--font-display); }
+  .plan ul { list-style:none; padding:0; margin:0 0 1.6rem; flex:1; }
+  .plan li { padding:.42rem 0 .42rem 1.6rem; position:relative; font-size:.98rem; border-bottom:1px solid var(--color-border-light); }
+  .plan li::before { content:"✓"; position:absolute; left:.2rem; color:var(--color-accent); font-family:var(--font-display); font-weight:700; }
+  .plan li.head { padding-left:0; font-family:var(--font-display); font-weight:600; font-size:.85rem; color:var(--color-text-tertiary); text-transform:uppercase; letter-spacing:.08em; border:0; }
+  .plan li.head::before { content:none; }
+  .btn { display:inline-flex; justify-content:center; align-items:center; font-family:var(--font-display); font-weight:600; font-size:.95rem; padding:.8rem 1.6rem; border-radius:var(--radius-sm); border:2px solid var(--color-accent); text-decoration:none; }
+  .btn--primary { background:var(--color-accent); color:#fff; }
+  .btn--ghost { background:transparent; color:var(--color-accent); }
+  .note { font-size:.85rem; color:var(--color-text-tertiary); margin-top:.8rem; font-family:var(--font-display); }
+  section { padding:4rem 0; }
+  .free { background:var(--color-bg-warm); }
+  .free .box { max-width:820px; margin:0 auto; text-align:center; }
+  .anchor { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; max-width:900px; margin:2rem auto 0; }
+  .anchor div { background:var(--color-bg-elevated); border:1px solid var(--color-border-light); border-radius:var(--radius-md); padding:1.2rem 1.4rem; font-family:var(--font-display); }
+  .anchor b { display:block; font-size:1.5rem; letter-spacing:-.02em; }
+  .anchor span { font-size:.85rem; color:var(--color-text-secondary); }
+  .anchor .us { border-color:var(--color-accent); background:var(--color-accent-light); }
+  table { width:100%; border-collapse:collapse; max-width:900px; margin:2rem auto 0; font-family:var(--font-display); font-size:.95rem; background:var(--color-bg-elevated); border:1px solid var(--color-border-light); border-radius:var(--radius-lg); overflow:hidden; }
+  th, td { padding:.75rem 1rem; text-align:left; border-bottom:1px solid var(--color-border-light); }
+  th { font-size:.8rem; text-transform:uppercase; letter-spacing:.08em; color:var(--color-text-tertiary); background:var(--color-bg); }
+  td:nth-child(2), td:nth-child(3), th:nth-child(2), th:nth-child(3) { text-align:center; width:130px; }
+  tr.group td { background:var(--color-bg); font-weight:600; font-size:.8rem; text-transform:uppercase; letter-spacing:.08em; color:var(--color-text-secondary); }
+  .y { color:var(--color-accent); font-weight:700; }
+  .n { color:var(--color-border); }
+  .faq { max-width:820px; margin:2rem auto 0; }
+  .faq details { border-bottom:1px solid var(--color-border-light); padding:.9rem 0; }
+  .faq summary { font-family:var(--font-display); font-weight:600; cursor:pointer; font-size:1.05rem; }
+  .faq p { color:var(--color-text-secondary); margin:.6rem 0 0; }
+  .cta { text-align:center; background:var(--color-primary); color:#F7F5F0; }
+  .cta h2 { color:#fff; }
+  .cta p { color:#B8C2D8; max-width:600px; margin:0 auto 1.6rem; }
+  .cta .btn--ghost { color:#fff; border-color:#fff; margin-left:.6rem; }
+  .mock { position:fixed; bottom:12px; right:12px; background:#1A1E2E; color:#F7F5F0; font-family:var(--font-mono); font-size:.7rem; padding:.4rem .7rem; border-radius:4px; opacity:.85; }
+  footer { padding:2rem; text-align:center; font-family:var(--font-display); font-size:.85rem; color:var(--color-text-tertiary); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <b>Map<span>survey</span></b>
+  <div class="links"><a>For planners</a><a>For researchers</a><a class="on">Pricing</a><a>Log in</a></div>
+</nav>
+
+<section class="hero">
+  <div class="inner">
+    <p class="eyebrow">Pricing</p>
+    <h1>One survey or a whole programme.<br>Never a per-respondent fee.</h1>
+    <p class="lead">Every plan collects unlimited responses on unlimited surveys and exports everything you collected as GeoJSON, Shapefile and CSV. You pay for showing results to others, working with your team and your client, and having the developer on call.</p>
+
+    <div class="plans">
+      <div class="plan">
+        <h3>Project</h3>
+        <p class="who">One participation project with a start and an end: a neighbourhood plan, a consultation, a thesis field study with a client.</p>
+        <div class="price">€999 <small>one-off</small></div>
+        <div class="price-sub">Up to 6 months · invoice · no renewal</div>
+        <ul>
+          <li class="head">Everything in Workspace, plus</li>
+          <li>Hosting region and data governance of your choice: EU, US or a dedicated instance under your own agreement</li>
+          <li>We set the survey up with you on a call</li>
+          <li>Public results page configured for you</li>
+          <li>PDF report with maps and charts at the end</li>
+          <li>Ends when your project ends, data stays yours</li>
+        </ul>
+        <a class="btn btn--ghost" href="mailto:konuchovartem@mapsurvey.org?subject=Project%20licence">Start a project</a>
+        <div class="note">Grant-funded? We quote a fixed line item you can put in the application.</div>
+      </div>
+
+      <div class="plan plan--hi">
+        <span class="tag">Most councils and studios</span>
+        <h3>Workspace</h3>
+        <p class="who">A council, a planning studio or a research group that runs surveys all year round.</p>
+        <div class="price">€49 <small>/ month</small></div>
+        <div class="price-sub">or €490 / year · cancel any time</div>
+        <ul>
+          <li class="head">Show and share</li>
+          <li>Public results pages for residents and clients</li>
+          <li>Residents can support each other's pins</li>
+          <li>Your logo, no "Made with Mapsurvey" badge</li>
+          <li class="head">Work together</li>
+          <li>Unlimited members, editor and read-only roles</li>
+          <li>Read-only access for your client or committee</li>
+          <li class="head">Understand</li>
+          <li>Heatmaps, cross-filtering, comparison sets</li>
+          <li>Respondent funnel and UTM links per channel</li>
+          <li>Unlimited AI survey drafts</li>
+          <li class="head">Support</li>
+          <li>Email from the developer, same working day</li>
+        </ul>
+        <a class="btn btn--primary" href="mailto:konuchovartem@mapsurvey.org?subject=Workspace%20plan">Get Workspace</a>
+        <div class="note">Invoice or card. VAT added where it applies.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="free">
+  <div class="inner box">
+    <p class="eyebrow">Free</p>
+    <h2>The whole tool is free to build and collect with</h2>
+    <p class="lead">Students, community groups and anyone testing an idea: every question type including points, lines and polygons, sub-questions, conditional questions, photo and audio uploads, 75 languages, reference layers, the full data-cleaning workspace, and export in every format. Unlimited surveys and responses. Two members per workspace, five AI drafts a month, and the Mapsurvey badge on your survey. <a href="#">Create a free account</a>. Open source under AGPLv3.</p>
+  </div>
+</section>
+
+<section>
+  <div class="inner" style="text-align:center">
+    <p class="eyebrow">Compared</p>
+    <h2>What map-based engagement usually costs</h2>
+    <p class="lead">Public list prices, per organisation per year. Mapsurvey is not the cheapest because it does less. It is cheaper because it is one developer, no sales team, and no per-seat metering.</p>
+    <div class="anchor">
+      <div><b>£10,495+</b><span>Citizen Space, G-Cloud floor</span></div>
+      <div><b>$15–40K</b><span>Open Point, typical deal</span></div>
+      <div><b>~€4,000+</b><span>Maptionnaire, as quoted to buyers</span></div>
+      <div class="us"><b>€490</b><span>Mapsurvey Workspace, per year</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="inner" style="text-align:center">
+    <p class="eyebrow">Feature table</p>
+    <h2>What is in each plan</h2>
+    <table>
+      <thead><tr><th>Feature</th><th>Free</th><th>Workspace / Project</th></tr></thead>
+      <tbody>
+        <tr class="group"><td colspan="3">Build and collect</td></tr>
+        <tr><td>All question types: point, line, polygon, choice, rating, ranking, text, uploads</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td>Sub-questions on map objects, conditional questions</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td>Multilingual surveys, 75 languages</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td>Reference layers and satellite basemaps</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td>Password-protected surveys, versioning</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td>Surveys, questions and responses</td><td>Unlimited</td><td>Unlimited</td></tr>
+        <tr><td>Respondent uploads storage</td><td>1 GB</td><td>20 GB</td></tr>
+        <tr><td>AI survey drafts</td><td>5 / month</td><td>Unlimited</td></tr>
+        <tr class="group"><td colspan="3">Clean and export</td></tr>
+        <tr><td>Data workspace: table, inline edits, tags, validation, anomalies</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td>Export GeoJSON, Shapefile, CSV</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr class="group"><td colspan="3">Show and share</td></tr>
+        <tr><td>Public results page (live or frozen snapshot)</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr><td>Residents support each other's pins</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr><td>Remove "Made with Mapsurvey" badge, your logo</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr class="group"><td colspan="3">Work together</td></tr>
+        <tr><td>Workspace members</td><td>2</td><td>Unlimited</td></tr>
+        <tr><td>Editor and read-only roles, client access</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr class="group"><td colspan="3">Understand</td></tr>
+        <tr><td>Response counts and points on a map</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td>Heatmaps, cross-filtering, comparison sets</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr><td>Respondent funnel, referrers, UTM link generator</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr class="group"><td colspan="3">Support</td></tr>
+        <tr><td>Community Discord</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td>Email from the developer, same working day</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr><td>Setup call and end-of-project PDF report</td><td class="n">—</td><td>Project</td></tr>
+        <tr><td>Hosting region and data governance of your choice (EU, US, dedicated instance)</td><td class="n">—</td><td>Project</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="free">
+  <div class="inner">
+    <div style="text-align:center"><p class="eyebrow">Questions</p><h2>Before you forward this to finance</h2></div>
+    <div class="faq">
+      <details open><summary>Is there a per-respondent, per-survey or per-seat charge?</summary><p>No. A survey with 40 responses and one with 4,000 cost the same. Members are unlimited on Workspace.</p></details>
+      <details><summary>Can we pay by invoice?</summary><p>Yes. Annual Workspace and Project are invoiced; monthly Workspace is by card. Purchase orders are fine.</p></details>
+      <details><summary>Where is the data hosted?</summary><p>Free and Workspace run on our shared instance in the United States (Render, media in AWS). On a Project licence you choose: EU, US, or a dedicated instance under your own data-processing agreement. Tell us what your procurement requires and we quote it in the same offer.</p></details>
+      <details><summary>We are a university group or a community initiative.</summary><p>Stay on Free. It is the same tool. If you need a public results page for a thesis or a neighbourhood campaign, write to us. We usually say yes in exchange for a short case study.</p></details>
+      <details><summary>What happens to our data if we stop paying?</summary><p>Nothing. Surveys keep collecting, exports keep working. Public pages and extra members are paused until you resume.</p></details>
+      <details><summary>Can we self-host?</summary><p>Yes, the code is AGPLv3 on GitHub. Self-hosting includes none of the support above.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="inner">
+    <h2>Not sure which one?</h2>
+    <p>Write two sentences about the project and we will answer with a number the same day.</p>
+    <a class="btn btn--primary" href="mailto:konuchovartem@mapsurvey.org?subject=Pricing%20question">Email the developer</a>
+    <a class="btn btn--ghost" href="#">Try the live demo survey</a>
+  </div>
+</section>
+
+<footer>Mapsurvey · Open source · Prices in EUR, excluding VAT · Mockup, not live</footer>
+<div class="mock">MOCKUP · 2026-09-11 · backlog: feature-pro-tier-visible-pricing-page</div>
+</body>
+</html>

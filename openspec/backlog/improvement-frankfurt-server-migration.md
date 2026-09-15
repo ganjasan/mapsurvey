@@ -3,6 +3,8 @@
 **Type**: improvement
 **Priority**: high
 **Area**: infra
+**Epic**: pro-tier
+**Updated**: 2026-08-31 — filed under pro-tier: EU hosting is the ThINK Jena hard blocker; delivery vehicle for `#35`
 **Created**: 2026-03-26
 
 ## Description

@@ -1,7 +1,8 @@
 # Migrate Transactional Email to a Dedicated ESP (Deliverability)
 
 **Type**: feature
-**Priority**: very high
+**Priority**: high
+**Updated**: 2026-08-31 — very high → high; still the top infra item, but not on the revenue path
 **Area**: infra
 **Epic**: —
 **Created**: 2026-07-05
