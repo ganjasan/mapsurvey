@@ -16044,6 +16044,90 @@ class BasemapTest(TestCase):
         self.assertNotIn('<option value="">---------</option>', resp.content.decode())
 
 
+class VolunteerTileServerGuardTest(TestCase):
+    """No creator surface requests tiles from a volunteer-run server.
+
+    basemap-mapbox-outdoors moved every basemap to Mapbox, but the report that
+    prompted it came from Responses -> Overview, whose thumbnail map never went
+    through basemap_layers.html and kept a hard-coded tile.openstreetmap.org
+    literal. The same literal sat in the reference-layer style preview. These
+    tests render the two pages the original guards did not.
+    """
+
+    VOLUNTEER_HOSTS = ('tile.openstreetmap.org', 'tile.opentopomap.org')
+
+    def setUp(self):
+        self.org = _make_org('TileGuardOrg')
+        self.owner = User.objects.create_user('tileguard', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.login(username='tileguard', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.survey = SurveyHeader.objects.create(
+            name='tile_guard', organization=self.org, created_by=self.owner, status='published',
+        )
+        SurveyCollaborator.objects.create(user=self.owner, survey=self.survey, role='owner')
+        section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        q = Question.objects.create(
+            survey_section=section, name='Where', code='q1', input_type='point', order_number=1,
+        )
+        sess = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=sess, question=q, point=Point(13.405, 52.52))
+
+    @override_settings(RESPONSES_V2=True, MAPBOX_URL='https://example.test/streets/{z}/{x}/{y}')
+    def test_responses_overview_thumbnail_uses_mapbox(self):
+        """
+        GIVEN a survey owner, Responses v2 on and MAPBOX_URL overridden
+        WHEN they open Responses, whose Overview pane renders a view-only thumbnail map
+        THEN the page carries the overridden Mapbox URL and names no volunteer tile host
+        """
+        r = self.client.get(f'/editor/surveys/{self.survey.uuid}/analytics/')
+        self.assertEqual(r.status_code, 200)
+        self.assertTemplateUsed(r, 'editor/partials/analytics_overview_pane.html')
+        self.assertContains(r, 'https://example.test/streets/')
+        for host in self.VOLUNTEER_HOSTS:
+            self.assertNotContains(r, host)
+
+    def test_survey_settings_panel_uses_no_volunteer_tile_server(self):
+        """
+        GIVEN a survey owner
+        WHEN they load the survey settings panel, whose reference-layer cards carry a style preview map
+        THEN the rendered HTML names no volunteer tile host
+        """
+        r = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings-panel/')
+        self.assertEqual(r.status_code, 200)
+        for host in self.VOLUNTEER_HOSTS:
+            self.assertNotContains(r, host)
+
+
+class VolunteerTileServerSweepTest(SimpleTestCase):
+    """A literal on a surface no page test renders must still fail the suite."""
+
+    VOLUNTEER_HOSTS = ('tile.openstreetmap.org', 'tile.opentopomap.org')
+
+    def test_no_template_or_script_names_a_volunteer_tile_host(self):
+        """
+        GIVEN every template and first-party script under survey/
+        WHEN each is scanned for volunteer tile hosts
+        THEN none names tile.openstreetmap.org or tile.opentopomap.org
+        """
+        import pathlib
+        app = pathlib.Path(__file__).resolve().parent
+        offenders = []
+        for root in (app / 'templates', app / 'assets' / 'js'):
+            for path in sorted(root.rglob('*')):
+                if path.suffix not in ('.html', '.js') or path.name.endswith('.min.js'):
+                    continue
+                text = path.read_text(encoding='utf-8', errors='ignore')
+                for host in self.VOLUNTEER_HOSTS:
+                    if host in text:
+                        offenders.append(f'{path.relative_to(app)}: {host}')
+        self.assertEqual(offenders, [], 'volunteer tile host referenced in: ' + ', '.join(offenders))
+
+
 class HTMXNavigationTest(TestCase):
     """Tests for HTMX-based section navigation with persistent map."""
 

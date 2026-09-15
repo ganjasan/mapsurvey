@@ -52,3 +52,19 @@
 
 - [ ] 6.1 After merge and deploy, verify Topo on production and reply to the reporting creator
       (`dawgranat@gmail.com`) — short, per the bug-fix email convention
+
+## 7. Surfaces the first pass missed (reported again 2026-09-15, production Responses → Overview)
+
+- [x] 7.1 `editor/partials/analytics_overview_pane.html`: the Overview thumbnail map uses
+      `{{ MAPBOX_URL }}` with the access token instead of the `tile.openstreetmap.org` literal —
+      this was the surface the original report came from; it never went through
+      `basemap_layers.html`
+- [x] 7.2 `editor/partials/survey_settings_panel.html`: the reference-layer style preview map uses
+      `{{ MAPBOX_URL }}` with the access token instead of the `tile.openstreetmap.org` literal
+- [x] 7.3 Guard test: the Responses dashboard (v2, Overview pane) and the survey settings panel
+      render neither `tile.openstreetmap.org` nor `tile.opentopomap.org`, and the dashboard's tile
+      URL follows `MAPBOX_URL`
+- [x] 7.4 Repository sweep test: no template or first-party script under `survey/` names either
+      host, so a literal cannot creep back on a surface no page test covers
+- [ ] 7.5 After merge, open production Responses → Overview on a desktop viewport and confirm
+      Mapbox tiles render in the thumbnail

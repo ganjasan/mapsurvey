@@ -38,7 +38,10 @@ report that surfaced it.
 - Templates: `partials/basemap_layers.html`, `base_survey_template.html`,
   `editor/survey_create.html`, `editor/partials/analytics_geo_map.html`,
   `editor/partials/analytics_session_detail.html`, `editor/partials/section_map_picker.html`,
-  `public_results.html`.
+  `public_results.html`. Second pass (2026-09-15): `editor/partials/analytics_overview_pane.html`
+  (the Overview thumbnail — the surface the report actually came from, missed because it never
+  used `basemap_layers.html`) and `editor/partials/survey_settings_panel.html` (reference-layer
+  style preview).
 - `survey/tests.py` — the basemap tile-URL assertions (one asserts `tile.opentopomap.org`).
 - Cost: Topo and public-results traffic now counts against the Mapbox tile quota. Volume is small
   (Topo is rarely the default; public results pages are low-traffic), but it is no longer free.

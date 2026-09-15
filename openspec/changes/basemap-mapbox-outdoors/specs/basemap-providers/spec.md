@@ -18,6 +18,22 @@ holds an account with (Mapbox, Esri).
   Response Map
 - **THEN** the rendered HTML contains no `tile.openstreetmap.org` or `tile.opentopomap.org` URL
 
+#### Scenario: Responses Overview thumbnail
+- **WHEN** a creator loads Responses and the Overview pane renders its view-only thumbnail map
+- **THEN** the thumbnail's tile layer is built from `MAPBOX_URL` with the access token, and the
+  rendered HTML contains no `tile.openstreetmap.org` or `tile.opentopomap.org` URL
+
+#### Scenario: Reference-layer style preview
+- **WHEN** a creator opens the survey settings panel, whose reference-layer cards carry a style
+  preview map
+- **THEN** the preview's tile layer is built from `MAPBOX_URL` with the access token, and the
+  rendered HTML contains no `tile.openstreetmap.org` or `tile.opentopomap.org` URL
+
+#### Scenario: No literal anywhere in the app
+- **WHEN** every template and first-party script under `survey/` is scanned
+- **THEN** none names `tile.openstreetmap.org` or `tile.opentopomap.org`, so a surface without a
+  page test cannot reintroduce a volunteer host
+
 ### Requirement: Topo basemap is served by Mapbox Outdoors
 The `topo` basemap slug SHALL render Mapbox Outdoors tiles on every surface that offers it. The
 tile URL SHALL come from the `MAPBOX_OUTDOORS_URL` setting rather than a template literal, and the
