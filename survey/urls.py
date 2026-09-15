@@ -4,6 +4,7 @@ from django.views.generic import RedirectView
 from . import views
 from . import editor_views
 from . import layer_object_views
+from . import comment_views
 from . import analytics_views
 from . import share_views
 from . import org_views
@@ -109,6 +110,17 @@ urlpatterns = [
     # Shared map moderation (spec shared-map-moderation)
     path('editor/surveys/<uuid:survey_uuid>/analytics/layers/<int:layer_id>/objects/<str:key>/status/', analytics_views.analytics_object_status, name='analytics_object_status'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/comments/<int:answer_id>/hidden/', analytics_views.analytics_comment_hidden, name='analytics_comment_hidden'),
+
+    # Comment threads (spec survey-comment-threads): one drawer, four anchors.
+    path('editor/surveys/<uuid:survey_uuid>/comments/', comment_views.threads_panel, name='editor_comment_threads'),
+    path('editor/surveys/<uuid:survey_uuid>/comments/counts/', comment_views.thread_counts, name='editor_comment_counts'),
+    path('editor/surveys/<uuid:survey_uuid>/comments/new/', comment_views.thread_create, name='editor_comment_thread_create'),
+    path('editor/surveys/<uuid:survey_uuid>/comments/<int:thread_id>/reply/', comment_views.comment_reply, name='editor_comment_reply'),
+    path('editor/surveys/<uuid:survey_uuid>/comments/<int:thread_id>/resolve/', comment_views.thread_resolve, name='editor_comment_resolve'),
+    path('editor/surveys/<uuid:survey_uuid>/comments/<int:thread_id>/reopen/', comment_views.thread_reopen, name='editor_comment_reopen'),
+    path('editor/surveys/<uuid:survey_uuid>/comments/<int:thread_id>/comments/<int:comment_id>/delete/', comment_views.comment_delete, name='editor_comment_delete'),
+    path('editor/surveys/<uuid:survey_uuid>/comments/<int:thread_id>/comments/<int:comment_id>/edit/', comment_views.comment_edit, name='editor_comment_edit'),
+    path('editor/surveys/<uuid:survey_uuid>/comments/<int:thread_id>/comments/<int:comment_id>/attachments/<int:attachment_id>/', comment_views.attachment_download, name='editor_comment_attachment'),
 
     # Public results page configuration
     path('editor/surveys/<uuid:survey_uuid>/public-results/', public_results_editor.public_results_config, name='editor_survey_public_results'),

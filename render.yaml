@@ -153,6 +153,8 @@ services:
       # restore the previous single-counter behaviour without a rebuild.
       - key: REGISTRATION_SPLIT_RATE_LIMIT
         value: "True"
+      - key: SITE_URL
+        value: "https://mapsurvey.org"
       - key: NEWSLETTER_SITE_URL
         value: "https://mapsurvey.org"
       # Gunicorn concurrency — tunable from the dashboard without an image rebuild.
@@ -272,6 +274,8 @@ services:
       - key: EMAIL_HOST_PASSWORD
         sync: false
         previewEnvRenderServiceName: mapsurvey
+      - key: SITE_URL
+        value: "https://mapsurvey.org"
       - key: NEWSLETTER_SITE_URL
         value: "https://mapsurvey.org"
       # Media object storage. The worker writes files too — ZIP import and AI

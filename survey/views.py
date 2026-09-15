@@ -647,12 +647,15 @@ def editor(request):
 
 	# Compute completion KPIs per survey (family-wide via the service scope)
 	from .analytics import SurveyAnalyticsService
+	from .comments import unseen_by_survey
+	comment_counts = unseen_by_survey(request.user, survey_list)
 	surveys_with_kpi = []
 	for survey in survey_list:
 		survey.session_count = family_counts.get(survey.id, 0)
 		overview = SurveyAnalyticsService(survey).get_overview()
 		survey.completed_count = overview['completed_count']
 		survey.completion_rate = overview['completion_rate']
+		survey.open_comments, survey.unseen_comments = comment_counts.get(survey.id, (0, 0))
 		surveys_with_kpi.append(survey)
 
 	context = {

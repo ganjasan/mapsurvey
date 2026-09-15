@@ -129,6 +129,12 @@
         </div>
     </div>
 
+    {# Comment thread on this response (spec survey-comment-threads) #}
+    <div class="cm-card cm-inline mt-3">
+        <div class="cm-card-h"><i class="fas fa-comments"></i> {% trans "Comments" %}</div>
+        {% include "editor/partials/_comments_panel.html" with inline=True %}
+    </div>
+
     {% if has_geo %}
     {% comment %}
     Feature properties carry respondent sub-answer text — never |safe. The

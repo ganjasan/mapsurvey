@@ -109,6 +109,7 @@
         {% else %}{% trans "New Question" %}
         {% endif %}
     </h5>
+    {% if question %}{% load comment_utils %}{% badge_key 'question' question.code as cm_bk %}{% with cm_n=thread_counts|thread_count:cm_bk cm_new=thread_counts|thread_new:cm_bk %}<button type="button" class="btn btn-sm btn-outline-primary cm-toolbar-btn ml-3{% if cm_new %} cm-has-new{% endif %}" data-cm-open="question:{{ question.id }}" data-thread-badge="{{ cm_bk }}" aria-label="{% trans 'Comments on this question' %}{% if cm_n %}, {{ cm_n }} {% trans 'open' %}{% endif %}" title="{% trans 'Comments on this question' %}"><i class="fas fa-comments" aria-hidden="true"></i> {% trans "Comments" %} <span class="cm-count" data-cm-n>{% if cm_n %}{{ cm_n }}{% endif %}</span></button>{% endwith %}{% endif %}
     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
 </div>
 <form {% if question %}

@@ -205,6 +205,32 @@ Responses map alike; `layers.match_class` mirrors its matching for the server-si
 (`legend_for`, delivered as metadata). The object editor draws with its own code and does
 not honour rules yet.
 
+**Comment threads (`CommentThread`/`Comment`/`CommentAttachment`, spec `survey-comment-threads`)**:
+workspace members discuss a survey where it lives — a question, a section, a respondent session or
+a public-results block — in ONE slide-in drawer (`editor/partials/_comments_drawer.html`, included
+once from `editor_base.html`; `js/comments_drawer.js` + `css/comments.css`). Row badges
+(`section_list_item`, `question_list_item`, `pr_block_list_item`) and the toolbar/modal buttons
+call `CommentsDrawer.open({anchor: "<kind>:<page id>"})`; the panel is an HTMX partial from
+`survey/comment_views.py`. **Anchoring rule**: `thread.survey` is always `canonical_of()`, question
+and section anchors are `code`s (never FKs — `publish_draft()` replaces the rows), session and
+block anchors are FKs; a `CheckConstraint` enforces exactly one anchor. All of that lives in
+`survey/comments.py` (`resolve_anchor`, `anchor_fields`, `open_counts`, `participants_of`, writes);
+views only check roles. Every role opens/replies/resolves; delete = author or owner. Bodies are
+PLAIN TEXT escaped on render — `coerce_creator_html` does not apply. Attachments sit on the private
+media tier under random keys and are served only by `attachment_download`. Badge counts come from
+one grouped query per page (`thread_counts` in every row-rendering context; the `thread_count`
+filter) and are refreshed client-side on `HX-Trigger: threadCountsChanged`, so a render site that
+forgets the context under-counts until the next action, never errors. Notification mail goes to the
+thread's participants (creator, authors, everyone mentioned), never the actor, one Celery task per
+recipient (`survey/tasks.py`) through `survey/mail.py::send_templated_mail` and `SITE_URL`
+(defaults to `NEWSLETTER_SITE_URL`); the same helper is where invitation/activation mail should move.
+Deep link: `<editor page>?section|block|session=<id>#thread-<id>`. "New since you last looked" is
+`CommentSeen` (one row per member+survey, bumped when the drawer renders): `open_counts(survey,
+user)` also returns `new_keys`/`new_total`, which drive the red dot on badges, the toolbar count and
+the "N new" pill — so every render site passes `request.user`. Authors edit their own comments in
+place (`edited_at`, no re-notification). Response anchors are labelled with the Responses ordinal
+(`comments.session_seq`), never the session id.
+
 **Session Management**: Survey sessions are created on first section view and tracked via `request.session['survey_session_id']`.
 
 **Data Export** (`download_data` view): Exports survey responses as ZIP containing:

@@ -37,9 +37,11 @@
     copies of exactly these files produced three phantom layout bugs in one
     review day. In production the manifest hash does this properly.{% endcomment %}
     <link rel="stylesheet" href="{% static 'css/editor-mobile.css' %}{% if debug %}?t={% now 'U' %}{% endif %}">
+    <link rel="stylesheet" href="{% static 'css/comments.css' %}{% if debug %}?t={% now 'U' %}{% endif %}">
     <script src="{% static 'js/editor_mobile_nav.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
     {% endif %}
     {% if EDITOR_AUTOSAVE %}
+    <script src="{% static 'js/comments_drawer.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
     <script src="{% static 'js/editor_autosave.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
     <style>
         .autosave-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #6b7280; }
@@ -1079,6 +1081,8 @@
     {% endif %}
 
     {% block content %}{% endblock %}
+
+    {% include "editor/partials/_comments_drawer.html" %}
 
     <!-- Generic confirm/alert dialog — see survey/assets/js/editor_dialog.js -->
     <div class="modal fade editor-modal" id="editorDialog" tabindex="-1" aria-hidden="true">

@@ -111,6 +111,7 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
                     <b>{{ item.started|date:"j M H:i" }}{% if item.duration_display %} · {{ item.duration_display }}{% endif %}</b>
                     <span>{% if item.geo_count %}{{ item.geo_count }} {% trans "geo" %} · {% endif %}{% if item.text_excerpt %}“{{ item.text_excerpt }}”{% elif not item.geo_count %}{% trans "no answers" %}{% endif %}</span>
                 </span>
+                {% load comment_utils %}{% badge_key 'session' item.id as cm_bk %}{% with cm_n=thread_counts|thread_count:cm_bk cm_new=thread_counts|thread_new:cm_bk %}<span class="cm-badge{% if not cm_n %} cm-ghost{% endif %}{% if cm_new %} cm-badge--new{% endif %}" role="button" tabindex="0" data-thread-badge="{{ cm_bk }}" data-cm-session="{{ item.id }}" aria-label="{% if cm_n %}{{ cm_n }} open comment{{ cm_n|pluralize }}{% if cm_new %}, {% trans 'new activity' %}{% endif %}{% else %}{% trans 'Add a comment' %}{% endif %}" title="{% if cm_n %}{{ cm_n }} open comment{{ cm_n|pluralize }}{% else %}{% trans 'Add a comment' %}{% endif %}"><i class="fas fa-comment" aria-hidden="true"></i> <span data-cm-n>{% if cm_n %}{{ cm_n }}{% endif %}</span></span>{% endwith %}
                 {% if item.issues %}
                 <span class="rv2-chip-status err">{{ item.issues.0 }}</span>
                 {% elif item.status == 'on_hold' %}

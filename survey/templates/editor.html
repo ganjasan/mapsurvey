@@ -259,6 +259,14 @@
         body.mobile-nav-enabled .survey-row .row-meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     }
 
+    .cm-dash-badge { display: inline-flex; align-items: center; gap: 0.25rem; margin-left: auto; font-size: 0.72rem; font-weight: 600; line-height: 1; padding: 0.22rem 0.5rem; border-radius: 20px; background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; text-decoration: none; white-space: nowrap; }
+    .cm-dash-badge:hover { background: #e0e7ff; color: #3730a3; text-decoration: none; }
+    .cm-dash-badge--new { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    .cm-dash-badge--new:hover { background: #fee2e2; color: #991b1b; }
+    .cm-dash-badge b { font-weight: 700; }
+    /* In the card the KPI row is narrow: the badge takes its own line under the numbers instead of squeezing them. */
+    .card-comments { margin: -0.15rem 0 0.5rem; }
+    .card-comments .cm-dash-badge { margin-left: 0; }
     .badge-beta {
         font-size: 0.6rem;
         font-weight: 600;
@@ -384,6 +392,7 @@
                         <span><span class="kpi-value">{{ survey.completed_count }}</span> {% trans "completed" %}</span>
                         <span><span class="kpi-value">{{ survey.completion_rate }}%</span> {% trans "rate" %}</span>
                     </div>
+                    <div class="card-comments">{% if survey.open_comments %}<a class="cm-dash-badge{% if survey.unseen_comments %} cm-dash-badge--new{% endif %}" href="{% url 'editor_survey_detail' survey.uuid %}#comments" title="{% if survey.unseen_comments %}{{ survey.unseen_comments }} {% trans 'new' %} · {% endif %}{{ survey.open_comments }} {% trans 'open comments' %}" aria-label="{{ survey.open_comments }} {% trans 'open comments' %}{% if survey.unseen_comments %}, {{ survey.unseen_comments }} {% trans 'new' %}{% endif %}"><i class="fas fa-comment" aria-hidden="true"></i> {{ survey.open_comments }}{% if survey.unseen_comments %} <b>· {{ survey.unseen_comments }} {% trans "new" %}</b>{% endif %}</a>{% endif %}</div>
                     {% if survey.updated_at %}
                     <div class="card-date">{% blocktrans with ago=survey.updated_at|timesince %}Updated {{ ago }} ago{% endblocktrans %}</div>
                     {% endif %}
@@ -431,7 +440,7 @@
                 <div class="row-kpi">
                     <span><span class="kpi-value">{{ survey.session_count }}</span> {% trans "started" %}</span>
                     <span><span class="kpi-value">{{ survey.completed_count }}</span> {% trans "completed" %}</span>
-                    <span><span class="kpi-value">{{ survey.completion_rate }}%</span> {% trans "rate" %}</span>
+                    <span><span class="kpi-value">{{ survey.completion_rate }}%</span> {% trans "rate" %}</span>{% if survey.open_comments %}<a class="cm-dash-badge{% if survey.unseen_comments %} cm-dash-badge--new{% endif %}" href="{% url 'editor_survey_detail' survey.uuid %}#comments" title="{% if survey.unseen_comments %}{{ survey.unseen_comments }} {% trans 'new' %} · {% endif %}{{ survey.open_comments }} {% trans 'open comments' %}" aria-label="{{ survey.open_comments }} {% trans 'open comments' %}{% if survey.unseen_comments %}, {{ survey.unseen_comments }} {% trans 'new' %}{% endif %}"><i class="fas fa-comment" aria-hidden="true"></i> {{ survey.open_comments }}{% if survey.unseen_comments %} <b>· {{ survey.unseen_comments }} {% trans "new" %}</b>{% endif %}</a>{% endif %}
                 </div>
             </a>
             <div class="row-actions">

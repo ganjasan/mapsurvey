@@ -33,7 +33,7 @@ Us inside the client's workspace, and a consultancy with its municipality: discu
 
 | # | Type | Title | Priority | Area | Epic | Created |
 |---|------|-------|----------|------|------|---------|
-| 169 | feature | [Comment threads anchored to survey objects](feature-survey-comment-threads.md) | high | backend | team-collaboration | 2026-09-15 |
+| 169 | feature | [Comment threads anchored to survey objects](feature-survey-comment-threads.md) (promoted) | high | backend | team-collaboration | 2026-09-15 |
 | 91 | feature | [Workspace roles & permissions (read-only client access)](feature-workspace-roles-permissions.md) | high | backend | team-collaboration | 2026-07-29 |
 
 ## 3. Growth — more creators, more responses

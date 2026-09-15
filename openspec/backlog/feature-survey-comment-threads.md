@@ -66,5 +66,8 @@ surface for that service, which is why this sits in the pro-tier epic next to
 
 ## Notes
 
+Promoted on 2026-09-15 — worktree `Mapsurvey-comment-threads`, branch `feature/survey-comment-threads`.
+Implemented 2026-09-15 in `openspec/changes/survey-comment-threads/` (one PR: all four anchors, drawer, mail, attachments).
+
 `CreatorNote` is unrelated: those are our internal CRM notes about a creator, invisible to
 them. Nothing comment-like exists in the codebase today.

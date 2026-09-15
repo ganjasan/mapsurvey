@@ -15,6 +15,7 @@ from .models import (
     PublicResultsPage, PublicResultsBlock,
     AIGenerationEvent,
     ProInterest,
+    CommentThread, Comment, CommentAttachment,
 )
 from .funnel import dashboard_context
 from leaflet.admin import LeafletGeoAdmin
@@ -394,4 +395,33 @@ class ProInterestAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class CommentInline(admin.TabularInline):
+    model = Comment
+    extra = 0
+    fields = ('author', 'body', 'created_at', 'deleted_at')
+    readonly_fields = fields
+
+
+@admin.register(CommentThread)
+class CommentThreadAdmin(admin.ModelAdmin):
+    """Read-only browser for support: what a workspace discussed, where."""
+    list_display = ('id', 'survey', 'anchor_kind', 'question_code', 'section_code', 'session', 'block', 'status', 'last_activity_at')
+    list_filter = ('status', 'anchor_kind')
+    search_fields = ('survey__name', 'question_code', 'section_code')
+    readonly_fields = ('survey', 'anchor_kind', 'question_code', 'section_code', 'session', 'block',
+                       'created_by', 'created_at', 'resolved_by', 'resolved_at', 'last_activity_at')
+    inlines = [CommentInline]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Deleting here would cascade past the app's soft delete (body cleared,
+        # row kept, files removed); use the drawer.
         return False

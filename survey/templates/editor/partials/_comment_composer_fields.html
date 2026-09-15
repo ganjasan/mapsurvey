@@ -1,0 +1,18 @@
+{% load i18n %}
+{% comment %}Textarea + mention list + attach + submit. Shared by the new-thread
+composer and every reply form. Mentions are posted as user ids in
+`mentions[]`, filled by comments_drawer.js when a name is picked. Errors from
+the server land in the [data-cm-error] slot, the typed text stays.{% endcomment %}
+<div class="cm-mentions" data-cm-mentions hidden role="listbox"></div>
+<textarea name="body" rows="3" required data-cm-body
+          aria-label="{% if placeholder %}{% blocktrans with name=placeholder %}Comment on “{{ name }}”{% endblocktrans %}{% else %}{% trans "Reply" %}{% endif %}"
+          placeholder="{% if placeholder %}{% blocktrans with name=placeholder %}Comment on “{{ name }}”… use @ to mention someone{% endblocktrans %}{% else %}{% trans "Reply… use @ to mention someone" %}{% endif %}"></textarea>
+<div class="cm-error" data-cm-error role="alert" hidden></div>
+<div class="cm-pending" data-cm-pending hidden></div>
+<div class="cm-mention-inputs" data-cm-mention-inputs></div>
+<div class="cm-cbar">
+    <label class="cm-tool"><i class="fas fa-paperclip" aria-hidden="true"></i> {% trans "Attach" %}<input type="file" name="files" multiple hidden data-cm-files accept="image/*,.pdf,.txt,.csv,.doc,.docx,.xls,.xlsx,.zip,.json,.geojson"></label>
+    <button type="button" class="cm-tool" data-cm-at aria-label="{% trans 'Mention a member' %}" title="{% trans 'Mention a member' %}">@</button>
+    {% if hint %}<span class="cm-hint">{{ hint }}</span>{% endif %}
+    <button type="submit" class="cm-send" title="{% trans 'Ctrl+Enter or ⌘+Enter to send' %}"><span class="cm-send-label">{% if placeholder %}{% trans "Comment" %}{% else %}{% trans "Reply" %}{% endif %}</span><span class="cm-send-busy">{% trans "Sending…" %}</span></button>
+</div>

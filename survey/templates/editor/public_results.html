@@ -84,9 +84,11 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
             <button type="submit" class="msb-btn msb-outline msb-desktop" title="{% trans 'Show visitors a fixed snapshot instead of live data — useful before a public announcement' %}">{% trans "❄ Freeze snapshot" %}</button>
         </form>
         {% endif %}
+        <button type="button" class="msb-btn msb-outline cm-toolbar-btn{% if thread_counts.new_total %} cm-has-new{% endif %}" data-cm-open="" aria-label="{% trans 'Comments' %}{% if thread_counts.total %}, {{ thread_counts.total }} {% trans 'open' %}{% endif %}{% if thread_counts.new_total %}, {{ thread_counts.new_total }} {% trans 'new' %}{% endif %}" title="{% trans 'Comments on this page' %}">💬 {% trans "Comments" %} <span class="cm-count" data-thread-total{% if not thread_counts.total %} hidden{% endif %}>{{ thread_counts.total }}</span></button>
         <a class="msb-btn msb-outline msb-desktop" href="{{ public_url }}" target="_blank" title="{% trans 'The live page exactly as visitors see it' %}">{% trans "↗ Open as visitor" %}</a>
     {% else %}
         <button class="msb-btn msb-green" onclick="prSetPublished(true)" {% if not can_publish %}disabled title="{% trans 'Publish the survey first' %}"{% endif %}>{% trans "🌐 Publish page" %}</button>
+        <button type="button" class="msb-btn msb-outline cm-toolbar-btn{% if thread_counts.new_total %} cm-has-new{% endif %}" data-cm-open="" aria-label="{% trans 'Comments' %}{% if thread_counts.total %}, {{ thread_counts.total }} {% trans 'open' %}{% endif %}{% if thread_counts.new_total %}, {{ thread_counts.new_total }} {% trans 'new' %}{% endif %}" title="{% trans 'Comments on this page' %}">💬 {% trans "Comments" %} <span class="cm-count" data-thread-total{% if not thread_counts.total %} hidden{% endif %}>{{ thread_counts.total }}</span></button>
         <a class="msb-btn msb-outline msb-desktop" href="{% url 'editor_public_results_preview' survey.uuid %}" target="_blank" title="{% trans 'Private preview — only you can open this URL' %}">{% trans "↗ Open as visitor" %}</a>
     {% endif %}
 </div>

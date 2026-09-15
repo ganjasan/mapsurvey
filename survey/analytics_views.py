@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 
 from . import product_events as pe
 from .models import Question, Answer, SurveySession, VALIDATION_STATUS_CHOICES
+from .comments import open_counts as _thread_counts
 from .permissions import survey_permission_required
 from .analytics import (
     SurveyAnalyticsService, PerformanceAnalyticsService, SessionValidationService,
@@ -136,6 +137,7 @@ def analytics_dashboard(request, survey_uuid):
     overview_extras = service.get_overview_extras() if responses_v2 else None
 
     return render(request, template_name, {
+        'thread_counts': _thread_counts(survey, request.user),
         'overview_extras': overview_extras,
         'survey': survey,
         'effective_role': request.effective_survey_role,
@@ -225,7 +227,9 @@ def analytics_session_detail(request, survey_uuid, session_id):
     answer_rows, geo_features = service.format_session_answers(session)
     geo_collection = {'type': 'FeatureCollection', 'features': geo_features}
 
+    from .comment_views import panel_context
     return render(request, 'editor/partials/analytics_session_detail.html', {
+        **panel_context(request, survey, anchor=('session', str(session.id)), status='all', inline=True),
         'survey': survey,
         'session': session,
         'is_editor': request.effective_survey_role in ('editor', 'owner'),

@@ -595,6 +595,10 @@ CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 CELERY_TASK_ALWAYS_EAGER = os.environ.get('CELERY_TASK_ALWAYS_EAGER', 'False').lower() == 'true'
 
+# Absolute-URL base for links built outside a request (Celery mail). Falls back
+# to the older newsletter setting so existing deployments change nothing.
+SITE_URL = os.environ.get('SITE_URL', os.environ.get('NEWSLETTER_SITE_URL', 'https://mapsurvey.org'))
+
 # Newsletter
 NEWSLETTER_SITE_URL = os.environ.get('NEWSLETTER_SITE_URL', 'https://mapsurvey.org')
 NEWSLETTER_PHYSICAL_ADDRESS = os.environ.get(

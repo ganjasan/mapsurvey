@@ -1,0 +1,60 @@
+{% load i18n %}
+{% comment %}One panel: header with filters, thread groups, composer. Rendered by
+comment_views.threads_panel into the drawer, and inline (inline=True, no
+header) under Tags & Notes in the session detail. The composer opens a NEW
+thread on the focused anchor; replies live inside each thread. Threads with
+activity the member has not seen are marked and sorted first.{% endcomment %}
+<div class="cm-panel" data-cm-panel
+     data-anchor="{% if anchor_kind %}{{ anchor_kind }}:{{ anchor_key }}{% endif %}"
+     data-focus-thread="{{ focus_thread_id|default:'' }}"
+     data-panel-url="{% url 'editor_comment_threads' survey.uuid %}">
+{% if not inline %}
+    <div class="cm-panel-head">
+        <i class="fas fa-comments" aria-hidden="true"></i><h2 class="cm-title" tabindex="-1" data-cm-title>{% trans "Comments" %}</h2>
+        {% if new_total %}<span class="cm-newpill" title="{% trans 'Activity since you last looked' %}">{{ new_total }} {% trans "new" %}</span>{% endif %}
+        <div class="cm-filters" role="group" aria-label="{% trans 'Show' %}">
+            <button type="button" class="{% if status == 'open' %}on{% endif %}" aria-pressed="{% if status == 'open' %}true{% else %}false{% endif %}"
+                    hx-get="{% url 'editor_comment_threads' survey.uuid %}?status=open{% if anchor_kind %}&anchor={{ anchor_kind }}:{{ anchor_key }}{% endif %}"
+                    hx-target="#comments-drawer-body" hx-swap="innerHTML">{% trans "Open" %} · {{ open_total }}</button>
+            <button type="button" class="{% if status == 'resolved' %}on{% endif %}" aria-pressed="{% if status == 'resolved' %}true{% else %}false{% endif %}"
+                    hx-get="{% url 'editor_comment_threads' survey.uuid %}?status=resolved{% if anchor_kind %}&anchor={{ anchor_kind }}:{{ anchor_key }}{% endif %}"
+                    hx-target="#comments-drawer-body" hx-swap="innerHTML">{% trans "Resolved" %} · {{ resolved_total }}</button>
+        </div>
+        <button type="button" class="cm-x" data-cm-close aria-label="{% trans 'Close comments' %}">✕</button>
+    </div>
+    {% if anchor %}
+    <div class="cm-scope">
+        <span>{% trans "Showing" %}: <b>{{ anchor.label }}</b></span>
+        <a href="#" hx-get="{% url 'editor_comment_threads' survey.uuid %}?status={{ status }}" hx-target="#comments-drawer-body" hx-swap="innerHTML">{% trans "All comments" %}</a>
+    </div>
+    {% endif %}
+{% endif %}
+    <div class="cm-list">
+        {% for g in groups %}
+        <div class="cm-anchor" data-anchor-key="{{ g.anchor.badge_key }}">
+            <i class="fas {% if g.anchor.kind == 'question' %}fa-question-circle{% elif g.anchor.kind == 'section' %}fa-layer-group{% elif g.anchor.kind == 'session' %}fa-user{% else %}fa-th-large{% endif %}" aria-hidden="true"></i>
+            {% if g.anchor.kind == 'question' %}{% trans "Question" %}{% elif g.anchor.kind == 'section' %}{% trans "Section" %}{% elif g.anchor.kind == 'session' %}{% trans "Response" %}{% else %}{% trans "Block" %}{% endif %}:
+            <b>{{ g.anchor.label }}</b>
+            {% if not g.anchor.exists %}<span class="cm-gone">{% trans "no longer in the survey" %}</span>
+            {% elif not inline %}<a href="{{ g.anchor.path }}">{% if g.anchor.kind == 'question' %}{% trans "Open question" %}{% elif g.anchor.kind == 'section' %}{% trans "Go to section" %}{% elif g.anchor.kind == 'session' %}{% trans "Open response" %}{% else %}{% trans "Open block" %}{% endif %}</a>{% endif %}
+        </div>
+        {% for thread in g.threads %}{% include "editor/partials/_comment_thread.html" %}{% endfor %}
+        {% empty %}
+        <p class="cm-empty">{% if status == 'resolved' %}{% trans "Nothing resolved yet." %}{% elif anchor %}{% trans "No comments here yet. Start the first one below." %}{% else %}{% trans "No open comments. Click a 💬 badge on a section or question to start a thread." %}{% endif %}</p>
+        {% endfor %}
+    </div>
+{% if anchor and anchor.exists %}
+    <form class="cm-composer" data-cm-composer
+          hx-post="{% url 'editor_comment_thread_create' survey.uuid %}" hx-encoding="multipart/form-data"
+          hx-disabled-elt="find .cm-send"
+          {% if inline %}hx-target="closest [data-cm-panel]" hx-swap="outerHTML"{% else %}hx-target="#comments-drawer-body" hx-swap="innerHTML"{% endif %}>
+        {% csrf_token %}
+        <input type="hidden" name="anchor" value="{{ anchor_kind }}:{{ anchor_key }}">
+        {% if inline %}<input type="hidden" name="inline" value="1">{% endif %}
+        {% include "editor/partials/_comment_composer_fields.html" with placeholder=anchor.label hint=_("People in the thread and anyone you mention get an email") %}
+    </form>
+{% elif not anchor and not inline %}
+    <div class="cm-composer cm-composer--hint">{% trans "Pick a section, question or block (the 💬 badge) to start a new thread." %}</div>
+{% endif %}
+    {% with mid="cm-members-"|add:anchor_kind|default:"cm-members-all" %}{{ mentions|json_script:mid }}{% endwith %}
+</div>
