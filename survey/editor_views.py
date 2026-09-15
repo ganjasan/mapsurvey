@@ -47,6 +47,7 @@ from .ai.materialize import header_overrides_from_form
 from .ai.tasks import generate_survey_draft_task
 from .models import AIGenerationEvent
 from .forms import SurveySectionAnswerForm
+from .comments import open_counts as _thread_counts
 from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role,
@@ -536,6 +537,7 @@ def editor_survey_detail(request, survey_uuid):
             )
 
     return render(request, 'editor/survey_detail.html', {
+        'thread_counts': _thread_counts(survey, request.user),
         'visibility_lint_hints': visibility_lint_hints,
         'session_count': survey.surveysession_set.count(),
         'ai_feedback_trace_id': feedback_trace_id,
@@ -1019,7 +1021,7 @@ def editor_section_create(request, survey_uuid):
         section.prev_section = last
         section.save(update_fields=['prev_section'])
 
-    return render(request, 'editor/partials/section_list_item.html', {
+    return render(request, 'editor/partials/section_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
         'section': section,
         'survey': survey,
         'is_current': False,
@@ -1109,6 +1111,7 @@ def editor_section_detail(request, survey_uuid, section_id):
 
     return render(request, 'editor/partials/section_detail_form.html', {
         **_visibility_block_context(survey, section, 'section', host=section),
+        'thread_counts': _thread_counts(survey, request.user),
         'survey': survey,
         'section': section,
         'form': form,
@@ -1342,6 +1345,7 @@ def _render_question_modal(request, context):
         # The in-modal sub-question list renders the same disabled state as
         # the section list does on published/closed surveys.
         context.setdefault('is_read_only', survey.status in ('published', 'closed'))
+        context.setdefault('thread_counts', _thread_counts(survey, request.user))
         if 'layer_options' not in context:
             context['layer_options'], context['answer_sources'] = _shared_map_layer_options(survey)
     response = render(request, 'editor/partials/question_form_modal.html', context)
@@ -1357,7 +1361,7 @@ def _section_list_row_oob(request, question, survey, mode):
     existing top-level row in place — `#questions-list >` keeps the selector
     off the modal's own sub-question rows, which carry the same
     data-question-id."""
-    item = render(request, 'editor/partials/question_list_item.html', {
+    item = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
         'question': question, 'survey': survey,
         'is_read_only': survey.status in ('published', 'closed'),
     }).content.decode()
@@ -1474,7 +1478,7 @@ def editor_question_create(request, survey_uuid, section_id):
                 pe.emit(pe.SURVEY_QUESTION_ADDED, request.user.pk,
                         {'survey_id': str(survey.id)})
             _save_question_translations(request, question, survey)
-            response = render(request, 'editor/partials/question_list_item.html', {
+            response = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
                 'question': question,
                 'survey': survey,
                 'is_read_only': survey.status in ('published', 'closed'),
@@ -1581,7 +1585,7 @@ def editor_question_edit(request, survey_uuid, question_id):
             # A sub-question lives inside its parent's section-list row: answer
             # with the parent's row (the form targets it), never a top-level
             # item for the child.
-            response = render(request, 'editor/partials/question_list_item.html', {
+            response = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
                 'question': q.parent_question_id or q,
                 'survey': survey,
                 'is_read_only': survey.status in ('published', 'closed'),
@@ -1964,7 +1968,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
                 # row in the section list re-rendered with the new child.
                 return _edit_modal_response(request, parent, oob_list_item='replace', trigger='questionUpdated')
             # Return the parent question item (includes sub-questions)
-            response = render(request, 'editor/partials/question_list_item.html', {
+            response = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
                 'question': parent,
                 'survey': survey,
                 'is_read_only': survey.status in ('published', 'closed'),
@@ -2022,7 +2026,7 @@ def editor_question_duplicate(request, survey_uuid, question_id):
         new_question.order_number = source.order_number + 1
         new_question.save(update_fields=['order_number'])
 
-    response = render(request, 'editor/partials/question_list_item.html', {
+    response = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
         'question': new_question,
         'survey': survey,
         'is_read_only': survey.status in ('published', 'closed'),
@@ -2050,7 +2054,7 @@ def editor_section_duplicate(request, survey_uuid, section_id):
             name_suffix=' (copy)',
         )
 
-    response = render(request, 'editor/partials/section_list_item.html', {
+    response = render(request, 'editor/partials/section_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
         'section': new_section,
         'survey': survey,
         'is_current': False,
@@ -2148,7 +2152,7 @@ def editor_question_paste(request, survey_uuid, section_id):
         new_question.order_number = (max_order or 0) + 1
         new_question.save(update_fields=['order_number'])
 
-    response = render(request, 'editor/partials/question_list_item.html', {
+    response = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(target_survey, request.user), 
         'question': target_parent if target_parent is not None else new_question,
         'survey': target_survey,
         'is_read_only': target_survey.status in ('published', 'closed'),
@@ -2194,7 +2198,7 @@ def editor_section_paste(request, survey_uuid):
             name_suffix=None,
         )
 
-    response = render(request, 'editor/partials/section_list_item.html', {
+    response = render(request, 'editor/partials/section_list_item.html', {'thread_counts': _thread_counts(target_survey, request.user), 
         'section': new_section,
         'survey': target_survey,
         'is_current': False,

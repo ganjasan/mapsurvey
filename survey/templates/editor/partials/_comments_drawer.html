@@ -1,0 +1,21 @@
+{% load i18n %}
+{% comment %}The comments drawer shell (spec survey-comment-threads). Included ONCE
+from editor_base.html on every page that carries a survey; the panel itself is
+HTMX-loaded into #comments-drawer-body by comments_drawer.js. Off-canvas until
+the `open` class is set. The badges, the toolbar button and the modal header
+button all call CommentsDrawer.open(...). Focus moves to the panel title on
+open and back to the opener on close; the live region announces actions.{% endcomment %}
+{% if survey.uuid %}
+<aside id="comments-drawer" class="cm-drawer" aria-hidden="true" aria-label="{% trans 'Comments' %}"
+       data-panel-url="{% url 'editor_comment_threads' survey.uuid %}"
+       data-counts-url="{% url 'editor_comment_counts' survey.uuid %}">
+    <div class="cm-resize" data-cm-resize role="separator" aria-orientation="vertical" tabindex="0"
+         aria-label="{% trans 'Resize the comments panel' %}" aria-valuemin="320" aria-valuenow="420"
+         title="{% trans 'Drag to resize · double-click to reset · arrow keys' %}"><span></span></div>
+    <div class="sr-only" aria-live="polite" aria-atomic="true" data-cm-live></div>
+    <div id="comments-drawer-body" class="cm-panel">
+        <div class="cm-panel-head"><i class="fas fa-comments" aria-hidden="true"></i><h2 class="cm-title" tabindex="-1" data-cm-title>{% trans "Comments" %}</h2><button type="button" class="cm-x" data-cm-close aria-label="{% trans 'Close comments' %}">✕</button></div>
+        <div class="cm-list"><p class="cm-empty">{% trans "Loading…" %}</p></div>
+    </div>
+</aside>
+{% endif %}

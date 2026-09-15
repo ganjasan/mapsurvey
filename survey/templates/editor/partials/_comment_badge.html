@@ -1,0 +1,6 @@
+{% load i18n comment_utils %}{% comment %}The 💬 N badge on a section, question or block row.
+Include with kind="question|section|block", key=<code or id the counts are keyed by>,
+open=<the object id the page knows, used as the drawer anchor>. A real button so it
+is reachable from the keyboard; ghost (shown on hover/focus) when nothing is open;
+a dot when there is activity the member has not seen. comments_drawer.js patches
+[data-thread-badge] after actions.{% endcomment %}{% badge_key kind key as cm_bk %}{% with cm_n=thread_counts|thread_count:cm_bk cm_new=thread_counts|thread_new:cm_bk %}<button type="button" class="cm-badge{% if not cm_n %} cm-ghost{% endif %}{% if cm_new %} cm-badge--new{% endif %}" data-thread-badge="{{ cm_bk }}" data-cm-open="{{ kind }}:{{ open }}" aria-label="{% if cm_n %}{{ cm_n }} open comment{{ cm_n|pluralize }}{% if cm_new %}, {% trans 'new activity' %}{% endif %}{% else %}{% trans 'Add a comment' %}{% endif %}" title="{% if cm_n %}{{ cm_n }} open comment{{ cm_n|pluralize }}{% if cm_new %} · {% trans 'new activity' %}{% endif %}{% else %}{% trans 'Add a comment' %}{% endif %}"><i class="fas fa-comment" aria-hidden="true"></i> <span data-cm-n>{% if cm_n %}{{ cm_n }}{% endif %}</span></button>{% endwith %}

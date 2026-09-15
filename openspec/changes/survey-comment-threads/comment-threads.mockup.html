@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Comment threads on survey objects</title>
+<style>
+  :root { --ink:#10241f; --paper:#f2efe6; --accent:#4f46e5; --muted:#6b7280; --annot:#8a4b12; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); background-image:radial-gradient(rgba(16,36,31,.06) 1px, transparent 1px); background-size:22px 22px; font:15px/1.5 "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, sans-serif; color:var(--ink); }
+  main { max-width:1500px; margin:0 auto; padding:40px 28px 80px; }
+  h1 { font-size:30px; margin:0 0 6px; }
+  .lede { color:var(--muted); max-width:820px; margin:0 0 34px; }
+  .frame { background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:22px 24px 24px; margin-bottom:34px; box-shadow:0 10px 30px rgba(16,36,31,.06); }
+  .frame h2 { margin:0 0 4px; font-size:20px; }
+  .frame .sub { color:var(--muted); margin:0 0 16px; font-size:14px; }
+  .shot { border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; background:#f8f9fb; }
+  .shot img { display:block; width:100%; height:auto; }
+  .row { display:grid; grid-template-columns: 1fr 340px; gap:22px; align-items:start; }
+  .row.narrow { grid-template-columns: 420px 1fr; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .notes { font-size:14px; }
+  .notes ol { padding-left:20px; margin:0; }
+  .notes li { margin-bottom:9px; }
+  .notes b { color:var(--annot); }
+  .tag { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); background:#eef2ff; border:1px solid #c7d2fe; border-radius:999px; padding:2px 9px; margin-bottom:8px; }
+  .decided { background:#ecfdf5; border:1px solid #a7f3d0; border-radius:12px; padding:16px 22px; margin-bottom:34px; font-size:14px; }
+  .decided h2 { margin:0 0 8px; font-size:16px; color:#065f46; }
+  .decided li { margin-bottom:4px; }
+  .qs { background:#fff8ee; border:1px solid #f5d9a8; border-radius:12px; padding:18px 22px; }
+  .qs h2 { margin:0 0 8px; font-size:18px; }
+  .qs li { margin-bottom:8px; }
+  table.spec { border-collapse:collapse; font-size:14px; width:100%; }
+  table.spec th, table.spec td { text-align:left; padding:7px 10px; border-bottom:1px solid #eee; vertical-align:top; }
+  table.spec th { color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+  code { background:#f3f4f6; padding:1px 5px; border-radius:4px; font-size:13px; }
+  .cap { font-size:12px; color:var(--muted); margin:6px 0 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Comment threads on survey objects</h1>
+  <p class="lede">Backlog #169, epic <b>team-collaboration</b>. Every frame is the <em>real</em> editor from the worktree dev server with the comment UI injected on top — the Olney survey, seeded responses, the actual chrome. Nothing is redrawn. One component (thread list + composer) lives in <b>one slide-in drawer</b> that opens on every page; only the anchor it is focused on changes.</p>
+
+  <section class="decided">
+    <h2>Decided with the owner, 2026-09-15</h2>
+    <ul>
+      <li>All four anchors in v1: question, section, respondent's response (= session), public-results block.</li>
+      <li>One <b>slide-in drawer from the right, everywhere</b> — not a right-pane toggle, not a card inside the modal. Full width on phones.</li>
+      <li>Every role (owner / editor / viewer) can open, reply and resolve. Own comment can be deleted by its author; any comment by an owner.</li>
+      <li>Body = plain text with <code>@mentions</code> plus attachments (images and files).</li>
+      <li>Email goes to the <b>participants of the thread</b>: the author, anyone who replied, anyone @mentioned. Sent by a Celery task; invitations and activation mail move to the same task later.</li>
+    </ul>
+  </section>
+
+  <section class="frame">
+    <span class="tag">1 · Survey editor</span>
+    <h2>Badges on rows, one Comments button in the toolbar, drawer from the right</h2>
+    <p class="sub">Closed state (left): badges carry the open count; the toolbar gets a <b>Comments · 2</b> button. Open state (right): the drawer slides over the live preview and lists every thread of the survey grouped by anchor. A click on a badge opens the drawer focused on that anchor.</p>
+    <div class="two">
+      <div><div class="shot"><img src="mock-0-closed.png" alt="Editor with comment badges and a Comments button in the toolbar, drawer closed"></div><p class="cap">Closed: badges + toolbar button. The preview stays where it is.</p></div>
+      <div><div class="shot"><img src="mock-1-structure.png" alt="Editor with the comments drawer open over the preview"></div><p class="cap">Open: drawer over the preview, 400px, closes with ×.</p></div>
+    </div>
+    <div class="notes" style="margin-top:14px"><ol>
+      <li><b>Badges.</b> <code>💬 2</code> on a section = open threads inside it (own + its questions). On a question row it sits before the action icons, same slot as the visibility badge. Rows without a thread show a ghost icon on hover — that is the “add comment” affordance.</li>
+      <li><b>Grouped by anchor.</b> Question / Section headings, each with an “Open question” / “Go to section” link. The focused thread has the indigo ring.</li>
+      <li><b>Filters</b> Open · N / Resolved · N. Resolved threads render muted with “Resolved by Kelsie” and a Reopen link.</li>
+      <li><b>Composer</b> pinned to the bottom, always targeting the focused anchor (the placeholder names it). Attach, @, and a hint that mentioned members get an email.</li>
+    </ol></div>
+  </section>
+
+  <section class="frame">
+    <span class="tag">2 · Question modal</span>
+    <h2>Same drawer, above the modal</h2>
+    <p class="sub">“Edit question” gets a <b>Comments · 1 open</b> button in its header. It opens the same drawer, filtered to this question, on top of the modal. Here the composer has the @-mention popup open and a pending attachment.</p>
+    <div class="row">
+      <div class="shot"><img src="mock-2-question-modal.png" alt="Question modal with the comments drawer open on top, mention popup and pending attachment"></div>
+      <div class="notes"><ol>
+        <li><b>Why from the modal too.</b> This is where the client reads the wording; a note about the label should be one click from the label.</li>
+        <li><b>@ popup</b> lists workspace members (name + email/role). Picking one inserts <code>@Kelsie</code>, rendered as a chip.</li>
+        <li><b>Attachments</b>: images get a thumbnail, other files an icon + size. A pending attachment shows under the textarea with a remove ×. Stored like layer-object assets (random keys), served through a gated view.</li>
+        <li><b>Stacking.</b> Drawer z-index above the Bootstrap modal; closing the drawer returns to the modal untouched.</li>
+      </ol></div>
+    </div>
+  </section>
+
+  <section class="frame">
+    <span class="tag">3 · Responses — session drawer</span>
+    <h2>Thread on a respondent's answer, inside the existing drawer</h2>
+    <p class="sub">Anchor = the session (the whole response). Responses already has a right-hand drawer per response, so the thread is mounted inside it, under Tags &amp; Notes, rather than opening a second drawer. The map popup and the Latest responses list get the same badge.</p>
+    <div class="row">
+      <div class="shot"><img src="mock-3-responses-drawer.png" alt="Responses drawer with a comment thread under Tags and Notes"></div>
+      <div class="notes"><ol>
+        <li><b>Notes vs Comments.</b> Notes stay: a private scratchpad, one text. Comments are a conversation with authors, mentions, email. Notes is not migrated.</li>
+        <li><b>Triage use.</b> “@Artem can we mark it approved?” — the status chips are right above, so the reply is an action, not a message.</li>
+        <li><b>Map popup</b> (tiles are blocked on dev, not shown): the identify popup gets a <code>💬 1</code> row that opens this drawer scrolled to the thread.</li>
+      </ol></div>
+    </div>
+  </section>
+
+  <section class="frame">
+    <span class="tag">4 · Public results config</span>
+    <h2>Thread on a results block</h2>
+    <p class="sub">Badge on the block row; the drawer opens from the toolbar button or the badge, focused on the block.</p>
+    <div class="row">
+      <div class="shot"><img src="mock-4-public-results.png" alt="Public results config with a comment badge on a block and the comments drawer"></div>
+      <div class="notes"><ol>
+        <li><b>Anchor label</b> = block type + custom title (“Map · White squirrel sightings”); “Open block” selects it in the form.</li>
+        <li><b>Toolbar button</b> sits next to “Open as visitor”, same as on the Survey page.</li>
+      </ol></div>
+    </div>
+  </section>
+
+  <section class="frame">
+    <span class="tag">5 · Mobile · 6 · Email</span>
+    <h2>Phone: the drawer takes the whole screen. Email: one message per mention/reply, deep link into the thread</h2>
+    <div class="row narrow">
+      <div class="shot"><img src="mock-5-mobile.png" alt="Mobile editor with the comments drawer full screen above the bottom nav"></div>
+      <div>
+        <div class="shot" style="margin-bottom:14px"><img src="mock-6-email.png" alt="Notification email: Kelsie mentioned you on the question White squirrel, with Open the thread button"></div>
+        <div class="notes"><ol>
+          <li><b>Mobile.</b> Below 768px the drawer is full width above the bottom bar; × returns to whatever pane was open. Opened from a badge tap or the toolbar button (which moves into the “…” menu on narrow screens).</li>
+          <li><b>Email subject</b>: <code>Kelsie Sterchi mentioned you on “White (albino) squirrel” · olney-white-squirrel-count</code>. Body = the comment, attachments by name, one button. The deep link opens the page with the drawer open and the thread focused (<code>#thread-&lt;id&gt;</code>).</li>
+          <li><b>Who gets it</b>: participants of the thread (author, repliers, mentioned). A new thread with no mention emails nobody. Celery task; invitations and activation mail will ride the same task.</li>
+        </ol></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="frame">
+    <span class="tag">Data</span>
+    <h2>What a thread is</h2>
+    <table class="spec">
+      <tr><th>Field</th><th>Value</th><th>Why</th></tr>
+      <tr><td><code>survey</code></td><td>FK → canonical SurveyHeader</td><td>Publishing moves section/question rows to an archived header; the canonical id never changes.</td></tr>
+      <tr><td><code>anchor_kind</code></td><td><code>question</code> · <code>section</code> · <code>session</code> · <code>results_block</code></td><td>One thread, one object.</td></tr>
+      <tr><td><code>question_code</code> / <code>section_code</code></td><td>CharField</td><td>Codes survive versioning (SurveyMapLayer does the same). Duplicating a survey regenerates codes, so threads do not follow a duplicate — by design.</td></tr>
+      <tr><td><code>session</code> / <code>results_block</code></td><td>nullable FK</td><td>Their ids are stable across publishes.</td></tr>
+      <tr><td><code>status</code>, <code>resolved_by</code>, <code>resolved_at</code></td><td>open / resolved</td><td>Reopen keeps the history.</td></tr>
+      <tr><td>Comment</td><td><code>thread</code>, <code>author</code> (SET_NULL), <code>body</code> text, <code>mentions</code> M2M, <code>created_at</code></td><td>Plain text, escaped on render; @chips from the M2M, not re-parsed on every render.</td></tr>
+      <tr><td>CommentAttachment</td><td><code>comment</code>, file, name, size, content_type</td><td>Same storage path as layer-object assets; served through a gated view.</td></tr>
+    </table>
+  </section>
+
+  <section class="qs">
+    <h2>Still open</h2>
+    <ol>
+      <li><b>Section badge count.</b> Own threads only, or own + questions inside (shown)? The rolled-up number is what says “something is waiting in this section”.</li>
+      <li><b>Composer target</b> when nothing is focused: default to the current section, or ask to pick an anchor first?</li>
+      <li><b>Sessions of archived versions</b> still appear on Responses; their threads keep working since the FK is on the session. Confirm that is fine.</li>
+    </ol>
+  </section>
+</main>
+</body>
+</html>

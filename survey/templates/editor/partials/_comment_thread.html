@@ -1,0 +1,67 @@
+{% load i18n %}
+{% comment %}One thread: its comments, a collapsed reply form, resolve/reopen.
+Rendered inside the panel and returned alone by reply/resolve/reopen/edit/
+delete (outerHTML swap on this element). Bodies are plain text: `linebreaksbr`
+on auto-escaped output, never |safe. The author may edit their own comment in
+place; the edit never re-notifies.{% endcomment %}
+<article class="cm-thread{% if thread.status == 'resolved' %} cm-done{% endif %}{% if focus_thread_id == thread.pk %} cm-focus{% endif %}{% if thread.is_new %} cm-new{% endif %}"
+     id="thread-{{ thread.pk }}" data-thread-id="{{ thread.pk }}" data-anchor-key="{{ thread.anchor.badge_key }}"
+     aria-label="{% blocktrans with name=thread.anchor.label %}Thread on {{ name }}{% endblocktrans %}">
+    {% if thread.is_new %}<span class="cm-newdot" title="{% trans 'New since you last looked' %}"><span class="sr-only">{% trans "New" %}</span></span>{% endif %}
+    {% for c in thread.visible_comments %}
+    <div class="cm-msg{% if c.is_deleted %} cm-msg--deleted{% endif %}" data-comment-id="{{ c.pk }}">
+        <div class="cm-av{% if c.author_id == user.pk %} me{% endif %}" aria-hidden="true">{% if c.author %}{{ c.author.first_name|first|default:c.author.username|first|upper }}{{ c.author.last_name|first|upper }}{% else %}?{% endif %}</div>
+        <div class="cm-msg-body">
+            <div class="cm-meta"><b>{% if c.author %}{{ c.author.get_full_name|default:c.author.username }}{% else %}{% trans "Former member" %}{% endif %}</b> · <time datetime="{{ c.created_at|date:'c' }}" title="{{ c.created_at|date:'Y-m-d H:i' }}">{{ c.created_at|timesince }} {% trans "ago" %}</time>{% if c.edited_at %} · <span class="cm-edited" title="{{ c.edited_at|date:'Y-m-d H:i' }}">{% trans "edited" %}</span>{% endif %}
+                {% if not c.is_deleted %}
+                {% if c.author_id == user.pk %}<button type="button" class="cm-ico" data-cm-edit-toggle aria-label="{% trans 'Edit comment' %}" title="{% trans 'Edit' %}"><i class="fas fa-pen" aria-hidden="true"></i></button>{% endif %}
+                {% if c.author_id == user.pk or effective_role == 'owner' %}<button type="button" class="cm-ico cm-del" aria-label="{% trans 'Delete comment' %}" title="{% trans 'Delete' %}"
+                    hx-post="{% url 'editor_comment_delete' survey.uuid thread.pk c.pk %}" hx-target="closest .cm-thread" hx-swap="outerHTML"
+                    hx-confirm="{% trans 'Delete this comment?' %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'><i class="fas fa-trash-alt" aria-hidden="true"></i></button>{% endif %}
+                {% endif %}
+            </div>
+            {% if c.is_deleted %}<div class="cm-body cm-body--deleted">{% trans "Comment deleted" %}</div>
+            {% else %}
+            <div class="cm-body" data-cm-body-text>{{ c.body|linebreaksbr }}</div>
+            {% if c.author_id == user.pk %}
+            <form class="cm-composer cm-edit" data-cm-editform hidden
+                  hx-post="{% url 'editor_comment_edit' survey.uuid thread.pk c.pk %}" hx-target="closest .cm-thread" hx-swap="outerHTML" hx-disabled-elt="find .cm-send">
+                {% csrf_token %}
+                <textarea name="body" rows="3" required aria-label="{% trans 'Edit comment' %}">{{ c.body }}</textarea>
+                <div class="cm-error" data-cm-error role="alert" hidden></div>
+                <div class="cm-cbar">
+                    <span class="cm-hint">{% trans "Editing does not send another email" %}</span>
+                    <button type="button" class="cm-tool" data-cm-edit-cancel>{% trans "Cancel" %}</button>
+                    <button type="submit" class="cm-send"><span class="cm-send-label">{% trans "Save" %}</span><span class="cm-send-busy">{% trans "Saving…" %}</span></button>
+                </div>
+            </form>
+            {% endif %}
+            {% for m in c.mentions.all %}<span class="cm-mention">@{{ m.get_full_name|default:m.username }}</span>{% endfor %}
+            {% for a in c.attachments.all %}
+            <a class="cm-att" href="{% url 'editor_comment_attachment' survey.uuid thread.pk c.pk a.pk %}" target="_blank" rel="noopener" title="{{ a.original_name }}">
+                {% if a.kind == 'image' %}<img class="cm-thumb" src="{% url 'editor_comment_attachment' survey.uuid thread.pk c.pk a.pk %}" alt="" width="34" height="26" loading="lazy" decoding="async">{% else %}<i class="fas fa-file" aria-hidden="true"></i>{% endif %}
+                <span>{{ a.original_name|truncatechars:32 }}</span><small>{{ a.size_bytes|filesizeformat }}</small>
+            </a>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    <div class="cm-actions">
+        {% if thread.status == 'resolved' %}
+        <button type="button" hx-post="{% url 'editor_comment_reopen' survey.uuid thread.pk %}" hx-target="closest .cm-thread" hx-swap="outerHTML" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>{% trans "Reopen" %}</button>
+        <span class="cm-state"><i class="fas fa-check" aria-hidden="true"></i> {% trans "Resolved" %}{% if thread.resolved_by %} {% trans "by" %} {{ thread.resolved_by.get_full_name|default:thread.resolved_by.username }}{% endif %}</span>
+        {% else %}
+        <button type="button" data-cm-reply-toggle aria-expanded="false"><i class="fas fa-reply" aria-hidden="true"></i> {% trans "Reply" %}</button>
+        <button type="button" class="cm-res" hx-post="{% url 'editor_comment_resolve' survey.uuid thread.pk %}" hx-target="closest .cm-thread" hx-swap="outerHTML" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' title="{% trans 'Mark as done. You can reopen it later.' %}"><i class="fas fa-check" aria-hidden="true"></i> {% trans "Resolve" %}</button>
+        {% endif %}
+    </div>
+    {% if thread.status != 'resolved' %}
+    <form class="cm-composer cm-reply" data-cm-composer hidden
+          hx-post="{% url 'editor_comment_reply' survey.uuid thread.pk %}" hx-encoding="multipart/form-data"
+          hx-disabled-elt="find .cm-send" hx-target="closest .cm-thread" hx-swap="outerHTML">
+        {% csrf_token %}
+        {% include "editor/partials/_comment_composer_fields.html" with placeholder='' hint=_("Everyone in the thread gets an email") %}
+    </form>
+    {% endif %}
+</article>

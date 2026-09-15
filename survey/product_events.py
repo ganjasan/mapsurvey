@@ -39,6 +39,12 @@ EMBED_COPIED = 'embed_copied'
 RESPONSES_VIEWED = 'responses_viewed'
 DATA_EXPORTED = 'data_exported'
 
+# Team collaboration (spec survey-comment-threads). Creator events: who
+# discussed what, never what was said -- no body, mentions or file names.
+COMMENT_THREAD_OPENED = 'comment_thread_opened'
+COMMENT_REPLY_POSTED = 'comment_reply_posted'
+COMMENT_THREAD_RESOLVED = 'comment_thread_resolved'
+
 CREATOR_FUNNEL_EVENTS = (
     CREATOR_REGISTERED,
     CREATOR_ACTIVATED,

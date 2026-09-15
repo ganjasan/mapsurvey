@@ -1729,6 +1729,165 @@ class PublicResultsBlock(models.Model):
         return f"{self.block_type} block on {self.page.slug}"
 
 
+# ─── Comment threads (spec survey-comment-threads) ──────────────────────────
+
+COMMENT_ANCHOR_CHOICES = (
+    ('question', _('Question')),
+    ('section', _('Section')),
+    ('session', _('Response')),
+    ('block', _('Public results block')),
+)
+
+COMMENT_THREAD_STATUS_CHOICES = (
+    ('open', _('Open')),
+    ('resolved', _('Resolved')),
+)
+
+
+def comment_attachment_key(instance, filename):
+    """comment_attachments/<uuid4>.<ext> on the PRIVATE tier.
+
+    Random and unlistable like `layer_asset_key`, but private where layer
+    assets are public: a comment is workspace-internal discussion, never
+    something a respondent loads, so the only way to a file is the gated
+    download view."""
+    ext = (os.path.splitext(filename)[1] or '')[:8].lower()
+    return f'comment_attachments/{uuid_module.uuid4().hex}{ext}'
+
+
+class CommentThread(models.Model):
+    """A discussion anchored to exactly one object of a survey.
+
+    `survey` is always the CANONICAL header (`versioning.canonical_of`), whatever
+    page the thread was opened from. A question or section is named by its
+    `code`, not a FK: `publish_draft()` moves the old rows to an archived header
+    and puts freshly cloned rows with the same code on the canonical one, so a
+    FK would point at an archived row after the next publish — the same reason
+    `SurveyMapLayer.source_question_code` is a code. Codes are regenerated on
+    duplicate/paste, so a thread does not follow a duplicated survey; accepted.
+    A session or a public-results block keeps one row for life, so those two
+    anchors are ordinary FKs.
+    """
+    survey = models.ForeignKey('SurveyHeader', on_delete=models.CASCADE, related_name='comment_threads')
+    anchor_kind = models.CharField(max_length=10, choices=COMMENT_ANCHOR_CHOICES)
+    question_code = models.CharField(max_length=50, blank=True, default='')
+    section_code = models.CharField(max_length=8, blank=True, default='')
+    session = models.ForeignKey('SurveySession', null=True, blank=True, on_delete=models.CASCADE, related_name='comment_threads')
+    block = models.ForeignKey('PublicResultsBlock', null=True, blank=True, on_delete=models.CASCADE, related_name='comment_threads')
+    status = models.CharField(max_length=8, choices=COMMENT_THREAD_STATUS_CHOICES, default='open')
+    # Losing an account must not delete the conversation (same rule as
+    # CreatorNote.author), hence SET_NULL on every user reference.
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    created_at = models.DateTimeField(default=timezone.now)
+    # Bumped by every comment, resolve and reopen: the drawer's sort key.
+    last_activity_at = models.DateTimeField(default=timezone.now)
+    resolved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['-last_activity_at', '-id']
+        indexes = [
+            models.Index(fields=['survey', 'status', 'anchor_kind']),
+            models.Index(fields=['survey', 'question_code']),
+            models.Index(fields=['survey', 'section_code']),
+        ]
+        constraints = [
+            # Exactly one anchor, and the one `anchor_kind` names. Enforced in
+            # the database rather than clean(): every write path (views, a
+            # later AI agent, a shell) meets the same wall.
+            models.CheckConstraint(
+                name='commentthread_one_anchor_only',
+                check=(
+                    Q(anchor_kind='question', section_code='', session__isnull=True, block__isnull=True) & ~Q(question_code='')
+                    | Q(anchor_kind='section', question_code='', session__isnull=True, block__isnull=True) & ~Q(section_code='')
+                    | Q(anchor_kind='session', question_code='', section_code='', session__isnull=False, block__isnull=True)
+                    | Q(anchor_kind='block', question_code='', section_code='', session__isnull=True, block__isnull=False)
+                ),
+            ),
+        ]
+
+    def __str__(self):
+        return f'thread #{self.pk} on {self.anchor_kind} ({self.status})'
+
+    @property
+    def is_resolved(self):
+        return self.status == 'resolved'
+
+
+class Comment(models.Model):
+    """One message in a thread. The opening post is a row like any reply.
+
+    `body` is PLAIN TEXT, escaped on render — the Quill/`html_sanitize`
+    pipeline that governs creator rich text does not apply and must not be
+    reached for from here. Mentions are stored when the comment is posted so
+    rendering reads a relation instead of re-parsing text."""
+    thread = models.ForeignKey(CommentThread, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    body = models.TextField(blank=True, default='')
+    mentions = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='comment_mentions')
+    created_at = models.DateTimeField(default=timezone.now)
+    # The author may fix their own text; the mark tells readers it changed. An
+    # edit never re-notifies -- the mail already went out with the first wording.
+    edited_at = models.DateTimeField(null=True, blank=True)
+    # Soft delete keeps the thread readable: the row stays, body and files go.
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['created_at', 'id']
+        indexes = [models.Index(fields=['thread', 'created_at'])]
+
+    def __str__(self):
+        return f'comment #{self.pk} in thread #{self.thread_id}'
+
+    @property
+    def is_deleted(self):
+        return self.deleted_at is not None
+
+
+COMMENT_ATTACHMENT_KINDS = (
+    ('image', _('Image')),
+    ('file', _('File')),
+)
+
+
+class CommentAttachment(models.Model):
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='attachments')
+    kind = models.CharField(max_length=5, choices=COMMENT_ATTACHMENT_KINDS)
+    file = models.FileField(upload_to=comment_attachment_key, storage=_private_media_storage, max_length=500)
+    original_name = models.CharField(max_length=255)
+    content_type = models.CharField(max_length=100, blank=True, default='')
+    size_bytes = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['id']
+
+    def __str__(self):
+        return self.original_name
+
+
+class CommentSeen(models.Model):
+    """When a member last opened a survey's comments.
+
+    One row per (member, survey), bumped every time the drawer renders. A thread
+    whose last activity is newer than this, and was not the member's own, is
+    "new" -- the dot in the drawer and on the badges. Conversation across time
+    zones is the whole point of the feature, so "what changed since I looked"
+    has to be answered without reading everything again."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comment_seen')
+    survey = models.ForeignKey('SurveyHeader', on_delete=models.CASCADE, related_name='comment_seen')
+    seen_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        app_label = 'survey'
+        constraints = [models.UniqueConstraint(fields=['user', 'survey'], name='commentseen_user_survey')]
+
+    def __str__(self):
+        return f'{self.user_id} saw comments of {self.survey_id} at {self.seen_at:%Y-%m-%d %H:%M}'
+
 
 AI_GENERATION_KIND_CHOICES = (
     ('survey_draft', _('Survey draft generation')),

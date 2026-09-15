@@ -1,0 +1,10 @@
+{% autoescape off %}{{ actor_name }} {{ verb }} {{ kind_label }} "{{ anchor_label }}" in {{ survey_name }}.
+
+{{ body }}
+{% if attachments %}
+Attached: {{ attachments|join:", " }}
+{% endif %}
+Open the thread: {{ thread_url }}
+
+You get this email because you are part of the thread. Reply in Mapsurvey; replies to this email are not delivered.
+{% endautoescape %}

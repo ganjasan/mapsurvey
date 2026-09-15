@@ -21,6 +21,7 @@ from .models import (
     PublicResultsPage, PublicResultsBlock, Question, Answer, SurveyHeader,
     PUBLIC_RESULTS_BLOCK_TYPE_CHOICES, BASEMAP_CHOICES,
 )
+from .comments import open_counts as _thread_counts
 from .permissions import (
     survey_permission_required, get_effective_survey_role, _check_survey_role,
 )
@@ -127,6 +128,7 @@ def public_results_config(request, survey_uuid):
         'survey': survey,
         'page': page,
         'blocks': page.blocks.all(),
+        'thread_counts': _thread_counts(survey, request.user),
         'question_rows': _survey_questions(survey),
         'geo_subquestions': geo_subquestions,
         'selected_block': selected_block,

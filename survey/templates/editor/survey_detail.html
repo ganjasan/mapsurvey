@@ -42,6 +42,7 @@ when the published survey is read-only the bar goes amber and carries the
         {% endif %}
     </div>
     <div style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:.6rem;">
+        <button type="button" class="btn btn-sm btn-outline-primary cm-toolbar-btn{% if thread_counts.new_total %} cm-has-new{% endif %}" data-cm-open="" aria-label="{% trans 'Comments' %}{% if thread_counts.total %}, {{ thread_counts.total }} {% trans 'open' %}{% endif %}{% if thread_counts.new_total %}, {{ thread_counts.new_total }} {% trans 'new' %}{% endif %}" title="{% trans 'Comments on this survey' %}"><i class="fas fa-comments" aria-hidden="true"></i> {% trans "Comments" %} <span class="cm-count" data-thread-total{% if not thread_counts.total %} hidden{% endif %}>{{ thread_counts.total }}</span></button>
         <a class="btn btn-sm btn-outline-secondary ctx-preview-btn" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="{% trans 'Open the survey as a respondent' %}">
             <i class="fas fa-external-link-alt"></i> {% trans "Preview" %}
         </a>
@@ -56,7 +57,8 @@ when the published survey is read-only the bar goes amber and carries the
         <div class="s">{% if survey.status == 'draft' %}{% trans "Draft — not collecting responses" %}{% elif survey.status == 'testing' %}{% trans "Testing — invite-link access" %}{% elif survey.status == 'published' %}{% trans "Open" %} · {% blocktrans count counter=session_count %}{{ counter }} response{% plural %}{{ counter }} responses{% endblocktrans %}{% elif survey.status == 'closed' %}{% trans "Closed" %} · {% blocktrans count counter=session_count %}{{ counter }} response{% plural %}{{ counter }} responses{% endblocktrans %}{% else %}{% trans "Sections, questions & survey settings" %}{% endif %}</div>
     </div>
     <span style="flex:1;"></span>
-    <a class="btn btn-sm btn-outline-secondary ctx-preview-btn" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="{% trans 'Open the survey as a respondent' %}">
+    <button type="button" class="btn btn-sm btn-outline-primary cm-toolbar-btn{% if thread_counts.new_total %} cm-has-new{% endif %}" data-cm-open="" aria-label="{% trans 'Comments' %}{% if thread_counts.total %}, {{ thread_counts.total }} {% trans 'open' %}{% endif %}{% if thread_counts.new_total %}, {{ thread_counts.new_total }} {% trans 'new' %}{% endif %}" title="{% trans 'Comments on this survey' %}"><i class="fas fa-comments" aria-hidden="true"></i> {% trans "Comments" %} <span class="cm-count" data-thread-total{% if not thread_counts.total %} hidden{% endif %}>{{ thread_counts.total }}</span></button>
+        <a class="btn btn-sm btn-outline-secondary ctx-preview-btn" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="{% trans 'Open the survey as a respondent' %}">
         <i class="fas fa-external-link-alt"></i> {% trans "Preview" %}
     </a>
     {% if show_draft_actions %}
@@ -114,6 +116,7 @@ flow.{% endcomment %}
     {% endif %}
     <a class="msb-btn msb-indigo" href="{% url 'editor_survey_share' survey.uuid %}">{% trans "🔗 Share" %}</a>
     {% endif %}
+    <button type="button" class="msb-btn msb-outline cm-toolbar-btn{% if thread_counts.new_total %} cm-has-new{% endif %}" data-cm-open="" aria-label="{% trans 'Comments' %}{% if thread_counts.total %}, {{ thread_counts.total }} {% trans 'open' %}{% endif %}{% if thread_counts.new_total %}, {{ thread_counts.new_total }} {% trans 'new' %}{% endif %}" title="{% trans 'Comments on this survey' %}">💬 <span class="msb-desktop">{% trans "Comments" %}</span> <span class="cm-count" data-thread-total{% if not thread_counts.total %} hidden{% endif %}>{{ thread_counts.total }}</span></button>
     <a class="msb-btn msb-outline msb-desktop" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="{% trans 'Take the survey the way a respondent will — real page, real map, real submit' %}">{% trans "↗ Open as respondent" %}</a>
     {% if is_owner %}
     <div class="dropdown msb-desktop" style="flex:0 0 auto;">

@@ -4,6 +4,7 @@
     data-section-name="{{ section.name }}">
     <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
     <span class="section-title">{{ section.title|default:section.name }}</span>
+    {% include "editor/partials/_comment_badge.html" with kind="section" key=section.code open=section.id %}
     {% load question_utils %}{% with vis=section|visibility_info:survey %}{% if vis %}
     {% if vis.broken %}
     <span class="badge badge-warning" title="{{ vis.reason }}. Shown to everyone until fixed."><i class="fas fa-exclamation-triangle"></i></span>
