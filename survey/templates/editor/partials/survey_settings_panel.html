@@ -640,7 +640,7 @@
             if (!pv || !window.L || !window.RefLayerFactory) return;
             if (!pvMap) {
                 pvMap = L.map(pv, { attributionControl: false, zoomControl: false });
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, opacity: .6 }).addTo(pvMap);
+                L.tileLayer('{{ MAPBOX_URL }}', { maxZoom: 23, opacity: .6, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }).addTo(pvMap);
             }
             function draw() {
                 if (pvLayer) pvMap.removeLayer(pvLayer);
