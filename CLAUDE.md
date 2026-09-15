@@ -206,8 +206,8 @@ Responses map alike; `layers.match_class` mirrors its matching for the server-si
 not honour rules yet.
 
 **Comment threads (`CommentThread`/`Comment`/`CommentAttachment`, spec `survey-comment-threads`)**:
-workspace members discuss a survey where it lives — a question, a section, a respondent session or
-a public-results block — in ONE slide-in drawer (`editor/partials/_comments_drawer.html`, included
+workspace members discuss a survey where it lives — the survey as a whole, a question, a section, a respondent
+session or a public-results block — in ONE slide-in drawer (`editor/partials/_comments_drawer.html`, included
 once from `editor_base.html`; `js/comments_drawer.js` + `css/comments.css`). Row badges
 (`section_list_item`, `question_list_item`, `pr_block_list_item`) and the toolbar/modal buttons
 call `CommentsDrawer.open({anchor: "<kind>:<page id>"})`; the panel is an HTMX partial from

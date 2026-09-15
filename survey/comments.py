@@ -26,7 +26,8 @@ from .models import (
 )
 from .versioning import canonical_of, family_ids_with_draft
 
-ANCHOR_KINDS = ('question', 'section', 'session', 'block')
+ANCHOR_KINDS = ('survey', 'question', 'section', 'session', 'block')
+SURVEY_ANCHOR_KEY = 'all'
 
 MAX_ATTACHMENT_BYTES = 15 * 1024 * 1024
 MAX_ATTACHMENTS_PER_COMMENT = 10
@@ -82,6 +83,9 @@ def resolve_anchor(thread):
     """Label, editor path and liveness of a thread's anchor, resolved now."""
     canonical = canonical_of(thread.survey)
     uuid = canonical.uuid
+    if thread.anchor_kind == 'survey':
+        return Anchor('survey', SURVEY_ANCHOR_KEY, canonical.name, True,
+                      reverse('editor_survey_detail', kwargs={'survey_uuid': uuid}), canonical)
     if thread.anchor_kind == 'question':
         q = _question_row(canonical, thread.question_code)
         if q is None:
@@ -143,6 +147,8 @@ def anchor_fields(survey, kind, key):
     survey family.
     """
     canonical = canonical_of(survey)
+    if kind == 'survey':
+        return {'anchor_kind': 'survey'}
     try:
         pk = int(key)
     except (TypeError, ValueError):
@@ -265,11 +271,13 @@ def open_counts(survey, user=None):
     rows = (CommentThread.objects.filter(survey=canonical, status='open')
             .values('anchor_kind', 'question_code', 'section_code', 'session_id', 'block_id')
             .annotate(n=Count('id')))
-    out = {'question': Counter(), 'section': Counter(), 'session': Counter(), 'block': Counter(), 'total': 0}
+    out = {'survey': Counter(), 'question': Counter(), 'section': Counter(), 'session': Counter(), 'block': Counter(), 'total': 0}
     for r in rows:
         out['total'] += r['n']
         k = r['anchor_kind']
-        if k == 'question':
+        if k == 'survey':
+            out['survey'][SURVEY_ANCHOR_KEY] += r['n']
+        elif k == 'question':
             out['question'][r['question_code']] += r['n']
         elif k == 'section':
             out['section'][r['section_code']] += r['n']
@@ -292,7 +300,9 @@ def open_counts(survey, user=None):
             out['new_total'] = len(new_ids)
             q_to_section = {}
             for t in CommentThread.objects.filter(pk__in=new_ids).only('anchor_kind', 'question_code', 'section_code', 'session_id', 'block_id'):
-                if t.anchor_kind == 'question':
+                if t.anchor_kind == 'survey':
+                    out['new_keys'].add(f'survey:{SURVEY_ANCHOR_KEY}')
+                elif t.anchor_kind == 'question':
                     out['new_keys'].add(f'question:{t.question_code}')
                     q_to_section.setdefault(t.question_code, None)
                 elif t.anchor_kind == 'section':

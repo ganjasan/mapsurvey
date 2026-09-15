@@ -71,4 +71,5 @@
 - [x] 8.7 Response anchor labelled with the Responses ordinal (`comments.session_seq`), not the database id
 - [x] 8.8 Touch targets 44px under `pointer: coarse`; text sizes ≥ .75rem, comment body .9rem/1.5 capped at 70ch; ⌘/Ctrl+Enter shown in the send button title; shorter hint on reply forms
 - [x] 8.10 Dashboard: every survey card shows `💬 N` open comments and `· M new` in red when there is unseen activity (`comments.unseen_by_survey`, two queries for the whole list); links to the survey editor (owner request 2026-09-15)
+- [x] 8.11 General threads: the survey itself is the fifth anchor (`anchor_kind=survey`, migration `0083` widens the constraint); the whole-survey drawer view has a composer for it and lists these threads first (owner request 2026-09-15)
 - [ ] 8.9 Deferred: server-side image thumbnails for attachments (previews still load the original, lazily)
