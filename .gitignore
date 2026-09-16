@@ -20,3 +20,7 @@ designs/
 exports/
 raw/
 requirements/
+
+# Python bytecode
+__pycache__/
+*.pyc

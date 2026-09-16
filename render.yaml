@@ -182,6 +182,16 @@ services:
       # retained after everything was freed. Recycling after ~300 requests (boot is
       # under a second) bounds the high-water mark in time; jitter keeps the two
       # workers from restarting together.
+      #
+      # The worker class matters: stock gthread drops the connections it accepted
+      # in its last loop iteration when it recycles or gets a deploy's SIGTERM —
+      # one 502 per recycle on 2026-09-16. mapsurvey.gunicorn_workers.
+      # DrainingThreadWorker stops accepting first and serves what it holds
+      # (scripts/gunicorn_recycle_check.py is the reproduction). Setting this back
+      # to "gthread" from the dashboard is the rollback; set GUNICORN_MAX_REQUESTS
+      # to "0" to stop recycling altogether.
+      - key: GUNICORN_WORKER_CLASS
+        value: "mapsurvey.gunicorn_workers.DrainingThreadWorker"
       - key: GUNICORN_MAX_REQUESTS
         value: "300"
       - key: GUNICORN_MAX_REQUESTS_JITTER

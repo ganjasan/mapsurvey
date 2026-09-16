@@ -8,6 +8,7 @@
 - [x] 1.4 `layers_for()` defers `geojson`/`geojson_legacy`; `collect_layer_files` and the gated endpoint opt in; layer `get_object_or_404` sites in editor/object views defer
 - [x] 1.5 Question → layer accesses on respondent form/POST and Responses paths go through a deferred fetch
 - [x] 1.6 Tests: property names stored and backfilled; editor page and settings card render without selecting the geometry column; export still carries the text; Dockerfile/compose carry the recycling flags
+- [x] 1.7 Follow-up (found on production 2026-09-16): stock gthread 502s one request per recycle and per deploy switch; `mapsurvey.gunicorn_workers.DrainingThreadWorker` stops accepting before it exits and drains what it accepted; `scripts/gunicorn_recycle_check.py` reproduces (stock: 11/12/88/1 failures over keep-alive, fresh-connection, four-parallel-client and SIGTERM runs; draining: 0/0/0/0); guard test names the class
 
 ## 2. Stage 2 — upload diet
 

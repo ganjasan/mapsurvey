@@ -137,8 +137,13 @@ DEFER `GEOMETRY_TEXT_FIELDS`; the only readers of the text are the gated endpoin
 full instance's `save()` writes the text back — on respondent and Responses paths use
 `layers.layer_lite(question)`. Property names for the editor's pickers are the stored
 `SurveyMapLayer.property_names`, written by `rebuild_layer`; never parse the GeoJSON to list
-them. Workers recycle after `GUNICORN_MAX_REQUESTS` (+ jitter) requests. The
-`LayerMemoryDietTest` query-capture tests fail if a page starts selecting the column again.
+them. Workers recycle after `GUNICORN_MAX_REQUESTS` (+ jitter) requests, and the worker class is
+`mapsurvey.gunicorn_workers.DrainingThreadWorker`, NOT stock `gthread`: gthread drops the
+connections it accepted in its last loop iteration when it recycles or gets a deploy's SIGTERM
+(one 502 per recycle on 2026-09-16); the draining worker stops accepting first and serves what it
+holds. `scripts/gunicorn_recycle_check.py` is the reproduction — run it against both classes after
+touching the gunicorn command line or bumping gunicorn. The `LayerMemoryDietTest` query-capture
+tests fail if a page starts selecting the column again.
 
 **Layer objects (`LayerObject`, `LayerObjectAsset`; change `overlay-features`)**: a layer is a
 container of objects — key, title, category, rich-text description, link, one-part geometry,

@@ -42155,21 +42155,30 @@ class LayerMemoryDietTest(TestCase):
         with zipfile.ZipFile(io.BytesIO(r.content)) as zf:
             self.assertEqual(len(json.loads(zf.read('layers/0.geojson'))['features']), 3)
 
-    def test_gunicorn_recycles_workers(self):
+    def test_gunicorn_recycles_workers_with_the_draining_worker(self):
         """
         GIVEN the production and compose start commands
         WHEN they are read
-        THEN both carry a request budget with jitter, env-tunable like the other knobs
+        THEN both carry a request budget with jitter AND run the draining worker class
+             (stock gthread drops the connections it accepted in its last loop
+             iteration on every recycle and every deploy — one 502 each on 2026-09-16),
+             and that class is importable and a gthread worker
         """
         import os
+        from gunicorn.workers.gthread import ThreadWorker
+        from mapsurvey.gunicorn_workers import DrainingThreadWorker
+        self.assertTrue(issubclass(DrainingThreadWorker, ThreadWorker))
         root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         for name in ('Dockerfile', 'docker-compose.yml'):
             with open(os.path.join(root, name)) as fh:
                 text = fh.read()
             self.assertIn('--max-requests ${GUNICORN_MAX_REQUESTS:-', text, name)
             self.assertIn('--max-requests-jitter ${GUNICORN_MAX_REQUESTS_JITTER:-', text, name)
+            self.assertIn('--worker-class ${GUNICORN_WORKER_CLASS:-mapsurvey.gunicorn_workers.DrainingThreadWorker}', text, name)
         with open(os.path.join(root, 'render.yaml')) as fh:
-            self.assertIn('GUNICORN_MAX_REQUESTS_JITTER', fh.read())
+            text = fh.read()
+        self.assertIn('GUNICORN_MAX_REQUESTS_JITTER', text)
+        self.assertIn('mapsurvey.gunicorn_workers.DrainingThreadWorker', text)
 
 
 class LayerStreamingRebuildTest(TestCase):
