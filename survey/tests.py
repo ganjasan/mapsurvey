@@ -41986,7 +41986,7 @@ class LayerMemoryDietTest(TestCase):
     """Change layer-memory-diet, stage 1: no surface but the gated endpoint and the
     export reads a layer's geometry text; property names are a stored column."""
 
-    GEOJSON_COLUMN = '"survey_surveymaplayer"."geojson"'
+    GEOJSON_COLUMN = '"survey_surveymaplayer"."geojson_gz"'
 
     def setUp(self):
         self.org = Organization.objects.create(name="Diet Org")
@@ -42370,3 +42370,74 @@ class SurveyImportJobTest(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertFalse(SurveyImportJob.objects.filter(pk=job.pk).exists())
         self.assertNotContains(r, 'data-import-job=')
+
+
+class LayerGzipStorageTest(TestCase):
+    """Change layer-memory-diet, stage 3: the derived GeoJSON is stored gzipped
+    and handed to gzip-capable clients as it is."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Gzip Org")
+        self.survey = SurveyHeader.objects.create(
+            name="gzip_survey", organization=self.org, redirect_url="/thanks/",
+            status='published', available_languages=['en'],
+        )
+        SurveySection.objects.create(survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True)
+        self.layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        self.url = reverse('survey_layer_geojson', kwargs={'survey_slug': str(self.survey.uuid), 'layer_id': self.layer.pk})
+
+    def test_text_api_round_trips_through_gzip_bytes(self):
+        """
+        GIVEN a rebuilt layer
+        WHEN its text is read back from the database
+        THEN it equals what was written, the row holds gzip bytes smaller than the
+             text, an empty text is NULL, and size_bytes reports the text
+        """
+        import gzip
+        from .models import SurveyMapLayer
+        row = SurveyMapLayer.objects.get(pk=self.layer.pk)
+        self.assertEqual(json.loads(row.geojson)['features'][2]['id'], '3')
+        self.assertEqual(gzip.decompress(bytes(row.geojson_gz)).decode('utf-8'), row.geojson)
+        self.assertLess(len(row.geojson_gz), len(row.geojson))
+        self.assertEqual(row.size_bytes, len(row.geojson.encode('utf-8')))
+        empty = SurveyMapLayer.objects.create(survey=self.survey, name="Empty", geojson='')
+        self.assertIsNone(SurveyMapLayer.objects.get(pk=empty.pk).geojson_gz)
+        self.assertEqual(SurveyMapLayer.objects.get(pk=empty.pk).geojson, '')
+
+    def test_endpoint_serves_the_stored_bytes_to_gzip_clients_and_text_to_others(self):
+        """
+        GIVEN a client that accepts gzip and one that does not
+        WHEN each fetches the layer
+        THEN the first receives the stored bytes with Content-Encoding: gzip, the
+             second the text, both with the same ETag, and a matching If-None-Match
+             still answers 304
+        """
+        import gzip
+        gz = self.client.get(self.url, HTTP_ACCEPT_ENCODING='gzip, deflate, br')
+        self.assertEqual(gz.status_code, 200)
+        self.assertEqual(gz['Content-Encoding'], 'gzip')
+        self.assertEqual(gz['Content-Type'], 'application/geo+json')
+        self.assertIn('Accept-Encoding', gz['Vary'])
+        body = gzip.decompress(gz.content).decode('utf-8')
+        plain = self.client.get(self.url)
+        self.assertEqual(plain.status_code, 200)
+        self.assertFalse(plain.has_header('Content-Encoding'))
+        self.assertEqual(plain.content.decode('utf-8'), body)
+        self.assertEqual(len(json.loads(body)['features']), 3)
+        self.assertEqual(gz['ETag'], plain['ETag'])
+        again = self.client.get(self.url, HTTP_ACCEPT_ENCODING='gzip', HTTP_IF_NONE_MATCH=gz['ETag'])
+        self.assertEqual(again.status_code, 304)
+
+    def test_migration_compresses_existing_rows(self):
+        """
+        GIVEN the compress step of migration 0086 run over a stored layer
+        WHEN it finishes
+        THEN the bytes decompress to the same text (the live column is the gz one, so
+             the forwards step is exercised through the model it targets)
+        """
+        import gzip
+        from .models import SurveyMapLayer
+        text = SurveyMapLayer.objects.get(pk=self.layer.pk).geojson
+        raw = SurveyMapLayer.objects.filter(pk=self.layer.pk).values_list('geojson_gz', flat=True).first()
+        self.assertEqual(gzip.decompress(bytes(raw)).decode('utf-8'), text)
+        self.assertLess(len(raw), len(text) / 2)

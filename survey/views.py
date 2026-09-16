@@ -2271,10 +2271,17 @@ def survey_layer_geojson(request, survey_slug, layer_id):
 	etag = '"layer-%s-%s"' % (layer.pk, layer.updated_at.strftime('%Y%m%d%H%M%S%f'))
 	if request.headers.get('If-None-Match') == etag:
 		response = HttpResponse(status=304)
+	elif layer.geojson_gz and 'gzip' in request.headers.get('Accept-Encoding', ''):
+		# The stored bytes ARE the response (change layer-memory-diet): no
+		# decompression in the worker, a third of the bytes on the wire. Every
+		# browser and fetch() takes gzip; a client that does not gets the text.
+		response = HttpResponse(bytes(layer.geojson_gz), content_type='application/geo+json')
+		response['Content-Encoding'] = 'gzip'
 	else:
 		response = HttpResponse(layer.geojson, content_type='application/geo+json')
 	response['ETag'] = etag
 	response['Cache-Control'] = 'private, max-age=300'
+	response['Vary'] = 'Accept-Encoding'
 	return response
 
 

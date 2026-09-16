@@ -1,3 +1,4 @@
+import gzip
 import uuid as uuid_module
 import os
 
@@ -649,7 +650,11 @@ class SurveyMapLayer(models.Model):
     # rule by object attribute. Always read through `layers.normalize_style`
     # — an empty dict is today's look; the raw value is never trusted.
     style = models.JSONField(default=dict, blank=True, help_text=_('Base style (opacity, weight, fill_opacity, radius, icon) and an optional rule `by` one object property; normalised on every write.'))
-    geojson = models.TextField(help_text=_('Derived FeatureCollection, rebuilt from the layer objects on every write.'))
+    # The derived FeatureCollection lives gzip-compressed (change layer-memory-diet,
+    # stage 3): 8.6 MB of text is 2.4 MB of bytes, in the row, in the worker and on
+    # the wire — the gated endpoint hands the bytes to the browser as they are.
+    # `geojson` stays the text API every reader and writer uses.
+    geojson_gz = models.BinaryField(null=True, blank=True, editable=False, help_text=_('Derived FeatureCollection, gzip-compressed, rebuilt from the layer objects on every write. Read and write it through `geojson`.'))
     property_names = models.JSONField(default=list, blank=True, help_text=_('Sorted union of the objects\' property names (reserved `_*` names excluded), stored on every rebuild so the editor never parses the GeoJSON to list them.'))
     geojson_legacy = models.TextField(blank=True, default='', help_text=_('The pre-objects FeatureCollection kept for one release after the split migration; empty for layers created since.'))
     feature_count = models.PositiveIntegerField(default=0)
@@ -663,6 +668,18 @@ class SurveyMapLayer(models.Model):
 
     def __str__(self):
         return f"{self.survey.name} / {self.name}"
+
+    @property
+    def geojson(self):
+        """The derived FeatureCollection as text; '' before the first rebuild."""
+        data = self.geojson_gz
+        if not data:
+            return ''
+        return gzip.decompress(data).decode('utf-8')
+
+    @geojson.setter
+    def geojson(self, text):
+        self.geojson_gz = gzip.compress(text.encode('utf-8'), compresslevel=6) if text else None
 
     def clean(self):
         from django.core.exceptions import ValidationError

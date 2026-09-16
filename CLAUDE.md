@@ -124,10 +124,16 @@ never the model. Cap: `MAX_LAYERS_PER_SURVEY = 10`.
 
 **Layer memory rules (change `layer-memory-diet`, after the 2026-09-15 memory-limit incident)**:
 `SurveyMapLayer.geojson` is up to 10 MB of text per row, and a gunicorn worker keeps the RSS of
-its largest request for life. So `layers_for()`, `question_layers_for()` and every layer
-`get_object_or_404` in editor/object views DEFER `GEOMETRY_TEXT_FIELDS`; the only readers of the
-text are the gated endpoint (`_gated_layer(with_geojson=True)`), `download_data` and the ZIP
-export (`layers_for(survey).defer(None)`). `question.layer` cannot defer through the FK, and a
+its largest request for life. The text is stored gzip-compressed in `geojson_gz` (a third of the
+bytes in the row, in the worker and on the wire); `geojson` is a property that decompresses on
+read and compresses on write, so readers and writers (including `create(geojson=…)`) keep the
+text API — but `.defer()`, `update_fields` and `.values()` name `geojson_gz`. The gated endpoint
+hands the stored bytes to a client that sends `Accept-Encoding: gzip` (every browser and
+`fetch()`) with `Content-Encoding: gzip` and decompresses only for one that does not. So
+`layers_for()`, `question_layers_for()` and every layer `get_object_or_404` in editor/object views
+DEFER `GEOMETRY_TEXT_FIELDS`; the only readers of the text are the gated endpoint
+(`_gated_layer(with_geojson=True)`), `download_data` and the ZIP export
+(`layers_for(survey).defer(None)`). `question.layer` cannot defer through the FK, and a
 full instance's `save()` writes the text back — on respondent and Responses paths use
 `layers.layer_lite(question)`. Property names for the editor's pickers are the stored
 `SurveyMapLayer.property_names`, written by `rebuild_layer`; never parse the GeoJSON to list

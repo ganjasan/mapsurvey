@@ -41,7 +41,7 @@ def layer_owner(survey):
 # row. Every resolver below defers them — a name, a flag or a position must never
 # cost a 10 MB read (change layer-memory-diet). Readers of the text opt in with
 # `.defer(None)` (export) or a plain `get` by pk (the gated endpoint).
-GEOMETRY_TEXT_FIELDS = ('geojson', 'geojson_legacy')
+GEOMETRY_TEXT_FIELDS = ('geojson_gz', 'geojson_legacy')
 
 
 def layers_for(survey):
@@ -119,7 +119,7 @@ def ensure_layer_questions(section, hidden_ids=()):
         survey_section=section, parent_question_id__isnull=True,
     ).aggregate(m=Max('order_number'))['m'] or 0
     created = []
-    for layer in layers_for(section.survey_header).defer('geojson', 'geojson_legacy').order_by('position', 'id'):
+    for layer in layers_for(section.survey_header).defer(*GEOMETRY_TEXT_FIELDS).order_by('position', 'id'):
         if layer.pk in hidden or layer.pk in bound:
             continue
         max_order += 1
@@ -258,7 +258,7 @@ def build_map_layers_metadata(survey):
         # defer('geojson'): the 100s-of-KB geometry column loaded on every map
         # surface render fragments the worker heap into an RSS ratchet (the
         # 2026-09 "exceeded memory limits" incident); only config fields render.
-        for layer in layers_for(survey).defer('geojson', 'geojson_legacy')
+        for layer in layers_for(survey).defer(*GEOMETRY_TEXT_FIELDS)
     ]
 
 
@@ -483,7 +483,7 @@ def rebuild_layer(layer):
     layer.feature_count = layer.items.count()
     layer.size_bytes = len(geojson.encode('utf-8'))
     layer.property_names = names
-    layer.save(update_fields=['geojson', 'feature_count', 'size_bytes', 'property_names', 'updated_at'])
+    layer.save(update_fields=['geojson_gz', 'feature_count', 'size_bytes', 'property_names', 'updated_at'])
     return layer
 
 
