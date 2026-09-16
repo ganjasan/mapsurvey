@@ -825,7 +825,7 @@ def editor_survey_layer_create(request, survey_uuid):
     if f.size > MAX_LAYER_BYTES:
         return JsonResponse({'error': f'File is larger than {MAX_LAYER_BYTES // (1024 * 1024)} MB.'}, status=400)
     try:
-        geojson_str, count, properties = validate_layer_upload(f.read())
+        features, _properties = validate_layer_upload(f.read())
     except LayerValidationError as exc:
         return JsonResponse({'error': str(exc)}, status=400)
 
@@ -838,8 +838,7 @@ def editor_survey_layer_create(request, survey_uuid):
         survey=owner, name=name, geojson='', position=position,
     )
     # The file becomes objects; the layer's geojson is derived from them.
-    objects_from_features(layer, json.loads(geojson_str)['features'],
-                          sanitize=coerce_creator_html)
+    objects_from_features(layer, features, sanitize=coerce_creator_html)
     rebuild_layer(layer)
     return JsonResponse(_layer_payload(layer, layer.property_names), status=201)
 

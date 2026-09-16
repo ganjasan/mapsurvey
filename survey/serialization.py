@@ -1140,7 +1140,7 @@ def extract_layers(
             warnings.append(f"Reference layer '{clean['name']}' is missing '{archive_path}' — layer skipped.")
             continue
         try:
-            geojson_str, count, _ = validate_layer_upload(raw)
+            features, _ = validate_layer_upload(raw)
         except LayerValidationError as exc:
             ids.append(None)
             warnings.append(f"Reference layer '{clean['name']}' was skipped: {exc}")
@@ -1153,7 +1153,6 @@ def extract_layers(
         layer = SurveyMapLayer.objects.create(
             survey=survey, geojson='', position=index, **clean,
         )
-        features = json.loads(geojson_str)['features']
         derived = any(isinstance(f.get('properties'), dict) and '_key' in f['properties'] for f in features)
         mapping = {'key': '_key', 'title': '_title', 'category': '_category'} if derived else None
         objects_from_features(layer, features, mapping=mapping, sanitize=coerce_creator_html)

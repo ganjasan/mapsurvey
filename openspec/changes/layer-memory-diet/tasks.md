@@ -11,11 +11,11 @@
 
 ## 2. Stage 2 — upload diet
 
-- [ ] 2.1 `validate_layer_upload` returns `(features, property_names)`; create view, object-editor import and ZIP import use the features
-- [ ] 2.2 `objects_from_features` flushes rows every 500
-- [ ] 2.3 `build_layer_geojson` streams from `values()` rows and collects property names in the same pass
-- [ ] 2.4 Tests: validation contract; streamed output byte-identical to the dict construction (upload layer with covers and categories, `question` layer with `_status`); collision report unchanged across batch boundaries
-- [ ] 2.5 Re-run the memory probe: upload peak and retained memory before/after
+- [x] 2.1 `validate_layer_upload` returns `(features, property_names)`; create view, object-editor import and ZIP import use the features
+- [x] 2.2 `objects_from_features` flushes rows every 500
+- [x] 2.3 `build_layer_geojson` streams from `values()` rows and collects property names in the same pass
+- [x] 2.4 Tests: validation contract; streamed output byte-identical to the dict construction (upload layer with covers and categories, `question` layer with `_status`); collision report unchanged across batch boundaries
+- [x] 2.5 Re-run the memory probe: upload peak +198 → +134 MB (kernel HWM), retained after the upload +107 → +71 MB; the single remaining large item is the one parse tree (+64 MB), which the 10 MB cap bounds
 
 ## 3. Stage 3 — structure
 

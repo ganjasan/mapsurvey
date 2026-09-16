@@ -32813,6 +32813,17 @@ def _zones_geojson(count=3, projected=False):
     return json.dumps({"type": "FeatureCollection", "features": features})
 
 
+def _validated_geojson_text(raw):
+    """(FeatureCollection text, count, property names) the way pre-objects fixtures
+    stored a layer: the validated parse re-serialised. Production never stores
+    this text any more (rebuild_layer derives it from objects); a handful of
+    fixtures still seed the column directly."""
+    from .layers import validate_layer_upload
+    features, props = validate_layer_upload(raw)
+    text = json.dumps({'type': 'FeatureCollection', 'features': features}, ensure_ascii=False, separators=(',', ':'))
+    return text, len(features), props
+
+
 class LayerValidationTest(SimpleTestCase):
     """validate_layer_upload — the single gate every stored layer passes."""
 
@@ -32823,10 +32834,10 @@ class LayerValidationTest(SimpleTestCase):
         THEN it is accepted with the feature count and the union of property names
         """
         from .layers import validate_layer_upload
-        geojson, count, props = validate_layer_upload(_zones_geojson().encode())
-        self.assertEqual(count, 3)
+        features, props = validate_layer_upload(_zones_geojson().encode())
+        self.assertEqual(len(features), 3)
         self.assertEqual(props, ['name', 'zone_id'])
-        self.assertEqual(json.loads(geojson)['type'], 'FeatureCollection')
+        self.assertTrue(all(f['type'] == 'Feature' for f in features))
 
     def test_projected_coordinates_are_rejected(self):
         """
@@ -32858,21 +32869,22 @@ class LayerValidationTest(SimpleTestCase):
         """
         from .layers import validate_layer_upload
         raw = json.dumps({"type": "Point", "coordinates": [13.4, 52.5]}).encode()
-        geojson, count, props = validate_layer_upload(raw)
-        self.assertEqual(count, 1)
-        self.assertEqual(json.loads(geojson)['type'], 'FeatureCollection')
+        features, props = validate_layer_upload(raw)
+        self.assertEqual(len(features), 1)
+        self.assertEqual(features[0]['type'], 'Feature')
+        self.assertEqual(features[0]['geometry']['type'], 'Point')
 
-    def test_stored_value_is_a_reparse_not_the_raw_bytes(self):
+    def test_parse_is_what_flows_on_not_the_raw_bytes(self):
         """
         GIVEN an upload carrying a BOM and sloppy whitespace
         WHEN it is validated
-        THEN the stored text is the re-serialized parse, not the original bytes
+        THEN the parsed features flow on (the stored text is rebuilt from the
+             objects they become), so the BOM and the whitespace never reach a layer
         """
         from .layers import validate_layer_upload
         raw = ('﻿' + '  ' + _zones_geojson(1)).encode('utf-8')
-        geojson, _, _ = validate_layer_upload(raw)
-        self.assertFalse(geojson.startswith('﻿'))
-        self.assertEqual(json.loads(geojson)['features'][0]['properties']['name'], 'Area 1')
+        features, _ = validate_layer_upload(raw)
+        self.assertEqual(features[0]['properties']['name'], 'Area 1')
 
     def test_invalid_json_is_rejected(self):
         """
@@ -32899,7 +32911,7 @@ class LayerEndpointTest(TestCase):
         SurveySection.objects.create(
             survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
         )
-        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        geojson, count, _ = _validated_geojson_text(_zones_geojson().encode())
         self.layer = SurveyMapLayer.objects.create(
             survey=self.survey, name="Zones", geojson=geojson, feature_count=count,
             size_bytes=len(geojson),
@@ -33027,7 +33039,7 @@ class LayerRespondentRenderingTest(TestCase):
         Question.objects.create(
             survey_section=self.head, code="LR001", name="Q", input_type="text", order_number=1,
         )
-        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        geojson, count, _ = _validated_geojson_text(_zones_geojson().encode())
         self.layer = SurveyMapLayer.objects.create(
             survey=self.survey, name="Zones", color="#e8971e", label_field="name",
             geojson=geojson, feature_count=count, size_bytes=len(geojson),
@@ -33101,7 +33113,7 @@ class LayerPreviewTest(TestCase):
         Question.objects.create(
             survey_section=self.section, code="LP001", name="Q", input_type="text", order_number=1,
         )
-        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        geojson, count, _ = _validated_geojson_text(_zones_geojson().encode())
         self.layer = SurveyMapLayer.objects.create(
             survey=self.survey, name="Zones", color="#e8971e", label_field="name",
             geojson=geojson, feature_count=count, size_bytes=len(geojson),
@@ -33354,7 +33366,7 @@ class AnalyticsReferenceLayerTest(TestCase):
         SurveySection.objects.create(
             survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
         )
-        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        geojson, count, _ = _validated_geojson_text(_zones_geojson().encode())
         self.layer = SurveyMapLayer.objects.create(
             survey=self.survey, name="Zones", geojson=geojson, feature_count=count,
             size_bytes=len(geojson),
@@ -33438,7 +33450,7 @@ class LayersByQuestionMigrationTest(TestCase):
         self.form_section = SurveySection.objects.create(
             survey_header=self.survey, name="s2", title="Form", code="S2", layout='form',
         )
-        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        geojson, count, _ = _validated_geojson_text(_zones_geojson().encode())
         self.a = SurveyMapLayer.objects.create(
             survey=self.survey, name="A", color="#111111", geojson=geojson, feature_count=count,
             size_bytes=len(geojson), position=0,
@@ -33567,7 +33579,7 @@ class LayerSerializationTest(TestCase):
         Question.objects.create(
             survey_section=self.first, code="LS001", name="Q", input_type="text", order_number=1,
         )
-        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        geojson, count, _ = _validated_geojson_text(_zones_geojson().encode())
         self.layer = SurveyMapLayer.objects.create(
             survey=self.survey, name="Counting zones", color="#e8971e", label_field="name",
             key_field="zone_id", show_popups=True, geojson=geojson, feature_count=count,
@@ -37290,9 +37302,9 @@ def _objects_layer(survey, name="Zones", geojson_text=None, **layer_fields):
     first, derived GeoJSON second."""
     from .models import SurveyMapLayer
     from .layers import validate_layer_upload, objects_from_features, rebuild_layer
-    geojson, _count, _props = validate_layer_upload((geojson_text or _zones_geojson()).encode())
+    features, _props = validate_layer_upload((geojson_text or _zones_geojson()).encode())
     layer = SurveyMapLayer.objects.create(survey=survey, name=name, geojson='', **layer_fields)
-    objects_from_features(layer, json.loads(geojson)['features'])
+    objects_from_features(layer, features)
     rebuild_layer(layer)
     return layer
 
@@ -37354,7 +37366,7 @@ class LayerObjectsModelTest(TestCase):
         """
         from .layers import objects_from_features, validate_layer_upload
         layer = _objects_layer(self.survey, key_field='zone_id')
-        geojson, _, _ = validate_layer_upload(_zones_geojson().encode())
+        geojson, _, _ = _validated_geojson_text(_zones_geojson().encode())
         report = objects_from_features(layer, json.loads(geojson)['features'])
         self.assertEqual(report['created'], 0)
         self.assertEqual(sorted(report['collisions']), ['1', '2', '3'])
@@ -37677,7 +37689,7 @@ class LayerSplitMigrationTest(TestCase):
         """
         from .models import SurveyMapLayer
         from .layers import validate_layer_upload, bbox_of_collection
-        geojson, count, _ = validate_layer_upload(_zones_geojson(count=35).encode())
+        geojson, count, _ = _validated_geojson_text(_zones_geojson(count=35).encode())
         layer = SurveyMapLayer.objects.create(
             survey=self.survey, name="Legacy", geojson=geojson, feature_count=count,
             size_bytes=len(geojson), key_field='zone_id', label_field='name',
@@ -37703,7 +37715,7 @@ class LayerSplitMigrationTest(TestCase):
         parsed = json.loads(_zones_geojson(count=3))
         for f in parsed['features']:
             f['properties']['zone_id'] = 1
-        geojson, count, _ = validate_layer_upload(json.dumps(parsed).encode())
+        geojson, count, _ = _validated_geojson_text(json.dumps(parsed).encode())
         layer = SurveyMapLayer.objects.create(
             survey=self.survey, name="Dupes", geojson=geojson, feature_count=count,
             size_bytes=len(geojson), key_field='zone_id',
@@ -42096,3 +42108,114 @@ class LayerMemoryDietTest(TestCase):
             self.assertIn('--max-requests-jitter ${GUNICORN_MAX_REQUESTS_JITTER:-', text, name)
         with open(os.path.join(root, 'render.yaml')) as fh:
             self.assertIn('GUNICORN_MAX_REQUESTS_JITTER', fh.read())
+
+
+class LayerStreamingRebuildTest(TestCase):
+    """Change layer-memory-diet, stage 2: the derived GeoJSON is streamed one
+    feature at a time and objects are written in batches — with the same result."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Stream Org")
+        self.survey = SurveyHeader.objects.create(
+            name="stream_survey", organization=self.org, redirect_url="/thanks/", status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+
+    @staticmethod
+    def _tree_serialisation(layer, with_status=False):
+        """The pre-change construction: every object as a model instance, one
+        dict tree, one json.dumps — the reference the stream must match byte for byte."""
+        from .models import LayerObjectAsset
+        from .layers import feature_for_object, creator_objects
+        covers = {}
+        for asset in LayerObjectAsset.objects.filter(object__layer=layer, kind='image').order_by('object_id', 'position', 'id'):
+            covers.setdefault(asset.object_id, asset.url)
+        features = []
+        for obj in (creator_objects(layer) if with_status else layer.items.order_by('position', 'id')):
+            feature = feature_for_object(obj, covers.get(obj.pk, ''))
+            if with_status:
+                feature['properties']['_status'] = obj.status
+            features.append(feature)
+        return json.dumps({'type': 'FeatureCollection', 'features': features}, ensure_ascii=False, separators=(',', ':'))
+
+    def test_streamed_collection_is_byte_identical_to_the_tree_serialisation(self):
+        """
+        GIVEN an uploaded layer whose objects carry categories, unicode text, a cover
+              image, a link and shadowing reserved properties
+        WHEN the derived GeoJSON is rebuilt
+        THEN the streamed text equals the whole-tree serialisation byte for byte
+             and the property names come out of the same pass
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from .models import LayerObjectAsset
+        from .layers import rebuild_layer, build_layer_geojson
+        layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        obj = layer.items.get(key='2')
+        obj.category = 'Парки'
+        obj.description = '<p>Pocket <b>park</b> — «тихий»</p>'
+        obj.link = 'https://city.example/2'
+        obj.properties = {**obj.properties, '_key': 'shadow', '_cover': 'x', 'notes': 'ä/ö "quoted"'}
+        obj.save()
+        png = SimpleUploadedFile('cover.png', b'\x89PNG\r\n\x1a\n' + b'0' * 20, content_type='image/png')
+        LayerObjectAsset.objects.create(object=obj, kind='image', file=png, title='cover.png',
+                                        content_type='image/png', size_bytes=png.size, position=0)
+        rebuild_layer(layer)
+        layer.refresh_from_db()
+        self.assertEqual(build_layer_geojson(layer), self._tree_serialisation(layer))
+        self.assertEqual(layer.geojson, self._tree_serialisation(layer))
+        self.assertEqual(layer.property_names, ['name', 'notes', 'zone_id'])
+        feature = next(f for f in json.loads(layer.geojson)['features'] if f['id'] == '2')
+        self.assertEqual(feature['properties']['_key'], '2')
+        self.assertTrue(feature['properties']['_has_content'])
+        self.assertTrue(feature['properties']['_cover'])
+
+    def test_question_layer_streams_status_the_same_way(self):
+        """
+        GIVEN a shared-map layer materialised from a respondent's marks with approve-first on
+        WHEN it is rebuilt
+        THEN the streamed text equals the tree serialisation, `_status` included, and
+             a marks layer stores no property names
+        """
+        from django.contrib.gis.geos import Point
+        from .models import SurveyMapLayer
+        from .layers import sync_question_layer, rebuild_layer
+        q1 = Question.objects.create(survey_section=self.section, code="Q1", name="Where", input_type="point", order_number=1)
+        layer = SurveyMapLayer.objects.create(
+            survey=self.survey, name="Marks", geojson='{}', source='question', source_question_code='Q1', approve_first=True,
+        )
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=session, question=q1, point=Point(13.4, 52.5))
+        Answer.objects.create(survey_session=session, question=q1, point=Point(13.5, 52.6))
+        sync_question_layer(layer, session)
+        rebuild_layer(layer)
+        layer.refresh_from_db()
+        self.assertEqual(layer.feature_count, 2)
+        self.assertEqual(layer.geojson, self._tree_serialisation(layer, with_status=True))
+        self.assertIn('"_status":"pending"', layer.geojson)
+        self.assertEqual(layer.property_names, [])
+
+    def test_batches_keep_positions_and_collision_reports(self):
+        """
+        GIVEN a 1100-feature file whose feature 700 repeats the key of feature 5
+        WHEN objects are created in batches of 500
+        THEN 1099 objects exist in file order with contiguous positions and the
+             collision is reported once
+        """
+        from .models import SurveyMapLayer
+        from .layers import validate_layer_upload, objects_from_features
+        features = []
+        for i in range(1, 1101):
+            key = '5' if i == 700 else str(i)
+            features.append({'type': 'Feature', 'properties': {'zone_id': key, 'name': f'Area {i}'},
+                             'geometry': {'type': 'Point', 'coordinates': [13.0 + i / 10000, 52.0]}})
+        parsed, _ = validate_layer_upload(json.dumps({'type': 'FeatureCollection', 'features': features}).encode())
+        layer = SurveyMapLayer.objects.create(survey=self.survey, name="Big", geojson='', key_field='zone_id')
+        report = objects_from_features(layer, parsed)
+        self.assertEqual(report['created'], 1099)
+        self.assertEqual(report['collisions'], ['5'])
+        rows = list(layer.items.order_by('position').values_list('position', 'key'))
+        self.assertEqual([p for p, _ in rows], list(range(1, 1100)))
+        self.assertEqual([k for _, k in rows][:6], ['1', '2', '3', '4', '5', '6'])
+        self.assertEqual([k for _, k in rows][697:700], ['698', '699', '701'])

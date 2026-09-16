@@ -1,11 +1,13 @@
 """Reference overlay layers: validation, objects and the derived GeoJSON.
 
 `validate_layer_upload` is the one gate every GeoJSON passes on the way in —
-editor import, ZIP import, AI-written — so a file is always a re-serialized
-parse, never raw bytes. Since `overlay-features` a layer is a container of
-LayerObject rows: `objects_from_features` turns validated features into rows,
-`rebuild_layer` derives the FeatureCollection the respondent map loads, and
-`layers_for` resolves which survey owns the layers a page should show.
+editor import, ZIP import, AI-written — and returns the parsed features, which
+are parsed exactly once (change layer-memory-diet: the tree of an 8.6 MB file
+is 55 MB of Python objects). Since `overlay-features` a layer is a container of
+LayerObject rows: `objects_from_features` turns validated features into rows in
+batches, `rebuild_layer` streams the derived FeatureCollection the respondent
+map loads from those rows one feature at a time, and `layers_for` resolves
+which survey owns the layers a page should show.
 """
 import json
 import re
@@ -156,9 +158,11 @@ def _geometry_coords(geometry):
 
 
 def validate_layer_upload(data):
-    """Validate raw uploaded bytes; return (geojson_str, feature_count, property_names).
+    """Validate raw uploaded bytes; return (features, property_names).
 
-    Raises LayerValidationError with a creator-facing message.
+    `features` is the parsed list of Feature dicts — the caller hands it to
+    `objects_from_features` and never re-parses. Raises LayerValidationError
+    with a creator-facing message.
     """
     if len(data) > MAX_LAYER_BYTES:
         raise LayerValidationError(
@@ -213,10 +217,7 @@ def validate_layer_upload(data):
                     "coordinate system — re-export it as WGS84 (EPSG:4326).")
     if not checked_any:
         raise LayerValidationError("No coordinates found in the file.")
-
-    collection = {'type': 'FeatureCollection', 'features': features}
-    geojson_str = json.dumps(collection, ensure_ascii=False, separators=(',', ':'))
-    return geojson_str, len(features), sorted(properties)
+    return features, sorted(properties)
 
 
 def build_map_layers_metadata(survey):
@@ -344,7 +345,17 @@ def objects_from_features(layer, features, mapping=None, sanitize=None):
     taken = set(layer.items.values_list('key', flat=True))
     start_pos = (layer.items.order_by('-position').values_list('position', flat=True).first() or 0) + 1
     report = {'created': 0, 'collisions': [], 'exploded': 0, 'skipped': 0}
+    # Rows are flushed every BATCH: holding every GEOS geometry and model
+    # instance until the end was +43 MB on a 1620-object file.
+    BATCH = 500
     rows = []
+
+    def flush():
+        if rows:
+            LayerObject.objects.bulk_create(rows, batch_size=BATCH)
+            report['created'] += len(rows)
+            rows.clear()
+
     for index, feature in enumerate(features, start=1):
         props = feature.get('properties') if isinstance(feature.get('properties'), dict) else {}
         parts = explode_geometry(feature.get('geometry'))
@@ -374,15 +385,15 @@ def objects_from_features(layer, features, mapping=None, sanitize=None):
                 description=description,
                 link=str(props.get(m['link']) or '')[:500] if m['link'] else '',
                 geometry=GEOSGeometry(json.dumps(part), srid=4326),
-                position=start_pos + len(rows),
+                position=start_pos + report['created'] + len(rows),
                 # Reserved names are re-derived on output; storing them would
                 # let a re-imported derived file shadow the object's own fields.
                 properties={k: v for k, v in props.items()
                             if isinstance(k, str) and k not in RESERVED_PROPS},
             ))
-    if rows:
-        LayerObject.objects.bulk_create(rows, batch_size=500)
-        report['created'] = len(rows)
+            if len(rows) >= BATCH:
+                flush()
+    flush()
     return report
 
 
@@ -404,49 +415,74 @@ def feature_for_object(obj, cover_url=''):
     }
 
 
-def build_layer_geojson(layer):
-    """FeatureCollection string for the layer, in object order."""
+_OBJECT_ROW_FIELDS = ('pk', 'key', 'title', 'category', 'description', 'link', 'properties', 'geometry')
+
+
+def _feature_json(row, cover_url='', status=None):
+    """One feature as compact JSON text from a `values()` row — the same keys
+    in the same order as `feature_for_object`, so the streamed collection is
+    byte-identical to `json.dumps` of the whole tree (guarded by a test)."""
+    props = dict(row['properties'] or {})
+    for reserved in RESERVED_PROPS:
+        props.pop(reserved, None)
+    props['_key'] = row['key']
+    props['_title'] = row['title']
+    props['_category'] = row['category']
+    props['_has_content'] = bool(row['description'] or row['link'] or cover_url)
+    props['_cover'] = cover_url
+    if status is not None:
+        props['_status'] = status
+    feature = {
+        'type': 'Feature',
+        'id': row['key'],
+        'properties': props,
+        'geometry': json.loads(row['geometry'].geojson),
+    }
+    return json.dumps(feature, ensure_ascii=False, separators=(',', ':'))
+
+
+def stream_layer_geojson(layer):
+    """(FeatureCollection string, sorted property names) for the layer, in
+    object order, built one feature at a time from `values()` rows: no model
+    instances, no GEOS geometry kept past its feature, no whole-collection
+    tree (change layer-memory-diet — that tree was +64 MB on an 8.6 MB layer)."""
     from survey.models import LayerObjectAsset
     covers = {}
     for asset in (LayerObjectAsset.objects
                   .filter(object__layer=layer, kind='image')
                   .order_by('object_id', 'position', 'id')):
         covers.setdefault(asset.object_id, asset.url)
+    names = set()
+    parts = []
     if layer.source == 'question':
         # Creator surfaces (object editor, Responses map): every status of every
         # clean session, with the status exposed for badges. Respondents get
         # `build_question_layer_geojson` per request instead.
-        features = []
-        for obj in creator_objects(layer):
-            feature = feature_for_object(obj)
-            feature['properties']['_status'] = obj.status
-            features.append(feature)
+        rows = creator_objects(layer).values(*_OBJECT_ROW_FIELDS, 'status')
     else:
-        features = [feature_for_object(obj, covers.get(obj.pk, ''))
-                    for obj in layer.items.order_by('position', 'id')]
-    return json.dumps({'type': 'FeatureCollection', 'features': features},
-                      ensure_ascii=False, separators=(',', ':'))
-
-
-def property_names_for(layer):
-    """Sorted union of the objects' property names, reserved names excluded —
-    what the editor's label/key/style pickers offer."""
-    names = set()
-    for props in layer.items.values_list('properties', flat=True):
+        rows = layer.items.order_by('position', 'id').values(*_OBJECT_ROW_FIELDS)
+    for row in rows.iterator(chunk_size=500):
+        props = row['properties']
         if isinstance(props, dict):
             names.update(k for k in props if isinstance(k, str) and k not in RESERVED_PROPS)
-    return sorted(names)
+        parts.append(_feature_json(row, covers.get(row['pk'], ''), row.get('status')))
+    return '{"type":"FeatureCollection","features":[' + ','.join(parts) + ']}', sorted(names)
+
+
+def build_layer_geojson(layer):
+    """FeatureCollection string for the layer, in object order."""
+    return stream_layer_geojson(layer)[0]
 
 
 def rebuild_layer(layer):
-    """Recompute the derived GeoJSON, its counters and the property names; bumps
-    `updated_at`, which is what the endpoint's ETag hangs on. Call after every
-    object/asset write."""
-    geojson = build_layer_geojson(layer)
+    """Recompute the derived GeoJSON, its counters and the property names in one
+    streamed pass; bumps `updated_at`, which is what the endpoint's ETag hangs
+    on. Call after every object/asset write."""
+    geojson, names = stream_layer_geojson(layer)
     layer.geojson = geojson
     layer.feature_count = layer.items.count()
     layer.size_bytes = len(geojson.encode('utf-8'))
-    layer.property_names = property_names_for(layer)
+    layer.property_names = names
     layer.save(update_fields=['geojson', 'feature_count', 'size_bytes', 'property_names', 'updated_at'])
     return layer
 
