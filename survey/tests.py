@@ -41,6 +41,15 @@ def _make_org(name='TestOrg'):
     return Organization.objects.create(name=name, slug=name.lower().replace(' ', '-'))
 
 
+def _eager_import():
+    """Run the ZIP import job inline. The view only enqueues a Celery task and
+    the suite has no broker, so `.delay` becomes the task itself (the AI draft
+    tests patch their task the same way)."""
+    from unittest.mock import patch
+    from .tasks import run_survey_import
+    return patch('survey.views.run_survey_import.delay', side_effect=lambda job_id: run_survey_import(job_id))
+
+
 class SmokeTest(TestCase):
     """Basic smoke test to verify test infrastructure works."""
 
@@ -2204,7 +2213,8 @@ class WebViewTest(TestCase):
         )
 
         self.client.login(username='testuser', password='testpass123')
-        response = self.client.post('/editor/import/', {'file': upload_file})
+        with _eager_import():
+            response = self.client.post('/editor/import/', {'file': upload_file})
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(SurveyHeader.objects.filter(name="imported_web_survey").exists())
@@ -2223,7 +2233,8 @@ class WebViewTest(TestCase):
         )
 
         self.client.login(username='testuser', password='testpass123')
-        response = self.client.post('/editor/import/', {'file': invalid_file})
+        with _eager_import():
+            response = self.client.post('/editor/import/', {'file': invalid_file})
 
         self.assertEqual(response.status_code, 302)
 
@@ -2255,7 +2266,8 @@ class WebViewTest(TestCase):
         )
 
         self.client.login(username='testuser', password='testpass123')
-        response = self.client.post('/editor/import/', {'file': upload_file})
+        with _eager_import():
+            response = self.client.post('/editor/import/', {'file': upload_file})
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(SurveyHeader.objects.filter(name='web_test_survey').count(), 2)
@@ -7033,7 +7045,8 @@ class ExportImportDeletePermissionTest(TestCase):
         buf.seek(0)
         from django.core.files.uploadedfile import SimpleUploadedFile
         f = SimpleUploadedFile('test.zip', buf.read(), content_type='application/zip')
-        response = self.client.post('/editor/import/', {'file': f})
+        with _eager_import():
+            response = self.client.post('/editor/import/', {'file': f})
         self.assertEqual(response.status_code, 403)
 
     def test_editor_can_import(self):
@@ -7052,7 +7065,8 @@ class ExportImportDeletePermissionTest(TestCase):
         buf.seek(0)
         from django.core.files.uploadedfile import SimpleUploadedFile
         f = SimpleUploadedFile('test.zip', buf.read(), content_type='application/zip')
-        response = self.client.post('/editor/import/', {'file': f})
+        with _eager_import():
+            response = self.client.post('/editor/import/', {'file': f})
         self.assertEqual(response.status_code, 302)
         imported = SurveyHeader.objects.get(name='imported_survey')
         self.assertEqual(imported.organization, self.org)
@@ -32813,6 +32827,17 @@ def _zones_geojson(count=3, projected=False):
     return json.dumps({"type": "FeatureCollection", "features": features})
 
 
+def _validated_geojson_text(raw):
+    """(FeatureCollection text, count, property names) the way pre-objects fixtures
+    stored a layer: the validated parse re-serialised. Production never stores
+    this text any more (rebuild_layer derives it from objects); a handful of
+    fixtures still seed the column directly."""
+    from .layers import validate_layer_upload
+    features, props = validate_layer_upload(raw)
+    text = json.dumps({'type': 'FeatureCollection', 'features': features}, ensure_ascii=False, separators=(',', ':'))
+    return text, len(features), props
+
+
 class LayerValidationTest(SimpleTestCase):
     """validate_layer_upload — the single gate every stored layer passes."""
 
@@ -32823,10 +32848,10 @@ class LayerValidationTest(SimpleTestCase):
         THEN it is accepted with the feature count and the union of property names
         """
         from .layers import validate_layer_upload
-        geojson, count, props = validate_layer_upload(_zones_geojson().encode())
-        self.assertEqual(count, 3)
+        features, props = validate_layer_upload(_zones_geojson().encode())
+        self.assertEqual(len(features), 3)
         self.assertEqual(props, ['name', 'zone_id'])
-        self.assertEqual(json.loads(geojson)['type'], 'FeatureCollection')
+        self.assertTrue(all(f['type'] == 'Feature' for f in features))
 
     def test_projected_coordinates_are_rejected(self):
         """
@@ -32858,21 +32883,22 @@ class LayerValidationTest(SimpleTestCase):
         """
         from .layers import validate_layer_upload
         raw = json.dumps({"type": "Point", "coordinates": [13.4, 52.5]}).encode()
-        geojson, count, props = validate_layer_upload(raw)
-        self.assertEqual(count, 1)
-        self.assertEqual(json.loads(geojson)['type'], 'FeatureCollection')
+        features, props = validate_layer_upload(raw)
+        self.assertEqual(len(features), 1)
+        self.assertEqual(features[0]['type'], 'Feature')
+        self.assertEqual(features[0]['geometry']['type'], 'Point')
 
-    def test_stored_value_is_a_reparse_not_the_raw_bytes(self):
+    def test_parse_is_what_flows_on_not_the_raw_bytes(self):
         """
         GIVEN an upload carrying a BOM and sloppy whitespace
         WHEN it is validated
-        THEN the stored text is the re-serialized parse, not the original bytes
+        THEN the parsed features flow on (the stored text is rebuilt from the
+             objects they become), so the BOM and the whitespace never reach a layer
         """
         from .layers import validate_layer_upload
         raw = ('﻿' + '  ' + _zones_geojson(1)).encode('utf-8')
-        geojson, _, _ = validate_layer_upload(raw)
-        self.assertFalse(geojson.startswith('﻿'))
-        self.assertEqual(json.loads(geojson)['features'][0]['properties']['name'], 'Area 1')
+        features, _ = validate_layer_upload(raw)
+        self.assertEqual(features[0]['properties']['name'], 'Area 1')
 
     def test_invalid_json_is_rejected(self):
         """
@@ -32899,7 +32925,7 @@ class LayerEndpointTest(TestCase):
         SurveySection.objects.create(
             survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
         )
-        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        geojson, count, _ = _validated_geojson_text(_zones_geojson().encode())
         self.layer = SurveyMapLayer.objects.create(
             survey=self.survey, name="Zones", geojson=geojson, feature_count=count,
             size_bytes=len(geojson),
@@ -33027,7 +33053,7 @@ class LayerRespondentRenderingTest(TestCase):
         Question.objects.create(
             survey_section=self.head, code="LR001", name="Q", input_type="text", order_number=1,
         )
-        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        geojson, count, _ = _validated_geojson_text(_zones_geojson().encode())
         self.layer = SurveyMapLayer.objects.create(
             survey=self.survey, name="Zones", color="#e8971e", label_field="name",
             geojson=geojson, feature_count=count, size_bytes=len(geojson),
@@ -33101,7 +33127,7 @@ class LayerPreviewTest(TestCase):
         Question.objects.create(
             survey_section=self.section, code="LP001", name="Q", input_type="text", order_number=1,
         )
-        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        geojson, count, _ = _validated_geojson_text(_zones_geojson().encode())
         self.layer = SurveyMapLayer.objects.create(
             survey=self.survey, name="Zones", color="#e8971e", label_field="name",
             geojson=geojson, feature_count=count, size_bytes=len(geojson),
@@ -33166,11 +33192,9 @@ class LayerEditorTest(TestCase):
         self.section = SurveySection.objects.create(
             survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
         )
-        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
-        self.layer = SurveyMapLayer.objects.create(
-            survey=self.survey, name="Zones", geojson=geojson, feature_count=count,
-            size_bytes=len(geojson),
-        )
+        # Objects first, derived GeoJSON second — the way every stored layer is
+        # made since overlay-features; property names come from the objects.
+        self.layer = _objects_layer(self.survey, name="Zones")
         self.client.login(username='layerowner', password='pw12345678')
 
     def _upload(self, content=None, name='zones.geojson'):
@@ -33356,7 +33380,7 @@ class AnalyticsReferenceLayerTest(TestCase):
         SurveySection.objects.create(
             survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
         )
-        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        geojson, count, _ = _validated_geojson_text(_zones_geojson().encode())
         self.layer = SurveyMapLayer.objects.create(
             survey=self.survey, name="Zones", geojson=geojson, feature_count=count,
             size_bytes=len(geojson),
@@ -33440,7 +33464,7 @@ class LayersByQuestionMigrationTest(TestCase):
         self.form_section = SurveySection.objects.create(
             survey_header=self.survey, name="s2", title="Form", code="S2", layout='form',
         )
-        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        geojson, count, _ = _validated_geojson_text(_zones_geojson().encode())
         self.a = SurveyMapLayer.objects.create(
             survey=self.survey, name="A", color="#111111", geojson=geojson, feature_count=count,
             size_bytes=len(geojson), position=0,
@@ -33569,7 +33593,7 @@ class LayerSerializationTest(TestCase):
         Question.objects.create(
             survey_section=self.first, code="LS001", name="Q", input_type="text", order_number=1,
         )
-        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
+        geojson, count, _ = _validated_geojson_text(_zones_geojson().encode())
         self.layer = SurveyMapLayer.objects.create(
             survey=self.survey, name="Counting zones", color="#e8971e", label_field="name",
             key_field="zone_id", show_popups=True, geojson=geojson, feature_count=count,
@@ -36963,15 +36987,22 @@ class MalformedArchiveImportTest(TestCase):
     def test_import_view_shows_a_message_for_a_bad_archive(self):
         """
         GIVEN a creator uploading an archive with a null required field
-        WHEN they POST it to the import view
-        THEN they are redirected with an error message, not served a 500
+        WHEN they POST it to the import view and the job runs
+        THEN they are redirected, not served a 500, and the dashboard card names
+             the field that failed
         """
         data = self._valid_survey(name=None)
-        response = self.client.post('/editor/import/',
-                                    {'file': self._archive(data)}, follow=True)
+        with _eager_import():
+            response = self.client.post('/editor/import/',
+                                        {'file': self._archive(data)}, follow=True)
         self.assertEqual(response.status_code, 200)
-        texts = [str(m) for m in response.context['messages']]
-        self.assertTrue(any('name' in t for t in texts), texts)
+        from .models import SurveyImportJob
+        job = SurveyImportJob.objects.get(user=self.user)
+        self.assertEqual(job.status, 'failed')
+        self.assertIn('name', job.error)
+        dashboard = self.client.get('/editor/?dashboard=1')
+        self.assertContains(dashboard, 'data-import-status="failed"')
+        self.assertContains(dashboard, 'name')
 
 
 class ExternalScriptCorsTest(SimpleTestCase):
@@ -37333,9 +37364,9 @@ def _objects_layer(survey, name="Zones", geojson_text=None, **layer_fields):
     first, derived GeoJSON second."""
     from .models import SurveyMapLayer
     from .layers import validate_layer_upload, objects_from_features, rebuild_layer
-    geojson, _count, _props = validate_layer_upload((geojson_text or _zones_geojson()).encode())
+    features, _props = validate_layer_upload((geojson_text or _zones_geojson()).encode())
     layer = SurveyMapLayer.objects.create(survey=survey, name=name, geojson='', **layer_fields)
-    objects_from_features(layer, json.loads(geojson)['features'])
+    objects_from_features(layer, features)
     rebuild_layer(layer)
     return layer
 
@@ -37397,7 +37428,7 @@ class LayerObjectsModelTest(TestCase):
         """
         from .layers import objects_from_features, validate_layer_upload
         layer = _objects_layer(self.survey, key_field='zone_id')
-        geojson, _, _ = validate_layer_upload(_zones_geojson().encode())
+        geojson, _, _ = _validated_geojson_text(_zones_geojson().encode())
         report = objects_from_features(layer, json.loads(geojson)['features'])
         self.assertEqual(report['created'], 0)
         self.assertEqual(sorted(report['collisions']), ['1', '2', '3'])
@@ -37720,7 +37751,7 @@ class LayerSplitMigrationTest(TestCase):
         """
         from .models import SurveyMapLayer
         from .layers import validate_layer_upload, bbox_of_collection
-        geojson, count, _ = validate_layer_upload(_zones_geojson(count=35).encode())
+        geojson, count, _ = _validated_geojson_text(_zones_geojson(count=35).encode())
         layer = SurveyMapLayer.objects.create(
             survey=self.survey, name="Legacy", geojson=geojson, feature_count=count,
             size_bytes=len(geojson), key_field='zone_id', label_field='name',
@@ -37746,7 +37777,7 @@ class LayerSplitMigrationTest(TestCase):
         parsed = json.loads(_zones_geojson(count=3))
         for f in parsed['features']:
             f['properties']['zone_id'] = 1
-        geojson, count, _ = validate_layer_upload(json.dumps(parsed).encode())
+        geojson, count, _ = _validated_geojson_text(json.dumps(parsed).encode())
         layer = SurveyMapLayer.objects.create(
             survey=self.survey, name="Dupes", geojson=geojson, feature_count=count,
             size_bytes=len(geojson), key_field='zone_id',
@@ -41990,3 +42021,464 @@ class CommentGeneralThreadTest(_CommentFixture):
         self.client.login(username='cmviewer', password='pw12345678')
         r = self.client.get(self._u('editor_comment_counts'))
         self.assertIn('survey:all', r.json()['new'])
+
+
+class LayerMemoryDietTest(TestCase):
+    """Change layer-memory-diet, stage 1: no surface but the gated endpoint and the
+    export reads a layer's geometry text; property names are a stored column."""
+
+    GEOJSON_COLUMN = '"survey_surveymaplayer"."geojson_gz"'
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Diet Org")
+        self.owner = User.objects.create_user(username='dietowner', password='pw12345678')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="diet_survey", organization=self.org, redirect_url="/thanks/",
+            created_by=self.owner, status='published', available_languages=['en'],
+        )
+        SurveyCollaborator.objects.create(user=self.owner, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        self.q = Question.objects.create(
+            survey_section=self.section, code="DT001", name="Objects", input_type="layer_objects",
+            layer=self.layer, order_number=1,
+        )
+        Question.objects.create(
+            survey_section=self.section, code="DT002", name="Rate", input_type="rating",
+            parent_question_id=self.q, order_number=1, choices=[{"code": i, "name": str(i)} for i in range(1, 6)],
+        )
+
+    def _geojson_reads(self, queries):
+        return [q['sql'] for q in queries if self.GEOJSON_COLUMN in q['sql'] and q['sql'].lstrip().upper().startswith('SELECT')]
+
+    def test_rebuild_stores_property_names(self):
+        """
+        GIVEN a layer built from objects carrying `name` and `zone_id`
+        WHEN it is rebuilt
+        THEN the sorted property names are stored on the layer, reserved names excluded
+        """
+        from .layers import rebuild_layer
+        obj = self.layer.items.first()
+        obj.properties = {**obj.properties, '_key': 'shadow', 'extra': 1}
+        obj.save()
+        rebuild_layer(self.layer)
+        self.layer.refresh_from_db()
+        self.assertEqual(self.layer.property_names, ['extra', 'name', 'zone_id'])
+
+    def test_upload_response_and_pickers_use_the_stored_names(self):
+        """
+        GIVEN an owner uploading a GeoJSON
+        WHEN the create endpoint answers and the settings card renders
+        THEN both list the stored property names and neither selects the geometry column
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        from .models import SurveyMapLayer
+        self.client.login(username='dietowner', password='pw12345678')
+        payload = SimpleUploadedFile('zones.geojson', _zones_geojson().encode(), content_type='application/geo+json')
+        r = self.client.post(reverse('editor_survey_layer_create', args=[self.survey.uuid]), {'layer': payload})
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(r.json()['properties'], ['name', 'zone_id'])
+        self.assertEqual(SurveyMapLayer.objects.get(pk=r.json()['id']).property_names, ['name', 'zone_id'])
+        with CaptureQueriesContext(connection) as ctx:
+            r = self.client.get(reverse('editor_survey_settings_panel', args=[self.survey.uuid]))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'zone_id')
+        self.assertEqual(self._geojson_reads(ctx.captured_queries), [])
+
+    def test_migration_backfills_property_names_from_objects(self):
+        """
+        GIVEN a layer whose stored names are empty (a row from before the column)
+        WHEN the backfill migration runs
+        THEN the names are derived from the objects' properties
+        """
+        from importlib import import_module
+        from django.apps import apps
+        from django.db import connection
+        from .models import SurveyMapLayer
+        SurveyMapLayer.objects.filter(pk=self.layer.pk).update(property_names=[])
+        import_module('survey.migrations.0084_surveymaplayer_property_names').forwards(apps, connection.schema_editor)
+        self.layer.refresh_from_db()
+        self.assertEqual(self.layer.property_names, ['name', 'zone_id'])
+
+    def test_editor_respondent_and_responses_pages_never_read_the_geometry_text(self):
+        """
+        GIVEN a survey with a layer and an Objects-on-the-map question
+        WHEN the editor page, the question modal, the respondent section (GET and POST)
+             and the Responses dashboard render
+        THEN no query selects the layer's geojson column
+        """
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        self.client.login(username='dietowner', password='pw12345678')
+        pages = [
+            ('editor_survey', reverse('editor_survey_detail', args=[self.survey.uuid])),
+            ('question modal', reverse('editor_question_edit', args=[self.survey.uuid, self.q.pk])),
+            ('responses', reverse('editor_survey_analytics', args=[self.survey.uuid])),
+            ('object card', reverse('survey_layer_object', args=[str(self.survey.uuid), self.layer.pk, self.layer.items.first().key])),
+        ]
+        for label, url in pages:
+            # The question modal is a draft-only surface; the rest read a published survey.
+            SurveyHeader.objects.filter(pk=self.survey.pk).update(status='draft' if label == 'question modal' else 'published')
+            with CaptureQueriesContext(connection) as ctx:
+                r = self.client.get(url)
+            self.assertEqual(r.status_code, 200, label)
+            self.assertEqual(self._geojson_reads(ctx.captured_queries), [], label)
+        respondent = Client()
+        url = reverse('section', args=[str(self.survey.uuid), self.section.name])
+        with CaptureQueriesContext(connection) as ctx:
+            r = respondent.get(url)
+            self.assertEqual(r.status_code, 200)
+            key = self.layer.items.first().key
+            r = respondent.post(url, {f'obj__{key}__DT002': '4'})
+        self.assertIn(r.status_code, (200, 302))
+        self.assertEqual(self._geojson_reads(ctx.captured_queries), [])
+
+    def test_gated_endpoint_and_export_still_read_the_text(self):
+        """
+        GIVEN the same survey
+        WHEN the GeoJSON endpoint and the ZIP export run
+        THEN both deliver the derived FeatureCollection
+        """
+        import io
+        import zipfile
+        self.client.login(username='dietowner', password='pw12345678')
+        r = self.client.get(reverse('survey_layer_geojson', args=[str(self.survey.uuid), self.layer.pk]))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(json.loads(r.content)['features']), 3)
+        r = self.client.get(reverse('export_survey', args=[self.survey.uuid]))
+        self.assertEqual(r.status_code, 200)
+        with zipfile.ZipFile(io.BytesIO(r.content)) as zf:
+            self.assertEqual(len(json.loads(zf.read('layers/0.geojson'))['features']), 3)
+
+    def test_gunicorn_recycles_workers(self):
+        """
+        GIVEN the production and compose start commands
+        WHEN they are read
+        THEN both carry a request budget with jitter, env-tunable like the other knobs
+        """
+        import os
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        for name in ('Dockerfile', 'docker-compose.yml'):
+            with open(os.path.join(root, name)) as fh:
+                text = fh.read()
+            self.assertIn('--max-requests ${GUNICORN_MAX_REQUESTS:-', text, name)
+            self.assertIn('--max-requests-jitter ${GUNICORN_MAX_REQUESTS_JITTER:-', text, name)
+        with open(os.path.join(root, 'render.yaml')) as fh:
+            self.assertIn('GUNICORN_MAX_REQUESTS_JITTER', fh.read())
+
+
+class LayerStreamingRebuildTest(TestCase):
+    """Change layer-memory-diet, stage 2: the derived GeoJSON is streamed one
+    feature at a time and objects are written in batches — with the same result."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Stream Org")
+        self.survey = SurveyHeader.objects.create(
+            name="stream_survey", organization=self.org, redirect_url="/thanks/", status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+
+    @staticmethod
+    def _tree_serialisation(layer, with_status=False):
+        """The pre-change construction: every object as a model instance, one
+        dict tree, one json.dumps — the reference the stream must match byte for byte."""
+        from .models import LayerObjectAsset
+        from .layers import feature_for_object, creator_objects
+        covers = {}
+        for asset in LayerObjectAsset.objects.filter(object__layer=layer, kind='image').order_by('object_id', 'position', 'id'):
+            covers.setdefault(asset.object_id, asset.url)
+        features = []
+        for obj in (creator_objects(layer) if with_status else layer.items.order_by('position', 'id')):
+            feature = feature_for_object(obj, covers.get(obj.pk, ''))
+            if with_status:
+                feature['properties']['_status'] = obj.status
+            features.append(feature)
+        return json.dumps({'type': 'FeatureCollection', 'features': features}, ensure_ascii=False, separators=(',', ':'))
+
+    def test_streamed_collection_is_byte_identical_to_the_tree_serialisation(self):
+        """
+        GIVEN an uploaded layer whose objects carry categories, unicode text, a cover
+              image, a link and shadowing reserved properties
+        WHEN the derived GeoJSON is rebuilt
+        THEN the streamed text equals the whole-tree serialisation byte for byte
+             and the property names come out of the same pass
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from .models import LayerObjectAsset
+        from .layers import rebuild_layer, build_layer_geojson
+        layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        obj = layer.items.get(key='2')
+        obj.category = 'Парки'
+        obj.description = '<p>Pocket <b>park</b> — «тихий»</p>'
+        obj.link = 'https://city.example/2'
+        obj.properties = {**obj.properties, '_key': 'shadow', '_cover': 'x', 'notes': 'ä/ö "quoted"'}
+        obj.save()
+        png = SimpleUploadedFile('cover.png', b'\x89PNG\r\n\x1a\n' + b'0' * 20, content_type='image/png')
+        LayerObjectAsset.objects.create(object=obj, kind='image', file=png, title='cover.png',
+                                        content_type='image/png', size_bytes=png.size, position=0)
+        rebuild_layer(layer)
+        layer.refresh_from_db()
+        self.assertEqual(build_layer_geojson(layer), self._tree_serialisation(layer))
+        self.assertEqual(layer.geojson, self._tree_serialisation(layer))
+        self.assertEqual(layer.property_names, ['name', 'notes', 'zone_id'])
+        feature = next(f for f in json.loads(layer.geojson)['features'] if f['id'] == '2')
+        self.assertEqual(feature['properties']['_key'], '2')
+        self.assertTrue(feature['properties']['_has_content'])
+        self.assertTrue(feature['properties']['_cover'])
+
+    def test_question_layer_streams_status_the_same_way(self):
+        """
+        GIVEN a shared-map layer materialised from a respondent's marks with approve-first on
+        WHEN it is rebuilt
+        THEN the streamed text equals the tree serialisation, `_status` included, and
+             a marks layer stores no property names
+        """
+        from django.contrib.gis.geos import Point
+        from .models import SurveyMapLayer
+        from .layers import sync_question_layer, rebuild_layer
+        q1 = Question.objects.create(survey_section=self.section, code="Q1", name="Where", input_type="point", order_number=1)
+        layer = SurveyMapLayer.objects.create(
+            survey=self.survey, name="Marks", geojson='{}', source='question', source_question_code='Q1', approve_first=True,
+        )
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=session, question=q1, point=Point(13.4, 52.5))
+        Answer.objects.create(survey_session=session, question=q1, point=Point(13.5, 52.6))
+        sync_question_layer(layer, session)
+        rebuild_layer(layer)
+        layer.refresh_from_db()
+        self.assertEqual(layer.feature_count, 2)
+        self.assertEqual(layer.geojson, self._tree_serialisation(layer, with_status=True))
+        self.assertIn('"_status":"pending"', layer.geojson)
+        self.assertEqual(layer.property_names, [])
+
+    def test_batches_keep_positions_and_collision_reports(self):
+        """
+        GIVEN a 1100-feature file whose feature 700 repeats the key of feature 5
+        WHEN objects are created in batches of 500
+        THEN 1099 objects exist in file order with contiguous positions and the
+             collision is reported once
+        """
+        from .models import SurveyMapLayer
+        from .layers import validate_layer_upload, objects_from_features
+        features = []
+        for i in range(1, 1101):
+            key = '5' if i == 700 else str(i)
+            features.append({'type': 'Feature', 'properties': {'zone_id': key, 'name': f'Area {i}'},
+                             'geometry': {'type': 'Point', 'coordinates': [13.0 + i / 10000, 52.0]}})
+        parsed, _ = validate_layer_upload(json.dumps({'type': 'FeatureCollection', 'features': features}).encode())
+        layer = SurveyMapLayer.objects.create(survey=self.survey, name="Big", geojson='', key_field='zone_id')
+        report = objects_from_features(layer, parsed)
+        self.assertEqual(report['created'], 1099)
+        self.assertEqual(report['collisions'], ['5'])
+        rows = list(layer.items.order_by('position').values_list('position', 'key'))
+        self.assertEqual([p for p, _ in rows], list(range(1, 1100)))
+        self.assertEqual([k for _, k in rows][:6], ['1', '2', '3', '4', '5', '6'])
+        self.assertEqual([k for _, k in rows][697:700], ['698', '699', '701'])
+
+
+class SurveyImportJobTest(TestCase):
+    """Change layer-memory-diet, stage 3: the ZIP import is a tracked job on the
+    worker, and the dashboard is the creator's window on it."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Import Job Org")
+        self.user = User.objects.create_user(username='importer', password='pw12345678')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.other = User.objects.create_user(username='bystander', password='pw12345678')
+        Membership.objects.create(user=self.other, organization=self.org, role='editor')
+        self.client.login(username='importer', password='pw12345678')
+        session = self.client.session
+        session['active_org_id'] = self.org.pk
+        session.save()
+
+    def _archive(self, name='job_test_survey'):
+        from io import BytesIO
+        import zipfile
+        buf = BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zf:
+            zf.writestr('survey.json', json.dumps({
+                'version': '1.0', 'exported_at': '2026-09-16T00:00:00Z', 'mode': 'structure',
+                'survey': {'name': name, 'sections': [
+                    {'name': 'section_1', 'code': 'S1', 'is_head': True, 'questions': []},
+                ]},
+                'option_groups': [],
+            }))
+        buf.seek(0)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return SimpleUploadedFile(f'{name}.zip', buf.read(), content_type='application/zip')
+
+    def test_post_stores_the_archive_and_enqueues_a_job(self):
+        """
+        GIVEN an org editor uploading an archive
+        WHEN they POST to the import URL
+        THEN a queued job holds the archive under a random private key, the task is
+             enqueued with the job id, and the dashboard shows a polling card
+        """
+        from unittest.mock import patch
+        from .models import SurveyImportJob
+        with patch('survey.views.run_survey_import.delay') as delay:
+            r = self.client.post('/editor/import/', {'file': self._archive()})
+        self.assertEqual(r.status_code, 302)
+        job = SurveyImportJob.objects.get(user=self.user)
+        self.assertEqual(job.status, 'queued')
+        self.assertEqual(job.original_name, 'job_test_survey.zip')
+        self.assertTrue(job.file.name.startswith('import_jobs/'))
+        self.assertNotIn('job_test_survey', job.file.name)
+        delay.assert_called_once_with(job.pk)
+        r = self.client.get('/editor/?dashboard=1')
+        self.assertContains(r, 'data-import-status="queued"')
+        self.assertContains(r, 'hx-trigger="every 3s"')
+        job.discard_file()
+
+    def test_task_imports_and_removes_the_archive(self):
+        """
+        GIVEN a queued job
+        WHEN the worker runs it
+        THEN the survey exists with the creator as owner, the job is done with the
+             survey linked, the archive is gone, and a redelivery imports nothing twice
+        """
+        from unittest.mock import patch
+        from .models import SurveyImportJob
+        from .tasks import run_survey_import
+        with patch('survey.views.run_survey_import.delay'):
+            self.client.post('/editor/import/', {'file': self._archive()})
+        job = SurveyImportJob.objects.get(user=self.user)
+        run_survey_import(job.pk)
+        job.refresh_from_db()
+        self.assertEqual(job.status, 'done', job.error)
+        self.assertEqual(job.survey.name, 'job_test_survey')
+        self.assertEqual(job.survey.organization, self.org)
+        self.assertTrue(SurveyCollaborator.objects.filter(user=self.user, survey=job.survey, role='owner').exists())
+        self.assertFalse(job.file)
+        self.assertIsNotNone(job.finished_at)
+        run_survey_import(job.pk)
+        self.assertEqual(SurveyHeader.objects.filter(name='job_test_survey').count(), 1)
+        r = self.client.get('/editor/?dashboard=1')
+        self.assertContains(r, 'data-import-status="done"')
+        self.assertNotContains(r, 'hx-trigger="every 3s"')
+        self.assertContains(r, reverse('editor_survey_detail', args=[job.survey.uuid]))
+
+    def test_invalid_archive_fails_the_job_with_the_reason(self):
+        """
+        GIVEN an upload that is not a ZIP archive
+        WHEN the worker runs the job
+        THEN the job is failed with a creator-readable reason, the file is gone,
+             and the card shows the reason
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from .models import SurveyImportJob
+        bad = SimpleUploadedFile('broken.zip', b'not a zip', content_type='application/zip')
+        with _eager_import():
+            r = self.client.post('/editor/import/', {'file': bad})
+        self.assertEqual(r.status_code, 302)
+        job = SurveyImportJob.objects.get(user=self.user)
+        self.assertEqual(job.status, 'failed')
+        self.assertTrue(job.error)
+        self.assertFalse(job.file)
+        r = self.client.get('/editor/?dashboard=1')
+        self.assertContains(r, 'data-import-status="failed"')
+        self.assertContains(r, job.error)
+
+    def test_cards_are_private_and_dismissable(self):
+        """
+        GIVEN a finished job of one creator
+        WHEN another member of the org opens the dashboard, and the owner dismisses the card
+        THEN the other member never sees it, an open job cannot be dismissed, and a
+             dismissed card is gone
+        """
+        from .models import SurveyImportJob
+        with _eager_import():
+            self.client.post('/editor/import/', {'file': self._archive('dismiss_me')})
+        job = SurveyImportJob.objects.get(user=self.user)
+        other = Client()
+        other.login(username='bystander', password='pw12345678')
+        session = other.session
+        session['active_org_id'] = self.org.pk
+        session.save()
+        self.assertNotContains(other.get('/editor/?dashboard=1'), 'data-import-job=')
+        self.assertEqual(other.post(reverse('editor_import_job_dismiss', args=[job.pk])).status_code, 404)
+        SurveyImportJob.objects.filter(pk=job.pk).update(status='running')
+        self.assertEqual(self.client.post(reverse('editor_import_job_dismiss', args=[job.pk])).status_code, 400)
+        SurveyImportJob.objects.filter(pk=job.pk).update(status='done')
+        r = self.client.post(reverse('editor_import_job_dismiss', args=[job.pk]))
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(SurveyImportJob.objects.filter(pk=job.pk).exists())
+        self.assertNotContains(r, 'data-import-job=')
+
+
+class LayerGzipStorageTest(TestCase):
+    """Change layer-memory-diet, stage 3: the derived GeoJSON is stored gzipped
+    and handed to gzip-capable clients as it is."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Gzip Org")
+        self.survey = SurveyHeader.objects.create(
+            name="gzip_survey", organization=self.org, redirect_url="/thanks/",
+            status='published', available_languages=['en'],
+        )
+        SurveySection.objects.create(survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True)
+        self.layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        self.url = reverse('survey_layer_geojson', kwargs={'survey_slug': str(self.survey.uuid), 'layer_id': self.layer.pk})
+
+    def test_text_api_round_trips_through_gzip_bytes(self):
+        """
+        GIVEN a rebuilt layer
+        WHEN its text is read back from the database
+        THEN it equals what was written, the row holds gzip bytes smaller than the
+             text, an empty text is NULL, and size_bytes reports the text
+        """
+        import gzip
+        from .models import SurveyMapLayer
+        row = SurveyMapLayer.objects.get(pk=self.layer.pk)
+        self.assertEqual(json.loads(row.geojson)['features'][2]['id'], '3')
+        self.assertEqual(gzip.decompress(bytes(row.geojson_gz)).decode('utf-8'), row.geojson)
+        self.assertLess(len(row.geojson_gz), len(row.geojson))
+        self.assertEqual(row.size_bytes, len(row.geojson.encode('utf-8')))
+        empty = SurveyMapLayer.objects.create(survey=self.survey, name="Empty", geojson='')
+        self.assertIsNone(SurveyMapLayer.objects.get(pk=empty.pk).geojson_gz)
+        self.assertEqual(SurveyMapLayer.objects.get(pk=empty.pk).geojson, '')
+
+    def test_endpoint_serves_the_stored_bytes_to_gzip_clients_and_text_to_others(self):
+        """
+        GIVEN a client that accepts gzip and one that does not
+        WHEN each fetches the layer
+        THEN the first receives the stored bytes with Content-Encoding: gzip, the
+             second the text, both with the same ETag, and a matching If-None-Match
+             still answers 304
+        """
+        import gzip
+        gz = self.client.get(self.url, HTTP_ACCEPT_ENCODING='gzip, deflate, br')
+        self.assertEqual(gz.status_code, 200)
+        self.assertEqual(gz['Content-Encoding'], 'gzip')
+        self.assertEqual(gz['Content-Type'], 'application/geo+json')
+        self.assertIn('Accept-Encoding', gz['Vary'])
+        body = gzip.decompress(gz.content).decode('utf-8')
+        plain = self.client.get(self.url)
+        self.assertEqual(plain.status_code, 200)
+        self.assertFalse(plain.has_header('Content-Encoding'))
+        self.assertEqual(plain.content.decode('utf-8'), body)
+        self.assertEqual(len(json.loads(body)['features']), 3)
+        self.assertEqual(gz['ETag'], plain['ETag'])
+        again = self.client.get(self.url, HTTP_ACCEPT_ENCODING='gzip', HTTP_IF_NONE_MATCH=gz['ETag'])
+        self.assertEqual(again.status_code, 304)
+
+    def test_migration_compresses_existing_rows(self):
+        """
+        GIVEN the compress step of migration 0086 run over a stored layer
+        WHEN it finishes
+        THEN the bytes decompress to the same text (the live column is the gz one, so
+             the forwards step is exercised through the model it targets)
+        """
+        import gzip
+        from .models import SurveyMapLayer
+        text = SurveyMapLayer.objects.get(pk=self.layer.pk).geojson
+        raw = SurveyMapLayer.objects.filter(pk=self.layer.pk).values_list('geojson_gz', flat=True).first()
+        self.assertEqual(gzip.decompress(bytes(raw)).decode('utf-8'), text)
+        self.assertLess(len(raw), len(text) / 2)

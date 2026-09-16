@@ -1,11 +1,13 @@
 """Reference overlay layers: validation, objects and the derived GeoJSON.
 
 `validate_layer_upload` is the one gate every GeoJSON passes on the way in —
-editor import, ZIP import, AI-written — so a file is always a re-serialized
-parse, never raw bytes. Since `overlay-features` a layer is a container of
-LayerObject rows: `objects_from_features` turns validated features into rows,
-`rebuild_layer` derives the FeatureCollection the respondent map loads, and
-`layers_for` resolves which survey owns the layers a page should show.
+editor import, ZIP import, AI-written — and returns the parsed features, which
+are parsed exactly once (change layer-memory-diet: the tree of an 8.6 MB file
+is 55 MB of Python objects). Since `overlay-features` a layer is a container of
+LayerObject rows: `objects_from_features` turns validated features into rows in
+batches, `rebuild_layer` streams the derived FeatureCollection the respondent
+map loads from those rows one feature at a time, and `layers_for` resolves
+which survey owns the layers a page should show.
 """
 import json
 import re
@@ -35,9 +37,38 @@ def layer_owner(survey):
     return survey.canonical_survey or survey.published_version or survey
 
 
+# The derived FeatureCollection and its FD-1 predecessor: up to 10 MB of text per
+# row. Every resolver below defers them — a name, a flag or a position must never
+# cost a 10 MB read (change layer-memory-diet). Readers of the text opt in with
+# `.defer(None)` (export) or a plain `get` by pk (the gated endpoint).
+GEOMETRY_TEXT_FIELDS = ('geojson_gz', 'geojson_legacy')
+
+
 def layers_for(survey):
-    """QuerySet of the layers a survey (or any of its versions) renders."""
-    return layer_owner(survey).map_layers.all()
+    """QuerySet of the layers a survey (or any of its versions) renders, with the
+    geometry text deferred (see GEOMETRY_TEXT_FIELDS)."""
+    return layer_owner(survey).map_layers.defer(*GEOMETRY_TEXT_FIELDS)
+
+
+def layer_lite(question):
+    """The layer an Objects-on-the-map question is bound to, WITHOUT its geometry
+    text. `question.layer` cannot defer through the FK descriptor, and a full
+    instance saved with `save()` writes the 10 MB text back; hot paths (respondent
+    form and POST, Responses aggregates) use this instead. Cached per question."""
+    from survey.models import SurveyMapLayer
+    # An instance already on the question wins: the live preview binds a
+    # transient, unsaved `question` layer, and download_data select_relates it.
+    on_question = question._state.fields_cache.get('layer')
+    if on_question is not None:
+        return on_question
+    if not question.layer_id:
+        return None
+    cached = question.__dict__.get('_layer_lite')
+    if cached is not None and cached.pk == question.layer_id:
+        return cached
+    layer = SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS).filter(pk=question.layer_id).first()
+    question.__dict__['_layer_lite'] = layer
+    return layer
 
 
 def section_layer_ids(section):
@@ -88,7 +119,7 @@ def ensure_layer_questions(section, hidden_ids=()):
         survey_section=section, parent_question_id__isnull=True,
     ).aggregate(m=Max('order_number'))['m'] or 0
     created = []
-    for layer in layers_for(section.survey_header).defer('geojson', 'geojson_legacy').order_by('position', 'id'):
+    for layer in layers_for(section.survey_header).defer(*GEOMETRY_TEXT_FIELDS).order_by('position', 'id'):
         if layer.pk in hidden or layer.pk in bound:
             continue
         max_order += 1
@@ -127,9 +158,11 @@ def _geometry_coords(geometry):
 
 
 def validate_layer_upload(data):
-    """Validate raw uploaded bytes; return (geojson_str, feature_count, property_names).
+    """Validate raw uploaded bytes; return (features, property_names).
 
-    Raises LayerValidationError with a creator-facing message.
+    `features` is the parsed list of Feature dicts — the caller hands it to
+    `objects_from_features` and never re-parses. Raises LayerValidationError
+    with a creator-facing message.
     """
     if len(data) > MAX_LAYER_BYTES:
         raise LayerValidationError(
@@ -184,10 +217,7 @@ def validate_layer_upload(data):
                     "coordinate system — re-export it as WGS84 (EPSG:4326).")
     if not checked_any:
         raise LayerValidationError("No coordinates found in the file.")
-
-    collection = {'type': 'FeatureCollection', 'features': features}
-    geojson_str = json.dumps(collection, ensure_ascii=False, separators=(',', ':'))
-    return geojson_str, len(features), sorted(properties)
+    return features, sorted(properties)
 
 
 def build_map_layers_metadata(survey):
@@ -228,7 +258,7 @@ def build_map_layers_metadata(survey):
         # defer('geojson'): the 100s-of-KB geometry column loaded on every map
         # surface render fragments the worker heap into an RSS ratchet (the
         # 2026-09 "exceeded memory limits" incident); only config fields render.
-        for layer in layers_for(survey).defer('geojson', 'geojson_legacy')
+        for layer in layers_for(survey).defer(*GEOMETRY_TEXT_FIELDS)
     ]
 
 
@@ -315,7 +345,17 @@ def objects_from_features(layer, features, mapping=None, sanitize=None):
     taken = set(layer.items.values_list('key', flat=True))
     start_pos = (layer.items.order_by('-position').values_list('position', flat=True).first() or 0) + 1
     report = {'created': 0, 'collisions': [], 'exploded': 0, 'skipped': 0}
+    # Rows are flushed every BATCH: holding every GEOS geometry and model
+    # instance until the end was +43 MB on a 1620-object file.
+    BATCH = 500
     rows = []
+
+    def flush():
+        if rows:
+            LayerObject.objects.bulk_create(rows, batch_size=BATCH)
+            report['created'] += len(rows)
+            rows.clear()
+
     for index, feature in enumerate(features, start=1):
         props = feature.get('properties') if isinstance(feature.get('properties'), dict) else {}
         parts = explode_geometry(feature.get('geometry'))
@@ -345,15 +385,15 @@ def objects_from_features(layer, features, mapping=None, sanitize=None):
                 description=description,
                 link=str(props.get(m['link']) or '')[:500] if m['link'] else '',
                 geometry=GEOSGeometry(json.dumps(part), srid=4326),
-                position=start_pos + len(rows),
+                position=start_pos + report['created'] + len(rows),
                 # Reserved names are re-derived on output; storing them would
                 # let a re-imported derived file shadow the object's own fields.
                 properties={k: v for k, v in props.items()
                             if isinstance(k, str) and k not in RESERVED_PROPS},
             ))
-    if rows:
-        LayerObject.objects.bulk_create(rows, batch_size=500)
-        report['created'] = len(rows)
+            if len(rows) >= BATCH:
+                flush()
+    flush()
     return report
 
 
@@ -375,38 +415,75 @@ def feature_for_object(obj, cover_url=''):
     }
 
 
-def build_layer_geojson(layer):
-    """FeatureCollection string for the layer, in object order."""
+_OBJECT_ROW_FIELDS = ('pk', 'key', 'title', 'category', 'description', 'link', 'properties', 'geometry')
+
+
+def _feature_json(row, cover_url='', status=None):
+    """One feature as compact JSON text from a `values()` row — the same keys
+    in the same order as `feature_for_object`, so the streamed collection is
+    byte-identical to `json.dumps` of the whole tree (guarded by a test)."""
+    props = dict(row['properties'] or {})
+    for reserved in RESERVED_PROPS:
+        props.pop(reserved, None)
+    props['_key'] = row['key']
+    props['_title'] = row['title']
+    props['_category'] = row['category']
+    props['_has_content'] = bool(row['description'] or row['link'] or cover_url)
+    props['_cover'] = cover_url
+    if status is not None:
+        props['_status'] = status
+    feature = {
+        'type': 'Feature',
+        'id': row['key'],
+        'properties': props,
+        'geometry': json.loads(row['geometry'].geojson),
+    }
+    return json.dumps(feature, ensure_ascii=False, separators=(',', ':'))
+
+
+def stream_layer_geojson(layer):
+    """(FeatureCollection string, sorted property names) for the layer, in
+    object order, built one feature at a time from `values()` rows: no model
+    instances, no GEOS geometry kept past its feature, no whole-collection
+    tree (change layer-memory-diet — that tree was +64 MB on an 8.6 MB layer)."""
     from survey.models import LayerObjectAsset
     covers = {}
     for asset in (LayerObjectAsset.objects
                   .filter(object__layer=layer, kind='image')
                   .order_by('object_id', 'position', 'id')):
         covers.setdefault(asset.object_id, asset.url)
+    names = set()
+    parts = []
     if layer.source == 'question':
         # Creator surfaces (object editor, Responses map): every status of every
         # clean session, with the status exposed for badges. Respondents get
         # `build_question_layer_geojson` per request instead.
-        features = []
-        for obj in creator_objects(layer):
-            feature = feature_for_object(obj)
-            feature['properties']['_status'] = obj.status
-            features.append(feature)
+        rows = creator_objects(layer).values(*_OBJECT_ROW_FIELDS, 'status')
     else:
-        features = [feature_for_object(obj, covers.get(obj.pk, ''))
-                    for obj in layer.items.order_by('position', 'id')]
-    return json.dumps({'type': 'FeatureCollection', 'features': features},
-                      ensure_ascii=False, separators=(',', ':'))
+        rows = layer.items.order_by('position', 'id').values(*_OBJECT_ROW_FIELDS)
+    for row in rows.iterator(chunk_size=500):
+        props = row['properties']
+        if isinstance(props, dict):
+            names.update(k for k in props if isinstance(k, str) and k not in RESERVED_PROPS)
+        parts.append(_feature_json(row, covers.get(row['pk'], ''), row.get('status')))
+    return '{"type":"FeatureCollection","features":[' + ','.join(parts) + ']}', sorted(names)
+
+
+def build_layer_geojson(layer):
+    """FeatureCollection string for the layer, in object order."""
+    return stream_layer_geojson(layer)[0]
 
 
 def rebuild_layer(layer):
-    """Recompute the derived GeoJSON and its counters; bumps `updated_at`, which
-    is what the endpoint's ETag hangs on. Call after every object/asset write."""
-    geojson = build_layer_geojson(layer)
+    """Recompute the derived GeoJSON, its counters and the property names in one
+    streamed pass; bumps `updated_at`, which is what the endpoint's ETag hangs
+    on. Call after every object/asset write."""
+    geojson, names = stream_layer_geojson(layer)
     layer.geojson = geojson
     layer.feature_count = layer.items.count()
     layer.size_bytes = len(geojson.encode('utf-8'))
-    layer.save(update_fields=['geojson', 'feature_count', 'size_bytes', 'updated_at'])
+    layer.property_names = names
+    layer.save(update_fields=['geojson_gz', 'feature_count', 'size_bytes', 'property_names', 'updated_at'])
     return layer
 
 
@@ -496,7 +573,8 @@ def attach_tallies(collection, tallies):
 
 def question_layers_for(survey, code):
     """Canonical `question` layers fed by the geo question with `code`."""
-    return layer_owner(survey).map_layers.filter(source='question', source_question_code=code)
+    return (layer_owner(survey).map_layers.defer(*GEOMETRY_TEXT_FIELDS)
+            .filter(source='question', source_question_code=code))
 
 
 def answer_geometry(answer):
@@ -692,7 +770,7 @@ def rebuild_question_layers_for(survey):
     """After a session's validation status / trash state changed: the creator
     surfaces read the cached GeoJSON, which must drop or restore that session's
     marks. Respondent responses are computed per request and need nothing."""
-    for layer in layer_owner(survey).map_layers.filter(source='question'):
+    for layer in layer_owner(survey).map_layers.defer(*GEOMETRY_TEXT_FIELDS).filter(source='question'):
         rebuild_layer(layer)
 
 

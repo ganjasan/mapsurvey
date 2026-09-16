@@ -24,7 +24,7 @@ from .models import (
     QuestionTranslation, default_basemaps, SurveyMapLayer,
 )
 from .html_sanitize import coerce_creator_html
-from .layers import layers_for, normalize_style
+from .layers import layers_for, normalize_style, GEOMETRY_TEXT_FIELDS
 
 logger = logging.getLogger(__name__)
 from .question_types import CHOICE_TYPES
@@ -138,7 +138,8 @@ def collect_layer_files(survey: SurveyHeader) -> List[Tuple[str, Any]]:
     an import into another environment can own them."""
     from .models import LayerObjectAsset
     entries: List[Tuple[str, Any]] = []
-    for index, layer in enumerate(layers_for(survey)):
+    # The one export site that needs the derived text: `layers_for` defers it.
+    for index, layer in enumerate(layers_for(survey).defer(None)):
         if layer.source == 'question':
             continue   # respondents' marks are answers, not structure
         entries.append((f"layers/{index}.geojson", layer.geojson))
@@ -1139,7 +1140,7 @@ def extract_layers(
             warnings.append(f"Reference layer '{clean['name']}' is missing '{archive_path}' — layer skipped.")
             continue
         try:
-            geojson_str, count, _ = validate_layer_upload(raw)
+            features, _ = validate_layer_upload(raw)
         except LayerValidationError as exc:
             ids.append(None)
             warnings.append(f"Reference layer '{clean['name']}' was skipped: {exc}")
@@ -1152,7 +1153,6 @@ def extract_layers(
         layer = SurveyMapLayer.objects.create(
             survey=survey, geojson='', position=index, **clean,
         )
-        features = json.loads(geojson_str)['features']
         derived = any(isinstance(f.get('properties'), dict) and '_key' in f['properties'] for f in features)
         mapping = {'key': '_key', 'title': '_title', 'category': '_category'} if derived else None
         objects_from_features(layer, features, mapping=mapping, sanitize=coerce_creator_html)
@@ -1177,7 +1177,7 @@ def _archive_has_share_flags(sections_data) -> bool:
 def seed_share_flags_from_layers(survey: SurveyHeader) -> None:
     """Legacy layer `show_tallies` / `show_comments` → the sub-questions that
     collect those answers (Question.share_with_respondents)."""
-    for layer in survey.map_layers.all():
+    for layer in survey.map_layers.defer(*GEOMETRY_TEXT_FIELDS):
         subs = Question.objects.filter(parent_question_id__layer=layer, parent_question_id__input_type='layer_objects')
         if layer.show_tallies:
             subs.filter(input_type='thumbs').update(share_with_respondents=True)
@@ -1210,7 +1210,7 @@ def resolve_question_layers(survey: SurveyHeader, code_remap: Dict[str, str]) ->
     as an unresolvable visibility rule."""
     from .layers import source_question_for
     warnings: List[str] = []
-    for layer in survey.map_layers.filter(source='question'):
+    for layer in survey.map_layers.defer(*GEOMETRY_TEXT_FIELDS).filter(source='question'):
         layer.source_question_code = code_remap.get(layer.source_question_code, layer.source_question_code)
         if source_question_for(layer) is None:
             warnings.append(

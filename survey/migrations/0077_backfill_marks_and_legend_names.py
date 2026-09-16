@@ -10,6 +10,17 @@ from django.db import migrations
 
 
 def forwards(apps, schema_editor):
+    # Historical models decide whether there is anything to do. On a fresh database
+    # (every test run, every PR preview) there is not, and the LIVE models below
+    # select every column the model has today — 0084's `property_names` made this
+    # migration fail during test-database creation (change layer-memory-diet).
+    if apps is not None:   # tests call forwards(None, None) on a populated database
+        HistoricalLayer = apps.get_model('survey', 'SurveyMapLayer')
+        HistoricalQuestion = apps.get_model('survey', 'Question')
+        if (not HistoricalLayer.objects.filter(source='question').exists()
+                and not HistoricalQuestion.objects.filter(input_type='layer_objects', layer__isnull=False).exists()):
+            return
+
     from survey.layers import backfill_question_layer, default_question_name
     from survey.models import Question, SurveyMapLayer
 

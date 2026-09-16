@@ -1,0 +1,32 @@
+{% load i18n %}
+{% comment %}
+Import job cards (change layer-memory-diet, stage 3). The ZIP import runs on
+the Celery worker; this fragment is the creator's window on it. While any job
+is open the wrapper polls itself every 3 s and swaps whole — the cards carry
+no animation that a swap would restart (the spinner is CSS on a fresh
+element). Finished cards stay for a day or until dismissed.
+{% endcomment %}
+<div id="import-jobs"{% if import_jobs_open %} hx-get="{% url 'editor_import_jobs' %}" hx-trigger="every 3s" hx-swap="outerHTML"{% endif %}>
+{% for job in import_jobs %}
+  <div class="alert py-2 d-flex align-items-start {% if job.status == 'done' %}alert-success{% elif job.status == 'failed' %}alert-danger{% else %}alert-info{% endif %}"
+       role="status" style="font-size:0.85rem;" data-import-job="{{ job.pk }}" data-import-status="{{ job.status }}">
+    <div class="flex-grow-1">
+      {% if job.status == 'done' %}
+        {% blocktrans with name=job.original_name %}Imported “{{ name }}”{% endblocktrans %}{% if job.survey %} — <a href="{% url 'editor_survey_detail' job.survey.uuid %}">{{ job.survey.name }}</a>{% endif %}
+        {% if job.warnings %}<ul class="mb-0 mt-1 pl-3">{% for w in job.warnings %}<li>{{ w }}</li>{% endfor %}</ul>{% endif %}
+      {% elif job.status == 'failed' %}
+        {% blocktrans with name=job.original_name %}Import of “{{ name }}” failed{% endblocktrans %}: {{ job.error }}
+      {% else %}
+        <span class="spinner-border spinner-border-sm mr-1" aria-hidden="true"></span>
+        {% blocktrans with name=job.original_name %}Importing “{{ name }}”…{% endblocktrans %}
+        <span class="text-muted">{% trans "You can leave this page; the survey will appear here when it is ready." %}</span>
+      {% endif %}
+    </div>
+    {% if not job.is_open %}
+    <button type="button" class="close ml-2" aria-label="{% trans 'Dismiss' %}"
+            hx-post="{% url 'editor_import_job_dismiss' job.pk %}" hx-target="#import-jobs" hx-swap="outerHTML"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'><span aria-hidden="true">&times;</span></button>
+    {% endif %}
+  </div>
+{% endfor %}
+</div>

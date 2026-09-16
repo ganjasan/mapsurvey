@@ -27,7 +27,7 @@ from .models import (
 )
 from .layers import (
     normalize_style, legend_for, LAYER_ICONS,
-    validate_layer_upload, LayerValidationError, layers_for, layer_owner,
+    validate_layer_upload, LayerValidationError, layers_for, layer_owner, layer_lite, GEOMETRY_TEXT_FIELDS,
     objects_from_features, rebuild_layer, check_object_caps, backfill_question_layer,
     MAX_LAYER_BYTES, MAX_LAYERS_PER_SURVEY,
 )
@@ -825,7 +825,7 @@ def editor_survey_layer_create(request, survey_uuid):
     if f.size > MAX_LAYER_BYTES:
         return JsonResponse({'error': f'File is larger than {MAX_LAYER_BYTES // (1024 * 1024)} MB.'}, status=400)
     try:
-        geojson_str, count, properties = validate_layer_upload(f.read())
+        features, _properties = validate_layer_upload(f.read())
     except LayerValidationError as exc:
         return JsonResponse({'error': str(exc)}, status=400)
 
@@ -838,10 +838,9 @@ def editor_survey_layer_create(request, survey_uuid):
         survey=owner, name=name, geojson='', position=position,
     )
     # The file becomes objects; the layer's geojson is derived from them.
-    objects_from_features(layer, json.loads(geojson_str)['features'],
-                          sanitize=coerce_creator_html)
+    objects_from_features(layer, features, sanitize=coerce_creator_html)
     rebuild_layer(layer)
-    return JsonResponse(_layer_payload(layer, properties), status=201)
+    return JsonResponse(_layer_payload(layer, layer.property_names), status=201)
 
 
 @survey_permission_required('owner')
@@ -849,7 +848,7 @@ def editor_survey_layer_create(request, survey_uuid):
 def editor_survey_layer_update(request, survey_uuid, layer_id):
     """Update a layer's presentation config (never its geometry)."""
     _layers_enabled_or_404()
-    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey))
+    layer = get_object_or_404(SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS), pk=layer_id, survey=layer_owner(request.survey))
     style_error = _apply_style(request, layer)
     if style_error:
         return style_error
@@ -909,7 +908,7 @@ def editor_survey_layer_style_summary(request, survey_uuid, layer_id):
     """Distinct values / numeric range of one object property — what the
     card's Auto-fill builds classes from (spec layer-style)."""
     _layers_enabled_or_404()
-    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey))
+    layer = get_object_or_404(SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS), pk=layer_id, survey=layer_owner(request.survey))
     if layer.source == 'question':
         raise Http404
     from .layers import style_summary
@@ -940,7 +939,7 @@ def _update_question_layer(request, layer):
 @require_POST
 def editor_survey_layer_delete(request, survey_uuid, layer_id):
     _layers_enabled_or_404()
-    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey))
+    layer = get_object_or_404(SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS), pk=layer_id, survey=layer_owner(request.survey))
     # Question.layer is PROTECT: answers about the layer's objects would be
     # orphaned. Say which question holds the binding instead of a 500.
     bound = list(layer.questions.values_list('name', flat=True))
@@ -952,18 +951,10 @@ def editor_survey_layer_delete(request, survey_uuid, layer_id):
 
 
 def _layer_property_names(layer):
-    """Property names present in a stored layer, for the field pickers."""
-    try:
-        parsed = json.loads(layer.geojson)
-    except ValueError:
-        return []
-    from .layers import RESERVED_PROPS
-    names = set()
-    for feature in parsed.get('features') or []:
-        props = feature.get('properties')
-        if isinstance(props, dict):
-            names.update(k for k in props if isinstance(k, str) and k not in RESERVED_PROPS)
-    return sorted(names)
+    """Property names of a stored layer, for the field pickers. Stored on the
+    layer by `rebuild_layer` (change layer-memory-diet): parsing the derived
+    GeoJSON for this cost 55 MB per editor page render on a 10 MB layer."""
+    return list(layer.property_names or [])
 
 
 # ─── Survey map position ─────────────────────────────────────────────────────
@@ -1284,7 +1275,7 @@ def _resolve_layer_choice(request, survey):
     if question is None:
         return request.POST
     owner = layer_owner(survey)
-    layer = owner.map_layers.filter(source='question', source_question_code=code).first()
+    layer = owner.map_layers.defer(*GEOMETRY_TEXT_FIELDS).filter(source='question', source_question_code=code).first()
     if layer is None:
         position = (owner.map_layers.aggregate(m=models.Max('position'))['m'] or 0) + 1
         label = (request.POST.get('sm_label_field') or '').strip()[:100]
@@ -1307,7 +1298,7 @@ def _apply_shared_map_settings(request, question):
     """The Objects-on-the-map form is the ONE place a `question` layer's
     label and visibility settings are edited (owner decision 2026-09-05: the
     layer card in Survey settings does not repeat them)."""
-    layer = question.layer if question.input_type == 'layer_objects' else None
+    layer = layer_lite(question) if question.input_type == 'layer_objects' else None
     if layer is None or layer.source != 'question':
         return
     from .layers import source_question_for
@@ -1725,7 +1716,7 @@ def editor_question_preview_live(request, survey_uuid, section_id):
             source = next((q for q in _geo_questions(survey) if q.code == code), None)
             if source is not None:
                 owner = layer_owner(survey)
-                draft_layer = (owner.map_layers.filter(source='question', source_question_code=code).first()
+                draft_layer = (owner.map_layers.defer(*GEOMETRY_TEXT_FIELDS).filter(source='question', source_question_code=code).first()
                                or SurveyMapLayer(survey=owner, name=f'Marks: {source.name}'[:100], color='#f97316',
                                                  source='question', source_question_code=code))
     try:
@@ -1813,8 +1804,8 @@ def editor_question_delete(request, survey_uuid, question_id):
     # derived data (its reactions were answers to this question's
     # sub-questions, gone with it) — drop it so Survey settings does not keep
     # a "Marks" layer nothing reads.
-    orphan_layer = question.layer if (question.input_type == 'layer_objects' and question.layer_id
-                                      and question.layer.source == 'question') else None
+    orphan_layer = layer_lite(question) if (question.input_type == 'layer_objects' and question.layer_id
+                                            and layer_lite(question).source == 'question') else None
     parent = question.parent_question_id
     question.delete()
     if orphan_layer is not None and not orphan_layer.questions.exists():

@@ -638,19 +638,21 @@ class SurveyAnalyticsService:
         """Per-object aggregates for an Objects-on-the-map question (spec
         object-answers): one row per object, the sub-questions as columns."""
         from .object_stats import object_aggregates, headline, layer_object_stats
+        from .layers import layer_lite
+        layer = layer_lite(question)   # config only, never the geometry text
         aggregates = object_aggregates(question)
-        sessions_by_key = layer_object_stats(question.layer) if question.layer_id else {}
+        sessions_by_key = layer_object_stats(layer) if question.layer_id else {}
         # Shared map (spec shared-map-moderation): on a `question` layer every
         # row is another respondent's mark — it carries a status, and the
         # creator moderates it (and its comments) right here.
-        shared = bool(question.layer_id and question.layer.source == 'question')
+        shared = bool(question.layer_id and layer.source == 'question')
         objects_by_key = {}
         comments_by_key = {}
         if shared:
             from .layers import creator_objects
-            objects_by_key = {o.key: o for o in creator_objects(question.layer)}
+            objects_by_key = {o.key: o for o in creator_objects(layer)}
             for a in (Answer.objects
-                      .filter(layer_object__layer=question.layer,
+                      .filter(layer_object__layer=layer,
                               question__parent_question_id=question,
                               question__input_type__in=('text', 'text_line'),
                               survey_session__is_deleted=False)
@@ -681,13 +683,13 @@ class SurveyAnalyticsService:
             'object_rows': rows,
             'sub_questions': [{'code': s['code'], 'name': s['name'], 'type': s['type']}
                               for s in (rows[0]['subs'] if rows else [])],
-            'layer': question.layer,
+            'layer': layer,
             'shared': shared,
             'pending': pending,
             'hidden': hidden,
             # Approve-first with nothing visible and a minimum: respondents
             # cannot pass — the creator must know before residents write in.
-            'min_warning': bool(shared and question.layer.approve_first and pending
+            'min_warning': bool(shared and layer.approve_first and pending
                                 and question.min_objects > 0
                                 and not any(r['status'] == 'visible' for r in rows)),
         }

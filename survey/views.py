@@ -6,14 +6,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import models
 from django.db.models import Q, Prefetch, Count
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotAllowed, HttpResponseBadRequest
 from django.utils import translation
 from django.utils.translation import override as lang_override
 from django.utils.translation import gettext as _
-from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator, SurveyMapLayer, LayerObject
+from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator, SurveyMapLayer, LayerObject, SurveyImportJob
+from .tasks import run_survey_import
 from .models import FILE_INPUT_TYPES
 from .uploads import attach_upload, detach_unreferenced
-from .layers import build_map_layers_metadata, layer_owner, section_layer_ids
+from .layers import build_map_layers_metadata, layer_owner, section_layer_ids, GEOMETRY_TEXT_FIELDS
 from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role, get_org_membership, SURVEY_ROLE_RANK,
@@ -33,6 +34,7 @@ from .seo_landings import (
     build_breadcrumb_jsonld, build_story_collection_jsonld,
 )
 from django.http import HttpResponseRedirect, Http404
+from django.utils import timezone
 from django.urls import reverse
 from django.core.serializers import serialize
 import geojson
@@ -658,11 +660,14 @@ def editor(request):
 		survey.open_comments, survey.unseen_comments = comment_counts.get(survey.id, (0, 0))
 		surveys_with_kpi.append(survey)
 
+	import_jobs = import_jobs_for(request.user, org) if org_role in ('owner', 'admin', 'editor') else []
 	context = {
 		"survey_headers": surveys_with_kpi,
 		"org_role": org_role,
 		"show_archived": show_archived,
 		"trashed_surveys": trashed_surveys,
+		"import_jobs": import_jobs,
+		"import_jobs_open": any(j.is_open for j in import_jobs),
 	}
 	return render(request, "editor.html", context)
 
@@ -1844,7 +1849,13 @@ def export_survey(request, survey_uuid):
 
 @org_permission_required('editor')
 def import_survey(request):
-	"""Import survey from uploaded ZIP archive."""
+	"""Start a ZIP import as a job (change layer-memory-diet, stage 3).
+
+	The archive is stored on the private media tier and imported by the Celery
+	worker; this request returns at once and the dashboard card shows the
+	outcome. Importing inline held the web worker for 17 s and ~100 MB on a
+	layer-heavy archive and hit client timeouts on 2026-09-16.
+	"""
 	if request.method != 'POST':
 		return redirect('editor')
 
@@ -1853,33 +1864,58 @@ def import_survey(request):
 		return redirect('editor')
 
 	uploaded_file = request.FILES['file']
-
-	try:
-		survey, warnings = import_survey_from_zip(
-			uploaded_file,
-			organization=request.active_org,
-			created_by=request.user,
-		)
-
-		# Show warnings
-		for warning in warnings:
-			messages.warning(request, warning)
-
-		if survey:
-			# Create SurveyCollaborator owner entry for imported survey
-			SurveyCollaborator.objects.get_or_create(
-				user=request.user,
-				survey=survey,
-				defaults={'role': 'owner'},
-			)
-			messages.success(request, f"Survey '{survey.name}' imported successfully")
-		else:
-			messages.success(request, "Data imported successfully")
-
-	except SerializationImportError as e:
-		messages.error(request, str(e))
-
+	job = SurveyImportJob.objects.create(
+		user=request.user,
+		organization=request.active_org,
+		original_name=(uploaded_file.name or 'archive.zip')[:255],
+		file=uploaded_file,
+	)
+	run_survey_import.delay(job.pk)
+	messages.info(request, f"Importing “{job.original_name}” — the survey will appear on this page when it is ready.")
 	return redirect('editor')
+
+
+IMPORT_JOB_CARD_HOURS = 24
+
+
+def import_jobs_for(user, organization):
+	"""The import cards a creator sees on the dashboard: every open job plus
+	those finished in the last day, newest first, until dismissed."""
+	from datetime import timedelta
+	since = timezone.now() - timedelta(hours=IMPORT_JOB_CARD_HOURS)
+	return list(
+		SurveyImportJob.objects
+		.filter(user=user, organization=organization)
+		.filter(Q(status__in=('queued', 'running')) | Q(finished_at__gte=since))
+		.select_related('survey')[:5]
+	)
+
+
+def _render_import_jobs(request):
+	jobs = import_jobs_for(request.user, request.active_org)
+	return render(request, 'editor/partials/import_jobs.html', {
+		'import_jobs': jobs,
+		'import_jobs_open': any(j.is_open for j in jobs),
+	})
+
+
+@org_permission_required('editor')
+def editor_import_jobs(request):
+	"""The polled import-jobs fragment."""
+	return _render_import_jobs(request)
+
+
+@org_permission_required('editor')
+def editor_import_job_dismiss(request, job_id):
+	"""Drop a finished job's card. An open job cannot be dismissed — its
+	outcome is still on its way."""
+	if request.method != 'POST':
+		return HttpResponseNotAllowed(['POST'])
+	job = get_object_or_404(SurveyImportJob, pk=job_id, user=request.user)
+	if job.is_open:
+		return HttpResponseBadRequest('This import is still running.')
+	job.delete()
+	return _render_import_jobs(request)
 
 
 STORIES_CRUMB = Crumb("Stories", "/stories/")
@@ -2062,7 +2098,7 @@ def _save_object_answers(post, survey_session, question):
 	parsed = _parse_object_fields(post)
 	if not parsed:
 		return 0
-	objects = {o.key: o for o in question.layer.items.filter(key__in=list(parsed.keys()))}
+	objects = {o.key: o for o in LayerObject.objects.filter(layer_id=question.layer_id, key__in=list(parsed.keys()))}
 	sub_questions = {q.code: q for q in Question.objects.filter(parent_question_id=question)}
 	saved = 0
 	for key, by_code in parsed.items():
@@ -2124,7 +2160,7 @@ def _existing_object_answers(questions, session_id):
 	return out
 
 
-def _gated_layer(request, survey_slug, layer_id):
+def _gated_layer(request, survey_slug, layer_id, with_geojson=True):
 	"""Resolve a layer under the survey's own access rules, or 404.
 
 	Shared by the GeoJSON endpoint and the per-object card endpoint so the two
@@ -2147,7 +2183,8 @@ def _gated_layer(request, survey_slug, layer_id):
 	if not is_collaborator and check_survey_access(request, survey) is not None:
 		raise Http404
 	# Versions and draft copies borrow the canonical survey's layers.
-	layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(survey))
+	qs = SurveyMapLayer.objects if with_geojson else SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS)
+	layer = get_object_or_404(qs, pk=layer_id, survey=layer_owner(survey))
 	# `question` layers answer differently to the creator (every mark, every
 	# status) and to a respondent (other people's visible marks only); the two
 	# endpoints read this instead of re-deriving the role.
@@ -2164,7 +2201,7 @@ def survey_layer_object(request, survey_slug, layer_id, key):
 	the way in, so an imported file's markup can never reach a respondent raw.
 	"""
 	from .layer_assets import object_card_payload
-	layer = _gated_layer(request, survey_slug, layer_id)
+	layer = _gated_layer(request, survey_slug, layer_id, with_geojson=False)
 	if layer.source == 'question' and not layer.collaborator_access:
 		# A respondent may open only what their layer collection contains —
 		# never a pending/hidden mark, a rejected session's, or their own.
@@ -2234,10 +2271,17 @@ def survey_layer_geojson(request, survey_slug, layer_id):
 	etag = '"layer-%s-%s"' % (layer.pk, layer.updated_at.strftime('%Y%m%d%H%M%S%f'))
 	if request.headers.get('If-None-Match') == etag:
 		response = HttpResponse(status=304)
+	elif layer.geojson_gz and 'gzip' in request.headers.get('Accept-Encoding', ''):
+		# The stored bytes ARE the response (change layer-memory-diet): no
+		# decompression in the worker, a third of the bytes on the wire. Every
+		# browser and fetch() takes gzip; a client that does not gets the text.
+		response = HttpResponse(bytes(layer.geojson_gz), content_type='application/geo+json')
+		response['Content-Encoding'] = 'gzip'
 	else:
 		response = HttpResponse(layer.geojson, content_type='application/geo+json')
 	response['ETag'] = etag
 	response['Cache-Control'] = 'private, max-age=300'
+	response['Vary'] = 'Accept-Encoding'
 	return response
 
 

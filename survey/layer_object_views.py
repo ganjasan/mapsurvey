@@ -25,7 +25,7 @@ from .layer_assets import (
     MAX_ASSET_BYTES, MAX_ASSETS_PER_OBJECT, object_card_payload,
 )
 from .layers import (
-    layer_owner, layers_for, objects_from_features, rebuild_layer, check_object_caps,
+    layer_owner, layers_for, objects_from_features, rebuild_layer, check_object_caps, GEOMETRY_TEXT_FIELDS,
     validate_layer_upload, LayerValidationError, explode_geometry, _clean_key,
     MAX_LAYER_BYTES, MAX_LAYERS_PER_SURVEY,
 )
@@ -49,7 +49,8 @@ class _ReadOnlyLayer(Exception):
 
 def _layer(request, layer_id, writable=False):
     _enabled_or_404()
-    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey))
+    layer = get_object_or_404(SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS),
+                              pk=layer_id, survey=layer_owner(request.survey))
     if writable and layer.source == 'question':
         # Shared map: materialised objects are never edited by hand.
         raise _ReadOnlyLayer()
@@ -401,14 +402,13 @@ def import_geojson(request, survey_uuid, layer_id):
     if f.size > MAX_LAYER_BYTES:
         return _error(f'File is larger than {MAX_LAYER_BYTES // (1024 * 1024)} MB.')
     try:
-        geojson_str, count, properties = validate_layer_upload(f.read())
+        features, properties = validate_layer_upload(f.read())
     except LayerValidationError as exc:
         return _error(exc)
     try:
-        check_object_caps(layer, adding=count)
+        check_object_caps(layer, adding=len(features))
     except LayerValidationError as exc:
         return _error(exc)
-    features = json.loads(geojson_str)['features']
     mapping = _mapping_from(request)
     dry_run = str(request.POST.get('dry_run') or '') in ('1', 'true', 'on')
     with transaction.atomic():
@@ -417,7 +417,7 @@ def import_geojson(request, survey_uuid, layer_id):
             transaction.set_rollback(True)
         else:
             rebuild_layer(layer)
-    report.update({'properties': properties, 'dry_run': dry_run, 'features': count})
+    report.update({'properties': properties, 'dry_run': dry_run, 'features': len(features)})
     if not dry_run:
         report['summary'] = _layer_summary(layer)
     return JsonResponse(report)

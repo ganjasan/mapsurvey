@@ -31,6 +31,13 @@ def _feature(obj):
             'geometry': json.loads(obj.geometry.geojson)}
 
 
+def _geojson_field(layer):
+    """The historical model at this migration has the `geojson` TextField; the
+    live model (LayerSplitMigrationTest runs these functions against it) stores
+    the text as `geojson_gz` since 0086 and exposes `geojson` as a property."""
+    return 'geojson' if 'geojson' in {f.name for f in layer._meta.fields} else 'geojson_gz'
+
+
 def forwards(apps, schema_editor):
     from django.contrib.gis.geos import GEOSGeometry
     SurveyMapLayer = apps.get_model('survey', 'SurveyMapLayer')
@@ -97,7 +104,7 @@ def forwards(apps, schema_editor):
         layer.geojson = derived
         layer.feature_count = len(rows)
         layer.size_bytes = len(derived.encode('utf-8'))
-        layer.save(update_fields=['geojson', 'geojson_legacy', 'feature_count', 'size_bytes'])
+        layer.save(update_fields=[_geojson_field(layer), 'geojson_legacy', 'feature_count', 'size_bytes'])
 
 
 def backwards(apps, schema_editor):
@@ -108,7 +115,7 @@ def backwards(apps, schema_editor):
         layer.feature_count = len((json.loads(layer.geojson).get('features') or []))
         layer.size_bytes = len(layer.geojson.encode('utf-8'))
         layer.geojson_legacy = ''
-        layer.save(update_fields=['geojson', 'geojson_legacy', 'feature_count', 'size_bytes'])
+        layer.save(update_fields=[_geojson_field(layer), 'geojson_legacy', 'feature_count', 'size_bytes'])
         LayerObject.objects.filter(layer=layer).delete()
 
 

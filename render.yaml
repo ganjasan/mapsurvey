@@ -176,6 +176,16 @@ services:
         value: "4"
       - key: GUNICORN_TIMEOUT
         value: "60"
+      # Worker recycling (change layer-memory-diet). A multi-megabyte GeoJSON parsed
+      # into Python objects fragments the allocator arenas, and a worker that never
+      # exits keeps that RSS for life: one 8.6 MB layer upload measured +107 MB
+      # retained after everything was freed. Recycling after ~300 requests (boot is
+      # under a second) bounds the high-water mark in time; jitter keeps the two
+      # workers from restarting together.
+      - key: GUNICORN_MAX_REQUESTS
+        value: "300"
+      - key: GUNICORN_MAX_REQUESTS_JITTER
+        value: "60"
       # Internal product analytics. Deliberately WITHOUT previewEnvRenderServiceName:
       # inheriting the production key would make every PR preview write test traffic
       # into the real project. Previews leave it unset, and unset renders no snippet.

@@ -366,6 +366,12 @@
     </div>
     {% endif %}
 
+    {% if import_jobs %}
+    {% comment %}base.html loads no htmx; the import cards poll and dismiss with it.{% endcomment %}
+    <script src="https://unpkg.com/htmx.org@1.9.10" crossorigin="anonymous"></script>
+    {% include "editor/partials/import_jobs.html" %}
+    {% endif %}
+
     <!-- Cards View -->
     <div class="dashboard-grid" id="view-grid">
         {% for survey in survey_headers %}

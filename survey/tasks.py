@@ -53,3 +53,50 @@ def send_thread_notification(self, thread_id, comment_id, actor_id, recipient_id
         send_templated_mail('comments/notify', recipient.email, subject, context, fail_silently=False)
     except Exception as exc:  # noqa: BLE001 — retry, then let task_failure report it
         raise self.retry(exc=exc)
+
+
+@shared_task(bind=True)
+def run_survey_import(self, job_id):
+    """Import the archive of a SurveyImportJob (change layer-memory-diet).
+
+    Runs once per job: a redelivered message finds the row past `queued` and
+    leaves it alone, so an archive is never imported twice. A validation error
+    is the creator's to read on the dashboard card; anything else is marked
+    failed for them and re-raised so the task_failure receiver reports it."""
+    import io
+    from django.utils import timezone
+    from .models import SurveyImportJob, SurveyCollaborator
+    from .serialization import import_survey_from_zip, ImportError as SerializationImportError
+
+    try:
+        job = SurveyImportJob.objects.select_related('organization', 'user').get(pk=job_id)
+    except SurveyImportJob.DoesNotExist:
+        logger.warning('survey import %s: row gone before the worker got to it', job_id)
+        return
+    if job.status != 'queued':
+        return
+    job.status = 'running'
+    job.started_at = timezone.now()
+    job.save(update_fields=['status', 'started_at'])
+    try:
+        with job.file.open('rb') as fh:
+            archive = io.BytesIO(fh.read())   # zipfile seeks; not every storage backend does
+        survey, warnings = import_survey_from_zip(archive, organization=job.organization, created_by=job.user)
+        if survey is not None:
+            SurveyCollaborator.objects.get_or_create(user=job.user, survey=survey, defaults={'role': 'owner'})
+        job.survey = survey
+        job.warnings = [str(w) for w in warnings]
+        job.status = 'done'
+    except SerializationImportError as exc:
+        job.status = 'failed'
+        job.error = str(exc)
+    except Exception:
+        job.status = 'failed'
+        job.error = 'The import failed unexpectedly. The error has been reported.'
+        job.finished_at = timezone.now()
+        job.discard_file()
+        job.save()
+        raise
+    job.finished_at = timezone.now()
+    job.discard_file()
+    job.save()
