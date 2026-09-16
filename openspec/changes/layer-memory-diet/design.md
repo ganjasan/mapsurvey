@@ -26,6 +26,10 @@ Worker boot: 0.6 s, 94 MB locally. Celery worker: flat 200–230 MB over four da
 After stage 2 (same probe, same file): `validate_layer_upload` +64 (one parse, no dumps),
 `objects_from_features` +36, `rebuild_layer` +26; upload peak +134 MB, retained +71 MB.
 
+After stage 3b, serving the same layer from a fresh process: gzip bytes to a gzip client
+2.39 MB on the wire, +6 MB retained once, 0 after; text to a client without gzip 8.74 MB,
++11 MB peak. The ZIP import no longer runs in the web process at all (stage 3a).
+
 ## Goals / Non-Goals
 
 Goals: no request parses a multi-megabyte GeoJSON into a Python tree unless it is the
