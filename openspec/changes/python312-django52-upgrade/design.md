@@ -112,8 +112,15 @@ lesson_predeploy_destructive_migration_window).
 - A package without Django 5.2 support surfaces only at import or at runtime: the suite
   and the e2e flow are the net; `django-registration` is the one with the most surface
   (registration views, activation) and has explicit tests (`registration-abuse-defenses`).
-- GIS: same Debian release, same apt GDAL — low risk, but `LayerValidationTest`,
-  `LayerStreamingRebuildTest` and the export tests exercise GEOS/GDAL end to end.
+- GIS: **not** the same Debian release, which the first draft of this note assumed.
+  `python:3.9-slim` was bookworm; `python:3.12-slim` is trixie, so `binutils libproj-dev
+  gdal-bin postgresql-client` come from a newer Debian (GDAL 3.6 → 3.10/3.11, PROJ 9.x).
+  Verified on the PR preview rather than reasoned about: the image built, the app booted
+  (the PostGIS backend imports `django.contrib.gis.geos`/`gdal` at startup, so a missing
+  or ABI-broken library would fail there), and `migrate` created every geometry column
+  from zero, through `survey.0086`. Locally a respondent's point answer round-trips into
+  `Answer.point`. The suite's `LayerValidationTest`, `LayerStreamingRebuildTest` and the
+  export tests cover the rest.
 - Memory: Python 3.12 objects are slightly smaller and the allocator differs; expect the
   idle baseline to move a little either way — the post-#187 numbers (260–320 MB) are the
   comparison.

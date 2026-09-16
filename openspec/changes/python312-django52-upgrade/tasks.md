@@ -22,7 +22,9 @@
 - [x] 3.3 `SectionFormMarkupTest`: a section renders its question cards, labels and widgets; no respondent template renders a whole form (D2)
 - [x] 3.4 `PostHogErrorTrackingTest` on the resolved posthog version (D4)
 - [x] 3.5 Third-party support check recorded in design.md (package, version, 5.2 support source)
-- [ ] 3.6 PR preview: `run_e2e.sh` respondent flow; k6 lecture-burst p95 and memory vs current (`scripts/gunicorn_recycle_check.py` under 3.12 already green: 0/0/0/0)
+- [x] 3.6 PR preview #190: image builds `FROM python:3.12-slim` (Debian trixie, newer GDAL/PROJ than bookworm — see design Risks), web live in 3 min, Celery 5.6.3 worker ready, migrations applied from zero through `survey.0086`, public pages render (`/`, `/accounts/register/`, `/trust/`, `/sitemap.xml`)
+- [x] 3.7 Local 3.12 dev server: respondent section renders its question cards, a GeoJSON Feature point answer round-trips into `Answer.point`; `run_e2e.sh` (Playwright) against it
+- [ ] 3.8 k6 lecture-burst against the preview: needs the preview database seeded (`seed_loadtest_survey` via a Render one-off job — no shell, see lesson_preview_seeding_paths), so it needs the owner or an API key
 
 ## 4. Docs and rollout
 
