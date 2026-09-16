@@ -26,6 +26,7 @@
     because two of them arrive by HTMX swap (settings panel, section modal)
     and a script inside a swapped fragment is not reliably executed.{% endcomment %}
     <script src="{% static 'js/components/map_place_search.js' %}"></script>
+    <script src="{% static 'js/map_position_picker.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js" crossorigin="anonymous"></script>
     <script src="{% static 'js/marker_icon.js' %}"></script>
     <script src="{% static 'js/icon_picker.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
@@ -43,13 +44,6 @@
     {% if EDITOR_AUTOSAVE %}
     <script src="{% static 'js/comments_drawer.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
     <script src="{% static 'js/editor_autosave.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
-    <style>
-        .autosave-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #6b7280; }
-        .autosave-indicator .autosave-dot { font-size: 0.55rem; color: #198754; }
-        .autosave-indicator[data-state="saving"] .autosave-dot { color: #f59e0b; }
-        .autosave-indicator[data-state="error"] { color: #b91c1c; font-weight: 600; cursor: pointer; }
-        .autosave-indicator[data-state="error"] .autosave-dot { color: #dc2626; }
-    </style>
     {% endif %}
     <style>
         :root {
@@ -235,6 +229,26 @@
         .picker-map-search .map-search-context { font-size: 0.76rem; color: #6b7280; }
         .picker-map-search .map-search-message { padding: 8px 12px; font-size: 0.82rem; color: #6b7280; }
         .picker-map { width: 100%; position: relative; z-index: 0; }
+        /* Centre pin (openspec: map-picker-centre-autosave): the position IS
+           the centre of the map, the pin's tip marks it. Appended to the map
+           container by map_position_picker.js; the create page has its own
+           copy. Dimmed while a section inherits the survey position. */
+        .map-center-pin {
+            position: absolute; left: 50%; top: 50%;
+            transform: translate(-50%, -100%);
+            z-index: 450; pointer-events: none;
+            color: var(--accent); font-size: 32px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            transition: opacity 0.2s;
+        }
+        .map-center-pin.is-inherit { opacity: 0.4; }
+        /* Saved / saving / error indicator. Question forms use it under
+           EDITOR_AUTOSAVE (editor_autosave.js); the map pickers always do. */
+        .autosave-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #6b7280; }
+        .autosave-indicator .autosave-dot { font-size: 0.55rem; color: #198754; }
+        .autosave-indicator[data-state="saving"] .autosave-dot { color: #f59e0b; }
+        .autosave-indicator[data-state="error"] { color: #b91c1c; font-weight: 600; cursor: pointer; }
+        .autosave-indicator[data-state="error"] .autosave-dot { color: #dc2626; }
         .picker-map--page, .picker-map--panel { height: 300px; border-radius: var(--radius); border: 1px solid var(--border-color); }
         .picker-map--modal { height: 400px; }
         .picker-map-search--modal { margin: 0.75rem 1rem 0.5rem; }

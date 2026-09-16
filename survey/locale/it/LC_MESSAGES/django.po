@@ -7667,3 +7667,43 @@ msgstr "Non è stato possibile salvare il nome. Controlla la connessione e ripro
 
 msgid "A draft is renamed by renaming the published survey."
 msgstr "Una bozza si rinomina rinominando il sondaggio pubblicato."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Drag and zoom the map so the pin marks where respondents start on this section. Changes save automatically."
+msgstr "Trascina e ingrandisci la mappa in modo che il segnaposto indichi dove i rispondenti iniziano questa sezione. Le modifiche vengono salvate automaticamente."
+
+#: survey/templates/editor/partials/survey_settings.html
+msgid "Drag and zoom the map so the pin marks where respondents start. Changes save automatically."
+msgstr "Trascina e ingrandisci la mappa in modo che il segnaposto indichi dove i rispondenti iniziano. Le modifiche vengono salvate automaticamente."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "When checked, this section inherits map position from the survey default or keeps the respondent’s current view. Moving the map gives the section its own position."
+msgstr "Se selezionato, questa sezione eredita la posizione della mappa predefinita del sondaggio o mantiene la vista attuale del rispondente. Spostare la mappa dà alla sezione una posizione propria."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Inheriting the survey position — drag the map to give this section its own"
+msgstr "Eredita la posizione del sondaggio — trascina la mappa per dare a questa sezione la sua"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Saving…"
+msgstr "Salvataggio…"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Not saved — tap to retry"
+msgstr "Non salvato — tocca per riprovare"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "My location"
+msgstr "La mia posizione"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Locating you…"
+msgstr "Localizzazione in corso…"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Couldn't get your location — search for a place or drag the map instead."
+msgstr "Impossibile ottenere la tua posizione — cerca un luogo o trascina la mappa."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Geolocation is not available in this browser."
+msgstr "La geolocalizzazione non è disponibile in questo browser."
