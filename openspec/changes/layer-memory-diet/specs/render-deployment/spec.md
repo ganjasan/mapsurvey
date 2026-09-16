@@ -15,3 +15,7 @@ large requests cannot accumulate for the life of the process.
 #### Scenario: Budget tunable without rebuild
 - **WHEN** an operator sets `GUNICORN_MAX_REQUESTS` or `GUNICORN_MAX_REQUESTS_JITTER` in the Render dashboard and restarts the service
 - **THEN** gunicorn applies the new budget without an image rebuild
+
+#### Scenario: Recycling and shutdown answer every accepted connection
+- **WHEN** a worker leaves — its request budget is spent, or the master received a deploy's SIGTERM — while connections it has accepted are still unread or in flight
+- **THEN** it stops accepting new connections first and answers every connection it already holds before exiting, so no request is reset (`scripts/gunicorn_recycle_check.py` shows zero failures over keep-alive, fresh-connection and SIGTERM runs)

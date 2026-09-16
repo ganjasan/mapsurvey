@@ -64,5 +64,5 @@ RUN usermod -s /bin/bash -d /home/app app \
 USER app
 
 ENTRYPOINT ["/home/app/web/entrypoint.sh"]
-CMD gunicorn --bind :${PORT:-8000} --workers ${WEB_CONCURRENCY:-2} --threads ${GUNICORN_THREADS:-4} --worker-class gthread --timeout ${GUNICORN_TIMEOUT:-60} --max-requests ${GUNICORN_MAX_REQUESTS:-300} --max-requests-jitter ${GUNICORN_MAX_REQUESTS_JITTER:-60} mapsurvey.wsgi:application
+CMD gunicorn --bind :${PORT:-8000} --workers ${WEB_CONCURRENCY:-2} --threads ${GUNICORN_THREADS:-4} --worker-class ${GUNICORN_WORKER_CLASS:-mapsurvey.gunicorn_workers.DrainingThreadWorker} --timeout ${GUNICORN_TIMEOUT:-60} --max-requests ${GUNICORN_MAX_REQUESTS:-300} --max-requests-jitter ${GUNICORN_MAX_REQUESTS_JITTER:-60} mapsurvey.wsgi:application
 

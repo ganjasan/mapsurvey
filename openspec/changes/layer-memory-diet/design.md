@@ -48,6 +48,28 @@ finishes in-flight requests before exiting and the master starts the replacement
 so capacity dips by one worker for well under a second. Alternative rejected: `malloc_trim`
 hooks or `PYTHONMALLOC=malloc` — fragile, and they do not address pymalloc arenas.
 
+**D1a (production follow-up, 2026-09-16).** Stock gthread does not recycle cleanly: its run
+loop keeps accepting for up to a second after `alive` turns False (the acceptor runs inside
+`poller.select(1.0)` while a request thread flips the flag) and then `poller.close()` drops
+those connections unanswered — the proxy reports 502. Observed on production at every recycle
+(10:19:44, 10:21:31) and at every deploy switch; reproduced locally with `--max-requests 4`:
+11 of 80 keep-alive requests, 12 of 80 fresh-connection requests, 88 of 320 with four
+parallel clients, 1 of 40 sent before a SIGTERM. `--keep-alive 0` does not help. A second
+mechanism showed up only under parallel clients: a response built while `alive` was still
+True goes out without `Connection: close`, and gthread's `finish_request` then closes that
+keep-alive connection because `alive` is False by the time it runs — the proxy reuses it and
+meets a closed socket. `mapsurvey.gunicorn_workers.DrainingThreadWorker` overrides the exit
+and `finish_request`: unregister and close the listener copies first (the arbiter still holds
+the sockets, so the backlog goes to the other worker and the replacement), keep every
+keep-alive connection registered until teardown, serve what turns readable with
+`Connection: close`, leave idle ones to the keep-alive timeout (never close them early — the
+proxy may have written the next request already), and leave when nothing is left, when silent
+sockets have been silent for `keepalive` seconds, or at `graceful-timeout`. Same four runs:
+0 / 0 / 0 / 0.
+`GUNICORN_WORKER_CLASS` is env-tunable; `gthread` is the rollback. Alternatives rejected:
+sync workers (8 slots would cost ~900 MB idle), a larger budget (rarer, not gone), no
+recycling (the ratchet is smaller after stages 2–3 but not gone).
+
 ### D2. `property_names` is a stored column, computed in `rebuild_layer`
 Why: `_layer_property_names` parsed the whole text to list keys; the keys are already
 on `LayerObject.properties`, and `rebuild_layer` already visits every object. Stored as a
