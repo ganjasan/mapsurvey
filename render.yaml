@@ -23,7 +23,16 @@ services:
   - type: web
     name: mapsurvey
     runtime: docker
-    plan: starter
+    # Standard = 1 CPU / 2 GB. Starter (512 MB) was exceeded on 2026-09-15: the
+    # instance idles at 425-480 MB with two gthread workers, and one reference-layer
+    # upload or ZIP import (both run in this process and hold several copies of the
+    # parsed file) pushed it over the limit — eleven worker SIGKILLs, then three
+    # container restarts that 502'd a respondent's section submits. The plan lives
+    # HERE, not in the dashboard: a Blueprint sync overwrites a dashboard-only plan.
+    plan: standard
+    # Previews exist for review and are the box the k6 lecture-burst harness
+    # deliberately measures on; they do not need production's headroom.
+    previewPlan: starter
     dockerfilePath: ./Dockerfile
     dockerContext: .
     # Migrations run here — after the new image is built, before the running instance is
@@ -158,8 +167,9 @@ services:
       - key: NEWSLETTER_SITE_URL
         value: "https://mapsurvey.org"
       # Gunicorn concurrency — tunable from the dashboard without an image rebuild.
-      # Slots = WEB_CONCURRENCY × GUNICORN_THREADS (gthread); sized for the 512 MB
-      # Starter instance (~110 MB per worker, measured 143 MB steady with one).
+      # Slots = WEB_CONCURRENCY × GUNICORN_THREADS (gthread). Measured 2026-09-15 on
+      # Starter: 425-480 MB idle with two workers (the "~110 MB per worker" this was
+      # sized on predates reference layers), so two workers need the 2 GB plan above.
       - key: WEB_CONCURRENCY
         value: "2"
       - key: GUNICORN_THREADS
