@@ -41,6 +41,15 @@ def _make_org(name='TestOrg'):
     return Organization.objects.create(name=name, slug=name.lower().replace(' ', '-'))
 
 
+def _eager_import():
+    """Run the ZIP import job inline. The view only enqueues a Celery task and
+    the suite has no broker, so `.delay` becomes the task itself (the AI draft
+    tests patch their task the same way)."""
+    from unittest.mock import patch
+    from .tasks import run_survey_import
+    return patch('survey.views.run_survey_import.delay', side_effect=lambda job_id: run_survey_import(job_id))
+
+
 class SmokeTest(TestCase):
     """Basic smoke test to verify test infrastructure works."""
 
@@ -2204,7 +2213,8 @@ class WebViewTest(TestCase):
         )
 
         self.client.login(username='testuser', password='testpass123')
-        response = self.client.post('/editor/import/', {'file': upload_file})
+        with _eager_import():
+            response = self.client.post('/editor/import/', {'file': upload_file})
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(SurveyHeader.objects.filter(name="imported_web_survey").exists())
@@ -2223,7 +2233,8 @@ class WebViewTest(TestCase):
         )
 
         self.client.login(username='testuser', password='testpass123')
-        response = self.client.post('/editor/import/', {'file': invalid_file})
+        with _eager_import():
+            response = self.client.post('/editor/import/', {'file': invalid_file})
 
         self.assertEqual(response.status_code, 302)
 
@@ -2255,7 +2266,8 @@ class WebViewTest(TestCase):
         )
 
         self.client.login(username='testuser', password='testpass123')
-        response = self.client.post('/editor/import/', {'file': upload_file})
+        with _eager_import():
+            response = self.client.post('/editor/import/', {'file': upload_file})
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(SurveyHeader.objects.filter(name='web_test_survey').count(), 2)
@@ -7033,7 +7045,8 @@ class ExportImportDeletePermissionTest(TestCase):
         buf.seek(0)
         from django.core.files.uploadedfile import SimpleUploadedFile
         f = SimpleUploadedFile('test.zip', buf.read(), content_type='application/zip')
-        response = self.client.post('/editor/import/', {'file': f})
+        with _eager_import():
+            response = self.client.post('/editor/import/', {'file': f})
         self.assertEqual(response.status_code, 403)
 
     def test_editor_can_import(self):
@@ -7052,7 +7065,8 @@ class ExportImportDeletePermissionTest(TestCase):
         buf.seek(0)
         from django.core.files.uploadedfile import SimpleUploadedFile
         f = SimpleUploadedFile('test.zip', buf.read(), content_type='application/zip')
-        response = self.client.post('/editor/import/', {'file': f})
+        with _eager_import():
+            response = self.client.post('/editor/import/', {'file': f})
         self.assertEqual(response.status_code, 302)
         imported = SurveyHeader.objects.get(name='imported_survey')
         self.assertEqual(imported.organization, self.org)
@@ -36932,15 +36946,22 @@ class MalformedArchiveImportTest(TestCase):
     def test_import_view_shows_a_message_for_a_bad_archive(self):
         """
         GIVEN a creator uploading an archive with a null required field
-        WHEN they POST it to the import view
-        THEN they are redirected with an error message, not served a 500
+        WHEN they POST it to the import view and the job runs
+        THEN they are redirected, not served a 500, and the dashboard card names
+             the field that failed
         """
         data = self._valid_survey(name=None)
-        response = self.client.post('/editor/import/',
-                                    {'file': self._archive(data)}, follow=True)
+        with _eager_import():
+            response = self.client.post('/editor/import/',
+                                        {'file': self._archive(data)}, follow=True)
         self.assertEqual(response.status_code, 200)
-        texts = [str(m) for m in response.context['messages']]
-        self.assertTrue(any('name' in t for t in texts), texts)
+        from .models import SurveyImportJob
+        job = SurveyImportJob.objects.get(user=self.user)
+        self.assertEqual(job.status, 'failed')
+        self.assertIn('name', job.error)
+        dashboard = self.client.get('/editor/?dashboard=1')
+        self.assertContains(dashboard, 'data-import-status="failed"')
+        self.assertContains(dashboard, 'name')
 
 
 class ExternalScriptCorsTest(SimpleTestCase):
@@ -42219,3 +42240,133 @@ class LayerStreamingRebuildTest(TestCase):
         self.assertEqual([p for p, _ in rows], list(range(1, 1100)))
         self.assertEqual([k for _, k in rows][:6], ['1', '2', '3', '4', '5', '6'])
         self.assertEqual([k for _, k in rows][697:700], ['698', '699', '701'])
+
+
+class SurveyImportJobTest(TestCase):
+    """Change layer-memory-diet, stage 3: the ZIP import is a tracked job on the
+    worker, and the dashboard is the creator's window on it."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Import Job Org")
+        self.user = User.objects.create_user(username='importer', password='pw12345678')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.other = User.objects.create_user(username='bystander', password='pw12345678')
+        Membership.objects.create(user=self.other, organization=self.org, role='editor')
+        self.client.login(username='importer', password='pw12345678')
+        session = self.client.session
+        session['active_org_id'] = self.org.pk
+        session.save()
+
+    def _archive(self, name='job_test_survey'):
+        from io import BytesIO
+        import zipfile
+        buf = BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zf:
+            zf.writestr('survey.json', json.dumps({
+                'version': '1.0', 'exported_at': '2026-09-16T00:00:00Z', 'mode': 'structure',
+                'survey': {'name': name, 'sections': [
+                    {'name': 'section_1', 'code': 'S1', 'is_head': True, 'questions': []},
+                ]},
+                'option_groups': [],
+            }))
+        buf.seek(0)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return SimpleUploadedFile(f'{name}.zip', buf.read(), content_type='application/zip')
+
+    def test_post_stores_the_archive_and_enqueues_a_job(self):
+        """
+        GIVEN an org editor uploading an archive
+        WHEN they POST to the import URL
+        THEN a queued job holds the archive under a random private key, the task is
+             enqueued with the job id, and the dashboard shows a polling card
+        """
+        from unittest.mock import patch
+        from .models import SurveyImportJob
+        with patch('survey.views.run_survey_import.delay') as delay:
+            r = self.client.post('/editor/import/', {'file': self._archive()})
+        self.assertEqual(r.status_code, 302)
+        job = SurveyImportJob.objects.get(user=self.user)
+        self.assertEqual(job.status, 'queued')
+        self.assertEqual(job.original_name, 'job_test_survey.zip')
+        self.assertTrue(job.file.name.startswith('import_jobs/'))
+        self.assertNotIn('job_test_survey', job.file.name)
+        delay.assert_called_once_with(job.pk)
+        r = self.client.get('/editor/?dashboard=1')
+        self.assertContains(r, 'data-import-status="queued"')
+        self.assertContains(r, 'hx-trigger="every 3s"')
+        job.discard_file()
+
+    def test_task_imports_and_removes_the_archive(self):
+        """
+        GIVEN a queued job
+        WHEN the worker runs it
+        THEN the survey exists with the creator as owner, the job is done with the
+             survey linked, the archive is gone, and a redelivery imports nothing twice
+        """
+        from unittest.mock import patch
+        from .models import SurveyImportJob
+        from .tasks import run_survey_import
+        with patch('survey.views.run_survey_import.delay'):
+            self.client.post('/editor/import/', {'file': self._archive()})
+        job = SurveyImportJob.objects.get(user=self.user)
+        run_survey_import(job.pk)
+        job.refresh_from_db()
+        self.assertEqual(job.status, 'done', job.error)
+        self.assertEqual(job.survey.name, 'job_test_survey')
+        self.assertEqual(job.survey.organization, self.org)
+        self.assertTrue(SurveyCollaborator.objects.filter(user=self.user, survey=job.survey, role='owner').exists())
+        self.assertFalse(job.file)
+        self.assertIsNotNone(job.finished_at)
+        run_survey_import(job.pk)
+        self.assertEqual(SurveyHeader.objects.filter(name='job_test_survey').count(), 1)
+        r = self.client.get('/editor/?dashboard=1')
+        self.assertContains(r, 'data-import-status="done"')
+        self.assertNotContains(r, 'hx-trigger="every 3s"')
+        self.assertContains(r, reverse('editor_survey_detail', args=[job.survey.uuid]))
+
+    def test_invalid_archive_fails_the_job_with_the_reason(self):
+        """
+        GIVEN an upload that is not a ZIP archive
+        WHEN the worker runs the job
+        THEN the job is failed with a creator-readable reason, the file is gone,
+             and the card shows the reason
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from .models import SurveyImportJob
+        bad = SimpleUploadedFile('broken.zip', b'not a zip', content_type='application/zip')
+        with _eager_import():
+            r = self.client.post('/editor/import/', {'file': bad})
+        self.assertEqual(r.status_code, 302)
+        job = SurveyImportJob.objects.get(user=self.user)
+        self.assertEqual(job.status, 'failed')
+        self.assertTrue(job.error)
+        self.assertFalse(job.file)
+        r = self.client.get('/editor/?dashboard=1')
+        self.assertContains(r, 'data-import-status="failed"')
+        self.assertContains(r, job.error)
+
+    def test_cards_are_private_and_dismissable(self):
+        """
+        GIVEN a finished job of one creator
+        WHEN another member of the org opens the dashboard, and the owner dismisses the card
+        THEN the other member never sees it, an open job cannot be dismissed, and a
+             dismissed card is gone
+        """
+        from .models import SurveyImportJob
+        with _eager_import():
+            self.client.post('/editor/import/', {'file': self._archive('dismiss_me')})
+        job = SurveyImportJob.objects.get(user=self.user)
+        other = Client()
+        other.login(username='bystander', password='pw12345678')
+        session = other.session
+        session['active_org_id'] = self.org.pk
+        session.save()
+        self.assertNotContains(other.get('/editor/?dashboard=1'), 'data-import-job=')
+        self.assertEqual(other.post(reverse('editor_import_job_dismiss', args=[job.pk])).status_code, 404)
+        SurveyImportJob.objects.filter(pk=job.pk).update(status='running')
+        self.assertEqual(self.client.post(reverse('editor_import_job_dismiss', args=[job.pk])).status_code, 400)
+        SurveyImportJob.objects.filter(pk=job.pk).update(status='done')
+        r = self.client.post(reverse('editor_import_job_dismiss', args=[job.pk]))
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(SurveyImportJob.objects.filter(pk=job.pk).exists())
+        self.assertNotContains(r, 'data-import-job=')

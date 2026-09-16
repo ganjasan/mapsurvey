@@ -19,7 +19,7 @@
 
 ## 3. Stage 3 — structure
 
-- [ ] 3.1 `SurveyImportJob` model + migration; `import_survey` view stores the file and enqueues `run_survey_import`; dashboard job card with HTMX polling
+- [x] 3.1 `SurveyImportJob` model + migration; `import_survey` view stores the file and enqueues `run_survey_import`; dashboard job card with HTMX polling
 - [ ] 3.2 `geojson_gz` BinaryField, `geojson` property, migration compressing existing rows; gated endpoint serves `Content-Encoding: gzip`
 - [ ] 3.3 Tests: job lifecycle (queued → done / failed, warnings shown, file removed); gzip round-trip, endpoint headers, ETag/304 unchanged, tallies path still works
 - [ ] 3.4 Full suite green; CLAUDE.md notes for `layers_for` deferral, `property_names`, gzip storage and the import job

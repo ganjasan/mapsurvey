@@ -250,6 +250,17 @@ place (`edited_at`, no re-notification). Response anchors are labelled with the 
 - GeoJSON files for each geo-question (point/line/polygon)
 - CSV file for non-geographic data
 
+**ZIP import is a job (`SurveyImportJob`, `survey/tasks.py::run_survey_import`)**: the
+`import_survey` view stores the archive on the private media tier under a random
+`import_jobs/<uuid>.zip` key, enqueues the task and redirects; the Celery worker calls
+`import_survey_from_zip` (same function the CLI uses), records the outcome (survey, warnings
+or the validation error) on the job row and deletes the archive. The dashboard renders
+`editor/partials/import_jobs.html` for the creator's open jobs and those finished in the last
+24 h, polling every 3 s while one is open; finished cards are dismissed (deleted) by the
+creator. Tests wrap web-import POSTs in `_eager_import()`, which turns `.delay` into the task
+itself — the suite has no broker. The task runs once per job: a redelivered message finds the
+row past `queued` and returns.
+
 **Public results page**: Creators expose aggregated results at `/r/<slug>/` via `PublicResultsPage` (1:1 with `SurveyHeader`) + ordered `PublicResultsBlock`s. Config tab at `/editor/surveys/<uuid>/public-results/`. Rendering logic in `survey/public_results.py` (`PublicResultsService`, `render_page_data`, `freeze_page`/`unfreeze_page`); editor views in `survey/public_results_editor.py`. Aggregates run over CLEAN sessions only (not deleted, excludes `not_approved`/`on_hold`) across the canonical survey + all versions. Privacy: k-anonymity masks buckets `<K` (default 3); geo popups expose only creator-selected `geo_label_fields`; individual free-text answers are never published. Hybrid `live` (60s cache) vs `frozen` (snapshot) mode. Visibility `public` (indexed, in sitemap) vs `unlisted` (noindex). The page config is intentionally NOT included in survey ZIP export/import.
 
 **Mobile-adaptive layouts (two kill switches)**: `MOBILE_EDITOR_NAV` gives the editor

@@ -2031,3 +2031,58 @@ class ProInterest(models.Model):
     def __str__(self):
         who = self.organisation or self.email
         return f"{who} ({self.segment or 'unknown'}) at {self.created_at:%Y-%m-%d %H:%M}"
+
+
+def import_job_key(instance, filename):
+    """import_jobs/<uuid4>.zip on the PRIVATE tier: a random key, never the
+    creator's filename, gone as soon as the job finishes."""
+    return f'import_jobs/{uuid_module.uuid4().hex}.zip'
+
+
+IMPORT_JOB_STATUS_CHOICES = (
+    ('queued', 'queued'),
+    ('running', 'running'),
+    ('done', 'done'),
+    ('failed', 'failed'),
+)
+
+
+class SurveyImportJob(models.Model):
+    """A ZIP import in flight (change layer-memory-diet, stage 3).
+
+    The request stores the archive and returns at once; the Celery worker
+    imports it. A layer-heavy archive takes tens of seconds and holds ~100 MB
+    while its GeoJSON is parsed — neither belongs in a web worker that serves
+    respondents. The dashboard shows the job's state and polls it while it is
+    open; the archive is removed when the job finishes, whatever the outcome."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='import_jobs')
+    organization = models.ForeignKey('Organization', on_delete=models.CASCADE, related_name='import_jobs')
+    file = models.FileField(upload_to=import_job_key, storage=_private_media_storage, max_length=500, blank=True)
+    original_name = models.CharField(max_length=255)
+    status = models.CharField(max_length=10, choices=IMPORT_JOB_STATUS_CHOICES, default='queued', db_index=True)
+    survey = models.ForeignKey('SurveyHeader', on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    warnings = models.JSONField(default=list, blank=True)
+    error = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['-created_at', '-id']
+
+    def __str__(self):
+        return f"import {self.original_name} ({self.status})"
+
+    @property
+    def is_open(self):
+        return self.status in ('queued', 'running')
+
+    def discard_file(self):
+        """Remove the archive from storage; the row keeps the outcome."""
+        if self.file:
+            try:
+                self.file.delete(save=False)
+            except Exception:  # noqa: BLE001 — a missing object must not mask the outcome
+                pass
+            self.file = None

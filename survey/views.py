@@ -6,11 +6,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import models
 from django.db.models import Q, Prefetch, Count
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotAllowed, HttpResponseBadRequest
 from django.utils import translation
 from django.utils.translation import override as lang_override
 from django.utils.translation import gettext as _
-from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator, SurveyMapLayer, LayerObject
+from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator, SurveyMapLayer, LayerObject, SurveyImportJob
+from .tasks import run_survey_import
 from .models import FILE_INPUT_TYPES
 from .uploads import attach_upload, detach_unreferenced
 from .layers import build_map_layers_metadata, layer_owner, section_layer_ids, GEOMETRY_TEXT_FIELDS
@@ -33,6 +34,7 @@ from .seo_landings import (
     build_breadcrumb_jsonld, build_story_collection_jsonld,
 )
 from django.http import HttpResponseRedirect, Http404
+from django.utils import timezone
 from django.urls import reverse
 from django.core.serializers import serialize
 import geojson
@@ -658,11 +660,14 @@ def editor(request):
 		survey.open_comments, survey.unseen_comments = comment_counts.get(survey.id, (0, 0))
 		surveys_with_kpi.append(survey)
 
+	import_jobs = import_jobs_for(request.user, org) if org_role in ('owner', 'admin', 'editor') else []
 	context = {
 		"survey_headers": surveys_with_kpi,
 		"org_role": org_role,
 		"show_archived": show_archived,
 		"trashed_surveys": trashed_surveys,
+		"import_jobs": import_jobs,
+		"import_jobs_open": any(j.is_open for j in import_jobs),
 	}
 	return render(request, "editor.html", context)
 
@@ -1844,7 +1849,13 @@ def export_survey(request, survey_uuid):
 
 @org_permission_required('editor')
 def import_survey(request):
-	"""Import survey from uploaded ZIP archive."""
+	"""Start a ZIP import as a job (change layer-memory-diet, stage 3).
+
+	The archive is stored on the private media tier and imported by the Celery
+	worker; this request returns at once and the dashboard card shows the
+	outcome. Importing inline held the web worker for 17 s and ~100 MB on a
+	layer-heavy archive and hit client timeouts on 2026-09-16.
+	"""
 	if request.method != 'POST':
 		return redirect('editor')
 
@@ -1853,33 +1864,58 @@ def import_survey(request):
 		return redirect('editor')
 
 	uploaded_file = request.FILES['file']
-
-	try:
-		survey, warnings = import_survey_from_zip(
-			uploaded_file,
-			organization=request.active_org,
-			created_by=request.user,
-		)
-
-		# Show warnings
-		for warning in warnings:
-			messages.warning(request, warning)
-
-		if survey:
-			# Create SurveyCollaborator owner entry for imported survey
-			SurveyCollaborator.objects.get_or_create(
-				user=request.user,
-				survey=survey,
-				defaults={'role': 'owner'},
-			)
-			messages.success(request, f"Survey '{survey.name}' imported successfully")
-		else:
-			messages.success(request, "Data imported successfully")
-
-	except SerializationImportError as e:
-		messages.error(request, str(e))
-
+	job = SurveyImportJob.objects.create(
+		user=request.user,
+		organization=request.active_org,
+		original_name=(uploaded_file.name or 'archive.zip')[:255],
+		file=uploaded_file,
+	)
+	run_survey_import.delay(job.pk)
+	messages.info(request, f"Importing “{job.original_name}” — the survey will appear on this page when it is ready.")
 	return redirect('editor')
+
+
+IMPORT_JOB_CARD_HOURS = 24
+
+
+def import_jobs_for(user, organization):
+	"""The import cards a creator sees on the dashboard: every open job plus
+	those finished in the last day, newest first, until dismissed."""
+	from datetime import timedelta
+	since = timezone.now() - timedelta(hours=IMPORT_JOB_CARD_HOURS)
+	return list(
+		SurveyImportJob.objects
+		.filter(user=user, organization=organization)
+		.filter(Q(status__in=('queued', 'running')) | Q(finished_at__gte=since))
+		.select_related('survey')[:5]
+	)
+
+
+def _render_import_jobs(request):
+	jobs = import_jobs_for(request.user, request.active_org)
+	return render(request, 'editor/partials/import_jobs.html', {
+		'import_jobs': jobs,
+		'import_jobs_open': any(j.is_open for j in jobs),
+	})
+
+
+@org_permission_required('editor')
+def editor_import_jobs(request):
+	"""The polled import-jobs fragment."""
+	return _render_import_jobs(request)
+
+
+@org_permission_required('editor')
+def editor_import_job_dismiss(request, job_id):
+	"""Drop a finished job's card. An open job cannot be dismissed — its
+	outcome is still on its way."""
+	if request.method != 'POST':
+		return HttpResponseNotAllowed(['POST'])
+	job = get_object_or_404(SurveyImportJob, pk=job_id, user=request.user)
+	if job.is_open:
+		return HttpResponseBadRequest('This import is still running.')
+	job.delete()
+	return _render_import_jobs(request)
 
 
 STORIES_CRUMB = Crumb("Stories", "/stories/")
