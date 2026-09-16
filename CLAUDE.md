@@ -54,8 +54,9 @@ with `UserActivity.DoesNotExist`.
 
 `loadtest/lecture-burst.js` (k6) reproduces a lecture-hall burst — N students opening the
 same map survey at once. It does **not** reproduce locally (a dev machine is far faster
-than a 0.5 CPU Render Starter instance), so run it against a Render PR preview, never
-production. Seed the preview's empty database first with
+than the 0.5 CPU Render Starter instance previews run on; production is on Standard,
+1 CPU / 2 GB, since the 2026-09-15 memory-limit incident), so run it against a Render PR
+preview, never production. Seed the preview's empty database first with
 `python manage.py seed_loadtest_survey`. See `loadtest/README.md`.
 
 ## Architecture Overview
