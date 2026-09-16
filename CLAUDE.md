@@ -122,6 +122,18 @@ answer layers in the Layers panel (own pane each, so stacking = panel order, nev
 order, visibility and opacity persist in `localStorage['rv2RefLayers:<uuid>']` — browser-only,
 never the model. Cap: `MAX_LAYERS_PER_SURVEY = 10`.
 
+**Layer memory rules (change `layer-memory-diet`, after the 2026-09-15 memory-limit incident)**:
+`SurveyMapLayer.geojson` is up to 10 MB of text per row, and a gunicorn worker keeps the RSS of
+its largest request for life. So `layers_for()`, `question_layers_for()` and every layer
+`get_object_or_404` in editor/object views DEFER `GEOMETRY_TEXT_FIELDS`; the only readers of the
+text are the gated endpoint (`_gated_layer(with_geojson=True)`), `download_data` and the ZIP
+export (`layers_for(survey).defer(None)`). `question.layer` cannot defer through the FK, and a
+full instance's `save()` writes the text back — on respondent and Responses paths use
+`layers.layer_lite(question)`. Property names for the editor's pickers are the stored
+`SurveyMapLayer.property_names`, written by `rebuild_layer`; never parse the GeoJSON to list
+them. Workers recycle after `GUNICORN_MAX_REQUESTS` (+ jitter) requests. The
+`LayerMemoryDietTest` query-capture tests fail if a page starts selecting the column again.
+
 **Layer objects (`LayerObject`, `LayerObjectAsset`; change `overlay-features`)**: a layer is a
 container of objects — key, title, category, rich-text description, link, one-part geometry,
 raw imported properties, ordered attachments (image/audio/document/video files on the PUBLIC

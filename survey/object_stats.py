@@ -37,7 +37,8 @@ def object_aggregates(question, session_ids=None, excluded_session_ids=None, inc
         qs = qs.exclude(survey_session_id__in=excluded_session_ids)
 
     out = {}
-    for obj in question.layer.items.order_by('position', 'id'):
+    from .models import LayerObject
+    for obj in LayerObject.objects.filter(layer_id=question.layer_id).order_by('position', 'id'):
         out[obj.key] = {
             'key': obj.key, 'title': obj.title or obj.key, 'category': obj.category,
             'answers': 0, '_sessions': set(),
@@ -214,9 +215,10 @@ def shared_map_verdicts(survey, question):
     geo question that feeds `question` layers of this survey family — what the
     question's own GeoJSON export carries per feature. Empty when no layer
     reads the question, so exports of ordinary geo questions are untouched."""
-    from .layers import layer_owner
+    from .layers import layer_owner, GEOMETRY_TEXT_FIELDS
     from .models import LayerObject
-    layers = list(layer_owner(survey).map_layers.filter(source='question', source_question_code=question.code))
+    layers = list(layer_owner(survey).map_layers.defer(*GEOMETRY_TEXT_FIELDS)
+                  .filter(source='question', source_question_code=question.code))
     if not layers:
         return {}
     out = {}

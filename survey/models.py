@@ -650,6 +650,7 @@ class SurveyMapLayer(models.Model):
     # — an empty dict is today's look; the raw value is never trusted.
     style = models.JSONField(default=dict, blank=True, help_text=_('Base style (opacity, weight, fill_opacity, radius, icon) and an optional rule `by` one object property; normalised on every write.'))
     geojson = models.TextField(help_text=_('Derived FeatureCollection, rebuilt from the layer objects on every write.'))
+    property_names = models.JSONField(default=list, blank=True, help_text=_('Sorted union of the objects\' property names (reserved `_*` names excluded), stored on every rebuild so the editor never parses the GeoJSON to list them.'))
     geojson_legacy = models.TextField(blank=True, default='', help_text=_('The pre-objects FeatureCollection kept for one release after the split migration; empty for layers created since.'))
     feature_count = models.PositiveIntegerField(default=0)
     size_bytes = models.PositiveIntegerField(default=0)

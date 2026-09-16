@@ -13,7 +13,7 @@ from django.utils.translation import gettext as _
 from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question, Story, SurveyCollaborator, SurveyMapLayer, LayerObject
 from .models import FILE_INPUT_TYPES
 from .uploads import attach_upload, detach_unreferenced
-from .layers import build_map_layers_metadata, layer_owner, section_layer_ids
+from .layers import build_map_layers_metadata, layer_owner, section_layer_ids, GEOMETRY_TEXT_FIELDS
 from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role, get_org_membership, SURVEY_ROLE_RANK,
@@ -2062,7 +2062,7 @@ def _save_object_answers(post, survey_session, question):
 	parsed = _parse_object_fields(post)
 	if not parsed:
 		return 0
-	objects = {o.key: o for o in question.layer.items.filter(key__in=list(parsed.keys()))}
+	objects = {o.key: o for o in LayerObject.objects.filter(layer_id=question.layer_id, key__in=list(parsed.keys()))}
 	sub_questions = {q.code: q for q in Question.objects.filter(parent_question_id=question)}
 	saved = 0
 	for key, by_code in parsed.items():
@@ -2124,7 +2124,7 @@ def _existing_object_answers(questions, session_id):
 	return out
 
 
-def _gated_layer(request, survey_slug, layer_id):
+def _gated_layer(request, survey_slug, layer_id, with_geojson=True):
 	"""Resolve a layer under the survey's own access rules, or 404.
 
 	Shared by the GeoJSON endpoint and the per-object card endpoint so the two
@@ -2147,7 +2147,8 @@ def _gated_layer(request, survey_slug, layer_id):
 	if not is_collaborator and check_survey_access(request, survey) is not None:
 		raise Http404
 	# Versions and draft copies borrow the canonical survey's layers.
-	layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(survey))
+	qs = SurveyMapLayer.objects if with_geojson else SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS)
+	layer = get_object_or_404(qs, pk=layer_id, survey=layer_owner(survey))
 	# `question` layers answer differently to the creator (every mark, every
 	# status) and to a respondent (other people's visible marks only); the two
 	# endpoints read this instead of re-deriving the role.
@@ -2164,7 +2165,7 @@ def survey_layer_object(request, survey_slug, layer_id, key):
 	the way in, so an imported file's markup can never reach a respondent raw.
 	"""
 	from .layer_assets import object_card_payload
-	layer = _gated_layer(request, survey_slug, layer_id)
+	layer = _gated_layer(request, survey_slug, layer_id, with_geojson=False)
 	if layer.source == 'question' and not layer.collaborator_access:
 		# A respondent may open only what their layer collection contains —
 		# never a pending/hidden mark, a rejected session's, or their own.

@@ -35,9 +35,38 @@ def layer_owner(survey):
     return survey.canonical_survey or survey.published_version or survey
 
 
+# The derived FeatureCollection and its FD-1 predecessor: up to 10 MB of text per
+# row. Every resolver below defers them — a name, a flag or a position must never
+# cost a 10 MB read (change layer-memory-diet). Readers of the text opt in with
+# `.defer(None)` (export) or a plain `get` by pk (the gated endpoint).
+GEOMETRY_TEXT_FIELDS = ('geojson', 'geojson_legacy')
+
+
 def layers_for(survey):
-    """QuerySet of the layers a survey (or any of its versions) renders."""
-    return layer_owner(survey).map_layers.all()
+    """QuerySet of the layers a survey (or any of its versions) renders, with the
+    geometry text deferred (see GEOMETRY_TEXT_FIELDS)."""
+    return layer_owner(survey).map_layers.defer(*GEOMETRY_TEXT_FIELDS)
+
+
+def layer_lite(question):
+    """The layer an Objects-on-the-map question is bound to, WITHOUT its geometry
+    text. `question.layer` cannot defer through the FK descriptor, and a full
+    instance saved with `save()` writes the 10 MB text back; hot paths (respondent
+    form and POST, Responses aggregates) use this instead. Cached per question."""
+    from survey.models import SurveyMapLayer
+    # An instance already on the question wins: the live preview binds a
+    # transient, unsaved `question` layer, and download_data select_relates it.
+    on_question = question._state.fields_cache.get('layer')
+    if on_question is not None:
+        return on_question
+    if not question.layer_id:
+        return None
+    cached = question.__dict__.get('_layer_lite')
+    if cached is not None and cached.pk == question.layer_id:
+        return cached
+    layer = SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS).filter(pk=question.layer_id).first()
+    question.__dict__['_layer_lite'] = layer
+    return layer
 
 
 def section_layer_ids(section):
@@ -399,14 +428,26 @@ def build_layer_geojson(layer):
                       ensure_ascii=False, separators=(',', ':'))
 
 
+def property_names_for(layer):
+    """Sorted union of the objects' property names, reserved names excluded —
+    what the editor's label/key/style pickers offer."""
+    names = set()
+    for props in layer.items.values_list('properties', flat=True):
+        if isinstance(props, dict):
+            names.update(k for k in props if isinstance(k, str) and k not in RESERVED_PROPS)
+    return sorted(names)
+
+
 def rebuild_layer(layer):
-    """Recompute the derived GeoJSON and its counters; bumps `updated_at`, which
-    is what the endpoint's ETag hangs on. Call after every object/asset write."""
+    """Recompute the derived GeoJSON, its counters and the property names; bumps
+    `updated_at`, which is what the endpoint's ETag hangs on. Call after every
+    object/asset write."""
     geojson = build_layer_geojson(layer)
     layer.geojson = geojson
     layer.feature_count = layer.items.count()
     layer.size_bytes = len(geojson.encode('utf-8'))
-    layer.save(update_fields=['geojson', 'feature_count', 'size_bytes', 'updated_at'])
+    layer.property_names = property_names_for(layer)
+    layer.save(update_fields=['geojson', 'feature_count', 'size_bytes', 'property_names', 'updated_at'])
     return layer
 
 
@@ -496,7 +537,8 @@ def attach_tallies(collection, tallies):
 
 def question_layers_for(survey, code):
     """Canonical `question` layers fed by the geo question with `code`."""
-    return layer_owner(survey).map_layers.filter(source='question', source_question_code=code)
+    return (layer_owner(survey).map_layers.defer(*GEOMETRY_TEXT_FIELDS)
+            .filter(source='question', source_question_code=code))
 
 
 def answer_geometry(answer):
@@ -692,7 +734,7 @@ def rebuild_question_layers_for(survey):
     """After a session's validation status / trash state changed: the creator
     surfaces read the cached GeoJSON, which must drop or restore that session's
     marks. Respondent responses are computed per request and need nothing."""
-    for layer in layer_owner(survey).map_layers.filter(source='question'):
+    for layer in layer_owner(survey).map_layers.defer(*GEOMETRY_TEXT_FIELDS).filter(source='question'):
         rebuild_layer(layer)
 
 

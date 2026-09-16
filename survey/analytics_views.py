@@ -18,7 +18,7 @@ from .analytics import (
     version_choices,
 )
 from .events import emit_event
-from .layers import build_map_layers_metadata, layers_for
+from .layers import build_map_layers_metadata, layers_for, GEOMETRY_TEXT_FIELDS
 
 
 def _map_layers_with_object_stats(survey):
@@ -640,7 +640,7 @@ def analytics_object_status(request, survey_uuid, layer_id, key):
     from .models import LayerObject, SurveyMapLayer, LAYER_OBJECT_STATUS_CHOICES
     if not django_settings.MAP_REFERENCE_LAYERS:
         raise Http404
-    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey), source='question')
+    layer = get_object_or_404(SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS), pk=layer_id, survey=layer_owner(request.survey), source='question')
     obj = get_object_or_404(LayerObject, layer=layer, key=key)
     status = request.POST.get('status', '')
     if status not in {c[0] for c in LAYER_OBJECT_STATUS_CHOICES}:

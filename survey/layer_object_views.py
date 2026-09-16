@@ -25,7 +25,7 @@ from .layer_assets import (
     MAX_ASSET_BYTES, MAX_ASSETS_PER_OBJECT, object_card_payload,
 )
 from .layers import (
-    layer_owner, layers_for, objects_from_features, rebuild_layer, check_object_caps,
+    layer_owner, layers_for, objects_from_features, rebuild_layer, check_object_caps, GEOMETRY_TEXT_FIELDS,
     validate_layer_upload, LayerValidationError, explode_geometry, _clean_key,
     MAX_LAYER_BYTES, MAX_LAYERS_PER_SURVEY,
 )
@@ -49,7 +49,8 @@ class _ReadOnlyLayer(Exception):
 
 def _layer(request, layer_id, writable=False):
     _enabled_or_404()
-    layer = get_object_or_404(SurveyMapLayer, pk=layer_id, survey=layer_owner(request.survey))
+    layer = get_object_or_404(SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS),
+                              pk=layer_id, survey=layer_owner(request.survey))
     if writable and layer.source == 'question':
         # Shared map: materialised objects are never edited by hand.
         raise _ReadOnlyLayer()

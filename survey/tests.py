@@ -33166,11 +33166,9 @@ class LayerEditorTest(TestCase):
         self.section = SurveySection.objects.create(
             survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
         )
-        geojson, count, _ = validate_layer_upload(_zones_geojson().encode())
-        self.layer = SurveyMapLayer.objects.create(
-            survey=self.survey, name="Zones", geojson=geojson, feature_count=count,
-            size_bytes=len(geojson),
-        )
+        # Objects first, derived GeoJSON second — the way every stored layer is
+        # made since overlay-features; property names come from the objects.
+        self.layer = _objects_layer(self.survey, name="Zones")
         self.client.login(username='layerowner', password='pw12345678')
 
     def _upload(self, content=None, name='zones.geojson'):
@@ -41949,3 +41947,152 @@ class CommentGeneralThreadTest(_CommentFixture):
         self.client.login(username='cmviewer', password='pw12345678')
         r = self.client.get(self._u('editor_comment_counts'))
         self.assertIn('survey:all', r.json()['new'])
+
+
+class LayerMemoryDietTest(TestCase):
+    """Change layer-memory-diet, stage 1: no surface but the gated endpoint and the
+    export reads a layer's geometry text; property names are a stored column."""
+
+    GEOJSON_COLUMN = '"survey_surveymaplayer"."geojson"'
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Diet Org")
+        self.owner = User.objects.create_user(username='dietowner', password='pw12345678')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="diet_survey", organization=self.org, redirect_url="/thanks/",
+            created_by=self.owner, status='published', available_languages=['en'],
+        )
+        SurveyCollaborator.objects.create(user=self.owner, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        self.q = Question.objects.create(
+            survey_section=self.section, code="DT001", name="Objects", input_type="layer_objects",
+            layer=self.layer, order_number=1,
+        )
+        Question.objects.create(
+            survey_section=self.section, code="DT002", name="Rate", input_type="rating",
+            parent_question_id=self.q, order_number=1, choices=[{"code": i, "name": str(i)} for i in range(1, 6)],
+        )
+
+    def _geojson_reads(self, queries):
+        return [q['sql'] for q in queries if self.GEOJSON_COLUMN in q['sql'] and q['sql'].lstrip().upper().startswith('SELECT')]
+
+    def test_rebuild_stores_property_names(self):
+        """
+        GIVEN a layer built from objects carrying `name` and `zone_id`
+        WHEN it is rebuilt
+        THEN the sorted property names are stored on the layer, reserved names excluded
+        """
+        from .layers import rebuild_layer
+        obj = self.layer.items.first()
+        obj.properties = {**obj.properties, '_key': 'shadow', 'extra': 1}
+        obj.save()
+        rebuild_layer(self.layer)
+        self.layer.refresh_from_db()
+        self.assertEqual(self.layer.property_names, ['extra', 'name', 'zone_id'])
+
+    def test_upload_response_and_pickers_use_the_stored_names(self):
+        """
+        GIVEN an owner uploading a GeoJSON
+        WHEN the create endpoint answers and the settings card renders
+        THEN both list the stored property names and neither selects the geometry column
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        from .models import SurveyMapLayer
+        self.client.login(username='dietowner', password='pw12345678')
+        payload = SimpleUploadedFile('zones.geojson', _zones_geojson().encode(), content_type='application/geo+json')
+        r = self.client.post(reverse('editor_survey_layer_create', args=[self.survey.uuid]), {'layer': payload})
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(r.json()['properties'], ['name', 'zone_id'])
+        self.assertEqual(SurveyMapLayer.objects.get(pk=r.json()['id']).property_names, ['name', 'zone_id'])
+        with CaptureQueriesContext(connection) as ctx:
+            r = self.client.get(reverse('editor_survey_settings_panel', args=[self.survey.uuid]))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'zone_id')
+        self.assertEqual(self._geojson_reads(ctx.captured_queries), [])
+
+    def test_migration_backfills_property_names_from_objects(self):
+        """
+        GIVEN a layer whose stored names are empty (a row from before the column)
+        WHEN the backfill migration runs
+        THEN the names are derived from the objects' properties
+        """
+        from importlib import import_module
+        from django.apps import apps
+        from django.db import connection
+        from .models import SurveyMapLayer
+        SurveyMapLayer.objects.filter(pk=self.layer.pk).update(property_names=[])
+        import_module('survey.migrations.0084_surveymaplayer_property_names').forwards(apps, connection.schema_editor)
+        self.layer.refresh_from_db()
+        self.assertEqual(self.layer.property_names, ['name', 'zone_id'])
+
+    def test_editor_respondent_and_responses_pages_never_read_the_geometry_text(self):
+        """
+        GIVEN a survey with a layer and an Objects-on-the-map question
+        WHEN the editor page, the question modal, the respondent section (GET and POST)
+             and the Responses dashboard render
+        THEN no query selects the layer's geojson column
+        """
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        self.client.login(username='dietowner', password='pw12345678')
+        pages = [
+            ('editor_survey', reverse('editor_survey_detail', args=[self.survey.uuid])),
+            ('question modal', reverse('editor_question_edit', args=[self.survey.uuid, self.q.pk])),
+            ('responses', reverse('editor_survey_analytics', args=[self.survey.uuid])),
+            ('object card', reverse('survey_layer_object', args=[str(self.survey.uuid), self.layer.pk, self.layer.items.first().key])),
+        ]
+        for label, url in pages:
+            # The question modal is a draft-only surface; the rest read a published survey.
+            SurveyHeader.objects.filter(pk=self.survey.pk).update(status='draft' if label == 'question modal' else 'published')
+            with CaptureQueriesContext(connection) as ctx:
+                r = self.client.get(url)
+            self.assertEqual(r.status_code, 200, label)
+            self.assertEqual(self._geojson_reads(ctx.captured_queries), [], label)
+        respondent = Client()
+        url = reverse('section', args=[str(self.survey.uuid), self.section.name])
+        with CaptureQueriesContext(connection) as ctx:
+            r = respondent.get(url)
+            self.assertEqual(r.status_code, 200)
+            key = self.layer.items.first().key
+            r = respondent.post(url, {f'obj__{key}__DT002': '4'})
+        self.assertIn(r.status_code, (200, 302))
+        self.assertEqual(self._geojson_reads(ctx.captured_queries), [])
+
+    def test_gated_endpoint_and_export_still_read_the_text(self):
+        """
+        GIVEN the same survey
+        WHEN the GeoJSON endpoint and the ZIP export run
+        THEN both deliver the derived FeatureCollection
+        """
+        import io
+        import zipfile
+        self.client.login(username='dietowner', password='pw12345678')
+        r = self.client.get(reverse('survey_layer_geojson', args=[str(self.survey.uuid), self.layer.pk]))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(json.loads(r.content)['features']), 3)
+        r = self.client.get(reverse('export_survey', args=[self.survey.uuid]))
+        self.assertEqual(r.status_code, 200)
+        with zipfile.ZipFile(io.BytesIO(r.content)) as zf:
+            self.assertEqual(len(json.loads(zf.read('layers/0.geojson'))['features']), 3)
+
+    def test_gunicorn_recycles_workers(self):
+        """
+        GIVEN the production and compose start commands
+        WHEN they are read
+        THEN both carry a request budget with jitter, env-tunable like the other knobs
+        """
+        import os
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        for name in ('Dockerfile', 'docker-compose.yml'):
+            with open(os.path.join(root, name)) as fh:
+                text = fh.read()
+            self.assertIn('--max-requests ${GUNICORN_MAX_REQUESTS:-', text, name)
+            self.assertIn('--max-requests-jitter ${GUNICORN_MAX_REQUESTS_JITTER:-', text, name)
+        with open(os.path.join(root, 'render.yaml')) as fh:
+            self.assertIn('GUNICORN_MAX_REQUESTS_JITTER', fh.read())

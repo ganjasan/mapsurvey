@@ -1,0 +1,25 @@
+# Tasks: layer-memory-diet
+
+## 1. Stage 1 — stop the ratchet
+
+- [x] 1.1 Gunicorn `--max-requests ${GUNICORN_MAX_REQUESTS:-300} --max-requests-jitter ${GUNICORN_MAX_REQUESTS_JITTER:-60}` in `Dockerfile` CMD and `docker-compose.yml`; declare both in `render.yaml`
+- [x] 1.2 `SurveyMapLayer.property_names` JSONField + migration with backfill from `LayerObject.properties`
+- [x] 1.3 `rebuild_layer` computes `property_names`; `_layer_property_names` and the create response read the column
+- [x] 1.4 `layers_for()` defers `geojson`/`geojson_legacy`; `collect_layer_files` and the gated endpoint opt in; layer `get_object_or_404` sites in editor/object views defer
+- [x] 1.5 Question → layer accesses on respondent form/POST and Responses paths go through a deferred fetch
+- [x] 1.6 Tests: property names stored and backfilled; editor page and settings card render without selecting the geometry column; export still carries the text; Dockerfile/compose carry the recycling flags
+
+## 2. Stage 2 — upload diet
+
+- [ ] 2.1 `validate_layer_upload` returns `(features, property_names)`; create view, object-editor import and ZIP import use the features
+- [ ] 2.2 `objects_from_features` flushes rows every 500
+- [ ] 2.3 `build_layer_geojson` streams from `values()` rows and collects property names in the same pass
+- [ ] 2.4 Tests: validation contract; streamed output byte-identical to the dict construction (upload layer with covers and categories, `question` layer with `_status`); collision report unchanged across batch boundaries
+- [ ] 2.5 Re-run the memory probe: upload peak and retained memory before/after
+
+## 3. Stage 3 — structure
+
+- [ ] 3.1 `SurveyImportJob` model + migration; `import_survey` view stores the file and enqueues `run_survey_import`; dashboard job card with HTMX polling
+- [ ] 3.2 `geojson_gz` BinaryField, `geojson` property, migration compressing existing rows; gated endpoint serves `Content-Encoding: gzip`
+- [ ] 3.3 Tests: job lifecycle (queued → done / failed, warnings shown, file removed); gzip round-trip, endpoint headers, ETag/304 unchanged, tallies path still works
+- [ ] 3.4 Full suite green; CLAUDE.md notes for `layers_for` deferral, `property_names`, gzip storage and the import job

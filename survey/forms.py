@@ -380,7 +380,8 @@ class LayerObjectsField(forms.Field):
 
     def widget_attrs(self, widget):
         attrs = super().widget_attrs(widget)
-        layer = self.question.layer
+        from .layers import layer_lite
+        layer = layer_lite(self.question)   # never the 10 MB geometry text on a section render
         # Without sub-questions the block only shows the layer: no counter, no
         # minimum (spec layer-objects-question; Question.collects_objects).
         collects = getattr(self.question, 'preview_collects', None)
