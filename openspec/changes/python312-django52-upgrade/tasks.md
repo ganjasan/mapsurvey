@@ -23,7 +23,8 @@
 - [x] 3.4 `PostHogErrorTrackingTest` on the resolved posthog version (D4)
 - [x] 3.5 Third-party support check recorded in design.md (package, version, 5.2 support source)
 - [x] 3.6 PR preview #190: image builds `FROM python:3.12-slim` (Debian trixie, newer GDAL/PROJ than bookworm — see design Risks), web live in 3 min, Celery 5.6.3 worker ready, migrations applied from zero through `survey.0086`, public pages render (`/`, `/accounts/register/`, `/trust/`, `/sitemap.xml`)
-- [x] 3.7 Local 3.12 dev server: respondent section renders its question cards, a GeoJSON Feature point answer round-trips into `Answer.point`; `run_e2e.sh` (Playwright) against it
+- [x] 3.7 Local 3.12 dev server: respondent section renders its question cards, a GeoJSON Feature point answer round-trips into `Answer.point`; `run_e2e.sh` (Playwright, Chromium) against it — **33 passed, 8 failed, none caused by the upgrade** (see 3.7a)
+- [x] 3.7a The 8 e2e failures are pre-existing drift, not a regression. Decisive: this branch changes no template, no asset and no e2e test relative to master (`git diff origin/master --stat -- survey/templates survey/assets tests_e2e` is empty), so nothing here can move a DOM element. Individually: the toolbar test wants `a[href=".../settings/"]`, which no template renders (settings is a modal); the satellite test wants `opentopomap`, which #180 removed on purpose; the two registration tests never reach `networkidle` because this worktree's `.env` carries real Turnstile keys (the bypass needs `TURNSTILE_SECRET_KEY=""`); the four remaining are visibility/click timeouts in editor flows whose UI moved on (the create page is a wizard since #108). Worth its own change — the suite is currently not a gate.
 - [ ] 3.8 k6 lecture-burst against the preview: needs the preview database seeded (`seed_loadtest_survey` via a Render one-off job — no shell, see lesson_preview_seeding_paths), so it needs the owner or an API key
 
 ## 4. Docs and rollout
