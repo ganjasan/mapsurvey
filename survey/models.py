@@ -953,7 +953,11 @@ class Question(models.Model):
         state, no minimum, nothing to count (spec layer-objects-question,
         owner decision 2026-09-06: "если у слоя не будет подвопросов, то он
         и не будет ничего собирать")."""
+        # An unsaved question (the editor's live preview builds one) has no
+        # sub-questions; Django 5 refuses an unsaved instance in a related
+        # filter instead of matching nothing.
         return (self.input_type == 'layer_objects'
+                and self.pk is not None
                 and Question.objects.filter(parent_question_id=self).exists())
 
     def thumbs_choices(self):
@@ -1833,7 +1837,7 @@ class CommentThread(models.Model):
             # later AI agent, a shell) meets the same wall.
             models.CheckConstraint(
                 name='commentthread_one_anchor_only',
-                check=(
+                condition=(
                     Q(anchor_kind='survey', question_code='', section_code='', session__isnull=True, block__isnull=True)
                     | Q(anchor_kind='question', section_code='', session__isnull=True, block__isnull=True) & ~Q(question_code='')
                     | Q(anchor_kind='section', question_code='', session__isnull=True, block__isnull=True) & ~Q(section_code='')

@@ -9,9 +9,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 docker-compose up --build              # Start all services
 docker-compose up db                   # Start only PostgreSQL/PostGIS
 
-# Local development (venv in ./env)
+# Local development (venv in ./env — Python 3.12; the image is python:3.12-slim, Django 5.2 LTS)
 source env/bin/activate                # Activate virtual environment
 pipenv install                         # Install dependencies (Pipfile — there is no requirements.txt)
+# Faster equivalent for a fresh venv: uv venv --python 3.12 env && pipenv requirements --dev > /tmp/r.txt
+#                                     && uv pip install --python env/bin/python -r /tmp/r.txt
+# Branches from before change python312-django52-upgrade need a 3.9 venv (kept as ../Mapsurvey/env39).
+# Deprecation gate (run once per Django bump): python -W error::django.utils.deprecation.RemovedInDjango60Warning
+#   -W error::DeprecationWarning:survey -W error::DeprecationWarning:mapsurvey manage.py test survey
 python manage.py migrate               # Apply database migrations
 python manage.py runserver             # Start development server (port 8000)
 python manage.py createsuperuser       # Create admin user

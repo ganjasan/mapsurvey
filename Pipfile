@@ -6,20 +6,30 @@ verify_ssl = true
 [dev-packages]
 pytest-playwright = "*"
 pytest-django = "*"
+# settings.py loads .env through it when present and runs without it (production
+# gets its variables from Render). The old 3.9 venv had it installed by hand and
+# nobody noticed; without it every test that reads an AI key from .env fails.
+python-dotenv = "*"
 
 [packages]
-django = "*"
+# ~=5.2: the LTS (April 2028). `*` is how 4.2 stayed pinned for a year — the resolver
+# re-picks the newest Django the interpreter allows, and would jump to 6.0 next.
+django = "~=5.2"
 django-debug-toolbar = "*"
 psycopg2-binary = "*"
 django-leaflet = "*"
 geojson = "*"
 django-registration = "*"
-pandas = "*"
-gunicorn = "*"
+# The three pins below hold major versions the Python 3.12 resolver would otherwise
+# jump (pandas 3, gunicorn 26, Pillow 12): each is its own change with its own checks
+# (pandas: export value tests; gunicorn: scripts/gunicorn_recycle_check.py against the
+# DrainingThreadWorker, which subclasses gthread internals).
+pandas = "~=2.3"
+gunicorn = "~=23.0"
 whitenoise = "*"
 django-storages = "*"
 boto3 = "*"
-pillow = "*"
+pillow = "~=11.3"
 celery = {extras = ["redis"], version = "*"}
 django-ratelimit = "*"
 django-redis = "*"
@@ -27,11 +37,13 @@ requests = "*"
 google-api-python-client = "*"
 google-auth = "*"
 nh3 = "*"
-anthropic = "*"
-# Pinned to 6.9: 7.x needs Python >=3.10 (we run 3.9), and 6.7.5-6.7.13 shipped with
-# broken Django exception capture (posthog-python #286/#329). Read the design note in
-# openspec/changes/posthog-error-tracking/design.md before changing this in either direction.
+# <1: the 1.x SDK changed its API; the provider code is Gemini-first and the Anthropic
+# path is exercised only by its tests — bump in its own change.
+anthropic = "~=0.122"
+# 6.7.5-6.7.13 shipped with broken Django exception capture (posthog-python #286/#329);
+# PostHogErrorTrackingTest are the canaries — run them before moving this in either
+# direction. Read openspec/changes/posthog-error-tracking/design.md first.
 posthog = "~=6.9"
 
 [requires]
-python_version = "3.9"
+python_version = "3.12"
