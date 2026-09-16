@@ -8,7 +8,7 @@ import json
 import logging
 import zipfile
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
 from typing import IO, Dict, List, Optional, Tuple, Any
 
@@ -386,7 +386,7 @@ def export_survey_to_zip(
         if mode in ("structure", "full"):
             survey_data = {
                 "version": FORMAT_VERSION,
-                "exported_at": datetime.utcnow().isoformat() + "Z",
+                "exported_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                 "mode": mode,
                 "survey": serialize_survey_to_dict(survey),
             }
@@ -411,7 +411,7 @@ def export_survey_to_zip(
         if mode in ("data", "full"):
             responses_data = {
                 "version": FORMAT_VERSION,
-                "exported_at": datetime.utcnow().isoformat() + "Z",
+                "exported_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                 "survey_name": survey.name,
                 "sessions": serialize_sessions(survey),
             }

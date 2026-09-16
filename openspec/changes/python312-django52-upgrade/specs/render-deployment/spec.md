@@ -19,4 +19,4 @@ SHALL be generated under the same Python the image runs.
 
 #### Scenario: Respondent pages render unchanged after the upgrade
 - **WHEN** a section page of a published survey is rendered
-- **THEN** its form markup (one table row per field, the project's widget templates) is the same structure as before the upgrade
+- **THEN** every question is a question card built by the project's own templates and widgets, and no respondent-facing template delegates to Django's form-level template, whose markup changed in 5.0

@@ -29,14 +29,30 @@ numpy 2, pandas 2.3, Pillow 11); 3.13 would work but buys nothing today. 5.2 is 
 (April 2028); 6.0 removes `CheckConstraint(check=)` and other things we still carry, and its
 support window is shorter. The pin is `django = "~=5.2"`: `*` is exactly how 4.2 stuck.
 
-### D2. Respondent form markup is frozen through a project renderer
-Django 5.0 switched `Form.template_name` from `django/forms/table.html` to `div.html`.
-`mapsurvey/forms_renderer.py::TableFormRenderer(DjangoTemplates)` sets
-`form_template_name = "django/forms/table.html"` and `FORM_RENDERER` points at it, so
-`{{ form }}` renders the same `<tr>`/`<th>`/`<td>` structure the section page's CSS and JS
-expect. A render test snapshots the structure of one section (field order, `<tr>` per
-field, widget templates present) so the freeze is enforced, not assumed. The admin's
-`{{ form.as_p }}` is unaffected.
+### D2. Respondent form markup: verified untouched, no renderer pin
+Django 5.0 switched `Form.template_name` from `django/forms/table.html` to `div.html`. The
+first draft of this change pinned `table.html` through a project `FORM_RENDERER`; the
+suite showed it changes nothing: the respondent section is rendered by
+`partials/survey_section_partial.html`, which walks `form.visible_fields` and emits a
+`question-card` per field through the project's widget templates, and Django's form-level
+template is never involved. The two templates that do render `{{ form }}`
+(`survey_section_block.html`, `answer.html`) are rendered by no view. The renderer pin was
+dropped; `SectionFormMarkupTest` keeps both facts true — a section renders its cards,
+labels and widgets, and no respondent-facing template reaches for `{{ form }}` or
+`as_p`/`as_table`/`as_div`/`as_ul`. The admin's `{{ form.as_p }}` is unaffected either way.
+
+### D2a. Django 5 refuses unsaved instances in related filters
+`ValueError: Model instances passed to related filters must be saved` surfaced in one
+place: `Question.collects_objects` ran `Question.objects.filter(parent_question_id=self)`
+on the transient question the editor's live preview builds. Guarded with `self.pk is not
+None` (an unsaved question has no sub-questions). No other site matched in the suite.
+
+### D2b. A dev dependency the old venv carried by hand
+`python-dotenv` was installed in the 3.9 venv but listed nowhere; `settings.py` tolerates
+its absence, so the fresh 3.12 venv silently stopped loading `.env`, the AI key vanished
+and the create-page wizard tests failed. It is now a `[dev-packages]` entry (production
+reads Render's environment). The old venv held 25 other unlisted packages (matplotlib,
+lxml, polib, pytrends, testcontainers…) that no test needs.
 
 ### D3. Deprecations are cleared, not silenced
 The suite runs once with `-W error::django.utils.deprecation.RemovedInDjango60Warning`
@@ -53,6 +69,26 @@ django-leaflet 0.32, django-ratelimit 4.1, django-storages 1.14, django-redis,
 django-debug-toolbar). `posthog` moves to `~=7` only if `PostHogErrorTrackingTest` (the
 canaries for the 6.7.5–6.7.13 breakage) pass on it; otherwise it stays on 6.9, which runs
 on 3.12.
+
+**Resolved (2026-09-16, `pipenv lock` under 3.12):** Django 5.2.17, django-registration
+5.2.1, django-leaflet 0.34.0, django-ratelimit 4.1.0, django-storages 1.14.6, django-redis
+7.0.0, django-debug-toolbar 8.0.0, celery 5.6.3, redis 6.4.0, numpy 2.5.3, psycopg2-binary
+2.9.13, whitenoise 6.12.0, posthog 6.9.3. Four unforced major jumps the first lock produced
+were pinned back to the current majors, each with its own follow-up change: pandas 3.0 →
+`~=2.3` (export value tests), gunicorn 26 → `~=23.0` (`DrainingThreadWorker` subclasses
+gthread internals; `scripts/gunicorn_recycle_check.py` is the gate), Pillow 12 → `~=11.3`,
+anthropic 1.x → `~=0.122` (SDK API change; the Anthropic provider path is test-only today).
+django-redis 7 and django-debug-toolbar 8 are Django-adjacent majors that track Django
+support and stay.
+
+**Declared support (installed dist-info metadata, task 3.5):** django-registration 5.2.1
+classifiers 4.2 / 5.1 / 5.2, `Django>=4.2,!=5.0.*`; django-redis 7.0.0 `Django>=5.2,<7.0`;
+django-debug-toolbar 8.0.0 `django>=5.2`; whitenoise 6.12.0 classifiers 4.2–6.0;
+django-storages 1.14.6 classifiers up to 5.1 (no 5.2 classifier yet; it uses the stable
+`STORAGES` API and the media tests exercise the S3 backend class); django-leaflet 0.34.0
+requires Python ≥3.10 (a 2025 release; Django 5 supported since 0.30); django-ratelimit
+4.1.0 declares no framework classifier (decorator-only, works on 4.2–5.2); celery 5.6.3
+`Django>=2.2.28`; posthog 6.9.3 Django-agnostic (canaries cover the middleware).
 
 ### D5. Developer venv switch
 `env/` is a 3.9 venv shared by every worktree through a symlink. The upgrade creates
