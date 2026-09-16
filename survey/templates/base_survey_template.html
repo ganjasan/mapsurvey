@@ -18,6 +18,7 @@ locale.{% endcomment %}
     <!-- js util -->
     <script type="text/javascript" src="{% static 'js/util.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/conditional_visibility.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/other_option.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/components/map_place_search.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/components/ranking.js' %}"></script>
     {% if FILE_UPLOAD_QUESTIONS %}<script type="text/javascript" src="{% static 'js/file_upload.js' %}"></script>{% endif %}
@@ -656,6 +657,10 @@ locale.{% endcomment %}
             }
         }
 
+        // Restore above sets values without events; decide the write-in
+        // fields' visibility from the restored state (spec other-option-write-in).
+        if (window.syncOtherWriteins) window.syncOtherWriteins($popup[0], false);
+
         tempLayer.editing.disable();
 
         $popup.find("button.layer-delete").click(function(){
@@ -870,7 +875,11 @@ locale.{% endcomment %}
                 $(card).find('input, textarea, select').each(function() {
                     var t = (this.type || '').toLowerCase();
                     if (t === 'radio' || t === 'checkbox') { if (this.checked) filled = true; }
-                    else if ($.trim(this.value || '') !== '') filled = true;
+                    // A disabled input never posts, so it cannot count as an answer:
+                    // a write-in typed and then deselected keeps its text but is
+                    // disabled (spec other-option-write-in), as are inputs of a
+                    // card hidden by a visibility rule.
+                    else if (!this.disabled && $.trim(this.value || '') !== '') filled = true;
                 });
                 if (!filled) {
                     $(card).addClass('question-card--invalid');

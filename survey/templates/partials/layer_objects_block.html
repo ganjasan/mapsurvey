@@ -279,6 +279,7 @@ description, which the object endpoint passed through coerce_creator_html.
                         stored[name].forEach(function(v) { $form.find('[name="' + name + '"][value="' + v + '"]').prop('checked', true); });
                     } else if ($el.length) { $el.val(stored[name][0]); }
                 });
+                if (window.syncOtherWriteins) window.syncOtherWriteins($popup[0], false);   // restore fired no events
                 $form.find('.thumbs__option input:checked').closest('.thumbs__option').addClass('is-checked');
                 $form.find('.thumbs__option input').on('change', function() {
                     $(this).closest('.thumbs').find('.thumbs__option').removeClass('is-checked');

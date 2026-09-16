@@ -429,7 +429,7 @@ class SurveyAnalyticsService:
         """Display value for a sub-answer, or None when there is nothing to show."""
         input_type = answer.question.input_type
         if input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
-            return ', '.join(answer.get_selected_choice_names()) or None
+            return answer.choice_display() or None
         if input_type in ('number', 'range'):
             return str(answer.numeric) if answer.numeric is not None else None
         if input_type in ('text', 'text_line', 'datetime'):
@@ -941,7 +941,7 @@ class SurveyAnalyticsService:
             geo_object_id = None
             geo_label = ''
             if q.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
-                value = ', '.join(a.get_selected_choice_names()) or '\u2014'
+                value = a.choice_display() or '\u2014'
             elif q.input_type in ('number', 'range'):
                 value = str(a.numeric) if a.numeric is not None else '\u2014'
             elif q.input_type in ('text', 'text_line', 'datetime'):
@@ -1358,8 +1358,7 @@ class SurveyAnalyticsService:
         """Format a single Answer to a display string for the attribute table."""
         q = answer.question
         if q.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
-            names = answer.get_selected_choice_names()
-            return ', '.join(names) if names else '—'
+            return answer.choice_display() or '—'
         elif q.input_type in ('number', 'range'):
             return str(answer.numeric) if answer.numeric is not None else '—'
         elif q.input_type in ('text', 'text_line', 'datetime'):

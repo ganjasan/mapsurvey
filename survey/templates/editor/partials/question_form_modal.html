@@ -468,6 +468,7 @@
         {% include "editor/partials/_visibility_block.html" %}
 
         <!-- Choices editor -->
+        <style>.choices-editor--no-other .choice-other-cell { display: none; }</style>
         <div class="choices-editor" id="choices-editor" style="display:none;">
             <label style="font-weight:600;">{% trans "Choices" %}</label>
             <table class="table table-sm">
@@ -482,6 +483,7 @@
                         {% else %}
                         <th>{% trans "Name" %}</th>
                         {% endif %}
+                        <th class="choice-other-cell" style="width:64px;" title="{% trans 'Write-in option: respondents who pick it get a text field to say what they mean' %}">{% trans "Other" %}</th>
                         <th style="width:40px;"></th>
                     </tr>
                 </thead>
@@ -493,6 +495,10 @@
             </button>
         </div>
         <input type="hidden" name="choices_json" id="choices-json-input">
+        {% if question and question.choices %}{% comment %}Real JSON for the reload below. The old
+        `{{ question.choices|safe }}` was a Python repr: fine while choices held only ints and
+        plain strings, dead on the first `True` (the write-in flag) or apostrophe.{% endcomment %}
+        {{ question.choices|json_script:"existing-choices-data" }}{% endif %}
 
         {# Validation settings per question type #}
         <div id="vs-number-fields" style="display:none;" class="mt-2 p-2" style="background:#f8f9fa;border-radius:4px;">
@@ -689,6 +695,10 @@
     var choiceTypes = ['choice', 'multichoice', 'range', 'rating', 'ranking'];
 
     function toggleChoicesEditor() {
+        // The write-in column only means something for choice/multichoice;
+        // rating/range/ranking share this table and must not show it.
+        var t = inputTypeSelect ? inputTypeSelect.value : '';
+        choicesEditor.classList.toggle('choices-editor--no-other', t !== 'choice' && t !== 'multichoice');
         if (inputTypeSelect && choiceTypes.indexOf(inputTypeSelect.value) !== -1) {
             choicesEditor.style.display = 'block';
         } else {
@@ -1284,7 +1294,12 @@
     var starCountInput = document.getElementById('star-count-input');
     if (starCountInput) starCountInput.addEventListener('change', applyStarCount);
 
-    window.addChoiceRow = function(code, name) {
+    // A function declaration, not an assignment to window: declarations are
+    // hoisted, so toggleStarCountField() — which runs from the init block above
+    // this point and adds five star rows — can call it. The assignment form threw
+    // `ReferenceError: addChoiceRow is not defined` there and aborted the whole
+    // script for star-rating questions (PostHog, 2026-09-14).
+    function addChoiceRow(code, name, other) {
         var tbody = document.getElementById('choices-rows');
         var row = document.createElement('tr');
         var codeVal;
@@ -1323,12 +1338,30 @@
             cells += '<td><input type="text" class="form-control form-control-sm choice-name-default" value="' + (flat || '').replace(/"/g, '&quot;') + '"></td>';
         }
 
+        // The write-in flag (spec other-option-write-in): a checkbox, not a radio,
+        // so a flag can be taken off again; exclusivity is enforced on change.
+        cells += '<td class="choice-other-cell text-center"><input type="checkbox" class="choice-other" title="{% trans 'Write-in option' %}"' + (other ? ' checked' : '') + '></td>';
         cells += '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'tr\').remove();window.schedulePreview&&window.schedulePreview()">&times;</button></td>';
         row.innerHTML = cells;
         tbody.appendChild(row);
         // Row add/remove bypasses form input events; nudge the live preview.
         if (window.schedulePreview) window.schedulePreview();
-    };
+    }
+    window.addChoiceRow = addChoiceRow;
+
+    // At most one write-in option per question: checking one unchecks the rest.
+    (function () {
+        var rows = document.getElementById('choices-rows');
+        if (!rows || rows.dataset.otherBound) return;
+        rows.dataset.otherBound = '1';
+        rows.addEventListener('change', function (e) {
+            if (!e.target.classList.contains('choice-other')) return;
+            if (e.target.checked) {
+                rows.querySelectorAll('.choice-other').forEach(function (cb) { if (cb !== e.target) cb.checked = false; });
+            }
+            if (window.schedulePreview) window.schedulePreview();
+        });
+    })();
 
     // ── Icon Picker ── (survey/assets/js/icon_picker.js; catalog + sprites via MarkerIcon)
     (function() {
@@ -1373,7 +1406,10 @@
                 // Single-language survey: flat string.
                 name = row.querySelector('.choice-name-default').value.trim();
             }
-            choices.push({ code: code, name: name });
+            var entry = { code: code, name: name };
+            var otherCb = row.querySelector('.choice-other');
+            if (otherCb && otherCb.checked) entry.other = true;
+            choices.push(entry);
         });
 
         document.getElementById('choices-json-input').value = choices.length > 0 ? JSON.stringify(choices) : '';
@@ -1466,9 +1502,9 @@
     // Runs LAST: addChoiceRow/serializeChoices must already be assigned to window,
     // otherwise this block throws and kills the whole script (broke Apply).
     {% if question and question.choices %}
-    var existingChoices = {{ question.choices|safe }};
+    var existingChoices = JSON.parse(document.getElementById('existing-choices-data').textContent);
     existingChoices.forEach(function(choice) {
-        addChoiceRow(choice.code, choice.name);
+        addChoiceRow(choice.code, choice.name, !!choice.other);
     });
     {% endif %}
 
