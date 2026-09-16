@@ -50,6 +50,7 @@ import pandas as pd
 from .access_control import check_survey_access, mark_indexing
 from .audit import audit
 from .trash import trash_survey, restore_survey, purge_survey, purge_expired_surveys
+from . import other_option
 from .versioning import resolve_version_scope
 import hmac
 from django.http import JsonResponse
@@ -881,12 +882,18 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 						# The token round-trips: the popup widget resolves it
 						# back to the uploaded state on revisit.
 						feature['properties'][sub_q.code] = [str(child.upload_id)]
+					elif sub_q.input_type in ('choice', 'multichoice', 'rating', 'thumbs', 'ranking'):
+						# By type, not by which columns are set: a choice answer with a
+						# write-in carries both codes and text (spec other-option-write-in).
+						if child.selected_choices:
+							feature['properties'][sub_q.code] = [str(c) for c in child.selected_choices]
+						_other = child.other_text()
+						if _other is not None:
+							feature['properties'][other_option.field_name(sub_q.code)] = [_other]
 					elif child.text is not None:
 						feature['properties'][sub_q.code] = [child.text]
 					elif child.numeric is not None:
 						feature['properties'][sub_q.code] = [str(child.numeric)]
-					elif child.selected_choices:
-						feature['properties'][sub_q.code] = [str(c) for c in child.selected_choices]
 				features.append(feature)
 			if features:
 				existing_geo_answers[question.code] = features
@@ -901,11 +908,17 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 			elif question.input_type in ('choice', 'rating', 'thumbs'):
 				if answer.selected_choices:
 					initial[question.code] = str(answer.selected_choices[0])
+					_other = answer.other_text()
+					if _other is not None:
+						initial[other_option.field_name(question.code)] = _other
 				elif answer.numeric is not None:
 					initial[question.code] = str(int(answer.numeric))
 			elif question.input_type == 'multichoice':
 				if answer.selected_choices:
 					initial[question.code] = [str(c) for c in answer.selected_choices]
+					_other = answer.other_text()
+					if _other is not None:
+						initial[other_option.field_name(question.code)] = _other
 			elif question.input_type == 'ranking':
 				# Order matters here, unlike multichoice: this list is the answer.
 				if answer.selected_choices:
@@ -1126,7 +1139,7 @@ def survey_section(request, survey_slug, section_name):
 							#сохранить properties как ответы наследники
 							properties = gj['properties'];
 							for key, value in properties.items():
-								if key != 'question_id':
+								if key != 'question_id' and not other_option.is_other_field(key):
 									sub_question = Question.objects.get(Q(survey_section=section) & Q(code=key))
 									sub_answer = Answer(survey_session=survey_session, question=sub_question, parent_answer_id = answer)
 									first = value[0] if value else None
@@ -1138,6 +1151,10 @@ def survey_section(request, survey_slug, section_name):
 											sub_answer.numeric = float(first)
 									elif sub_question.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
 										sub_answer.selected_choices = [int(v) for v in value if v]
+										_raw = properties.get(other_option.field_name(key)) or []
+										_text = other_option.other_text(sub_question, sub_answer.selected_choices, _raw[0] if _raw else '')
+										if _text is not None:
+											sub_answer.text = _text
 									elif sub_question.input_type in FILE_INPUT_TYPES:
 										# The popup carries async-upload tokens as ordinary
 										# property values — one per file. Each becomes its
@@ -1190,6 +1207,9 @@ def survey_section(request, survey_slug, section_name):
 					if selected:
 						answer = Answer(survey_session=survey_session, question=question)
 						answer.selected_choices = selected
+						_text = other_option.other_text(question, selected, request.POST.get(other_option.field_name(question.code)))
+						if _text is not None:
+							answer.text = _text
 						answer.save()
 
 				elif question.input_type in FILE_INPUT_TYPES:
@@ -1537,7 +1557,8 @@ def _answer_cell(question, answers):
 		return ""
 
 	if not answers:
-		return ""
+		# A flagged question keeps its adjacent write-in column on unanswered rows too.
+		return other_option.export_cell(question, None, "")
 
 	answer = answers[0]
 
@@ -1563,10 +1584,10 @@ def _answer_cell(question, answers):
 
 	if input_type in ('choice', 'rating', 'thumbs'):
 		names = answer.get_selected_choice_names()
-		return names[0] if names else ""
+		return other_option.export_cell(question, answer, names[0] if names else "")
 
 	if input_type == 'multichoice':
-		return "; ".join(answer.get_selected_choice_names())
+		return other_option.export_cell(question, answer, "; ".join(answer.get_selected_choice_names()))
 
 	if input_type == 'ranking':
 		# One column per item, valued by its rank: a single "a > b > c" cell
@@ -1633,7 +1654,13 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 				# Unlike the CSV, every sub-question keeps a property even when
 				# it holds nothing: a feature collection whose attribute set
 				# varies per feature is awkward to read in QGIS.
-				properties[subquestion.name] = "" if cell is EXPORT_NO_COLUMN else cell
+				if cell is EXPORT_NO_COLUMN:
+					properties[subquestion.name] = ""
+				elif isinstance(cell, dict):
+					# Several columns for one answer: ranking, a write-in option.
+					properties.update(cell)
+				else:
+					properties[subquestion.name] = cell
 
 			properties["session"] = str(geo_answer.survey_session)
 			properties["session_id"] = geo_answer.survey_session_id
@@ -2106,6 +2133,8 @@ def _save_object_answers(post, survey_session, question):
 		if obj is None:
 			continue
 		for code, values in by_code.items():
+			if other_option.is_other_field(code):
+				continue   # read beside its option below
 			sub_q = sub_questions.get(code)
 			if sub_q is None:
 				continue
@@ -2123,6 +2152,10 @@ def _save_object_answers(post, survey_session, question):
 				if not selected:
 					continue
 				answer.selected_choices = selected
+				_raw = by_code.get(other_option.field_name(code)) or []
+				_text = other_option.other_text(sub_q, selected, _raw[0] if _raw else '')
+				if _text is not None:
+					answer.text = _text
 			elif sub_q.input_type == 'ranking':
 				defined = [str(c["code"]) for c in (sub_q.choices or [])]
 				if sorted(values) != sorted(defined) or not defined:
@@ -2147,15 +2180,22 @@ def _existing_object_answers(questions, session_id):
 		        .select_related('question', 'layer_object'))
 		by_key = {}
 		for a in rows:
-			if a.text is not None:
+			q = a.question
+			if q.input_type in ('choice', 'multichoice', 'rating', 'thumbs', 'ranking'):
+				# By type, not by column: a write-in row holds codes AND text.
+				if not a.selected_choices:
+					continue
+				values = [str(c) for c in a.selected_choices]
+				_other = a.other_text()
+				if _other is not None:
+					by_key.setdefault(a.layer_object.key, {})[other_option.field_name(q.code)] = [_other]
+			elif a.text is not None:
 				values = [a.text]
 			elif a.numeric is not None:
 				values = [str(a.numeric)]
-			elif a.selected_choices:
-				values = [str(c) for c in a.selected_choices]
 			else:
 				continue
-			by_key.setdefault(a.layer_object.key, {})[a.question.code] = values
+			by_key.setdefault(a.layer_object.key, {})[q.code] = values
 		out[question.code] = by_key
 	return out
 

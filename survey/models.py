@@ -1064,6 +1064,11 @@ class Question(models.Model):
                 return names
         return str(code)
 
+    def other_choice_code(self):
+        """Code of this question's write-in option, or None (spec other-option-write-in)."""
+        from . import other_option
+        return other_option.other_code(self)
+
 
 class QuestionTranslation(models.Model):
     question = models.ForeignKey("Question", on_delete=models.CASCADE, related_name='translations')
@@ -1163,6 +1168,16 @@ class Answer(models.Model):
     def get_selected_choice_names(self, lang=None):
         codes = self.selected_choices or []
         return [self.question.get_choice_name(code, lang) for code in codes]
+
+    def other_text(self):
+        """Write-in of a choice answer, or None unless the flagged option is selected."""
+        from . import other_option
+        return other_option.answer_text(self)
+
+    def choice_display(self, lang=None):
+        """Selected labels for the creator's eyes, the write-in option carrying its text."""
+        from . import other_option
+        return other_option.display(self, lang)
 
     def subAnswers(self):
     	if not hasattr(self, "__sacache"):

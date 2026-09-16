@@ -26,3 +26,5 @@ costs the creator two questions per "Other".
   text (k-anonymity rules in `public_results.py`).
 - Touches: `choices` JSON schema, `SurveySectionAnswerForm`, respondent template + JS
   toggle, CSV export, ZIP serialization, editor choice UI.
+
+Promoted on 2026-09-16

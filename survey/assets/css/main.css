@@ -1559,3 +1559,7 @@ body.survey-form-layout #info_page {
 .ref-style-table tr.is-other td { color:#9aa0a6; }
 .ref-style-preview { height:170px; margin-top:.5rem; border-radius:8px; overflow:hidden; border:1px solid #e5e7eb; background:#e4ebe0; }
 .ref-layer-pill { font-size:.62rem; padding:0 6px; border-radius:999px; background:#eef2ff; color:#4f46e5; margin-left:.4rem; white-space:nowrap; }
+
+/* "Other, please specify" write-in under its option (openspec: other-option-write-in) */
+.other-writein { margin: .25rem 0 .5rem 1.5rem; }
+.other-writein__input { max-width: 28rem; }

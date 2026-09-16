@@ -38,7 +38,51 @@ class HTMLField(forms.Field):
         return attrs
 
 
-class ChoiceDropdownWidget(widgets.Select):
+class OtherChoiceWidgetMixin:
+    """Renders the write-in input under a question's flagged option
+    (openspec: other-option-write-in).
+
+    `other_choice` / `other_value` are stamped on the widget instance by the
+    form, the way `question_type` and `display_style` are. Without a flagged
+    option the widget renders exactly as its stock base class. The option
+    template reads `widget.other`; the dropdown reads it from the outer context.
+    """
+    other_choice = None   # {'code': int, 'label': str} or None
+    other_value = ''      # prefilled write-in text (top-level revisit only)
+
+    def _other_state(self, name, selected_values):
+        from . import other_option
+        if not self.other_choice:
+            return None
+        code = self.other_choice['code']
+        return {
+            'name': other_option.field_name(name),
+            'code': code,
+            'value': self.other_value or '',
+            'shown': str(code) in [str(v) for v in (selected_values or [])],
+        }
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
+        if self.other_choice and str(value) == str(self.other_choice['code']):
+            option['other'] = self._other_state(name, [value] if selected else [])
+        return option
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['widget']['other'] = self._other_state(name, self.format_value(value))
+        return context
+
+
+class OtherChoiceRadioSelect(OtherChoiceWidgetMixin, forms.RadioSelect):
+    option_template_name = 'partials/choice_option_other.html'
+
+
+class OtherChoiceCheckboxSelectMultiple(OtherChoiceWidgetMixin, forms.CheckboxSelectMultiple):
+    option_template_name = 'partials/choice_option_other.html'
+
+
+class ChoiceDropdownWidget(OtherChoiceWidgetMixin, widgets.Select):
     """Searchable dropdown for choice questions with many options.
 
     The real form control stays a native <select> (hidden), so validation and
@@ -430,6 +474,17 @@ class ShowImageField(forms.Field):
 
         return attrs
 
+def _stamp_other_choice(widget, question, language, initial=None):
+    """Hand the widget its write-in option, if the question has one
+    (spec other-option-write-in). `initial` carries the stored text on revisit."""
+    from . import other_option
+    code = other_option.other_code(question)
+    if code is None:
+        return
+    widget.other_choice = {'code': code, 'label': question.get_choice_name(code, language)}
+    widget.other_value = (initial or {}).get(other_option.field_name(question.code), '') or ''
+
+
 class SurveySectionAnswerForm(forms.Form):
 
     # Question types whose rendering the creator can pick. Membership, rather
@@ -480,13 +535,13 @@ class SurveySectionAnswerForm(forms.Form):
 
         elif input_type == 'choice':
             choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
-            widget = ChoiceDropdownWidget if display_style == 'dropdown' else forms.RadioSelect
+            widget = ChoiceDropdownWidget if display_style == 'dropdown' else OtherChoiceRadioSelect
             return forms.ChoiceField(widget=widget, choices=choices, label=label, required=required)
 
         elif input_type == 'multichoice':
             choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
             return forms.MultipleChoiceField(
-                widget=forms.CheckboxSelectMultiple,
+                widget=OtherChoiceCheckboxSelectMultiple,
                 choices=choices,
                 label=label,
                 required=required,
@@ -604,6 +659,7 @@ class SurveySectionAnswerForm(forms.Form):
         # their own widget instead, so they are left out here.
         field.widget.question_subtext = (
             question.get_translated_subtext(language) if question.subtext else "")
+        _stamp_other_choice(field.widget, question, language)
         if resolved_style == 'stars':
             # The star partial paints from these; resolved here so the two form
             # paths (whole section, single question) cannot disagree.
@@ -651,6 +707,7 @@ class SurveySectionAnswerForm(forms.Form):
             self.fields[field_name].widget.question_type = question.input_type
             self.fields[field_name].widget.display_style = resolved_style
             self.fields[field_name].widget.question_subtext = field_sublabel
+            _stamp_other_choice(self.fields[field_name].widget, question, language, initial)
             if resolved_style == 'stars':
                 self.fields[field_name].widget.star_icon = question.star_icon()
                 self.fields[field_name].widget.star_color = question.star_color()

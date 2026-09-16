@@ -1,4 +1,4 @@
-<div class="choice-dropdown" data-choice-dropdown>
+{% load i18n %}<div class="choice-dropdown" data-choice-dropdown>
     <input type="text" class="form-control cd-search" autocomplete="off"
            role="combobox" aria-expanded="false" aria-haspopup="listbox"
            placeholder="Type to search…" value="{{ widget.selected_label }}">
@@ -19,6 +19,9 @@
             {% if option.selected %}aria-selected="true"{% endif %}>{{ option.label }}</li>
         {% endfor %}{% endfor %}
     </ul>
+    {% if widget.other %}{% comment %}The write-in option's text field, beneath the control; other_option.js
+    shows it while the flagged code is the select's value (spec other-option-write-in).{% endcomment %}
+    {% include "partials/other_writein_input.html" with other=widget.other controls=widget.name code=widget.other.code %}{% endif %}
 </div>
 <script>
 (function () {
@@ -44,7 +47,10 @@
         });
     }
     function pick(box, li) {
-        box.querySelector('.cd-select').value = li.dataset.value;
+        var select = box.querySelector('.cd-select');
+        select.value = li.dataset.value;
+        // Setting .value fires nothing; the write-in reveal listens for change.
+        select.dispatchEvent(new Event('change', { bubbles: true }));
         box.querySelector('.cd-search').value = li.textContent.trim();
         items(box).forEach(function (o) { o.removeAttribute('aria-selected'); });
         li.setAttribute('aria-selected', 'true');
@@ -66,8 +72,13 @@
         if (e.target.classList && e.target.classList.contains('cd-search')) {
             var box = root(e.target);
             // Free text invalidates the previous pick until an option is chosen
-            // again, so a stale value can never ride under edited text.
-            box.querySelector('.cd-select').value = '';
+            // again, so a stale value can never ride under edited text. The
+            // select is told, so a write-in field revealed by the old pick folds.
+            var cleared = box.querySelector('.cd-select');
+            if (cleared.value !== '') {
+                cleared.value = '';
+                cleared.dispatchEvent(new Event('change', { bubbles: true }));
+            }
             filterList(box, e.target.value);
             openList(box);
         }

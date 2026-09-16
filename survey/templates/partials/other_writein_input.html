@@ -1,0 +1,6 @@
+{% load i18n %}{% comment %}The write-in field under a flagged option (spec other-option-write-in).
+Included by the radio/checkbox option template and by the dropdown; other_option.js shows it
+while `code` is among the selected values of the controls named `controls`.{% endcomment %}
+<div class="other-writein" data-other-for="{{ controls }}" data-other-code="{{ code|stringformat:'s' }}"{% if not other.shown %} hidden{% endif %}>
+    <input type="text" class="form-control form-control-sm other-writein__input" name="{{ other.name }}" value="{{ other.value }}" placeholder="{% trans 'Please specify' %}" autocomplete="off" maxlength="500"{% if not other.shown %} disabled{% endif %}>
+</div>

@@ -18,6 +18,7 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 
+from . import other_option
 from .models import (
     SurveyHeader, SurveySession, SurveySection, SurveySectionTranslation,
     Question, QuestionTranslation, SurveyCollaborator, Answer,
@@ -73,7 +74,7 @@ def _guard_choice_codes(question, new_choices):
     existing choice is a normal compatible edit).
     """
     if not isinstance(new_choices, list) or not question.code:
-        return new_choices
+        return other_option.clamp_single_other(new_choices)
 
     old_codes = {c.get('code') for c in (question.choices or []) if isinstance(c, dict)}
 
@@ -93,7 +94,7 @@ def _guard_choice_codes(question, new_choices):
     for selected in lineage_selected:
         answered.update(selected or [])
     if not answered:
-        return new_choices
+        return other_option.clamp_single_other(new_choices)
 
     all_known = answered | old_codes | {
         c.get('code') for c in new_choices if isinstance(c, dict)
@@ -108,7 +109,7 @@ def _guard_choice_codes(question, new_choices):
         if code in answered and code not in old_codes:
             choice['code'] = next_code
             next_code += 1
-    return new_choices
+    return other_option.clamp_single_other(new_choices)
 
 
 def _check_structural_edit_allowed(survey):
@@ -1699,7 +1700,7 @@ def editor_question_preview_live(request, survey_uuid, section_id):
                 and not isinstance(c.get('code'), bool)
                 and 'name' in c
             ]
-            choices = cleaned or None
+            choices = other_option.clamp_single_other(cleaned) or None
 
     # Objects on the map: the draft's layer comes from the modal's picker and
     # must be one of this survey's (canonical owner's) layers.

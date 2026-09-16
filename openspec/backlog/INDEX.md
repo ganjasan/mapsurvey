@@ -151,7 +151,7 @@ Phase 1 shipped (Turnstile, rate limit, honeypot). Remaining items are hygiene.
 | 14 | feature | [Export filter: completed surveys only](feature-export-completed-only-filter.md) | high | backend | — | 2026-03-30 |
 | 8 | feature | [Shapefile and GeoPackage export](feature-shapefile-geopackage-export.md) | high | backend | — | 2026-03-26 |
 | 6 | feature | [Link questions to geoinformation after creation](feature-link-questions-to-geo.md) | high | frontend | — | 2026-03-26 |
-| 165 | feature | ["Other, please specify" write-in option on choice questions](feature-other-option-with-write-in.md) | medium | frontend | — | 2026-09-02 |
+| 165 | feature | ["Other, please specify" write-in option on choice questions](feature-other-option-with-write-in.md) (promoted) | medium | frontend | — | 2026-09-02 |
 | 161 | feature | [Excel (.xlsx) export with coordinates](feature-excel-export.md) | medium | backend | — | 2026-08-31 |
 | 127 | improvement | [Language picker: `eu` (Basque) reads as "EU / European"](improvement-language-picker-eu-basque-trap.md) | medium | frontend | — | 2026-08-17 |
 | 102 | feature | [Additional scale, matrix and ranking question types](feature-additional-scale-question-types.md) (ranking shipped) | medium | frontend | — | 2026-08-04 |
@@ -168,6 +168,7 @@ Phase 1 shipped (Turnstile, rate limit, honeypot). Remaining items are hygiene.
 | 164 | feature | [Image as an answer option (choice / multichoice with pictures)](feature-image-answer-options.md) | low | frontend | — | 2026-08-31 |
 | 40 | feature | [Answer choice templates](feature-answer-choice-templates.md) | low | frontend | — | 2026-03-26 |
 | 39 | feature | [Progress bar for entire survey](feature-progress-bar.md) | low | frontend | — | 2026-03-26 |
+| 171 | feature | [AI drafts mark the "Other, please specify" option](feature-ai-drafts-other-option.md) | low | ai | — | 2026-09-16 |
 
 ## Shipped / closed
 
