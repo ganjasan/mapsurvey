@@ -7641,3 +7641,43 @@ msgstr "Bagian di balik aturan visibilitas dibandingkan dengan orang yang dilolo
 msgid "%(n)s skipped by rule"
 msgid_plural "%(n)s skipped by rule"
 msgstr[0] "%(n)s dilewati oleh aturan"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Drag and zoom the map so the pin marks where respondents start on this section. Changes save automatically."
+msgstr "Seret dan perbesar peta sehingga pin menandai tempat responden memulai bagian ini. Perubahan disimpan otomatis."
+
+#: survey/templates/editor/partials/survey_settings.html
+msgid "Drag and zoom the map so the pin marks where respondents start. Changes save automatically."
+msgstr "Seret dan perbesar peta sehingga pin menandai tempat responden memulai. Perubahan disimpan otomatis."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "When checked, this section inherits map position from the survey default or keeps the respondent’s current view. Moving the map gives the section its own position."
+msgstr "Jika dicentang, bagian ini mewarisi posisi peta dari bawaan survei atau mempertahankan tampilan responden saat ini. Menggeser peta memberi bagian ini posisinya sendiri."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Inheriting the survey position — drag the map to give this section its own"
+msgstr "Mewarisi posisi survei — seret peta untuk memberi bagian ini posisinya sendiri"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Saving…"
+msgstr "Menyimpan…"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Not saved — tap to retry"
+msgstr "Belum tersimpan — ketuk untuk mencoba lagi"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "My location"
+msgstr "Lokasi saya"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Locating you…"
+msgstr "Mencari lokasi Anda…"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Couldn't get your location — search for a place or drag the map instead."
+msgstr "Lokasi Anda tidak dapat ditemukan — cari tempat atau seret peta."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Geolocation is not available in this browser."
+msgstr "Geolokasi tidak tersedia di peramban ini."

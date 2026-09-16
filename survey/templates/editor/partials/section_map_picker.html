@@ -8,17 +8,9 @@
     <div class="picker-map-search picker-map-search--modal" id="map-picker-search"></div>
     <div id="map-picker" class="picker-map picker-map--modal"></div>
     <div style="padding:0.75rem 1rem;font-size:0.85rem;color:#6b7280;">
-        {% trans "Click on the map to set the starting position. Adjust zoom as needed." %}
+        {% trans "Drag and zoom the map so the pin marks where respondents start on this section. Changes save automatically." %}
         <br>
-        <span id="map-coords">
-            {% if section.start_map_postion %}
-                Lat: {{ section.start_map_postion.y|floatformat:5 }},
-                Lng: {{ section.start_map_postion.x|floatformat:5 }},
-                Zoom: {{ section.start_map_zoom|default:"12" }}
-            {% else %}
-                {% trans "No position set (inherits from survey or previous section)" %}
-            {% endif %}
-        </span>
+        <span id="map-coords"></span>
     </div>
     <div style="padding:0 1rem 0.75rem;">
         <div class="form-check mb-2">
@@ -26,7 +18,7 @@
                    {% if not section.start_map_postion %}checked{% endif %}>
             <label class="form-check-label" for="clear-position"
                    style="font-size:0.85rem;cursor:pointer;"
-                   title="{% trans 'When checked, this section inherits map position from the survey default or keeps the respondent’s current view.' %}">
+                   title="{% trans 'When checked, this section inherits map position from the survey default or keeps the respondent’s current view. Moving the map gives the section its own position.' %}">
                 {% trans "Inherit position (don't override)" %}
                 <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
             </label>
@@ -53,10 +45,28 @@
     </div>
 </div>
 <div class="modal-footer">
-    <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
-    <button type="button" class="btn btn-primary" id="save-map-position">{% trans "Save Position" %}</button>
+    {% comment %}Autosave (openspec: map-picker-centre-autosave): the indicator
+    replaces Save and Cancel. It doubles as the retry control in the error
+    state — map_position_picker.js drives data-state.{% endcomment %}
+    <span class="autosave-indicator" id="map-picker-status" data-state="saved" role="status" aria-live="polite">
+        <i class="fas fa-circle autosave-dot"></i>
+        <span class="autosave-label">{% trans "All changes saved" %}</span>
+    </span>
+    <span style="flex:1;"></span>
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Close" %}</button>
 </div>
 
+{% trans "Respondents open here — centre" as lbl_centre %}
+{% trans "zoom" as lbl_zoom %}
+{% trans "Inheriting the survey position — drag the map to give this section its own" as lbl_inheriting %}
+{% trans "Saving…" as lbl_saving %}
+{% trans "All changes saved" as lbl_saved %}
+{% trans "Not saved — tap to retry" as lbl_error %}
+{% trans "My location" as lbl_my_location %}
+{% trans "Locating you…" as lbl_locating %}
+{% trans "Couldn't get your location — search for a place or drag the map instead." as lbl_locate_failed %}
+{% trans "Geolocation is not available in this browser." as lbl_no_geolocation %}
+{% trans "Search for a place — city, address, landmark…" as lbl_search %}
 <script>
 (function() {
     {% comment %}USE_L10N is on, so a float rendered under any locale that writes
@@ -76,163 +86,60 @@
     var zoom = hasPosition ? {{ section.start_map_zoom|default:"12" }} : inheritZoom;
     {% endlocalize %}
 
-
     // Wait for modal to be visible before initializing map
     setTimeout(function() {
         var map = L.map('map-picker').setView([lat, lng], zoom);
         {% include "partials/basemap_layers.html" %}
-
-        var marker = hasPosition ? L.marker([lat, lng]).addTo(map) : null;
-
-        // Toggle map picker interactivity based on inherit checkbox
-        var clearCb = document.getElementById('clear-position');
-        var pickerDiv = document.getElementById('map-picker');
-        var savedLat = lat, savedLng = lng, savedZoom = zoom;
-        var inheritMarker = null;
-        function updatePickerState() {
-            if (clearCb.checked) {
-                // Save current custom position so it can be restored on uncheck
-                if (marker) { savedLat = lat; savedLng = lng; savedZoom = zoom; }
-                // Remove custom marker, show inherited position
-                if (marker) { map.removeLayer(marker); marker = null; }
-                if (!inheritMarker) {
-                    inheritMarker = L.marker([inheritLat, inheritLng], {
-                        opacity: 0.6
-                    }).addTo(map);
-                }
-                map.flyTo([inheritLat, inheritLng], inheritZoom, {animate: true, duration: 0.5});
-                pickerDiv.style.pointerEvents = 'none';
-                document.getElementById('map-coords').textContent =
-                    'Inheriting: Lat: ' + inheritLat.toFixed(5) + ', Lng: ' + inheritLng.toFixed(5) + ', Zoom: ' + inheritZoom;
-            } else {
-                // Remove inherit marker, restore custom state
-                if (inheritMarker) { map.removeLayer(inheritMarker); inheritMarker = null; }
-                pickerDiv.style.pointerEvents = 'auto';
-                if (savedLat !== inheritLat || savedLng !== inheritLng) {
-                    map.flyTo([savedLat, savedLng], savedZoom, {animate: true, duration: 0.5});
-                    if (!marker) { marker = L.marker([savedLat, savedLng]).addTo(map); }
-                    document.getElementById('map-coords').textContent =
-                        'Lat: ' + savedLat.toFixed(5) + ', Lng: ' + savedLng.toFixed(5) + ', Zoom: ' + savedZoom;
-                }
-            }
-        }
-        clearCb.addEventListener('change', updatePickerState);
-        updatePickerState();
-
-        map.on('click', function(e) {
-            if (clearCb.checked) return;
-            lat = e.latlng.lat;
-            lng = e.latlng.lng;
-            if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
-            else { marker.setLatLng(e.latlng); }
-            document.getElementById('map-coords').textContent =
-                'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + map.getZoom();
-        });
-
-        map.on('zoomend', function() {
-            zoom = map.getZoom();
-            if (!clearCb.checked) {
-                document.getElementById('map-coords').textContent =
-                    'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
-            }
-        });
-
-        document.getElementById('save-map-position').addEventListener('click', function() {
-            zoom = map.getZoom();
-            var formData = new FormData();
-            formData.append('clear_position', clearCb.checked ? '1' : '0');
-            formData.append('lat', lat);
-            formData.append('lng', lng);
-            formData.append('zoom', zoom);
-            formData.append('use_geolocation', document.getElementById('use-geolocation').checked ? '1' : '0');
-            formData.append('override_basemap', document.getElementById('override-basemap').value);
-
-            fetch('{% url "editor_section_map_picker" survey.uuid section.id %}', {
-                method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-                body: formData
-            }).then(function(resp) {
-                if (resp.ok) {
-                    $('#mapPickerModal').modal('hide');
-                } else {
-                    alert('Failed to save: survey may be read-only. Create a draft to edit.');
-                }
-            });
-        });
-
-        // "My location" button
-        var LocateControl = L.Control.extend({
-            options: { position: 'topright' },
-            onAdd: function() {
-                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-                var link = L.DomUtil.create('a', '', container);
-                link.href = '#';
-                link.title = 'My location';
-                link.setAttribute('role', 'button');
-                link.setAttribute('aria-label', 'My location');
-                link.style.cssText = 'font-size:16px;line-height:30px;width:30px;height:30px;display:block;text-align:center;cursor:pointer;background:#fff;';
-                link.textContent = '\uD83D\uDCCD';
-                L.DomEvent.on(link, 'click', function(e) {
-                    L.DomEvent.preventDefault(e);
-                    L.DomEvent.stopPropagation(e);
-                    if (!navigator.geolocation) return;
-                    navigator.geolocation.getCurrentPosition(function(pos) {
-                        lat = pos.coords.latitude;
-                        lng = pos.coords.longitude;
-                        map.setView([lat, lng], 15);
-                        if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
-                        else { marker.setLatLng([lat, lng]); }
-                        clearCb.checked = false;
-                        updatePickerState();
-                        document.getElementById('map-coords').textContent =
-                            'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + map.getZoom();
-                    });
-                });
-                return container;
-            }
-        });
-        map.addControl(new LocateControl());
-
-        // Fix map rendering in modal
+        // Fix map rendering in modal — before the picker attaches, so the
+        // resize pan is not mistaken for a move worth saving.
         map.invalidateSize();
 
+        // The centre is the position; the pin marks it; every settled move
+        // saves (openspec: map-picker-centre-autosave). Inherit: ticking flies
+        // to the survey default and clears; any gesture on the map unticks.
+        var picker = MapPositionPicker.attach(map, {
+            url: '{% url "editor_section_map_picker" survey.uuid section.id %}',
+            csrfToken: '{{ csrf_token }}',
+            coordsEl: document.getElementById('map-coords'),
+            indicatorEl: document.getElementById('map-picker-status'),
+            inherit: {
+                checkbox: document.getElementById('clear-position'),
+                lat: inheritLat, lng: inheritLng, zoom: inheritZoom
+            },
+            extraFields: function() {
+                return {
+                    use_geolocation: document.getElementById('use-geolocation').checked ? '1' : '0',
+                    override_basemap: document.getElementById('override-basemap').value
+                };
+            },
+            watch: [document.getElementById('use-geolocation'), document.getElementById('override-basemap')],
+            locate: true,
+            labels: {
+                centre: '{{ lbl_centre|escapejs }}',
+                zoom: '{{ lbl_zoom|escapejs }}',
+                inheriting: '{{ lbl_inheriting|escapejs }}',
+                saving: '{{ lbl_saving|escapejs }}',
+                saved: '{{ lbl_saved|escapejs }}',
+                error: '{{ lbl_error|escapejs }}',
+                myLocation: '{{ lbl_my_location|escapejs }}',
+                locating: '{{ lbl_locating|escapejs }}',
+                locateFailed: '{{ lbl_locate_failed|escapejs }}',
+                noGeolocation: '{{ lbl_no_geolocation|escapejs }}'
+            }
+        });
+
         // ── Place search (openspec: editor-map-picker-search) ──
-        // Typing a place into a section picker means "this section starts
-        // here": the result becomes the section's own position, which
-        // first lifts "Inherit" — while it is checked the map ignores
-        // clicks, so a moved-but-unset map would be a dead end.
-        // Attached LAST, after every binding above: this is the one call
-        // that talks to an external SDK, and a throw here used to skip
-        // the Save handler and leave a modal that looks fine and saves
-        // nothing (openspec: fix-section-map-picker-init). The token is a
-        // template literal on purpose — reading a global that another
-        // partial declares is what broke it.
+        // Attached LAST: this is the one call that talks to an external SDK,
+        // and a throw here must cost the search box, never the picker
+        // (openspec: fix-section-map-picker-init). The token is a template
+        // literal on purpose — reading a global that another partial declares
+        // is what broke it. A result is a creator gesture: it lifts Inherit,
+        // and the flight's moveend saves the centre.
         MapPlaceSearch.attach(map, {
             accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
             container: document.getElementById('map-picker-search'),
-            labels: { placeholder: '{% trans "Search for a place — city, address, landmark…" %}' },
-            onSelect: function(result) {
-                lat = result.lat; lng = result.lng;
-                if (clearCb.checked) {
-                    // The restore path flies to the saved custom position;
-                    // make that the result, or it would undo the search.
-                    savedLat = lat; savedLng = lng; savedZoom = result.zoom || map.getZoom();
-                    clearCb.checked = false;
-                    updatePickerState();
-                }
-                if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
-                else { marker.setLatLng([lat, lng]); }
-                // A result with bounds is fitted synchronously, so moveend
-                // may already have fired: write the label now and again
-                // once an animated fly settles on its final zoom.
-                function showPicked() {
-                    zoom = map.getZoom();
-                    document.getElementById('map-coords').textContent =
-                        'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
-                }
-                showPicked();
-                map.once('moveend', showPicked);
-            }
+            labels: { placeholder: '{{ lbl_search|escapejs }}' },
+            onSelect: picker.touched
         });
     }, 300);
 })();

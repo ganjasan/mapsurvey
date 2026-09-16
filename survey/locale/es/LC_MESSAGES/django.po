@@ -7686,3 +7686,43 @@ msgid "%(n)s skipped by rule"
 msgid_plural "%(n)s skipped by rule"
 msgstr[0] "%(n)s omitido por la regla"
 msgstr[1] "%(n)s omitidos por la regla"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Drag and zoom the map so the pin marks where respondents start on this section. Changes save automatically."
+msgstr "Arrastre y amplíe el mapa para que el marcador señale dónde empiezan los encuestados en esta sección. Los cambios se guardan automáticamente."
+
+#: survey/templates/editor/partials/survey_settings.html
+msgid "Drag and zoom the map so the pin marks where respondents start. Changes save automatically."
+msgstr "Arrastre y amplíe el mapa para que el marcador señale dónde empiezan los encuestados. Los cambios se guardan automáticamente."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "When checked, this section inherits map position from the survey default or keeps the respondent’s current view. Moving the map gives the section its own position."
+msgstr "Si está marcado, esta sección hereda la posición del mapa predeterminada de la encuesta o mantiene la vista actual del encuestado. Mover el mapa da a la sección su propia posición."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Inheriting the survey position — drag the map to give this section its own"
+msgstr "Hereda la posición de la encuesta — arrastre el mapa para dar a esta sección la suya"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Saving…"
+msgstr "Guardando…"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Not saved — tap to retry"
+msgstr "No guardado — toque para reintentar"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "My location"
+msgstr "Mi ubicación"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Locating you…"
+msgstr "Localizando…"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Couldn't get your location — search for a place or drag the map instead."
+msgstr "No se pudo obtener su ubicación — busque un lugar o arrastre el mapa."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Geolocation is not available in this browser."
+msgstr "La geolocalización no está disponible en este navegador."

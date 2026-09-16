@@ -123,15 +123,9 @@
         <div class="picker-map-search" id="survey-map-search"></div>
         <div id="survey-map-picker" class="picker-map picker-map--page" style="margin-bottom:0.75rem;"></div>
         <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
-            <span id="survey-map-coords">
-                {% if survey.start_map_postion %}
-                    Lat: {{ survey.start_map_postion.y|floatformat:5 }},
-                    Lng: {{ survey.start_map_postion.x|floatformat:5 }},
-                    Zoom: {{ survey.start_map_zoom|default:"12" }}
-                {% else %}
-                    {% trans "Click the map to set position" %}
-                {% endif %}
-            </span>
+            {% trans "Drag and zoom the map so the pin marks where respondents start. Changes save automatically." %}
+            <br>
+            <span id="survey-map-coords"></span>
         </div>
         <div class="form-check mb-2">
             <input type="checkbox" class="form-check-input" id="survey-use-geolocation"
@@ -143,12 +137,22 @@
                 <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
             </label>
         </div>
-        <button type="button" class="btn btn-primary btn-sm" id="save-survey-map-position">
-            <i class="fas fa-save mr-1"></i> {% trans "Save Map Position" %}
-        </button>
-        <span id="survey-map-saved" style="display:none;color:#10b981;font-size:0.85rem;margin-left:0.5rem;">{% trans "Saved!" %}</span>
+        <span class="autosave-indicator" id="survey-map-status" data-state="saved" role="status" aria-live="polite">
+            <i class="fas fa-circle autosave-dot"></i>
+            <span class="autosave-label">{% trans "All changes saved" %}</span>
+        </span>
     </div>
 
+{% trans "Respondents open here — centre" as lbl_centre %}
+{% trans "zoom" as lbl_zoom %}
+{% trans "Saving…" as lbl_saving %}
+{% trans "All changes saved" as lbl_saved %}
+{% trans "Not saved — tap to retry" as lbl_error %}
+{% trans "My location" as lbl_my_location %}
+{% trans "Locating you…" as lbl_locating %}
+{% trans "Couldn't get your location — search for a place or drag the map instead." as lbl_locate_failed %}
+{% trans "Geolocation is not available in this browser." as lbl_no_geolocation %}
+{% trans "Search for a place — city, address, landmark…" as lbl_search %}
     <script>
     (function() {
         {% comment %}See section_map_picker.html: a localized decimal comma here
@@ -167,79 +171,48 @@
             accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
         }).addTo(map);
 
-        var marker = hasPosition ? L.marker([lat, lng]).addTo(map) : null;
-
-        // Auto-geolocate when no position is set yet
-        if (!hasPosition && navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(pos) {
-                lat = pos.coords.latitude;
-                lng = pos.coords.longitude;
-                zoom = 13;
-                map.setView([lat, lng], zoom);
-                marker = L.marker([lat, lng]).addTo(map);
-                document.getElementById('survey-map-coords').textContent =
-                    'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
-            }, function() {}, { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 });
-        }
-
-        map.on('click', function(e) {
-            lat = e.latlng.lat; lng = e.latlng.lng;
-            if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
-            else { marker.setLatLng(e.latlng); }
-            document.getElementById('survey-map-coords').textContent =
-                'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + map.getZoom();
-        });
-
-        map.on('zoomend', function() {
-            zoom = map.getZoom();
-            document.getElementById('survey-map-coords').textContent =
-                'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
-        });
-
-        // ── Place search (openspec: editor-map-picker-search) ──
-        // Unlike the respondent map, choosing a result SETS the position:
-        // a creator searching for a city wants that city as the answer. A
-        // click afterwards still refines.
-        MapPlaceSearch.attach(map, {
-            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
-            container: document.getElementById('survey-map-search'),
-            labels: { placeholder: '{% trans "Search for a place — city, address, landmark…" %}' },
-            onSelect: function(result) {
-                lat = result.lat; lng = result.lng;
-                if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
-                else { marker.setLatLng([lat, lng]); }
-                // A result with bounds is fitted synchronously, so moveend
-                // may already have fired: write the label now and again
-                // once an animated fly settles on its final zoom.
-                function showPicked() {
-                    zoom = map.getZoom();
-                    document.getElementById('survey-map-coords').textContent =
-                        'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
-                }
-                showPicked();
-                map.once('moveend', showPicked);
+        // The centre is the position; the pin marks it; every settled move
+        // saves (openspec: map-picker-centre-autosave).
+        var picker = MapPositionPicker.attach(map, {
+            url: '{% url "editor_survey_map_position" survey.uuid %}',
+            csrfToken: '{{ csrf_token }}',
+            coordsEl: document.getElementById('survey-map-coords'),
+            indicatorEl: document.getElementById('survey-map-status'),
+            extraFields: function() {
+                return { use_geolocation: document.getElementById('survey-use-geolocation').checked ? '1' : '0' };
+            },
+            watch: [document.getElementById('survey-use-geolocation')],
+            locate: true,
+            labels: {
+                centre: '{{ lbl_centre|escapejs }}',
+                zoom: '{{ lbl_zoom|escapejs }}',
+                saving: '{{ lbl_saving|escapejs }}',
+                saved: '{{ lbl_saved|escapejs }}',
+                error: '{{ lbl_error|escapejs }}',
+                myLocation: '{{ lbl_my_location|escapejs }}',
+                locating: '{{ lbl_locating|escapejs }}',
+                locateFailed: '{{ lbl_locate_failed|escapejs }}',
+                noGeolocation: '{{ lbl_no_geolocation|escapejs }}'
             }
         });
 
-        document.getElementById('save-survey-map-position').addEventListener('click', function() {
-            zoom = map.getZoom();
-            var formData = new FormData();
-            formData.append('lat', lat);
-            formData.append('lng', lng);
-            formData.append('zoom', zoom);
-            formData.append('use_geolocation', document.getElementById('survey-use-geolocation').checked ? '1' : '0');
+        // Open near the creator when no position is set yet. A move made on
+        // the creator's behalf is not a decision: rebase() so it is not saved
+        // until they frame the map themselves.
+        if (!hasPosition && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                map.setView([pos.coords.latitude, pos.coords.longitude], 13);
+                picker.rebase();
+            }, function() {}, { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 });
+        }
 
-            fetch('{% url "editor_survey_map_position" survey.uuid %}', {
-                method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-                body: formData
-            }).then(function(resp) {
-                if (resp.ok) {
-                    var el = document.getElementById('survey-map-saved');
-                    el.style.display = 'inline';
-                    setTimeout(function() { el.style.display = 'none'; }, 2000);
-                }
-            });
+        // ── Place search (openspec: editor-map-picker-search) ──
+        // The control only moves the map; the position follows because the
+        // centre IS the position. Attached last (fix-section-map-picker-init).
+        MapPlaceSearch.attach(map, {
+            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
+            container: document.getElementById('survey-map-search'),
+            labels: { placeholder: '{{ lbl_search|escapejs }}' }
         });
 
         setTimeout(function() { map.invalidateSize(); }, 200);

@@ -7659,3 +7659,43 @@ msgstr "De naam kon niet worden opgeslagen. Controleer je verbinding en probeer 
 
 msgid "A draft is renamed by renaming the published survey."
 msgstr "Een concept hernoem je door de gepubliceerde enquête te hernoemen."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Drag and zoom the map so the pin marks where respondents start on this section. Changes save automatically."
+msgstr "Sleep en zoom de kaart zodat de speld markeert waar respondenten in deze sectie beginnen. Wijzigingen worden automatisch opgeslagen."
+
+#: survey/templates/editor/partials/survey_settings.html
+msgid "Drag and zoom the map so the pin marks where respondents start. Changes save automatically."
+msgstr "Sleep en zoom de kaart zodat de speld markeert waar respondenten beginnen. Wijzigingen worden automatisch opgeslagen."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "When checked, this section inherits map position from the survey default or keeps the respondent’s current view. Moving the map gives the section its own position."
+msgstr "Indien aangevinkt erft deze sectie de kaartpositie van de enquête of behoudt ze de huidige weergave van de respondent. De kaart verplaatsen geeft de sectie een eigen positie."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Inheriting the survey position — drag the map to give this section its own"
+msgstr "Erft de enquêtepositie — sleep de kaart om deze sectie een eigen positie te geven"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Saving…"
+msgstr "Opslaan…"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Not saved — tap to retry"
+msgstr "Niet opgeslagen — tik om opnieuw te proberen"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "My location"
+msgstr "Mijn locatie"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Locating you…"
+msgstr "Locatie bepalen…"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Couldn't get your location — search for a place or drag the map instead."
+msgstr "Uw locatie kon niet worden bepaald — zoek een plaats of sleep de kaart."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Geolocation is not available in this browser."
+msgstr "Geolocatie is niet beschikbaar in deze browser."

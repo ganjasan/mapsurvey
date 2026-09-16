@@ -36516,8 +36516,9 @@ class EditorMapPickerSearchTest(TestCase):
         self.assertLess(html.index('id="map-picker-search"'), html.index('id="map-picker"'))
         self.assertIn('class="picker-map picker-map--modal"', html)
         self.assertIn("container: document.getElementById('map-picker-search')", html)
-        on_select = html[html.index('onSelect: function(result)'):]
-        self.assertLess(on_select.index('clearCb.checked = false'), on_select.index('updatePickerState()'))
+        # A search result is a creator gesture: the picker unticks Inherit and
+        # the flight's moveend saves the centre (map-picker-centre-autosave).
+        self.assertIn('onSelect: picker.touched', html)
 
     def test_section_picker_declares_the_token_it_uses(self):
         """
@@ -36535,30 +36536,23 @@ class EditorMapPickerSearchTest(TestCase):
         self.assertIn("accessToken: 'pk.test-token'", html)
         self.assertNotIn('mapboxAccessToken', html)
 
-    def test_section_picker_binds_handlers_before_attaching_search(self):
+    def test_section_picker_attaches_before_the_search(self):
         """
         GIVEN the section map picker modal
         WHEN it renders
-        THEN the inherit toggle, the map click handler and the Save handler are
-             bound exactly once each, all before MapPlaceSearch.attach, and none of
-             them lives inside its onSelect callback — a throw while attaching the
-             search control then costs the search box, never the picker
-             (openspec: fix-section-map-picker-init)
+        THEN the position picker is attached exactly once, before
+             MapPlaceSearch.attach, and nothing of it lives inside the search's
+             options — a throw while attaching the search control then costs
+             the search box, never the picker (openspec: fix-section-map-picker-init)
         """
         html = self.client.get(reverse('editor_section_map_picker', args=[self.survey.uuid, self.section.id])).content.decode()
 
         attach = html.index('MapPlaceSearch.attach(')
-        for binding in (
-            "clearCb.addEventListener('change', updatePickerState)",
-            "map.on('click'",
-            "getElementById('save-map-position').addEventListener('click'",
-        ):
-            self.assertEqual(html.count(binding), 1, binding)
-            self.assertLess(html.index(binding), attach, binding)
-        on_select = html[html.index('onSelect: function(result)'):html.index('}, 300);')]
-        self.assertNotIn('addEventListener', on_select)
-        self.assertNotIn("map.on('click'", on_select)
-        self.assertNotIn("map.on('zoomend'", on_select)
+        self.assertEqual(html.count('MapPositionPicker.attach('), 1)
+        self.assertLess(html.index('MapPositionPicker.attach('), attach)
+        search_options = html[attach:html.index('}, 300);')]
+        self.assertNotIn('MapPositionPicker', search_options)
+        self.assertNotIn('addEventListener', search_options)
 
     def test_save_endpoint_is_unchanged(self):
         """
@@ -36575,6 +36569,127 @@ class EditorMapPickerSearchTest(TestCase):
         self.assertAlmostEqual(self.survey.start_map_postion.y, 59.4370, places=4)
         self.assertAlmostEqual(self.survey.start_map_postion.x, 24.7536, places=4)
         self.assertEqual(self.survey.start_map_zoom, 12)
+
+
+class EditorMapPickerCentreAutosaveTest(TestCase):
+    """The three editor map pickers take the position from the CENTRE of the
+    map and save every settled move (openspec: map-picker-centre-autosave).
+
+    A creator set three sections to three districts and got the survey default
+    on all three: the pickers only read a click, she dragged — the create
+    page's model — and Save wrote the untouched default as her choice. The
+    click handler, the Save button and the create-a-different-model-per-picker
+    are gone; one module drives all three.
+    """
+
+    SURFACES = ('settings_page', 'settings_panel', 'section_modal')
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='centre_owner', password='pass')
+        self.org = _make_org('CentreOrg')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='centre_survey', organization=self.org,
+            start_map_postion=Point(13.4050, 52.5231), start_map_zoom=12,
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec', code='S1', is_head=True,
+        )
+        self.client.login(username='centre_owner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+    def _html(self, surface):
+        url = {
+            'settings_page': reverse('editor_survey_settings', args=[self.survey.uuid]),
+            'settings_panel': reverse('editor_survey_settings_panel', args=[self.survey.uuid]),
+            'section_modal': reverse('editor_section_map_picker', args=[self.survey.uuid, self.section.id]),
+        }[surface]
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, surface)
+        return response.content.decode()
+
+    def test_every_picker_is_centre_based_with_autosave_and_no_save_button(self):
+        """
+        GIVEN the settings page, the settings panel and the section modal
+        WHEN each renders
+        THEN each attaches MapPositionPicker once, binds no map click handler,
+             carries an autosave indicator and no Save button
+        """
+        for surface in self.SURFACES:
+            html = self._html(surface)
+            self.assertEqual(html.count('MapPositionPicker.attach('), 1, surface)
+            self.assertNotIn("map.on('click'", html, surface)
+            self.assertIn('class="autosave-indicator"', html, surface)
+            self.assertNotIn('id="save-map-position"', html, surface)
+            self.assertNotIn('id="save-survey-map-position"', html, surface)
+            self.assertNotIn('Click the map', html, surface)
+            self.assertNotIn('Click on the map', html, surface)
+
+    def test_section_modal_wires_inherit_and_the_section_fields(self):
+        """
+        GIVEN the section map picker modal
+        WHEN it renders
+        THEN the picker receives the Inherit checkbox with the survey default as
+             the inherit target, posts the geolocation flag and basemap override
+             with every save, and saves both on change
+        """
+        html = self._html('section_modal')
+        self.assertIn("checkbox: document.getElementById('clear-position')", html)
+        self.assertIn('lat: inheritLat, lng: inheritLng, zoom: inheritZoom', html)
+        self.assertIn('use_geolocation:', html)
+        self.assertIn('override_basemap:', html)
+        self.assertIn("watch: [document.getElementById('use-geolocation'), document.getElementById('override-basemap')]", html)
+        self.assertNotIn('id="save-map-position"', html)
+
+    def test_module_is_served_by_the_editor_base(self):
+        """
+        GIVEN any editor page
+        WHEN it renders
+        THEN the picker module is loaded by editor_base.html, so the two
+             pickers that arrive by HTMX swap find it (a script inside a swapped
+             fragment is not reliably executed)
+        """
+        html = self._html('settings_page')
+        self.assertRegex(html, r'js/map_position_picker(\.[0-9a-f]+)?\.js')
+
+    @override_settings(EDITOR_AUTOSAVE=False)
+    def test_indicator_styling_does_not_depend_on_the_question_autosave_flag(self):
+        """
+        GIVEN EDITOR_AUTOSAVE switched off
+        WHEN an editor page renders
+        THEN the .autosave-indicator rules are still present — the map pickers
+             use the indicator unconditionally
+        """
+        html = self._html('settings_page')
+        self.assertIn('.autosave-indicator[data-state="error"]', html)
+
+    def test_section_endpoint_stores_a_centre_and_clears_on_inherit(self):
+        """
+        GIVEN the section map-position endpoint the picker posts to
+        WHEN a centre is posted with clear_position=0, then clear_position=1
+        THEN the section holds the centre and zoom, then holds nothing
+        """
+        url = reverse('editor_section_map_picker', args=[self.survey.uuid, self.section.id])
+        response = self.client.post(url, {
+            'clear_position': '0', 'lat': '42.84600', 'lng': '-2.67300', 'zoom': '14',
+            'use_geolocation': '0', 'override_basemap': '',
+        })
+        self.assertEqual(response.status_code, 204)
+        self.section.refresh_from_db()
+        self.assertAlmostEqual(self.section.start_map_postion.y, 42.846, places=4)
+        self.assertAlmostEqual(self.section.start_map_postion.x, -2.673, places=4)
+        self.assertEqual(self.section.start_map_zoom, 14)
+
+        response = self.client.post(url, {
+            'clear_position': '1', 'lat': '42.84600', 'lng': '-2.67300', 'zoom': '14',
+            'use_geolocation': '0', 'override_basemap': '',
+        })
+        self.assertEqual(response.status_code, 204)
+        self.section.refresh_from_db()
+        self.assertIsNone(self.section.start_map_postion)
+        self.assertIsNone(self.section.start_map_zoom)
 
 
 class EditorJsNumberLocaleTest(TestCase):

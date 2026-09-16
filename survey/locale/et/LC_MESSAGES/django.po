@@ -7600,3 +7600,43 @@ msgstr "Nime ei õnnestunud salvestada. Kontrolli ühendust ja proovi uuesti."
 
 msgid "A draft is renamed by renaming the published survey."
 msgstr "Mustandi nime muutmiseks muuda avaldatud küsitluse nime."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Drag and zoom the map so the pin marks where respondents start on this section. Changes save automatically."
+msgstr "Lohista ja suumi kaarti nii, et nõel märgiks, kust vastajad selles jaotises alustavad. Muudatused salvestatakse automaatselt."
+
+#: survey/templates/editor/partials/survey_settings.html
+msgid "Drag and zoom the map so the pin marks where respondents start. Changes save automatically."
+msgstr "Lohista ja suumi kaarti nii, et nõel märgiks, kust vastajad alustavad. Muudatused salvestatakse automaatselt."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "When checked, this section inherits map position from the survey default or keeps the respondent’s current view. Moving the map gives the section its own position."
+msgstr "Kui märgitud, pärib see jaotis kaardi asukoha küsitluse vaikeväärtusest või säilitab vastaja praeguse vaate. Kaardi liigutamine annab jaotisele oma asukoha."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Inheriting the survey position — drag the map to give this section its own"
+msgstr "Pärib küsitluse asukoha — lohista kaarti, et anda sellele jaotisele oma"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Saving…"
+msgstr "Salvestamine…"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Not saved — tap to retry"
+msgstr "Salvestamata — puuduta uuesti proovimiseks"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "My location"
+msgstr "Minu asukoht"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Locating you…"
+msgstr "Asukoha määramine…"
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Couldn't get your location — search for a place or drag the map instead."
+msgstr "Sinu asukohta ei õnnestunud määrata — otsi kohta või lohista kaarti."
+
+#: survey/templates/editor/partials/section_map_picker.html
+msgid "Geolocation is not available in this browser."
+msgstr "Geolokatsioon pole selles brauseris saadaval."
