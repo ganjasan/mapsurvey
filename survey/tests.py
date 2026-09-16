@@ -16128,6 +16128,124 @@ class VolunteerTileServerSweepTest(SimpleTestCase):
         self.assertEqual(offenders, [], 'volunteer tile host referenced in: ' + ', '.join(offenders))
 
 
+class MapboxScopeGlobalSweepTest(SimpleTestCase):
+    """
+    #180 deleted the `var mapboxUrl` / `var mapboxAccessToken` pair from five
+    templates when basemap_layers.html stopped reading them from the enclosing
+    scope. section_map_picker.html kept passing `mapboxAccessToken` to
+    MapPlaceSearch.attach, so the picker script threw ReferenceError there and
+    never reached its Save handler -- Save was a silent no-op for every creator
+    for two days. A token must come from the template context, never from a
+    variable some other template is trusted to declare.
+    """
+
+    GLOBALS = ('mapboxAccessToken', 'mapboxUrl')
+
+    def test_no_template_reads_a_mapbox_scope_global_it_does_not_declare(self):
+        """
+        GIVEN every template under survey/templates/
+        WHEN each is scanned for a mapbox scope global it never declares itself
+        THEN none is found -- the token is read from the template context
+        """
+        import pathlib
+        import re
+        app = pathlib.Path(__file__).resolve().parent
+        offenders = []
+        for path in sorted((app / 'templates').rglob('*.html')):
+            text = path.read_text(encoding='utf-8', errors='ignore')
+            # Both comment styles discuss these names on purpose; only code counts.
+            code = re.sub(r'{%\s*comment\s*%}.*?{%\s*endcomment\s*%}', '', text, flags=re.S)
+            code = re.sub(r'^\s*//.*$', '', code, flags=re.M)
+            for name in self.GLOBALS:
+                if not re.search(r'\b%s\b' % name, code):
+                    continue
+                if re.search(r'var\s+%s\s*=' % name, code):
+                    continue  # declares it itself, in its own scope
+                offenders.append(f'{path.relative_to(app)}: {name}')
+        self.assertEqual(
+            offenders, [],
+            'mapbox scope global used but not declared in: ' + ', '.join(offenders),
+        )
+
+
+class SectionMapPickerScriptTest(TestCase):
+    """The picker's handlers must not hang off the place-search callback."""
+
+    def setUp(self):
+        self.org = _make_org('PickerOrg')
+        self.owner = User.objects.create_user('pickerowner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.login(username='pickerowner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.survey = SurveyHeader.objects.create(
+            name='picker_test', organization=self.org, created_by=self.owner,
+        )
+        SurveyCollaborator.objects.create(user=self.owner, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', code='S1', is_head=True,
+        )
+
+    @staticmethod
+    def _attach_call_span(body):
+        """Index range of the MapPlaceSearch.attach(...) call, by paren matching."""
+        open_at = body.index('MapPlaceSearch.attach(') + len('MapPlaceSearch.attach(') - 1
+        depth = 0
+        for i in range(open_at, len(body)):
+            if body[i] == '(':
+                depth += 1
+            elif body[i] == ')':
+                depth -= 1
+                if depth == 0:
+                    return open_at, i
+        raise AssertionError('MapPlaceSearch.attach( is never closed')
+
+    def test_picker_handlers_are_registered_outside_the_search_callback(self):
+        """
+        GIVEN the section map picker partial
+        WHEN its script is parsed for where each handler is registered
+        THEN the Inherit checkbox, map click, zoomend and Save handlers all sit
+             outside the MapPlaceSearch.attach(...) call -- #174 nested them in
+             its onSelect body, which left the picker inert for a creator who
+             never searched
+        """
+        r = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/map/'
+        )
+        self.assertEqual(r.status_code, 200)
+        body = r.content.decode()
+        _, attach_end = self._attach_call_span(body)
+        for snippet in (
+            "clearCb.addEventListener('change', updatePickerState)",
+            "map.on('click'",
+            "map.on('zoomend'",
+            "getElementById('save-map-position')",
+        ):
+            self.assertIn(snippet, body)
+            self.assertGreater(
+                body.index(snippet), attach_end,
+                f'{snippet} is registered inside MapPlaceSearch.attach(...)',
+            )
+
+    def test_picker_does_not_read_an_undeclared_mapbox_token(self):
+        """
+        GIVEN the section map picker partial
+        WHEN its rendered script is scanned for the token it passes to the search
+        THEN it passes a context-rendered literal, not the `mapboxAccessToken`
+             global #180 removed -- referencing it threw before the Save handler
+             was ever registered
+        """
+        with override_settings(MAPBOX_ACCESS_TOKEN='pk.test-token'):
+            r = self.client.get(
+                f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/map/'
+            )
+        self.assertEqual(r.status_code, 200)
+        body = r.content.decode()
+        self.assertIn("accessToken: 'pk.test-token'", body)
+        self.assertNotIn('accessToken: mapboxAccessToken', body)
+
+
 class HTMXNavigationTest(TestCase):
     """Tests for HTMX-based section navigation with persistent map."""
 
