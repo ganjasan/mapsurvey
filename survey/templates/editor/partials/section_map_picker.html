@@ -116,37 +116,6 @@
                 }
             }
         }
-        // ── Place search (openspec: editor-map-picker-search) ──
-        // Typing a place into a section picker means "this section starts
-        // here": the result becomes the section's own position, which
-        // first lifts "Inherit" — while it is checked the map ignores
-        // clicks, so a moved-but-unset map would be a dead end.
-        MapPlaceSearch.attach(map, {
-            accessToken: mapboxAccessToken,
-            container: document.getElementById('map-picker-search'),
-            labels: { placeholder: '{% trans "Search for a place — city, address, landmark…" %}' },
-            onSelect: function(result) {
-                lat = result.lat; lng = result.lng;
-                if (clearCb.checked) {
-                    // The restore path flies to the saved custom position;
-                    // make that the result, or it would undo the search.
-                    savedLat = lat; savedLng = lng; savedZoom = result.zoom || map.getZoom();
-                    clearCb.checked = false;
-                    updatePickerState();
-                }
-                if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
-                else { marker.setLatLng([lat, lng]); }
-                // A result with bounds is fitted synchronously, so moveend
-                // may already have fired: write the label now and again
-                // once an animated fly settles on its final zoom.
-                function showPicked() {
-                    zoom = map.getZoom();
-                    document.getElementById('map-coords').textContent =
-                        'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
-                }
-                showPicked();
-                map.once('moveend', showPicked);
-
         clearCb.addEventListener('change', updatePickerState);
         updatePickerState();
 
@@ -165,8 +134,6 @@
             if (!clearCb.checked) {
                 document.getElementById('map-coords').textContent =
                     'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
-            }
-        });
             }
         });
 
@@ -228,6 +195,45 @@
 
         // Fix map rendering in modal
         map.invalidateSize();
+
+        // ── Place search (openspec: editor-map-picker-search) ──
+        // Typing a place into a section picker means "this section starts
+        // here": the result becomes the section's own position, which
+        // first lifts "Inherit" — while it is checked the map ignores
+        // clicks, so a moved-but-unset map would be a dead end.
+        // Attached LAST, after every binding above: this is the one call
+        // that talks to an external SDK, and a throw here used to skip
+        // the Save handler and leave a modal that looks fine and saves
+        // nothing (openspec: fix-section-map-picker-init). The token is a
+        // template literal on purpose — reading a global that another
+        // partial declares is what broke it.
+        MapPlaceSearch.attach(map, {
+            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
+            container: document.getElementById('map-picker-search'),
+            labels: { placeholder: '{% trans "Search for a place — city, address, landmark…" %}' },
+            onSelect: function(result) {
+                lat = result.lat; lng = result.lng;
+                if (clearCb.checked) {
+                    // The restore path flies to the saved custom position;
+                    // make that the result, or it would undo the search.
+                    savedLat = lat; savedLng = lng; savedZoom = result.zoom || map.getZoom();
+                    clearCb.checked = false;
+                    updatePickerState();
+                }
+                if (!marker) { marker = L.marker([lat, lng]).addTo(map); }
+                else { marker.setLatLng([lat, lng]); }
+                // A result with bounds is fitted synchronously, so moveend
+                // may already have fired: write the label now and again
+                // once an animated fly settles on its final zoom.
+                function showPicked() {
+                    zoom = map.getZoom();
+                    document.getElementById('map-coords').textContent =
+                        'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5) + ', Zoom: ' + zoom;
+                }
+                showPicked();
+                map.once('moveend', showPicked);
+            }
+        });
     }, 300);
 })();
 </script>

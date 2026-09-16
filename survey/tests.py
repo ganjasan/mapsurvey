@@ -36495,6 +36495,47 @@ class EditorMapPickerSearchTest(TestCase):
         on_select = html[html.index('onSelect: function(result)'):]
         self.assertLess(on_select.index('clearCb.checked = false'), on_select.index('updatePickerState()'))
 
+    def test_section_picker_declares_the_token_it_uses(self):
+        """
+        GIVEN the section map picker modal
+        WHEN it renders with a Mapbox token configured
+        THEN the place search receives the token as a template literal and the
+             script never reads a `mapboxAccessToken` global — the basemap partial
+             it includes renamed its own global on 2026-09-14 and the picker died
+             with a ReferenceError before binding Save
+             (openspec: fix-section-map-picker-init)
+        """
+        with self.settings(MAPBOX_ACCESS_TOKEN='pk.test-token'):
+            html = self.client.get(reverse('editor_section_map_picker', args=[self.survey.uuid, self.section.id])).content.decode()
+
+        self.assertIn("accessToken: 'pk.test-token'", html)
+        self.assertNotIn('mapboxAccessToken', html)
+
+    def test_section_picker_binds_handlers_before_attaching_search(self):
+        """
+        GIVEN the section map picker modal
+        WHEN it renders
+        THEN the inherit toggle, the map click handler and the Save handler are
+             bound exactly once each, all before MapPlaceSearch.attach, and none of
+             them lives inside its onSelect callback — a throw while attaching the
+             search control then costs the search box, never the picker
+             (openspec: fix-section-map-picker-init)
+        """
+        html = self.client.get(reverse('editor_section_map_picker', args=[self.survey.uuid, self.section.id])).content.decode()
+
+        attach = html.index('MapPlaceSearch.attach(')
+        for binding in (
+            "clearCb.addEventListener('change', updatePickerState)",
+            "map.on('click'",
+            "getElementById('save-map-position').addEventListener('click'",
+        ):
+            self.assertEqual(html.count(binding), 1, binding)
+            self.assertLess(html.index(binding), attach, binding)
+        on_select = html[html.index('onSelect: function(result)'):html.index('}, 300);')]
+        self.assertNotIn('addEventListener', on_select)
+        self.assertNotIn("map.on('click'", on_select)
+        self.assertNotIn("map.on('zoomend'", on_select)
+
     def test_save_endpoint_is_unchanged(self):
         """
         GIVEN a position chosen by search and saved through the existing endpoint
