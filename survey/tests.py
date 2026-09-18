@@ -42981,3 +42981,65 @@ class OtherOptionWriteInTest(TestCase):
         draft = clone_survey_for_draft(self.survey)
         dq = Question.objects.get(survey_section__survey_header=draft, code='Q_COPE')
         self.assertEqual(dq.other_choice_code(), 4)
+class SectionFormMarkupTest(TestCase):
+    """Change python312-django52-upgrade, D2: Django 5.0 changed what `{{ form }}`
+    renders (div.html instead of table.html). The respondent section never used
+    it — partials/survey_section_partial.html renders every question as a
+    question-card through the project's widget templates — and this test keeps
+    that fact true, so a future template that reaches for `{{ form }}` on a
+    respondent page is caught here rather than by a respondent."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Markup Org")
+        self.survey = SurveyHeader.objects.create(
+            name="markup_survey", organization=self.org, redirect_url="/thanks/",
+            status='published', available_languages=['en'],
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        Question.objects.create(survey_section=self.section, code="M1", name="Your name", input_type="text_line", order_number=1)
+        Question.objects.create(survey_section=self.section, code="M2", name="Age", input_type="number", order_number=2)
+        Question.objects.create(survey_section=self.section, code="M3", name="Where", input_type="point", order_number=3)
+
+    def test_section_renders_question_cards_through_project_templates(self):
+        """
+        GIVEN a published survey whose section has a text, a number and a point question
+        WHEN a respondent opens the section
+        THEN the two form questions are question-cards with their labels, the point
+             question renders as the project's draw-button widget (geo questions take
+             the card-less branch of the partial), and Django's form-level template —
+             table rows before 5.0, div wrappers since — appears nowhere on the page
+        """
+        r = Client().get(reverse('section', args=[str(self.survey.uuid), self.section.name]))
+        self.assertEqual(r.status_code, 200)
+        html = r.content.decode('utf-8')
+        self.assertEqual(html.count('class="question-card'), 2, html[:600])
+        for label in ('Your name', 'Age', 'Where'):
+            self.assertIn(label, html)
+        self.assertIn('drawbutton', html)
+        self.assertNotIn('<tr><th>', html)
+        self.assertNotIn('<div>\n      <label', html)
+
+    def test_no_respondent_template_renders_a_whole_form(self):
+        """
+        GIVEN the templates a respondent can be served
+        WHEN they are scanned for form-level rendering
+        THEN none uses `{{ form }}` or `as_p`/`as_table`/`as_div`/`as_ul` — the two
+             legacy templates that do are rendered by no view
+        """
+        import os
+        import re
+        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
+        offenders = []
+        for dirpath, _dirs, files in os.walk(root):
+            if os.sep + 'editor' in dirpath or os.sep + 'admin' in dirpath or os.sep + 'registration' in dirpath:
+                continue
+            for name in files:
+                if not name.endswith('.html') or name in ('survey_section_block.html', 'answer.html'):
+                    continue
+                with open(os.path.join(dirpath, name), encoding='utf-8') as fh:
+                    text = fh.read()
+                if re.search(r'{{\s*form\s*}}|\.as_(p|table|div|ul)\b', text):
+                    offenders.append(os.path.relpath(os.path.join(dirpath, name), root))
+        self.assertEqual(offenders, [])
