@@ -505,6 +505,9 @@
             if (r.invalid && r.invalid.length) lines.push('<span class="text-danger">Rows with invalid coordinates:</span> ' + esc(r.invalid.slice(0, 20).join(', ')));
             if (r.rejected && r.rejected.length) lines.push('<span class="text-danger">Rejected:</span> ' + esc(r.rejected.slice(0, 10).join('; ')));
         }
+        // The file kept elevation; the geometry column does not. Say so rather
+        // than letting a creator assume Z survived the import.
+        if (r.dropped_z) lines.push('Elevation (Z) in the file was discarded — only longitude and latitude are stored.');
         setHtml(reportEl, lines.map(function (l) { return '<div>' + l + '</div>'; }).join(''));
     }
     document.getElementById('loe-import-go').addEventListener('click', function () {

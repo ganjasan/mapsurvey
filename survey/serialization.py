@@ -1140,7 +1140,7 @@ def extract_layers(
             warnings.append(f"Reference layer '{clean['name']}' is missing '{archive_path}' — layer skipped.")
             continue
         try:
-            features, _ = validate_layer_upload(raw)
+            features, _, _ = validate_layer_upload(raw)
         except LayerValidationError as exc:
             ids.append(None)
             warnings.append(f"Reference layer '{clean['name']}' was skipped: {exc}")

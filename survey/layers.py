@@ -157,12 +157,60 @@ def _geometry_coords(geometry):
     yield from _iter_coords(geometry.get('coordinates'))
 
 
+def _reduce_to_2d(coords):
+    """Return `coords` with every position truncated to [lng, lat].
+
+    QGIS and ArcGIS write a Z ordinate by default and `LayerObject.geometry` is
+    a 2D column, so a 3D file used to pass validation and die at the database
+    with `DataError: Geometry has Z dimension but column does not` — a 500 that
+    reached the creator as `Unexpected token '<'`, because the editor parses the
+    response as JSON. Nothing in the product reads elevation, so it is dropped
+    here, once, where every ingestion path sees it.
+
+    Returns (coords, dropped_z).
+    """
+    if not isinstance(coords, (list, tuple)) or not coords:
+        return coords, False
+    if isinstance(coords[0], (int, float)):
+        return list(coords[:2]), len(coords) > 2
+    dropped = False
+    out = []
+    for part in coords:
+        reduced, part_dropped = _reduce_to_2d(part)
+        dropped = dropped or part_dropped
+        out.append(reduced)
+    return out, dropped
+
+
+def _reduce_geometry_to_2d(geometry):
+    """Truncate every position in one geometry. Returns (geometry, dropped_z)."""
+    if not isinstance(geometry, dict):
+        return geometry, False
+    if geometry.get('type') == 'GeometryCollection':
+        dropped = False
+        out = []
+        for g in geometry.get('geometries') or []:
+            reduced, g_dropped = _reduce_geometry_to_2d(g)
+            dropped = dropped or g_dropped
+            out.append(reduced)
+        geometry['geometries'] = out
+        return geometry, dropped
+    if 'coordinates' in geometry:
+        geometry['coordinates'], dropped = _reduce_to_2d(geometry['coordinates'])
+        return geometry, dropped
+    return geometry, False
+
+
 def validate_layer_upload(data):
-    """Validate raw uploaded bytes; return (features, property_names).
+    """Validate raw uploaded bytes; return (features, property_names, dropped_z).
 
     `features` is the parsed list of Feature dicts — the caller hands it to
-    `objects_from_features` and never re-parses. Raises LayerValidationError
-    with a creator-facing message.
+    `objects_from_features` and never re-parses. Positions are truncated to
+    [lng, lat] here, so every ingestion path (interactive upload, single-object
+    create, ZIP import) gets 2D geometry without its own copy of the logic;
+    `dropped_z` says whether the file carried elevation, so the import report
+    can tell the creator it did not survive. Raises LayerValidationError with a
+    creator-facing message.
     """
     if len(data) > MAX_LAYER_BYTES:
         raise LayerValidationError(
@@ -202,12 +250,17 @@ def validate_layer_upload(data):
 
     properties = set()
     checked_any = False
+    dropped_z = False
     for f in features:
         if not isinstance(f, dict) or f.get('type') != 'Feature':
             raise LayerValidationError("Every entry in 'features' must be a Feature object.")
         props = f.get('properties')
         if isinstance(props, dict):
             properties.update(k for k in props if isinstance(k, str))
+        geometry, f_dropped = _reduce_geometry_to_2d(f.get('geometry'))
+        if geometry is not None:
+            f['geometry'] = geometry
+        dropped_z = dropped_z or f_dropped
         for lng, lat in _geometry_coords(f.get('geometry')):
             checked_any = True
             if not (-180 <= lng <= 180 and -90 <= lat <= 90):
@@ -217,7 +270,7 @@ def validate_layer_upload(data):
                     "coordinate system — re-export it as WGS84 (EPSG:4326).")
     if not checked_any:
         raise LayerValidationError("No coordinates found in the file.")
-    return features, sorted(properties)
+    return features, sorted(properties), dropped_z
 
 
 def build_map_layers_metadata(survey):
@@ -301,9 +354,18 @@ def derive_title(props, label_field, key):
 def explode_geometry(geometry):
     """A LayerObject holds one Point/LineString/Polygon. Multi* and
     GeometryCollection split into parts; the caller suffixes their keys.
-    Returns a list of geometry dicts; empty for unsupported input."""
+    Returns a list of geometry dicts; empty for unsupported input.
+
+    Positions are truncated to [lng, lat] here as well as in
+    `validate_layer_upload`, because this is the one choke point EVERY stored
+    geometry passes: the bulk import (`objects_from_features`) and a single
+    drawn or pasted object (`layer_object_views._geometry_from`) both come
+    through it, and so will the next caller. The column is 2D; a Z ordinate
+    reaching it is a 500.
+    """
     if not isinstance(geometry, dict):
         return []
+    geometry, _dropped_z = _reduce_geometry_to_2d(geometry)
     gtype = geometry.get('type')
     if gtype in _SINGLE_TYPES:
         return [geometry]

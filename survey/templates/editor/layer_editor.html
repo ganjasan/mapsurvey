@@ -1,5 +1,6 @@
 {% extends "editor/editor_base.html" %}
 {% load i18n %}
+{% load l10n %}
 {% load static %}
 {% load survey_filters %}
 {% block page_title %}{{ layer.name }} — {% trans "Objects" %}{% endblock %}
@@ -231,7 +232,16 @@
 <script>
   var mapboxUrl = '{{ MAPBOX_URL }}';
   var mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
-  var map = L.map('loe-map', { zoomControl: true }).setView([{{ survey.start_map_postion.y|default:"48.85" }}, {{ survey.start_map_postion.x|default:"2.35" }}], {{ survey.start_map_zoom|default:"12" }});
+  {% comment %}See section_map_picker.html: a localized decimal comma here parses as an
+  argument separator, so setView() would take a four-element array and the map pane would
+  never get a position -- every pointer move then throws inside Leaflet. `localize off`
+  wraps the block rather than each value so a coordinate added later is covered too.
+  {% endcomment %}
+  {% localize off %}
+  var mapCentre = [{{ survey.start_map_postion.y|default:"48.85" }}, {{ survey.start_map_postion.x|default:"2.35" }}];
+  var mapZoom = {{ survey.start_map_zoom|default:"12" }};
+  {% endlocalize %}
+  var map = L.map('loe-map', { zoomControl: true }).setView(mapCentre, mapZoom);
   {# The partial is bare JS (no script tag of its own) — every includer wraps it. #}
   {% include "partials/basemap_layers.html" %}
 </script>
