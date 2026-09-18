@@ -14,6 +14,7 @@ from django.http import HttpResponse, Http404, JsonResponse
 from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.utils import timezone, translation
+from django.utils.html import strip_tags
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
@@ -1771,9 +1772,17 @@ def editor_question_delete(request, survey_uuid, question_id):
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
 
     # The modal's close handler discards an unnamed draft — but only an EMPTY
-    # one: a name is not the only sign of work (a picked layer, sub-questions).
+    # one: a name is not the only sign of work (a picked layer, sub-questions,
+    # a body typed into Subtext). Subtext counts because for `html` it IS the
+    # whole content while the name is an editor-only label the respondent never
+    # sees, so a Formatted Text block is normally nameless — losing it on close
+    # was the reported defect (change fix-draft-question-body-loss). Tags are
+    # stripped first: Quill hands back markup for an editor that was opened and
+    # cleared, and markup carrying no text is not content.
     if request.POST.get('if_empty') == '1':
+        subtext_text = strip_tags(question.subtext or '').replace('\xa0', ' ').strip()
         configured = (question.name or '').strip() or question.layer_id \
+            or subtext_text \
             or Question.objects.filter(parent_question_id=question).exists()
         if configured:
             return HttpResponse(status=204)
