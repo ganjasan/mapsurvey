@@ -179,7 +179,12 @@
             coordsEl: document.getElementById('survey-map-coords'),
             indicatorEl: document.getElementById('survey-map-status'),
             extraFields: function() {
-                return { use_geolocation: document.getElementById('survey-use-geolocation').checked ? '1' : '0' };
+                // Null means "cannot build a payload" and the save is abandoned.
+                // Substituting a default here would post a use_geolocation the
+                // creator never chose once HTMX has swapped this panel away.
+                var geo = document.getElementById('survey-use-geolocation');
+                if (!geo) return null;
+                return { use_geolocation: geo.checked ? '1' : '0' };
             },
             watch: [document.getElementById('survey-use-geolocation')],
             locate: true,

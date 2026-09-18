@@ -32833,7 +32833,7 @@ def _validated_geojson_text(raw):
     this text any more (rebuild_layer derives it from objects); a handful of
     fixtures still seed the column directly."""
     from .layers import validate_layer_upload
-    features, props = validate_layer_upload(raw)
+    features, props, _z = validate_layer_upload(raw)
     text = json.dumps({'type': 'FeatureCollection', 'features': features}, ensure_ascii=False, separators=(',', ':'))
     return text, len(features), props
 
@@ -32848,7 +32848,7 @@ class LayerValidationTest(SimpleTestCase):
         THEN it is accepted with the feature count and the union of property names
         """
         from .layers import validate_layer_upload
-        features, props = validate_layer_upload(_zones_geojson().encode())
+        features, props, _z = validate_layer_upload(_zones_geojson().encode())
         self.assertEqual(len(features), 3)
         self.assertEqual(props, ['name', 'zone_id'])
         self.assertTrue(all(f['type'] == 'Feature' for f in features))
@@ -32883,7 +32883,7 @@ class LayerValidationTest(SimpleTestCase):
         """
         from .layers import validate_layer_upload
         raw = json.dumps({"type": "Point", "coordinates": [13.4, 52.5]}).encode()
-        features, props = validate_layer_upload(raw)
+        features, props, _z = validate_layer_upload(raw)
         self.assertEqual(len(features), 1)
         self.assertEqual(features[0]['type'], 'Feature')
         self.assertEqual(features[0]['geometry']['type'], 'Point')
@@ -32897,8 +32897,62 @@ class LayerValidationTest(SimpleTestCase):
         """
         from .layers import validate_layer_upload
         raw = ('﻿' + '  ' + _zones_geojson(1)).encode('utf-8')
-        features, _ = validate_layer_upload(raw)
+        features, _, _z = validate_layer_upload(raw)
         self.assertEqual(features[0]['properties']['name'], 'Area 1')
+
+    def test_z_ordinate_is_discarded(self):
+        """
+        GIVEN a FeatureCollection whose positions carry elevation
+        WHEN it is validated
+        THEN every position is truncated to [lng, lat] and dropped_z is reported
+
+        QGIS and ArcGIS write Z by default and `LayerObject.geometry` is a 2D
+        column, so such a file used to pass validation and die at the database
+        with `DataError: Geometry has Z dimension but column does not`.
+        """
+        from .layers import validate_layer_upload
+        raw = json.dumps({
+            'type': 'FeatureCollection',
+            'features': [
+                {'type': 'Feature', 'properties': {'name': 'stop'},
+                 'geometry': {'type': 'Point', 'coordinates': [6.96, 50.94, 58.2]}},
+                {'type': 'Feature', 'properties': {'name': 'route'},
+                 'geometry': {'type': 'LineString',
+                              'coordinates': [[6.96, 50.94, 58.2], [6.97, 50.95, 59.1]]}},
+            ],
+        }).encode()
+        features, _props, dropped_z = validate_layer_upload(raw)
+        self.assertTrue(dropped_z)
+        self.assertEqual(features[0]['geometry']['coordinates'], [6.96, 50.94])
+        self.assertEqual(features[1]['geometry']['coordinates'],
+                         [[6.96, 50.94], [6.97, 50.95]])
+
+    def test_two_dimensional_file_is_untouched(self):
+        """
+        GIVEN a FeatureCollection with no elevation
+        WHEN it is validated
+        THEN the coordinates are unchanged and dropped_z is False
+        """
+        from .layers import validate_layer_upload
+        features, _props, dropped_z = validate_layer_upload(_zones_geojson(1).encode())
+        self.assertFalse(dropped_z)
+        ring = features[0]['geometry']['coordinates'][0]
+        self.assertTrue(all(len(position) == 2 for position in ring))
+
+    def test_explode_geometry_also_drops_z(self):
+        """
+        GIVEN a 3D geometry handed straight to explode_geometry
+        WHEN it is exploded into single-part geometries
+        THEN the parts are two-dimensional
+
+        explode_geometry is the choke point EVERY stored geometry passes --
+        the bulk import and a single drawn or pasted object both come through
+        it -- so the reduction is repeated there rather than trusted upstream.
+        """
+        from .layers import explode_geometry
+        parts = explode_geometry({'type': 'MultiPoint',
+                                  'coordinates': [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]})
+        self.assertEqual([p['coordinates'] for p in parts], [[1.0, 2.0], [4.0, 5.0]])
 
     def test_invalid_json_is_rejected(self):
         """
@@ -33203,6 +33257,66 @@ class LayerEditorTest(TestCase):
             name, (content or _zones_geojson()).encode(), content_type='application/geo+json')
         return self.client.post(
             reverse('editor_survey_layer_create', args=[self.survey.uuid]), {'layer': payload})
+
+    def test_three_dimensional_upload_creates_a_layer(self):
+        """
+        GIVEN a GeoJSON carrying elevation, as QGIS and ArcGIS export by default
+        WHEN the owner uploads it
+        THEN the layer is created and its objects hold two-dimensional geometry
+
+        Before this, the insert raised `DataError: Geometry has Z dimension but
+        column does not`, the browser got an HTML 500 where it expected JSON,
+        and the creator read `Unexpected token '<'`. One creator retried six
+        times across two surveys before giving up.
+        """
+        from .models import LayerObject
+        content = json.dumps({
+            'type': 'FeatureCollection',
+            'features': [
+                {'type': 'Feature', 'properties': {'name': 'Haltestelle 1'},
+                 'geometry': {'type': 'Point', 'coordinates': [6.96, 50.94, 58.2]}},
+            ],
+        })
+        response = self._upload(content=content, name='haltestellenkataster.geojson')
+        self.assertEqual(response.status_code, 201, response.content[:400])
+        layer_id = response.json()['id']
+        obj = LayerObject.objects.get(layer_id=layer_id)
+        self.assertFalse(obj.geometry.hasz)
+        self.assertAlmostEqual(obj.geometry.x, 6.96, places=5)
+        self.assertAlmostEqual(obj.geometry.y, 50.94, places=5)
+
+    def test_a_failed_upload_leaves_no_layer_behind(self):
+        """
+        GIVEN an upload that passes validation but fails while building objects
+        WHEN the owner uploads it
+        THEN no layer row survives and the survey's layer count is unchanged
+
+        The row is created before its objects exist, so without a transaction a
+        failure left an empty layer that no creator-facing list can remove and
+        that still counted against MAX_LAYERS_PER_SURVEY. One such orphan
+        reached production.
+        """
+        from .models import SurveyMapLayer
+        before = SurveyMapLayer.objects.filter(survey=self.survey).count()
+        with mock.patch('survey.editor_views.objects_from_features',
+                        side_effect=RuntimeError('boom')):
+            with self.assertRaises(RuntimeError):
+                self._upload()
+        self.assertEqual(SurveyMapLayer.objects.filter(survey=self.survey).count(), before)
+
+    def test_a_refused_upload_answers_json_not_html(self):
+        """
+        GIVEN a file the validator refuses
+        WHEN the owner uploads it
+        THEN the response is JSON carrying a readable reason
+
+        The editor parses this response as JSON; an HTML error page surfaces to
+        the creator as `Unexpected token '<', "<!DOCTYPE "... is not valid JSON`.
+        """
+        response = self._upload(content='<?xml version="1.0"?><kml/>', name='stops.kml')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response['Content-Type'], 'application/json')
+        self.assertTrue(response.json()['error'])
 
     def test_upload_creates_a_layer_and_returns_property_names(self):
         """
@@ -36762,28 +36876,23 @@ class EditorJsNumberLocaleTest(TestCase):
             f"({scripts[max(0, found.start() - 60):found.start() + 40] if found else ''!r})",
         )
 
-    def test_section_map_picker_has_no_localized_decimals(self):
-        """
-        GIVEN a section with float coordinates
-        WHEN its map picker renders under a comma-decimal UI language
-        THEN no digit-comma-digit sequence appears in any script block
-        """
-        response = self.client.get(
-            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/map/')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get('Content-Language'), 'de')
-        self._assert_no_localized_decimal(response.content.decode(), 'section map picker')
-
-    def test_survey_settings_has_no_localized_decimals(self):
+    def test_layer_object_editor_has_no_localized_decimals(self):
         """
         GIVEN a survey with float coordinates
-        WHEN the settings page renders under a comma-decimal UI language
+        WHEN the layer object editor renders under a comma-decimal UI language
         THEN no digit-comma-digit sequence appears in any script block
+
+        The page the August 2026 fix did not cover: it was written a week later
+        and reintroduced the defect, unguarded, for six weeks.
         """
-        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings/')
+        from .models import SurveyMapLayer
+        layer = SurveyMapLayer.objects.create(
+            survey=self.survey, name='Stops', geojson='', position=1)
+        response = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/layers/{layer.id}/edit/')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get('Content-Language'), 'de')
-        self._assert_no_localized_decimal(response.content.decode(), 'survey settings')
+        self._assert_no_localized_decimal(response.content.decode(), 'layer object editor')
 
     def test_coordinates_are_identical_in_both_locales(self):
         """
@@ -36817,6 +36926,299 @@ class EditorJsNumberLocaleTest(TestCase):
             rendered = unguarded.render(Context({'y': 52.5231}))
         self.assertRegex(self._scripts(rendered), self.DECIMAL_COMMA)
 
+
+
+class MapPickerAutosaveTeardownGuardTest(SimpleTestCase):
+    """The autosave must not fire against a panel that has been swapped away.
+
+    #192 gave the three pickers a debounced autosave whose `extraFields()`
+    dereferenced `document.getElementById(...).checked` with no guard. The
+    editor's settings panel is an HTMX fragment, so when it was replaced before
+    the debounce elapsed the element was gone, the callback threw, and the
+    creator's map position was silently lost.
+
+    The fix has two independent halves, and this asserts both, because either
+    one alone is a trap:
+
+      * teardown -- the picker stops itself, so nothing fires at a detached DOM;
+      * refusal  -- a save whose fields cannot be read is ABANDONED, never sent
+        with a substituted value. `el && el.checked ? '1' : '0'` looks like a
+        guard and is worse than the crash: it posts a `use_geolocation` the
+        creator never chose and persists it.
+
+    There is no JavaScript test runner in this repository, so this reads the
+    source. Behaviour is verified in a browser; what this catches is the NEXT
+    call site, added by someone who did not read #192.
+    """
+
+    ASSETS = os.path.join(settings.BASE_DIR, 'survey', 'assets', 'js')
+    TEMPLATES = os.path.join(settings.BASE_DIR, 'survey', 'templates')
+
+    PICKER_SITES = (
+        'editor/partials/survey_settings_panel.html',
+        'editor/partials/section_map_picker.html',
+        'editor/survey_settings.html',
+    )
+
+    EXTRA_FIELDS = re.compile(
+        r'extraFields:\s*function\s*\([^)]*\)\s*\{(?P<body>.*?)\n\s{12}\},', re.S)
+
+    def _picker_source(self):
+        with open(os.path.join(self.ASSETS, 'map_position_picker.js'), encoding='utf-8') as fh:
+            return fh.read()
+
+    def test_picker_exposes_detach(self):
+        """
+        GIVEN the picker module
+        WHEN its public surface is read
+        THEN it returns a detach() that clears the pending timer
+        """
+        source = self._picker_source()
+        self.assertIn('detach: detach', source)
+        self.assertRegex(source, r'function detach\(\)\s*\{[^}]*clearTimeout\(timer\)')
+
+    def test_save_refuses_to_fire_at_a_detached_container(self):
+        """
+        GIVEN a pending save whose map container has left the document
+        WHEN save() runs
+        THEN it returns without fetching
+
+        Independent of the teardown hook on purpose: a hook that silently stops
+        matching is how this defect comes back, and this is the net under it.
+        """
+        source = self._picker_source()
+        self.assertIn('document.body.contains(map.getContainer())', source)
+
+    def test_a_payload_that_cannot_be_built_is_not_sent(self):
+        """
+        GIVEN extraFields() that throws or returns null
+        WHEN payload() runs
+        THEN it yields null and save() abandons rather than substituting values
+        """
+        source = self._picker_source()
+        self.assertIn('if (!extra) return null;', source)
+        self.assertIn('if (!body) return;', source)
+
+    def test_every_extra_fields_call_site_refuses_rather_than_guesses(self):
+        """
+        GIVEN each template that attaches a MapPositionPicker
+        WHEN its extraFields() callback is read
+        THEN every element it reads is null-checked and the callback returns
+             null rather than a substituted value
+        """
+        offenders = []
+        for rel in self.PICKER_SITES:
+            path = os.path.join(self.TEMPLATES, rel)
+            with open(path, encoding='utf-8') as fh:
+                body = fh.read()
+            found = self.EXTRA_FIELDS.search(body)
+            self.assertIsNotNone(found, f'{rel}: no extraFields callback found')
+            callback = found.group('body')
+            reads = re.findall(r"getElementById\('([^']+)'\)", callback)
+            self.assertTrue(reads, f'{rel}: extraFields reads no elements')
+            if 'return null' not in callback:
+                offenders.append(f'{rel}: extraFields substitutes a value instead of refusing')
+                continue
+            # Every element must be held in a variable and checked, never
+            # dereferenced straight off getElementById().
+            if re.search(r"getElementById\('[^']+'\)\s*\.(checked|value)", callback):
+                offenders.append(f'{rel}: dereferences getElementById() without a null check')
+        self.assertEqual(offenders, [], '\n  '.join(offenders))
+
+
+class TemplateScriptLocalizationGuardTest(SimpleTestCase):
+    """No template may write an unguarded server-side value into JavaScript.
+
+    This is the class-level guard. The rendering tests above prove that specific
+    pages are correct today; this one fails when a NEW template gets it wrong,
+    which is the failure mode that actually happened. The August 2026 fix
+    guarded three templates and pinned its tests to two URLs, so the map
+    template added six days later (#155) shipped the same defect green. It ran
+    in production for six weeks, and every exception it produced came from a
+    creator working in German, Dutch or Polish -- none from English.
+
+    It scans template SOURCE rather than rendered pages for the same reason
+    ExternalScriptCorsTest does: a rendering test can only assert about URLs
+    someone remembered to list, and the whole defect is that nobody remembers.
+
+    Django localizes a float under an active locale, so ten of the eleven
+    shipped creator languages turn 52.5231 into `52,5231`. Inside JavaScript
+    that is either a syntax error or -- with a thousands separator -- a silently
+    different number.
+    """
+
+    TEMPLATE_DIR = os.path.join(settings.BASE_DIR, 'survey', 'templates')
+
+    SCRIPT = re.compile(r'<script\b(?P<attrs>[^>]*)>(?P<body>.*?)</script>', re.S | re.I)
+    TYPE_ATTR = re.compile(r'type\s*=\s*[\'"]([^\'"]+)[\'"]', re.I)
+    VAR = re.compile(r'\{\{\s*(?P<expr>.*?)\s*\}\}', re.S)
+    LOCALIZE_OFF = re.compile(r'\{%\s*localize\s+off\s*%\}(.*?)\{%\s*endlocalize\s*%\}', re.S)
+    INCLUDE = re.compile(r'\{%\s*include\s+[\'"]([^\'"]+)[\'"]')
+
+    # A filter that yields a string or pre-serialized JSON cannot be reformatted
+    # by the locale; `unlocalize` is the per-value guard.
+    SAFE_FILTERS = ('unlocalize', '|safe', 'json_script', '|escapejs', '|yesno')
+
+    @staticmethod
+    def _inside_string(prefix):
+        """Is the interpolation point inside a JavaScript string literal?
+
+        `= '{{ x }}'` is a string literal: a comma inside it cannot change how
+        the script parses. This counts unescaped quotes rather than matching a
+        pattern -- a regex looking for "a quote, then no quotes to the end"
+        happily anchors on the CLOSING quote of an earlier literal, which is
+        how the first version of this guard passed against the very line it was
+        written to catch:
+
+            var map = L.map('loe-map', {...}).setView([{{ lat }}, ...
+                            ^ closing quote here, rest of the line quote-free
+        """
+        quote, escaped = None, False
+        for ch in prefix:
+            if escaped:
+                escaped = False
+            elif ch == '\\':
+                escaped = True
+            elif quote:
+                if ch == quote:
+                    quote = None
+            elif ch in '"\'`':
+                quote = ch
+        return quote is not None
+
+    def _templates(self):
+        for root, _dirs, files in os.walk(self.TEMPLATE_DIR):
+            for filename in files:
+                if filename.endswith('.html'):
+                    yield os.path.join(root, filename)
+
+    def _partials_included_inside_scripts(self):
+        """Templates that are `{% include %}`d from inside a <script> block.
+
+        `partials/basemap_layers.html` is bare JavaScript with no script tag of
+        its own, so scanning for <script> alone would never look at it. Deriving
+        the set from actual include sites beats an allow-list that drifts, and
+        beats guessing from "the file has no HTML tags" -- which misreads a
+        plain-text email body as JavaScript.
+        """
+        included = set()
+        for path in self._templates():
+            with open(path, encoding='utf-8') as fh:
+                body = fh.read()
+            for match in self.SCRIPT.finditer(body):
+                for inc in self.INCLUDE.finditer(match.group('body')):
+                    included.add(inc.group(1))
+        return included
+
+    def _js_blocks(self, path, body, script_partials):
+        """Yield (offset, text) for every JavaScript region of one template."""
+        rel = os.path.relpath(path, self.TEMPLATE_DIR).replace(os.sep, '/')
+        if rel in script_partials:
+            yield 0, body
+            return
+        for match in self.SCRIPT.finditer(body):
+            declared = self.TYPE_ATTR.search(match.group('attrs'))
+            # `application/json` and `text/plain` islands are data read by other
+            # code, not parsed as JavaScript.
+            if declared and 'javascript' not in declared.group(1).lower():
+                continue
+            yield match.start('body'), match.group('body')
+
+    def _offenders(self):
+        script_partials = self._partials_included_inside_scripts()
+        for path in self._templates():
+            with open(path, encoding='utf-8') as fh:
+                body = fh.read()
+            for offset, block in self._js_blocks(path, body, script_partials):
+                guarded = [(m.start(1), m.end(1)) for m in self.LOCALIZE_OFF.finditer(block)]
+                for var in self.VAR.finditer(block):
+                    if any(a <= var.start() < b for a, b in guarded):
+                        continue
+                    expr = var.group('expr')
+                    if any(f in expr for f in self.SAFE_FILTERS):
+                        continue
+                    line_start = block.rfind('\n', 0, var.start()) + 1
+                    if self._inside_string(block[line_start:var.start()]):
+                        continue
+                    line = body.count('\n', 0, offset + var.start()) + 1
+                    rel = os.path.relpath(path, self.TEMPLATE_DIR)
+                    yield '%s:%d  {{ %s }}' % (rel, line, expr)
+
+    def _scan(self, source):
+        """Run the scanner over one template body held in a temporary tree."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            with open(os.path.join(tmp, 'probe.html'), 'w', encoding='utf-8') as fh:
+                fh.write(source)
+            with mock.patch.object(type(self), 'TEMPLATE_DIR', tmp):
+                return list(self._offenders())
+
+    def test_no_unguarded_interpolation_reaches_javascript(self):
+        """
+        GIVEN every template shipped under survey/templates
+        WHEN each JavaScript region is scanned for server-side interpolation
+        THEN every bare value is inside {% localize off %} or filtered through |unlocalize
+        """
+        offenders = sorted(self._offenders())
+        self.assertEqual(
+            offenders, [],
+            'A locale-formatted value can reach JavaScript here. Wrap the block in '
+            '{% localize off %} (preferred -- it also covers a value added later) or '
+            'filter the value through |unlocalize:\n  ' + '\n  '.join(offenders),
+        )
+
+    def test_the_scanner_sees_script_only_partials(self):
+        """
+        GIVEN a partial that is bare JavaScript with no <script> tag of its own
+        WHEN the set of script-included partials is derived from include sites
+        THEN that partial is in it
+
+        Without this the scanner would silently skip the basemap partial, and a
+        coordinate added there would never be checked.
+        """
+        self.assertIn('partials/basemap_layers.html',
+                      self._partials_included_inside_scripts())
+
+    def test_the_scanner_can_fail(self):
+        """
+        GIVEN a template body of the shape this defect produced
+        WHEN it is scanned
+        THEN an offender is reported
+
+        Pins the detector: a regex that matched nothing would make the test
+        above pass forever. The August fix recorded three green-on-broken
+        versions of its own tests.
+        """
+        self.assertTrue(
+            self._scan('<script>var lat = {{ survey.start_map_postion.y }};</script>'))
+
+    def test_the_scanner_accepts_a_guarded_block(self):
+        """
+        GIVEN the same body wrapped in {% localize off %}
+        WHEN it is scanned
+        THEN nothing is reported
+        """
+        self.assertEqual(self._scan(
+            '<script>{% localize off %}'
+            'var lat = {{ survey.start_map_postion.y }};{% endlocalize %}</script>'), [])
+
+    def test_the_scanner_ignores_a_quoted_value(self):
+        """
+        GIVEN an interpolation inside a JavaScript string literal
+        WHEN it is scanned
+        THEN it is not reported, because a comma there cannot change parsing
+        """
+        self.assertEqual(
+            self._scan("<script>var u = '{{ MAPBOX_URL }}';</script>"), [])
+
+    def test_the_scanner_ignores_a_json_data_island(self):
+        """
+        GIVEN a <script type="application/json"> block carrying serialized data
+        WHEN it is scanned
+        THEN it is not reported, because nothing parses it as JavaScript
+        """
+        self.assertEqual(self._scan(
+            '<script type="application/json" id="d">{{ counts }}</script>'), [])
 
 
 class ZeroSizeMapGuardTest(TestCase):
@@ -37479,7 +37881,7 @@ def _objects_layer(survey, name="Zones", geojson_text=None, **layer_fields):
     first, derived GeoJSON second."""
     from .models import SurveyMapLayer
     from .layers import validate_layer_upload, objects_from_features, rebuild_layer
-    features, _props = validate_layer_upload((geojson_text or _zones_geojson()).encode())
+    features, _props, _z = validate_layer_upload((geojson_text or _zones_geojson()).encode())
     layer = SurveyMapLayer.objects.create(survey=survey, name=name, geojson='', **layer_fields)
     objects_from_features(layer, features)
     rebuild_layer(layer)
@@ -42425,7 +42827,7 @@ class LayerStreamingRebuildTest(TestCase):
             key = '5' if i == 700 else str(i)
             features.append({'type': 'Feature', 'properties': {'zone_id': key, 'name': f'Area {i}'},
                              'geometry': {'type': 'Point', 'coordinates': [13.0 + i / 10000, 52.0]}})
-        parsed, _ = validate_layer_upload(json.dumps({'type': 'FeatureCollection', 'features': features}).encode())
+        parsed, _, _z = validate_layer_upload(json.dumps({'type': 'FeatureCollection', 'features': features}).encode())
         layer = SurveyMapLayer.objects.create(survey=self.survey, name="Big", geojson='', key_field='zone_id')
         report = objects_from_features(layer, parsed)
         self.assertEqual(report['created'], 1099)

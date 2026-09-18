@@ -54,6 +54,19 @@
 
         var inFlight = false, queued = false, timer = null;
         var lastKey = null;
+        // Everything attached outside this closure, so detach() can undo it.
+        var teardown = [];
+        var detached = false;
+
+        function on(target, event, handler, opts) {
+            target.addEventListener(event, handler, opts);
+            teardown.push(function () { target.removeEventListener(event, handler, opts); });
+        }
+
+        function mapOn(event, handler) {
+            map.on(event, handler);
+            teardown.push(function () { map.off(event, handler); });
+        }
 
         function inheriting() {
             return !!(inherit && inherit.checkbox && inherit.checkbox.checked);
@@ -91,28 +104,48 @@
                 ' · ' + (labels.zoom || 'zoom') + ' ' + s.zoom;
         }
 
+        // Returns null when the fields cannot be read. A save is then ABANDONED
+        // rather than sent: extraFields() reads controls that live in the panel,
+        // and once HTMX has swapped the panel away they are gone. Substituting a
+        // default would post `use_geolocation=0` -- a choice the creator never
+        // made -- and persist it. #192 dereferenced them unguarded and threw.
         function payload(s) {
+            var extra;
+            try {
+                extra = typeof o.extraFields === 'function' ? o.extraFields() : (o.extraFields || {});
+            } catch (err) {
+                return null;
+            }
+            if (!extra) return null;
             var fd = new FormData();
             if (inherit) fd.append('clear_position', inheriting() ? '1' : '0');
             fd.append('lat', s.lat);
             fd.append('lng', s.lng);
             fd.append('zoom', s.zoom);
-            var extra = typeof o.extraFields === 'function' ? o.extraFields() : (o.extraFields || {});
             Object.keys(extra).forEach(function (k) { fd.append(k, extra[k]); });
             return fd;
         }
 
         function save() {
             clearTimeout(timer);
+            // The container leaving the document is the same event as the panel
+            // being swapped; checking here means a caller that forgets to call
+            // detach() still cannot fire against a detached DOM.
+            if (detached || !document.body.contains(map.getContainer())) {
+                detach();
+                return;
+            }
             if (inFlight) { queued = true; return; }
-            inFlight = true;
             var s = current();
+            var body = payload(s);
+            if (!body) return;
+            inFlight = true;
             var key = stateKey(s);
             setState('saving', labels.saving || 'Saving…');
             fetch(o.url, {
                 method: 'POST',
                 headers: { 'X-CSRFToken': o.csrfToken || '' },
-                body: payload(s),
+                body: body,
             }).then(function (resp) {
                 if (!resp.ok) throw resp;
                 lastKey = key;
@@ -180,36 +213,36 @@
             }
         }
 
-        map.on('moveend', sync);
-        map.on('zoomend', sync);
+        mapOn('moveend', sync);
+        mapOn('zoomend', sync);
 
         if (inherit && inherit.checkbox) {
             pin.classList.toggle('is-inherit', inheriting());
-            inherit.checkbox.addEventListener('change', applyInherit);
+            on(inherit.checkbox, 'change', applyInherit);
             // The create page's list of gestures Leaflet cannot attribute to
             // the creator by itself: a programmatic setView/flyTo fires none.
             var mapEl = map.getContainer();
-            map.on('dragstart', touched);
-            mapEl.addEventListener('wheel', touched, { passive: true });
-            mapEl.addEventListener('dblclick', touched);
-            mapEl.addEventListener('touchstart', function (e) {
+            mapOn('dragstart', touched);
+            on(mapEl, 'wheel', touched, { passive: true });
+            on(mapEl, 'dblclick', touched);
+            on(mapEl, 'touchstart', function (e) {
                 if (e.touches && e.touches.length > 1) touched();
             }, { passive: true });
             // Capture phase on purpose: Leaflet's zoom control stops click
             // propagation at itself (disableClickPropagation), so a bubbling
             // listener here would never see the +/- buttons.
-            mapEl.addEventListener('click', function (e) {
+            on(mapEl, 'click', function (e) {
                 if (e.target.closest && e.target.closest('.leaflet-control-zoom')) touched();
             }, true);
         }
 
         (o.watch || []).forEach(function (el) {
-            if (el) el.addEventListener('change', save);
+            if (el) on(el, 'change', save);
         });
 
         // The indicator doubles as the retry control in the error state.
         if (indicatorEl) {
-            indicatorEl.addEventListener('click', function () {
+            on(indicatorEl, 'click', function () {
                 if (indicatorEl.getAttribute('data-state') === 'error') save();
             });
         }
@@ -248,10 +281,29 @@
             map.addControl(new LocateControl());
         }
 
+        // Stop everything. A pending save is dropped rather than fired at a DOM
+        // that is no longer there; calling it twice is harmless, so a caller can
+        // wire it to both a modal close and an HTMX teardown without guarding.
+        function detach() {
+            if (detached) return;
+            detached = true;
+            clearTimeout(timer);
+            queued = false;
+            teardown.splice(0).forEach(function (undo) { undo(); });
+            if (pin.parentNode) pin.parentNode.removeChild(pin);
+        }
+
+        // Self-wiring teardown: htmx fires this on every element it is about to
+        // remove, so a picker inside a swapped fragment stops itself without the
+        // template having to remember. save() checks document containment too --
+        // the two are independent on purpose, because a teardown hook that
+        // silently stops matching is exactly how this class of bug returns.
+        on(map.getContainer(), 'htmx:beforeCleanupElement', detach);
+
         // The view the page opened with is the stored one.
         rebase();
 
-        return { save: save, sync: sync, touched: touched, rebase: rebase };
+        return { save: save, sync: sync, touched: touched, rebase: rebase, detach: detach };
     }
 
     window.MapPositionPicker = { attach: attach };

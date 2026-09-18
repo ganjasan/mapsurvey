@@ -107,9 +107,15 @@
                 lat: inheritLat, lng: inheritLng, zoom: inheritZoom
             },
             extraFields: function() {
+                // Null means "cannot build a payload" and the save is abandoned.
+                // Substituting defaults here would post values the creator never
+                // chose once the modal has been closed and its body replaced.
+                var geo = document.getElementById('use-geolocation');
+                var basemap = document.getElementById('override-basemap');
+                if (!geo || !basemap) return null;
                 return {
-                    use_geolocation: document.getElementById('use-geolocation').checked ? '1' : '0',
-                    override_basemap: document.getElementById('override-basemap').value
+                    use_geolocation: geo.checked ? '1' : '0',
+                    override_basemap: basemap.value
                 };
             },
             watch: [document.getElementById('use-geolocation'), document.getElementById('override-basemap')],

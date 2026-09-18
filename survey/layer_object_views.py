@@ -402,7 +402,7 @@ def import_geojson(request, survey_uuid, layer_id):
     if f.size > MAX_LAYER_BYTES:
         return _error(f'File is larger than {MAX_LAYER_BYTES // (1024 * 1024)} MB.')
     try:
-        features, properties = validate_layer_upload(f.read())
+        features, properties, dropped_z = validate_layer_upload(f.read())
     except LayerValidationError as exc:
         return _error(exc)
     try:
@@ -417,7 +417,8 @@ def import_geojson(request, survey_uuid, layer_id):
             transaction.set_rollback(True)
         else:
             rebuild_layer(layer)
-    report.update({'properties': properties, 'dry_run': dry_run, 'features': len(features)})
+    report.update({'properties': properties, 'dry_run': dry_run, 'features': len(features),
+                   'dropped_z': dropped_z})
     if not dry_run:
         report['summary'] = _layer_summary(layer)
     return JsonResponse(report)

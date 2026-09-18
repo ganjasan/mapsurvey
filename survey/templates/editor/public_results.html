@@ -1,5 +1,6 @@
 {% extends "editor/editor_base.html" %}
 {% load i18n %}
+{% load l10n %}
 {% load survey_filters %}
 
 {% block page_title %}{% trans "Public results" %} – {{ survey.name }}{% endblock %}
@@ -352,7 +353,7 @@ function prCopyPublicLink(btn){
   // Scroll the live-preview iframe to the block selected in the sidebar and
   // flash it. The preview is same-origin (xframe_options_sameorigin), so we can
   // reach into its DOM. Runs on every iframe load (incl. autosave reloads).
-  var selectedBlockId = {{ selected_block.id|default:"null" }};
+  {% localize off %}var selectedBlockId = {{ selected_block.id|default:"null" }};{% endlocalize %}
   function scrollPreviewToSelected() {
     if (!selectedBlockId || !frame) return;
     try {

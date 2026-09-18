@@ -827,21 +827,26 @@ def editor_survey_layer_create(request, survey_uuid):
     if f.size > MAX_LAYER_BYTES:
         return JsonResponse({'error': f'File is larger than {MAX_LAYER_BYTES // (1024 * 1024)} MB.'}, status=400)
     try:
-        features, _properties = validate_layer_upload(f.read())
+        features, _properties, _dropped_z = validate_layer_upload(f.read())
     except LayerValidationError as exc:
         return JsonResponse({'error': str(exc)}, status=400)
 
     name = (os.path.splitext(f.name)[0] or 'Layer')[:100]
     owner = layer_owner(survey)
     position = (owner.map_layers.aggregate(m=models.Max('position'))['m'] or 0) + 1
-    # The layer is created on the OWNER (canonical) survey: a draft copy borrows
-    # its layers rather than holding copies (see survey.layers.layer_owner).
-    layer = SurveyMapLayer.objects.create(
-        survey=owner, name=name, geojson='', position=position,
-    )
-    # The file becomes objects; the layer's geojson is derived from them.
-    objects_from_features(layer, features, sanitize=coerce_creator_html)
-    rebuild_layer(layer)
+    # The row is created before its objects exist, so anything that raises while
+    # building them used to leave an empty layer behind, counting against
+    # MAX_LAYERS_PER_SURVEY until the creator spotted it in the settings card and
+    # deleted it by hand. One such orphan reached production before this was atomic.
+    with transaction.atomic():
+        # The layer is created on the OWNER (canonical) survey: a draft copy borrows
+        # its layers rather than holding copies (see survey.layers.layer_owner).
+        layer = SurveyMapLayer.objects.create(
+            survey=owner, name=name, geojson='', position=position,
+        )
+        # The file becomes objects; the layer's geojson is derived from them.
+        objects_from_features(layer, features, sanitize=coerce_creator_html)
+        rebuild_layer(layer)
     return JsonResponse(_layer_payload(layer, layer.property_names), status=201)
 
 
