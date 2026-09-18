@@ -42943,25 +42943,32 @@ class LayerMemoryDietTest(TestCase):
         """
         GIVEN the production and compose start commands
         WHEN they are read
-        THEN both carry a request budget with jitter AND run the draining worker class
-             (stock gthread drops the connections it accepted in its last loop
-             iteration on every recycle and every deploy — one 502 each on 2026-09-16),
-             and that class is importable and a gthread worker
+        THEN both carry a request budget with jitter, an env-tunable graceful timeout
+             (change worker-drain-hard-bound: the longest a worker with a blocked
+             thread may take to leave — 90 s of nothing accepting on 2026-09-18) AND
+             run the draining worker class (stock gthread drops the connections it
+             accepted in its last loop iteration on every recycle and every deploy —
+             one 502 each on 2026-09-16), and that class is importable, a gthread
+             worker, and overrides the exit, the abort and the pool hand-off
         """
         import os
         from gunicorn.workers.gthread import ThreadWorker
         from mapsurvey.gunicorn_workers import DrainingThreadWorker
         self.assertTrue(issubclass(DrainingThreadWorker, ThreadWorker))
+        for name in ('enqueue_req', 'handle_exit', 'handle_abort', 'handle_quit', 'run'):
+            self.assertIsNot(getattr(DrainingThreadWorker, name), getattr(ThreadWorker, name), name)
         root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         for name in ('Dockerfile', 'docker-compose.yml'):
             with open(os.path.join(root, name)) as fh:
                 text = fh.read()
             self.assertIn('--max-requests ${GUNICORN_MAX_REQUESTS:-', text, name)
             self.assertIn('--max-requests-jitter ${GUNICORN_MAX_REQUESTS_JITTER:-', text, name)
+            self.assertIn('--graceful-timeout ${GUNICORN_GRACEFUL_TIMEOUT:-', text, name)
             self.assertIn('--worker-class ${GUNICORN_WORKER_CLASS:-mapsurvey.gunicorn_workers.DrainingThreadWorker}', text, name)
         with open(os.path.join(root, 'render.yaml')) as fh:
             text = fh.read()
-        self.assertIn('GUNICORN_MAX_REQUESTS_JITTER', text)
+        for key in ('GUNICORN_MAX_REQUESTS_JITTER', 'GUNICORN_GRACEFUL_TIMEOUT', 'GUNICORN_THREADS'):
+            self.assertIn(key, text)
         self.assertIn('mapsurvey.gunicorn_workers.DrainingThreadWorker', text)
 
 

@@ -140,9 +140,15 @@ full instance's `save()` writes the text back — on respondent and Responses pa
 them. Workers recycle after `GUNICORN_MAX_REQUESTS` (+ jitter) requests, and the worker class is
 `mapsurvey.gunicorn_workers.DrainingThreadWorker`, NOT stock `gthread`: gthread drops the
 connections it accepted in its last loop iteration when it recycles or gets a deploy's SIGTERM
-(one 502 per recycle on 2026-09-16); the draining worker stops accepting first and serves what it
-holds. `scripts/gunicorn_recycle_check.py` is the reproduction — run it against both classes after
-touching the gunicorn command line or bumping gunicorn. The `LayerMemoryDietTest` query-capture
+(one 502 per recycle on 2026-09-16), and a gthread worker with a thread blocked in client-socket
+I/O — gthread reads client sockets with no timeout — cannot exit at all (both workers recycled in
+that state on 2026-09-18: 90 s with no acceptor, failed health check, instance restart). The
+draining worker stops accepting first and serves what it holds, puts a socket timeout of
+`--timeout` on every pooled connection, leaves with `os._exit` at `GUNICORN_GRACEFUL_TIMEOUT`
+whatever its threads are doing (logging `N request threads abandoned` and their stacks), and
+takes a per-master `flock` so workers recycle one at a time — a deploy's SIGTERM bypasses the
+lock. `scripts/gunicorn_recycle_check.py` is the reproduction — run it against both classes,
+with and without `--poison`, after touching the gunicorn command line or bumping gunicorn. The `LayerMemoryDietTest` query-capture
 tests fail if a page starts selecting the column again.
 
 **Layer objects (`LayerObject`, `LayerObjectAsset`; change `overlay-features`)**: a layer is a
