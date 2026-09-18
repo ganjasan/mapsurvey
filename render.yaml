@@ -166,36 +166,53 @@ services:
         value: "https://mapsurvey.org"
       - key: NEWSLETTER_SITE_URL
         value: "https://mapsurvey.org"
-      # Gunicorn concurrency — tunable from the dashboard without an image rebuild.
-      # Slots = WEB_CONCURRENCY × GUNICORN_THREADS (gthread). Measured 2026-09-15 on
-      # Starter: 425-480 MB idle with two workers (the "~110 MB per worker" this was
-      # sized on predates reference layers), so two workers need the 2 GB plan above.
+      # Gunicorn sizing — tunable from the dashboard without an image rebuild.
+      # Slots = WEB_CONCURRENCY × GUNICORN_THREADS (gthread). Threads are cheap in
+      # this I/O-bound process; each holds one persistent Postgres connection
+      # (CONN_MAX_AGE), 16 against the basic-256 plan's 97. Two workers idle at
+      # 425-480 MB (measured 2026-09-15 with reference layers), hence the 2 GB plan.
+      # Eight threads per worker since 2026-09-18: one creator with an eight-layer
+      # survey open in two tabs filled all eight slots of 2 × 4.
       - key: WEB_CONCURRENCY
         value: "2"
       - key: GUNICORN_THREADS
-        value: "4"
+        value: "8"
       - key: GUNICORN_TIMEOUT
         value: "60"
+      # How long a worker that stopped serving may take to finish what it holds.
+      # After this the worker leaves whatever its threads are doing (see the
+      # worker class below), so this is also the longest a recycle can delay the
+      # spawn of the replacement.
+      - key: GUNICORN_GRACEFUL_TIMEOUT
+        value: "10"
       # Worker recycling (change layer-memory-diet). A multi-megabyte GeoJSON parsed
       # into Python objects fragments the allocator arenas, and a worker that never
       # exits keeps that RSS for life: one 8.6 MB layer upload measured +107 MB
-      # retained after everything was freed. Recycling after ~300 requests (boot is
-      # under a second) bounds the high-water mark in time; jitter keeps the two
-      # workers from restarting together.
+      # retained after everything was freed. Recycling (boot is under a second)
+      # bounds the high-water mark in time. 1500 ± jitter since 2026-09-18: an
+      # eight-layer preview open is ~20 requests, so the old 300 was 15 opens and
+      # recycles ran constantly under exactly the traffic that makes them risky;
+      # the jitter is as large as the budget so two workers never share one.
       #
-      # The worker class matters: stock gthread drops the connections it accepted
-      # in its last loop iteration when it recycles or gets a deploy's SIGTERM —
-      # one 502 per recycle on 2026-09-16. mapsurvey.gunicorn_workers.
-      # DrainingThreadWorker stops accepting first and serves what it holds
-      # (scripts/gunicorn_recycle_check.py is the reproduction). Setting this back
-      # to "gthread" from the dashboard is the rollback; set GUNICORN_MAX_REQUESTS
-      # to "0" to stop recycling altogether.
+      # The worker class matters. Stock gthread drops the connections it accepted
+      # in its last loop iteration when it recycles or gets a deploy's SIGTERM (one
+      # 502 per recycle on 2026-09-16), and a worker with a thread blocked in
+      # client-socket I/O cannot exit at all: on 2026-09-18 both workers recycled
+      # together in that state and nothing accepted for 90 s until the arbiter
+      # killed them (health check failed, instance restarted). mapsurvey.
+      # gunicorn_workers.DrainingThreadWorker stops accepting first and serves what
+      # it holds, puts a socket timeout on every pooled connection, leaves with
+      # os._exit at GUNICORN_GRACEFUL_TIMEOUT whatever its threads are doing, and
+      # takes a per-master lock so workers recycle one at a time. scripts/
+      # gunicorn_recycle_check.py (with --poison) is the reproduction. Setting this
+      # back to "gthread" from the dashboard is the rollback; set
+      # GUNICORN_MAX_REQUESTS to "0" to stop recycling altogether.
       - key: GUNICORN_WORKER_CLASS
         value: "mapsurvey.gunicorn_workers.DrainingThreadWorker"
       - key: GUNICORN_MAX_REQUESTS
-        value: "300"
+        value: "1500"
       - key: GUNICORN_MAX_REQUESTS_JITTER
-        value: "60"
+        value: "1500"
       # Internal product analytics. Deliberately WITHOUT previewEnvRenderServiceName:
       # inheriting the production key would make every PR preview write test traffic
       # into the real project. Previews leave it unset, and unset renders no snippet.
