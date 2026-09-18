@@ -1797,6 +1797,12 @@ msgstr "Wiederherstellen"
 msgid "Delete permanently"
 msgstr "Endgültig löschen"
 
+#: survey/templates/editor.html:496
+msgid "Including %(layers)s reference layer with %(objects)s objects."
+msgid_plural "Including %(layers)s reference layers with %(objects)s objects."
+msgstr[0] "Einschließlich %(layers)s Referenzebene mit %(objects)s Objekten."
+msgstr[1] "Einschließlich %(layers)s Referenzebenen mit %(objects)s Objekten."
+
 #: survey/templates/editor.html:503
 msgid "Permanently delete survey '<strong id=\"purgeSurveyName\"></strong>'?"
 msgstr "Umfrage '<strong id=\"purgeSurveyName\"></strong>' endgültig löschen?"
