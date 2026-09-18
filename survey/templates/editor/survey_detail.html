@@ -677,6 +677,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Saved from inside the modal (draft created, sub-question added): keep it open.
     document.body.addEventListener('questionUpdated', function() { refreshPreview(); });
 
+    // Before a type is picked there is no row at all — the pick is what creates
+    // it — so closing used to discard whatever was already typed into Name or
+    // Subtext without a word. The product already promises the opposite once a
+    // type exists ("a named draft is simply a question, closing keeps it"), so
+    // closing now saves the same way, defaulting the type to `text`; the creator
+    // finds their words in the section and can change the type there. The picker
+    // itself still opens with nothing lit — a pre-selected tile would read as a
+    // choice already made (change fix-draft-question-body-loss).
+    $('#questionModal').on('hide.bs.modal', function() {
+        var form = document.querySelector('#questionModalBody form[data-create-picker]');
+        if (!form || form._qtpSavedOnClose) return;
+        var name = form.querySelector('[name=name]');
+        var subtext = form.querySelector('[name=subtext]');
+        if (!((name && name.value.trim()) || (subtext && subtext.value.trim()))) return;
+        form._qtpSavedOnClose = true;
+        htmx.ajax('POST', form.getAttribute('hx-post'), {
+            target: '#questionModalBody', swap: 'innerHTML',
+            values: { input_type: 'text', draft: '1',
+                      name: name ? name.value : '', subtext: subtext ? subtext.value : '' },
+            headers: { 'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value }
+        }).then(function() { refreshPreview(); });
+    });
+
     // A question is created the moment its type is picked; closing the modal
     // with the name still empty throws that draft away (spec survey-editor
     // "Question rows are created on type pick").
@@ -689,6 +712,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // sub-question added is real work, an Objects question needs no name
         // (its legend line falls back to the layer's). The server checks the
         // same before deleting (if_empty).
+        // A body typed into Subtext is work too, and for `html` it is the whole
+        // content while Name is an editor-only label — a Formatted Text block is
+        // normally nameless, so keying on the name alone deleted what the creator
+        // had just written (change fix-draft-question-body-loss). Both rich-text
+        // editors write into this one input and normalise an emptied editor to
+        // '', so a trimmed truth test is the whole check.
+        var subtext = form.querySelector('[name=subtext]');
+        if (subtext && subtext.value.trim()) return;
         var layer = form.querySelector('select[name=layer]');
         if (layer && layer.value) return;
         if (form.querySelector('.subquestion-list--modal li')) return;

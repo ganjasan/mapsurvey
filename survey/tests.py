@@ -39859,6 +39859,35 @@ class QuestionDraftOnTypePickTest(TestCase):
         self.assertEqual(self.client.post(url(empty), {'if_empty': '1'}).status_code, 200)
         self.assertFalse(Question.objects.filter(pk=empty.pk).exists())
 
+    def test_close_keeps_a_nameless_draft_whose_body_was_written(self):
+        """
+        GIVEN a nameless Formatted Text draft whose whole content lives in subtext
+        WHEN the modal's close handler posts delete with if_empty=1
+        THEN the question is kept (204) with its body intact, because for `html` the name is an
+             editor-only label and subtext is what the respondent reads
+        """
+        self.client.post(self.create_url, {'draft': '1', 'input_type': 'html',
+                                           'subtext': '<p>Takes about 5 minutes.</p>'})
+        q = Question.objects.get(survey_section=self.section, input_type='html')
+        self.assertEqual(q.name or '', '')
+        url = reverse('editor_question_delete', kwargs={'survey_uuid': self.survey.uuid, 'question_id': q.pk})
+        self.assertEqual(self.client.post(url, {'if_empty': '1'}).status_code, 204)
+        q.refresh_from_db()
+        self.assertIn('Takes about 5 minutes.', q.subtext)
+
+    def test_close_drops_a_draft_whose_subtext_is_markup_without_text(self):
+        """
+        GIVEN a nameless draft whose subtext holds markup but no readable text
+        WHEN the modal's close handler posts delete with if_empty=1
+        THEN the draft is deleted (200), because an opened-and-cleared editor is not content
+        """
+        self.client.post(self.create_url, {'draft': '1', 'input_type': 'text'})
+        q = Question.objects.get(survey_section=self.section, input_type='text')
+        Question.objects.filter(pk=q.pk).update(subtext='<p><br></p>')
+        url = reverse('editor_question_delete', kwargs={'survey_uuid': self.survey.uuid, 'question_id': q.pk})
+        self.assertEqual(self.client.post(url, {'if_empty': '1'}).status_code, 200)
+        self.assertFalse(Question.objects.filter(pk=q.pk).exists())
+
     def test_named_question_loses_the_draft_marker(self):
         """
         GIVEN a draft question
