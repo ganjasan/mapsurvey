@@ -31,7 +31,7 @@
 - [x] 5.1 `./run_tests.sh survey -v2` — one baseline before the work, one after; summarize the delta, do not iterate on the runner
 - [x] 5.2 Drive it in a browser: trash a survey with a layer, read the dialog, press Delete forever, confirm it disappears
 - [x] 5.3 `openspec validate purge-survey-with-layers --strict`
-- [ ] 5.4 Open the PR against `master`; no migration and no kill switch, so rollback is a revert
+- [x] 5.4 Open the PR against `master`; no migration and no kill switch, so rollback is a revert
 - [ ] 5.5 After deploy: re-run the production count of trashed surveys owning layers (9 as of 2026-09-18) and confirm the nine Delete-forever buttons work
 - [ ] 5.6 Resolve PostHog issue `01a0a513-…` once no new events arrive
 - [ ] 5.7 Write to the creator who hit it ten times — thank and "fixed", no cause detail
