@@ -492,7 +492,8 @@
                 <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="fas fa-trash-restore mr-1"></i>{% trans "Restore" %}</button>
             </form>
             <button type="button" class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#purgeModal"
-                    data-survey-name="{{ survey.name }}" data-survey-uuid="{{ survey.uuid }}">
+                    data-survey-name="{{ survey.name }}" data-survey-uuid="{{ survey.uuid }}"
+                    data-layer-note="{% if survey.layer_count %}{% blocktrans count layers=survey.layer_count with objects=survey.layer_object_count %}Including {{ layers }} reference layer with {{ objects }} objects.{% plural %}Including {{ layers }} reference layers with {{ objects }} objects.{% endblocktrans %}{% endif %}">
                 Delete forever
             </button>
         </div>
@@ -514,6 +515,11 @@
                 <div class="modal-body">
                     <p>{% blocktrans %}Permanently delete survey '<strong id="purgeSurveyName"></strong>'?{% endblocktrans %}</p>
                     <p class="text-danger"><small>{% trans "This action cannot be undone. All survey data including sessions and answers will be permanently deleted." %}</small></p>
+                    {% comment %}
+                    Filled from the row's data-layer-note; hidden for a survey
+                    that owns no reference layers, so that dialog is unchanged.
+                    {% endcomment %}
+                    <p class="text-danger mb-0" id="purgeLayerNote" style="display:none;"><small></small></p>
                 </div>
                 <div class="modal-footer d-flex align-items-center">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
@@ -674,6 +680,9 @@ $('#purgeModal').on('show.bs.modal', function(event) {
     var modal = $(this);
     modal.find('#purgeSurveyName').text(button.data('survey-name'));
     modal.find('#purgeForm').attr('action', '/editor/purge/' + button.data('survey-uuid') + '/');
+    // One modal serves every row, so the note has to be cleared as well as set.
+    var note = button.data('layer-note') || '';
+    modal.find('#purgeLayerNote').toggle(!!note).find('small').text(note);
 });
 
 </script>

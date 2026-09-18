@@ -1785,6 +1785,12 @@ msgstr "Taasta"
 msgid "Delete permanently"
 msgstr "Kustuta jäädavalt"
 
+#: survey/templates/editor.html:496
+msgid "Including %(layers)s reference layer with %(objects)s objects."
+msgid_plural "Including %(layers)s reference layers with %(objects)s objects."
+msgstr[0] "Sealhulgas %(layers)s viitekiht %(objects)s objektiga."
+msgstr[1] "Sealhulgas %(layers)s viitekihti %(objects)s objektiga."
+
 #: survey/templates/editor.html:503
 msgid "Permanently delete survey '<strong id=\"purgeSurveyName\"></strong>'?"
 msgstr ""

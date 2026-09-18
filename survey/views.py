@@ -610,9 +610,15 @@ def editor(request):
 	# Exclude draft copies and archived versions from dashboard
 	survey_list = survey_list.filter(is_canonical=True, published_version__isnull=True)
 
-	# Trash section: same scope, trashed only; dashboard itself hides trashed below
+	# Trash section: same scope, trashed only; dashboard itself hides trashed below.
+	# The layer/object counts feed the Delete-forever dialog — a creator who
+	# uploaded a 4,000-object layer should read that before the last confirmation,
+	# not after. One aggregate for the whole list, not a query per row.
 	trashed_surveys = list(
-		survey_list.filter(deleted_at__isnull=False).order_by('-deleted_at')
+		survey_list.filter(deleted_at__isnull=False).annotate(
+			layer_count=Count('map_layers', distinct=True),
+			layer_object_count=Count('map_layers__items', distinct=True),
+		).order_by('-deleted_at')
 	)
 	survey_list = survey_list.filter(deleted_at__isnull=True)
 
@@ -2045,8 +2051,11 @@ def internal_purge_trash(request):
 	if not token or not hmac.compare_digest(provided, token):
 		return HttpResponseForbidden()
 
-	purged = purge_expired_surveys()
-	return JsonResponse({'purged': purged})
+	run = purge_expired_surveys()
+	# 500 when a survey could not be purged, so the cron's own failure count
+	# carries the signal; the body names how many of each either way.
+	status = 500 if run.failed else 200
+	return JsonResponse({'purged': run.purged, 'failed': run.failed}, status=status)
 
 
 @survey_permission_required('owner', allow_trashed=True)
