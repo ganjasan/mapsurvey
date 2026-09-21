@@ -10,6 +10,7 @@ import csv
 import io
 import json
 import os
+from contextlib import contextmanager
 
 from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry, GEOSException
@@ -60,6 +61,28 @@ def _layer(request, layer_id, writable=False):
 def _object(request, layer_id, key, writable=False):
     layer = _layer(request, layer_id, writable=writable)
     return layer, get_object_or_404(LayerObject, layer=layer, key=key)
+
+
+@contextmanager
+def _layer_write(layer):
+    """Serialise writers of one layer, for the whole read-modify-rebuild.
+
+    Key generation counts and reads the layer's keys, `check_object_caps` counts
+    its objects, and `rebuild_layer` recomputes the derived GeoJSON from all of
+    them — each a read the writer then acts on. Without a lock two concurrent
+    creates pick the same `o-N` (one of them then dies on
+    `layerobject_unique_key_per_layer`), and two rebuilds each write a cache
+    holding only their own insert, so the last to commit drops the other's
+    object from the map until some later write rebuilds it.
+
+    `.only('pk')` because the lock wants the row, not its contents: selecting
+    the layer unfiltered would pull `geojson_gz` — up to 10 MB, and a gunicorn
+    worker keeps the resident memory of its largest request for life (see
+    CLAUDE.md, layer memory rules).
+    """
+    with transaction.atomic():
+        SurveyMapLayer.objects.select_for_update().only('pk').get(pk=layer.pk)
+        yield
 
 
 def _writes_objects(view):
@@ -215,14 +238,17 @@ def objects_collection(request, survey_uuid, layer_id):
     geom = _geometry_from(payload)
     if geom is None:
         return _error('A single Point, LineString or Polygon geometry is required.')
-    try:
-        check_object_caps(layer, adding=1)
-    except LayerValidationError as exc:
-        return _error(exc)
-    key = _clean_key(payload.get('key') or '') or _next_key(layer)
-    if layer.items.filter(key=key).exists():
-        return _error(f'An object with key "{key}" already exists in this layer.')
-    with transaction.atomic():
+    # Caps, key allocation, insert and rebuild all under the layer lock: each of
+    # them reads what the next one writes, and outside the lock two creators
+    # racing land on the same generated key.
+    with _layer_write(layer):
+        try:
+            check_object_caps(layer, adding=1)
+        except LayerValidationError as exc:
+            return _error(exc)
+        key = _clean_key(payload.get('key') or '') or _next_key(layer)
+        if layer.items.filter(key=key).exists():
+            return _error(f'An object with key "{key}" already exists in this layer.')
         obj = LayerObject.objects.create(
             layer=layer, key=key,
             title=str(payload.get('title') or '')[:255],
@@ -244,7 +270,7 @@ def object_detail(request, survey_uuid, layer_id, key):
         return JsonResponse({'object': _object_detail(obj), 'row': object_row(obj)})
 
     if request.method == 'DELETE':
-        with transaction.atomic():
+        with _layer_write(layer):
             obj.delete()
             rebuild_layer(layer)
         return JsonResponse({'summary': _layer_summary(layer)})
@@ -257,7 +283,7 @@ def object_detail(request, survey_uuid, layer_id, key):
         obj.description = coerce_creator_html(str(payload.get('description') or ''))
     if 'properties' in payload and isinstance(payload['properties'], dict):
         obj.properties = {k: v for k, v in payload['properties'].items() if isinstance(k, str)}
-    with transaction.atomic():
+    with _layer_write(layer):
         obj.save()
         rebuild_layer(layer)
     return JsonResponse({'object': _object_detail(obj), 'row': object_row(obj),
@@ -272,7 +298,7 @@ def object_geometry(request, survey_uuid, layer_id, key):
     geom = _geometry_from(_body(request))
     if geom is None:
         return _error('A single Point, LineString or Polygon geometry is required.')
-    with transaction.atomic():
+    with _layer_write(layer):
         obj.geometry = geom
         obj.save(update_fields=['geometry', 'updated_at'])
         rebuild_layer(layer)
@@ -300,7 +326,7 @@ def objects_bulk(request, survey_uuid, layer_id):
         keys = [k for k in keys.split(',') if k]
     action = payload.get('action')
     qs = layer.items.filter(key__in=[str(k) for k in keys])
-    with transaction.atomic():
+    with _layer_write(layer):
         if action == 'set_category':
             n = qs.update(category=str(payload.get('category') or '')[:100])
         elif action == 'delete':
@@ -342,7 +368,10 @@ def asset_create(request, survey_uuid, layer_id, key):
         asset = LayerObjectAsset.objects.create(
             object=obj, kind=kind, file=f, title=(f.name or kind)[:255],
             content_type=content_type, size_bytes=f.size, position=position)
-    rebuild_layer(layer)
+    # The upload above stays outside the lock — it can be an S3 round trip, and
+    # the row it writes is committed and visible before the rebuild reads it.
+    with _layer_write(layer):
+        rebuild_layer(layer)
     return JsonResponse({'asset': {'id': asset.pk, 'kind': asset.kind, 'url': asset.url,
                                    'title': asset.title, 'position': asset.position},
                          'row': object_row(obj)}, status=201)
@@ -355,8 +384,9 @@ def asset_detail(request, survey_uuid, layer_id, key, asset_id):
     layer, obj = _object(request, layer_id, key, writable=True)
     asset = get_object_or_404(LayerObjectAsset, pk=asset_id, object=obj)
     if request.method == 'DELETE':
-        asset.delete()
-        rebuild_layer(layer)
+        with _layer_write(layer):
+            asset.delete()
+            rebuild_layer(layer)
         return JsonResponse({'row': object_row(obj)})
     payload = _body(request)
     if 'title' in payload:
@@ -374,7 +404,7 @@ def assets_reorder(request, survey_uuid, layer_id, key):
     if isinstance(order, str):
         order = [o for o in order.split(',') if o]
     ids = [int(i) for i in order if str(i).isdigit()]
-    with transaction.atomic():
+    with _layer_write(layer):
         for position, asset_id in enumerate(ids):
             LayerObjectAsset.objects.filter(pk=asset_id, object=obj).update(position=position)
         rebuild_layer(layer)
@@ -405,13 +435,16 @@ def import_geojson(request, survey_uuid, layer_id):
         features, properties, dropped_z = validate_layer_upload(f.read())
     except LayerValidationError as exc:
         return _error(exc)
-    try:
-        check_object_caps(layer, adding=len(features))
-    except LayerValidationError as exc:
-        return _error(exc)
     mapping = _mapping_from(request)
     dry_run = str(request.POST.get('dry_run') or '') in ('1', 'true', 'on')
-    with transaction.atomic():
+    # Parsing and validating the upload stays outside the lock; the caps count
+    # and the key allocation inside objects_from_features both read what this
+    # request is about to write, so they do not.
+    with _layer_write(layer):
+        try:
+            check_object_caps(layer, adding=len(features))
+        except LayerValidationError as exc:
+            return _error(exc)
         report = objects_from_features(layer, features, mapping=mapping, sanitize=coerce_creator_html)
         if dry_run:
             transaction.set_rollback(True)
@@ -462,7 +495,7 @@ def import_csv(request, survey_uuid, layer_id):
     has_coords = any(h in lower for h in ('lat', 'latitude')) and any(h in lower for h in ('lng', 'lon', 'longitude'))
     report = {'created': 0, 'updated': 0, 'unmatched': [], 'invalid': [], 'mode': 'coordinates' if has_coords else 'content'}
 
-    with transaction.atomic():
+    with _layer_write(layer):
         if has_coords:
             try:
                 check_object_caps(layer, adding=len(rows))
@@ -544,7 +577,7 @@ def import_photos(request, survey_uuid, layer_id):
     for o in by_key.values():
         by_title.setdefault(o.title.strip().lower(), o)
     report = {'attached': 0, 'unmatched': [], 'rejected': []}
-    with transaction.atomic():
+    with _layer_write(layer):
         for f in files:
             stem = os.path.splitext(os.path.basename(f.name))[0].strip().lower()
             obj = by_key.get(stem) or by_key.get(_clean_key(stem)) or by_title.get(stem)
