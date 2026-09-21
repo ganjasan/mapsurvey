@@ -130,7 +130,11 @@
         var end = Math.min(visible.length, start + Math.ceil(rowsEl.clientHeight / ROW_H) + 10);
         var html = '';
         for (var i = start; i < end; i++) {
+            // `visible` is an index into `byKey`; a key with no row behind it means the two
+            // fell out of step (see removeLocal/reloadAll). Skip it rather than throw — a
+            // scroll or resize lands here straight from a listener, with nothing to catch.
             var o = byKey[visible[i]];
+            if (!o) continue;
             var meta = [];
             if (o.category) meta.push(esc(o.category));
             if (o.assets) Object.keys(o.assets).forEach(function (k) {
@@ -195,6 +199,9 @@
     function removeLocal(key) {
         objects = objects.filter(function (o) { return o.key !== key; });
         delete byKey[key]; delete detailCache[key];
+        // Before closeCard(), which repaints the list: the callers only recompute `visible`
+        // after this returns, and the bulk path loops over a whole selection first.
+        var at = visible.indexOf(key); if (at >= 0) visible.splice(at, 1);
         if (features[key]) { featureGroup.removeLayer(features[key]); delete features[key]; }
         if (current === key) closeCard();
     }
@@ -537,6 +544,14 @@
             objects = d.objects; byKey = {}; objects.forEach(function (o) { byKey[o.key] = o; }); detailCache = {};
             applySummary(d.summary);
             featureGroup.clearLayers(); features = {};
+            // The card may still be open on an object the import replaced: `current` would
+            // then name a key with no row, and Delete reads byKey[current].title.
+            if (current && !byKey[current]) closeCard();
+            // `visible` still holds the pre-import keys. loadGeometry() ends with its own
+            // recomputeVisible(), but that is a fetch away — for a large layer, megabytes —
+            // and a scroll or resize in between would render rows that no longer exist.
+            // Must come after features is cleared: recomputeVisible() restyles what it finds.
+            recomputeVisible();
             return loadGeometry();
         });
     }
