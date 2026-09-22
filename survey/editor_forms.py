@@ -173,6 +173,14 @@ class SurveyHeaderForm(forms.ModelForm):
         self.fields['default_basemap'].required = False
         self.fields['default_basemap'].empty_label = None
         self.fields['default_basemap'].choices = list(BASEMAP_CHOICES)
+        # "#" is how this model spells "no redirect" (views.py sends the
+        # respondent to the thanks page when it sees it), and the model gives
+        # the field that default -- but the field is not blank=True, so the
+        # ModelForm made it required. A creator who cleared the box because
+        # they want no redirect got "This field is required" back on EVERY
+        # autosave of the whole panel, which is the permanent "Not saved --
+        # retry" Replay Vision caught on 2026-09-21 (backlog #187).
+        self.fields['redirect_url'].required = False
         if self.instance and self.instance.pk:
             self.fields['default_rating_display_style'].initial = self.instance.get_default_rating_display_style()
             accent = self.instance.get_accent_color()
@@ -181,6 +189,10 @@ class SurveyHeaderForm(forms.ModelForm):
         else:
             self.fields['default_rating_display_style'].initial = 'scale_strip'
             self.fields['accent_color'].initial = '#2f5cff'
+
+    def clean_redirect_url(self):
+        # Empty means "no redirect", which this model stores as "#".
+        return (self.cleaned_data.get('redirect_url') or '').strip() or '#'
 
     def clean_basemaps(self):
         VALID = {slug for slug, _ in BASEMAP_CHOICES}

@@ -44,6 +44,7 @@
     {% if EDITOR_AUTOSAVE %}
     <script src="{% static 'js/comments_drawer.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
     <script src="{% static 'js/editor_autosave.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
+    <script src="{% static 'js/panel_autosave.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
     {% endif %}
     <style>
         :root {
@@ -371,6 +372,16 @@
         .autosave-status { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #16a34a; margin-top: 0.4rem; transition: color 0.15s; }
         .autosave-status.is-error { color: #dc2626; }
         .autosave-status.is-saving { color: #9ca3af; }
+        /* Only a transport failure is worth a click; a validation failure says
+           which field to fix and re-posting it would fail identically
+           (openspec: fix-panel-autosave-error-reporting). */
+        .autosave-status.is-retryable { cursor: pointer; }
+        .autosave-status.is-error { font-weight: 600; }
+        /* Bootstrap 4 only paints .is-invalid on .form-control; these panels
+           also carry bare checkboxes and .pr-switch inputs. */
+        .pr-panel-flush .is-invalid, .pr-scroll .is-invalid, form .is-invalid {
+            border-color: #dc2626; box-shadow: 0 0 0 1px #dc2626;
+        }
         .section-form-card .form-group { margin-bottom: 0.75rem; }
         .section-form-card label { font-size: 0.85rem; font-weight: 500; color: #374151; }
 

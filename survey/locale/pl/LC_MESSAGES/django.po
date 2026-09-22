@@ -7750,6 +7750,10 @@ msgstr "Dziedziczy pozycję ankiety — przesuń mapę, aby nadać tej sekcji w�
 msgid "Saving…"
 msgstr "Zapisywanie…"
 
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Not saved"
+msgstr "Nie zapisano"
+
 #: survey/templates/editor/partials/section_map_picker.html
 msgid "Not saved — tap to retry"
 msgstr "Nie zapisano — dotknij, aby ponowić"

@@ -7627,6 +7627,10 @@ msgstr "Pärib küsitluse asukoha — lohista kaarti, et anda sellele jaotisele 
 msgid "Saving…"
 msgstr "Salvestamine…"
 
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Not saved"
+msgstr "Salvestamata"
+
 #: survey/templates/editor/partials/section_map_picker.html
 msgid "Not saved — tap to retry"
 msgstr "Salvestamata — puuduta uuesti proovimiseks"

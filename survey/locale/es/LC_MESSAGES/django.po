@@ -7713,6 +7713,10 @@ msgstr "Hereda la posición de la encuesta — arrastre el mapa para dar a esta 
 msgid "Saving…"
 msgstr "Guardando…"
 
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Not saved"
+msgstr "No guardado"
+
 #: survey/templates/editor/partials/section_map_picker.html
 msgid "Not saved — tap to retry"
 msgstr "No guardado — toque para reintentar"

@@ -37264,6 +37264,232 @@ class MapPickerAutosaveTeardownGuardTest(SimpleTestCase):
         self.assertEqual(offenders, [], '\n  '.join(offenders))
 
 
+class SettingsPanelValidationContractTest(TestCase):
+    """The 400 contract the panel autosave reads (backlog #187).
+
+    `panel_autosave.js` names the rejected field out of `errors`. If this view
+    ever stopped sending a per-field map -- a bare 400, a flat string -- the
+    client would silently fall back to "tap to retry" and the creator would be
+    back to guessing. The client half cannot see that regression; this can.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='panel_owner', password='pass')
+        self.org = _make_org('PanelOrg')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name='panel_survey', organization=self.org)
+        self.client.login(username='panel_owner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+
+    def test_invalid_field_comes_back_named(self):
+        """
+        GIVEN an autosave POST that clears the required survey name
+        WHEN the settings panel endpoint answers
+        THEN the status is 400 and `errors` names that field with a message
+        """
+        response = self.client.post(
+            reverse('editor_survey_settings_panel', args=[self.survey.uuid]),
+            {'name': '', 'redirect_url': '#', 'visibility': 'private'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        payload = response.json()
+        self.assertFalse(payload['ok'])
+        self.assertIn('name', payload['errors'])
+        self.assertTrue(payload['errors']['name'][0])
+
+    def test_an_empty_redirect_url_is_not_an_error(self):
+        """
+        GIVEN a creator who cleared "Redirect URL" because they want none
+        WHEN the panel autosaves
+        THEN the save succeeds and the field is stored as the "#" sentinel
+
+        This is the dead end behind backlog #187: the model defaults the field
+        to "#" but is not blank=True, so the ModelForm made it required and
+        EVERY autosave of the whole panel came back 400 until the creator
+        guessed to type "#" back in.
+        """
+        response = self.client.post(
+            reverse('editor_survey_settings_panel', args=[self.survey.uuid]),
+            {'name': 'panel_survey', 'redirect_url': '', 'visibility': 'private'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['ok'])
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.redirect_url, '#')
+
+    def test_a_valid_save_answers_ok(self):
+        """
+        GIVEN a valid autosave POST
+        WHEN the settings panel endpoint answers
+        THEN it is 200 and the client's success path applies
+        """
+        response = self.client.post(
+            reverse('editor_survey_settings_panel', args=[self.survey.uuid]),
+            {'name': 'renamed_survey', 'redirect_url': '/thanks/', 'visibility': 'private'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['ok'])
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.name, 'renamed_survey')
+
+
+class PanelAutosaveErrorReportingTest(SimpleTestCase):
+    """An autosaving panel must say WHICH field a save was refused for.
+
+    Backlog #187. All three panels ended their save with
+    `.catch(function(){ setStatus('error'); })`, throwing away the `errors` map
+    the views send with a 400. A creator whose Redirect URL was rejected saw
+    "Not saved — retry" naming no field; retrying re-posted the same value, so
+    the state never cleared. Replay Vision scored that session 4.0/10
+    frustration on 2026-09-21 (Resilient Cities Network, user 413).
+
+    There is no JavaScript test runner in this repository, so this reads the
+    source. Behaviour is verified in a browser; what this catches is the FOURTH
+    panel, added by someone who copied the inline autosaver that used to be
+    here — which is exactly how #180 reached a fourth template six days after a
+    fix covered three.
+    """
+
+    ASSETS = os.path.join(settings.BASE_DIR, 'survey', 'assets', 'js')
+    TEMPLATES = os.path.join(settings.BASE_DIR, 'survey', 'templates')
+
+    PANELS = (
+        'editor/partials/survey_settings_panel.html',
+        'editor/partials/thanks_panel.html',
+        'editor/public_results.html',
+    )
+
+    def _module(self):
+        with open(os.path.join(self.ASSETS, 'panel_autosave.js'), encoding='utf-8') as fh:
+            return fh.read()
+
+    def _panel(self, rel):
+        with open(os.path.join(self.TEMPLATES, rel), encoding='utf-8') as fh:
+            return fh.read()
+
+    def test_validation_failure_names_the_field(self):
+        """
+        GIVEN the shared panel autosave module
+        WHEN its failure path is read
+        THEN a 400 carrying `errors` resolves the field's visible label and
+             writes it into the status line
+        """
+        source = self._module()
+        self.assertIn('resp.status !== 400', source)
+        # The prefix is translatable (labels.notSaved); what must not drift is
+        # that the message is built from the field's LABEL and its message.
+        self.assertIn("labels.notSaved || 'Not saved'", source)
+        self.assertIn("labelFor(form, name) + ': ' + message", source)
+        self.assertIn("label[for=", source)
+
+    def test_only_a_transport_failure_offers_a_retry(self):
+        """
+        GIVEN the shared panel autosave module
+        WHEN the retry affordance is read
+        THEN the click handler fires only in the retryable state, and only a
+             transport failure sets it
+        """
+        source = self._module()
+        self.assertIn("if (state === 'error-transport') statusEl.classList.add('is-retryable')", source)
+        self.assertIn("if (statusEl.classList.contains('is-retryable')) saveNow();", source)
+        # A validation failure must not be clickable: re-posting the same
+        # rejected value fails identically and teaches the creator nothing.
+        validation = source.split("error-validation")[1]
+        self.assertNotIn('is-retryable', validation.split('function')[0])
+
+    def test_a_success_clears_what_a_failure_marked(self):
+        """
+        GIVEN the shared panel autosave module
+        WHEN a save succeeds
+        THEN the invalid marks it set are cleared before the saved state
+        """
+        source = self._module()
+        success = source.split('if (!resp.ok) return reportFailure(resp);')[1]
+        self.assertIn('clearMarks();', success.split('function schedule')[0])
+
+    def test_question_autosave_ignores_panel_forms(self):
+        """
+        GIVEN editor_autosave.js, which saves question EDIT forms
+        WHEN its attach() is read
+        THEN it skips a form without hx-post
+
+        This is the root cause behind backlog #187. `data-autosave` is not this
+        module's marker alone -- the editor panels carry it too -- so every
+        keystroke in Survey settings also fired a question autosave, which
+        POSTed to the string "null" (404) and wrote "Not saved — tap to retry"
+        into the first `.autosave-indicator` in the form. On the settings panel
+        that element is the MAP's indicator, so the error appeared under
+        whatever control the creator had just touched, and no edit cleared it.
+        """
+        with open(os.path.join(self.ASSETS, 'editor_autosave.js'), encoding='utf-8') as fh:
+            source = fh.read()
+        attach = source.split('function attach(root)')[1]
+        self.assertIn("if (!form.getAttribute('hx-post')) return;", attach)
+
+    def test_panels_and_question_forms_do_not_share_an_autosaver(self):
+        """
+        GIVEN the panels marked data-autosave
+        WHEN their markup is read
+        THEN none of them carries hx-post, so the question autosaver cannot
+             claim them even if someone re-adds a broad selector
+        """
+        offenders = []
+        for rel in self.PANELS:
+            body = self._panel(rel)
+            for match in re.finditer(r'<form[^>]*data-autosave[^>]*>', body):
+                if 'hx-post' in match.group(0):
+                    offenders.append(f'{rel}: a data-autosave panel form carries hx-post')
+        self.assertEqual(offenders, [], '\n  '.join(offenders))
+
+    def test_every_panel_uses_the_shared_module(self):
+        """
+        GIVEN each editor panel that autosaves
+        WHEN its script is read
+        THEN it calls PanelAutosave.attach and defines no autosave status
+             handler of its own
+        """
+        offenders = []
+        for rel in self.PANELS:
+            body = self._panel(rel)
+            if 'PanelAutosave.attach' not in body:
+                offenders.append(f'{rel}: does not use PanelAutosave')
+            if re.search(r"function setStatus\s*\(", body):
+                offenders.append(f'{rel}: defines its own autosave status handler')
+            if "setStatus('error')" in body or "setStatus(form, 'error')" in body:
+                offenders.append(f'{rel}: swallows the failure reason')
+        self.assertEqual(offenders, [], '\n  '.join(offenders))
+
+    def test_module_is_loaded_for_every_editor_page(self):
+        """
+        GIVEN the editor base template
+        WHEN its script tags are read
+        THEN panel_autosave.js is loaded, so an HTMX-swapped panel finds it
+        """
+        base = self._panel('editor/editor_base.html')
+        self.assertIn("js/panel_autosave.js", base)
+
+    def test_auto_center_switch_does_not_fire_the_settings_autosave(self):
+        """
+        GIVEN the Survey settings panel
+        WHEN the autosave exclusions are read
+        THEN the auto-center switch is excluded, because it saves through
+             MapPositionPicker and a settings validation error must not appear
+             under the control the creator just touched
+        """
+        body = self._panel('editor/partials/survey_settings_panel.html')
+        attach = body.split('PanelAutosave.attach')[1]
+        self.assertIn('#survey-use-geolocation', attach.split('});')[0])
+        self.assertIn('#ref-layers-card', attach.split('});')[0])
+
+
 class TemplateScriptLocalizationGuardTest(SimpleTestCase):
     """No template may write an unguarded server-side value into JavaScript.
 
