@@ -99,6 +99,17 @@
 
     function attach(root) {
         (root || document).querySelectorAll('form[data-autosave]').forEach(function (form) {
+            // `data-autosave` is not this module's marker alone: the editor
+            // PANELS carry it too (Survey settings, Public results) and save
+            // through PanelAutosave against `action`, not `hx-post`. Without
+            // this check every keystroke in those panels also fired a save
+            // here, which POSTed to the string "null" (404) and then wrote
+            // "Not saved — tap to retry" into the first `.autosave-indicator`
+            // it found -- which on the settings panel is the MAP's indicator.
+            // That is the permanent, unclearable error Replay Vision caught on
+            // 2026-09-21 (backlog #187), appearing under whatever control the
+            // creator had just touched.
+            if (!form.getAttribute('hx-post')) return;
             if (form._autosaveAttached) return;
             form._autosaveAttached = true;
             form.addEventListener('input', function () { schedule(form); });

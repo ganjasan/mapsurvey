@@ -144,27 +144,18 @@
       loadLang(current);
 
       // ── autosave (posts the form; server sanitizes) ──
+      // openspec: fix-panel-autosave-error-reporting — the shared module is
+      // what tells the creator WHICH field a 400 rejected. Quill lives outside
+      // the form, so its value is synced into the hidden inputs on beforeSave.
       var form = document.getElementById('thanksForm');
-      function debounce(fn, ms) { var t; return function() { clearTimeout(t); t = setTimeout(fn, ms); }; }
-      function setStatus(state) {
-          var el = form.querySelector('[data-autosave-status]'); if (!el) return;
-          var span = el.querySelector('span') || el;
-          el.classList.remove('is-error', 'is-saving');
-          if (state === 'saving') { span.textContent = 'Saving…'; el.classList.add('is-saving'); }
-          else if (state === 'saved') { span.textContent = 'Saved'; }
-          else if (state === 'error') { span.textContent = 'Not saved — retry'; el.classList.add('is-error'); }
-      }
-      function save() {
-          syncCurrent();
-          var fd = new FormData(form);
-          var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || fd.get('csrfmiddlewaretoken') || '';
-          setStatus('saving');
-          fetch(form.action, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': token }, body: fd })
-              .then(function(r) { if (!r.ok) return Promise.reject(r); return r.json(); })
-              .then(function() { setStatus('saved'); if (window.refreshBuildPreview) window.refreshBuildPreview(); })
-              .catch(function() { setStatus('error'); });
-      }
-      var dsave = debounce(save, 700);
+      var inertAutosave = { save: function(){}, saveNow: function(){} };
+      var autosave = window.PanelAutosave ? PanelAutosave.attach(form, {
+          debounceMs: 700,
+          beforeSave: syncCurrent,
+          onSaved: function() { if (window.refreshBuildPreview) window.refreshBuildPreview(); }
+      }) : inertAutosave;
+      function save() { autosave.saveNow(); }
+      var dsave = autosave.save;
 
       quill.on('text-change', function(delta, old, source) { if (source === 'user') { dirty[current] = true; syncCurrent(); dsave(); } });
 

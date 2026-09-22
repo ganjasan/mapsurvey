@@ -437,28 +437,27 @@ function prCopyPublicLink(btn){
   // explicit Save buttons are gone (kept only inside <noscript>). The slug
   // field is excluded (data-no-autosave) and applied via its own button so the
   // public URL never changes from a half-typed value.
-  function debounce(fn, ms){ var t; return function(){ var a = arguments, c = this; clearTimeout(t); t = setTimeout(function(){ fn.apply(c, a); }, ms); }; }
-
   function reloadPreview(){
     var f = document.getElementById('prPreviewFrame');
     if (f) { try { f.contentWindow.location.reload(); } catch (e) { f.src = f.src; } }
   }
 
-  function setStatus(form, state){
-    var el = form.querySelector('[data-autosave-status]'); if (!el) return;
-    var span = el.querySelector('span') || el;
-    el.classList.remove('is-error', 'is-saving');
-    if (state === 'saving') { span.textContent = 'Saving…'; el.classList.add('is-saving'); }
-    else if (state === 'saved') { span.textContent = 'Saved'; }
-    else if (state === 'error') { span.textContent = 'Not saved — retry'; el.classList.add('is-error'); }
-  }
+  // openspec: fix-panel-autosave-error-reporting — one shared autosaver for
+  // every editor panel. The slug is data-no-autosave: it applies through its
+  // own button so the public URL never changes from a half-typed value, and
+  // the Apply button below is the one place that posts it.
+  document.querySelectorAll('form[data-autosave]').forEach(function(form){
+    PanelAutosave.attach(form, {
+      exclude: '[data-no-autosave]',
+      onSaved: reloadPreview
+    });
+  });
 
-  function postForm(form, opts){
-    opts = opts || {};
+  // The slug Apply button is not an autosave: it deliberately posts the field
+  // the autosaver excludes, so it keeps its own request.
+  function postSlug(form){
     var fd = new FormData(form);
-    if (opts.excludeSlug) { fd.delete('slug'); }
     var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || fd.get('csrfmiddlewaretoken') || '';
-    setStatus(form, 'saving');
     return fetch(form.action, {
       method: 'POST',
       headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': token },
@@ -467,29 +466,17 @@ function prCopyPublicLink(btn){
       if (!r.ok) { return Promise.reject(r); }
       return r.json().catch(function(){ return { ok: true }; });
     }).then(function(data){
-      setStatus(form, 'saved');
       reloadPreview();
       return data;
-    }).catch(function(){ setStatus(form, 'error'); return null; });
+    }).catch(function(){ return null; });
   }
-
-  document.querySelectorAll('form[data-autosave]').forEach(function(form){
-    var save = function(){ postForm(form, { excludeSlug: true }); };
-    var dsave = debounce(save, 600);
-    form.querySelectorAll('input, select, textarea').forEach(function(field){
-      if (field.name === 'csrfmiddlewaretoken' || field.hasAttribute('data-no-autosave')) return;
-      var tag = field.tagName, t = field.type;
-      if (tag === 'SELECT' || t === 'checkbox' || t === 'radio') { field.addEventListener('change', save); }
-      else { field.addEventListener('input', dsave); field.addEventListener('change', save); }
-    });
-  });
 
   var slugApply = document.getElementById('prSlugApply');
   if (slugApply) {
     slugApply.addEventListener('click', function(){
       var form = document.getElementById('prPageForm'); if (!form) return;
       var msg = document.querySelector('.pr-slug-msg');
-      postForm(form, { excludeSlug: false }).then(function(data){
+      postSlug(form).then(function(data){
         if (!data) return;
         if (data.slug_taken) { if (msg) msg.textContent = 'Address already taken'; return; }
         if (msg) msg.textContent = '';

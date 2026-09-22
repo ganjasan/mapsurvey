@@ -276,6 +276,7 @@
 {% trans "Saving…" as lbl_saving %}
 {% trans "All changes saved" as lbl_saved %}
 {% trans "Not saved — tap to retry" as lbl_error %}
+{% trans "Not saved" as lbl_not_saved %}
 {% trans "My location" as lbl_my_location %}
 {% trans "Locating you…" as lbl_locating %}
 {% trans "Couldn't get your location — search for a place or drag the map instead." as lbl_locate_failed %}
@@ -375,49 +376,30 @@
 <script>
 (function(){
     var form = document.getElementById('surveySettingsGeneralForm');
-    if (!form) return;
+    if (!form || !window.PanelAutosave) return;
 
-    function debounce(fn, ms){ var t; return function(){ var a = arguments, c = this; clearTimeout(t); t = setTimeout(function(){ fn.apply(c, a); }, ms); }; }
-
-    function setStatus(state){
-        var el = form.querySelector('[data-autosave-status]'); if (!el) return;
-        var span = el.querySelector('span') || el;
-        el.classList.remove('is-error', 'is-saving');
-        if (state === 'saving') { span.textContent = 'Saving…'; el.classList.add('is-saving'); }
-        else if (state === 'saved') { span.textContent = 'Saved'; }
-        else if (state === 'error') { span.textContent = 'Not saved — retry'; el.classList.add('is-error'); }
-    }
-
-    function save(){
-        var fd = new FormData(form);
-        var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || fd.get('csrfmiddlewaretoken') || '';
-        setStatus('saving');
-        fetch(form.action, {
-            method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': token },
-            body: fd
-        }).then(function(r){
-            if (!r.ok) { return Promise.reject(r); }
-            return r.json();
-        }).then(function(){
-            setStatus('saved');
-            document.body.dispatchEvent(new Event('sectionSaved'));
-        }).catch(function(){ setStatus('error'); });
-    }
-    var dsave = debounce(save, 600);
-
-    form.querySelectorAll('input, select, textarea').forEach(function(field){
-        if (field.name === 'csrfmiddlewaretoken') return;
-        // Reference-layer controls live inside this form for layout only; they
-        // save through their own endpoints and must not trigger a settings POST.
-        if (field.closest('#ref-layers-card')) return;
-        var tag = field.tagName, t = field.type;
-        if (tag === 'SELECT' || t === 'checkbox' || t === 'radio' || t === 'file') { field.addEventListener('change', save); }
-        else { field.addEventListener('input', dsave); field.addEventListener('change', save); }
+    // Controls that sit in this form for layout only and save through their own
+    // endpoints: the reference-layer card, and the auto-center switch, which
+    // MapPositionPicker watches. Before this exclusion, flipping the switch
+    // also fired a settings POST it was not part of — so a validation error
+    // from an unrelated field landed under the switch the creator had just
+    // touched and read as "the geolocation setting failed to save".
+    var autosave = PanelAutosave.attach(form, {
+        exclude: '#ref-layers-card input, #ref-layers-card select, #ref-layers-card textarea, #survey-use-geolocation',
+        labels: {
+            saving: '{{ lbl_saving|escapejs }}',
+            saved: '{{ lbl_saved|escapejs }}',
+            offline: '{{ lbl_error|escapejs }}',
+            notSaved: '{{ lbl_not_saved|escapejs }}'
+        },
+        onSaved: function(){ document.body.dispatchEvent(new Event('sectionSaved')); }
     });
+
     // Basemap checkboxes aren't form fields themselves (they sync into the
     // hidden `basemaps` input) — trigger autosave once that sync has run.
-    document.querySelectorAll('.basemap-cb').forEach(function(cb){ cb.addEventListener('change', save); });
+    document.querySelectorAll('.basemap-cb').forEach(function(cb){
+        cb.addEventListener('change', autosave.saveNow);
+    });
 })();
 </script>
 

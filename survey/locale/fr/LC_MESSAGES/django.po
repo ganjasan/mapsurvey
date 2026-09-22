@@ -7734,6 +7734,10 @@ msgstr "Hérite de la position de l’enquête — déplacez la carte pour donne
 msgid "Saving…"
 msgstr "Enregistrement…"
 
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Not saved"
+msgstr "Non enregistré"
+
 #: survey/templates/editor/partials/section_map_picker.html
 msgid "Not saved — tap to retry"
 msgstr "Non enregistré — touchez pour réessayer"

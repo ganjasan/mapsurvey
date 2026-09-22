@@ -7648,6 +7648,10 @@ msgstr "Perii kyselyn sijainnin — vedä karttaa antaaksesi tälle osiolle oman
 msgid "Saving…"
 msgstr "Tallennetaan…"
 
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Not saved"
+msgstr "Ei tallennettu"
+
 #: survey/templates/editor/partials/section_map_picker.html
 msgid "Not saved — tap to retry"
 msgstr "Ei tallennettu — napauta yrittääksesi uudelleen"

@@ -7667,6 +7667,10 @@ msgstr "Mewarisi posisi survei — seret peta untuk memberi bagian ini posisinya
 msgid "Saving…"
 msgstr "Menyimpan…"
 
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Not saved"
+msgstr "Belum tersimpan"
+
 #: survey/templates/editor/partials/section_map_picker.html
 msgid "Not saved — tap to retry"
 msgstr "Belum tersimpan — ketuk untuk mencoba lagi"

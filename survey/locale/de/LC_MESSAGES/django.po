@@ -7738,6 +7738,10 @@ msgstr "Übernimmt die Umfrageposition — ziehen Sie die Karte, um diesem Absch
 msgid "Saving…"
 msgstr "Wird gespeichert…"
 
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Not saved"
+msgstr "Nicht gespeichert"
+
 #: survey/templates/editor/partials/section_map_picker.html
 msgid "Not saved — tap to retry"
 msgstr "Nicht gespeichert — zum Wiederholen tippen"

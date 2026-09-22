@@ -7694,6 +7694,10 @@ msgstr "Eredita la posizione del sondaggio — trascina la mappa per dare a ques
 msgid "Saving…"
 msgstr "Salvataggio…"
 
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Not saved"
+msgstr "Non salvato"
+
 #: survey/templates/editor/partials/section_map_picker.html
 msgid "Not saved — tap to retry"
 msgstr "Non salvato — tocca per riprovare"
