@@ -52,4 +52,5 @@
 - [ ] 7.2 PR preview: upload through S3, confirm `basemap_images/` public and `basemap_uploads/` denied anonymously
 - [ ] 7.3 PR preview: `loadtest/lecture-burst.js` against an image survey with a shared-map question
 - [ ] 7.4 Real phones (mid-range Android, iPhone) with an 8192-px image; lower `IMAGE_BASEMAP_MAX_SIDE` if either stalls
+- [x] 7.6 Preview worker read a different S3 prefix than its web service (design D8): `MEDIA_NAMESPACE_SERVICE` on the worker in `render.yaml`, handled in `namespace_from_env`, tests for web/worker parity, slug names, production and the Blueprint
 - [x] 7.5 Update `CLAUDE.md` Key Patterns with the image basemap rules (one predicate, one renderer, Null Island bounds, shared file names)

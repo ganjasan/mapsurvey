@@ -192,6 +192,24 @@ header with Pillow's lazy `open()` does not decode pixels.
   instance it is assigned to, so two rows would share one object and a replacement in one would rename
   the other in memory. A test caught exactly that.
 
+### D8. Preview worker shares the web service's media namespace (found on PR #200)
+
+On a PR preview, `namespace_from_env` named the prefix after `RENDER_SERVICE_NAME`. The web service
+is `mapsurvey PR #200`, but its worker is `mapsurvey-celery PR #200`, so the two used different
+prefixes. The task received the upload, found no raw file under its own prefix and returned in
+0.14 s, which left the card on "Processing" forever. The same split breaks the Celery-side ZIP import
+on every preview since #187. Production is unaffected: both services resolve the empty namespace.
+
+Fix: the worker carries `MEDIA_NAMESPACE_SERVICE=mapsurvey` in `render.yaml`. On a preview,
+`namespace_from_env` swaps the service part of the name for it and keeps the ` PR #N` / `-pr-N`
+suffix, so both services write `previews/mapsurvey PR #200/`. That is exactly the web preview's
+name, which `reclaim_preview_media` checks against Render's service list. Outside previews the
+variable changes nothing.
+
+- *Alternative: pin `MEDIA_S3_NAMESPACE` per preview.* The Blueprint cannot express a preview's
+  name before Render creates it, which is why the namespace was derived in the first place.
+  Rejected.
+
 ## Risks / Trade-offs
 
 - [Coordinates look real and are not: an image survey's export puts points near 0°, 0° in the

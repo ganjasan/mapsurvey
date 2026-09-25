@@ -28,3 +28,29 @@ it with the public copy.
 
 - **WHEN** an unauthenticated client requests the storage key of a basemap upload awaiting processing
 - **THEN** the request is denied
+
+### Requirement: Environments are isolated by key prefix
+
+Every environment SHALL write media under its own key prefix, so that a preview environment cannot
+read, overwrite or delete an object belonging to production. All services of one environment — the
+web service and its Celery worker — SHALL resolve the same prefix, because the web hands files to the
+worker through storage.
+
+#### Scenario: A preview writes outside the production prefix
+
+- **WHEN** a PR preview environment stores an image
+- **THEN** the object key begins with that preview's own prefix
+- **AND** no object under the production prefix is created, modified or deleted
+
+#### Scenario: Production keys are stable across the migration
+
+- **WHEN** a file that existed on the disk is requested after the move to S3
+- **THEN** it resolves under the production prefix using the same relative path the database already
+  stores
+- **AND** no database rows were rewritten to complete the move
+
+#### Scenario: A preview worker reads what its web service stored
+
+- **WHEN** the web service of PR preview #N stores a file for a background task
+- **THEN** the preview's Celery worker resolves the same `previews/<web service name>` prefix and finds
+  the file

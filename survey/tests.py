@@ -34733,6 +34733,55 @@ class MediaNamespaceFromEnvTest(SimpleTestCase):
 
         self.assertEqual(namespace_from_env({'IS_PULL_REQUEST': 'true'}), 'previews/unnamed')
 
+    def test_preview_worker_shares_its_web_service_namespace(self):
+        """
+        GIVEN a preview web service and its Celery worker (MEDIA_NAMESPACE_SERVICE=mapsurvey)
+        WHEN each derives its namespace
+        THEN both resolve to the web preview's name, so the worker sees the files the web stores
+             (on PR #200 they differed and every image-basemap upload looked missing to the worker)
+        """
+        from mapsurvey.media_prefixes import namespace_from_env
+
+        web = namespace_from_env({'IS_PULL_REQUEST': 'true', 'RENDER_SERVICE_NAME': 'mapsurvey PR #200'})
+        worker = namespace_from_env({
+            'IS_PULL_REQUEST': 'true', 'RENDER_SERVICE_NAME': 'mapsurvey-celery PR #200',
+            'MEDIA_NAMESPACE_SERVICE': 'mapsurvey',
+        })
+        self.assertEqual(web, 'previews/mapsurvey PR #200')
+        self.assertEqual(worker, web)
+        slug_worker = namespace_from_env({
+            'IS_PULL_REQUEST': 'true', 'RENDER_SERVICE_NAME': 'mapsurvey-celery-pr-123',
+            'MEDIA_NAMESPACE_SERVICE': 'mapsurvey',
+        })
+        self.assertEqual(slug_worker, 'previews/mapsurvey-pr-123')
+
+    def test_namespace_service_has_no_effect_outside_previews(self):
+        """
+        GIVEN the production worker, which carries MEDIA_NAMESPACE_SERVICE too
+        WHEN the namespace is derived
+        THEN it is still production's empty namespace
+        """
+        from mapsurvey.media_prefixes import namespace_from_env
+
+        self.assertEqual(namespace_from_env({
+            'RENDER_SERVICE_NAME': 'mapsurvey-celery', 'MEDIA_NAMESPACE_SERVICE': 'mapsurvey',
+        }), '')
+
+    def test_blueprint_points_the_worker_at_the_web_namespace(self):
+        """
+        GIVEN render.yaml
+        WHEN the Celery worker's variables are read
+        THEN it carries MEDIA_NAMESPACE_SERVICE naming the web service that exists in the same file
+        """
+        import os
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        with open(os.path.join(root, 'render.yaml')) as fh:
+            text = fh.read()
+        # No YAML parser in the venv; slice the worker's block by its name line.
+        self.assertRegex(text, r'\n  - type: web\n    name: mapsurvey\n')
+        worker = text.split('\n    name: mapsurvey-celery\n', 1)[1].split('\n  - type:', 1)[0]
+        self.assertRegex(worker, r'- key: MEDIA_NAMESPACE_SERVICE\n\s+value: mapsurvey\n')
+
     def test_an_explicit_namespace_wins(self):
         """
         GIVEN an operator pins the namespace explicitly
