@@ -70,8 +70,9 @@ map in it has to be rebuilt on the other basemap.{% endcomment %}
   <div class="pr-field" style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;">
     <input type="file" accept="image/png,image/jpeg,image/webp" data-image-basemap-file
            class="form-control-file" style="max-width:260px;" aria-label="{% trans 'Base map image' %}">
-    <button type="button" class="btn btn-sm btn-outline-primary" data-image-basemap-upload
-            {% if survey.image_basemap_state == 'processing' %}disabled{% endif %}>
+    {% comment %}Never disabled while processing: a new upload supersedes the pending
+    one, and a stuck "Processing" must not leave the creator without a way out.{% endcomment %}
+    <button type="button" class="btn btn-sm btn-outline-primary" data-image-basemap-upload>
       <i class="fas fa-upload"></i> {% if survey.image_basemap %}{% trans "Replace image" %}{% else %}{% trans "Upload image" %}{% endif %}
     </button>
     {% if survey.image_basemap %}

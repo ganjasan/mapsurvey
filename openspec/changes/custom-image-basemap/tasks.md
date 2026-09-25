@@ -53,4 +53,5 @@
 - [ ] 7.3 PR preview: `loadtest/lecture-burst.js` against an image survey with a shared-map question
 - [ ] 7.4 Real phones (mid-range Android, iPhone) with an 8192-px image; lower `IMAGE_BASEMAP_MAX_SIDE` if either stalls
 - [x] 7.6 Preview worker read a different S3 prefix than its web service (design D8): `MEDIA_NAMESPACE_SERVICE` on the worker in `render.yaml`, handled in `namespace_from_env`, tests for web/worker parity, slug names, production and the Blueprint
+- [x] 7.7 A task whose raw file is missing marks the upload `failed` ("upload it again") instead of leaving "Processing" forever; the Upload button is never disabled while processing (a new upload supersedes)
 - [x] 7.5 Update `CLAUDE.md` Key Patterns with the image basemap rules (one predicate, one renderer, Null Island bounds, shared file names)

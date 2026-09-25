@@ -44399,6 +44399,27 @@ class ImageBasemapEditorTest(_ImageBasemapMediaMixin, TestCase):
         self.assertEqual((self.survey.image_basemap_width, self.survey.image_basemap_height), (300, 300))
         self.assertEqual(self._raw_files(), [])
 
+    def test_lost_raw_file_fails_instead_of_hanging(self):
+        """
+        GIVEN an accepted upload whose raw file is gone when the task runs
+              (the PR #200 preview: the worker looked under another S3 prefix)
+        WHEN the task runs
+        THEN the survey leaves "processing" for "failed" with a reason, and the card still offers upload
+        """
+        from .tasks import process_image_basemap
+        from . import image_basemap
+        with patch('survey.tasks.process_image_basemap.delay') as delay:
+            self.client.post(self.upload_url, {'image': _png_upload()})
+        args, _kw = delay.call_args
+        image_basemap.raw_storage().delete(args[1])
+        process_image_basemap(*args)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.image_basemap_state, 'failed')
+        self.assertIn('Upload it again', self.survey.image_basemap_error)
+        self.assertEqual(self.survey.image_basemap_pending, '')
+        html = self.client.get(reverse('editor_image_basemap', args=[self.survey.uuid])).content.decode()
+        self.assertRegex(html, r'<button type="button" class="btn btn-sm btn-outline-primary" data-image-basemap-upload>')
+
     def test_viewer_cannot_upload(self):
         """
         GIVEN a collaborator with the viewer role

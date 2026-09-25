@@ -112,6 +112,7 @@ def process_image_basemap(self, survey_id, raw_key, language='en'):
     whose survey has moved on to a newer upload, changes nothing except
     removing its own raw file."""
     from django.utils import translation
+    from django.utils.translation import gettext as _
     from .models import SurveyHeader
     from . import image_basemap
 
@@ -121,8 +122,17 @@ def process_image_basemap(self, survey_id, raw_key, language='en'):
     except SurveyHeader.DoesNotExist:
         storage.delete(raw_key)
         return
-    if survey.image_basemap_pending != raw_key or not storage.exists(raw_key):
-        storage.delete(raw_key)
+    if survey.image_basemap_pending != raw_key:
+        storage.delete(raw_key)  # superseded by a newer upload
+        return
+    if not storage.exists(raw_key):
+        # Still the current upload but its file is gone: say so rather than
+        # leave the card on "Processing" forever (PR #200 preview, where the
+        # worker looked under another prefix than the web wrote to).
+        with translation.override(language):
+            message = str(_('The uploaded file was lost before it could be processed. Upload it again.'))
+        SurveyHeader.objects.filter(pk=survey_id, image_basemap_pending=raw_key).update(
+            image_basemap_state='failed', image_basemap_error=message, image_basemap_pending='')
         return
     try:
         with translation.override(language):

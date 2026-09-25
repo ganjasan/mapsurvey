@@ -7157,3 +7157,7 @@ msgstr "Удалить изображение"
 #: survey/templates/editor/partials/image_basemap_card.html
 msgid "PNG, JPEG or WebP, up to 20 MB. Large pictures are scaled down to 8192 px on the long side."
 msgstr "PNG, JPEG или WebP, до 20 МБ. Большие изображения уменьшаются до 8192 пикселей по длинной стороне."
+
+#: survey/tasks.py
+msgid "The uploaded file was lost before it could be processed. Upload it again."
+msgstr "Загруженный файл потерялся до обработки. Загрузите его ещё раз."
