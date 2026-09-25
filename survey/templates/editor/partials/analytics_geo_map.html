@@ -656,7 +656,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     var allBounds = L.geoJSON(geoData).getBounds();
-    if (allBounds.isValid()) {
+    if (map._imageBasemapBounds) {
+        // Image basemap: the picture is the frame; zooming to one mark would
+        // show a blur of stretched pixels.
+        map.fitBounds(map._imageBasemapBounds);
+    } else if (allBounds.isValid()) {
         map.fitBounds(allBounds.pad(0.02));
     } else {
         // No answers yet: a placeholder view until the first reference layer

@@ -82,6 +82,25 @@ def default_basemaps():
     return ['streets', 'satellite', 'topo']
 
 
+BASEMAP_MODE_CHOICES = [
+    ('tiles', _('Map tiles')),
+    ('image', _('Uploaded image')),
+]
+
+IMAGE_BASEMAP_STATE_CHOICES = [
+    ('', _('Ready')),
+    ('processing', _('Processing')),
+    ('failed', _('Failed')),
+]
+
+
+def image_basemap_key(instance, filename):
+    """basemap_images/<uuid4>.webp on the public tier: the processed picture is
+    creator artwork shown on every map of the survey. The key is random because
+    draft copies and versions share the same name (see image_basemap.py)."""
+    return f'basemap_images/{uuid_module.uuid4().hex}.webp'
+
+
 BASEMAP_CHOICES = [
     ('streets', _('Streets')),
     ('satellite', _('Satellite')),
@@ -405,6 +424,18 @@ class SurveyHeader(models.Model):
     validation_settings = models.JSONField(default=dict, blank=True, help_text=_('Survey-level validation thresholds: {fast_threshold_seconds, duplicate_window_hours}'))
     basemaps = models.JSONField(default=default_basemaps, blank=True, help_text=_('Enabled basemaps for respondent map. List from: ["streets", "satellite", "topo"]'))
     default_basemap = models.CharField(max_length=20, null=True, blank=True, choices=BASEMAP_CHOICES, help_text=_('Default basemap shown to respondents. If null, first from basemaps list.'))
+    # Image basemap (change `custom-image-basemap`): a creator's own picture as the
+    # map, placed on a fixed rectangle at 0,0 — see survey/image_basemap.py. Copied
+    # into draft copies and back on publish like `basemaps`; the file NAME is shared.
+    basemap_mode = models.CharField(max_length=10, choices=BASEMAP_MODE_CHOICES, default='tiles')
+    image_basemap = models.ImageField(upload_to=image_basemap_key, max_length=255, null=True, blank=True)
+    image_basemap_width = models.PositiveIntegerField(null=True, blank=True)
+    image_basemap_height = models.PositiveIntegerField(null=True, blank=True)
+    image_basemap_state = models.CharField(max_length=12, choices=IMAGE_BASEMAP_STATE_CHOICES, default='', blank=True)
+    image_basemap_error = models.CharField(max_length=255, default='', blank=True)
+    # Private-tier key of the raw upload being processed; the task writes only if
+    # this still names its own upload, so a newer upload supersedes an older one.
+    image_basemap_pending = models.CharField(max_length=255, default='', blank=True)
     start_map_postion = geomodels.PointField(null=True, blank=True, help_text=_('Default map position for the survey. Sections inherit this if not overridden.'))
     start_map_zoom = models.IntegerField(null=True, blank=True, help_text=_('Default map zoom for the survey. Sections inherit this if not overridden.'))
     use_geolocation = models.BooleanField(default=False, help_text=_('Auto-center map on respondent location when entering the survey.'))
@@ -436,6 +467,12 @@ class SurveyHeader(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def uses_image_basemap(self):
+        """The ONE rule for "this survey's maps show the uploaded image"."""
+        return (self.basemap_mode == 'image' and bool(self.image_basemap)
+                and bool(self.image_basemap_width) and bool(self.image_basemap_height))
 
     def set_password(self, raw_password):
         self.password_hash = make_password(raw_password)

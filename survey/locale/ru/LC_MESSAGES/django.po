@@ -7047,3 +7047,113 @@ msgstr[0] "%(n)s пропущен правилом"
 msgstr[1] "%(n)s пропущены правилом"
 msgstr[2] "%(n)s пропущены правилом"
 msgstr[3] "%(n)s пропущены правилом"
+
+#: survey/models.py
+msgid "Map tiles"
+msgstr "Картографическая подложка"
+
+#: survey/models.py
+msgid "Uploaded image"
+msgstr "Загруженное изображение"
+
+#: survey/models.py
+msgid "Ready"
+msgstr "Готово"
+
+#: survey/models.py
+msgid "Processing"
+msgstr "Обработка"
+
+#: survey/models.py
+msgid "Failed"
+msgstr "Ошибка"
+
+#: survey/image_basemap.py
+msgid "The file is not a PNG, JPEG or WebP image."
+msgstr "Файл не является изображением PNG, JPEG или WebP."
+
+#: survey/image_basemap.py
+#, python-format
+msgid "The image is %(w)d × %(h)d pixels; the limit is %(mp)d megapixels."
+msgstr "Изображение имеет размер %(w)d × %(h)d пикселей; ограничение — %(mp)d мегапикселей."
+
+#: survey/image_basemap.py
+msgid "The file is not a PNG, JPEG or WebP image we can read."
+msgstr "Не удалось прочитать файл как изображение PNG, JPEG или WebP."
+
+#: survey/editor_views.py
+msgid "Choose an image to upload."
+msgstr "Выберите изображение для загрузки."
+
+#: survey/editor_views.py
+#, python-format
+msgid "The file is larger than %(mb)d MB."
+msgstr "Файл больше %(mb)d МБ."
+
+#: survey/editor_views.py
+msgid "Upload a PNG, JPEG or WebP image."
+msgstr "Загрузите изображение PNG, JPEG или WebP."
+
+#: survey/editor_views.py
+msgid "Upload an image first."
+msgstr "Сначала загрузите изображение."
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "Base map"
+msgstr "Подложка"
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "My own image"
+msgstr "Своё изображение"
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "Upload a picture — a fantasy map, a floor plan, a festival ground — and respondents answer on it instead of a real-world map. Search and geolocation are turned off, because the picture is not placed on Earth."
+msgstr "Загрузите картинку — карту вымышленного мира, план этажа, схему фестиваля — и респонденты будут отвечать на ней вместо настоящей карты. Поиск и геолокация отключаются: картинка не привязана к местности."
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "This survey already has answers drawn on the real-world map. They will not line up with the picture."
+msgstr "В этом опросе уже есть ответы, нанесённые на настоящую карту. С картинкой они не совпадут."
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "Switch anyway"
+msgstr "Всё равно переключить"
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "Uploaded base map"
+msgstr "Загруженная подложка"
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "Processing the image…"
+msgstr "Обрабатываем изображение…"
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "The image could not be used:"
+msgstr "Изображение не удалось использовать:"
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "The new image has different proportions. Marks respondents have already placed will not line up with it."
+msgstr "У нового изображения другие пропорции. Отметки, которые респонденты уже поставили, с ним не совпадут."
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "Replace anyway"
+msgstr "Всё равно заменить"
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "Base map image"
+msgstr "Изображение подложки"
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "Replace image"
+msgstr "Заменить изображение"
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "Upload image"
+msgstr "Загрузить изображение"
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "Remove image"
+msgstr "Удалить изображение"
+
+#: survey/templates/editor/partials/image_basemap_card.html
+msgid "PNG, JPEG or WebP, up to 20 MB. Large pictures are scaled down to 8192 px on the long side."
+msgstr "PNG, JPEG или WebP, до 20 МБ. Большие изображения уменьшаются до 8192 пикселей по длинной стороне."

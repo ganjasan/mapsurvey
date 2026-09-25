@@ -52,6 +52,11 @@
       <div class="pr-card">
         <h6>{% trans "Respondent map" %}</h6>
         <div class="pr-help" style="margin-top:0;margin-bottom:.75rem;">{% trans "The base map, starting position, and zoom respondents open on. Sections can override the position individually." %}</div>
+        {% include "editor/partials/image_basemap_card.html" %}
+        {% comment %}Tile choices stay in the DOM on an image survey — hidden, not
+        removed: they are named fields of the autosaving form, and a missing
+        field would be saved as blank. Switching back to tiles restores them.{% endcomment %}
+        <div id="tile-basemap-fields" {% if survey.uses_image_basemap %}hidden{% endif %}>
         <div class="pr-field">
           <label for="{{ form.basemaps.id_for_label }}">{{ form.basemaps.label }}</label>
           {{ form.basemaps }}
@@ -85,6 +90,7 @@
           {{ form.default_basemap }}
           {% if form.default_basemap.help_text %}<div class="pr-help">{{ form.default_basemap.help_text }}</div>{% endif %}
         </div>
+        </div>
 
         <div class="pr-field" style="margin-bottom:.5rem;">
           <label>{% trans "Default position" %}</label>
@@ -96,7 +102,7 @@
             <span id="survey-map-coords"></span>
           </div>
         </div>
-        <label class="pr-switch" title="{% trans 'Auto-center the map on the respondent’s browser location when they first enter the survey.' %}">
+        <label class="pr-switch" {% if survey.uses_image_basemap %}style="display:none"{% endif %} title="{% trans 'Auto-center the map on the respondent’s browser location when they first enter the survey.' %}">
           <span>{% trans "Auto-center on respondent's location" %} <small class="pr-help">{% trans "uses the visitor's browser geolocation on entry" %}</small></span>
           <input type="checkbox" id="survey-use-geolocation" {% if survey.use_geolocation %}checked{% endif %}>
         </label>
@@ -271,6 +277,109 @@
     <script>
     {% include "partials/ref_layer_factory.html" %}
     </script>
+    <script>
+    // Image basemap block (image_basemap_card.html). Every endpoint answers
+    // with the block itself (our own server-rendered partial, as HTMX would
+    // swap), which replaces the old one; while an upload is processing the
+    // block polls itself; a mode change reloads the panel so every map on it
+    // is rebuilt on the other basemap.
+    (function() {
+        // The panel is re-rendered by HTMX; bind the document listeners once
+        // and read everything per-survey from the card itself.
+        if (window._imageBasemapCard) { window._imageBasemapCard.settle(); return; }
+        var pollTimer = null;
+
+        function card() { return document.getElementById('image-basemap-card'); }
+        function panelUrl() { return card().dataset.panelUrl; }
+
+        function swap(html) {
+            var old = card();
+            if (!old) return;
+            var fresh = new DOMParser().parseFromString(html, 'text/html').getElementById('image-basemap-card');
+            if (!fresh) return;
+            old.replaceWith(fresh);
+            settle(fresh);
+        }
+
+        function settle(el) {
+            clearTimeout(pollTimer);
+            if (!el || !document.body.contains(el)) return;
+            if (el.dataset.reload === '1') { window.location.href = panelUrl(); return; }
+            if (el.dataset.state === 'processing') {
+                pollTimer = setTimeout(function() {
+                    if (!document.body.contains(el)) return;
+                    fetch(el.dataset.url, { credentials: 'same-origin' })
+                        .then(function(r) { return r.text(); })
+                        .then(function(html) {
+                            swap(html);
+                            // A finished upload on an image survey changes the maps.
+                            var now = card();
+                            if (now && now.dataset.state === '' && now.dataset.mode === 'image') {
+                                window.location.href = panelUrl();
+                            }
+                        });
+                }, 2000);
+            }
+        }
+
+        function post(url, body) {
+            body.append('csrfmiddlewaretoken', card().dataset.csrf);
+            return fetch(url, { method: 'POST', body: body, credentials: 'same-origin' })
+                .then(function(r) { return r.text(); })
+                .then(swap);
+        }
+
+        function upload(confirm) {
+            var el = card();
+            var input = el.querySelector('[data-image-basemap-file]');
+            if (!input.files.length) { input.click(); return; }
+            var pending = input.files[0];
+            var fd = new FormData();
+            fd.append('image', pending);
+            if (confirm) fd.append('confirm', '1');
+            post(el.dataset.uploadUrl, fd).then(function() {
+                // Keep the chosen file across the confirm round trip.
+                var now = card();
+                var fresh = now && now.querySelector('[data-image-basemap-file]');
+                if (fresh && now.querySelector('[data-image-basemap-confirm="upload"]') && window.DataTransfer) {
+                    var dt = new DataTransfer(); dt.items.add(pending); fresh.files = dt.files;
+                }
+            });
+        }
+
+        function setMode(mode, confirm) {
+            var fd = new FormData();
+            fd.append('mode', mode);
+            if (confirm) fd.append('confirm', '1');
+            post(card().dataset.modeUrl, fd);
+        }
+
+        document.addEventListener('click', function(e) {
+            var el = card();
+            if (!el || !el.contains(e.target)) return;
+            if (e.target.closest('[data-image-basemap-upload]')) { upload(false); }
+            else if (e.target.closest('[data-image-basemap-confirm="upload"]')) { upload(true); }
+            else if (e.target.closest('[data-image-basemap-confirm="mode"]')) { setMode('image', true); }
+            else if (e.target.closest('[data-image-basemap-cancel]')) {
+                fetch(el.dataset.url, { credentials: 'same-origin' }).then(function(r) { return r.text(); }).then(swap);
+            }
+            else if (e.target.closest('[data-image-basemap-clear]')) { post(el.dataset.clearUrl, new FormData()); }
+        });
+        document.addEventListener('change', function(e) {
+            var el = card();
+            if (!el || !el.contains(e.target)) return;
+            // Nameless inputs never reach the autosave form; stop the event so
+            // its change listener does not post the form for nothing.
+            e.stopPropagation();
+            if (e.target.matches('[data-image-basemap-mode]') && e.target.value !== el.dataset.mode) {
+                setMode(e.target.value, false);
+            }
+        }, true);
+
+        window._imageBasemapCard = { settle: function() { settle(card()); } };
+        settle(card());
+    })();
+    </script>
 {% trans "Respondents open here — centre" as lbl_centre %}
 {% trans "zoom" as lbl_zoom %}
 {% trans "Saving…" as lbl_saving %}
@@ -294,11 +403,23 @@
         {% endlocalize %}
 
         var map = L.map('survey-map-picker').setView([lat, lng], zoom);
-        L.tileLayer('{{ MAPBOX_URL }}', {
-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
-            maxZoom: 23,
-            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
-        }).addTo(map);
+        var pickerImage = JSON.parse('{{ survey|image_basemap_json|escapejs }}');
+        if (pickerImage) {
+            // The picture is the whole world: no search, no "my location", and
+            // a stored real-world position fits the picture instead.
+            var pickerImageCfg = pickerImage;
+            pickerImage = ImageBasemap.apply(map, pickerImageCfg);
+            if (!ImageBasemap.contains(pickerImageCfg, lat, lng)) {
+                hasPosition = false;
+                map.fitBounds(pickerImage.bounds);
+            }
+        } else {
+            L.tileLayer('{{ MAPBOX_URL }}', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
+                maxZoom: 23,
+                accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
+            }).addTo(map);
+        }
 
         // The centre is the position; the pin marks it; every settled move
         // saves (openspec: map-picker-centre-autosave).
@@ -316,7 +437,7 @@
                 return { use_geolocation: geo.checked ? '1' : '0' };
             },
             watch: [document.getElementById('survey-use-geolocation')],
-            locate: true,
+            locate: !pickerImage,
             labels: {
                 centre: '{{ lbl_centre|escapejs }}',
                 zoom: '{{ lbl_zoom|escapejs }}',
@@ -333,7 +454,7 @@
         // Open near the creator when no position is set yet. A move made on
         // the creator's behalf is not a decision: rebase() so it is not saved
         // until they frame the map themselves.
-        if (!hasPosition && navigator.geolocation) {
+        if (!hasPosition && !pickerImage && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(pos) {
                 map.setView([pos.coords.latitude, pos.coords.longitude], 13);
                 picker.rebase();
@@ -343,13 +464,21 @@
         // ── Place search (openspec: editor-map-picker-search) ──
         // The control only moves the map; the position follows because the
         // centre IS the position. Attached last (fix-section-map-picker-init).
-        MapPlaceSearch.attach(map, {
+        if (!pickerImage) MapPlaceSearch.attach(map, {
             accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
             container: document.getElementById('survey-map-search'),
             labels: { placeholder: '{{ lbl_search|escapejs }}' }
         });
 
-        setTimeout(function() { map.invalidateSize(); }, 200);
+        setTimeout(function() {
+            map.invalidateSize();
+            // Framing the picture was done on the creator's behalf; the resize
+            // and zoom limits it triggers must not save as their position.
+            if (pickerImage && !hasPosition) {
+                map.fitBounds(pickerImage.bounds, { animate: false });
+                picker.rebase();
+            }
+        }, 200);
     })();
     </script>
 
@@ -601,7 +730,9 @@
             if (!pv || !window.L || !window.RefLayerFactory) return;
             if (!pvMap) {
                 pvMap = L.map(pv, { attributionControl: false, zoomControl: false });
-                L.tileLayer('{{ MAPBOX_URL }}', { maxZoom: 23, opacity: .6, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }).addTo(pvMap);
+                var pvImage = JSON.parse('{{ survey|image_basemap_json|escapejs }}');
+                if (pvImage) ImageBasemap.apply(pvMap, pvImage);
+                else L.tileLayer('{{ MAPBOX_URL }}', { maxZoom: 23, opacity: .6, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }).addTo(pvMap);
             }
             function draw() {
                 if (pvLayer) pvMap.removeLayer(pvLayer);

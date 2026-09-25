@@ -1,13 +1,13 @@
 ## ADDED Requirements
 
 ### Requirement: A survey can use an uploaded image as its basemap
-A creator with editor rights SHALL be able to upload one image (PNG, JPEG or WebP) for a survey and
+A creator with the survey `owner` role (the role that edits survey settings) SHALL be able to upload one image (PNG, JPEG or WebP) for a survey and
 switch the survey's basemap mode between `tiles` and `image`. The image basemap SHALL be active only
 when the mode is `image` and a processed image exists. Surveys that never upload an image SHALL
 behave exactly as before.
 
 #### Scenario: Creator uploads an image and switches to it
-- **WHEN** an editor uploads a valid PNG in the survey settings and processing finishes
+- **WHEN** an owner uploads a valid PNG in the survey settings and processing finishes
 - **THEN** the settings card shows a preview of the image and offers the `image` basemap mode
 - **AND** after the editor selects `image`, the survey's maps show the image instead of tiles
 
@@ -148,7 +148,8 @@ back to `tiles`.
 
 ### Requirement: Draft copies carry the image and publish it
 Creating a draft copy SHALL copy the basemap mode, the image reference and its size. Publishing the
-draft SHALL copy them back to the canonical survey. A stored file SHALL be deleted only when no survey
+draft SHALL copy them back to the canonical survey, and the archived version that receives the
+previous sessions SHALL keep the previous image. A stored file SHALL be deleted only when no survey
 header references it any more.
 
 #### Scenario: Draft replaces the image without affecting respondents
@@ -164,9 +165,13 @@ header references it any more.
 - **WHEN** a survey family using an image basemap is purged from the trash
 - **THEN** the image file is deleted from storage
 
-#### Scenario: Duplicated survey shows the same image
-- **WHEN** an editor duplicates an image-basemap survey
-- **THEN** the copy uses the image basemap with the same picture
+#### Scenario: Archived version keeps the picture its answers sit on
+- **WHEN** a draft with a new image is published
+- **THEN** the archived version created for the previous responses keeps the previous image
+
+#### Scenario: Discarded draft releases only its own picture
+- **WHEN** a draft that uploaded its own image is discarded
+- **THEN** that image file is deleted and the published survey's image is kept
 
 ### Requirement: Replacing or switching warns when answers would not line up
 The settings card SHALL ask for confirmation before (a) replacing the image with one whose aspect

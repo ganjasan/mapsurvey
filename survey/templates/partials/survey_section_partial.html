@@ -1,12 +1,12 @@
 {% load hash i18n question_utils l10n survey_filters %}
 
 <div id="section-data"
-     data-map-lat="{{ section.start_map_postion.y|default:''|unlocalize }}"
-     data-map-lng="{{ section.start_map_postion.x|default:''|unlocalize }}"
-     data-map-zoom="{{ section.start_map_zoom|default:''|unlocalize }}"
+     data-map-lat="{{ section_map.position.y|default:''|unlocalize }}"
+     data-map-lng="{{ section_map.position.x|default:''|unlocalize }}"
+     data-map-zoom="{{ section_map.zoom|default:''|unlocalize }}"
      data-layout="{{ section.layout }}"
-     data-use-geolocation="{{ section.use_geolocation|yesno:'true,false' }}"
-     data-map-basemap="{{ section.override_basemap|default:'' }}"
+     data-use-geolocation="{{ section_map.use_geolocation|yesno:'true,false' }}"
+     data-map-basemap="{{ section_map.basemap }}"
      data-visible-layers="{{ visible_layers_json|default:'[]' }}"
      data-session-id="{{ request.session.survey_session_id|default:'' }}"
      data-section-name="{{ section.name|escapejs }}"

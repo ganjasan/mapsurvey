@@ -41,7 +41,7 @@ map itself.
 - The upload is **validated and normalised off the web worker**: a size cap, a pixel cap (to guard
   against decompression bombs), and re-encoding to WebP with a capped long side. The processed
   image lives on the public media tier under a random key, like other creator artwork.
-- The image basemap **rides ZIP export/import and survey duplication**, so a fantasy survey can be
+- The image basemap **rides ZIP export/import and draft copies**, so a fantasy survey can be
   shared as a template.
 - Not breaking: existing surveys keep `basemaps`/`default_basemap` as they are. The image basemap
   is opt-in per survey.
@@ -81,8 +81,8 @@ for any claim that every map shows a tile provider.
   `editor/partials/analytics_session_detail.html`, `public_results.html`. The last two tile
   hard-codings (`analytics_overview_pane.html`, the settings-panel previews) have to learn about
   the image too.
-- **Serialization / cloning / versioning**: `survey/serialization.py`, `survey/cloning.py`,
-  `survey/versioning.py`.
+- **Serialization / versioning / trash**: `survey/serialization.py`, `survey/versioning.py`,
+  `survey/trash.py`, draft discard in `survey/editor_views.py`.
 - **AI generation** (`survey/ai/materialize.py`) is untouched: it cannot produce an image, and a
   generated draft keeps tile basemaps.
 - **Load**: the whole point is a Reddit post, and a successful one looks like the lecture-hall

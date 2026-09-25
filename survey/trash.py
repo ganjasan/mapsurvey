@@ -51,6 +51,13 @@ def purge_survey(survey):
     for header in headers:
         if header.cover_image:
             header.cover_image.delete(save=False)
+    # Versions and drafts share one image-basemap file name; delete each once,
+    # after checking nothing outside this family still names it.
+    image_names = {h.image_basemap.name for h in headers if h.image_basemap}
+    header_ids = [h.pk for h in headers]
+    for name in image_names:
+        if not SurveyHeader.objects.filter(image_basemap=name).exclude(pk__in=header_ids).exists():
+            SurveyHeader._meta.get_field('image_basemap').storage.delete(name)
     questions = Question.objects.filter(survey_section__survey_header__in=headers).exclude(image='')
     for question in questions:
         if question.image:

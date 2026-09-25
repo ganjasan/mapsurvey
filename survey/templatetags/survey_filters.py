@@ -130,3 +130,21 @@ def json_attr(value):
     from django.utils.safestring import mark_safe
     text = _json.dumps(value, ensure_ascii=False)
     return mark_safe(text.replace('&', '&amp;').replace("'", '&#39;').replace('<', '&lt;').replace('>', '&gt;'))
+
+
+@register.filter
+def image_basemap_config(survey):
+    """ImageBasemap config for a survey whose maps show an uploaded image, else None."""
+    from survey.image_basemap import config_for
+    if not hasattr(survey, 'uses_image_basemap'):
+        return None
+    return config_for(survey)
+
+
+@register.filter
+def image_basemap_json(survey):
+    """The same config as JSON text ('null' on a tiles survey), for inline map
+    scripts: `JSON.parse('{{ survey|image_basemap_json|escapejs }}')`. Inline
+    because the includers are <script> bodies, where a json_script tag can't go."""
+    import json
+    return json.dumps(image_basemap_config(survey))

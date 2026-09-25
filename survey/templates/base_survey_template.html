@@ -45,6 +45,7 @@ locale.{% endcomment %}
    <!-- leaflet fa markers -->
    <link rel='stylesheet' href="{% static 'css/L.Icon.FontAwesome.css' %}">
    <script type="text/javascript" src="{% static 'js/marker_icon.js' %}"></script>
+   <script type="text/javascript" src="{% static 'js/image_basemap.js' %}"></script>
    <script type="text/javascript" src="{% static 'js/L.Icon.FontAwesome.js' %}"></script>
    <!--end fa markers -->
 
@@ -156,7 +157,8 @@ locale.{% endcomment %}
         lat: {{ initial_map_lat }},
         lng: {{ initial_map_lng }},
         zoom: {{ initial_map_zoom }},
-        useGeolocation: {{ initial_use_geolocation|yesno:"true,false" }}
+        useGeolocation: {{ initial_use_geolocation|yesno:"true,false" }},
+        fitImage: {{ initial_fit_image|yesno:"true,false" }}
     };
     {% endlocalize %}
     var _mapInitialized = false;
@@ -218,8 +220,13 @@ locale.{% endcomment %}
 
     L.control.zoom({position: 'bottomright'}).addTo(map);
 
-    // Basemap layers — also populates window._basemapLayers
+    // Basemap layers — also populates window._basemapLayers, or draws the
+    // survey's own picture and sets window._imageBasemap (custom-image-basemap)
     {% include "partials/basemap_layers.html" %}
+    if (window._imageBasemap && _initialMapState.fitImage) {
+        if (mapHasSize()) map.fitBounds(window._imageBasemap.bounds);
+        else map.once('resize', function () { map.fitBounds(window._imageBasemap.bounds); });
+    }
 
     // Reference overlay layers — fetched once, live across section swaps
     {% include "partials/ref_layer_factory.html" %}
@@ -275,12 +282,13 @@ locale.{% endcomment %}
             return container;
         }
     });
-    map.addControl(new LocateControl());
+    // On an image basemap there is no real world to locate in or search.
+    if (!window._imageBasemap) map.addControl(new LocateControl());
 
     // Place search. Moves the view only — never places a marker, never writes
     // an answer. Absent entirely when no Mapbox token is configured.
     {% get_current_language as CURRENT_LANGUAGE %}
-    MapPlaceSearch.attach(map, {
+    if (!window._imageBasemap) MapPlaceSearch.attach(map, {
         accessToken: mapboxAccessToken,
         language: '{{ CURRENT_LANGUAGE }}',
         labels: {

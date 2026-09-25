@@ -921,6 +921,8 @@ document.addEventListener('click', function (e) {
     function _install() {
         var map = window.analyticsMap;
         if (!map || map._rv2Geocoder) return;
+        // No real world to search on an image basemap (custom-image-basemap).
+        if (map._imageBasemapBounds) return;
         map._rv2Geocoder = true;
 
         var Geocoder = L.Control.extend({
@@ -1181,11 +1183,16 @@ function sessionGeoOpenMap(objectId) {
         sessionGeoDestroy();
         var map = L.map('session-geo-modal-map', { zoomControl: true });
         _sessionGeoMap = map;
-        L.tileLayer('{{ MAPBOX_URL }}', {
-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
-            maxZoom: 23,
-            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
-        }).addTo(map);
+        var sgImage = JSON.parse('{{ survey|image_basemap_json|escapejs }}');
+        if (sgImage) {
+            ImageBasemap.apply(map, sgImage);
+        } else {
+            L.tileLayer('{{ MAPBOX_URL }}', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
+                maxZoom: 23,
+                accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
+            }).addTo(map);
+        }
 
         /* Reference layers from the Map pane's cache -- same visibility, order
            and opacity as its Layers panel, no second request. */
@@ -1328,6 +1335,7 @@ function rv2FitMap(delay) {
         var m = window.analyticsMap;
         if (!m) return;
         m.invalidateSize();
+        if (m._imageBasemapBounds) { m.fitBounds(m._imageBasemapBounds); return; }
         var featureLayers = [];
         /* Reference layers are context, not data: they must not widen the fit. */
         var refPanes = {};

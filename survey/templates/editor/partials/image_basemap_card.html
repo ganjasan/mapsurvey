@@ -1,0 +1,82 @@
+{% load i18n %}
+{% comment %}Image basemap block of the settings card (change custom-image-basemap).
+Its controls carry no name= on purpose — like the reference layers card, it sits
+inside the autosaving settings form but saves through its own endpoints. The
+behaviour (upload, switch, confirm, poll while processing) is the delegated
+script in survey_settings_panel.html; every endpoint answers with this partial,
+which replaces itself. data-reload asks the panel to re-render, because every
+map in it has to be rebuilt on the other basemap.{% endcomment %}
+<div id="image-basemap-card"
+     data-url="{% url 'editor_image_basemap' survey.uuid %}"
+     data-upload-url="{% url 'editor_image_basemap_upload' survey.uuid %}"
+     data-mode-url="{% url 'editor_image_basemap_mode' survey.uuid %}"
+     data-clear-url="{% url 'editor_image_basemap_clear' survey.uuid %}"
+     data-panel-url="{% url 'editor_survey_detail' survey.uuid %}?panel=settings"
+     data-csrf="{{ csrf_token }}"
+     data-state="{{ survey.image_basemap_state }}"
+     data-mode="{{ survey.basemap_mode }}"
+     {% if reload_panel %}data-reload="1"{% endif %}>
+  <div class="pr-field">
+    <label>{% trans "Base map" %}</label>
+    <div style="display:flex;flex-wrap:wrap;gap:.4rem 1rem;">
+      <label style="font-weight:400;display:flex;gap:.4rem;align-items:center;margin:0;cursor:pointer;">
+        <input type="radio" data-image-basemap-mode value="tiles" {% if survey.basemap_mode != 'image' %}checked{% endif %}>
+        {% trans "Map tiles" %}
+      </label>
+      <label style="font-weight:400;display:flex;gap:.4rem;align-items:center;margin:0;cursor:pointer;">
+        <input type="radio" data-image-basemap-mode value="image" {% if survey.basemap_mode == 'image' %}checked{% endif %}
+               {% if not survey.image_basemap %}disabled{% endif %}>
+        {% trans "My own image" %}
+      </label>
+    </div>
+    <div class="pr-help">{% trans "Upload a picture — a fantasy map, a floor plan, a festival ground — and respondents answer on it instead of a real-world map. Search and geolocation are turned off, because the picture is not placed on Earth." %}</div>
+  </div>
+
+  {% if confirm_mode %}
+  <div class="alert alert-warning" role="alert" style="font-size:.85rem;">
+    {% trans "This survey already has answers drawn on the real-world map. They will not line up with the picture." %}
+    <div style="margin-top:.4rem;display:flex;gap:.5rem;">
+      <button type="button" class="btn btn-sm btn-warning" data-image-basemap-confirm="mode">{% trans "Switch anyway" %}</button>
+      <button type="button" class="btn btn-sm btn-light" data-image-basemap-cancel>{% trans "Cancel" %}</button>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if survey.image_basemap %}
+  <div class="pr-field">
+    <img src="{{ survey.image_basemap.url }}" alt="{% trans 'Uploaded base map' %}"
+         style="max-width:100%;max-height:180px;border-radius:6px;border:1px solid #e5e7eb;display:block;">
+    <div class="pr-help">{{ survey.image_basemap_width }} × {{ survey.image_basemap_height }} px</div>
+  </div>
+  {% endif %}
+
+  {% if survey.image_basemap_state == 'processing' %}
+  <div class="pr-help" role="status" aria-live="polite"><i class="fas fa-spinner fa-spin"></i> {% trans "Processing the image…" %}</div>
+  {% elif survey.image_basemap_state == 'failed' %}
+  <div class="text-danger" role="alert" style="font-size:.85rem;">{% trans "The image could not be used:" %} {{ survey.image_basemap_error }}</div>
+  {% endif %}
+  {% if upload_error %}<div class="text-danger" role="alert" style="font-size:.85rem;">{{ upload_error }}</div>{% endif %}
+
+  {% if confirm_upload %}
+  <div class="alert alert-warning" role="alert" style="font-size:.85rem;">
+    {% trans "The new image has different proportions. Marks respondents have already placed will not line up with it." %}
+    <div style="margin-top:.4rem;display:flex;gap:.5rem;">
+      <button type="button" class="btn btn-sm btn-warning" data-image-basemap-confirm="upload">{% trans "Replace anyway" %}</button>
+      <button type="button" class="btn btn-sm btn-light" data-image-basemap-cancel>{% trans "Cancel" %}</button>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="pr-field" style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;">
+    <input type="file" accept="image/png,image/jpeg,image/webp" data-image-basemap-file
+           class="form-control-file" style="max-width:260px;" aria-label="{% trans 'Base map image' %}">
+    <button type="button" class="btn btn-sm btn-outline-primary" data-image-basemap-upload
+            {% if survey.image_basemap_state == 'processing' %}disabled{% endif %}>
+      <i class="fas fa-upload"></i> {% if survey.image_basemap %}{% trans "Replace image" %}{% else %}{% trans "Upload image" %}{% endif %}
+    </button>
+    {% if survey.image_basemap %}
+    <button type="button" class="btn btn-sm btn-outline-danger" data-image-basemap-clear>{% trans "Remove image" %}</button>
+    {% endif %}
+  </div>
+  <div class="pr-help">{% trans "PNG, JPEG or WebP, up to 20 MB. Large pictures are scaled down to 8192 px on the long side." %}</div>
+</div>

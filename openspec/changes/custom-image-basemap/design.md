@@ -125,7 +125,7 @@ checks that the header still points at its `raw_key`, stored in a sixth field
 - *Alternative: decode in the view with a small cap.* It is simpler, but it repeats the exact
   failure mode of the 2026-09-15 incident. Rejected.
 
-### D4. One renderer: `ImageBasemap` + a data partial
+### D4. One renderer: `ImageBasemap` + one config filter
 
 - `survey/assets/js/image_basemap.js` defines `window.ImageBasemap.apply(map, cfg)`. It adds
   `L.imageOverlay(cfg.url, cfg.bounds)`, sets `maxBounds` (bounds padded by 10 %,
@@ -133,8 +133,11 @@ checks that the header still points at its `raw_key`, stored in a sixth field
   from the native zoom where one image pixel is one screen pixel (+1 for pinch). It sets the map
   background to a neutral colour instead of the tile grey, and returns the bounds so the caller can
   `fitBounds` when it has no start view of its own.
-- `partials/image_basemap_data.html` emits `{{ cfg|json_script:"image-basemap-data" }}` from a
-  context value built by `image_basemap.config_for(survey)`: url, bounds, width, height.
+- The config (`image_basemap.config_for(survey)`: url, bounds, width, height, or `null`) reaches
+  each map as `JSON.parse('{{ survey|image_basemap_json|escapejs }}')`, written inline where the map
+  is built. *Changed during implementation:* the first plan was a `json_script` partial, but every
+  includer of `basemap_layers.html` includes it inside a `<script>` body, where a `json_script` tag
+  cannot go. One filter used everywhere is also what the guard test below looks for.
 - `partials/basemap_layers.html` branches at the top: on an image survey it calls
   `ImageBasemap.apply` and adds **no** tile layers and **no** base entries to the layers control. The
   control is still created when reference overlays need it. The five including surfaces therefore
@@ -180,7 +183,14 @@ header with Pillow's lazy `open()` does not decode pixels.
   `"mapsurvey_image_basemap": {"image": "basemap.webp", "bounds": [...], "note": "..."}`. The
   image itself is added to the ZIP, so someone opening the data in QGIS can load the picture as a
   raster with those bounds and see the marks where respondents put them.
-- **Duplication** (`cloning.py`, whole-survey copy): copies the fields and file name (shared, D2).
+- **Duplication**: there is no whole-survey copy in the product (only question/section
+  duplication, which never touches the header), so nothing to do. ZIP export → import is the way to
+  copy a survey and carries the picture. The archived version created by `publish_draft()` does
+  copy the fields: the sessions moving there were drawn on the old picture.
+- **Copying rule**: `image_basemap.copy_fields()` passes the file NAME,
+  never the source's `FieldFile`. Django's file descriptor re-points a foreign `FieldFile` at the
+  instance it is assigned to, so two rows would share one object and a replacement in one would rename
+  the other in memory. A test caught exactly that.
 
 ## Risks / Trade-offs
 
