@@ -23,6 +23,10 @@
                 <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
             </label>
         </div>
+        {% comment %}On an image basemap both controls mean nothing: hidden, not
+        removed, because the autosave payload reads them and their stored values
+        apply again if the survey switches back to tiles.{% endcomment %}
+        <div {% if survey.uses_image_basemap %}hidden{% endif %}>
         <div class="form-check mb-2">
             <input type="checkbox" class="form-check-input" id="use-geolocation"
                    {% if section.use_geolocation %}checked{% endif %}>
@@ -41,6 +45,7 @@
                     <option value="{{ slug }}" {% if section.override_basemap == slug %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
+        </div>
         </div>
     </div>
 </div>
@@ -93,6 +98,18 @@
         // Fix map rendering in modal — before the picker attaches, so the
         // resize pan is not mistaken for a move worth saving.
         map.invalidateSize();
+        // Image basemap: a real-world position (the survey's or this section's,
+        // from before the switch) is off the picture — frame the picture, and
+        // inherit means "the whole picture".
+        if (window._imageBasemap) {
+            var cfg = window._imageBasemap.config;
+            if (!ImageBasemap.contains(cfg, inheritLat, inheritLng)) {
+                var c = window._imageBasemap.bounds.getCenter();
+                inheritLat = c.lat; inheritLng = c.lng;
+                inheritZoom = map.getBoundsZoom(window._imageBasemap.bounds);
+            }
+            if (!ImageBasemap.contains(cfg, lat, lng)) map.fitBounds(window._imageBasemap.bounds);
+        }
 
         // The centre is the position; the pin marks it; every settled move
         // saves (openspec: map-picker-centre-autosave). Inherit: ticking flies
@@ -119,7 +136,7 @@
                 };
             },
             watch: [document.getElementById('use-geolocation'), document.getElementById('override-basemap')],
-            locate: true,
+            locate: !window._imageBasemap,
             labels: {
                 centre: '{{ lbl_centre|escapejs }}',
                 zoom: '{{ lbl_zoom|escapejs }}',
@@ -141,7 +158,7 @@
         // literal on purpose — reading a global that another partial declares
         // is what broke it. A result is a creator gesture: it lifts Inherit,
         // and the flight's moveend saves the centre.
-        MapPlaceSearch.attach(map, {
+        if (!window._imageBasemap) MapPlaceSearch.attach(map, {
             accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
             container: document.getElementById('map-picker-search'),
             labels: { placeholder: '{{ lbl_search|escapejs }}' },

@@ -15,6 +15,9 @@ from .tasks import run_survey_import
 from .models import FILE_INPUT_TYPES
 from .uploads import attach_upload, detach_unreferenced
 from .layers import build_map_layers_metadata, layer_owner, section_layer_ids, GEOMETRY_TEXT_FIELDS
+from .image_basemap import section_map_view, geojson_member as image_basemap_geojson_member
+
+IMAGE_BASEMAP_EXPORT_NAME = 'basemap.webp'
 from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role, get_org_membership, SURVEY_ROLE_RANK,
@@ -968,6 +971,7 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 		'existing_object_answers': existing_object_answers,
 		'survey': survey,
 		'section': section,
+		'section_map': section_map_view(survey, section),
 		'section_title': section_title,
 		'section_subheading': section_subheading,
 		'selected_language': selected_language,
@@ -1382,6 +1386,15 @@ def survey_section(request, survey_slug, section_name):
 			ctx['initial_map_zoom'] = 12
 
 		ctx['initial_use_geolocation'] = survey.use_geolocation
+		ctx['initial_fit_image'] = False
+		if survey.uses_image_basemap:
+			# The picture is the whole world: a start position off it (a real
+			# place left from before the switch) fits the picture instead, and
+			# the device's location means nothing here.
+			from .image_basemap import point_inside
+			start = survey.start_map_postion or head_section.start_map_postion
+			ctx['initial_fit_image'] = not point_inside(survey, start)
+			ctx['initial_use_geolocation'] = False
 		ctx['map_layers'] = _build_map_layers_metadata(survey)
 
 		return render(request, 'survey_section.html', ctx)
@@ -1619,6 +1632,13 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 
 	from .models import FILE_INPUT_TYPES as _FILE_TYPES
 
+	if survey.uses_image_basemap:
+		try:
+			with survey.image_basemap.open('rb') as fh:
+				zip.writestr(prefix + IMAGE_BASEMAP_EXPORT_NAME, fh.read())
+		except (OSError, ValueError):
+			logger.exception("Image basemap unreadable during data export: survey=%s", survey.pk)
+
 	#обработка гео вопросов
 	geo_questions = survey.geo_questions()
 
@@ -1697,6 +1717,11 @@ def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
 			"properties": layer_properties,
 			"features": features,
 		}
+		if survey.uses_image_basemap:
+			# Coordinates are positions on the picture, not on Earth; say so and
+			# say where the picture goes (custom-image-basemap).
+			geojson_dict["mapsurvey_image_basemap"] = image_basemap_geojson_member(
+				survey, prefix + IMAGE_BASEMAP_EXPORT_NAME)
 
 		geojson_str = json.dumps(geojson_dict, ensure_ascii=False).encode('utf8')
 

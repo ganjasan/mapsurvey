@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n survey_filters %}
 {% comment %}
 Overview pane (openspec: responses-v2-refactor, capability responses-overview).
 The default Responses pane on every form factor: KPI strip with daily deltas,
@@ -215,13 +215,30 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
                went through basemap_layers.html and kept a hard-coded volunteer
                tile host -- the very surface the "Access blocked - 403" report
                came from. Guard tests reject that host anywhere under survey/. */
-            L.tileLayer('{{ MAPBOX_URL }}', {
-                attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
-                maxZoom: 23, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
-            }).addTo(m);
+            var ovImage = JSON.parse('{{ survey|image_basemap_json|escapejs }}');
+            if (ovImage) {
+                ovImage = ImageBasemap.apply(m, ovImage);
+            } else {
+                L.tileLayer('{{ MAPBOX_URL }}', {
+                    attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
+                    maxZoom: 23, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
+                }).addTo(m);
+            }
             mapEl.style.cursor = 'pointer';
             mapEl.addEventListener('click', function () { rv2Router.setPane('map'); });
-            if (geo && geo.features && geo.features.length) {
+            if (ovImage) {
+                /* The whole picture is the overview; marks sit on it. */
+                if (geo && geo.features && geo.features.length) {
+                    L.geoJSON(geo, {
+                        pointToLayer: function (f, latlng) {
+                            return L.circleMarker(latlng, { radius: 4, color: '#4f46e5', weight: 1.5, fillOpacity: 0.7 });
+                        },
+                        style: { color: '#4f46e5', weight: 2 },
+                    }).addTo(m);
+                }
+                m.fitBounds(ovImage.bounds);
+                setTimeout(function () { m.invalidateSize(); m.fitBounds(ovImage.bounds); }, 150);
+            } else if (geo && geo.features && geo.features.length) {
                 var layer = L.geoJSON(geo, {
                     pointToLayer: function (f, latlng) {
                         return L.circleMarker(latlng, { radius: 4, color: '#4f46e5', weight: 1.5, fillOpacity: 0.7 });

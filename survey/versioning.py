@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from django.db import transaction
 from django.db.models import Q
 
+from . import image_basemap
 from .cloning import clone_question
 from .models import (
     SurveyHeader, SurveySection, SurveySectionTranslation,
@@ -281,6 +282,7 @@ def clone_survey_for_draft(canonical, structure_source=None):
         use_geolocation=canonical.use_geolocation,
         show_branding=canonical.show_branding,
         style_settings=canonical.style_settings,
+        **image_basemap.copy_fields(canonical),
         status="draft",
         published_version=canonical,
     )
@@ -471,6 +473,9 @@ def publish_draft(draft, force=False):
             thanks_html=canonical.thanks_html,
             show_branding=canonical.show_branding,
             style_settings=canonical.style_settings,
+            # The sessions moving here were drawn on this picture; the version
+            # keeps it (and keeps the file referenced) whatever the draft did.
+            **image_basemap.copy_fields(canonical),
             status='closed',
             is_canonical=False,
             canonical_survey=canonical,
@@ -503,6 +508,8 @@ def publish_draft(draft, force=False):
         canonical.start_map_zoom = draft.start_map_zoom
         canonical.use_geolocation = draft.use_geolocation
         canonical.show_branding = draft.show_branding
+        for field, value in image_basemap.copy_fields(draft).items():
+            setattr(canonical, field, value)
 
         # 6. Increment version
         canonical.version_number += 1

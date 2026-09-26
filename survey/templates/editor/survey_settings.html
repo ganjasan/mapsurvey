@@ -165,11 +165,18 @@
         {% endlocalize %}
 
         var map = L.map('survey-map-picker').setView([lat, lng], zoom);
-        L.tileLayer('{{ MAPBOX_URL }}', {
-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
-            maxZoom: 23,
-            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
-        }).addTo(map);
+        var pickerImage = JSON.parse('{{ survey|image_basemap_json|escapejs }}');
+        if (pickerImage) {
+            var pickerFit = !ImageBasemap.contains(pickerImage, lat, lng);
+            pickerImage = ImageBasemap.apply(map, pickerImage);
+            if (pickerFit) map.fitBounds(pickerImage.bounds);
+        } else {
+            L.tileLayer('{{ MAPBOX_URL }}', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
+                maxZoom: 23,
+                accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
+            }).addTo(map);
+        }
 
         // The centre is the position; the pin marks it; every settled move
         // saves (openspec: map-picker-centre-autosave).

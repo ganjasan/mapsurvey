@@ -71,6 +71,12 @@ def serialize_survey_to_dict(survey: SurveyHeader) -> Dict[str, Any]:
         "use_geolocation": survey.use_geolocation,
         "show_branding": survey.show_branding,
         "style_settings": survey.style_settings or {},
+        "basemap_mode": survey.basemap_mode,
+        "image_basemap": ({
+            "file": IMAGE_BASEMAP_ARCHIVE_PATH,
+            "width": survey.image_basemap_width,
+            "height": survey.image_basemap_height,
+        } if survey.image_basemap else None),
         "layers": serialize_layers(survey),
         "sections": serialize_sections(survey),
     }
@@ -402,6 +408,14 @@ def export_survey_to_zip(
             for archive_path, geojson_text in collect_layer_files(survey):
                 zf.writestr(archive_path, geojson_text)
 
+            # Image basemap: the processed WebP, as stored
+            if survey.image_basemap:
+                try:
+                    with survey.image_basemap.open('rb') as fh:
+                        zf.writestr(IMAGE_BASEMAP_ARCHIVE_PATH, fh.read())
+                except (OSError, ValueError) as exc:
+                    warnings.append(f"Basemap image could not be read and was not exported: {exc}")
+
         # Export data (responses.json + upload images)
         if mode in ("data", "full"):
             responses_data = {
@@ -629,6 +643,7 @@ def import_structure_from_archive(
     # indexes into the exported layers array and needs the new ids to remap.
     layer_ids, layer_warnings = extract_layers(zip_file, survey, survey_data.get("layers") or [])
     warnings.extend(layer_warnings)
+    warnings.extend(extract_image_basemap(zip_file, survey, survey_data))
 
     # Create sections
     sections_data = survey_data.get("sections", [])
@@ -732,6 +747,40 @@ def create_survey_header(
         style_settings=_clean_style_settings(survey_data.get("style_settings")),
         is_canonical=True,
     )
+
+
+IMAGE_BASEMAP_ARCHIVE_PATH = "basemap/basemap.webp"
+
+
+def extract_image_basemap(zip_file: zipfile.ZipFile, survey: SurveyHeader, survey_data: Dict[str, Any]) -> List[str]:
+    """Restore the survey's image basemap from the archive (change custom-image-basemap).
+
+    An archive is untrusted, so the file goes through the same decode/bound/
+    re-encode as a web upload (image_basemap.process_file) — this runs on the
+    Celery worker with the rest of the import. Anything wrong leaves the survey
+    on tiles with a report line; archives from before the feature carry no key
+    and import silently as tiles.
+    """
+    from . import image_basemap
+
+    entry = survey_data.get("image_basemap")
+    if not isinstance(entry, dict):
+        return []
+    archive_path = entry.get("file")
+    if not isinstance(archive_path, str) or archive_path not in zip_file.namelist():
+        return [f"Basemap image '{archive_path}' not found in archive — the survey uses map tiles."]
+    if zip_file.getinfo(archive_path).file_size > image_basemap.max_upload_bytes():
+        return [f"Basemap image '{archive_path}' is too large — the survey uses map tiles."]
+    try:
+        with zip_file.open(archive_path) as fh:
+            webp, width, height = image_basemap.process_file(BytesIO(fh.read()))
+    except image_basemap.ImageRejected as exc:
+        return [f"Basemap image '{archive_path}' was skipped: {exc} The survey uses map tiles."]
+    image_basemap.store_processed(survey, webp, width, height)
+    if survey_data.get("basemap_mode") == "image":
+        survey.basemap_mode = "image"
+        survey.save(update_fields=["basemap_mode"])
+    return []
 
 
 def _clean_style_settings(value):

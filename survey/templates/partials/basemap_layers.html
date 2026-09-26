@@ -1,4 +1,18 @@
-(function() {
+{% load survey_filters %}(function() {
+    // Image basemap (change custom-image-basemap): the survey's own picture
+    // replaces every tile layer. No base entries in the layers control; the
+    // control is still created by reference_layers.html when overlays need it.
+    // window._imageBasemap tells the including page the picture's bounds.
+    window._basemapLayers = {};
+    window._layersControl = null;
+    window._imageBasemap = null;
+    var _imgCfg = JSON.parse('{{ survey|image_basemap_json|escapejs }}');
+    if (_imgCfg && window.ImageBasemap) {
+        window._imageBasemap = ImageBasemap.apply(map, _imgCfg);
+        window._imageBasemap.config = _imgCfg;
+        return;
+    }
+
     var _enabled = {{ survey.basemaps|safe }};
     if (!_enabled || !_enabled.length) _enabled = ['streets'];
     var _defaultSlug = '{{ survey.default_basemap|default:"" }}' || _enabled[0];
@@ -15,7 +29,6 @@
         'topo':      { name: 'Topo',      url: '{{ MAPBOX_OUTDOORS_URL }}', opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: _mapboxToken }}
     };
 
-    window._basemapLayers = {};
     var _baseMaps = {};
     _enabled.forEach(function(slug) {
         var p = _providers[slug];
@@ -31,7 +44,6 @@
 
     // Shared with reference_layers.html: overlays join the same control, and
     // the control exists when there is anything to switch (bases OR overlays).
-    window._layersControl = null;
     if (Object.keys(_baseMaps).length > 1) {
         window._layersControl = L.control.layers(_baseMaps, null, { position: 'topright', collapsed: true }).addTo(map);
     }

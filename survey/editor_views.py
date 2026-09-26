@@ -33,6 +33,8 @@ from .layers import (
     objects_from_features, rebuild_layer, check_object_caps, backfill_question_layer,
     MAX_LAYER_BYTES, MAX_LAYERS_PER_SURVEY,
 )
+from . import image_basemap
+from .image_basemap import point_inside, section_map_view
 from . import product_events as pe
 from .question_types import CHOICE_TYPES
 from .cloning import clone_question, clone_section
@@ -962,6 +964,99 @@ def _layer_property_names(layer):
     layer by `rebuild_layer` (change layer-memory-diet): parsing the derived
     GeoJSON for this cost 55 MB per editor page render on a 10 MB layer."""
     return list(layer.property_names or [])
+
+
+# ─── Image basemap (change custom-image-basemap) ─────────────────────────────
+
+def _image_basemap_card(request, survey, status=200, **extra):
+    ctx = {'survey': survey, 'image_basemap_cfg': image_basemap.config_for(survey)}
+    ctx.update(extra)
+    # A confirmation or an upload error belongs to the image block, whatever the mode.
+    ctx['force_open'] = bool(extra.get('confirm_mode') or extra.get('confirm_upload')
+                             or extra.get('upload_error'))
+    return render(request, 'editor/partials/image_basemap_card.html', ctx, status=status)
+
+
+@survey_permission_required('owner')
+def editor_image_basemap(request, survey_uuid):
+    """The image block of the settings card; polled while an upload processes."""
+    return _image_basemap_card(request, request.survey)
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_image_basemap_upload(request, survey_uuid):
+    """Accept a picture WITHOUT decoding it: type and size only, then the raw
+    bytes go to the private tier and the Celery worker does the rest
+    (image_basemap.process_file). Decoding here would keep a big picture's
+    RSS in this gunicorn worker for life (2026-09-15)."""
+    survey = request.survey
+    f = request.FILES.get('image')
+    if not f:
+        return _image_basemap_card(request, survey, status=400, upload_error=_('Choose an image to upload.'))
+    limit = image_basemap.max_upload_bytes()
+    if f.size > limit:
+        return _image_basemap_card(request, survey, status=400, upload_error=_(
+            'The file is larger than %(mb)d MB.') % {'mb': limit // (1024 * 1024)})
+    if (f.content_type or '').lower() not in image_basemap.ALLOWED_CONTENT_TYPES:
+        return _image_basemap_card(request, survey, status=400, upload_error=_(
+            'Upload a PNG, JPEG or WebP image.'))
+
+    # An upload switches the survey to its picture when processing succeeds
+    # (design D9), so on a survey still on tiles it asks what a mode switch asks.
+    if request.POST.get('confirm') != '1' and image_basemap.family_has_geo_answers(survey):
+        if not survey.uses_image_basemap:
+            return _image_basemap_card(request, survey, status=409, confirm_mode=True,
+                                       confirm_action='upload')
+        new_size = image_basemap.header_size(f)
+        if new_size and image_basemap.aspect_differs(
+                survey.image_basemap_width, survey.image_basemap_height, *new_size):
+            return _image_basemap_card(request, survey, status=409, confirm_upload=True)
+
+    raw_key = image_basemap.store_raw_upload(f)
+    survey.image_basemap_pending = raw_key
+    survey.image_basemap_state = 'processing'
+    survey.image_basemap_error = ''
+    survey.save(update_fields=['image_basemap_pending', 'image_basemap_state', 'image_basemap_error', 'updated_at'])
+    from .tasks import process_image_basemap
+    process_image_basemap.delay(survey.pk, raw_key, translation.get_language() or 'en')
+    survey.refresh_from_db()
+    return _image_basemap_card(request, survey)
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_image_basemap_mode(request, survey_uuid):
+    survey = request.survey
+    mode = request.POST.get('mode')
+    if mode not in ('tiles', 'image'):
+        return _image_basemap_card(request, survey, status=400)
+    if mode == 'image' and not survey.image_basemap:
+        return _image_basemap_card(request, survey, status=400, upload_error=_('Upload an image first.'))
+    if mode == 'image' and survey.basemap_mode != 'image' and request.POST.get('confirm') != '1' \
+            and image_basemap.family_has_geo_answers(survey):
+        return _image_basemap_card(request, survey, status=409, confirm_mode=True)
+    was_image = survey.uses_image_basemap
+    survey.basemap_mode = mode
+    fields = ['basemap_mode', 'updated_at']
+    if mode == 'tiles' and (survey.image_basemap_state or survey.image_basemap_pending):
+        # Back to tiles abandons an upload in flight: its task finds itself
+        # superseded, so it cannot switch the survey to the picture later.
+        survey.image_basemap_pending = ''
+        survey.image_basemap_state = ''
+        survey.image_basemap_error = ''
+        fields += ['image_basemap_pending', 'image_basemap_state', 'image_basemap_error']
+    survey.save(update_fields=fields)
+    return _image_basemap_card(request, survey, reload_panel=was_image != survey.uses_image_basemap)
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_image_basemap_clear(request, survey_uuid):
+    survey = request.survey
+    was_image = survey.uses_image_basemap
+    image_basemap.clear(survey)
+    return _image_basemap_card(request, survey, reload_panel=was_image)
 
 
 # ─── Survey map position ─────────────────────────────────────────────────────
@@ -2315,7 +2410,10 @@ def editor_section_preview(request, survey_uuid, section_name):
         'initial_map_lat': section.start_map_postion.y if section.start_map_postion else (survey.start_map_postion.y if survey.start_map_postion else 52.52),
         'initial_map_lng': section.start_map_postion.x if section.start_map_postion else (survey.start_map_postion.x if survey.start_map_postion else 13.405),
         'initial_map_zoom': section.start_map_zoom if section.start_map_zoom is not None else (survey.start_map_zoom if survey.start_map_zoom is not None else 12),
-        'initial_use_geolocation': survey.use_geolocation,
+        'initial_use_geolocation': survey.use_geolocation and not survey.uses_image_basemap,
+        'initial_fit_image': survey.uses_image_basemap and not point_inside(
+            survey, section.start_map_postion or survey.start_map_postion),
+        'section_map': section_map_view(survey, section),
         # Same helper the respondent view uses: two views render this shell from
         # two hand-built contexts, and a layer list built twice would drift.
         'map_layers': _build_map_layers_metadata(survey),
@@ -2643,12 +2741,15 @@ def editor_discard_draft(request, survey_uuid):
 
     canonical = survey.published_version
     audit(request, 'draft_discard', canonical, draft_uuid=str(survey.uuid))
+    image_name = survey.image_basemap.name if survey.image_basemap else ''
     with transaction.atomic():
         # SurveySession.survey is PROTECT, so previewing a draft even once used
         # to make it undiscardable (ProtectedError → 500). publish_draft drops
         # the same test sessions; discard has no reason to keep them either.
         SurveySession.objects.filter(survey=survey).delete()
         survey.delete()
+    # A picture uploaded in the draft and never published has no other owner.
+    image_basemap.delete_if_unreferenced(image_name)
     return redirect('editor_survey_detail', survey_uuid=canonical.uuid)
 
 

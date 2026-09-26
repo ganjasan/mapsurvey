@@ -34733,6 +34733,55 @@ class MediaNamespaceFromEnvTest(SimpleTestCase):
 
         self.assertEqual(namespace_from_env({'IS_PULL_REQUEST': 'true'}), 'previews/unnamed')
 
+    def test_preview_worker_shares_its_web_service_namespace(self):
+        """
+        GIVEN a preview web service and its Celery worker (MEDIA_NAMESPACE_SERVICE=mapsurvey)
+        WHEN each derives its namespace
+        THEN both resolve to the web preview's name, so the worker sees the files the web stores
+             (on PR #200 they differed and every image-basemap upload looked missing to the worker)
+        """
+        from mapsurvey.media_prefixes import namespace_from_env
+
+        web = namespace_from_env({'IS_PULL_REQUEST': 'true', 'RENDER_SERVICE_NAME': 'mapsurvey PR #200'})
+        worker = namespace_from_env({
+            'IS_PULL_REQUEST': 'true', 'RENDER_SERVICE_NAME': 'mapsurvey-celery PR #200',
+            'MEDIA_NAMESPACE_SERVICE': 'mapsurvey',
+        })
+        self.assertEqual(web, 'previews/mapsurvey PR #200')
+        self.assertEqual(worker, web)
+        slug_worker = namespace_from_env({
+            'IS_PULL_REQUEST': 'true', 'RENDER_SERVICE_NAME': 'mapsurvey-celery-pr-123',
+            'MEDIA_NAMESPACE_SERVICE': 'mapsurvey',
+        })
+        self.assertEqual(slug_worker, 'previews/mapsurvey-pr-123')
+
+    def test_namespace_service_has_no_effect_outside_previews(self):
+        """
+        GIVEN the production worker, which carries MEDIA_NAMESPACE_SERVICE too
+        WHEN the namespace is derived
+        THEN it is still production's empty namespace
+        """
+        from mapsurvey.media_prefixes import namespace_from_env
+
+        self.assertEqual(namespace_from_env({
+            'RENDER_SERVICE_NAME': 'mapsurvey-celery', 'MEDIA_NAMESPACE_SERVICE': 'mapsurvey',
+        }), '')
+
+    def test_blueprint_points_the_worker_at_the_web_namespace(self):
+        """
+        GIVEN render.yaml
+        WHEN the Celery worker's variables are read
+        THEN it carries MEDIA_NAMESPACE_SERVICE naming the web service that exists in the same file
+        """
+        import os
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        with open(os.path.join(root, 'render.yaml')) as fh:
+            text = fh.read()
+        # No YAML parser in the venv; slice the worker's block by its name line.
+        self.assertRegex(text, r'\n  - type: web\n    name: mapsurvey\n')
+        worker = text.split('\n    name: mapsurvey-celery\n', 1)[1].split('\n  - type:', 1)[0]
+        self.assertRegex(worker, r'- key: MEDIA_NAMESPACE_SERVICE\n\s+value: mapsurvey\n')
+
     def test_an_explicit_namespace_wins(self):
         """
         GIVEN an operator pins the namespace explicitly
@@ -44061,3 +44110,792 @@ class OtherOptionWriteInTest(TestCase):
         draft = clone_survey_for_draft(self.survey)
         dq = Question.objects.get(survey_section__survey_header=draft, code='Q_COPE')
         self.assertEqual(dq.other_choice_code(), 4)
+
+
+# ─── Image basemap (change custom-image-basemap) ─────────────────────────────
+
+def _png_bytes(size=(400, 200), color=(200, 30, 30)):
+    from PIL import Image
+    buf = BytesIO()
+    Image.new('RGB', size, color).save(buf, 'PNG')
+    return buf.getvalue()
+
+
+def _png_upload(size=(400, 200), name='map.png'):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    return SimpleUploadedFile(name, _png_bytes(size), content_type='image/png')
+
+
+def _eager_image_basemap():
+    """Run the basemap task inline — the suite has no broker."""
+    from .tasks import process_image_basemap
+    return patch('survey.tasks.process_image_basemap.delay',
+                 side_effect=lambda *a, **kw: process_image_basemap(*a, **kw))
+
+
+class _ImageBasemapMediaMixin:
+    """Each test writes pictures into a throwaway MEDIA_ROOT."""
+
+    def setUp(self):
+        import tempfile
+        import shutil
+        self._media = tempfile.mkdtemp(prefix='imgbasemap-')
+        self.addCleanup(shutil.rmtree, self._media, ignore_errors=True)
+        media_override = override_settings(MEDIA_ROOT=self._media)
+        media_override.enable()
+        self.addCleanup(media_override.disable)
+        super().setUp()
+
+    def _stored(self, name):
+        from django.core.files.storage import default_storage
+        return default_storage.exists(name)
+
+    def _give_image(self, survey, size=(400, 200), mode='image'):
+        from . import image_basemap
+        webp, w, h = image_basemap.process_file(BytesIO(_png_bytes(size)))
+        image_basemap.store_processed(survey, webp, w, h)
+        survey.basemap_mode = mode
+        survey.save(update_fields=['basemap_mode'])
+        survey.refresh_from_db()
+        return survey
+
+
+class ImageBasemapHelpersTest(_ImageBasemapMediaMixin, TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.org = Organization.objects.create(name="Img Org")
+        self.survey = SurveyHeader.objects.create(name="img_helpers", organization=self.org)
+
+    def test_landscape_bounds(self):
+        """
+        GIVEN a 4000 × 2000 picture
+        WHEN its bounds are computed
+        THEN the long side spans one degree of longitude centred on 0 and latitude follows the aspect
+        """
+        from .image_basemap import bounds_for
+        self.assertEqual(bounds_for(4000, 2000), [[-0.25, -0.5], [0.25, 0.5]])
+
+    def test_portrait_bounds(self):
+        """
+        GIVEN a 1000 × 2000 picture
+        WHEN its bounds are computed
+        THEN latitude spans one degree and longitude half of it
+        """
+        from .image_basemap import bounds_for
+        self.assertEqual(bounds_for(1000, 2000), [[-0.5, -0.25], [0.5, 0.25]])
+
+    def test_predicate_needs_mode_and_image(self):
+        """
+        GIVEN a survey with an image but mode tiles, then mode image
+        WHEN uses_image_basemap is read
+        THEN it is False, then True; and False with mode image but no image
+        """
+        self._give_image(self.survey, mode='tiles')
+        self.assertFalse(self.survey.uses_image_basemap)
+        self.survey.basemap_mode = 'image'
+        self.assertTrue(self.survey.uses_image_basemap)
+        self.assertFalse(SurveyHeader(name='x', basemap_mode='image').uses_image_basemap)
+
+    def test_real_world_section_settings_neutralised(self):
+        """
+        GIVEN an image survey and a section starting in Bishkek with geolocation and a satellite override
+        WHEN the section map view is computed
+        THEN position, zoom, geolocation and override are dropped; a position on the picture is kept
+        """
+        from .image_basemap import point_inside, section_map_view
+        self._give_image(self.survey)
+        section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+            start_map_postion=Point(74.6, 42.87), start_map_zoom=12,
+            use_geolocation=True, override_basemap='satellite',
+        )
+        self.assertEqual(section_map_view(self.survey, section),
+                         {'position': None, 'zoom': None, 'use_geolocation': False, 'basemap': ''})
+        section.start_map_postion = Point(0.1, 0.05)
+        self.assertTrue(point_inside(self.survey, section.start_map_postion))
+        self.assertEqual(section_map_view(self.survey, section)['zoom'], 12)
+
+    def test_tiles_section_view_unchanged(self):
+        """
+        GIVEN a tiles survey section with geolocation and a satellite override
+        WHEN the section map view is computed
+        THEN the stored values pass through
+        """
+        from .image_basemap import section_map_view
+        section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+            use_geolocation=True, override_basemap='satellite',
+        )
+        view = section_map_view(self.survey, section)
+        self.assertTrue(view['use_geolocation'])
+        self.assertEqual(view['basemap'], 'satellite')
+
+    def test_shared_file_deleted_only_when_unreferenced(self):
+        """
+        GIVEN two headers naming the same stored picture
+        WHEN the first lets go while the second still names it, then after the second is gone
+        THEN the file survives the first attempt and is deleted by the second
+        """
+        from .image_basemap import delete_if_unreferenced, copy_fields
+        self._give_image(self.survey)
+        name = self.survey.image_basemap.name
+        other = SurveyHeader.objects.create(name='img_other', organization=self.org, **copy_fields(self.survey))
+        self.assertFalse(delete_if_unreferenced(name, exclude_pk=self.survey.pk))
+        self.assertTrue(self._stored(name))
+        other.delete()
+        self.assertTrue(delete_if_unreferenced(name, exclude_pk=self.survey.pk))
+        self.assertFalse(self._stored(name))
+
+
+class ImageBasemapProcessingTest(TestCase):
+
+    def test_png_becomes_webp_with_size(self):
+        """
+        GIVEN a valid 400 × 200 PNG
+        WHEN it is processed
+        THEN the result is WebP of the same size
+        """
+        from PIL import Image
+        from .image_basemap import process_file
+        webp, w, h = process_file(BytesIO(_png_bytes((400, 200))))
+        self.assertEqual((w, h), (400, 200))
+        self.assertEqual(Image.open(BytesIO(webp)).format, 'WEBP')
+
+    @override_settings(IMAGE_BASEMAP_MAX_SIDE=100)
+    def test_large_image_is_downscaled(self):
+        """
+        GIVEN a 300 × 150 picture and a 100 px long-side cap (8192 in production)
+        WHEN it is processed
+        THEN it is scaled to 100 × 50
+        """
+        from .image_basemap import process_file
+        _webp, w, h = process_file(BytesIO(_png_bytes((300, 150))))
+        self.assertEqual((w, h), (100, 50))
+
+    def test_decompression_bomb_refused_before_decoding(self):
+        """
+        GIVEN a small PNG declaring 10 000 × 10 000 pixels (100 MP, over the 64 MP cap)
+        WHEN it is processed
+        THEN it is rejected with the pixel-limit message and no pixels are decoded
+        """
+        from PIL import Image
+        from .image_basemap import process_file, ImageRejected
+        buf = BytesIO()
+        Image.new('1', (10000, 10000), 0).save(buf, 'PNG')
+        self.assertLess(len(buf.getvalue()), 200_000)
+        buf.seek(0)
+        with patch('PIL.ImageFile.ImageFile.load', side_effect=AssertionError('decoded')):
+            with self.assertRaises(ImageRejected) as ctx:
+                process_file(buf)
+        self.assertIn('megapixels', str(ctx.exception))
+
+    def test_non_image_rejected(self):
+        """
+        GIVEN a PDF renamed to .png
+        WHEN it is processed
+        THEN it is rejected as not a supported image
+        """
+        from .image_basemap import process_file, ImageRejected
+        with self.assertRaises(ImageRejected):
+            process_file(BytesIO(b'%PDF-1.4\n%fake pdf\n'))
+
+
+class ImageBasemapEditorTest(_ImageBasemapMediaMixin, TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.org = Organization.objects.create(name="Img Editor Org")
+        self.owner = User.objects.create_user(username='imgowner', password='pw12345678')
+        self.viewer = User.objects.create_user(username='imgviewer', password='pw12345678')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="img_editor", organization=self.org, redirect_url="/thanks/",
+            created_by=self.owner, status='published', available_languages=['en'],
+        )
+        SurveyCollaborator.objects.create(user=self.owner, survey=self.survey, role='owner')
+        SurveyCollaborator.objects.create(user=self.viewer, survey=self.survey, role='viewer')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.q = Question.objects.create(
+            survey_section=self.section, code="IB001", name="Where", input_type="point", order_number=1,
+        )
+        self.client.force_login(self.owner)
+        self.upload_url = reverse('editor_image_basemap_upload', args=[self.survey.uuid])
+        self.mode_url = reverse('editor_image_basemap_mode', args=[self.survey.uuid])
+
+    def _answer(self):
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=session, question=self.q, point=Point(0.1, 0.1))
+
+    def _raw_files(self):
+        import os
+        path = os.path.join(self._media, 'basemap_uploads')
+        return os.listdir(path) if os.path.isdir(path) else []
+
+    def test_upload_processes_and_raw_is_deleted(self):
+        """
+        GIVEN an owner in the settings panel
+        WHEN they upload a PNG (task run inline)
+        THEN the survey stores a WebP with its size, state is clear, no raw upload remains,
+             and the survey now uses the picture (an upload is the switch, design D9)
+        """
+        with _eager_image_basemap():
+            resp = self.client.post(self.upload_url, {'image': _png_upload((400, 200))})
+        self.assertEqual(resp.status_code, 200)
+        self.survey.refresh_from_db()
+        self.assertTrue(self.survey.image_basemap.name.startswith('basemap_images/'))
+        self.assertTrue(self.survey.image_basemap.name.endswith('.webp'))
+        self.assertEqual((self.survey.image_basemap_width, self.survey.image_basemap_height), (400, 200))
+        self.assertEqual(self.survey.image_basemap_state, '')
+        self.assertEqual(self._raw_files(), [])
+        self.assertEqual(self.survey.basemap_mode, 'image')
+        self.assertTrue(self.survey.uses_image_basemap)
+
+    @override_settings(IMAGE_BASEMAP_MAX_UPLOAD_BYTES=100)
+    def test_oversized_upload_refused_in_request(self):
+        """
+        GIVEN a size cap below the file's size (20 MB in production)
+        WHEN the owner uploads it
+        THEN the request is refused and nothing is stored or queued
+        """
+        with patch('survey.tasks.process_image_basemap.delay') as delay:
+            resp = self.client.post(self.upload_url, {'image': _png_upload((400, 400))})
+        self.assertEqual(resp.status_code, 400)
+        delay.assert_not_called()
+        self.assertEqual(self._raw_files(), [])
+
+    def test_non_image_marks_failed_and_cleans_up(self):
+        """
+        GIVEN a PDF sent as image/png
+        WHEN the task processes it
+        THEN the state is failed with a reason, no picture is set and no raw file remains
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        fake = SimpleUploadedFile('map.png', b'%PDF-1.4 fake', content_type='image/png')
+        with _eager_image_basemap():
+            self.client.post(self.upload_url, {'image': fake})
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.image_basemap_state, 'failed')
+        self.assertTrue(self.survey.image_basemap_error)
+        self.assertFalse(self.survey.image_basemap)
+        self.assertEqual(self._raw_files(), [])
+
+    def test_superseded_upload_changes_nothing(self):
+        """
+        GIVEN upload A was accepted, then upload B, before A's task ran
+        WHEN A's task runs, then B's
+        THEN A only deletes its raw file; the survey ends with B's picture
+        """
+        from .tasks import process_image_basemap
+        with patch('survey.tasks.process_image_basemap.delay') as delay:
+            self.client.post(self.upload_url, {'image': _png_upload((400, 200))})
+            self.client.post(self.upload_url, {'image': _png_upload((300, 300))})
+        (a_args, _a_kw), (b_args, _b_kw) = delay.call_args_list
+        process_image_basemap(*a_args)
+        self.survey.refresh_from_db()
+        self.assertFalse(self.survey.image_basemap)
+        process_image_basemap(*b_args)
+        self.survey.refresh_from_db()
+        self.assertEqual((self.survey.image_basemap_width, self.survey.image_basemap_height), (300, 300))
+        self.assertEqual(self._raw_files(), [])
+
+    def test_lost_raw_file_fails_instead_of_hanging(self):
+        """
+        GIVEN an accepted upload whose raw file is gone when the task runs
+              (the PR #200 preview: the worker looked under another S3 prefix)
+        WHEN the task runs
+        THEN the survey leaves "processing" for "failed" with a reason, and the card still offers upload
+        """
+        from .tasks import process_image_basemap
+        from . import image_basemap
+        with patch('survey.tasks.process_image_basemap.delay') as delay:
+            self.client.post(self.upload_url, {'image': _png_upload()})
+        args, _kw = delay.call_args
+        image_basemap.raw_storage().delete(args[1])
+        process_image_basemap(*args)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.image_basemap_state, 'failed')
+        self.assertIn('Upload it again', self.survey.image_basemap_error)
+        self.assertEqual(self.survey.image_basemap_pending, '')
+        html = self.client.get(reverse('editor_image_basemap', args=[self.survey.uuid])).content.decode()
+        self.assertIn('data-image-basemap-file', html)
+
+    def test_viewer_cannot_upload(self):
+        """
+        GIVEN a collaborator with the viewer role
+        WHEN they post an image
+        THEN the request is refused and nothing is queued
+        """
+        self.client.force_login(self.viewer)
+        with patch('survey.tasks.process_image_basemap.delay') as delay:
+            resp = self.client.post(self.upload_url, {'image': _png_upload()})
+        self.assertIn(resp.status_code, (302, 403, 404))
+        delay.assert_not_called()
+
+    def test_mode_switch_and_back_keeps_tile_settings(self):
+        """
+        GIVEN a survey with an image, satellite as default basemap and geolocation on
+        WHEN the owner switches to image and back to tiles
+        THEN the image stays stored and the tile settings are as they were
+        """
+        self.survey.default_basemap = 'satellite'
+        self.survey.use_geolocation = True
+        self.survey.save()
+        self._give_image(self.survey, mode='tiles')
+        self.client.post(self.mode_url, {'mode': 'image'})
+        self.survey.refresh_from_db()
+        self.assertTrue(self.survey.uses_image_basemap)
+        self.client.post(self.mode_url, {'mode': 'tiles'})
+        self.survey.refresh_from_db()
+        self.assertFalse(self.survey.uses_image_basemap)
+        self.assertTrue(self.survey.image_basemap)
+        self.assertEqual(self.survey.default_basemap, 'satellite')
+        self.assertTrue(self.survey.use_geolocation)
+
+    def test_switch_with_geo_answers_needs_confirmation(self):
+        """
+        GIVEN a tiles survey with a point answer and an uploaded image
+        WHEN the owner switches to image without, then with confirmation
+        THEN the first is answered 409 and changes nothing, the second switches
+        """
+        self._give_image(self.survey, mode='tiles')
+        self._answer()
+        resp = self.client.post(self.mode_url, {'mode': 'image'})
+        self.assertEqual(resp.status_code, 409)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.basemap_mode, 'tiles')
+        self.client.post(self.mode_url, {'mode': 'image', 'confirm': '1'})
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.basemap_mode, 'image')
+
+    def test_replace_with_other_aspect_needs_confirmation(self):
+        """
+        GIVEN an image survey (2:1) with a point answer
+        WHEN the owner uploads a 1:1 picture, then an 8:4 one
+        THEN the square one is answered 409 and not queued; the same-ratio one is queued without asking
+        """
+        self._give_image(self.survey, size=(400, 200))
+        self._answer()
+        with patch('survey.tasks.process_image_basemap.delay') as delay:
+            resp = self.client.post(self.upload_url, {'image': _png_upload((300, 300))})
+            self.assertEqual(resp.status_code, 409)
+            delay.assert_not_called()
+            resp = self.client.post(self.upload_url, {'image': _png_upload((800, 400))})
+            self.assertEqual(resp.status_code, 200)
+            delay.assert_called_once()
+
+    def test_clear_deletes_file_and_returns_to_tiles(self):
+        """
+        GIVEN an image survey
+        WHEN the owner removes the image
+        THEN the file is deleted and the survey is back on tiles
+        """
+        self._give_image(self.survey)
+        name = self.survey.image_basemap.name
+        self.client.post(reverse('editor_image_basemap_clear', args=[self.survey.uuid]))
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.basemap_mode, 'tiles')
+        self.assertFalse(self.survey.image_basemap)
+        self.assertFalse(self._stored(name))
+
+    def test_both_modes_selectable_without_an_image(self):
+        """
+        GIVEN a survey that never uploaded an image
+        WHEN the owner opens its image block
+        THEN neither mode radio is disabled, "Map tiles" is checked and the image block is closed
+        """
+        html = self.client.get(reverse('editor_image_basemap', args=[self.survey.uuid])).content.decode()
+        radios = re.findall(r'<input type="radio"[^>]*data-image-basemap-mode[^>]*>', html)
+        self.assertEqual(len(radios), 2)
+        for radio in radios:
+            self.assertNotIn('disabled', radio)
+        self.assertIn('value="tiles" checked', html)
+        self.assertIn('data-image-basemap-block hidden', html)
+        self.assertIn('Choose image', html)
+
+    def test_first_upload_with_geo_answers_needs_confirmation(self):
+        """
+        GIVEN a tiles survey with a point answer and no image
+        WHEN the owner uploads a picture without, then with confirmation
+        THEN the first is answered 409 with the switch warning and not queued; the second is queued
+        """
+        self._answer()
+        with patch('survey.tasks.process_image_basemap.delay') as delay:
+            resp = self.client.post(self.upload_url, {'image': _png_upload()})
+            self.assertEqual(resp.status_code, 409)
+            self.assertIn('data-image-basemap-confirm="upload"', resp.content.decode())
+            delay.assert_not_called()
+            resp = self.client.post(self.upload_url, {'image': _png_upload(), 'confirm': '1'})
+            self.assertEqual(resp.status_code, 200)
+            delay.assert_called_once()
+
+    def test_tiles_while_processing_abandons_the_upload(self):
+        """
+        GIVEN an upload accepted but not yet processed
+        WHEN the owner chooses "Map tiles", then the task runs
+        THEN the upload is abandoned: the survey stays on tiles with no picture and no raw file
+        """
+        from .tasks import process_image_basemap
+        with patch('survey.tasks.process_image_basemap.delay') as delay:
+            self.client.post(self.upload_url, {'image': _png_upload()})
+        self.client.post(self.mode_url, {'mode': 'tiles'})
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.image_basemap_state, '')
+        process_image_basemap(*delay.call_args[0])
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.basemap_mode, 'tiles')
+        self.assertFalse(self.survey.image_basemap)
+        self.assertEqual(self._raw_files(), [])
+
+    def test_processing_upload_opens_the_image_block(self):
+        """
+        GIVEN a tiles survey whose upload is processing
+        WHEN the card renders
+        THEN "My own image" is checked and the image block shows the progress
+        """
+        with patch('survey.tasks.process_image_basemap.delay'):
+            html = self.client.post(self.upload_url, {'image': _png_upload()}).content.decode()
+        self.assertIn('value="image" checked', html)
+        self.assertNotIn('data-image-basemap-block hidden', html)
+        self.assertIn('Processing the image', html)
+
+    def test_zip_import_store_keeps_mode(self):
+        """
+        GIVEN a tiles survey
+        WHEN a picture is stored the way ZIP import stores it (no activation)
+        THEN the mode is unchanged
+        """
+        from . import image_basemap
+        from PIL import Image
+        import io
+        buf = io.BytesIO()
+        Image.new('RGB', (40, 20)).save(buf, 'WEBP')
+        image_basemap.store_processed(self.survey, buf.getvalue(), 40, 20)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.basemap_mode, 'tiles')
+
+    def test_settings_panel_hides_tile_choices_but_keeps_fields(self):
+        """
+        GIVEN an image survey
+        WHEN the owner opens the settings panel
+        THEN the image block renders, and the tile fields are hidden but still named in the form
+        """
+        self._give_image(self.survey)
+        html = self.client.get(reverse('editor_survey_settings_panel', args=[self.survey.uuid])).content.decode()
+        self.assertIn('id="image-basemap-card"', html)
+        self.assertIn('id="tile-basemap-fields" hidden', html)
+        self.assertIn('name="basemaps"', html)
+        self.assertIn('name="default_basemap"', html)
+
+
+class ImageBasemapRenderingTest(_ImageBasemapMediaMixin, TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.org = Organization.objects.create(name="Img Render Org")
+        self.survey = SurveyHeader.objects.create(
+            name="img_render", organization=self.org, redirect_url="/thanks/",
+            status='published', available_languages=['en'], use_geolocation=True,
+            start_map_postion=Point(74.6, 42.87), start_map_zoom=12,
+        )
+        self.head = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+            use_geolocation=True, override_basemap='satellite',
+        )
+        Question.objects.create(
+            survey_section=self.head, code="IR001", name="Where", input_type="point", order_number=1,
+        )
+        self.url = reverse('section', kwargs={'survey_slug': str(self.survey.uuid), 'section_name': 's1'})
+
+    def test_image_survey_page_carries_picture_and_no_real_world(self):
+        """
+        GIVEN an image survey whose stored start position and geolocation are real-world
+        WHEN a respondent opens the section
+        THEN the page carries the picture's key, fits the picture, and asks for no location or override
+        """
+        self._give_image(self.survey)
+        html = self.client.get(self.url).content.decode()
+        self.assertIn(self.survey.image_basemap.name.split('/')[-1], html)
+        self.assertIn('fitImage: true', html)
+        self.assertIn('useGeolocation: false', html)
+        self.assertIn('data-use-geolocation="false"', html)
+        self.assertIn('data-map-basemap=""', html)
+        self.assertIn('data-map-lat=""', html)
+
+    def test_tiles_survey_page_unchanged(self):
+        """
+        GIVEN the same survey on tiles
+        WHEN a respondent opens the section
+        THEN no picture config is emitted and the stored settings apply
+        """
+        html = self.client.get(self.url).content.decode()
+        self.assertIn("JSON.parse('null')", html)
+        self.assertIn('fitImage: false', html)
+        self.assertIn('useGeolocation: true', html)
+        self.assertIn('data-map-basemap="satellite"', html)
+
+    def test_start_position_on_picture_is_honoured(self):
+        """
+        GIVEN an image survey whose start position lies on the picture
+        WHEN a respondent opens the section
+        THEN the page does not fit the whole picture
+        """
+        self._give_image(self.survey)
+        self.survey.start_map_postion = Point(0.1, 0.05)
+        self.survey.save()
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('fitImage: false', html)
+
+    def test_public_results_carry_picture(self):
+        """
+        GIVEN an image survey with a public results page
+        WHEN the page is rendered
+        THEN it carries the picture config for its map blocks
+        """
+        from .models import PublicResultsPage
+        from .public_results import build_page_context
+        from django.template.loader import render_to_string
+        self._give_image(self.survey)
+        page = PublicResultsPage.objects.create(survey=self.survey, slug='img-results')
+        html = render_to_string('public_results.html', build_page_context(page))
+        self.assertIn(self.survey.image_basemap.name.split('/')[-1], html)
+
+    def test_every_tile_layer_template_handles_the_image(self):
+        """
+        GIVEN the template tree
+        WHEN every template that builds a tile layer is scanned
+        THEN each also reads the image basemap config (survey_create has no survey yet and is exempt)
+        """
+        import os
+        root = os.path.join(os.path.dirname(__file__), 'templates')
+        exempt = {os.path.join('editor', 'survey_create.html')}
+        offenders = []
+        for dirpath, _dirs, files in os.walk(root):
+            for f in files:
+                if not f.endswith('.html'):
+                    continue
+                path = os.path.join(dirpath, f)
+                rel = os.path.relpath(path, root)
+                with open(path, encoding='utf-8') as fh:
+                    text = fh.read()
+                if 'L.tileLayer(' in text and 'image_basemap_json' not in text and rel not in exempt:
+                    offenders.append(rel)
+        self.assertEqual(offenders, [])
+
+
+class ImageBasemapLifecycleTest(_ImageBasemapMediaMixin, TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.org = Organization.objects.create(name="Img Life Org")
+        self.owner = User.objects.create_user(username='imglife', password='pw12345678')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="img_life", organization=self.org, redirect_url="/thanks/",
+            created_by=self.owner, status='published', available_languages=['en'],
+        )
+        SurveyCollaborator.objects.create(user=self.owner, survey=self.survey, role='owner')
+        SurveySection.objects.create(survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True)
+        self._give_image(self.survey, size=(400, 200))
+
+    def test_draft_replaces_without_affecting_published_until_publish(self):
+        """
+        GIVEN a published image survey and its draft copy
+        WHEN the draft gets a new picture, then is published
+        THEN the published survey keeps the old picture until publish, then shows the new one,
+             and the archived version keeps the old picture its answers sit on
+        """
+        from . import image_basemap
+        old = self.survey.image_basemap.name
+        draft = clone_survey_for_draft(self.survey)
+        self.assertEqual(draft.image_basemap.name, old)
+        self.assertTrue(draft.uses_image_basemap)
+        webp, w, h = image_basemap.process_file(BytesIO(_png_bytes((800, 400))))
+        image_basemap.store_processed(draft, webp, w, h)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.image_basemap.name, old)
+        self.assertTrue(self._stored(old))
+        publish_draft(draft)
+        self.survey.refresh_from_db()
+        self.assertNotEqual(self.survey.image_basemap.name, old)
+        archived = SurveyHeader.objects.get(canonical_survey=self.survey, is_canonical=False)
+        self.assertEqual(archived.image_basemap.name, old)
+        self.assertTrue(self._stored(old))
+
+    def test_discarded_draft_deletes_only_its_own_picture(self):
+        """
+        GIVEN a draft copy that uploaded its own picture
+        WHEN the owner discards the draft
+        THEN the draft's picture is deleted and the published one is kept
+        """
+        from . import image_basemap
+        self.client.force_login(self.owner)
+        draft = clone_survey_for_draft(self.survey)
+        webp, w, h = image_basemap.process_file(BytesIO(_png_bytes((800, 400))))
+        image_basemap.store_processed(draft, webp, w, h)
+        draft_name = draft.image_basemap.name
+        self.client.post(reverse('editor_discard_draft', args=[draft.uuid]))
+        self.assertFalse(SurveyHeader.objects.filter(pk=draft.pk).exists())
+        self.assertFalse(self._stored(draft_name))
+        self.assertTrue(self._stored(self.survey.image_basemap.name))
+
+    def test_purge_deletes_picture(self):
+        """
+        GIVEN an image survey with a draft sharing its picture
+        WHEN the family is purged from the trash
+        THEN the picture file is deleted
+        """
+        from .trash import purge_survey
+        name = self.survey.image_basemap.name
+        clone_survey_for_draft(self.survey)
+        purge_survey(self.survey)
+        self.assertFalse(self._stored(name))
+
+
+class ImageBasemapSerializationTest(_ImageBasemapMediaMixin, TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.org = Organization.objects.create(name="Img Zip Org")
+        self.survey = SurveyHeader.objects.create(
+            name="img_zip", organization=self.org, redirect_url="/thanks/", available_languages=['en'],
+            status='published',
+        )
+        section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True,
+        )
+        self.q = Question.objects.create(
+            survey_section=section, code="IZ001", name="Where", input_type="point", order_number=1,
+        )
+
+    def _export(self):
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, mode='structure')
+        buf.seek(0)
+        return buf
+
+    def _rezip(self, buf, drop=(), replace=None):
+        out = BytesIO()
+        with zipfile.ZipFile(buf) as src, zipfile.ZipFile(out, 'w') as dst:
+            for item in src.infolist():
+                if item.filename in drop:
+                    continue
+                dst.writestr(item.filename, (replace or {}).get(item.filename, src.read(item.filename)))
+        out.seek(0)
+        return out
+
+    def test_round_trip_restores_picture(self):
+        """
+        GIVEN an image survey
+        WHEN it is exported and imported
+        THEN the archive has the picture under basemap/ and the new survey uses it with the same size
+        """
+        self._give_image(self.survey, size=(400, 200))
+        buf = self._export()
+        with zipfile.ZipFile(buf) as zf:
+            data = json.loads(zf.read('survey.json'))['survey']
+            self.assertIn('basemap/basemap.webp', zf.namelist())
+        self.assertEqual(data['basemap_mode'], 'image')
+        self.assertEqual(data['image_basemap']['width'], 400)
+        buf.seek(0)
+        imported, _warnings = import_survey_from_zip(buf, organization=self.org)
+        self.assertTrue(imported.uses_image_basemap)
+        self.assertEqual((imported.image_basemap_width, imported.image_basemap_height), (400, 200))
+        self.assertNotEqual(imported.image_basemap.name, self.survey.image_basemap.name)
+
+    def test_export_without_image(self):
+        """
+        GIVEN a tiles survey
+        WHEN it is exported
+        THEN image_basemap is null and the mode is tiles
+        """
+        with zipfile.ZipFile(self._export()) as zf:
+            data = json.loads(zf.read('survey.json'))['survey']
+        self.assertIsNone(data['image_basemap'])
+        self.assertEqual(data['basemap_mode'], 'tiles')
+
+    def test_missing_picture_imports_as_tiles_with_warning(self):
+        """
+        GIVEN an archive whose survey.json names a basemap file that is not in it
+        WHEN it is imported
+        THEN the survey is on tiles and the report names the missing file
+        """
+        self._give_image(self.survey)
+        buf = self._rezip(self._export(), drop={'basemap/basemap.webp'})
+        imported, warnings = import_survey_from_zip(buf, organization=self.org)
+        self.assertEqual(imported.basemap_mode, 'tiles')
+        self.assertTrue(any("Basemap image 'basemap/basemap.webp' not found" in w for w in warnings))
+
+    def test_invalid_picture_imports_as_tiles_with_warning(self):
+        """
+        GIVEN an archive whose basemap file is not an image
+        WHEN it is imported
+        THEN the survey is on tiles with no picture and the report says the image was skipped
+        """
+        self._give_image(self.survey)
+        buf = self._rezip(self._export(), replace={'basemap/basemap.webp': b'not an image'})
+        imported, warnings = import_survey_from_zip(buf, organization=self.org)
+        self.assertEqual(imported.basemap_mode, 'tiles')
+        self.assertFalse(imported.image_basemap)
+        self.assertTrue(any('was skipped' in w for w in warnings))
+
+    def test_old_archive_imports_silently_as_tiles(self):
+        """
+        GIVEN an archive from before this change (no basemap keys)
+        WHEN it is imported
+        THEN the survey is on tiles and no basemap warning is reported
+        """
+        buf = self._export()
+        with zipfile.ZipFile(buf) as zf:
+            data = json.loads(zf.read('survey.json'))
+        data['survey'].pop('image_basemap')
+        data['survey'].pop('basemap_mode')
+        buf.seek(0)
+        buf = self._rezip(buf, replace={'survey.json': json.dumps(data).encode()})
+        imported, warnings = import_survey_from_zip(buf, organization=self.org)
+        self.assertEqual(imported.basemap_mode, 'tiles')
+        self.assertFalse(any('Basemap' in w for w in warnings))
+
+    def test_data_download_notes_image_coordinates(self):
+        """
+        GIVEN an image survey with a point answer and an owner
+        WHEN the data ZIP is downloaded
+        THEN the point GeoJSON carries mapsurvey_image_basemap with image, bounds and note, and the ZIP has the picture
+        """
+        self._give_image(self.survey, size=(400, 200))
+        owner = User.objects.create_user(username='imgzipowner', password='pw12345678')
+        Membership.objects.create(user=owner, organization=self.org, role='owner')
+        SurveyCollaborator.objects.create(user=owner, survey=self.survey, role='owner')
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=session, question=self.q, point=Point(0.1, 0.1))
+        self.client.force_login(owner)
+        resp = self.client.get(reverse('download_data', args=[str(self.survey.uuid)]))
+        self.assertEqual(resp.status_code, 200, resp.content[:300])
+        with zipfile.ZipFile(BytesIO(resp.content)) as zf:
+            self.assertIn('basemap.webp', zf.namelist())
+            gj = json.loads(zf.read('Where.geojson'))
+        member = gj['mapsurvey_image_basemap']
+        self.assertEqual(member['image'], 'basemap.webp')
+        self.assertEqual(member['bounds'], [[-0.25, -0.5], [0.25, 0.5]])
+        self.assertIn('not on Earth', member['note'])
+
+    def test_data_download_of_tiles_survey_has_no_note(self):
+        """
+        GIVEN a tiles survey with a point answer
+        WHEN the data ZIP is downloaded
+        THEN no GeoJSON carries the member and no picture is added
+        """
+        owner = User.objects.create_user(username='imgzipowner2', password='pw12345678')
+        Membership.objects.create(user=owner, organization=self.org, role='owner')
+        SurveyCollaborator.objects.create(user=owner, survey=self.survey, role='owner')
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=session, question=self.q, point=Point(10, 10))
+        self.client.force_login(owner)
+        resp = self.client.get(reverse('download_data', args=[str(self.survey.uuid)]))
+        self.assertEqual(resp.status_code, 200, resp.content[:300])
+        with zipfile.ZipFile(BytesIO(resp.content)) as zf:
+            self.assertNotIn('basemap.webp', zf.namelist())
+            gj = json.loads(zf.read('Where.geojson'))
+        self.assertNotIn('mapsurvey_image_basemap', gj)

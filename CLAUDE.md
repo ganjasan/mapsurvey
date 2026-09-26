@@ -219,6 +219,22 @@ the sub-questions of an "Objects on the map" question bound to that layer; `show
 `LayerObject.status` / `Answer.hidden` are the creator's per-item moderation. The object
 editor is read-only for such layers; deleting the source geo question is refused.
 
+**Image basemap (change `custom-image-basemap`)**: a creator can upload one picture (a fantasy
+map, a floor plan) and switch `SurveyHeader.basemap_mode` from `tiles` to `image`. The picture is
+NOT georeferenced: it sits on a fixed rectangle centred on 0°,0° whose long side spans 1°
+(`survey/image_basemap.py::bounds_for`), in Leaflet's ordinary EPSG:3857, so answers stay plain
+SRID 4326 geometry and nothing downstream changes — the data export says so in a
+`mapsurvey_image_basemap` GeoJSON member. Rules: `SurveyHeader.uses_image_basemap` is the ONE
+predicate; `survey|image_basemap_json` + `ImageBasemap.apply()` (`js/image_basemap.js`) is the ONE
+renderer — a new map surface that builds `L.tileLayer(` without reading `image_basemap_json` fails
+the guard test; on an image survey place search, geolocation, the locate button and
+`override_basemap` are neutralised (`section_map_view`), but the stored values are kept and the
+editor hides, never removes, the controls (they are named autosave fields). Uploads are never
+decoded in a web request: the view stores the raw file on the PRIVATE tier and the Celery task
+`process_image_basemap` decodes, bounds (64 MP, 8192 px long side) and re-encodes to WebP on the
+public tier. Draft copies and archived versions share the file NAME (`copy_fields` passes the
+name, never a `FieldFile`); delete only through `image_basemap.delete_if_unreferenced`.
+
 **Reference layer style**: `SurveyMapLayer.style` (JSON) holds the base look beyond `color`
 (opacity, weight, fill_opacity, radius, icon) and at most one rule `by` one object property
 (categories or graduated classes, plus `other`). `layers.normalize_style` is the ONE validator

@@ -1,4 +1,4 @@
-{% load static i18n %}
+{% load static i18n survey_filters %}
 <!DOCTYPE html>
 <html lang="{{ lang|default:'en' }}">
 <head>
@@ -133,6 +133,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin="anonymous"></script>
+  <script src="{% static 'js/image_basemap.js' %}"></script>
   <script>
   (function(){
     // Segment palette for pie/doughnut charts. Declared before the render loop
@@ -152,6 +153,10 @@
       satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts: { attribution: '© Esri', maxZoom: 19 } },
       topo:      { url: '{{ MAPBOX_OUTDOORS_URL }}', opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 22, accessToken: MAPBOX_TOKEN } }
     };
+
+    // An image-basemap survey shows its own picture on every block, whatever
+    // basemap the block was configured with (change custom-image-basemap).
+    var IMAGE_BASEMAP = JSON.parse('{{ survey|image_basemap_json|escapejs }}');
 
     var blocks = JSON.parse(document.getElementById('blocks-data').textContent || '[]');
     blocks.forEach(function(b){
@@ -266,8 +271,11 @@
     function renderMap(b){
       var el = document.getElementById('map-' + b.id); if (!el) return;
       var map = L.map(el, { scrollWheelZoom: false });
-      var base = BASEMAPS[b.basemap] || BASEMAPS.streets;
-      L.tileLayer(base.url, base.opts).addTo(map);
+      var image = IMAGE_BASEMAP ? ImageBasemap.apply(map, IMAGE_BASEMAP) : null;
+      if (!image) {
+        var base = BASEMAPS[b.basemap] || BASEMAPS.streets;
+        L.tileLayer(base.url, base.opts).addTo(map);
+      }
 
       var fc = b.feature_collection || { features: [] };
       var isHeat = (b.viz === 'heatmap' || b.viz === 'heat');
@@ -305,9 +313,12 @@
       try {
         var bounds = layer.getBounds();
         if (!bounds.isValid() && pts.length) { bounds = L.latLngBounds(pts); }
-        if (bounds && bounds.isValid()) { map.fitBounds(bounds.pad(0.2)); }
+        if (image) { map.fitBounds(image.bounds); }
+        else if (bounds && bounds.isValid()) { map.fitBounds(bounds.pad(0.2)); }
         else { map.setView([52.52, 13.405], 11); }
-      } catch (e) { map.setView([52.52, 13.405], 11); }
+      } catch (e) {
+        if (image) { map.fitBounds(image.bounds); } else { map.setView([52.52, 13.405], 11); }
+      }
     }
   })();
   </script>

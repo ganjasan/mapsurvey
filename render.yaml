@@ -313,6 +313,12 @@ services:
       # like the web service, or an import would write to the disk while the web
       # service reads from the bucket. Same rule on the namespace: absent here,
       # derived per environment, so a preview worker cannot touch production keys.
+      # MEDIA_NAMESPACE_SERVICE makes a PREVIEW worker use its web service's
+      # namespace (`previews/mapsurvey PR #N`), not one named after itself —
+      # otherwise it cannot see the files the web hands it (media_prefixes.py).
+      # No effect outside previews.
+      - key: MEDIA_NAMESPACE_SERVICE
+        value: mapsurvey
       - key: USE_S3
         sync: false
         previewEnvRenderServiceName: mapsurvey

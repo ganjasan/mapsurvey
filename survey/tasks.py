@@ -100,3 +100,59 @@ def run_survey_import(self, job_id):
     job.finished_at = timezone.now()
     job.discard_file()
     job.save()
+
+
+@shared_task(bind=True)
+def process_image_basemap(self, survey_id, raw_key, language='en'):
+    """Turn a raw image-basemap upload into the survey's picture (change
+    `custom-image-basemap`). Decoding happens here and never in the web
+    request that received the file — see image_basemap.process_file.
+
+    Idempotent per raw_key: a redelivered message whose raw file is gone, or
+    whose survey has moved on to a newer upload, changes nothing except
+    removing its own raw file."""
+    from django.utils import translation
+    from django.utils.translation import gettext as _
+    from .models import SurveyHeader
+    from . import image_basemap
+
+    storage = image_basemap.raw_storage()
+    try:
+        survey = SurveyHeader.objects.get(pk=survey_id)
+    except SurveyHeader.DoesNotExist:
+        storage.delete(raw_key)
+        return
+    if survey.image_basemap_pending != raw_key:
+        storage.delete(raw_key)  # superseded by a newer upload
+        return
+    if not storage.exists(raw_key):
+        # Still the current upload but its file is gone: say so rather than
+        # leave the card on "Processing" forever (PR #200 preview, where the
+        # worker looked under another prefix than the web wrote to).
+        with translation.override(language):
+            message = str(_('The uploaded file was lost before it could be processed. Upload it again.'))
+        SurveyHeader.objects.filter(pk=survey_id, image_basemap_pending=raw_key).update(
+            image_basemap_state='failed', image_basemap_error=message, image_basemap_pending='')
+        return
+    try:
+        with translation.override(language):
+            try:
+                with storage.open(raw_key, 'rb') as fh:
+                    webp, width, height = image_basemap.process_file(fh)
+            except image_basemap.ImageRejected as exc:
+                SurveyHeader.objects.filter(pk=survey_id, image_basemap_pending=raw_key).update(
+                    image_basemap_state='failed', image_basemap_error=str(exc)[:255],
+                    image_basemap_pending='')
+                return
+        survey.refresh_from_db()
+        if survey.image_basemap_pending != raw_key:
+            return  # superseded while we decoded
+        image_basemap.store_processed(survey, webp, width, height, activate=True)
+    except Exception:
+        SurveyHeader.objects.filter(pk=survey_id, image_basemap_pending=raw_key).update(
+            image_basemap_state='failed',
+            image_basemap_error='Processing failed unexpectedly. The error has been reported.',
+            image_basemap_pending='')
+        raise
+    finally:
+        storage.delete(raw_key)
