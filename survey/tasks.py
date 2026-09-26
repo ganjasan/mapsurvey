@@ -147,7 +147,7 @@ def process_image_basemap(self, survey_id, raw_key, language='en'):
         survey.refresh_from_db()
         if survey.image_basemap_pending != raw_key:
             return  # superseded while we decoded
-        image_basemap.store_processed(survey, webp, width, height)
+        image_basemap.store_processed(survey, webp, width, height, activate=True)
     except Exception:
         SurveyHeader.objects.filter(pk=survey_id, image_basemap_pending=raw_key).update(
             image_basemap_state='failed',

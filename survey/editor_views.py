@@ -971,6 +971,9 @@ def _layer_property_names(layer):
 def _image_basemap_card(request, survey, status=200, **extra):
     ctx = {'survey': survey, 'image_basemap_cfg': image_basemap.config_for(survey)}
     ctx.update(extra)
+    # A confirmation or an upload error belongs to the image block, whatever the mode.
+    ctx['force_open'] = bool(extra.get('confirm_mode') or extra.get('confirm_upload')
+                             or extra.get('upload_error'))
     return render(request, 'editor/partials/image_basemap_card.html', ctx, status=status)
 
 
@@ -999,8 +1002,12 @@ def editor_image_basemap_upload(request, survey_uuid):
         return _image_basemap_card(request, survey, status=400, upload_error=_(
             'Upload a PNG, JPEG or WebP image.'))
 
-    if request.POST.get('confirm') != '1' and survey.image_basemap and \
-            image_basemap.family_has_geo_answers(survey):
+    # An upload switches the survey to its picture when processing succeeds
+    # (design D9), so on a survey still on tiles it asks what a mode switch asks.
+    if request.POST.get('confirm') != '1' and image_basemap.family_has_geo_answers(survey):
+        if not survey.uses_image_basemap:
+            return _image_basemap_card(request, survey, status=409, confirm_mode=True,
+                                       confirm_action='upload')
         new_size = image_basemap.header_size(f)
         if new_size and image_basemap.aspect_differs(
                 survey.image_basemap_width, survey.image_basemap_height, *new_size):
@@ -1029,9 +1036,18 @@ def editor_image_basemap_mode(request, survey_uuid):
     if mode == 'image' and survey.basemap_mode != 'image' and request.POST.get('confirm') != '1' \
             and image_basemap.family_has_geo_answers(survey):
         return _image_basemap_card(request, survey, status=409, confirm_mode=True)
+    was_image = survey.uses_image_basemap
     survey.basemap_mode = mode
-    survey.save(update_fields=['basemap_mode', 'updated_at'])
-    return _image_basemap_card(request, survey, reload_panel=True)
+    fields = ['basemap_mode', 'updated_at']
+    if mode == 'tiles' and (survey.image_basemap_state or survey.image_basemap_pending):
+        # Back to tiles abandons an upload in flight: its task finds itself
+        # superseded, so it cannot switch the survey to the picture later.
+        survey.image_basemap_pending = ''
+        survey.image_basemap_state = ''
+        survey.image_basemap_error = ''
+        fields += ['image_basemap_pending', 'image_basemap_state', 'image_basemap_error']
+    survey.save(update_fields=fields)
+    return _image_basemap_card(request, survey, reload_panel=was_image != survey.uses_image_basemap)
 
 
 @survey_permission_required('owner')

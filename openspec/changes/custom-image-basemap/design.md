@@ -210,6 +210,31 @@ variable changes nothing.
   name before Render creates it, which is why the namespace was derived in the first place.
   Rejected.
 
+### D9. The settings card leads with the mode; an upload is the switch (owner review on PR #200)
+
+The first version put the mode radios above a bare `<input type=file>` and an "Upload image"
+button, with "My own image" disabled until a processed picture existed. On the preview the owner
+could not tell the two modes apart, could not select "My own image", and asked why "Choose file" and
+"Upload image" were two controls in two styles. They were one action split in three steps: pick,
+upload, then switch.
+
+Now the radios are always enabled and decide what the card shows. "Map tiles" shows the tile
+choices only. "My own image" shows the image block: help text, one app-styled "Choose image…"
+button (a `<label>` over a hidden file input; the upload starts on file selection), and, once a
+picture exists, its preview with "Replace image" and "Remove image". Choosing "My own image" with no
+picture stored is client-only until a file is picked; the tile choices hide and a hint says the
+survey keeps map tiles until an image is uploaded.
+
+An upload is the request "use this picture": when processing succeeds the task sets
+`basemap_mode = 'image'`. The geo-answer confirmation therefore moves to the upload when the survey
+is still on tiles (same message as the mode switch; the chosen file survives the round trip).
+Choosing "Map tiles" while an upload is processing abandons it (`pending` cleared, the task finds
+itself superseded), so a late task can never flip a survey the creator has just put back on tiles.
+`store_processed` stays mode-neutral because ZIP import calls it with the archive's own mode.
+
+- *Alternative: keep the switch explicit after upload.* One more click nobody wants: the only way to
+  reach the upload control is to have chosen "My own image". Rejected.
+
 ## Risks / Trade-offs
 
 - [Coordinates look real and are not: an image survey's export puts points near 0°, 0° in the

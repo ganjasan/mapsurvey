@@ -7150,6 +7150,15 @@ msgstr "Заменить изображение"
 msgid "Upload image"
 msgstr "Загрузить изображение"
 
+msgid "Choose image…"
+msgstr "Выбрать изображение…"
+
+msgid "A real-world map: respondents can search for places and use their location."
+msgstr "Карта мира: респонденты могут искать места и использовать своё местоположение."
+
+msgid "Until you upload an image, respondents see map tiles."
+msgstr "Пока изображение не загружено, респонденты видят обычную карту."
+
 #: survey/templates/editor/partials/image_basemap_card.html
 msgid "Remove image"
 msgstr "Удалить изображение"

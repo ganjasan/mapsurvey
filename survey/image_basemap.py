@@ -203,8 +203,10 @@ def _has_alpha(img):
     return img.mode == 'P' and 'transparency' in img.info
 
 
-def store_processed(survey, webp_bytes, width, height):
-    """Point `survey` at a freshly processed picture and let go of the old one."""
+def store_processed(survey, webp_bytes, width, height, activate=False):
+    """Point `survey` at a freshly processed picture and let go of the old one.
+    `activate` also switches the survey to it (a creator's upload, design D9);
+    ZIP import leaves it off and keeps the archive's own mode."""
     old = survey.image_basemap.name if survey.image_basemap else ''
     survey.image_basemap.save('basemap.webp', ContentFile(webp_bytes), save=False)
     survey.image_basemap_width = width
@@ -212,10 +214,14 @@ def store_processed(survey, webp_bytes, width, height):
     survey.image_basemap_state = ''
     survey.image_basemap_error = ''
     survey.image_basemap_pending = ''
-    survey.save(update_fields=[
+    fields = [
         'image_basemap', 'image_basemap_width', 'image_basemap_height',
         'image_basemap_state', 'image_basemap_error', 'image_basemap_pending', 'updated_at',
-    ])
+    ]
+    if activate:
+        survey.basemap_mode = 'image'
+        fields.append('basemap_mode')
+    survey.save(update_fields=fields)
     if old and old != survey.image_basemap.name:
         delete_if_unreferenced(old, exclude_pk=survey.pk)
 

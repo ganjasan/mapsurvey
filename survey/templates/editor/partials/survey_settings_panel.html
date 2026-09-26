@@ -102,7 +102,7 @@
             <span id="survey-map-coords"></span>
           </div>
         </div>
-        <label class="pr-switch" {% if survey.uses_image_basemap %}style="display:none"{% endif %} title="{% trans 'Auto-center the map on the respondent’s browser location when they first enter the survey.' %}">
+        <label class="pr-switch" id="survey-geolocation-switch" {% if survey.uses_image_basemap %}style="display:none"{% endif %} title="{% trans 'Auto-center the map on the respondent’s browser location when they first enter the survey.' %}">
           <span>{% trans "Auto-center on respondent's location" %} <small class="pr-help">{% trans "uses the visitor's browser geolocation on entry" %}</small></span>
           <input type="checkbox" id="survey-use-geolocation" {% if survey.use_geolocation %}checked{% endif %}>
         </label>
@@ -305,6 +305,8 @@
             clearTimeout(pollTimer);
             if (!el || !document.body.contains(el)) return;
             if (el.dataset.reload === '1') { window.location.href = panelUrl(); return; }
+            var checked = el.querySelector('[data-image-basemap-mode]:checked');
+            if (checked) showMode(checked.value);
             if (el.dataset.state === 'processing') {
                 pollTimer = setTimeout(function() {
                     if (!document.body.contains(el)) return;
@@ -329,11 +331,26 @@
                 .then(swap);
         }
 
-        function upload(confirm) {
+        // "Map tiles" / "My own image" decide what the panel shows (design D9).
+        // Choosing the image with none stored is client-only until a file is picked.
+        function showMode(mode) {
+            var el = card();
+            var image = mode === 'image';
+            var block = el.querySelector('[data-image-basemap-block]');
+            var help = el.querySelector('[data-image-basemap-help="tiles"]');
+            if (block) block.hidden = !image;
+            if (help) help.hidden = image;
+            var tiles = document.getElementById('tile-basemap-fields');
+            if (tiles) tiles.hidden = image;
+            var geo = document.getElementById('survey-geolocation-switch');
+            if (geo) geo.style.display = image ? 'none' : '';
+        }
+
+        function upload(confirm, file) {
             var el = card();
             var input = el.querySelector('[data-image-basemap-file]');
-            if (!input.files.length) { input.click(); return; }
-            var pending = input.files[0];
+            var pending = file || (input.files.length ? input.files[0] : null);
+            if (!pending) { input.click(); return; }
             var fd = new FormData();
             fd.append('image', pending);
             if (confirm) fd.append('confirm', '1');
@@ -354,11 +371,22 @@
             post(card().dataset.modeUrl, fd);
         }
 
+        function chooseMode(mode) {
+            var el = card();
+            showMode(mode);
+            if (mode === 'image') {
+                // With a picture stored the choice is a real switch; without one
+                // the upload below makes it.
+                if (el.dataset.hasImage && el.dataset.mode !== 'image') setMode('image', false);
+            } else if (el.dataset.mode === 'image' || el.dataset.state) {
+                setMode('tiles', false);  // also abandons an upload in flight
+            }
+        }
+
         document.addEventListener('click', function(e) {
             var el = card();
             if (!el || !el.contains(e.target)) return;
-            if (e.target.closest('[data-image-basemap-upload]')) { upload(false); }
-            else if (e.target.closest('[data-image-basemap-confirm="upload"]')) { upload(true); }
+            if (e.target.closest('[data-image-basemap-confirm="upload"]')) { upload(true); }
             else if (e.target.closest('[data-image-basemap-confirm="mode"]')) { setMode('image', true); }
             else if (e.target.closest('[data-image-basemap-cancel]')) {
                 fetch(el.dataset.url, { credentials: 'same-origin' }).then(function(r) { return r.text(); }).then(swap);
@@ -371,8 +399,9 @@
             // Nameless inputs never reach the autosave form; stop the event so
             // its change listener does not post the form for nothing.
             e.stopPropagation();
-            if (e.target.matches('[data-image-basemap-mode]') && e.target.value !== el.dataset.mode) {
-                setMode(e.target.value, false);
+            if (e.target.matches('[data-image-basemap-mode]')) { chooseMode(e.target.value); }
+            else if (e.target.matches('[data-image-basemap-file]') && e.target.files.length) {
+                upload(false, e.target.files[0]);
             }
         }, true);
 

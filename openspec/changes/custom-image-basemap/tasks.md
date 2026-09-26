@@ -32,6 +32,15 @@
 - [x] 4.7 Tests: respondent page of an image survey has the config and no real-world settings; public results carry the picture; tiles survey output unchanged
 - [x] 4.8 Browser check: settings picker, respondent map (desktop + 390 px), point placed and stored on the picture, Responses Overview thumbnail and Map pane; no JS errors. Found and fixed: Map pane zoomed to a single mark (blurred pixels) and still offered real-world place search — both now keyed on the per-map `map._imageBasemapBounds`. Not driven in the browser: section map picker modal, layer object editor, per-response modal, public results page (covered by render tests only)
 
+## 4b. Settings card UX (owner review on PR #200, design D9)
+
+- [x] 4b.1 Radios always enabled; "Map tiles" shows tile choices only, "My own image" shows the image block (client-side toggle when no picture is stored yet)
+- [x] 4b.2 One app-styled "Choose image…" control (label over a hidden file input); upload starts on selection; "Replace image" / "Remove image" once a picture exists
+- [x] 4b.3 A successful upload sets `basemap_mode = 'image'` in the task; `store_processed` stays mode-neutral for ZIP import
+- [x] 4b.4 First upload on a tiles survey with geo answers asks the mode-switch confirmation; the chosen file survives the round trip
+- [x] 4b.5 "Map tiles" while processing abandons the pending upload
+- [x] 4b.6 Tests for every new scenario (5 new, 2 updated); browser check on the dev server with a real Celery worker: tiles → My own image → pick file → confirm → processing → switched; back to tiles and to image again
+
 ## 5. Versions and trash
 
 - [x] 5.1 `clone_survey_for_draft()` and `publish_draft()` copy the image fields; the archived version keeps the old picture; a discarded draft releases only its own picture

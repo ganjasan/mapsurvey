@@ -6,10 +6,18 @@ switch the survey's basemap mode between `tiles` and `image`. The image basemap 
 when the mode is `image` and a processed image exists. Surveys that never upload an image SHALL
 behave exactly as before.
 
-#### Scenario: Creator uploads an image and switches to it
-- **WHEN** an owner uploads a valid PNG in the survey settings and processing finishes
-- **THEN** the settings card shows a preview of the image and offers the `image` basemap mode
-- **AND** after the editor selects `image`, the survey's maps show the image instead of tiles
+#### Scenario: Creator chooses their own image and uploads it
+- **WHEN** an owner selects "My own image" in the survey settings of a survey with no image
+- **THEN** the card shows a single "Choose image" control and the survey stays on tiles
+- **AND** once they pick a valid PNG and processing finishes, the survey's mode is `image` and its maps show the picture without another click
+
+#### Scenario: Both modes are always selectable
+- **WHEN** an owner opens the settings of a survey with no uploaded image
+- **THEN** neither basemap mode option is disabled
+
+#### Scenario: Going back to tiles abandons a pending upload
+- **WHEN** an owner selects "Map tiles" while an upload is still processing
+- **THEN** the upload is abandoned and the survey stays on tiles when the processing task finishes
 
 #### Scenario: Switching back keeps the image
 - **WHEN** an editor switches an image-basemap survey back to `tiles`
@@ -177,10 +185,16 @@ header references it any more.
 The settings card SHALL ask for confirmation before (a) replacing the image with one whose aspect
 ratio differs by more than 1 % while the survey family has geo answers, and (b) switching a survey
 with geo answers from `tiles` to `image`, stating that existing marks will not line up with the
-picture. Replacing with an image of the same aspect ratio SHALL NOT ask.
+picture. Because an upload switches the survey to `image`, an upload to a survey still on `tiles`
+with geo answers SHALL ask the same confirmation as (b) before it is processed. Replacing with an
+image of the same aspect ratio SHALL NOT ask.
 
 #### Scenario: Different aspect ratio with answers
 - **WHEN** a survey with point answers on a 2:1 image receives a 1:1 upload
+- **THEN** the editor is asked to confirm before the upload is processed
+
+#### Scenario: First upload on a survey with answers
+- **WHEN** a tiles survey with point answers receives its first image upload
 - **THEN** the editor is asked to confirm before the upload is processed
 
 #### Scenario: Same aspect ratio without prompt

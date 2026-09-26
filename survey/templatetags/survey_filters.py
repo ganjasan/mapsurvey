@@ -148,3 +148,10 @@ def image_basemap_json(survey):
     because the includers are <script> bodies, where a json_script tag can't go."""
     import json
     return json.dumps(image_basemap_config(survey))
+
+
+@register.filter
+def image_block_open(survey):
+    """Whether the settings card opens on "My own image": the survey uses it,
+    or an upload is processing or has failed (design D9)."""
+    return survey.basemap_mode == 'image' or bool(survey.image_basemap_state)

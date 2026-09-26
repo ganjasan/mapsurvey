@@ -44338,7 +44338,8 @@ class ImageBasemapEditorTest(_ImageBasemapMediaMixin, TestCase):
         """
         GIVEN an owner in the settings panel
         WHEN they upload a PNG (task run inline)
-        THEN the survey stores a WebP with its size, state is clear, no raw upload remains, mode stays tiles
+        THEN the survey stores a WebP with its size, state is clear, no raw upload remains,
+             and the survey now uses the picture (an upload is the switch, design D9)
         """
         with _eager_image_basemap():
             resp = self.client.post(self.upload_url, {'image': _png_upload((400, 200))})
@@ -44349,7 +44350,8 @@ class ImageBasemapEditorTest(_ImageBasemapMediaMixin, TestCase):
         self.assertEqual((self.survey.image_basemap_width, self.survey.image_basemap_height), (400, 200))
         self.assertEqual(self.survey.image_basemap_state, '')
         self.assertEqual(self._raw_files(), [])
-        self.assertEqual(self.survey.basemap_mode, 'tiles')
+        self.assertEqual(self.survey.basemap_mode, 'image')
+        self.assertTrue(self.survey.uses_image_basemap)
 
     @override_settings(IMAGE_BASEMAP_MAX_UPLOAD_BYTES=100)
     def test_oversized_upload_refused_in_request(self):
@@ -44418,7 +44420,7 @@ class ImageBasemapEditorTest(_ImageBasemapMediaMixin, TestCase):
         self.assertIn('Upload it again', self.survey.image_basemap_error)
         self.assertEqual(self.survey.image_basemap_pending, '')
         html = self.client.get(reverse('editor_image_basemap', args=[self.survey.uuid])).content.decode()
-        self.assertRegex(html, r'<button type="button" class="btn btn-sm btn-outline-primary" data-image-basemap-upload>')
+        self.assertIn('data-image-basemap-file', html)
 
     def test_viewer_cannot_upload(self):
         """
@@ -44497,6 +44499,82 @@ class ImageBasemapEditorTest(_ImageBasemapMediaMixin, TestCase):
         self.assertEqual(self.survey.basemap_mode, 'tiles')
         self.assertFalse(self.survey.image_basemap)
         self.assertFalse(self._stored(name))
+
+    def test_both_modes_selectable_without_an_image(self):
+        """
+        GIVEN a survey that never uploaded an image
+        WHEN the owner opens its image block
+        THEN neither mode radio is disabled, "Map tiles" is checked and the image block is closed
+        """
+        html = self.client.get(reverse('editor_image_basemap', args=[self.survey.uuid])).content.decode()
+        radios = re.findall(r'<input type="radio"[^>]*data-image-basemap-mode[^>]*>', html)
+        self.assertEqual(len(radios), 2)
+        for radio in radios:
+            self.assertNotIn('disabled', radio)
+        self.assertIn('value="tiles" checked', html)
+        self.assertIn('data-image-basemap-block hidden', html)
+        self.assertIn('Choose image', html)
+
+    def test_first_upload_with_geo_answers_needs_confirmation(self):
+        """
+        GIVEN a tiles survey with a point answer and no image
+        WHEN the owner uploads a picture without, then with confirmation
+        THEN the first is answered 409 with the switch warning and not queued; the second is queued
+        """
+        self._answer()
+        with patch('survey.tasks.process_image_basemap.delay') as delay:
+            resp = self.client.post(self.upload_url, {'image': _png_upload()})
+            self.assertEqual(resp.status_code, 409)
+            self.assertIn('data-image-basemap-confirm="upload"', resp.content.decode())
+            delay.assert_not_called()
+            resp = self.client.post(self.upload_url, {'image': _png_upload(), 'confirm': '1'})
+            self.assertEqual(resp.status_code, 200)
+            delay.assert_called_once()
+
+    def test_tiles_while_processing_abandons_the_upload(self):
+        """
+        GIVEN an upload accepted but not yet processed
+        WHEN the owner chooses "Map tiles", then the task runs
+        THEN the upload is abandoned: the survey stays on tiles with no picture and no raw file
+        """
+        from .tasks import process_image_basemap
+        with patch('survey.tasks.process_image_basemap.delay') as delay:
+            self.client.post(self.upload_url, {'image': _png_upload()})
+        self.client.post(self.mode_url, {'mode': 'tiles'})
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.image_basemap_state, '')
+        process_image_basemap(*delay.call_args[0])
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.basemap_mode, 'tiles')
+        self.assertFalse(self.survey.image_basemap)
+        self.assertEqual(self._raw_files(), [])
+
+    def test_processing_upload_opens_the_image_block(self):
+        """
+        GIVEN a tiles survey whose upload is processing
+        WHEN the card renders
+        THEN "My own image" is checked and the image block shows the progress
+        """
+        with patch('survey.tasks.process_image_basemap.delay'):
+            html = self.client.post(self.upload_url, {'image': _png_upload()}).content.decode()
+        self.assertIn('value="image" checked', html)
+        self.assertNotIn('data-image-basemap-block hidden', html)
+        self.assertIn('Processing the image', html)
+
+    def test_zip_import_store_keeps_mode(self):
+        """
+        GIVEN a tiles survey
+        WHEN a picture is stored the way ZIP import stores it (no activation)
+        THEN the mode is unchanged
+        """
+        from . import image_basemap
+        from PIL import Image
+        import io
+        buf = io.BytesIO()
+        Image.new('RGB', (40, 20)).save(buf, 'WEBP')
+        image_basemap.store_processed(self.survey, buf.getvalue(), 40, 20)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.basemap_mode, 'tiles')
 
     def test_settings_panel_hides_tile_choices_but_keeps_fields(self):
         """
