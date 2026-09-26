@@ -49,6 +49,19 @@ services:
     # the pre-deploy died with "unrecognized arguments: manage.py createsuperuser || true".
     preDeployCommand: "sh ./predeploy.sh"
     envVars:
+      # Secrets for PR previews come from `mapsurvey-shared`, an environment group
+      # created BY HAND in the Render dashboard and deliberately not declared in this
+      # Blueprint (an `envVarGroups` entry would be cloned, empty, for every preview).
+      # A `sync: false` variable is never copied into a preview, and the
+      # `previewEnvRenderServiceName` key that used to sit under them is not a
+      # Render field at all — so until this group, every preview ran without S3
+      # (web and worker on separate disks: ZIP import and image uploads "lost"
+      # the file), without mail (console backend), without a superuser and
+      # without a Mapbox token (PR #200, 2026-09-26).
+      # On production the service's own values win: Render guarantees a variable
+      # set on the service takes precedence over a linked group. Never put
+      # POSTHOG_* or TURNSTILE_* in the group — see the comments on those keys.
+      - fromGroup: mapsurvey-shared
       - key: DATABASE_URL
         fromDatabase:
           name: mapsurvey-db
@@ -61,7 +74,6 @@ services:
         value: "localhost mapsurvey.org mapsurvey.render.com *.render.com"
       - key: MAPBOX_ACCESS_TOKEN
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       # AI survey draft generation. The web service only needs the provider
       # credentials to decide whether to render the AI panel; the worker below
       # makes the actual calls. A provider with no key = feature simply off.
@@ -72,13 +84,10 @@ services:
         value: gemini
       - key: GEMINI_API_KEY
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: GEMINI_MODEL
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: ANTHROPIC_API_KEY
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       # Off in production since 2026-08-17 evening, by product decision, after
       # a day of measuring Gemini's SSE in anger: 47% of streamed calls failed
       # (mid-answer cuts, stalls) in the morning batch, and one creator hit
@@ -92,37 +101,26 @@ services:
         previewValue: "true"
       - key: DEFAULT_FROM_EMAIL
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: DEMO_SURVEY_URL
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: DJANGO_SUPERUSER_USERNAME
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: DJANGO_SUPERUSER_EMAIL
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: DJANGO_SUPERUSER_PASSWORD
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: EMAIL_BACKEND
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: EMAIL_HOST
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: EMAIL_PORT
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: EMAIL_USE_SSL
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: EMAIL_HOST_USER
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: EMAIL_HOST_PASSWORD
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: CELERY_BROKER_URL
         fromService:
           type: redis
@@ -138,12 +136,13 @@ services:
           type: redis
           name: mapsurvey-redis
           property: connectionString
+      # Not in mapsurvey-shared: the production site key is bound to our domains, so on a
+      # *.onrender.com preview the widget would fail and registration with it. Unset
+      # TURNSTILE_SECRET_KEY is the dev bypass (survey/abuse.py), which previews rely on.
       - key: TURNSTILE_SITE_KEY
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: TURNSTILE_SECRET_KEY
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: CLOUDFLARE_TRUSTED
         value: "True"
       # Attempts that pass form validation.
@@ -196,7 +195,7 @@ services:
         value: "300"
       - key: GUNICORN_MAX_REQUESTS_JITTER
         value: "60"
-      # Internal product analytics. Deliberately WITHOUT previewEnvRenderServiceName:
+      # Internal product analytics. Deliberately NOT in the mapsurvey-shared group:
       # inheriting the production key would make every PR preview write test traffic
       # into the real project. Previews leave it unset, and unset renders no snippet.
       - key: POSTHOG_PROJECT_KEY
@@ -215,26 +214,22 @@ services:
       # is how this ships: the switch is flipped from the dashboard only after
       # the existing files have been copied into the bucket and verified.
       #
-      # Previews inherit the bucket and credentials but NOT the key prefix —
+      # Previews get the bucket and credentials from mapsurvey-shared but NOT the key prefix —
       # MEDIA_S3_NAMESPACE is deliberately absent here, so settings.py derives
       # previews/<service> from Render's own IS_PULL_REQUEST/RENDER_SERVICE_NAME.
       # A preview therefore cannot address, overwrite or delete a production key.
       - key: USE_S3
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: AWS_STORAGE_BUCKET_NAME
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: AWS_S3_REGION_NAME
         value: ap-southeast-2
       # Credentials belong to a bucket-scoped IAM user and are secrets: this
       # repository is public, so they are never literals in the Blueprint.
       - key: AWS_ACCESS_KEY_ID
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: AWS_SECRET_ACCESS_KEY
         sync: false
-        previewEnvRenderServiceName: mapsurvey
     # No disk, on purpose — this is what buys zero-downtime deploys. Media lives
     # in S3 (USE_S3 above); the old media-storage disk was copied there and
     # verified object-for-object on 2026-08-27 before this block was removed.
@@ -257,6 +252,8 @@ services:
     dockerContext: .
     dockerCommand: celery -A mapsurvey worker -l info --concurrency 2
     envVars:
+      # Same group as the web service: the worker reads the files the web stores.
+      - fromGroup: mapsurvey-shared
       - key: DATABASE_URL
         fromDatabase:
           name: mapsurvey-db
@@ -285,25 +282,18 @@ services:
         sync: false
       - key: DEFAULT_FROM_EMAIL
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: EMAIL_BACKEND
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: EMAIL_HOST
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: EMAIL_PORT
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: EMAIL_USE_SSL
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: EMAIL_HOST_USER
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: EMAIL_HOST_PASSWORD
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: SITE_URL
         value: "https://mapsurvey.org"
       - key: NEWSLETTER_SITE_URL
@@ -315,18 +305,14 @@ services:
       # derived per environment, so a preview worker cannot touch production keys.
       - key: USE_S3
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: AWS_STORAGE_BUCKET_NAME
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: AWS_S3_REGION_NAME
         value: ap-southeast-2
       - key: AWS_ACCESS_KEY_ID
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: AWS_SECRET_ACCESS_KEY
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       # AI survey draft generation runs here — this is the service that talks
       # to the model provider. Keep AI_PROVIDER identical to the web service:
       # the web side gates the panel on it, the worker resolves the client from
@@ -335,13 +321,10 @@ services:
         value: gemini
       - key: GEMINI_API_KEY
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: GEMINI_MODEL
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: ANTHROPIC_API_KEY
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       # Off in production since 2026-08-17 evening, by product decision, after
       # a day of measuring Gemini's SSE in anger: 47% of streamed calls failed
       # (mid-answer cuts, stalls) in the morning batch, and one creator hit
