@@ -3,7 +3,12 @@ previews:
 
 databases:
   - name: mapsurvey-db
-    plan: basic-256mb
+    # basic-1gb since 2026-09-28. On basic-256mb the kernel OOM-killed a Postgres
+    # backend four times (2026-09-15/16/17/21), each while a creator edited 2-5 MB
+    # reference layers: idle RSS ~100 MB, peaks 200-242 MB of 256. Every kill restarts
+    # all backends and 500s the in-flight requests. The plan lives HERE, not in the
+    # dashboard: a Blueprint sync overwrites a dashboard-only plan. Previews keep 256mb.
+    plan: basic-1gb
     databaseName: mapsurvey
     user: mapsurvey
     postgresMajorVersion: 16
