@@ -83,6 +83,10 @@ function tablePage(p) {
 /* Session detail modal */
 function loadSessionDetail(sid) {
     var body = document.getElementById('sessionDetailModalBody');
+    /* The body is cleared by hand, not by an HTMX swap, so the previous
+       mini-map gets no htmx:beforeCleanupElement: dispose it here, while its
+       element is still attached (openspec: responses-map-lifecycle). */
+    EditorMap.dispose('session-mini-map');
     body.textContent = '';
     var spinner = document.createElement('div');
     spinner.className = 'text-center text-muted py-4';
@@ -91,7 +95,6 @@ function loadSessionDetail(sid) {
     spinner.appendChild(icon);
     spinner.appendChild(document.createTextNode(' Loading...'));
     body.appendChild(spinner);
-    if (window._sessionMiniMap) { window._sessionMiniMap.remove(); window._sessionMiniMap = null; }
     $('#sessionDetailModal').modal('show');
     var url = '{% url "analytics_session_detail" survey.uuid 0 %}'.replace(/\/0\/$/, '/' + sid + '/');
     htmx.ajax('GET', url, { target: '#sessionDetailModalBody', swap: 'innerHTML' });

@@ -27,6 +27,11 @@
     and a script inside a swapped fragment is not reliably executed.{% endcomment %}
     <script src="{% static 'js/components/map_place_search.js' %}"></script>
     <script src="{% static 'js/map_position_picker.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
+    {% comment %}One lifecycle for the maps the Responses page mounts into
+    HTMX fragments (openspec: responses-map-lifecycle). Loaded here for the
+    same reason as the place search: the drawer partial arrives by swap and
+    its inline script needs the helper to exist already.{% endcomment %}
+    <script src="{% static 'js/editor_map.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js" crossorigin="anonymous"></script>
     <script src="{% static 'js/marker_icon.js' %}"></script>
     <script src="{% static 'js/icon_picker.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>

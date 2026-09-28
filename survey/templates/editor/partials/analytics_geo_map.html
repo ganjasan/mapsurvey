@@ -22,9 +22,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!geoData.features.length && !refLayerMetas.length) return;
 
     window.geoToolMode = 'pointer';
-    window._sessionMiniMap = null;
 
-    var map = L.map('analytics-map', { zoomControl: false });
+    // Through EditorMap like the page's other three maps (openspec:
+    // responses-map-lifecycle). Only the mount line: this pane's container
+    // never leaves the document, and whenMapSized() below already gates the
+    // layers as they arrive.
+    var map = EditorMap.mount('analytics-map', { zoomControl: false });
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     window.analyticsMap = map;
 
