@@ -15,7 +15,7 @@ from .comments import open_counts as _thread_counts
 from .permissions import survey_permission_required
 from .analytics import (
     SurveyAnalyticsService, PerformanceAnalyticsService, SessionValidationService,
-    version_choices,
+    EDITABLE_ANSWER_TYPES, version_choices,
 )
 from .events import emit_event
 from .layers import build_map_layers_metadata, layers_for, GEOMETRY_TEXT_FIELDS
@@ -380,14 +380,18 @@ def analytics_answer_edit(request, survey_uuid, session_id, question_id):
     except (json.JSONDecodeError, AttributeError):
         return HttpResponse(status=400)
 
-    # Get or create the answer
-    answer, _ = Answer.objects.get_or_create(
-        survey_session=session, question=question, parent_answer_id__isnull=True,
-        defaults={},
-    )
-
-    # Set value based on question type
+    # Type gate before any query: a geo question holds one root answer per
+    # feature, and get_or_create over those raised MultipleObjectsReturned (500).
     itype = question.input_type
+    if itype not in EDITABLE_ANSWER_TYPES:
+        return HttpResponse(status=400)
+
+    answer = Answer.objects.filter(
+        survey_session=session, question=question, parent_answer_id__isnull=True,
+    ).order_by('id').first()
+    if answer is None:
+        answer = Answer.objects.create(survey_session=session, question=question)
+
     if itype in ('text', 'text_line', 'datetime'):
         answer.text = str(value) if value is not None else ''
         answer.save(update_fields=['text'])
@@ -397,7 +401,7 @@ def analytics_answer_edit(request, survey_uuid, session_id, question_id):
         except (ValueError, TypeError):
             return HttpResponse(status=400)
         answer.save(update_fields=['numeric'])
-    elif itype in ('choice', 'rating', 'thumbs'):
+    elif itype in ('choice', 'rating'):
         try:
             answer.selected_choices = [int(value)] if value not in (None, '') else []
         except (ValueError, TypeError):
@@ -411,8 +415,6 @@ def analytics_answer_edit(request, survey_uuid, session_id, question_id):
         except (ValueError, TypeError):
             return HttpResponse(status=400)
         answer.save(update_fields=['selected_choices'])
-    else:
-        return HttpResponse(status=400)
 
     return HttpResponse(status=204)
 

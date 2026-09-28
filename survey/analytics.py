@@ -15,6 +15,13 @@ from .versioning import (
     resolve_version_scope as resolve_scope,
 )
 
+# Question types an editor may overwrite inline from Responses: one stored
+# value per session. Geo and file answers hold one row per feature/file, so
+# they are never editable here (spec analytics-data-workspace).
+EDITABLE_ANSWER_TYPES = frozenset(
+    ('text', 'text_line', 'number', 'range', 'choice', 'multichoice', 'rating', 'datetime')
+)
+
 
 def resolve_version_scope(survey, version):
     """The SurveyHeader ids a version filter value resolves to.
@@ -1002,7 +1009,7 @@ class SurveyAnalyticsService:
                 'href': row_href,
                 'kind': row_kind,
                 'attributes': attributes,
-                'editable': q.input_type in ('text', 'text_line', 'number', 'range', 'choice', 'multichoice', 'rating', 'datetime'),
+                'editable': q.input_type in EDITABLE_ANSWER_TYPES,
                 # Set only for a geo answer that actually holds geometry: the
                 # row is the handle for showing that one object on the map.
                 'geo_object_id': geo_object_id,
@@ -1470,6 +1477,7 @@ class SurveyAnalyticsService:
             {
                 'key': str(q.id), 'label': _col_label(q), 'input_type': q.input_type,
                 'choices_json': json.dumps(q.choices or [], ensure_ascii=False) if q.input_type in ('choice', 'multichoice', 'rating', 'thumbs') else '',
+                'editable': q.input_type in EDITABLE_ANSWER_TYPES,
             }
             for q in questions
         ]

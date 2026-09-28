@@ -11846,6 +11846,111 @@ class AnalyticsViewTest(TestCase):
         self.assertContains(response, 'Hello')
 
 
+class AnalyticsAnswerEditTest(TestCase):
+    """Inline answer edit from Responses (change fix-answer-edit-geo-500)."""
+
+    def setUp(self):
+        self.org = _make_org('AnswerEditOrg')
+        self.owner = User.objects.create_user('answereditor', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.login(username='answereditor', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.survey = SurveyHeader.objects.create(
+            name='answer_edit', organization=self.org,
+            created_by=self.owner, status='published',
+        )
+        section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.q_point = Question.objects.create(
+            survey_section=section, name='Where', code='where',
+            input_type='point', order_number=1,
+        )
+        self.q_poly = Question.objects.create(
+            survey_section=section, name='Area', code='area',
+            input_type='polygon', order_number=2,
+        )
+        self.q_text = Question.objects.create(
+            survey_section=section, name='Why', code='why',
+            input_type='text', order_number=3,
+        )
+        self.sess = SurveySession.objects.create(survey=self.survey)
+
+    def _edit(self, question, value):
+        return self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/analytics/sessions/{self.sess.id}/answers/{question.id}/edit/',
+            data=json.dumps({'value': value}), content_type='application/json',
+        )
+
+    def test_multi_feature_geo_answer_is_refused_not_crashed(self):
+        """
+        GIVEN a session with three root answers to a point question
+        WHEN an editor POSTs a new value for that session and question
+        THEN the response is 400 and the three answers are unchanged
+        """
+        for x in (1, 2, 3):
+            Answer.objects.create(survey_session=self.sess, question=self.q_point, point=Point(x, x))
+        response = self._edit(self.q_point, 'anything')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            sorted(a.point.x for a in Answer.objects.filter(question=self.q_point)), [1, 2, 3],
+        )
+
+    def test_unanswered_geo_question_creates_nothing(self):
+        """
+        GIVEN a session with no answer to a polygon question
+        WHEN an editor POSTs a value for it
+        THEN the response is 400 and no answer row is created
+        """
+        response = self._edit(self.q_poly, 'anything')
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Answer.objects.filter(question=self.q_poly).exists())
+
+    def test_text_edit_updates_earliest_of_duplicates(self):
+        """
+        GIVEN a session with two root answers to a text question
+        WHEN an editor POSTs "new" for it
+        THEN the response is 204 and the earliest answer's text is "new"
+        """
+        first = Answer.objects.create(survey_session=self.sess, question=self.q_text, text='a')
+        second = Answer.objects.create(survey_session=self.sess, question=self.q_text, text='b')
+        response = self._edit(self.q_text, 'new')
+        self.assertEqual(response.status_code, 204)
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertEqual((first.text, second.text), ('new', 'b'))
+
+    def test_text_edit_creates_missing_answer(self):
+        """
+        GIVEN a session with no answer to a text question
+        WHEN an editor POSTs "hello" for it
+        THEN the response is 204 and one answer with that text exists
+        """
+        response = self._edit(self.q_text, 'hello')
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(
+            list(Answer.objects.filter(question=self.q_text).values_list('text', flat=True)), ['hello'],
+        )
+
+    @override_settings(RESPONSES_V2=False)
+    def test_table_offers_edit_only_on_editable_columns(self):
+        """
+        GIVEN a Responses table with a point column and a text column
+        WHEN an editor renders the legacy table
+        THEN only the text cells carry the double-click edit handler
+        """
+        Answer.objects.create(survey_session=self.sess, question=self.q_point, point=Point(1, 1))
+        Answer.objects.create(survey_session=self.sess, question=self.q_text, text='why not')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/analytics/table/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn(f"startCellEdit(this, {self.sess.id}, '{self.q_text.id}'", html)
+        self.assertNotIn(f"startCellEdit(this, {self.sess.id}, '{self.q_point.id}'", html)
+        self.assertNotIn(f"startCellEdit(this, {self.sess.id}, '{self.q_poly.id}'", html)
+
+
 class ResponsesV2SwitchTest(TestCase):
     """RESPONSES_V2 kill switch selects between legacy and v2 Responses templates."""
 
