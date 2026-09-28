@@ -87,6 +87,12 @@ document.addEventListener('click', function(e){
 });
 document.body.addEventListener('statusChanged', function(){ window.location.reload(); });
 
+// Network-level failure (offline, or the request eaten by an ad blocker —
+// our creators run them more than most): the chains below must never end
+// in silence on the publish path.
+{% trans "Could not reach the server. Check your connection and any ad blocker, then try again." as publish_fetch_failed_msg %}
+function publishFetchFailed(){ alert("{{ publish_fetch_failed_msg|escapejs }}"); }
+
 // A 409 with translation_gaps is the non-blocking pre-publish warning:
 // show what is untranslated, and on confirm retry with the ack flag.
 function postTransition(form){
@@ -105,7 +111,7 @@ function postTransition(form){
             return;
         }
         r.text().then(function(m){ alert(m); });
-    });
+    }).catch(publishFetchFailed);
 }
 function doTransition(status){
     var form = new FormData(); form.append('status', status);
@@ -129,7 +135,10 @@ function toggleVisibility(btn){
 {% if show_draft_actions %}
 function checkAndPublishDraft(){
     fetch('{% url "editor_check_compatibility" survey.uuid %}', {headers:{'X-CSRFToken':'{{ csrf_token }}'}})
-      .then(function(r){ return r.json(); }).then(function(data){
+      .then(function(r){
+          if (!r.ok) { throw new Error('compatibility check HTTP ' + r.status); }
+          return r.json();
+      }).then(function(data){
         if (data.issues && data.issues.length > 0) {
             var list = document.getElementById('compatibilityIssuesList');
             while (list.firstChild) { list.removeChild(list.firstChild); }
@@ -142,7 +151,7 @@ function checkAndPublishDraft(){
             });
             $('#publishDraftIssuesModal').modal('show');
         } else { $('#publishDraftModal').modal('show'); }
-      });
+      }).catch(publishFetchFailed);
 }
 function doPublishDraft(force){
     var form = new FormData(); if (force) form.append('force','true');
@@ -158,7 +167,8 @@ function doPublishDraft(force){
                                   + lines.join('\n') + '\n\nPublish anyway?')) {
                           form.append('ack_translation_gaps','true');
                           fetch('{% url "editor_publish_draft" survey.uuid %}', {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}, body:form})
-                            .then(function(r2){ if(r2.redirected){ window.location.href=r2.url; } else if(r2.ok){ window.location.reload(); } else { r2.text().then(function(m){ alert(m); }); } });
+                            .then(function(r2){ if(r2.redirected){ window.location.href=r2.url; } else if(r2.ok){ window.location.reload(); } else { r2.text().then(function(m){ alert(m); }); } })
+                            .catch(publishFetchFailed);
                       }
                       return;
                   }
@@ -168,7 +178,7 @@ function doPublishDraft(force){
               return;
           }
           r.text().then(function(m){ alert(m); });
-      });
+      }).catch(publishFetchFailed);
 }
 {% endif %}
 </script>

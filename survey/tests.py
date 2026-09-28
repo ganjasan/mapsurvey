@@ -9484,6 +9484,32 @@ class EditorVersioningEndpointsTest(TestCase):
         self.assertIn('issues', data)
         self.assertTrue(len(data['issues']) > 0)
 
+    # ─── publish-flow error wiring (guard) ───────────────────────────────────
+
+    def test_publish_chains_carry_network_failure_handler(self):
+        """
+        GIVEN an owner viewing a draft copy's editor page
+        WHEN the page renders the lifecycle scripts
+        THEN every publish fetch chain is wired to publishFetchFailed, so a
+             blocked or failed request can never leave the Publish button
+             silently dead (backlog #190; template tests cannot execute the JS,
+             so this pins the wiring's presence)
+        """
+        self.client.login(username='ver_owner', password='pass')
+        draft = clone_survey_for_draft(self.survey)
+        SurveyCollaborator.objects.get_or_create(
+            user=self.owner, survey=draft, defaults={'role': 'owner'},
+        )
+        response = self.client.get(
+            reverse('editor_survey_detail', kwargs={'survey_uuid': draft.uuid}))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('function publishFetchFailed(', content)
+        # postTransition, checkAndPublishDraft, doPublishDraft + its ack retry.
+        self.assertEqual(content.count('.catch(publishFetchFailed)'), 4)
+        # checkAndPublishDraft must not r.json() an error page.
+        self.assertIn("throw new Error('compatibility check HTTP '", content)
+
 
 class DashboardVersioningTest(TestCase):
     """Tests that the dashboard excludes draft copies and archived versions."""
