@@ -33,5 +33,5 @@
 - [x] 5.3 Browser at 900px (overlay drawer) and 390px (full-screen drawer): same sequence — these are the viewports where the container is 0×0 at swap time
 - [x] 5.4 `RESPONSES_V2=False` in the browser: the v1 modal's mini-map still renders once the modal is shown — *done 2026-09-28: ten sequential opens and seven opens 80 ms apart; mini-map drawn every time, zero page errors, no leaked containers*
 - [x] 5.5 `openspec validate responses-map-lifecycle --strict`
-- [ ] 5.6 Open the PR against `master`; no migration, no kill switch
-- [ ] 5.7 After deploy: resolve PostHog issues `01a0a273-f54f`, `01a0a273-ffeb…83`, `01a0a273-ffeb…57` and the seven Firefox issues of 2026-09-26 (`01a0dea7-0496`, `01a0dea9-3e42`, `01a0dea6-71ba`, `01a0dea9-1fac`, `01a0dea6-8859`, `01a0dead-8861`, `01a0dea9-31df`) once no new events arrive
+- [x] 5.6 Open the PR against `master`; no migration, no kill switch — *PR #202, merged 2026-09-28*
+- [x] 5.7 After deploy: resolve PostHog issues `01a0a273-f54f`, `01a0a273-ffeb…83`, `01a0a273-ffeb…57` and the seven Firefox issues of 2026-09-26 (`01a0dea7-0496`, `01a0dea9-3e42`, `01a0dea6-71ba`, `01a0dea9-1fac`, `01a0dea6-8859`, `01a0dead-8861`, `01a0dea9-31df`) once no new events arrive — *all ten resolved 2026-09-28 12:14 UTC, after editor_map.js was live on mapsurvey.org (12:12 UTC); PostHog reopens any that recur*
