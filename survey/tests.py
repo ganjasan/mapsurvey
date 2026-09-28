@@ -37840,6 +37840,201 @@ class AnalyticsHeatLayerGuardTest(TestCase):
         self.assertLess(guard_at, add_at)
 
 
+class EditorMapLifecycleGuardTest(SimpleTestCase):
+    """Every map on the Responses page mounts through EditorMap, and the helper
+    keeps the contract that makes that safe.
+
+    Four maps -- Map pane, Overview thumbnail, drawer mini-map, response modal
+    -- each had a private answer to "is there a map here already, how do I get
+    rid of it, when can I draw". The drawer's answer held the instance in a
+    page global and called remove() on it after HTMX had discarded its DOM:
+    one throw, a half-cleared container id, then "Map container is being
+    reused by another instance" on every later open (PostHog 01a0a273, three
+    issues in five seconds). openspec: responses-map-lifecycle.
+
+    This is the class-level guard, per the lesson on #194: a test pinned to the
+    four surfaces that exist today would let the fifth ship the old pattern
+    green. It scans the analytics templates' SOURCE for a raw `L.map(` and
+    reads the helper's source for the parts a browser test cannot pin. There
+    is no JavaScript runner in this repository; behaviour is verified in a
+    browser (tasks 5.2-5.4).
+    """
+
+    TEMPLATES = os.path.join(settings.BASE_DIR, 'survey', 'templates', 'editor')
+    HELPER = os.path.join(settings.BASE_DIR, 'survey', 'assets', 'js', 'editor_map.js')
+
+    def _analytics_templates(self):
+        found = []
+        for root, _dirs, files in os.walk(self.TEMPLATES):
+            for filename in files:
+                if filename.endswith('.html') and (
+                        filename.startswith('analytics_') or filename.startswith('_analytics_')):
+                    found.append(os.path.join(root, filename))
+        self.assertTrue(found, 'no analytics templates found -- the scan is looking in the wrong place')
+        return found
+
+    def _helper_source(self):
+        with open(self.HELPER, encoding='utf-8') as fh:
+            return fh.read()
+
+    def test_no_analytics_template_mounts_leaflet_directly(self):
+        """
+        GIVEN every analytics template under editor/
+        WHEN its source is scanned for a raw Leaflet mount
+        THEN none calls `L.map(` -- every map goes through EditorMap.mount
+        """
+        offenders = []
+        for path in self._analytics_templates():
+            with open(path, encoding='utf-8') as fh:
+                for lineno, line in enumerate(fh, start=1):
+                    if 'L.map(' in line:
+                        offenders.append(f'{os.path.relpath(path, self.TEMPLATES)}:{lineno}: {line.strip()}')
+        self.assertEqual(offenders, [], 'raw L.map() outside EditorMap:\n  ' + '\n  '.join(offenders))
+
+    def test_no_page_global_holds_a_responses_map(self):
+        """
+        GIVEN the analytics templates
+        WHEN scanned for the globals that used to hold the drawer and modal maps
+        THEN none remains -- an instance that lives on its element cannot outlive it
+        """
+        offenders = []
+        for path in self._analytics_templates():
+            with open(path, encoding='utf-8') as fh:
+                body = fh.read()
+            for name in ('_sessionMiniMap', 'initSessionMiniMap', '_sessionGeoMap'):
+                if name in body:
+                    offenders.append(f'{os.path.relpath(path, self.TEMPLATES)}: {name}')
+        self.assertEqual(offenders, [], '\n  '.join(offenders))
+
+    def test_helper_disposes_without_throwing_and_clears_the_container(self):
+        """
+        GIVEN the helper's source
+        WHEN dispose() is read
+        THEN Leaflet's remove() is inside a try, and the container's Leaflet id
+             is cleared outside it -- so a half-torn map cannot poison the
+             element for the next mount
+        """
+        source = self._helper_source()
+        dispose_at = source.index('function dispose(')
+        body = source[dispose_at:source.index('function sweep(')]
+        self.assertIn('try {', body)
+        self.assertIn('map.remove();', body)
+        self.assertLess(body.index('try {'), body.index('map.remove();'))
+        self.assertIn('delete el._leaflet_id', body)
+        self.assertLess(body.index('} catch (e) {'), body.index('delete el._leaflet_id'),
+                        'the id must be cleared after the try/catch, whatever remove() managed')
+
+    def test_helper_disposes_on_htmx_cleanup_and_waits_for_size(self):
+        """
+        GIVEN the helper's source
+        WHEN mount() and whenSized() are read
+        THEN the map is disposed on htmx:beforeCleanupElement (while its element is
+             still attached), the instance is kept on the element, and readiness
+             is observed with ResizeObserver rather than timed
+        """
+        source = self._helper_source()
+        self.assertIn("addEventListener('htmx:beforeCleanupElement'", source)
+        self.assertIn('el._editorMap = map;', source)
+        self.assertIn('new ResizeObserver(', source)
+        self.assertNotIn('setTimeout(', source, 'readiness must be observed, not guessed')
+
+    def test_helper_is_loaded_by_the_editor_base(self):
+        """
+        GIVEN editor_base.html
+        WHEN its script includes are read
+        THEN editor_map.js is loaded there -- the drawer partial arrives by swap and
+             needs the helper to exist before its inline script runs
+        """
+        path = os.path.join(self.TEMPLATES, 'editor_base.html')
+        with open(path, encoding='utf-8') as fh:
+            body = fh.read()
+        self.assertIn("{% static 'js/editor_map.js' %}", body)
+
+
+class EditorMapLifecycleRenderTest(TestCase):
+    """The four Responses maps reach the page through EditorMap.mount.
+
+    Source scans prove no template bypasses the helper; these prove the helper
+    and the four call sites actually render on both dashboards and on the
+    detail endpoint the drawer swaps in.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='maplife_owner', password='pass')
+        self.org = _make_org('MapLifeOrg')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name='maplife_survey', organization=self.org)
+        section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec', code='S1', is_head=True)
+        q_pt = Question.objects.create(
+            survey_section=section, code='Q_PT', name='Where?',
+            input_type='point', order_number=1)
+        q_pg = Question.objects.create(
+            survey_section=section, code='Q_PG', name='Which area?',
+            input_type='polygon', order_number=2)
+        self.session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=self.session, question=q_pt,
+                              point=Point(13.405, 52.52))
+        Answer.objects.create(survey_session=self.session, question=q_pg,
+                              polygon=Polygon(((13.40, 52.52), (13.41, 52.52),
+                                               (13.41, 52.53), (13.40, 52.53), (13.40, 52.52))))
+        self.client.login(username='maplife_owner', password='pass')
+        s = self.client.session
+        s['active_org_id'] = self.org.id
+        s.save()
+        self.dash_url = f'/editor/surveys/{self.survey.uuid}/analytics/'
+        self.detail_url = f'/editor/surveys/{self.survey.uuid}/analytics/sessions/{self.session.id}/'
+
+    @override_settings(RESPONSES_V2=True)
+    def test_v2_dashboard_mounts_its_three_maps_through_the_helper(self):
+        """
+        GIVEN the v2 Responses page for a survey with geo answers
+        WHEN it renders
+        THEN the helper is loaded and the Map pane, the Overview thumbnail and the
+             response modal all mount through EditorMap.mount
+        """
+        response = self.client.get(self.dash_url)
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('js/editor_map', html)
+        self.assertIn("EditorMap.mount('analytics-map'", html)
+        self.assertIn('EditorMap.mount(mapEl', html)
+        self.assertIn("EditorMap.mount('session-geo-modal-map'", html)
+        self.assertIn("EditorMap.dispose('session-geo-modal-map')", html)
+
+    @override_settings(RESPONSES_V2=False)
+    def test_v1_dashboard_mounts_the_map_pane_through_the_helper(self):
+        """
+        GIVEN the legacy Responses page (RESPONSES_V2 off)
+        WHEN it renders
+        THEN the helper is loaded and the Map pane mounts through EditorMap.mount
+        """
+        response = self.client.get(self.dash_url)
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('js/editor_map', html)
+        self.assertIn("EditorMap.mount('analytics-map'", html)
+
+    def test_session_detail_mounts_the_mini_map_through_the_helper(self):
+        """
+        GIVEN the session detail partial the drawer (and the v1 modal) swaps in
+        WHEN it renders for a session with geo answers
+        THEN the mini-map mounts through EditorMap.mount with its layers inside the
+             ready callback, and no modal hook or page global remains
+        """
+        response = self.client.get(self.detail_url)
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("EditorMap.mount('session-mini-map'", html)
+        self.assertNotIn('shown.bs.modal', html)
+        self.assertNotIn('_sessionMiniMap', html)
+        self.assertNotIn('L.map(', html)
+        mount_at = html.index("EditorMap.mount('session-mini-map'")
+        self.assertLess(mount_at, html.index('layer.addTo(map);'),
+                        'layers must be added inside the ready callback, after the mount')
+        self.assertLess(mount_at, html.index('map.fitBounds('))
+
+
 class MalformedArchiveImportTest(TestCase):
     """A creator's bad ZIP must produce a message, not a 500.
 

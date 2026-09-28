@@ -147,27 +147,23 @@
          title="{% trans 'Open the full-size map of this response' %}"></div>
     <script>
     (function() {
-        function initMiniMap() {
-            if (window._sessionMiniMap) {
-                window._sessionMiniMap.remove();
-                window._sessionMiniMap = null;
-            }
-            var container = document.getElementById('session-mini-map');
-            if (!container) return;
+        {# Feature properties now carry respondent sub-answer text — never |safe. #}
+        var geoData = JSON.parse('{{ geo_json|escapejs }}');
+        var colors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+        var qNames = [];
+        geoData.features.forEach(function(f) {
+            if (qNames.indexOf(f.properties.question) === -1) qNames.push(f.properties.question);
+        });
 
-            {# Feature properties now carry respondent sub-answer text — never |safe. #}
-            var geoData = JSON.parse('{{ geo_json|escapejs }}');
-
-            var map = L.map('session-mini-map', { zoomControl: true });
-            window._sessionMiniMap = map;
-
+        /* This partial arrives by HTMX swap, into the v2 drawer or the v1
+           modal body, once per response the creator opens. EditorMap owns
+           what used to go wrong here: the previous map is disposed while its
+           element is still attached, the instance lives on the element rather
+           than in a global, and the layers wait for the container to have a
+           size -- the v1 modal is mid-fade and the overlay drawer may not be
+           laid out when this script runs (openspec: responses-map-lifecycle). */
+        EditorMap.mount('session-mini-map', { zoomControl: true }, function(map) {
             {% include "partials/basemap_layers.html" %}
-
-            var colors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-            var qNames = [];
-            geoData.features.forEach(function(f) {
-                if (qNames.indexOf(f.properties.question) === -1) qNames.push(f.properties.question);
-            });
 
             geoData.features.forEach(function(f) {
                 var ci = qNames.indexOf(f.properties.question) % colors.length;
@@ -187,25 +183,7 @@
 
             var allBounds = L.geoJSON(geoData).getBounds();
             if (allBounds.isValid()) map.fitBounds(allBounds.pad(0.15));
-        }
-
-        /* The surface that renders this partial owns the timing: v1 has a modal
-           to wait on, v2 swaps the partial into a drawer that is already
-           visible. Exposing the routine keeps one implementation for both. */
-        window.initSessionMiniMap = initMiniMap;
-
-        var modalEl = document.getElementById('sessionDetailModal');
-        if (modalEl) {
-            if ($(modalEl).hasClass('show')) {
-                setTimeout(initMiniMap, 50);
-            } else {
-                $(modalEl).one('shown.bs.modal', initMiniMap);
-            }
-        } else {
-            /* v2: no modal exists. Binding to one used to leave the preview a
-               blank box, since the handler could never fire. */
-            initMiniMap();
-        }
+        });
     })();
     </script>
     {% endif %}

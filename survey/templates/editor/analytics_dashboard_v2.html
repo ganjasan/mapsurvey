@@ -1122,8 +1122,10 @@ function rv2Confirm(message, onOk) {
    Reads the payload the detail surface already rendered, so opening costs no
    request. A own tile layer rather than the basemap_layers include: that
    include writes window._basemapLayers / _layersControl, which belong to the
-   Map pane — sharing them would break its layer switcher. */
-var _sessionGeoMap = null;
+   Map pane — sharing them would break its layer switcher.
+   The map itself is mounted and disposed through EditorMap, like the page's
+   other three maps (openspec: responses-map-lifecycle): the instance lives on
+   the container, never in a page global. */
 var SESSION_GEO_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 function sessionGeoData() {
@@ -1159,10 +1161,7 @@ function sessionGeoPopup(props) {
 }
 
 function sessionGeoDestroy() {
-    if (_sessionGeoMap) {
-        _sessionGeoMap.remove();
-        _sessionGeoMap = null;
-    }
+    EditorMap.dispose('session-geo-modal-map');
 }
 
 /* objectId optional: given, the map opens on that one object; omitted, it fits
@@ -1178,9 +1177,8 @@ function sessionGeoOpenMap(objectId) {
     $('#sessionGeoMapModal').modal('show');
 
     $('#sessionGeoMapModal').one('shown.bs.modal', function () {
-        sessionGeoDestroy();
-        var map = L.map('session-geo-modal-map', { zoomControl: true });
-        _sessionGeoMap = map;
+        /* mount() disposes whatever the previous open left on the container. */
+        var map = EditorMap.mount('session-geo-modal-map', { zoomControl: true });
         L.tileLayer('{{ MAPBOX_URL }}', {
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
             maxZoom: 23,

@@ -206,10 +206,24 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
         if (mapEl && window.L) {
             var geo = null;
             try { geo = JSON.parse(document.getElementById('geo-json-data').textContent); } catch (e) {}
-            var m = L.map(mapEl, {
+            /* Mounted through EditorMap so the thumbnail is fitted once its
+               container has a size rather than after a hand-picked delay, and
+               so it shares one lifecycle with the page's other three maps
+               (openspec: responses-map-lifecycle). */
+            var m = EditorMap.mount(mapEl, {
                 zoomControl: false, dragging: false, scrollWheelZoom: false,
                 doubleClickZoom: false, boxZoom: false, keyboard: false,
                 touchZoom: false, attributionControl: false,
+            }, function (map) {
+                if (geo && geo.features && geo.features.length) {
+                    var layer = L.geoJSON(geo, {
+                        pointToLayer: function (f, latlng) {
+                            return L.circleMarker(latlng, { radius: 4, color: '#4f46e5', weight: 1.5, fillOpacity: 0.7 });
+                        },
+                        style: { color: '#4f46e5', weight: 2 },
+                    }).addTo(map);
+                    try { map.fitBounds(layer.getBounds().pad(0.06)); } catch (e) {}
+                }
             });
             /* Streets from Mapbox like every other map. This thumbnail never
                went through basemap_layers.html and kept a hard-coded volunteer
@@ -221,23 +235,9 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
             }).addTo(m);
             mapEl.style.cursor = 'pointer';
             mapEl.addEventListener('click', function () { rv2Router.setPane('map'); });
-            if (geo && geo.features && geo.features.length) {
-                var layer = L.geoJSON(geo, {
-                    pointToLayer: function (f, latlng) {
-                        return L.circleMarker(latlng, { radius: 4, color: '#4f46e5', weight: 1.5, fillOpacity: 0.7 });
-                    },
-                    style: { color: '#4f46e5', weight: 2 },
-                }).addTo(m);
-                /* Leaflet measures the container lazily; fitting before the
-                   first layout settles leaves the thumbnail at world zoom. */
-                m.setView([0, 0], 2);
-                setTimeout(function () {
-                    m.invalidateSize();
-                    try { m.fitBounds(layer.getBounds().pad(0.06)); } catch (e) {}
-                }, 150);
-            } else {
-                m.setView([0, 0], 2);
-            }
+            /* World view until the container is laid out; the ready callback
+               above fits the features then. */
+            m.setView([0, 0], 2);
             window._rv2OverviewMap = m;
             /* Reference layers, as the Layers panel shows them. They arrive
                asynchronously and the creator may reorder or dim them on the
