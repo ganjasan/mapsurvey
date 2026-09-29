@@ -24,4 +24,4 @@ Users confuse "Export survey" (backup/import format — survey.json + responses.
 - This is probably why the "GeoJSON export bug" was reported — it may not be a bug at all, just UX confusion
 
 - **2026-09-29 — BUILT** in change `responses-export-formats` (branch
-  `feature/responses-export-formats`, PR pending). The data download is "Export data" everywhere (Responses toolbar, card menu) and opens a dialog that names each format and the tool it serves; the survey.json group in the card menu is "Backup (survey file)" with the hint "For import into Mapsurvey, not for analysis".
+  `feature/responses-export-formats`, PR #208). The data download is "Export data" everywhere (Responses toolbar, card menu) and opens a dialog that names each format and the tool it serves; the survey.json group in the card menu is "Backup (survey file)" with the hint "For import into Mapsurvey, not for analysis".

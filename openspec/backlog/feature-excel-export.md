@@ -26,4 +26,4 @@ and lon/lat columns for geo answers removes a demo objection for the cost of `op
 Keeps Free (export is never gated). Pairs with `#8` Shapefile/GeoPackage.
 
 - **2026-09-29 — BUILT** in change `responses-export-formats` (branch
-  `feature/responses-export-formats`, PR pending). `?format=xlsx`: sheets `observations` (one row per placed feature, lat/lon + WKT, sub-question columns merged by name), `responses`, `sessions`, `objects_<code>`; real dates and numbers, frozen bold header; written in openpyxl write-only mode and streamed. Offered from the new export dialog on Responses and the survey card menu.
+  `feature/responses-export-formats`, PR #208). `?format=xlsx`: sheets `observations` (one row per placed feature, lat/lon + WKT, sub-question columns merged by name), `responses`, `sessions`, `objects_<code>`; real dates and numbers, frozen bold header; written in openpyxl write-only mode and streamed. Offered from the new export dialog on Responses and the survey card menu.

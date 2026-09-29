@@ -107,5 +107,5 @@
   split, the URL contract and the `ogr2ogr` dependency
 - [x] 6.6 Draft the Olney reply (flat sheet is live, how to reach it, "session start" caveat) in
   `docs/marketing/user-outreach/olney/correspondence/`; do not send
-- [ ] 6.7 Open the PR (`feature/responses-export-formats` → master); after merge
+- [x] 6.7 Open the PR (`feature/responses-export-formats` → master, #208); after merge
   `/opsx:archive responses-export-formats`

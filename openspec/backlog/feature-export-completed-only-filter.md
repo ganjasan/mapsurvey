@@ -16,4 +16,4 @@
 - Важно для качества данных — частичные ответы могут искажать результаты
 
 - **2026-09-29 — BUILT** in change `responses-export-formats` (branch
-  `feature/responses-export-formats`, PR pending). `?completed_only=1` and the dialog switch "Completed responses only"; the predicate is `analytics.completed_session_filter`, shared with the Responses overview so the two counts agree.
+  `feature/responses-export-formats`, PR #208). `?completed_only=1` and the dialog switch "Completed responses only"; the predicate is `analytics.completed_session_filter`, shared with the Responses overview so the two counts agree.
