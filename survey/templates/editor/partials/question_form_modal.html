@@ -1067,7 +1067,10 @@
                               name: nameEl ? nameEl.value : '',
                               subtext: subtextEl ? subtextEl.value : '' },
                     headers: { 'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value }
-                }).then(function() { form._draftPending = false; });
+                }).then(function() { form._draftPending = false; },
+                        // htmx.ajax rejects with no value on error/abort/timeout;
+                        // clear the flag so the next type-pick can retry the draft.
+                        function() { form._draftPending = false; card.classList.remove('selected'); });
                 return;
             }
             inputTypeSelect.value = card.getAttribute('data-qtp-value');
