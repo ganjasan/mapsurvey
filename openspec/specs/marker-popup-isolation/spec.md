@@ -2,7 +2,6 @@
 
 ## Purpose
 How each feature's popup form stays bound to its own layer — unique form identity, popup-scoped property serialization and restoration, and handlers that cannot act on another feature.
-
 ## Requirements
 ### Requirement: Unique popup form identity
 Each map feature's popup form SHALL have a unique `id` attribute derived from the Leaflet layer's internal stamp (`L.Util.stamp(layer)`). The format SHALL be `subquestion_form_<stamp>`.
@@ -51,3 +50,16 @@ The Apply, Edit, and Delete button click handlers inside a popup SHALL operate o
 #### Scenario: Edit button edits correct layer
 - **WHEN** the user clicks "Edit" in a marker's popup
 - **THEN** `startEditMode` SHALL be called with the layer that owns the popup
+
+### Requirement: Popups open clear of the panel and the search box
+A respondent map popup (a placed feature's sub-question form, or an object card) SHALL auto-pan so it opens fully inside the visible map: on desktop not under the survey panel that overlays the map, and not under the address search box at the map's top edge. The popup's content SHALL not overflow horizontally.
+
+#### Scenario: Object card opened from the list on desktop
+- **WHEN** a respondent on a desktop viewport opens an object from the panel list and the object sits near the panel
+- **THEN** the map pans so the whole card is to the right of the panel and below the search box
+- **AND** the card has no horizontal scrollbar and none of its text is cut off
+
+#### Scenario: Phone
+- **WHEN** the viewport is a phone
+- **THEN** no panel padding applies, because the panel slides away before the popup opens
+
