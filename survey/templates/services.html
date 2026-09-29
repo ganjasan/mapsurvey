@@ -31,7 +31,7 @@
       {% trans "Mapsurvey is free and open source, and it stays that way. When you want a hand, we help you design your map survey and actually get responses — as an optional paid service. Most teams can build a survey; the hard part is getting enough of the right people to answer. That is what we help with." %}
     </p>
     <div class="hero__cta-group">
-      <a href="mailto:konuchovartem@mapsurvey.org?subject=Help%20with%20our%20map%20survey" class="btn-primary-landing">{% trans "Book a short call" %}</a>
+      {% if BOOK_A_CALL_URL %}<a href="{{ BOOK_A_CALL_URL }}" class="btn-primary-landing" target="_blank" rel="noopener" data-book-call="services">{% trans "Book a short call" %}</a>{% else %}<a href="mailto:{{ CONTACT_EMAIL }}?subject=Help%20with%20our%20map%20survey" class="btn-primary-landing">{% trans "Book a short call" %}</a>{% endif %}
       <a href="{% url 'django_registration_register' %}?utm_source=services&amp;utm_medium=services" class="btn-secondary-landing">{% trans "Or start free on your own" %}</a>
     </div>
     <div class="hero__badges">
@@ -77,7 +77,7 @@
       {% trans "The platform stays free and open source either way. This is optional help for teams that want a hand — not a paywall on Mapsurvey." %}
     </div>
     <div class="hero__cta-group" style="margin-top:28px;justify-content:center;">
-      <a href="mailto:konuchovartem@mapsurvey.org?subject=Help%20with%20our%20map%20survey" class="btn-primary-landing">{% trans "Book a short call" %}</a>
+      {% if BOOK_A_CALL_URL %}<a href="{{ BOOK_A_CALL_URL }}" class="btn-primary-landing" target="_blank" rel="noopener" data-book-call="services">{% trans "Book a short call" %}</a>{% else %}<a href="mailto:{{ CONTACT_EMAIL }}?subject=Help%20with%20our%20map%20survey" class="btn-primary-landing">{% trans "Book a short call" %}</a>{% endif %}
       <a href="{% url 'for_government' %}" class="btn-secondary-landing">{% trans "See the platform for engagement" %}</a>
     </div>
   </div>

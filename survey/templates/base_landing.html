@@ -204,8 +204,8 @@
                     {% if CONTACT_TELEGRAM %}
                     <li><a href="https://t.me/{{ CONTACT_TELEGRAM }}" target="_blank" rel="noopener">Telegram</a></li>
                     {% endif %}
-                    {% if DISCORD_INVITE_URL %}
-                    <li><a href="{{ DISCORD_INVITE_URL }}" target="_blank" rel="noopener">Discord</a></li>
+                    {% if BOOK_A_CALL_URL %}
+                    <li><a href="{{ BOOK_A_CALL_URL }}" target="_blank" rel="noopener" data-book-call="footer">{% trans "Book a call" %}</a></li>
                     {% endif %}
                     {% if GITHUB_REPO_URL %}
                     <li><a href="{{ GITHUB_REPO_URL }}" target="_blank" rel="noopener">GitHub</a></li>
@@ -218,6 +218,16 @@
             </div>
         </div>
     </footer>
+    <script>
+    // Book-a-call clicks: which surface sent the visitor to the calendar. Surface only, nothing
+    // about the visitor; silent when PostHog is not loaded (tests, previews, blockers).
+    document.addEventListener('click', function (e) {
+        var link = e.target.closest && e.target.closest('[data-book-call]');
+        if (link && window.posthog) {
+            window.posthog.capture('book_call_clicked', { surface: link.getAttribute('data-book-call') });
+        }
+    });
+    </script>
     {% block extra_js %}{% endblock %}
     <!--Start of Tawk.to Script-->
     <script type="text/javascript">

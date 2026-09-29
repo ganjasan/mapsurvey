@@ -669,28 +669,148 @@ a:hover { color: var(--color-accent-hover); }
 }
 
 /* ============================
-   MID-PAGE CTA
+   HOW TO START — two paths
    ============================ */
-.mid-cta {
-    padding: 5rem 0;
-    text-align: center;
+.how-to-start {
+    padding: var(--section-padding);
 }
 
-.mid-cta__heading {
-    font-family: var(--font-display);
-    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-    font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: -0.025em;
-    color: var(--color-text);
-    margin-bottom: 2rem;
+.how-to-start__lede {
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+    max-width: 52ch;
+    margin-bottom: 2.5rem;
 }
 
-.mid-cta__buttons {
+.how-to-start__paths {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.how-to-start__paths > * { min-width: 0; }
+
+.path-card {
     display: flex;
-    gap: 1rem;
-    justify-content: center;
+    flex-direction: column;
+    padding: 2rem;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-elevated);
+}
+
+.path-card--with-us { background: var(--color-bg-warm); }
+
+.path-card__tag {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    margin-bottom: 0.6rem;
+}
+
+.path-card__title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+    margin-bottom: 0.4rem;
+}
+
+.path-card__for {
+    color: var(--color-text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.path-card__steps {
+    list-style: none;
+    counter-reset: path-step;
+    padding: 0;
+    margin: 0 0 2rem;
+    flex: 1;
+}
+
+.path-card__steps li {
+    counter-increment: path-step;
+    position: relative;
+    padding-left: 2.4rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+    color: var(--color-text);
+}
+
+.path-card__steps li::before {
+    content: counter(path-step);
+    position: absolute;
+    left: 0;
+    top: -0.05rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-display);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    background: var(--color-accent-light);
+    color: var(--color-accent);
+}
+
+.path-card--with-us .path-card__steps li::before {
+    background: var(--color-grid);
+    color: var(--color-primary);
+    box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+.path-card__actions {
+    display: flex;
     flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 1.25rem;
+}
+
+.path-card__link,
+.hero__demo-link a {
+    font-family: var(--font-display);
+    font-size: 0.9375rem;
+    color: var(--color-text-secondary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.path-card__link:hover,
+.hero__demo-link a:hover { color: var(--color-text); }
+
+.path-card__fine {
+    font-family: var(--font-display);
+    font-size: 0.8125rem;
+    color: var(--color-text-tertiary);
+    margin: 1rem 0 0;
+}
+
+.hero__demo-link { margin: 1.25rem 0 0.75rem; }
+
+/* The "with us" path: same weight as the teal primary, different colour. */
+.btn-primary-landing--dark {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+
+.btn-primary-landing--dark:hover {
+    background: var(--color-primary-light);
+    border-color: var(--color-primary-light);
+    color: var(--color-text-inverse);
+}
+
+@media (max-width: 760px) {
+    .how-to-start__paths { grid-template-columns: 1fr; }
+    .path-card { padding: 1.5rem; }
+    .path-card__actions > .btn-primary-landing { width: 100%; }
 }
 
 /* ============================
@@ -911,31 +1031,6 @@ a:hover { color: var(--color-accent-hover); }
 }
 
 .pricing__enterprise a { color: var(--color-accent); }
-
-/* ============================
-   FINAL CTA
-   ============================ */
-.final-cta {
-    padding: 6rem 0;
-    text-align: center;
-}
-
-.final-cta__heading {
-    font-family: var(--font-display);
-    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-    font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: -0.025em;
-    color: var(--color-text);
-    margin-bottom: 2rem;
-}
-
-.final-cta__buttons {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
 
 /* ============================
    FOOTER
