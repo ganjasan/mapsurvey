@@ -210,10 +210,16 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
                container has a size rather than after a hand-picked delay, and
                so it shares one lifecycle with the page's other three maps
                (openspec: responses-map-lifecycle). */
+            /* The world view is the map's STARTING view, given at construction.
+               Setting it after mount() undid the fit whenever the container was
+               already laid out -- mount() then runs the ready callback
+               synchronously, so a later setView() won and the thumbnail showed
+               the whole world (the default pane, i.e. every first visit). */
             var m = EditorMap.mount(mapEl, {
                 zoomControl: false, dragging: false, scrollWheelZoom: false,
                 doubleClickZoom: false, boxZoom: false, keyboard: false,
                 touchZoom: false, attributionControl: false,
+                center: [0, 0], zoom: 2,
             }, function (map) {
                 if (geo && geo.features && geo.features.length) {
                     var layer = L.geoJSON(geo, {
@@ -235,9 +241,6 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
             }).addTo(m);
             mapEl.style.cursor = 'pointer';
             mapEl.addEventListener('click', function () { rv2Router.setPane('map'); });
-            /* World view until the container is laid out; the ready callback
-               above fits the features then. */
-            m.setView([0, 0], 2);
             window._rv2OverviewMap = m;
             /* Reference layers, as the Layers panel shows them. They arrive
                asynchronously and the creator may reorder or dim them on the
