@@ -1,0 +1,155 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.56368,
+     55.66259
+    ]
+   },
+   "properties": {
+    "_key": "cykelslangen",
+    "_title": "Cykelslangen",
+    "_category": "Cycle and foot bridge"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.566667,
+     55.661528
+    ]
+   },
+   "properties": {
+    "_key": "bryggebroen",
+    "_title": "Bryggebroen",
+    "_category": "Cycle and foot bridge"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5949,
+     55.6785
+    ]
+   },
+   "properties": {
+    "_key": "inderhavnsbroen",
+    "_title": "Inderhavnsbroen",
+    "_category": "Cycle and foot bridge"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5838,
+     55.67243
+    ]
+   },
+   "properties": {
+    "_key": "cirkelbroen",
+    "_title": "Cirkelbroen",
+    "_category": "Cycle and foot bridge"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.57984,
+     55.67103
+    ]
+   },
+   "properties": {
+    "_key": "lille-langebro",
+    "_title": "Lille Langebro",
+    "_category": "Cycle and foot bridge"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5638,
+     55.6867
+    ]
+   },
+   "properties": {
+    "_key": "dronning-louises-bro",
+    "_title": "Dronning Louises Bro",
+    "_category": "Road bridge with cycle lanes"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.54519,
+     55.68625
+    ]
+   },
+   "properties": {
+    "_key": "abuen",
+    "_title": "Åbuen",
+    "_category": "Cycle and foot bridge"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.550278,
+     55.6475
+    ]
+   },
+   "properties": {
+    "_key": "teglvaerksbroen",
+    "_title": "Teglværksbroen",
+    "_category": "Road bridge with cycle lanes"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.587222,
+     55.674722
+    ]
+   },
+   "properties": {
+    "_key": "knippelsbro",
+    "_title": "Knippelsbro",
+    "_category": "Road bridge with cycle lanes"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5788,
+     55.67028
+    ]
+   },
+   "properties": {
+    "_key": "langebro",
+    "_title": "Langebro",
+    "_category": "Road bridge with cycle lanes"
+   }
+  }
+ ]
+}

@@ -740,7 +740,7 @@ def _clean_style_settings(value):
     if not isinstance(value, dict):
         return {}
     cleaned = {}
-    if value.get("rating_display_style") in ("scale_strip", "list_pips"):
+    if value.get("rating_display_style") in ("scale_strip", "list_pips", "stars"):
         cleaned["rating_display_style"] = value["rating_display_style"]
     accent = value.get("accent_color")
     if isinstance(accent, str) and re_module.fullmatch(r"#[0-9a-fA-F]{6}", accent):
@@ -889,7 +889,7 @@ def _create_question(
     display_style = question_data.get("display_style")
     allowed_styles = (
         ("default", "dropdown") if input_type == "choice"
-        else ("default", "scale_strip", "list_pips")
+        else ("default", "scale_strip", "list_pips", "stars")
     )
     if display_style not in allowed_styles:
         display_style = "default"
@@ -1212,6 +1212,10 @@ def resolve_question_layers(survey: SurveyHeader, code_remap: Dict[str, str]) ->
     warnings: List[str] = []
     for layer in survey.map_layers.defer(*GEOMETRY_TEXT_FIELDS).filter(source='question'):
         layer.source_question_code = code_remap.get(layer.source_question_code, layer.source_question_code)
+        # On a question layer `label_field` names a sub-question code, so it is
+        # remapped with the source; left alone, every mark would lose its title
+        # on an import into a database that already holds those codes.
+        layer.label_field = code_remap.get(layer.label_field, layer.label_field)
         if source_question_for(layer) is None:
             warnings.append(
                 f"Reference layer '{layer.name}' read answers to question "
@@ -1219,7 +1223,7 @@ def resolve_question_layers(survey: SurveyHeader, code_remap: Dict[str, str]) ->
                 "imported as an empty layer.")
             layer.source = 'upload'
             layer.source_question_code = ''
-        layer.save(update_fields=['source', 'source_question_code', 'updated_at'])
+        layer.save(update_fields=['source', 'source_question_code', 'label_field', 'updated_at'])
     return warnings
 
 

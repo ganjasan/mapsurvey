@@ -1,0 +1,689 @@
+{
+ "version": "1.0",
+ "exported_at": "2026-09-29T00:00:00Z",
+ "mode": "structure",
+ "survey": {
+  "name": "Cycling in Copenhagen: Mapsurvey demo",
+  "organization": null,
+  "redirect_url": "#",
+  "available_languages": [
+   "en"
+  ],
+  "thanks_html": {
+   "en": "<h2>Thanks! That was the respondent's side.</h2><p>Everything you answered is now on the creator's Responses map, ready to filter, clean and export to Excel, GeoPackage, Shapefile or GeoJSON. The results page is what the public sees.</p><p><a href=\"https://mapsurvey.org/accounts/register/\">Build your own survey</a> · <a href=\"https://cal.com/mapsurvey-artem/mapsurvey-call\">Book a 30-min call</a></p>"
+  },
+  "status": "published",
+  "has_password": false,
+  "version": 1,
+  "start_map_position": "POINT (12.5780 55.6735)",
+  "start_map_zoom": 13,
+  "use_geolocation": false,
+  "show_branding": true,
+  "style_settings": {
+   "rating_display_style": "stars"
+  },
+  "layers": [
+   {
+    "name": "Cycling bridges",
+    "color": "#0FA58E",
+    "style": {
+     "icon": "fa-bicycle",
+     "radius": 9,
+     "legend": true,
+     "by": {
+      "field": "_category",
+      "mode": "categories",
+      "classes": [
+       {
+        "value": "Cycle and foot bridge",
+        "color": "#0FA58E",
+        "icon": "fa-bicycle",
+        "label": "Cycle and foot bridge"
+       },
+       {
+        "value": "Road bridge with cycle lanes",
+        "color": "#1B2A4A",
+        "icon": "fa-car",
+        "label": "Road bridge with cycle lanes"
+       }
+      ],
+      "other": {
+       "color": "#8A94A8",
+       "label": "Other"
+      }
+     }
+    },
+    "label_field": "",
+    "key_field": "",
+    "show_popups": true,
+    "source": "upload",
+    "source_question_code": "",
+    "show_tallies": true,
+    "show_comments": true,
+    "approve_first": false
+   },
+   {
+    "name": "Unsafe spots",
+    "color": "#d62828",
+    "style": {
+     "icon": "fa-exclamation-triangle",
+     "radius": 8
+    },
+    "label_field": "CPHSPWHY",
+    "key_field": "",
+    "show_popups": true,
+    "source": "question",
+    "source_question_code": "CPHSPOT",
+    "show_tallies": true,
+    "show_comments": true,
+    "approve_first": false
+   }
+  ],
+  "sections": [
+   {
+    "name": "welcome",
+    "title": "Cycling in Copenhagen",
+    "subheading": "",
+    "code": "CPH1",
+    "is_head": true,
+    "layout": "map",
+    "next_label": "Start the tour",
+    "start_map_position": "POINT (12.5780 55.6735)",
+    "start_map_zoom": 13,
+    "use_geolocation": false,
+    "override_basemap": null,
+    "next_section_name": "adapt",
+    "prev_section_name": null,
+    "visibility_rule": null,
+    "translations": [],
+    "questions": [
+     {
+      "code": "CPHWELCOME",
+      "order_number": 1,
+      "name": "Welcome",
+      "subtext": "<p><strong>This is a Mapsurvey demo</strong>, not a survey run by the City of Copenhagen. It takes about three minutes.</p><p>Each step shows one thing Mapsurvey can do, and says which in its title:</p><ol><li>Questions that adapt to earlier answers</li><li>Your own data on the map: rate real cycling bridges</li><li>Mark a place, with a photo</li><li>Draw a route</li><li>See what other people marked, and react</li></ol><p>The map already holds <strong>sample answers</strong>, so you can see how shared results look.</p>",
+      "input_type": "html",
+      "choices": null,
+      "required": false,
+      "visibility_rule": null,
+      "color": "#000000",
+      "icon_class": null,
+      "display_style": "default",
+      "image": null,
+      "translations": [],
+      "layer": null,
+      "min_objects": 0,
+      "objects_search": "auto",
+      "panel_mode": "list",
+      "share_with_respondents": false,
+      "sub_questions": []
+     }
+    ]
+   },
+   {
+    "name": "adapt",
+    "title": "Step 1 · Questions that adapt",
+    "subheading": "<p>Ordinary questions, with one twist: your first answer decides what comes next.</p>",
+    "code": "CPH2",
+    "is_head": false,
+    "layout": "form",
+    "next_label": null,
+    "start_map_position": null,
+    "start_map_zoom": null,
+    "use_geolocation": false,
+    "override_basemap": null,
+    "next_section_name": "bridges",
+    "prev_section_name": "welcome",
+    "visibility_rule": null,
+    "translations": [],
+    "questions": [
+     {
+      "code": "CPHFREQ",
+      "order_number": 1,
+      "name": "How often do you cycle in Copenhagen?",
+      "subtext": "",
+      "input_type": "choice",
+      "choices": [
+       {
+        "code": 1,
+        "name": "Most days"
+       },
+       {
+        "code": 2,
+        "name": "Now and then"
+       },
+       {
+        "code": 3,
+        "name": "Rarely or never"
+       }
+      ],
+      "required": true,
+      "visibility_rule": null,
+      "color": "#000000",
+      "icon_class": null,
+      "display_style": "default",
+      "image": null,
+      "translations": [],
+      "layer": null,
+      "min_objects": 0,
+      "objects_search": "auto",
+      "panel_mode": "list",
+      "share_with_respondents": false,
+      "sub_questions": []
+     },
+     {
+      "code": "CPHUSE",
+      "order_number": 2,
+      "name": "What do you use your bike for?",
+      "subtext": "<p>Shown because you cycle.</p>",
+      "input_type": "multichoice",
+      "choices": [
+       {
+        "code": 1,
+        "name": "Commuting"
+       },
+       {
+        "code": 2,
+        "name": "School or university"
+       },
+       {
+        "code": 3,
+        "name": "Shopping and errands"
+       },
+       {
+        "code": 4,
+        "name": "Leisure"
+       },
+       {
+        "code": 5,
+        "name": "Carrying kids or cargo"
+       }
+      ],
+      "required": false,
+      "visibility_rule": {
+       "question_code": "CPHFREQ",
+       "choice_codes": [
+        1,
+        2
+       ]
+      },
+      "color": "#000000",
+      "icon_class": null,
+      "display_style": "default",
+      "image": null,
+      "translations": [],
+      "layer": null,
+      "min_objects": 0,
+      "objects_search": "auto",
+      "panel_mode": "list",
+      "share_with_respondents": false,
+      "sub_questions": []
+     },
+     {
+      "code": "CPHBARR",
+      "order_number": 3,
+      "name": "What keeps you off the bike?",
+      "subtext": "<p>Shown because you rarely cycle.</p>",
+      "input_type": "multichoice",
+      "choices": [
+       {
+        "code": 1,
+        "name": "Traffic feels unsafe"
+       },
+       {
+        "code": 2,
+        "name": "Weather"
+       },
+       {
+        "code": 3,
+        "name": "Distances are too long"
+       },
+       {
+        "code": 4,
+        "name": "Nowhere safe to park"
+       },
+       {
+        "code": 5,
+        "name": "Something else"
+       }
+      ],
+      "required": false,
+      "visibility_rule": {
+       "question_code": "CPHFREQ",
+       "choice_codes": [
+        3
+       ]
+      },
+      "color": "#000000",
+      "icon_class": null,
+      "display_style": "default",
+      "image": null,
+      "translations": [],
+      "layer": null,
+      "min_objects": 0,
+      "objects_search": "auto",
+      "panel_mode": "list",
+      "share_with_respondents": false,
+      "sub_questions": []
+     },
+     {
+      "code": "CPHSAFE",
+      "order_number": 4,
+      "name": "How safe do you feel cycling in the city centre?",
+      "subtext": "",
+      "input_type": "rating",
+      "choices": [
+       {
+        "code": 1,
+        "name": "1"
+       },
+       {
+        "code": 2,
+        "name": "2"
+       },
+       {
+        "code": 3,
+        "name": "3"
+       },
+       {
+        "code": 4,
+        "name": "4"
+       },
+       {
+        "code": 5,
+        "name": "5"
+       }
+      ],
+      "required": false,
+      "visibility_rule": null,
+      "color": "#000000",
+      "icon_class": null,
+      "display_style": "stars",
+      "image": null,
+      "translations": [],
+      "layer": null,
+      "min_objects": 0,
+      "objects_search": "auto",
+      "panel_mode": "list",
+      "share_with_respondents": false,
+      "sub_questions": []
+     }
+    ]
+   },
+   {
+    "name": "bridges",
+    "title": "Step 2 · Your own data on the map",
+    "subheading": "<p>Ten cycling bridges from OpenStreetMap, uploaded as a layer with photos. Open a bridge to see its card, then tell us what you think.</p>",
+    "code": "CPH3",
+    "is_head": false,
+    "layout": "map",
+    "next_label": null,
+    "start_map_position": "POINT (12.5780 55.6735)",
+    "start_map_zoom": 13,
+    "use_geolocation": false,
+    "override_basemap": null,
+    "next_section_name": "spot",
+    "prev_section_name": "adapt",
+    "visibility_rule": null,
+    "translations": [],
+    "questions": [
+     {
+      "code": "CPHBRIDGE",
+      "order_number": 1,
+      "name": "Rate the bridges you have crossed",
+      "subtext": "",
+      "input_type": "layer_objects",
+      "choices": null,
+      "required": false,
+      "visibility_rule": null,
+      "color": "#000000",
+      "icon_class": null,
+      "display_style": "default",
+      "image": null,
+      "translations": [],
+      "layer": 0,
+      "min_objects": 0,
+      "objects_search": "off",
+      "panel_mode": "list",
+      "share_with_respondents": false,
+      "sub_questions": [
+       {
+        "code": "CPHBRTHUMB",
+        "order_number": 1,
+        "name": "Is this bridge good to cycle across?",
+        "subtext": "",
+        "input_type": "thumbs",
+        "choices": null,
+        "required": false,
+        "visibility_rule": null,
+        "color": "#000000",
+        "icon_class": null,
+        "display_style": "default",
+        "image": null,
+        "translations": [],
+        "layer": null,
+        "min_objects": 0,
+        "objects_search": "auto",
+        "panel_mode": "list",
+        "share_with_respondents": true,
+        "sub_questions": []
+       },
+       {
+        "code": "CPHBRNOTE",
+        "order_number": 2,
+        "name": "What would make it better?",
+        "subtext": "",
+        "input_type": "text_line",
+        "choices": null,
+        "required": false,
+        "visibility_rule": null,
+        "color": "#000000",
+        "icon_class": null,
+        "display_style": "default",
+        "image": null,
+        "translations": [],
+        "layer": null,
+        "min_objects": 0,
+        "objects_search": "auto",
+        "panel_mode": "list",
+        "share_with_respondents": true,
+        "sub_questions": []
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "spot",
+    "title": "Step 3 · Mark a place",
+    "subheading": "<p>Put a pin where cycling feels unsafe. Say what is wrong and, if you like, add a photo.</p>",
+    "code": "CPH4",
+    "is_head": false,
+    "layout": "map",
+    "next_label": null,
+    "start_map_position": "POINT (12.5780 55.6735)",
+    "start_map_zoom": 14,
+    "use_geolocation": false,
+    "override_basemap": null,
+    "next_section_name": "route",
+    "prev_section_name": "bridges",
+    "visibility_rule": null,
+    "translations": [],
+    "questions": [
+     {
+      "code": "CPHSPOT",
+      "order_number": 1,
+      "name": "Mark a spot where cycling feels unsafe",
+      "subtext": "",
+      "input_type": "point",
+      "choices": null,
+      "required": false,
+      "visibility_rule": null,
+      "color": "#d62828",
+      "icon_class": "fas fa-exclamation-triangle",
+      "display_style": "default",
+      "image": null,
+      "translations": [],
+      "layer": null,
+      "min_objects": 0,
+      "objects_search": "auto",
+      "panel_mode": "list",
+      "share_with_respondents": false,
+      "sub_questions": [
+       {
+        "code": "CPHSPWHY",
+        "order_number": 1,
+        "name": "What is the problem?",
+        "subtext": "",
+        "input_type": "choice",
+        "choices": [
+         {
+          "code": 1,
+          "name": "Cars too close or too fast"
+         },
+         {
+          "code": 2,
+          "name": "Blind corner"
+         },
+         {
+          "code": 3,
+          "name": "Too crowded with bikes"
+         },
+         {
+          "code": 4,
+          "name": "Poor surface"
+         },
+         {
+          "code": 5,
+          "name": "Confusing layout"
+         }
+        ],
+        "required": false,
+        "visibility_rule": null,
+        "color": "#000000",
+        "icon_class": null,
+        "display_style": "default",
+        "image": null,
+        "translations": [],
+        "layer": null,
+        "min_objects": 0,
+        "objects_search": "auto",
+        "panel_mode": "list",
+        "share_with_respondents": false,
+        "sub_questions": []
+       },
+       {
+        "code": "CPHSPPHOTO",
+        "order_number": 2,
+        "name": "Add a photo (optional)",
+        "subtext": "",
+        "input_type": "photo",
+        "choices": null,
+        "required": false,
+        "visibility_rule": null,
+        "color": "#000000",
+        "icon_class": null,
+        "display_style": "default",
+        "image": null,
+        "translations": [],
+        "layer": null,
+        "min_objects": 0,
+        "objects_search": "auto",
+        "panel_mode": "list",
+        "share_with_respondents": false,
+        "sub_questions": []
+       },
+       {
+        "code": "CPHSPNOTE",
+        "order_number": 3,
+        "name": "Anything else?",
+        "subtext": "",
+        "input_type": "text",
+        "choices": null,
+        "required": false,
+        "visibility_rule": null,
+        "color": "#000000",
+        "icon_class": null,
+        "display_style": "default",
+        "image": null,
+        "translations": [],
+        "layer": null,
+        "min_objects": 0,
+        "objects_search": "auto",
+        "panel_mode": "list",
+        "share_with_respondents": false,
+        "sub_questions": []
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "route",
+    "title": "Step 4 · Draw a line",
+    "subheading": "<p>Draw the route you ride most often, from start to finish.</p>",
+    "code": "CPH5",
+    "is_head": false,
+    "layout": "map",
+    "next_label": null,
+    "start_map_position": "POINT (12.5780 55.6735)",
+    "start_map_zoom": 13,
+    "use_geolocation": false,
+    "override_basemap": null,
+    "next_section_name": "others",
+    "prev_section_name": "spot",
+    "visibility_rule": null,
+    "translations": [],
+    "questions": [
+     {
+      "code": "CPHROUTE",
+      "order_number": 1,
+      "name": "Draw the route you ride most often",
+      "subtext": "",
+      "input_type": "line",
+      "choices": null,
+      "required": false,
+      "visibility_rule": null,
+      "color": "#2c7be5",
+      "icon_class": null,
+      "display_style": "default",
+      "image": null,
+      "translations": [],
+      "layer": null,
+      "min_objects": 0,
+      "objects_search": "auto",
+      "panel_mode": "list",
+      "share_with_respondents": false,
+      "sub_questions": [
+       {
+        "code": "CPHRTRATE",
+        "order_number": 1,
+        "name": "How pleasant is this route?",
+        "subtext": "",
+        "input_type": "rating",
+        "choices": [
+         {
+          "code": 1,
+          "name": "1"
+         },
+         {
+          "code": 2,
+          "name": "2"
+         },
+         {
+          "code": 3,
+          "name": "3"
+         },
+         {
+          "code": 4,
+          "name": "4"
+         },
+         {
+          "code": 5,
+          "name": "5"
+         }
+        ],
+        "required": false,
+        "visibility_rule": null,
+        "color": "#000000",
+        "icon_class": null,
+        "display_style": "stars",
+        "image": null,
+        "translations": [],
+        "layer": null,
+        "min_objects": 0,
+        "objects_search": "auto",
+        "panel_mode": "list",
+        "share_with_respondents": false,
+        "sub_questions": []
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "others",
+    "title": "Step 5 · See what others marked",
+    "subheading": "<p>These are the unsafe spots other people marked in step 3. Open one and say whether you agree. Your own pin joins them for the next visitor.</p>",
+    "code": "CPH6",
+    "is_head": false,
+    "layout": "map",
+    "next_label": null,
+    "start_map_position": "POINT (12.5780 55.6735)",
+    "start_map_zoom": 14,
+    "use_geolocation": false,
+    "override_basemap": null,
+    "next_section_name": null,
+    "prev_section_name": "route",
+    "visibility_rule": null,
+    "translations": [],
+    "questions": [
+     {
+      "code": "CPHOTHERS",
+      "order_number": 1,
+      "name": "Unsafe spots marked by others",
+      "subtext": "",
+      "input_type": "layer_objects",
+      "choices": null,
+      "required": false,
+      "visibility_rule": null,
+      "color": "#000000",
+      "icon_class": null,
+      "display_style": "default",
+      "image": null,
+      "translations": [],
+      "layer": 1,
+      "min_objects": 0,
+      "objects_search": "off",
+      "panel_mode": "list",
+      "share_with_respondents": false,
+      "sub_questions": [
+       {
+        "code": "CPHOTTHUMB",
+        "order_number": 1,
+        "name": "Do you agree this spot is unsafe?",
+        "subtext": "",
+        "input_type": "thumbs",
+        "choices": null,
+        "required": false,
+        "visibility_rule": null,
+        "color": "#000000",
+        "icon_class": null,
+        "display_style": "default",
+        "image": null,
+        "translations": [],
+        "layer": null,
+        "min_objects": 0,
+        "objects_search": "auto",
+        "panel_mode": "list",
+        "share_with_respondents": true,
+        "sub_questions": []
+       },
+       {
+        "code": "CPHOTNOTE",
+        "order_number": 2,
+        "name": "Add a comment",
+        "subtext": "",
+        "input_type": "text_line",
+        "choices": null,
+        "required": false,
+        "visibility_rule": null,
+        "color": "#000000",
+        "icon_class": null,
+        "display_style": "default",
+        "image": null,
+        "translations": [],
+        "layer": null,
+        "min_objects": 0,
+        "objects_search": "auto",
+        "panel_mode": "list",
+        "share_with_respondents": true,
+        "sub_questions": []
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}
