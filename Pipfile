@@ -32,6 +32,8 @@ anthropic = "*"
 # broken Django exception capture (posthog-python #286/#329). Read the design note in
 # openspec/changes/posthog-error-tracking/design.md before changing this in either direction.
 posthog = "~=6.9"
+# Excel export (survey/export.py), write-only mode.
+openpyxl = "*"
 
 [requires]
 python_version = "3.9"

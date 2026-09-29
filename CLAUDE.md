@@ -257,9 +257,24 @@ place (`edited_at`, no re-notification). Response anchors are labelled with the 
 
 **Session Management**: Survey sessions are created on first section view and tracked via `request.session['survey_session_id']`.
 
-**Data Export** (`download_data` view): Exports survey responses as ZIP containing:
-- GeoJSON files for each geo-question (point/line/polygon)
-- CSV file for non-geographic data
+**Data export (`survey/export.py`, spec `responses-export-formats`)**: `download_data` is a thin
+view; the work is one collector and several writers. `collect()` walks the database ONCE into an
+`ExportBundle` (per geo question a FeatureCollection plus the GEOS geometry and session of every
+feature; per-session rows; object-answer records; file answers), and every format is a writer over
+that bundle, so the flat table, the workbook and the GIS files can never disagree with the GeoJSON.
+URL contract: `?format=zip|xlsx|csv|gpkg|shp|kml` (no `format` = the legacy GeoJSON+CSV archive,
+byte-for-byte, for old links and scripts), `version`, `include_all=1`, `completed_only=1` (the
+Responses overview's definition through `analytics.completed_session_filter`, never a second one),
+`files=1` (uploads; turns a single-file format into a ZIP). The **observations** table is one row
+per placed feature with `lat`/`lon` (centroid for lines/polygons), `wkt`, and sub-question columns
+merged BY NAME across questions (`question` disambiguates) — the shape a clerk without a GIS asked
+for. Excel is written in `openpyxl` write-only mode to a temp file and streamed with `FileResponse`;
+GeoPackage/Shapefile/KML come from ONE `ogr2ogr` call over an OGR VRT listing every layer
+(`gdal-bin` is in the image for GeoDjango; `OGR_AVAILABLE` hides those formats on a host without it).
+The dialog is `editor/partials/_export_modal.html` + `js/export_dialog.js`, included once per page
+and fed by the opener button's `data-*` (survey, version list, has-files); it builds a GET URL, so an
+export is always a copyable link. Naming: the data download is "Export data" everywhere, the
+survey.json backup group is "Backup (survey file)" — creators confused the two.
 
 **ZIP import is a job (`SurveyImportJob`, `survey/tasks.py::run_survey_import`)**: the
 `import_survey` view stores the archive on the private media tier under a random

@@ -1,29 +1,26 @@
 {% load i18n %}
 {% comment %}
 Overflow "..." menu for survey cards/rows on dashboard.
-Requires: survey, org_role
+Requires: survey (with prefetched_archived_versions and has_files), org_role.
+"Export data" opens the shared #exportModal (editor/partials/_export_modal.html);
+the version list rides on the opener so one modal serves every card.
 {% endcomment %}
+{% trans "All versions" as t_all_versions %}
+{% trans "Current" as t_current %}
 <div class="more-menu dropdown d-inline">
     <button class="dropdown-toggle" data-toggle="dropdown" style="border:none;background:none;color:#9ca3af;cursor:pointer;padding:0.25rem 0.4rem;border-radius:4px;font-size:0.85rem;" title="{% trans 'More actions' %}">
         <i class="fas fa-ellipsis-h"></i>
     </button>
     <div class="dropdown-menu dropdown-menu-right">
-        {% if survey.prefetched_archived_versions %}
-        <span class="dropdown-item" style="font-weight:600;font-size:0.85rem;pointer-events:none;">{% trans "Download Clean Data" %}</span>
-        <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download?version=all">{% trans "All Versions" %}</a>
-        <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download?version=latest">{% trans "Current" %} (v{{ survey.version_number }})</a>
-        {% for archived in survey.prefetched_archived_versions %}
-        <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download?version=v{{ archived.version_number }}">v{{ archived.version_number }}</a>
-        {% endfor %}
-        <span class="dropdown-item" style="font-weight:600;font-size:0.85rem;pointer-events:none;">{% trans "Download All (incl. excluded)" %}</span>
-        <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download?version=all&include_all=1"><small class="text-muted">{% trans "All Versions" %}</small></a>
-        <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download?version=latest&include_all=1"><small class="text-muted">{% trans "Current" %} (v{{ survey.version_number }})</small></a>
-        {% else %}
-        <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download"><i class="fas fa-download fa-fw mr-1"></i>{% trans "Download Data" %}</a>
-        <a class="dropdown-item" href="/surveys/{{ survey.uuid }}/download?include_all=1"><small class="text-muted"><i class="fas fa-download fa-fw mr-1"></i>{% trans "All (incl. excluded)" %}</small></a>
-        {% endif %}
+        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#exportModal"
+           data-survey-uuid="{{ survey.uuid }}" data-survey-name="{{ survey.name }}"
+           data-version="all" data-has-files="{% if survey.has_files %}1{% else %}0{% endif %}"
+           data-versions='{% if survey.prefetched_archived_versions %}[{"value":"all","label":"{{ t_all_versions|escapejs }}"},{"value":"latest","label":"{{ t_current|escapejs }} (v{{ survey.version_number }})"}{% for archived in survey.prefetched_archived_versions %},{"value":"v{{ archived.version_number }}","label":"v{{ archived.version_number }}"}{% endfor %}]{% else %}[]{% endif %}'>
+            <i class="fas fa-file-export fa-fw mr-1"></i>{% trans "Export data" %}
+        </a>
         <div class="dropdown-divider"></div>
-        <span class="dropdown-item" style="font-weight:600;font-size:0.85rem;pointer-events:none;">{% trans "Export" %}</span>
+        <span class="dropdown-item" style="font-weight:600;font-size:0.85rem;pointer-events:none;">{% trans "Backup (survey file)" %}</span>
+        <small class="text-muted d-block" style="padding:0 1.5rem 0.25rem;font-size:0.72rem;line-height:1.3;">{% trans "For import into Mapsurvey, not for analysis" %}</small>
         <a class="dropdown-item" href="{% url 'export_survey' survey.uuid %}?mode=structure">{% trans "Structure Only" %}</a>
         <a class="dropdown-item" href="{% url 'export_survey' survey.uuid %}?mode=data">{% trans "Data Only" %}</a>
         <a class="dropdown-item" href="{% url 'export_survey' survey.uuid %}?mode=full">{% trans "Full Backup" %}</a>

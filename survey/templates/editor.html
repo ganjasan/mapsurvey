@@ -5,6 +5,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+<script src="{% static 'js/export_dialog.js' %}"></script>
 <style>
     :root {
         --accent: #4f46e5;
@@ -554,6 +555,8 @@
         </div>
     </div>
 </div>
+
+{% include "editor/partials/_export_modal.html" %}
 
 <!-- Import Modal -->
 <div class="modal fade" id="importModal" tabindex="-1">

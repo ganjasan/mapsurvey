@@ -12,6 +12,8 @@ import json
 import re
 import uuid
 import zipfile
+import unittest
+from . import export as _export
 
 from .models import (
     Organization, SurveyHeader, SurveySection, Question,
@@ -9587,7 +9589,8 @@ class DashboardVersioningTest(TestCase):
 
 
 class DashboardVersionDownloadUITest(TestCase):
-    """Tests for version-aware download dropdown in the editor dashboard."""
+    """The survey card menu opens the export dialog with the version list on the opener
+    (spec version-export-ui, modified by responses-export-formats)."""
 
     def setUp(self):
         self.org = _make_org('DlUIOrg')
@@ -9595,11 +9598,11 @@ class DashboardVersionDownloadUITest(TestCase):
         Membership.objects.create(user=self.user, organization=self.org, role='owner')
         self.client.login(username='dluiuser', password='pass')
 
-    def test_single_version_shows_plain_download_link(self):
+    def test_single_version_opener_has_no_version_list(self):
         """
         GIVEN a survey with version_number=1 and no archived versions
         WHEN the dashboard is loaded
-        THEN a plain "Download Data" link is shown (no dropdown)
+        THEN the card's "Export data" opener carries an empty version list and no direct download link
         """
         survey = SurveyHeader.objects.create(
             name='single_v', organization=self.org, status='published',
@@ -9607,14 +9610,17 @@ class DashboardVersionDownloadUITest(TestCase):
         )
         response = self.client.get('/editor/')
         content = response.content.decode()
-        self.assertIn(f'/surveys/{survey.uuid}/download', content)
-        self.assertNotIn('?version=all', content)
+        self.assertIn(f'data-survey-uuid="{survey.uuid}"', content)
+        self.assertIn("data-versions='[]'", content)
+        self.assertNotIn(f'/surveys/{survey.uuid}/download', content)
+        self.assertIn('Export data', content)
+        self.assertIn('id="exportModal"', content)
 
-    def test_multi_version_shows_download_dropdown(self):
+    def test_multi_version_opener_lists_versions(self):
         """
         GIVEN a survey with version_number=3 and two archived versions
         WHEN the dashboard is loaded
-        THEN a dropdown is shown with "All Versions", "Current (v3)", "v2", and "v1"
+        THEN the opener's version list holds "All versions", "Current (v3)", "v2" and "v1", in that order
         """
         canonical = SurveyHeader.objects.create(
             name='multi_v', organization=self.org, status='published',
@@ -9630,11 +9636,13 @@ class DashboardVersionDownloadUITest(TestCase):
         )
         response = self.client.get('/editor/')
         content = response.content.decode()
-        self.assertIn('?version=all', content)
-        self.assertIn('?version=latest', content)
-        self.assertIn('Current (v3)', content)
-        self.assertIn('?version=v2', content)
-        self.assertIn('?version=v1', content)
+        m = re.search(r"data-versions='(\[.*?\])'", content)
+        self.assertIsNotNone(m, content[:500])
+        versions = json.loads(m.group(1))
+        self.assertEqual([v['value'] for v in versions], ['all', 'latest', 'v2', 'v1'])
+        self.assertEqual(versions[1]['label'], 'Current (v3)')
+        self.assertIn('Backup (survey file)', content)
+        self.assertIn('?mode=full', content)
 
     def test_prefetched_versions_avoid_n_plus_one(self):
         """
@@ -9656,6 +9664,20 @@ class DashboardVersionDownloadUITest(TestCase):
         surveys = response.context['survey_headers']
         for s in surveys:
             self.assertTrue(hasattr(s, 'prefetched_archived_versions'))
+
+    def test_card_opener_knows_about_file_questions(self):
+        """
+        GIVEN one survey with a photo question and one without
+        WHEN the dashboard is loaded
+        THEN the first card's opener says data-has-files="1" and the second "0"
+        """
+        with_files = SurveyHeader.objects.create(name='with_files', organization=self.org, status='published')
+        sec = SurveySection.objects.create(survey_header=with_files, name='s', code='S1', is_head=True)
+        Question.objects.create(survey_section=sec, name='Photo', code='PH', input_type='photo')
+        without = SurveyHeader.objects.create(name='without_files', organization=self.org, status='published')
+        content = self.client.get('/editor/').content.decode()
+        self.assertRegex(content, rf'data-survey-uuid="{with_files.uuid}"[^>]*data-has-files="1"')
+        self.assertRegex(content, rf'data-survey-uuid="{without.uuid}"[^>]*data-has-files="0"')
 
 
 class VersionedDownloadTest(TestCase):
@@ -10037,13 +10059,14 @@ class VersionFilterParityTest(TestCase):
         """
         GIVEN the analytics dashboard filtered to one version
         WHEN the page is rendered
-        THEN its Download link exports that same version
+        THEN its Export data opener preselects that same version in the export dialog
         """
         url = f'/editor/surveys/{self.survey.uuid}/analytics/?version=v1'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response, f'/surveys/{self.survey.uuid}/download?version=v1',
+        self.assertRegex(
+            response.content.decode(),
+            rf'data-survey-uuid="{self.survey.uuid}"[^>]*data-version="v1"',
         )
 
 
@@ -28751,6 +28774,9 @@ class TranslationCatalogHygieneTest(SimpleTestCase):
         # The real fix is one string in the templates; until then a shared
         # translation is correct rather than a symptom.
         frozenset({'Try Demo Survey', 'Try the Demo Survey'}),
+        # A marketing table heading and the Responses export button: the same
+        # noun phrase in either order, one translation in most languages.
+        frozenset({'Data export', 'Export data'}),
     }
 
     @staticmethod
@@ -44507,3 +44533,641 @@ class HtmxPromiseGuardTest(SimpleTestCase):
             'htmx.ajax(...).then(...) without a rejection handler — the derived '
             'promise rejects unhandled (value: undefined): ' + ', '.join(offenders),
         )
+
+
+# ---------------------------------------------------------------------------
+# Export formats (spec responses-export-formats)
+# ---------------------------------------------------------------------------
+
+class ExportFormatsTest(TestCase):
+    """The format catalogue of /download, the flat observations table, Excel, CSV."""
+
+    def setUp(self):
+        self.org = _make_org('FormatsOrg')
+        self.user = User.objects.create_user('fmtowner', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='squirrel_count', organization=self.org, created_by=self.user, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='Count', code='S1', is_head=True,
+        )
+        self.q_weather = Question.objects.create(
+            survey_section=self.section, name='Weather', code='WX', input_type='choice', order_number=1,
+            choices=[{'code': 'sun', 'name': 'Sunny'}, {'code': 'rain', 'name': 'Rainy'}],
+        )
+        self.q_white = Question.objects.create(
+            survey_section=self.section, name='White squirrel', code='WS', input_type='point', order_number=2,
+        )
+        self.q_white_qty = Question.objects.create(
+            survey_section=self.section, name='Quantity', code='WS_Q', input_type='number',
+            parent_question_id=self.q_white, order_number=1,
+        )
+        self.q_white_note = Question.objects.create(
+            survey_section=self.section, name='Note', code='WS_N', input_type='text',
+            parent_question_id=self.q_white, order_number=2,
+        )
+        self.q_fox = Question.objects.create(
+            survey_section=self.section, name='Fox squirrel', code='FS', input_type='point', order_number=3,
+        )
+        self.q_fox_qty = Question.objects.create(
+            survey_section=self.section, name='Quantity', code='FS_Q', input_type='number',
+            parent_question_id=self.q_fox, order_number=1,
+        )
+        self.q_zone = Question.objects.create(
+            survey_section=self.section, name='Zone', code='ZN', input_type='polygon', order_number=4,
+        )
+        self.client.login(username='fmtowner', password='pass')
+
+    # -- fixtures -----------------------------------------------------------
+
+    def _session(self, **kwargs):
+        kwargs.setdefault('start_datetime', timezone.make_aware(
+            timezone.datetime(2026, 9, 22, 18, 59, 30), timezone.utc))
+        return SurveySession.objects.create(survey=self.survey, **kwargs)
+
+    def _observe(self, session, question, point, quantity=None, note=None):
+        parent = Answer.objects.create(survey_session=session, question=question, point=point)
+        subs = {q.code: q for q in question.subQuestions()}
+        if quantity is not None:
+            Answer.objects.create(survey_session=session, question=subs[question.code + '_Q'],
+                                  parent_answer_id=parent, numeric=quantity)
+        if note is not None:
+            Answer.objects.create(survey_session=session, question=subs['WS_N'],
+                                  parent_answer_id=parent, text=note)
+        return parent
+
+    def _download(self, **params):
+        from urllib.parse import urlencode
+        url = f'/surveys/{self.survey.uuid}/download'
+        if params:
+            url += '?' + urlencode(params)
+        return self.client.get(url)
+
+    @staticmethod
+    def _body(response):
+        if hasattr(response, 'streaming_content'):
+            return b''.join(response.streaming_content)
+        return response.content
+
+    def _workbook(self, response):
+        import openpyxl
+        self.assertEqual(response.status_code, 200, getattr(response, 'content', b'')[:200])
+        return openpyxl.load_workbook(BytesIO(self._body(response)))
+
+    @staticmethod
+    def _rows(ws):
+        rows = list(ws.iter_rows(values_only=True))
+        header = list(rows[0])
+        return header, [dict(zip(header, r)) for r in rows[1:]]
+
+    # -- URL contract -------------------------------------------------------
+
+    def test_legacy_link_unchanged(self):
+        """
+        GIVEN a session with a point and a choice answer
+        WHEN the download is requested with no format parameter
+        THEN the response is the GeoJSON+CSV archive: one .geojson per geo question, a BOM-less
+             per-session CSV, and nothing else
+        """
+        s = self._session()
+        Answer.objects.create(survey_session=s, question=self.q_weather, selected_choices=['sun'])
+        self._observe(s, self.q_white, Point(-88.0936, 38.7265), quantity=2)
+        response = self._download()
+        self.assertEqual(response['Content-Type'], 'application/zip')
+        archive = zipfile.ZipFile(BytesIO(response.content))
+        names = sorted(archive.namelist())
+        self.assertEqual(names, ['Fox squirrel.geojson', 'White squirrel.geojson', 'Zone.geojson',
+                                 'squirrel_count.csv'])
+        csv_bytes = archive.read('squirrel_count.csv')
+        self.assertFalse(csv_bytes.startswith('﻿'.encode('utf-8')))
+        self.assertIn(b'Sunny', csv_bytes)
+
+    def test_unknown_format_is_400_without_event(self):
+        """
+        GIVEN a signed-in owner
+        WHEN the download names an unknown format
+        THEN the response is 400 and no data_exported event is emitted
+        """
+        with patch('survey.views.pe.emit') as emit:
+            response = self._download(format='pdf')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual([c for c in emit.call_args_list if c.args[0] == 'data_exported'], [])
+
+    def test_gis_format_without_ogr_is_400(self):
+        """
+        GIVEN a host without ogr2ogr
+        WHEN a GIS format is requested
+        THEN the response is 400
+        """
+        with patch('survey.export.OGR_AVAILABLE', False):
+            response = self._download(format='gpkg')
+        self.assertEqual(response.status_code, 400)
+
+    def test_viewer_role_required_for_every_format(self):
+        """
+        GIVEN a signed-in user without a role on the survey
+        WHEN they request the Excel export
+        THEN the response is 404, exactly as for the legacy archive
+        """
+        User.objects.create_user('stranger', password='pass')
+        self.client.login(username='stranger', password='pass')
+        self.assertEqual(self._download(format='xlsx').status_code, 404)
+
+    def test_data_exported_carries_the_chosen_format(self):
+        """
+        GIVEN a signed-in owner
+        WHEN they download the Excel export
+        THEN one data_exported event with format xlsx is emitted
+        """
+        with patch('survey.views.pe.emit') as emit:
+            response = self._download(format='xlsx')
+        self.assertEqual(response.status_code, 200)
+        calls = [c for c in emit.call_args_list if c.args[0] == 'data_exported']
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0].args[2]['format'], 'xlsx')
+
+    # -- Excel --------------------------------------------------------------
+
+    def test_workbook_shape(self):
+        """
+        GIVEN a survey with geo and choice questions and no Objects-on-the-map question
+        WHEN it is exported as xlsx
+        THEN the workbook has sheets observations, responses, sessions in that order and no objects sheet
+        """
+        self._session()
+        wb = self._workbook(self._download(format='xlsx'))
+        self.assertEqual(wb.sheetnames, ['observations', 'responses', 'sessions'])
+        self.assertEqual(self._download(format='xlsx')['Content-Disposition'],
+                         'attachment; filename="squirrel_count.xlsx"')
+
+    def test_types_survive_the_round_trip(self):
+        """
+        GIVEN a session started 2026-09-22 18:59 UTC that placed a point with Quantity 3
+        WHEN the observations sheet is read back
+        THEN session_start_utc is a datetime, Quantity is 3 as a number and lat is a float
+        """
+        s = self._session()
+        self._observe(s, self.q_white, Point(-88.0936, 38.7265), quantity=3)
+        wb = self._workbook(self._download(format='xlsx'))
+        header, rows = self._rows(wb['observations'])
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
+        from datetime import datetime as _dt
+        self.assertIsInstance(row['session_start_utc'], _dt)
+        self.assertEqual(row['session_start_utc'].strftime('%Y-%m-%d %H:%M'), '2026-09-22 18:59')
+        self.assertEqual(row['Quantity'], 3)
+        self.assertIsInstance(row['lat'], float)
+        self.assertAlmostEqual(row['lat'], 38.7265)
+        self.assertAlmostEqual(row['lon'], -88.0936)
+        self.assertEqual(wb['observations'].freeze_panes, 'A2')
+        self.assertTrue(wb['observations']['A1'].font.bold)
+
+    def test_shared_subquestion_name_is_one_column(self):
+        """
+        GIVEN point questions "White squirrel" and "Fox squirrel", each with a number sub-question
+              named "Quantity", and one session placing one point on each with quantities 2 and 1
+        WHEN the observations sheet is read
+        THEN there are two rows, one Quantity column, question disambiguates, lat/lon are each point's
+        """
+        s = self._session()
+        self._observe(s, self.q_white, Point(-88.0936, 38.7265), quantity=2, note='by the feeder')
+        self._observe(s, self.q_fox, Point(-88.0940, 38.7262), quantity=1)
+        wb = self._workbook(self._download(format='xlsx'))
+        header, rows = self._rows(wb['observations'])
+        self.assertEqual(header.count('Quantity'), 1)
+        self.assertEqual(header[:12], list(_export.OBSERVATION_FIXED_COLUMNS))
+        self.assertEqual(header[12:], ['Quantity', 'Note'])
+        by_q = {r['question']: r for r in rows}
+        self.assertEqual(set(by_q), {'White squirrel', 'Fox squirrel'})
+        self.assertEqual(by_q['White squirrel']['Quantity'], 2)
+        self.assertEqual(by_q['White squirrel']['Note'], 'by the feeder')
+        self.assertEqual(by_q['Fox squirrel']['Quantity'], 1)
+        self.assertIsNone(by_q['Fox squirrel']['Note'])
+        self.assertAlmostEqual(by_q['Fox squirrel']['lon'], -88.0940)
+        self.assertEqual(by_q['White squirrel']['question_code'], 'WS')
+        self.assertEqual(by_q['White squirrel']['section'], 'Count')
+        self.assertEqual(by_q['White squirrel']['version'], self.survey.version_number)
+        self.assertEqual(by_q['White squirrel']['geometry_type'], 'Point')
+        self.assertTrue(by_q['White squirrel']['wkt'].startswith('POINT ('))
+
+    def test_polygon_row_has_centroid_and_wkt(self):
+        """
+        GIVEN a respondent drew a polygon
+        WHEN the observations sheet is read
+        THEN geometry_type is Polygon, lat/lon are the centroid and wkt starts with POLYGON ((
+        """
+        s = self._session()
+        square = Polygon(((0, 0), (0, 2), (2, 2), (2, 0), (0, 0)))
+        Answer.objects.create(survey_session=s, question=self.q_zone, polygon=square)
+        wb = self._workbook(self._download(format='xlsx'))
+        _, rows = self._rows(wb['observations'])
+        self.assertEqual(rows[0]['geometry_type'], 'Polygon')
+        self.assertAlmostEqual(rows[0]['lat'], 1.0)
+        self.assertAlmostEqual(rows[0]['lon'], 1.0)
+        self.assertTrue(rows[0]['wkt'].startswith('POLYGON (('))
+
+    def test_blank_subquestion_stays_blank(self):
+        """
+        GIVEN a point whose Quantity sub-question has no answer row and whose Note is answered
+        WHEN the observations sheet is read
+        THEN the Quantity cell is empty and Note holds its own value
+        """
+        s = self._session()
+        self._observe(s, self.q_white, Point(1, 1), note='only a note')
+        wb = self._workbook(self._download(format='xlsx'))
+        _, rows = self._rows(wb['observations'])
+        self.assertIsNone(rows[0]['Quantity'])
+        self.assertEqual(rows[0]['Note'], 'only a note')
+
+    def test_excluded_sessions_absent_from_observations(self):
+        """
+        GIVEN a clean session, a trashed one and a not_approved one, each with a point
+        WHEN the export runs without include_all
+        THEN only the clean session's feature is in observations and sessions
+        """
+        good = self._session()
+        self._observe(good, self.q_white, Point(1, 1), quantity=1)
+        self._observe(self._session(is_deleted=True), self.q_white, Point(2, 2), quantity=1)
+        self._observe(self._session(validation_status='not_approved'), self.q_white, Point(3, 3), quantity=1)
+        wb = self._workbook(self._download(format='xlsx'))
+        _, obs = self._rows(wb['observations'])
+        _, sessions = self._rows(wb['sessions'])
+        self.assertEqual([r['session_id'] for r in obs], [good.id])
+        self.assertEqual([r['session_id'] for r in sessions], [good.id])
+        wb_all = self._workbook(self._download(format='xlsx', include_all=1))
+        self.assertEqual(len(self._rows(wb_all['observations'])[1]), 3)
+
+    def test_responses_sheet_keeps_the_per_session_layout(self):
+        """
+        GIVEN a session with a choice answer
+        WHEN the responses sheet is read
+        THEN one row per session holds the choice NAME under the question, and session_start_utc
+             replaces the legacy datetime column
+        """
+        s = self._session()
+        Answer.objects.create(survey_session=s, question=self.q_weather, selected_choices=['rain'])
+        wb = self._workbook(self._download(format='xlsx'))
+        header, rows = self._rows(wb['responses'])
+        self.assertIn('session_start_utc', header)
+        self.assertNotIn('datetime', header)
+        self.assertEqual(rows[0]['Weather'], 'Rainy')
+        self.assertEqual(rows[0]['session_id'], s.id)
+
+    def test_sessions_sheet_columns(self):
+        """
+        GIVEN a completed session with tags and a note
+        WHEN the sessions sheet is read
+        THEN it has the documented columns and the end time, tags and notes
+        """
+        s = self._session(tags=['field', 'verified'], notes='called back')
+        s.mark_completed()
+        wb = self._workbook(self._download(format='xlsx'))
+        header, rows = self._rows(wb['sessions'])
+        self.assertEqual(header, list(_export.SESSION_COLUMNS))
+        self.assertIsNotNone(rows[0]['session_end_utc'])
+        self.assertEqual(rows[0]['tags'], 'field; verified')
+        self.assertEqual(rows[0]['notes'], 'called back')
+        self.assertEqual(rows[0]['opened_by_kind'], 'external')
+
+    def test_temp_directory_removed_when_response_closes(self):
+        """
+        GIVEN an xlsx export
+        WHEN the response is fully consumed and closed
+        THEN the temporary directory it was written to no longer exists
+        """
+        import os, tempfile as _tf
+        self._session()
+        made = []
+        real = _tf.TemporaryDirectory   # the patch below replaces the module attribute itself
+
+        def make(*args, **kwargs):
+            d = real(*args, **kwargs)
+            made.append(d.name)
+            return d
+
+        with patch('survey.views.tempfile.TemporaryDirectory', side_effect=make):
+            response = self._download(format='xlsx')
+            self.assertEqual(len(made), 1)
+            self.assertTrue(os.path.isdir(made[0]))
+            b''.join(response.streaming_content)
+            # Closing the test client's response fires request_finished, which
+            # would close the test transaction's connection; the client itself
+            # detaches close_old_connections around that signal, so do the same.
+            from django.core.signals import request_finished
+            from django.db import close_old_connections
+            request_finished.disconnect(close_old_connections)
+            try:
+                response.close()
+            finally:
+                request_finished.connect(close_old_connections)
+        self.assertFalse(os.path.exists(made[0]))
+
+    # -- completed_only -----------------------------------------------------
+
+    def test_completed_only_matches_the_overview(self):
+        """
+        GIVEN two sections and 5 clean sessions of which 3 answered the last section
+        WHEN the export runs with completed_only=1
+        THEN the sessions sheet has 3 rows and the Responses overview counts 3 completed
+        """
+        last = SurveySection.objects.create(survey_header=self.survey, name='Wrap', code='S2')
+        self.section.next_section = last
+        self.section.save()
+        q_last = Question.objects.create(survey_section=last, name='Anything else', code='AE',
+                                         input_type='text', order_number=1)
+        sessions = [self._session() for _ in range(5)]
+        for s in sessions:
+            Answer.objects.create(survey_session=s, question=self.q_weather, selected_choices=['sun'])
+        for s in sessions[:3]:
+            Answer.objects.create(survey_session=s, question=q_last, text='no')
+        trashed = self._session(is_deleted=True)
+        Answer.objects.create(survey_session=trashed, question=q_last, text='trashed but complete')
+
+        wb = self._workbook(self._download(format='xlsx', completed_only=1))
+        _, rows = self._rows(wb['sessions'])
+        self.assertEqual(sorted(r['session_id'] for r in rows), sorted(s.id for s in sessions[:3]))
+        overview = SurveyAnalyticsService(self.survey).get_overview()
+        self.assertEqual(overview['completed_count'], 3)
+
+        legacy = self._download(completed_only=1)
+        archive = zipfile.ZipFile(BytesIO(legacy.content))
+        csv_text = archive.read('squirrel_count.csv').decode()
+        self.assertEqual(csv_text.count('\n') - 1, 3)
+
+    # -- CSV ----------------------------------------------------------------
+
+    def test_csv_archive_has_bom_flat_tables(self):
+        """
+        GIVEN a session with a point and a choice answer
+        WHEN the export runs as csv
+        THEN the archive holds observations.csv, responses.csv and sessions.csv, each starting with a
+             BOM, and observations.csv has one row with lat/lon
+        """
+        s = self._session()
+        Answer.objects.create(survey_session=s, question=self.q_weather, selected_choices=['sun'])
+        self._observe(s, self.q_white, Point(-88.0936, 38.7265), quantity=2)
+        response = self._download(format='csv')
+        self.assertEqual(response.status_code, 200)
+        archive = zipfile.ZipFile(BytesIO(self._body(response)))
+        self.assertEqual(sorted(archive.namelist()), ['observations.csv', 'responses.csv', 'sessions.csv'])
+        import csv as _csv, io as _io
+        for name in archive.namelist():
+            raw = archive.read(name)
+            self.assertTrue(raw.startswith('﻿'.encode('utf-8')), name)
+        obs = list(_csv.DictReader(_io.StringIO(archive.read('observations.csv').decode('utf-8-sig'))))
+        self.assertEqual(len(obs), 1)
+        self.assertEqual(obs[0]['question'], 'White squirrel')
+        self.assertEqual(obs[0]['lat'], '38.7265')
+        self.assertEqual(obs[0]['Quantity'], '2.0')
+        self.assertEqual(obs[0]['session_start_utc'], '2026-09-22T18:59:30')
+
+
+class ExportObjectsSheetTest(TestCase):
+    """Answers about layer objects get their own sheet in the workbook."""
+
+    def setUp(self):
+        self.org = _make_org('ObjSheetOrg')
+        self.owner = User.objects.create_user('objsheet', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='obj_sheet', organization=self.org, created_by=self.owner, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.layer = _objects_layer(self.survey, name='Sites', key_field='zone_id', label_field='name')
+        self.q = Question.objects.create(
+            survey_section=self.section, code='OB1', name='Objects', input_type='layer_objects',
+            layer=self.layer, order_number=1,
+        )
+        self.thumbs = Question.objects.create(
+            survey_section=self.section, code='OB2', name='Build?', input_type='thumbs',
+            parent_question_id=self.q, order_number=1,
+        )
+        self.thumbs.choices = self.thumbs.thumbs_choices()
+        self.thumbs.save()
+        self.client.login(username='objsheet', password='pass')
+
+    def test_objects_sheet_present(self):
+        """
+        GIVEN a layer_objects question with a thumbs sub-question and one vote on object 1
+        WHEN the survey is exported as xlsx
+        THEN a sheet objects_OB1 holds one row with the object key, title, category and the vote
+        """
+        import openpyxl
+        obj = self.layer.items.get(key='1')
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=session, question=self.thumbs, layer_object=obj, selected_choices=[1])
+        response = self.client.get(f'/surveys/{self.survey.uuid}/download?format=xlsx')
+        wb = openpyxl.load_workbook(BytesIO(b''.join(response.streaming_content)))
+        self.assertEqual(wb.sheetnames, ['observations', 'responses', 'sessions', 'objects_OB1'])
+        rows = list(wb['objects_OB1'].iter_rows(values_only=True))
+        header = list(rows[0])
+        row = dict(zip(header, rows[1]))
+        self.assertEqual(row['object_key'], '1')
+        self.assertEqual(row['object_title'], obj.title)
+        self.assertEqual(row['object_category'], obj.category or None)
+        self.assertEqual(row['Build?'], 'up')
+        self.assertEqual(row['session_id'], session.id)
+        self.assertIn('session_start_utc', header)
+
+
+class ExportAttachedFilesTest(TestCase):
+    """Uploads ride along only on request; without them Excel is a single file."""
+
+    JPEG = b'\xff\xd8\xff\xe0' + b'0' * 16
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='fexp', password='pass')
+        org = Organization.objects.create(name="FExp Org")
+        Membership.objects.create(user=self.user, organization=org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="fexp_survey", organization=org, created_by=self.user,
+            redirect_url="#", status="published",
+        )
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(survey_header=self.survey, name="sec1", code="S1")
+        self.photo_q = Question.objects.create(
+            survey_section=self.section, name="Photos", code="Q_PH", input_type="photo",
+        )
+
+    def _collect_one_photo(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        section_url = f'/surveys/{self.survey.uuid}/sec1/'
+        self.client.get(section_url)
+        response = self.client.post(f'/surveys/{self.survey.uuid}/upload/', {
+            'question': 'Q_PH',
+            'file': SimpleUploadedFile('shot.jpg', self.JPEG, content_type='image/jpeg'),
+        })
+        token = response.json()['token']
+        self.client.post(section_url, {'Q_PH': [token]})
+        self.client.login(username='fexp', password='pass')
+        return SurveySession.objects.get(survey=self.survey)
+
+    def test_excel_alone_is_a_single_file_naming_the_path(self):
+        """
+        GIVEN a survey with one photo answer
+        WHEN it is exported as xlsx without files
+        THEN the response is a single workbook whose Photos cell holds files/<sid>/Q_PH__shot.jpg
+        """
+        import openpyxl
+        session = self._collect_one_photo()
+        response = self.client.get(f'/surveys/{self.survey.uuid}/download?format=xlsx')
+        self.assertEqual(response['Content-Type'], _export.CONTENT_TYPES['xlsx'])
+        wb = openpyxl.load_workbook(BytesIO(b''.join(response.streaming_content)))
+        rows = list(wb['responses'].iter_rows(values_only=True))
+        row = dict(zip(rows[0], rows[1]))
+        self.assertEqual(row['Photos'], f'files/{session.id}/Q_PH__shot.jpg')
+
+    def test_excel_with_files_is_a_zip(self):
+        """
+        GIVEN the same survey
+        WHEN it is exported as xlsx with files=1
+        THEN the response is a ZIP with fexp_survey.xlsx at the root and the photo under files/
+        """
+        session = self._collect_one_photo()
+        response = self.client.get(f'/surveys/{self.survey.uuid}/download?format=xlsx&files=1')
+        self.assertEqual(response['Content-Type'], 'application/zip')
+        archive = zipfile.ZipFile(BytesIO(b''.join(response.streaming_content)))
+        names = archive.namelist()
+        self.assertIn('fexp_survey.xlsx', names)
+        self.assertIn(f'files/{session.id}/Q_PH__shot.jpg', names)
+        self.assertEqual(archive.read(f'files/{session.id}/Q_PH__shot.jpg'), self.JPEG)
+
+    def test_dialog_offers_files_switch_only_with_file_questions(self):
+        """
+        GIVEN a survey with a photo question and one without
+        WHEN their Responses pages render
+        THEN the export dialog's attached-files switch is present for the first and absent for the second
+        """
+        self.client.login(username='fexp', password='pass')
+        with_files = self.client.get(f'/editor/surveys/{self.survey.uuid}/analytics/').content.decode()
+        self.assertIn('data-has-files="1"', with_files)
+        other = SurveyHeader.objects.create(
+            name="plain", organization=self.survey.organization, created_by=self.user, status="published",
+        )
+        SurveyCollaborator.objects.create(user=self.user, survey=other, role='owner')
+        SurveySection.objects.create(survey_header=other, name="s", code="S1", is_head=True)
+        without = self.client.get(f'/editor/surveys/{other.uuid}/analytics/').content.decode()
+        self.assertIn('data-has-files="0"', without)
+
+
+@unittest.skipUnless(_export.OGR_AVAILABLE, 'ogr2ogr not installed on this host')
+class ExportOgrFormatsTest(TestCase):
+    """GeoPackage, Shapefile and KML through ogr2ogr."""
+
+    def setUp(self):
+        self.org = _make_org('OgrOrg')
+        self.user = User.objects.create_user('ogrowner', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='ogr_survey', organization=self.org, created_by=self.user, status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True,
+        )
+        self.q_sight = Question.objects.create(
+            survey_section=self.section, name='Sightings', code='SG', input_type='point', order_number=1,
+        )
+        self.q_qty = Question.objects.create(
+            survey_section=self.section, name='Quantity', code='SG_Q', input_type='number',
+            parent_question_id=self.q_sight, order_number=1,
+        )
+        self.q_zone = Question.objects.create(
+            survey_section=self.section, name='Zones', code='ZN', input_type='polygon', order_number=2,
+        )
+        for i in range(3):
+            s = SurveySession.objects.create(survey=self.survey)
+            parent = Answer.objects.create(survey_session=s, question=self.q_sight, point=Point(-88.09 + i * 0.001, 38.72))
+            Answer.objects.create(survey_session=s, question=self.q_qty, parent_answer_id=parent, numeric=i + 1)
+        s = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=s, question=self.q_zone,
+                              polygon=Polygon(((0, 0), (0, 1), (1, 1), (1, 0), (0, 0))))
+        self.client.login(username='ogrowner', password='pass')
+
+    def _download(self, fmt, **params):
+        from urllib.parse import urlencode
+        params['format'] = fmt
+        response = self.client.get(f'/surveys/{self.survey.uuid}/download?' + urlencode(params))
+        self.assertEqual(response.status_code, 200)
+        return response, b''.join(response.streaming_content)
+
+    def test_geopackage_has_one_layer_per_question(self):
+        """
+        GIVEN a point question with 3 features and a polygon question with 1
+        WHEN the survey is exported as gpkg
+        THEN the file has layers Sightings and Zones with those feature counts and the Quantity attribute
+        """
+        import sqlite3, tempfile, os
+        response, body = self._download('gpkg')
+        self.assertEqual(response['Content-Disposition'], 'attachment; filename="ogr_survey.gpkg"')
+        with tempfile.NamedTemporaryFile(suffix='.gpkg', delete=False) as fh:
+            fh.write(body)
+        try:
+            con = sqlite3.connect(fh.name)
+            tables = sorted(r[0] for r in con.execute("SELECT table_name FROM gpkg_contents"))
+            self.assertEqual(tables, ['Sightings', 'Zones'])
+            self.assertEqual(con.execute('SELECT count(*) FROM "Sightings"').fetchone()[0], 3)
+            self.assertEqual(con.execute('SELECT count(*) FROM "Zones"').fetchone()[0], 1)
+            quantities = sorted(r[0] for r in con.execute('SELECT "Quantity" FROM "Sightings"'))
+            self.assertEqual(quantities, [1, 2, 3])
+            con.close()
+        finally:
+            os.unlink(fh.name)
+
+    def test_shapefile_zip_has_five_files_per_question(self):
+        """
+        GIVEN the same survey
+        WHEN it is exported as shp
+        THEN the ZIP holds exactly .shp/.shx/.dbf/.prj/.cpg per question and the .prj names WGS 84
+        """
+        response, body = self._download('shp')
+        self.assertEqual(response['Content-Type'], 'application/zip')
+        archive = zipfile.ZipFile(BytesIO(body))
+        names = sorted(archive.namelist())
+        expected = sorted(f'{q}.{ext}' for q in ('Sightings', 'Zones') for ext in ('shp', 'shx', 'dbf', 'prj', 'cpg'))
+        self.assertEqual(names, expected)
+        self.assertIn('WGS', archive.read('Sightings.prj').decode())
+        self.assertEqual(archive.read('Sightings.cpg').decode().strip(), 'UTF-8')
+
+    def test_kml_has_a_container_per_question(self):
+        """
+        GIVEN the same survey
+        WHEN it is exported as kml
+        THEN the file parses as XML and holds a named Document or Folder per question inside a root
+             named after the survey
+        """
+        import xml.etree.ElementTree as ET
+        response, body = self._download('kml')
+        root = ET.fromstring(body)
+        ns = {'k': 'http://www.opengis.net/kml/2.2'}
+        names = [n.text for n in root.iter('{http://www.opengis.net/kml/2.2}name')]
+        self.assertIn('ogr_survey', names)
+        containers = [el for el in root.iter() if el.tag.split('}')[-1] in ('Document', 'Folder')]
+        container_names = {el.find('k:name', ns).text for el in containers if el.find('k:name', ns) is not None}
+        self.assertTrue({'Sightings', 'Zones'} <= container_names, container_names)
+        self.assertEqual(len(list(root.iter('{http://www.opengis.net/kml/2.2}Placemark'))), 4)
+
+    def test_ogr_failure_is_loud(self):
+        """
+        GIVEN ogr2ogr exits non-zero
+        WHEN a GeoPackage export is requested
+        THEN the request fails with ExportFailed carrying the tool's stderr, and no file is returned
+        """
+        import subprocess as _sp
+        fake = _sp.CompletedProcess(args=['ogr2ogr'], returncode=1, stdout='', stderr='ERROR 1: boom')
+        with patch('survey.export.subprocess.run', return_value=fake):
+            with self.assertRaises(_export.ExportFailed) as ctx:
+                self.client.get(f'/surveys/{self.survey.uuid}/download?format=gpkg')
+        self.assertIn('ERROR 1: boom', str(ctx.exception))
+
+    def test_kml_with_files_is_a_zip_with_the_kml_at_root(self):
+        """
+        GIVEN the same survey
+        WHEN it is exported as kml with files=1
+        THEN the response is a ZIP with ogr_survey.kml at the root
+        """
+        response, body = self._download('kml', files=1)
+        self.assertEqual(response['Content-Type'], 'application/zip')
+        self.assertIn('ogr_survey.kml', zipfile.ZipFile(BytesIO(body)).namelist())

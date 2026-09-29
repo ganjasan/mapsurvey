@@ -133,6 +133,21 @@ def _get_last_section(survey):
     return ordered[-1] if ordered else None
 
 
+def completed_session_filter(qs, headers):
+    """Sessions from ``qs`` that answered a question of their version's last
+    section. The ONE definition of "completed": the Responses overview counts
+    with it and the export's completed_only filters with it, so the two never
+    disagree (spec responses-export-formats)."""
+    last_ids = set()
+    for header in headers:
+        last = _get_last_section(header)
+        if last:
+            last_ids.add(last.id)
+    if not last_ids:
+        return qs.none()
+    return qs.filter(answer__question__survey_section_id__in=last_ids).distinct()
+
+
 class SurveyAnalyticsService:
     """Read-only analytics queries for a survey. No request/view knowledge.
 
@@ -221,10 +236,7 @@ class SurveyAnalyticsService:
 
     def _completed_filter_qs(self, qs):
         """Sessions from qs that answered their version's last section."""
-        last_ids = self._last_section_ids()
-        if not last_ids:
-            return qs.none()
-        return qs.filter(answer__question__survey_section_id__in=last_ids).distinct()
+        return completed_session_filter(qs, self._scope_surveys)
 
     def get_overview(self):
         """Return overview stats: total sessions, completed, completion rate."""
