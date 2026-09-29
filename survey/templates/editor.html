@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load static %}
 {% load survey_filters %}
 
 {% block extra_head %}
@@ -369,6 +370,7 @@
     {% if import_jobs %}
     {% comment %}base.html loads no htmx; the import cards poll and dismiss with it.{% endcomment %}
     <script src="https://unpkg.com/htmx.org@1.9.10" crossorigin="anonymous"></script>
+    <script src="{% static 'js/htmx_promise_guard.js' %}"></script>
     {% include "editor/partials/import_jobs.html" %}
     {% endif %}
 

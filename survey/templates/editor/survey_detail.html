@@ -697,7 +697,10 @@ document.addEventListener('DOMContentLoaded', function() {
             values: { input_type: 'text', draft: '1',
                       name: name ? name.value : '', subtext: subtext ? subtext.value : '' },
             headers: { 'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value }
-        }).then(function() { refreshPreview(); });
+        }).then(function() { refreshPreview(); },
+                // htmx.ajax rejects with no value on error/abort/timeout; the form
+                // was not swapped out, so let the next close retry the save.
+                function() { form._qtpSavedOnClose = false; });
     });
 
     // A question is created the moment its type is picked; closing the modal
