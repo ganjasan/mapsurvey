@@ -44,14 +44,15 @@ import sys
 from io import BytesIO
 import json
 import logging
-from zipfile import ZipFile
-import pandas as pd
 
 from .access_control import check_survey_access, mark_indexing
 from .audit import audit
 from .trash import trash_survey, restore_survey, purge_survey, purge_expired_surveys
 from . import other_option
 from .versioning import resolve_version_scope
+from . import export as data_export
+import tempfile
+from django.http import FileResponse
 import hmac
 from django.http import JsonResponse
 from django.views.defaults import page_not_found
@@ -658,9 +659,22 @@ def editor(request):
 	from .analytics import SurveyAnalyticsService
 	from .comments import unseen_by_survey
 	comment_counts = unseen_by_survey(request.user, survey_list)
+	# Which families ask for files decides whether the export dialog offers
+	# "Include attached files" for that card — one query, like the counts above.
+	family_ids = [s.id for s in survey_list]
+	families_with_files = set()
+	for header_id, canonical_id in (
+			Question.objects
+			.filter(input_type__in=FILE_INPUT_TYPES)
+			.filter(Q(survey_section__survey_header_id__in=family_ids)
+					| Q(survey_section__survey_header__canonical_survey_id__in=family_ids))
+			.values_list('survey_section__survey_header_id',
+						 'survey_section__survey_header__canonical_survey_id')):
+		families_with_files.add(canonical_id or header_id)
 	surveys_with_kpi = []
 	for survey in survey_list:
 		survey.session_count = family_counts.get(survey.id, 0)
+		survey.has_files = survey.id in families_with_files
 		overview = SurveyAnalyticsService(survey).get_overview()
 		survey.completed_count = overview['completed_count']
 		survey.completion_rate = overview['completion_rate']
@@ -675,6 +689,7 @@ def editor(request):
 		"trashed_surveys": trashed_surveys,
 		"import_jobs": import_jobs,
 		"import_jobs_open": any(j.is_open for j in import_jobs),
+		"ogr_available": data_export.OGR_AVAILABLE,
 	}
 	return render(request, "editor.html", context)
 
@@ -1426,9 +1441,6 @@ def session_kind_for(request, survey):
 
 @login_required
 def download_data(request, survey_slug):
-	in_memory = BytesIO()
-	zip = ZipFile(in_memory, "a")
-
 	survey = resolve_survey(survey_slug)
 
 	# Authorization, not just authentication: this export carries respondent
@@ -1447,7 +1459,15 @@ def download_data(request, survey_slug):
 		)
 		raise Http404
 
-	pe.emit(pe.DATA_EXPORTED, request.user.pk, {'survey_id': str(survey.id), 'format': 'zip'})
+	# The format catalogue (spec responses-export-formats). No `format` is the
+	# legacy GeoJSON+CSV archive, unchanged for every old link and script.
+	fmt = request.GET.get('format') or 'zip'
+	if fmt not in data_export.FORMATS:
+		return HttpResponseBadRequest("Unknown export format")
+	if fmt in data_export.OGR_FORMATS and not data_export.OGR_AVAILABLE:
+		return HttpResponseBadRequest("GIS export formats are not available on this server")
+
+	pe.emit(pe.DATA_EXPORTED, request.user.pk, {'survey_id': str(survey.id), 'format': fmt})
 
 	# Checked once, on the survey the URL names, before the family is expanded:
 	# a SurveyCollaborator holds a row on the canonical survey, not on each
@@ -1457,394 +1477,47 @@ def download_data(request, survey_slug):
 	version_surveys = _get_version_surveys(survey, version_param)
 
 	include_all = request.GET.get('include_all') == '1'
+	completed_only = request.GET.get('completed_only') == '1'
+	include_files = request.GET.get('files') == '1'
 
-	# Pre-compute excluded session IDs (trashed + not_approved)
-	excluded_session_ids = set()
-	if not include_all:
-		for target_survey, _ in version_surveys:
-			excluded_session_ids |= set(
-				SurveySession.objects
-				.filter(survey=target_survey)
-				.filter(
-					Q(is_deleted=True) | Q(validation_status='not_approved')
-				)
-				.values_list('id', flat=True)
-			)
+	excluded_session_ids = data_export.excluded_sessions(version_surveys, include_all, completed_only)
+	bundle = data_export.collect(survey, version_surveys, excluded_session_ids)
 
-	for target_survey, prefix in version_surveys:
-		_export_survey_data(zip, target_survey, prefix, excluded_session_ids)
+	if fmt == 'zip':
+		response = HttpResponse(content_type="application/zip")
+		response["Content-Disposition"] = "attachment; filename={filename}.zip".format(filename=_sanitize_filename(survey.name))
+		response.write(data_export.build_legacy_zip(bundle).read())
+		return response
 
-	#Windows bug fix
-	for file in zip.filelist:
-		file.create_system = 0
-
-	zip.close()
-	response = HttpResponse(content_type="application/zip")
-	response["Content-Disposition"] = "attachment; filename={filename}.zip".format(filename=_sanitize_filename(survey.name))
-
-	in_memory.seek(0)
-	response.write(in_memory.read())
-
+	# Every other format is assembled on disk and streamed; the directory goes
+	# when the response closes, so the worker never holds the file.
+	workdir = tempfile.TemporaryDirectory(prefix='mapsurvey-export-')
+	try:
+		path, filename, content_type = data_export.build_export(bundle, fmt, include_files, workdir.name)
+	except Exception:
+		workdir.cleanup()
+		raise
+	response = FileResponse(open(path, 'rb'), as_attachment=True, filename=filename, content_type=content_type)
+	response._resource_closers.append(workdir.cleanup)
 	return response
 
 
-def _sanitize_filename(name):
-	"""Remove characters that are invalid in Windows filenames."""
-	return re.sub(r'[<>:"/\\|?*]', '_', name)
-
-
-# Every input type is classified for export. A type in none of these sets is a
-# bug — it means INPUT_TYPE_CHOICES gained a member and nobody decided how it
-# leaves the platform — so _answer_cell warns rather than dropping it silently,
-# which is how datetime went missing from the download unnoticed.
-
-# Carry respondent input; exported as a CSV column or a GeoJSON property.
-EXPORT_VALUE_TYPES = frozenset({
-	'text', 'text_line', 'number', 'range',
-	'choice', 'rating', 'thumbs', 'multichoice', 'datetime', 'ranking',
-	'photo', 'audio', 'document',
-})
-
-
-def _upload_archive_path(question, answer):
-	"""Where a file answer lives inside the responses ZIP. The same string is
-	the CSV/GeoJSON cell, so a row names the file sitting next to it."""
-	return 'files/{sid}/{code}__{name}'.format(
-		sid=answer.survey_session_id,
-		code=question.code,
-		name=_sanitize_filename(answer.upload.original_name),
-	)
-
-# Exported as GeoJSON layers in their own right, never as a cell.
-EXPORT_GEOMETRY_TYPES = frozenset({'point', 'line', 'polygon'})
-
-# Presentational; they collect nothing, so there is nothing to export.
-EXPORT_DISPLAY_ONLY_TYPES = frozenset({'image', 'html'})
-
-# Returned by _answer_cell for questions that must not produce a column at all,
-# which is distinct from a question that produces an empty one.
-EXPORT_NO_COLUMN = object()
-
-
-def _format_datetime_cell(raw):
-	"""Serialise a stored datetime answer as ISO 8601.
-
-	Values that do not parse are passed through unchanged: a raw string the
-	creator can still interpret beats a blank cell.
-	"""
-	if not raw:
-		return ""
-	try:
-		return datetime.fromisoformat(raw).isoformat()
-	except (TypeError, ValueError):
-		return raw
-
-
-def _answer_cell(question, answers):
-	"""Format one question's answer for export.
-
-	`answers` holds the rows belonging to this question and nothing else, which
-	is what keeps a blank question from inheriting its neighbour's value: the
-	result is computed per call rather than accumulated across a loop.
-
-	Returns EXPORT_NO_COLUMN for questions that should not appear as a cell.
-	"""
-	input_type = question.input_type
-
-	if input_type in EXPORT_GEOMETRY_TYPES or input_type in EXPORT_DISPLAY_ONLY_TYPES:
-		return EXPORT_NO_COLUMN
-
-	if input_type not in EXPORT_VALUE_TYPES:
-		logger.warning(
-			"Export: question %s has unclassified input_type %r; exporting an "
-			"empty column. Classify it in survey/views.py.",
-			question.code, input_type,
-		)
-		return ""
-
-	if not answers:
-		# A flagged question keeps its adjacent write-in column on unanswered rows too.
-		return other_option.export_cell(question, None, "")
-
-	answer = answers[0]
-
-	if input_type in ('photo', 'audio', 'document'):
-		# Several files per question: the cell names every archive path. The
-		# geo sub-answer path hands all rows in at once; the CSV loop passes
-		# one at a time and concatenates in the caller — same separator.
-		paths = [_upload_archive_path(question, a) for a in answers if a.upload_id]
-		return '; '.join(paths)
-
-	if input_type in ('text', 'text_line'):
-		return answer.text if answer.text is not None else ""
-
-	if input_type == 'datetime':
-		return _format_datetime_cell(answer.text)
-
-	if input_type in ('number', 'range'):
-		if answer.numeric is not None:
-			return answer.numeric
-		if answer.selected_choices:
-			return answer.selected_choices[0]
-		return ""
-
-	if input_type in ('choice', 'rating', 'thumbs'):
-		names = answer.get_selected_choice_names()
-		return other_option.export_cell(question, answer, names[0] if names else "")
-
-	if input_type == 'multichoice':
-		return other_option.export_cell(question, answer, "; ".join(answer.get_selected_choice_names()))
-
-	if input_type == 'ranking':
-		# One column per item, valued by its rank: a single "a > b > c" cell
-		# reads well and analyses badly, and ranks are what the creator wants
-		# to average.
-		ranks = {}
-		for position, code in enumerate(answer.selected_choices or [], start=1):
-			ranks[f"{question.name}: {question.get_choice_name(code)}"] = position
-		return ranks
-
-	return ""
+# The export machinery lives in survey/export.py; these names stay importable
+# from here for the tests and callers that grew up with them.
+_sanitize_filename = data_export._sanitize_filename
+_upload_archive_path = data_export._upload_archive_path
+_format_datetime_cell = data_export._format_datetime_cell
+_answer_cell = data_export._answer_cell
+EXPORT_VALUE_TYPES = data_export.EXPORT_VALUE_TYPES
+EXPORT_GEOMETRY_TYPES = data_export.EXPORT_GEOMETRY_TYPES
+EXPORT_DISPLAY_ONLY_TYPES = data_export.EXPORT_DISPLAY_ONLY_TYPES
+EXPORT_NO_COLUMN = data_export.EXPORT_NO_COLUMN
 
 
 def _export_survey_data(zip, survey, prefix='', excluded_session_ids=None):
-	"""Export a single survey's data into the zip with optional filename prefix.
-
-	Args:
-		excluded_session_ids: set of session PKs to skip (trashed + not_approved).
-			Empty set or None means export all.
-	"""
-	if excluded_session_ids is None:
-		excluded_session_ids = set()
-
-	from .models import FILE_INPUT_TYPES as _FILE_TYPES
-
-	#обработка гео вопросов
-	geo_questions = survey.geo_questions()
-
-	for question in geo_questions:
-
-		layer_properties = {
-			"survey": question.survey_section.survey_header.name,
-			"survey_section": question.survey_section.name,
-			"required": question.required,
-		}
-
-		#получить ответы
-		features = []
-		answers = question.answers()
-		from .object_stats import shared_map_verdicts
-		verdicts = shared_map_verdicts(survey, question)
-		for geo_answer in answers:
-			# Skip excluded sessions
-			if geo_answer.survey_session_id in excluded_session_ids:
-				continue
-
-			#получить геометрию
-			geo_type = question.input_type
-			if geo_type == "polygon":
-				coordinates =  [[[i[0],i[1]] for i in geo_answer.polygon.coords[0]]]
-				geometry_type = "Polygon"
-			elif geo_type == "line":
-				coordinates =  [[i[0],i[1]] for i in geo_answer.line.coords]
-				geometry_type = "LineString"
-			elif geo_type == "point":
-				coordinates =  [geo_answer.point.coords[0], geo_answer.point.coords[1]]
-				geometry_type = "Point"
-
-			#получить properties из subquestions
-			properties = {}
-			subanswers = geo_answer.subAnswers()
-			for subquestion, rows in subanswers.items():
-				cell = _answer_cell(subquestion, rows)
-				# Unlike the CSV, every sub-question keeps a property even when
-				# it holds nothing: a feature collection whose attribute set
-				# varies per feature is awkward to read in QGIS.
-				if cell is EXPORT_NO_COLUMN:
-					properties[subquestion.name] = ""
-				elif isinstance(cell, dict):
-					# Several columns for one answer: ranking, a write-in option.
-					properties.update(cell)
-				else:
-					properties[subquestion.name] = cell
-
-			properties["session"] = str(geo_answer.survey_session)
-			properties["session_id"] = geo_answer.survey_session_id
-			properties["language"] = geo_answer.survey_session.language or ''
-			properties["validation_status"] = geo_answer.survey_session.validation_status or ''
-			# Shared map (spec shared-map-layer): the verdict other respondents
-			# gave this mark rides on the author's own feature — ten residents
-			# asking for the same corner are one feature with votes_up=9.
-			if verdicts:
-				properties.update(verdicts.get(geo_answer.pk) or {
-					"mark_key": "", "votes_up": 0, "votes_down": 0, "comments": 0})
-
-			feature = {
-				"type": "Feature",
-				"properties": properties,
-				"geometry":{
-					"type": geometry_type,
-					"coordinates": coordinates,
-				}
-			}
-
-			features.append(feature)
-
-		geojson_dict = {
-			"type": "FeatureCollection",
-			"name": question.name,
-			"crs": {"type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }},
-			"properties": layer_properties,
-			"features": features,
-		}
-
-		geojson_str = json.dumps(geojson_dict, ensure_ascii=False).encode('utf8')
-
-		zip.writestr(prefix + _sanitize_filename(question.name) + '.geojson', geojson_str)
-
-	# Answers ABOUT layer objects (spec object-answers): one CSV per Objects-
-	# on-the-map question keyed by object, and the layer's derived GeoJSON
-	# enriched with per-object aggregates — never with free text.
-	_export_object_answers(zip, survey, prefix, excluded_session_ids)
-
-	#обработка обычных вопросов
-
-	sessions = survey.sessions()
-
-	properties_list = []
-	for session in sessions:
-		# Skip excluded sessions
-		if session.id in excluded_session_ids:
-			continue
-
-		properties = {}
-		answers = session.answers()
-		for answer in answers:
-			if not answer.question:
-				continue
-
-			cell = _answer_cell(answer.question, [answer])
-			# Geometry questions are exported as their own GeoJSON layers and
-			# display-only questions collect nothing, so neither gets a column.
-			if cell is EXPORT_NO_COLUMN:
-				continue
-
-			# A ranking answer is several columns, not one cell.
-			if isinstance(cell, dict):
-				properties.update(cell)
-			elif (answer.question.input_type in _FILE_TYPES
-					and properties.get(answer.question.name)):
-				# Several files on one question: one cell listing every path.
-				properties[answer.question.name] += '; ' + cell
-			else:
-				properties[answer.question.name] = cell
-
-		properties["session"] = str(session)
-		properties["session_id"] = session.id
-		properties["datetime"] = session.start_datetime
-		properties["language"] = session.language or ''
-		properties["validation_status"] = session.validation_status or ''
-		properties_list.append(properties)
-
-	zip.writestr(prefix + _sanitize_filename(survey.name) + '.csv', pd.DataFrame(properties_list).to_csv())
-
-	# Respondent files ride along under files/<session_id>/, read through the
-	# storage API so the same code serves filesystem and S3. Only attached
-	# uploads of non-excluded sessions — orphans and trashed sessions stay out.
-	file_answers = (
-		Answer.objects
-		.filter(
-			survey_session__survey=survey,
-			question__input_type__in=_FILE_TYPES,
-			upload__isnull=False,
-		)
-		.exclude(survey_session_id__in=excluded_session_ids)
-		.select_related('question', 'upload')
-	)
-	for answer in file_answers:
-		try:
-			with answer.upload.file.open('rb') as stored:
-				zip.writestr(prefix + _upload_archive_path(answer.question, answer), stored.read())
-		except Exception:
-			logger.warning(
-				"Export: upload %s missing from storage; row keeps the path, file absent from ZIP.",
-				answer.upload_id,
-			)
-
-
-def _export_object_answers(zip, survey, prefix, excluded_session_ids):
-	from .object_stats import object_aggregates, flat_properties, sub_questions_of
-	questions = Question.objects.filter(
-		survey_section__survey_header=survey, input_type='layer_objects', layer__isnull=False,
-	).select_related('layer').order_by('survey_section_id', 'order_number')
-	layers_done = set()
-	for question in questions:
-		subs = sub_questions_of(question)
-		if not subs:
-			# Display-only (spec layer-objects-question): nothing was asked, so
-			# there is no sheet to write — the layer itself still gets its
-			# results GeoJSON below when another question of this survey asks.
-			continue
-		rows = (Answer.objects
-		        .filter(question__in=subs, layer_object__isnull=False)
-		        .exclude(survey_session_id__in=excluded_session_ids)
-		        .select_related('layer_object', 'survey_session', 'question')
-		        .order_by('survey_session_id', 'layer_object__position', 'layer_object_id'))
-		grouped = {}
-		for a in rows:
-			grouped.setdefault((a.survey_session_id, a.layer_object_id), []).append(a)
-		records = []
-		for (session_id, _obj_id), answers in grouped.items():
-			session = answers[0].survey_session
-			obj = answers[0].layer_object
-			record = {
-				'session_id': session_id,
-				'object_key': obj.key,
-				'object_title': obj.title,
-				'object_category': obj.category,
-			}
-			by_q = {}
-			for a in answers:
-				by_q.setdefault(a.question, []).append(a)
-			for sub_q in subs:
-				cell = _answer_cell(sub_q, by_q.get(sub_q, []))
-				if cell is EXPORT_NO_COLUMN:
-					continue
-				if isinstance(cell, dict):
-					record.update(cell)
-				else:
-					record[sub_q.name] = cell
-			record['datetime'] = session.start_datetime
-			record['language'] = session.language or ''
-			record['validation_status'] = session.validation_status or ''
-			if question.layer.source == 'question':
-				record['status'] = obj.status   # the creator's moderation is part of their data
-			records.append(record)
-		zip.writestr(prefix + 'objects_' + _sanitize_filename(question.code) + '.csv', pd.DataFrame(records).to_csv())
-
-		layer = question.layer
-		if layer.pk in layers_done:
-			continue
-		layers_done.add(layer.pk)
-		aggregates = {}
-		# Only THIS header's questions: the layer is shared with the draft copy
-		# and the archived versions, whose sub-questions would otherwise add
-		# empty columns to every feature.
-		for q in layer.questions.filter(input_type='layer_objects', survey_section__survey_header=survey):
-			for key, entry in object_aggregates(q, excluded_session_ids=excluded_session_ids).items():
-				props = flat_properties(entry)
-				aggregates.setdefault(key, {}).update(props)
-		try:
-			collection = json.loads(layer.geojson)
-		except ValueError:
-			continue
-		for feature in collection.get('features') or []:
-			key = (feature.get('properties') or {}).get('_key')
-			feature.setdefault('properties', {}).update(aggregates.get(key, {'answers': 0}))
-		collection['name'] = layer.name
-		collection['crs'] = {"type": "name", "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
-		zip.writestr(prefix + 'layers/' + _sanitize_filename(layer.name) + '.results.geojson',
-		             json.dumps(collection, ensure_ascii=False).encode('utf8'))
+	"""Legacy entry point: one version straight into an open ZipFile."""
+	bundle = data_export.collect(survey, [(survey, prefix)], excluded_session_ids or set())
+	data_export.write_legacy_zip(bundle, zip)
 
 
 @survey_permission_required('viewer')

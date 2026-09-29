@@ -8,6 +8,7 @@
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
 <script src="{% static 'js/range-slider.js' %}"></script>
+<script src="{% static 'js/export_dialog.js' %}"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin="anonymous"></script>
@@ -56,10 +57,15 @@
             {% endfor %}
         </select>
         {% endif %}
-        <a href="/surveys/{{ survey.uuid }}/download?version={{ current_version }}" class="btn btn-sm btn-outline-secondary"
-           style="{% if not version_choices %}margin-left:auto;{% else %}margin-left:0.5rem;{% endif %}margin-bottom:0.25rem;font-size:0.8rem;" title="{% trans 'Download clean responses (CSV + GeoJSON)' %}">
-            <i class="fas fa-download"></i> {% trans "Download data" %}
-        </a>
+        <button type="button" class="btn btn-sm btn-outline-secondary"
+                data-toggle="modal" data-target="#exportModal"
+                data-survey-uuid="{{ survey.uuid }}" data-survey-name="{{ survey.name }}"
+                data-version="{{ current_version }}" data-versions="{{ version_choices_json }}"
+                data-has-files="{% if has_files %}1{% else %}0{% endif %}"
+                style="{% if not version_choices %}margin-left:auto;{% else %}margin-left:0.5rem;{% endif %}margin-bottom:0.25rem;font-size:0.8rem;"
+                title="{% trans 'Export responses as Excel, GeoPackage, Shapefile, GeoJSON, KML or CSV' %}">
+            <i class="fas fa-file-export"></i> {% trans "Export data" %}
+        </button>
     </div>
 </div>
 
@@ -703,4 +709,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endif %}
+{% include "editor/partials/_export_modal.html" %}
 {% endblock %}

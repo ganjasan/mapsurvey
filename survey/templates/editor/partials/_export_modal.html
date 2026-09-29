@@ -1,0 +1,101 @@
+{% load i18n %}
+{% comment %}
+Export dialog (spec responses-export-formats). Included ONCE per page; every opener
+is a button with data-toggle="modal" data-target="#exportModal" carrying
+data-survey-uuid, data-survey-name, data-version (preselected scope),
+data-versions (JSON list of {value,label}, empty for a single-version survey) and
+data-has-files ("1" when the survey asks for photos/audio/documents).
+js/export_dialog.js builds the download URL from the choices and keeps it on the
+Export button's href, so the export is always a copyable link.
+Requires: ogr_available (whether GeoPackage/Shapefile/KML can be produced).
+{% endcomment %}
+<style>
+#exportModal .export-format { display:flex; gap:0.6rem; align-items:flex-start; padding:0.45rem 0.6rem; border:1px solid #e5e7eb; border-radius:6px; margin-bottom:0.35rem; cursor:pointer; }
+#exportModal .export-format:hover { background:#f9fafb; }
+#exportModal .export-format input { margin-top:0.3rem; flex-shrink:0; }
+#exportModal .export-format-name { font-weight:600; font-size:0.9rem; }
+#exportModal .export-format-name small { font-weight:400; color:#6b7280; margin-left:0.25rem; }
+#exportModal .export-format-hint { display:block; color:#6b7280; font-size:0.78rem; line-height:1.3; }
+#exportModal .export-recommended { font-size:0.7rem; font-weight:600; color:#047857; background:#d1fae5; border-radius:4px; padding:0 0.35rem; margin-left:0.35rem; vertical-align:middle; }
+#exportModal legend { font-size:0.85rem; font-weight:600; color:#374151; margin-bottom:0.35rem; }
+#exportModal .export-option { margin-top:0.5rem; }
+#exportModal .export-option small { display:block; color:#6b7280; font-size:0.76rem; margin-left:1.5rem; }
+#exportModal .export-url { font-size:0.72rem; color:#9ca3af; word-break:break-all; margin-top:0.75rem; }
+</style>
+<div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalTitle">
+  <div class="modal-dialog modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exportModalTitle"><i class="fas fa-file-export mr-1"></i>{% trans "Export data" %}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-2" id="exportSurveyName"></p>
+        <fieldset>
+          <legend>{% trans "Format" %}</legend>
+          <label class="export-format">
+            <input type="radio" name="export-format" value="xlsx">
+            <span><span class="export-format-name">{% trans "Excel" %} <small>.xlsx</small></span>
+              <small class="export-format-hint">{% trans "One sheet per table: observations (one row per placed feature, with lat/lon), responses (one row per respondent), sessions. Opens in Excel, Google Sheets and LibreOffice." %}</small></span>
+          </label>
+          {% if ogr_available %}
+          <label class="export-format">
+            <input type="radio" name="export-format" value="gpkg">
+            <span><span class="export-format-name">{% trans "GeoPackage" %} <small>.gpkg</small><span class="export-recommended">{% trans "recommended for GIS" %}</span></span>
+              <small class="export-format-hint">{% trans "For QGIS and ArcGIS: one file, one layer per map question, every attribute kept." %}</small></span>
+          </label>
+          <label class="export-format">
+            <input type="radio" name="export-format" value="shp">
+            <span><span class="export-format-name">{% trans "Shapefile" %} <small>.shp</small></span>
+              <small class="export-format-hint">{% trans "Legacy GIS format, one shapefile per map question in a ZIP. Field names are cut to 10 characters — prefer GeoPackage." %}</small></span>
+          </label>
+          {% endif %}
+          <label class="export-format">
+            <input type="radio" name="export-format" value="zip">
+            <span><span class="export-format-name">{% trans "GeoJSON + CSV" %} <small>.zip</small></span>
+              <small class="export-format-hint">{% trans "One GeoJSON per map question plus a CSV of the other answers, one row per respondent. Attached files are always included." %}</small></span>
+          </label>
+          {% if ogr_available %}
+          <label class="export-format">
+            <input type="radio" name="export-format" value="kml">
+            <span><span class="export-format-name">{% trans "KML" %} <small>.kml</small></span>
+              <small class="export-format-hint">{% trans "For Google Earth: one folder per map question." %}</small></span>
+          </label>
+          {% endif %}
+          <label class="export-format">
+            <input type="radio" name="export-format" value="csv">
+            <span><span class="export-format-name">{% trans "CSV" %} <small>.zip</small></span>
+              <small class="export-format-hint">{% trans "The same tables as Excel, as UTF-8 CSV files." %}</small></span>
+          </label>
+        </fieldset>
+
+        <div class="form-group mt-3" id="exportVersionGroup">
+          <label for="exportVersion" style="font-size:0.85rem;font-weight:600;color:#374151;">{% trans "Version" %}</label>
+          <select id="exportVersion" class="form-control form-control-sm"></select>
+        </div>
+
+        <div class="custom-control custom-switch export-option">
+          <input type="checkbox" class="custom-control-input" id="exportIncludeAll">
+          <label class="custom-control-label" for="exportIncludeAll">{% trans "Include excluded responses" %}</label>
+          <small>{% trans "Trashed and not-approved responses are left out unless you switch this on." %}</small>
+        </div>
+        <div class="custom-control custom-switch export-option">
+          <input type="checkbox" class="custom-control-input" id="exportCompletedOnly">
+          <label class="custom-control-label" for="exportCompletedOnly">{% trans "Completed responses only" %}</label>
+          <small>{% trans "Only respondents who answered the last section — the same count as “completed” on the Overview." %}</small>
+        </div>
+        <div class="custom-control custom-switch export-option" id="exportFilesGroup">
+          <input type="checkbox" class="custom-control-input" id="exportFiles">
+          <label class="custom-control-label" for="exportFiles">{% trans "Include attached files" %}</label>
+          <small>{% trans "Photos, audio and documents respondents uploaded. The download becomes a ZIP with the file next to a files/ folder." %}</small>
+        </div>
+
+        <div class="export-url" id="exportUrl" title="{% trans 'The export is a link — copy it to repeat the same export later.' %}"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+        <a id="exportGo" class="btn btn-primary" href="#"><i class="fas fa-file-export mr-1"></i>{% trans "Export" %}</a>
+      </div>
+    </div>
+  </div>
+</div>

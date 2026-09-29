@@ -1732,9 +1732,9 @@ msgstr ""
 msgid "All (incl. excluded)"
 msgstr ""
 
-#: survey/templates/editor/_survey_more_menu.html:26
+#: survey/templates/editor/partials/_export_modal.html
 msgid "Export"
-msgstr ""
+msgstr "Экспорт"
 
 #: survey/templates/editor/_survey_more_menu.html:27
 msgid "Structure Only"
@@ -7047,3 +7047,87 @@ msgstr[0] "%(n)s пропущен правилом"
 msgstr[1] "%(n)s пропущены правилом"
 msgstr[2] "%(n)s пропущены правилом"
 msgstr[3] "%(n)s пропущены правилом"
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "Export data"
+msgstr "Экспорт данных"
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "Format"
+msgstr "Формат"
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "One sheet per table: observations (one row per placed feature, with lat/lon), responses (one row per respondent), sessions. Opens in Excel, Google Sheets and LibreOffice."
+msgstr "Один лист на таблицу: observations (строка на каждый поставленный объект, с широтой и долготой), responses (строка на респондента), sessions. Открывается в Excel, Google Sheets и LibreOffice."
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "recommended for GIS"
+msgstr "рекомендуется для ГИС"
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "For QGIS and ArcGIS: one file, one layer per map question, every attribute kept."
+msgstr "Для QGIS и ArcGIS: один файл, один слой на каждый картографический вопрос, все атрибуты сохранены."
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "Legacy GIS format, one shapefile per map question in a ZIP. Field names are cut to 10 characters — prefer GeoPackage."
+msgstr "Устаревший ГИС-формат: по одному shapefile на картографический вопрос в ZIP. Имена полей обрезаются до 10 символов — лучше GeoPackage."
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "One GeoJSON per map question plus a CSV of the other answers, one row per respondent. Attached files are always included."
+msgstr "По одному GeoJSON на картографический вопрос плюс CSV с остальными ответами, строка на респондента. Прикреплённые файлы включаются всегда."
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "For Google Earth: one folder per map question."
+msgstr "Для Google Earth: одна папка на картографический вопрос."
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "The same tables as Excel, as UTF-8 CSV files."
+msgstr "Те же таблицы, что в Excel, в виде CSV-файлов в кодировке UTF-8."
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "Include excluded responses"
+msgstr "Включить исключённые ответы"
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "Trashed and not-approved responses are left out unless you switch this on."
+msgstr "Ответы из корзины и неодобренные не попадают в выгрузку, пока этот переключатель выключен."
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "Completed responses only"
+msgstr "Только завершённые ответы"
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "Only respondents who answered the last section — the same count as “completed” on the Overview."
+msgstr "Только респонденты, ответившие на последний раздел — то же число, что «завершённые» на Обзоре."
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "Include attached files"
+msgstr "Включить прикреплённые файлы"
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "Photos, audio and documents respondents uploaded. The download becomes a ZIP with the file next to a files/ folder."
+msgstr "Фото, аудио и документы, загруженные респондентами. Выгрузка станет ZIP-архивом: файл рядом с папкой files/."
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "The export is a link — copy it to repeat the same export later."
+msgstr "Экспорт — это ссылка: скопируйте её, чтобы повторить ту же выгрузку позже."
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "Export responses as Excel, GeoPackage, Shapefile, GeoJSON, KML or CSV"
+msgstr "Выгрузить ответы в Excel, GeoPackage, Shapefile, GeoJSON, KML или CSV"
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "Backup (survey file)"
+msgstr "Резервная копия (файл опроса)"
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "For import into Mapsurvey, not for analysis"
+msgstr "Для импорта в Mapsurvey, не для анализа"
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "All versions"
+msgstr "Все версии"
+
+#: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
+msgid "Current"
+msgstr "Текущая"

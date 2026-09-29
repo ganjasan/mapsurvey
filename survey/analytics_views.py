@@ -10,7 +10,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from . import product_events as pe
-from .models import Question, Answer, SurveySession, VALIDATION_STATUS_CHOICES
+from .models import Question, Answer, SurveySession, VALIDATION_STATUS_CHOICES, FILE_INPUT_TYPES
+from .export import OGR_AVAILABLE
 from .comments import open_counts as _thread_counts
 from .permissions import survey_permission_required
 from .analytics import (
@@ -142,6 +143,13 @@ def analytics_dashboard(request, survey_uuid):
         'survey': survey,
         'effective_role': request.effective_survey_role,
         'version_choices': version_choices(survey),
+        # The export dialog reads the same choices from its opener button.
+        'version_choices_json': json.dumps(version_choices(survey)),
+        'has_files': Question.objects.filter(
+            survey_section__survey_header_id__in=service.scope_ids,
+            input_type__in=FILE_INPUT_TYPES,
+        ).exists(),
+        'ogr_available': OGR_AVAILABLE,
         # The resolved value, not the raw parameter: an unresolvable one (v99,
         # or 'draft' where no draft exists) must leave the picker showing what
         # is actually reported below it.
