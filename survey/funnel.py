@@ -667,10 +667,12 @@ class AcquisitionService:
                 'survey_name': '', 'split_known': False,
             }
 
+        # Sessions tagged `sample` are seeded demo data (seed_demo_survey), not visitors.
         total = (SurveySession.objects
                  .filter(survey=survey, is_deleted=False,
                          start_datetime__date__gte=self.start,
                          start_datetime__date__lte=self.end)
+                 .exclude(tags__contains=['sample'])
                  .count())
 
         opens = DemoOpen.objects.filter(

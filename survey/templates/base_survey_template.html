@@ -486,10 +486,27 @@ locale.{% endcomment %}
     // too narrow. Size to the viewport (not the document): a comfortable column on
     // desktop, nearly full width on a phone.
     function _subquestionPopupOptions() {
+        // On desktop the panel lies OVER the map, so Leaflet's auto-pan, which only
+        // keeps the popup inside the map container, happily opened it under the
+        // panel: the card lost its left edge and the answer form scrolled out of
+        // reach. Pad the pan by the open panel's width. On a phone the panel slides
+        // away before a popup opens (hidePanelForPopup), so no extra padding.
+        // The address search box sits at the map's top edge the same way; clear it too.
+        var panel = document.getElementById('info_page');
+        var search = document.querySelector('#map .map-search');
+        var left = 12, top = 12;
+        if (panel && !isMobile() && !panel.classList.contains('hidden')) {
+            left = Math.round(panel.getBoundingClientRect().right) + 12;
+        }
+        if (search) {
+            top = Math.round(search.getBoundingClientRect().bottom) + 8;
+        }
         return {
             maxWidth: Math.min(520, Math.round($(window).width() * 0.9)),
             minWidth: Math.min(300, Math.round($(window).width() * 0.9)),
-            maxHeight: Math.round($(window).height() * 0.7)
+            maxHeight: Math.round($(window).height() * 0.7),
+            autoPanPaddingTopLeft: L.point(left, top),
+            autoPanPaddingBottomRight: L.point(12, 12)
         };
     }
 

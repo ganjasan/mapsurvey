@@ -1,0 +1,192 @@
+[
+ {
+  "key": "cykelslangen",
+  "title": "Cykelslangen",
+  "category": "Cycle and foot bridge",
+  "description": "<p>The Cycle Snake: a bikes-only ramp that winds above the harbourfront between Dybbølsbro and Bryggebroen, so riders skip the stairs. Opened in 2014, about 220 m long.</p><p><em>Photo: kallerna, CC BY-SA 4.0, <a href=\"https://commons.wikimedia.org/wiki/File:Cykelslangen_2026_6.jpg\">Wikimedia Commons</a>. Location: OpenStreetMap contributors / Wikidata.</em></p>",
+  "link": "https://en.wikipedia.org/wiki/Cykelslangen",
+  "properties": {
+   "wikidata": "Q60537471"
+  },
+  "assets": [
+   {
+    "kind": "image",
+    "title": "Cykelslangen",
+    "position": 0,
+    "file": "layers/0/assets/cykelslangen.jpg",
+    "content_type": "image/jpeg"
+   }
+  ]
+ },
+ {
+  "key": "bryggebroen",
+  "title": "Bryggebroen",
+  "category": "Cycle and foot bridge",
+  "description": "<p>Cycle and foot bridge between Islands Brygge and Vesterbro. Opened in 2006, about 190 m long.</p><p><em>Photo: kallerna, CC BY-SA 4.0, <a href=\"https://commons.wikimedia.org/wiki/File:Bryggebroen_bridge_Copenhagen_4.jpg\">Wikimedia Commons</a>. Location: OpenStreetMap contributors / Wikidata.</em></p>",
+  "link": "https://en.wikipedia.org/wiki/Bryggebroen",
+  "properties": {
+   "wikidata": "Q2927205"
+  },
+  "assets": [
+   {
+    "kind": "image",
+    "title": "Bryggebroen",
+    "position": 0,
+    "file": "layers/0/assets/bryggebroen.jpg",
+    "content_type": "image/jpeg"
+   }
+  ]
+ },
+ {
+  "key": "inderhavnsbroen",
+  "title": "Inderhavnsbroen",
+  "category": "Cycle and foot bridge",
+  "description": "<p>Cycle and foot bridge between Nyhavn and Christianshavn. Its two halves slide apart to let ships through. Opened in 2016, about 180 m long.</p><p><em>Photo: European Commission, CC BY 4.0, <a href=\"https://commons.wikimedia.org/wiki/File:The_Inderhavnsbroen_(The_Inner_Harbour_Bridge)_5.jpg\">Wikimedia Commons</a>. Location: OpenStreetMap contributors / Wikidata.</em></p>",
+  "link": "https://en.wikipedia.org/wiki/Inderhavnsbroen",
+  "properties": {
+   "wikidata": "Q11977027"
+  },
+  "assets": [
+   {
+    "kind": "image",
+    "title": "Inderhavnsbroen",
+    "position": 0,
+    "file": "layers/0/assets/inderhavnsbroen.jpg",
+    "content_type": "image/jpeg"
+   }
+  ]
+ },
+ {
+  "key": "cirkelbroen",
+  "title": "Cirkelbroen",
+  "category": "Cycle and foot bridge",
+  "description": "<p>Five circular platforms across the mouth of Christianshavn Canal, designed by Olafur Eliasson. Opened in 2015.</p><p><em>Photo: Karen Mardahl, CC BY-SA 2.0, <a href=\"https://commons.wikimedia.org/wiki/File:Cirkelbroen_cph.jpg\">Wikimedia Commons</a>. Location: OpenStreetMap contributors / Wikidata.</em></p>",
+  "link": "https://en.wikipedia.org/wiki/Circle_Bridge",
+  "properties": {
+   "wikidata": "Q11963844"
+  },
+  "assets": [
+   {
+    "kind": "image",
+    "title": "Cirkelbroen",
+    "position": 0,
+    "file": "layers/0/assets/cirkelbroen.jpg",
+    "content_type": "image/jpeg"
+   }
+  ]
+ },
+ {
+  "key": "lille-langebro",
+  "title": "Lille Langebro",
+  "category": "Cycle and foot bridge",
+  "description": "<p>Cycle and foot swing bridge beside Langebro, between the city centre and Christianshavn. Opened in 2019, about 175 m long.</p><p><em>Photo: kallerna, CC BY-SA 4.0, <a href=\"https://commons.wikimedia.org/wiki/File:Lille_Langebro_winter_2026_3.jpg\">Wikimedia Commons</a>. Location: OpenStreetMap contributors / Wikidata.</em></p>",
+  "link": "https://en.wikipedia.org/wiki/Lille_Langebro",
+  "properties": {
+   "wikidata": "Q55748850"
+  },
+  "assets": [
+   {
+    "kind": "image",
+    "title": "Lille Langebro",
+    "position": 0,
+    "file": "layers/0/assets/lille-langebro.jpg",
+    "content_type": "image/jpeg"
+   }
+  ]
+ },
+ {
+  "key": "dronning-louises-bro",
+  "title": "Dronning Louises Bro",
+  "category": "Road bridge with cycle lanes",
+  "description": "<p>The bridge across the Lakes between the city centre and Nørrebro, from 1887. Wide cycle tracks carry some of the heaviest bike traffic in the city.</p><p><em>Photo: Orf3us, CC BY-SA 3.0, <a href=\"https://commons.wikimedia.org/wiki/File:Dronning_Louises_Bro_(K%C3%B8benhavn).JPG\">Wikimedia Commons</a>. Location: OpenStreetMap contributors / Wikidata.</em></p>",
+  "link": "https://en.wikipedia.org/wiki/Dronning_Louises_Bro",
+  "properties": {
+   "wikidata": "Q3428996"
+  },
+  "assets": [
+   {
+    "kind": "image",
+    "title": "Dronning Louises Bro",
+    "position": 0,
+    "file": "layers/0/assets/dronning-louises-bro.jpg",
+    "content_type": "image/jpeg"
+   }
+  ]
+ },
+ {
+  "key": "abuen",
+  "title": "Åbuen",
+  "category": "Cycle and foot bridge",
+  "description": "<p>Åbuen, the arch on the Nørrebro cycle route that takes riders over Ågade without a crossing. Opened in 2008, about 65 m long.</p><p><em>Photo: Leif Jørgensen, CC BY-SA 4.0, <a href=\"https://commons.wikimedia.org/wiki/File:%C3%85buen_03.JPG\">Wikimedia Commons</a>. Location: OpenStreetMap contributors / Wikidata.</em></p>",
+  "link": "https://www.wikidata.org/wiki/Q21337230",
+  "properties": {
+   "wikidata": "Q21337230"
+  },
+  "assets": [
+   {
+    "kind": "image",
+    "title": "Åbuen",
+    "position": 0,
+    "file": "layers/0/assets/abuen.jpg",
+    "content_type": "image/jpeg"
+   }
+  ]
+ },
+ {
+  "key": "teglvaerksbroen",
+  "title": "Teglværksbroen",
+  "category": "Road bridge with cycle lanes",
+  "description": "<p>Bridge across Teglværkshavnen in Sydhavnen, opened in 2011, with cycle paths on both sides.</p><p><em>Photo: News Oresund, CC BY 2.0, <a href=\"https://commons.wikimedia.org/wiki/File:Teglv%C3%A6rksbroen_20210903_Sydhavn_(cropped).jpg\">Wikimedia Commons</a>. Location: OpenStreetMap contributors / Wikidata.</em></p>",
+  "link": "https://en.wikipedia.org/wiki/Teglv%C3%A6rksbroen",
+  "properties": {
+   "wikidata": "Q3076002"
+  },
+  "assets": [
+   {
+    "kind": "image",
+    "title": "Teglværksbroen",
+    "position": 0,
+    "file": "layers/0/assets/teglvaerksbroen.jpg",
+    "content_type": "image/jpeg"
+   }
+  ]
+ },
+ {
+  "key": "knippelsbro",
+  "title": "Knippelsbro",
+  "category": "Road bridge with cycle lanes",
+  "description": "<p>Bascule road bridge from 1937 between the city centre and Christianshavn, with cycle lanes in both directions.</p><p><em>Photo: kallerna, CC BY-SA 4.0, <a href=\"https://commons.wikimedia.org/wiki/File:Knippelsbro_Copenhagen.jpg\">Wikimedia Commons</a>. Location: OpenStreetMap contributors / Wikidata.</em></p>",
+  "link": "https://en.wikipedia.org/wiki/Knippelsbro",
+  "properties": {
+   "wikidata": "Q491808"
+  },
+  "assets": [
+   {
+    "kind": "image",
+    "title": "Knippelsbro",
+    "position": 0,
+    "file": "layers/0/assets/knippelsbro.jpg",
+    "content_type": "image/jpeg"
+   }
+  ]
+ },
+ {
+  "key": "langebro",
+  "title": "Langebro",
+  "category": "Road bridge with cycle lanes",
+  "description": "<p>Bascule road bridge from 1954 between the city centre and Islands Brygge, with cycle lanes in both directions.</p><p><em>Photo: Sigfrid  Lundberg from Lund, Sweden, CC BY-SA 2.0, <a href=\"https://commons.wikimedia.org/wiki/File:Langebro_-RMS_Copenhagen.jpg\">Wikimedia Commons</a>. Location: OpenStreetMap contributors / Wikidata.</em></p>",
+  "link": "https://en.wikipedia.org/wiki/Langebro",
+  "properties": {
+   "wikidata": "Q944453"
+  },
+  "assets": [
+   {
+    "kind": "image",
+    "title": "Langebro",
+    "position": 0,
+    "file": "layers/0/assets/langebro.jpg",
+    "content_type": "image/jpeg"
+   }
+  ]
+ }
+]
