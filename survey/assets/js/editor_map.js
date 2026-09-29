@@ -47,8 +47,14 @@
     }
 
     function hasSize(map) {
-        var s = map.getSize();
-        return s.x > 0 && s.y > 0;
+        // The container itself, never map.getSize(): Leaflet caches the size it
+        // measured at construction and refreshes it only on invalidateSize(). A
+        // map built inside a hidden pane cached 0x0, so the ResizeObserver saw
+        // "still empty" on every callback and `ready` never ran -- the Overview
+        // thumbnail stayed on the world view with no answers drawn, unless some
+        // unrelated invalidateSize() happened to win the race first.
+        var el = map.getContainer();
+        return el.clientWidth > 0 && el.clientHeight > 0;
     }
 
     /* Calls fn(map) once the container has a size; returns a function that

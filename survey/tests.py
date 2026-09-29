@@ -45453,3 +45453,78 @@ class StarsDisplayStyleImportTest(TestCase):
         q = Question.objects.get(survey_section__survey_header=imported, input_type='rating')
         self.assertEqual(q.display_style, 'stars')
         self.assertEqual(imported.style_settings.get('rating_display_style'), 'stars')
+
+
+class LandingShowcaseRefreshTest(TestCase):
+    """See it in action + Capabilities rebuilt from the Copenhagen demo (landing-showcase-refresh)."""
+
+    def test_showcase_has_four_steps_with_screenshots(self):
+        """
+        GIVEN the landing page
+        WHEN it is rendered
+        THEN the showcase has BUILD, COLLECT, ANALYZE and SHARE rows, and every inline
+             and full-size screenshot it references exists in the assets
+        """
+        import os
+        from django.conf import settings as dj_settings
+        html = Client().get('/').content.decode()
+        start = html.index('id="showcase"')
+        showcase = html[start:html.index('</section>', start)]
+        for step in ('01 &middot; BUILD', '02 &middot; COLLECT', '03 &middot; ANALYZE', '04 &middot; SHARE'):
+            self.assertIn(step, showcase)
+        assets = os.path.join(dj_settings.BASE_DIR, 'survey', 'assets', 'img', 'landing')
+        for key in ('build', 'collect', 'analyze', 'share'):
+            for stem in (key, f'{key}-full'):
+                # {% static %} renders a hashed name (build.1a2b3c.webp) under the manifest storage.
+                self.assertRegex(showcase, rf'img/landing/{stem}\.(?:[0-9a-f]+\.)?webp')
+                self.assertTrue(os.path.exists(os.path.join(assets, f'{stem}.webp')), stem)
+
+    def test_capabilities_are_the_six_new_cards_without_stale_claims(self):
+        """
+        GIVEN the landing page
+        WHEN it is rendered
+        THEN the capabilities grid holds exactly the six new cards, and the stale
+             "13 question types" and "GeoJSON + CSV" claims are gone
+        """
+        html = Client().get('/').content.decode()
+        start = html.index('id="features"')
+        features = html[start:html.index('</section>', start)]
+        titles = ['Questions made for maps', 'Your data on the map', 'A map people build together',
+                  'Built to be answered', 'Clean and analyse', 'Export and publish']
+        self.assertEqual(features.count('class="feature-card__title"'), 6)
+        for title in titles:
+            self.assertIn(title, features)
+        self.assertNotIn('13 question types', html)
+        self.assertNotIn('GeoJSON + CSV', html)
+
+
+class EditorMapSizingGuardTest(SimpleTestCase):
+    """Guards for the Overview thumbnail that stayed on the world view (landing-showcase-refresh)."""
+
+    def _read(self, *parts):
+        import os
+        from django.conf import settings as dj_settings
+        with open(os.path.join(dj_settings.BASE_DIR, *parts), encoding='utf-8') as fh:
+            return fh.read()
+
+    def test_has_size_measures_the_container(self):
+        """
+        GIVEN editor_map.js
+        WHEN hasSize decides whether a map can draw
+        THEN it reads the container's size, never Leaflet's size cached at construction
+        """
+        js = self._read('survey', 'assets', 'js', 'editor_map.js')
+        body = js[js.index('function hasSize'):js.index('function whenSized')]
+        code = '\n'.join(l for l in body.splitlines() if not l.strip().startswith('//'))
+        self.assertIn('clientWidth', code)
+        self.assertNotIn('getSize()', code)
+
+    def test_overview_start_view_is_not_set_after_mount(self):
+        """
+        GIVEN the Overview pane script
+        WHEN the thumbnail map is mounted
+        THEN its world view is a construction option, and no setView follows mount()
+        """
+        tpl = self._read('survey', 'templates', 'editor', 'partials', 'analytics_overview_pane.html')
+        self.assertIn('center: [0, 0], zoom: 2', tpl)
+        self.assertNotIn('m.setView(', tpl)

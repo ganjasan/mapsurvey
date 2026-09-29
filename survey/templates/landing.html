@@ -38,53 +38,70 @@
 </section>
 
 {# ===== Product showcase ===== #}
+{% comment %}
+Screenshots are taken from the "Cycling in Copenhagen" demo (seed_demo_survey), so the
+page shows the survey a visitor can open themselves. 1920x1200 for the lightbox,
+1200x750 inline (change landing-showcase-refresh).
+{% endcomment %}
 <section class="showcase" id="showcase">
     <div class="landing-inner">
         <p class="section-eyebrow reveal">{% trans "See it in action" %}</p>
-        <h2 class="section-heading reveal">{% trans "From a blank map to shareable insight" %}</h2>
+        <h2 class="section-heading reveal">{% trans "From a brief to published results" %}</h2>
 
         <div class="showcase-row reveal">
             <div class="showcase-row__media">
                 <button type="button" class="shot" data-shot="{% static 'img/landing/build-full.webp' %}" aria-label="{% trans 'Enlarge screenshot' %}">
                     <span class="shot__chrome"><i></i><i></i><i></i></span>
-                    <img src="{% static 'img/landing/build.webp' %}" alt="{% trans 'Mapsurvey question editor: question types, including map questions, with a live preview' %}" loading="lazy">
+                    <img src="{% static 'img/landing/build.webp' %}" alt="{% trans 'Mapsurvey layer editor: ten Copenhagen cycling bridges with categories, photos and descriptions' %}" loading="lazy">
                     <span class="shot__zoom" aria-hidden="true">⤢</span>
                 </button>
             </div>
             <div class="showcase-row__text">
                 <div class="showcase-step">01 &middot; {% trans "BUILD" %}</div>
-                <h3>{% trans "AI drafts it, you edit visually" %}</h3>
-                <p>{% trans "Describe your project and AI writes the sections, questions and translations for you. Then change anything in the drag-and-drop editor with a live preview — text, choice and rating questions, plus points, lines and areas on the map. No code." %}</p>
+                <h3>{% trans "AI drafts it, your data goes on the map" %}</h3>
+                <p>{% trans "Describe the project and AI drafts the sections, questions and translations. Then add your own layers — GeoJSON or CSV, with photos, categories and a legend — so people can answer about the places you already know." %}</p>
             </div>
         </div>
-
         <div class="showcase-row showcase-row--reverse reveal">
             <div class="showcase-row__media">
                 <button type="button" class="shot" data-shot="{% static 'img/landing/collect-full.webp' %}" aria-label="{% trans 'Enlarge screenshot' %}">
                     <span class="shot__chrome"><i></i><i></i><i></i></span>
-                    <img src="{% static 'img/landing/collect.webp' %}" alt="{% trans 'Respondents answer on an interactive map' %}" loading="lazy">
+                    <img src="{% static 'img/landing/collect.webp' %}" alt="{% trans 'A respondent opens a bridge card with a photo, reactions from others and a thumbs up or down question' %}" loading="lazy">
                     <span class="shot__zoom" aria-hidden="true">⤢</span>
                 </button>
             </div>
             <div class="showcase-row__text">
                 <div class="showcase-step">02 &middot; {% trans "COLLECT" %}</div>
-                <h3>{% trans "Collect on a map" %}</h3>
-                <p>{% trans "Respondents mark places, draw routes, and outline areas directly on the map — mobile-friendly and multilingual." %}</p>
+                <h3>{% trans "People answer on the map" %}</h3>
+                <p>{% trans "Respondents open your objects, rate them and comment, mark places, draw routes, add photos, and see what others marked. Questions adapt to earlier answers. It works on any phone, in their language." %}</p>
             </div>
         </div>
-
         <div class="showcase-row reveal">
             <div class="showcase-row__media">
                 <button type="button" class="shot" data-shot="{% static 'img/landing/analyze-full.webp' %}" aria-label="{% trans 'Enlarge screenshot' %}">
                     <span class="shot__chrome"><i></i><i></i><i></i></span>
-                    <img src="{% static 'img/landing/analyze.webp' %}" alt="{% trans 'Mapsurvey analytics dashboard' %}" loading="lazy">
+                    <img src="{% static 'img/landing/analyze.webp' %}" alt="{% trans 'Mapsurvey Responses map: routes, unsafe spots and bridges across Copenhagen' %}" loading="lazy">
                     <span class="shot__zoom" aria-hidden="true">⤢</span>
                 </button>
             </div>
             <div class="showcase-row__text">
                 <div class="showcase-step">03 &middot; {% trans "ANALYZE" %}</div>
-                <h3>{% trans "Analyze & share" %}</h3>
-                <p>{% trans "Response maps, charts, and a completion funnel in one dashboard. Publish a public results page or export GeoJSON + CSV." %}</p>
+                <h3>{% trans "Every answer on one map" %}</h3>
+                <p>{% trans "Filter and select answers right on the map, flag and clean responses, and see where people drop off. Export to Excel, GeoPackage, Shapefile, KML or GeoJSON when the work moves to GIS." %}</p>
+            </div>
+        </div>
+        <div class="showcase-row showcase-row--reverse reveal">
+            <div class="showcase-row__media">
+                <button type="button" class="shot" data-shot="{% static 'img/landing/share-full.webp' %}" aria-label="{% trans 'Enlarge screenshot' %}">
+                    <span class="shot__chrome"><i></i><i></i><i></i></span>
+                    <img src="{% static 'img/landing/share.webp' %}" alt="{% trans 'Public results page with the response count, a link to take the survey, and charts' %}" loading="lazy">
+                    <span class="shot__zoom" aria-hidden="true">⤢</span>
+                </button>
+            </div>
+            <div class="showcase-row__text">
+                <div class="showcase-step">04 &middot; {% trans "SHARE" %}</div>
+                <h3>{% trans "Publish what you heard" %}</h3>
+                <p>{% trans "Turn the answers into a public results page with maps and charts. Small groups are masked to protect privacy. Keep it live while the survey runs, or freeze it when the consultation closes." %}</p>
             </div>
         </div>
     </div>
@@ -133,7 +150,7 @@
                     <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M8 26C8 22 11.6 18 16 18C20.4 18 24 22 24 26" stroke="currentColor" stroke-width="1.5"/><path d="M16 8V16M12 12H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </div>
                 <h3 class="use-case-card__title">{% trans "Researchers & Students" %}</h3>
-                <p class="use-case-card__text">{% trans "Run spatial studies without expensive platforms. Download GeoJSON + CSV, analyze in QGIS, R, or Python. Cite the open-source tool in your papers." %}</p>
+                <p class="use-case-card__text">{% trans "Run spatial studies without expensive platforms. Download GeoJSON, GeoPackage, Shapefile or CSV and analyze in QGIS, R, or Python. Cite the open-source tool in your papers." %}</p>
             </div>
             <div class="use-case-card reveal reveal-delay-2">
                 <div class="use-case-card__icon">
@@ -179,49 +196,49 @@
 <section class="features" id="features">
     <div class="landing-inner">
         <p class="section-eyebrow reveal">{% trans "Capabilities" %}</p>
-        <h2 class="section-heading reveal">{% trans "Everything you need for spatial surveys" %}</h2>
+        <h2 class="section-heading reveal">{% trans "Everything a map-based consultation needs" %}</h2>
         <div class="features__grid">
             <div class="feature-card reveal">
                 <div class="feature-card__icon">
-                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M14 20V26" stroke="currentColor" stroke-width="1.5"/><path d="M10 24H18" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="12" r="3" fill="currentColor" opacity="0.2"/></svg>
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 25s-8-7.4-8-13a8 8 0 0116 0c0 5.6-8 13-8 13z" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="12" r="3" fill="currentColor" opacity="0.25"/><path d="M4 22l5-2M24 22l-5-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/></svg>
                 </div>
-                <h3 class="feature-card__title">{% trans "Interactive map surveys" %}</h3>
-                <p class="feature-card__text">{% trans "Respondents mark places, draw routes, and outline areas directly on the map. Mobile-friendly with crosshair mode for precise input." %}</p>
+                <h3 class="feature-card__title">{% trans "Questions made for maps" %}</h3>
+                <p class="feature-card__text">{% trans "Points, lines and areas, as many as a person needs, each with its own follow-up questions and photo. Pick a marker icon from almost two thousand, and let people search for an address." %}</p>
             </div>
             <div class="feature-card reveal reveal-delay-1">
                 <div class="feature-card__icon">
-                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="5" width="22" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M10 5V3M18 5V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M3 10H25" stroke="currentColor" stroke-width="1.5"/><rect x="6" y="13" width="5" height="3" rx="0.5" fill="currentColor" opacity="0.2"/><rect x="13" y="13" width="5" height="3" rx="0.5" fill="currentColor" opacity="0.2"/><rect x="6" y="18" width="5" height="3" rx="0.5" fill="currentColor" opacity="0.2"/></svg>
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 4L25 10L14 16L3 10L14 4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M3 14.5L14 20.5L25 14.5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M3 19L14 25L25 19" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" opacity="0.5"/></svg>
                 </div>
-                <h3 class="feature-card__title">{% trans "Visual survey editor" %}</h3>
-                <p class="feature-card__text">{% trans "Drag-and-drop editor with live preview. 13 question types including text, choice, rating, image, and three map types. Sub-questions, sections, translations — no coding required." %}</p>
+                <h3 class="feature-card__title">{% trans "Your data on the map" %}</h3>
+                <p class="feature-card__text">{% trans "Upload GeoJSON or CSV layers with photos, categories and a legend, then ask about each object: thumbs up or down, a comment, a rating. Your list of sites becomes the survey." %}</p>
             </div>
             <div class="feature-card reveal reveal-delay-2">
                 <div class="feature-card__icon">
-                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="11" stroke="currentColor" stroke-width="1.5"/><path d="M14 3V25M3 14H25" stroke="currentColor" stroke-width="1" opacity="0.3"/><text x="7" y="13" font-size="7" fill="currentColor" font-weight="600">A</text><text x="16" y="19" font-size="7" fill="currentColor" font-weight="600">&#1041;</text></svg>
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="9" cy="10" r="4" stroke="currentColor" stroke-width="1.5"/><circle cx="19" cy="10" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M3 23c0-3.3 2.7-6 6-6s6 2.7 6 6M13 23c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </div>
-                <h3 class="feature-card__title">{% trans "Multilingual surveys" %}</h3>
-                <p class="feature-card__text">{% trans "One survey, multiple languages. Questions, choices, and the thank-you page all support translation. Respondents pick their language on entry." %}</p>
+                <h3 class="feature-card__title">{% trans "A map people build together" %}</h3>
+                <p class="feature-card__text">{% trans "Respondents see what others marked and react to it, so a consultation turns into a conversation. You moderate what is shown, or approve each mark first." %}</p>
             </div>
-            <div class="feature-card reveal reveal-delay-3">
+            <div class="feature-card reveal">
+                <div class="feature-card__icon">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="7" cy="6" r="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="7" cy="22" r="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="21" cy="14" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M7 8.5V19.5M7 12c0 2 3 2 11.5 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </div>
+                <h3 class="feature-card__title">{% trans "Built to be answered" %}</h3>
+                <p class="feature-card__text">{% trans "AI drafts the survey from a short brief. Questions and sections adapt to earlier answers; star ratings, rankings, sliders and an “Other” option are built in. 75 languages, any phone." %}</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-1">
                 <div class="feature-card__icon">
                     <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="6" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><polyline points="7 18 11 13 15 16 19 10 23 12" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="13" r="1.5" fill="currentColor" opacity="0.3"/></svg>
                 </div>
-                <h3 class="feature-card__title">{% trans "Built-in analytics" %}</h3>
-                <p class="feature-card__text">{% trans "Response maps, charts, completion funnel, device breakdown, and time-on-section — all in one dashboard. Track campaigns with UTM links and shareable pages." %}</p>
+                <h3 class="feature-card__title">{% trans "Clean and analyse" %}</h3>
+                <p class="feature-card__text">{% trans "Select and filter answers on the map, flag incomplete or doubtful responses, tag them and add notes. See completion, drop-off and which links brought people in." %}</p>
             </div>
-            <div class="feature-card reveal reveal-delay-4">
+            <div class="feature-card reveal reveal-delay-2">
                 <div class="feature-card__icon">
-                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="10" cy="10" r="5" stroke="currentColor" stroke-width="1.5"/><circle cx="18" cy="18" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M14 7C15.5 8.5 15.5 11.5 14 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 15C12.5 16.5 12.5 19.5 14 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 4V17M9 12L14 17L19 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18V23H23V18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
-                <h3 class="feature-card__title">{% trans "Team collaboration" %}</h3>
-                <p class="feature-card__text">{% trans "Create organizations, invite team members with roles, and collaborate on surveys. Survey versioning keeps your published data safe while you edit the next draft." %}</p>
-            </div>
-            <div class="feature-card reveal reveal-delay-5">
-                <div class="feature-card__icon">
-                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 22L6 8L14 4L22 8V22" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 8L14 12L22 8" stroke="currentColor" stroke-width="1.5"/><path d="M14 12V26" stroke="currentColor" stroke-width="1.5"/></svg>
-                </div>
-                <h3 class="feature-card__title">{% trans "Export to GIS" %}</h3>
-                <p class="feature-card__text">{% trans "Download responses as GeoJSON + CSV in a single ZIP — ready for QGIS, ArcGIS, R, or Python. Export by version. Import and reuse survey structures across projects." %}</p>
+                <h3 class="feature-card__title">{% trans "Export and publish" %}</h3>
+                <p class="feature-card__text">{% trans "Excel, GeoPackage, Shapefile, KML, GeoJSON and CSV for your GIS. A public results page with privacy masking, and comment threads so your team works in one place." %}</p>
             </div>
         </div>
     </div>
