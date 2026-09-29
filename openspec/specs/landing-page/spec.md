@@ -2,7 +2,6 @@
 
 ## Purpose
 The public marketing page at the root URL — its own base template, section layout, hero and contact CTAs, navbar and footer — kept separate from the authenticated editor chrome.
-
 ## Requirements
 ### Requirement: Public landing page at root URL
 The system SHALL serve a public landing page at `/` for all visitors (anonymous and authenticated).
@@ -35,44 +34,32 @@ The landing page SHALL use `base_landing.html` as its base template, independent
 - **THEN** those pages SHALL continue using `base.html` with Bootstrap 4
 
 ### Requirement: Hero section with contact CTA
-The landing page SHALL display a hero section as the first visible content, with the primary call-to-action being to contact us about ordering a survey.
+The landing page SHALL display a hero section as the first visible content with exactly two buttons: a primary one to start on your own and a secondary one to book a call with us. The demo survey, when configured, SHALL be offered as a text link under the buttons, not as a third button. The hero SHALL NOT make hosting or compliance claims.
 
-#### Scenario: Hero content
+#### Scenario: Hero buttons for an anonymous visitor
+- **WHEN** an unauthenticated visitor views the landing page and `BOOK_A_CALL_URL` is set
+- **THEN** the hero SHALL show a primary "Create your Mapsurvey" button linking to registration
+- **AND** a secondary "Book a 30-min call" button linking to `BOOK_A_CALL_URL` in a new tab
+
+#### Scenario: Hero for a signed-in user
+- **WHEN** an authenticated user views the landing page
+- **THEN** the primary hero button SHALL be "Go to Dashboard" linking to the editor
+
+#### Scenario: Demo survey as a text link
+- **WHEN** `DEMO_SURVEY_URL` is set
+- **THEN** the hero SHALL show a text link to the demo survey beneath the buttons
+
+#### Scenario: No unbacked claims in the hero
 - **WHEN** the landing page is rendered
-- **THEN** the hero section SHALL display a headline, a short value-proposition description targeting architecture and urban planning professionals, and a primary CTA button "Order a Survey"
-
-#### Scenario: Hero primary CTA
-- **WHEN** a visitor clicks the "Order a Survey" button in the hero
-- **THEN** the page SHALL scroll to the contact section
-
-#### Scenario: Hero secondary CTA
-- **WHEN** the landing page is rendered
-- **THEN** the hero SHALL include a secondary "Browse Surveys" button that scrolls to the survey cards section
-
-### Requirement: How it works section
-The landing page SHALL display a "How it works" section explaining the service flow in 3 steps.
-
-#### Scenario: Steps content
-- **WHEN** the landing page is rendered
-- **THEN** the how-it-works section SHALL display three steps: (1) describe your task, (2) we create a geo-survey, (3) you get data and maps
-
-### Requirement: Contact section
-The landing page SHALL display a contact section with email and Telegram links for ordering surveys.
-
-#### Scenario: Contact channels
-- **WHEN** the landing page is rendered
-- **THEN** the contact section SHALL display an email link (mailto:) and a Telegram link (t.me/)
-
-#### Scenario: Contact settings from configuration
-- **WHEN** the landing page is rendered
-- **THEN** the contact email and Telegram handle SHALL be read from Django settings (`CONTACT_EMAIL`, `CONTACT_TELEGRAM`)
+- **THEN** the hero badges SHALL NOT include "GDPR-Friendly" or any claim about where data is hosted
 
 ### Requirement: Page sections layout
-The landing page SHALL be organized in full-width sections in the following order: hero, how-it-works, survey cards, stories, contact, footer.
+The landing page SHALL be organized in full-width sections in the following order: hero, product showcase, use cases, demo, capabilities, how to start, footer.
 
 #### Scenario: Section ordering
 - **WHEN** the landing page is rendered
-- **THEN** sections SHALL appear in order: hero, how-it-works, surveys, stories, contact, footer
+- **THEN** sections SHALL appear in order: hero, showcase, use cases, demo, capabilities, how to start, footer
+- **AND** there SHALL be no separate mid-page or final call-to-action section besides "How to start"
 
 #### Scenario: Full-width layout
 - **WHEN** the landing page is rendered
@@ -94,6 +81,40 @@ The landing page SHALL have its own navbar with the Mapsurvey brand, navigation 
 The landing page SHALL display a footer with contact info, navigation links, and copyright.
 
 #### Scenario: Footer content
-- **WHEN** the landing page is rendered
-- **THEN** the footer SHALL display email and Telegram contact links, navigation links (Surveys, Stories), and a copyright line
+- **WHEN** a page built on `base_landing.html` is rendered and `BOOK_A_CALL_URL` is set
+- **THEN** the footer "Connect" column SHALL offer a "Book a call" link to `BOOK_A_CALL_URL`, alongside email, Telegram and GitHub
+- **AND** the footer SHALL NOT link to Discord
 - **AND** the footer SHALL NOT display any login or registration links
+
+### Requirement: How to start section
+The landing page SHALL display a "How to start" section that offers two paths side by side: building the survey yourself for free, and building it with us under a fixed quote. Each path SHALL carry exactly one button.
+
+#### Scenario: Two paths
+- **WHEN** the landing page is rendered
+- **THEN** the "How to start" section SHALL show a "Build it yourself" card with three steps and a "Create your Mapsurvey" button (or "Go to Dashboard" for a signed-in user)
+- **AND** a "Build it with us" card with three steps, a "Book a 30-min call" button linking to `BOOK_A_CALL_URL`, and a text link to `/services/`
+
+#### Scenario: Booking not configured
+- **WHEN** `BOOK_A_CALL_URL` is empty
+- **THEN** the "Build it with us" card SHALL still render, and its button SHALL link to `/services/` instead
+
+#### Scenario: Stacked on a phone
+- **WHEN** the viewport is narrower than 760px
+- **THEN** the two cards SHALL stack vertically with the "Build it yourself" card first
+
+### Requirement: Book-a-call target from configuration
+Every "Book a call" control on the public marketing pages SHALL take its URL from the `BOOK_A_CALL_URL` setting (environment variable, default the Mapsurvey Cal.com booking page), exposed to templates by the `contact` context processor. Discord SHALL NOT be offered on any public page.
+
+#### Scenario: Services page call buttons
+- **WHEN** `/services/` is rendered and `BOOK_A_CALL_URL` is set
+- **THEN** both "Book a short call" buttons SHALL link to `BOOK_A_CALL_URL`
+- **AND** when `BOOK_A_CALL_URL` is empty they SHALL fall back to a `mailto:` link to `CONTACT_EMAIL`
+
+#### Scenario: Educators page
+- **WHEN** `/for-educators/` is rendered and `BOOK_A_CALL_URL` is set
+- **THEN** its hero SHALL offer "Book a call" instead of a Discord link
+
+#### Scenario: Click is measured
+- **WHEN** a visitor clicks any Book-a-call control and PostHog is loaded
+- **THEN** a `book_call_clicked` event SHALL be captured with the surface it was clicked on and no other visitor data
+
