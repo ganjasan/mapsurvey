@@ -542,7 +542,8 @@ CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'konuchovartem@mapsurvey.org')
 CONTACT_TELEGRAM = os.environ.get('CONTACT_TELEGRAM', 'Konuchovartem')
 GITHUB_REPO_URL = os.environ.get('GITHUB_REPO_URL', 'https://github.com/ganjasan/mapsurvey')
 DEMO_SURVEY_URL = os.environ.get('DEMO_SURVEY_URL', '')
-DISCORD_INVITE_URL = os.environ.get('DISCORD_INVITE_URL', 'https://discord.gg/v6YYw3zjKH')
+# The "Build it with us" path: every Book-a-call button on the marketing pages.
+BOOK_A_CALL_URL = os.environ.get('BOOK_A_CALL_URL', 'https://cal.com/mapsurvey-artem/mapsurvey-call')
 
 # Mobile-adaptive layout kill switches (openspec: mobile-adaptive-refactor).
 # ON by default (owner decision at PR time). Setting the env var to False

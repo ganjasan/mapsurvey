@@ -19098,6 +19098,114 @@ class ForGovernmentLandingTest(TestCase):
         self.assertContains(c.get("/robots.txt"), "/for-government/")
 
 
+@override_settings(BOOK_A_CALL_URL="https://cal.example/mapsurvey-call")
+class LandingTwoPathsTest(TestCase):
+    """The landing page ends in "How to start": build it yourself, or with us (landing-two-paths)."""
+
+    BOOKING = "https://cal.example/mapsurvey-call"
+
+    def test_hero_offers_register_and_booking(self):
+        """
+        GIVEN an anonymous visitor and a configured booking page
+        WHEN the landing page is rendered
+        THEN the hero carries "Create your Mapsurvey" and "Book a 30-min call",
+             and the booking link opens the calendar in a new tab
+        """
+        resp = Client().get("/")
+        self.assertContains(resp, "Create your Mapsurvey")
+        self.assertContains(resp, 'href="%s" class="btn-secondary-landing" target="_blank" rel="noopener" data-book-call="hero"' % self.BOOKING, html=False)
+
+    @override_settings(DEMO_SURVEY_URL="/surveys/demo/")
+    def test_demo_is_a_text_link_not_a_hero_button(self):
+        """
+        GIVEN a configured demo survey
+        WHEN the landing page is rendered
+        THEN the demo is offered as a text link under the hero buttons
+        """
+        resp = Client().get("/")
+        self.assertContains(resp, 'class="hero__demo-link"')
+        self.assertContains(resp, "or try a 2-minute demo survey")
+        self.assertNotContains(resp, "Try Demo Survey")
+
+    def test_how_to_start_shows_both_paths(self):
+        """
+        GIVEN an anonymous visitor
+        WHEN the landing page is rendered
+        THEN "How to start" shows the free path with a register button and the
+             with-us path with a booking button and a link to /services/
+        """
+        resp = Client().get("/")
+        self.assertContains(resp, 'id="how-to-start"')
+        self.assertContains(resp, "Build it yourself")
+        self.assertContains(resp, "Build it with us")
+        self.assertContains(resp, 'data-book-call="how_to_start"')
+        self.assertContains(resp, 'href="/services/" class="path-card__link"')
+
+    @override_settings(BOOK_A_CALL_URL="")
+    def test_with_us_path_falls_back_to_services(self):
+        """
+        GIVEN no booking page is configured
+        WHEN the landing page is rendered
+        THEN the with-us card still renders and its button goes to /services/,
+             and no booking control appears anywhere on the page
+        """
+        resp = Client().get("/")
+        self.assertContains(resp, "Build it with us")
+        self.assertContains(resp, 'href="/services/" class="btn-primary-landing btn-primary-landing--dark"')
+        self.assertNotContains(resp, "data-book-call=")
+
+    def test_signed_in_user_goes_to_dashboard_from_the_free_path(self):
+        """
+        GIVEN a signed-in user
+        WHEN the landing page is rendered
+        THEN both the hero and the free path lead to the dashboard, not registration
+        """
+        user = User.objects.create_user("twopaths", password="pw")
+        c = Client()
+        c.force_login(user)
+        html = c.get("/").content.decode()
+        start = html.index('id="how-to-start"')
+        section = html[start:html.index("</section>", start)]
+        hero = html[html.index('id="hero"'):start]
+        for part in (hero, section):
+            self.assertIn('href="/editor/" class="btn-primary-landing">Go to Dashboard', part)
+            self.assertNotIn("/accounts/register/", part)
+
+    def test_no_discord_and_no_unbacked_hosting_claims(self):
+        """
+        GIVEN the landing, educators and services pages
+        WHEN each is rendered
+        THEN none links to Discord, the footer offers "Book a call", and the
+             landing page makes no GDPR or "your infrastructure" claim
+        """
+        for url in ("/", "/for-educators/", "/services/"):
+            resp = Client().get(url)
+            self.assertEqual(resp.status_code, 200, url)
+            self.assertNotContains(resp, "discord", msg_prefix=url)
+            self.assertContains(resp, 'data-book-call="footer"', msg_prefix=url)
+        landing = Client().get("/")
+        self.assertNotContains(landing, "GDPR-Friendly")
+        self.assertNotContains(landing, "stays on your infrastructure")
+
+    def test_educators_hero_offers_booking(self):
+        """
+        GIVEN a configured booking page
+        WHEN /for-educators/ is rendered
+        THEN its hero offers "Book a call" to the booking page
+        """
+        resp = Client().get("/for-educators/")
+        self.assertContains(resp, 'data-book-call="educators"')
+
+    def test_booking_clicks_are_measured_by_surface_only(self):
+        """
+        GIVEN a page built on the landing base template
+        WHEN it is rendered
+        THEN it carries the book_call_clicked listener, which sends only the surface
+        """
+        resp = Client().get("/")
+        self.assertContains(resp, "posthog.capture('book_call_clicked', { surface: link.getAttribute('data-book-call') })")
+
+
 class ServicesPageTest(TestCase):
     """Expert-help service page: optional paid help on top of the free platform."""
 
@@ -19106,14 +19214,26 @@ class ServicesPageTest(TestCase):
         GIVEN the services page
         WHEN an anonymous visitor requests it
         THEN it renders with the two help tiers, the "stays free" reassurance,
-             and the mailto call-to-action
+             and both call buttons pointing at the booking page
         """
         resp = Client().get("/services/")
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Launch help")
         self.assertContains(resp, "Done-with-you engagement")
         self.assertContains(resp, "free and open source")
-        self.assertContains(resp, "mailto:konuchovartem@mapsurvey.org")
+        self.assertContains(resp, 'data-book-call="services"', count=2)
+        self.assertNotContains(resp, "mailto:konuchovartem@mapsurvey.org?subject=")
+
+    @override_settings(BOOK_A_CALL_URL="")
+    def test_call_buttons_fall_back_to_mail_without_booking_page(self):
+        """
+        GIVEN no booking page is configured
+        WHEN the services page is requested
+        THEN both "Book a short call" buttons fall back to a mailto link
+        """
+        resp = Client().get("/services/")
+        self.assertContains(resp, "mailto:konuchovartem@mapsurvey.org?subject=", count=2)
+        self.assertNotContains(resp, "data-book-call=")
 
     def test_in_sitemap_and_robots(self):
         """

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Landing: two ways to start — mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-primary:#1B2A4A;--color-primary-light:#2A3F6B;
+  --color-accent:#0FA58E;--color-accent-hover:#0D8F7A;--color-accent-light:rgba(15,165,142,.12);
+  --color-bg:#F7F5F0;--color-bg-warm:#EFECE5;--color-bg-elevated:#fff;
+  --color-text:#1B2A4A;--color-text-secondary:#5A6680;--color-text-tertiary:#8A94A8;
+  --color-border:#D4CFC6;--color-border-light:#E4E0D8;
+  --font-display:'Instrument Sans',system-ui,sans-serif;--font-body:'Source Serif 4',Georgia,serif;
+  --radius-md:8px;--radius-lg:12px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)}
+.note{font-family:var(--font-display);font-size:.8rem;letter-spacing:.04em;text-transform:uppercase;color:#b4532a;background:#fff4ec;border:1px dashed #e0a27f;padding:.5rem .9rem;border-radius:6px;display:inline-block;margin:0 0 1rem}
+.frame{max-width:1160px;margin:0 auto;padding:3rem 2rem}
+.divider{border:0;border-top:1px dashed var(--color-border);margin:0}
+
+/* buttons, as in landing.css */
+.btn-primary{display:inline-flex;align-items:center;gap:.5rem;background:var(--color-accent);color:#fff;font-family:var(--font-display);font-weight:600;font-size:1rem;padding:.85rem 1.6rem;border-radius:var(--radius-md);text-decoration:none}
+.btn-primary:hover{background:var(--color-accent-hover)}
+.btn-dark{background:var(--color-primary)}
+.btn-dark:hover{background:var(--color-primary-light)}
+.btn-secondary{display:inline-flex;align-items:center;gap:.5rem;border:1.5px solid var(--color-border);color:var(--color-text);font-family:var(--font-display);font-weight:600;font-size:1rem;padding:.8rem 1.5rem;border-radius:var(--radius-md);text-decoration:none;background:transparent}
+.textlink{font-family:var(--font-display);font-size:.95rem;color:var(--color-text-secondary);text-decoration:underline;text-underline-offset:3px}
+
+/* hero (only the CTA part changes) */
+.hero h1{font-family:var(--font-display);font-size:clamp(2rem,4.5vw,3.4rem);line-height:1.1;margin:0 0 1rem;max-width:18ch}
+.hero p{font-size:1.2rem;color:var(--color-text-secondary);max-width:40ch;margin:0 0 2rem}
+.hero .ctas{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.hero .demo{margin-top:1rem}
+.badges{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.75rem}
+.badge{font-family:var(--font-display);font-size:.8rem;padding:.3rem .7rem;border:1px solid var(--color-border);border-radius:99px;color:var(--color-text-secondary)}
+.badge.removed{text-decoration:line-through;opacity:.45}
+
+/* how to start */
+.eyebrow{font-family:var(--font-display);font-size:.8rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--color-accent);margin:0 0 .6rem}
+.heading{font-family:var(--font-display);font-size:clamp(1.7rem,3vw,2.4rem);margin:0 0 .75rem}
+.lede{color:var(--color-text-secondary);font-size:1.1rem;margin:0 0 2.5rem;max-width:52ch}
+.paths{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.path{background:var(--color-bg-elevated);border:1px solid var(--color-border-light);border-radius:var(--radius-lg);padding:2rem;display:flex;flex-direction:column}
+.path--us{background:var(--color-bg-warm)}
+.tag{font-family:var(--font-display);font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-tertiary);margin-bottom:.6rem}
+.path h3{font-family:var(--font-display);font-size:1.5rem;margin:0 0 .4rem}
+.for{color:var(--color-text-secondary);margin:0 0 1.5rem}
+ol{list-style:none;counter-reset:s;padding:0;margin:0 0 2rem;flex:1}
+ol li{counter-increment:s;position:relative;padding-left:2.4rem;margin-bottom:1rem;line-height:1.5}
+ol li::before{content:counter(s);position:absolute;left:0;top:-.05rem;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--color-accent-light);color:var(--color-accent);font-family:var(--font-display);font-weight:700;font-size:.85rem;display:grid;place-items:center}
+.path--us ol li::before{background:rgba(27,42,74,.08);color:var(--color-primary)}
+.actions{display:flex;flex-wrap:wrap;gap:1rem;align-items:center}
+.fine{font-family:var(--font-display);font-size:.85rem;color:var(--color-text-tertiary);margin-top:1rem}
+
+.phone{width:390px;margin:0 auto;border:10px solid #222;border-radius:32px;overflow:hidden;background:var(--color-bg)}
+.phone .frame{padding:2rem 16px}
+.phone .paths{grid-template-columns:1fr}
+.phone .path{padding:1.5rem}
+@media (max-width:760px){.paths{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <span class="note">1 · Hero: only the buttons and badges change</span>
+  <section class="hero">
+    <h1>The easiest way to collect geographic data</h1>
+    <p>Think Google Forms — but people answer by drawing points, lines, and areas on a map. Free to start, no coding required.</p>
+    <div class="ctas">
+      <a class="btn-primary" href="#">Create your Mapsurvey</a>
+      <a class="btn-secondary" href="#">📅 Book a 30-min call</a>
+    </div>
+    <div class="demo"><a class="textlink" href="#">or try a 2-minute demo survey →</a></div>
+    <div class="badges">
+      <span class="badge">Open Source</span>
+      <span class="badge">Free to Start</span>
+      <span class="badge">No Coding Required</span>
+      <span class="badge">You own the data</span>
+      <span class="badge removed">GDPR-Friendly</span>
+    </div>
+  </section>
+</div>
+
+<hr class="divider">
+
+<div class="frame">
+  <span class="note">2 · Replaces “Ready to create your own?” and the final Discord/GitHub block</span>
+  <section>
+    <p class="eyebrow">How to start</p>
+    <h2 class="heading">Two ways to get your map survey live</h2>
+    <p class="lede">Most people build it themselves in an afternoon. If you have a deadline, a council to report to, or no time — we build it with you.</p>
+
+    <div class="paths">
+      <div class="path">
+        <div class="tag">On your own · Free</div>
+        <h3>Build it yourself</h3>
+        <p class="for">For anyone with a place and a question.</p>
+        <ol>
+          <li>Describe the place and who should answer.</li>
+          <li>AI drafts the survey in about a minute. Change anything.</li>
+          <li>Publish, share the link or QR code, watch answers land on the map.</li>
+        </ol>
+        <div class="actions">
+          <a class="btn-primary" href="#">Create your Mapsurvey</a>
+        </div>
+        <div class="fine">Free to start · no card · no coding</div>
+      </div>
+
+      <div class="path path--us">
+        <div class="tag">With us · Fixed quote</div>
+        <h3>Build it with us</h3>
+        <p class="for">For councils, agencies and consultancies whose project depends on the responses.</p>
+        <ol>
+          <li>A 30-minute call about your project, audience and timeline.</li>
+          <li>A fixed quote. No retainer, no surprises.</li>
+          <li>We set up the survey and help you reach a response target. Every response stays yours.</li>
+        </ol>
+        <div class="actions">
+          <a class="btn-primary btn-dark" href="#">📅 Book a 30-min call</a>
+          <a class="textlink" href="#">What's included →</a>
+        </div>
+        <div class="fine">The call is free and commits you to nothing</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<hr class="divider">
+
+<div class="frame">
+  <span class="note">3 · Same block on a phone (390 px)</span>
+  <div class="phone">
+    <div class="frame">
+      <p class="eyebrow">How to start</p>
+      <h2 class="heading">Two ways to get your map survey live</h2>
+      <div class="paths">
+        <div class="path">
+          <div class="tag">On your own · Free</div>
+          <h3>Build it yourself</h3>
+          <ol>
+            <li>Describe the place and who should answer.</li>
+            <li>AI drafts the survey in about a minute.</li>
+            <li>Publish and share the link or QR code.</li>
+          </ol>
+          <a class="btn-primary" href="#">Create your Mapsurvey</a>
+        </div>
+        <div class="path path--us">
+          <div class="tag">With us · Fixed quote</div>
+          <h3>Build it with us</h3>
+          <ol>
+            <li>30-minute call about your project.</li>
+            <li>A fixed quote, no retainer.</li>
+            <li>We set it up and help you reach a response target.</li>
+          </ol>
+          <a class="btn-primary btn-dark" href="#">📅 Book a 30-min call</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
