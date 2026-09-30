@@ -7,7 +7,7 @@ a fact renders as its `chip` when it has one, else as its `value`.
 <a class="story-card" href="{% url 'story_detail' story.slug %}">
   {% with picture=story.card_picture %}
   <div class="story-card__cover{% if not picture %} story-card__cover--empty{% endif %}">
-    {% if picture %}<img src="{{ picture.url }}" alt="{{ story.cover_alt }}" loading="lazy">{% endif %}
+    {% if picture %}<img src="{{ picture.url }}" alt="{% if story.card_image %}{{ story.title }}{% else %}{{ story.cover_alt }}{% endif %}" loading="lazy">{% endif %}
     <span class="story-card__type">{{ story.get_story_type_display }}</span>
   </div>
   {% endwith %}
